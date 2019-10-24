@@ -362,15 +362,21 @@ abstract class PriceModel {
         }
 
         // New rate
-            $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
-                .HTMLTable::makeTd('(New)')
-                .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd('')
-            );
-
+        $this->newRateMarkup($fTbl);
 
         return $fTbl;
+    }
+
+    protected function newRateMarkup(&$fTbl) {
+
+        // New rate
+        $fTbl->addBodyTr(
+            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
+            .HTMLTable::makeTd('(New)')
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd('')
+        );
+
     }
 
     public function saveEditMarkup(\PDO $dbh, $post, $username) {
@@ -708,8 +714,19 @@ class PriceBasic extends PriceModel {
         $modelCode = ItemPriceCode::Basic;
 
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-                . "(5,'Flat Rate','','" . RoomRateCategorys::FlatRateCategory . "','$modelCode',10.00,10.00,10.00,10,'a'), "
                 . "(6,'Assigned','','" . RoomRateCategorys::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
+    }
+
+    protected function newRateMarkup(&$fTbl) {
+
+        // New rate
+        // Not new rates are possible
+        return;
+    }
+    
+    public function saveEditMarkup(\PDO $dbh, $post, $username) {
+        $defaultRate = RoomRateCategorys::Fixed_Rate_Category;
+        return $defaultRate;
     }
 
 }

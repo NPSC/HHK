@@ -255,7 +255,7 @@ CREATE TABLE if not exists `document` (
   `Category` varchar(5) NOT NULL DEFAULT '',
   `Type` varchar(5) NOT NULL DEFAULT '',
   `Mime_Type` VARCHAR(85) NOT NULL DEFAULT '',
- `Folder` varchar(45) NOT NULL DEFAULT '',
+  `Folder` varchar(45) NOT NULL DEFAULT '',
   `Language` varchar(5) NOT NULL DEFAULT '',
   `Abstract` text,
   `Doc` blob,

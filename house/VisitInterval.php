@@ -1314,9 +1314,14 @@ if ($uS->PatientAddr) {
     $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
 }
 
-$cFields[] = array("Patient DOB", 'pBirth', '', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+if ($uS->ShowBirthDate) {
+    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient').' DOB', 'pBirth', '', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+}
 
-$cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent'), 'Referral_Agent', 'checked', '', 's', '', array());
+// Referral Agent
+if ($uS->ReferralAgent) {
+    $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Ref. Agent'), 'Referral_Agent', 'checked', '', 's', '', array());
+}
 
 // Hospital
 if (count($filter->getHospitals()) > 1) {

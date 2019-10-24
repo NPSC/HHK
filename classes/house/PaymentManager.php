@@ -282,12 +282,20 @@ class PaymentManager {
                         ($this->pmp->getBalWith() != ExcessPay::Ignore || $overPaymemntAmt == 0)) {
 
                     $reversalAmt = $this->guestCreditAmt;
+                    $revTaxAmt = array();
 
-                    $taxRates = $vat->getTaxedItemSums($visit->getIdVisit(), 0);  // Get all taxes, no timeouts.
+                    //$taxRates = $vat->getTaxedItemSums($visit->getIdVisit(), 0);  // Get all taxes, no timeouts.
+                    foreach ($vat->getAllTaxedItems($visit->getIdVisit()) as $t) {
 
-                    if (isset($taxRates[ItemId::Lodging]) && $taxRates[ItemId::Lodging] > 0) {
+                        if ($t->getIdTaxedItem() == ItemId::Lodging) {
+                            $revTaxAmt[$t->getIdTaxingItem()] = round($reversalAmt / (1 + ($taxRates[ItemId::Lodging])), 2);
+                            $reversalAmt -= $revTaxAmt[$t];
+                        }
+                    }
+
+                    if (count($revTaxAmt) > 0) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
-                        $reversalAmt = round($reversalAmt / (1 + ($taxRates[ItemId::Lodging])), 2);
+                        //$reversalAmt = round($reversalAmt / (1 + ($taxRates[ItemId::Lodging])), 2);
 
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
@@ -296,7 +304,7 @@ class PaymentManager {
 
                             if ($t->getIdTaxedItem() == ItemId::Lodging) {
                                 $taxInvoiceLine = new TaxInvoiceLine();
-                                $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), (0 - $reversalAmt)), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . ')');
+                                $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), (0 - $revTaxAmt[$t->getIdTaxingItem()])), 1, '(' . $t->getTextPercentTax() . ')');
                                 $taxInvoiceLine->setSourceItemId(ItemId::LodgingReversal);
                                 $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                                 $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);

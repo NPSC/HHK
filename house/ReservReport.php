@@ -78,13 +78,16 @@ if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
 }
 
-// Reservation statuses
+// Reservation statuses 
 $statusList = removeOptionGroups($uS->guestLookups['ReservStatus']);
 
+if ($uS->Doctor) {
+    $cFields[] = array("Doctor", 'Name_Doctor', '', '', 's', '');
+}
 
-$cFields[] = array("Doctor", 'Name_Doctor', '', '', 's', '');
-$cFields[] = array("Agent", 'Name_Agent', '', '', 's', '');
-
+if ($uS->ReferralAgent) {
+    $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 's', '');
+}
 
 $cFields[] = array("First", 'Name_First', 'checked', '', 's', '');
 $cFields[] = array("Last", 'Name_Last', 'checked', '', 's', '');

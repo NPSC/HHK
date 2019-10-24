@@ -318,7 +318,7 @@ class History {
 
     }
 
-    public static function getCheckedInGuestMarkup(\PDO $dbh, $page = "GuestEdit.php", $includeAction = TRUE, $static = FALSE) {
+    public static function getCheckedInGuestMarkup(\PDO $dbh, $page = "GuestEdit.php", $includeAction = TRUE, $static = FALSE, $patientColName = 'Patient', $hospColName = 'Hospital') {
 
         $uS = Session::getInstance();
 
@@ -327,12 +327,10 @@ class History {
             $hospList = $uS->guestLookups[GL_TableNames::Hospital];
         }
 
-        //$roomRates = RoomRate::makeDescriptions($dbh);
-
-        return self::getCheckedInMarkup($dbh, $uS->ccgw, $hospList, $page, $includeAction, $static);
+        return self::getCheckedInMarkup($dbh, $uS->ccgw, $hospList, $page, $includeAction, $static, $patientColName, $hospColName);
     }
 
-    public static function getCheckedInMarkup(\PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE, $static = FALSE) {
+    public static function getCheckedInMarkup(\PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE, $static = FALSE, $patientColName = 'Patient', $hospColName = 'Hospital') {
 
         $uS = Session::getInstance();
         $labels = new Config_Lite(LABEL_FILE);
@@ -495,14 +493,14 @@ class History {
                     $hospital .= $hospitals[$r['idHospital']][1];
                 }
 
-                $fixedRows['Hospital'] = $hospital;
+                $fixedRows[$hospColName] = $hospital;
             }
 
             // Patient Name
-            $fixedRows['Patient'] = $r['Patient'];
+            $fixedRows[$patientColName] = $r['Patient'];
 
             if ($page != '' && !$static) {
-                $fixedRows['Patient'] = HTMLContainer::generateMarkup('span', $r['Patient'], array('class'=>'hhk-getPSGDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-psg'=>$r['idPsg']));
+                $fixedRows[$patientColName] = HTMLContainer::generateMarkup('span', $r['Patient'], array('class'=>'hhk-getPSGDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-psg'=>$r['idPsg']));
             }
 
             $returnRows[] = $fixedRows;

@@ -24,8 +24,6 @@ require ('classes' . DS . 'sec' . DS . 'sessionClass.php');
 require ('classes' . DS . 'sec' . DS . 'webInit.php');
 require('classes' . DS . 'sec' . DS . 'Login.php');
 
-// get session instance
-$uS = Session::getInstance();
 
 $config = Login::initializeSession(ciCFG_FILE);
 

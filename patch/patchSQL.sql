@@ -14,6 +14,12 @@ ALTER TABLE `guest_token`
 
 ALTER TABLE `document` 
 	ADD COLUMN `Mime_Type` VARCHAR(85) NOT NULL DEFAULT '' AFTER `Type`;
+ALTER TABLE `document` 
+	ADD COLUMN `Folder` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Mime_Type`;
+ALTER TABLE `document` 
+	ADD COLUMN `Language` VARCHAR(5) NOT NULL DEFAULT '' AFTER `Folder`;
+ALTER TABLE `document` 
+	ADD COLUMN `Name` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Title`;
 
 ALTER TABLE `w_users`
     ADD COLUMN `Default_Page` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Ip`;
@@ -58,7 +64,7 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Time_Zo
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Time_Zone', 'America/Los_Angeles', 'Pacific');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'instamed', 'Instamed');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'vantiv', 'Vantiv');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'vantiv', 'Worldpay');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Payment_Status', 'rv', 'Reversed');
 

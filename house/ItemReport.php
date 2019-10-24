@@ -581,7 +581,7 @@ $monSize = 5;
 // Prepare controls
 
 $statusSelector = HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selPayStatus[]', 'size' => '6', 'multiple' => 'multiple'));
+                HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selPayStatus[]', 'size' => '4', 'multiple' => 'multiple'));
 
 $itemSelector = HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($itemList, $itemSelections), array('name' => 'selItems[]', 'size' => (count($itemList) + 1), 'multiple' => 'multiple'));

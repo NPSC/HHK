@@ -28,7 +28,7 @@ class RoomRate {
             }
 
             $rateCategories[$rc->FA_Category->getStoredVal()] = array(0=>$rc->FA_Category->getStoredVal(),
-                1=>self::titleAddAmount($rc->Title->getStoredVal(), $rc->FA_Category->getStoredVal(), number_format($rc->Reduced_Rate_1->getStoredVal())),
+                1=>self::titleAddAmount($rc->Title->getStoredVal(), $rc->FA_Category->getStoredVal(), number_format($rc->Reduced_Rate_1->getStoredVal(), $decimals)),
                 2=>number_format($rc->Reduced_Rate_1->getStoredVal(), $decimals));
         }
 
