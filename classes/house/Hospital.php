@@ -491,7 +491,7 @@ class HospitalStay {
             $assocTxt = $hospitalnames[$this->getAssociationId()][1] . '/';
         }
 
-        return $assocTxt . $hospitalnames[$this->getHospitalId()][1];
+        return $assocTxt . (isset($hospitalnames[$this->getHospitalId()][1]) ? $hospitalnames[$this->getHospitalId()][1] : 'Undefined');
 
     }
 

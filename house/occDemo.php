@@ -7,9 +7,9 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-require("homeIncludes.php");
+require('homeIncludes.php');
 require(HOUSE . 'ReportFilter.php');
-require(HOUSE . "GuestReport.php");
+require(HOUSE . 'GuestReport.php');
 
 $wInit = new webInit();
 
