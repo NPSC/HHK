@@ -288,14 +288,13 @@ class PaymentManager {
                     foreach ($vat->getAllTaxedItems($visit->getIdVisit()) as $t) {
 
                         if ($t->getIdTaxedItem() == ItemId::Lodging) {
-                            $revTaxAmt[$t->getIdTaxingItem()] = round($reversalAmt / (1 + ($taxRates[ItemId::Lodging])), 2);
+                            $revTaxAmt[$t->getIdTaxingItem()] = round($reversalAmt / (1 + $t->getDecimal()), 2);
                             $reversalAmt -= $revTaxAmt[$t];
                         }
                     }
 
                     if (count($revTaxAmt) > 0) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
-                        //$reversalAmt = round($reversalAmt / (1 + ($taxRates[ItemId::Lodging])), 2);
 
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
