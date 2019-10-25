@@ -704,7 +704,7 @@ class VisitView {
                 foreach ($curAccount->getCurentTaxItems(ItemId::Lodging) as $t) {
 
                     if ($curAccount->getRoomFeeBalance() < 0) {
-                        $taxAmt = $t->getTaxAmount($curAccount->getRoomCharge());
+                        $taxAmt = $t->getTaxAmount($curAccount->getRoomCharge() + $curAccount->getTotalDiscounts());
                     } else {
                         $taxAmt = $curAccount->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($curAccount->getRoomFeeBalance());
                     }

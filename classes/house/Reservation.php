@@ -475,6 +475,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         // Registration
         $reg = new Registration($dbh, $this->reserveData->getIdPsg());
 
+        // active reservations
         if ($resv->isNew() === FALSE && $resv->isActive()) {
 
             // Allow reservations to have many guests.
@@ -543,8 +544,20 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         } else if ($resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
 
+            // Staying or checked out - cannot change resv status.
             $dataArray['rstat'] = '';
 
+        } else {
+            // Cancelled.
+
+            // Allow to change reserv status.
+            $dataArray['rstat'] = $this->createStatusChooser(
+                    $resv,
+                    $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
+                    $uS->nameLookups[GL_TableNames::PayType],
+                    $labels,
+                    $showPayWith,
+                    Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
         }
 
         // Reservation status title
@@ -1090,9 +1103,9 @@ WHERE
             return $oldResvId;
         }
 
-        $stmt = $dbh->query("SELECT  r.idReservation, r.idGuest, MAX(r.Expected_Arrival) "
+        $stmt = $dbh->query("SELECT  MAX(r.idReservation), r.idGuest "
                 . "FROM reservation r LEFT JOIN registration rg ON r.idRegistration = rg.idRegistration "
-                . "WHERE rg.idPsg = " . $this->reserveData->getIdPsg() . " ORDER BY rg.idPsg");
+                . "WHERE rg.idPsg = " . $this->reserveData->getIdPsg());
 
         $rows = $stmt->fetchAll(PDO::FETCH_NUM);
 
@@ -1238,14 +1251,13 @@ class ActiveReservation extends Reservation {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
 
+        // Get any previous settings and set primary guest if blank.
+        $oldResvId = $this->copyOldReservation($dbh);
+
         // Add the family, hospital, etc sections.
         $this->createDatesMarkup();
         $this->createHospitalMarkup($dbh);
         $this->createFamilyMarkup($dbh);
-
-
-        // Get any previous settings and set primary guest if blank.
-        $oldResvId = $this->copyOldReservation($dbh);
 
         // Add the reservation section.
         $this->reserveData->setResvSection($this->createResvMarkup($dbh, $oldResvId));
@@ -1404,46 +1416,6 @@ class ActiveReservation extends Reservation {
 
 
         $this->processCOF($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $post, $cofPostbackPage);
-
-//        // Delete any credit cards on file
-//        $keys = array_keys($post);
-//
-//        foreach ($keys as $k) {
-//
-//            $parts = explode('_', $k);
-//
-//            if (count($parts) > 1 && $parts[0] == 'crdel') {
-//
-//                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
-//
-//                if ($idGt > 0) {
-//                    $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
-//                }
-//            }
-//        }
-//
-//        // Adding a new card?
-//        if (isset($post['cbNewCard'])) {
-//
-//            $newCardHolderName = '';
-//            $manualKey = FALSE;
-//
-//            if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
-//                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
-//                $manualKey = TRUE;
-//            }
-//
-//            try {
-//                // Payment Gateway
-//                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-//
-//                $this->cofResult = $gateway->initCardOnFile($dbh, $uS->siteName, $resv->getIdGuest(), $reg->getIdRegistration(), $manualKey, $newCardHolderName, 'Reserve.php?rid=' . $resv->getIdReservation());
-//
-//            } catch (Hk_Exception_Payment $ex) {
-//
-//                $this->reserveData->addError($ex->getMessage());
-//            }
-//        }
 
         return $this;
     }
