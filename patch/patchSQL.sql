@@ -53,6 +53,7 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Con
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'v', 'Volunteer');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'es', 'Email Server');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'fg', 'Payment Gateway');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'c', 'Calendar');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Email_Server', 'SMTP', 'SMTP');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Email_Server', 'Mail', 'Mail');
@@ -65,6 +66,9 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Time_Zo
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'instamed', 'Instamed');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Pay_Gateway_Name', 'vantiv', 'Worldpay');
+
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Init_Reserv_Status', 'a', 'Confirmed');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Init_Reserv_Status', 'uc', 'Unconfirmed');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Payment_Status', 'rv', 'Reversed');
 
@@ -80,10 +84,25 @@ update sys_config set Category = 'fg', Type = 'lu', GenLookup = 'Pay_Gateway_Nam
 update sys_config set GenLookup = 'CC_Gateway_Name', Type = 'lu' where `Key` = 'ccgw';
 update sys_config set Description = 'House Time Zone', GenLookup = 'Time_Zone', Type = 'lu' where `Key` = 'tz';
 UPDATE `sys_config` SET `GenLookup`='Price_Model', Type = 'lu' WHERE `Key`='RoomPriceModel';
+UPDATE `sys_config` SET `Type`='lu', `GenLookup`='Init_Reserv_Status' WHERE `Key`='InitResvStatus';
+UPDATE `sys_config` SET `Type`='lu', `GenLookup`='Room_Group' WHERE `Key`='CalResourceGroupBy';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='CalDateIncrement';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='CalExpandResources';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='CalRescColWidth';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='CalResourceGroupBy';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='CalViewWeeks';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='GuestNameColor';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='InitResvStatus';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='NightsCounter';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='RegColors';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='ShoStaysCtr';
+UPDATE `sys_config` SET `Category`='c' WHERE `Key`='ShowUncfrmdStatusTab';
+
 
 UPDATE `invoice_line_type` SET `Description`='waive' WHERE `id`='5';
 UPDATE `invoice_line_type` SET `Order_Position`='4' WHERE `id`='7';
 
+-- Add reservation cancel codes.
 INSERT INTO `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Other`) VALUES ('ReservStatus', 'c1', 'Canceled 1', 'y', 'y', 'ui-icon-cancel');
 INSERT INTO `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Other`) VALUES ('ReservStatus', 'c2', 'Canceled 2', 'n', 'n', 'ui-icon-cancel');
 INSERT INTO `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Other`) VALUES ('ReservStatus', 'c3', 'Canceled 3', 'n', 'n', 'ui-icon-cancel');

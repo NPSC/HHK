@@ -1510,6 +1510,7 @@ FROM reservation r
 
         // Uncommitted cannot check in.
         if ($rRs->Status->getStoredVal() == ReservationStatus::UnCommitted) {
+            $rData->setSaveButtonLabel('Save');
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData, TRUE));
         }
 

@@ -525,7 +525,7 @@ class SiteConfig {
                 $inpt = HTMLContainer::generateMarkup('textarea', $r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'rows'=>'2', 'cols'=>'38'));
 
             } else if ($r['Type'] == 'i') {
-                // text area
+                // integer
 
                 $inpt = HTMLInput::generateMarkup($r['Value'], array('name' => 'sys_config' . '[' . $r['Key'] . ']', 'size'=>'7'));
 
@@ -534,7 +534,7 @@ class SiteConfig {
 
                 $opts = readGenLookupsPDO($dbh, $r['GenLookup']);
 
-                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $r['Value'], TRUE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
+                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($opts), $r['Value'], TRUE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
 
             } else {
 

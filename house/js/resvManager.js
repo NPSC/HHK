@@ -1,5 +1,5 @@
 
-function resvManager(initData, options = false) {
+function resvManager(initData, options) {
     var t = this;
 
     var patLabel = initData.patLabel;
@@ -382,7 +382,7 @@ function resvManager(initData, options = false) {
             $('.hhk-addrPicker').remove();
 
             var $sel = $('<select id="selAddrch" multiple="multiple" />');
-            var options = 0;
+            var opts = 0;
             var optTexts = [];
 
             for (var p in addrs.list()) {
@@ -405,8 +405,8 @@ function resvManager(initData, options = false) {
 
                     if (notFound) {
                         // Add as option
-                        optTexts[options] = optText;
-                        options++;
+                        optTexts[opts] = optText;
+                        opts++;
 
                         $('<option class="hhk-addrPickerPanel" value="' + p + '">' + optText + '</option>')
                             .appendTo($sel);
@@ -414,9 +414,9 @@ function resvManager(initData, options = false) {
                 }
             }
 
-            if (options > 0) {
+            if (opts > 0) {
 
-                $sel.prop('size', options + 1).prepend($('<option value="0" >(Cancel)</option>'));
+                $sel.prop('size', opts + 1).prepend($('<option value="0" >(Cancel)</option>'));
 
                 $sel.change(function () {
                     setAddress(prefix, $(this).val());
@@ -2329,11 +2329,7 @@ function resvManager(initData, options = false) {
 
             $('.hhk-cbStay').change();
 
-            if (data.resv.rdiv.hideCkinBtn !== undefined && data.resv.rdiv.hideCkinBtn) {
-                $('#btnDone').hide();
-            } else {
-                $('#btnDone').val(saveButtonLabel).show();
-            }
+            $('#btnDone').val(saveButtonLabel).show();
 
             if (data.rid > 0) {
                 $('#btnDelete').val('Delete ' + resvTitle).show();
@@ -2342,7 +2338,7 @@ function resvManager(initData, options = false) {
             }
 
             // Checking in now button
-            manageCheckInNowButton($('#gstDate').val(), data.rid, false);
+            manageCheckInNowButton($('#gstDate').val(), data.rid, data.resv.rdiv.hideCiNowBtn);
 
         }
 
