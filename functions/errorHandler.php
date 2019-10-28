@@ -52,7 +52,7 @@ function formHandler($error, $uS){
 	  	
 	  	// send email and redirect
 	  	sendMail($message, $uS);
-	  	header("location: ?status=success");
+	  	buildPage("", true);
 	  	exit;
 	}
 }
@@ -82,7 +82,7 @@ function returnJSON($error, $uS){
 }
 
 
-function buildPage($error){
+function buildPage($error, $success = false){
 	$wInit = new webInit();
 	$pageTitle = $wInit->pageTitle;
 	$sec = new SecurityComponent;
@@ -102,9 +102,19 @@ function buildPage($error){
 	        <?php echo FAVICON; ?>
 
 	        <style>
-		        .wrapper {
-			        margin-top: 2em;
+		        
+		        .errorwrapper {
+			        position: fixed;
+			        top: 0;
+			        left: 0;
+			        width: 100%;
+			        height: 100%;
+			        background-color: #fff;
+			        z-index: 100000;
+			        margin-top: 39px;
+			        padding-top: 2em;
 		        }
+		        
 		        .container {
 			        width: 1140px;
 		        }
@@ -149,7 +159,7 @@ function buildPage($error){
 	        </style>
 	    </head>
 	    <body>
-		    <div class="wrapper">
+		    <div class="wrapper errorwrapper">
 		        <h1>Uh oh, something's not right!</h1>
 		        <div class="container">
 			        <div class="col-6" style="text-align: center;">
@@ -163,7 +173,7 @@ function buildPage($error){
 							<h2>File a bug report</h2>
 						</div>
 						<div class="ui-widget-content ui-corner-bottom hhk-tdbox">
-							<?php if(isset($_GET["status"]) && $_GET["status"] == "success"){ ?>
+							<?php if($success){ ?>
 								<h4>Thanks for submitting!</h4>
 								<a href="<?php echo $sec->getRootURL(); ?>" class="ui-button ui-corner-all ui-widget">Go Home</a>
 							<?php }else{ ?>
@@ -181,6 +191,7 @@ function buildPage($error){
 									<input type="submit" class="ui-button ui-corner-all ui-widget" value="Submit" style="width: initial;">
 								</div>
 							</form>
+							<?php echo "location: //" . $_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'] . "&errorstatus=success" ?><br>
 							<?php } ?>
 						</div>
 					</div>
