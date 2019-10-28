@@ -358,11 +358,11 @@ function amtPaid() {
 
     if (isNaN(roomBalDue)) {
         roomBalDue = 0;
-    } else {
+    } else if (roomBalDue > 0) {
 
         $taxingItems.each(function () {
             var rate = parseFloat($(this).data('taxrate'));
-            roomBalTaxDue += roundTo(roomBalDue* rate, 2);
+            roomBalTaxDue += roundTo(roomBalDue * rate, 2);
         });
     }
 

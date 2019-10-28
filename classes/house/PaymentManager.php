@@ -288,8 +288,8 @@ class PaymentManager {
                     foreach ($vat->getAllTaxedItems($visit->getIdVisit()) as $t) {
 
                         if ($t->getIdTaxedItem() == ItemId::Lodging) {
-                            $revTaxAmt[$t->getIdTaxingItem()] = round($reversalAmt / (1 + $t->getDecimalTax()), 2);
-                            $reversalAmt -= $revTaxAmt[$t];
+                            $revTaxAmt[$t->getIdTaxingItem()] = $this->guestCreditAmt - round($this->guestCreditAmt / (1 + $t->getDecimalTax()), 2);
+                            $reversalAmt -= $revTaxAmt[$t->getIdTaxingItem()];
                         }
                     }
 

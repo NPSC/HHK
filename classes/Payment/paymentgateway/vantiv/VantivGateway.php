@@ -153,7 +153,7 @@ class VantivGateway extends PaymentGateway {
                     $invoice->updateInvoiceBalance($dbh, $csResp->response->getAuthorizedAmount(), $uS->username);
 
                     $csResp->idVisit = $invoice->getOrderNumber();
-                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createSaleMarkup($dbh, $csResp, $uS->resourceURL . 'images/receiptlogo.png', $uS->siteName, $uS->sId, 'Void Return')));
+                    $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $csResp, $uS->siteName, $uS->sId, 'Void Return')));
                     $dataArray['success'] = 'Return is Voided.  ';
 
                     break;

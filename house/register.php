@@ -196,7 +196,7 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital' || (strt
 
     $shoHosptialName = TRUE;
 
-    $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('resourceBuilder', 'hospitalsTab', 'Hospital') . ': ');
+    $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'hospital', 'Hospital') . ': ');
     // All button
     $colorKey .= HTMLContainer::generateMarkup('span', 'All', array('class'=>'spnHosp', 'data-id'=>0, 'style' => 'border:solid 3px black;font-size:120%;background-color:fff;color:000;'));
 
@@ -427,7 +427,7 @@ if ($uS->UseWLnotes) {
                             <td><input id='cbReserv' type='checkbox'/> Reservations</td>
                             <td>Ending: <input type="text" id="txtactend" class="ckdate" value="" /></td>
                         </tr><tr>
-                            <td><input id='cbHospStay' type='checkbox'/> Hospital Stays</td>
+                            <td><input id='cbHospStay' type='checkbox'/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</td>
                             <td></td>
                         </tr><tr>
                             <td></td>

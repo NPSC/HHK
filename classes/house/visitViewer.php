@@ -157,10 +157,11 @@ class VisitView {
             $hname = $r['Association'] . ' / ' . $hname;
         }
 
-        // Patient Name
-        $th .= HTMLTable::makeTh($labels->getString('hospital', 'hosptial', 'Hospital'));
+
+        $th .= HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'));
         $tr .= HTMLTable::makeTd($hname);
 
+        // Patient Name
         if ($r['Patient_Name'] != '') {
             $th .= HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'));
             $tr .= HTMLTable::makeTd($r['Patient_Name']);

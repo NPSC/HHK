@@ -459,7 +459,7 @@ order by ng.idPsg";
             if (isset($r['Birth Date'])) {
                 $r['Birth Date'] = $r['Birth Date'] == '' ? '' : date('M j, Y', strtotime($r['Birth Date']));
             }
-            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['PSG Id']));
+            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r[$psgLabel]));
 
             if ($firstTd != '') {
                 $r[$separatorClassIndicator] = 'hhk-rowseparater';

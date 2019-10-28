@@ -68,7 +68,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
     if ($local) {
 
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh($colNameTitle) . HTMLTable::makeTh($labels->getString('hospital', 'hosptial', 'Hospital')) . HTMLTable::makeTh('Patients'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh($colNameTitle) . HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital')) . HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient').'s'));
 
     } else {
 
@@ -83,7 +83,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
         // HEader row
         $hdr[$n++] =  'Id';
         $hdr[$n++] =  $colNameTitle;
-        $hdr[$n++] =  $labels->getString('hospital', 'hosptial', 'Hospital');
+        $hdr[$n++] =  $labels->getString('hospital', 'hospital', 'Hospital');
         $hdr[$n++] =  $labels->getString('MemberType', 'patient', 'Patient');
 
         OpenXML::writeHeaderRow($sml, $hdr);
@@ -200,10 +200,12 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 }
 
 
-function blanksOnly(\PDO $dbh, $type, $whClause, $hospitals, $start, $end) {
+function blanksOnly(\PDO $dbh, $type, $whClause, $hospitals, $start, $end, $labels) {
 
     $class = '';
     $htmlId = '';
+    $nameCol = $labels->getString('MemberType', 'patient', 'Patient');
+    $hospitalCol = $labels->getString('hospital', 'hospital', 'Hospital');
 
     if ($type == VolMemberType::Doctor) {
         $Id = 'idDoctor';
@@ -217,7 +219,7 @@ function blanksOnly(\PDO $dbh, $type, $whClause, $hospitals, $start, $end) {
         $htmlId = 'txtAgentSch';
     }
 
-    $query = "select hs.idPatient as `Patient Id`, n.Name_Full as `Patient Name`, hs.idHospital as `Hospital`, hs.idPsg
+    $query = "select hs.idPatient as `Id`, n.Name_Full as `$nameCol Name`, hs.idHospital as `$hospitalCol`, hs.idPsg
 from hospital_stay hs left join `name` n on hs.idPatient = n.idName
 left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
 where hs.$Id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
@@ -229,10 +231,10 @@ where hs.$Id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '"
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-        $r['Patient Id'] = HTMLContainer::generateMarkup('a', $r['Patient Id'], array('href'=>'GuestEdit.php?id=' . $r['Patient Id'] . '&psg=' . $r['idPsg']));
+        $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
-        if (isset($hospitals[$r['Hospital']])) {
-            $r['Hospital'] = $hospitals[$r['Hospital']][1];
+        if (isset($hospitals[$r[$hospitalCol]])) {
+            $r[$hospitalCol] = $hospitals[$r[$hospitalCol]][1];
         }
 
         unset($r['idPsg']);
@@ -494,7 +496,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         if ($blanksOnly) {
 
-            $dataTable = blanksOnly($dbh, $type, $whHosp, $hospList, $start, $end);
+            $dataTable = blanksOnly($dbh, $type, $whHosp, $hospList, $start, $end, $labels);
             $sTbl->addBodyTr(HTMLTable::makeTh('Missing ' . $colTitle . ' Assignments', array('colspan'=>'4')));
 
         } else {
@@ -503,7 +505,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         }
 
         $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-        $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hosptial', 'Hospital') . 's', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc);
+        $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc);
         $settingstable = $sTbl->generateMarkup();
 
         $mkTable = 1;
@@ -660,11 +662,11 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                     </table>
                     <table style="float: left;">
                         <tr>
-                            <th colspan="2"><?php echo $labels->getString('hospital', 'hosptial', 'Hospital'); ?>s</th>
+                            <th colspan="2"><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr>
                         <?php if (count($aList) > 0) { ?><tr>
                             <th>Associations</th>
-                            <th><?php echo $labels->getString('hospital', 'hosptial', 'Hospital'); ?>s</th>
+                            <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
                             <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>
@@ -673,7 +675,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                     </table>
                     <table style="clear:left; margin-top: 15px;">
                         <tr>
-                            <td><input type="checkbox" name="cbBlanksOnly" id="cbBlanksOnly" <?php echo $cbBlank; ?>/><label for="cbBlanksOnly"> Only Show Patients without an assignment </label></td>
+                            <td><input type="checkbox" name="cbBlanksOnly" id="cbBlanksOnly" <?php echo $cbBlank; ?>/><label for="cbBlanksOnly"> Only Show <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s without an assignment </label></td>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
                             <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
                         </tr>
