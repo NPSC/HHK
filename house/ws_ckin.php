@@ -218,6 +218,7 @@ try {
 
             break;
 
+        // Confirm Reservation Form
         case 'confrv':
 
             $idresv = 0;

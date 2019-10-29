@@ -44,7 +44,7 @@ $(document).ready(function() {
         buttons: {
             'Download MS Word': function () {
                 var $confForm = $("form#frmConfirm");
-                $confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'))
+                $confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'));
                 $confForm.submit();
             },
             'Send Email': function() {

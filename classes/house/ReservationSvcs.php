@@ -113,7 +113,9 @@ class ReservationSvcs {
                 if($mail->send()) {
 
                     // Make a note in the reservation.
-                    //$reserv->setNotes('Confirmation Email sent to ' . $emailAddr . ' with the following as a Note: ' . str_replace('\n', ' ', $notes), $uS->username);
+                    $noteText = 'Confirmation Email sent to ' . $emailAddr . ' with the following as a specail note: ' . str_replace('\n', ' ', $notes);
+                    LinkNote::save($dbh, $noteText, $reserv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
+
                     $reserv->saveReservation($dbh, $reserv->getIdRegistration(), $uS->username);
 
                     $dataArray['mesg'] = "Email sent.  ";
