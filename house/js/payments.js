@@ -358,7 +358,7 @@ function amtPaid() {
 
     if (isNaN(roomBalDue)) {
         roomBalDue = 0;
-    } else if (roomBalDue > 0) {
+    } else {
 
         $taxingItems.each(function () {
             var rate = parseFloat($(this).data('taxrate'));

@@ -281,31 +281,35 @@ class PaymentManager {
                 if ($this->guestCreditAmt > 0 &&
                         ($this->pmp->getBalWith() != ExcessPay::Ignore || $overPaymemntAmt == 0)) {
 
-                    $reversalAmt = $this->guestCreditAmt;
-                    $revTaxAmt = array();
+//                    $reversalAmt = $this->guestCreditAmt;
+//                    $revTaxAmt = array();
 
                     //$taxRates = $vat->getTaxedItemSums($visit->getIdVisit(), 0);  // Get all taxes, no timeouts.
-                    foreach ($vat->getAllTaxedItems($visit->getIdVisit()) as $t) {
+                    
+//                    foreach ($vat->getAllTaxedItems($visit->getIdVisit()) as $t) {
+//
+//                        if ($t->getIdTaxedItem() == ItemId::Lodging) {
+//                            $revTaxAmt[$t->getIdTaxingItem()] = $this->guestCreditAmt - round($this->guestCreditAmt / (1 + $t->getDecimalTax()), 2);
+//                            $reversalAmt -= $revTaxAmt[$t->getIdTaxingItem()];
+//                        }
+//                    }
+                    
+                    // taxes
+                    
+                    $reversalAmt = $this->guestCreditAmt / (1 + $taxRate);
 
-                        if ($t->getIdTaxedItem() == ItemId::Lodging) {
-                            $revTaxAmt[$t->getIdTaxingItem()] = $this->guestCreditAmt - round($this->guestCreditAmt / (1 + $t->getDecimalTax()), 2);
-                            $reversalAmt -= $revTaxAmt[$t->getIdTaxingItem()];
-                        }
-                    }
-
-                    if (count($revTaxAmt) > 0) {
+                    if ($reversalAmt !== $this->guestCreditAmt) {
                         // we caught taxes.  Reduce reversalAmt by the sum of tax rates.
 
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
 
                         // Add the tax lines back into the mix
-                        foreach ($vat->getAllTaxedItems($visit->getIdVisit()) as $t) {
+                        foreach ($vat->getCurrentTaxedItems($visit->getIdVisit(), $this->pmp->visitCharges->getNightsStayed()) as $t) {
 
                             if ($t->getIdTaxedItem() == ItemId::Lodging) {
                                 $taxInvoiceLine = new TaxInvoiceLine();
-                                $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), (0 - $revTaxAmt[$t->getIdTaxingItem()])), 1, '(' . $t->getTextPercentTax() . ')');
+                                $taxInvoiceLine->createNewLine(new Item($dbh, $t->getIdTaxingItem(), (0 - $reversalAmt)), $t->getDecimalTax(), '(' . $t->getTextPercentTax() . ')');
                                 $taxInvoiceLine->setSourceItemId(ItemId::LodgingReversal);
-                                $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                                 $this->invoice->addLine($dbh, $taxInvoiceLine, $uS->username);
                             }
                         }

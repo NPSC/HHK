@@ -925,7 +925,7 @@ WHERE
 
                         $priceModel->itemMarkup($item, $tbl);
 
-                    } else if ($l['Type_Id'] == InvoiceLineType::Tax && $l['Source_Item_Id'] == ItemId::Lodging) {
+                    } else if ($l['Type_Id'] == InvoiceLineType::Tax && ($l['Source_Item_Id'] == ItemId::Lodging || $l['Source_Item_Id'] == ItemId::LodgingReversal)) {
                         $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
                     } else if (($l['Item_Id'] == ItemId::Lodging || $l['Item_Id'] == ItemId::LodgingReversal) && ($l['Status'] == InvoiceStatus::Paid || $l['Status'] == InvoiceStatus::Unpaid)) {
                         $roomFeesPaid += floatval($l['Amount']);
