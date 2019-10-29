@@ -281,21 +281,6 @@ class PaymentManager {
                 if ($this->guestCreditAmt > 0 &&
                         ($this->pmp->getBalWith() != ExcessPay::Ignore || $overPaymemntAmt == 0)) {
 
-//                    $reversalAmt = $this->guestCreditAmt;
-//                    $revTaxAmt = array();
-
-                    //$taxRates = $vat->getTaxedItemSums($visit->getIdVisit(), 0);  // Get all taxes, no timeouts.
-                    
-//                    foreach ($vat->getAllTaxedItems($visit->getIdVisit()) as $t) {
-//
-//                        if ($t->getIdTaxedItem() == ItemId::Lodging) {
-//                            $revTaxAmt[$t->getIdTaxingItem()] = $this->guestCreditAmt - round($this->guestCreditAmt / (1 + $t->getDecimalTax()), 2);
-//                            $reversalAmt -= $revTaxAmt[$t->getIdTaxingItem()];
-//                        }
-//                    }
-                    
-                    // taxes
-                    
                     $reversalAmt = $this->guestCreditAmt / (1 + $taxRate);
 
                     if ($reversalAmt !== $this->guestCreditAmt) {
