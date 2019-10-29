@@ -191,7 +191,6 @@ function buildPage($error, $success = false){
 									<input type="submit" class="ui-button ui-corner-all ui-widget" value="Submit" style="width: initial;">
 								</div>
 							</form>
-							<?php echo "location: //" . $_SERVER["HTTP_HOST"] . $_SERVER['REQUEST_URI'] . "&errorstatus=success" ?><br>
 							<?php } ?>
 						</div>
 					</div>
