@@ -1551,9 +1551,9 @@ if ($uS->CoTod) {
 <script type="text/javascript">
     var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
     var rctMkup, pmtMkup;
+    var dateFormat = '<?php echo $dateFormat; ?>';
 
     $(document).ready(function() {
-        var dateFormat = '<?php echo $dateFormat; ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
 

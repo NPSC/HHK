@@ -28,6 +28,10 @@ class WebhookResponse extends GatewayResponse implements iGatewayResponse {
         return '';
     }
 
+    public function getStatus() {
+        return $this->getResponseCode();
+    }
+
     public function getResponseMessage() {
         if (isset($this->result['CurrentTransactionStatusDescription'])) {
             return $this->result['CurrentTransactionStatusDescription'];
@@ -274,12 +278,16 @@ class VerifyCurlResponse extends GatewayResponse implements iGatewayResponse {
         }
             return '';
     }
-
+    
     public function getResponseCode() {
         if (isset($this->result['responseCode'])) {
             return $this->result['responseCode'];
         }
         return '';
+    }
+    
+    public function getStatus() {
+        return $this->getResponseCode();
     }
 
     public function getResponseMessage() {

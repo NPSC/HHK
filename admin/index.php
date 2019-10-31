@@ -68,7 +68,7 @@ if (isset($_POST['txtUname'])) {
 if ($uS->mode != Mode::Live) {
     $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA complient and not intended to be used for storing Protected Health Information.';
 } else {
-    $disclaimer = SysConfig::getKeyValue($dbh, 'sys_config', 'Disclaimer');
+    $disclaimer = '';
 }
 
 $tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
