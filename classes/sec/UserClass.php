@@ -116,7 +116,7 @@ class UserClass {
         return FALSE;
     }
 
-    protected function setPassword(\PDO $dbh, $id, $newPw) {
+    public function setPassword(\PDO $dbh, $id, $newPw) {
 
         if ($newPw != '' && $id != 0) {
 
