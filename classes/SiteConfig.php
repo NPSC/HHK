@@ -621,6 +621,24 @@ class SiteConfig {
                 HTMLTable::makeTh('Gateway Mode', array())
                 .HTMLTable::makeTd($ginpt)
         );
+
+        // Batch Settlement hour
+        $bopts = array(
+            array('01:00', '1am'),
+            array('02:00', '2am'),
+            array('03:00', '3am'),
+            array('04:00', '4am'),
+            array('05:00', '5am'),
+        );
+
+        $binpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($bopts, SysConfig::getKeyValue($dbh, 'sys_config', 'BatchSettlementHour'), TRUE), array('name' => 'payGtwybtch'));
+
+        $tbl->addBodyTr(
+                HTMLTable::makeTh('Batch Settlement Hour', array())
+                .HTMLTable::makeTd($binpt)
+        );
+
+        // Spacer
         $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
 
         return $tbl->generateMarkup() . $gateway->createEditMarkup($dbh, $resultMessage);
@@ -638,6 +656,17 @@ class SiteConfig {
                 SysConfig::saveKeyValue($dbh, 'sys_config', 'ccgw', $newcc);
                 $uS->ccgw = $newcc;
                 $msg .= 'Gateway Mode Changed.  ';
+            }
+        }
+
+        // Batch settlement
+        if (isset($post['payGtwybtch'])) {
+            $bhour = filter_var($post['payGtwybtch'], FILTER_SANITIZE_STRING);
+
+            if (SysConfig::getKeyValue($dbh, 'sys_config', 'BatchSettlementHour') != $bhour) {
+                SysConfig::saveKeyValue($dbh, 'sys_config', 'BatchSettlementHour', $bhour);
+                $uS->BatchSettlementHour = $bhour;
+                $msg .= 'Batch Settlement Hour Changed.  ';
             }
         }
 

@@ -421,7 +421,7 @@ class ReturnReply extends CreditPayments {
             $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
             $payRs->idPayor->setNewVal($pr->idPayor);
             $payRs->idTrans->setNewVal($pr->getIdTrans());
-            $payRs->idToken->setNewVal($pr->getToken());
+            $payRs->idToken->setNewVal($pr->getIdToken());
             $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
             $payRs->Result->setNewVal(MpStatusValues::Approved);
             $payRs->Attempt->setNewVal($attempts);
@@ -516,7 +516,7 @@ class ReturnReply extends CreditPayments {
 
             $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
             $payRs->idPayor->setNewVal($pr->idPayor);
-            $payRs->idToken->setNewVal($pr->getToken());
+            $payRs->idToken->setNewVal($pr->getIdToken());
             $payRs->idTrans->setNewVal($pr->getIdTrans());
             $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
             $payRs->Status_Code->setNewVal(PaymentStatusCode::Declined);

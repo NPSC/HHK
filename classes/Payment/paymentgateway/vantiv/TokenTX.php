@@ -160,7 +160,6 @@ class TokenTX {
 
     }
 
-
     public static function creditReturnToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReturnTokenRequest $returnSale, $payRs, $payNotes = '') {
 
         if (is_null($payRs) === FALSE && $payRs->idPayment->getStoredVal() == 0) {
