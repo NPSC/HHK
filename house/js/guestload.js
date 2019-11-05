@@ -156,6 +156,12 @@ $(document).ready(function () {
             guestId: memData.id,
             psgId: memData.idPsg
     });
+    
+    //doc uploader
+    $('#vDocsContent').docUploader({
+            guestId: memData.id,
+            psgId: memData.idPsg
+    });
 
     // relationship dialog
     $("#submit").dialog({

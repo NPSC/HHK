@@ -769,7 +769,8 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="../js/uppload.js"></script>
-
+		<script type="text/javascript" src="js/documentUpload.js"></script>
+		
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
@@ -877,6 +878,9 @@ $uS->guestId = $id;
                         <?php if ($uS->UseIncidentReports) { ?>
                         <li><a href="#vincidents">Incidents</a></li>
                         <?php } ?>
+                        <?php if ($uS->UseDocumentUpload) { ?>
+                        <li><a href="#vDocs">Documents</a></li>
+                        <?php } ?>
                     </ul>
                     <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
@@ -904,6 +908,11 @@ $uS->guestId = $id;
                     <?php if ($uS->UseIncidentReports) { ?>
                     <div id="vincidents" class="ui-tabs-hide" style="display: none;">
 	                    <div id="vIncidentContent"></div>
+                    </div>
+                    <?php } ?>
+                    <?php if ($uS->UseDocumentUpload) { ?>
+                    <div id="vDocs" class="ui-tabs-hide" style="display: none;">
+	                    <div id="vDocsContent"></div>
                     </div>
                     <?php } ?>
                 </div>
@@ -961,6 +970,6 @@ $uS->guestId = $id;
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js?vn=36"></script>
+        <script type="text/javascript" src="js/guestload.js?vn=36"></script>
     </body>
 </html>
