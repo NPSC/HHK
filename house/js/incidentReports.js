@@ -216,7 +216,7 @@
         }
 
         if (error == true) {
-            settings.alertMessage.call("Incident not saved. Check fields in red.", 'alert');
+            settings.alertMessage("Incident not saved. Check fields in red.", 'alert');
         } else {
             var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
             var data = $wrapper.incidentdialog.find("form").serialize();
@@ -243,9 +243,9 @@
                         clearform($wrapper);
                     } else {
                         if (data.error) {
-                            settings.alertMessage.call(data.error, 'alert');
+                            settings.alertMessage(data.error, 'alert');
                         } else {
-                            settings.alertMessage.call('An unknown error occurred.', 'alert');
+                            settings.alertMessage('An unknown error occurred.', 'alert');
                         }
                     }
                 }
@@ -338,7 +338,7 @@
                         row.find('.incident-edit').hide();
                         row.find('.incident-undodelete').show();
                     } else {
-                        settings.alertMessage.call(data.error, 'error');
+                        settings.alertMessage(data.error, 'error');
                     }
                 }
             });
@@ -363,7 +363,7 @@
                     if (data.idReport > 0) {
                         $table.ajax.reload();
                     } else {
-                        settings.alertMessage.call(data.error, 'error');
+                        settings.alertMessage(data.error, 'error');
                     }
                 }
             });

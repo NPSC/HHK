@@ -69,7 +69,7 @@
                     searchable: true,
                     sortable: false,
                     width: "70%",
-                    className: 'incidentTitle',
+                    className: 'docTitle',
                     data: "Title",
                 },
                 {
@@ -97,30 +97,42 @@
         $wrapper.uploader.find("input").val("");
     }
 
-    function createActions(reportId, row) {
-
+    function createActions(docId, row) {
+        
         var $ul, $li;
-
+        
         $ul = $('<ul />').addClass('ui-widget ui-helper-clearfix hhk-ui-icons');
-
+        
         // Edit icon
-        $li = $('<li title="Edit Incident" data-incidentid="' + reportId + '" />').addClass('hhk-report-button incident-edit ui-corner-all ui-state-default');
+        $li = $('<li title="Edit Doc" data-docid="' + docId + '" data-docTitle="' + row.Title + '" />').addClass('hhk-doc-button doc-edit ui-corner-all ui-state-default');
         $li.append($('<span class="ui-icon ui-icon-pencil" />'));
-
+        
         $ul.append($li);
-
+        
+        // Save(Done) Edit Icon
+        $li = $('<li title="Save Doc" />').addClass('hhk-doc-button doc-done doc-action ui-corner-all ui-state-default').hide();
+        $li.append($('<span class="ui-icon ui-icon-check" />'));
+        
+        $ul.append($li);
+        
+        // Cancel Edit Icon
+        $li = $('<li title="Cancel" data-titletext="' + row.Title + '" />').addClass('hhk-doc-button doc-cancel doc-action ui-corner-all ui-state-default').hide();
+        $li.append($('<span class="ui-icon ui-icon-cancel" />'));
+        
+        $ul.append($li);
+        
         // Delete Edit Icon
-        $li = $('<li title="Delete report" data-reportid="' + reportId + '" />').addClass('hhk-report-button incident-delete ui-corner-all ui-state-default');
+        $li = $('<li title="Delete Doc" data-docid="' + docId + '" />').addClass('hhk-doc-button doc-delete ui-corner-all ui-state-default');
         $li.append($('<span class="ui-icon ui-icon-trash" />'));
-
+        
         $ul.append($li);
-
+        
         // Undo Delete Edit Icon
-        $li = $('<li title="Undo Delete" data-reportid="' + reportId + '" />').addClass('hhk-report-button incident-undodelete ui-corner-all ui-state-default').hide();
-        $li.append($('<span class="ui-icon ui-icon-arrowreturnthick-1-w" />'));
-
+        $li = $('<li title="Undo Delete" data-docid="' + docId + '" />').addClass('hhk-doc-button doc-undodelete ui-corner-all ui-state-default').hide();
+        $li.append($('<span class="ui-icon ui-icon-notice" />'));
+        
         $ul.append($li);
-
+        
         return $('<div />').append($ul).html();
 
         //return $ul.html();
@@ -131,7 +143,7 @@
         var error = false;
 
         if (error == true) {
-            settings.alertMessage.call("Incident not saved. Check fields in red.", 'alert');
+            settings.alertMessage("Incident not saved. Check fields in red.", 'alert');
         } else {
             var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
             var data = $wrapper.incidentdialog.find("form").serialize();
@@ -158,9 +170,9 @@
                         clearform($wrapper);
                     } else {
                         if (data.error) {
-                            settings.alertMessage.call(data.error, 'alert');
+                            settings.alertMessage(data.error, 'alert');
                         } else {
-                            settings.alertMessage.call('An unknown error occurred.', 'alert');
+                            settings.alertMessage('An unknown error occurred.', 'alert');
                         }
                     }
                 }
@@ -169,72 +181,101 @@
     }
 
     function actions($wrapper, settings, $table) {
-
-        //Show new incident
-        $wrapper.on('click', '#incident-create', function (e) {
-            e.preventDefault();
-            clearform($wrapper);
-            $wrapper.incidentdialog.dialog("open");
-        });
-
+        
         //Show Edit mode
-        $wrapper.on('click', '.incident-edit', function (e) {
+        $wrapper.on('click', '.doc-edit', function(e){
             e.preventDefault();
-            clearform($wrapper);
-            var repID = $(e.target).parent().data('incidentid');
-            $.ajax({
-                url: settings.serviceURL,
-                dataType: 'JSON',
-                type: 'post',
-                data: {
-                    cmd: 'getincidentreport',
-                    repid: repID,
-                },
-                success: function (data) {
-                    if (data.title) {
-
-                    } else {
-
-                    }
-                }
-            });
-
-
+            $(this).closest('tr').find('.docTitle').html('<input type="text" style="width: 100%; height: ' + $(this).closest('tr').find('.docTitle').height() +'px;" id="editDocTitle" value="' + $(this).data('doctitle') + '">');
+            $(this).closest('td').find('.doc-action').show();
+            $(this).closest('td').find('.doc-delete').hide();
+            $(this).hide();
         });
         //End Show Edit mode
+        
+        //Edit Doc
+        $wrapper.on('click', '.doc-done', function(e){
+            e.preventDefault();
+            var docTitle = $(this).closest('tr').find('#editDocTitle').val();
+            var docId = $(this).closest('td').find('.doc-edit').data('docid');
 
-        //Delete Report
-        $wrapper.on('click', '.incident-delete', function (e) {
-            var idReport = $(this).data("reportid");
+            if(docTitle != ""){
+                $.ajax({
+                    url: settings.serviceURL,
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                            cmd: 'updateDocTitle',
+                            idDoc: docId,
+                            data: docTitle
+                    },
+                    success: function( data ){
+                            if(data.idDoc > 0){
+                                $table.ajax.reload();
+                            }else{
+                                if(data.error){
+                                    settings.alertMessage(data.error, 'error');
+                                }else{
+                                    settings.alertMessage('An unknown error occurred.', 'alert');
+                                }
+                            }
+                    }
+                });
+            }
+
+            $(this).closest('td').find('.doc-action').hide();
+            $(this).closest('td').find('.doc-edit').show();
+            $(this).closest('td').find('.doc-delete').show();
+        });
+        //End Edit Doc
+        
+        //Cancel Doc
+        $wrapper.on('click', '.doc-cancel', function(e){
+            e.preventDefault();
+            var docTitle = $(this).closest('tr').find('#editDocTitle').val();
+            $(this).closest('tr').find('.docTitle').html(docTitle);
+            $(this).closest('td').find('.doc-action').hide();
+            $(this).closest('td').find('.doc-edit').show();
+            $(this).closest('td').find('.doc-delete').show();
+
+        });
+        //End Cancel Doc
+        
+        //Delete Doc
+        $wrapper.on('click', '.doc-delete', function(e){
+            var iddoc = $(this).data("docid");
             var row = $(this).closest('tr');
             e.preventDefault();
             $.ajax({
-                url: settings.serviceURL,
-                dataType: 'JSON',
-                type: 'post',
-                data: {
-                    cmd: 'deleteIncident',
-                    idReport: idReport
-                },
-                success: function (data) {
-                    if (data.idReport > 0) {
-                        row.find("td:not(:first)").css("opacity", "0.3");
-                        row.find('.incident-action').hide();
-                        row.find('.incident-delete').hide();
-                        row.find('.incident-edit').hide();
-                        row.find('.incident-undodelete').show();
-                    } else {
-                        settings.alertMessage.call(data.error, 'error');
+                    url: settings.serviceURL,
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                        cmd: 'deleteDoc',
+                        idDoc: iddoc
+                    },
+                    success: function( data ){
+                        if(data.idDoc > 0){
+                            row.find("td:not(:first)").css("opacity", "0.3");
+                            var docTitle = row.find('#editDocTitle').val();
+                                    row.find('.docTitle').html(docTitle);
+                                    row.find('.doc-action').hide();
+                                    row.find('.doc-delete').hide();
+                                    row.find('.doc-edit').hide();
+                                    row.find('.doc-undodelete').show();
+                            $("#docTitle").val("");
+                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                        }else{
+                            settings.alertMessage(data.error, 'error');
+                        }
                     }
-                }
-            });
+                });
 
         });
-        //End Delete Report
-
-        //Undo Delete Report
-        $wrapper.on('click', '.incident-undodelete', function (e) {
-            var idReport = $(this).data("reportid");
+        //End Delete Doc
+        
+        //Undo Delete Doc
+        $wrapper.on('click', '.doc-undodelete', function(e){
+            var iddoc = $(this).data("docid");
 
             e.preventDefault();
             $.ajax({
@@ -242,20 +283,22 @@
                 dataType: 'JSON',
                 type: 'post',
                 data: {
-                    cmd: 'undoDeleteIncident',
-                    idReport: idReport
+                    cmd: 'undoDeleteDoc',
+                    idDoc: iddoc
                 },
-                success: function (data) {
-                    if (data.idReport > 0) {
+                success: function( data ){
+                    if(data.idDoc > 0){
                         $table.ajax.reload();
-                    } else {
-                        settings.alertMessage.call(data.error, 'error');
+                        $("#docTitle").val("");
+                        $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                    }else{
+                        settings.alertMessage(data.error, 'error');
                     }
                 }
             });
 
         });
-        //End Undo Delete Report
+        //End Undo Delete Note
     }
 
     function createViewer($wrapper, settings) {
@@ -291,7 +334,7 @@
             $(".dataTables_filter").addClass('ignrSave');
             $(".dtBottom").addClass('ignrSave');
 
-            //add incident dialog
+            //add new doc form
             $wrapper.append($wrapper.uploader);
             
             new Uppload({

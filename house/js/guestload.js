@@ -153,14 +153,20 @@ $(document).ready(function () {
 
     //incident reports
     $('#vIncidentContent').incidentViewer({
-            guestId: memData.id,
-            psgId: memData.idPsg
+        guestId: memData.id,
+        psgId: memData.idPsg,
+        alertMessage: function(text, type) {
+            flagAlertMessage(text, type);
+        }
     });
     
     //doc uploader
     $('#vDocsContent').docUploader({
-            guestId: memData.id,
-            psgId: memData.idPsg
+        guestId: memData.id,
+        psgId: memData.idPsg,
+        alertMessage: function(text, type) {
+            flagAlertMessage(text, type);
+        }
     });
 
     // relationship dialog
