@@ -2,23 +2,10 @@
 
     $.fn.docUploader = function (options) {
 
-		var uploader = '<div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog" style="margin-top: 0.5em; margin-bottom: 0.5em; width: 100%;">' +
-			'<form class="hhk-panel">' +
-				'<table style="width: 100%">' +
-					'<tr>' +
-						'<th style="min-width: 120px;">New Document</th>' +
-						'<td>' +
-							'<input type="text" name="title" placeholder="Title" style="padding: 0.5em" size="100">' +
-						'</td>' +
-						'<td style="min-width: 110px;">' +
-							'<button id="docUploadBtn" class="ui-button ui-corner-all ui-widget" style="width: 100%">' +
-								'<span class="ui-icon ui-icon-plusthick" style="margin-right: 0.5em"></span>Upload' +
-							'</button>' +
-						'</td>' +
-					'</tr>' +
-				'</table>' +
-			'</form>' +
-		'</div>';
+		var uploader = 
+						'<button id="docUploadBtn" class="ui-button ui-corner-all ui-widget">' +
+							'<span class="ui-icon ui-icon-plusthick" style="margin-right: 0.5em"></span>New Document' +
+						'</button>';
 
         var defaults = {
             guestId: 0,
@@ -68,7 +55,7 @@
                     title: "Title",
                     searchable: true,
                     sortable: false,
-                    width: "70%",
+                    width:"70%",
                     className: 'docTitle',
                     data: "Title",
                 },
@@ -304,6 +291,9 @@
     function createViewer($wrapper, settings) {
 
         if (settings.guestId > 0 || settings.psgId > 0 || settings.rid > 0) {
+	        //add new doc btn
+            $wrapper.append($wrapper.uploader);
+            
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
             var dtTable = $table
@@ -333,19 +323,26 @@
             //add ignrSave class to Dt controls
             $(".dataTables_filter").addClass('ignrSave');
             $(".dtBottom").addClass('ignrSave');
-
-            //add new doc form
-            $wrapper.append($wrapper.uploader);
             
-            new Uppload({
+            newDocUppload = new Uppload({
 	            call: ["#docUploadBtn"],
 		        uploadFunction: function uploadFunction(file){
+			        var docTitle = $(newDocUppload.modalElement).find("input#newDocTitle").val();
+			        if(docTitle == ''){
+				        docTitle = file.name;
+			        }
 		            return new Promise(function (resolve, reject) {
 		                var formData = new FormData();
 		                formData.append('cmd', 'putguestphoto');
 		                formData.append('guestId', "1");
-		                formData.append('guestPhoto', file);
-						console.log(file);
+		                formData.append('docTitle', docTitle);
+		                formData.append("mimetype", file.type);
+		                formData.append('file', file);
+						
+						//print formData to console for debugging
+						for (var pair of formData.entries()) {
+							console.log(pair[0]+ ': ' + pair[1]); 
+						}
 						resolve("success");
 		            });
 		        },
@@ -353,12 +350,21 @@
 		            "upload"
 		        ],
 		        defaultService: "upload",
-		        allowedTypes: "application/pdf",
+		        allowedTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
 		    });
+		    
+		    //add docTitle field
+		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; top: 1.5em; width: 100%"><input type="text" name="docTitle" id="newDocTitle" placeholder="Enter Document Title" style="margin: 0 auto"></div>');
+		    
+		    //add fileType text
+		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; bottom: 1.5em; width: 100%; text-align: center;">Allowed filetypes: pdf, doc, docx</div>');
 		    
 		    $wrapper.on("click", "#docUploadBtn", function(e){
 			    e.preventDefault();
 		    })
+		    newDocUppload.on("modalOpened", function(){
+			    $(newDocUppload.modalElement).find("input#newDocTitle").val('');
+		    });
     
         }
     }
