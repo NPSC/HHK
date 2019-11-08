@@ -2133,6 +2133,12 @@ CREATE TABLE if not exists `w_auth` (
 ) ENGINE=InnoDB;
 
 
+-- Table `w_auth_ip`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `w_auth_ip` (
+  `IP` varchar(45) NOT NULL,
+  PRIMARY KEY (`IP`)
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
@@ -2146,6 +2152,7 @@ CREATE TABLE if not exists `w_groups` (
   `Max_Level` varchar(5) NOT NULL DEFAULT '',
   `Min_Access_Level` varchar(5) NOT NULL DEFAULT '',
   `Cookie_Restricted` bit(1) NOT NULL DEFAULT b'0',
+  `IP_Restricted` boolean NOT NULL DEFAULT 0,
   `Password_Policy` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Updated_By` varchar(45) NOT NULL DEFAULT '',

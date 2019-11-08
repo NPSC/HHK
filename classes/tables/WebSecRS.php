@@ -42,6 +42,16 @@ class W_authRS extends TableRS {
 
 }
 
+class W_auth_ipRS extends TableRS {
+	
+	public $IP; // varchar(45) NOT NULL
+	
+	function __construct($TableName = "w_auth_ip") {
+		$this->IP = new DB_Field("IP", "", new DbStrSanitizer(45), TRUE, TRUE);
+		parent::__construct($TableName);
+	}
+}
+
 class W_usersRS extends TableRS {
 
     public $idName;  // int(11) NOT NULL,
@@ -91,6 +101,7 @@ class W_groupsRS extends TableRS {
     public $Max_Level;  // varchar(5) NOT NULL DEFAULT '',
     public $Min_Access_Level;  // varchar(5) NOT NULL DEFAULT '',
     public $Cookie_Restricted;  // bit(1) NOT NULL DEFAULT b'0',
+    public $IP_Restricted; // tinyint NOT NULL DEFAULT 0,
     public $Password_Policy;  // varchar(45) NOT NULL DEFAULT '',
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
@@ -105,6 +116,7 @@ class W_groupsRS extends TableRS {
         $this->Max_Level = new DB_Field("Max_Level", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Min_Access_Level = new DB_Field("Min_Access_Level", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Cookie_Restricted = new DB_Field("Cookie_Restricted", "", new DbBitSanitizer(), TRUE, TRUE);
+        $this->IP_Restricted = new DB_Field("IP_Restricted", "", new DbBitSanitizer(), TRUE, TRUE);
         $this->Password_Policy = new DB_Field("Password_Policy", "", new DbStrSanitizer(5), TRUE, TRUE);
 
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

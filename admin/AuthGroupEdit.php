@@ -106,16 +106,47 @@ foreach ($rows as $r) {
     if ($wgroupRS->Cookie_Restricted->getStoredVal() == 1) {
         $crAttr['checked'] = 'checked';
     }
+    
+    $iprAttr = array(
+        'name' => $wgroupRS->IP_Restricted->getColUnticked().$cde,
+        'type' => 'checkbox'
+    );
+
+    if ($wgroupRS->IP_Restricted->getStoredVal() == 1) {
+        $iprAttr['checked'] = 'checked';
+    }
 
     $tbl->addBodyTr(
             HTMLTable::makeTd(HTMLInput::generateMarkup($wgroupRS->Group_Code->getStoredVal(), array('name' => $wgroupRS->Group_Code->getColUnticked().$cde, 'size' => '4', 'readonly'=>'readonly', 'style'=>'border:none;')))
             . HTMLTable::makeTd(HTMLInput::generateMarkup($wgroupRS->Title->getStoredVal(), array('name' => $wgroupRS->Title->getColUnticked().$cde, 'size' => '20')))
             . HTMLTable::makeTd(HTMLInput::generateMarkup('', $crAttr), array('style' => 'text-align:center;'))
+            . HTMLTable::makeTd(HTMLInput::generateMarkup('', $iprAttr), array('style' => 'text-align:center;'))
             . HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', $wgroupRS->Description->getStoredVal(), array('name' => $wgroupRS->Description->getColUnticked().$cde, 'rows' => '1', 'cols' => '40')))
     );
 }
 
-$tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Cookie-Restricted') . HTMLTable::makeTh('Description'));
+$tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Cookie-Restricted') . HTMLTable::makeTh('IP-Restricted') . HTMLTable::makeTh('Description'));
+
+//build IP restrictions table
+$ip_tbl = new HTMLTable();
+
+$wauthipRS = new W_auth_ipRS();
+$iprows = EditRS::select($dbh, $wauthipRS, array());
+
+foreach ($iprows as $r) {
+
+    EditRS::loadRow($r, $wauthipRS);
+
+	$cde = '[' . $wauthipRS->IP->getStoredVal() . ']';
+
+    $ip_tbl->addBodyTr(
+        HTMLTable::makeTd($wauthipRS->IP->getStoredVal())
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('Revoke', array('name' => 'ip_revoke'.$cde, 'type' => 'submit')))
+
+    );
+}
+
+$ip_tbl->addHeaderTr(HTMLTable::makeTh('IP Address') . HTMLTable::makeTh('Revoke'));
 
 
 ?>
@@ -145,13 +176,23 @@ $tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') .
             <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:0.95em; float:left; padding: 0.7em 1.0em;">
                 <form method="POST" action="AuthGroupEdit.php" name="form1">
                     <?php echo $tbl->generateMarkup(); ?>
+                    <div class="ui-widget ui-widget-content ui-corner-all" style="margin: 0.7em 0em">
+	                    <h3>Cookie Restrictions</h3>
+                     <input name="setCookie" type="submit" value="Set PC Access" style="margin:10px;"/><input name="removeCookie" type="submit" value="Remove Access" style="margin:10px;"/><strong><?php echo $cookieReply; ?></strong>
+                    </div>
+                    <div class="ui-widget ui-widget-content ui-corner-all" style="margin: 0.7em 0em">
+	                    <h3>IP Address Restrictions</h3>
                      <input name="setCookie" type="submit" value="Set PC Access" style="margin:10px;"/><input name="removeCookie" type="submit" value="Remove Access" style="margin:10px;"/>
+                     <div style="margin: 10px;">
+	                     <h4 style="margin-bottom: 10px;">Authorized IP Addresses</h4>
+                     	<?php echo $ip_tbl->generateMarkup(); ?>
+                     </div>
+                    </div>
                  <span style="float:right;margin:10px;">
 
                     <input type="submit" name="btnSave" value="Save"/>
                 </span>
                 </form>
-                <h3><?php echo $cookieReply; ?></h3>
             </div>
 
         </div>
