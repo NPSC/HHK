@@ -24,6 +24,18 @@ $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
+// Get Client IP
+function getClientIP(){       
+     if (array_key_exists('HTTP_X_FORWARDED_FOR', $_SERVER)){
+            return  $_SERVER["HTTP_X_FORWARDED_FOR"];  
+     }else if (array_key_exists('REMOTE_ADDR', $_SERVER)) { 
+            return $_SERVER["REMOTE_ADDR"]; 
+     }else if (array_key_exists('HTTP_CLIENT_IP', $_SERVER)) {
+            return $_SERVER["HTTP_CLIENT_IP"]; 
+     } 
+
+     return '';
+}
 
 if (isset($_POST['btnSave'])) {
 
@@ -46,10 +58,18 @@ if (isset($_POST['btnSave'])) {
                 $wgRS->Title->setNewVal(filter_var($_POST[$wgRS->Title->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
                 $wgRS->Description->setNewVal(filter_var($_POST[$wgRS->Description->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
 
+				//Cookie restriction
                 if (isset($_POST[$wgRS->Cookie_Restricted->getColUnticked()][$gc])) {
                     $wgRS->Cookie_Restricted->setNewVal(1);
                 } else {
                     $wgRS->Cookie_Restricted->setNewVal(0);
+                }
+                
+                //IP restriction
+                if (isset($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc])) {
+                    $wgRS->IP_Restricted->setNewVal(1);
+                } else {
+                    $wgRS->IP_Restricted->setNewVal(0);
                 }
 
                 $wgRS->Updated_By->setNewVal($uS->username);
@@ -79,6 +99,29 @@ if (isset($_POST['setCookie']) && SecurityComponent::is_Admin()) {
 
 } else if (isset($_POST['removeCookie']) && isset($_COOKIE['housepc'])) {
     $accordIndex = 7;
+
+    if (UserClass::setCookieAccess($wInit->page->getRootPath(), FALSE) ) {
+        $cookieReply = "Cookie-Restricted Access is removed from this device.";
+    } else {
+        $cookieReply .= " Failed to remove the access cookie!";
+    }
+}
+
+
+
+if (isset($_POST['setIP']) && SecurityComponent::is_Admin()) {
+    $ipRS = new W_auth_ipRS();
+    $ipRS->IP->setNewVal(getClientIP());
+	$id = EditRS::insert($dbh, $ipRS);
+
+    if (count(EditRS::select($dbh, $ipRS, array(getClientIP()))) > 0) {
+        $ipReply = "IP-Restricted Access is set for this device.";
+    } else {
+        $ipReply = "Failed to get IP address!";
+    }
+
+} else if (isset($_POST['removeIP'])) {
+    
 
     if (UserClass::setCookieAccess($wInit->page->getRootPath(), FALSE) ) {
         $cookieReply = "Cookie-Restricted Access is removed from this device.";
@@ -178,11 +221,11 @@ $ip_tbl->addHeaderTr(HTMLTable::makeTh('IP Address') . HTMLTable::makeTh('Revoke
                     <?php echo $tbl->generateMarkup(); ?>
                     <div class="ui-widget ui-widget-content ui-corner-all" style="margin: 0.7em 0em">
 	                    <h3>Cookie Restrictions</h3>
-                     <input name="setCookie" type="submit" value="Set PC Access" style="margin:10px;"/><input name="removeCookie" type="submit" value="Remove Access" style="margin:10px;"/><strong><?php echo $cookieReply; ?></strong>
+						<input name="setCookie" type="submit" value="Set PC Access" style="margin:10px;"/><input name="removeCookie" type="submit" value="Remove Access" style="margin:10px;"/><strong><?php echo $cookieReply; ?></strong>
                     </div>
                     <div class="ui-widget ui-widget-content ui-corner-all" style="margin: 0.7em 0em">
 	                    <h3>IP Address Restrictions</h3>
-                     <input name="setCookie" type="submit" value="Set PC Access" style="margin:10px;"/><input name="removeCookie" type="submit" value="Remove Access" style="margin:10px;"/>
+						<input name="setIP" type="submit" value="Set PC Access" style="margin:10px;"/><input name="removeIP" type="submit" value="Remove Access" style="margin:10px;"/> <?php echo getClientIP(); ?> <strong><?php echo $ipReply; ?></strong>
                      <div style="margin: 10px;">
 	                     <h4 style="margin-bottom: 10px;">Authorized IP Addresses</h4>
                      	<?php echo $ip_tbl->generateMarkup(); ?>
