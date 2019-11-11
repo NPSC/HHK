@@ -67,8 +67,8 @@ class Hospital {
                 (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
                 .HTMLTable::makeTh('Room')
-                .HTMLTable::makeTh($labels->getString('hospital', 'treatment', 'Treatment').' Start')
-                .($showExitDate ? HTMLTable::makeTh($labels->getString('hospital', 'treatment', 'Treatment').' End') : '')
+                .HTMLTable::makeTh($labels->getString('hospital', 'treatmentStart', 'Treatment Start'))
+                .($showExitDate ? HTMLTable::makeTh($labels->getString('hospital', 'treatmentEnd', 'Treatment End')) : '')
             );
 
         $table->addBodyTr(
