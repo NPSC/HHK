@@ -76,7 +76,6 @@ if (isset($_POST['btnSave'])) {
     
     if(isset($_POST['ip_title']) && $_POST['ip_cidr'] && is_array($_POST['ip_cidr'])){
 	    foreach($_POST['ip_cidr'] as $ip => $cidr){
-		    echo "IP Address: " . $ip . "/" . $cidr;
 		    $wauthipRS = new W_auth_ipRS();
 			$wauthipRS->IP_addr->setStoredVal($ip);
             $wauthipRows = EditRS::select($dbh, $wauthipRS, array($wauthipRS->IP_addr));

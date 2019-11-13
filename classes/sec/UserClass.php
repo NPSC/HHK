@@ -134,7 +134,7 @@ class UserClass {
 	    $remoteIp = self::getRemoteIp();
 		$query = "SELECT * from w_auth_ip waip";
 		if($gc){
-			$query .= " join w_group_ip wgip on waip.IP_addr = wgip.IP_addr where wgip.Group_Code = $gc";
+			$query .= " join w_group_ip wgip on waip.IP_addr = wgip.IP_addr where wgip.Group_Code = '$gc'";
 		}
 		$stmt = $dbh->prepare($query);
 		$stmt->execute();
@@ -156,7 +156,7 @@ class UserClass {
 	 * @param  string $range IP/CIDR netmask eg. 127.0.0.0/24, also 127.0.0.1 is accepted and /32 assumed
 	 * @return boolean true if the ip is in this range / false if not.
 	 */
-	protected function ip_in_range( $ip, $range ) {
+	public static function ip_in_range( $ip, $range ) {
 		if ( strpos( $range, '/' ) == false ) {
 			$range .= '/32';
 		}
