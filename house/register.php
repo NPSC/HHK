@@ -319,36 +319,25 @@ if ($uS->UseWLnotes) {
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
         <style>
-           #version {
-            height: 15px;
-            position: absolute;
-            right: 2px;
-            top: 47px;
-            font-size: .6em;
-            padding: 0 6px;
-            cursor:pointer;
-            }
-            #version:hover { background-color: yellow; }
-            .hhk-justify-r {
-                text-align: right;
-            }
-            .hhk-justify-c {
-                text-align: center;
-            }
-            .ui-menu-item-wrapper {min-width: 130px;}
-            .fc-bgevent {opacity: .9;}
-
-            .hhk-fc-title::after {
-                /* generic arrow */
-                content: "";
-                position: absolute;
-                top: 50%;
-                margin-top: -5px;
-                border: 5px solid #000;
-  border-top-color: transparent;
-  border-bottom-color: transparent;
-                opacity: .9;
-            }
+.hhk-justify-r {
+    text-align: right;
+}
+.hhk-justify-c {
+    text-align: center;
+}
+.ui-menu-item-wrapper {min-width: 130px;}
+.fc-bgevent {opacity: .9;}
+.hhk-fc-title::after {
+    /* generic arrow */
+    content: "";
+    position: absolute;
+    top: 50%;
+    margin-top: -5px;
+    border: 5px solid #000;
+    border-top-color: transparent;
+    border-bottom-color: transparent;
+    opacity: .9;
+}
         </style>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?> >

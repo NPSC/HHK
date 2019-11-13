@@ -563,7 +563,7 @@ if ($checkingIn == '') {
                     "deferRender": true,
                     "columns": outCols
                 });
-                
+
                 $('#inTable').dataTable({
                     ajax: {
                         url: 'ws_resc.php?cmd=cleanStat&tbl=inTable&stdte=' + $.datepicker.formatDate("yy-mm-dd", coDate) + '&enddte=' + $.datepicker.formatDate("yy-mm-dd", coDate),
@@ -599,7 +599,7 @@ if ($checkingIn == '') {
 				$('#prtCkIn').click(function () {
                     $('div#ckin').printArea(opt);
                 });
-                
+
                 $('#prtCkOut').click(function () {
                     $('div#ckout').printArea(opt);
                 });
@@ -644,7 +644,7 @@ if ($checkingIn == '') {
                                 <button type="button" data-weeks="4" class="ui-corner-right">4 Weeks</button>
                             </div>
                             <div style="display: inline-block; margin-left:5px;padding:5px;" class="ui-widget ui-widget-content ui-corner-all">
-                                <label>Or Choose Checkin Date: </label>
+                                <label>Or Choose Check-in Date: </label>
                                 <input id="ckInDate" class="ckdate"/>
                             </div>
                             <input type="button" value="Print" id="prtCkIn" style="margin-left:23px;"/>

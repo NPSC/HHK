@@ -906,16 +906,9 @@ where g3.Substitute > 0 and ru.idResource_use is null");
         // Loop rooms.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            if ($uS->HouseKeepingSteps > 1) {
-                if ($filter == RoomState::Dirty && !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Clean)) {
-                    continue;
-                }
-
-            } else {
-
-                if ($filter == RoomState::Dirty && !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver)) {
-                    continue;
-                }
+            if ($filter == RoomState::Dirty &&
+                    !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver || ($uS->HouseKeepingSteps > 1 && $r['Status'] == RoomState::Clean && $r['idVisit'] == 0))) {
+                continue;
             }
 
             $expDeparture = $r['Expected_Departure'];
