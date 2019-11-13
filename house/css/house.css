@@ -290,10 +290,11 @@ div#global-title {
     width: 100%;
     z-index: 20;
     background: url("jqui/images/ui-bg_gloss-wave_55_5c9ccc_500x100.png") repeat-x scroll 0 bottom #5c9ccc;
-    height: 39px;
+    display: flex;
+    flex-wrap: wrap;
 }
 #global-nav #navContainer {
-    float:right;
+    margin-left: auto;
 }
 #global-nav #nav ul {
     border-left: 1px solid rgba(97, 159, 205, 0.35);

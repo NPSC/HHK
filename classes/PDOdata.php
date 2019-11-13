@@ -701,9 +701,8 @@ class EditRS {
             $whClause = substr($whClause, 4);
             $query .= " where " . $whClause;
 
-
             $stmt = $dbh->prepare($query);
-
+            
             if ($stmt->execute($paramList) === FALSE) {
                 return FALSE;
             } else {
