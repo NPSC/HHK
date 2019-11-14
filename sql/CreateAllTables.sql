@@ -2167,7 +2167,7 @@ CREATE TABLE if not exists `w_groups` (
 
 -- Table `w_group_ip`
 -- -----------------------------------------------------
-CREATE TABLE if not exists `w_auth_ip` (
+CREATE TABLE if not exists `w_group_ip` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `Group_Code` varchar(5) NOT NULL DEFAULT '',
   `IP_addr` varchar(45) NOT NULL DEFAULT '',
