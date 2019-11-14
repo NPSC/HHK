@@ -24,6 +24,8 @@ $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
+$ipReply = "";
+$revokeReply = "";
 
 if (isset($_POST['btnSave'])) {
 
@@ -45,46 +47,62 @@ if (isset($_POST['btnSave'])) {
 
                 $wgRS->Title->setNewVal(filter_var($_POST[$wgRS->Title->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
                 $wgRS->Description->setNewVal(filter_var($_POST[$wgRS->Description->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
-
-                if (isset($_POST[$wgRS->Cookie_Restricted->getColUnticked()][$gc])) {
-                    $wgRS->Cookie_Restricted->setNewVal(1);
-                } else {
-                    $wgRS->Cookie_Restricted->setNewVal(0);
-                }
-
+				if(count($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) > 0){
+					$wgRS->IP_Restricted->setNewVal(1);
+				}else{
+					$wgRS->IP_Restricted->setNewVal(0);
+				}
                 $wgRS->Updated_By->setNewVal($uS->username);
                 $wgRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
                 EditRS::update($dbh, $wgRS, array($wgRS->Group_Code));
             }
+            
+            //set ip access
+            $query = "DELETE FROM `w_group_ip` WHERE `Group_Code` = '$gc'";
+            $stmt = $dbh->prepare($query);
+			$stmt->execute();
+			
+			if(count($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) > 0){
+				
+				foreach($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc] as $ipAddr){
+					$query = "INSERT INTO `w_group_ip` (`Group_Code`, `IP_addr`) VALUES('$gc', '$ipAddr');";
+					$stmt = $dbh->prepare($query);
+					$stmt->execute();
+				}
+			}
         }
     }
+    
+    if(isset($_POST['ip_title']) && $_POST['ip_cidr'] && is_array($_POST['ip_cidr'])){
+	    foreach($_POST['ip_cidr'] as $ip => $cidr){
+		    $wauthipRS = new W_auth_ipRS();
+			$wauthipRS->IP_addr->setStoredVal($ip);
+            $wauthipRows = EditRS::select($dbh, $wauthipRS, array($wauthipRS->IP_addr));
+
+	        if (count($wauthipRows) == 1) {
+	            EditRS::loadRow($wauthipRows[0], $wauthipRS);
+	
+				$wauthipRS->Title->setNewVal(filter_var($_POST['ip_title'][$ip], FILTER_SANITIZE_STRING));
+	            $wauthipRS->cidr->setNewVal(filter_var($_POST['ip_cidr'][$ip], FILTER_SANITIZE_NUMBER_INT));
+	            $wauthipRS->Updated_By->setNewVal($uS->username);
+	            $wauthipRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+	
+	            EditRS::update($dbh, $wauthipRS, array($wauthipRS->IP_addr));
+            }
+	    }
+    }
+    
 }
 
-
-$cookieReply = "No access cookie found on this device. ";
-
-if (isset($_COOKIE['housepc'])) {
-    $cookieReply = "Cookie-Restricted Access is set for this device. ";
+if(isset($_POST['ip_revoke']) && SecurityComponent::is_Admin()){
+	$ipAddr = array_keys($_POST['ip_revoke'])[0];
+	$revokeReply = UserClass::revokePCAccess($dbh, $ipAddr);
 }
 
-if (isset($_POST['setCookie']) && SecurityComponent::is_Admin()) {
-    $accordIndex = 7;
+if (isset($_POST['setAccess']) && SecurityComponent::is_Admin()) {
+    $ipReply = UserClass::setPCAccess($dbh, $_POST['PC_name']);
 
-    if (UserClass::setCookieAccess($wInit->page->getRootPath(), TRUE)) {
-        $cookieReply = "Cookie-Restricted Access is set for this device.";
-    } else {
-        $cookieReply = "Failed to set the access cookie!";
-    }
-
-} else if (isset($_POST['removeCookie']) && isset($_COOKIE['housepc'])) {
-    $accordIndex = 7;
-
-    if (UserClass::setCookieAccess($wInit->page->getRootPath(), FALSE) ) {
-        $cookieReply = "Cookie-Restricted Access is removed from this device.";
-    } else {
-        $cookieReply .= " Failed to remove the access cookie!";
-    }
 }
 
 $tbl = new HTMLTable();
@@ -96,26 +114,65 @@ foreach ($rows as $r) {
 
     EditRS::loadRow($r, $wgroupRS);
 
+	//get IPs
+	$gc = $wgroupRS->Group_Code->getStoredVal();
+	$query = "SELECT `IP_addr` FROM `w_group_ip` where `Group_Code` = '$gc';";
+	$stmt = $dbh->prepare($query);
+	$stmt->execute();
+	$ips = $stmt->fetchAll();
+	$selected = array();
+	foreach($ips as $ip){
+		$selected[$ip['IP_addr']] = $ip['IP_addr'];
+	}
+
     $cde = '[' . $wgroupRS->Group_Code->getStoredVal() . ']';
 
-    $crAttr = array(
-        'name' => $wgroupRS->Cookie_Restricted->getColUnticked().$cde,
-        'type' => 'checkbox'
+    $iprAttr = array(
+        'name' => $wgroupRS->IP_Restricted->getColUnticked().$cde.'[]',
+        'multiple' => 'multiple',
+        'class' => 'hhk-multisel',
+        'style' => 'display: none'
     );
-
-    if ($wgroupRS->Cookie_Restricted->getStoredVal() == 1) {
-        $crAttr['checked'] = 'checked';
-    }
+    
+    //build ip list
+    $ipListMarkup = HTMLSelector::getLookups($dbh, "SELECT IP_addr, title from w_auth_ip", $selected, FALSE);
 
     $tbl->addBodyTr(
             HTMLTable::makeTd(HTMLInput::generateMarkup($wgroupRS->Group_Code->getStoredVal(), array('name' => $wgroupRS->Group_Code->getColUnticked().$cde, 'size' => '4', 'readonly'=>'readonly', 'style'=>'border:none;')))
             . HTMLTable::makeTd(HTMLInput::generateMarkup($wgroupRS->Title->getStoredVal(), array('name' => $wgroupRS->Title->getColUnticked().$cde, 'size' => '20')))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup('', $crAttr), array('style' => 'text-align:center;'))
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup($ipListMarkup, $iprAttr), array('style' => 'text-align:center;'))
             . HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', $wgroupRS->Description->getStoredVal(), array('name' => $wgroupRS->Description->getColUnticked().$cde, 'rows' => '1', 'cols' => '40')))
     );
 }
 
-$tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Cookie-Restricted') . HTMLTable::makeTh('Description'));
+$tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Device-Restricted') . HTMLTable::makeTh('Description'));
+
+//build IP restrictions table
+$ip_tbl = new HTMLTable();
+
+$wauthipRS = new W_auth_ipRS();
+$iprows = EditRS::select($dbh, $wauthipRS, array());
+if(count($iprows) == 0){
+	$ip_tbl->addBodyTr(
+	    HTMLTable::makeTd("No IP Addresses found", array('colspan'=>'4'))
+	);
+}
+foreach ($iprows as $r) {
+
+    EditRS::loadRow($r, $wauthipRS);
+
+	$cde = '[' . $wauthipRS->IP_addr->getStoredVal() . ']';
+
+    $ip_tbl->addBodyTr(
+	    HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'ip_title'.$cde, 'value' => $wauthipRS->Title->getStoredVal(), 'type' => 'text')))
+        . HTMLTable::makeTd($wauthipRS->IP_addr->getStoredVal())
+        . HTMLTable::makeTd(" / " . HTMLInput::generateMarkup('', array('name' => 'ip_cidr'.$cde, 'value' => $wauthipRS->cidr->getStoredVal(), 'type' => 'number', 'max' => '32', 'min' => '1', 'style' => 'width: 3em;')))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('Revoke', array('name' => 'ip_revoke'.$cde, 'value' => $cde, 'type' => 'submit')))
+
+    );
+}
+
+$ip_tbl->addHeaderTr(HTMLTable::makeTh('Name') . HTMLTable::makeTh('IP Address') . HTMLTable::makeTh('CIDR') . HTMLTable::makeTh('Revoke'));
 
 
 ?>
@@ -127,9 +184,12 @@ $tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') .
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo MULTISELECT_CSS; ?>
+
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
         <script type="text/javascript">
             var table, accordIndex;
             $(document).ready(function() {
@@ -145,16 +205,42 @@ $tbl->addHeaderTr(HTMLTable::makeTh('Group Code') . HTMLTable::makeTh('Title') .
             <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:0.95em; float:left; padding: 0.7em 1.0em;">
                 <form method="POST" action="AuthGroupEdit.php" name="form1">
                     <?php echo $tbl->generateMarkup(); ?>
-                     <input name="setCookie" type="submit" value="Set PC Access" style="margin:10px;"/><input name="removeCookie" type="submit" value="Remove Access" style="margin:10px;"/>
-                 <span style="float:right;margin:10px;">
-
-                    <input type="submit" name="btnSave" value="Save"/>
-                </span>
+                    <div style="display: flex; margin-top: 10px;">
+	                    <div class="ui-widget ui-widget-content ui-corner-all" style="padding: 10px; margin: 10px">
+		                    <h3 style="margin-bottom: 10px;">Authorized IP Addresses</h3>
+		                    <?php if($revokeReply){ ?>
+		                    <p style="margin-bottom: 10px;"> <?php echo $revokeReply; ?></p>
+		                    <?php } ?>
+							<?php echo $ip_tbl->generateMarkup(); ?>
+							<p style="margin-top: 10px;">Note: Only change the CIDR value if you understand what it means.</p>
+	                    </div>
+	                    <div class="ui-widget ui-widget-content ui-corner-all" style="padding: 10px; margin: 10px;">
+		                    <h3 style="margin-bottom: 10px;">This PC</h3>
+		                    <?php if(UserClass::checkPCAccess($dbh)){ ?>
+		                    <p style="margin-bottom: 10px;">This PC is authorized</p>
+		                    <?php } else { ?>
+		                    <p><?php echo $ipReply; ?></p>
+		                    <p style="margin-bottom: 10px;">Current IP Address: <strong><?php echo UserClass::getRemoteIp(); ?></strong></p>
+		                    <input name="PC_name" type="text" placeholder="Enter name for this PC" style="display: block; padding: 5px;">
+		                    <input name="setAccess" type="submit" value="Set PC Access" style="margin:10px;"/>
+		                    <?php } ?>
+	                    </div>
+                    </div>
+					<span style="float:right;margin:10px;">
+                    	<input type="submit" name="btnSave" value="Save"/>
+					</span>
                 </form>
-                <h3><?php echo $cookieReply; ?></h3>
             </div>
-
         </div>
+        <script type="text/javascript">
+	        $(document).ready(function(){
+		       $('select.hhk-multisel').each( function () {
+			   		$(this).multiselect({
+			   			selectedList: 3
+			        });
+			    }); 
+	        });
+	    </script>
     </body>
 </html>
 

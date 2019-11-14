@@ -158,7 +158,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
         return "<table style='margin-top:10px;'><tr>
      <td style=';width:12%;vertical-align: bottom;'>" . $this->labels->getString('MemberType', 'patient', 'Patient') . ":</td><td style='border-bottom: 1px solid black;width:35%;vertical-align: bottom;'>$patientName&nbsp;</td>
-     <td style='padding-left:21px;width:19%;vertical-align: bottom;'>" . $labels->getString('hospital', 'hospital', 'Hospital') . ":</td><td style='border-bottom: 1px solid black;width:38%;vertical-align: bottom;'>$hospitalName&nbsp;</td>
+     <td style='padding-left:21px;width:19%;vertical-align: bottom;'>" . $this->labels->getString('hospital', 'hospital', 'Hospital') . ":</td><td style='border-bottom: 1px solid black;width:38%;vertical-align: bottom;'>$hospitalName&nbsp;</td>
  </tr></table>";
 
     }

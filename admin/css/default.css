@@ -193,34 +193,37 @@ div#global-title {
     font-size: 1.5em;
 }
 #global-nav {
+	display: flex;
+	flex-wrap: wrap;
     position: fixed;
     top: 0;
     width: 100%;
     z-index: 20;
     background: url("jqui/images/ui-bg_highlight-hard_15_459e00_1x100.png") repeat-x scroll 0 bottom #459E00;
-    height: 39px;
 }
 #global-nav #navContainer {
-    float:right;
+    margin-left: auto;
 }
 #global-nav #nav ul {
     border-left: 1px solid rgba(0, 0, 0, 0.35);
     border-right: 1px solid rgba(255, 255, 255, 0.098);
     display: inline;
-    float: left;
+/*     float: left; */
     list-style: none outside none;
     margin: 0;
     text-align: left;
 }
+/*
 #global-nav #nav ul.links {
     float: left;
 }
+*/
 #global-nav #nav ul li {
     border-left: 1px solid rgba(255, 255, 255, 0.098);
     border-right: 1px solid rgba(0, 0, 0, 0.35);
     cursor: pointer;
     display: inline-block;
-    float: left;
+/*     float: left; */
     font-family: segoe ui,Arial,sans-serif;
     font-weight: bold;
     position: relative;
