@@ -66,7 +66,7 @@ class Hospital {
         $table->addHeaderTr(
                 (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
-                .HTMLTable::makeTh('Room')
+                .HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
                 .HTMLTable::makeTh($labels->getString('hospital', 'treatmentStart', 'Treatment Start'))
                 .($showExitDate ? HTMLTable::makeTh($labels->getString('hospital', 'treatmentEnd', 'Treatment End')) : '')
             );
@@ -87,7 +87,7 @@ class Hospital {
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $hstay->getRoom(),
-                                array('name'=>'psgRoom', 'size'=>'6')
+                                array('name'=>'psgRoom', 'size'=>'8')
                                 )
                         )
                 . HTMLTable::makeTd(
