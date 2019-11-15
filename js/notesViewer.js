@@ -91,7 +91,7 @@
         
         if (settings.linkId > 0) {
             
-            $button = $('<button class=" ui-button ui-corner-all ui-widget" id=' + settings.linkId + '"note-newNote" style="vertical-align: top; margin:7px;">Save New Note</button>')
+            $button = $('<button class=" ui-button ui-corner-all ui-widget" id="note-newNote" style="vertical-align: top; margin:7px;">Save New Note</button>')
                 .click(function (e) {
                     e.preventDefault();
                     var noteTextarea = $('#' + settings.newNoteAttrs.id);
@@ -168,7 +168,7 @@
         
         // Undo Delete Edit Icon
         $li = $('<li title="Undo Delete" data-noteid="' + noteId + '" />').addClass('hhk-note-button note-undodelete ui-corner-all ui-state-default').hide();
-        $li.append($('<span class="ui-icon ui-icon-notice" />'));
+        $li.append($('<span class="ui-icon ui-icon-arrowreturnthick-1-w" />'));
         
         $ul.append($li);
         
@@ -335,6 +335,8 @@
         }
         
         $wrapper.append(createNewNote(settings, dtTable));
+
+		$wrapper.find('.hhk-note-button').button();
 
         $wrapper.show();
 
