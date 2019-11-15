@@ -324,6 +324,8 @@ class VantivGateway extends PaymentGateway {
 
     public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
 
+        $uS = Session::getInstance();
+        $rtnResult = NULL;
         $tokenRS = CreditToken::getTokenRsFromId($dbh, $rtnToken);
         $amount = abs($invoice->getAmount());
 
@@ -348,7 +350,7 @@ class VantivGateway extends PaymentGateway {
             $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $returnRequest, NULL, $paymentNotes);
 
             // Analyze the result
-            $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $idToken);
+            $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $tokenRS->idGuest_token->getStoredVal());
 
             switch ($tokenResp->getStatus()) {
 
@@ -381,6 +383,7 @@ class VantivGateway extends PaymentGateway {
             throw new Hk_Exception_Payment('Return Failed.  Credit card token not found.  ');
         }
 
+        return $rtnResult;
     }
 
     Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {

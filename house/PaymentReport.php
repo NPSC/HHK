@@ -750,5 +750,21 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 <?php echo $dataTable; ?>
             </div>
         </div>
+        <div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
+            <table><tr>
+                    <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName"><?php echo $uS->username; ?></span></td>
+                </tr><tr>
+                    <td class="tdlabel">Enter Old Password:</td><td><input id="txtOldPw" type="password" value=""  /></td>
+                </tr><tr>
+                    <td class="tdlabel">Enter New Password:</td><td><input id="txtNewPw1" type="password" value=""  /></td>
+                </tr><tr>
+                    <td class="tdlabel">New Password Again:</td><td><input id="txtNewPw2" type="password" value=""  /></td>
+                </tr><tr>
+                    <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
+                </tr><tr>
+                    <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
+                </tr>
+            </table>
+        </div>
     </body>
 </html>

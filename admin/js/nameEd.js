@@ -158,17 +158,17 @@ $(document).ready(function () {
     });
     
     $('#chgPW').click(function () {
-        $('#dchgPw').dialog("option", "title", "Change Password for " + memData.memName);
+        $('#achgPw').dialog("option", "title", "Change Password for " + memData.memName);
         $('#txtOldPw').val('');
         $('#txtNewPw1').val('');
         $('#txtNewPw2').val('');
 
-        $('#dchgPw').dialog('open');
+        $('#achgPw').dialog('open');
         $('#pwChangeErrMsg').val('');
         $('#txtOldPw').focus();
     });
     
-    $('#dchgPw').dialog({
+    $('#achgPw').dialog({
         autoOpen: false,
         width: 550,
         resizable: true,
@@ -200,7 +200,7 @@ $(document).ready(function () {
                     }
                     
                 } else {
-                    updateTips(tips, "Password must have 8 characters including at least one uppercase and one lower case alphabetical character and one number.");
+                    updateTips(tips, "Password must have 8 characters including at least one uppercase and one lower case letter, one number and one symbol.");
                     return;
                 }
 

@@ -477,7 +477,7 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
         $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
         $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
@@ -489,8 +489,8 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
         $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
         // EMV
         $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());

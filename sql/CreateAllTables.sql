@@ -2133,6 +2133,17 @@ CREATE TABLE if not exists `w_auth` (
 ) ENGINE=InnoDB;
 
 
+-- Table `w_auth_ip`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `w_auth_ip` (
+  `IP_addr` varchar(45) NOT NULL,
+  `cidr` int(2) NOT NULL DEFAULT 32,
+  `Title` varchar(245) NOT NULL,
+  `Last_Updated` datetime DEFAULT NULL,
+  `Updated_By` varchar(45) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`IP_addr`)
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
@@ -2146,6 +2157,7 @@ CREATE TABLE if not exists `w_groups` (
   `Max_Level` varchar(5) NOT NULL DEFAULT '',
   `Min_Access_Level` varchar(5) NOT NULL DEFAULT '',
   `Cookie_Restricted` bit(1) NOT NULL DEFAULT b'0',
+  `IP_Restricted` boolean DEFAULT 0,
   `Password_Policy` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
@@ -2153,7 +2165,14 @@ CREATE TABLE if not exists `w_groups` (
   PRIMARY KEY (`Group_Code`)
 ) ENGINE=InnoDB;
 
-
+-- Table `w_group_ip`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `w_group_ip` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `Group_Code` varchar(5) NOT NULL DEFAULT '',
+  `IP_addr` varchar(45) NOT NULL DEFAULT '',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `w_user_log`
@@ -2214,33 +2233,6 @@ CREATE TABLE if not exists `web_sites` (
   `HTTP_Host` varchar(245) NOT NULL DEFAULT '',
   PRIMARY KEY (`idweb_sites`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5;
-
-
--- -----------------------------------------------------
--- Table `report`
--- -----------------------------------------------------
- CREATE TABLE IF NOT EXISTS `report` (
-  `idReport` int(11) unsigned NOT NULL AUTO_INCREMENT,
-  `Title` varchar(240) NOT NULL DEFAULT '',
-  `Category` varchar(5) NOT NULL DEFAULT '',
-  `Report_Date` datetime DEFAULT NULL,
-  `Resolution_Date` datetime DEFAULT NULL,
-  `Description` text DEFAULT NULL,
-  `Resolution` text DEFAULT NULL,
-  `Signature` blob,
-  `Signature_Date` datetime DEFAULT NULL,
-  `Author` varchar(45) NOT NULL DEFAULT '',
-  `Guest_Id` int(11) NOT NULL DEFAULT '0',
-  `Psg_Id` int(11) NOT NULL DEFAULT '0',
-  `Last_Updated` datetime DEFAULT NULL,
-  `Updated_By` varchar(45) NOT NULL DEFAULT '',
-  `Status` varchar(5) NOT NULL DEFAULT '',
-  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idReport`),
-  KEY `Index_Psg_Id` (`Psg_Id`)
-) ENGINE=InnoDB;
-
-
 
 
 -- -----------------------------------------------------

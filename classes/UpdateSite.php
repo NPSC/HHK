@@ -52,13 +52,6 @@ class UpdateSite {
             // Update system
             $patch = new Patch();
 
-
-            // copy site.cfg params to the sys_config table.  Harmless if run more than one.
-            // This is a one-off.  Once done, remove this command.
-            $patch->insertSiteConf($dbh);
-            //
-
-
             // Update Tables
             $this->resultAccumulator .= $patch->updateWithSqlStmts($dbh, '../sql/CreateAllTables.sql', "Tables");
 

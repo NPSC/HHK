@@ -42,6 +42,27 @@ class W_authRS extends TableRS {
 
 }
 
+//Lists PCs and their IP address
+class W_auth_ipRS extends TableRS {
+	
+	public $IP_addr; // varchar(45) NOT NULL
+	public $cidr; // int(2)
+	public $Title; // varchar(245),
+    public $Last_Updated;  // datetime DEFAULT NULL,
+    public $Updated_By;  // varchar(45) DEFAULT '',
+    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	
+	function __construct($TableName = "w_auth_ip") {
+		$this->IP_addr = new DB_Field("IP_addr", "", new DbStrSanitizer(45), TRUE, TRUE);
+		$this->cidr = new DB_Field("cidr", NULL, new DBIntSanitizer(2), TRUE, TRUE);
+		$this->Title = new DB_Field("Title", "", new DBStrSanitizer(245), TRUE, TRUE);
+		$this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);
+        $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
+        $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
+		parent::__construct($TableName);
+	}
+}
+
 class W_usersRS extends TableRS {
 
     public $idName;  // int(11) NOT NULL,
@@ -91,6 +112,7 @@ class W_groupsRS extends TableRS {
     public $Max_Level;  // varchar(5) NOT NULL DEFAULT '',
     public $Min_Access_Level;  // varchar(5) NOT NULL DEFAULT '',
     public $Cookie_Restricted;  // bit(1) NOT NULL DEFAULT b'0',
+    public $IP_Restricted; // tinyint NOT NULL DEFAULT 0,
     public $Password_Policy;  // varchar(45) NOT NULL DEFAULT '',
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
@@ -105,6 +127,7 @@ class W_groupsRS extends TableRS {
         $this->Max_Level = new DB_Field("Max_Level", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Min_Access_Level = new DB_Field("Min_Access_Level", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Cookie_Restricted = new DB_Field("Cookie_Restricted", "", new DbBitSanitizer(), TRUE, TRUE);
+        $this->IP_Restricted = new DB_Field("IP_Restricted", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Password_Policy = new DB_Field("Password_Policy", "", new DbStrSanitizer(5), TRUE, TRUE);
 
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

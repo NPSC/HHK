@@ -534,7 +534,7 @@ $alertMessage = $alertMsg->createMarkup();
                     <tr><td><input type="hidden" id="hdnRelCode" value=""/></td><td></td></tr>
                 </table>
             </div>
-            <div id="dchgPw" class="hhk-member-detail" style="display:none;font-size:0.95em;">
+            <div id="achgPw" class="hhk-member-detail" style="display:none;font-size:0.95em;">
                 <table>
                     <tr>
                         <td class="tdlabel">User Name</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" /></td>

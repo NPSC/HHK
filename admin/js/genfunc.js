@@ -10,7 +10,6 @@
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 
-//function $() {}
 function updateTips(tips, t) {
     "use strict";
     tips.text(t).addClass("ui-state-highlight");
@@ -67,22 +66,6 @@ function changeMemberStatus(sc, memData, savePressed) {
     }
 
 }
-
-function checkStrength(pwCtrl) {
-    var strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})/g;
-    var mediumRegex = new RegExp("^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{8,})");
-    var rtn = true;
-    if(strongRegex.test(pwCtrl.val())) {
-        pwCtrl.css('background-color', 'green');
-    } else if(mediumRegex.test(pwCtrl.val())) {
-        pwCtrl.css('background-color', 'orange');
-    } else {
-        pwCtrl.css('background-color', 'red');
-        rtn = false;
-    }
-    return rtn;
-}
-
 function getDonationMarkup(id) {
     "use strict";
     $.post(
