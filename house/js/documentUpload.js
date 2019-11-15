@@ -130,9 +130,9 @@
         var error = false;
 
         if (error == true) {
-            settings.alertMessage("Incident not saved. Check fields in red.", 'alert');
+            settings.alertMessage("Document not saved.", 'alert');
         } else {
-            var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
+            var docID = $wrapper.incidentdialog.find("input[name=reportId]").val();
             var data = $wrapper.incidentdialog.find("form").serialize();
             var signature = encodeURIComponent($wrapper.incidentdialog.find(".jsignature").jSignature("getData"));
             data += "&signature=" + signature;
@@ -333,7 +333,7 @@
 			        }
 		            return new Promise(function (resolve, reject) {
 		                var formData = new FormData();
-		                formData.append('cmd', 'putguestphoto');
+		                formData.append('cmd', 'putdoc');
 		                formData.append('guestId', "1");
 		                formData.append('docTitle', docTitle);
 		                formData.append("mimetype", file.type);
@@ -343,7 +343,28 @@
 						for (var pair of formData.entries()) {
 							console.log(pair[0]+ ': ' + pair[1]); 
 						}
-						resolve("success");
+						
+						$.ajax({
+			                url: settings.serviceURL,
+			                dataType: 'JSON',
+			                type: 'post',
+			                data: formData,
+			                contentType: false,
+							processData: false,
+			                success: function (data) {
+			                    if (data.idDoc > 0) {
+			                        $table.ajax.reload();
+			                        clearform($wrapper);
+			                        resolve("success");
+			                    } else {
+			                        if (data.error) {
+			                            reject(data.error);
+			                        } else {
+			                            reject('An unknown error occurred.', 'alert');
+			                        }
+			                    }
+			                }
+			            });
 		            });
 		        },
 		        services: [

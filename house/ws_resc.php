@@ -153,7 +153,23 @@ try {
         	
         	break;
         	
-
+		case 'putDoc':
+		
+			SiteConfig::checkUploadFile('file');
+			
+			$guestId = intval(filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
+        	$psgId = intval(filter_input(INPUT_GET, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
+        	$doc = $_FILES['file'];
+        	
+        	if (is_null($guestId) || $guestId === FALSE) {
+                throw new Exception('GuestId missing');
+            } else if (is_null($doc) || $doc === FALSE) {
+                throw new Exception('Document is missing');
+            }
+        	
+        	
+			break;
+			
         case 'vehsch':
 
             if (isset($_REQUEST['letters'])) {
