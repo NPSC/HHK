@@ -571,48 +571,19 @@ try {
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
 <script type="text/javascript">
-function invoiceAction(idInvoice, action, eid, container, show) {
-    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action, 'sbt':show},
-      function(data) {
-        if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                //flagAlertMessage(data.error, true);
-                return;
-            }
-            if (data.markup) {
-                var contr = $(data.markup);
-                if (container != undefined && container != '') {
-                    $(container).append(contr);
-                } else {
-                    $('body').append(contr);
-                }
-                $('body').append(contr);
-                contr.position({
-                    my: 'left top',
-                    at: 'left bottom',
-                    of: "#" + data.eid
-                });
-            }
-        }
-    });
-}
-    var challVar = $('#challVar').val();
+    var challVar;
     $(document).ready(function() {
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+        challVar = $('#challVar').val();
+
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
         $('.ckdate').datepicker({
             yearRange: '-05:+01',

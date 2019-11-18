@@ -835,13 +835,14 @@ try {
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 <script type="text/javascript">
-    var challVar = $('#challVar').val();
+    var challVar;
 $(document).ready(function() {
     var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
     var makeTable = '<?php echo $mkTable; ?>';
     var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
     var pmtMkup = '<?php echo $paymentMarkup; ?>';
     var rctMkup = '<?php echo $receiptMarkup; ?>';
+    challVar = $('#challVar').val();
 
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo').button();
     $('.ckdate').datepicker({

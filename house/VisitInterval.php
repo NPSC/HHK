@@ -1560,11 +1560,11 @@ try {
     var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
     var rctMkup, pmtMkup;
     var dateFormat = '<?php echo $dateFormat; ?>';
-    var challVar = $('#challVar').val();
+    var challVar;
     $(document).ready(function() {
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-
+        challVar = $('#challVar').val();
         pmtMkup = $('#pmtMkup').val(),
         rctMkup = $('#rctMkup').val();
         <?php echo $filter->getTimePeriodScript(); ?>;
