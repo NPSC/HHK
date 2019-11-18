@@ -15,6 +15,7 @@ require (PMT . 'Receipt.php');
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
 require HOUSE . 'PaymentReport.php';
+require(SEC . 'ChallengeGenerator.php');
 
 try {
     $wInit = new webInit();
@@ -546,6 +547,13 @@ $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010',
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
+// instantiate a ChallengeGenerator object
+try {
+    $chlgen = new ChallengeGenerator();
+    $challengeVar = $chlgen->getChallengeVar("challenge");
+} catch (Exception $e) {
+    //
+}
 
 ?>
 <!DOCTYPE html>
@@ -564,6 +572,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 <script type="text/javascript">
 function invoiceAction(idInvoice, action, eid, container, show) {
     $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action, 'sbt':show},
@@ -599,6 +608,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         }
     });
 }
+    var challVar = $('#challVar').val();
     $(document).ready(function() {
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var makeTable = '<?php echo $mkTable; ?>';
@@ -750,6 +760,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 <?php echo $dataTable; ?>
             </div>
         </div>
+        <input  type="hidden" id="challVar" value='<?php echo $challengeVar; ?>' />
         <div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
             <table><tr>
                     <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName"><?php echo $uS->username; ?></span></td>

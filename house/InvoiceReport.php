@@ -11,6 +11,7 @@
 require ("homeIncludes.php");
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
+require(SEC . 'ChallengeGenerator.php');
 
 require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
@@ -801,6 +802,13 @@ $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
 
+// instantiate a ChallengeGenerator object
+try {
+    $chlgen = new ChallengeGenerator();
+    $challengeVar = $chlgen->getChallengeVar("challenge");
+} catch (Exception $e) {
+    //
+}
 
 ?>
 <!DOCTYPE html>
@@ -825,7 +833,9 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 <script type="text/javascript">
+    var challVar = $('#challVar').val();
 $(document).ready(function() {
     var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
     var makeTable = '<?php echo $mkTable; ?>';
@@ -1136,6 +1146,7 @@ $(document).ready(function() {
         <div id="keysfees" style="font-size: .9em;"></div>
 
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
+        <input  type="hidden" id="challVar" value='<?php echo $challengeVar; ?>' />
 
         <div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
             <table><tr>

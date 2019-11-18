@@ -19,6 +19,7 @@ require(CLASSES . 'Purchase/RoomRate.php');
 require(CLASSES . 'ValueAddedTax.php');
 require (CLASSES . 'PaymentSvcs.php');
 
+require(SEC . 'ChallengeGenerator.php');
 
 require(HOUSE . 'Resource.php');
 require(HOUSE . 'ReportFilter.php');
@@ -1518,6 +1519,13 @@ $dateFormat = $labels->getString("momentFormats", "report", "MMM D, YYYY");
 if ($uS->CoTod) {
     $dateFormat .= ' H:mm';
 }
+// instantiate a ChallengeGenerator object
+try {
+    $chlgen = new ChallengeGenerator();
+    $challengeVar = $chlgen->getChallengeVar("challenge");
+} catch (Exception $e) {
+    //
+}
 
 ?>
 <!DOCTYPE html>
@@ -1540,7 +1548,7 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
@@ -1552,7 +1560,7 @@ if ($uS->CoTod) {
     var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
     var rctMkup, pmtMkup;
     var dateFormat = '<?php echo $dateFormat; ?>';
-
+    var challVar = $('#challVar').val();
     $(document).ready(function() {
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
@@ -1696,6 +1704,7 @@ if ($uS->CoTod) {
         </div>
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
+        <input  type="hidden" id="challVar" value='<?php echo $challengeVar; ?>' />
         <div id="keysfees" style="font-size: .9em;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
