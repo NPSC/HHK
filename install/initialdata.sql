@@ -582,7 +582,8 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('VisitFee','false','b','h','','Use the visit fee (cleaning fee) feature',''),
 ('VisitFeeDelayDays','0','i','h','','Number of days before cleaning fee is charged',''),
 ('Volunteers','false','b','a','','Use HHK Volunteer Manager',''),
-('Zip_Code','60115','s','h','','Organization zip code, used for distance calculations','');
+('Zip_Code','60115','s','h','','Organization zip code, used for distance calculations',''),
+('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', '');
 -- ;
 
 

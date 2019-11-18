@@ -131,6 +131,28 @@ try {
             }
 
             break;
+            
+        case 'getDocumentList':
+        
+        	$guestId = intval(filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
+        	$psgId = intval(filter_input(INPUT_GET, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
+        	
+        	$events = ["draw"=> 0,
+        			   "recordsTotal"=> 1,
+        			   "recordsFiltered" => 1,
+        			   "data" => [
+	        			   			[
+        			   					"Date" => "2019-11-05 00:00:00",
+					   					"Guest" => "Joe Gorilla",
+					   					"Title" => "Test Document",
+					   					"User" => "admin",
+					   					"Action" => 1
+        			   				]
+        			   			]
+        			   ];
+        	
+        	break;
+        	
 
         case 'vehsch':
 
