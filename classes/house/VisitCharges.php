@@ -194,6 +194,10 @@ class VisitCharges {
                         $daysBeingPaid += $rateAmt['daysPaid'];
                     } else {
                         $daysBeingPaid += ($daysPaid - $rateAmt['daysPaid']);
+
+                        if ($daysBeingPaid < 0) {
+                            $daysBeingPaid = 0;
+                        }
                     }
 
                     $payment = $priceModel->getRemainderAmt();
