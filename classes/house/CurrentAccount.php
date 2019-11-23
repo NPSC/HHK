@@ -90,7 +90,7 @@ class CurrentAccount {
             $this->sumReimburseTax($t->getIdTaxingItem(), $visitCharge->getItemInvCharges($t->getIdTaxingItem()));
         }
 
-        // Taxex
+        // Taxes
         $this->curentTaxItems = $vat->getCurrentTaxedItems($visitCharge->getIdVisit(), $visitCharge->getNightsStayed());
 
         $this->setAdditionalChargeTax($visitCharge->getTaxInvoices(ItemId::AddnlCharge));
@@ -108,8 +108,8 @@ class CurrentAccount {
 
         // Lodging tax already paid
         foreach ($visitCharge->getTaxItemIds() as $tid =>$v) {
-            $this->setLodgingTaxPd($tid, ($visitCharge->getItemInvPayments($tid) + $visitCharge->get3rdPartyPending($tid)));
-        }
+                $this->setLodgingTaxPd($tid, $visitCharge->getItemTaxItemAmount(ItemId::Lodging, $tid));
+            }
 
         // Payments
         $this->setTotalPaid($visitCharge->getRoomFeesPaid()

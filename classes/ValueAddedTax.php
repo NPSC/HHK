@@ -116,9 +116,9 @@ class ValueAddedTax {
     /**
      * The current taxed items include the vat objects
      *
-     * @param type $numDays
-     * @param type $idVisit
-     * @return type
+     * @param int $idVisit
+     * @param int $numDays
+     * @return array
      */
     public function getCurrentTaxedItems($idVisit, $numDays = 0) {
 
@@ -134,6 +134,14 @@ class ValueAddedTax {
         return $current;
     }
 
+    /**
+     * Get the taxing Items for a given taxed item
+     *
+     * @param int $idVisit
+     * @param int $numDays
+     * @param int $idTaxedItem
+     * @return array
+     */
     public function getCurrentTaxingItems($idVisit, $numDays, $idTaxedItem) {
 
         $taxingItems = array();
@@ -148,6 +156,7 @@ class ValueAddedTax {
 
     /**
      *
+     * @param int $idVisit
      * @return array of all the TaxedItems for a particular visit Id
      */
     public function getAllTaxedItems($idVisit) {
@@ -196,6 +205,17 @@ class TaxedItem {
     protected $firstOrderId;
     protected $lastOrderId;
 
+    /**
+     *
+     * @param int $idTaxedItem  Item Id of the item being taxed.
+     * @param int $idTaxingItem  Item Id of the taxing item.
+     * @param int $maxDays  The maximum number of days to apply the tax.
+     * @param decimal $percentTax  The percent tax - divide by 100 to get the decimal tax mulitplier.
+     * @param string $taxingItemDesc
+     * @param strubg $taxingItemGlCode
+     * @param int $firstOrderId
+     * @param int $lastOrderId
+     */
     public function __construct($idTaxedItem, $idTaxingItem, $maxDays, $percentTax, $taxingItemDesc, $taxingItemGlCode, $firstOrderId, $lastOrderId) {
         $this->idTaxedItem = $idTaxedItem;
         $this->idTaxingItem = $idTaxingItem;

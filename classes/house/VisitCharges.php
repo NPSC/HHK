@@ -244,10 +244,10 @@ class VisitCharges {
 
         // predefine taxes
         foreach ($invStatuses as $s) {
-            $this->itemSums['tax'][$s[0]] = 0;
+            $this->itemSums[self::TAX_PAID][$s[0]] = 0;
         }
 
-        $this->itemSums['tax'][self::THIRD_PARTY] = 0;
+        $this->itemSums[self::TAX_PAID][self::THIRD_PARTY] = 0;
 
 
         $invLines = $this->loadInvoiceLines($dbh, $this->getIdVisit());
@@ -270,17 +270,25 @@ class VisitCharges {
 
                 $this->taxItemIds[$l['Item_Id']] = 't';
 
-                $this->itemSums['tax'][$stat] += $l['Amount'];
+                $this->itemSums[self::TAX_PAID][$stat] += $l['Amount'];
 
                 $this->itemSums[$l['Source_Item_Id']][self::TAX_PAID] += $l['Amount'];
+
+                // Set item-taxing item amounts.
+                if (isset($this->itemSums[$l['Source_Item_Id']][$l['Item_Id']])) {
+                    $this->itemSums[$l['Source_Item_Id']][$l['Item_Id']] += $l['Amount'];
+                } else {
+                    $this->itemSums[$l['Source_Item_Id']][$l['Item_Id']] = $l['Amount'];
+                }
             }
 
             // Third Party invoice
             if ($l['Billing_Agent'] > 0 && $stat == InvoiceStatus::Unpaid) {
+
                 $this->itemSums[$l['Item_Id']][self::THIRD_PARTY] += $l['Amount'];
 
                 if ($l['Type_Id'] == InvoiceLineType::Tax) {
-                    $this->itemSums['tax'][self::THIRD_PARTY] += $l['Amount'];
+                    $this->itemSums[self::TAX_PAID][self::THIRD_PARTY] += $l['Amount'];
                 }
             }
 
@@ -410,6 +418,15 @@ where
         }
         return 0;
     }
+
+    public function getItemTaxItemAmount($idItem, $idTaxItem) {
+        // $this->itemSums[$l['Source_Item_Id']][$l['Item_Id']] += $l['Amount'];
+        if (isset($this->itemSums[$idItem][$idTaxItem])) {
+            return $this->itemSums[$idItem][$idTaxItem];
+        }
+        return 0;
+    }
+
 
     public function getTaxItemIds() {
         return $this->taxItemIds;
