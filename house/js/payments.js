@@ -745,13 +745,13 @@ function amtPaid() {
         //$('#feesTax').val(feePayTaxAmt.toFixed(2).toString());
     }
 
-    if (overPayAmt === 0) {
+    if (overPayAmt.toFixed(2) === 0) {
         p.overPay.val('');
     } else {
         p.overPay.val(overPayAmt.toFixed(2).toString());
     }
 
-    if (heldAmt > 0) {
+    if (heldAmt.toFixed(2) > 0) {
         p.heldAmtTb.val((0 - heldAmt).toFixed(2).toString());
     } else {
         p.heldAmtTb.val('');
