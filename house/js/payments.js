@@ -745,7 +745,7 @@ function amtPaid() {
         //$('#feesTax').val(feePayTaxAmt.toFixed(2).toString());
     }
 
-    if (overPayAmt.toFixed(2) === 0) {
+    if (overPayAmt.toFixed(2) == 0) {
         p.overPay.val('');
     } else {
         p.overPay.val(overPayAmt.toFixed(2).toString());
