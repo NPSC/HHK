@@ -153,12 +153,15 @@ class ReservationSvcs {
             $regForm = new RegisterForm();
 
             if (count($docRows) > 0) {
+
                 foreach($docRows as $d) {
+
                     $docs[] = array('doc'=>$regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d['Doc']),
                         'style'=>RegisterForm::getStyling(),
                         'tabIndex'=>$d['Code'],
                         'tabTitle'=>$d['Description']);
                 }
+
             } else {
 
                 $docs[] = array('doc'=>$regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
@@ -172,6 +175,7 @@ class ReservationSvcs {
 
             // IMD and St. Mary's
 
+            $instructFileName = '';
             $roomTitle = '';
             $additionalGuests = array();
             $priGuest = new Guest($dbh, '', 0);
@@ -361,7 +365,7 @@ class ReservationSvcs {
                         $logoURL,
                         $logoWidth,
                         $instructFileName,
-                        $d['doc'],
+                        ($d['Doc'] == '' ? $d['Abstract'] : $d['Doc']),
                         $expectedPayType,
                         $notes,
                         $todaysDate),
