@@ -96,6 +96,11 @@ if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FA
     $receiptMarkup = $payResult->getReceiptMarkup();
 
     $idRegistration = $payResult->getIdRegistration();
+    $idInvoice = $payResult->getIdInvoice();
+
+    $invoice = new Invoice($dbh);
+    $invoice->loadInvoice($dbh, $idInvoice);
+    $idVisit = $invoice->getOrderNumber();
 
 }
 
