@@ -848,7 +848,7 @@ WHERE
     and DATE(ifnull(s.Span_End_Date, DATE_ADD(datedefaultnow(s.Expected_Co_Date),INTERVAL 1 DAY))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
     and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
     and s.idName in (" . substr($whStays, 1) . ") "
-                    . " order by s.Visit_Span");
+                    . " order by s.idVisit, s.Visit_Span");
 
             while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
                 // These guests are already staying somewhere
@@ -862,6 +862,7 @@ WHERE
                     $memVisit = new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title'], 'status'=>$s['Status']));
                 }
 
+                // Set visit id and Check primary guest
                 foreach ($psgMembers as $m) {
 
                     if ($m->getId() == $s['idName']) {

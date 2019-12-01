@@ -212,12 +212,12 @@ if ($uS->rolecode > WebRole::WebUser) {
     exit("Unauthorized - " . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'index.php')));
 }
 
-
 $tabIndex = 0;
 $feFileSelection = '';
 $rteMsg = '';
 $rateTableErrorMessage = '';
 $itemMessage = '';
+
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -973,10 +973,82 @@ if (isset($_POST['btnTaxSave'])) {
 
 }
 
-$pageTitle = $wInit->pageTitle;
+if (isset($_POST['ldfm'])) {
 
+    $formDef = '';
 
+    $formType = filter_var($_POST['ldfm'], FILTER_SANITIZE_STRING);
 
+    $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
+
+    // Look for a match
+    foreach ($rarry as $f) {
+
+        if ($formType == $f['Code']) {
+            $formDef = $f['Substitute'];
+            break;
+        }
+    }
+
+    if (empty($formDef) === FALSE) {
+        // Caught us a form
+
+        $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef'");
+        $docRows = $formstmt->fetchAll();
+
+        if ($formstmt->rowCount() > 0) {
+
+            $li = '';
+            $tabContent = '';
+
+            foreach ($docRows as $r) {
+
+                $li .= HTMLContainer::generateMarkup('li',
+                        HTMLContainer::generateMarkup('a', $r['Description'] , array('href'=>'#'.$r['Code'])));
+
+                $tabContent .= HTMLContainer::generateMarkup('div',
+'<form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST">
+    <input type="hidden" name="docId" value="'.$r['idDocument'] . '"/>
+    Upload new file: <input name="formfile" type="file" />
+    <input type="submit" name="docUpload" value="Send File" />
+</form>'
+                    .HTMLContainer::generateMarkup('div', $r['Doc'], array('id'=>'form'.$r['idDocument'])),
+                    array('id'=>$r['Code']));
+
+            }
+
+            $ul = HTMLContainer::generateMarkup('ul', $li, array());
+            $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+
+            echo $output;
+
+        } else {
+            echo "No forms were found.  ";
+        }
+    } else {
+        echo "Nothing specified.  ";
+    }
+    exit();
+}
+
+if (isset($_POST['docUpload'])) {
+
+    $docId = -1;
+    if (isset($_POST['docId'])) {
+        $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
+    }
+
+    // Get the file and convert it.
+    $file = file_get_contents($_FILES['formfile']['tmp_name']);
+    $doc = iconv('Windows-1252', 'UTF-8', $file);
+
+    $ustmt = $dbh->prepare("update document set Doc = ? where idDocument = ?");
+    $ustmt->bindParam(1, $doc, PDO::PARAM_LOB);
+    $ustmt->bindParam(2, $docId);
+    $dbh->beginTransaction();
+    $ustmt->execute();
+    $dbh->commit();
+}
 //
 // Generate tab content
 //
@@ -1475,6 +1547,10 @@ $tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code'
 $taxTable = $tiTbl->generateMarkup(array('style' => 'float:left;'));
 
 
+// Form Upload
+
+$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Form_Upload')), 'ra', FALSE), array('name'=>'selFormUpload'));
+
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -1490,7 +1566,7 @@ $resultMessage = $alertMsg->createMarkup();
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
@@ -1811,6 +1887,28 @@ $resultMessage = $alertMsg->createMarkup();
 //            delConstraint($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
 //        });
 
+        $('#formGo').button().click(function () {
+            $('#spnFrmLoading').show();
+            $.post('ResourceBuilder.php', {'ldfm': $('#selFormUpload').val()},
+                function (data) {
+                    $('#spnFrmLoading').hide();
+//                    data = $.parseJSON(data);
+//                    if (data.error) {
+//                        if (data.gotopage) {
+//                            window.open(data.gotopage, '_self');
+//                        }
+//                        flagAlertMessage(data.error, true);
+//                        return;
+//                    }
+
+                    if (data) {
+                        $('#divUploadForm').empty().append(data);
+                        $('#regTabDiv').tabs();
+                    }
+                });
+        });
+
+
         $('#tblroom, #tblresc').dataTable({
             "dom": '<"top"if>rt<"bottom"lp><"clear">',
             "displayLength": 50,
@@ -1917,7 +2015,7 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
                     <li><a href="#demoTable">Demographics</a></li>
                     <li><a href="#lkTable">Lookups</a></li>
-<!--                    <li><a href="#agreeEdit">Forms Editor</a></li>-->
+                    <li><a href="#formUpload">Forms Upload</a></li>
                     <li><a href="#itemTable">Items</a></li>
                     <li><a href="#taxTable">Taxes</a></li>
                     <li><a href="#attrTable">Attributes</a></li>
@@ -2007,14 +2105,13 @@ $resultMessage = $alertMsg->createMarkup();
                         <span style="margin:10px;float:right;"><input type="submit" id='btnhSave' name="btnhSave" value="Save"/></span>
                     </form>
                 </div>
-<!--                <div id="agreeEdit" class="ui-tabs-hide" >
-                    <p>Select the form to edit from the following list: <?php //echo $rteSelectForm; ?><span id="spnRteLoading" style="font-style: italic; display:none;">Loading...</span></p>
-                    <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php //echo $rteMsg; ?></p>
-                    <fieldset style="clear:left; float:left; margin-top:10px;">
-                        <legend><span id="spnEditorTitle" style="font-size: 1em; font-weight: bold;">Select a form</span></legend>
-                        <div id="rteContainer"></div>
-                    </fieldset>
-                </div>-->
+                <div id="formUpload" class="ui-tabs-hide" >
+                    <p>Select the form to upload from the following list: <?php echo $rteSelectForm; ?>
+                    <input id="formGo" type="button" value="Get" />
+                    <span id="spnFrmLoading" style="font-style: italic; display:none;">Loading...</span></p>
+                    <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
+                    <div id="divUploadForm" style="margin-top: 1em;"></div>
+                </div>
                 <div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <form method="POST" action="ResourceBuilder.php" name="formitem">
 <?php echo $itemTable; ?>
