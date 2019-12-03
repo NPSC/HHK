@@ -409,6 +409,7 @@ class DocumentRS extends TableRS {
     public $Status;  // VARCHAR(5) NOT NULL,
     public $Last_Updated;  // DATETIME NULL,
     public $Updated_By;  // VARCHAR(45) NOT NULL DEFAULT '',
+    public $Created_By; // VARCHAR(45) NOT NULL DEFAULT '',
     public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
 
     function __construct($TableName = "document") {
@@ -421,13 +422,14 @@ class DocumentRS extends TableRS {
         $this->Folder = new DB_Field("Folder", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Type = new DB_Field("Type", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Abstract = new DB_Field("Abstract", "", new DbStrSanitizer(1000), TRUE, TRUE);
-        $this->Doc = new DB_Field("Doc", "", new DbStrSanitizer(90000), TRUE, TRUE);
+        $this->Doc = new DB_Field("Doc", "", new DbBlobSanitizer(), TRUE, TRUE);
         $this->Mime_Type = new DB_Field("Mime_Type", "", new DbStrSanitizer(85), TRUE, TRUE);
 
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);
         $this->Last_Updated = new DB_Field("Last_Updated", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("Timestamp", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
+        $this->Created_By = new DB_Field("Created_By", "", new DBStrSanitizer(45), FALSE);
         parent::__construct($TableName);
     }
 

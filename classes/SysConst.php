@@ -204,12 +204,13 @@ class MemType {
 
 }
 
-// operating mode of site, live, demo or training
+// operating mode of site, live, demo, training and dev
 // in site.cfg file.
 class Mode {
     const Live = "live";
     const Demo = "demo";
     const Training = "train";
+    const Dev = "dev";
 }
 
 class MpStatusMessage {
