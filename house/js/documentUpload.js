@@ -17,11 +17,6 @@
                 class: 'display compact',
                 width: '100%'
             },
-            newIncidentAttrs: {
-                id: 'incidentTitle',
-                style: 'width: 80%;',
-                rows: 2
-            },
             alertMessage: function (text, type) {},
 
             dtCols: [

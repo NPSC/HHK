@@ -27,7 +27,7 @@ class ListDocuments {
             array( 'db' => 'Guest', 'dt' => 'Guest')
         );
 
-        $dbView = '';
+        $dbView = 'v_docs';
         $whereField = '';
         $priKey = 'Doc_Id';
 
@@ -39,13 +39,11 @@ class ListDocuments {
 
             case Document::GuestLink:
 
-                $dbView = 'vguest_docs';
                 $whereField = 'Guest_Id';
                 break;
 
             case Document::PsgLink:
 
-                $dbView = 'vpsg_docs';
                 $whereField = 'PSG_Id';
                 break;
 
