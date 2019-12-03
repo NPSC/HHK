@@ -467,36 +467,35 @@ abstract class MercRequest {
      */
     public function submit(array $gway, $trace = FALSE) {
 
-        $this->setMerchantId($gway['Merchant_Id']);
+        $this->setMerchantId(trim($gway['Merchant_Id']));
         $this->gateWay = $gway;
 
         // Keep the PW out of the object's fields array
         $req = $this->getFieldsArray();
-        $req['Password'] = $gway['Password'];
+        $req['Password'] = trim($gway['Password']);
 
         $data = array("request" => $req);
 
         try {
             // Create the Soap, prepre the data
-            $txClient = new SoapClient($gway['Credit_Url'], array('trace'=>FALSE));
+            $txClient = new SoapClient($gway['Credit_Url'], array('trace'=>$trace));
 
             // Each child object must call its own Soap function.  This can be rewritten so that the children objecs
             // set a string function name, but then we have to get into the Soap.
             $xaction = $this->execute($txClient, $data);
 
         } catch (SoapFault $sf) {
-
             throw new Hk_Exception_Payment('Problem with HHK web server contacting the Mercury Payment system:  ' . $sf->getMessage() .     ' (' . $sf->getCode() . '); ' . ' Trace: ' . $sf->getTraceAsString());
         }
 
-//        try {
-//            if ($trace) {
-//                file_put_contents(REL_BASE_DIR . 'patch' . DS . 'soapLog.xml', $txClient->__getLastRequest() . $txClient->__getLastResponse(), FILE_APPEND);
-//            }
-//        } catch(Exception $ex) {
-//
-//            throw new Hk_Exception_Payment('Trace file error:  ' . $ex->getMessage());
-//        }
+        try {
+            if ($trace) {
+                file_put_contents(REL_BASE_DIR . 'patch' . DS . 'soapLog.xml', $txClient->__getLastRequest() . $txClient->__getLastResponse(), FILE_APPEND);
+            }
+        } catch(Exception $ex) {
+
+            //throw new Hk_Exception_Payment('Trace file error:  ' . $ex->getMessage());
+        }
 
         return $xaction;
     }
@@ -1417,7 +1416,7 @@ abstract class MercTokenRequest extends MercRequest {
                 file_put_contents(REL_BASE_DIR . 'patch' . DS . 'soapLog.xml', $txClient->__getLastRequest() . $txClient->__getLastResponse(), FILE_APPEND);
             }
         } catch(Exception $ex) {
-            throw new Hk_Exception_Payment('Trace file error:  ' . $ex->getMessage());
+            //throw new Hk_Exception_Payment('Trace file error:  ' . $ex->getMessage());
         }
 
         return $xaction;

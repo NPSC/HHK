@@ -391,12 +391,11 @@ class VantivGateway extends PaymentGateway {
         $uS = Session::getInstance();
 
         // Do a hosted payment.
-        $config = new Config_Lite(ciCFG_FILE);
         $secure = new SecurityComponent();
 
         $houseUrl = $secure->getSiteURL();
         $siteUrl = $secure->getRootURL();
-        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
+        $logo = $uS->PmtPageLogoUrl;
 
         if ($houseUrl == '' || $siteUrl == '') {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
