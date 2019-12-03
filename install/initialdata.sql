@@ -123,6 +123,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('FB_Status','w','Waiting','','',0),
 ('FB_Status','x','Prohibited','','',0),
 
+('Form_Upload', 'c', 'Reservation Comfirmation', '', '', 0),
+('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement', '', 0),
+('Form_Upload', 's', 'Survey Form', '', '', 0),
+
 ('Fund', '1', 'External Donation', '', 'u', '100'),
 
 ('Gender','f','Female','','d',0),
@@ -486,7 +490,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('CoTod','false','b','h','','Edit the time of day of a checkout.',''),
 ('county','true','b','h','','Include the County for addresses.',''),
 ('DefaultDays','21','i','h','','The Default number of following days for date range control',''),
-('DefaultPayType','ca','s','a','','Default payment type for paying today UI',''),
+('DefaultPayType','ca','s','f','','Default payment type for paying today UI',''),
 ('DefaultRegisterTab','0','i','h','','Default active tab on register page, 0 = calendar, 1 = current Guests',''),
 ('DefaultVisitFee','1','s','h','','Default Visit Fee selected on new check-in and reservation pages.',''),
 ('Disclaimer','Welcome! Please remember that unauthorized use of the data made available to you as a House volunteer, including collecting user names and/or email addresses of other users for the purpose of sending unsolicited email or other unauthorized purposes, is prohibited. Thank you for all you do!','t','v','','Volunteer Site Disclaimer',''),
@@ -574,6 +578,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('subsidyId','11','i','f','','Member Id to use for House Discount payment source',''),
 ('TrackAuto','false','b','h','','Track vehicles',''),
 ('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone'),
+('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', ''),
 ('UseHouseWaive', 'true', 'b', 'h','', 'Show the house waive checkbox on checkout.', ''),
 ('UseIncidentReports', 'false', 'b', 'h', '', 'Use the Incident Reports feature', ''),
 ('UseWLnotes','false','b','h','','Use wait list notes feature on reservations',''),
@@ -582,8 +587,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('VisitFee','false','b','h','','Use the visit fee (cleaning fee) feature',''),
 ('VisitFeeDelayDays','0','i','h','','Number of days before cleaning fee is charged',''),
 ('Volunteers','false','b','a','','Use HHK Volunteer Manager',''),
-('Zip_Code','60115','s','h','','Organization zip code, used for distance calculations',''),
-('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', '');
+('Zip_Code','60115','s','h','','Organization zip code, used for distance calculations','');
 -- ;
 
 

@@ -767,7 +767,7 @@ if (isset($_POST['btnhSave'])) {
 
 if (isset($_POST['btnAttrSave'])) {
 
-    $tabIndex = 8;
+    $tabIndex = 9;
     $postedAttr = array();
     if (isset($_POST['atTitle'])) {
         $postedAttr = filter_var_array($_POST['atTitle'], FILTER_SANITIZE_STRING);
@@ -973,9 +973,11 @@ if (isset($_POST['btnTaxSave'])) {
 
 }
 
+// Get forms
 if (isset($_POST['ldfm'])) {
 
     $formDef = '';
+    $formTitle = '';
 
     $formType = filter_var($_POST['ldfm'], FILTER_SANITIZE_STRING);
 
@@ -984,8 +986,9 @@ if (isset($_POST['ldfm'])) {
     // Look for a match
     foreach ($rarry as $f) {
 
-        if ($formType == $f['Code']) {
+        if ($formType === $f['Code']) {
             $formDef = $f['Substitute'];
+            $formTitle = $f['Description'];
             break;
         }
     }
@@ -996,42 +999,48 @@ if (isset($_POST['ldfm'])) {
         $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef'");
         $docRows = $formstmt->fetchAll();
 
-        if ($formstmt->rowCount() > 0) {
 
-            $li = '';
-            $tabContent = '';
+        $li = '';
+        $tabContent = '';
 
-            foreach ($docRows as $r) {
+        foreach ($docRows as $r) {
 
-                $li .= HTMLContainer::generateMarkup('li',
-                        HTMLContainer::generateMarkup('a', $r['Description'] , array('href'=>'#'.$r['Code'])));
+            $li .= HTMLContainer::generateMarkup('li',
+                    HTMLContainer::generateMarkup('a', $r['Description'] , array('href'=>'#'.$r['Code'])));
 
-                $tabContent .= HTMLContainer::generateMarkup('div',
+            $tabContent .= HTMLContainer::generateMarkup('div',
 '<form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST">
-    <input type="hidden" name="docId" value="'.$r['idDocument'] . '"/>
-    Upload new file: <input name="formfile" type="file" />
-    <input type="submit" name="docUpload" value="Send File" />
+<input type="hidden" name="docId" value="'.$r['idDocument'] . '"/>
+Upload new file: <input name="formfile" type="file" />
+<input type="submit" name="docUpload" value="Send File" />
 </form>'
-                    .HTMLContainer::generateMarkup('div', $r['Doc'], array('id'=>'form'.$r['idDocument'])),
-                    array('id'=>$r['Code']));
+                .HTMLContainer::generateMarkup('div', $r['Doc'], array('id'=>'form'.$r['idDocument'])),
+                array('id'=>$r['Code']));
 
-            }
-
-            $ul = HTMLContainer::generateMarkup('ul', $li, array());
-            $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
-
-            echo $output;
-
-        } else {
-            echo "No forms were found.  ";
         }
+
+        // add New documt
+        $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'New' , array('href'=>'#newDoc')), array('id'=>'liNewForm', 'data-type'=>$formType, 'data-title'=>$formTitle));
+
+        $tabContent .= HTMLContainer::generateMarkup('div', ' ', array('id'=>'newDoc'));
+
+        // Make the final tab control
+        $ul = HTMLContainer::generateMarkup('ul', $li, array());
+        $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+
+        echo $output;
+
+
     } else {
         echo "Nothing specified.  ";
     }
     exit();
 }
 
+// Upload a new form
 if (isset($_POST['docUpload'])) {
+
+    $tabIndex = 8;
 
     $docId = -1;
     if (isset($_POST['docId'])) {
@@ -1041,13 +1050,94 @@ if (isset($_POST['docUpload'])) {
     // Get the file and convert it.
     $file = file_get_contents($_FILES['formfile']['tmp_name']);
     $doc = iconv('Windows-1252', 'UTF-8', $file);
+    $uName = $uS->username;
 
-    $ustmt = $dbh->prepare("update document set Doc = ? where idDocument = ?");
+    $ustmt = $dbh->prepare("update document set Doc = ?, Updated_By = ?, Last_Updated = now() where idDocument = ?");
     $ustmt->bindParam(1, $doc, PDO::PARAM_LOB);
-    $ustmt->bindParam(2, $docId);
+    $ustmt->bindParam(2, $uName);
+    $ustmt->bindParam(3, $docId);
     $dbh->beginTransaction();
     $ustmt->execute();
     $dbh->commit();
+}
+
+if (isset($_POST['txtformLang'])) {
+
+    $tabIndex = 8;
+    $lang = trim(filter_var($_POST['txtformLang'], FILTER_SANITIZE_STRING));
+    $formType = '';
+    $formDef = '';
+    $formTitle = '';
+    
+    if ($lang != '') {
+
+        if (isset($_POST['hdnFormType'])) {
+            $formType = filter_var($_POST['hdnFormType'], FILTER_SANITIZE_STRING);
+        }
+
+        $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
+
+        // Look for a match
+        foreach ($rarry as $f) {
+
+            if ($formType === $f['Code']) {
+                $formDef = $f['Substitute'];
+                $formTitle = $f['Description'];
+                break;
+            }
+        }
+
+        if (empty($formDef) === FALSE) {
+
+            $docId = 0;
+            $langCode = '';
+
+            // lookup teh language
+            $lstmt = $dbh->query("Select `ISO_639_1` as `Code` from `language` where `Title` = '$lang';");
+            $langRows = $lstmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (count($langRows) > 0) {
+                // Ah, a recognized language
+                $langCode = $langRows[0]['Code'];
+
+            } else {
+                // Make our own code.
+
+            }
+
+            if ($langCode != '') {
+
+                // Code already exist?
+                $formstmt = $dbh->query("Select g.`Code`, g.`Description` from gen_lookups g where g.`Table_Name` = '$formDef' and g.`Code` = '$langCode'");
+                $docRows = $formstmt->fetchAll();
+
+                if (count($docRows) == 0) {
+
+                    // Create document entry
+                    $docRs = new DocumentRS();
+                    $docRs->Title->setNewVal($formTitle);
+                    $docRs->Category->setNewVal('form');
+                    $docRs->Language->setNewVal($langCode);
+                    $docRs->Type->setNewVal('html');
+                    $docRs->Created_By->setNewVal($uS->username);
+                    $docRs->Status->setNewVal('a');
+
+                    $docId = EditRS::insert($dbh, $docRs);
+
+                    // Add index to GenLookups
+                    if ($docId > 0) {
+                        $genRs = new GenLookupsRS();
+                        $genRs->Table_Name->setNewVal($formDef);
+                        $genRs->Code->setNewVal($langCode);
+                        $genRs->Description->setNewVal($lang);
+                        $genRs->Substitute->setNewVal($docId);
+
+                        EditRS::insert($dbh, $genRs);
+                    }
+                }
+            }
+        }
+    }
 }
 //
 // Generate tab content
@@ -1596,6 +1686,7 @@ $resultMessage = $alertMsg->createMarkup();
     }
 
     var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+    var savedRow;
 
     function getRoomFees(cat) {
         if (cat != '' && cat != fixedRate) {
@@ -1665,7 +1756,6 @@ $resultMessage = $alertMsg->createMarkup();
         });
         $('#selRateCategory').change();
     }
-    var savedRow;
     function getResource(idResc, type, trow) {
         "use strict";
         if ($('#cancelbtn').length > 0) {
@@ -1877,33 +1967,57 @@ $resultMessage = $alertMsg->createMarkup();
             modal: true,
             title: 'Manage Status Events'
         });
+        $('#divNewForm').dialog({
+            autoOpen: false,
+            resizable: true,
+            width: 800,
+            modal: true,
+            title: 'Create New Form',
+            buttons: {
+                "Create New Form": function() {
+                    var fmType = $('#hdnFormType').val(),
+                        fmLang = $('txtformLang').val();
+
+                    if (fmType !== '' && fmLang !== '') {
+                        // Make a new form
+                        $('#formFormNew').submit();
+                    }
+                },
+                "Cancel": function() {
+                    $(this).dialog("close");
+                    $('#regTabDiv').tabs('option', 'active', 0);
+                }
+            }
+        });
+        $('#btnnewform').button();
         $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
             getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
         });
         $('div#mainTabs').on('click', '.reStatBtn', function () {
             getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
         });
-//        $('div#mainTabs').on('click', '.reDelBtn', function () {
-//            delConstraint($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
-//        });
-
         $('#formGo').button().click(function () {
             $('#spnFrmLoading').show();
+            $('#hdnFormType').val('');
+            
             $.post('ResourceBuilder.php', {'ldfm': $('#selFormUpload').val()},
                 function (data) {
                     $('#spnFrmLoading').hide();
-//                    data = $.parseJSON(data);
-//                    if (data.error) {
-//                        if (data.gotopage) {
-//                            window.open(data.gotopage, '_self');
-//                        }
-//                        flagAlertMessage(data.error, true);
-//                        return;
-//                    }
 
                     if (data) {
                         $('#divUploadForm').empty().append(data);
-                        $('#regTabDiv').tabs();
+                        $('#regTabDiv').tabs({
+                            beforeActivate: function (event, ui) {
+                                if (ui.newTab.prop('id') === 'liNewForm') {
+                                    $('#hdnFormType').val(ui.newTab.data('type'));
+                                    $('#spanFrmTypeTitle').text(ui.newTab.data('title'));
+                                    $('#txtformLang').val('');
+                                    
+
+                                    $('#divNewForm').dialog('open');
+                                }
+                            }
+                        });
                     }
                 });
         });
@@ -1973,7 +2087,6 @@ $resultMessage = $alertMsg->createMarkup();
                 });
         }).button();
 
-
         // Add diagnosis and locations
         if ($('#btnAddDiags').length > 0) {
             $('#btnAddDiags').button();
@@ -1988,8 +2101,6 @@ $resultMessage = $alertMsg->createMarkup();
             $('#btnAddnlCharge').button();
         }
 
-
-        //verifyAddrs('#roomTable');
         $('input.number-only').change(function () {
             if (isNumber(this.value) === false) {
                 $(this).val('0');
@@ -2015,9 +2126,9 @@ $resultMessage = $alertMsg->createMarkup();
                     <li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
                     <li><a href="#demoTable">Demographics</a></li>
                     <li><a href="#lkTable">Lookups</a></li>
-                    <li><a href="#formUpload">Forms Upload</a></li>
                     <li><a href="#itemTable">Items</a></li>
                     <li><a href="#taxTable">Taxes</a></li>
+                    <li><a href="#formUpload">Forms Upload</a></li>
                     <li><a href="#attrTable">Attributes</a></li>
                     <li><a href="#constr">Constraints</a></li>
                 </ul>
@@ -2106,7 +2217,7 @@ $resultMessage = $alertMsg->createMarkup();
                     </form>
                 </div>
                 <div id="formUpload" class="ui-tabs-hide" >
-                    <p>Select the form to upload from the following list: <?php echo $rteSelectForm; ?>
+                    <p>Select the form to upload: <?php echo $rteSelectForm; ?>
                     <input id="formGo" type="button" value="Get" />
                     <span id="spnFrmLoading" style="font-style: italic; display:none;">Loading...</span></p>
                     <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
@@ -2137,6 +2248,28 @@ $resultMessage = $alertMsg->createMarkup();
                 <div id="constr" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                         <?php echo $constraintTable; ?>
                 </div>
+            </div>
+            <div id="divNewForm" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;">
+                <form method="POST" action="ResourceBuilder.php" id="formFormNew" name="formFormNew">
+                <table>
+                    <tr>
+                        <th colspan="2"><span id="spanFrmTypeTitle"></span></th>
+                    </tr>
+                    <tr>
+                        <th>Language or other title</th>
+                        <td><input id="txtformLang" name="txtformLang" type="text" value=''/></td>
+                    </tr>
+<!--                    <tr>
+                        <th>MIME Type</th>
+                        <td><input id="txtMimeType" name="txtMimeType" type="text" value='text/html' readonly="true"/></td>
+                    </tr>
+                    <tr>
+                        <th>Character Encoding</th>
+                        <td><input id="txtEncoding" name="txtEncoding" type="text" value='windows-1252' /></td>
+                    </tr>-->
+                </table>
+                <input type="hidden" id="hdnFormType" name="hdnFormType" />
+                </form>
             </div>
             <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;"></div>
         </div>  <!-- div id="contentDiv"-->

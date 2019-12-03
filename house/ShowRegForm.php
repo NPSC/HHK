@@ -165,7 +165,8 @@ foreach ($reservArray['docs'] as $r) {
 
 
     $tabContent .= HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex'])),
+        HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrint', 'data-tab'=>$r['tabIndex']))
+        .HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex'])),
         array('id'=>$r['tabIndex']));
 
     $sty = $r['style'];
@@ -174,13 +175,13 @@ foreach ($reservArray['docs'] as $r) {
 $ul = HTMLContainer::generateMarkup('ul', $li, array());
 $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
 
-$prtBtn = HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrint', 'data-tab'=>$r['tabIndex']));
+
 $shoRegBtn = HTMLInput::generateMarkup('Check In Followup', array('type'=>'button', 'id'=>'btnReg', 'style'=>$regButtonStyle));
 $shoStmtBtn = HTMLInput::generateMarkup('Show Statement', array('type'=>'button', 'id'=>'btnStmt', 'style'=>$regButtonStyle));
 
 $regMessage = HTMLContainer::generateMarkup('div', '', array('id'=>'mesgReg', 'style'=>'color: darkgreen; clear:left; font-size:1.5em;display:none;'));
 
-$contrls = HTMLContainer::generateMarkup('div', $prtBtn . $shoRegBtn . $shoStmtBtn . $regMessage, array());
+$contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regMessage, array());
 
 unset($reservArray);
 
