@@ -17,11 +17,6 @@
                 class: 'display compact',
                 width: '100%'
             },
-            newIncidentAttrs: {
-                id: 'incidentTitle',
-                style: 'width: 80%;',
-                rows: 2
-            },
             alertMessage: function (text, type) {},
 
             dtCols: [
@@ -55,7 +50,6 @@
                     title: "Title",
                     searchable: true,
                     sortable: false,
-                    width:"70%",
                     className: 'docTitle',
                     data: "Title",
                 },
@@ -66,6 +60,16 @@
                     searchable: false,
                     visible: true,
                     data: "User"
+                },
+                {
+                    "targets": [5],
+                    title: "View Doc",
+                    data: "View Doc",
+                    sortable: false,
+                    searchable: false,
+                    render: function (data, type, row) {
+                        return createDownload(data, row);
+                    }
                 },
             ]
         };
@@ -81,7 +85,7 @@
     };
 
     function clearform($wrapper) {
-        $wrapper.uploader.find("input").val("");
+        $($wrapper.uploader).find("input").val("");
     }
 
     function createActions(docId, row) {
@@ -116,7 +120,7 @@
         
         // Undo Delete Edit Icon
         $li = $('<li title="Undo Delete" data-docid="' + docId + '" />').addClass('hhk-doc-button doc-undodelete ui-corner-all ui-state-default').hide();
-        $li.append($('<span class="ui-icon ui-icon-notice" />'));
+        $li.append($('<span class="ui-icon ui-icon-arrowreturnthick-1-w" />'));
         
         $ul.append($li);
         
@@ -124,47 +128,18 @@
 
         //return $ul.html();
     }
+    
+    function createDownload(docId, row) {
+        
+        var $btn
+                
+        $btn = $('<a data-docid="' + docId + '" href="ws_resc.php?cmd=getdoc&docId=' + docId + '" target="_blank" />').addClass('hhk-doc-button doc-download ui-corner-all ui-state-default');
+        
+        $btn.append('Open<span class="ui-icon ui-icon-extlink" style="margin-left: 0.5em;"></span>').button();
+                
+        return $('<div />').append($btn).html();
 
-    function saveDoc($wrapper, settings, $table) {
-        //validate
-        var error = false;
-
-        if (error == true) {
-            settings.alertMessage("Incident not saved. Check fields in red.", 'alert');
-        } else {
-            var repID = $wrapper.incidentdialog.find("input[name=reportId]").val();
-            var data = $wrapper.incidentdialog.find("form").serialize();
-            var signature = encodeURIComponent($wrapper.incidentdialog.find(".jsignature").jSignature("getData"));
-            data += "&signature=" + signature;
-            if (repID > 0) {
-                data += "&cmd=editIncident&repId=" + repID;
-            } else {
-                data += "&cmd=saveIncident&guestId=" + settings.guestId + "&psgId=" + settings.psgId;
-            }
-
-            $.ajax({
-                url: settings.serviceURL,
-                dataType: 'JSON',
-                type: 'post',
-                data: data,
-                success: function (data) {
-                    if (data.idReport > 0) {
-                        if (print) {
-                            Print($wrapper, settings, data.idReport);
-                        }
-                        $table.ajax.reload();
-                        $wrapper.incidentdialog.dialog("close");
-                        clearform($wrapper);
-                    } else {
-                        if (data.error) {
-                            settings.alertMessage(data.error, 'alert');
-                        } else {
-                            settings.alertMessage('An unknown error occurred.', 'alert');
-                        }
-                    }
-                }
-            });
-    }
+        //return $ul.html();
     }
 
     function actions($wrapper, settings, $table) {
@@ -191,9 +166,9 @@
                     dataType: 'JSON',
                     type: 'post',
                     data: {
-                            cmd: 'updateDocTitle',
-                            idDoc: docId,
-                            data: docTitle
+                            cmd: 'updatedoctitle',
+                            docId: docId,
+                            docTitle: docTitle
                     },
                     success: function( data ){
                             if(data.idDoc > 0){
@@ -229,7 +204,7 @@
         
         //Delete Doc
         $wrapper.on('click', '.doc-delete', function(e){
-            var iddoc = $(this).data("docid");
+            var docId = $(this).data("docid");
             var row = $(this).closest('tr');
             e.preventDefault();
             $.ajax({
@@ -237,8 +212,8 @@
                     dataType: 'JSON',
                     type: 'post',
                     data: {
-                        cmd: 'deleteDoc',
-                        idDoc: iddoc
+                        cmd: 'deletedoc',
+                        docId: docId
                     },
                     success: function( data ){
                         if(data.idDoc > 0){
@@ -262,7 +237,7 @@
         
         //Undo Delete Doc
         $wrapper.on('click', '.doc-undodelete', function(e){
-            var iddoc = $(this).data("docid");
+            var docId = $(this).data("docid");
 
             e.preventDefault();
             $.ajax({
@@ -270,8 +245,8 @@
                 dataType: 'JSON',
                 type: 'post',
                 data: {
-                    cmd: 'undoDeleteDoc',
-                    idDoc: iddoc
+                    cmd: 'undodeletedoc',
+                    docId: docId
                 },
                 success: function( data ){
                     if(data.idDoc > 0){
@@ -311,7 +286,6 @@
                             url: settings.serviceURL,
                             data: {
                                 'cmd': 'getDocumentList',
-                                'guestId': settings.guestId,
                                 'psgId': settings.psgId,
                             },
                         }
@@ -326,38 +300,82 @@
             
             newDocUppload = new Uppload({
 	            call: ["#docUploadBtn"],
+				maxFileSize: 5000000,
 		        uploadFunction: function uploadFunction(file){
 			        var docTitle = $(newDocUppload.modalElement).find("input#newDocTitle").val();
-			        if(docTitle == ''){
-				        docTitle = file.name;
-			        }
+
 		            return new Promise(function (resolve, reject) {
 		                var formData = new FormData();
-		                formData.append('cmd', 'putguestphoto');
-		                formData.append('guestId', "1");
+		                formData.append('cmd', 'putdoc');
+		                formData.append('guestId', settings.guestId);
+		                formData.append('psgId', settings.psgId);
 		                formData.append('docTitle', docTitle);
 		                formData.append("mimetype", file.type);
 		                formData.append('file', file);
 						
-						//print formData to console for debugging
+						/* print formData to console for debugging
 						for (var pair of formData.entries()) {
 							console.log(pair[0]+ ': ' + pair[1]); 
 						}
-						resolve("success");
+						*/
+						
+						$.ajax({
+			                url: settings.serviceURL,
+			                dataType: 'JSON',
+			                type: 'post',
+			                data: formData,
+			                contentType: false,
+							processData: false,
+			                success: function (data) {
+				                console.log(data);
+			                    if (data.idDoc > 0) {
+			                        dtTable.ajax.reload();
+			                        console.log($table);
+			                        clearform($wrapper);
+			                        resolve("success");
+			                    } else {
+			                        if (data.error) {
+			                            reject(data.error);
+			                        } else {
+			                            reject('An unknown error occurred.');
+			                        }
+			                    }
+			                }
+			            });
 		            });
 		        },
 		        services: [
 		            "upload"
 		        ],
 		        defaultService: "upload",
-		        allowedTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+		        allowedTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpg", "image/png"],
+		    });
+		    
+		    //hide/show extra fields
+		    newDocUppload.on("pageChanged", function(page){
+			    if(page == "upload"){
+				    $("#newDocTitle").prop("type", "text");
+				    $("#fileTypeText").show();
+			    }else{
+				    $("#newDocTitle").prop("type", "hidden");
+				    $("#fileTypeText").hide();
+			   }
+		    });
+		    
+		    //set title to filename if no title given
+		    newDocUppload.on("fileSelected", function(file){
+			    console.log("Title: " + $("#newDocTitle").val());
+			    console.log("Filename: " + file.name);
+			    if($("#newDocTitle").val() == ""){
+				    $("#newDocTitle").val(file.name.replace(/\.[^/.]+$/, "")); //trim off extension
+			    }
 		    });
 		    
 		    //add docTitle field
 		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; top: 1.5em; width: 100%"><input type="text" name="docTitle" id="newDocTitle" placeholder="Enter Document Title" style="margin: 0 auto"></div>');
 		    
 		    //add fileType text
-		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; bottom: 1.5em; width: 100%; text-align: center;">Allowed filetypes: pdf, doc, docx</div>');
+		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; bottom: 1.5em; width: 100%; text-align: center;" id="fileTypeText">Allowed filetypes: pdf, doc, docx, image<br>Maximum File Size: 5MB</div>');
 		    
 		    $wrapper.on("click", "#docUploadBtn", function(e){
 			    e.preventDefault();

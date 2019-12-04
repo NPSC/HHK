@@ -258,15 +258,25 @@ CREATE TABLE if not exists `document` (
   `Folder` varchar(45) NOT NULL DEFAULT '',
   `Language` varchar(5) NOT NULL DEFAULT '',
   `Abstract` text,
-  `Doc` blob,
+  `Doc` mediumblob,
   `Status` varchar(5) NOT NULL,
   `Last_Updated` datetime DEFAULT NULL,
   `Created_By` varchar(45) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idDocument`)
-) ENGINE=MyISAM;
+) ENGINE=InnoDB;
 
+-- -----------------------------------------------------
+-- Table `link_doc`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `link_doc` (
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
+  `idDocument` int(11) NOT NULL,
+  `idGuest` int(11) DEFAULT NULL,
+  `idPSG` int(11) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `donations`

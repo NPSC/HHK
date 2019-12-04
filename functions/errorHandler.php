@@ -1,9 +1,14 @@
 <?php
-register_shutdown_function( "fatal_handler" );
+	
+$uS = Session::getInstance();
+
+//only interfere on live and demo sites
+if($uS->Mode != "dev"){
+	register_shutdown_function( "fatal_handler" );
+}
 $errorMsg = "";
 
 function fatal_handler() {
-	$uS = Session::getInstance();
     $errfile = "unknown file";
     $errstr  = "shutdown";
     $errno   = E_CORE_ERROR;
@@ -13,7 +18,7 @@ function fatal_handler() {
     $error = error_get_last();
 
 	//split error object into vars
-    if( $error !== NULL) {
+    if( $error !== NULL && isset($uS->Error_Report_Email)) {
         $errno   = $error["type"];
         $errfile = $error["file"];
         $errline = $error["line"];
