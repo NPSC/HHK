@@ -1009,7 +1009,7 @@ if (isset($_POST['ldfm'])) {
                     HTMLContainer::generateMarkup('a', $r['Description'] , array('href'=>'#'.$r['Code'])));
 
             $tabContent .= HTMLContainer::generateMarkup('div',
-'<form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST">
+'<form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="ui-widget-content" style="margin-bottom:15px; padding: 5px 7px; ">
 <input type="hidden" name="docId" value="'.$r['idDocument'] . '"/>
 Upload new file: <input name="formfile" type="file" />
 <input type="submit" name="docUpload" value="Send File" />
@@ -1020,7 +1020,8 @@ Upload new file: <input name="formfile" type="file" />
         }
 
         // add New documt
-        $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'New' , array('href'=>'#newDoc')), array('id'=>'liNewForm', 'data-type'=>$formType, 'data-title'=>$formTitle));
+        $li .= HTMLContainer::generateMarkup('li', 
+                HTMLContainer::generateMarkup('a', 'New...' , array('href'=>'#newDoc')), array('id'=>'liNewForm', 'data-type'=>$formType, 'data-title'=>$formTitle));
 
         $tabContent .= HTMLContainer::generateMarkup('div', ' ', array('id'=>'newDoc'));
 
@@ -1989,7 +1990,7 @@ $resultMessage = $alertMsg->createMarkup();
                 }
             }
         });
-        $('#btnnewform').button();
+
         $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
             getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
         });
@@ -2007,12 +2008,12 @@ $resultMessage = $alertMsg->createMarkup();
                     if (data) {
                         $('#divUploadForm').empty().append(data);
                         $('#regTabDiv').tabs({
+                            collapsible: true,
                             beforeActivate: function (event, ui) {
                                 if (ui.newTab.prop('id') === 'liNewForm') {
                                     $('#hdnFormType').val(ui.newTab.data('type'));
                                     $('#spanFrmTypeTitle').text(ui.newTab.data('title'));
                                     $('#txtformLang').val('');
-                                    
 
                                     $('#divNewForm').dialog('open');
                                 }
@@ -2259,14 +2260,6 @@ $resultMessage = $alertMsg->createMarkup();
                         <th>Language or other title</th>
                         <td><input id="txtformLang" name="txtformLang" type="text" value=''/></td>
                     </tr>
-<!--                    <tr>
-                        <th>MIME Type</th>
-                        <td><input id="txtMimeType" name="txtMimeType" type="text" value='text/html' readonly="true"/></td>
-                    </tr>
-                    <tr>
-                        <th>Character Encoding</th>
-                        <td><input id="txtEncoding" name="txtEncoding" type="text" value='windows-1252' /></td>
-                    </tr>-->
                 </table>
                 <input type="hidden" id="hdnFormType" name="hdnFormType" />
                 </form>
