@@ -797,6 +797,26 @@ CREATE or replace VIEW `vemail_directory` AS
 
 
 -- -----------------------------------------------------
+-- View `vgetIncidentlisting`
+-- -----------------------------------------------------
+
+CREATE or replace VIEW `vgetIncidentlisting`
+AS SELECT
+   `r`.`idReport` AS `idReport`,
+   `r`.`idReport` AS `Action`,
+   `n`.`Name_Full` AS `Guest`,
+   `r`.`Title` AS `Title`,
+   `r`.`Report_Date` AS `Date`,
+   `r`.`Description` AS `Description`,
+   `r`.`Author` AS `Author`,(case `r`.`Status` when 'a' then 'Active' when 'r' then 'Resolved' when 'h' then 'On Hold' end) AS `Status`,
+   `r`.`Timestamp` AS `Timestamp`,
+   `r`.`Guest_Id` AS `Guest_Id`,
+   `r`.`Psg_Id` AS `Psg_Id`
+FROM ((`report` `r` left join `name_guest` `ng` on((`r`.`Guest_Id` = `ng`.`idName`))) left join `name` `n` on((`ng`.`idName` = `n`.`idName`))) where ((`r`.`idReport` > 0) and (`r`.`Status` in ('a','r','h')));
+
+
+
+-- -----------------------------------------------------
 -- View `vguest_audit_log`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_audit_log` AS
@@ -2689,23 +2709,4 @@ left join `gen_lookups` `gr` on(((`a`.`Role_Id` = `gr`.`Code`) and (`gr`.`Table_
 left join `gen_lookups` `gs` on(((`u`.`Status` = `gs`.`Code`) and (`gs`.`Table_Name` = 'Web_User_Status'))))
 left join `gen_lookups` `gf` on(((`f`.`Status` = `gf`.`Code`) and (`gf`.`Table_Name` = 'FB_Status'))))
 where (`n`.`idName` > 0);
-
-
--- -----------------------------------------------------
--- View `vgetIncidentlisting`
--- -----------------------------------------------------
-
-CREATE or replace VIEW `vgetIncidentlisting`
-AS SELECT
-   `r`.`idReport` AS `idReport`,
-   `r`.`idReport` AS `Action`,
-   `n`.`Name_Full` AS `Guest`,
-   `r`.`Title` AS `Title`,
-   `r`.`Report_Date` AS `Date`,
-   `r`.`Description` AS `Description`,
-   `r`.`Author` AS `Author`,(case `r`.`Status` when 'a' then 'Active' when 'r' then 'Resolved' when 'h' then 'On Hold' end) AS `Status`,
-   `r`.`Timestamp` AS `Timestamp`,
-   `r`.`Guest_Id` AS `Guest_Id`,
-   `r`.`Psg_Id` AS `Psg_Id`
-FROM ((`report` `r` left join `name_guest` `ng` on((`r`.`Guest_Id` = `ng`.`idName`))) left join `name` `n` on((`ng`.`idName` = `n`.`idName`))) where ((`r`.`idReport` > 0) and (`r`.`Status` in ('a','r','h')));
 

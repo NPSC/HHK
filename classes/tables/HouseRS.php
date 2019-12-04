@@ -408,9 +408,9 @@ class DocumentRS extends TableRS {
     public $Doc;  // BLOB NULL,
     public $Status;  // VARCHAR(5) NOT NULL,
     public $Last_Updated;  // DATETIME NULL,
-    public $Created_By; 
+    public $Created_By;
     public $Updated_By;  // VARCHAR(45) NOT NULL DEFAULT '',
-    public $Created_By; // VARCHAR(45) NOT NULL DEFAULT '',
+
     public $Timestamp;  // TIMESTAMP NOT NULL DEFAULT now(),
 
     function __construct($TableName = "document") {
@@ -431,7 +431,7 @@ class DocumentRS extends TableRS {
         $this->Created_By = new DB_Field("Created_By", "", new DbStrSanitizer(45), FALSE);
         $this->Last_Updated = new DB_Field("Last_Updated", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("Timestamp", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
-        $this->Created_By = new DB_Field("Created_By", "", new DBStrSanitizer(45), FALSE);
+
         parent::__construct($TableName);
     }
 

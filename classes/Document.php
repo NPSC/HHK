@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Document.php
  *
@@ -13,33 +14,28 @@
  *
  * @author Will
  */
-
 class Document {
 
     // Document Type
     const FileType = 'file';
     const HtmlType = 'html';
-    
     //LinkTypes
     const GuestLink = "guestId";
     const PsgLink = "psgId";
-
     // Document Status
     const ActiveStatus = 'a';
     const DeletedStatus = 'd';
-    
+
     // MimeTypes
+
+    protected $mimeTypes = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'application/pdf' => 'pdf',
+        'application/msword' => 'doc',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx'
+    ];
     
-    protected $mimeTypes =
-    	[
-    		'image/jpeg' => 'jpg',
-			'image/png' => 'png',
-			'application/pdf' => 'pdf',
-			'application/msword' => 'doc',
-			'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx'
-        ];
-
-
     // Document record field vars
     protected $idDocument = 0;
     protected $title = '';
@@ -56,7 +52,6 @@ class Document {
     protected $lastUpdated = null;
     protected $updatedBy = '';
     protected $cretedOn = '';
-
     private $documentRS;
 
     /**
@@ -67,7 +62,6 @@ class Document {
 
         $id = intval($idDocument, 10);
         $this->idDocument = $id;
-
     }
 
     /**
@@ -103,9 +97,8 @@ class Document {
                 $this->setLastUpdated($documentRS->Last_Updated->getStoredVal());
 
                 $this->documentRS = $documentRS;
-
             } else {
-                $response =  FALSE;
+                $response = FALSE;
             }
         }
 
@@ -120,7 +113,7 @@ class Document {
      * @param string $documentType
      * @param string $docStatus
      */
-    public static function createNew($title, $mimeType, $doc, $username, $documentType = self::FileType, $docStatus = Document::ActiveStatus ) {
+    public static function createNew($title, $mimeType, $doc, $username, $documentType = self::FileType, $docStatus = Document::ActiveStatus) {
 
         if ($title != '' && $mimeType != '' && $doc != '') {
 
@@ -133,7 +126,6 @@ class Document {
             $document->setStatus($docStatus);
             $document->setCreatedBy($username);
             $document->idDocument = 0;
-
         } else {
             throw new Hk_Exception_Runtime('Trying to create an invalid Document.  ');
         }
@@ -163,9 +155,8 @@ class Document {
         EditRS::updateStoredVals($documentRS);
 
         $this->documentRS = $documentRS;
-
     }
-    
+
     /**
      *
      * @param \PDO $dbh
@@ -173,15 +164,13 @@ class Document {
      * @param string $psgId
      * @return int last insert id.
      */
-     
-    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null){
-	    if($this->idDocument && ($psgId || $guestId)){
-		    $query = 'INSERT INTO `link_doc` (`idDocument`, `idGuest`, `idPSG`) VALUES("' . $this->idDocument . '", "' . $guestId . '", "' . $psgId . '");';
-		    $stmt = $dbh->prepare($query);
-		    $stmt->execute();
-		    return $dbh->lastInsertId();
-		    
-	    }
+    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null) {
+        if ($this->idDocument && ($psgId || $guestId)) {
+            $query = 'INSERT INTO `link_doc` (`idDocument`, `idGuest`, `idPSG`) VALUES("' . $this->idDocument . '", "' . $guestId . '", "' . $psgId . '");';
+            $stmt = $dbh->prepare($query);
+            $stmt->execute();
+            return $dbh->lastInsertId();
+        }
     }
 
     /**
@@ -190,7 +179,6 @@ class Document {
      * @param string $title
      * @return int the number of records updated.
      */
-
     public function saveTitle(\PDO $dbh, $title) {
 
         $counter = 0;
@@ -224,12 +212,10 @@ class Document {
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
             EditRS::updateStoredVals($this->documentRS);
-
         }
 
         return $counter;
     }
-
 
     /**
      *
@@ -249,7 +235,6 @@ class Document {
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
             EditRS::updateStoredVals($this->documentRS);
-
         }
 
         return $counter;
@@ -279,27 +264,27 @@ class Document {
     public function getType() {
         return $this->type;
     }
-    
+
     public function getMimeType() {
         return $this->mimeType;
     }
-    
+
     public function getFolder() {
         return $this->folder;
     }
-    
+
     public function getLanguage() {
         return $this->language;
     }
-    
+
     public function getAbstract() {
         return $this->abstrac;
     }
-    
+
     public function getDoc() {
         return $this->doc;
     }
-    
+
     public function getStatus() {
         return $this->status;
     }
@@ -307,7 +292,7 @@ class Document {
     public function getLastUpdated() {
         return $this->lastUpdated;
     }
-    
+
     public function getCreatedBy() {
         return $this->createdBy;
     }
@@ -331,27 +316,27 @@ class Document {
     public function setType($type) {
         $this->type = $type;
     }
-    
+
     public function setMimeType($mimeType) {
         $this->mimeType = $mimeType;
     }
-    
+
     public function setFolder($folder) {
         $this->folder = $folder;
     }
-    
+
     public function setLanguage($language) {
         $this->language = $language;
     }
-    
+
     public function setAbstract($abstract) {
         $this->abstract = $abstract;
     }
-    
+
     public function setDoc($doc) {
         $this->doc = $doc;
     }
-    
+
     public function setStatus($status) {
         $this->status = $status;
     }
@@ -359,7 +344,7 @@ class Document {
     public function setLastUpdated($lastUpdated) {
         $this->lastUpdated = $lastUpdated;
     }
-    
+
     public function setCreatedBy($createdBy) {
         $this->createdBy = $createdBy;
     }
@@ -367,12 +352,13 @@ class Document {
     public function setUpdatedBy($updatedBy) {
         $this->updatedBy = $updatedBy;
     }
-    
-    public function getExtension(){
-	    if($this->mimeType && $this->mimeTypes[$this->mimeType]){
-		    return $this->mimeTypes[$this->mimeType];
-	    }else{
-		    return false;
-	    }
+
+    public function getExtension() {
+        if ($this->mimeType && $this->mimeTypes[$this->mimeType]) {
+            return $this->mimeTypes[$this->mimeType];
+        } else {
+            return false;
+        }
     }
+
 }
