@@ -74,8 +74,9 @@ if (SecurityComponent::isHTTPS()) {
                     <ul style="margin: 20px; line-height: 1.9em;">
                         <li><a href="<?php echo $secureComp->getSiteURL() . 'admin'; ?>">Administration Site</a></li>
                         <li><a href="<?php echo $secureComp->getSiteURL() . 'house'; ?>">Guest Tracking</a></li>
-                        <li><a href="<?php echo $secureComp->getSiteURL() . 'volunteer'; ?>">Volunteers' Site</a></li>
-
+                        <?php if(SysConfig::getKeyValue($dbh, 'sys_config', 'volunteers')){ ?>
+	                        <li><a href="<?php echo $secureComp->getSiteURL() . 'volunteer'; ?>">Volunteers' Site</a></li>
+                        <?php } ?>
                     </ul>
                     <div style="margin-top: 100px;">
                         <hr>
