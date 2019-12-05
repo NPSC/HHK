@@ -122,7 +122,7 @@ $paymentMarkup = '';
 // Hosted payment return
 try {
 
-    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+    if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $uS->ccgw, $_REQUEST)) === FALSE) {
 
         $receiptMarkup = $payResult->getReceiptMarkup();
 
@@ -771,7 +771,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="../js/uppload.js"></script>
 		<script type="text/javascript" src="js/documentUpload.js"></script>
-		
+
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>

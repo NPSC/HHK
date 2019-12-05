@@ -81,7 +81,7 @@ class PaymentSvcs {
           case PayType::Charge:
 
             // Payment Gateway
-            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
 
             $payResult = $gateway->CreditSale($dbh, $pmp, $invoice, $postbackUrl);
 
@@ -234,7 +234,7 @@ class PaymentSvcs {
             case PayType::Charge:
 
                 // Load gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
                 $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes());
 
                 break;
@@ -322,7 +322,7 @@ class PaymentSvcs {
         }
 
         // Load gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
 
         return $gateway->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid, $postbackUrl);
 
@@ -355,7 +355,7 @@ class PaymentSvcs {
         }
 
         // Load gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
 
         return $gateway->reverseSale($dbh, $payRs, $invoice, $bid, $paymentNotes);
 
@@ -393,7 +393,7 @@ class PaymentSvcs {
             case PaymentMethod::Charge:
 
                 // Load gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
                 $dataArray = $gateway->returnPayment($dbh, $payRs, $invoice, $bid);
 
                 break;
@@ -545,7 +545,7 @@ class PaymentSvcs {
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
         // Payment Gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
         return array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs));
 
     }
@@ -747,12 +747,12 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    public static function processWebhook(\PDO $dbh, $data) {
+    public static function processWebhook(\PDO $dbh, $ccgw, $data) {
 
         $uS = Session::getInstance();
 
         // Payment Gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $ccgw);
 
         $payNotes = '';
 
@@ -760,12 +760,12 @@ class PaymentSvcs {
 
     }
 
-    public static function processSiteReturn(\PDO $dbh, $post) {
+    public static function processSiteReturn(\PDO $dbh, $ccgw, $post) {
 
         $uS = Session::getInstance();
 
         // Payment Gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $ccgw);
 
         $payNotes = '';
         $idInv = 0;
@@ -789,6 +789,8 @@ class PaymentSvcs {
             $post = $uS->imcomplete;
             unset($uS->imcomplete);
         }
+
+        unset($uS->ccgw);
 
         return $gateway->processHostedReply($dbh, $post, $tokenId, $idInv, $payNotes, $uS->username);
 
@@ -878,7 +880,7 @@ class PaymentSvcs {
                 $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $gTRs->CardHolderName->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
 
                 try {
-                    $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $uS->ccgw);
+                    $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $invoice->getCreditGatewayName($dbh));
                 } catch (Exception $ex) {
                     // Grab the local gateway
                     $gateway = PaymentGateway::factory($dbh, '', '');

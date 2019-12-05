@@ -49,7 +49,7 @@ class InstamedGateway extends PaymentGateway {
     protected $returnUrl;
     protected $voidUrl;
 
-    public function getPaymentMethod() {
+    public static function getPaymentMethod() {
         return PaymentMethod::Charge;
     }
 
@@ -1036,29 +1036,11 @@ where r.idRegistration =" . $idReg);
         return new ImCofResponse($vcr, $idPayor, $idGroup);
     }
 
-    public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
+    public static function createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
 
         $gwRs = new InstamedGatewayRS();
-        $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $gwRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
-
-        if (count($rows) < 1) {
-            // Define new gateway rows
-            $gwrRs = new InstamedGatewayRS();
-            $gwrRs->Gateway_Name->setNewVal($this->getGatewayName());
-            $gwrRs->cc_name->setNewVal('test');
-
-            EditRS::insert($dbh, $gwrRs);
-
-            $gwpRs = new InstamedGatewayRS();
-            $gwpRs->Gateway_Name->setNewVal($this->getGatewayName());
-            $gwpRs->cc_name->setNewVal('production');
-            EditRS::insert($dbh, $gwpRs);
-
-            $gwRs = new InstamedGatewayRS();
-            $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
-            $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
-        }
 
         $tbl = new HTMLTable();
 
@@ -1123,11 +1105,11 @@ where r.idRegistration =" . $idReg);
         return $tbl->generateMarkup();
     }
 
-    public function SaveEditMarkup(\PDO $dbh, $post) {
+    public static function SaveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
         $msg = '';
         $ccRs = new InstamedGatewayRS();
-        $ccRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $ccRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
         foreach ($rows as $r) {

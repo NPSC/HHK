@@ -56,7 +56,9 @@ abstract class PaymentGateway {
     protected abstract function setCredentials($credentials);
 
     // used to determine if it's a real gateway or out of band, local gateway
-    public abstract function getPaymentMethod();
+    public static function getPaymentMethod() {
+        throw new Hk_Exception_Payment('Payment Method not defined.  ');
+    }
 
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
@@ -142,9 +144,49 @@ abstract class PaymentGateway {
         throw new Hk_Exception_Payment('Webhook not implemeneted');
     }
 
-    public abstract function createEditMarkup(\PDO $dbh);
+    public static function createEditMarkup(\PDO $dbh, $gatewayName) {
 
-    public abstract function SaveEditMarkup(\PDO $dbh, $post);
+        switch (strtolower($gatewayName)) {
+
+            case PaymentGateway::VANTIV:
+
+                return VantivGateway::createEditMarkup($dbh, $gatewayName);
+
+            case PaymentGateway::INSTAMED:
+
+                return InstamedGateway::createEditMarkup($dbh, $gatewayName);
+
+            case PaymentGateway::CONVERGE:
+
+                return ConvergeGateway::createEditMarkup($dbh, $gatewayName);
+
+            default:
+
+                return LocalGateway::createEditMarkup($dbh, $gatewayName);
+        }
+    }
+
+    public static function SaveEditMarkup(\PDO $dbh, $gatewayName, $post) {
+
+        switch (strtolower($gatewayName)) {
+
+            case PaymentGateway::VANTIV:
+
+                return VantivGateway::saveEditMarkup($dbh, $gatewayName, $post);
+
+            case PaymentGateway::INSTAMED:
+
+                return InstamedGateway::saveEditMarkup($dbh, $gatewayName, $post);
+
+            case PaymentGateway::CONVERGE:
+
+                return ConvergeGateway::saveEditMarkup($dbh, $gatewayName, $post);
+
+            default:
+
+                return LocalGateway::saveEditMarkup($dbh, $gatewayName, $post);
+        }
+    }
 
     public static function logGwTx(PDO $dbh, $status, $request, $response, $transType) {
 
@@ -158,7 +200,7 @@ abstract class PaymentGateway {
         return EditRS::insert($dbh, $gwRs);
     }
 
-    public function updatePayTypes(\PDO $dbh, $username) {
+    public static function updatePayTypes(\PDO $dbh, $paymentMethod, $username) {
 
         $msg = '';
 
@@ -172,7 +214,7 @@ abstract class PaymentGateway {
             $glRs = new GenLookupsRS();
             EditRS::loadRow($rows[0], $glRs);
 
-            $glRs->Substitute->setNewVal($this->getPaymentMethod());
+            $glRs->Substitute->setNewVal($paymentMethod);
 
             $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
 
@@ -253,7 +295,7 @@ abstract class PaymentGateway {
 
 class LocalGateway extends PaymentGateway {
 
-    public function getPaymentMethod() {
+    public static function getPaymentMethod() {
         return PaymentMethod::ChgAsCash;
     }
 
@@ -269,11 +311,11 @@ class LocalGateway extends PaymentGateway {
 
     }
 
-    public function SaveEditMarkup(\PDO $dbh, $post) {
+    public static function SaveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
     }
 
-    public function createEditMarkup(\PDO $dbh) {
+    public static function createEditMarkup(\PDO $dbh, $gatewayName) {
         return '';
     }
 
@@ -295,8 +337,5 @@ class LocalGateway extends PaymentGateway {
 
     }
 
-    public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
-
-    }
 
 }

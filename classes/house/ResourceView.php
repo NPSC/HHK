@@ -108,7 +108,7 @@ order by r.Title;");
 
     }
 
-    public static function roomTable(\PDO $dbh, $keyDeposit = FALSE) {
+    public static function roomTable(\PDO $dbh, $keyDeposit = FALSE, $payGW = '') {
 
         $rooms = array();
         // Get labels
@@ -124,7 +124,11 @@ order by r.Title;");
         $depositTitle = $labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit');
 
         if ($keyDeposit) {
-            $depositCol = ", g5.Description as `$depositTitle ` ";
+            $depositCol .= ", g5.Description as `$depositTitle` ";
+        }
+
+        if ($payGW != '') {
+            $depositCol .= ", ifnull(l.CC_Gateway, '') as `CC_Name` ";
         }
 
 
@@ -137,6 +141,7 @@ left join gen_lookups g4 on g4.`Table_Name`='Static_Room_Rate' and g4.`Code`=r.R
 left join gen_lookups g5 on g5.`Table_Name`='Key_Deposit_Code' and g5.`Code`=r.Key_Deposit_Code
 left join gen_lookups g6 on g6.`Table_Name` = 'Room_Cleaning_Days' and g6.`Code` = r.Cleaning_Cycle_Code
 left join gen_lookups g7 on g7.`Table_Name` = 'Room_Rpt_Cat' and g7.`Code` = r.Report_Category
+left join location l on r.idLocation = l.idLocation
 order by r.Title;");
 
         $numResc = $stmt->rowCount();
@@ -180,6 +185,10 @@ order by r.Title;");
            $newRow[$depositTitle] = '';
        }
 
+        if ($payGW != '') {
+            $newRow[`CC_Name`] = '';
+        }
+        
         foreach ($attrs as $a) {
             $newRow[$a['Title']] = '';
         }

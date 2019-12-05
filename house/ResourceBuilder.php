@@ -1037,7 +1037,7 @@ Upload new file: <input name="formfile" type="file" />
     exit();
 }
 
-// Upload a new form
+// Upload a form
 if (isset($_POST['docUpload'])) {
 
     $tabIndex = 8;
@@ -1061,6 +1061,7 @@ if (isset($_POST['docUpload'])) {
     $dbh->commit();
 }
 
+// Create a new form
 if (isset($_POST['txtformLang'])) {
 
     $tabIndex = 8;
@@ -1068,7 +1069,7 @@ if (isset($_POST['txtformLang'])) {
     $formType = '';
     $formDef = '';
     $formTitle = '';
-    
+
     if ($lang != '') {
 
         if (isset($_POST['hdnFormType'])) {
@@ -1155,7 +1156,7 @@ $kTbl->addBodyTr(HTMLTable::makeTd($rPrices[$uS->RoomPriceModel][1]));
 $pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Pricing Model', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'margin:7px;'));
 
 $rescTable = ResourceView::resourceTable($dbh);
-$roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit);
+$roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->PaymentGateway);
 
 
 // Room Pricing
@@ -1999,7 +2000,7 @@ $resultMessage = $alertMsg->createMarkup();
         $('#formGo').button().click(function () {
             $('#spnFrmLoading').show();
             $('#hdnFormType').val('');
-            
+
             $.post('ResourceBuilder.php', {'ldfm': $('#selFormUpload').val()},
                 function (data) {
                     $('#spnFrmLoading').hide();
@@ -2012,7 +2013,7 @@ $resultMessage = $alertMsg->createMarkup();
                                     $('#hdnFormType').val(ui.newTab.data('type'));
                                     $('#spanFrmTypeTitle').text(ui.newTab.data('title'));
                                     $('#txtformLang').val('');
-                                    
+
 
                                     $('#divNewForm').dialog('open');
                                 }

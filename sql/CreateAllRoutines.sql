@@ -14,6 +14,37 @@ DETERMINISTIC NO SQL
 RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end  -- ;
 
 
+-- --------------------------------------------------------
+--
+-- Procedure `get_credit_gw`
+--
+DROP procedure IF EXISTS `get_credit_gw`; -- ;
+
+CREATE PROCEDURE `get_credit_gw` (
+    IN idInv INT)
+BEGIN
+    if (idInv > 0) THEN
+
+        SELECT 
+            ifnull(l.CC_Gateway, '') as `ccgw`
+        FROM
+            invoice i
+                LEFT JOIN
+            visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
+                LEFT JOIN
+            resource_room rr on v.idResource = rr.idResource
+                LEFT JOIN
+            room rm on rm.idRoom = rr.idRoom
+                LEFT JOIN
+            location l on l.idLocation = rm.idLocation
+        where l.Status = 'a' and i.idInvoice = idInv;	
+
+    ELSE
+
+        SELECT ifnull(l.CC_Gateway, '') as `ccgw` from location l where l.Status = 'a';
+
+    END if;
+END --;
 
 
 -- --------------------------------------------------------

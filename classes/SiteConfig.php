@@ -600,26 +600,16 @@ class SiteConfig {
 
         $uS = Session::getInstance();
 
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-
         $tbl = new HTMLTable();
 
         // Payment Gateway name
+
         $opts = readGenLookupsPDO($dbh, 'Pay_Gateway_Name');
         $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway'), TRUE), array('name' => 'payGtwyName'));
 
         $tbl->addBodyTr(
                 HTMLTable::makeTh('Payment Gateway', array())
                 .HTMLTable::makeTd($inpt)
-        );
-
-        // Test or prod
-        $gopts = readGenLookupsPDO($dbh, 'CC_Gateway_Name');
-        $ginpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($gopts, SysConfig::getKeyValue($dbh, 'sys_config', 'ccgw'), TRUE), array('name' => 'payGtwyccgo'));
-
-        $tbl->addBodyTr(
-                HTMLTable::makeTh('Gateway Mode', array())
-                .HTMLTable::makeTd($ginpt)
         );
 
         // Batch Settlement hour
@@ -641,23 +631,13 @@ class SiteConfig {
         // Spacer
         $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
 
-        return $tbl->generateMarkup() . $gateway->createEditMarkup($dbh, $resultMessage);
+        return $tbl->generateMarkup() . PaymentGateway::createEditMarkup($dbh, $uS->PaymentGateway, $resultMessage);
     }
 
     public static function savePaymentCredentials(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
         $msg = '';
-
-        if (isset($post['payGtwyccgo'])) {
-            $newcc = filter_var($post['payGtwyccgo'], FILTER_SANITIZE_STRING);
-
-            if (SysConfig::getKeyValue($dbh, 'sys_config', 'ccgw') != $newcc) {
-                SysConfig::saveKeyValue($dbh, 'sys_config', 'ccgw', $newcc);
-                $uS->ccgw = $newcc;
-                $msg .= 'Gateway Mode Changed.  ';
-            }
-        }
 
         // Batch settlement
         if (isset($post['payGtwybtch'])) {
@@ -678,49 +658,34 @@ class SiteConfig {
             $uS->PaymentGateway = $newGW;
             $msg .= "Payment Gateway Changed.";
 
-            if ($newGW == '') {
-                SysConfig::saveKeyValue($dbh, 'sys_config', 'ccgw', '');
-                $uS->ccgw = '';
-            } else  if ($uS->ccgw == '') {
-                SysConfig::saveKeyValue($dbh, 'sys_config', 'ccgw', 'test');
-                $uS->ccgw == 'test';
-            }
-
             switch ($newGW) {
 
                 case PaymentGateway::INSTAMED:
-                    require (PMT . 'paymentgateway/instamed/InstamedConnect.php');
-                    require (PMT . 'paymentgateway/instamed/InstamedResponse.php');
+
                     require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
-
+                    PaymentGateway::updatePayTypes($dbh, InstamedGateway::getPaymentMethod(), $uS->username);
                     break;
 
-                case PaymentGateway::CONVERGE:
-                   require (PMT . 'paymentgateway/converge/ConvergeConnect.php');
-                    require (PMT . 'paymentgateway/converge/ConvergeGateway.php');
-
-                    break;
+//                case PaymentGateway::CONVERGE:
+//                    require (PMT . 'paymentgateway/converge/ConvergeGateway.php');
+//                    PaymentGateway::updatePayTypes($dbh, ConvergeGateway::getPaymentMethod(), $uS->username);
+//                    break;
 
                 case PaymentGateway::VANTIV:
 
-                    require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
-                    require (PMT . 'paymentgateway/vantiv/HostedPayments.php');
-                    require (PMT . 'paymentgateway/vantiv/TokenTX.php');
                     require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
+                    PaymentGateway::updatePayTypes($dbh, VantivGateway::getPaymentMethod(), $uS->username);
                     break;
 
             }
-
-            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-            $msg .= $gateway->updatePayTypes($dbh, $uS->username);
 
         } else {
 
             $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-            $msg = $gateway->SaveEditMarkup($dbh, $post);
+            $msg = PaymentGateway::SaveEditMarkup($dbh, $uS->PaymentGateway, $post);
 
-            $msg .= $gateway->updatePayTypes($dbh, $uS->username);
+            $msg .= PaymentGateway::updatePayTypes($dbh, $gateway->getPaymentMethod(), $uS->username);
         }
 
         return $msg;

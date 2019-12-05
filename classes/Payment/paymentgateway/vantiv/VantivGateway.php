@@ -20,7 +20,7 @@ class VantivGateway extends PaymentGateway {
     const CARD_ID = 'CardID';
     const PAYMENT_ID = 'PaymentID';
 
-    public function getPaymentMethod() {
+    public static function getPaymentMethod() {
         return PaymentMethod::Charge;
     }
 
@@ -417,6 +417,9 @@ class VantivGateway extends PaymentGateway {
             $pay->setPaymentPageCode('Checkout_Url');
         }
 
+        // Set CC Gateway name
+        $uS->ccgw = $this->getGatewayType();
+
         $pay->setPartialAuth(TRUE);
 
         $pay->setAVSZip($addr["Postal_Code"])
@@ -469,6 +472,10 @@ class VantivGateway extends PaymentGateway {
         } else {
             $initCi->setPaymentPageCode('CardInfo_Url');
         }
+
+        // Set CC Gateway name
+        $uS->ccgw = $this->getGatewayType();
+
 
         $initCi->setCardHolderName($cardHolderName)
                 ->setFrequency(MpFrequencyValues::OneTime)
@@ -704,9 +711,9 @@ class VantivGateway extends PaymentGateway {
 
     protected function loadGateway(\PDO $dbh) {
 
-        $query = "select * from `cc_hosted_gateway` where cc_name = :ccn and Gateway_Name = 'vantiv'";
+        $query = "select * from `cc_hosted_gateway` where cc_name = :ccn and Gateway_Name = :gwname";
         $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':ccn' => $this->gwType));
+        $stmt->execute(array(':ccn' => $this->gwType, ':gwname'=>$this->getGatewayName()));
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -732,30 +739,11 @@ class VantivGateway extends PaymentGateway {
         $this->credentials = $gwRow;
     }
 
-    public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
+    public static function createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
 
         $gwRs = new Cc_Hosted_GatewayRS();
-        $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $gwRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
-
-
-        if (count($rows) < 1) {
-            // Define new gateway rows
-            $gwrRs = new Cc_Hosted_GatewayRS();
-            $gwrRs->Gateway_Name->setNewVal($this->getGatewayName());
-            $gwrRs->cc_name->setNewVal('test');
-
-            EditRS::insert($dbh, $gwrRs);
-
-            $gwpRs = new Cc_Hosted_GatewayRS();
-            $gwpRs->Gateway_Name->setNewVal($this->getGatewayName());
-            $gwpRs->cc_name->setNewVal('production');
-            EditRS::insert($dbh, $gwpRs);
-
-            $gwRs = new Cc_Hosted_GatewayRS();
-            $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
-            $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
-        }
 
         $opts = array(
             array(0, 'False'),
@@ -796,7 +784,7 @@ class VantivGateway extends PaymentGateway {
             $indx = $gwRs->idcc_gateway->getStoredVal();
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Mode', array('style' => 'border-top:2px solid black;'))
+                    HTMLTable::makeTh('Name', array('style' => 'border-top:2px solid black;'))
                     . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
             );
 
@@ -852,17 +840,18 @@ class VantivGateway extends PaymentGateway {
         return $tbl->generateMarkup();
     }
 
-    public function SaveEditMarkup(\PDO $dbh, $post) {
+    public static function SaveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
         $msg = '';
         $ccRs = new Cc_Hosted_GatewayRS();
-        $ccRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $ccRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
         // Use POS
         if (isset($post['selCardSwipe'])) {
             SysConfig::saveKeyValue($dbh, 'sys_config', 'CardSwipe', filter_var($post['selCardSwipe'], FILTER_SANITIZE_STRING));
         }
+
         // host page image URL
         if (isset($post['txtppUrl'])) {
             SysConfig::saveKeyValue($dbh, 'sys_config', 'PmtPageLogoUrl', filter_var($post['txtppUrl'], FILTER_SANITIZE_STRING));
