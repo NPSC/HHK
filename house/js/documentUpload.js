@@ -349,6 +349,7 @@
 		        ],
 		        defaultService: "upload",
 		        allowedTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpg", "image/png"],
+		        ignoreFontAwesome: true
 		    });
 		    
 		    //hide/show extra fields
@@ -372,16 +373,17 @@
 		    });
 		    
 		    //add docTitle field
-		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; top: 1.5em; width: 100%"><input type="text" name="docTitle" id="newDocTitle" placeholder="Enter Document Title" style="margin: 0 auto"></div>');
-		    
+		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; top: 1.5em; width: 100%"><input type="text" name="docTitle" id="newDocTitle" placeholder="Enter Document Title" style="margin: 0 auto"></div>');  
+		    		    
 		    //add fileType text
 		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; bottom: 1.5em; width: 100%; text-align: center;" id="fileTypeText">Allowed filetypes: pdf, doc, docx, image<br>Maximum File Size: 5MB</div>');
 		    
 		    $wrapper.on("click", "#docUploadBtn", function(e){
 			    e.preventDefault();
 		    })
-		    newDocUppload.on("modalOpened", function(){
+		    newDocUppload.on("modalOpened", function(e){
 			    $(newDocUppload.modalElement).find("input#newDocTitle").val('');
+			    console.log(e);
 		    });
     
         }

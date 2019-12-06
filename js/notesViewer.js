@@ -23,6 +23,16 @@
             dtCols: [
                 {
                 "targets": [ 0 ],
+                        title: "Flag",
+                        data: "Flag",
+                        sortable: true,
+                        searchable: false,
+                        render: function (data, type, row) {
+                            return createActions(data, row);  
+                        }
+                },
+                {
+                "targets": [ 1 ],
                         title: "Actions",
                         data: "Action",
                         sortable: false,
@@ -32,7 +42,7 @@
                         }
                 },
                 {
-                "targets": [ 1 ],
+                "targets": [ 2 ],
                         title: "Date",
                         data: 'Date',
                         render: function (data, type) {
@@ -40,14 +50,14 @@
                         }
                 },
                 {
-                "targets": [ 2 ],
+                "targets": [ 3 ],
                         title: "User",
                         searchable: true,
                         sortable: true,
                         data: "User"
                 },
                 {
-                "targets": [ 3 ],
+                "targets": [ 4 ],
                         title: "Note",
                         searchable: true,
                         sortable: false,
@@ -63,7 +73,7 @@
                         }
                 },
                 {
-                "targets": [ 4 ],
+                "targets": [ 5 ],
                         sortable: false,
                         searchable: false,
                         visible: false,

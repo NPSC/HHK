@@ -678,7 +678,7 @@ if ($psg->getIdPsg() > 0) {
 
 $guestPhotoMarkup = "";
 if($uS->ShowGuestPhoto){
-	$guestPhotoMarkup = showGuestPicure($name->get_idName(), $uS->MemberImageSizePx);
+	$guestPhotoMarkup = showGuestPicture($name->get_idName(), $uS->MemberImageSizePx);
 }
 
 $guestName = "<span style='font-size:2em;'>$niceName</span>";
@@ -769,7 +769,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        <script type="text/javascript" src="../js/uppload.js"></script>
+        <script type="text/javascript" src="../js/uppload.js"></script> -->
 		<script type="text/javascript" src="js/documentUpload.js"></script>
 		
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>

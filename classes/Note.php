@@ -37,6 +37,7 @@ class Note {
     protected $text = '';
     protected $title = '';
     protected $type = '';
+    protected $flag = false;
     protected $userName = '';
     protected $status = '';
     protected $createdOn = null;
@@ -79,6 +80,7 @@ class Note {
                 $this->setText($noteRS->Note_Text->getStoredVal());
                 $this->setTitle($noteRS->Title->getStoredVal());
                 $this->setType($noteRS->Note_Type->getStoredVal());
+                $this->setFlag($noteRS->Flag->getStoredVal());
                 $this->setUserName($noteRS->User_Name->getStoredVal());
                 $this->setUpdatedBy($noteRS->Updated_By->getstoredVal());
                 $this->setLastUpdated($noteRS->Last_Updated->getStoredVal());
@@ -108,6 +110,7 @@ class Note {
 
             $note->setText($noteText);
             $note->setType($noteType);
+            $note->setFlag(0);
             $note->setTitle($noteTitle);
             $note->setUserName($userName);
             $note->setStatus($noteStatus);
@@ -131,6 +134,7 @@ class Note {
         $noteRS->User_Name->setNewVal($this->getUserName());
         $noteRS->Note_Text->setNewVal($this->getNoteText());
         $noteRS->Note_Type->setNewVal($this->getNoteType());
+        $noteRS->Flag->setNewVal($this->getFlag());
         $noteRS->Title->setNewVal($this->getNoteTitle());
         $noteRS->Status->setNewVal($this->getStatus());
         $noteRS->Last_Updated->setNewVal($this->getLastUpdated());
@@ -249,6 +253,10 @@ class Note {
     public function getNoteType() {
         return $this->type;
     }
+    
+    public function getFlag() {
+        return $this->flag;
+    }
 
     public function getNoteTitle() {
         return $this->title;
@@ -285,6 +293,11 @@ class Note {
 
     public function setType($type) {
         $this->type = $type;
+        return $this;
+    }
+    
+    public function setFlag($flag) {
+        $this->flag = $flag;
         return $this;
     }
 

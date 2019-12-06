@@ -548,7 +548,7 @@ $(document).ready(function () {
     $("#form1").dirrty();
 
     //GuestPhoto
-    new Uppload({
+    var $guestUppload = new Uppload({
         uploadFunction: function uploadFunction(file){
             return new Promise(function (resolve, reject) {
                 var formData = new FormData();
@@ -587,7 +587,9 @@ $(document).ready(function () {
         allowedTypes: "image",
         crop: {
             aspectRatio: 1/1
-        }
+        },
+        call: ["#addGuestPhoto"],
+        bind: ["#guestPhoto", "#guestPhotoInput"]
     });
 
     $(".uppload-branding").hide(); //hide Get Uppload branding from upload box

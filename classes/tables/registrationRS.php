@@ -216,6 +216,7 @@ class NoteRs extends TableRS {
     public $idNote;   // INT NOT NULL AUTO_INCREMENT,
     public $User_Name;   // VARCHAR(45) NOT NULL,
     public $Note_Type;   // VARCHAR(15) NULL,
+    public $Flag; // BOOL DEFAULT false
     public $Title;   // VARCHAR(145) NULL,
     public $Note_Text;   // TEXT NULL,
     public $Updated_By;   // VARCHAR(45) NULL,
@@ -229,6 +230,7 @@ class NoteRs extends TableRS {
         $this->Updated_By = new DB_Field("Updated_By", '', new DbStrSanitizer(45), TRUE, TRUE);
         $this->Note_Type = new DB_Field("Note_Type", '', new DbStrSanitizer(15), TRUE, TRUE);
         $this->Title = new DB_Field("Title", '', new DbStrSanitizer(145), TRUE, TRUE);
+        $this->flag = new DB_Field("flag", FALSE, new DbBitSanitizer(), TRUE, TRUE);
         $this->User_Name = new DB_Field("User_Name", '', new DbStrSanitizer(45), TRUE, TRUE);
         $this->Status = new DB_Field("Status", '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Note_Text = new DB_Field("Note_Text", '', new DbStrSanitizer(5000), TRUE, TRUE);

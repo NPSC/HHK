@@ -23,7 +23,8 @@ class ListNotes {
             array( 'db' => 'Note_Text', 'dt' => 'Note'),
             array( 'db' => 'Title', 'dt' => 'Title'),
             array( 'db' => 'Note_Id', 'dt' => 'NoteId'),
-            array( 'db' => 'Action', 'dt' => 'Action')
+            array( 'db' => 'Action', 'dt' => 'Action'),
+            array( 'db' => 'flag', 'dt' => 'Flag'),
         );
 
         $dbView = '';
