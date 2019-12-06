@@ -56,6 +56,7 @@ class InstamedGateway extends PaymentGateway {
     public function getGatewayName() {
         return 'instamed';
     }
+
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -194,7 +195,6 @@ class InstamedGateway extends PaymentGateway {
 
         return $payResult;
     }
-
 
     protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl, $manualKey, $cardHolderName) {
 
@@ -342,7 +342,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    protected function sendVoid(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes, $bid) {
+    protected function _voidSale(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes, $bid) {
 
         $uS = Session::getInstance();
         $dataArray['bid'] = $bid;
@@ -1036,7 +1036,19 @@ where r.idRegistration =" . $idReg);
         return new ImCofResponse($vcr, $idPayor, $idGroup);
     }
 
-    public static function createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
+    public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
+
+        $payTbl->addBodyTr(
+                HTMLTable::makeTd(
+                    HTMLContainer::generateMarkup('label', 'Key Account:', array('for'=>'btnvrKeyNumber', 'class'=>'hhkvrKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
+                    . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber', 'class'=>'hhk-feeskeys hhkvrKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number'))
+                , array('class'=>'tdlabel hhkvrKeyNumber'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName', 'class'=>'hhk-feeskeys hhkvrKeyNumber')), array('colspan'=>'2', 'style'=>'min-width:140px'))
+            , array('id'=>'trvdCHName'));
+
+    }
+
+    protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
 
         $gwRs = new InstamedGatewayRS();
         $gwRs->Gateway_Name->setStoredVal($gatewayName);
@@ -1105,7 +1117,7 @@ where r.idRegistration =" . $idReg);
         return $tbl->generateMarkup();
     }
 
-    public static function SaveEditMarkup(\PDO $dbh, $gatewayName, $post) {
+    protected static function _saveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
         $msg = '';
         $ccRs = new InstamedGatewayRS();

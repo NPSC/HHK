@@ -2370,6 +2370,17 @@ FROM
 order by r.Util_Priority,r.Title;
 
 
+-- -----------------------------------------------------
+-- View `vroom_listing`
+-- -----------------------------------------------------
+CREATE  OR REPLACE VIEW `vroom_paygateway` AS
+Select ifnull(l.CC_Gateway, '') as `ccgw`, r.idRoom
+from 
+    room r 
+        left join 
+    location l on r.idLocation = l.idLocation;
+
+
 
 -- -----------------------------------------------------
 -- View `vspan_listing`

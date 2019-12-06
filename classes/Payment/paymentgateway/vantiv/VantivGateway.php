@@ -83,37 +83,6 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
-
-        // find the token record
-        if ($payRs->idToken->getStoredVal() > 0) {
-            $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
-        } else {
-            return array('warning' => 'Payment Token Id not found.  Unable to Void this purchase.  ', 'bid' => $bid);
-        }
-
-        if (CreditToken::hasToken($tknRs) === FALSE) {
-            return array('warning' => 'Payment Token not found.  Unable to Void this purchase.  ', 'bid' => $bid);
-        }
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Void this purchase. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
-            return $this->sendVoid($dbh, $payRs, $pAuthRs, $tknRs, $invoice, $paymentNotes);
-        }
-
-        return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
-    }
-
     public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
 
         $uS = Session::getInstance();
@@ -578,10 +547,21 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    protected function sendVoid(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Guest_TokenRS $tknRs, Invoice $invoice, $paymentNotes = '') {
+    protected function _voidSale(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes = '', $bid = '') {
 
         $uS = Session::getInstance();
         $dataArray = array();
+
+        // find the token record
+        if ($payRs->idToken->getStoredVal() > 0) {
+            $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
+        } else {
+            return array('warning' => 'Payment Token Id not found.  Unable to Void this purchase.  ', 'bid' => $bid);
+        }
+
+        if (CreditToken::hasToken($tknRs) === FALSE) {
+            return array('warning' => 'Payment Token not found.  Unable to Void this purchase.  ', 'bid' => $bid);
+        }
 
         // Set up request
         $voidRequest = new CreditVoidSaleTokenRequest();
@@ -713,7 +693,7 @@ class VantivGateway extends PaymentGateway {
 
         $query = "select * from `cc_hosted_gateway` where cc_name = :ccn and Gateway_Name = :gwname";
         $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':ccn' => $this->gwType, ':gwname'=>$this->getGatewayName()));
+        $stmt->execute(array(':ccn' => $this->getGatewayType(), ':gwname'=>$this->getGatewayName()));
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -739,7 +719,11 @@ class VantivGateway extends PaymentGateway {
         $this->credentials = $gwRow;
     }
 
-    public static function createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
+    public function selectPaymentMarkup(\PDO $dbh, &$payTable) {
+
+    }
+
+    protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
 
         $gwRs = new Cc_Hosted_GatewayRS();
         $gwRs->Gateway_Name->setStoredVal($gatewayName);
@@ -840,7 +824,7 @@ class VantivGateway extends PaymentGateway {
         return $tbl->generateMarkup();
     }
 
-    public static function SaveEditMarkup(\PDO $dbh, $gatewayName, $post) {
+    protected static function _saveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
         $msg = '';
         $ccRs = new Cc_Hosted_GatewayRS();

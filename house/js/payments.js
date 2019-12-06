@@ -797,14 +797,14 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             $('.hhk-transfer').hide();
             $('.hhk-tfnum').hide();
             chg.hide();
-            $('.hhkvrKeyNumber').hide();
+            $('#trvdCHName').hide();
             $('#tdCashMsg').hide();
             $('.paySelectNotes').show();
 
             if ($(this).val() === 'cc') {
                 chg.show('fade');
                 if ($('input[name=rbUseCard]:checked').val() == 0) {
-                    $('.hhkvrKeyNumber').show();
+                    $('#trvdCHName').show();
                 }
             } else if ($(this).val() === 'ck') {
                 $('.hhk-cknum').show('fade');
@@ -825,23 +825,24 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 
         $('input[name=rbUseCard]').on('change', function () {
             if ($(this).val() == 0) {
-                $('.hhkvrKeyNumber').show();
+                $('#trvdCHName').show();
             } else {
-                $('.hhkvrKeyNumber').hide();
+                $('#trvdCHName').hide();
                 $('#btnvrKeyNumber').prop('checked', false).change();
             }
         });
 
         if ($('input[name=rbUseCard]:checked').val() > 0) {
-            $('.hhkvrKeyNumber').hide();
+            $('#trvdCHName').hide();
         }
 
         $('#btnvrKeyNumber').change(function() {
 
             if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
-                $('#trvdCHName').show();
+                $('#txtvdNewCardName').show();
             } else {
-                $('#trvdCHName').hide();
+                $('#txtvdNewCardName').hide();
+                $('#txtvdNewCardName').val('');
             }
         });
 

@@ -21,27 +21,34 @@ RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() el
 DROP procedure IF EXISTS `get_credit_gw`; -- ;
 
 CREATE PROCEDURE `get_credit_gw` (
-    IN idInv INT)
+    IN idVisit INT,
+    IN Span INT)
 BEGIN
-    if (idInv > 0) THEN
+    if (idVisit > 0) THEN
 
         SELECT 
             ifnull(l.CC_Gateway, '') as `ccgw`
         FROM
-            invoice i
-                LEFT JOIN
-            visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
+            visit v 
                 LEFT JOIN
             resource_room rr on v.idResource = rr.idResource
                 LEFT JOIN
             room rm on rm.idRoom = rr.idRoom
                 LEFT JOIN
             location l on l.idLocation = rm.idLocation
-        where l.Status = 'a' and i.idInvoice = idInv;	
+        where 
+            l.Status = 'a' and v.idVisit = idVisit and v.Span = Span;	
 
     ELSE
 
-        SELECT ifnull(l.CC_Gateway, '') as `ccgw` from location l where l.Status = 'a';
+        SELECT 
+           DISTINCT ifnull(l.CC_Gateway, '') as `ccgw` 
+        FROM
+            room rm
+                LEFT JOIN
+            location l  on l.idLocation = rm.idLocation
+        where 
+            l.`Status` = 'a' or l.`Status` is null;
 
     END if;
 END --;

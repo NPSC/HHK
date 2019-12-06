@@ -26,7 +26,6 @@ abstract class PaymentGateway {
     const CONVERGE = 'converge';
     const LOCAL = '';
 
-    protected $gwName;
     protected $gwType;
     protected $credentials;
     protected $responseErrors;
@@ -39,45 +38,26 @@ abstract class PaymentGateway {
         $this->setCredentials($this->loadGateway($dbh));
     }
 
-    public function getGatewayType() {
-        return strtolower($this->gwType);
-    }
-
-    public abstract function getGatewayName();
+    /**
+     *  Interpret database info into payment gateway credentials object.
+     */
+    protected abstract function setCredentials($credentials);
 
     /**
      *  Get the gateway information from the database.
      */
     protected abstract function loadGateway(\PDO $dbh);
 
-    /**
-     *  Interpret database info into payment gateway credentials object.
-     */
-    protected abstract function setCredentials($credentials);
+    public abstract function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '');
 
-    // used to determine if it's a real gateway or out of band, local gateway
-    public static function getPaymentMethod() {
-        throw new Hk_Exception_Payment('Payment Method not defined.  ');
-    }
+    public abstract function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup);
+
+    public abstract function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes);
+
+    public abstract function selectPaymentMarkup(\PDO $dbh, &$payTable);
 
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
-        // Initialiaze hosted payment
-        try {
-
-            $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl, $pmp->getManualKeyEntry());
-
-            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-            $payResult->setForwardHostedPayment($fwrder);
-            $payResult->setDisplayMessage('Forward to Payment Page. ');
-        } catch (Hk_Exception_Payment $hpx) {
-
-            $payResult = new PaymentResult($invoice->getIdInvoice(), 0, 0);
-            $payResult->setStatus(PaymentResult::ERROR);
-            $payResult->setDisplayMessage($hpx->getMessage());
-        }
-
-        return $payResult;
     }
 
     public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
@@ -94,14 +74,14 @@ abstract class PaymentGateway {
         EditRS::loadRow(array_pop($arows), $pAuthRs);
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
-            return $this->sendVoid($dbh, $payRs, $pAuthRs, $invoice, $paymentNotes, $bid);
+            return $this->_voidSale($dbh, $payRs, $pAuthRs, $invoice, $paymentNotes, $bid);
         }
 
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
     }
 
-    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
-        return array('warning' => 'Not Available.  ');
+    protected function _voidSale(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes, $bid) {
+        return array('warning' => '_voidSale is not implemented. ');
     }
 
     public function returnPayment(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid) {
@@ -128,17 +108,17 @@ abstract class PaymentGateway {
         return array('warning' => '_returnPayment is not implemented. ');
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
+        return array('warning' => 'Not Available.  ');
+    }
 
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
         return array('warning' => 'Return Amount is not implemented. ');
     }
 
     public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
-
         return $this->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid);
     }
-
-    public abstract function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes);
 
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
         throw new Hk_Exception_Payment('Webhook not implemeneted');
@@ -150,41 +130,41 @@ abstract class PaymentGateway {
 
             case PaymentGateway::VANTIV:
 
-                return VantivGateway::createEditMarkup($dbh, $gatewayName);
+                return VantivGateway::_createEditMarkup($dbh, $gatewayName);
 
             case PaymentGateway::INSTAMED:
 
-                return InstamedGateway::createEditMarkup($dbh, $gatewayName);
+                return InstamedGateway::_createEditMarkup($dbh, $gatewayName);
 
             case PaymentGateway::CONVERGE:
 
-                return ConvergeGateway::createEditMarkup($dbh, $gatewayName);
+                return ConvergeGateway::_createEditMarkup($dbh, $gatewayName);
 
             default:
 
-                return LocalGateway::createEditMarkup($dbh, $gatewayName);
+                return LocalGateway::_createEditMarkup($dbh, $gatewayName);
         }
     }
 
-    public static function SaveEditMarkup(\PDO $dbh, $gatewayName, $post) {
+    public static function saveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
         switch (strtolower($gatewayName)) {
 
             case PaymentGateway::VANTIV:
 
-                return VantivGateway::saveEditMarkup($dbh, $gatewayName, $post);
+                return VantivGateway::_saveEditMarkup($dbh, $gatewayName, $post);
 
             case PaymentGateway::INSTAMED:
 
-                return InstamedGateway::saveEditMarkup($dbh, $gatewayName, $post);
+                return InstamedGateway::_saveEditMarkup($dbh, $gatewayName, $post);
 
             case PaymentGateway::CONVERGE:
 
-                return ConvergeGateway::saveEditMarkup($dbh, $gatewayName, $post);
+                return ConvergeGateway::_saveEditMarkup($dbh, $gatewayName, $post);
 
             default:
 
-                return LocalGateway::saveEditMarkup($dbh, $gatewayName, $post);
+                return LocalGateway::_saveEditMarkup($dbh, $gatewayName, $post);
         }
     }
 
@@ -250,6 +230,38 @@ abstract class PaymentGateway {
         }
     }
 
+    public function getCreditGatewayNames(\PDO $dbh, $idVisit, $span) {
+
+        $ccNames = array();
+
+        $volStmt = $dbh->prepare("call get_credit_gw(:idVisit, :span);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        $volStmt->execute(array(':idVisit'=>intval($idVisit), ':span'=>intval($span)));
+        $rows = $volStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (count($rows) > 0) {
+
+            foreach ($rows as $r) {
+                $ccNames[] = $r['ccgw'];
+            }
+
+        } else {
+            $ccNames[] = '';
+        }
+
+        return $ccNames;
+    }
+
+    // used to determine if it's a real gateway or out of band, local gateway
+    public static function getPaymentMethod() {
+        throw new Hk_Exception_Payment('Payment Method not defined.  ');
+    }
+
+    public abstract function getGatewayName();
+
+    public function getGatewayType() {
+        return strtolower($this->gwType);
+    }
+
     public function getResponseErrors() {
         return $this->responseErrors;
     }
@@ -288,9 +300,6 @@ abstract class PaymentGateway {
         return $infoArray;
     }
 
-    public abstract function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '');
-
-    public abstract function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup);
 }
 
 class LocalGateway extends PaymentGateway {
@@ -299,28 +308,24 @@ class LocalGateway extends PaymentGateway {
         return PaymentMethod::ChgAsCash;
     }
 
-    public function getGatewayName() {
-        return 'local';
+    protected function loadGateway(\PDO $dbh) {
+        return array();
     }
 
-    protected function loadGateway(\PDO $dbh) {
-
+    public function getGatewayName() {
+        return 'local';
     }
 
     protected function setCredentials($credentials) {
 
     }
 
-    public static function SaveEditMarkup(\PDO $dbh, $gatewayName, $post) {
+    protected static function _saveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
     }
 
-    public static function createEditMarkup(\PDO $dbh, $gatewayName) {
+    protected static function _createEditMarkup(\PDO $dbh, $gatewayName) {
         return '';
-    }
-
-    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
-
     }
 
     public function processHostedReply(\PDO $dbh, $post, $ssoTtoken, $idInv, $payNotes) {
@@ -337,5 +342,16 @@ class LocalGateway extends PaymentGateway {
 
     }
 
+    public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
+
+        // Charge as Cash markup
+//        $payTbl->addBodyTr(
+//            HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
+//            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
+//            .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
+//            , array('style'=>'display:none;', 'class'=>'hhk-mcred'));
+//
+
+    }
 
 }

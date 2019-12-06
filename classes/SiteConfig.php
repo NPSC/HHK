@@ -683,7 +683,7 @@ class SiteConfig {
 
             $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
-            $msg = PaymentGateway::SaveEditMarkup($dbh, $uS->PaymentGateway, $post);
+            $msg = PaymentGateway::saveEditMarkup($dbh, $uS->PaymentGateway, $post);
 
             $msg .= PaymentGateway::updatePayTypes($dbh, $gateway->getPaymentMethod(), $uS->username);
         }

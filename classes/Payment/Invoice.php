@@ -920,14 +920,13 @@ where pi.Invoice_Id in ($whAssoc)";
 
             // The order number is the visit
 
-            $volStmt = $dbh->prepare("call get_credit_gw(:idInv);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $volStmt->execute(array(':idInv'=>$this->getIdInvoice()));
+            $volStmt = $dbh->prepare("call get_credit_gw(:idVisit, :span);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+            $volStmt->execute(array(':idVisit'=>$this->getOrderNumber(), ':span'=>$this->getSuborderNumber()));
             $rows = $volStmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (count($rows) == 1) {
                 return $rows[0]['ccgw'];
             }
-
         }
 
         return '';
