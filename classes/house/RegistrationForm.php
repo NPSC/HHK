@@ -71,7 +71,7 @@ class RegistrationForm {
             // Make Emergency contact.
             $ec = $priGuest->getEmergContactObj($dbh);
 
-            $doc .= $this->makeFirstAdditional($ec->getEcNameFirst(), $ec->getEcNameLast(), '', $ec->getEcRelationship(), $ec->getEcPhone(), '', $this->labels);
+            $doc .= $this->makeFirstAdditional($ec->getEcNameFirst(), $ec->getEcNameLast(), '', $ec->getEcRelationship(), $ec->getEcPhone(), '');
 
             // blank additional guest
             $doc .= $this->makeBlankGuest(3);
@@ -236,7 +236,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 ';
     }
 
-    public function makeFirstAdditional($fName, $lName, $date, $relation, $phone, $email, $labels) {
+    public function makeFirstAdditional($fName, $lName, $date, $relation, $phone, $email) {
 
         $uS = Session::getInstance();
 
@@ -253,7 +253,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
         </table>
        <table style="width:100%; margin-left:20px;">
            <tr><td style="border-bottom: 1px solid black;width:40%;">' . $relat . '&nbsp;</td><td style="border-bottom: 1px solid black;width:20%;">&nbsp;</td><td style="border-bottom: 1px solid black;background-color: #EAEBFF; text-align:center;">&#9634; Copy of Picture ID Taken <span style="font-weight:bold;">(Guest Only)</span></td></tr>
-            <tr><td class="prompt">&#9650;Relationship to ' . $labels->getString('MemberType', 'patient', 'Patient') . '/Guest</td><td class="prompt">&#9650;Age</td><td class="prompt"></td></tr>
+            <tr><td class="prompt">&#9650;Relationship to ' . $this->labels->getString('MemberType', 'patient', 'Patient') . '/Guest</td><td class="prompt">&#9650;Age</td><td class="prompt"></td></tr>
         </table>
    <table style="width:100%; margin-left:20px;">
        <tr><td style="border-bottom: 1px solid black;width:30%;">' . $phone . '&nbsp;</td><td style="border-bottom: 1px solid black;">' . $email . '&nbsp;</td></tr>

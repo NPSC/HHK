@@ -349,10 +349,10 @@ class ReservationSvcs {
             $logoWidth = 114;
 
             if (count($docRows) > 0) {
-            foreach($docRows as $d) {
+                foreach($docRows as $d) {
 
-                $docs[] = array(
-                    'doc'=>$regdoc->getDocument($dbh,
+                    $docs[] = array(
+                        'doc'=>$regdoc->getDocument($dbh,
                         $priGuest,
                         $billingGuest,
                         $additionalGuests,
@@ -365,15 +365,15 @@ class ReservationSvcs {
                         $logoURL,
                         $logoWidth,
                         $instructFileName,
-                        ($d['Doc'] == '' ? $d['Abstract'] : $d['Doc']),
+                        $d['Doc'],
                         $expectedPayType,
                         $notes,
                         $todaysDate),
                     'style'=>$regdoc->getStyle(),
                     'tabIndex'=>$d['Code'],
                     'tabTitle'=>$d['Description']
-                );
-            }
+                    );
+                }
             } else {
 
                 $docs[] = array(
