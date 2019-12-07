@@ -230,22 +230,22 @@ abstract class PaymentGateway {
         }
     }
 
-    public function getCreditGatewayNames(\PDO $dbh, $idVisit, $span) {
+    public static function getCreditGatewayNames(\PDO $dbh, $idVisit, $span) {
 
-        $ccNames = array();
+        $ccNames = '';
 
         $volStmt = $dbh->prepare("call get_credit_gw(:idVisit, :span);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         $volStmt->execute(array(':idVisit'=>intval($idVisit), ':span'=>intval($span)));
         $rows = $volStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (count($rows) > 0) {
+        if (count($rows) > 1) {
 
             foreach ($rows as $r) {
                 $ccNames[] = $r['ccgw'];
             }
 
-        } else {
-            $ccNames[] = '';
+        } else if (count($rows) == 1) {
+            $ccNames = $rows[0]['ccgw'];
         }
 
         return $ccNames;
@@ -259,7 +259,16 @@ abstract class PaymentGateway {
     public abstract function getGatewayName();
 
     public function getGatewayType() {
-        return strtolower($this->gwType);
+
+        $myType = '';
+
+        if (is_array($this->gwType)) {
+            $myType = '';
+        } else {
+            $myType = $this->gwType;
+        }
+
+        return strtolower($myType);
     }
 
     public function getResponseErrors() {

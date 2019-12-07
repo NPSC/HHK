@@ -20,34 +20,37 @@ RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() el
 --
 DROP procedure IF EXISTS `get_credit_gw`; -- ;
 
-CREATE PROCEDURE `get_credit_gw` (
-    IN idVisit INT,
-    IN Span INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `get_credit_gw`(
+    IN visitId INT,
+    IN spanId INT)
 BEGIN
-    if (idVisit > 0) THEN
+
+    DECLARE myResc INT;
+    
+    Select idResource into myResc from visit where idVisit = visitId and Span = spanId;
+    
+    if (myResc > 0) THEN
 
         SELECT 
             ifnull(l.CC_Gateway, '') as `ccgw`
         FROM
-            visit v 
-                LEFT JOIN
-            resource_room rr on v.idResource = rr.idResource
+            resource_room rr
                 LEFT JOIN
             room rm on rm.idRoom = rr.idRoom
                 LEFT JOIN
             location l on l.idLocation = rm.idLocation
-        where 
-            l.Status = 'a' and v.idVisit = idVisit and v.Span = Span;	
+        where
+            l.Status = 'a' and rr.idResource = myResc;
 
     ELSE
 
         SELECT 
-           DISTINCT ifnull(l.CC_Gateway, '') as `ccgw` 
+           DISTINCT ifnull(l.CC_Gateway, '') as `ccgw`
         FROM
             room rm
                 LEFT JOIN
             location l  on l.idLocation = rm.idLocation
-        where 
+        where
             l.`Status` = 'a' or l.`Status` is null;
 
     END if;

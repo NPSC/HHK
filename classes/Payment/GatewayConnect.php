@@ -14,6 +14,8 @@ interface iGatewayResponse {
     public function getResponseCode();
     public function getResponseMessage();
     public function getTranType();
+    public function getCcGateway();
+    public function getProcessor();
 
     public function getAuthorizedAmount();
     public function getRequestAmount();
@@ -68,6 +70,8 @@ abstract class GatewayResponse {
     protected $result;
 
     protected $tranType;
+    protected $processor;
+    protected $ccGateway;
 
     /**
      * The child is expected to define $result.
@@ -102,6 +106,14 @@ abstract class GatewayResponse {
 
     public function getTranType() {
         return $this->tranType;
+    }
+
+    public function getProcessor() {
+        return $this->processor;
+    }
+
+    public function getCcGateway() {
+        return $this->ccGateway;
     }
 
     public function getErrorMessage() {
@@ -189,6 +201,8 @@ class StandInGwResponse implements iGatewayResponse {
     protected $cardholderName;
     protected $expDate;
     protected $token;
+    protected $processor;
+    protected $ccGateway;
 
     public function __construct(Payment_AuthRS $pAuthRs, $operatorId, $cardholderName, $expDate, $token, $invoiceNumber, $amount) {
 
@@ -218,7 +232,6 @@ class StandInGwResponse implements iGatewayResponse {
     public function getOperatorId() {
         return $this->operatorId;
     }
-
 
     public function getAcqRefData() {
         return $this->pAuthRs->AcqRefData->getStoredVal();
@@ -323,6 +336,22 @@ class StandInGwResponse implements iGatewayResponse {
 
     public function getTranType() {
         return '';
+    }
+
+    public function getProcessor() {
+        return $this->processor;
+    }
+
+    public function getCcGateway() {
+        return $this->ccGateway;
+    }
+
+    public function setProcessor($v) {
+        $this->processor = $v;
+    }
+
+    public function setCcGateway($v) {
+        $this->ccGateway = $v;
     }
 
     public function getTransPostTime() {

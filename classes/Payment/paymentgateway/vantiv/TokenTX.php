@@ -91,6 +91,7 @@ class TokenTX {
 
         // Call to web service
         $creditResponse = $voidSale->submit($gway->getCredentials(), $trace);
+
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId(), $payNotes);
 
         // Save raw transaction in the db.

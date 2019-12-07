@@ -719,7 +719,35 @@ class VantivGateway extends PaymentGateway {
         $this->credentials = $gwRow;
     }
 
-    public function selectPaymentMarkup(\PDO $dbh, &$payTable) {
+    public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
+
+        $myGwType = '';
+
+        $stmt = $dbh->query("Select DISTINCT CC_Gateway, Title from location where Status = 'a'");
+        $gwRows = $stmt->fetchAll();
+
+        $selArray = array('id'=>'selccgw', 'size'=>count($gwRows));
+
+        if (is_array($this->gwType)) {
+            // Show choice of gateway
+
+            $sel = HTMLSelector::doOptionsMkup($gwRows, $myGwType, FALSE);
+
+            $payTbl->addBodyTr(
+                    HTMLTable::makeTh('Select House:')
+                    .HTMLTable::makeTd(
+                            HTMLSelector::generateMarkup($sel, $selArray)
+                            , array('colspan'=>'2')
+                    )
+                    , array('id'=>'trvdCHName'));
+
+        } else {
+
+            $payTbl->addBodyTr(
+                    HTMLTable::makeTh('Selected House:')
+                    .HTMLTable::makeTd(ucfirst($this->gwType), array('colspan'=>'2'))
+                    );
+        }
 
     }
 

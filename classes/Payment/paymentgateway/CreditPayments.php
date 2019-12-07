@@ -139,6 +139,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
             $pDetailRS->CVV->setNewVal($vr->getCvvResult());
             $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+            $pDetailRS->CC_Gateway->setNewVal($vr->getCcGateway());
             $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
             $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
@@ -213,6 +214,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
             $pDetailRS->CVV->setNewVal($vr->getCvvResult());
             $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+            $pDetailRS->CC_Gateway->setNewVal($vr->getCcGateway());
             $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
             $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
@@ -284,17 +286,18 @@ class VoidReply extends CreditPayments {
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
         $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
         $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
         $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+        $pDetailRS->CC_Gateway->setNewVal($vr->getCcGateway());
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
         $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
         // EMV
         $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
@@ -371,17 +374,18 @@ class ReverseReply extends CreditPayments {
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
         $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
         $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
         $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+        $pDetailRS->CC_Gateway->setNewVal($vr->getCcGateway());
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
         $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
         // EMV
         $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
@@ -487,6 +491,7 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+        $pDetailRS->CC_Gateway->setNewVal($vr->getCcGateway());
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
         $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
         $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
@@ -545,7 +550,7 @@ class ReturnReply extends CreditPayments {
                 $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
                 $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
                 $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+                $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
                 $pDetailRS->AVS->setNewVal($vr->getAVSResult());
                 $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
                 $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
@@ -553,10 +558,11 @@ class ReturnReply extends CreditPayments {
                 $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
                 $pDetailRS->CVV->setNewVal($vr->getCvvResult());
                 $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+                $pDetailRS->CC_Gateway->setNewVal($vr->getCcGateway());
                 $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
                 $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+                $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+                $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
                 // EMV
                 $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
@@ -631,7 +637,7 @@ class VoidReturnReply extends CreditPayments {
         $pDetailRS->AVS->setNewVal($vr->getAVSResult());
         $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
         $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
         $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $pDetailRS->idTrans->setNewVal($pr->idTrans);
         $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
@@ -641,10 +647,11 @@ class VoidReturnReply extends CreditPayments {
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidReturn);
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+        $pDetailRS->CC_Gateway->setNewVal($vr->getCcGateway());
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
         $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
 
         $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 

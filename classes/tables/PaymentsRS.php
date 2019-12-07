@@ -106,6 +106,7 @@ class Payment_AuthRS extends TableRS {
     public $Approved_Amount;   // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $idTrans;   // int(11) NOT NULL DEFAULT '0',
     public $Processor;   // varchar(45) NOT NULL DEFAULT '',
+    public $CC_Gateway;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $Approval_Code;   // varchar(20) NOT NULL DEFAULT '',
     public $Status_Message;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $AVS;   // varchar(20) NOT NULL DEFAULT '',
@@ -141,6 +142,7 @@ class Payment_AuthRS extends TableRS {
         $this->PartialPayment = new DB_Field('PartialPayment', 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->idTrans = new DB_Field("idTrans", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Processor = new DB_Field("Processor", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->CC_Gateway = new DB_Field("CC_Gateway", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Approval_Code = new DB_Field("Approval_Code", "", new DbStrSanitizer(20), TRUE, TRUE);
         $this->Status_Message = new DB_Field("Status_Message", "", new DbStrSanitizer(40), TRUE, TRUE);
         $this->AVS = new DB_Field("AVS", "", new DbStrSanitizer(20), TRUE, TRUE);

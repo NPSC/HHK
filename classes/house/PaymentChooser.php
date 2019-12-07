@@ -3,7 +3,7 @@
  * PaymentChooser.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
   */
@@ -298,6 +298,8 @@ class PaymentChooser {
 
         $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
 
+        $paymentGateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan()));
+
         if ($uS->ShowTxPayType == FALSE) {
             unset($payTypes[PayType::Transfer]);
         }
@@ -307,7 +309,7 @@ class PaymentChooser {
                 $defaultPayType,
                 $payTypes,
                 $labels,
-                PaymentGateway::factory($dbh, $uS->PaymentGateway, ''),
+                $paymentGateway,
                 $idGuest, $idRegistration, $prefTokenId);
 
 
@@ -324,7 +326,7 @@ class PaymentChooser {
         $mkup .= HTMLContainer::generateMarkup('div', self::showReturnSelection($dbh,
                 $defaultPayType,
                 $payTypes,
-                $uS->PaymentGateway,
+                $paymentGateway,
                 $idGuest, $idRegistration, $prefTokenId),
                 array('id'=>'divReturnPay', 'style'=>'float:left;display:none;'));
 
@@ -418,7 +420,13 @@ class PaymentChooser {
 
 
         // payment types panel
-        $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, PaymentGateway::factory($dbh, $uS->PaymentGateway, ''),
+        $panelMkup = self::showPaySelection(
+                $dbh,
+                $uS->DefaultPayType,
+                $payTypes,
+                removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')),
+                $labels,
+                PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan())),
                 $idGuest, $idRegistration, $prefTokenId);
 
         $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
@@ -626,20 +634,14 @@ ORDER BY v.idVisit , v.Span;");
                 $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
                 unset($payTypes[PayType::Invoice]);
 
-                // House return invoices
-//                if ($id == $uS->returnId) {
-//                    unset($payTypes[PayType::Charge]);
-//                    unset($payTypes[PayType::ChargeAsCash]);
-//                    $panelMkup = self::showReturnSelection($dbh, PayType::Check, $payTypes, array(), $uS->ccgw,
-//                        $id, 0, 0, '');
-//
-//                } else {
-                    // payment types panel
-                            // Payment gateway
 
-                        $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, PaymentGateway::factory($dbh, $uS->PaymentGateway, ''),
+                $panelMkup = self::showPaySelection(
+                        $dbh, $uS->DefaultPayType,
+                        $payTypes,
+                        removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')),
+                        $labels,
+                        PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan())),
                         $id, 0, $prefTokenId, '');
-//                }
 
                 $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
 
@@ -933,7 +935,7 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblPaySelect'));
     }
 
-    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
+    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, PaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();
 
@@ -962,7 +964,7 @@ ORDER BY v.idVisit , v.Span;");
         if (isset($payTypes[PayType::Charge])) {
 
             // Credit gateway
-            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, null, $prefTokenId, ReturnIndex::ReturnIndex);
+            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId, ReturnIndex::ReturnIndex);
 
         }
 
@@ -977,7 +979,7 @@ ORDER BY v.idVisit , v.Span;");
 
     protected static function CreditBlock(\PDO $dbh, &$tbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId = 0, $index = '') {
 
-        $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $idPrimaryGuest);
+        $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $paymentGateway->getGatewayType(), $idPrimaryGuest);
 
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
             $tbl->addBodyTr(HTMLTable::makeTh("No Cards on file", array('colspan'=>'3'))

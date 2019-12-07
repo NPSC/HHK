@@ -539,6 +539,8 @@ abstract class MercResponse {
     protected $result;
 
     protected $tranType;
+    protected $ccGateway;
+    protected $processor = 'vantiv';
 
     /**
      * The child is expected to define $result.
@@ -552,6 +554,22 @@ abstract class MercResponse {
         } else {
             throw new Hk_Exception_Payment('Empty response object. ');
         }
+    }
+
+    public function setProcessor($v) {
+        $this->processor = $v;
+    }
+
+    public function setCcGateway($v) {
+        $this->ccGateway = $v;
+    }
+
+    public function getProcessor() {
+        return $this->processor;
+    }
+
+    public function getCcGateway() {
+        return $this->ccGateway;
     }
 
     public function getResponseCode() {
@@ -779,6 +797,7 @@ class VerifyCiResponse extends MercResponse implements iGatewayResponse {
 
         $this->tranType = MpTranType::CardOnFile;
     }
+
     public function getAVSAddress() {
         return '';
     }

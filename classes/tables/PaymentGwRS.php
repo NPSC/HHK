@@ -21,6 +21,7 @@ class Guest_TokenRS extends TableRS {
     public $Running_Total;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $idRegistration;   // int(11) NOT NULL DEFAULT '0',
     public $Token;   // varchar(100) NOT NULL DEFAULT '',
+    public $CC_Gateway;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $Granted_Date;   // datetime DEFAULT NULL,
     public $LifetimeDays;   // int(11) NOT NULL DEFAULT '0',
     public $MaskedAccount;   // varchar(18) NOT NULL DEFAULT '',
@@ -43,6 +44,7 @@ class Guest_TokenRS extends TableRS {
         $this->Running_Total = new DB_Field('Running_Total', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->idRegistration = new DB_Field("idRegistration", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Token = new DB_Field("Token", "", new DbStrSanitizer(100), TRUE, TRUE);
+        $this->CC_Gateway = new DB_Field("CC_Gateway", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Granted_Date = new DB_Field("Granted_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->LifetimeDays = new DB_Field("LifetimeDays", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->MaskedAccount = new DB_Field("MaskedAccount", "", new DbStrSanitizer(18), TRUE, TRUE);

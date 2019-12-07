@@ -17,7 +17,7 @@
  */
 class CreditToken {
 
-    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr, $idToken = 0) {
+    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr, $ccGateway, $idToken = 0) {
 
         if ($vr->saveCardonFile() === FALSE || $vr->getToken() == '') {
             return 0;
@@ -34,6 +34,7 @@ class CreditToken {
         // Load values
         $gtRs->idGuest->setNewVal($idPayor);
         $gtRs->idRegistration->setNewVal($idRegistration);
+        $gtRs->CC_Gateway->setNewVal($ccGateway);
 
         if ($vr->getCardHolderName() != '') {
             $gtRs->CardHolderName->setNewVal($vr->getCardHolderName());
@@ -136,15 +137,18 @@ class CreditToken {
     }
 
 
-    public static function getRegTokenRSs(\PDO $dbh, $idRegistration, $idGuest = 0) {
+    public static function getRegTokenRSs(\PDO $dbh, $idRegistration, $ccGateway, $idGuest = 0) {
 
         $rsRows = array();
+        $idReg = intval($idRegistration);
+        $idGst = intval($idGuest);
+
 
         // Get registration tokens
         if ($idRegistration > 0) {
 
             $stmt = $dbh->query("select t.* from guest_token t left join name_volunteer2 nv on t.idGuest = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ba'
-where t.idRegistration = $idRegistration and nv.idName is null");
+where t.idRegistration = $idReg and t.CC_Gateway = '$ccGateway' and nv.idName is null");
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -157,11 +161,12 @@ where t.idRegistration = $idRegistration and nv.idName is null");
             }
         }
 
-        if ($idGuest > 0) {
+        if ($idReg > 0) {
 
             $gtRs = new Guest_TokenRS();
-            $gtRs->idGuest->setStoredVal($idGuest);
-            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest));
+            $gtRs->idGuest->setStoredVal($idReg);
+            $gtRs->CC_Gateway->setStoredVal($ccGateway);
+            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CC_Gateway));
 
             foreach ($rows as $r) {
                 $gtRs = new Guest_TokenRS();
@@ -176,7 +181,7 @@ where t.idRegistration = $idRegistration and nv.idName is null");
 
     }
 
-    public static function findTokenRS(\PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount) {
+    public static function findTokenRS(\PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount, $ccGateway) {
 
         $gtRs = new Guest_TokenRS();
         $gtRs->idGuest->setStoredVal($gid);
@@ -184,7 +189,11 @@ where t.idRegistration = $idRegistration and nv.idName is null");
         $gtRs->CardType->setStoredVal($cardType);
         $gtRs->MaskedAccount->setStoredVal($maskedAccount);
 
-        $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CardHolderName, $gtRs->CardType, $gtRs->MaskedAccount));
+        if ($ccGateway != '') {
+            $gtRs->CC_Gateway->setStoredVal($ccGateway);
+        }
+
+        $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CardHolderName, $gtRs->CardType, $gtRs->MaskedAccount, $gtRs->CC_Gateway));
 
         if (count($rows) == 1) {
 
@@ -196,7 +205,7 @@ where t.idRegistration = $idRegistration and nv.idName is null");
 
         } else {
 
-            throw new Hk_Exception_Runtime('Multiple Payment Tokens for guest Id: '.$gid);
+            throw new Hk_Exception_Runtime('Multiple Payment Tokens for guest Id: '.$gid.', ccgw='.$ccGateway);
         }
 
         return $gtRs;
