@@ -232,20 +232,17 @@ abstract class PaymentGateway {
 
     public static function getCreditGatewayNames(\PDO $dbh, $idVisit, $span) {
 
-        $ccNames = '';
+        $ccNames = array();
 
         $volStmt = $dbh->prepare("call get_credit_gw(:idVisit, :span);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         $volStmt->execute(array(':idVisit'=>intval($idVisit), ':span'=>intval($span)));
         $rows = $volStmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (count($rows) > 1) {
+        if (count($rows) > 0) {
 
             foreach ($rows as $r) {
-                $ccNames[] = $r['ccgw'];
+                $ccNames[$r['idLocation']] = $r['ccgw'];
             }
-
-        } else if (count($rows) == 1) {
-            $ccNames = $rows[0]['ccgw'];
         }
 
         return $ccNames;
@@ -262,13 +259,11 @@ abstract class PaymentGateway {
 
         $myType = '';
 
-        if (is_array($this->gwType)) {
-            $myType = '';
-        } else {
-            $myType = $this->gwType;
+        if (is_array($this->gwType) && count($this->gwType) == 1) {
+            $myType = strtolower(array_pop($this->gwType));
         }
 
-        return strtolower($myType);
+        return $myType;
     }
 
     public function getResponseErrors() {
@@ -354,12 +349,11 @@ class LocalGateway extends PaymentGateway {
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
 
         // Charge as Cash markup
-//        $payTbl->addBodyTr(
-//            HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
-//            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
-//            .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
-//            , array('style'=>'display:none;', 'class'=>'hhk-mcred'));
-//
+        $payTbl->addBodyTr(
+            HTMLTable::makeTd('New Card: ', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), '', TRUE), array('name'=>'selChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
+            .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
+            , array('id'=>'trvdCHName'));
 
     }
 

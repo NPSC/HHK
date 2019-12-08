@@ -106,6 +106,10 @@ class Room {
         return $this->roomRS->idRoom->getStoredVal();
     }
 
+    public function getIdLocation() {
+        return $this->roomRS->idLocation->getStoredVal();
+    }
+    
     public function getRoomRS() {
         return $this->roomRS;
     }

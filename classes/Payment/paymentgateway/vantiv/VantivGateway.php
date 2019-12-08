@@ -734,7 +734,7 @@ class VantivGateway extends PaymentGateway {
             $sel = HTMLSelector::doOptionsMkup($gwRows, $myGwType, FALSE);
 
             $payTbl->addBodyTr(
-                    HTMLTable::makeTh('Select House:')
+                    HTMLTable::makeTh('Select Location:')
                     .HTMLTable::makeTd(
                             HTMLSelector::generateMarkup($sel, $selArray)
                             , array('colspan'=>'2')
@@ -744,7 +744,7 @@ class VantivGateway extends PaymentGateway {
         } else {
 
             $payTbl->addBodyTr(
-                    HTMLTable::makeTh('Selected House:')
+                    HTMLTable::makeTh('Selected Location:')
                     .HTMLTable::makeTd(ucfirst($this->gwType), array('colspan'=>'2'))
                     );
         }

@@ -188,7 +188,7 @@ order by r.Title;");
         if ($payGW != '') {
             $newRow[`CC_Name`] = '';
         }
-        
+
         foreach ($attrs as $a) {
             $newRow[$a['Title']] = '';
         }
@@ -453,6 +453,7 @@ order by r.Title;");
 
     public static function saveRoom(\PDO $dbh, $idRoom, $post, $user, $keyDeposit) {
 
+        $uS = Session::getInstance();
         $room = new Room($dbh, $idRoom);
         $rTitle = '';
 
@@ -519,6 +520,11 @@ order by r.Title;");
 
         }
 
+        if (isset($post['selLocId'])) {
+            $idLoc = intval(filter_var($post['selLocId'], FILTER_SANITIZE_NUMBER_INT));
+            $roomRs->idLocation->setNewVal($idLoc);
+        }
+
         if (isset($post['selKeyCode'])) {
             $code = filter_var($post['selKeyCode'], FILTER_SANITIZE_STRING);
 
@@ -563,7 +569,7 @@ order by r.Title;");
         $roomAttr = new RoomAttributes($dbh, $room->getIdRoom());
         $roomAttr->saveAttributes($dbh, $capturedAttributes);
 
-        return array("roomList"=>self::roomTable($dbh, $keyDeposit));
+        return array("roomList"=>self::roomTable($dbh, $keyDeposit, $uS->PaymentGateway));
     }
 
     public static function saveResc(\PDO $dbh, $idResc, $post, $username, $showPartitions) {
@@ -677,6 +683,8 @@ order by r.Title;");
 
     public static function roomDialog(\PDO $dbh, $idRoom, $roomTypes, $roomCategories, $reportCategories, $rateCodes, $keyDepositCodes, $keyDeposit) {
 
+        $uS = Session::getInstance();
+
         $roomRs = new RoomRs();
         $roomRs->idRoom->setStoredVal($idRoom);
 
@@ -723,6 +731,21 @@ order by r.Title;");
                     HTMLSelector::doOptionsMkup(removeOptionGroups($keyDepositCodes), $room->getKeyDepositCode(), FALSE), array('id'=>'selKeyCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
         }
 
+        if ($uS->PaymentGateway != '') {
+
+            $ccGateways = PaymentGateway::getCreditGatewayNames($dbh, 0, 0);
+
+            $opts = array();
+
+            // Furn into options
+            foreach ($ccGateways as $l => $g) {
+                $opts[] = array(0=>$l, 1=> ucfirst($g));
+            }
+
+            $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                    HTMLSelector::doOptionsMkup($opts, $room->getIdLocation(), FALSE), array('id'=>'selLocId', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
+
+        }
 
         $roomAttr = new RoomAttributes($dbh, $room->getIdRoom());
         $rattribute = $roomAttr->getAttributes();

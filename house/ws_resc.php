@@ -27,6 +27,10 @@ require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Notes.php');
 require CLASSES . 'TableLog.php';
 
+require (PMT . 'GatewayConnect.php');
+require (PMT . 'PaymentGateway.php');
+require (PMT . 'PaymentResponse.php');
+
 require (PMT . 'Invoice.php');
 require (PMT . 'InvoiceLine.php');
 require (PMT . 'Receipt.php');
@@ -82,6 +86,9 @@ if (isset($_REQUEST["cmd"])) {
 }
 
 $uS = Session::getInstance();
+
+creditIncludes($uS->PaymentGateway);
+
 $events = array();
 
 try {
@@ -133,57 +140,57 @@ try {
             }
 
             break;
-            
+
         case 'getDocumentList':
-        
+
         	$guestId = intval(filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
         	$psgId = intval(filter_input(INPUT_GET, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
-        	
+
         	if($guestId > 0){
 	        	$events = ListDocuments::loadList($dbh, $guestId, Document::GuestLink, $_GET);
         	}else if($psgId > 0){
 	        	$events = ListDocuments::loadList($dbh, $psgId, Document::PsgLink, $_GET);
         	}
-        	
+
         	break;
-        	
+
 		case 'putdoc':
-		
+
 			SiteConfig::checkUploadFile('file');
-			
+
 			$guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
         	$psgId = intval(filter_input(INPUT_POST, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
         	$docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_STRING);
         	$mimeType = filter_input(INPUT_POST, 'mimetype', FILTER_SANITIZE_STRING);
         	$doc = $_FILES['file'];
-        	
+
         	if (is_null($guestId) || $guestId === FALSE) {
                 throw new Exception('GuestId missing');
             } else if (is_null($doc) || $doc === FALSE) {
                 throw new Exception('Document is missing');
             }
-        	
+
         	$docContents = file_get_contents($doc['tmp_name']);
-        	
+
             $document = Document::createNew($docTitle, $mimeType, $docContents, $uS->username);
-            
+
             $document->saveNew($dbh);
-            
+
             if($document->linkNew($dbh, $guestId, $psgId) > 0){
 	            $events = ["idDoc"=> $document->getIdDocument(), "length"=>strlen($docContents)];
             }else{
 	            $events = ["error" => "Unable to save document"];
             }
-        	
+
 			break;
-			
+
 		case 'getdoc':
-			
+
 			$docId = intval(filter_input(INPUT_GET, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
             $document = new Document($docId);
             $document->loadDocument($dbh);
-            
+
             if($document->getExtension()){
 	            $ending = "." . $document->getExtension();
             }else{
@@ -194,62 +201,62 @@ try {
             header('Content-Disposition: inline; filename="' . $document->getTitle() . $ending . '"');
             echo $document->getDoc();
             exit();
-			
+
 			break;
-			
+
 		case 'updatedoctitle':
-			
+
 			$docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
         	$docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_STRING);
-        	
+
         	if (is_null($docId) || $docId === FALSE) {
                 throw new Exception('DocId missing');
             }
-        	
+
             $document = new Document($docId);
-            
+
             $document->saveTitle($dbh, $docTitle);
-            
+
 	        $events = ["idDoc"=> $document->getIdDocument()];
-        	
+
 			break;
-			
+
 		case 'deletedoc':
-			
+
 			$docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
-        	
+
         	if (is_null($docId) || $docId === FALSE || $docId < 1) {
                 throw new Exception('DocId missing');
             }
-        	
+
             $document = new Document($docId);
-                        
+
             if($document->deleteDocument($dbh, $uS->username) > 0){
 	            $events = ["status"=> "success", "idDoc"=> $document->getIdDocument(), "msg"=>"Document deleted successfully"];
             }else{
 	            $events = ["error" => "Unable to delete document"];
             }
-        	
+
 			break;
-			
+
 		case 'undodeletedoc':
-			
+
 			$docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
-        	
+
         	if (is_null($docId) || $docId === FALSE || $docId < 1) {
                 throw new Exception('DocId missing');
             }
-        	
+
             $document = new Document($docId);
-                        
+
             if($document->undoDeleteDocument($dbh, $uS->username) > 0){
 	            $events = ["status"=> "success", "idDoc"=> $document->getIdDocument(), "msg"=>"Document restored successfully"];
             }else{
 	            $events = ["error" => "Unable to restore document"];
             }
-        	
+
 			break;
-			
+
         case 'vehsch':
 
             if (isset($_REQUEST['letters'])) {
@@ -685,7 +692,7 @@ $(document).mousedown(function (event) {
                 case 'outTable':
                     $events['outTable'] = ResourceView::showCoList($dbh, $startDate, $endDate);
                     break;
-                    
+
                 case 'inTable':
                     $events['inTable'] = ResourceView::showCiList($dbh, $startDate, $endDate);
                     break;
