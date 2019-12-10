@@ -723,10 +723,10 @@ class VantivGateway extends PaymentGateway {
 
         $myGwType = '';
 
-        $stmt = $dbh->query("Select DISTINCT CC_Gateway, Title from location where Status = 'a'");
+        $stmt = $dbh->query("Select DISTINCT l.CC_Gateway, l.Title from location l join room r on l.idLocation = r.idLocation where r.idLocation is not null and l.'Status' = 'a'");
         $gwRows = $stmt->fetchAll();
 
-        $selArray = array('id'=>'selccgw', 'size'=>count($gwRows));
+        $selArray = array('id'=>'selccgw', 'name'=>'selccgw', 'size'=>count($gwRows));
 
         if (is_array($this->gwType)) {
             // Show choice of gateway

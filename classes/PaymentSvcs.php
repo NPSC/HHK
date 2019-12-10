@@ -760,12 +760,17 @@ class PaymentSvcs {
 
     }
 
-    public static function processSiteReturn(\PDO $dbh, $ccgw, $post) {
+    public static function processSiteReturn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
+        
+        //Quick exti?
+        if ($uS->PaymentGateway == '' || $uS->ccgw == '') {
+            return NULL;
+        }
 
         // Payment Gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $ccgw);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
         $payNotes = '';
         $idInv = 0;
@@ -789,8 +794,6 @@ class PaymentSvcs {
             $post = $uS->imcomplete;
             unset($uS->imcomplete);
         }
-
-        unset($uS->ccgw);
 
         return $gateway->processHostedReply($dbh, $post, $tokenId, $idInv, $payNotes, $uS->username);
 

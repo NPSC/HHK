@@ -57,6 +57,11 @@ class PaymentChooser {
         if (isset($post['rbUseCard'])) {
             $pmp->setIdToken(intval(filter_var($post['rbUseCard'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
+        
+        if (isset($post['selccgw'])) {
+            $pmp->setCcGateway(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
+            $uS->ccgw = $pmp->getCcGateway();
+        }
 
         if (isset($post['rbUseCard' . $rtnIndex])) {
             $pmp->setRtnIdToken(intval(filter_var($post['rbUseCard' . $rtnIndex], FILTER_SANITIZE_NUMBER_INT), 10));

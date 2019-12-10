@@ -555,6 +555,7 @@ class PaymentManagerPayment {
     protected $balWith;
     protected $manualKeyEntry;
     protected $cardHolderName = '';
+    protected $ccGateway = '';
     /**
      *
      * @var PriceModel
@@ -740,6 +741,15 @@ class PaymentManagerPayment {
 
     public function setNewCardOnFile($newCardOnFile) {
         $this->newCardOnFile = $newCardOnFile;
+        return $this;
+    }
+    
+    public function getCcGateway() {
+        return $this->ccGateway;
+    }
+
+    public function setCcGateway($v) {
+        $this->ccGateway = $v;
         return $this;
     }
 

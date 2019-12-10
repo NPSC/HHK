@@ -28,7 +28,7 @@ class CreditToken {
         if ($idToken > 0) {
             $gtRs = self::getTokenRsFromId($dbh, $idToken);
         } else {
-            $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum);
+            $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum,$ccGateway);
         }
 
         // Load values
