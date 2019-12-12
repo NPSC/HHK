@@ -18,7 +18,12 @@ require (CLASSES . 'US_Holidays.php');
 require (HOUSE . 'Reservation_1.php');
 
 
-$wInit = new webInit(WebPageCode::Service);
+try {
+    $wInit = new webInit(WebPageCode::Service);
+} catch (Hk_Exception_InvalidArguement $ex) {
+    // Password may be missing
+    exit('');
+}
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
