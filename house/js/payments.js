@@ -1131,6 +1131,7 @@ function verifyAmtTendrd() {
 
     $('#tdCashMsg').hide('fade');
     $('#tdInvceeMsg').text('').hide();
+    $('#tdChargeMsg').text('');
 
     if ($('#PayTypeSel').val() === 'ca') {
 
@@ -1167,6 +1168,12 @@ function verifyAmtTendrd() {
         if ((isNaN(idPayor) || idPayor < 1) && total != 0) {
             $('#tdInvceeMsg').text('The Invoicee is missing. ').show('fade');
             return false;
+        }
+        
+    } else if ($('#PayTypeSel').val() === 'cc') {
+        
+        if ($('#selccgw').length > 0 && $('#selccgw').val() === '') {
+            $('#tdChargeMsg').text('Select a location.');
         }
     }
     return true;

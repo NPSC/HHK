@@ -1031,6 +1031,9 @@ ORDER BY v.idVisit , v.Span;");
             $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '2'))
                 .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
                     , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+            $tbl->addBodyTr(
+                 HTMLTable::makeTd('', array('id'=>'tdChargeMsg', 'colspan'=>'3', 'style'=>'color:red;'))
+                     , array('style'=>'display:none;', 'class'=>'hhk-tblCredit' . $index));
 
             $paymentGateway->selectPaymentMarkup($dbh, $tbl);
 

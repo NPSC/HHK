@@ -807,7 +807,7 @@ CREATE TABLE if not exists `location` (
   `Description` varchar(245) DEFAULT '',
   `Status` varchar(5) DEFAULT '',
   `Address` varchar(145) NOT NULL DEFAULT '',
-  `Phone` varchar(45) NOT NULL DEFAULT '',
+  `CC_Gateway` varchar(45) NOT NULL DEFAULT '',
   `Map` varchar(510) NOT NULL DEFAULT '',
   `Owner_Id` int(11) NOT NULL DEFAULT '0',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',

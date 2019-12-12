@@ -1443,8 +1443,6 @@ CREATE or replace VIEW `vindividual_donations` AS
 CREATE OR REPLACE VIEW `vitem_list` AS
     SELECT 
         `i`.`idItem` AS `idItem`,
-        `i`.`Internal_Number` AS `Internal_Number`,
-        `i`.`Entity_Id` AS `Entity_Id`,
         `i`.`Percentage` AS `Percentage`,
         `i`.`Deleted` AS `Deleted`,
         `i`.`Has_Decimals` AS `Has_Decimals`,
@@ -1618,7 +1616,7 @@ Select
     l.Description,
     l.Status,
     l.Address,
-    l.Phone,
+    l.CC_Gateway,
     l.Owner_Id as `Owner Id`,
     ifnull(v.Name_Last, '') AS Owner,
     l.Updated_By as `Updated By`,

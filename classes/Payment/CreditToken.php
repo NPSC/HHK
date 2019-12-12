@@ -164,7 +164,7 @@ where t.idRegistration = $idReg and t.CC_Gateway = '$ccGateway' and nv.idName is
         if ($idReg > 0) {
 
             $gtRs = new Guest_TokenRS();
-            $gtRs->idGuest->setStoredVal($idReg);
+            $gtRs->idGuest->setStoredVal($idGst);
             $gtRs->CC_Gateway->setStoredVal($ccGateway);
             $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CC_Gateway));
 
