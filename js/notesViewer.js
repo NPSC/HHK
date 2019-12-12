@@ -28,7 +28,7 @@
                         sortable: true,
                         searchable: false,
                         render: function (data, type, row) {
-                            return createActions(data, row);  
+                            return showFlag(data, row);  
                         }
                 },
                 {
@@ -45,6 +45,7 @@
                 "targets": [ 2 ],
                         title: "Date",
                         data: 'Date',
+                        sortable: true,
                         render: function (data, type) {
                             return dateRender(data, type, dateFormat);
                         }
@@ -145,6 +146,16 @@
         
         return $div;
     }
+
+	function showFlag(flagged, row){
+		if(flagged){
+			return '<label for="flag">Flag</label>' +
+			'<input type="checkbox" name="flag" class="flag" checked="true">';
+		}else{
+			return '<label for="flag">Flag</label>' +
+			'<input type="checkbox" name="flag" class="flag" checked="false">';
+		}
+	}
 
     function createActions(noteId, row) {
         
@@ -322,7 +333,7 @@
 	        "processing": true,
 	        "deferRender": true,
 	        "language": {"sSearch": "Search Notes:"},
-	        "sorting": [[1,'desc']],
+	        "sorting": [[0,'asc'], [2,'desc']],
 	        "displayLength": 5,
 	        "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
                 "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
@@ -347,6 +358,10 @@
         $wrapper.append(createNewNote(settings, dtTable));
 
 		$wrapper.find('.hhk-note-button').button();
+		
+		$wrapper.find(".flag").checkboxradio({
+			icon: false
+		});
 
         $wrapper.show();
 

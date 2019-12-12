@@ -771,7 +771,6 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="../js/uppload.js"></script> -->
 		<script type="text/javascript" src="js/documentUpload.js"></script>
-		
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
