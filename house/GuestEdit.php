@@ -770,7 +770,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="../js/uppload.polyfills.js"></script>
-		<script type="text/javascript" src="js/documentUpload.js"></script>
+		<script type="text/javascript" src="js/documentUpload.min.js"></script>
 		
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
@@ -971,6 +971,6 @@ $uS->guestId = $id;
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload.js?vn=36"></script>
+        <script type="text/javascript" src="js/guestload.min.js?vn=38"></script>
     </body>
 </html>
