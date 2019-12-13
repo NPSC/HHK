@@ -3,9 +3,9 @@
     $.fn.docUploader = function (options) {
 
 		var uploader = 
-						'<button id="docUploadBtn" class="ui-button ui-corner-all ui-widget">' +
+						'<div id="docUploadBtn" class="ui-button ui-corner-all ui-widget">' +
 							'<span class="ui-icon ui-icon-plusthick" style="margin-right: 0.5em"></span>New Document' +
-						'</button>';
+						'</div>';
 
         var defaults = {
             guestId: 0,
