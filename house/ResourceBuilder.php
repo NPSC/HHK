@@ -26,6 +26,7 @@ require (CLASSES . 'HouseLog.php');
 require (CLASSES . 'Purchase/RoomRate.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . 'ValueAddedTax.php');
+require (CLASSES . 'SiteConfig.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'Attributes.php');
@@ -33,6 +34,7 @@ require (HOUSE . 'Constraint.php');
 
 const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
 const LOCATION_TABLE_NAME = 'Location';
+const FORM_FILE = 'formfile';
 
 try {
     $wInit = new webInit();
@@ -973,72 +975,59 @@ if (isset($_POST['btnTaxSave'])) {
 
 }
 
-// Get forms
-if (isset($_POST['ldfm'])) {
 
-    $formDef = '';
-    $formTitle = '';
+// Upload a new form to an existing form tab
+if (isset($_POST['docUpload']) && isset($_FILES[FORM_FILE])) {
 
-    $formType = filter_var($_POST['ldfm'], FILTER_SANITIZE_STRING);
+    $tabIndex = 8;
 
-    $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
+    $allowedFileExts = array(
+        'htm' => 'y',
+        'html' => 'y',
+        'txt' => 'y',
+    );
 
-    // Look for a match
-    foreach ($rarry as $f) {
-
-        if ($formType === $f['Code']) {
-            $formDef = $f['Substitute'];
-            $formTitle = $f['Description'];
-            break;
-        }
+    $docId = -1;
+    if (isset($_POST['docId'])) {
+        $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
     }
 
-    if (empty($formDef) === FALSE) {
-        // Caught us a form
+    $ext = $ext = pathinfo($_FILES[FORM_FILE]['name'], PATHINFO_EXTENSION);
 
-        $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef'");
-        $docRows = $formstmt->fetchAll();
+    if ($_FILES[FORM_FILE]['size'] == 0) {
 
+        $rteMsg = 'Pick a file to upload.  ';
 
-        $li = '';
-        $tabContent = '';
+    } else if (isset($allowedFileExts[$ext]) === FALSE) {
 
-        foreach ($docRows as $r) {
-
-            $li .= HTMLContainer::generateMarkup('li',
-                    HTMLContainer::generateMarkup('a', $r['Description'] , array('href'=>'#'.$r['Code'])));
-
-            $tabContent .= HTMLContainer::generateMarkup('div',
-'<form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST">
-<input type="hidden" name="docId" value="'.$r['idDocument'] . '"/>
-Upload new file: <input name="formfile" type="file" />
-<input type="submit" name="docUpload" value="Send File" />
-</form>'
-                .HTMLContainer::generateMarkup('div', $r['Doc'], array('id'=>'form'.$r['idDocument'])),
-                array('id'=>$r['Code']));
-
-        }
-
-        // add New documt
-        $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'New' , array('href'=>'#newDoc')), array('id'=>'liNewForm', 'data-type'=>$formType, 'data-title'=>$formTitle));
-
-        $tabContent .= HTMLContainer::generateMarkup('div', ' ', array('id'=>'newDoc'));
-
-        // Make the final tab control
-        $ul = HTMLContainer::generateMarkup('ul', $li, array());
-        $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
-
-        echo $output;
-
+        $rteMsg = 'Unsupported file extension.  ';
 
     } else {
-        echo "Nothing specified.  ";
+
+        try {
+            SiteConfig::checkUploadFile(FORM_FILE);  // Throws RuntimeException
+
+            // Get the file and convert it.
+            $file = file_get_contents($_FILES[FORM_FILE]['tmp_name']);
+            $doc = iconv('Windows-1252', 'UTF-8', $file);
+            $uName = $uS->username;
+
+            $ustmt = $dbh->prepare("update document set Doc = ?, Updated_By = ?, Last_Updated = now() where idDocument = ?");
+            $ustmt->bindParam(1, $doc, PDO::PARAM_LOB);
+            $ustmt->bindParam(2, $uName);
+            $ustmt->bindParam(3, $docId);
+            $dbh->beginTransaction();
+            $ustmt->execute();
+            $dbh->commit();
+
+        } catch (RuntimeException $ex) {
+            $rteMsg = $ex->getMessage();
+        }
     }
-    exit();
 }
 
-// Upload a form
-if (isset($_POST['docUpload'])) {
+// Delete a form tab and any associated document
+if (isset($_POST['deleteUlForm'])) {
 
     $tabIndex = 8;
 
@@ -1047,21 +1036,34 @@ if (isset($_POST['docUpload'])) {
         $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
     }
 
-    // Get the file and convert it.
-    $file = file_get_contents($_FILES['formfile']['tmp_name']);
-    $doc = iconv('Windows-1252', 'UTF-8', $file);
-    $uName = $uS->username;
+    if ($docId > 0) {
 
-    $ustmt = $dbh->prepare("update document set Doc = ?, Updated_By = ?, Last_Updated = now() where idDocument = ?");
-    $ustmt->bindParam(1, $doc, PDO::PARAM_LOB);
-    $ustmt->bindParam(2, $uName);
-    $ustmt->bindParam(3, $docId);
-    $dbh->beginTransaction();
-    $ustmt->execute();
-    $dbh->commit();
+        $docRs = new DocumentRS();
+        $docRs->idDocument->setStoredVal($docId);
+        $rows = EditRS::select($dbh, $docRs, array($docRs->idDocument));
+
+        if (count($rows) > 0) {
+
+            $stmt = $dbh->query("SELECT g2.Table_Name, g2.Code
+FROM gen_lookups g join gen_lookups g2 on g.Substitute = g2.Table_Name
+where g2.Substitute = $docId");
+            $gls = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (count($gls) == 1) {
+                $tn = filter_var($gls[0]['Table_Name'], FILTER_SANITIZE_STRING);
+                $cd = filter_var($gls[0]['Code'], FILTER_SANITIZE_STRING);
+
+                if ($tn != '' && $cd != '') {
+                    $dbh->exec("Delete from `gen_lookups` where `Table_Name` = '$tn' and `Code` = '$cd';");
+                    $dbh->exec("Delete from document where idDocument = $docId");
+                }
+            }
+        }
+    }
+
 }
 
-// Create a new form
+// Create a new form upload tab and a new blank document
 if (isset($_POST['txtformLang'])) {
 
     $tabIndex = 8;
@@ -1140,6 +1142,74 @@ if (isset($_POST['txtformLang'])) {
         }
     }
 }
+
+// Make upload forms markup
+if (isset($_POST['ldfm'])) {
+
+    $formDef = '';
+    $formTitle = '';
+
+    $formType = filter_var($_POST['ldfm'], FILTER_SANITIZE_STRING);
+
+    $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
+
+    // Look for a match
+    foreach ($rarry as $f) {
+
+        if ($formType === $f['Code']) {
+            $formDef = $f['Substitute'];
+            $formTitle = $f['Description'];
+            break;
+        }
+    }
+
+    if (empty($formDef) === FALSE) {
+        // Caught us a form
+
+        $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef'");
+        $docRows = $formstmt->fetchAll();
+
+
+        $li = '';
+        $tabContent = '';
+
+        foreach ($docRows as $r) {
+
+            $li .= HTMLContainer::generateMarkup('li',
+                    HTMLContainer::generateMarkup('a', $r['Description'] , array('href'=>'#'.$r['Code'])));
+
+            $tabContent .= HTMLContainer::generateMarkup('div',
+'<form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="ui-widget-content" style="margin-bottom:15px; padding: 5px 7px; ">
+<input type="hidden" name="docId" value="'.$r['idDocument'] . '"/>
+Upload new file: <input name="formfile" type="file" />
+<input type="submit" name="docUpload" value="Send File" />
+<input type="submit" name="deleteUlForm" style="margin-left:5em;" value="Delete ' . $r['Description'] . ' Tab" />
+</form>'
+                .HTMLContainer::generateMarkup('div', $r['Doc'], array('id'=>'form'.$r['idDocument'])),
+                array('id'=>$r['Code']));
+
+        }
+
+        // add New documt
+        $li .= HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('a', 'New...' , array('href'=>'#newDoc')), array('id'=>'liNewForm', 'data-type'=>$formType, 'data-title'=>$formTitle));
+
+        $tabContent .= HTMLContainer::generateMarkup('div', ' ', array('id'=>'newDoc'));
+
+        // Make the final tab control
+        $ul = HTMLContainer::generateMarkup('ul', $li, array());
+        $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+
+        echo $output;
+
+
+    } else {
+        echo "Nothing specified.  ";
+    }
+    exit();
+}
+
+
 //
 // Generate tab content
 //
@@ -1990,7 +2060,7 @@ $resultMessage = $alertMsg->createMarkup();
                 }
             }
         });
-        $('#btnnewform').button();
+
         $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
             getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
         });
@@ -2008,12 +2078,12 @@ $resultMessage = $alertMsg->createMarkup();
                     if (data) {
                         $('#divUploadForm').empty().append(data);
                         $('#regTabDiv').tabs({
+                            collapsible: true,
                             beforeActivate: function (event, ui) {
                                 if (ui.newTab.prop('id') === 'liNewForm') {
                                     $('#hdnFormType').val(ui.newTab.data('type'));
                                     $('#spanFrmTypeTitle').text(ui.newTab.data('title'));
                                     $('#txtformLang').val('');
-
 
                                     $('#divNewForm').dialog('open');
                                 }
@@ -2260,14 +2330,6 @@ $resultMessage = $alertMsg->createMarkup();
                         <th>Language or other title</th>
                         <td><input id="txtformLang" name="txtformLang" type="text" value=''/></td>
                     </tr>
-<!--                    <tr>
-                        <th>MIME Type</th>
-                        <td><input id="txtMimeType" name="txtMimeType" type="text" value='text/html' readonly="true"/></td>
-                    </tr>
-                    <tr>
-                        <th>Character Encoding</th>
-                        <td><input id="txtEncoding" name="txtEncoding" type="text" value='windows-1252' /></td>
-                    </tr>-->
                 </table>
                 <input type="hidden" id="hdnFormType" name="hdnFormType" />
                 </form>
