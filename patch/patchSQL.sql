@@ -21,8 +21,5 @@ UPDATE `sys_config` SET `Category`='fg' WHERE `Key`='BatchSettlementHour';
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`, `GenLookup`) VALUES('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', '');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'c', 'Reservation Confirmation', 'Confirm_Resv');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 's', 'Survey Form', 'Survey_Form');
 
-DELETE FROM `gen_lookups` WHERE `Table_Name`='CC_Gateway_Name';
-DELETE FROM `sys_config` WHERE `Key`='ccgw';
+DELETE FROM `gen_lookups` WHERE `Table_Name`='CC_Gateway_Name';DELETE FROM `sys_config` WHERE `Key`='ccgw';

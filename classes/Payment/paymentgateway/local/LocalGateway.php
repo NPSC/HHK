@@ -32,7 +32,7 @@
 class LocalGateway extends PaymentGateway {
 
     public static function getPaymentMethod() {
-        return PaymentMethod::ChgAsCash;
+        return PaymentMethod::Charge;
     }
 
     protected function loadGateway(\PDO $dbh) {
@@ -45,6 +45,43 @@ class LocalGateway extends PaymentGateway {
 
     protected function setCredentials($credentials) {
         $this->credentials = $credentials;
+    }
+
+    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
+
+        $uS = Session::getInstance();
+
+        
+        $cashResp = new ManualChargeResponse($invoice->getAmountToPay(), $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
+
+        //ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
+
+        // Update invoice
+        $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
+
+        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+        $payResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
+        $payResult->setDisplayMessage('External Credit Payment Recorded.  ');
+    }
+    
+    protected function _voidSale(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes, $bid) {
+        return array('warning' => '_voidSale is not implemented. ');
+    }
+
+    protected function _returnPayment(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $retAmount, $bid) {
+        return array('warning' => '_returnPayment is not implemented. ');
+    }
+
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
+        return array('warning' => 'Not Available.  ');
+    }
+
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+        return array('warning' => 'Return Amount is not implemented. ');
+    }
+
+    public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
+        return $this->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid);
     }
 
     protected static function _saveEditMarkup(\PDO $dbh, $gatewayName, $post) {

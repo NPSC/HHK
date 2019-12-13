@@ -90,7 +90,7 @@ class PaymentSvcs {
 
           case PayType::ChargeAsCash:
 
-             $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
+            $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
 
             ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
 
