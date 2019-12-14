@@ -32,7 +32,7 @@ BEGIN
     if (myResc > 0) THEN
 
         SELECT 
-            ifnull(l.CC_Gateway, '') as `ccgw`, l.idLocation
+            ifnull(l.Merchant, '') as `Merchant`, l.idLocation
         FROM
             resource_room rr
                 LEFT JOIN
@@ -45,7 +45,7 @@ BEGIN
     ELSE
 
         SELECT 
-           DISTINCT ifnull(l.CC_Gateway, '') as `ccgw`, l.idLocation
+           DISTINCT ifnull(l.Merchant, '') as `Merchant`, l.idLocation
         FROM
             room rm
                 LEFT JOIN

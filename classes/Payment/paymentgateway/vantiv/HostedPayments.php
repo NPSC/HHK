@@ -24,7 +24,7 @@ class CardInfo {
 
         if (strtolower($gway->getGatewayType()) == 'test') {
             $initCi->setOperatorID('test');
-            $trace = TRUE;
+//            $trace = TRUE;
         }
 
         $ciResponse = $initCi->submit($gway->getCredentials(), $trace);

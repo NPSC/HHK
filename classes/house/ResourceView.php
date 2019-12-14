@@ -128,7 +128,7 @@ order by r.Title;");
         }
 
         if ($payGW != '') {
-            $depositCol .= ", ifnull(l.CC_Gateway, '') as `CC_Name` ";
+            $depositCol .= ", ifnull(l.Merchant, '') as `Merchant` ";
         }
 
 
@@ -186,7 +186,7 @@ order by r.Title;");
        }
 
         if ($payGW != '') {
-            $newRow[`CC_Name`] = '';
+            $newRow[`Merchant`] = '';
         }
 
         foreach ($attrs as $a) {
@@ -733,13 +733,14 @@ order by r.Title;");
 
         if ($uS->PaymentGateway != '') {
 
-            $ccGateways = PaymentGateway::getCreditGatewayNames($dbh, 0, 0);
+            $gstmt = $dbh->query("Select idLocation, Title from location where ifnull(Merchant, '') != '';");
+            $ccGateways = $gstmt->fetchAll(PDO::FETCH_NUM);
 
             $opts = array();
 
             // Furn into options
-            foreach ($ccGateways as $l => $g) {
-                $opts[] = array(0=>$l, 1=> ucfirst($g));
+            foreach ($ccGateways as $l) {
+                $opts[] = array(0=>$l[0], 1=> ucfirst($l[1]));
             }
 
             $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(

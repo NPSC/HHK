@@ -1511,6 +1511,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
         IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
         IFNULL(`pa`.`Customer_Id`, 0) AS `Charge_Customer_Id`,
+        IFNULL(`pa`.`Merchant`, '') AS `Merchant`,
         IFNULL(`pa`.`Acct_Number`, `p`.`Data2`) AS `Masked_Account`,
         IFNULL(`pa`.`Card_Type`, '') AS `Card_Type`,
         IFNULL(`pa`.`Approved_Amount`, '') AS `Approved_Amount`,
@@ -1580,6 +1581,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
         IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
         IFNULL(`pa`.`Customer_Id`, 0) AS `Charge_Customer_Id`,
+        IFNULL(`pa`.`Merchant`, '') AS `Merchant`,
         IFNULL(`pa`.`Acct_Number`, `p`.`Data2`) AS `Masked_Account`,
         IFNULL(`pa`.`Card_Type`, '') AS `Card_Type`,
         IFNULL(`pa`.`Approved_Amount`, '') AS `Approved_Amount`,
@@ -1616,7 +1618,7 @@ Select
     l.Description,
     l.Status,
     l.Address,
-    l.CC_Gateway,
+    l.Merchant,
     l.Owner_Id as `Owner Id`,
     ifnull(v.Name_Last, '') AS Owner,
     l.Updated_By as `Updated By`,
@@ -2368,11 +2370,12 @@ FROM
 order by r.Util_Priority,r.Title;
 
 
+
 -- -----------------------------------------------------
--- View `vroom_listing`
+-- View `vroom_paygateway`
 -- -----------------------------------------------------
 CREATE  OR REPLACE VIEW `vroom_paygateway` AS
-Select ifnull(l.CC_Gateway, '') as `ccgw`, r.idRoom
+Select r.idRoom, ifnull(l.Merchant, '') as `Merchant`
 from 
     room r 
         left join 

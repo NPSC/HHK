@@ -653,7 +653,7 @@ class InitCiRequest extends MercRequest {
 
     protected function execute(\SoapClient $txClient, array $data) {
         if ($this->getPaymentPageCode() == '') {
-            throw new Hk_Exception_Payment('Mercury Card Info Page is not set.  ');
+            throw new Hk_Exception_Payment('Worldpay CardInfo Page is not set.  ');
         }
         return new InitCiResponse($txClient->InitializeCardInfo($data), $this->gateWay[$this->getPaymentPageCode()]);
     }

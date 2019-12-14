@@ -721,32 +721,31 @@ class VantivGateway extends PaymentGateway {
 
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
 
-        $myGwType = '';
-
-        $stmt = $dbh->query("Select DISTINCT l.CC_Gateway, l.`Title` from `location` l join `room` r on l.idLocation = r.idLocation where r.idLocation is not null and l.`Status` = 'a'");
+        $stmt = $dbh->query("Select DISTINCT l.`Merchant`, l.`Title` from `location` l join `room` r on l.idLocation = r.idLocation where r.idLocation is not null and l.`Status` = 'a'");
         $gwRows = $stmt->fetchAll();
 
         $selArray = array('id'=>'selccgw', 'name'=>'selccgw', 'size'=>count($gwRows));
 
-        if (is_array($this->gwType)) {
+        if (is_array($this->gwType) && count($this->gwType) > 1) {
             // Show choice of gateway
 
-            $sel = HTMLSelector::doOptionsMkup($gwRows, $myGwType, FALSE);
+            $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
 
             $payTbl->addBodyTr(
                     HTMLTable::makeTh('Select Location:')
                     .HTMLTable::makeTd(
-                            HTMLSelector::generateMarkup($sel, $selArray)
-                            , array('colspan'=>'2')
+                            HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2')
                     )
                     , array('id'=>'trvdCHName'));
 
-        } else {
+        } else if (is_array($this->gwType) && count($this->gwType) === 1) {
 
+            $sel = HTMLSelector::doOptionsMkup($gwRows, $this->gwType[0], FALSE);
+            
             $payTbl->addBodyTr(
                     HTMLTable::makeTh('Selected Location:')
-                    .HTMLTable::makeTd(ucfirst($this->gwType), array('colspan'=>'2'))
-                    );
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
+                    , array('id'=>'trvdCHName'));
         }
 
     }

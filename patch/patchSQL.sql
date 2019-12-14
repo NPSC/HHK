@@ -3,25 +3,27 @@ ALTER TABLE `w_groups`
  ADD COLUMN `IP_Restricted` BOOLEAN NOT NULL DEFAULT 0 AFTER `Cookie_Restricted`;
 
 ALTER TABLE `location`
-    CHANGE COLUMN `Phone` `CC_Gateway` VARCHAR(45) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
+    CHANGE COLUMN `Phone` `Merchant` VARCHAR(45) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
+
+ALTER TABLE `card_id` 
+    ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Amount`;
 
 
 ALTER TABLE `guest_token`
-    ADD COLUMN `CC_Gateway` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Token`;
+    ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Token`;
 
 ALTER TABLE `payment_auth`
-    ADD COLUMN `CC_Gateway` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Processor`;
+    ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Processor`;
 
-update `guest_token` set `CC_Gatewway` = (Select `Value`  from `sys_config` where `Key` = 'ccgw');
-update `payment_auth` set `CC_Gatewway` = (Select `Value`  from `sys_config` where `Key` = 'ccgw');
-
+update `guest_token` set `Merchant` = ifnull((Select `Value`  from `sys_config` where `Key` = 'ccgw'), '');
+update `payment_auth` set `Merchant` = ifnull((Select `Value`  from `sys_config` where `Key` = 'ccgw'), '');
+Insert into location (idLocation, Title, Merchant, Status) select 1, ifnull(`Value`, ''), ifnull(`Value`, ''), 'a' from `sys_config` where `Key` = 'ccgw';
+update room r set r.idLocation = (select ifnull(idLocation, '') from location where idLocation = 1) where r.idLocation = 0;
 
 UPDATE `sys_config` SET `Category`='fg' WHERE `Key`='BatchSettlementHour';
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`, `GenLookup`) VALUES('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', '');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'c', 'Reservation Confirmation', 'Confirm_Resv');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 's', 'Survey Form', 'Survey_Form');
 
 ALTER TABLE `document` CHANGE COLUMN `Doc` `Doc` MEDIUMBLOB NULL DEFAULT NULL ;

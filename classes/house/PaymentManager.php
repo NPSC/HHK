@@ -555,7 +555,7 @@ class PaymentManagerPayment {
     protected $balWith;
     protected $manualKeyEntry;
     protected $cardHolderName = '';
-    protected $ccGateway = '';
+    protected $merchant = '';
     /**
      *
      * @var PriceModel
@@ -744,12 +744,12 @@ class PaymentManagerPayment {
         return $this;
     }
     
-    public function getCcGateway() {
-        return $this->ccGateway;
+    public function getMerchant() {
+        return $this->merchant;
     }
 
-    public function setCcGateway($v) {
-        $this->ccGateway = $v;
+    public function setMerchant($v) {
+        $this->merchant = $v;
         return $this;
     }
 
@@ -892,10 +892,10 @@ class PaymentManagerPayment {
 
         $uS = Session::getInstance();
 
-//        // Check for Charge as Cash case.
-//        if ($payType == PayType::Charge && $uS->ccgw == ''){
-//           $payType = PayType::ChargeAsCash;
-//        }
+        // Check for Charge as Cash case.
+        if ($payType == PayType::Charge && $uS->ccgw == ''){
+           $payType = PayType::ChargeAsCash;
+        }
 
         $this->payType = $payType;
         return $this;

@@ -241,7 +241,7 @@ abstract class PaymentGateway {
         if (count($rows) > 0) {
 
             foreach ($rows as $r) {
-                $ccNames[$r['idLocation']] = $r['ccgw'];
+                $ccNames[$r['idLocation']] = $r['Merchant'];
             }
         }
 
@@ -285,7 +285,7 @@ abstract class PaymentGateway {
 
         $infoArray = array();
 
-        $query = "select `idName`, `idGroup`, `InvoiceNumber`, `Amount`, `CardID` from `card_id` where `CardID` = :cid";
+        $query = "select `idName`, `idGroup`, `InvoiceNumber`, `Amount`, `CardID`, `Merchant` from `card_id` where `CardID` = :cid";
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':cid'=>$cardId));
 

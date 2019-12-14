@@ -17,7 +17,7 @@
  */
 class CreditToken {
 
-    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr, $ccGateway, $idToken = 0) {
+    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr, $merchant, $idToken = 0) {
 
         if ($vr->saveCardonFile() === FALSE || $vr->getToken() == '') {
             return 0;
@@ -28,13 +28,13 @@ class CreditToken {
         if ($idToken > 0) {
             $gtRs = self::getTokenRsFromId($dbh, $idToken);
         } else {
-            $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum,$ccGateway);
+            $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum,$merchant);
         }
 
         // Load values
         $gtRs->idGuest->setNewVal($idPayor);
         $gtRs->idRegistration->setNewVal($idRegistration);
-        $gtRs->CC_Gateway->setNewVal($ccGateway);
+        $gtRs->Merchant->setNewVal($merchant);
 
         if ($vr->getCardHolderName() != '') {
             $gtRs->CardHolderName->setNewVal($vr->getCardHolderName());
@@ -137,7 +137,7 @@ class CreditToken {
     }
 
 
-    public static function getRegTokenRSs(\PDO $dbh, $idRegistration, $ccGateway, $idGuest = 0) {
+    public static function getRegTokenRSs(\PDO $dbh, $idRegistration, $merchant, $idGuest = 0) {
 
         $rsRows = array();
         $idReg = intval($idRegistration);
@@ -148,7 +148,7 @@ class CreditToken {
         if ($idRegistration > 0) {
 
             $stmt = $dbh->query("select t.* from guest_token t left join name_volunteer2 nv on t.idGuest = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ba'
-where t.idRegistration = $idReg and t.CC_Gateway = '$ccGateway' and nv.idName is null");
+where t.idRegistration = $idReg and t.Merchant = '$merchant' and nv.idName is null");
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -165,8 +165,8 @@ where t.idRegistration = $idReg and t.CC_Gateway = '$ccGateway' and nv.idName is
 
             $gtRs = new Guest_TokenRS();
             $gtRs->idGuest->setStoredVal($idGst);
-            $gtRs->CC_Gateway->setStoredVal($ccGateway);
-            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CC_Gateway));
+            $gtRs->Merchant->setStoredVal($merchant);
+            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->Merchant));
 
             foreach ($rows as $r) {
                 $gtRs = new Guest_TokenRS();
@@ -181,7 +181,7 @@ where t.idRegistration = $idReg and t.CC_Gateway = '$ccGateway' and nv.idName is
 
     }
 
-    public static function findTokenRS(\PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount, $ccGateway) {
+    public static function findTokenRS(\PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount, $merchant) {
 
         $gtRs = new Guest_TokenRS();
         $gtRs->idGuest->setStoredVal($gid);
@@ -189,11 +189,11 @@ where t.idRegistration = $idReg and t.CC_Gateway = '$ccGateway' and nv.idName is
         $gtRs->CardType->setStoredVal($cardType);
         $gtRs->MaskedAccount->setStoredVal($maskedAccount);
 
-        if ($ccGateway != '') {
-            $gtRs->CC_Gateway->setStoredVal($ccGateway);
+        if ($merchant != '') {
+            $gtRs->Merchant->setStoredVal($merchant);
         }
 
-        $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CardHolderName, $gtRs->CardType, $gtRs->MaskedAccount, $gtRs->CC_Gateway));
+        $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CardHolderName, $gtRs->CardType, $gtRs->MaskedAccount, $gtRs->Merchant));
 
         if (count($rows) == 1) {
 
@@ -205,7 +205,7 @@ where t.idRegistration = $idReg and t.CC_Gateway = '$ccGateway' and nv.idName is
 
         } else {
 
-            throw new Hk_Exception_Runtime('Multiple Payment Tokens for guest Id: '.$gid.', ccgw='.$ccGateway);
+            throw new Hk_Exception_Runtime('Multiple Payment Tokens for guest Id: '.$gid.', ccgw='.$merchant);
         }
 
         return $gtRs;

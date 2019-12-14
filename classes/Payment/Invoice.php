@@ -925,7 +925,7 @@ where pi.Invoice_Id in ($whAssoc)";
             $rows = $volStmt->fetchAll(PDO::FETCH_ASSOC);
 
             if (count($rows) == 1) {
-                return $rows[0]['ccgw'];
+                return $rows[0]['Merchant'];
             }
         }
 
