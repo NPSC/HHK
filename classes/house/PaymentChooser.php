@@ -59,8 +59,7 @@ class PaymentChooser {
         }
         
         if (isset($post['selccgw'])) {
-            $pmp->setCcGateway(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
-            $uS->ccgw = $pmp->getCcGateway();
+            $pmp->setMerchant(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
         }
 
         if (isset($post['rbUseCard' . $rtnIndex])) {
@@ -987,6 +986,7 @@ ORDER BY v.idVisit , v.Span;");
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $paymentGateway->getGatewayType(), $idPrimaryGuest);
 
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
+            // Cannot return to a new card...
             $tbl->addBodyTr(HTMLTable::makeTh("No Cards on file", array('colspan'=>'3'))
                 , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
             return;
@@ -1036,7 +1036,6 @@ ORDER BY v.idVisit , v.Span;");
                      , array('style'=>'display:none;', 'class'=>'hhk-tblCredit' . $index));
 
             $paymentGateway->selectPaymentMarkup($dbh, $tbl);
-
 
         }
 

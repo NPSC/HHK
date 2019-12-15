@@ -260,7 +260,7 @@ abstract class PaymentGateway {
         $myType = '';
 
         if (is_array($this->gwType) && count($this->gwType) == 1) {
-            $myType = strtolower(array_pop($this->gwType));
+            $myType = strtolower(array_values($this->gwType)[0]);
         }
 
         return $myType;

@@ -79,9 +79,13 @@ class PaymentSvcs {
         switch ($pmp->getPayType()) {
 
           case PayType::Charge:
+              
+            if ($pmp->getMerchant() == '') {
+                $ccnames = PaymentGateway::getCreditGatewayNames($dbh, $invoice->getOrderNumber(), $invoice->getSuborderNumber());
+            }
 
             // Payment Gateway
-            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
+            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant());
 
             $payResult = $gateway->CreditSale($dbh, $pmp, $invoice, $postbackUrl);
 

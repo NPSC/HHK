@@ -914,24 +914,6 @@ where pi.Invoice_Id in ($whAssoc)";
         return $cnt;
     }
 
-    public function getCreditGatewayName(\PDO $dbh) {
-
-        if ($this->getIdInvoice() > 0 && $this->getOrderNumber() > 0) {
-
-            // The order number is the visit
-
-            $volStmt = $dbh->prepare("call get_credit_gw(:idVisit, :span);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $volStmt->execute(array(':idVisit'=>$this->getOrderNumber(), ':span'=>$this->getSuborderNumber()));
-            $rows = $volStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            if (count($rows) == 1) {
-                return $rows[0]['Merchant'];
-            }
-        }
-
-        return '';
-    }
-
     private function createNewInvoiceNumber(PDO $dbh) {
         return incCounter($dbh, 'invoice');
     }

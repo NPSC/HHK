@@ -691,9 +691,9 @@ class VantivGateway extends PaymentGateway {
 
     protected function loadGateway(\PDO $dbh) {
 
-        $query = "select * from `cc_hosted_gateway` where cc_name = :ccn and Gateway_Name = :gwname";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':ccn' => $this->getGatewayType(), ':gwname'=>$this->getGatewayName()));
+        $query = "select * from `cc_hosted_gateway` where `cc_name` = '" . $this->getGatewayType() . "' and `Gateway_Name` = '" .$this->getGatewayName()."'";
+        $stmt = $dbh->query($query);
+        //$stmt->execute(array(':ccn' => $this->getGatewayType(), ':gwname'=>$this->getGatewayName()));
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -720,34 +720,39 @@ class VantivGateway extends PaymentGateway {
     }
 
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
+        
+        $selArray = array('id'=>'selccgw', 'name'=>'selccgw', 'class'=>'hhk-feeskeys');
 
-        $stmt = $dbh->query("Select DISTINCT l.`Merchant`, l.`Title` from `location` l join `room` r on l.idLocation = r.idLocation where r.idLocation is not null and l.`Status` = 'a'");
-        $gwRows = $stmt->fetchAll();
+        if ($this->getGatewayType() != '') {
 
-        $selArray = array('id'=>'selccgw', 'name'=>'selccgw', 'size'=>count($gwRows));
-
-        if (is_array($this->gwType) && count($this->gwType) > 1) {
-            // Show choice of gateway
-
-            $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
-
-            $payTbl->addBodyTr(
-                    HTMLTable::makeTh('Select Location:')
-                    .HTMLTable::makeTd(
-                            HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2')
-                    )
-                    , array('id'=>'trvdCHName'));
-
-        } else if (is_array($this->gwType) && count($this->gwType) === 1) {
-
-            $sel = HTMLSelector::doOptionsMkup($gwRows, $this->gwType[0], FALSE);
+            $sel = HTMLSelector::doOptionsMkup(array(0=>array(0=>$this->getGatewayType(), 1=> ucfirst($this->getGatewayType()))), $this->getGatewayType(), FALSE);
             
             $payTbl->addBodyTr(
                     HTMLTable::makeTh('Selected Location:')
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
-                    , array('id'=>'trvdCHName'));
-        }
+                    , array('id'=>'trvdCHName')
+            );
+            
+        } else {
 
+            $stmt = $dbh->query("Select DISTINCT l.`Merchant`, l.`Title` from `location` l join `room` r on l.idLocation = r.idLocation where r.idLocation is not null and l.`Status` = 'a'");
+            $gwRows = $stmt->fetchAll();
+
+            $selArray['size'] = count($gwRows);
+
+            if (is_array($this->gwType) && count($this->gwType) > 1) {
+                // Show choice of gateway
+
+                $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
+
+                $payTbl->addBodyTr(
+                        HTMLTable::makeTh('Select Location:')
+                        .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
+                        , array('id'=>'trvdCHName')
+                );
+
+            }
+        }
     }
 
     protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
