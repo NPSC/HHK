@@ -88,7 +88,7 @@
         var $wrapper = $(this);
 
         createViewer($wrapper, settings);
-
+        
         return this;
     };
 
@@ -148,13 +148,20 @@
     }
 
 	function showFlag(flagged, row){
+		var flagContainer = $("<span />");
+		var flagLabel = $("<label />").prop("for", "flag-" + row.NoteId).text("Flag");
+		
 		if(flagged){
-			return '<label for="flag">Flag</label>' +
-			'<input type="checkbox" name="flag" class="flag" checked="true">';
+			var flagEl = $('<input type="checkbox" name="flag" checked="true" id="flag-' + row.NoteId + '" />').addClass("flag");
 		}else{
-			return '<label for="flag">Flag</label>' +
-			'<input type="checkbox" name="flag" class="flag" checked="false">';
+			var flagEl = $('<input type="checkbox" name="flag" id="flag-' + row.NoteId + '" />').addClass("flag");
+
 		}
+		
+		flagContainer.append(flagLabel);
+		flagContainer.append(flagEl);
+		
+		return flagContainer.html();
 	}
 
     function createActions(noteId, row) {
@@ -321,9 +328,6 @@
 
     function createViewer($wrapper, settings) {
         
-//        console.log(settings.serviceURL + settings.idReservation);
-//        console.log(settings.dtCols);
-        
         if (settings.linkId > 0) {
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
@@ -358,10 +362,8 @@
         $wrapper.append(createNewNote(settings, dtTable));
 
 		$wrapper.find('.hhk-note-button').button();
-		
-		$wrapper.find(".flag").checkboxradio({
-			icon: false
-		});
+
+		$wrapper.find('.flag').checkboxradio({icon: false});
 
         $wrapper.show();
 

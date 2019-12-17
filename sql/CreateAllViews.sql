@@ -1827,6 +1827,7 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
     SELECT 
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
+        n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
@@ -1869,6 +1870,7 @@ CREATE OR REPLACE VIEW `vpsg_notes` AS
     SELECT 
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
+        n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,

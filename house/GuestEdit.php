@@ -769,7 +769,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        <script type="text/javascript" src="../js/uppload.js"></script> -->
+        <script type="text/javascript" src="../js/uppload.js"></script>
 		<script type="text/javascript" src="js/documentUpload.js"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
@@ -971,5 +971,6 @@ $uS->guestId = $id;
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
         <script type="text/javascript" src="js/guestload.js?vn=36"></script>
+        
     </body>
 </html>
