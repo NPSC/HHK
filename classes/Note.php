@@ -236,6 +236,33 @@ class Note {
 
         return $counter;
     }
+    
+    /**
+     *
+     * @param \PDO $dbh
+     * @param string $username
+     * @return int the number of rows affected
+     */
+    public function flagNote(\PDO $dbh, $flag, $username) {
+
+        $counter = 0;
+
+        if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
+
+            $this->noteRS->Flag->setNewVal($flag);
+            if($flag){
+	            $this->noteRS->Status->setNewVal(self::ActiveStatus);
+            }
+            $this->noteRS->Updated_By->setNewVal($username);
+            $this->noteRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+            $counter = EditRS::update($dbh, $this->noteRS, array($this->noteRS->idNote));
+            EditRS::updateStoredVals($this->noteRS);
+
+        }
+
+        return $counter;
+    }
 
     protected function isValid() {
 

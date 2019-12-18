@@ -308,6 +308,27 @@ try {
 
         break;
 
+    case 'flagNote':
+
+        $noteId = 0;
+        $flagCount = 0;
+
+        if (isset($_POST['idNote'])) {
+            $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+        
+        if (isset($_POST['flag'])) {
+            $flag = intval(filter_input(INPUT_POST, 'flag', FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        if ($noteId > 0) {
+            $note = new Note($noteId);
+            $flagCount = $note->flagNote($dbh, $flag, $uS->userName);
+        }
+
+        $events = array('update'=>$flagCount, 'idNote'=>$noteId, 'flag'=>$flag);
+
+        break;
 
     case 'linkNote':
 

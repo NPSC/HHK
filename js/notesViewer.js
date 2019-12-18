@@ -27,6 +27,7 @@
                         data: "Flag",
                         sortable: true,
                         searchable: false,
+                        className:'actionBtns',
                         render: function (data, type, row) {
                             return showFlag(data, row);  
                         }
@@ -37,6 +38,7 @@
                         data: "Action",
                         sortable: false,
                         searchable: false,
+                        className:'actionBtns',
                         render: function (data, type, row) {
                             return createActions(data, row);  
                         }
@@ -220,6 +222,7 @@
         //Edit Note
         $wrapper.on('click', '.note-done', function(e){
             e.preventDefault();
+            var row = $(this).closest("tr");
             var noteText = $(this).closest('tr').find('#editNoteText').val();
             var noteId = $(this).closest('td').find('.note-edit').data('noteid');
 
@@ -235,7 +238,11 @@
                     },
                     success: function( data ){
                             if(data.idNote > 0){
-                                $table.ajax.reload();
+                                //$table.ajax.reload();
+                                var rowdata = $table.row(row).data();
+                                rowdata["Note"] = noteText;
+								$table.row(row).data(rowdata);
+								row.find("input.flag").checkboxradio({icon:false});
                             }else{
                                 if(data.error){
                                     settings.alertMessage.call(data.error, 'alert');
@@ -246,10 +253,6 @@
                     }
                 });
             }
-
-            $(this).closest('td').find('.note-action').hide();
-            $(this).closest('td').find('.note-edit').show();
-            $(this).closest('td').find('.note-delete').show();
         });
         //End Edit Note
         
@@ -270,6 +273,12 @@
             var idnote = $(this).data("noteid");
             var row = $(this).closest('tr');
             e.preventDefault();
+            if($table.row(row).data()["Flag"]){
+	            var confirmed = confirm("This Note is flagged, are you sure you want to delete it?");
+	            if(!confirmed){
+		            return;
+	            }
+            }
             $.ajax({
                     url: settings.serviceURL,
                     dataType: 'JSON',
@@ -280,7 +289,7 @@
                     },
                     success: function( data ){
                         if(data.idNote > 0){
-                            row.find("td:not(:first)").css("opacity", "0.3");
+                            row.find("td:not(.actionBtns)").css("opacity", "0.3");
                             var noteText = row.find('#editNoteText').val();
                                     row.find('.noteText').html(noteText);
                                     row.find('.note-action').hide();
@@ -301,7 +310,7 @@
         //Undo Delete Note
         $wrapper.on('click', '.note-undodelete', function(e){
             var idnote = $(this).data("noteid");
-
+			var row = $(this).parents("tr");
             e.preventDefault();
             $.ajax({
                     url: settings.serviceURL,
@@ -313,7 +322,11 @@
                     },
                     success: function( data ){
                         if(data.idNote > 0){
-                            $table.ajax.reload();
+                            //$table.ajax.reload();
+                            var rowdata = $table.row(row).data();
+                            $table.row(row).data(rowdata);
+                            row.find("td").css("opacity", "1");
+                            row.find("input.flag").checkboxradio({icon:false});
                             $("#noteText").val("");
                             $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                         }else{
@@ -324,6 +337,49 @@
 
         });
         //End Undo Delete Note
+        
+        //Flag Note
+        $wrapper.on('click', 'input.flag', function(e){
+            var rowtr = $(this).closest('tr');
+            var row = $table.row(rowtr);
+            var idnote = row.data()["NoteId"];
+            if($(this).prop('checked') == true){
+	            flag = 1;
+	            rowtr.css("font-weight", "bold");
+            }else{
+	            flag = 0;
+	            rowtr.css("font-weight", "normal")
+            }
+            rowtr.find("td").css("opacity", "1");
+            
+            if(rowtr.find(".note-done").is(":visible")){
+	            rowtr.find(".note-done").trigger("click");
+            }
+            
+            e.preventDefault();
+            $.ajax({
+                    url: settings.serviceURL,
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                        cmd: 'flagNote',
+                        idNote: idnote,
+                        flag: flag,
+                    },
+                    success: function( data ){
+                        if(data.idNote > 0){
+	                        var rowdata = row.data();
+	                        rowdata["Flag"] = data.flag;
+                            row.data(rowdata);
+                            rowtr.find("input.flag").checkboxradio({icon:false});
+                        }else{
+                            settings.alertMessage.call(data.error, 'error');
+                        }
+                    }
+                });
+
+        });
+        //End Flag Note
     }
 
     function createViewer($wrapper, settings) {
@@ -332,26 +388,39 @@
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
             var dtTable = $table.DataTable({
-	        "columnDefs": settings.dtCols,
-	        "serverSide": true,
-	        "processing": true,
-	        "deferRender": true,
-	        "language": {"sSearch": "Search Notes:"},
-	        "sorting": [[0,'asc'], [2,'desc']],
-	        "displayLength": 5,
-	        "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
-                "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
-	        ajax: {
-	            url: settings.serviceURL,
-                    data: {
-                        'cmd': 'getNoteList',
-                        'linkType': settings.linkType,
-                        'linkId': settings.linkId
-                    },
-	        }
+		        "columnDefs": settings.dtCols,
+		        "serverSide": true,
+		        "processing": true,
+		        "deferRender": true,
+		        "language": {"sSearch": "Search Notes:"},
+		        "sorting": [[0,'desc'], [2,'desc']],
+		        "displayLength": 5,
+		        "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
+	                "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+		        ajax: {
+		            url: settings.serviceURL,
+	                data: {
+	                    'cmd': 'getNoteList',
+	                    'linkType': settings.linkType,
+	                    'linkId': settings.linkId
+	                },
+		        },
+		        "drawCallback": function(settings){
+			        $wrapper.find("input.flag").checkboxradio({icon:false});
+			        
+			        $wrapper.find('.hhk-note-button').button();
+		        },
+		        "createdRow": function( row, data, dataIndex){
+	                if( data["Flag"] ==  1){
+	                    $(row).css("font-weight", "bold");
+	                }
+	            }
             });
 
             actions($wrapper, settings, dtTable);
+            
+            //add jquery UI checkbox
+            $wrapper.find('.flag').checkboxradio({icon: false});
             
             //add ignrSave class to Dt controls
             $(".dataTables_filter").addClass('ignrSave');
@@ -361,9 +430,7 @@
         
         $wrapper.append(createNewNote(settings, dtTable));
 
-		$wrapper.find('.hhk-note-button').button();
-
-		$wrapper.find('.flag').checkboxradio({icon: false});
+		
 
         $wrapper.show();
 
