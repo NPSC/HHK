@@ -321,6 +321,7 @@
         $wrapper.on('click', '.incident-delete', function (e) {
             var idReport = $(this).data("reportid");
             var row = $(this).closest('tr');
+            
             e.preventDefault();
             $.ajax({
                 url: settings.serviceURL,
@@ -349,7 +350,8 @@
         //Undo Delete Report
         $wrapper.on('click', '.incident-undodelete', function (e) {
             var idReport = $(this).data("reportid");
-
+			var row = $(this).parents("tr");
+			
             e.preventDefault();
             $.ajax({
                 url: settings.serviceURL,
@@ -361,7 +363,10 @@
                 },
                 success: function (data) {
                     if (data.idReport > 0) {
-                        $table.ajax.reload();
+                        //$table.ajax.reload();
+                        var rowdata = $table.row(row).data();
+                        $table.row(row).data(rowdata);
+                        row.find("td").css("opacity", "1");
                     } else {
                         settings.alertMessage(data.error, 'error');
                     }
@@ -564,7 +569,13 @@
                                 'psgId': settings.psgId,
                                 'rid': settings.rid
                             },
-                        }
+                        },
+						"drawCallback": function(settings){
+							$wrapper.find('.hhk-report-button').button();
+		        		},
+		        		createdRow: function (row, data, dataIndex) {
+							$(row).attr('data-repid', data.ReportId);
+        				}
 
                     });
 

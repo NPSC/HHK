@@ -157,7 +157,8 @@
         //Edit Doc
         $wrapper.on('click', '.doc-done', function(e){
             e.preventDefault();
-            var docTitle = $(this).closest('tr').find('#editDocTitle').val();
+            var row = $(this).closest('tr');
+            var docTitle = row.find('#editDocTitle').val();
             var docId = $(this).closest('td').find('.doc-edit').data('docid');
 
             if(docTitle != ""){
@@ -171,22 +172,21 @@
                             docTitle: docTitle
                     },
                     success: function( data ){
-                            if(data.idDoc > 0){
-                                $table.ajax.reload();
+                        if(data.idDoc > 0){
+                            //$table.ajax.reload();
+                            var rowdata = $table.row(row).data();
+                            rowdata["Title"] = docTitle;
+							$table.row(row).data(rowdata);
+                        }else{
+                            if(data.error){
+                                settings.alertMessage(data.error, 'error');
                             }else{
-                                if(data.error){
-                                    settings.alertMessage(data.error, 'error');
-                                }else{
-                                    settings.alertMessage('An unknown error occurred.', 'alert');
-                                }
+                                settings.alertMessage('An unknown error occurred.', 'alert');
                             }
+                        }
                     }
                 });
             }
-
-            $(this).closest('td').find('.doc-action').hide();
-            $(this).closest('td').find('.doc-edit').show();
-            $(this).closest('td').find('.doc-delete').show();
         });
         //End Edit Doc
         
@@ -238,7 +238,8 @@
         //Undo Delete Doc
         $wrapper.on('click', '.doc-undodelete', function(e){
             var docId = $(this).data("docid");
-
+			var row = $(this).parents("tr");
+			
             e.preventDefault();
             $.ajax({
                 url: settings.serviceURL,
@@ -250,7 +251,10 @@
                 },
                 success: function( data ){
                     if(data.idDoc > 0){
-                        $table.ajax.reload();
+                        //$table.ajax.reload();
+                        var rowdata = $table.row(row).data();
+                        $table.row(row).data(rowdata);
+                        row.find("td").css("opacity", "1");
                         $("#docTitle").val("");
                         $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
                     }else{
@@ -288,8 +292,10 @@
                                 'cmd': 'getDocumentList',
                                 'psgId': settings.psgId,
                             },
-                        }
-
+                        },
+						"drawCallback": function(settings){
+							$wrapper.find('.hhk-doc-button').button();
+		        		},
                     });
 
             actions($wrapper, settings, dtTable);
@@ -387,11 +393,6 @@
 		    });
     
         }
-        $(document).ready(function(){
-	        $("#txtLastName").on("keypress", function(){
-		        debugger;
-	        })
-        });
     }
 
 }(jQuery));

@@ -812,7 +812,7 @@ AS SELECT
    `r`.`Timestamp` AS `Timestamp`,
    `r`.`Guest_Id` AS `Guest_Id`,
    `r`.`Psg_Id` AS `Psg_Id`
-FROM ((`report` `r` left join `name_guest` `ng` on((`r`.`Guest_Id` = `ng`.`idName`))) left join `name` `n` on((`ng`.`idName` = `n`.`idName`))) where ((`r`.`idReport` > 0) and (`r`.`Status` in ('a','r','h')));
+FROM ((`report` `r` left join `name_guest` `ng` on((`r`.`Guest_Id` = `ng`.`idName`))) left join `name` `n` on((`ng`.`idName` = `n`.`idName`))) where ((`r`.`idReport` > 0) and (`r`.`Status` in ('a','r','h'))) group by `r`.`idReport`;
 
 
 

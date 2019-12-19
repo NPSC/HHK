@@ -498,7 +498,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $report = new Report($repId);
         $report->updateContents($dbh, $incidentTitle, $incidentDate, $resolutionDate, $incidentDescription, $incidentResolution,$signature, $signatureDate, $incidentStatus, $uS->username);
 
-        $events = array('status'=>'success', 'idReport'=>$report->getIdReport());
+        $events = array('status'=>'success', 'idReport'=>$report->getIdReport(), 'incidentTitle'=>$incidentTitle, 'incidentDate'=>$incidentDate, 'incidentStatus'=>$incidentStatus);
 
         break;
 
