@@ -36,6 +36,7 @@ class TokenTX {
 
         // Call to web service
         $creditResponse = $cstReq->submit($gway->getCredentials(), $trace);
+        $creditResponse->setMerchant($gway->getGatewayType());
 
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $cstReq->getTokenId(), $payNotes);
 
@@ -91,6 +92,7 @@ class TokenTX {
 
         // Call to web service
         $creditResponse = $voidSale->submit($gway->getCredentials(), $trace);
+        $creditResponse->setMerchant($gway->getGatewayType());
 
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId(), $payNotes);
 
@@ -135,6 +137,7 @@ class TokenTX {
 
         // Call to web service
         $creditResponse = $reverseSale->submit($gway->getCredentials(), $trace);
+        $creditResponse->setMerchant($gway->getGatewayType());
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $reverseSale->getTokenId(), $payNotes);
 
         // Save raw transaction in the db.
@@ -179,6 +182,7 @@ class TokenTX {
 
         // Call to web service
         $creditResponse = $returnSale->submit($gway->getCredentials(), $trace);
+        $creditResponse->setMerchant($gway->getGatewayType());
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnSale->getTokenId(), $payNotes);
 
 
@@ -222,6 +226,7 @@ class TokenTX {
 
         // Call to web service
         $creditResponse = $returnVoid->submit($gway->getCredentials(), $trace);
+        $creditResponse->setMerchant($gway->getGatewayType());
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnVoid->getTokenId());
 
 
@@ -299,7 +304,7 @@ class TokenResponse extends PaymentResponse {
         }
 
         if ($this->response->getAuthCode() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode() . ' ('.ucfirst($this->response->getMerchant()). ')', array('style'=>'font-size:.8em;')));
         }
 
         if ($this->response->getResponseMessage() != '') {

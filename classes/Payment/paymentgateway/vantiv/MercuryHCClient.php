@@ -462,7 +462,8 @@ abstract class MercRequest {
     /**
      *
      * @param array $gway
-     * @return response object
+     * @param boolean $trace  True to turn trace on.  This writes to the file system, which may not allow write priv.
+     * @return MercResponse $xaction
      * @throws Hk_Exception_Payment
      */
     public function submit(array $gway, $trace = FALSE) {
@@ -539,7 +540,7 @@ abstract class MercResponse {
     protected $result;
 
     protected $tranType;
-    protected $ccGateway;
+    protected $merchant;
     protected $processor = 'vantiv';
 
     /**
@@ -560,16 +561,16 @@ abstract class MercResponse {
         $this->processor = $v;
     }
 
-    public function setCcGateway($v) {
-        $this->ccGateway = $v;
+    public function setMerchant($v) {
+        $this->merchant = $v;
     }
 
     public function getProcessor() {
         return $this->processor;
     }
 
-    public function getCcGateway() {
-        return $this->ccGateway;
+    public function getMerchant() {
+        return $this->merchant;
     }
 
     public function getResponseCode() {

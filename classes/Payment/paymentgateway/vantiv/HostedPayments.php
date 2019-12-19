@@ -28,6 +28,7 @@ class CardInfo {
         }
 
         $ciResponse = $initCi->submit($gway->getCredentials(), $trace);
+        $ciResponse->setMerchant($gway->getGatewayName());
 
         // Save raw transaction in the db.
         try {
@@ -70,6 +71,8 @@ class CardInfo {
 
         // Verify request
         $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
+        $verifyResponse->setMerchant($gway->getGatewayName());
+
         $vr = new CardInfoResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup']);
 
         // Save raw transaction in the db.
@@ -153,6 +156,7 @@ class HostedCheckout {
         }
 
         $ciResponse = $initCoRequest->submit($gway->getCredentials(), $trace);
+        $ciResponse->setMerchant($gway->getGatewayType());
 
         // Save raw transaction in the db.
         try {
@@ -165,8 +169,8 @@ class HostedCheckout {
         if ($ciResponse->getResponseCode() == 0) {
 
             // Save payment ID
-            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                . " values ($idPayor, $idGroup, 'hco', '$invoiceNumber', '" . $ciResponse->getPaymentId() . "', now(), 'OneTime', '" . $ciResponse->getResponseCode() . "')";
+            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode, Merchant)"
+                . " values ($idPayor, $idGroup, 'hco', '$invoiceNumber', '" . $ciResponse->getPaymentId() . "', now(), 'OneTime', '" . $ciResponse->getResponseCode() . "', '".$gway->getGatewayName()."')";
 
             $dbh->exec($ciq);
 
@@ -199,6 +203,7 @@ class HostedCheckout {
 
         // Verify request
         $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
+        $verifyResponse->setMerchant($gway->getGatewayType());
 
         $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes);
 
@@ -279,7 +284,7 @@ class CheckOutResponse extends PaymentResponse {
         }
 
         if ($this->response->getAuthCode() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode() . ' ('.ucfirst($this->response->getMerchant()). ')', array('style'=>'font-size:.8em;')));
         }
 
         if ($this->response->getResponseMessage() != '') {

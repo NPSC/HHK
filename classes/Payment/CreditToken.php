@@ -17,7 +17,7 @@
  */
 class CreditToken {
 
-    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr, $merchant, $idToken = 0) {
+    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr, $idToken = 0) {
 
         if ($vr->saveCardonFile() === FALSE || $vr->getToken() == '') {
             return 0;
@@ -28,13 +28,13 @@ class CreditToken {
         if ($idToken > 0) {
             $gtRs = self::getTokenRsFromId($dbh, $idToken);
         } else {
-            $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum,$merchant);
+            $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum, $vr->getMerchant());
         }
 
         // Load values
         $gtRs->idGuest->setNewVal($idPayor);
         $gtRs->idRegistration->setNewVal($idRegistration);
-        $gtRs->Merchant->setNewVal($merchant);
+        $gtRs->Merchant->setNewVal($vr->getMerchant());
 
         if ($vr->getCardHolderName() != '') {
             $gtRs->CardHolderName->setNewVal($vr->getCardHolderName());
@@ -145,7 +145,7 @@ class CreditToken {
 
 
         // Get registration tokens
-        if ($idRegistration > 0) {
+        if ($idReg > 0) {
 
             $stmt = $dbh->query("select t.* from guest_token t left join name_volunteer2 nv on t.idGuest = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ba'
 where t.idRegistration = $idReg and t.Merchant = '$merchant' and nv.idName is null");
@@ -161,7 +161,7 @@ where t.idRegistration = $idReg and t.Merchant = '$merchant' and nv.idName is nu
             }
         }
 
-        if ($idReg > 0) {
+        if ($idGst > 0) {
 
             $gtRs = new Guest_TokenRS();
             $gtRs->idGuest->setStoredVal($idGst);

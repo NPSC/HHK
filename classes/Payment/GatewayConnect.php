@@ -14,7 +14,7 @@ interface iGatewayResponse {
     public function getResponseCode();
     public function getResponseMessage();
     public function getTranType();
-    public function getCcGateway();
+    public function getMerchant();
     public function getProcessor();
 
     public function getAuthorizedAmount();
@@ -71,7 +71,7 @@ abstract class GatewayResponse {
 
     protected $tranType;
     protected $processor;
-    protected $ccGateway;
+    protected $merchant;
 
     /**
      * The child is expected to define $result.
@@ -112,8 +112,8 @@ abstract class GatewayResponse {
         return $this->processor;
     }
 
-    public function getCcGateway() {
-        return $this->ccGateway;
+    public function getMerchant() {
+        return $this->merchant;
     }
 
     public function getErrorMessage() {
@@ -202,7 +202,7 @@ class StandInGwResponse implements iGatewayResponse {
     protected $expDate;
     protected $token;
     protected $processor;
-    protected $ccGateway;
+    protected $merchant;
 
     public function __construct(Payment_AuthRS $pAuthRs, $operatorId, $cardholderName, $expDate, $token, $invoiceNumber, $amount) {
 
@@ -215,6 +215,7 @@ class StandInGwResponse implements iGatewayResponse {
         $this->expDate = $expDate;
         $this->cardholderName = $cardholderName;
         $this->token = $token;
+        $this->merchant = $this->pAuthRs->Merchant->getStoredVal();
     }
 
     public function getAVSAddress() {
@@ -342,16 +343,16 @@ class StandInGwResponse implements iGatewayResponse {
         return $this->processor;
     }
 
-    public function getCcGateway() {
-        return $this->ccGateway;
+    public function getMerchant() {
+        return $this->merchant;
     }
 
     public function setProcessor($v) {
         $this->processor = $v;
     }
 
-    public function setCcGateway($v) {
-        $this->ccGateway = $v;
+    public function setMerchant($v) {
+        $this->merchant = $v;
     }
 
     public function getTransPostTime() {

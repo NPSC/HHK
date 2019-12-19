@@ -255,12 +255,18 @@ abstract class PaymentGateway {
 
     public abstract function getGatewayName();
 
+    public function getMerchant() {
+        return $this->getGatewayType();
+    }
+
     public function getGatewayType() {
 
         $myType = '';
 
         if (is_array($this->gwType) && count($this->gwType) == 1) {
             $myType = strtolower(array_values($this->gwType)[0]);
+        } else {
+            $myType = $this->gwType;
         }
 
         return $myType;

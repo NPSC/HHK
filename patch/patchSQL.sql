@@ -3,14 +3,14 @@ ALTER TABLE `w_groups`
  ADD COLUMN `IP_Restricted` BOOLEAN NOT NULL DEFAULT 0 AFTER `Cookie_Restricted`;
 
 ALTER TABLE `location`
-    CHANGE COLUMN `Phone` `Merchant` VARCHAR(45) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
+    CHANGE COLUMN `Phone` `Merchant` VARCHAR(45) NOT NULL DEFAULT '' ;
 
 ALTER TABLE `card_id` 
     ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Amount`;
 
 
 ALTER TABLE `guest_token`
-    ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Token`;
+    CHANGE COLUMN `CC_Gateway` `Merchant` VARCHAR(45) NOT NULL DEFAULT '';
 
 ALTER TABLE `payment_auth`
     ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Processor`;

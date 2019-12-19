@@ -20,7 +20,7 @@ RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() el
 --
 DROP procedure IF EXISTS `get_credit_gw`; -- ;
 
-CREATE DEFINER=`root`@`localhost` PROCEDURE `get_credit_gw`(
+CREATE PROCEDURE `get_credit_gw`(
     IN visitId INT,
     IN spanId INT)
 BEGIN

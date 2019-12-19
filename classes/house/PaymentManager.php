@@ -743,7 +743,7 @@ class PaymentManagerPayment {
         $this->newCardOnFile = $newCardOnFile;
         return $this;
     }
-    
+
     public function getMerchant() {
         return $this->merchant;
     }
@@ -893,9 +893,9 @@ class PaymentManagerPayment {
         $uS = Session::getInstance();
 
         // Check for Charge as Cash case.
-        if ($payType == PayType::Charge && $uS->ccgw == ''){
-           $payType = PayType::ChargeAsCash;
-        }
+//        if ($payType == PayType::Charge && $uS->ccgw == ''){
+//           $payType = PayType::ChargeAsCash;
+//        }
 
         $this->payType = $payType;
         return $this;

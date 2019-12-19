@@ -79,10 +79,6 @@ class PaymentSvcs {
         switch ($pmp->getPayType()) {
 
           case PayType::Charge:
-              
-            if ($pmp->getMerchant() == '') {
-                $ccnames = PaymentGateway::getCreditGatewayNames($dbh, $invoice->getOrderNumber(), $invoice->getSuborderNumber());
-            }
 
             // Payment Gateway
             $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant());
@@ -767,7 +763,7 @@ class PaymentSvcs {
     public static function processSiteReturn(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
-        
+
         //Quick exti?
         if ($uS->PaymentGateway == '' || $uS->ccgw == '') {
             return NULL;
@@ -887,7 +883,7 @@ class PaymentSvcs {
                 $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $gTRs->CardHolderName->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
 
                 try {
-                    $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $invoice->getCreditGatewayName($dbh));
+                    $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $pAuthRs->Merchant->getStoredVal());
                 } catch (Exception $ex) {
                     // Grab the local gateway
                     $gateway = PaymentGateway::factory($dbh, '', '');

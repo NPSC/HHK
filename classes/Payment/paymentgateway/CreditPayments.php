@@ -52,7 +52,6 @@ abstract class CreditPayments {
 
 class SaleReply extends CreditPayments {
 
-
     protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $pRs = NULL, $attempts = 1) {
 
         $uS = Session::getInstance();
@@ -139,7 +138,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
             $pDetailRS->CVV->setNewVal($vr->getCvvResult());
             $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-            $pDetailRS->Merchant->setNewVal($vr->getCcGateway());
+            $pDetailRS->Merchant->setNewVal($vr->getMerchant());
             $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
             $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
@@ -214,7 +213,7 @@ class SaleReply extends CreditPayments {
             $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
             $pDetailRS->CVV->setNewVal($vr->getCvvResult());
             $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-            $pDetailRS->Merchant->setNewVal($vr->getCcGateway());
+            $pDetailRS->Merchant->setNewVal($vr->getMerchant());
             $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
             $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
             $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
@@ -293,7 +292,7 @@ class VoidReply extends CreditPayments {
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
         $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-        $pDetailRS->Merchant->setNewVal($vr->getCcGateway());
+        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
         $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
         $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
@@ -381,7 +380,7 @@ class ReverseReply extends CreditPayments {
         $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
         $pDetailRS->CVV->setNewVal($vr->getCvvResult());
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-        $pDetailRS->Merchant->setNewVal($vr->getCcGateway());
+        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
         $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
         $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
@@ -491,7 +490,7 @@ class ReturnReply extends CreditPayments {
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-        $pDetailRS->Merchant->setNewVal($vr->getCcGateway());
+        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
         $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
         $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
@@ -558,7 +557,7 @@ class ReturnReply extends CreditPayments {
                 $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
                 $pDetailRS->CVV->setNewVal($vr->getCvvResult());
                 $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-                $pDetailRS->Merchant->setNewVal($vr->getCcGateway());
+                $pDetailRS->Merchant->setNewVal($vr->getMerchant());
                 $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
                 $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
                 $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
@@ -647,7 +646,7 @@ class VoidReturnReply extends CreditPayments {
         $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidReturn);
         $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-        $pDetailRS->Merchant->setNewVal($vr->getCcGateway());
+        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
         $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
         $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
         $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
