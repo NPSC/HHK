@@ -1969,9 +1969,20 @@ class ReserveSearcher extends ActiveReservation {
                 $firstOne = FALSE;
             }
 
+			//is deceased?
+			if($psg->getPatientStatus($dbh) == "d"){
+				$trAttrs = array('style'=>'background-color: #ffc4c4');
+				$labelAttrs = array();
+				$status = " [DECEASED]";
+			}else{
+				$labelAttrs = array('class'=>'tdlabel');
+				$trAttrs = array();
+				$status = "";
+			}
+
             $tbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLContainer::generateMarkup('label', $psg->getPatientName($dbh), array('for'=>$psg->getIdPsg().'cbselpsg')), array('class'=>'tdlabel'))
-                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', $attrs)));
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup('label', $psg->getPatientName($dbh) . $status, array('for'=>$psg->getIdPsg().'cbselpsg')), $labelAttrs)
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', $attrs)), $trAttrs);
 
         }
 

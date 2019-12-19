@@ -527,5 +527,22 @@ class Psg {
 
         return $nameRS->Name_First->getStoredVal() . ' ' . $nameRS->Name_Last->getStoredVal() . ($nameRS->Name_Suffix->getStoredVal() == '' ? '' : ' ' . $uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()][1]);
     }
+    
+    public function getPatientStatus(\PDO $dbh) {
+
+        $uS = Session::getInstance();
+        $nameRS = new NameRS();
+
+        if ($this->getIdPatient() > 0) {
+            $nameRS->idName->setStoredVal($this->getIdPatient());
+            $rows = EditRS::select($dbh, $nameRS, array($nameRS->idName));
+
+            if (count($rows) > 0) {
+                EditRS::loadRow($rows[0], $nameRS);
+            }
+        }
+
+        return $nameRS->Member_Status->getStoredVal();
+    }
 }
 
