@@ -234,7 +234,7 @@ class PaymentSvcs {
             case PayType::Charge:
 
                 // Load gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant());
                 $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes());
 
                 break;
@@ -295,7 +295,7 @@ class PaymentSvcs {
         return $rtnResult;
     }
 
-    public static function voidFees(\PDO $dbh, $idPayment, $bid, $postbackUrl, $paymentNotes = '') {
+    public static function voidFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
 
@@ -314,6 +314,17 @@ class PaymentSvcs {
             return array('warning' => 'Payment is ineligable for Void/Reverse.  ', 'bid' => $bid);
         }
 
+        // Find the Payment detail record.
+        $pAuthRs = new Payment_AuthRS();
+        $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+        $pAuths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment), 'and', array($pAuthRs->idPayment_auth));
+
+        if (count($pAuths) < 1) {
+            return array('warning' => 'Payment Auth record not found for Void/Reverse.  ', 'bid' => $bid);
+        }
+
+        EditRS::loadRow(array_pop($pAuths), $pAuthRs);
+
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
@@ -322,13 +333,13 @@ class PaymentSvcs {
         }
 
         // Load gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
 
-        return $gateway->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid, $postbackUrl);
+        return $gateway->voidSale($dbh, $invoice, $payRs, $$pAuths, $bid);
 
     }
 
-    public static function reversalFees(\PDO $dbh, $idPayment, $bid, $paymentNotes = '') {
+    public static function reversalFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
 
@@ -347,6 +358,17 @@ class PaymentSvcs {
             return array('warning' => 'Payment is ineligable for Reversal/Void.  ', 'bid' => $bid);
         }
 
+        // Find the Payment detail record.
+        $pAuthRs = new Payment_AuthRS();
+        $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+        $pAuths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment), 'and', array($pAuthRs->idPayment_auth));
+
+        if (count($pAuths) < 1) {
+            return array('warning' => 'Payment Auth record not found for Void/Reverse.  ', 'bid' => $bid);
+        }
+
+        EditRS::loadRow(array_pop($pAuths), $pAuthRs);
+
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
@@ -355,9 +377,9 @@ class PaymentSvcs {
         }
 
         // Load gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
 
-        return $gateway->reverseSale($dbh, $payRs, $invoice, $bid, $paymentNotes);
+        return $gateway->reverseSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
 
     }
 
@@ -392,9 +414,20 @@ class PaymentSvcs {
 
             case PaymentMethod::Charge:
 
+                // Find the Payment detail record.
+                $pAuthRs = new Payment_AuthRS();
+                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+                $pAuths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment), 'and', array($pAuthRs->idPayment_auth));
+
+                if (count($pAuths) < 1) {
+                    return array('warning' => 'Payment detail record not found.  Unable to return this payment. ', 'bid' => $bid);
+                }
+
+                EditRS::loadRow(array_pop($pAuths), $pAuthRs);
+
                 // Load gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
-                $dataArray = $gateway->returnPayment($dbh, $payRs, $invoice, $bid);
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
+                $dataArray = $gateway->returnPayment($dbh, $invoice, $payRs, $pAuthRs, $bid);
 
                 break;
 
@@ -545,7 +578,7 @@ class PaymentSvcs {
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
         // Payment Gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $invoice->getCreditGatewayName($dbh));
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
         return array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs));
 
     }
@@ -955,6 +988,5 @@ class PaymentSvcs {
 
         return $dataArray;
     }
-
 
 }

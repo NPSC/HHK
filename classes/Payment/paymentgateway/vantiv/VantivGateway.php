@@ -83,7 +83,7 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         $uS = Session::getInstance();
 
@@ -91,11 +91,11 @@ class VantivGateway extends PaymentGateway {
         if ($payRs->idToken->getStoredVal() > 0) {
             $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
         } else {
-            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ');
+            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ', 'bid' => $bid);
         }
 
         if (CreditToken::hasToken($tknRs) === FALSE) {
-            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ');
+            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ', 'bid' => $bid);
         }
 
         // Set up request
@@ -143,12 +143,14 @@ class VantivGateway extends PaymentGateway {
             $dataArray['warning'] = "Void-Return Error = " . $exPay->getMessage();
         }
 
+        $dataArray['bid'] = $bid;
         return $dataArray;
     }
 
-    public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
+    public function reverseSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         $uS = Session::getInstance();
+        $dataArray = array();
 
         // find the token record
         if ($payRs->idToken->getStoredVal() > 0) {
@@ -160,17 +162,6 @@ class VantivGateway extends PaymentGateway {
         if (CreditToken::hasToken($tknRs) === FALSE) {
             return array('warning' => 'Payment Token not found.  Unable to Reverse this purchase.  ', 'bid' => $bid);
         }
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Reverse this purchase. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
 
@@ -190,7 +181,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs, $paymentNotes);
+                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs);
 
                 switch ($csResp->response->getStatus()) {
 
@@ -209,7 +200,7 @@ class VantivGateway extends PaymentGateway {
                     case MpStatusValues::Declined:
 
                         // Try Void
-                        $dataArray = self::sendVoid($dbh, $payRs, $pAuthRs, $tknRs, $invoice, $paymentNotes);
+                        $dataArray = $this->_voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
                         $dataArray['reversal'] = 'Reversal Declined, trying Void.  ';
 
                         break;
@@ -223,6 +214,7 @@ class VantivGateway extends PaymentGateway {
                 $dataArray['warning'] = "Reversal Error = " . $exPay->getMessage();
             }
 
+            $dataArray['bid'] = $bid;
             return $dataArray;
         }
 
@@ -230,7 +222,7 @@ class VantivGateway extends PaymentGateway {
     }
 
     // Returns a Payment
-    protected function _returnPayment(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
+    protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
 
@@ -547,7 +539,7 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    protected function _voidSale(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes = '', $bid = '') {
+    protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid = '') {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -576,7 +568,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $voidRequest, $payRs, $paymentNotes);
+            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $voidRequest, $payRs);
 
             switch ($csResp->response->getStatus()) {
 
@@ -720,19 +712,19 @@ class VantivGateway extends PaymentGateway {
     }
 
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
-        
+
         $selArray = array('id'=>'selccgw', 'name'=>'selccgw', 'class'=>'hhk-feeskeys');
 
         if ($this->getGatewayType() != '') {
 
             $sel = HTMLSelector::doOptionsMkup(array(0=>array(0=>$this->getGatewayType(), 1=> ucfirst($this->getGatewayType()))), $this->getGatewayType(), FALSE);
-            
+
             $payTbl->addBodyTr(
                     HTMLTable::makeTh('Selected Location:')
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
                     , array('id'=>'trvdCHName')
             );
-            
+
         } else {
 
             $stmt = $dbh->query("Select DISTINCT l.`Merchant`, l.`Title` from `location` l join `room` r on l.idLocation = r.idLocation where r.idLocation is not null and l.`Status` = 'a'");

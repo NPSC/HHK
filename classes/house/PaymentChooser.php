@@ -57,7 +57,7 @@ class PaymentChooser {
         if (isset($post['rbUseCard'])) {
             $pmp->setIdToken(intval(filter_var($post['rbUseCard'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
-        
+
         if (isset($post['selccgw'])) {
             $pmp->setMerchant(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
         }
@@ -254,7 +254,7 @@ class PaymentChooser {
     }
 
 
-    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
+    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, PaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -301,8 +301,6 @@ class PaymentChooser {
                 );
 
         $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
-
-        $paymentGateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan()));
 
         if ($uS->ShowTxPayType == FALSE) {
             unset($payTypes[PayType::Transfer]);
@@ -430,7 +428,7 @@ class PaymentChooser {
                 $payTypes,
                 removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')),
                 $labels,
-                PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan())),
+                PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayTypes($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan())),
                 $idGuest, $idRegistration, $prefTokenId);
 
         $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
@@ -644,7 +642,7 @@ ORDER BY v.idVisit , v.Span;");
                         $payTypes,
                         removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')),
                         $labels,
-                        PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan())),
+                        PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayTypes($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan())),
                         $id, 0, $prefTokenId, '');
 
                 $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
@@ -1033,7 +1031,7 @@ ORDER BY v.idVisit , v.Span;");
                     , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
             $tbl->addBodyTr(
                  HTMLTable::makeTd('', array('id'=>'tdChargeMsg', 'colspan'=>'3', 'style'=>'color:red;'))
-                     , array('style'=>'display:none;', 'class'=>'hhk-tblCredit' . $index));
+                     , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
 
             $paymentGateway->selectPaymentMarkup($dbh, $tbl);
 

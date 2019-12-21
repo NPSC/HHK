@@ -342,7 +342,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    protected function _voidSale(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes, $bid) {
+    protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         $uS = Session::getInstance();
         $dataArray['bid'] = $bid;
@@ -372,7 +372,7 @@ class InstamedGateway extends PaymentGateway {
         }
 
         // Make a void response...
-        $sr = new ImPaymentResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes);
+        $sr = new ImPaymentResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber());
 
         // Record transaction
         try {
@@ -413,7 +413,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    protected function _returnPayment(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
+    protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
 

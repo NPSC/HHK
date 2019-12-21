@@ -57,58 +57,36 @@ abstract class PaymentGateway {
     public abstract function selectPaymentMarkup(\PDO $dbh, &$payTable);
 
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
-
+        return array('warning' => 'Credit Sale is not implemented. ');
     }
 
-    public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Void this purchase. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
+    public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
-            return $this->_voidSale($dbh, $payRs, $pAuthRs, $invoice, $paymentNotes, $bid);
+            return $this->_voidSale($dbh, $payRs, $pAuthRs, $invoice, $bid);
         }
 
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
     }
 
-    protected function _voidSale(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $paymentNotes, $bid) {
+    protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
         return array('warning' => '_voidSale is not implemented. ');
     }
 
-    public function returnPayment(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid) {
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Return. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
+    public function returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid && $pAuthRs->Status_Code->getStoredVal() != PaymentStatusCode::VoidReturn) {
-            return $this->_returnPayment($dbh, $payRs, $pAuthRs, $invoice, $pAuthRs->Approved_Amount->getStoredVal(), $bid);
+            return $this->_returnPayment($dbh, $invoice, $payRs, $pAuthRs, $pAuthRs->Approved_Amount->getStoredVal(), $bid);
         }
 
         return array('warning' => 'This Payment is ineligable for Return. ', 'bid' => $bid);
     }
 
-    protected function _returnPayment(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $retAmount, $bid) {
+    protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $retAmount, $bid) {
         return array('warning' => '_returnPayment is not implemented. ');
     }
 
-    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
         return array('warning' => 'Not Available.  ');
     }
 
@@ -116,8 +94,8 @@ abstract class PaymentGateway {
         return array('warning' => 'Return Amount is not implemented. ');
     }
 
-    public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
-        return $this->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid);
+    public function reverseSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
+        return $this->voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
     }
 
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
@@ -230,7 +208,7 @@ abstract class PaymentGateway {
         }
     }
 
-    public static function getCreditGatewayNames(\PDO $dbh, $idVisit, $span) {
+    public static function getCreditGatewayTypes(\PDO $dbh, $idVisit, $span) {
 
         $ccNames = array();
 
@@ -265,7 +243,7 @@ abstract class PaymentGateway {
 
         if (is_array($this->gwType) && count($this->gwType) == 1) {
             $myType = strtolower(array_values($this->gwType)[0]);
-        } else {
+        } else if (is_array($this->gwType) === FALSE) {
             $myType = $this->gwType;
         }
 

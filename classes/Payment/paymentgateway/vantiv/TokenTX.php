@@ -72,7 +72,7 @@ class TokenTX {
         throw new Hk_Exception_Payment("Credit Adjust Sale Amount is not implememnted yet. ");
     }
 
-    public static function creditVoidSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidSaleTokenRequest $voidSale, PaymentRS $payRs, $payNotes = '') {
+    public static function creditVoidSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidSaleTokenRequest $voidSale, PaymentRS $payRs) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
@@ -94,7 +94,7 @@ class TokenTX {
         $creditResponse = $voidSale->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
 
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId(), $payNotes);
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId());
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($voidSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidSaleToken');
