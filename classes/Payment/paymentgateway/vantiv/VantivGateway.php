@@ -363,28 +363,28 @@ class VantivGateway extends PaymentGateway {
         }
 
         if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
-            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
-        }
-
-        $pay = new InitCkOutRequest($uS->siteName, 'Custom');
-
-
-        // Card reader?
-        if ($uS->CardSwipe) {
-            $pay->setDefaultSwipe('Swipe')
-                    ->setCardEntryMethod('Both')
-                    ->setPaymentPageCode('Checkout_Url');
-        } else {
-            $pay->setPaymentPageCode('Checkout_Url');
+            throw new Hk_Exception_Runtime("The Invoice is missing.  ");
         }
 
         // Set CC Gateway name
         $uS->ccgw = $this->getGatewayType();
 
-        $pay->setPartialAuth(TRUE);
+
+        $pay = new InitCkOutRequest($uS->siteName, 'Custom');
+
+        // Card reader?
+        if ($uS->CardSwipe) {
+            $pay->setDefaultSwipe('Swipe')
+                    ->setCardEntryMethod('Both')
+                    ->setPaymentPageCode('CheckoutPOS_Url');
+        } else {
+            $pay->setPaymentPageCode('Checkout_Url');
+        }
+
 
         $pay->setAVSZip($addr["Postal_Code"])
                 ->setAVSAddress($addr['Address_1'])
+                ->setAVSZip($addr["Postal_Code"])
                 ->setCardHolderName($guest->getRoleMember()->get_fullName())
                 ->setFrequency(MpFrequencyValues::OneTime)
                 ->setInvoice($invoice->getInvoiceNumber())
@@ -395,7 +395,7 @@ class VantivGateway extends PaymentGateway {
                 ->setReturnURL($houseUrl . $postbackUrl)
                 ->setTranType(MpTranType::Sale)
                 ->setLogoUrl($siteUrl . $logo)
-                ->setCVV('on')
+                ->setCVV($this->useCVV ? 'on' : '')
                 ->setAVSFields('both');
 
         $CreditCheckOut = HostedCheckout::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pay);
@@ -403,49 +403,80 @@ class VantivGateway extends PaymentGateway {
         return $CreditCheckOut;
     }
 
-    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postBackPage) {
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
 
         $uS = Session::getInstance();
 
+        // Do a hosted payment.
         $secure = new SecurityComponent();
-        $config = new Config_Lite(ciCFG_FILE);
 
         $houseUrl = $secure->getSiteURL();
         $siteUrl = $secure->getRootURL();
-        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
+        $logo = $uS->PmtPageLogoUrl;
 
         if ($houseUrl == '' || $siteUrl == '') {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
-        }
-
-        if ($idGuest < 1 || $idGroup < 1) {
-            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
-        }
-
-
-        $initCi = new InitCiRequest($pageTitle, 'Custom');
-
-        // Card reader?
-        if ($uS->CardSwipe) {
-            $initCi->setDefaultSwipe('Swipe')
-                    ->setCardEntryMethod('Both')
-                    ->setPaymentPageCode('CardInfo_Url');
-        } else {
-            $initCi->setPaymentPageCode('CardInfo_Url');
         }
 
         // Set CC Gateway name
         $uS->ccgw = $this->getGatewayType();
 
 
-        $initCi->setCardHolderName($cardHolderName)
+        $pay = new InitCkOutRequest($uS->siteName, 'Custom');
+
+        // Card reader?
+        if ($uS->CardSwipe) {
+            $pay->setDefaultSwipe('Swipe')
+                    ->setCardEntryMethod('Both')
+                    ->setPaymentPageCode('CheckoutPOS_Url');
+        } else {
+            $pay->setPaymentPageCode('Checkout_Url');
+        }
+
+
+        $pay->setAVSZip($addr["Postal_Code"])
+                ->setAVSAddress($addr['Address_1'])
+                ->setAVSZip($addr["Postal_Code"])
+                ->setCardHolderName($cardHolderName)
                 ->setFrequency(MpFrequencyValues::OneTime)
-                ->setCompleteURL($houseUrl . $postBackPage)
-                ->setReturnURL($houseUrl . $postBackPage)
-                ->setLogoUrl($siteUrl . $logo);
+                ->setInvoice('CardInfo')
+                ->setMemo(MpVersion::PosVersion)
+                ->setTaxAmount(0)
+                ->setTotalAmount(0)
+                ->setCompleteURL($houseUrl . $postbackUrl)
+                ->setReturnURL($houseUrl . $postbackUrl)
+                ->setTranType(MpTranType::ZeroAuth)
+                ->setLogoUrl($siteUrl . $logo)
+                ->setCVV($this->useCVV ? 'on' : '')
+                ->setAVSFields('both');
+
+        return HostedCheckout::sendToPortal($dbh, $this, $idGuest, $idGroup, 'CardInfo', $pay);
 
 
-        return CardInfo::sendToPortal($dbh, $this, $idGuest, $idGroup, $initCi);
+//
+//        $initCi = new InitCiRequest($pageTitle, 'Custom');
+//
+//        // Card reader?
+//        if ($uS->CardSwipe) {
+//            $initCi->setDefaultSwipe('Swipe')
+//                    ->setCardEntryMethod('Both')
+//                    ->setPaymentPageCode('CardInfo_Url');
+//        } else {
+//            $initCi->setPaymentPageCode('CardInfo_Url');
+//        }
+//
+//        // Set CC Gateway name
+//        $uS->ccgw = $this->getGatewayType();
+//
+//
+//        $initCi->setCardHolderName($cardHolderName)
+//                ->setFrequency(MpFrequencyValues::OneTime)
+//                ->setCompleteURL($houseUrl . $postBackPage)
+//                ->setReturnURL($houseUrl . $postBackPage)
+//                ->setLogoUrl($siteUrl . $logo);
+//
+//
+//        return CardInfo::sendToPortal($dbh, $this, $idGuest, $idGroup, $initCi);
     }
 
     public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes) {
@@ -685,7 +716,6 @@ class VantivGateway extends PaymentGateway {
 
         $query = "select * from `cc_hosted_gateway` where `cc_name` = '" . $this->getGatewayType() . "' and `Gateway_Name` = '" .$this->getGatewayName()."'";
         $stmt = $dbh->query($query);
-        //$stmt->execute(array(':ccn' => $this->getGatewayType(), ':gwname'=>$this->getGatewayName()));
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

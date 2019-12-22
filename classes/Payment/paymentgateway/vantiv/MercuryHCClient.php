@@ -636,317 +636,6 @@ abstract class MercResponse {
 
 
 
-// Card Info Hosted transactions
-class InitCiRequest extends MercRequest {
-
-    function __construct($pageTitle = '', $displayStyle = '', $title = '') {
-
-        if ($pageTitle != '') {
-            $this->setPageTitle($pageTitle);
-        }
-
-        if ($displayStyle != '') {
-            $this->setDisplayStyle($displayStyle);
-        }
-
-        $this->title = $title;
-    }
-
-    protected function execute(\SoapClient $txClient, array $data) {
-        if ($this->getPaymentPageCode() == '') {
-            throw new Hk_Exception_Payment('Worldpay CardInfo Page is not set.  ');
-        }
-        return new InitCiResponse($txClient->InitializeCardInfo($data), $this->gateWay[$this->getPaymentPageCode()]);
-    }
-
-    public function setOperatorID($v) {
-        $this->fields["OperatorID"] = $v;
-        return $this;
-    }
-
-    public function setDisplayStyle($v) {
-        // Valid values are Mercury or Custom
-        if ($v != '' && strtolower($v) != 'mercury') {
-            $this->fields["DisplayStyle"] = 'Custom';
-        }
-        return $this;
-    }
-
-    public function setPageTitle($v) {
-        if ($v != '') {
-            $this->fields["PageTitle"] = $v;
-        }
-        return $this;
-    }
-
-    public function setDefaultSwipe($v) {
-        //Valid values = Manual or Swipe
-        if ($v != '') {
-            $this->fields["DefaultSwipe"] = $v;
-        }
-        return $this;
-    }
-
-    public function setCardEntryMethod($v) {
-        if ($v != '') {
-            $this->fields["CardEntryMethod"] = $v;
-        }
-        return $this;
-    }
-
-    public function setLogoUrl($v) {
-        if ($v != '') {
-            $this->fields["LogoUrl"] = $v;
-        }
-        return $this;
-    }
-
-    public function setFrequency($frequency) {
-        $this->fields["Frequency"] = $frequency;
-        return $this;
-    }
-
-    public function setCompleteURL($completeURL) {
-        $this->fields["ProcessCompleteUrl"] = $completeURL;
-        return $this;
-    }
-
-    public function setReturnURL($returnURL) {
-        $this->fields["ReturnUrl"] = $returnURL;
-        return $this;
-    }
-
-    public function setCardHolderName($v) {
-        $this->fields["CardHolderName"] = $v;
-        return $this;
-    }
-
-//    public function setCVV($v) {
-//        //Valid values = off or on. Determines whether CVV field is displayed. Default is on.
-//        if (strtolower($v) == 'on') {
-//            $this->fields["CVV"] = 'on';
-//        } else if (strtolower($v) == 'off') {
-//            $this->fields["CVV"] = 'off';
-//        }
-//        return $this;
-//    }
-
-}
-
-class VerifyCIRequest extends MercRequest{
-
-    protected function execute(\SoapClient $txClient, array $data) {
-        return new VerifyCiResponse($txClient->VerifyCardInfo($data));
-    }
-
-
-    public function setCardId($cardId) {
-        $this->fields["CardID"] = $cardId;
-        return $this;
-    }
-
-}
-
-
-class InitCiResponse extends MercResponse {
-
-    private $cardInfoURL = '';
-
-    function __construct($response, $cardInfoURL) {
-        parent::__construct($response);
-        $this->cardInfoURL = $cardInfoURL;
-
-        if (isset($this->response->InitializeCardInfoResult)) {
-            $this->result = $this->response->InitializeCardInfoResult;
-        } else {
-            throw new Hk_Exception_Payment("InitializeCardInfoResult is missing from the payment gateway response.  ");
-        }
-
-    }
-
-    public function getMessage() {
-        if (isset($this->result->Message)) {
-            return $this->result->Message;
-        }
-        return '';
-    }
-
-    public function getCardId() {
-        if (isset($this->result->CardID)) {
-            return $this->result->CardID;
-        }
-        return '';
-    }
-
-    public function getCardInfoUrl() {
-        return $this->cardInfoURL;
-    }
-
-}
-
-class VerifyCiResponse extends MercResponse implements iGatewayResponse {
-
-    function __construct($response) {
-        parent::__construct($response);
-
-        if (isset($this->response->VerifyCardInfoResult)) {
-            $this->result = $this->response->VerifyCardInfoResult;
-        }
-        else {
-            throw new Hk_Exception_Payment("VerifyCardInfoResult is missing from the payment gateway response.  ");
-        }
-
-        $this->tranType = MpTranType::CardOnFile;
-    }
-
-    public function getAVSAddress() {
-        return '';
-    }
-
-    public function getAVSResult() {
-        return '';
-    }
-
-    public function getAVSZip() {
-        return '';
-    }
-
-    public function getAcqRefData() {
-        return '';
-    }
-
-    public function getAuthCode() {
-        return '';
-    }
-
-    public function getAuthorizationText() {
-        return '';
-    }
-
-    public function getCvvResult() {
-        return '';
-    }
-
-    public function getInvoiceNumber() {
-        return '';
-    }
-
-    public function getPartialPaymentAmount() {
-        return '';
-    }
-
-    public function getProcessData() {
-        return '';
-    }
-
-    public function getRefNo() {
-        return '';
-    }
-
-    public function getResponseMessage() {
-        return '';
-    }
-
-    public function getTransPostTime() {
-        return '';
-    }
-
-    public function getTransactionStatus() {
-        return '';
-    }
-
-    public function getRequestAmount() {
-        return 0;
-    }
-
-    public function getCardId() {
-        if (isset($this->result->CardID)) {
-            return $this->result->CardID;
-        }
-        return '';
-    }
-
-    public function getStatus() {
-        if (isset($this->result->Status)) {
-            return $this->result->Status;
-        }
-        return '';
-    }
-
-    public function getStatusMessage() {
-        if (isset($this->result->StatusMessage)) {
-            return $this->result->StatusMessage;
-        }
-        return '';
-    }
-
-    public function getDisplayMessage() {
-        if (isset($this->result->DisplayMessage)) {
-            return $this->result->DisplayMessage;
-        }
-        return '';
-    }
-
-    public function getToken() {
-        if (isset($this->result->Token)) {
-            return $this->result->Token;
-        }
-        return '';
-    }
-
-    public function getCardType() {
-        if (isset($this->result->CardType)) {
-            return $this->result->CardType;
-        }
-        return '';
-    }
-
-    public function getMaskedAccount() {
-        if (isset($this->result->MaskedAccount)) {
-            return str_ireplace('x', '', $this->result->MaskedAccount);
-        }
-        return '';
-    }
-
-    public function getCardUsage() {
-        if (isset($this->result->CardUsage)) {
-            return $this->result->CardUsage;
-        }
-        return '';
-    }
-
-    public function getCardIDExpired() {
-        if (isset($this->result->CardIDExpired)) {
-            return $this->result->CardIDExpired;
-        }
-        return '';
-    }
-
-    public function getCardHolderName() {
-        if (isset($this->result->CardHolderName)) {
-            return $this->result->CardHolderName;
-        }
-        return '';
-    }
-
-    public function getOperatorID() {
-        if (isset($this->result->OperatorID)) {
-            return $this->result->OperatorID;
-        }
-        return '';
-    }
-
-    public function getExpDate() {
-        if (isset($this->result->ExpDate)) {
-            return $this->result->ExpDate;
-        }
-        return '';
-    }
-
-}
-
-
-
 // Credit Payment Hosted transactions
 class InitCkOutRequest extends MercRequest {
 
@@ -1403,6 +1092,318 @@ class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse {
     }
 
 }
+
+
+
+// Card Info Hosted transactions
+class InitCiRequest extends MercRequest {
+
+    function __construct($pageTitle = '', $displayStyle = '', $title = '') {
+
+        if ($pageTitle != '') {
+            $this->setPageTitle($pageTitle);
+        }
+
+        if ($displayStyle != '') {
+            $this->setDisplayStyle($displayStyle);
+        }
+
+        $this->title = $title;
+    }
+
+    protected function execute(\SoapClient $txClient, array $data) {
+        if ($this->getPaymentPageCode() == '') {
+            throw new Hk_Exception_Payment('Worldpay CardInfo Page is not set.  ');
+        }
+        return new InitCiResponse($txClient->InitializeCardInfo($data), $this->gateWay[$this->getPaymentPageCode()]);
+    }
+
+    public function setOperatorID($v) {
+        $this->fields["OperatorID"] = $v;
+        return $this;
+    }
+
+    public function setDisplayStyle($v) {
+        // Valid values are Mercury or Custom
+        if ($v != '' && strtolower($v) != 'mercury') {
+            $this->fields["DisplayStyle"] = 'Custom';
+        }
+        return $this;
+    }
+
+    public function setPageTitle($v) {
+        if ($v != '') {
+            $this->fields["PageTitle"] = $v;
+        }
+        return $this;
+    }
+
+    public function setDefaultSwipe($v) {
+        //Valid values = Manual or Swipe
+        if ($v != '') {
+            $this->fields["DefaultSwipe"] = $v;
+        }
+        return $this;
+    }
+
+    public function setCardEntryMethod($v) {
+        if ($v != '') {
+            $this->fields["CardEntryMethod"] = $v;
+        }
+        return $this;
+    }
+
+    public function setLogoUrl($v) {
+        if ($v != '') {
+            $this->fields["LogoUrl"] = $v;
+        }
+        return $this;
+    }
+
+    public function setFrequency($frequency) {
+        $this->fields["Frequency"] = $frequency;
+        return $this;
+    }
+
+    public function setCompleteURL($completeURL) {
+        $this->fields["ProcessCompleteUrl"] = $completeURL;
+        return $this;
+    }
+
+    public function setReturnURL($returnURL) {
+        $this->fields["ReturnUrl"] = $returnURL;
+        return $this;
+    }
+
+    public function setCardHolderName($v) {
+        $this->fields["CardHolderName"] = $v;
+        return $this;
+    }
+
+//    public function setCVV($v) {
+//        //Valid values = off or on. Determines whether CVV field is displayed. Default is on.
+//        if (strtolower($v) == 'on') {
+//            $this->fields["CVV"] = 'on';
+//        } else if (strtolower($v) == 'off') {
+//            $this->fields["CVV"] = 'off';
+//        }
+//        return $this;
+//    }
+
+}
+
+class VerifyCIRequest extends MercRequest{
+
+    protected function execute(\SoapClient $txClient, array $data) {
+        return new VerifyCiResponse($txClient->VerifyCardInfo($data));
+    }
+
+
+    public function setCardId($cardId) {
+        $this->fields["CardID"] = $cardId;
+        return $this;
+    }
+
+}
+
+
+class InitCiResponse extends MercResponse {
+
+    private $cardInfoURL = '';
+
+    function __construct($response, $cardInfoURL) {
+        parent::__construct($response);
+        $this->cardInfoURL = $cardInfoURL;
+
+        if (isset($this->response->InitializeCardInfoResult)) {
+            $this->result = $this->response->InitializeCardInfoResult;
+        } else {
+            throw new Hk_Exception_Payment("InitializeCardInfoResult is missing from the payment gateway response.  ");
+        }
+
+    }
+
+    public function getMessage() {
+        if (isset($this->result->Message)) {
+            return $this->result->Message;
+        }
+        return '';
+    }
+
+    public function getCardId() {
+        if (isset($this->result->CardID)) {
+            return $this->result->CardID;
+        }
+        return '';
+    }
+
+    public function getCardInfoUrl() {
+        return $this->cardInfoURL;
+    }
+
+}
+
+class VerifyCiResponse extends MercResponse implements iGatewayResponse {
+
+    function __construct($response) {
+        parent::__construct($response);
+
+        if (isset($this->response->VerifyCardInfoResult)) {
+            $this->result = $this->response->VerifyCardInfoResult;
+        }
+        else {
+            throw new Hk_Exception_Payment("VerifyCardInfoResult is missing from the payment gateway response.  ");
+        }
+
+        $this->tranType = MpTranType::CardOnFile;
+    }
+
+    public function getAVSAddress() {
+        return '';
+    }
+
+    public function getAVSResult() {
+        return '';
+    }
+
+    public function getAVSZip() {
+        return '';
+    }
+
+    public function getAcqRefData() {
+        return '';
+    }
+
+    public function getAuthCode() {
+        return '';
+    }
+
+    public function getAuthorizationText() {
+        return '';
+    }
+
+    public function getCvvResult() {
+        return '';
+    }
+
+    public function getInvoiceNumber() {
+        return '';
+    }
+
+    public function getPartialPaymentAmount() {
+        return '';
+    }
+
+    public function getProcessData() {
+        return '';
+    }
+
+    public function getRefNo() {
+        return '';
+    }
+
+    public function getResponseMessage() {
+        return '';
+    }
+
+    public function getTransPostTime() {
+        return '';
+    }
+
+    public function getTransactionStatus() {
+        return '';
+    }
+
+    public function getRequestAmount() {
+        return 0;
+    }
+
+    public function getCardId() {
+        if (isset($this->result->CardID)) {
+            return $this->result->CardID;
+        }
+        return '';
+    }
+
+    public function getStatus() {
+        if (isset($this->result->Status)) {
+            return $this->result->Status;
+        }
+        return '';
+    }
+
+    public function getStatusMessage() {
+        if (isset($this->result->StatusMessage)) {
+            return $this->result->StatusMessage;
+        }
+        return '';
+    }
+
+    public function getDisplayMessage() {
+        if (isset($this->result->DisplayMessage)) {
+            return $this->result->DisplayMessage;
+        }
+        return '';
+    }
+
+    public function getToken() {
+        if (isset($this->result->Token)) {
+            return $this->result->Token;
+        }
+        return '';
+    }
+
+    public function getCardType() {
+        if (isset($this->result->CardType)) {
+            return $this->result->CardType;
+        }
+        return '';
+    }
+
+    public function getMaskedAccount() {
+        if (isset($this->result->MaskedAccount)) {
+            return str_ireplace('x', '', $this->result->MaskedAccount);
+        }
+        return '';
+    }
+
+    public function getCardUsage() {
+        if (isset($this->result->CardUsage)) {
+            return $this->result->CardUsage;
+        }
+        return '';
+    }
+
+    public function getCardIDExpired() {
+        if (isset($this->result->CardIDExpired)) {
+            return $this->result->CardIDExpired;
+        }
+        return '';
+    }
+
+    public function getCardHolderName() {
+        if (isset($this->result->CardHolderName)) {
+            return $this->result->CardHolderName;
+        }
+        return '';
+    }
+
+    public function getOperatorID() {
+        if (isset($this->result->OperatorID)) {
+            return $this->result->OperatorID;
+        }
+        return '';
+    }
+
+    public function getExpDate() {
+        if (isset($this->result->ExpDate)) {
+            return $this->result->ExpDate;
+        }
+        return '';
+    }
+
+}
+
 
 
 // Mercury Token transactions

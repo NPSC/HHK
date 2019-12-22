@@ -1584,9 +1584,28 @@ FROM reservation r
                 $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), $roomKeyDeps);
                 $checkinCharges->sumPayments($dbh);
 
-               // $stmt = $dbh->query("Select l.Merchant from room r join location l on r.idLocation = l.idLocation where r.idRoom = ")
+                // select gateway
+                if ($resv->getIdResource() > 0) {
+                    // Get gateway merchant
+                    $gwStmt = $dbh->query("SELECT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM location l join room r on l.idLocation = r.idLocation
+                    join resource_room rr on r.idRoom = rr.idRoom where l.Status = 'a' and rr.idResource = " . $resv->getIdResource());
 
-                $paymentGateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $gwType);
+                } else {
+                    $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
+                    where l.`Status` = 'a' or l.`Status` is null;");
+                }
+
+                $rows = $gwStmt->fetchAll(PDO::FETCH_ASSOC);
+                $merchants = array();
+
+                if (count($rows) > 0) {
+
+                    foreach ($rows as $r) {
+                        $merchants[$r['idLocation']] = $r['Merchant'];
+                    }
+                }
+
+                $paymentGateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $merchants);
 
                 $dataArray['pay'] = HTMLContainer::generateMarkup('div',
                         PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())

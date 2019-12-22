@@ -11,6 +11,7 @@
 Class MpTranType {
     const Sale = 'Sale';
     const PreAuth = 'PreAuth';
+    const ZeroAuth = 'ZeroAuth';
     const ReturnAmt = 'ReturnAmount';
     const ReturnSale = 'ReturnSale';
     const Void = 'VoidSale';
@@ -208,7 +209,7 @@ abstract class PaymentGateway {
         }
     }
 
-    public static function getCreditGatewayTypes(\PDO $dbh, $idVisit, $span) {
+    public static function getCreditGatewayNames(\PDO $dbh, $idVisit, $span) {
 
         $ccNames = array();
 

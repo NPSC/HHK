@@ -98,31 +98,32 @@ function manageRelation(id, rId, relCode, cmd) {
 function setupCOF() {
 
     // Card on file Cardholder name.
-    if ($('#trCHName').length > 0) {
+    if ($('#trvdCHName').length > 0) {
 
-        $('#cbNewCard').change(function () {
-
-            if (this.checked) {
-                $('.hhkKeyNumber').show();
+        $('input[name=rbUseCard]').on('change', function () {
+            if ($(this).val() == 0) {
+                $('#trvdCHName').show();
             } else {
-                $('.hhkKeyNumber').hide();
-                $('#cbKeyNumber').prop('checked', false).change();
-
+                $('#trvdCHName').hide();
+                $('#btnvrKeyNumber').prop('checked', false).change();
             }
         });
 
-        $('#cbNewCard').change();
+        if ($('input[name=rbUseCard]:checked').val() > 0) {
+            $('#trvdCHName').hide();
+        }
 
-        $('#cbKeyNumber').change(function() {
+        $('#btnvrKeyNumber').change(function() {
 
-            if (this.checked && $('#cbNewCard').prop('checked') === true) {
-                $('#trCHName').show();
+            if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
+                $('#txtvdNewCardName').show();
             } else {
-                $('#trCHName').hide();
+                $('#txtvdNewCardName').hide();
+                $('#txtvdNewCardName').val('');
             }
         });
 
-        $('#cbKeyNumber').change();
+        $('#btnvrKeyNumber').change();
     }
 
 }

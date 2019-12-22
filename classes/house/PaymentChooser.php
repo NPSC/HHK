@@ -924,7 +924,8 @@ ORDER BY v.idVisit , v.Span;");
         if (isset($payTypes[PayType::Charge])) {
 
             // Charge card gateway
-            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId);
+            $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $paymentGateway->getGatewayType(), $idPrimaryGuest);
+            self::CreditBlock($dbh, $payTbl, $tkRsArray, $paymentGateway, $prefTokenId);
         }
 
         // Payment notes
@@ -965,8 +966,11 @@ ORDER BY v.idVisit , v.Span;");
         // credit info
         if (isset($payTypes[PayType::Charge])) {
 
+            // Charge card gateway
+            $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $paymentGateway->getGatewayType(), $idPrimaryGuest);
+            self::CreditBlock($dbh, $payTbl, $tkRsArray, $paymentGateway, $prefTokenId);
             // Credit gateway
-            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId, ReturnIndex::ReturnIndex);
+            //self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId, ReturnIndex::ReturnIndex);
 
         }
 
@@ -979,19 +983,17 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblRtnSelect'));
     }
 
-    protected static function CreditBlock(\PDO $dbh, &$tbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId = 0, $index = '') {
-
-        $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $paymentGateway->getGatewayType(), $idPrimaryGuest);
+    public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;') {
 
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
             // Cannot return to a new card...
             $tbl->addBodyTr(HTMLTable::makeTh("No Cards on file", array('colspan'=>'3'))
-                , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                , array('style'=>$display, 'class'=>'tblCredit' . $index));
             return;
         }
 
         $tbl->addBodyTr(HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use")
-                , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
         // preset useCardRb
         if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
@@ -1010,10 +1012,15 @@ ORDER BY v.idVisit , v.Span;");
                 unset($attr['checked']);
             }
 
-            $tbl->addBodyTr(HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal())
+            $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
+            if (strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+                $merchant = '';
+            }
+
+            $tbl->addBodyTr(HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant)
                     . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
-                , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
         }
 
@@ -1028,7 +1035,7 @@ ORDER BY v.idVisit , v.Span;");
 
             $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '2'))
                 .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
-                    , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                    , array('style'=>$display, 'class'=>'tblCredit' . $index));
             $tbl->addBodyTr(
                  HTMLTable::makeTd('', array('id'=>'tdChargeMsg', 'colspan'=>'3', 'style'=>'color:red;'))
                      , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));

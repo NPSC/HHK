@@ -1277,51 +1277,27 @@ class HouseServices {
 
         $uS = Session::getInstance();
 
-        $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, $idGuest);
+        $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
+                where l.`Status` = 'a' or l.`Status` is null;");
 
-        $tblPayment = new HTMLTable();
-        //$tblPayment->addHeaderTr(HTMLTable::makeTh("Credit Card on File", array('colspan' => '4')));
-        $tblPayment->addBodyTr(HTMLTable::makeTh("Type") . HTMLTable::makeTh("Account") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Delete"));
+        $rows = $gwStmt->fetchAll(PDO::FETCH_ASSOC);
+        $merchants = array();
 
-        // Offer to delete any stored cards
-        foreach ($tkRsArray as $tkRs) {
+        if (count($rows) > 0) {
 
-            if (CreditToken::hasToken($tkRs)) {
-
-                $attr = array('type' => 'checkbox', 'class'=>'ignrSave', 'name' => 'crdel_' . $tkRs->idGuest_token->getStoredVal());
-
-                $tblPayment->addBodyTr(
-                        HTMLTable::makeTd($tkRs->CardType->getStoredVal())
-                        . HTMLTable::makeTd($tkRs->MaskedAccount->getStoredVal())
-                        . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
-                        . HTMLTable::makeTd(
-                                HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr), array('style' => 'text-align:center;'))
-                );
+            foreach ($rows as $r) {
+                $merchants[$r['idLocation']] = $r['Merchant'];
             }
         }
 
-        // Offer for storing a new card.
-        $attr = array('type' => 'checkbox', 'name' => 'cbNewCard', 'class'=>'ignrSave', 'style' => 'margin-right:4px;');
-        $nameAttr = array('type' => 'textbox', 'name' => 'txtNewCardName', 'class'=>'ignrSave', 'style' => 'margin-right:4px;');
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $merchants);
+        $tbl = new HTMLTable();
 
-        $tblPayment->addBodyTr(
-                HTMLTable::makeTd(
-                        HTMLInput::generateMarkup('', $attr)
-                        . HTMLContainer::generateMarkup('label', 'Put a new card on file', array('for' => 'cbNewCard'))
-                        . ($uS->PaymentGateway == PaymentGateway::INSTAMED ?
-                           HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'cbKeyNumber', 'class'=>'hhkKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
-                        . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbKeyNumber', 'class'=>'ignrSave hhkKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan' => '4'))
-        );
+        $tkRsArray = CreditToken::getGuestTokenRSs($dbh, $idGuest);
+        PaymentChooser::CreditBlock($dbh, $tbl, $tkRsArray, $gateway, 0, '', '');
 
-        if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {
+        return $tbl->generateMarkup(array('id' => 'tblupCredit'));
 
-            $tblPayment->addBodyTr(
-                    HTMLTable::makeTd('Cardholder Name', array('colspan' => '2', 'class'=>'tdlabel'))
-                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', $nameAttr), array('colspan' => '2','class'=>'ignrSave'))
-                , array('id'=>'trCHName'));
-        }
-
-        return $tblPayment->generateMarkup(array('id' => 'tblupCredit'));
     }
 
     /**
@@ -1370,8 +1346,10 @@ class HouseServices {
         // Add a new card
         if (isset($post['cbNewCard'])) {
 
-            $newCardHolderName = '';
             $manualKey = FALSE;
+
+            $guest = new Guest($dbh, '', $idGuest);
+            $newCardHolderName = $guest->getRoleMember()->get_fullName();
 
             if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
                 $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
@@ -1379,8 +1357,20 @@ class HouseServices {
             }
 
             try {
-                // Payment Gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+                $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
+                where l.`Status` = 'a' or l.`Status` is null;");
+
+                $rows = $gwStmt->fetchAll(PDO::FETCH_ASSOC);
+                $merchants = array();
+
+                if (count($rows) > 0) {
+
+                    foreach ($rows as $r) {
+                        $merchants[$r['idLocation']] = $r['Merchant'];
+                    }
+                }
+
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $merchants);
 
                 $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage);
 

@@ -19,12 +19,16 @@ class CardInfo {
 
     public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, InitCiRequest $initCi) {
 
+        $uS = Session::getInstance();
         $dataArray = array();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
+        if (strtolower($uS->mode) !== Mode::Live) {
+//            $initCoRequest->setAVSAddress('4')->setAVSZip('30329');
             $initCi->setOperatorID('test');
-//            $trace = TRUE;
+            $trace = TRUE;
+        } else {
+            $initCi->setOperatorID($uS->username);
         }
 
         $ciResponse = $initCi->submit($gway->getCredentials(), $trace);
@@ -146,13 +150,16 @@ class HostedCheckout {
 
     public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, $invoiceNumber, InitCkOutRequest $initCoRequest) {
 
+        $uS = Session::getInstance();
         $dataArray = array();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
-            $initCoRequest->setAVSAddress('4')->setAVSZip('30329');
+        if (strtolower($uS->mode) !== Mode::Live) {
+//            $initCoRequest->setAVSAddress('4')->setAVSZip('30329');
             $initCoRequest->setOperatorID('test');
             $trace = TRUE;
+        } else {
+            $initCoRequest->setOperatorID($uS->username);
         }
 
         $ciResponse = $initCoRequest->submit($gway->getCredentials(), $trace);

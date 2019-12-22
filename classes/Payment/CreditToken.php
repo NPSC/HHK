@@ -136,6 +136,28 @@ class CreditToken {
         return $gtRs;
     }
 
+    public static function getGuestTokenRSs(\PDO $dbh, $idGuest) {
+
+        $rsRows = array();
+        $idGst = intval($idGuest);
+
+        if ($idGst > 0) {
+
+            $gtRs = new Guest_TokenRS();
+            $gtRs->idGuest->setStoredVal($idGst);
+            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest), 'and', array($gtRs->Merchant));
+
+            foreach ($rows as $r) {
+                $gtRs = new Guest_TokenRS();
+                EditRS::loadRow($r, $gtRs);
+
+                if (self::hasToken($gtRs)) {
+                    $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
+                }
+            }
+        }
+        return $rsRows;
+    }
 
     public static function getRegTokenRSs(\PDO $dbh, $idRegistration, $merchant, $idGuest = 0) {
 
@@ -144,7 +166,7 @@ class CreditToken {
         $idGst = intval($idGuest);
 
 
-        // Get registration tokens
+        // Get Billing Agent tokens
         if ($idReg > 0) {
 
             $stmt = $dbh->query("select t.* from guest_token t left join name_volunteer2 nv on t.idGuest = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ba'
