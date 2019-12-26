@@ -27,3 +27,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement');
 
 ALTER TABLE `document` CHANGE COLUMN `Doc` `Doc` MEDIUMBLOB NULL DEFAULT NULL ;
+
+UPDATE `sys_config` SET `Category`='h' WHERE `Key`='ShowUncfrmdStatusTab';
+
+-- Update gen_lookups Pay_Types to index paymentId 2 instead of 4

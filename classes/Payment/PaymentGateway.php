@@ -33,7 +33,7 @@ abstract class PaymentGateway {
     protected $useAVS;
     protected $useCVV;
 
-    public function __construct(\PDO $dbh, $gwType) {
+    public function __construct(\PDO $dbh, $gwType = '') {
 
         $this->gwType = $gwType;
         $this->setCredentials($this->loadGateway($dbh));
@@ -159,33 +159,33 @@ abstract class PaymentGateway {
         return EditRS::insert($dbh, $gwRs);
     }
 
-    public static function updatePayTypes(\PDO $dbh, $paymentMethod, $username) {
-
-        $msg = '';
-
-        $glRs = new GenLookupsRS();
-        $glRs->Table_Name->setStoredVal('Pay_Type');
-        $glRs->Code->setStoredVal(PayType::Charge);
-        $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
-
-        if (count($rows) > 0) {
-
-            $glRs = new GenLookupsRS();
-            EditRS::loadRow($rows[0], $glRs);
-
-            $glRs->Substitute->setNewVal($paymentMethod);
-
-            $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
-
-            if ($ctr > 0) {
-                $logText = HouseLog::getUpdateText($glRs);
-                HouseLog::logGenLookups($dbh, 'Pay_Type', PayType::Charge, $logText, "update", $username);
-                $msg = "Pay_Type Charge is updated.  ";
-            }
-        }
-
-        return $msg;
-    }
+//    public static function updatePayTypes(\PDO $dbh, $paymentMethod, $username) {
+//
+//        $msg = '';
+//
+//        $glRs = new GenLookupsRS();
+//        $glRs->Table_Name->setStoredVal('Pay_Type');
+//        $glRs->Code->setStoredVal(PayType::Charge);
+//        $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+//
+//        if (count($rows) > 0) {
+//
+//            $glRs = new GenLookupsRS();
+//            EditRS::loadRow($rows[0], $glRs);
+//
+//            $glRs->Substitute->setNewVal($paymentMethod);
+//
+//            $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+//
+//            if ($ctr > 0) {
+//                $logText = HouseLog::getUpdateText($glRs);
+//                HouseLog::logGenLookups($dbh, 'Pay_Type', PayType::Charge, $logText, "update", $username);
+//                $msg = "Pay_Type Charge is updated.  ";
+//            }
+//        }
+//
+//        return $msg;
+//    }
 
     public static function factory(\PDO $dbh, $gwName, $gwType) {
 

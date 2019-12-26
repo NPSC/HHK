@@ -50,10 +50,35 @@ class LocalGateway extends PaymentGateway {
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
+        $payResult = NULL;
+
+        $guest = new Guest($dbh, '', $invoice->getSoldToId());
+        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
+
+        $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
 
 
-        $cashResp = new ManualChargeResponse($invoice->getAmountToPay(), $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
+        $payResp = new LocalResponse($invoice->getAmountToPay(), $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
 
+        // New Token?
+        if ($vr->response->getToken() != '') {
+
+            $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->getIdToken());
+
+            $vr->response->setMaskedAccount($guestTokenRs->MaskedAccount->getStoredVal());
+            $vr->response->setCardHolderName($guestTokenRs->CardHolderName->getStoredVal());
+            $vr->response->setOperatorId($cstReq->getOperatorID());
+            $vr->cardType = $guestTokenRs->CardType->getStoredVal();
+            $vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
+        }
+
+        // Record transaction
+        $transRs = Transaction::recordTransaction($dbh, $vr, $gway->getGatewayName(), TransType::Sale, TransMethod::Token);
+        $vr->setIdTrans($transRs->idTrans->getStoredVal());
+
+
+        // Record Payment
+        return SaleReply::processReply($dbh, $vr, $uS->username);
         //ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
 
         // Update invoice

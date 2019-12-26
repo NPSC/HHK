@@ -582,17 +582,27 @@ class SiteConfig {
 
     public static function saveSysConfig(\PDO $dbh, array $post) {
 
+        $mess = '';
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
 
-            $value = filter_var($val, FILTER_SANITIZE_STRING);
-            $key = filter_var($itemName, FILTER_SANITIZE_STRING);
+            try {
+                $value = filter_var($val, FILTER_SANITIZE_STRING);
+                $key = filter_var($itemName, FILTER_SANITIZE_STRING);
 
-            SysConfig::saveKeyValue($dbh, 'sys_config', $key, $value);
+                SysConfig::saveKeyValue($dbh, 'sys_config', $key, $value);
+
+            } catch (Hk_Exception_Runtime $hx) {
+                $mess .= $hx->getMessage() . ';  ';
+            }
 
         }
 
-        return 'Parameters saved.  ';
+        if ($mess == '') {
+            $mess = 'Parameters saved.  ';
+        }
+
+        return $mess;
 
     }
 
@@ -654,38 +664,23 @@ class SiteConfig {
 
         if (isset($post['payGtwyName']) && SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway') != $newGW) {
 
-            SysConfig::saveKeyValue($dbh, 'sys_config', 'PaymentGateway', $newGW);
-            $uS->PaymentGateway = $newGW;
-            $msg .= "Payment Gateway Changed.";
+            // is the new name implemented?
+            $pgwdirs = scandir(PMT . 'PaymentGateway');
 
-            switch ($newGW) {
+            if (count(array_intersect(array(0=>$newGW), $pgwdirs)) == 1) {
 
-                case PaymentGateway::INSTAMED:
-
-                    require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
-                    PaymentGateway::updatePayTypes($dbh, InstamedGateway::getPaymentMethod(), $uS->username);
-                    break;
-
-//                case PaymentGateway::CONVERGE:
-//                    require (PMT . 'paymentgateway/converge/ConvergeGateway.php');
-//                    PaymentGateway::updatePayTypes($dbh, ConvergeGateway::getPaymentMethod(), $uS->username);
-//                    break;
-
-                case PaymentGateway::VANTIV:
-
-                    require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
-                    PaymentGateway::updatePayTypes($dbh, VantivGateway::getPaymentMethod(), $uS->username);
-                    break;
-
+                // Change payment gateway
+                SysConfig::saveKeyValue($dbh, 'sys_config', 'PaymentGateway', $newGW);
+                $uS->PaymentGateway = $newGW;
+                $msg .= "Payment Gateway Changed.";
+            } else {
+                $msg = 'Payment Gateway not found: ' .$newGW;
             }
 
         } else {
-
-            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-
+            // Update current GW.
             $msg = PaymentGateway::saveEditMarkup($dbh, $uS->PaymentGateway, $post);
 
-            $msg .= PaymentGateway::updatePayTypes($dbh, $gateway->getPaymentMethod(), $uS->username);
         }
 
         return $msg;
