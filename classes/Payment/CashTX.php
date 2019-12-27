@@ -21,6 +21,10 @@ class CashResponse extends PaymentResponse {
 
     }
 
+    public function getPaymentMethod() {
+        return PaymentMethod::Cash;
+    }
+
     public function getStatus() {
         return CreditPayments::STATUS_APPROVED;
     }
@@ -30,6 +34,10 @@ class CashResponse extends PaymentResponse {
         if ($this->getAmount() != 0) {
             $tbl->addBodyTr(HTMLTable::makeTd("Cash Tendered:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
         }
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
     }
 
 }

@@ -22,6 +22,14 @@ class CheckResponse extends PaymentResponse {
 
     }
 
+    public function getPaymentMethod() {
+        return PaymentMethod::Check;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
+    }
+
     public function getStatus() {
         return CreditPayments::STATUS_APPROVED;
     }
@@ -31,7 +39,6 @@ class CheckResponse extends PaymentResponse {
         $tbl->addBodyTr(HTMLTable::makeTd("Check:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
         $tbl->addBodyTr(HTMLTable::makeTd('Check Number:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->checkNumber));
     }
-
 
 }
 
@@ -204,6 +211,14 @@ class TransferResponse extends PaymentResponse {
         $this->checkNumber = $transferAcct;
         $this->payNotes = $payNotes;
 
+    }
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Transfer;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
     }
 
     public function getStatus() {

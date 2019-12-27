@@ -120,6 +120,10 @@ class CardInfoResponse extends PaymentResponse {
         $this->cardName = $verifyCiResponse->getCardHolderName();
     }
 
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
+
     public function getStatus() {
 
         switch ($this->response->getStatus()) {
@@ -260,6 +264,10 @@ class CheckOutResponse extends PaymentResponse {
         $this->cardName = $verifyCkOutResponse->getCardHolderName();
         $this->amount = $verifyCkOutResponse->getAuthorizedAmount();
         $this->payNotes = $payNotes;
+    }
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
     }
 
     public function getStatus() {

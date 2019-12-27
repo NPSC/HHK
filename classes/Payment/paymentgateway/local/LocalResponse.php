@@ -76,4 +76,13 @@ class LocalResponse extends PaymentResponse {
         $tbl->addBodyTr(HTMLTable::makeTd($cgType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCardNum()));
 
     }
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
+    
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
+    }
+
 }

@@ -11,16 +11,13 @@
 
 abstract class PaymentResponse {
 
-    protected $paymentType;
-    public $response;
     protected $amount;
-    protected $amountDue = 0.0;
     protected $invoiceNumber = '';
     protected $partialPaymentFlag = FALSE;
     protected $paymentDate;
-    public $payNotes = '';
+    protected $payNotes = '';
     protected $refund;
-
+    protected $result;  // vendor specific
 
     public $idPayor = 0;
     public $idVisit;
@@ -28,34 +25,19 @@ abstract class PaymentResponse {
     public $idRegistration;
     public $idTrans = 0;
     public $idGuestToken = 0;
-    public $checkNumber;
-
     public $idPayment;
-    public $idPaymentAuth;
-    public $idInfoCheck;
-
-
-    /**
-     *
-     * @var PaymentRS
-     */
-    public $paymentRs;
-
 
     public abstract function getStatus();
 
     public abstract function receiptMarkup(\PDO $dbh, &$tbl);
 
+    // One of the PaymentMethods
     public abstract function getPaymentMethod();
 
-    public function getResult() {
-        return MpStatusValues::Approved;
-    }
+    // One of the PaymentStatusCodes
+    public abstract function getPaymentStatusCode();
 
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
-    }
-
+    // Record a payment
     public function recordPayment(\PDO $dbh, $username, $attempts = 1) {
 
         $payRs = new PaymentRS();
@@ -75,6 +57,69 @@ abstract class PaymentResponse {
         $this->idPayment = EditRS::insert($dbh, $payRs);
         $payRs->idPayment->setNewVal($this->idPayment);
         EditRS::updateStoredVals($payRs);
+    }
+
+    public function getAmount() {
+        return $this->amount;
+    }
+
+    public function getResult() {
+        return $this->result;
+    }
+
+    public function getPaymentDate() {
+        return $this->paymentDate;
+    }
+
+    public function setPaymentDate($d) {
+        $this->paymentDate = $d;
+    }
+
+    public function getPaymentNotes() {
+        return $this->payNotes;
+    }
+
+    public function getIdPayor() {
+        return $this->idPayor;
+    }
+
+    public function getInvoiceNumber() {
+        return $this->invoiceNumber;
+    }
+
+    public function isRefund() {
+        if ($this->refund) {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    public function getIdPayment() {
+        return $this->idPayment;
+    }
+
+    public function getIdToken() {
+        return $this->idGuestToken;
+    }
+
+    public function getIdTrans() {
+        return $this->idTrans;
+    }
+
+    public function setIdTrans($idTrans) {
+        $this->idTrans = $idTrans;
+        return $this;
+    }
+}
+
+abstract class CreditResponse extends PaymentResponse {
+
+    public $response;
+    public $idPaymentAuth;
+
+    public function getResult() {
+        return MpStatusValues::Approved;
     }
 
     public function recordPaymentAuth(\PDO $dbh, $paymentGatewayName, $username) {
@@ -107,7 +152,7 @@ abstract class PaymentResponse {
 
             $pDetailRS->Updated_By->setNewVal($username);
             $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-            $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Paid);
+            $pDetailRS->Status_Code->setNewVal($this->getPaymentStatusCode());
 
             // EMV
             $pDetailRS->EMVApplicationIdentifier->setNewVal($this->response->getEMVApplicationIdentifier());
@@ -117,54 +162,14 @@ abstract class PaymentResponse {
             $pDetailRS->EMVTransactionStatusInformation->setNewVal($this->response->getEMVTransactionStatusInformation());
 
 
-            $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+            $this->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         }
 
-    }
-
-    public function getPaymentType() {
-        return $this->paymentType;
-    }
-
-    public function getAmountDue() {
-        return $this->amountDue;
-    }
-
-    public function getAmount() {
-        return $this->amount;
-    }
-
-    public function getPaymentDate() {
-        return $this->paymentDate;
-    }
-
-    public function setPaymentDate($d) {
-        $this->paymentDate = $d;
-    }
-
-    public function getPaymentNotes() {
-        return $this->payNotes;
-    }
-
-    public function getIdPayor() {
-        return $this->idPayor;
-    }
-
-    public function getInvoiceNumber() {
-        return $this->invoiceNumber;
     }
 
     public function isPartialPayment() {
         return $this->partialPaymentFlag;
-    }
-
-    public function isRefund() {
-        if ($this->refund) {
-            return 1;
-        } else {
-            return 0;
-        }
     }
 
     public function setPartialPayment($v) {
@@ -175,21 +180,12 @@ abstract class PaymentResponse {
         }
     }
 
-    public function getIdToken() {
-        return $this->idGuestToken;
-    }
-
     public function setIdToken($idToken) {
-        $this->idGuestToken = intval($idToken, 0);
+        $this->idGuestToken = intval($idToken, 10);
     }
 
     public function getIdPayment() {
-
-        if (is_null($this->paymentRs) === FALSE) {
-            return $this->paymentRs->idPayment->getStoredVal();
-        }
-
-        return 0;
+        return $this->idPayment;
     }
 
     public function getIdTrans() {
@@ -203,3 +199,28 @@ abstract class PaymentResponse {
 
 }
 
+
+abstract class CheckResponse extends PaymentResponse {
+
+    public $idInfoCheck;
+
+    public function recordInfoCheck(\PDO $dbh) {
+
+        if ($this->idPayment > 0) {
+
+            // Check table
+            $ckRs = new PaymentInfoCheckRS();
+            $ckRs->Check_Date->setNewVal($this->getPaymentDate());
+            $ckRs->Check_Number->setNewVal($this->getCheckNumber);
+            $ckRs->idPayment->setNewVal($this->idPayment);
+
+            $this->idInfoCheck = EditRS::insert($dbh, $ckRs);
+        }
+
+    }
+
+    public function getCheckNumber() {
+        return $this->checkNumber;
+    }
+
+}

@@ -254,14 +254,7 @@ class TokenTX {
 }
 
 
-class TokenResponse extends PaymentResponse {
-
-    /**
-     *
-     * @var CreditTokenResponse
-     */
-    public $response;
-
+class TokenResponse extends CreditResponse {
 
 
     function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $payNotes = '') {
@@ -274,6 +267,14 @@ class TokenResponse extends PaymentResponse {
         $this->invoiceNumber = $creditTokenResponse->getInvoiceNumber();
         $this->amount = $creditTokenResponse->getAuthorizedAmount();
         $this->payNotes = $payNotes;
+    }
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
     }
 
     public function getStatus() {
@@ -317,3 +318,4 @@ class TokenResponse extends PaymentResponse {
     }
 
 }
+

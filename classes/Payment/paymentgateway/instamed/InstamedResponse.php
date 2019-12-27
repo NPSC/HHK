@@ -29,6 +29,14 @@ class ImPaymentResponse extends PaymentResponse {
         }
     }
 
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
+    }
+
     public function getStatus() {
 
         $status = '';
@@ -118,6 +126,14 @@ class ImReturnResponse extends PaymentResponse {
 
     }
 
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Retrn;
+    }
+
     public function getStatus() {
 
         $status = '';
@@ -205,6 +221,14 @@ class ImCofResponse extends PaymentResponse {
 
     }
 
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
+    }
+    
     public function getStatus() {
 
         switch ($this->response->getResponseCode()) {
