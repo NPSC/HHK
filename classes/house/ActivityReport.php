@@ -613,9 +613,11 @@ where `lp`.`idPayment` > 0
                 $stat = '';
                 $attr['style'] = 'text-align:right;';
 
-                $voidContent = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer;float:right;', 'title' => 'View Payment Receipt'));
                 $amt = $p['Payment_Amount'];
                 $dateDT = new DateTime($p['Payment_Date']);
+
+                $voidContent = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer;float:right;', 'title' => 'View Payment Receipt'));
+                $actionButtonArray = array('type' => 'button', 'style'=>'font-size:.8em', 'id' => 'btnvr' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'data-amt' => $amt);
 
                 switch ($p['Payment_Status']) {
 
@@ -646,12 +648,14 @@ where `lp`.`idPayment` > 0
 
                         // Void return
                         if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Last_Updated'])) == date('Y-m-d')) {
-                            $voidContent .= HTMLInput::generateMarkup('Void-Return', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                            $actionButtonArray['class'] = 'hhk-voidRefundPmt';
+                            $voidContent .= HTMLInput::generateMarkup('Void-Return', $actionButtonArray);
                         }
 
                         // Clawback
                         if ($p['idPayment_Method'] != PaymentMethod::Charge) {
-                            $voidContent .= HTMLInput::generateMarkup('Undo Return', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-undoReturnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                            $actionButtonArray['class'] = 'hhk-undoReturnPmt';
+                            $voidContent .= HTMLInput::generateMarkup('Undo Return', $actionButtonArray);
                         }
 
                         break;
@@ -669,7 +673,8 @@ where `lp`.`idPayment` > 0
                             if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
                                 //$voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
                             } else if ($p['idPayment_Method'] != PaymentMethod::Charge) {
-                                $voidContent .= HTMLInput::generateMarkup('Undo Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-undoReturnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                                $actionButtonArray['class'] = 'hhk-undoReturnPmt';
+                                $voidContent .= HTMLInput::generateMarkup('Undo Refund', $actionButtonArray);
                             }
 
                         } else {
@@ -680,9 +685,11 @@ where `lp`.`idPayment` > 0
                             if ($amt != 0) {
 
                                 if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
-                                    $voidContent .= HTMLInput::generateMarkup('Void', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                                    $actionButtonArray['class'] = 'hhk-voidPmt';
+                                    $voidContent .= HTMLInput::generateMarkup('Void', $actionButtonArray);
                                 } else {
-                                    $voidContent .= HTMLInput::generateMarkup('Return', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-returnPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                                    $actionButtonArray['class'] = 'hhk-returnPmt';
+                                    $voidContent .= HTMLInput::generateMarkup('Return', $actionButtonArray);
                                 }
                             }
                         }
