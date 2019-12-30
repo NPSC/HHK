@@ -50,11 +50,9 @@ class LocalGateway extends PaymentGateway {
     public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
-        $payResult = NULL;
 
-        $guest = new Guest($dbh, '', $invoice->getSoldToId());
-        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
-
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr, $pr->getIdToken()));
+        // Check token id for pre-stored credentials.
         $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
 
 
@@ -82,7 +80,7 @@ class LocalGateway extends PaymentGateway {
         //ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
 
         // Update invoice
-        $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
+        $invoice->updateInvoiceBalance($dbh, $invoice->getAmountToPay(), $uS->username);
 
         $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
         $payResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);

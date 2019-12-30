@@ -9,40 +9,6 @@
  */
 
 
-class CheckResponse extends PaymentResponse {
-
-    function __construct($amount, $idPayor, $invoiceNumber, $checkNumber = '', $payNotes = '') {
-
-        $this->paymentType = PayType::Check;
-        $this->idPayor = $idPayor;
-        $this->amount = $amount;
-        $this->invoiceNumber = $invoiceNumber;
-        $this->checkNumber = $checkNumber;
-        $this->payNotes = $payNotes;
-
-    }
-
-    public function getPaymentMethod() {
-        return PaymentMethod::Check;
-    }
-
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
-    }
-
-    public function getStatus() {
-        return CreditPayments::STATUS_APPROVED;
-    }
-
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Check:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd('Check Number:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->checkNumber));
-    }
-
-}
-
-
 /**
  * Description of CheckTX
  *
@@ -50,43 +16,46 @@ class CheckResponse extends PaymentResponse {
  */
 class CheckTX {
 
-    public static function checkSale(\PDO $dbh, CheckResponse &$pr, $userName, $paymentDate) {
+    public static function checkSale(\PDO $dbh, CheckResponse &$pr, $username, $paymentDate) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Sale, TransMethod::Check);
         $pr->setIdTrans($transRs->idTrans->getStoredVal());
 
-
         // Record Payment
-        $payRs = new PaymentRS();
-        $payRs->Amount->setNewVal($pr->getAmount());
-        $payRs->Payment_Date->setNewVal($paymentDate);
-        $payRs->idPayor->setNewVal($pr->idPayor);
-        $payRs->idTrans->setNewVal($pr->getIdTrans());
-        $payRs->Notes->setNewVal($pr->payNotes);
-        $payRs->idPayment_Method->setNewVal(PaymentMethod::Check);
-        $payRs->Attempt->setNewVal(1);
-        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
-        $payRs->Created_By->setNewVal($userName);
+        $pr->recordPayment($dbh, $username);
 
-        $idPayment = EditRS::insert($dbh, $payRs);
-        $payRs->idPayment->setNewVal($idPayment);
-        EditRS::updateStoredVals($payRs);
+        $pr->recordInfoCheck($dbh);
 
-        $pr->setPaymentDate($paymentDate);
-        $pr->paymentRs = $payRs;
-
-        if ($idPayment > 0) {
-
-            // Check table
-            $ckRs = new PaymentInfoCheckRS();
-            $ckRs->Check_Date->setNewVal($paymentDate);
-            $ckRs->Check_Number->setNewVal($pr->checkNumber);
-            $ckRs->idPayment->setNewVal($idPayment);
-
-            EditRS::insert($dbh, $ckRs);
-        }
-
+//        $payRs = new PaymentRS();
+//        $payRs->Amount->setNewVal($pr->getAmount());
+//        $payRs->Payment_Date->setNewVal($paymentDate);
+//        $payRs->idPayor->setNewVal($pr->idPayor);
+//        $payRs->idTrans->setNewVal($pr->getIdTrans());
+//        $payRs->Notes->setNewVal($pr->payNotes);
+//        $payRs->idPayment_Method->setNewVal(PaymentMethod::Check);
+//        $payRs->Attempt->setNewVal(1);
+//        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+//        $payRs->Created_By->setNewVal($userName);
+//
+//        $idPayment = EditRS::insert($dbh, $payRs);
+//        $payRs->idPayment->setNewVal($idPayment);
+//        EditRS::updateStoredVals($payRs);
+//
+//        $pr->setPaymentDate($paymentDate);
+//        $pr->paymentRs = $payRs;
+//
+//        if ($idPayment > 0) {
+//
+//            // Check table
+//            $ckRs = new PaymentInfoCheckRS();
+//            $ckRs->Check_Date->setNewVal($paymentDate);
+//            $ckRs->Check_Number->setNewVal($pr->checkNumber);
+//            $ckRs->idPayment->setNewVal($idPayment);
+//
+//            EditRS::insert($dbh, $ckRs);
+//        }
+//
     }
 
     public static function returnAmount(\PDO $dbh, CheckResponse &$pr, $userName, $paymentDate) {
@@ -97,35 +66,39 @@ class CheckTX {
 
 
         // Record Payment
-        $payRs = new PaymentRS();
-        $payRs->Amount->setNewVal($pr->getAmount());
-        $payRs->Payment_Date->setNewVal($paymentDate);
-        $payRs->idPayor->setNewVal($pr->idPayor);
-        $payRs->idTrans->setNewVal($pr->getIdTrans());
-        $payRs->Notes->setNewVal($pr->payNotes);
-        $payRs->idPayment_Method->setNewVal(PaymentMethod::Check);
-        $payRs->Attempt->setNewVal(1);
-        $payRs->Is_Refund->setNewVal(1);
-        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
-        $payRs->Created_By->setNewVal($userName);
+        $pr->recordPayment($dbh, $username);
 
-        $idPayment = EditRS::insert($dbh, $payRs);
-        $payRs->idPayment->setNewVal($idPayment);
-        EditRS::updateStoredVals($payRs);
+        $pr->recordInfoCheck($dbh);
 
-        $pr->setPaymentDate($paymentDate);
-        $pr->paymentRs = $payRs;
-
-        if ($idPayment > 0) {
-
-            // Check table
-            $ckRs = new PaymentInfoCheckRS();
-            $ckRs->Check_Date->setNewVal($paymentDate);
-            $ckRs->Check_Number->setNewVal($pr->checkNumber);
-            $ckRs->idPayment->setNewVal($idPayment);
-
-            EditRS::insert($dbh, $ckRs);
-        }
+//        $payRs = new PaymentRS();
+//        $payRs->Amount->setNewVal($pr->getAmount());
+//        $payRs->Payment_Date->setNewVal($paymentDate);
+//        $payRs->idPayor->setNewVal($pr->idPayor);
+//        $payRs->idTrans->setNewVal($pr->getIdTrans());
+//        $payRs->Notes->setNewVal($pr->payNotes);
+//        $payRs->idPayment_Method->setNewVal(PaymentMethod::Check);
+//        $payRs->Attempt->setNewVal(1);
+//        $payRs->Is_Refund->setNewVal(1);
+//        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+//        $payRs->Created_By->setNewVal($userName);
+//
+//        $idPayment = EditRS::insert($dbh, $payRs);
+//        $payRs->idPayment->setNewVal($idPayment);
+//        EditRS::updateStoredVals($payRs);
+//
+//        $pr->setPaymentDate($paymentDate);
+//        $pr->paymentRs = $payRs;
+//
+//        if ($idPayment > 0) {
+//
+//            // Check table
+//            $ckRs = new PaymentInfoCheckRS();
+//            $ckRs->Check_Date->setNewVal($paymentDate);
+//            $ckRs->Check_Number->setNewVal($pr->checkNumber);
+//            $ckRs->idPayment->setNewVal($idPayment);
+//
+//            EditRS::insert($dbh, $ckRs);
+//        }
     }
 
     public static function checkReturn(\PDO $dbh, CheckResponse &$pr, $username, PaymentRS $payRs) {

@@ -147,6 +147,10 @@ class CardInfoResponse extends PaymentResponse {
         return array('error'=>'Receipts not available.');
     }
 
+    public function getPaymentStatusCode() {
+        return '';
+    }
+
 }
 
 
@@ -308,6 +312,15 @@ class CheckOutResponse extends PaymentResponse {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
 
+    }
+
+    public function getPaymentStatusCode() {
+
+        if ($this->getStatus() == CreditPayments::STATUS_APPROVED) {
+            return PaymentStatusCode::Paid;
+        } else {
+            return PaymentStatusCode::Declined;
+        }
     }
 
 }

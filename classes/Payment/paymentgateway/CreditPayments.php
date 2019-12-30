@@ -15,7 +15,7 @@ abstract class CreditPayments {
     const STATUS_DECLINED = 'DECLINED';
     const STATUS_ERROR = 'Error';
 
-    public static function processReply(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
+    public static function processReply(\PDO $dbh, CreditResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
 
         // Transaction status
         switch ($pr->getStatus()) {
@@ -37,14 +37,14 @@ abstract class CreditPayments {
     }
 
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
+    protected static function caseApproved(\PDO $dbh, CreditResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
         throw new Hk_Exception_Payment('Payments::caseApproved Method not overridden!');
     }
 
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
+    protected static function caseDeclined(\PDO $dbh, CreditResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
         return $pr;
     }
-    protected static function caseOther(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
+    protected static function caseOther(\PDO $dbh, CreditResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
         return $pr;
     }
 
@@ -52,7 +52,7 @@ abstract class CreditPayments {
 
 class SaleReply extends CreditPayments {
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $pRs = NULL, $attempts = 1) {
+    protected static function caseApproved(\PDO $dbh, CreditResponse $pr, $username, $pRs = NULL, $attempts = 1) {
 
         $uS = Session::getInstance();
         $vr = $pr->response;
@@ -92,168 +92,180 @@ class SaleReply extends CreditPayments {
             }
         }
 
+        $pr->recordPayment($dbh, $username);
 
-        // Record Payment
-        $payRs = new PaymentRS();
-
-        if ($vr->getTranType() == MpTranType::ReturnAmt) {
-            $payRs->Is_Refund->setStoredVal(1);
-        }
-
-        $payRs->Amount->setNewVal($pr->getAmount());
-        $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
-        $payRs->idPayor->setNewVal($pr->idPayor);
-        $payRs->idTrans->setNewVal($pr->getIdTrans());
-        $payRs->idToken->setNewVal($pr->getIdToken());
-        $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
-        $payRs->Result->setNewVal(MpStatusValues::Approved);
-        $payRs->Attempt->setNewVal($attempts);
-        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
-        $payRs->Created_By->setNewVal($username);
-        $payRs->Notes->setNewVal($pr->payNotes);
-
-        $idPayment = EditRS::insert($dbh, $payRs);
-        $payRs->idPayment->setNewVal($idPayment);
-        EditRS::updateStoredVals($payRs);
-
-        $pr->setPaymentDate(date("Y-m-d H:i:s"));
-        $pr->paymentRs = $payRs;
-
-        if ($idPayment > 0) {
-
-            //Payment Detail
-            $pDetailRS = new Payment_AuthRS();
-            $pDetailRS->idPayment->setNewVal($idPayment);
-            $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
-            $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
-            $pDetailRS->Status_Message->setNewVal($vr->getResponseMessage());
-            $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-            $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
-            $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
-            $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
-            $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-            $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
-            $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-            $pDetailRS->CVV->setNewVal($vr->getCvvResult());
-            $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-            $pDetailRS->Merchant->setNewVal($vr->getMerchant());
-            $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-            $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
-            $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
-            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
-
-            $pDetailRS->Updated_By->setNewVal($username);
-            $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-            $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Paid);
-
-            // EMV
-            $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
-            $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
-            $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
-            $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
-            $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
-
-
-            $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-
-        }
-
-       return $pr;
-    }
-
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, $pRs = NULL, $attempts = 1) {
-
-        $uS = Session::getInstance();
-        $vr = $pr->response;
-
-        $payRs = new PaymentRS();
-
-        if ($vr->getTranType() == MpTranType::ReturnAmt) {
-            $payRs->Is_Refund->setStoredVal(1);
-        }
-
-        $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
-        $payRs->idPayor->setNewVal($pr->idPayor);
-        $payRs->idToken->setNewVal($pr->getIdToken());
-        $payRs->idTrans->setNewVal($pr->getIdTrans());
-        $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
-        $payRs->Status_Code->setNewVal(PaymentStatusCode::Declined);
-        $payRs->Result->setNewVal(MpStatusValues::Declined);
-        $payRs->Created_By->setNewVal($username);
-        $payRs->Attempt->setNewVal($attempts);
-        $payRs->Amount->setNewVal($pr->getAmount());
-        $payRs->Notes->setNewVal($pr->payNotes);
-
-        $idPmt = EditRS::insert($dbh, $payRs);
-        $payRs->idPayment->setNewVal($idPmt);
-        EditRS::updateStoredVals($payRs);
-
-        $pr->setPaymentDate(date("Y-m-d H:i:s"));
-        $pr->paymentRs = $payRs;
-
-        if ($idPmt > 0) {
-
-            //Payment Detail
-            $pDetailRS = new Payment_AuthRS();
-            $pDetailRS->idPayment->setNewVal($idPmt);
-            $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
-            $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
-            $pDetailRS->Status_Message->setNewVal($vr->getResponseMessage());
-            $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-            $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
-            $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
-            $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
-            $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-            $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
-            $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-            $pDetailRS->CVV->setNewVal($vr->getCvvResult());
-            $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-            $pDetailRS->Merchant->setNewVal($vr->getMerchant());
-            $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-            $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
-            $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
-            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
-
-            $pDetailRS->Updated_By->setNewVal($username);
-            $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-            $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Declined);
-
-            // EMV
-            $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
-            $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
-            $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
-            $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
-            $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
-
-            $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-
-        }
+        $pr->recordPaymentAuth($dbh, $uS->PaymentGateway, $username);
 
         return $pr;
     }
+//        // Record Payment
+//        $payRs = new PaymentRS();
+//
+//        if ($vr->getTranType() == MpTranType::ReturnAmt) {
+//            $payRs->Is_Refund->setStoredVal(1);
+//        }
+//
+//        $payRs->Amount->setNewVal($pr->getAmount());
+//        $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
+//        $payRs->idPayor->setNewVal($pr->idPayor);
+//        $payRs->idTrans->setNewVal($pr->getIdTrans());
+//        $payRs->idToken->setNewVal($pr->getIdToken());
+//        $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
+//        $payRs->Result->setNewVal(MpStatusValues::Approved);
+//        $payRs->Attempt->setNewVal($attempts);
+//        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+//        $payRs->Created_By->setNewVal($username);
+//        $payRs->Notes->setNewVal($pr->payNotes);
+//
+//        $idPayment = EditRS::insert($dbh, $payRs);
+//        $payRs->idPayment->setNewVal($idPayment);
+//        EditRS::updateStoredVals($payRs);
+//
+//        $pr->setPaymentDate(date("Y-m-d H:i:s"));
+//        $pr->paymentRs = $payRs;
+//
+//        if ($idPayment > 0) {
+//
+//            //Payment Detail
+//            $pDetailRS = new Payment_AuthRS();
+//            $pDetailRS->idPayment->setNewVal($idPayment);
+//            $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
+//            $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
+//            $pDetailRS->Status_Message->setNewVal($vr->getResponseMessage());
+//            $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
+//            $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
+//            $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+//            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+//            $pDetailRS->AVS->setNewVal($vr->getAVSResult());
+//            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
+//            $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
+//            $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
+//            $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
+//            $pDetailRS->CVV->setNewVal($vr->getCvvResult());
+//            $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+//            $pDetailRS->Merchant->setNewVal($vr->getMerchant());
+//            $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+//            $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+//            $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
+//            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+//            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+//
+//            $pDetailRS->Updated_By->setNewVal($username);
+//            $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+//            $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Paid);
+//
+//            // EMV
+//            $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+//            $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+//            $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+//            $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+//            $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+//
+//
+//            $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+//
+//        }
+//
+//
+//    }
+
+    protected static function caseDeclined(\PDO $dbh, CreditResponse $pr, $username, $pRs = NULL, $attempts = 1) {
+
+        $uS = Session::getInstance();
+//        $vr = $pr->response;
+
+        $pr->recordPayment($dbh, $username);
+
+        $pr->recordPaymentAuth($dbh, $uS->PaymentGateway, $username);
+
+        return $pr;
+    }
+
+//        $payRs = new PaymentRS();
+//
+//        if ($vr->getTranType() == MpTranType::ReturnAmt) {
+//            $payRs->Is_Refund->setStoredVal(1);
+//        }
+//
+//        $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
+//        $payRs->idPayor->setNewVal($pr->idPayor);
+//        $payRs->idToken->setNewVal($pr->getIdToken());
+//        $payRs->idTrans->setNewVal($pr->getIdTrans());
+//        $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
+//        $payRs->Status_Code->setNewVal(PaymentStatusCode::Declined);
+//        $payRs->Result->setNewVal(MpStatusValues::Declined);
+//        $payRs->Created_By->setNewVal($username);
+//        $payRs->Attempt->setNewVal($attempts);
+//        $payRs->Amount->setNewVal($pr->getAmount());
+//        $payRs->Notes->setNewVal($pr->payNotes);
+//
+//        $idPmt = EditRS::insert($dbh, $payRs);
+//        $payRs->idPayment->setNewVal($idPmt);
+//        EditRS::updateStoredVals($payRs);
+//
+//        $pr->setPaymentDate(date("Y-m-d H:i:s"));
+//        $pr->paymentRs = $payRs;
+//
+//        if ($idPmt > 0) {
+//
+//            //Payment Detail
+//            $pDetailRS = new Payment_AuthRS();
+//            $pDetailRS->idPayment->setNewVal($idPmt);
+//            $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
+//            $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
+//            $pDetailRS->Status_Message->setNewVal($vr->getResponseMessage());
+//            $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
+//            $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
+//            $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+//            $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+//            $pDetailRS->AVS->setNewVal($vr->getAVSResult());
+//            $pDetailRS->Invoice_Number->setNewVal($pr->getInvoiceNumber());
+//            $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
+//            $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
+//            $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
+//            $pDetailRS->CVV->setNewVal($vr->getCvvResult());
+//            $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+//            $pDetailRS->Merchant->setNewVal($vr->getMerchant());
+//            $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+//            $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+//            $pDetailRS->Customer_Id->setNewVal($vr->getOperatorId());
+//            $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+//            $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+//
+//            $pDetailRS->Updated_By->setNewVal($username);
+//            $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+//            $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Declined);
+//
+//            // EMV
+//            $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+//            $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+//            $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+//            $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+//            $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+//
+//            $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+//
+//        }
+//
+//        return $pr;
+//    }
 
 }
 
 
 class VoidReply extends CreditPayments {
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1){
+    protected static function caseApproved(\PDO $dbh, CreditResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         if (is_null($payRs) || $payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
         }
 
         $uS = Session::getInstance();
-        $vr = $pr->response;
+        //$vr = $pr->response;
 
         // Store any tokens
-        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr, $pr->getIdToken()));
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $pr->response, $pr->getIdToken()));
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::VoidSale);
@@ -273,43 +285,45 @@ class VoidReply extends CreditPayments {
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
 
-        $pr->setPaymentDate(date("Y-m-d H:i:s"));
-        $pr->paymentRs = $payRs;
+        //$pr->setPaymentDate(date("Y-m-d H:i:s"));
+        $pr->setIdPayment($payRs->idPayment);
 
         // Payment Detail
-        $pDetailRS = new Payment_AuthRS();
-        $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
-        $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
-        $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
-        $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-        $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
-        $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
-        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
-        $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-        $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
-        $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
-        $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
-        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
-        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+        $pr->recordPaymentAuth($dbh, $uS->PaymentGateway, $username);
 
-        // EMV
-        $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
-        $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
-        $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
-        $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
-        $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
-
-        $pDetailRS->Updated_By->setNewVal($username);
-        $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-        $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidSale);
-
-        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+//        $pDetailRS = new Payment_AuthRS();
+//        $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
+//        $pDetailRS->Approved_Amount->setNewVal($pr->getAmount());
+//        $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
+//        $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
+//        $pDetailRS->AVS->setNewVal($vr->getAVSResult());
+//        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
+//        $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+//        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+//        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
+//        $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
+//        $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
+//        $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
+//        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
+//        $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+//        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
+//        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+//        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+//        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+//        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+//
+//        // EMV
+//        $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+//        $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+//        $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+//        $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+//        $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+//
+//        $pDetailRS->Updated_By->setNewVal($username);
+//        $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+//        $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidSale);
+//
+//        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
 //        $pDetailRS->idPayment_auth->setNewVal($idPaymentAuth);
 //        EditRS::updateStoredVals($pDetailRS);
@@ -319,7 +333,7 @@ class VoidReply extends CreditPayments {
 
     }
 
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1) {
+    protected static function caseDeclined(\PDO $dbh, CreditResponse $pr, $username, $payRs = NULL, $attempts = 1) {
 
         if ($pr->response->getResponseMessage() == 'ITEM VOIDED') {
             $pr = self::caseApproved($dbh, $pr, $username, $payRs, $attempts);
@@ -330,17 +344,17 @@ class VoidReply extends CreditPayments {
 
 class ReverseReply extends CreditPayments {
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1){
+    protected static function caseApproved(\PDO $dbh, CreditResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         if (is_null($payRs) || $payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
         }
 
         $uS = Session::getInstance();
-        $vr = $pr->response;
+//        $vr = $pr->response;
 
         // Store any tokens
-        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr, $pr->getIdToken()));
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $pr->response, $pr->getIdToken()));
 
         // Payment record
         $payRs->Status_Code->setNewVal(PaymentStatusCode::Reverse);
@@ -360,44 +374,48 @@ class ReverseReply extends CreditPayments {
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
 
-        $pr->setPaymentDate(date("Y-m-d H:i:s"));
-        $pr->paymentRs = $payRs;
+        $pr->setIdPayment($payRs->idPayment);
+
+        $pr->recordPaymentAuth($dbh, $uS->PaymentGateway, $username);
+
+//        $pr->setPaymentDate(date("Y-m-d H:i:s"));
+//        $pr->paymentRs = $payRs;
 
 
-        // Payment Detail
-        $pDetailRS = new Payment_AuthRS();
-        $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
-        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
-        $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
-        $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-        $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
-        $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
-        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
-        $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-        $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
-        $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
-        $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
-        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
-        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
-
-        // EMV
-        $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
-        $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
-        $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
-        $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
-        $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
-
-        $pDetailRS->Updated_By->setNewVal($username);
-        $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-        $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Reverse);
-
-        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+//        // Payment Detail
+//        $pDetailRS = new Payment_AuthRS();
+//        $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
+//        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
+//        $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
+//        $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
+//        $pDetailRS->AVS->setNewVal($vr->getAVSResult());
+//        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
+//        $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+//        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+//        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
+//        $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
+//        $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
+//        $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
+//        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
+//        $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+//        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
+//        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+//        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+//        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+//        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+//
+//        // EMV
+//        $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+//        $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+//        $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+//        $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+//        $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+//
+//        $pDetailRS->Updated_By->setNewVal($username);
+//        $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+//        $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Reverse);
+//
+//        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         return $pr;
 
@@ -407,30 +425,31 @@ class ReverseReply extends CreditPayments {
 
 class ReturnReply extends CreditPayments {
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1){
+    protected static function caseApproved(\PDO $dbh, CreditResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         $uS = Session::getInstance();
-        $vr = $pr->response;
+        //$vr = $pr->response;
 
         // Store any tokens
-        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr, $pr->getIdToken()));
+        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $pr->response, $pr->getIdToken()));
 
         if (is_null($payRs)) {
 
             // New Return payment
-            $payRs = new PaymentRS();
-
-            $payRs->Amount->setNewVal($pr->getAmount());
-            $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
-            $payRs->idPayor->setNewVal($pr->idPayor);
-            $payRs->idTrans->setNewVal($pr->getIdTrans());
-            $payRs->idToken->setNewVal($pr->getIdToken());
-            $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
-            $payRs->Result->setNewVal(MpStatusValues::Approved);
-            $payRs->Attempt->setNewVal($attempts);
-            $payRs->Is_Refund->setNewVal(1);
-            $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
-            $payRs->Created_By->setNewVal($username);
+            $pr->recordPayment($dbh, $username);
+//            $payRs = new PaymentRS();
+//
+//            $payRs->Amount->setNewVal($pr->getAmount());
+//            $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
+//            $payRs->idPayor->setNewVal($pr->idPayor);
+//            $payRs->idTrans->setNewVal($pr->getIdTrans());
+//            $payRs->idToken->setNewVal($pr->getIdToken());
+//            $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
+//            $payRs->Result->setNewVal(MpStatusValues::Approved);
+//            $payRs->Attempt->setNewVal($attempts);
+//            $payRs->Is_Refund->setNewVal(1);
+//            $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+//            $payRs->Created_By->setNewVal($username);
 
         } else if ($payRs->idPayment->getStoredVal() > 0) {
 
@@ -439,144 +458,145 @@ class ReturnReply extends CreditPayments {
             $payRs->Updated_By->setNewVal($username);
             $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
+            // payment Note
+            if ($pr->payNotes != '') {
+
+                if ($payRs->Notes->getStoredVal() != '') {
+                    $payRs->Notes->setNewVal($payRs->Notes->getStoredVal() . " | " . $pr->payNotes);
+                } else {
+                    $payRs->Notes->setNewVal($pr->payNotes);
+                }
+            }
+
+
+            // Save the payment record
+            if ($payRs->idPayment->getStoredVal() > 0) {
+                EditRS::update($dbh, $payRs, array($payRs->idPayment));
+            } else {
+                $idPayment = EditRS::insert($dbh, $payRs);
+                $payRs->idPayment->setNewVal($idPayment);
+            }
+
+            EditRS::updateStoredVals($payRs);
+
+//        $pr->setPaymentDate(date("Y-m-d H:i:s"));
+//        $pr->paymentRs = $payRs;
+
         } else {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
         }
 
-
-
-        // payment Note
-        if ($pr->payNotes != '') {
-
-            if ($payRs->Notes->getStoredVal() != '') {
-                $payRs->Notes->setNewVal($payRs->Notes->getStoredVal() . " | " . $pr->payNotes);
-            } else {
-                $payRs->Notes->setNewVal($pr->payNotes);
-            }
-        }
-
-
-        // Save the payment record
-        if ($payRs->idPayment->getStoredVal() > 0) {
-            EditRS::update($dbh, $payRs, array($payRs->idPayment));
-        } else {
-            $idPayment = EditRS::insert($dbh, $payRs);
-            $payRs->idPayment->setNewVal($idPayment);
-        }
-
-        EditRS::updateStoredVals($payRs);
-
-        $pr->setPaymentDate(date("Y-m-d H:i:s"));
-        $pr->paymentRs = $payRs;
-
-
-
+        $pr->recordPaymentAuth($dbh, $uS->PaymentGateway, $username);
         //Payment Detail
-        $pDetailRS = new Payment_AuthRS();
-        $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
-        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
-        $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
-        $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-        $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
-        $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
-        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
-        $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-        $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
-        $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
-        $pDetailRS->Updated_By->setNewVal($username);
-        $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-        $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
-        $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
-        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
-        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
-
-        // EMV
-        $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
-        $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
-        $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
-        $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
-        $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
-
-        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+//        $pDetailRS = new Payment_AuthRS();
+//        $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
+//        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
+//        $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
+//        $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
+//        $pDetailRS->AVS->setNewVal($vr->getAVSResult());
+//        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
+//        $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+//        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+//        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
+//        $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
+//        $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
+//        $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
+//        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
+//        $pDetailRS->Updated_By->setNewVal($username);
+//        $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+//        $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Retrn);
+//        $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+//        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
+//        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+//        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+//        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+//        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+//
+//        // EMV
+//        $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+//        $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+//        $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+//        $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+//        $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+//
+//        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         return $pr;
 
     }
 
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $username, $pRs = NULL, $attempts = 1) {
+    protected static function caseDeclined(\PDO $dbh, CreditResponse $pr, $username, $pRs = NULL, $attempts = 1) {
 
         if (is_null($pRs)) {
 
             $uS = Session::getInstance();
-            $vr = $pr->response;
+//            $vr = $pr->response;
 
-            $payRs = new PaymentRS();
+            $pr->recordPayment($dbh, $username);
 
-            $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
-            $payRs->idPayor->setNewVal($pr->idPayor);
-            $payRs->idToken->setNewVal($pr->getIdToken());
-            $payRs->idTrans->setNewVal($pr->getIdTrans());
-            $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
-            $payRs->Status_Code->setNewVal(PaymentStatusCode::Declined);
-            $payRs->Result->setNewVal(MpStatusValues::Declined);
-            $payRs->Created_By->setNewVal($username);
-            $payRs->Attempt->setNewVal($attempts);
-            $payRs->Is_Refund->setNewVal(1);
-            $payRs->Amount->setNewVal($pr->getAmount());
-            $payRs->Balance->setNewVal($vr->getAuthorizedAmount());
-            $payRs->Notes->setNewVal($pr->payNotes);
+         $pr->recordPaymentAuth($dbh, $uS->PaymentGateway, $username);
 
-            $idPmt = EditRS::insert($dbh, $payRs);
-            $payRs->idPayment->setNewVal($idPmt);
-            EditRS::updateStoredVals($payRs);
+//            $payRs = new PaymentRS();
+//
+//            $payRs->Payment_Date->setNewVal(date("Y-m-d H:i:s"));
+//            $payRs->idPayor->setNewVal($pr->idPayor);
+//            $payRs->idToken->setNewVal($pr->getIdToken());
+//            $payRs->idTrans->setNewVal($pr->getIdTrans());
+//            $payRs->idPayment_Method->setNewVal(PaymentMethod::Charge);
+//            $payRs->Status_Code->setNewVal(PaymentStatusCode::Declined);
+//            $payRs->Result->setNewVal(MpStatusValues::Declined);
+//            $payRs->Created_By->setNewVal($username);
+//            $payRs->Attempt->setNewVal($attempts);
+//            $payRs->Is_Refund->setNewVal(1);
+//            $payRs->Amount->setNewVal($pr->getAmount());
+//            $payRs->Balance->setNewVal($vr->getAuthorizedAmount());
+//            $payRs->Notes->setNewVal($pr->payNotes);
+//
+//            $idPmt = EditRS::insert($dbh, $payRs);
+//            $payRs->idPayment->setNewVal($idPmt);
+//            EditRS::updateStoredVals($payRs);
+//
+//            $pr->setPaymentDate(date("Y-m-d H:i:s"));
+//            $pr->paymentRs = $payRs;
 
-            $pr->setPaymentDate(date("Y-m-d H:i:s"));
-            $pr->paymentRs = $payRs;
-
-            if ($idPmt > 0) {
-
-                //Payment Detail
-                $pDetailRS = new Payment_AuthRS();
-                $pDetailRS->idPayment->setNewVal($idPmt);
-                $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
-                $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
-                $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-                $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
-                $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-                $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
-                $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-                $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
-                $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
-                $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
-                $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-                $pDetailRS->CVV->setNewVal($vr->getCvvResult());
-                $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-                $pDetailRS->Merchant->setNewVal($vr->getMerchant());
-                $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
-                $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-                $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-                $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
-
-                // EMV
-                $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
-                $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
-                $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
-                $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
-                $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
-
-                $pDetailRS->Updated_By->setNewVal($username);
-                $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-                $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Declined);
-
-                $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
-
-            }
+//            if ($idPmt > 0) {
+//
+//                //Payment Detail
+//                $pDetailRS = new Payment_AuthRS();
+//                $pDetailRS->idPayment->setNewVal($idPmt);
+//                $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
+//                $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
+//                $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
+//                $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
+//                $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+//                $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+//                $pDetailRS->AVS->setNewVal($vr->getAVSResult());
+//                $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
+//                $pDetailRS->idTrans->setNewVal($pr->getIdTrans());
+//                $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
+//                $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
+//                $pDetailRS->CVV->setNewVal($vr->getCvvResult());
+//                $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+//                $pDetailRS->Merchant->setNewVal($vr->getMerchant());
+//                $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+//                $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+//                $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+//                $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+//
+//                // EMV
+//                $pDetailRS->EMVApplicationIdentifier->setNewVal($vr->getEMVApplicationIdentifier());
+//                $pDetailRS->EMVApplicationResponseCode->setNewVal($vr->getEMVApplicationResponseCode());
+//                $pDetailRS->EMVIssuerApplicationData->setNewVal($vr->getEMVIssuerApplicationData());
+//                $pDetailRS->EMVTerminalVerificationResults->setNewVal($vr->getEMVTerminalVerificationResults());
+//                $pDetailRS->EMVTransactionStatusInformation->setNewVal($vr->getEMVTransactionStatusInformation());
+//
+//                $pDetailRS->Updated_By->setNewVal($username);
+//                $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+//                $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::Declined);
+//
+//                $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+//
+//            }
         }
 
         return $pr;
@@ -586,7 +606,7 @@ class ReturnReply extends CreditPayments {
 
 class VoidReturnReply extends CreditPayments {
 
-    protected static function caseApproved(\PDO $dbh, PaymentResponse $pr, $username, $payRs = NULL, $attempts = 1){
+    protected static function caseApproved(\PDO $dbh, CreditResponse $pr, $username, $payRs = NULL, $attempts = 1){
 
         if (is_null($payRs) || $payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id is undefined (0).  ');
@@ -627,38 +647,39 @@ class VoidReturnReply extends CreditPayments {
         $pr->setPaymentDate(date("Y-m-d H:i:s"));
         $pr->paymentRs = $payRs;
 
+        $pr->recordPaymentAuth($dbh, $uS->PaymentGateway, $username);
         // Payment Detail
-        $pDetailRS = new Payment_AuthRS();
-        $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
-        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
-        $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
-        $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
-        $pDetailRS->AVS->setNewVal($vr->getAVSResult());
-        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
-        $pDetailRS->Card_Type->setNewVal($vr->getCardType());
-        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
-        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
-        $pDetailRS->idTrans->setNewVal($pr->idTrans);
-        $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
-        $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
-        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
-        $pDetailRS->Updated_By->setNewVal($username);
-        $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
-        $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidReturn);
-        $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
-        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
-        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
-        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
-        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
-        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
-
-        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
+//        $pDetailRS = new Payment_AuthRS();
+//        $pDetailRS->idPayment->setNewVal($payRs->idPayment->getStoredVal());
+//        $pDetailRS->Approved_Amount->setNewVal($vr->getAuthorizedAmount());
+//        $pDetailRS->Approval_Code->setNewVal($vr->getAuthCode());
+//        $pDetailRS->Reference_Num->setNewVal($vr->getRefNo());
+//        $pDetailRS->AVS->setNewVal($vr->getAVSResult());
+//        $pDetailRS->Acct_Number->setNewVal($vr->getMaskedAccount());
+//        $pDetailRS->Card_Type->setNewVal($vr->getCardType());
+//        $pDetailRS->Cardholder_Name->setNewVal($vr->getCardHolderName());
+//        $pDetailRS->Invoice_Number->setNewVal($vr->getInvoiceNumber());
+//        $pDetailRS->idTrans->setNewVal($pr->idTrans);
+//        $pDetailRS->AcqRefData->setNewVal($vr->getAcqRefData());
+//        $pDetailRS->ProcessData->setNewVal($vr->getProcessData());
+//        $pDetailRS->CVV->setNewVal($vr->getCvvResult());
+//        $pDetailRS->Updated_By->setNewVal($username);
+//        $pDetailRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+//        $pDetailRS->Status_Code->setNewVal(PaymentStatusCode::VoidReturn);
+//        $pDetailRS->Processor->setNewVal($uS->PaymentGateway);
+//        $pDetailRS->Merchant->setNewVal($vr->getMerchant());
+//        $pDetailRS->Response_Code->setNewVal($vr->getTransactionStatus());
+//        $pDetailRS->Response_Message->setNewVal($vr->getAuthorizationText());
+//        $pDetailRS->Signature_Required->setNewVal($vr->SignatureRequired());
+//        $pDetailRS->PartialPayment->setNewVal($vr->getPartialPaymentAmount() > 0 ? 1 : 0);
+//
+//        $pr->idPaymentAuth = EditRS::insert($dbh, $pDetailRS);
 
         return $pr;
 
     }
 
-    protected static function caseDeclined(\PDO $dbh, PaymentResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
+    protected static function caseDeclined(\PDO $dbh, CreditResponse $pr, $userName, $payRs = NULL, $attempts = 1) {
         // todo:  Return a timed out message - only works on un-captured transactions.
         return $pr;
     }

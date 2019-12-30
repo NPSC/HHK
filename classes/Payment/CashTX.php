@@ -8,41 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-
-class CashResponse extends PaymentResponse {
-
-    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '') {
-
-        $this->paymentType = PayType::Cash;
-        $this->idPayor = $idPayor;
-        $this->amount = $amount;
-        $this->invoiceNumber = $invoiceNumber;
-        $this->payNotes = $payNote;
-
-    }
-
-    public function getPaymentMethod() {
-        return PaymentMethod::Cash;
-    }
-
-    public function getStatus() {
-        return CreditPayments::STATUS_APPROVED;
-    }
-
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
-
-        if ($this->getAmount() != 0) {
-            $tbl->addBodyTr(HTMLTable::makeTd("Cash Tendered:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
-        }
-    }
-
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
-    }
-
-}
-
-
 /**
  * Description of CashTX
  *

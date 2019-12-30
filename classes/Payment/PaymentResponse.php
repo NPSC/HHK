@@ -187,6 +187,13 @@ abstract class CreditResponse extends PaymentResponse {
     public function getIdPayment() {
         return $this->idPayment;
     }
+    public function setIdPayment($v) {
+        $this->idPayment = intval($v, 10);
+    }
+
+    public function getIdPaymentAuth() {
+        return $this->idPaymentAuth;
+    }
 
     public function getIdTrans() {
         return $this->idTrans;
@@ -200,9 +207,38 @@ abstract class CreditResponse extends PaymentResponse {
 }
 
 
-abstract class CheckResponse extends PaymentResponse {
+class CheckResponse extends PaymentResponse {
 
     public $idInfoCheck;
+
+    function __construct($amount, $idPayor, $invoiceNumber, $checkNumber = '', $payNotes = '') {
+
+        $this->paymentType = PayType::Check;
+        $this->idPayor = $idPayor;
+        $this->amount = $amount;
+        $this->invoiceNumber = $invoiceNumber;
+        $this->checkNumber = $checkNumber;
+        $this->payNotes = $payNotes;
+
+    }
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Check;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
+    }
+
+    public function getStatus() {
+        return CreditPayments::STATUS_APPROVED;
+    }
+
+    public function receiptMarkup(\PDO $dbh, &$tbl) {
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Check:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd('Check Number:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->checkNumber));
+    }
 
     public function recordInfoCheck(\PDO $dbh) {
 
@@ -224,3 +260,37 @@ abstract class CheckResponse extends PaymentResponse {
     }
 
 }
+
+class CashResponse extends PaymentResponse {
+
+    function __construct($amount, $idPayor, $invoiceNumber, $payNote = '') {
+
+        $this->paymentType = PayType::Cash;
+        $this->idPayor = $idPayor;
+        $this->amount = $amount;
+        $this->invoiceNumber = $invoiceNumber;
+        $this->payNotes = $payNote;
+
+    }
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Cash;
+    }
+
+    public function getStatus() {
+        return CreditPayments::STATUS_APPROVED;
+    }
+
+    public function receiptMarkup(\PDO $dbh, &$tbl) {
+
+        if ($this->getAmount() != 0) {
+            $tbl->addBodyTr(HTMLTable::makeTd("Cash Tendered:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
+        }
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
+    }
+
+}
+
