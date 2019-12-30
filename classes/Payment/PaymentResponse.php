@@ -79,6 +79,10 @@ abstract class PaymentResponse {
         return $this->payNotes;
     }
 
+    public function setPaymentNotes($v) {
+        $this->payNotes = $v;
+    }
+
     public function getIdPayor() {
         return $this->idPayor;
     }

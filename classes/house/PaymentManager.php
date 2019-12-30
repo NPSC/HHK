@@ -437,14 +437,14 @@ class PaymentManager {
         return $this->invoice;
     }
 
-    public function makeHousePayment(\PDO $dbh, $postBackPage, $paymentDate = '') {
+    public function makeHousePayment(\PDO $dbh, $postBackPage) {
 
         if ($this->hasInvoice()) {
 
             try {
 
                 // Make the payment
-                $payResult = PaymentSvcs::payAmount($dbh, $this->invoice, $this->pmp, $postBackPage, $paymentDate);
+                $payResult = PaymentSvcs::payAmount($dbh, $this->invoice, $this->pmp, $postBackPage);
                 $payResult->setReplyMessage($payResult->getDisplayMessage() . '  ' . $this->result);
 
 
@@ -834,12 +834,29 @@ class PaymentManagerPayment {
     public function getPayDate() {
 
         if ($this->payDate != '') {
-            $d = date('Y-m-d H:i:s', strtotime($this->payDate));
+
+            try {
+                $payDT = new DateTime($this->payDate);
+                $paymentDate = $payDT->format('Y-m-d H:i:s');
+
+                $now = new DateTime();
+                $now->setTime(0, 0, 0);
+                $payDT->setTime(0, 0, 0);
+
+                if ($payDT >= $now) {
+                    $paymentDate = date('Y-m-d H:i:s');
+                }
+
+            } catch (Exception $ex) {
+                $paymentDate = date('Y-m-d H:i:s');
+            }
+
         } else {
-            $d = date('Y-m-d H:i:s');
+
+            $paymentDate = date('Y-m-d H:i:s');
         }
 
-        return $d;
+        return $paymentDate;
     }
 
     public function getIdToken() {

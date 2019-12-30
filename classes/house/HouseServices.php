@@ -662,7 +662,8 @@ class HouseServices {
                     // We can pay it now and return a receipt.
                     $paymentManager = new PaymentManager(new PaymentManagerPayment(PayType::Cash));
                     $paymentManager->setInvoice($invoice);
-                    $payResult = $paymentManager->makeHousePayment($dbh, '', $invDate);
+                    $paymentManager->pmp->setPayDate($invDate);
+                    $payResult = $paymentManager->makeHousePayment($dbh, '');
 
                     if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
@@ -710,11 +711,11 @@ class HouseServices {
 
             if ($invoice->getAmountToPay() >= 0) {
                 // Make guest payment
-                $payResult = $paymentManager->makeHousePayment($dbh, $postbackPage, $paymentManager->pmp->getPayDate());
+                $payResult = $paymentManager->makeHousePayment($dbh, $postbackPage);
 
             } else if ($invoice->getAmountToPay() < 0) {
                 // Make guest return
-                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate());
+                $payResult = $paymentManager->makeHouseReturn($dbh);
             }
         }
 

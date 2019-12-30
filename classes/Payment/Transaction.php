@@ -24,7 +24,7 @@ class Transaction {
         $transRs->Amount->setNewVal($vr->getAmount());
         $transRs->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $transRs->Date_Entered->setNewVal(date("Y-m-d H:i:s"));
-        $transRs->Payment_Type->setNewVal($vr->getPaymentType());
+        $transRs->Payment_Type->setNewVal($vr->getPaymentMethod());
         $transRs->idName->setNewVal($vr->idPayor);
         $transRs->Trans_Date->setNewVal(date("Y-m-d H:i:s"));
         $transRs->Gateway_Ref->setNewVal($gwName);

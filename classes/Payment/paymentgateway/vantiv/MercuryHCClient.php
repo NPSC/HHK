@@ -1806,7 +1806,7 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
     }
 
     public function getResponseMessage() {
-        return $this->getStatus();
+        return $this->getMessage();
     }
 
     public function getResponseCode() {

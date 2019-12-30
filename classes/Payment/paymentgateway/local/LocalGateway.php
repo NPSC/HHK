@@ -47,16 +47,21 @@ class LocalGateway extends PaymentGateway {
         $this->credentials = $credentials;
     }
 
-    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
+    public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
 
-        $pr->setIdToken(CreditToken::storeToken($dbh, $pr->idRegistration, $pr->idPayor, $vr, $pr->getIdToken()));
         // Check token id for pre-stored credentials.
         $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
 
+        // Do we have a token?
+        if (CreditToken::hasToken($tokenRS)) {
+            $pmp->setChargeCard($tokenRS->CardType->getStoredVal());
+            $pmp->setChargeAcct($tokenRS->MaskedAccount->getStoredVal());
+            $pmp->setCardHolderName($tokenRS->CardHolderName->getStoredVal());
+        }
 
-        $payResp = new LocalResponse($invoice->getAmountToPay(), $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
+        $vr = new LocalResponse($invoice->getAmountToPay(), $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getIdToken(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes(), $pmp->getPayDate());
 
         // New Token?
         if ($vr->response->getToken() != '') {
@@ -65,13 +70,13 @@ class LocalGateway extends PaymentGateway {
 
             $vr->response->setMaskedAccount($guestTokenRs->MaskedAccount->getStoredVal());
             $vr->response->setCardHolderName($guestTokenRs->CardHolderName->getStoredVal());
-            $vr->response->setOperatorId($cstReq->getOperatorID());
+            $vr->response->setOperatorId($uS->username);
             $vr->cardType = $guestTokenRs->CardType->getStoredVal();
             $vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
         }
 
         // Record transaction
-        $transRs = Transaction::recordTransaction($dbh, $vr, $gway->getGatewayName(), TransType::Sale, TransMethod::Token);
+        $transRs = Transaction::recordTransaction($dbh, $vr, $this->getGatewayName(), TransType::Sale, TransMethod::Token);
         $vr->setIdTrans($transRs->idTrans->getStoredVal());
 
 

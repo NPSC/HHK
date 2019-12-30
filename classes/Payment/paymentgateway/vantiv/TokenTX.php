@@ -24,7 +24,7 @@ class TokenTX {
      * @param \CreditSaleTokenRequest $cstReq
      * @return \TokenResponse
      */
-    public static function CreditSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditSaleTokenRequest $cstReq, $payNotes = '') {
+    public static function CreditSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditSaleTokenRequest $cstReq, $payNotes, $payDate) {
 
         $uS = Session::getInstance();
         $trace = FALSE;
@@ -38,8 +38,9 @@ class TokenTX {
         $creditResponse = $cstReq->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
 
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $cstReq->getTokenId(), $payNotes);
-
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $cstReq->getTokenId());
+        $vr->setPaymentDate($payDate);
+        $vr->setNotes($payNotes);
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($cstReq->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditSaleToken');
@@ -68,11 +69,11 @@ class TokenTX {
 
     }
 
-    public static function CreditAdjustToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditAdjustTokenRequest $cstReq, $payNotes = '') {
+    public static function CreditAdjustToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditAdjustTokenRequest $cstReq) {
         throw new Hk_Exception_Payment("Credit Adjust Sale Amount is not implememnted yet. ");
     }
 
-    public static function creditVoidSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidSaleTokenRequest $voidSale, PaymentRS $payRs) {
+    public static function creditVoidSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidSaleTokenRequest $voidSale, PaymentRS $payRs, $payDate) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
@@ -95,6 +96,7 @@ class TokenTX {
         $creditResponse->setMerchant($gway->getGatewayType());
 
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId());
+        $vr->setPaymentDate($payDate);
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($voidSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidSaleToken');
@@ -119,7 +121,7 @@ class TokenTX {
 
     }
 
-    public static function creditReverseToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReversalTokenRequest $reverseSale, PaymentRS $payRs, $payNotes = '') {
+    public static function creditReverseToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReversalTokenRequest $reverseSale, PaymentRS $payRs, $payDate) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
@@ -138,7 +140,8 @@ class TokenTX {
         // Call to web service
         $creditResponse = $reverseSale->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $reverseSale->getTokenId(), $payNotes);
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $reverseSale->getTokenId());
+        $vr->setPaymentDate($payDate);
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($reverseSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReverseToken');
@@ -164,7 +167,7 @@ class TokenTX {
 
     }
 
-    public static function creditReturnToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReturnTokenRequest $returnSale, $payRs, $payNotes = '') {
+    public static function creditReturnToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReturnTokenRequest $returnSale, $payRs, $payDate) {
 
         if (is_null($payRs) === FALSE && $payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
@@ -183,7 +186,8 @@ class TokenTX {
         // Call to web service
         $creditResponse = $returnSale->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnSale->getTokenId(), $payNotes);
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnSale->getTokenId());
+        $vr->setPaymentDate($payDate);
 
 
         // Save raw transaction in the db.
@@ -210,7 +214,7 @@ class TokenTX {
 
     }
 
-    public static function creditVoidReturnToken (\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidReturnTokenRequest $returnVoid, PaymentRS $payRs) {
+    public static function creditVoidReturnToken (\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidReturnTokenRequest $returnVoid, PaymentRS $payRs, $payDate) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('DB Payment Id not given.  ');
@@ -227,7 +231,9 @@ class TokenTX {
         // Call to web service
         $creditResponse = $returnVoid->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
+
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnVoid->getTokenId());
+        $vr->setPaymentDate($payDate);
 
 
         // Save raw transaction in the db.
@@ -257,16 +263,14 @@ class TokenTX {
 class TokenResponse extends CreditResponse {
 
 
-    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $payNotes = '') {
+    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken) {
 
         $this->response = $creditTokenResponse;
-        $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->setIdToken($idToken);
         $this->idRegistration = $idRegistration;
         $this->invoiceNumber = $creditTokenResponse->getInvoiceNumber();
         $this->amount = $creditTokenResponse->getAuthorizedAmount();
-        $this->payNotes = $payNotes;
     }
 
     public function getPaymentMethod() {

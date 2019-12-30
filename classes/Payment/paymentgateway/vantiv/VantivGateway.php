@@ -57,7 +57,7 @@ class VantivGateway extends PaymentGateway {
                     ->setMemo(MpVersion::PosVersion);
 
             // Run the token transaction
-            $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes());
+            $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes(), $pmp->getPayDate());
 
             // Analyze the result
             $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken(), $this->useAVS, $this->useCVV);
@@ -283,7 +283,7 @@ class VantivGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken) {
 
         $uS = Session::getInstance();
         $rtnResult = NULL;
