@@ -342,6 +342,7 @@ $(document).ready(function () {
     $('#phEmlTabs').tabs();
     $('#emergTabs').tabs();
     $('#addrsTabs').tabs();
+    
     $psgList = $('#psgList').tabs({
         collapsible: true,
         beforeActivate: function (event, ui) {
@@ -355,6 +356,11 @@ $(document).ready(function () {
                 if (ui.newTab.prop('id') === 'lipsg' && !setupNotes) {
                     setupNotes = setupPsgNotes(memData.idPsg, $('#psgNoteViewer'));
                 }
+            }
+        },
+        load: function (event, ui) {
+            if (ui.tab.prop('id') === 'pmtsTable') {
+                paymentsTable('feesTable', 'rptfeediv');
             }
         }
     });

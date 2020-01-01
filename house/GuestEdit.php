@@ -870,7 +870,7 @@ $uS->guestId = $id;
                         <?php if ($uS->IncomeRated && $showCharges) {  ?>
                         <li id="fin"><a href="#vfin">Financial Assistance...</a></li>
                         <?php } if ($showCharges) {  ?>
-                        <li><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
+                        <li id="pmtsTable"><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
                         <?php } ?>
                         <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>
                         <?php if ($uS->TrackAuto) { ?>
@@ -962,6 +962,7 @@ $uS->guestId = $id;
             </div>
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"></form>
+        <table id="feesTable" style="display:none;"></table>
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
@@ -971,6 +972,6 @@ $uS->guestId = $id;
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload.min.js?vn=38"></script>
+        <script type="text/javascript" src="js/guestload-min.js?vn=38"></script>
     </body>
 </html>

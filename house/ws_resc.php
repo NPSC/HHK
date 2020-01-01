@@ -154,108 +154,108 @@ try {
 
         	break;
 
-		case 'putdoc':
+        case 'putdoc':
 
-			SiteConfig::checkUploadFile('file');
+                SiteConfig::checkUploadFile('file');
 
-			$guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
-        	$psgId = intval(filter_input(INPUT_POST, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
-        	$docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_STRING);
-        	$mimeType = filter_input(INPUT_POST, 'mimetype', FILTER_SANITIZE_STRING);
-        	$doc = $_FILES['file'];
+                $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
+        $psgId = intval(filter_input(INPUT_POST, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
+        $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_STRING);
+        $mimeType = filter_input(INPUT_POST, 'mimetype', FILTER_SANITIZE_STRING);
+        $doc = $_FILES['file'];
 
-        	if (is_null($guestId) || $guestId === FALSE) {
-                throw new Exception('GuestId missing');
-            } else if (is_null($doc) || $doc === FALSE) {
-                throw new Exception('Document is missing');
-            }
+        if (is_null($guestId) || $guestId === FALSE) {
+        throw new Exception('GuestId missing');
+    } else if (is_null($doc) || $doc === FALSE) {
+        throw new Exception('Document is missing');
+    }
 
-        	$docContents = file_get_contents($doc['tmp_name']);
+        $docContents = file_get_contents($doc['tmp_name']);
 
-            $document = Document::createNew($docTitle, $mimeType, $docContents, $uS->username);
+    $document = Document::createNew($docTitle, $mimeType, $docContents, $uS->username);
 
-            $document->saveNew($dbh);
+    $document->saveNew($dbh);
 
-            if($document->linkNew($dbh, $guestId, $psgId) > 0){
-	            $events = ["idDoc"=> $document->getIdDocument(), "length"=>strlen($docContents)];
-            }else{
-	            $events = ["error" => "Unable to save document"];
-            }
+    if($document->linkNew($dbh, $guestId, $psgId) > 0){
+            $events = ["idDoc"=> $document->getIdDocument(), "length"=>strlen($docContents)];
+    }else{
+            $events = ["error" => "Unable to save document"];
+    }
 
-			break;
+                break;
 
-		case 'getdoc':
+        case 'getdoc':
 
-			$docId = intval(filter_input(INPUT_GET, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
+                $docId = intval(filter_input(INPUT_GET, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-            $document = new Document($docId);
-            $document->loadDocument($dbh);
+    $document = new Document($docId);
+    $document->loadDocument($dbh);
 
-            if($document->getExtension()){
-	            $ending = "." . $document->getExtension();
-            }else{
-	            $ending = "";
-            }
+    if($document->getExtension()){
+            $ending = "." . $document->getExtension();
+    }else{
+            $ending = "";
+    }
 
-            header("Content-Type: " . $document->getMimeType());
-            header('Content-Disposition: inline; filename="' . $document->getTitle() . $ending . '"');
-            echo $document->getDoc();
-            exit();
+    header("Content-Type: " . $document->getMimeType());
+    header('Content-Disposition: inline; filename="' . $document->getTitle() . $ending . '"');
+    echo $document->getDoc();
+    exit();
 
-			break;
+                break;
 
-		case 'updatedoctitle':
+        case 'updatedoctitle':
 
-			$docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
-        	$docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_STRING);
+                $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
+        $docTitle = filter_input(INPUT_POST, 'docTitle', FILTER_SANITIZE_STRING);
 
-        	if (is_null($docId) || $docId === FALSE) {
-                throw new Exception('DocId missing');
-            }
+        if (is_null($docId) || $docId === FALSE) {
+        throw new Exception('DocId missing');
+    }
 
-            $document = new Document($docId);
+    $document = new Document($docId);
 
-            $document->saveTitle($dbh, $docTitle);
+    $document->saveTitle($dbh, $docTitle);
 
-	        $events = ["idDoc"=> $document->getIdDocument()];
+        $events = ["idDoc"=> $document->getIdDocument()];
 
-			break;
+                break;
 
-		case 'deletedoc':
+        case 'deletedoc':
 
-			$docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
+                $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-        	if (is_null($docId) || $docId === FALSE || $docId < 1) {
-                throw new Exception('DocId missing');
-            }
+        if (is_null($docId) || $docId === FALSE || $docId < 1) {
+        throw new Exception('DocId missing');
+    }
 
-            $document = new Document($docId);
+    $document = new Document($docId);
 
-            if($document->deleteDocument($dbh, $uS->username) > 0){
-	            $events = ["status"=> "success", "idDoc"=> $document->getIdDocument(), "msg"=>"Document deleted successfully"];
-            }else{
-	            $events = ["error" => "Unable to delete document"];
-            }
+    if($document->deleteDocument($dbh, $uS->username) > 0){
+            $events = ["status"=> "success", "idDoc"=> $document->getIdDocument(), "msg"=>"Document deleted successfully"];
+    }else{
+            $events = ["error" => "Unable to delete document"];
+    }
 
-			break;
+                break;
 
-		case 'undodeletedoc':
+        case 'undodeletedoc':
 
-			$docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
+                $docId = intval(filter_input(INPUT_POST, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-        	if (is_null($docId) || $docId === FALSE || $docId < 1) {
-                throw new Exception('DocId missing');
-            }
+        if (is_null($docId) || $docId === FALSE || $docId < 1) {
+        throw new Exception('DocId missing');
+    }
 
-            $document = new Document($docId);
+    $document = new Document($docId);
 
-            if($document->undoDeleteDocument($dbh, $uS->username) > 0){
-	            $events = ["status"=> "success", "idDoc"=> $document->getIdDocument(), "msg"=>"Document restored successfully"];
-            }else{
-	            $events = ["error" => "Unable to restore document"];
-            }
+    if($document->undoDeleteDocument($dbh, $uS->username) > 0){
+            $events = ["status"=> "success", "idDoc"=> $document->getIdDocument(), "msg"=>"Document restored successfully"];
+    }else{
+            $events = ["error" => "Unable to restore document"];
+    }
 
-			break;
+                break;
 
         case 'vehsch':
 
@@ -361,73 +361,7 @@ try {
             }
 
             if ($id > 0) {
-                $events = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, '', '', array(0 => ''), array(0 => ''), $id, 'Payment History', FALSE), array('id' => 'rptfeediv', 'class' => 'ignrSave'))
-                        . '<script type= "text/javascript"> ' .
-                        "$('#feesTable').dataTable({
-    'dom': '<\"ignrSave\"if>rt<\"ignrSave\"lp><\"clear\">',
-    'displayLength': 50,
-    'lengthMenu': [[25, 50, -1], [25, 50, 'All']],
-    'columnDefs': [
-        {'targets': 8,
-         'type': 'date',
-         'render': function ( data, type, row ) {return dateRender(data, type);}
-        }
-    ]
-});" . '// Void/Return button
-$("#rptfeediv").on("click", ".hhk-voidPmt", function() {
-    var btn = $(this);
-    var amt = parseFloat(btn.data("amt"));
-    if (btn.val() != "Saving..." && confirm("Void/Reverse this payment for $" + amt.toFixed(2).toString() + "?")) {
-        btn.val("Saving...");
-        sendVoidReturn(btn.attr("id"), "rv", btn.data("pid"));
-    }
-});
-
-$("#rptfeediv").on("click", ".hhk-voidRefundPmt", function () {
-    var btn = $(this);
-    if (btn.val() != "Saving..." && confirm("Void this Return?")) {
-        btn.val("Saving...");
-        sendVoidReturn(btn.attr("id"), "vr", btn.data("pid"));
-    }
-});
-$("#rptfeediv").on("click", ".hhk-undoReturnPmt", function () {
-    var btn = $(this);
-    var amt = parseFloat(btn.data("amt"));
-    if (btn.val() != "Saving..." && confirm("Undo this Return/Refund for $" + amt.toFixed(2).toString() + "?")) {
-        btn.val("Saving...");
-        sendVoidReturn(btn.attr("id"), "ur", btn.data("pid"));
-    }
-});
-
-$("#rptfeediv").on("click", ".hhk-deleteWaive", function () {
-    var btn = $(this);
-    if (btn.val() != "Deleting..." && confirm("Delete this House Waive?")) {
-        btn.val("Deleting...");
-        sendVoidReturn(btn.attr("id"), "d", btn.data("ilid"), btn.data("iid"));
-    }
-});
-
-$("#rptfeediv").on("click", ".hhk-returnPmt", function() {
-    var btn = $(this);
-    var amt = parseFloat(btn.data("amt"));
-    if (btn.val() != "Saving..." && confirm("Return this payment for $" + amt.toFixed(2).toString() + "?")) {
-        btn.val("Saving...");
-        sendVoidReturn(btn.attr("id"), "r", btn.data("pid"), amt);
-    }
-});
-$("#rptfeediv").on("click", ".invAction", function (event) {
-    invoiceAction($(this).data("iid"), "view", event.target.id);
-});
-$("#rptfeediv").on("click", ".pmtRecpt", function () {
-    reprintReceipt($(this).data("pid"), "#pmtRcpt");
-});
-$(document).mousedown(function (event) {
-    var target = $(event.target);
-    if ($("div#pudiv").length > 0 && target[0].id !== "pudiv" && target.parents("#" + "pudiv").length === 0) {
-        $("div#pudiv").remove();
-    }
-});
-</script>';
+                $events = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, '', '', array(0 => ''), array(0 => ''), $id, 'Payment History', FALSE), array('id' => 'rptfeediv', 'class' => 'ignrSave'));
             } else {
                 $events = '';
             }
