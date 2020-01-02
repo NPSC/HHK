@@ -112,7 +112,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs);
+            $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs, date('Y-m-d H:i:s'));
 
             switch ($csResp->getStatus()) {
 
@@ -181,7 +181,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs);
+                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs, date('Y-m-d H:i:s'));
 
                 switch ($csResp->response->getStatus()) {
 
@@ -249,7 +249,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $returnRequest, $payRs);
+            $csResp = TokenTX::creditReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $returnRequest, $payRs, date('Y-m-d H:i:s'));
 
             switch ($csResp->response->getStatus()) {
 
@@ -308,7 +308,7 @@ class VantivGateway extends PaymentGateway {
             $returnRequest->setTokenId($tokenRS->idGuest_token->getStoredVal());
 
 
-            $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $returnRequest, NULL, $paymentNotes);
+            $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $returnRequest, NULL, date('Y-m-d H:i:s'));
 
             // Analyze the result
             $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $tokenRS->idGuest_token->getStoredVal());
@@ -599,7 +599,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $voidRequest, $payRs);
+            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $voidRequest, $payRs, date('Y-m-d H:i:s'));
 
             switch ($csResp->response->getStatus()) {
 

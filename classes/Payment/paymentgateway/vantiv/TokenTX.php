@@ -40,7 +40,7 @@ class TokenTX {
 
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $cstReq->getTokenId());
         $vr->setPaymentDate($payDate);
-        $vr->setNotes($payNotes);
+        $vr->setPaymentNotes($payNotes);
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($cstReq->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditSaleToken');

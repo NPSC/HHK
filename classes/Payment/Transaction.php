@@ -30,7 +30,10 @@ class Transaction {
         $transRs->Gateway_Ref->setNewVal($gwName);
         $transRs->Trans_Type->setNewVal($transType);
         $transRs->Trans_Method->setNewVal($transMethod);
-        $transRs->Check_Number->setNewVal($vr->checkNumber);
+
+        if (is_a($vr, 'CheckResponse')) {
+            $transRs->Check_Number->setNewVal($vr->checkNumber);
+        }
 
 
         if (isset($vr->response)) {
