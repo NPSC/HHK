@@ -967,7 +967,8 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
         `ng`.`Relationship_Code` AS `Relationship_Code`,
         `ng`.`idPsg` AS `idPsg`,
         `nd`.`No_Return` AS `ngStatus`,
-        IFNULL(`n`.`External_Id`, '') AS `External_Id`
+        IFNULL(`n`.`External_Id`, '') AS `External_Id`,
+        `n`.`Member_Status` AS `Member_Status`
     FROM
         ((((((((`name_guest` `ng`
         LEFT JOIN `name` `n` ON ((`ng`.`idName` = `n`.`idName`)))

@@ -46,7 +46,7 @@ $labels = new Config_Lite(LABEL_FILE);
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, \Config_Lite $labels, $showDiagnosis, $showLocation) {
+function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, \Config_Lite $labels, $showDiagnosis, $showLocation, $showDeceased = FALSE) {
 
     $uS = Session::getInstance();
 
@@ -105,6 +105,10 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
     if ($showNoReturn) {
         $whClause .= " and vg.ngStatus != '' ";
+    }
+    
+    if(!$showDeceased) {
+	    $whClause .= " and vg.Member_Status != 'd' ";
     }
 
     $query .= " from stays s
@@ -543,6 +547,7 @@ $statusSelections = array();
 $showAddressSelection = '';
 $showFullNameSelection = '';
 $showNoReturnSelection = '';
+$showDeceasedSelection = '';
 $mkTable = '';
 $dataTable = '';
 $settingstable = '';
@@ -868,6 +873,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $showAddr = FALSE;
         $showFullName = FALSE;
         $showNoReturn = FALSE;
+        $showDeceased = FALSE;
         $showDiag = TRUE;
         $showLocation = FALSE;
 
@@ -891,6 +897,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         if (isset($_POST['cbNoReturn'])) {
             $showNoReturn = TRUE;
             $showNoReturnSelection = 'checked="checked"';
+        }
+        
+        if (isset($_POST['cbDeceased'])) {
+            $showDeceased = TRUE;
+            $showDeceasedSelection = 'checked="checked"';
         }
 
         // Create settings markup
@@ -930,7 +941,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 
             case 'p':
-                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and Relationship_Code = '" . RelLinkType::Self . "' ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
+                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and Relationship_Code = '" . RelLinkType::Self . "' ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation, $showDeceased);
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just Patients', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
@@ -946,7 +957,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 break;
 
             case 'g':
-                $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
+                $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation, $showDeceased);
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Patients & Guests', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
@@ -1202,6 +1213,7 @@ if ($uS->CoTod) {
                             <td ><input type="checkbox" name="cbAddr" class="psgsel" id="cbAddr" <?php echo $showAddressSelection; ?>/><label for="cbAddr" class="psgsel"> Show Address</label></td>
                             <td><input type="checkbox" name="cbFullName" class="psgsel" id="cbFullName" <?php echo $showFullNameSelection; ?>/><label for="cbFullName" class="psgsel"> Show Full Name</label></td>
                             <td id="cbNoRtntd"><input type="checkbox" name="cbNoReturn" class="psgsel" id="cbNoReturn" <?php echo $showNoReturnSelection; ?>/><label for="cbNoReturn" class="psgsel"> Show No Return Only</label></td>
+                            <td id="cbDeceasedtd"><input type="checkbox" name="cbDeceased" class="psgsel" id="cbDeceased" <?php echo $showDeceasedSelection; ?>/><label for="cbDeceased" class="psgsel"> Show Deceased</label></td>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
                             <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
                         </tr>
