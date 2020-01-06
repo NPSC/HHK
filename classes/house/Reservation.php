@@ -1963,14 +1963,16 @@ class ReserveSearcher extends ActiveReservation {
 
             $psg = new Psg($dbh, $n->idPsg->getStoredVal());
 
+			$patientStatus = $psg->getPatientStatus($dbh);
+
             $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'name'=>'cbselpsg', 'id'=>$psg->getIdPsg().'cbselpsg');
-            if ($firstOne) {
+            if ($firstOne && $patientStatus != 'd') {
                 $attrs['checked'] = 'checked';
                 $firstOne = FALSE;
             }
 
 			//is deceased?
-			if($psg->getPatientStatus($dbh) == "d"){
+			if($patientStatus == "d"){
 				$trAttrs = array('style'=>'background-color: #ffc4c4');
 				$labelAttrs = array();
 				$status = " [DECEASED]";
