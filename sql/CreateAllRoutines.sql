@@ -22,12 +22,17 @@ DROP procedure IF EXISTS `get_credit_gw`; -- ;
 
 CREATE PROCEDURE `get_credit_gw`(
     IN visitId INT,
-    IN spanId INT)
+    IN spanId INT,
+    IN regId INT)
 BEGIN
 
     DECLARE myResc INT;
     
-    Select idResource into myResc from visit where idVisit = visitId and Span = spanId;
+    if (visitId > 0) then
+	Select ifnull(idResource, 0) into myResc from visit where idVisit = visitId and Span = spanId;
+    ELSE
+	select ifnull(Max(r.idResource), 0) into myResc from reservation r join registration rg on r.idRegistration = rg.idRegistration where rg. idRegistration = regId;
+    END IF;
     
     if (myResc > 0) THEN
 

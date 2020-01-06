@@ -1278,24 +1278,24 @@ class HouseServices {
 
         $uS = Session::getInstance();
 
-        $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
-                where l.`Status` = 'a' or l.`Status` is null;");
+//        $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
+//                where l.`Status` = 'a' or l.`Status` is null;");
+//
+//        $rows = $gwStmt->fetchAll(PDO::FETCH_ASSOC);
+//        $merchants = array();
+//
+//        if (count($rows) > 0) {
+//
+//            foreach ($rows as $r) {
+//                $merchants[$r['idLocation']] = $r['Merchant'];
+//            }
+//        }
 
-        $rows = $gwStmt->fetchAll(PDO::FETCH_ASSOC);
-        $merchants = array();
-
-        if (count($rows) > 0) {
-
-            foreach ($rows as $r) {
-                $merchants[$r['idLocation']] = $r['Merchant'];
-            }
-        }
-
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $merchants);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, $idRegistration));
         $tbl = new HTMLTable();
 
         $tkRsArray = CreditToken::getGuestTokenRSs($dbh, $idGuest);
-        PaymentChooser::CreditBlock($dbh, $tbl, $tkRsArray, $gateway, 0, '', '');
+        PaymentChooser::CreditBlock($dbh, $tbl, $tkRsArray, $gateway, 0, '', '', FALSE);
 
         return $tbl->generateMarkup(array('id' => 'tblupCredit'));
 
@@ -1348,6 +1348,7 @@ class HouseServices {
         if (isset($post['cbNewCard'])) {
 
             $manualKey = FALSE;
+            $selGw = '';
 
             $guest = new Guest($dbh, '', $idGuest);
             $newCardHolderName = $guest->getRoleMember()->get_fullName();
@@ -1357,21 +1358,13 @@ class HouseServices {
                 $manualKey = TRUE;
             }
 
+            if (isset($post['selccgw'])) {
+                $selGw = strtolower(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
+            }
+
             try {
-                $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
-                where l.`Status` = 'a' or l.`Status` is null;");
 
-                $rows = $gwStmt->fetchAll(PDO::FETCH_ASSOC);
-                $merchants = array();
-
-                if (count($rows) > 0) {
-
-                    foreach ($rows as $r) {
-                        $merchants[$r['idLocation']] = $r['Merchant'];
-                    }
-                }
-
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $merchants);
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $selGw);
 
                 $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage);
 

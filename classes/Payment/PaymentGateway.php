@@ -159,34 +159,6 @@ abstract class PaymentGateway {
         return EditRS::insert($dbh, $gwRs);
     }
 
-//    public static function updatePayTypes(\PDO $dbh, $paymentMethod, $username) {
-//
-//        $msg = '';
-//
-//        $glRs = new GenLookupsRS();
-//        $glRs->Table_Name->setStoredVal('Pay_Type');
-//        $glRs->Code->setStoredVal(PayType::Charge);
-//        $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
-//
-//        if (count($rows) > 0) {
-//
-//            $glRs = new GenLookupsRS();
-//            EditRS::loadRow($rows[0], $glRs);
-//
-//            $glRs->Substitute->setNewVal($paymentMethod);
-//
-//            $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
-//
-//            if ($ctr > 0) {
-//                $logText = HouseLog::getUpdateText($glRs);
-//                HouseLog::logGenLookups($dbh, 'Pay_Type', PayType::Charge, $logText, "update", $username);
-//                $msg = "Pay_Type Charge is updated.  ";
-//            }
-//        }
-//
-//        return $msg;
-//    }
-
     public static function factory(\PDO $dbh, $gwName, $gwType) {
 
         switch (strtolower($gwName)) {
@@ -209,12 +181,12 @@ abstract class PaymentGateway {
         }
     }
 
-    public static function getCreditGatewayNames(\PDO $dbh, $idVisit, $span) {
+    public static function getCreditGatewayNames(\PDO $dbh, $idVisit, $span, $idRegistration = 0) {
 
         $ccNames = array();
 
-        $volStmt = $dbh->prepare("call get_credit_gw(:idVisit, :span);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-        $volStmt->execute(array(':idVisit'=>intval($idVisit), ':span'=>intval($span)));
+        $volStmt = $dbh->prepare("call get_credit_gw(:idVisit, :span, :idReg);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        $volStmt->execute(array(':idVisit'=>intval($idVisit), ':span'=>intval($span), ':idReg'=>intval($idRegistration)));
         $rows = $volStmt->fetchAll(PDO::FETCH_ASSOC);
 
         if (count($rows) > 0) {

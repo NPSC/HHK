@@ -31,3 +31,4 @@ ALTER TABLE `document` CHANGE COLUMN `Doc` `Doc` MEDIUMBLOB NULL DEFAULT NULL ;
 UPDATE `sys_config` SET `Category`='h' WHERE `Key`='ShowUncfrmdStatusTab';
 
 -- Update gen_lookups Pay_Types to index paymentId 2 instead of 4
+Update `gen_lookups` set `Substitute` = '2' where `Table_Name` = 'Pay_Type' and `Code` = 'cc';

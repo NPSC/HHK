@@ -173,6 +173,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         // Adding a new card?
         if (isset($post['cbNewCard'])) {
 
+            $selGw = '';
             $newCardHolderName = '';
             $manualKey = FALSE;
 
@@ -181,9 +182,13 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $manualKey = TRUE;
             }
 
+            if (isset($post['selccgw'])) {
+                $selGw = strtolower(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
+            }
+
             try {
                 // Payment Gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $selGw);
 
                 $this->cofResult = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idReg, $manualKey, $newCardHolderName, $postbackPage);
 
@@ -496,7 +501,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), $reg->getIdRegistration());
 
                 // Card on file
-                if ($uS->ccgw != '') {
+                if ($uS->PaymentGateway != '') {
 
                     $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
                             HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
