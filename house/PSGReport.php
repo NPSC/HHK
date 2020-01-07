@@ -109,6 +109,8 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     
     if(!$showDeceased) {
 	    $whClause .= " and vg.Member_Status != 'd' ";
+    }else{
+	    $query .= " , if(vg.Member_Status='d', 'Yes', '') as `Deceased` ";
     }
 
     $query .= " from stays s
@@ -1213,7 +1215,7 @@ if ($uS->CoTod) {
                             <td ><input type="checkbox" name="cbAddr" class="psgsel" id="cbAddr" <?php echo $showAddressSelection; ?>/><label for="cbAddr" class="psgsel"> Show Address</label></td>
                             <td><input type="checkbox" name="cbFullName" class="psgsel" id="cbFullName" <?php echo $showFullNameSelection; ?>/><label for="cbFullName" class="psgsel"> Show Full Name</label></td>
                             <td id="cbNoRtntd"><input type="checkbox" name="cbNoReturn" class="psgsel" id="cbNoReturn" <?php echo $showNoReturnSelection; ?>/><label for="cbNoReturn" class="psgsel"> Show No Return Only</label></td>
-                            <td id="cbDeceasedtd"><input type="checkbox" name="cbDeceased" class="psgsel" id="cbDeceased" <?php echo $showDeceasedSelection; ?>/><label for="cbDeceased" class="psgsel"> Show Deceased</label></td>
+                            <td id="cbDeceasedtd"><input type="checkbox" name="cbDeceased" class="psgsel" id="cbDeceased" <?php echo $showDeceasedSelection; ?>/><label for="cbDeceased" class="psgsel"> Include Deceased</label></td>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
                             <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
                         </tr>
