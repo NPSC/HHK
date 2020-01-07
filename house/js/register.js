@@ -585,11 +585,11 @@ $(document).ready(function () {
         $(".hhk-alert").hide();
         getApplyDiscDiag($(this).data('vid'), $('#pmtRcpt'));
     });
-    $('#vstays, #vresvs, #vwls, #vuncon').on('click', '.stupCredit', function (event) {
-        event.preventDefault();
-        $(".hhk-alert").hide();
-        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile', 'register.php');
-    });
+//    $('#vstays, #vuncon').on('click', '.stupCredit', function (event) {
+//        event.preventDefault();
+//        $(".hhk-alert").hide();
+//        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile', 'register.php');
+//    });
     $('#vstays').on('click', '.stckout', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
@@ -670,18 +670,18 @@ $(document).ready(function () {
         modal: true,
         title: 'Payment Receipt'
     });
-    $('#cardonfile').dialog({
-        autoOpen: false,
-        resizable: true,
-        modal: true,
-        title: 'Update Credit Card On File',
-        close: function (event, ui) {
-            $('div#submitButtons').show();
-        },
-        open: function (event, ui) {
-            $('div#submitButtons').hide();
-        }
-    });
+//    $('#cardonfile').dialog({
+//        autoOpen: false,
+//        resizable: true,
+//        modal: true,
+//        title: 'Update Credit Card On File',
+//        close: function (event, ui) {
+//            $('div#submitButtons').show();
+//        },
+//        open: function (event, ui) {
+//            $('div#submitButtons').hide();
+//        }
+//    });
 
     if ($('#txtactstart').val() === '') {
         var nowdt = new Date();

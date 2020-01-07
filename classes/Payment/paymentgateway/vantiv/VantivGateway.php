@@ -421,6 +421,8 @@ class VantivGateway extends PaymentGateway {
         // Set CC Gateway name
         $uS->ccgw = $this->getGatewayType();
 
+        $guest = new Guest($dbh, '', $idGuest);
+        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
 
         $pay = new InitCkOutRequest($uS->siteName, 'Custom');
 
@@ -436,7 +438,6 @@ class VantivGateway extends PaymentGateway {
 
         $pay->setAVSZip($addr["Postal_Code"])
                 ->setAVSAddress($addr['Address_1'])
-                ->setAVSZip($addr["Postal_Code"])
                 ->setCardHolderName($cardHolderName)
                 ->setFrequency(MpFrequencyValues::OneTime)
                 ->setInvoice('CardInfo')
@@ -494,35 +495,35 @@ class VantivGateway extends PaymentGateway {
         }
 
 
-        if (isset($post[VantivGateway::CARD_ID])) {
-
-            $cardId = filter_var($post[VantivGateway::CARD_ID], FILTER_SANITIZE_STRING);
-            $cidInfo = $this->getInfoFromCardId($dbh, $cardId);
-
-            // Save postback in the db.
-            try {
-                self::logGwTx($dbh, $rtnCode, '', json_encode($post), 'CardInfoPostBack');
-            } catch (Exception $ex) {
-                // Do nothing
-            }
-
-            if ($rtnCode > 0) {
-
-                $payResult = new cofResult($rtnMessage, PaymentResult::ERROR, 0, 0);
-                return $payResult;
-            }
-
-            try {
-
-                $vr = CardInfo::portalReply($dbh, $this, $cidInfo);
-
-                $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
-
-            } catch (Hk_Exception_Payment $hex) {
-                $payResult = new cofResult($hex->getMessage(), PaymentResult::ERROR, 0, 0);
-            }
-
-        } else if (isset($post[VantivGateway::PAYMENT_ID])) {
+//        if (isset($post[VantivGateway::CARD_ID])) {
+//
+//            $cardId = filter_var($post[VantivGateway::CARD_ID], FILTER_SANITIZE_STRING);
+//            $cidInfo = $this->getInfoFromCardId($dbh, $cardId);
+//
+//            // Save postback in the db.
+//            try {
+//                self::logGwTx($dbh, $rtnCode, '', json_encode($post), 'CardInfoPostBack');
+//            } catch (Exception $ex) {
+//                // Do nothing
+//            }
+//
+//            if ($rtnCode > 0) {
+//
+//                $payResult = new cofResult($rtnMessage, PaymentResult::ERROR, 0, 0);
+//                return $payResult;
+//            }
+//
+//            try {
+//
+//                $vr = CardInfo::portalReply($dbh, $this, $cidInfo);
+//
+//                $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
+//
+//            } catch (Hk_Exception_Payment $hex) {
+//                $payResult = new cofResult($hex->getMessage(), PaymentResult::ERROR, 0, 0);
+//            }
+//
+//        } else if (isset($post[VantivGateway::PAYMENT_ID])) {
 
             $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_STRING);
 
@@ -565,7 +566,7 @@ class VantivGateway extends PaymentGateway {
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->setDisplayMessage($hex->getMessage());
             }
-        }
+//        }
 
         return $payResult;
     }

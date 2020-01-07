@@ -197,7 +197,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $this->reserveData->addError($ex->getMessage());
             }
         }
-
     }
 
     public function createMarkup(\PDO $dbh) {
@@ -504,7 +503,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 if ($uS->PaymentGateway != '') {
 
                     $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
-                            HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
+                            HTMLContainer::generateMarkup('legend', 'Credit Cards on File', array('style'=>'font-weight:bold;'))
                             . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
                         ,array('style'=>'float:left;', 'class'=>'hhk-panel')));
                 }

@@ -1278,24 +1278,13 @@ class HouseServices {
 
         $uS = Session::getInstance();
 
-//        $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
-//                where l.`Status` = 'a' or l.`Status` is null;");
-//
-//        $rows = $gwStmt->fetchAll(PDO::FETCH_ASSOC);
-//        $merchants = array();
-//
-//        if (count($rows) > 0) {
-//
-//            foreach ($rows as $r) {
-//                $merchants[$r['idLocation']] = $r['Merchant'];
-//            }
-//        }
-
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, $idRegistration));
         $tbl = new HTMLTable();
 
         $tkRsArray = CreditToken::getGuestTokenRSs($dbh, $idGuest);
-        PaymentChooser::CreditBlock($dbh, $tbl, $tkRsArray, $gateway, 0, '', '', FALSE);
+        $prefTokenId = Registration::readPrefTokenId($dbh, $idRegistration);
+
+        PaymentChooser::CreditBlock($dbh, $tbl, $tkRsArray, $gateway, $prefTokenId, '', '', FALSE);
 
         return $tbl->generateMarkup(array('id' => 'tblupCredit'));
 
@@ -1317,11 +1306,7 @@ class HouseServices {
 
         $dataArray = array();
 
-        if ($uS->ccgw == '') {
-            return $dataArray;
-        }
-
-        // Delete any tokens
+        // Delete any credit tokens
         $keys = array_keys($post);
         $msg = '';
 
@@ -1345,7 +1330,7 @@ class HouseServices {
         }
 
         // Add a new card
-        if (isset($post['cbNewCard'])) {
+        if (isset($post['rbUseCard']) && $post['rbUseCard'] == 0) {
 
             $manualKey = FALSE;
             $selGw = '';
@@ -1353,6 +1338,7 @@ class HouseServices {
             $guest = new Guest($dbh, '', $idGuest);
             $newCardHolderName = $guest->getRoleMember()->get_fullName();
 
+            // for instamed
             if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
                 $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
                 $manualKey = TRUE;
@@ -1374,7 +1360,7 @@ class HouseServices {
             }
         }
 
-        if ($msg != '' && isset($post['cbNewCard']) === FALSE) {
+        if ($msg != '' && isset($post['rbUseCard']) === FALSE) {
             $dataArray['success'] = $msg;
             $dataArray['COFmkup'] = HouseServices::viewCreditTable($dbh, $idGroup, $idGuest);
         }

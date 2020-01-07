@@ -968,7 +968,7 @@ ORDER BY v.idVisit , v.Span;");
 
             // Charge card gateway
             $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $paymentGateway->getGatewayType(), $idPrimaryGuest);
-            self::CreditBlock($dbh, $payTbl, $tkRsArray, $paymentGateway, $prefTokenId);
+            self::CreditBlock($dbh, $payTbl, $tkRsArray, $paymentGateway, $prefTokenId, ReturnIndex::ReturnIndex);
             // Credit gateway
             //self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId, ReturnIndex::ReturnIndex);
 

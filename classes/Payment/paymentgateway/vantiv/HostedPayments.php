@@ -165,7 +165,7 @@ class HostedCheckout {
         if (strtolower($uS->mode) !== Mode::Live) {
 //            $initCoRequest->setAVSAddress('4')->setAVSZip('30329');
             $initCoRequest->setOperatorID('test');
-            $trace = TRUE;
+//            $trace = TRUE;
         } else {
             $initCoRequest->setOperatorID($uS->username);
         }

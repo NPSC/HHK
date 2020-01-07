@@ -783,6 +783,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     "use strict";
     var ptsel = $('#PayTypeSel');
     var chg = $('.tblCredit');
+    var $chrgExpand = $('#trvdCHName');
     var p = new payCtrls();
 
     if (chg.length === 0) {
@@ -804,7 +805,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             if ($(this).val() === 'cc') {
                 chg.show('fade');
                 if ($('input[name=rbUseCard]:checked').val() == 0) {
-                    $('#trvdCHName').show();
+                    $chrgExpand.show();
                 }
             } else if ($(this).val() === 'ck') {
                 $('.hhk-cknum').show('fade');
@@ -821,34 +822,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     }
 
     // Card on file Cardholder name.
-    if ($('#trvdCHName').length > 0) {
-
-        $('input[name=rbUseCard]').on('change', function () {
-            if ($(this).val() == 0) {
-                $('#trvdCHName').show();
-            } else {
-                $('#trvdCHName').hide();
-                $('#btnvrKeyNumber').prop('checked', false).change();
-            }
-        });
-
-        if ($('input[name=rbUseCard]:checked').val() > 0) {
-            $('#trvdCHName').hide();
-        }
-
-        $('#btnvrKeyNumber').change(function() {
-
-            if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
-                $('#txtvdNewCardName').show();
-            } else {
-                $('#txtvdNewCardName').hide();
-                $('#txtvdNewCardName').val('');
-            }
-        });
-
-        $('#btnvrKeyNumber').change();
-    }
-
+    setupCOF($chrgExpand);
 
 
     // Set up return table
@@ -1297,33 +1271,41 @@ function paymentRedirect (data, $xferForm) {
     }
 }
 
-function setupCOF() {
+/**
+ * 
+ * @param {jqobject} $chgExpand
+ * @returns {undefined}
+ */
+function setupCOF($chgExpand) {
 
     // Card on file Cardholder name.
-    if ($('#trCHName').length > 0) {
+    if ($chgExpand.length > 0) {
 
-        $('#cbNewCard').change(function () {
-
-            if (this.checked) {
-                $('.hhkKeyNumber').show();
+        $('input[name=rbUseCard]').on('change', function () {
+            if ($(this).val() == 0) {
+                $chgExpand.show();
             } else {
-                $('.hhkKeyNumber').hide();
-                $('#cbKeyNumber').prop('checked', false).change();
+                $chgExpand.hide();
+                $('#btnvrKeyNumber').prop('checked', false).change();
             }
         });
 
-        $('#cbNewCard').change();
+        if ($('input[name=rbUseCard]:checked').val() > 0) {
+            $chgExpand.hide();
+        }
 
-        $('#cbKeyNumber').change(function() {
+        // Instamed-specific controls
+        $('#btnvrKeyNumber').change(function() {
 
-            if (this.checked && $('#cbNewCard').prop('checked') === true) {
-                $('#trCHName').show();
+            if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
+                $('#txtvdNewCardName').show();
             } else {
-                $('#trCHName').hide();
+                $('#txtvdNewCardName').hide();
+                $('#txtvdNewCardName').val('');
             }
         });
 
-        $('#cbKeyNumber').change();
+        $('#btnvrKeyNumber').change();
     }
 
 }

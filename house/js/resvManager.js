@@ -1886,7 +1886,7 @@ function resvManager(initData, options) {
                 setupPay(data);
             }
             if (data.resv.rdiv.cof !== undefined) {
-                setupCOF();
+                setupCOF($('#trvdCHName'));
             }
 
             if ($('#addGuestHeader').length > 0) {

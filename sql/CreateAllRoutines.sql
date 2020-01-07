@@ -31,7 +31,7 @@ BEGIN
     if (visitId > 0) then
 	Select ifnull(idResource, 0) into myResc from visit where idVisit = visitId and Span = spanId;
     ELSE
-	select ifnull(Max(r.idResource), 0) into myResc from reservation r join registration rg on r.idRegistration = rg.idRegistration where rg. idRegistration = regId;
+	select ifnull(r.idResource, 0) into myResc from reservation r join registration rg on r.idRegistration = rg.idRegistration where rg. idRegistration = regId order by r.idReservation DESC limit 0, 1;
     END IF;
     
     if (myResc > 0) THEN
