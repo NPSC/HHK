@@ -36,7 +36,8 @@ class Login {
 
         // Check site maintenance
         if ($config->getBool('site', 'Site_Maintenance', FALSE)) {
-            exit("<h1>".$config->getString('site','Site_Name', ''). " is offline for maintenance.  Try again later.</h1>");
+            //exit("<h1>".$config->getString('site','Site_Name', ''). " is offline for maintenance.  Try again later.</h1>");
+            exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
         }
 
         // Check SsL
