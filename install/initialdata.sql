@@ -541,7 +541,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('receiptLogoFile','../conf/receiptlogo.png','url','f','','',''),('receiptLogoWidth','150','i','f','','in px',''),
 ('ReferralAgent','true','b','h','','Track referral agents/social workers',''),
 ('RegColors','','s','h','','Calendar page ribbon colors based on hospital or room',''),
-('RegForm','2','i','h','','1 = Registration form style 1, 2 = style 2',''),
+('RegForm','1','i','h','','1 = Registration form style 1, 2 = style 2',''),
 ('RegFormNoRm','false','b','h','','Do not show the room number on the registration form before check-in',''),
 ('RegSubj','Volunteer Registration','s','v','','Volunteer Registration email subject line',''),
 ('ReplyTo','','ea','g','','The reply to address for any email sent to guests.',''),
