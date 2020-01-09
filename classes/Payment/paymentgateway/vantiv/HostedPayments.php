@@ -237,6 +237,8 @@ class HostedCheckout {
                 $trType = TransType::Retrn;
             } else if ($verifyResponse->getTranType() == MpTranType::Sale) {
                 $trType = TransType::Sale;
+            } else if ($verifyResponse->getTranType() == MpTranType::ZeroAuth) {
+                $trType = TransType::ZeroAuth;
             }
 
             $transRs = Transaction::recordTransaction($dbh, $vr, $gway->getGatewayType(), $trType, TransMethod::HostedPayment);
@@ -246,8 +248,31 @@ class HostedCheckout {
 
         }
 
-        // record payment
-        return SaleReply::processReply($dbh, $vr, $uS->username);
+        if ($verifyResponse->getTranType() == MpTranType::ZeroAuth) {
+
+            // Zero Auth Response
+            if ($vr->response->getResponseCode() == 0 && $vr->response->getStatus() == MpStatusValues::Approved) {
+
+                if ($vr->response->getToken() != '') {
+
+                    try {
+                        $vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
+                    } catch(Exception $ex) {
+                        $vr->idToken = 0;
+                    }
+
+                } else {
+                    $vr->idToken = 0;
+                }
+            }
+
+            return $vr;
+
+        } else {
+            
+            // record payment
+            return SaleReply::processReply($dbh, $vr, $uS->username);
+        }
 
     }
 

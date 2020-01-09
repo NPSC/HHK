@@ -383,6 +383,7 @@ class TransType {
     const VoidReturn = 'vr';
     const Reverse = 'rv';
     const undoRetrn = 'ur';
+    const ZeroAuth = 'za';
 }
 
 

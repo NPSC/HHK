@@ -424,11 +424,15 @@ class VantivGateway extends PaymentGateway {
         $guest = new Guest($dbh, '', $idGuest);
         $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
 
+        if ($cardHolderName == '') {
+            $cardHolderName = $guest->getRoleMember()->getMemberFullName();
+        }
+
         $pay = new InitCkOutRequest($uS->siteName, 'Custom');
 
         // Card reader?
         if ($uS->CardSwipe) {
-            $pay->setDefaultSwipe('Swipe')
+            $pay->setDefaultSwipe('Manual') // set to  key in the acct number manually for this
                     ->setCardEntryMethod('Both')
                     ->setPaymentPageCode('CheckoutPOS_Url');
         } else {
@@ -523,7 +527,8 @@ class VantivGateway extends PaymentGateway {
 //                $payResult = new cofResult($hex->getMessage(), PaymentResult::ERROR, 0, 0);
 //            }
 //
-//        } else if (isset($post[VantivGateway::PAYMENT_ID])) {
+//        } else
+          if (isset($post[VantivGateway::PAYMENT_ID])) {
 
             $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_STRING);
 
@@ -547,18 +552,27 @@ class VantivGateway extends PaymentGateway {
 
                 $csResp = HostedCheckout::portalReply($dbh, $this, $cidInfo, $payNotes);
 
-                if ($csResp->getInvoiceNumber() != '') {
+                if ($csResp->response->getTranType() == MpTranType::ZeroAuth) {
 
-                    $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
-
-                    // Analyze the result
-                    $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0, $this->useAVS, $this->useCVV);
+                    // Zero auth card info
+                    $payResult = new CofResult($csResp->response->getDisplayMessage(), $csResp->response->getStatus(), $csResp->idPayor, $csResp->idRegistration);
 
                 } else {
 
-                    $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
-                    $payResult->setStatus(PaymentResult::ERROR);
-                    $payResult->setDisplayMessage('Invoice Not Found!  ');
+                    // Hosted payment response.
+                    if ($csResp->getInvoiceNumber() != '') {
+
+                        $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
+
+                        // Analyze the result
+                        $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0, $this->useAVS, $this->useCVV);
+
+                    } else {
+
+                        $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
+                        $payResult->setStatus(PaymentResult::ERROR);
+                        $payResult->setDisplayMessage('Invoice Not Found!  ');
+                    }
                 }
             } catch (Hk_Exception_Payment $hex) {
 
@@ -566,7 +580,7 @@ class VantivGateway extends PaymentGateway {
                 $payResult->setStatus(PaymentResult::ERROR);
                 $payResult->setDisplayMessage($hex->getMessage());
             }
-//        }
+        }
 
         return $payResult;
     }

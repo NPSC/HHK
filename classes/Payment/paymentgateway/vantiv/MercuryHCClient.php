@@ -151,7 +151,7 @@ class MpTokenLifetimeDays {
 }
 
 class MpVersion {
-    const PosVersion = 'hhkpos-3.7';
+    const PosVersion = 'hhkpos-3.13';
 }
 
 class CVVResult {
@@ -873,6 +873,9 @@ class VerifyCkOutResponse extends MercResponse  implements iGatewayResponse {
         }
 
         $this->tranType = MpTranType::Sale;
+        if (isset($this->result->TranType)) {
+            $this->tranType = $this->result->TranType;
+        }
 
     }
 

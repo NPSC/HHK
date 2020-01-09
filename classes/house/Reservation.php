@@ -171,7 +171,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         // Adding a new card?
-        if (isset($post['cbNewCard'])) {
+        if (isset($post['rbUseCard'])) {
 
             $selGw = '';
             $newCardHolderName = '';
