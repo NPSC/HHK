@@ -462,7 +462,7 @@ abstract class MercRequest {
     /**
      *
      * @param array $gway
-     * @return response object
+     * @return MercResponse object
      * @throws Hk_Exception_Payment
      */
     public function submit(array $gway, $trace = FALSE) {
@@ -1395,7 +1395,7 @@ abstract class MercTokenRequest extends MercRequest {
      * The password is handled differently for Tokens.
      *
      * @param array $gway
-     * @return \CreditResponse
+     * @return MercResponse
      * @throws Hk_Exception_Payment
      */
     public function submit(array $gway, $trace = FALSE) {

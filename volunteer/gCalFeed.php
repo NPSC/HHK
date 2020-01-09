@@ -204,7 +204,7 @@ try {
 
     $events = array("error" => "Database Error" . $ex->getMessage());
 
-} catch (Hk_Exception $ex) {
+} catch (Exception $ex) {
 
     $events = array("error" => "HouseKeeper Error" . $ex->getMessage());
 }

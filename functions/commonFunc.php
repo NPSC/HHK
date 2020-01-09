@@ -612,7 +612,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
  *
  * @param int $idGuest
  * @param int $widthPx - desired pixel width of image
- * @return HTML
+ * @return string HTML formatted
  */
 
 function showGuestPicture ($idGuest, $widthPx) {
@@ -637,7 +637,7 @@ function showGuestPicture ($idGuest, $widthPx) {
  * @param $_FILES['photo'] $photo
  * @param int $newwidth
  * @param int $newheight
- * @return binary photo data
+ * @return object photo data
  */
 
 function makeThumbnail($photo, $newwidth, $newheight){

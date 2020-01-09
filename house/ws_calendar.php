@@ -28,11 +28,6 @@ try {
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
 
-$uS = Session::getInstance();
-
-
-$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
-
 $c = "";
 
 // Get our command
@@ -97,8 +92,6 @@ try {
 
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
-} catch (Hk_Exception $ex) {
-    $events = array("error" => "HouseKeeper Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Exception $ex) {
     $events = array("error" => "Web Server Error: " . $ex->getMessage());
 }

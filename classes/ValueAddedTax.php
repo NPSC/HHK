@@ -210,9 +210,9 @@ class TaxedItem {
      * @param int $idTaxedItem  Item Id of the item being taxed.
      * @param int $idTaxingItem  Item Id of the taxing item.
      * @param int $maxDays  The maximum number of days to apply the tax.
-     * @param decimal $percentTax  The percent tax - divide by 100 to get the decimal tax mulitplier.
+     * @param float $percentTax  The percent tax - divide by 100 to get the decimal tax mulitplier.
      * @param string $taxingItemDesc
-     * @param strubg $taxingItemGlCode
+     * @param string $taxingItemGlCode
      * @param int $firstOrderId
      * @param int $lastOrderId
      */

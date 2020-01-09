@@ -31,7 +31,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             $site = $this->loadWebSite($dbh);
 
-        } catch (Hk_Exception $hex) {
+        } catch (Hk_Exception_Runtime $hex) {
 
             $uS->destroy(TRUE);
             exit("error: ".$hex->getMessage());

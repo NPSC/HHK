@@ -25,7 +25,6 @@ $wInit = new webInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 
-$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
 // get session instance
 $uS = Session::getInstance();
@@ -53,7 +52,7 @@ switch ($c) {
 
         $id = 0;
         $rId = 0;
-        $relCode = "";
+
         if (isset($_POST['id'])) {
             $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
@@ -72,7 +71,7 @@ switch ($c) {
 
         $id = 0;
         $rId = 0;
-        $relCode = "";
+
         if (isset($_POST['id'])) {
             $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
@@ -91,7 +90,7 @@ switch ($c) {
 
         $id = 0;
         $rId = 0;
-        $relCode = "";
+
         if (isset($_POST['id'])) {
             $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
@@ -110,7 +109,7 @@ switch ($c) {
 
         $id = 0;
         $rId = 0;
-        $relCode = "";
+
         if (isset($_POST['id'])) {
             $id = intval(filter_var($_POST['id'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
@@ -181,7 +180,7 @@ switch ($c) {
 
     $events = array("error" => "Database Error" . $ex->getMessage());
 
-} catch (Hk_Exception $ex) {
+} catch (Exception $ex) {
 
     $events = array("error" => "HouseKeeper Error" . $ex->getMessage());
 }
