@@ -3,21 +3,20 @@
 <p style="margin-top:5px;">Should your plans change, please let us know as soon as possible so that we can serve others in need of accommodations.</p>
 
 <p style="margin-top:10px;"><b>Please enter the facility at:</b></p>
-<p>310 S. Washington Street</p>
-<p>Casper, WY 82601</p>
+<p>(address)</p>
+<p>(city, state, zip)</p>
 
 <p style="margin-top:10px;"><b>Check-in:</b> 2 - 5 pm</p>
 <p><b>Check-out:</b> 11am - 12 pm</p>
 
 <p style="margin-top:10px;"><b>Parking</b></p>
-Please Park in visitor parking garage located at Wyoming Medical Center in designated
-Masterson Place spots (found on the first level).
+(Parking directions if needed.)
 
 <p style="margin-top:10px;"><b>Before You Arrive</b></p>
-<p>Should you have any questions or comments or need to change your reservation, please call our office at 307-237-5933.</p>
+<p>Should you have any questions or comments or need to change your reservation, please call our office at 555 555-5555.</p>
 
 <p style="margin-top:10px;">We look forward to seeing you,</p>
-<p>Masterson Place Staff</p>
+<p>House Staff</p>
 <br/>
 ${Notes}
 

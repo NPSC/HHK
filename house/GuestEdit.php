@@ -189,7 +189,7 @@ if ($id > 0) {
             }
 
         } else {
-            $alertMessage = 'This person is not a '.$labels->getString('hospital', 'hospital', 'Hospital').' or guest.  ' . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
+            $alertMessage = 'This person is not a '.$labels->getString('MemberType', 'patient', 'Patient').' or guest.  ' . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
             $showSearchOnly = TRUE;
         }
     }
@@ -231,12 +231,10 @@ if ($idPsg > 0) {
         $alertMessage = 'Guest is not a memeber of the PSG indicated on the URL (GET param).  ';
         $idPsg = 0;
     }
-}
 
+} else {
 
-// PSG Chooser
-if ($idPsg == 0) {
-
+    // PSG Chooser
     if (count($ngRss) > 1) {
 
         // Select psg
@@ -442,10 +440,6 @@ if (isset($_POST["btnSubmit"])) {
         $resultMessage = $ex->getMessage();
     }
 }
-
-
-// Get labels
-$labels = new Config_Lite(LABEL_FILE);
 
 
 
