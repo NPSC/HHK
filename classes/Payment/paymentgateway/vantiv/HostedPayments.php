@@ -9,151 +9,6 @@
  */
 
 
-
-/**
- * CardInfo - Create markup for  the Hosted CC portal.
- *
- * @author Eric
- */
-class CardInfo {
-
-    public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, InitCiRequest $initCi) {
-
-        $uS = Session::getInstance();
-        $dataArray = array();
-        $trace = FALSE;
-
-        if (strtolower($uS->mode) !== Mode::Live) {
-//            $initCoRequest->setAVSAddress('4')->setAVSZip('30329');
-            $initCi->setOperatorID('test');
-            $trace = TRUE;
-        } else {
-            $initCi->setOperatorID($uS->username);
-        }
-
-        $ciResponse = $initCi->submit($gway->getCredentials(), $trace);
-        $ciResponse->setMerchant($gway->getGatewayName());
-
-        // Save raw transaction in the db.
-        try {
-            PaymentGateway::logGwTx($dbh, $ciResponse->getResponseCode(), json_encode($initCi->getFieldsArray()), json_encode($ciResponse->getResultArray()), 'CardInfoInit');
-        } catch(Exception $ex) {
-            // Do Nothing
-        }
-
-        if ($ciResponse->getResponseCode() == 0) {
-
-            // Save the CardID in the database indexed by the guest id.
-            $ciq = "replace into `card_id` (`idName`, `idGroup`, `Transaction`, `CardID`, `Init_Date`, `Frequency`, `ResponseCode`)"
-                . " values ($idPayor, $idGroup, 'cof', '" . $ciResponse->getCardId() . "', now(), 'OneTime', '" . $ciResponse->getResponseCode() . "')";
-
-            $dbh->exec($ciq);
-
-            $dataArray = array('xfer' => $ciResponse->getCardInfoUrl(), 'cardId' => $ciResponse->getCardId());
-
-        } else {
-
-            // The initialization failed.
-            throw new Hk_Exception_Payment("Card-On-File Gateway Error: " . $ciResponse->getResponseText());
-
-        }
-
-        return $dataArray;
-    }
-
-
-    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cidInfo) {
-
-        $verify = new VerifyCIRequest();
-        $verify->setCardId($cidInfo['CardID']);
-
-        $trace = FALSE;
-
-        if (strtolower($gway->getGatewayType()) == 'test') {
-            $trace = TRUE;
-        }
-
-        // Verify request
-        $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
-        $verifyResponse->setMerchant($gway->getGatewayName());
-
-        $vr = new CardInfoResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup']);
-
-        // Save raw transaction in the db.
-        try {
-            PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($verify->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CardInfoVerify');
-        } catch(Exception $ex) {
-            // Do Nothing
-        }
-
-
-        if ($vr->response->getResponseCode() == 0 && $vr->response->getStatus() == MpStatusValues::Approved) {
-
-            if ($vr->response->getToken() != '') {
-
-                try {
-                    $vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
-                } catch(Exception $ex) {
-                    $vr->idToken = 0;
-                }
-
-            } else {
-                $vr->idToken = 0;
-            }
-        }
-
-        return $vr;
-
-    }
-}
-
-class CardInfoResponse extends PaymentResponse {
-
-
-    function __construct(VerifyCiResponse $verifyCiResponse, $idPayor, $idGroup) {
-        $this->response = $verifyCiResponse;
-        $this->idPayor = $idPayor;
-        $this->idRegistration = $idGroup;
-        $this->expDate = $verifyCiResponse->getExpDate();
-        $this->cardNum = $verifyCiResponse->getMaskedAccount();
-        $this->cardType = $verifyCiResponse->getCardType();
-        $this->cardName = $verifyCiResponse->getCardHolderName();
-    }
-
-    public function getPaymentMethod() {
-        return PaymentMethod::Charge;
-    }
-
-    public function getStatus() {
-
-        switch ($this->response->getStatus()) {
-
-            case MpStatusValues::Approved:
-                $pr = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case MpStatusValues::Declined:
-                $pr = CreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-                $pr = CreditPayments::STATUS_DECLINED;
-        }
-
-        return $pr;
-    }
-
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
-        return array('error'=>'Receipts not available.');
-    }
-
-    public function getPaymentStatusCode() {
-        return '';
-    }
-
-}
-
-
 class HostedCheckout {
 
     public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, $invoiceNumber, InitCkOutRequest $initCoRequest) {
@@ -202,7 +57,7 @@ class HostedCheckout {
         return $dataArray;
     }
 
-    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cidInfo, $payNotes) {
+    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cidInfo, $payNotes, $payDate) {
 
         $uS = Session::getInstance();
 
@@ -218,9 +73,10 @@ class HostedCheckout {
 
         // Verify request
         $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
+
         $verifyResponse->setMerchant($gway->getGatewayType());
 
-        $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes);
+        $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes, $payDate);
 
 
         // Save raw transaction in the db.
@@ -269,7 +125,7 @@ class HostedCheckout {
             return $vr;
 
         } else {
-            
+
             // record payment
             return SaleReply::processReply($dbh, $vr, $uS->username);
         }
@@ -279,9 +135,9 @@ class HostedCheckout {
 }
 
 
-class CheckOutResponse extends PaymentResponse {
+class CheckOutResponse extends CreditResponse {
 
-    function __construct($verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+    function __construct($verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes, $payDate) {
         $this->response = $verifyCkOutResponse;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
@@ -293,6 +149,7 @@ class CheckOutResponse extends PaymentResponse {
         $this->cardName = $verifyCkOutResponse->getCardHolderName();
         $this->amount = $verifyCkOutResponse->getAuthorizedAmount();
         $this->payNotes = $payNotes;
+        $this->setPaymentDate($payDate);
     }
 
     public function getPaymentMethod() {

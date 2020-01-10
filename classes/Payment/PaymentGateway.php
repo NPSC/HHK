@@ -53,7 +53,7 @@ abstract class PaymentGateway {
 
     public abstract function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup);
 
-    public abstract function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes);
+    public abstract function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate);
 
     public abstract function selectPaymentMarkup(\PDO $dbh, &$payTable);
 

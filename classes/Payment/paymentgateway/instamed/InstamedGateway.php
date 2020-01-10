@@ -562,7 +562,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
 
     }
 
-    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes) {
+    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate) {
 
         $uS = Session::getInstance();
         $transType = '';

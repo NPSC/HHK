@@ -422,11 +422,11 @@ class ActivityReport {
         }
 
         // Dates
-        if ($startDT != NULL && $startDT != '') {
+        if ($startDT != NULL) {
             $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $startDT->format('Y-m-d') . "') ";
         }
 
-        if ($endDT != NULL && $endDT != '') {
+        if ($endDT != NULL) {
             $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) <= DATE('" . $endDT->format('Y-m-d') . "') ";
         }
 

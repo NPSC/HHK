@@ -60,7 +60,8 @@ class VantivGateway extends PaymentGateway {
             $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes(), $pmp->getPayDate());
 
             // Analyze the result
-            $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken(), $this->useAVS, $this->useCVV);
+            $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
+
         } else {
 
             // Initialiaze hosted payment
@@ -74,6 +75,7 @@ class VantivGateway extends PaymentGateway {
             $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
             $uS->paymentIds = $payIds;
             $uS->paymentNotes = $pmp->getPayNotes();
+            $uS->paymentDate = $pmp->getPayDate();
 
             $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
             $payResult->setForwardHostedPayment($fwrder);
@@ -457,34 +459,9 @@ class VantivGateway extends PaymentGateway {
 
         return HostedCheckout::sendToPortal($dbh, $this, $idGuest, $idGroup, 'CardInfo', $pay);
 
-
-//
-//        $initCi = new InitCiRequest($pageTitle, 'Custom');
-//
-//        // Card reader?
-//        if ($uS->CardSwipe) {
-//            $initCi->setDefaultSwipe('Swipe')
-//                    ->setCardEntryMethod('Both')
-//                    ->setPaymentPageCode('CardInfo_Url');
-//        } else {
-//            $initCi->setPaymentPageCode('CardInfo_Url');
-//        }
-//
-//        // Set CC Gateway name
-//        $uS->ccgw = $this->getGatewayType();
-//
-//
-//        $initCi->setCardHolderName($cardHolderName)
-//                ->setFrequency(MpFrequencyValues::OneTime)
-//                ->setCompleteURL($houseUrl . $postBackPage)
-//                ->setReturnURL($houseUrl . $postBackPage)
-//                ->setLogoUrl($siteUrl . $logo);
-//
-//
-//        return CardInfo::sendToPortal($dbh, $this, $idGuest, $idGroup, $initCi);
     }
 
-    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes) {
+    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate) {
 
         $payResult = NULL;
         $rtnCode = '';
@@ -499,36 +476,7 @@ class VantivGateway extends PaymentGateway {
         }
 
 
-//        if (isset($post[VantivGateway::CARD_ID])) {
-//
-//            $cardId = filter_var($post[VantivGateway::CARD_ID], FILTER_SANITIZE_STRING);
-//            $cidInfo = $this->getInfoFromCardId($dbh, $cardId);
-//
-//            // Save postback in the db.
-//            try {
-//                self::logGwTx($dbh, $rtnCode, '', json_encode($post), 'CardInfoPostBack');
-//            } catch (Exception $ex) {
-//                // Do nothing
-//            }
-//
-//            if ($rtnCode > 0) {
-//
-//                $payResult = new cofResult($rtnMessage, PaymentResult::ERROR, 0, 0);
-//                return $payResult;
-//            }
-//
-//            try {
-//
-//                $vr = CardInfo::portalReply($dbh, $this, $cidInfo);
-//
-//                $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
-//
-//            } catch (Hk_Exception_Payment $hex) {
-//                $payResult = new cofResult($hex->getMessage(), PaymentResult::ERROR, 0, 0);
-//            }
-//
-//        } else
-          if (isset($post[VantivGateway::PAYMENT_ID])) {
+        if (isset($post[VantivGateway::PAYMENT_ID])) {
 
             $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_STRING);
 
@@ -550,12 +498,27 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $csResp = HostedCheckout::portalReply($dbh, $this, $cidInfo, $payNotes);
+                $csResp = HostedCheckout::portalReply($dbh, $this, $cidInfo, $payNotes, $payDate);
 
                 if ($csResp->response->getTranType() == MpTranType::ZeroAuth) {
 
                     // Zero auth card info
                     $payResult = new CofResult($csResp->response->getDisplayMessage(), $csResp->response->getStatus(), $csResp->idPayor, $csResp->idRegistration);
+
+                    if ($this->useAVS) {
+                        $avsResult = new AVSResult($csResp->response->getAVSResult());
+
+                        if ($avsResult->isZipMatch() === FALSE) {
+                            $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
+                        }
+                    }
+
+                    if ($this->useCVV) {
+                        $cvvResult = new CVVResult($csResp->response->getCvvResult());
+                        if ($cvvResult->isCvvMatch() === FALSE) {
+                            $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
+                        }
+                    }
 
                 } else {
 
@@ -565,7 +528,7 @@ class VantivGateway extends PaymentGateway {
                         $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
 
                         // Analyze the result
-                        $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0, $this->useAVS, $this->useCVV);
+                        $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0);
 
                     } else {
 
@@ -658,7 +621,7 @@ class VantivGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function analyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken, $useAVS, $useCVV) {
+    public function analyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken) {
 
         $uS = Session::getInstance();
 
@@ -679,7 +642,7 @@ class VantivGateway extends PaymentGateway {
                     $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->response->getAuthorizedAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
                 }
 
-                if ($useAVS) {
+                if ($this->useAVS) {
                     $avsResult = new AVSResult($payResp->response->getAVSResult());
 
                     if ($avsResult->isZipMatch() === FALSE) {
@@ -687,7 +650,7 @@ class VantivGateway extends PaymentGateway {
                     }
                 }
 
-                if ($useCVV) {
+                if ($this->useCVV) {
                     $cvvResult = new CVVResult($payResp->response->getCvvResult());
                     if ($cvvResult->isCvvMatch() === FALSE && $uS->CardSwipe === FALSE) {
                         $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');

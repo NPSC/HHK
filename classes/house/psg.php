@@ -267,7 +267,7 @@ class Psg {
         $editDiv = $pTable
                 .$table
                 . $memMkup
-                . $lastConfirmed . $changePatientMU
+                . $lastConfirmed
                 . $notesContainer //$nTable->generateMarkup(array('style'=>'clear:left;width:700px;float:left;'))
                 . $c . $v;
 

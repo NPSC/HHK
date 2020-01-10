@@ -120,7 +120,7 @@ class LocalGateway extends PaymentGateway {
         return '';
     }
 
-    public function processHostedReply(\PDO $dbh, $post, $ssoTtoken, $idInv, $payNotes) {
+    public function processHostedReply(\PDO $dbh, $post, $ssoTtoken, $idInv, $payNotes, $payDate) {
 
     }
 

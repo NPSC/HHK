@@ -760,12 +760,18 @@ class PaymentSvcs {
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
         $payNotes = '';
+        $payDate = date('Y-m-d H:i:s');
         $idInv = 0;
         $tokenId = '';
 
         if (isset($uS->paymentNotes)) {
             $payNotes = $uS->paymentNotes;
             unset($uS->paymentNotes);
+        }
+
+        if (isset($uS->paymentDate)) {
+            $payDate = $uS->paymentDate;
+            unset($uS->paymentDate);
         }
 
         if (isset($uS->imtoken)) {
@@ -782,7 +788,7 @@ class PaymentSvcs {
             unset($uS->imcomplete);
         }
 
-        return $gateway->processHostedReply($dbh, $post, $tokenId, $idInv, $payNotes, $uS->username);
+        return $gateway->processHostedReply($dbh, $post, $tokenId, $idInv, $payNotes, $payDate);
 
     }
 

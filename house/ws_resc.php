@@ -650,8 +650,7 @@ try {
 
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage());
-} catch (Hk_Exception $ex) {
-    $events = array("error" => "HouseKeeper Error: " . $ex->getMessage());
+
 } catch (Exception $ex) {
     $events = array("error" => "Programming Error: " . $ex->getMessage());
 }

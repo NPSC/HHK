@@ -260,7 +260,7 @@ class AVSResult {
     const RC_X = '(X) 9-digit postal code and address match.';
     const RC_Y = '(Y) Street address and postal code match.';
     const RC_Z = '(Z) 5-digit ZIP code matches, address does not.';
-    const BLANK = '() AVS is Blank.';
+    const BLANK = '';
 
     const MATCH = 'm';
     const NO_MATCH = 'nm';
