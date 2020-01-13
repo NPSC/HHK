@@ -115,6 +115,7 @@ WHERE
     public function loadInvoice(\PDO $dbh, $idInvoice = 0, $idPayment = 0) {
 
         $this->invoiceNum = '';
+        $rows = array();
 
         if ($idInvoice > 0) {
 

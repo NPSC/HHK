@@ -279,7 +279,8 @@ class RoomChooser {
                 "rate" => $assignedRate,
                 "title" => $rc->getTitle(),
                 'key' => $rc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]),
-                'status' => 'a'
+                'status' => 'a',
+                'merchant' => $rc->getMerchant(),
             );
         }
 
@@ -289,7 +290,8 @@ class RoomChooser {
             "rate" => 0,
             "title" => '',
             'key' => 0,
-            'status' => ''
+            'status' => '',
+            'merchant' => ''
         );
 
         return $resArray;

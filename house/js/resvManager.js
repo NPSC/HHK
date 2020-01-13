@@ -1695,6 +1695,24 @@ function resvManager(initData, options) {
                     } else {
                         $('#hhkroomMsg').text(selparent).show();
                     }
+                    
+                    // Set merchant
+                    if ($('#selccgw').length > 0) {
+                        var room = rooms[$('#selResource').val()];
+                        var notThere = true;
+                        // option available
+                        $('#selccgw option').each(function() {
+                            if (this.value === room.merchant) {
+                                notThere = false;
+                            }
+                        });
+                        
+                        if (notThere) {
+                            $('#selccgw').append('<option value="'+room.merchant+'">'+room.merchant+'</option>');
+                        }
+                        
+                        $('#selccgw').val(room.merchant);
+                    }
                 });
             }
         }

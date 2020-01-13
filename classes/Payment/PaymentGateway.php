@@ -232,9 +232,6 @@ abstract class PaymentGateway {
     }
 
     public function useAVS() {
-        if ($this->credentials->Use_AVS_Flag->getStoredVal() > 0) {
-            return TRUE;
-        }
         return FALSE;
     }
 

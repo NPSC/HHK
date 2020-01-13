@@ -22,8 +22,9 @@ class Room {
 
     protected $currOccupants = 0;
     protected $idRoom;
+    protected $merchant;
 
-    public function __construct(PDO $dbh, $idRoom = 0, $roomRecordSource = NULL, $roomType = RoomType::Room) {
+    public function __construct(PDO $dbh, $idRoom = 0, $roomRecordSource = NULL, $roomType = RoomType::Room, $merchant = '') {
 
         if (is_null($roomRecordSource)) {
 
@@ -36,6 +37,7 @@ class Room {
         }
 
         $this->idRoom = $this->getIdRoom();
+        $this->merchant = $merchant;
 
     }
 
@@ -106,10 +108,14 @@ class Room {
         return $this->roomRS->idRoom->getStoredVal();
     }
 
+    public function getMerchant() {
+        return $this->merchant;
+    }
+
     public function getIdLocation() {
         return $this->roomRS->idLocation->getStoredVal();
     }
-    
+
     public function getRoomRS() {
         return $this->roomRS;
     }
@@ -235,19 +241,19 @@ class Room {
 
     public function deleteRoom(PDO $dbh, $username) {
 
-        $stmt1 = $dbh->prepare("delete from resource_room where idRoom = :id");
-        $stmt1->execute(array(':id' => $this->getIdRoom()));
-
-        $stmt = $dbh->prepare("delete from attribute_entity where idEntity = :id and Type = :tpe");
-        $stmt->execute(array(':id' => $this->getIdRoom(), ':tpe' => Attribute_Types::Room));
-
-        if (EditRS::delete($dbh, $this->roomRS, array($this->roomRS->idRoom))) {
-            $logText = RoomLog::getDeleteText($this->roomRS, $this->getIdRoom());
-            RoomLog::logRoom($dbh, $this->roomRS->idRoom->getStoredVal(), $logText, "delete", $username);
-
-            $this->roomRS = new RoomRs();
-            return true;
-        }
+//        $stmt1 = $dbh->prepare("delete from resource_room where idRoom = :id");
+//        $stmt1->execute(array(':id' => $this->getIdRoom()));
+//
+//        $stmt = $dbh->prepare("delete from attribute_entity where idEntity = :id and Type = :tpe");
+//        $stmt->execute(array(':id' => $this->getIdRoom(), ':tpe' => Attribute_Types::Room));
+//
+//        if (EditRS::delete($dbh, $this->roomRS, array($this->roomRS->idRoom))) {
+//            $logText = RoomLog::getDeleteText($this->roomRS, $this->getIdRoom());
+//            RoomLog::logRoom($dbh, $this->roomRS->idRoom->getStoredVal(), $logText, "delete", $username);
+//
+//            $this->roomRS = new RoomRs();
+//            return true;
+//        }
 
         return false;
     }
