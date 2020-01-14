@@ -46,73 +46,67 @@ $labels = new Config_Lite(LABEL_FILE);
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, \Config_Lite $labels, $showDiagnosis, $showLocation, $showDeceased = FALSE) {
-
+function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, \Config_Lite $labels, $showDiagnosis, $showLocation) {
+    
     $uS = Session::getInstance();
-
+    
     $query = '';
     $agentTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $locTitle = $labels->getString('hospital', 'location', 'Location');
     $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
-
-
+    
+    
     if ($showAddr && $showFullName) {
-
+        
         $query = "select s.idName, hs.idPsg, vg.Relationship_Code, v.idReservation as `Resv ID`, "
             . "vg.`Patient Rel.`, vg.Prefix, vg.First as `Guest First`, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, "
-            . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
-            . " vg.Address, vg.City, vg.County, vg.State, vg.Zip, vg.Country, vg.Phone, vg.Email, "
-            . "r.title as `Room`,"
-            . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
-            . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
-            . "hs.idHospital, hs.idAssociation, "
-            . "  ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-            . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle`, ifnull(g2.Description,'') as `Status`";
-
+                . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
+                . " vg.Address, vg.City, vg.County, vg.State, vg.Zip, vg.Country, vg.Phone, vg.Email, "
+                    . "r.title as `Room`,"
+                        . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
+                            . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
+                                . "hs.idHospital, hs.idAssociation, "
+                                    . "  ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+                                    . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle`, ifnull(g2.Description,'') as `Status`";
+                                    
     } else if ($showAddr && !$showFullName) {
-
+        
         $query = "select s.idName, hs.idPsg, vg.Relationship_Code,
             vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.Phone, vg.Email, vg.`Address`, vg.City, vg.County, vg.State, vg.Zip, case when vg.Country = '' then 'US' else vg.Country end as Country, vg.ngStatus, "
             . "ifnull(g2.Description,'') as `Status`, "
-            . "r.title as `Room`,"
-            . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
-            . "hs.idHospital, hs.idAssociation, "
-            . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
-                ." ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-            . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
-
-    } else if (!$showAddr && $showFullName) {
-
-        $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Prefix, vg.First as `Guest First`, vg.Middle, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
-                . "ifnull(g2.Description,'') as `Status`, "
                 . "r.title as `Room`,"
-                . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
-                . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
-                . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-            . "hs.idHospital, hs.idAssociation,
+                    . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
+                        . "hs.idHospital, hs.idAssociation, "
+                            . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
+                            ." ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+                            . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
+                            
+    } else if (!$showAddr && $showFullName) {
+        
+        $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Prefix, vg.First as `Guest First`, vg.Middle, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
+            . "ifnull(g2.Description,'') as `Status`, "
+                . "r.title as `Room`,"
+                    . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
+                        . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
+                        . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+                        . "hs.idHospital, hs.idAssociation,
           ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
-
+                        
     } else {
-
+        
         $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
             . "ifnull(g2.Description,'') as `Status`, r.title as `Room`, ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
                 . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-            . "hs.idHospital, hs.idAssociation, "
-                . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
+                . "hs.idHospital, hs.idAssociation, "
+                    . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
     }
-
+    
     if ($showNoReturn) {
         $whClause .= " and vg.ngStatus != '' ";
     }
     
-    if(!$showDeceased) {
-	    $whClause .= " and vg.Member_Status != 'd' ";
-    }else{
-	    $query .= " , if(vg.Member_Status='d', 'Yes', '') as `Deceased` ";
-    }
-
     $query .= " from stays s
         join
     vguest_listing vg on vg.Id = s.idName
@@ -137,34 +131,34 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     	join
     room r on s.idRoom = r.idRoom
 where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
-
+    
     $stmt = $dbh->query($query);
-
+    
     if (!$local) {
-
+        
         $reportRows = 1;
         $file = 'PeopleReport';
         $sml = OpenXML::createExcel('Guest Tracker', 'People Report');
     }
-
+    
     $rows = array();
     $firstRow = TRUE;
-
+    
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-
+        
+        
         if ($uS->county === FALSE) {
             unset($r['County']);
         }
-
+        
         if (!$uS->ShowBirthDate) {
             unset($r['Birth Date']);
         }
-
+        
         if (!$showNoReturn) {
             unset($r['ngStatus']);
         }
-
+        
         if ($showRelationship === FALSE) {
             unset($r[$patTitle.' First']);
             unset($r[$patTitle.' Last']);
@@ -173,86 +167,86 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
             $r[$patTitle . ' Rel.'] = $r['Patient Rel.'];
             unset($r['Patient Rel.']);
         }
-
+        
         unset($r['Relationship_Code']);
-
+        
         if ($showDiagnosis === FALSE) {
             unset($r['Diagnosis']);
         }
-
+        
         if ($showLocation === FALSE) {
             unset($r['Location']);
         }
-
+        
         if ($uS->Doctor === FALSE) {
             unset($r['Doctor']);
         }
-
+        
         if ($uS->ReferralAgent === FALSE) {
             unset($r[$agentTitle]);
         }
-
+        
         if ($showAssoc === FALSE) {
             $r['idAssociation'] = 0;
         } else {
             $r['Association'] = '';
         }
-
+        
         // Hospital
         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
-
-
+        
+        
         if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
             $r['Association'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
         }
         if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
             $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
         }
-
+        
         if (count($uS->guestLookups[GL_TableNames::Hospital]) < 2) {
             unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
         }
-
+        
         unset($r['idHospital']);
         unset($r['idAssociation']);
-
-
+        
+        
         if ($firstRow) {
-
+            
             $firstRow = FALSE;
-
+            
             if ($local === FALSE) {
-
+                
                 // build header
                 $hdr = array();
                 $n = 0;
                 $noReturn = '';
-
+                
                 // HEader row
                 $keys = array_keys($r);
                 foreach ($keys as $k) {
-
+                    
                     if ($k == 'ngStatus') {
                         $noReturn = 'No Return';
                         continue;
                     }
-
+                    
                     $hdr[$n++] =  $k;
                 }
-
+                
                 if ($noReturn != '') {
                     $hdr[$n++] =  $noReturn;
                 }
-
+                
                 OpenXML::writeHeaderRow($sml, $hdr);
                 $reportRows++;
             }
         }
-
+        
         if ($local) {
-
+            
             $r['Id'] = HTMLContainer::generateMarkup('a', $r['idName'], array('href'=>'GuestEdit.php?id=' . $r['idName'] . '&psg=' . $r['idPsg']));
-
+            
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
                 $r['Birth Date'] = date('n/d/Y', strtotime($r['Birth Date']));
             }
@@ -263,79 +257,79 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
                 $r['Departure'] = date('n/d/Y', strtotime($r['Departure']));
             }
             unset($r['idPsg']);
-
+            
             if (isset($r['ngStatus'])) {
-
+                
                 if ($r['ngStatus'] != '' && isset($uS->nameLookups['NoReturnReason'][$r['ngStatus']])) {
                     $r['No Return'] = $uS->nameLookups['NoReturnReason'][$r['ngStatus']][1];
                 } else {
                     $r['No Return'] = ' ';
                 }
-
+                
                 unset($r['ngStatus']);
             }
-
+            
             $rows[] = $r;
-
+            
         } else {
-
+            
             $n = 0;
             $flds = array();
-
+            
             if (isset($r['ngStatus'])) {
-
+                
                 if ($r['ngStatus'] != '' && isset($uS->nameLookups['NoReturnReason'][$r['ngStatus']])) {
                     $r['No Return'] = $uS->nameLookups['NoReturnReason'][$r['ngStatus']][1];
                 } else {
                     $r['No Return'] = '';
                 }
-
+                
                 unset($r['ngStatus']);
             }
-
+            
             foreach ($r as $key => $col) {
-
+                
                 if (($key == 'Arrival' or $key == 'Departure' || $key == 'Birth Date') && $col != '') {
-
+                    
                     $flds[$n++] = array('type' => "n",
                         'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
                         'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
-
+                    
                 } else {
                     $flds[$n++] = array('type' => "s", 'value' => $col);
                 }
             }
-
+            
             $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
         }
-
+        
     }
-
+    
     if ($local) {
-
+        
         $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
         return $dataTable;
-
-
+        
+        
     } else {
-
+        
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
         header('Cache-Control: max-age=0');
-
+        
         OpenXML::finalizeExcel($sml);
         exit();
-
+        
     }
 }
 
 function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, \Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
-
+    
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $locTitle = $labels->getString('hospital', 'location', 'Location');
     $psgLabel = $labels->getString('statement', 'psgAbrev', 'PSG') . ' Id';
     $patRelTitle = $labels->getString('MemberType', 'patient', 'Patient') . " Relationship";
-
+    
     $query = "Select DISTINCT
     ng.idPsg as `$psgLabel`,
     ifnull(ng.idName, 0) as `Id`,
@@ -369,175 +363,239 @@ from
 where n.Member_Status != 'TBD'
  $whHosp
 order by ng.idPsg";
+ 
+ 
+ if (!$local) {
+     
+     $reportRows = 1;
+     $file = $psgLabel . 'Report';
+     $sml = OpenXML::createExcel('GuestTracker', 'PSG Report');
+     
+ }
+ 
+ $psgId = 0;
+ $rows = array();
+ $firstRow = TRUE;
+ $separatorClassIndicator = '))+class';
+ $numberPSGs = 0;
+ 
+ $stmt = $dbh->query($query);
+ $rowCount = $stmt->rowCount();
+ 
+ while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+     
+     $relCode = $r[$patRelTitle];
+     if (isset($relCodes[$relCode])) {
+         $r[$patRelTitle] = $relCodes[$relCode][1];
+     } else {
+         $r[$patRelTitle] = '';
+     }
+     
+     // Hospital
+     if (!$showAssoc) {
+         unset($r['Association']);
+     } else if ($showAssoc && $r['Association'] > 0 && isset($hospCodes[$r['Association']]) && $hospCodes[$r['Association']][1] != '(None)') {
+         $r['Association'] = $hospCodes[$r['Association']][1];
+     } else {
+         $r['Association'] = '';
+     }
+     
+     if ($r[$labels->getString('hospital', 'hospital', 'Hospital')] > 0 && isset($hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]])) {
+         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]][1];
+     } else {
+         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
+     }
+     
+     if (count($hospCodes) < 2) {
+         unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
+     }
+     
+     if ($showDiagnosis === FALSE) {
+         unset($r[$diagTitle]);
+     }
+     
+     if ($showLocation === FALSE) {
+         unset($r[$locTitle]);
+     }
+     
+     if (!$patBirthDate) {
+         unset($r['Birth Date']);
+     }
+     
+     if ($firstRow) {
+         
+         $firstRow = FALSE;
+         
+         if ($local === FALSE) {
+             
+             // build header
+             $hdr = array();
+             $n = 0;
+             
+             // HEader row
+             $keys = array_keys($r);
+             foreach ($keys as $k) {
+                 $hdr[$n++] =  $k;
+             }
+             
+             OpenXML::writeHeaderRow($sml, $hdr);
+             $reportRows++;
+         }
+     }
+     
+     if ($psgId != $r[$psgLabel]) {
+         $firstTd = $r[$psgLabel];
+         $psgId = $r[$psgLabel];
+         $numberPSGs++;
+     } else {
+         $firstTd = '';
+     }
+     
+     
+     if ($local) {
+         
+         $r[$psgLabel] = $firstTd;
+         
+         if (isset($r['Birth Date'])) {
+             $r['Birth Date'] = $r['Birth Date'] == '' ? '' : date('M j, Y', strtotime($r['Birth Date']));
+         }
+         $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r[$psgLabel]));
+         
+         if ($firstTd != '') {
+             $r[$separatorClassIndicator] = 'hhk-rowseparater';
+         }
+         
+         if ($relCode == RelLinkType::Self) {
+             
+             $r[$patRelTitle] = HTMLContainer::generateMarkup('span', $r[$patRelTitle], array('style'=>'font-weight:bold;'));
+             
+         } else if ($patAsGuest) {
+             // Not a patient
+             if (isset($r[$diagTitle])) {
+                 $r[$diagTitle] = '';
+             }
+             if (isset($r[$locTitle])) {
+                 $r[$locTitle] = '';
+             }
+             
+             if (isset($r[$labels->getString('hospital', 'hospital', 'Hospital')])) {
+                 $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
+             }
+             
+             if (isset($r['Association'])) {
+                 $r['Association'] = '';
+             }
+         }
+         
+         $rows[] = $r;
+         
+     } else {
+         
+         $n = 0;
+         $flds = array();
+         
+         foreach ($r as $key => $col) {
+             
+             if (($key == 'Arrival' || $key == 'Departure' || $key == 'Birth Date') && $col != '') {
+                 $flds[$n++] = array('type' => "n",
+                     'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
+                     'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
+             } else {
+                 
+                 $flds[$n++] = array('type' => "s", 'value' => $col);
+             }
+         }
+         
+         $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+         
+     }
+ }
+ 
+ if ($local) {
+     
+     $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblroom', $separatorClassIndicator);
+     
+     return array('table'=>$dataTable, 'rows'=>$rowCount, 'psgs'=>$numberPSGs);
+     
+     
+ } else {
+     
+     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+     header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
+     header('Cache-Control: max-age=0');
+     
+     OpenXML::finalizeExcel($sml);
+     exit();
+     
+ }
+ 
+}
 
-
-    if (!$local) {
-
-        $reportRows = 1;
-        $file = $psgLabel . 'Report';
-        $sml = OpenXML::createExcel('GuestTracker', 'PSG Report');
-
-    }
-
-    $psgId = 0;
-    $rows = array();
-    $firstRow = TRUE;
-    $separatorClassIndicator = '))+class';
-    $numberPSGs = 0;
-
+function getNoReturn(\PDO $dbh, $local){
+    $uS = Session::getInstance();
+    
+    $query = "SELECT N.idName AS 'Id', N.Name_First AS 'First Name', N.Name_Last AS 'Last Name', NRT.Description AS 'No Return Reason' FROM `name` N
+    JOIN `name_demog` ND on N.idName = ND.idName
+    LEFT JOIN `gen_lookups` NRT on ND.No_Return = NRT.Code AND NRT.Table_Name = 'NoReturnReason'
+    WHERE ND.No_Return != '';";
+    
     $stmt = $dbh->query($query);
-    $rowCount = $stmt->rowCount();
-
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-        $relCode = $r[$patRelTitle];
-        if (isset($relCodes[$relCode])) {
-            $r[$patRelTitle] = $relCodes[$relCode][1];
-        } else {
-            $r[$patRelTitle] = '';
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    if($local){
+        
+        foreach($rows as $key=>$row){
+            $rows[$key]["Id"] = HTMLContainer::generateMarkup('a', $row['Id'], array('href'=>'GuestEdit.php?id=' . $row['Id']));
         }
-
-        // Hospital
-        if (!$showAssoc) {
-            unset($r['Association']);
-        } else if ($showAssoc && $r['Association'] > 0 && isset($hospCodes[$r['Association']]) && $hospCodes[$r['Association']][1] != '(None)') {
-            $r['Association'] = $hospCodes[$r['Association']][1];
-        } else {
-            $r['Association'] = '';
-        }
-
-        if ($r[$labels->getString('hospital', 'hospital', 'Hospital')] > 0 && isset($hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]])) {
-            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]][1];
-        } else {
-            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
-        }
-
-        if (count($hospCodes) < 2) {
-            unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
-        }
-
-        if ($showDiagnosis === FALSE) {
-            unset($r[$diagTitle]);
-        }
-
-        if ($showLocation === FALSE) {
-            unset($r[$locTitle]);
-        }
-
-        if (!$patBirthDate) {
-            unset($r['Birth Date']);
-        }
-
-        if ($firstRow) {
-
-            $firstRow = FALSE;
-
-            if ($local === FALSE) {
-
+        
+        $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
+        return $dataTable;
+        
+    }else{
+        $file = 'NoReturnPeopleReport';
+        $sml = OpenXML::createExcel('Guest Tracker', 'People Report');
+        $firstRow = true;
+        $reportRows = 1;
+        
+        foreach($rows as $key=>$row){
+            
+            if ($firstRow) {
+                
+                $firstRow = FALSE;
+                
                 // build header
                 $hdr = array();
                 $n = 0;
-
-                // HEader row
-                $keys = array_keys($r);
+                
+                // Header row
+                $keys = array_keys($row);
                 foreach ($keys as $k) {
+                    
                     $hdr[$n++] =  $k;
                 }
-
+                
                 OpenXML::writeHeaderRow($sml, $hdr);
                 $reportRows++;
             }
-        }
-
-        if ($psgId != $r[$psgLabel]) {
-            $firstTd = $r[$psgLabel];
-            $psgId = $r[$psgLabel];
-            $numberPSGs++;
-        } else {
-            $firstTd = '';
-        }
-
-
-        if ($local) {
-
-            $r[$psgLabel] = $firstTd;
-
-            if (isset($r['Birth Date'])) {
-                $r['Birth Date'] = $r['Birth Date'] == '' ? '' : date('M j, Y', strtotime($r['Birth Date']));
-            }
-            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r[$psgLabel]));
-
-            if ($firstTd != '') {
-                $r[$separatorClassIndicator] = 'hhk-rowseparater';
-            }
-
-            if ($relCode == RelLinkType::Self) {
-
-                $r[$patRelTitle] = HTMLContainer::generateMarkup('span', $r[$patRelTitle], array('style'=>'font-weight:bold;'));
-
-            } else if ($patAsGuest) {
-                // Not a patient
-                if (isset($r[$diagTitle])) {
-                    $r[$diagTitle] = '';
-                }
-                if (isset($r[$locTitle])) {
-                    $r[$locTitle] = '';
-                }
-
-                if (isset($r[$labels->getString('hospital', 'hospital', 'Hospital')])) {
-                    $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
-                }
-
-                if (isset($r['Association'])) {
-                    $r['Association'] = '';
-                }
-            }
-
-            $rows[] = $r;
-
-        } else {
-
+            
             $n = 0;
             $flds = array();
-
-            foreach ($r as $key => $col) {
-
-                if (($key == 'Arrival' || $key == 'Departure' || $key == 'Birth Date') && $col != '') {
-                    $flds[$n++] = array('type' => "n",
-                        'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
-                } else {
-
-                    $flds[$n++] = array('type' => "s", 'value' => $col);
-                }
+            
+            foreach ($row as $key => $col) {
+                $flds[$n++] = array('type' => "s", 'value' => $col);
             }
-
+            
             $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
         }
-    }
-
-    if ($local) {
-
-        $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblroom', $separatorClassIndicator);
-
-        return array('table'=>$dataTable, 'rows'=>$rowCount, 'psgs'=>$numberPSGs);
-
-
-    } else {
-
+        
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
         header('Cache-Control: max-age=0');
-
+        
         OpenXML::finalizeExcel($sml);
         exit();
-
     }
-
 }
-
-
 
 $assocSelections = array();
 $hospitalSelections = array();
@@ -549,7 +607,6 @@ $statusSelections = array();
 $showAddressSelection = '';
 $showFullNameSelection = '';
 $showNoReturnSelection = '';
-$showDeceasedSelection = '';
 $mkTable = '';
 $dataTable = '';
 $settingstable = '';
@@ -600,34 +657,34 @@ $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
 $locs = readGenLookupsPDO($dbh, 'Location', 'Description');
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
-
+    
     $local = TRUE;
     if (isset($_POST['btnExcel'])) {
         $local = FALSE;
     }
-
+    
     // gather input
-
+    
     if (isset($_POST['selResvStatus'])) {
         $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
     }
-
+    
     if (isset($_POST['selCalendar'])) {
         $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
     }
-
+    
     if (isset($_POST['selIntMonth'])) {
         $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
     }
-
+    
     if (isset($_POST['selIntYear'])) {
         $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
     }
-
+    
     if (isset($_POST['stDate'])) {
         $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
     }
-
+    
     if (isset($_POST['enDate'])) {
         $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
     }
@@ -637,57 +694,57 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             $assocSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
         }
     }
-
+    
     if (isset($_POST['selHospital'])) {
         $reqs = $_POST['selHospital'];
         if (is_array($reqs)) {
             $hospitalSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
         }
     }
-
+    
     if (isset($_POST['adrstate'])) {
         $stateSelection = filter_Var($_POST['adrstate'], FILTER_SANITIZE_STRING);
     }
-
+    
     if (isset($_POST['adrcountry'])) {
         $countrySelection = filter_Var($_POST['adrcountry'], FILTER_SANITIZE_STRING);
     }
-
+    
     if (isset($_POST['selDiag'])) {
-
+        
         $reqs = $_POST['selDiag'];
-
+        
         if (is_array($reqs)) {
             $diagSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
         }
     }
-
+    
     if (isset($_POST['selLoc'])) {
-
+        
         $reqs = $_POST['selLoc'];
-
+        
         if (is_array($reqs)) {
             $locSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
         }
     }
-
-   if ($calSelection == 20) {
+    
+    if ($calSelection == 20) {
         // fiscal year
         $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
         $startDT = new DateTime($year . '-01-01');
         $startDT->sub($adjustPeriod);
         $start = $startDT->format('Y-m-d');
-
+        
         $endDT = new DateTime(($year + 1) . '-01-01');
         $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
-
+        
     } else if ($calSelection == 21) {
         // Calendar year
         $startDT = new DateTime($year . '-01-01');
         $start = $startDT->format('Y-m-d');
-
+        
         $end = ($year + 1) . '-01-01';
-
+        
     } else if ($calSelection == 18) {
         // Dates
         if ($txtStart != '') {
@@ -695,42 +752,42 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         } else {
             $startDT = new DateTime();
         }
-
+        
         if ($txtEnd != '') {
             $endDT = new DateTime($txtEnd);
         } else {
             $endDT = new DateTime();
         }
-
+        
         $start = $startDT->format('Y-m-d');
         $end = $endDT->format('Y-m-d');
-
+        
     } else if ($calSelection == 22) {
         // Year to date
         $start = date('Y') . '-01-01';
-
+        
         $endDT = new DateTime();
         $endDT->add(new DateInterval('P1D'));
         $end = $endDT->format('Y-m-d');
-
+        
     } else {
         // Months
         $interval = 'P' . count($months) . 'M';
         $month = $months[0];
         $start = $year . '-' . $month . '-01';
-
+        
         $endDate = new DateTime($start);
         $endDate->add(new DateInterval($interval));
-
+        
         $end = $endDate->format('Y-m-d');
     }
-
-
-
+    
+    
+    
     // Hospitals
     $whHosp = '';
     $tdHosp = '';
-
+    
     foreach ($hospitalSelections as $a) {
         if ($a != '') {
             if ($whHosp == '') {
@@ -742,19 +799,19 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             }
         }
     }
-
+    
     if ($tdHosp == '') {
         $tdHosp = 'All';
     }
-
-
+    
+    
     // Associations.
     $whAssoc = '';
     $tdAssoc = '';
-
+    
     // Only if there are any.
     if (count($aList) > 0) {
-
+        
         foreach ($assocSelections as $a) {
             if ($a != '') {
                 if ($whAssoc == '') {
@@ -766,26 +823,26 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 }
             }
         }
-
+        
         if ($tdAssoc == '') {
             $tdAssoc = 'All';
         }
-
+        
         $tdAssoc = HTMLTable::makeTd($tdAssoc);
     }
-
-
+    
+    
     if ($whHosp != '') {
         $whHosp = " and hs.idHospital in (".$whHosp.") ";
     }
-
+    
     if ($whAssoc != '') {
         $whHosp .= " and hs.idAssociation in (".$whAssoc.") ";
     }
-
+    
     $whDiags = '';
     $tdDiags = '';
-
+    
     foreach ($diagSelections as $a) {
         if ($a != '') {
             if ($whDiags == '') {
@@ -797,16 +854,16 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             }
         }
     }
-
+    
     if ($whDiags != '') {
         $whDiags = " and hs.Diagnosis in (".$whDiags.") ";
     } else {
         $tdDiags = 'All';
     }
-
+    
     $whLocs = '';
     $tdLocs = '';
-
+    
     foreach ($locSelections as $a) {
         if ($a != '') {
             if ($whLocs == '') {
@@ -818,27 +875,27 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             }
         }
     }
-
+    
     if ($whLocs != '') {
         $whDiags .= " and hs.Location in (".$whLocs.") ";
     } else {
         $tdLocs = 'All';
     }
-
-
+    
+    
     $whCountry = '';
     $tdState = $stateSelection;
-
+    
     if ($stateSelection != '') {
         $whCountry .= " and vg.State = '$stateSelection' ";
     } else {
         $tdState = 'All';
     }
-
+    
     $tdCountry = $countrySelection;
-
+    
     if ($countrySelection != '') {
-
+        
         if ($countrySelection == 'US') {
             $whCountry .= " and (vg.Country = '$countrySelection' or vg.Country = '')  ";
         } else {
@@ -847,11 +904,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     } else {
         $tdCountry = 'All';
     }
-
+    
     // Visit status selections
     $whStatus = '';
     $tdStatus = '';
-
+    
     foreach ($statusSelections as $s) {
         if ($s != '') {
             if ($whStatus == '') {
@@ -868,25 +925,24 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     } else {
         $tdStatus = 'All';
     }
-
-
+    
+    
     if (isset($_POST['rbReport'])) {
-
+        
         $showAddr = FALSE;
         $showFullName = FALSE;
         $showNoReturn = FALSE;
-        $showDeceased = FALSE;
         $showDiag = TRUE;
         $showLocation = FALSE;
-
+        
         if (count($diags) == 0) {
             $showDiag = FALSE;
         }
-
+        
         if (count($locs) > 0) {
             $showLocation = TRUE;
         }
-
+        
         if (isset($_POST['cbAddr'])) {
             $showAddr = TRUE;
             $showAddressSelection = 'checked="checked"';
@@ -895,33 +951,28 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             $showFullName = TRUE;
             $showFullNameSelection = 'checked="checked"';
         }
-
+        
         if (isset($_POST['cbNoReturn'])) {
             $showNoReturn = TRUE;
             $showNoReturnSelection = 'checked="checked"';
         }
         
-        if (isset($_POST['cbDeceased'])) {
-            $showDeceased = TRUE;
-            $showDeceasedSelection = 'checked="checked"';
-        }
-
         // Create settings markup
         $sTbl = new HTMLTable();
-
-
-
+        
+        
+        
         $whPeople = $whHosp . $whCountry . $whDiags . $whStatus;
-
+        
         $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_STRING);
-
+        
         $showAssoc = FALSE;
         if (count($aList) > 0) {
             $showAssoc = TRUE;
         }
-
+        
         switch ($rptSetting) {
-
+            
             case 'psg':
                 $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GL_TableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
                 $dataTable = $rptArry['table'];
@@ -934,16 +985,16 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 if ($showLocation) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'location', 'Locations'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdLocs, array('colspan'=>'3')));
                 }
-
+                
                 $sTbl->addBodyTr(HTMLTable::makeTd('Rows Returned', array('class'=>'tdlabel')) . HTMLTable::makeTd($rptArry['rows'], array('colspan'=>'3')));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'psgAbrev', 'PSG')." count", array('class'=>'tdlabel')) . HTMLTable::makeTd($rptArry['psgs'], array('colspan'=>'3')));
-
+                
                 $settingstable = $sTbl->generateMarkup();
                 break;
-
-
+                
+                
             case 'p':
-                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and Relationship_Code = '" . RelLinkType::Self . "' ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation, $showDeceased);
+                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and Relationship_Code = '" . RelLinkType::Self . "' ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just Patients', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
@@ -957,9 +1008,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 $sTbl->addBodyTr(HTMLTable::makeTd('Visit Status', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdStatus, array('colspan'=>'3')));
                 $settingstable = $sTbl->generateMarkup();
                 break;
-
+                
             case 'g':
-                $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation, $showDeceased);
+                $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Patients & Guests', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
@@ -973,20 +1024,26 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 $sTbl->addBodyTr(HTMLTable::makeTd('Visit Status', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdStatus, array('colspan'=>'3')));
                 $settingstable = $sTbl->generateMarkup();
                 break;
-
+                
+            case 'nr':
+                $dataTable = getNoReturn($dbh, $local);
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' No Return People', array('colspan'=>'4')));
+                $settingstable = $sTbl->generateMarkup();
+                break;
+                
         }
-
+        
         $mkTable = 1;
     }
-
-
+    
+    
 }
 
 // Setups for the page.
 $assocs = '';
 if (count($aList) > 0) {
     $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections, TRUE),
-            array('name'=>'selAssoc[]', 'size'=>min(count($aList)+1, 5), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
+        array('name'=>'selAssoc[]', 'size'=>min(count($aList)+1, 5), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 }
 
 
@@ -994,7 +1051,7 @@ if (count($aList) > 0) {
 $hospSize = min(count($hList)+1, 12);
 
 $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections, TRUE),
-        array('name'=>'selHospital[]', 'size'=>$hospSize, 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
+    array('name'=>'selHospital[]', 'size'=>$hospSize, 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 
 if ($hospSize < 5) {
     $hospSize = 5;
@@ -1011,14 +1068,14 @@ $statusSelector = HTMLSelector::generateMarkup(
 
 $selDiag = '';
 if (count($diags) > 0) {
-
+    
     $selDiag = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($diags, $diagSelections, TRUE),
         array('name'=>'selDiag[]', 'multiple'=>'multiple', 'size'=>min(count($diags)+1, $hospSize)));
 }
 
 $selLoc = '';
 if (count($locs) > 0) {
-
+    
     $selLoc = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($locs, $locSelections, TRUE),
         array('name'=>'selLoc[]', 'multiple'=>'multiple', 'size'=>min(count($locs)+1, $hospSize)));
 }
@@ -1111,8 +1168,15 @@ if ($uS->CoTod) {
         $('input[name="rbReport"]').change(function () {
             if ($('#rbpsg').prop('checked')) {
                 $('.psgsel').hide();
+                $('.filters').show();
+                $('.checkboxesShow').show();
+            } else if($('#nrp').prop('checked')) {
+                $('.filters').hide();
+                $('.checkboxesShow').hide();
             } else {
+                $('.filters').show();
                 $('.psgsel').show();
+                $('.checkboxesShow').show();
         }
         });
         $('input[name="rbReport"]').change();
@@ -1132,10 +1196,12 @@ if ($uS->CoTod) {
                             <th><label for='rbpsg'><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></label><input type="radio" id='rbpsg' name="rbReport" value="psg" style='margin-left:.5em;' <?php if ($rptSetting == 'psg') {echo 'checked="checked"';} ?>/></th>
                             <?php if ($uS->PatientAsGuest) { ?><th><label for='rbp'>Just <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbp' name="rbReport" value="p" style='margin-left:.5em;' <?php if ($rptSetting == 'p') {echo 'checked="checked"';} ?>/></th><?php } ?>
                             <th><label for='rbg'>Guests & <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbg' name="rbReport" value="g" style='margin-left:.5em;' <?php if ($rptSetting == 'g') {echo 'checked="checked"';} ?>/></th>
+                            <th><label for='nrp'>No Return People</label><input type="radio" id='nrp' name="rbReport" value="nr" style='margin-left:.5em;' <?php if ($rptSetting == 'nr') {echo 'checked="checked"';} ?>/></th>
                         </tr>
                     </table>
                     </fieldset>
-                   <table style="clear:left;float: left;">
+                    <div class="filters">
+                    <table style="clear:left;float: left;">
                         <tr>
                             <th colspan="3">Time Period</th>
                         </tr>
@@ -1210,12 +1276,12 @@ if ($uS->CoTod) {
                             <td><?php echo $selCountry; ?></td>
                         </tr>
                     </table>
+                    </div>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
-                            <td ><input type="checkbox" name="cbAddr" class="psgsel" id="cbAddr" <?php echo $showAddressSelection; ?>/><label for="cbAddr" class="psgsel"> Show Address</label></td>
-                            <td><input type="checkbox" name="cbFullName" class="psgsel" id="cbFullName" <?php echo $showFullNameSelection; ?>/><label for="cbFullName" class="psgsel"> Show Full Name</label></td>
-                            <td id="cbNoRtntd"><input type="checkbox" name="cbNoReturn" class="psgsel" id="cbNoReturn" <?php echo $showNoReturnSelection; ?>/><label for="cbNoReturn" class="psgsel"> Show No Return Only</label></td>
-                            <td id="cbDeceasedtd"><input type="checkbox" name="cbDeceased" class="psgsel" id="cbDeceased" <?php echo $showDeceasedSelection; ?>/><label for="cbDeceased" class="psgsel"> Include Deceased</label></td>
+                            <td class="checkboxesShow"><input type="checkbox" name="cbAddr" class="psgsel" id="cbAddr" <?php echo $showAddressSelection; ?>/><label for="cbAddr" class="psgsel"> Show Address</label></td>
+                            <td class="checkboxesShow"><input type="checkbox" name="cbFullName" class="psgsel" id="cbFullName" <?php echo $showFullNameSelection; ?>/><label for="cbFullName" class="psgsel"> Show Full Name</label></td>
+                            <td class="checkboxesShow" id="cbNoRtntd"><input type="checkbox" name="cbNoReturn" class="psgsel" id="cbNoReturn" <?php echo $showNoReturnSelection; ?>/><label for="cbNoReturn" class="psgsel"> Show No Return Only</label></td>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
                             <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
                         </tr>
