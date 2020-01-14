@@ -93,8 +93,6 @@ $pageTitle = $wInit->pageTitle;
 $uS = Session::getInstance();
 creditIncludes($uS->PaymentGateway);
 
-$menuMarkup = $wInit->generatePageMenu();
-
 
 $labels = new Config_Lite(LABEL_FILE);
 
