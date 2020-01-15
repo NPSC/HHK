@@ -19,7 +19,7 @@ class LocalResponse extends CreditResponse {
     protected $cardType;
 
 
-    function __construct($amount, $idPayor, $invoiceNumber, $idToken, $cardType, $cardAcct, $idToken, $payNote, $payDate) {
+    function __construct($amount, $idPayor, $invoiceNumber, $idToken, $cardType, $cardAcct, $payNote, $payDate) {
 
         $this->idPayor = $idPayor;
         $this->amount = $amount;

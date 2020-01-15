@@ -64,7 +64,7 @@ class LocalGateway extends PaymentGateway {
         $vr = new LocalResponse($invoice->getAmountToPay(), $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getIdToken(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes(), $pmp->getPayDate());
 
         // New Token?
-        if ($vr->response->getToken() != '') {
+        if ($vr->response->getIdToken() != '') {
 
             $guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->getIdToken());
 
@@ -100,7 +100,7 @@ class LocalGateway extends PaymentGateway {
         return array('warning' => '_returnPayment is not implemented. ');
     }
 
-    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
         return array('warning' => 'Not Available.  ');
     }
 

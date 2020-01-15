@@ -69,10 +69,6 @@ function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw) {
 
 function creditIncludes($gatewayName) {
 
-    if ($gatewayName == '') {
-        return;
-    }
-
     require (PMT . 'paymentgateway/CreditPayments.php');
 
 
@@ -100,6 +96,10 @@ function creditIncludes($gatewayName) {
             require (PMT . 'paymentgateway/vantiv/TokenTX.php');
             require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
             break;
+
+        default:
+            require (PMT . 'paymentgateway/local/LocalResponse.php');
+            require (PMT . 'paymentgateway/local/LocalGateway.php');
 
     }
 

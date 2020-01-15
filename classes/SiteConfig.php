@@ -664,17 +664,27 @@ class SiteConfig {
 
         if (isset($post['payGtwyName']) && SysConfig::getKeyValue($dbh, 'sys_config', 'PaymentGateway') != $newGW) {
 
-            // is the new name implemented?
-            $pgwdirs = scandir(PMT . 'PaymentGateway');
-
-            if (count(array_intersect(array(0=>$newGW), $pgwdirs)) == 1) {
-
-                // Change payment gateway
+            // change gateway
+            if ($newGW == '') {
+                // use "local" gateway
                 SysConfig::saveKeyValue($dbh, 'sys_config', 'PaymentGateway', $newGW);
                 $uS->PaymentGateway = $newGW;
                 $msg .= "Payment Gateway Changed.";
+
             } else {
-                $msg = 'Payment Gateway not found: ' .$newGW;
+
+                // is the new name implemented?
+                $pgwdirs = scandir(PMT . 'PaymentGateway');
+
+                if (count(array_intersect(array(0=>$newGW), $pgwdirs)) == 1) {
+
+                    // Change payment gateway
+                    SysConfig::saveKeyValue($dbh, 'sys_config', 'PaymentGateway', $newGW);
+                    $uS->PaymentGateway = $newGW;
+                    $msg .= "Payment Gateway Changed.";
+                } else {
+                    $msg = 'Payment Gateway not found: ' .$newGW;
+                }
             }
 
         } else {
