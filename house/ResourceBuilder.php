@@ -11,8 +11,10 @@ require ("homeIncludes.php");
 
 require (CLASSES . 'History.php');
 require (CLASSES . 'CreateMarkupFromDB.php');
+require (HOUSE . 'Reservation_1.php');
 
 require (DB_TABLES . 'GenLookupsRS.php');
+require (DB_TABLES . 'LookupsRS.php');
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'AttributeRS.php');
 require (DB_TABLES . 'ReservationRS.php');
@@ -33,7 +35,7 @@ require (HOUSE . 'Constraint.php');
 
 const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
 const LOCATION_TABLE_NAME = 'Location';
-
+const RESERV_STATUS_TABLE_NAME = 'lookups';
 try {
     $wInit = new webInit();
 } catch (Exception $exw) {
@@ -136,15 +138,29 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
     }
 
     // Generate selectors.
-    $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
-
+    if($tableName == RESERV_STATUS_TABLE_NAME){
+        $lookups = readLookups($dbh, $type, "Code", true);
+        $diags = array();
+        
+        //get Cancel Codes
+        foreach($lookups as $lookup){
+            if(Reservation_1::isRemovedStatus($lookup["Code"])){
+                $diags[] = $lookup;
+            }
+        }
+        
+    }else{
+        $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
+    }
+    
     $tbl = new HTMLTable();
 
-    $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . HTMLTable::makeTh('Order')
+    $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries')
+            . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Order'): '')
             . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
             . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
             . ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
-            . ($type == GlTypeCodes::U ? '' : $type == GlTypeCodes::m ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
+            . ($type == GlTypeCodes::U ? '' : $type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
 
 
 
@@ -158,7 +174,7 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
 
         $cbDelMU = '';
 
-        if ($type == GlTypeCodes::m) {
+        if ($type == GlTypeCodes::m || ($tableName == RESERV_STATUS_TABLE_NAME && ($d[0] == "c1" || $d[0] == "c2" || $d[0] == "c3" || $d[0] == "c4"))) {
 
             $ary = array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb');
 
@@ -168,7 +184,7 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
 
-        } else if ($type == GlTypeCodes::Demographics && $d[0] == 'z') {
+        } else if (($type == GlTypeCodes::Demographics && $d[0] == 'z') || $tableName == RESERV_STATUS_TABLE_NAME) {
 
             $cbDelMU = HTMLTable::makeTd('');
 
@@ -178,16 +194,16 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
         }
 
         $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3')))
+            HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
+                . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3'))): '')
                 . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
                 . $cbDelMU
-                . ($type != GlTypeCodes::m && $type != GlTypeCodes::U ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
-        );
+                . ($type != GlTypeCodes::m && $type != GlTypeCodes::U && $tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
+            );
     }
 
     // New Entry Markup?
-    if ($type != GlTypeCodes::U && $type != GlTypeCodes::m) {
+    if ($type != GlTypeCodes::U && $type != GlTypeCodes::m && $tableName != RESERV_STATUS_TABLE_NAME) {
         // new entry row
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
@@ -259,6 +275,8 @@ if (isset($_POST['table'])) {
         $tableName = DIAGNOSIS_TABLE_NAME;
     } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
         $tableName = LOCATION_TABLE_NAME;
+    } else if ($tableName == "ReservStatus"){
+        $tableName = RESERV_STATUS_TABLE_NAME;
     }
 
     $cmd = '';
@@ -416,7 +434,7 @@ if (isset($_POST['table'])) {
         }
 
         $codeArray = filter_var_array($_POST['txtDiag'], FILTER_SANITIZE_STRING);
-        $orderNums = filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT);
+        $orderNums = (isset($_POST['txtDOrder']) ? filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT): array());
 
         if ($type === GlTypeCodes::m) {
 
@@ -461,14 +479,20 @@ if (isset($_POST['table'])) {
                     }
                 }
             }
-        } else {
+        } else if(isset($_POST['selmisc'])) {
+            replaceLookups($dbh, $_POST['selmisc'], $codeArray, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL));
+        }else {
             replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
         }
     }
 
 
     // Generate selectors.
-    $tbl = getSelections($dbh, $tableName, $type, $labels);
+    if(isset($_POST['selmisc'])){
+        $tbl = getSelections($dbh, RESERV_STATUS_TABLE_NAME, $_POST['selmisc'], $labels);
+    }else{
+        $tbl = getSelections($dbh, $tableName, $type, $labels);
+    }
 
     echo($tbl->generateMarkup());
     exit();
@@ -1525,6 +1549,11 @@ foreach ($rows3 as $r) {
 
 $seldiscs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows3, ''), array('name' => 'seldiscs', 'class' => 'hhk-selLookup'));
 
+// Misc Codes (cancel codes, etc
+$rows4 = [["ReservStatus", "Reservation Cancel Codes"]];
+
+$selmisc = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows4, ''), array('name' => 'selmisc', 'class' => 'hhk-selLookup'));
+
 
 // Items
 $sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage, i.Last_Order_Id
@@ -2037,6 +2066,9 @@ $resultMessage = $alertMsg->createMarkup();
             if ($sel.data('type') === 'd') {
                 table = $sel.val();
                 type = 'd';
+            }else if($sel.val() == "ReservStatus"){
+				table = "ReservStatus";
+				type = "ReservStatus";
             }
 
             $sel.closest('form').children('div').empty().text('Loading...');
@@ -2199,6 +2231,20 @@ $resultMessage = $alertMsg->createMarkup();
                             </span>
                         </form>
                     </div>
+                	<div style="float:left; margin-left:30px;">
+                        <h3>Miscelaneous Lookups</h3>
+                        <form method="POST" action="ResourceBuilder.php"  id="formmisc">
+                            <table><tr>
+                                    <th>Category</th>
+                                    <td><?php echo $selmisc; ?></td>
+                                </tr></table>
+                            <div id="divmisc" class="hhk-divLk"></div>
+                            <span style="margin:10px;float:right;">
+                                <input type="button" id='btnmiscSave' class="hhk-saveLookup" data-type="ha" value="Save"/>
+                            </span>
+                        </form>
+                    </div>
+                	
                 </div>
                 <div id="rateTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <p style="padding:3px;background-color: #fff7db;">Make changes directly into the text boxes below and press 'Save'.</p>

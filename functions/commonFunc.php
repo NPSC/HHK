@@ -1,4 +1,5 @@
 <?php
+
 /**
  * commonFunc.php
  *
@@ -7,18 +8,17 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-function initPDO($override = FALSE) {
-
+function initPDO($override = FALSE)
+{
     $ssn = Session::getInstance();
     $roleCode = $ssn->rolecode;
 
-    if (!isset($ssn->databaseURL)) {
+    if (! isset($ssn->databaseURL)) {
         throw new Hk_Exception_Runtime('<p>Missing Database URL (initPDO)</p>');
     }
 
     $dbuName = $ssn->databaseUName;
     $dbPw = $ssn->databasePWord;
-
 
     if ($roleCode >= WebRole::Guest && $override === FALSE) {
         // Get the site configuration object
@@ -45,7 +45,6 @@ function initPDO($override = FALSE) {
 
         // Syncromize PHP and mySQL timezones
         syncTimeZone($dbh);
-
     } catch (\PDOException $e) {
 
         $ssn->destroy(TRUE);
@@ -61,20 +60,18 @@ function initPDO($override = FALSE) {
     return $dbh;
 }
 
-function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw) {
-
+function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw)
+{
     return new \PDO("mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw);
-
 }
 
-function creditIncludes($gatewayName) {
-
+function creditIncludes($gatewayName)
+{
     if ($gatewayName == '') {
         return;
     }
 
     require (PMT . 'paymentgateway/CreditPayments.php');
-
 
     switch ($gatewayName) {
 
@@ -100,16 +97,14 @@ function creditIncludes($gatewayName) {
             require (PMT . 'paymentgateway/vantiv/TokenTX.php');
             require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
             break;
-
     }
-
 }
 
-function syncTimeZone(\PDO $dbh) {
-
+function syncTimeZone(\PDO $dbh)
+{
     $now = new \DateTime();
     $tmins = $now->getOffset() / 60;
-    $sgn = ($tmins < 0 ? -1 : 1);
+    $sgn = ($tmins < 0 ? - 1 : 1);
     $mins = abs($tmins);
     $hrs = floor($mins / 60);
     $mins -= $hrs * 60;
@@ -117,12 +112,13 @@ function syncTimeZone(\PDO $dbh) {
     $dbh->exec("SET time_zone='$offset';");
 }
 
-function stripslashes_gpc(&$value) {
+function stripslashes_gpc(&$value)
+{
     $value = stripslashes($value);
 }
 
-function doExcelDownLoad($rows, $fileName) {
-
+function doExcelDownLoad($rows, $fileName)
+{
     if (count($rows) === 0) {
         return;
     }
@@ -139,11 +135,11 @@ function doExcelDownLoad($rows, $fileName) {
     $keys = array_keys($rows[0]);
 
     foreach ($keys as $t) {
-        $hdr[$n++] = $t;
+        $hdr[$n ++] = $t;
     }
 
     OpenXML::writeHeaderRow($sml, $hdr);
-    $reportRows++;
+    $reportRows ++;
 
     foreach ($rows as $r) {
 
@@ -152,9 +148,11 @@ function doExcelDownLoad($rows, $fileName) {
 
         foreach ($r as $col) {
 
-            $flds[$n++] = array('type' => "s", 'value' => $col);
+            $flds[$n ++] = array(
+                'type' => "s",
+                'value' => $col
+            );
         }
-
 
         $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
     }
@@ -165,14 +163,13 @@ function doExcelDownLoad($rows, $fileName) {
 
     OpenXML::finalizeExcel($sml);
     exit();
-
 }
 
-function prepareEmail() {
-
+function prepareEmail()
+{
     $uS = Session::getInstance();
 
-    $mail = new PHPMailer;
+    $mail = new PHPMailer();
 
     switch (strtolower($uS->EmailType)) {
 
@@ -208,23 +205,23 @@ function prepareEmail() {
     return $mail;
 }
 
-// This is named backwards.  I'll start the new name, but it may take a while for all the code to comply
-function addslashesextended(&$arr_r) {
-
+// This is named backwards. I'll start the new name, but it may take a while for all the code to comply
+function addslashesextended(&$arr_r)
+{
     if (get_magic_quotes_gpc()) {
         array_walk_recursive($arr_r, 'stripslashes_gpc');
     }
 }
 
-function stripSlashesExtended(&$arr_r) {
-
+function stripSlashesExtended(&$arr_r)
+{
     if (get_magic_quotes_gpc()) {
         array_walk_recursive($arr_r, 'stripslashes_gpc');
     }
 }
 
-function newDateWithTz($strDate, $strTz) {
-
+function newDateWithTz($strDate, $strTz)
+{
     if ($strTz == '') {
         throw new \Exception('(newDateWithTz) - timezone not set.  ');
     }
@@ -239,8 +236,8 @@ function newDateWithTz($strDate, $strTz) {
     return $theDT;
 }
 
-function setTimeZone($uS, $strDate) {
-
+function setTimeZone($uS, $strDate)
+{
     if (is_null($uS) || is_a($uS, 'Session') == FALSE) {
         $uS = Session::getInstance();
     }
@@ -248,8 +245,8 @@ function setTimeZone($uS, $strDate) {
     return newDateWithTz($strDate, $uS->tz);
 }
 
-function incCounter(\PDO $dbh, $counterName) {
-
+function incCounter(\PDO $dbh, $counterName)
+{
     $dbh->query("CALL IncrementCounter('$counterName', @num);");
 
     foreach ($dbh->query("SELECT @num") as $row) {
@@ -263,7 +260,8 @@ function incCounter(\PDO $dbh, $counterName) {
     return $rptId;
 }
 
-function checkHijack($uS) {
+function checkHijack($uS)
+{
     if ($uS->vaddr == "y" || $uS->vaddr == "Y") {
         return true;
     } else {
@@ -271,8 +269,8 @@ function checkHijack($uS) {
     }
 }
 
-function setHijack(\PDO $dbh, $uS, $code = "") {
-
+function setHijack(\PDO $dbh, $uS, $code = "")
+{
     $id = $uS->uid;
     $query = "update w_users set Verify_Address = '$code' where idName = $id;";
     $dbh->exec($query);
@@ -280,19 +278,23 @@ function setHijack(\PDO $dbh, $uS, $code = "") {
     return true;
 }
 
-function getYearArray() {
-
+function getYearArray()
+{
     $curYear = intval(date("Y"));
 
     $yrs = array();
     // load years
-    for ($i = $curYear - 5; $i <= $curYear; $i++) {
-        $yrs[$i] = array($i, $i);
+    for ($i = $curYear - 5; $i <= $curYear; $i ++) {
+        $yrs[$i] = array(
+            $i,
+            $i
+        );
     }
     return $yrs;
 }
 
-function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRUE) {
+function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRUE)
+{
     $markup = "";
 
     $curYear = intval(date("Y")) + 1;
@@ -302,7 +304,7 @@ function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRU
 
     // Show next year in list if we are already into the new FY
     if ($fyDate <= intval(date("n"))) {
-        $curYear++;
+        $curYear ++;
     }
 
     if ($showAllYears) {
@@ -314,7 +316,7 @@ function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRU
     }
 
     // load years
-    for ($i = $startYear; $i <= $curYear; $i++) {
+    for ($i = $startYear; $i <= $curYear; $i ++) {
         if ($slctd == $i) {
             $slctMarkup = "selected='selected'";
         } else {
@@ -325,26 +327,31 @@ function getYearOptionsMarkup($slctd, $startYear, $fyMonths, $showAllYears = TRU
     return $markup;
 }
 
-function getKey() {
+function getKey()
+{
     return "017d609a4b2d8910685595C8df";
 }
 
-function getIV() {
+function getIV()
+{
     return "fYfhHeDmf j98UUy4";
 }
 
-function encryptMessage($input) {
+function encryptMessage($input)
+{
     $key = getKey();
     $iv = getIV();
 
     return encrypt_decrypt('encrypt', $input, $key, $iv);
 }
 
-function getNotesKey($keyPart) {
+function getNotesKey($keyPart)
+{
     return "E4HD9h4DhS56DY" . trim($keyPart) . "3Nf";
 }
 
-function encryptNotes($input, $pw) {
+function encryptNotes($input, $pw)
+{
     $crypt = "";
     if ($pw != "" && $input != "") {
         $key = getNotesKey($pw);
@@ -356,7 +363,8 @@ function encryptNotes($input, $pw) {
     return $crypt;
 }
 
-function decryptNotes($encrypt, $pw) {
+function decryptNotes($encrypt, $pw)
+{
     $clear = "";
 
     if ($pw != "" && $encrypt != "") {
@@ -368,53 +376,52 @@ function decryptNotes($encrypt, $pw) {
     return $clear;
 }
 
-function decryptMessage($encrypt) {
-
+function decryptMessage($encrypt)
+{
     return encrypt_decrypt('decrypt', $encrypt, getKey(), getIV());
 }
-
 
 /**
  * simple method to encrypt or decrypt a plain text string
  * initialization vector(IV) has to be the same when encrypting and decrypting
  *
- * @param string $action: can be 'encrypt' or 'decrypt'
- * @param string $string: string to encrypt or decrypt
- *
+ * @param string $action:
+ *            can be 'encrypt' or 'decrypt'
+ * @param string $string:
+ *            string to encrypt or decrypt
+ *            
  * @return string
  */
-function encrypt_decrypt($action, $string, $secret_key, $secret_iv) {
+function encrypt_decrypt($action, $string, $secret_key, $secret_iv)
+{
     $output = false;
     $encrypt_method = "AES-256-CBC";
-//    $secret_key = 'This is my secret key';
-//    $secret_iv = 'This is my secret iv';
+    // $secret_key = 'This is my secret key';
+    // $secret_iv = 'This is my secret iv';
     // hash
     $key = hash('sha256', $secret_key);
 
     // iv - encrypt method AES-256-CBC expects 16 bytes - else you will get a warning
     $iv = substr(hash('sha256', $secret_iv), 0, 16);
-    if ( $action == 'encrypt' ) {
+    if ($action == 'encrypt') {
         $output = base64_encode(openssl_encrypt($string, $encrypt_method, $key, 0, $iv));
-
-    } else if( $action == 'decrypt' ) {
+    } else if ($action == 'decrypt') {
         $output = openssl_decrypt(base64_decode($string), $encrypt_method, $key, 0, $iv);
     }
     return $output;
 }
 
-
-
-function readGenLookups($con, $tbl, $orderBy = "Code") {
-
-    if (!is_a($con, 'mysqli')) {
+function readGenLookups($con, $tbl, $orderBy = "Code")
+{
+    if (! is_a($con, 'mysqli')) {
         return readGenLookupsPDO($con, $tbl, $orderBy);
     } else {
         throw new Hk_Exception_Runtime('Non-PDO access not supported.  ');
     }
 }
 
-function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code") {
-
+function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code")
+{
     $safeTbl = str_replace("'", '', $tbl);
     $query = "SELECT `Code`, `Description`, `Substitute`, `Type`, `Order` FROM `gen_lookups` WHERE `Table_Name` = '$safeTbl' order by `$orderBy`;";
     $stmt = $dbh->query($query);
@@ -428,9 +435,15 @@ function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code") {
     return $genArray;
 }
 
-function readLookups(\PDO $dbh, $tbl, $orderBy = "Code") {
+function readLookups(\PDO $dbh, $tbl, $orderBy = "Code", $includeUnused = false)
+{
+    if ($includeUnused) {
+        $where = "";
+    } else {
+        $where = "and `Use` = 'y'";
+    }
 
-    $query = "SELECT `Code`, `Title` FROM `lookups` WHERE `Category` = '$tbl' and `Use` = 'y' order by `$orderBy`;";
+    $query = "SELECT `Code`, `Title`, `Use` FROM `lookups` WHERE `Category` = '$tbl' $where order by `$orderBy`;";
     $stmt = $dbh->query($query);
     $genArray = array();
 
@@ -441,7 +454,8 @@ function readLookups(\PDO $dbh, $tbl, $orderBy = "Code") {
     return $genArray;
 }
 
-function doOptionsMkup($gArray, $sel, $offerBlank = true) {
+function doOptionsMkup($gArray, $sel, $offerBlank = true)
+{
     $data = "";
     if ($offerBlank) {
         $sel = trim($sel);
@@ -463,25 +477,29 @@ function doOptionsMkup($gArray, $sel, $offerBlank = true) {
     return $data;
 }
 
-function DoLookups($con, $tbl, $sel, $offerBlank = true) {
-
+function DoLookups($con, $tbl, $sel, $offerBlank = true)
+{
     $g = readGenLookups($con, $tbl);
 
     return doOptionsMkup($g, $sel, $offerBlank);
 }
 
-function removeOptionGroups($gArray) {
+function removeOptionGroups($gArray)
+{
     $clean = array();
     if (is_array($gArray)) {
         foreach ($gArray as $s) {
-            $clean[$s[0]] = array($s[0], $s[1]);
+            $clean[$s[0]] = array(
+                $s[0],
+                $s[1]
+            );
         }
     }
     return $clean;
 }
 
-function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = array()) {
-
+function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = array())
+{
     if (isset($desc)) {
 
         foreach ($desc as $k => $r) {
@@ -496,7 +514,10 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = 
             $glRs->Table_Name->setStoredVal($tblName);
             $glRs->Code->setStoredVal($code);
 
-            $rates = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+            $rates = EditRS::select($dbh, $glRs, array(
+                $glRs->Table_Name,
+                $glRs->Code
+            ));
 
             if (count($rates) == 1) {
 
@@ -506,7 +527,10 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = 
 
                 if ($del != NULL && isset($del[$code])) {
                     // delete
-                    EditRS::delete($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                    EditRS::delete($dbh, $glRs, array(
+                        $glRs->Table_Name,
+                        $glRs->Code
+                    ));
                     $logText = HouseLog::getDeleteText($glRs, $tblName . $code);
                     HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'delete', $uS->username);
                 } else {
@@ -521,7 +545,10 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = 
                         $glRs->Type->setNewVal(filter_var($type[$code], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
                     }
 
-                    $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                    $ctr = EditRS::update($dbh, $glRs, array(
+                        $glRs->Table_Name,
+                        $glRs->Code
+                    ));
 
                     if ($ctr > 0) {
                         $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
@@ -533,8 +560,8 @@ function saveGenLk(\PDO $dbh, $tblName, array $desc, array $subt, $del, $type = 
     }
 }
 
-function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $order, $del, $replace, array $replaceWith) {
-
+function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $order, $del, $replace, array $replaceWith)
+{
     $rowsAffected = 0;
 
     if (isset($desc)) {
@@ -551,7 +578,10 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
             $glRs->Table_Name->setStoredVal($tblName);
             $glRs->Code->setStoredVal($code);
 
-            $rates = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+            $rates = EditRS::select($dbh, $glRs, array(
+                $glRs->Table_Name,
+                $glRs->Code
+            ));
 
             if (count($rates) == 1) {
                 $uS = Session::getInstance();
@@ -570,7 +600,10 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
                         }
                     }
 
-                    EditRS::delete($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                    EditRS::delete($dbh, $glRs, array(
+                        $glRs->Table_Name,
+                        $glRs->Code
+                    ));
                     $logText = HouseLog::getDeleteText($glRs, $tblName . $code);
                     HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'delete', $uS->username);
                 } else {
@@ -593,7 +626,10 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
                         $glRs->Order->setNewVal(intval(filter_var($order[$code], FILTER_SANITIZE_NUMBER_INT), 10));
                     }
 
-                    $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                    $ctr = EditRS::update($dbh, $glRs, array(
+                        $glRs->Table_Name,
+                        $glRs->Code
+                    ));
 
                     if ($ctr > 0) {
                         $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
@@ -607,29 +643,96 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
     return $rowsAffected;
 }
 
+function replaceLookups(\PDO $dbh, $category, array $title, array $use)
+{
+    $rowsAffected = 0;
+
+    if (isset($title)) {
+
+        foreach ($title as $k => $r) {
+
+            $code = trim(filter_var($k, FILTER_SANITIZE_STRING));
+
+            if ($code == '') {
+                continue;
+            }
+
+            $lookRs = new LookupsRS();
+            $lookRs->Category->setStoredVal($category);
+            $lookRs->Code->setStoredVal($code);
+
+            $rates = EditRS::select($dbh, $lookRs, array(
+                $lookRs->Category,
+                $lookRs->Code
+            ));
+
+            if (count($rates) == 1) {
+                $uS = Session::getInstance();
+
+                EditRS::loadRow($rates[0], $lookRs);
+
+                if ($use != NULL && isset($use[$code])) {
+                    // activate
+                    $lookRs->Use->setNewVal("y");
+                } else {
+                    $lookRs->Use->setNewVal("n");
+                }
+
+                // update
+                if (isset($title[$code]) && $title[$code] != '') {
+                    $lookRs->Title->setNewVal(filter_var($title[$code], FILTER_SANITIZE_STRING));
+                }
+
+                $ctr = EditRS::update($dbh, $lookRs, array(
+                    $lookRs->Category,
+                    $lookRs->Code
+                ));
+
+                if ($ctr > 0) {
+                    $logText = HouseLog::getUpdateText($lookRs, $category . $code);
+                    HouseLog::logGenLookups($dbh, $category, $code, $logText, 'update', $uS->username);
+                }
+            }
+        }
+    }
+
+    return $rowsAffected;
+}
+
 /**
  * Show guest photo HTML
  *
  * @param int $idGuest
- * @param int $widthPx - desired pixel width of image
+ * @param int $widthPx
+ *            - desired pixel width of image
  * @return HTML
  */
-
-function showGuestPicture ($idGuest, $widthPx) {
-
-    return HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('img ', '', array('id'=>'guestPhoto', 'src'=>"ws_resc.php?cmd=getguestphoto&guestId=$idGuest", 'width'=>$widthPx)) .
-        HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-plusthick'))
-        , array("class"=>"ui-button ui-corner-all ui-widget", 'style'=>'padding: .3em; margin-right:0.3em;', 'data-uppload-button'=>'true')) . HTMLContainer::generateMarkup('div',
-        htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
-        , array("class"=>"ui-button ui-corner-all ui-widget delete-guest-photo", 'style'=>'padding: .3em'))
-        , array('style'=>"position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;", 'id'=>'hhk-guest-photo-actions'))
-        ,array('class'=>'hhk-panel', 'style'=>'display: inline-block; position:relative', 'id'=>'hhk-guest-photo'));
-
+function showGuestPicture($idGuest, $widthPx)
+{
+    return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('img ', '', array(
+        'id' => 'guestPhoto',
+        'src' => "ws_resc.php?cmd=getguestphoto&guestId=$idGuest",
+        'width' => $widthPx
+    )) . HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('span', '', array(
+        'class' => 'ui-icon ui-icon-plusthick'
+    )), array(
+        "class" => "ui-button ui-corner-all ui-widget",
+        'style' => 'padding: .3em; margin-right:0.3em;',
+        'data-uppload-button' => 'true'
+    )) . HTMLContainer::generateMarkup('div', htmlContainer::generateMarkup('span', '', array(
+        'class' => 'ui-icon ui-icon-trash'
+    )), array(
+        "class" => "ui-button ui-corner-all ui-widget delete-guest-photo",
+        'style' => 'padding: .3em'
+    )), array(
+        'style' => "position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;",
+        'id' => 'hhk-guest-photo-actions'
+    )), array(
+        'class' => 'hhk-panel',
+        'style' => 'display: inline-block; position:relative',
+        'id' => 'hhk-guest-photo'
+    ));
 }
-
 
 /**
  * create thumbnail from uploaded photo
@@ -639,43 +742,42 @@ function showGuestPicture ($idGuest, $widthPx) {
  * @param int $newheight
  * @return binary photo data
  */
-
-function makeThumbnail($photo, $newwidth, $newheight){
-
-    if($photo['type'] && $photo['tmp_name']){
+function makeThumbnail($photo, $newwidth, $newheight)
+{
+    if ($photo['type'] && $photo['tmp_name']) {
         $mime = $photo['type'];
         $file = $photo['tmp_name'];
-        $temp = imagecreatetruecolor($newwidth, $newheight); //temp GD image object
-        list($oldwidth, $oldheight) = getimagesize($file); //get current width & height
+        $temp = imagecreatetruecolor($newwidth, $newheight); // temp GD image object
+        list ($oldwidth, $oldheight) = getimagesize($file); // get current width & height
 
-        ob_start(); //start object buffer to capture image data
+        ob_start(); // start object buffer to capture image data
 
-        switch($mime){
+        switch ($mime) {
             case 'image/jpg':
             case 'image/jpeg':
 
-                    $image = imagecreatefromjpeg($file); //create GD image from input file
-                    imagecopyresampled($temp, $image, 0, 0, 0, 0, $newwidth, $newheight, $oldwidth, $oldheight); //resize image and save to $temp object
-                    imagejpeg($temp); //output image
-                    break;
+                $image = imagecreatefromjpeg($file); // create GD image from input file
+                imagecopyresampled($temp, $image, 0, 0, 0, 0, $newwidth, $newheight, $oldwidth, $oldheight); // resize image and save to $temp object
+                imagejpeg($temp); // output image
+                break;
 
             case 'image/png':
 
-                    $image = imagecreatefrompng($file); //create GD image from input file
-                    imagecopyresampled($temp, $image, 0, 0, 0, 0, $newwidth, $newheight, $oldwidth, $oldheight); //resize image and save to $temp object
-                    imagepng($temp); //output image
-                    break;
+                $image = imagecreatefrompng($file); // create GD image from input file
+                imagecopyresampled($temp, $image, 0, 0, 0, 0, $newwidth, $newheight, $oldwidth, $oldheight); // resize image and save to $temp object
+                imagepng($temp); // output image
+                break;
 
             default:
-                    throw new Exception("File Type not supported");
-                    break;
+                throw new Exception("File Type not supported");
+                break;
         }
 
-        $thumbnailData = ob_get_contents(); //send object buffer/image data to variable
-        ob_end_clean(); //close object buffer
+        $thumbnailData = ob_get_contents(); // send object buffer/image data to variable
+        ob_end_clean(); // close object buffer
 
         return $thumbnailData;
-    }else{
+    } else {
         return false;
     }
 }
