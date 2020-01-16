@@ -109,6 +109,7 @@ class CurrentAccount {
         // Lodging tax already paid
         foreach ($visitCharge->getTaxItemIds() as $tid =>$v) {
                 $this->setLodgingTaxPd($tid, $visitCharge->getItemTaxItemAmount(ItemId::Lodging, $tid));
+                $this->setLodgingTaxPd($tid, $visitCharge->getItemTaxItemAmount(ItemId::LodgingReversal, $tid));
             }
 
         // Payments
@@ -243,13 +244,6 @@ class CurrentAccount {
 
         $amt = 0;
 
-//        foreach ($this->getCurentTaxItems($idTaxedItem) as $t) {
-//
-//            if ($t->getIdTaxedItem() == $idTaxedItem) {
-//                $amt += $t->getTaxAmount($balanceAmt) + $this->getLodgingTaxPd($t->getIdTaxingItem());
-//            }
-//        }
-
         foreach ($this->getCurentTaxItems($idTaxedItem) as $t) {
 
             if ($this->getRoomFeeBalance() < 0) {
@@ -259,7 +253,6 @@ class CurrentAccount {
             }
 
         }
-
 
         return $amt;
     }
@@ -279,7 +272,11 @@ class CurrentAccount {
     }
 
     public function setLodgingTaxPd($tid, $amt) {
-        $this->lodgingTaxPd[$tid] = $amt;
+        if (isset($this->lodgingTaxPd[$tid])) {
+            $this->lodgingTaxPd[$tid] += $amt;
+        } else {
+            $this->lodgingTaxPd[$tid] = $amt;
+        }
     }
 
     public function setDueToday() {
