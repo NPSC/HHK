@@ -1741,7 +1741,7 @@ function resvManager(initData, options) {
 
         function setUp(data) {
 
-            $rDiv = $('<div/>').addClass(' hhk-tdbox').prop('id', 'divResvDetail').css('padding', '5px');
+            $rDiv = $('<div/>').addClass(' hhk-tdbox ui-corner-bottom hhk-tdbox ui-widget-content').prop('id', 'divResvDetail').css({'padding':'5px', 'display':'flex', 'flex-wrap':'wrap'});
 
             // Room Chooser section
             if (data.resv.rdiv.rChooser !== undefined) {

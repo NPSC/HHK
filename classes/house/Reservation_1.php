@@ -954,7 +954,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return '';
     }
 
-    public function getStatusIcon($status = '') {
+    public function getStatusIcon(\PDO $dbh, $status = '') {
 
         if ($status == '') {
             $status = $this->getStatus();
@@ -963,7 +963,13 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                 return '';
             }
         }
+        
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code", true);
 
+        if(isset($reservStatuses[$status])){
+            return HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ' . $reservStatuses[$status]["Icon"], 'style'=>'float: left; margin-left:.3em;', 'title'=>$reservStatuses[$status]["Title"]));
+        }
+        
         $uS = Session::getInstance();
 
         if (isset($uS->guestLookups['ReservStatus'][$status][2])) {

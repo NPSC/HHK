@@ -175,7 +175,7 @@ WHERE
                     .HTMLContainer::generateMarkup('label', ' No vehicle this visit', array('for'=>'cbNoVehicle', 'title'=>'Check for no vehicle')), array('style'=>'margin:.3em;'))
                     . HTMLContainer::generateMarkup('p', '', array('id'=>'vehValidate', 'style'=>'color:red;'))
                     . $cars, array('class'=>'hhk-panel')),
-                    array('style'=>'float:left'));
+                    array('style'=>'display: inline-block', 'class'=>'mr-3'));
 
         return $mk1;
     }

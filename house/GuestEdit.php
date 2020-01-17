@@ -654,7 +654,7 @@ if ($psg->getIdPsg() > 0) {
                 $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '
                 . (date('Y') == date('Y', strtotime($reserv->getArrival())) ? date('M j', strtotime($reserv->getArrival())) : date('M j, Y', strtotime($reserv->getArrival())))
                 . " to " .(date('Y') == date('Y', strtotime($reserv->getDeparture())) ? date('M j', strtotime($reserv->getDeparture())) : date('M j, Y', strtotime($reserv->getDeparture())))
-                . '.  ' . $reserv->getStatusIcon()
+                . '.  ' . $reserv->getStatusIcon($dbh)
                 , array('style'=>'margin-left:10px;')), array('style'=>'min-height:25px; padding-top:5px;'));
 
         $reservMarkup .= $hdr . HTMLContainer::generateMarkup('div', $rtbl->generateMarkup());

@@ -247,7 +247,7 @@ $resvObjEncoded = json_encode($resvAr);
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu() ?>
-        <div id="contentDiv">
+        <div id="contentDiv" class="container-fluid">
             <h1><?php echo $title; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
@@ -255,12 +255,11 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
                 <?php echo $mk1; ?>
             </div>
-
             <form action="Reserve.php" method="post"  id="form1">
-                <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog"></div>
+                <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"></div>
+                <div id="famSection" style="font-size: .9em; display:none; min-width: 810px; margin-bottom:.5em;" class="ui-widget hhk-visitdialog mb-3"></div>
                 <?php if ($uS->UseIncidentReports) { ?>
-	            <div id="incidentsSection" style="font-size: .9em; display: none; min-width: 810px; float: left; margin-bottom: 0.5em" class="ui-widget hhk-visitdialog hhk-row">
+	            <div id="incidentsSection" style="font-size: .9em; display: none; min-width: 810px;" class="ui-widget hhk-visitdialog mb-3">
 		            <div style="padding:2px; cursor:pointer;" class="ui-widget-header ui-state-default ui-corner-top hhk-incidentHdr">
 			            <div class="hhk-checkinHdr" style="display: inline-block;">Incidents<span id="incidentCounts"></span></div>
 			            <ul style="list-style-type:none; float:right;margin-left:5px;padding-top:2px;" class="ui-widget"><li class="ui-widget-header ui-corner-all" title="Open - Close"><span id="f_drpDown" class="ui-icon ui-icon-circle-triangle-n"></span></li></ul>
@@ -268,8 +267,8 @@ $resvObjEncoded = json_encode($resvAr);
 	                <div id="incidentContent" style="padding: 5px; display: none;" class="ui-corner-bottom hhk-tdbox ui-widget-content"></div>
 	            </div>
 	            <?php } ?>
-                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
-                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
+                <div id="hospitalSection" style="font-size: .9em; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog mb-3"></div>
+                <div id="resvSection" style="font-size:.9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog mb-3"></div>
                 <div style="clear:left; min-height: 70px;"></div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >

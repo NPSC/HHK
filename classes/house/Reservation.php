@@ -456,7 +456,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4'))
                     , array('style'=>'margin-left:.7em;'))
 
-                , array('style'=>'float:left;font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
+                , array('style'=>'font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
 
         return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays', 'updateOnChange'=>$updateOnChange, 'startDate'=>$startDate, 'endDate'=>$endDate);
 
@@ -501,7 +501,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
                             HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
                             . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
-                        ,array('style'=>'float:left;', 'class'=>'hhk-panel')));
+                        ,array('style'=>'display: inline-block;', 'class'=>'hhk-panel mr-3')));
                 }
             }
 
@@ -795,7 +795,7 @@ where rg.idReservation =" . $r['idReservation']);
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
                     . $tbl2->generateMarkup() . $mk2,
                     array('class'=>'hhk-panel'))
-            , array('style'=>'display: inline-block'));
+            , array('style'=>'display: inline-block', 'class'=>'mr-3'));
 
     }
 
