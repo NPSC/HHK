@@ -79,7 +79,8 @@ if (count($diags) > 0) {
 }
 
 // Reservation statuses 
-$statusList = removeOptionGroups($uS->guestLookups['ReservStatus']);
+//$statusList = removeOptionGroups($uS->guestLookups['ReservStatus']);
+$statusList = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", TRUE));
 
 if ($uS->Doctor) {
     $cFields[] = array("Doctor", 'Name_Doctor', '', '', 's', '');

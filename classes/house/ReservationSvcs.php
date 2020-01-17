@@ -754,7 +754,7 @@ class ReservationSvcs {
 
             if ($resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
 
-                $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' status "' . $resv->getStatusTitle() . '" cannot be deleted';
+                $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' status "' . $resv->getStatusTitle($dbh) . '" cannot be deleted';
 
             } else {
                 // Okay to delete

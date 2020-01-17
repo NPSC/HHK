@@ -469,7 +469,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $resv = new Reservation_1($this->reservRs);
         $showPayWith = FALSE;
-        $statusText = $resv->getStatusTitle();
+        $statusText = $resv->getStatusTitle($dbh);
         $hideCheckinButton = TRUE;
 
         // Registration
@@ -774,7 +774,7 @@ where rg.idReservation =" . $r['idReservation']);
                 . $moaData : '')
                 .($resv->isActive() ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($limResvStatuses, $resv->getStatus(), FALSE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($limResvStatuses, $resv->getStatus(), TRUE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
                         .HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;float:right;')))
                 );
 
@@ -795,7 +795,7 @@ where rg.idReservation =" . $r['idReservation']);
                     HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'statusLabel', 'Reservation Status'), array('style'=>'font-weight:bold;'))
                     . $tbl2->generateMarkup() . $mk2,
                     array('class'=>'hhk-panel'))
-            , array('style'=>'clear:left; float:left;'));
+            , array('style'=>'display: inline-block'));
 
     }
 
@@ -1298,7 +1298,7 @@ class ActiveReservation extends Reservation {
         // Determine Reservation Status
         $reservStatus = ReservationStatus::Waitlist;
 
-        if (isset($post['selResvStatus'])) {
+        if (isset($post['selResvStatus']) && $post['selResvStatus'] != '') {
 
             $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_STRING);
 

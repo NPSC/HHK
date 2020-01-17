@@ -671,11 +671,15 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
 
                 EditRS::loadRow($rates[0], $lookRs);
 
-                if ($use != NULL && isset($use[$code])) {
-                    // activate
-                    $lookRs->Use->setNewVal("y");
-                } else {
-                    $lookRs->Use->setNewVal("n");
+                if ($code == "c1" || $code == "c2" || $code == "c3" || $code == "c4") {
+                    if (isset($use[$code])) {
+                        // activate
+                        $lookRs->Use->setNewVal("y");
+                        $lookRs->Show->setNewVal("y");
+                    } else {
+                        $lookRs->Use->setNewVal("n");
+                        $lookRs->Show->setNewVal("n");
+                    }
                 }
 
                 // update

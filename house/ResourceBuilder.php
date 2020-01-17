@@ -480,7 +480,7 @@ if (isset($_POST['table'])) {
                 }
             }
         } else if(isset($_POST['selmisc'])) {
-            replaceLookups($dbh, $_POST['selmisc'], $codeArray, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL));
+            replaceLookups($dbh, $_POST['selmisc'], $codeArray, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : array()));
         }else {
             replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
         }

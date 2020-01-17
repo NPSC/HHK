@@ -636,7 +636,7 @@ if ($psg->getIdPsg() > 0) {
         $categoryTitles = RoomRate::makeDescriptions($dbh);
 
         $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>'Reserve.php?rid=' . $reserv->getIdReservation())))
-                . HTMLTable::makeTd($reserv->getStatusTitle($reserv->getStatus()))
+                . HTMLTable::makeTd($reserv->getStatusTitle($dbh, $reserv->getStatus()))
                 . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
                 . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
                 . HTMLTable::makeTd($reserv->getRoomTitle($dbh))

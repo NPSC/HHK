@@ -171,7 +171,7 @@ class Reservation_1 {
 
                     if ($this->getStatus() == ReservationStatus::Waitlist) {
                         $this->setStatus(ReservationStatus::Committed);
-                        $roomChanged .= 'New status is ' . $this->getStatusTitle(ReservationStatus::Committed);
+                        $roomChanged .= 'New status is ' . $this->getStatusTitle($dbh, ReservationStatus::Committed);
                     }
 
                 }
@@ -899,7 +899,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                 } else {
                     if ($resv->getStatus() == ReservationStatus::UnCommitted) {
                         $guestAttrs['class'] = 'ui-state-highlight';
-                        $guestAttrs['title'] = 'Reservation status is ' . $resv->getStatusTitle() . '.  ' . $guestAttrs['title'];
+                        $guestAttrs['title'] = 'Reservation status is ' . $resv->getStatusTitle($dbh) . '.  ' . $guestAttrs['title'];
                     }
 
                     $guestName = HTMLContainer::generateMarkup('span', $guestMember->getMemberName(), $guestAttrs);
@@ -928,7 +928,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     }
 
 
-    public function getStatusTitle($status = '') {
+    public function getStatusTitle(\PDO $dbh, $status = '') {
 
         if ($status == '') {
             $status = $this->getStatus();
@@ -938,12 +938,18 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
             }
         }
 
-        $uS = Session::getInstance();
-
-        if (isset($uS->guestLookups['ReservStatus'][$status][1])) {
-
-            return $uS->guestLookups['ReservStatus'][$status][1];
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code", true);
+        
+        if(isset($reservStatuses[$status])){
+            return $reservStatuses[$status]["Title"];
         }
+        
+         $uS = Session::getInstance();
+
+         if (isset($uS->guestLookups['ReservStatus'][$status][1])) {
+
+             return $uS->guestLookups['ReservStatus'][$status][1];
+         }
 
         return '';
     }
