@@ -93,8 +93,6 @@ $pageTitle = $wInit->pageTitle;
 $uS = Session::getInstance();
 creditIncludes($uS->PaymentGateway);
 
-$menuMarkup = $wInit->generatePageMenu();
-
 
 $labels = new Config_Lite(LABEL_FILE);
 
@@ -104,14 +102,12 @@ $id = 0;
 $idPsg = 0;
 $psg = NULL;
 $uname = $uS->username;
-$receipt = '';
 $guestTabIndex = 0;
 $guestName = '';
 $psgmkup = '';
 $memberData = array();
 $showSearchOnly = FALSE;
 $ngRss = array();
-$isPatient = FALSE;
 
 $memberFlag = SecurityComponent::is_Authorized("guestadmin");
 
@@ -184,7 +180,6 @@ if ($id > 0) {
             while ($r = $stmv->fetch(\PDO::FETCH_NUM)) {
 
                 if ($r[0] == VolMemberType::Patient) {
-                    $isPatient = TRUE;
                 }
             }
 
@@ -500,7 +495,7 @@ $regTabMarkup = "";
 $psgTabMarkup = "";
 $vehicleTabMarkup = "";
 $reservMarkup = '';
-$finMarkup = '';
+
 
 
 //
@@ -656,15 +651,6 @@ if ($psg->getIdPsg() > 0) {
     }
 
 
-    // Financial Assistance
-    if ($uS->IncomeRated) {
-        $finApp = new FinAssistance($dbh, $registration->getIdRegistration());
-        $finMarkup = $finApp->createIncomeDialog();
-    }
-
-
-
-
 } else {
     $psgTabMarkup = $psgmkup;
     $psgOnly = TRUE;
@@ -813,7 +799,7 @@ $uS->guestId = $id;
                         <?php echo $demogTab; ?>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table style="width:100%;" id="dataTbl" cellpadding="0" cellspacing="0" border="0"></table>
+                      <table style="width:100%;" id="dataTbl" border-style: none></table>
                     </div>
                     <div id="exclTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
                         <?php echo $ExcludeTab; ?>
@@ -892,7 +878,7 @@ $uS->guestId = $id;
                         </div>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table style="width:100%;" id="dataTbl" cellpadding="0" cellspacing="0" border="0"></table>
+                      <table style="width:100%;" id="dataTbl" border-style: none></table>
                     </div>
                     <div id="vfin"></div>
                     <div id="vVisits" class="ui-tabs-hide" style="min-width: 600px; display:none">

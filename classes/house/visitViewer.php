@@ -863,7 +863,6 @@ class VisitView {
         $today->setTime(0,0,0);
         $stayCoversSpan = FALSE;
         $stayFound = FALSE;
-        $remainingStays = array();
         $earliestStart = new \DateTime('2900-01-01');
         $latestEnd = new \DateTime('1984-01-01');
 
@@ -912,8 +911,6 @@ class VisitView {
                 $stayFound = TRUE;
 
             } else {
-
-                $remainingStays[] = $st;
 
                 $stayStartDT = new \DateTime($st['Span_Start_Date']);
                 $stayStartDT->setTime(0, 0, 0);
@@ -1041,7 +1038,7 @@ class VisitView {
         $spans = array();
         $stays = array();
         $firstArrival = NULL;
-        $visitCheckedIn = FALSE;
+
 
         $lastSpanId = 0;
         foreach ($visitRcrds as $r) {
@@ -1059,10 +1056,6 @@ class VisitView {
             // Save first arrival
             if ($vRs->Span->getStoredVal() == 0) {
                 $firstArrival = newDateWithTz($vRs->Arrival_Date->getStoredVal(), $uS->tz);
-            }
-
-            if ($vRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                $visitCheckedIn = TRUE;
             }
 
             // Changing only the end of the visit, need only the last span

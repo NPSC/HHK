@@ -571,7 +571,7 @@ dateFormat: "M d, yy" ';
 
     }
 
-    public static function createPayInvMarkup(\PDO $dbh, $id, $iid, $prefTokenId = 0) {
+    public static function createPayInvMarkup(\PDO $dbh, $id, $iid, $paymentGateway, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -642,7 +642,7 @@ ORDER BY v.idVisit , v.Span;");
                         $payTypes,
                         removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')),
                         $labels,
-                        PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayTypes($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan())),
+                        $paymentGateway,
                         $id, 0, $prefTokenId, '');
 
                 $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));

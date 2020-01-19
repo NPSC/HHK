@@ -687,7 +687,7 @@ class VantivGateway extends PaymentGateway {
     }
 
     public function getCofResponseObj(iGatewayResponse $verifyCiResponse, $idPayor, $idGroup) {
-        return new CardInfoResponse($verifyCiResponse, $idPayor, $idGroup);
+        return new TokenResponse($verifyCiResponse, $idPayor, $idGroup);
     }
 
     protected function loadGateway(\PDO $dbh) {

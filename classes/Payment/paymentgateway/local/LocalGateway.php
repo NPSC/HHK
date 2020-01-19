@@ -126,7 +126,7 @@ class LocalGateway extends PaymentGateway {
 
     public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
 
-        return new ManualChargeResponse($vcr->getAuthorizedAmount(), $idPayor, $invoiceNumber, $vcr->getCardType(), $vcr->getMaskedAccount());
+        return new LocalResponse($vcr->getAuthorizedAmount(), $idPayor, $invoiceNumber, $vcr->getCardType(), $vcr->getMaskedAccount());
 
     }
 

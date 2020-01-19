@@ -906,14 +906,6 @@ class PaymentManagerPayment {
     }
 
     public function setPayType($payType) {
-
-        $uS = Session::getInstance();
-
-        // Check for Charge as Cash case.
-//        if ($payType == PayType::Charge && $uS->ccgw == ''){
-//           $payType = PayType::ChargeAsCash;
-//        }
-
         $this->payType = $payType;
         return $this;
     }
@@ -931,13 +923,6 @@ class PaymentManagerPayment {
     }
 
     public function setRtnPayType($rtnPayType) {
-
-        $uS = Session::getInstance();
-
-        // Check for Charge as Cash case.
-//        if ($rtnPayType == PayType::Charge && $uS->ccgw == ''){
-//           $rtnPayType = PayType::ChargeAsCash;
-//        }
 
         $this->rtnPayType = $rtnPayType;
     }

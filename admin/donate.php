@@ -27,14 +27,6 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
-// Get the site configuration object
-try {
-    $config = new Config_Lite(ciCFG_FILE);
-} catch (Exception $ex) {
-    $ssn->destroy();
-    throw new Hk_Exception_Runtime("Configurtion file is missing, path=".ciCFG_FILE, 999, $ex);
-}
-
 
 // Array for responses
 $resp = array();
@@ -105,7 +97,7 @@ switch ($cmd) {
 
 } catch (PDOException $ex) {
     $resp = array("error" => "Database Error: " . $ex->getMessage());
-} catch (Hk_Exception $ex) {
+} catch (Exception $ex) {
     $resp = array("error" => "HouseKeeper Error: " . $ex->getMessage());
 }
 
@@ -171,13 +163,8 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
     // Date
     if (isset($data["ddate"])) {
         $dte = filter_var($data["ddate"], FILTER_SANITIZE_STRING);
-        if ($dte != '') {
-            $donDT = new DateTime($data["ddate"]);
-        } else {
-            $donDT = new DateTime();
-        }
     } else {
-        $donDT = new DateTime();
+        $dte = date('Y-m-d H:i:s');
     }
 
 
@@ -370,8 +357,6 @@ function deleteDonation(PDO $dbh, $donId, $uname) {
 
 
 function genDonationMarkup(PDO $dbh, $id) {
-
-    $uS = Session::getInstance();
 
     if ($id == 0) {
         return array('error'=>"<p>Bad Member Id</p>");

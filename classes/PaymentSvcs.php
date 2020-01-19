@@ -85,7 +85,7 @@ class PaymentSvcs {
 
             $cashResp = new CashResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getPayNotes());
 
-            CashTX::cashSale($dbh, $cashResp, $uS->username, $paymentDate);
+            CashTX::cashSale($dbh, $cashResp, $uS->username, $pmp->getPayDate());
 
             // Update invoice
             $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
@@ -100,7 +100,7 @@ class PaymentSvcs {
 
             $ckResp = new CheckResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getCheckNumber(), $pmp->getPayNotes());
 
-            CheckTX::checkSale($dbh, $ckResp, $uS->username, $paymentDate);
+            CheckTX::checkSale($dbh, $ckResp, $uS->username, $pmp->getPayDate());
 
             // Update invoice
             $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
@@ -115,7 +115,7 @@ class PaymentSvcs {
 
             $ckResp = new TransferResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getTransferAcct(), $pmp->getPayNotes());
 
-            TransferTX::sale($dbh, $ckResp, $uS->username, $paymentDate);
+            TransferTX::sale($dbh, $ckResp, $uS->username, $pmp->getPayDate());
 
             // Update invoice
             $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
@@ -667,7 +667,7 @@ class PaymentSvcs {
 
                 CheckTX::undoReturnAmount($dbh, $ckResp, $idPayment);
 
-                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
                 // delete invoice
                 $invoice->deleteInvoice($dbh, $uS->username);
 
@@ -681,7 +681,7 @@ class PaymentSvcs {
 
                 TransferTX::undoReturnAmount($dbh, $ckResp, $idPayment);
 
-                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
+                $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
                 // delete invoice
                 $invoice->deleteInvoice($dbh, $uS->username);
 
@@ -886,21 +886,21 @@ class PaymentSvcs {
                 $payResp->paymentRs = $payRs;
                 break;
 
-            case PaymentMethod::ChgAsCash:
+//             case PaymentMethod::ChgAsCash:
 
-                $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by idPayment_auth");
-                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+//                 $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by idPayment_auth");
+//                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-                if (count($rows) < 1) {
-                    return array('warning'=>'Charge payment record not found.');
-                }
+//                 if (count($rows) < 1) {
+//                     return array('warning'=>'Charge payment record not found.');
+//                 }
 
-                $pAuthRs = new Payment_AuthRS();
-                EditRS::loadRow($rows[0], $pAuthRs);
+//                 $pAuthRs = new Payment_AuthRS();
+//                 EditRS::loadRow($rows[0], $pAuthRs);
 
-                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
-                $payResp->paymentRs = $payRs;
-                break;
+//                 $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
+//                 $payResp->paymentRs = $payRs;
+//                 break;
 
         }
 

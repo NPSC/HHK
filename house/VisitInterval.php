@@ -432,7 +432,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
  * @param array $aList
  * @param boolean $local
  * @param boolean $visitFee  Flag to show/hide visit fees
- * @return type
+ * @return 
  */
 function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $visitFee, $statsOnly, $rescGroup, $labels) {
 

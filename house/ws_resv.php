@@ -335,7 +335,7 @@ try {
 
         $psgId = 0;
         $guestId = 0;
-        $rId = 0;
+
 
         if (isset($_GET['psgId'])) {
             $psgId = intval(filter_input(INPUT_GET, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
@@ -532,8 +532,6 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
-} catch (Hk_Exception $ex) {
-    $events = array("error" => "HouseKeeper Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Exception $ex) {
     $events = array("error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 }

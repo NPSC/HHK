@@ -909,16 +909,13 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
 
             // Hospital
             $hospital = '';
-            $assoc = '';
-            $hosp = '';
 
             if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
                 $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
-                $assoc = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
             }
+            
             if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
                 $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
-                $hosp = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
             }
 
             $statusTxt = '';

@@ -113,7 +113,7 @@ switch ($c) {
 
         try {
             $events = $transfer->searchAccount($searchCriteria);
-        } catch (Execption $ex) {
+        } catch (Exception $ex) {
             $events = array("error" => "Transfer Error: " . $ex->getMessage());
         }
 
@@ -125,7 +125,6 @@ switch ($c) {
             $results = $transfer->listCustomFields();
 
             $tbl = new HTMLTable();
-            $custom_fields = array();
             $th = '';
 
             foreach ($results as $v) {
@@ -163,8 +162,6 @@ switch ($c) {
         if (isset($_POST['accountId'])) {
             $accountId = intval(filter_var($_POST['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
-
-        $source = 'remote';
 
         if (isset($_POST['src']) && $_POST['src'] === 'hhk') {
 
@@ -255,7 +252,7 @@ switch ($c) {
 
     $events = array("error" => "Database Error: " . $ex->getMessage());
 
-} catch (Hk_Exception $ex) {
+} catch (Exception $ex) {
 
     $events = array("error" => "HouseKeeper Error: " . $ex->getMessage());
 }

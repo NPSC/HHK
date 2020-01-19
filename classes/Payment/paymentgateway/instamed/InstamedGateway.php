@@ -519,7 +519,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
      * @param Invoice $invoice
      * @param float $returnAmt
      * @param string $userName
-     * @return type
+     * @return object
      */
     protected function processReturnPayment(\PDO $dbh, $payRs, $paymentTransId, Invoice $invoice, $returnAmt, $userName, $paymentNotes) {
 

@@ -922,7 +922,6 @@ class Visit {
         $rooms = $resc->getRooms();
 
         $rmCleans = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
-        $finalCleanState = '';
 
         foreach ($rooms as $r) {
 
@@ -930,7 +929,6 @@ class Visit {
             if (isset($rmCleans[$r->getCleaningCycleCode()]) && $rmCleans[$r->getCleaningCycleCode()][2] > 0) {
                 $r->putTurnOver();
                 $r->saveRoom($dbh, $username, TRUE);
-                $finalCleanState = RoomState::TurnOver;
             }
         }
 
