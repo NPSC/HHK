@@ -350,9 +350,9 @@ class RateChooser {
             $markup .= HTMLInput::generateMarkup('Income Chooser ...', array('type'=>'button', 'id' => 'btnFapp', 'data-id'=>$resv->getIdGuest(), 'style'=>'margin:1em;'));
         }
 
-        return HTMLContainer::generateMarkup('fieldset',
+        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Rate Chooser', array('style'=>'font-weight:bold;'))
-                . $markup, array('style'=>'float:left;', 'class'=>'hhk-panel'));
+                . $markup, array('class'=>'hhk-panel')), array('style'=> 'display: inline-block', 'class'=>'mr-3'));
 
     }
 

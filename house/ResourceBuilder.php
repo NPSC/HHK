@@ -34,7 +34,9 @@ require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
 
 const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
+
 const LOCATION_TABLE_NAME = 'Location';
+
 const RESERV_STATUS_TABLE_NAME = 'lookups';
 try {
     $wInit = new webInit();
@@ -42,8 +44,8 @@ try {
     die($exw->getMessage());
 }
 
-function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
-
+function saveArchive(\PDO $dbh, $desc, $subt, $tblName)
+{
     $defaultCode = '';
 
     if (isset($desc)) {
@@ -61,7 +63,10 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
             $glRs = new GenLookupsRS();
             $glRs->Table_Name->setStoredVal($tblName);
             $glRs->Code->setStoredVal($code);
-            $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+            $rows = EditRS::select($dbh, $glRs, array(
+                $glRs->Table_Name,
+                $glRs->Code
+            ));
 
             if (count($rows) < 1) {
                 continue;
@@ -102,10 +107,12 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
                 // Update Old
                 $glRs->Type->setNewVal(GlTypeCodes::Archive);
 
-                $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                $ctr = EditRS::update($dbh, $glRs, array(
+                    $glRs->Table_Name,
+                    $glRs->Code
+                ));
                 $logTextu = HouseLog::getUpdateText($glRs, $tblName . $code);
                 HouseLog::logGenLookups($dbh, $tblName, $code, $logTextu, 'update', $uS->username);
-
             } else {
 
                 // update
@@ -113,13 +120,15 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
                     $glRs->Description->setNewVal($newDesc);
                 }
 
-                $ctr = EditRS::update($dbh, $glRs, array($glRs->Table_Name, $glRs->Code));
+                $ctr = EditRS::update($dbh, $glRs, array(
+                    $glRs->Table_Name,
+                    $glRs->Code
+                ));
 
                 if ($ctr > 0) {
                     $logText = HouseLog::getUpdateText($glRs, $tblName . $code);
                     HouseLog::logGenLookups($dbh, $tblName, $code, $logText, 'update', $uS->username);
                 }
-
             }
         }
     }
@@ -127,8 +136,8 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName) {
     return $defaultCode;
 }
 
-function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
-
+function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels)
+{
     $uS = Session::getInstance();
 
     if ($tableName == $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME)) {
@@ -138,31 +147,23 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
     }
 
     // Generate selectors.
-    if($tableName == RESERV_STATUS_TABLE_NAME){
+    if ($tableName == RESERV_STATUS_TABLE_NAME) {
         $lookups = readLookups($dbh, $type, "Code", true);
         $diags = array();
-        
-        //get Cancel Codes
-        foreach($lookups as $lookup){
-            if(Reservation_1::isRemovedStatus($lookup["Code"])){
+
+        // get Cancel Codes
+        foreach ($lookups as $lookup) {
+            if (Reservation_1::isRemovedStatus($lookup["Code"])) {
                 $diags[] = $lookup;
             }
         }
-        
-    }else{
+    } else {
         $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
     }
-    
+
     $tbl = new HTMLTable();
 
-    $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries')
-            . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Order'): '')
-            . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '')
-            . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '')
-            . ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '')
-            . ($type == GlTypeCodes::U ? '' : $type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
-
-
+    $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Order') : '') . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '') . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '') . ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '') . ($type == GlTypeCodes::U ? '' : $type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
 
     $tbl->addHeaderTr($hdrTr);
 
@@ -176,47 +177,63 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels) {
 
         if ($type == GlTypeCodes::m || ($tableName == RESERV_STATUS_TABLE_NAME && ($d[0] == "c1" || $d[0] == "c2" || $d[0] == "c3" || $d[0] == "c4"))) {
 
-            $ary = array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb');
+            $ary = array(
+                'name' => 'cbDiagDel[' . $d[0] . ']',
+                'type' => 'checkbox',
+                'class' => 'hhkdiagdelcb'
+            );
 
             if (strtolower($d[2]) == 'y') {
                 $ary['checked'] = 'checked';
             }
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
-
         } else if (($type == GlTypeCodes::Demographics && $d[0] == 'z') || $tableName == RESERV_STATUS_TABLE_NAME) {
 
             $cbDelMU = HTMLTable::makeTd('');
-
         } else if ($type != GlTypeCodes::U) {
 
-            $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'cbDiagDel[' . $d[0] . ']', 'type' => 'checkbox', 'class' => 'hhkdiagdelcb', 'data-did' => 'selDiagDel[' . $d[0] . ']')));
+            $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+                'name' => 'cbDiagDel[' . $d[0] . ']',
+                'type' => 'checkbox',
+                'class' => 'hhkdiagdelcb',
+                'data-did' => 'selDiagDel[' . $d[0] . ']'
+            )));
         }
 
-        $tbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array('name' => 'txtDiag[' . $d[0] . ']')))
-                . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array('name' => 'txtDOrder[' . $d[0] . ']', 'size'=>'3'))): '')
-                . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array('size' => '10', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[' . $d[0] . ']'))) : '')
-                . $cbDelMU
-                . ($type != GlTypeCodes::m && $type != GlTypeCodes::U && $tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array('name' => 'selDiagDel[' . $d[0] . ']'))) : '')
-            );
+        $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup($d[1], array(
+            'name' => 'txtDiag[' . $d[0] . ']'
+        ))) . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array(
+            'name' => 'txtDOrder[' . $d[0] . ']',
+            'size' => '3'
+        ))) : '') . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array(
+            'size' => '10',
+            'style' => 'text-align:right;',
+            'name' => 'txtDiagAmt[' . $d[0] . ']'
+        ))) : '') . $cbDelMU . ($type != GlTypeCodes::m && $type != GlTypeCodes::U && $tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($tDiags, ''), array(
+            'name' => 'selDiagDel[' . $d[0] . ']'
+        ))) : ''));
     }
 
     // New Entry Markup?
     if ($type != GlTypeCodes::U && $type != GlTypeCodes::m && $tableName != RESERV_STATUS_TABLE_NAME) {
         // new entry row
-        $tbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDiag[0]')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtDOrder[0]', 'size'=>'3')))
-                . HTMLTable::makeTd('New', array('colspan' => 2))
-                . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array('size' => '7', 'style' => 'text-align:right;', 'name' => 'txtDiagAmt[0]'))) : '')
-        );
+        $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+            'name' => 'txtDiag[0]'
+        ))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+            'name' => 'txtDOrder[0]',
+            'size' => '3'
+        ))) . HTMLTable::makeTd('New', array(
+            'colspan' => 2
+        )) . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+            'size' => '7',
+            'style' => 'text-align:right;',
+            'name' => 'txtDiagAmt[0]'
+        ))) : ''));
     }
 
     return $tbl;
-
 }
-
 
 $dbh = $wInit->dbh;
 
@@ -225,7 +242,9 @@ $uS = Session::getInstance();
 // Kick out 'Guest' Users
 if ($uS->rolecode > WebRole::WebUser) {
 
-    exit("Unauthorized - " . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'index.php')));
+    exit("Unauthorized - " . HTMLContainer::generateMarkup('a', 'Continue', array(
+        'href' => 'index.php'
+    )));
 }
 
 $tabIndex = 0;
@@ -233,7 +252,6 @@ $feFileSelection = '';
 $rteMsg = '';
 $rateTableErrorMessage = '';
 $itemMessage = '';
-
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -260,7 +278,6 @@ if (isset($_POST['btnAddnlCharge'])) {
     $tabIndex = 5;
 }
 
-
 // Lookups
 if (isset($_POST['table'])) {
 
@@ -275,7 +292,7 @@ if (isset($_POST['table'])) {
         $tableName = DIAGNOSIS_TABLE_NAME;
     } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
         $tableName = LOCATION_TABLE_NAME;
-    } else if ($tableName == "ReservStatus"){
+    } else if ($tableName == "ReservStatus") {
         $tableName = RESERV_STATUS_TABLE_NAME;
     }
 
@@ -347,21 +364,20 @@ if (isset($_POST['table'])) {
         if (isset($demos[$tableName])) {
 
             if ($tableName == 'Gender') {
-                $rep = function($dbh, $newId, $oldId, $tableName) {
+                $rep = function ($dbh, $newId, $oldId, $tableName) {
                     return $dbh->exec("update name set `$tableName` = '$newId' where `$tableName` = '$oldId';");
                 };
             } else {
-                $rep = function($dbh, $newId, $oldId, $tableName) {
+                $rep = function ($dbh, $newId, $oldId, $tableName) {
                     return $dbh->exec("update name_demog set `$tableName` = '$newId' where `$tableName` = '$oldId';");
                 };
             }
-
         } else {
             switch ($tableName) {
 
                 case 'Patient_Rel_Type':
 
-                    $rep = function($dbh, $newId, $oldId) {
+                    $rep = function ($dbh, $newId, $oldId) {
                         return $dbh->exec("update name_guest set Relationship_Code = '$newId' where Relationship_Code = '$oldId';");
                     };
 
@@ -370,7 +386,7 @@ if (isset($_POST['table'])) {
 
                 case 'Diagnosis':
 
-                    $rep = function($dbh, $newId, $oldId) {
+                    $rep = function ($dbh, $newId, $oldId) {
                         return $dbh->exec("update hospital_stay set Diagnosis = '$newId' where Diagnosis = '$oldId';");
                     };
 
@@ -379,42 +395,42 @@ if (isset($_POST['table'])) {
 
                 case 'Location':
 
-                    $rep = function($dbh, $newId, $oldId) {
+                    $rep = function ($dbh, $newId, $oldId) {
                         return $dbh->exec("update hospital_stay set Location = '$newId' where Location = '$oldId';");
                     };
                     break;
 
                 case 'OSS_Codes':
 
-                    $rep = function($dbh, $newId, $oldId) {
+                    $rep = function ($dbh, $newId, $oldId) {
                         return $dbh->exec("update resource_use set OSS_Code = '$newId' where OSS_Code = '$oldId';");
                     };
                     break;
 
                 case 'Utilization_Category':
 
-                    $rep = function($dbh, $newId, $oldId) {
+                    $rep = function ($dbh, $newId, $oldId) {
                         return $dbh->exec("update resource set Utilization_Category = '$newId' where Utilization_Category = '$oldId';");
                     };
                     break;
 
                 case 'Ins_Type':
 
-                    $rep = function($dbh, $newId, $oldId) {
+                    $rep = function ($dbh, $newId, $oldId) {
                         return $dbh->exec("update insurance set `Type` = '$newId' where `Type` = '$oldId';");
                     };
                     break;
 
                 case 'Room_Cleaning_Days':
 
-                    $rep = function($dbh, $newId, $oldId) {
+                    $rep = function ($dbh, $newId, $oldId) {
                         return $dbh->exec("update room set `Cleaning_Cycle_Code` = '$newId' where `Cleaning_Cycle_Code` = '$oldId';");
                     };
                     break;
 
                 case 'NoReturnReason':
 
-                    $rep = function($dbh, $newId, $oldId) {
+                    $rep = function ($dbh, $newId, $oldId) {
                         return $dbh->exec("update name_demog set `No_Return` = '$newId' where `No_Return` = '$oldId';");
                     };
                     break;
@@ -434,7 +450,7 @@ if (isset($_POST['table'])) {
         }
 
         $codeArray = filter_var_array($_POST['txtDiag'], FILTER_SANITIZE_STRING);
-        $orderNums = (isset($_POST['txtDOrder']) ? filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT): array());
+        $orderNums = (isset($_POST['txtDOrder']) ? filter_var_array($_POST['txtDOrder'], FILTER_SANITIZE_NUMBER_INT) : array());
 
         if ($type === GlTypeCodes::m) {
 
@@ -444,7 +460,10 @@ if (isset($_POST['table'])) {
                 $gluRs->Table_Name->setStoredVal($tableName);
                 $gluRs->Code->setStoredVal($c);
 
-                $rw = EditRS::select($dbh, $gluRs, array($gluRs->Table_Name, $gluRs->Code));
+                $rw = EditRS::select($dbh, $gluRs, array(
+                    $gluRs->Table_Name,
+                    $gluRs->Code
+                ));
 
                 if (count($rw) == 1) {
 
@@ -470,7 +489,10 @@ if (isset($_POST['table'])) {
                     $gluRs->Substitute->setNewVal($use);
                     $gluRs->Order->setNewVal($orderNumber);
 
-                    $upCtr = EditRS::update($dbh, $gluRs, array($gluRs->Table_Name, $gluRs->Code));
+                    $upCtr = EditRS::update($dbh, $gluRs, array(
+                        $gluRs->Table_Name,
+                        $gluRs->Code
+                    ));
 
                     if ($upCtr > 0) {
 
@@ -479,29 +501,27 @@ if (isset($_POST['table'])) {
                     }
                 }
             }
-        } else if(isset($_POST['selmisc'])) {
+        } else if (isset($_POST['selmisc'])) {
             replaceLookups($dbh, $_POST['selmisc'], $codeArray, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : array()));
-        }else {
+        } else {
             replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
         }
     }
 
-
     // Generate selectors.
-    if(isset($_POST['selmisc'])){
+    if (isset($_POST['selmisc'])) {
         $tbl = getSelections($dbh, RESERV_STATUS_TABLE_NAME, $_POST['selmisc'], $labels);
-    }else{
+    } else {
         $tbl = getSelections($dbh, $tableName, $type, $labels);
     }
 
-    echo($tbl->generateMarkup());
+    echo ($tbl->generateMarkup());
     exit();
 }
 
 if (isset($_POST['btnkfSave'])) {
 
     $tabIndex = 2;
-
 
     // room pricing
     $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
@@ -512,7 +532,7 @@ if (isset($_POST['btnkfSave'])) {
         $uS->RoomRateDefault = $newDefault;
     }
 
-    //Static room settings.
+    // Static room settings.
     if (isset($_POST['srrDesc'][0]) && $_POST['srrDesc'][0] != '') {
 
         // new entry
@@ -542,10 +562,8 @@ if (isset($_POST['btnkfSave'])) {
         unset($_POST['srrDesc'][0]);
     }
 
-    //saveArchive($dbh, $_POST['srrDesc'], $_POST['srrAmt'], 'Static_Room_Rate');
+    // saveArchive($dbh, $_POST['srrDesc'], $_POST['srrAmt'], 'Static_Room_Rate');
     saveGenLk($dbh, 'Static_Room_Rate', $_POST['srrDesc'], $_POST['srrAmt'], NULL);
-
-
 
     // Key Deposit
     if (isset($_POST['kdesc'])) {
@@ -560,11 +578,15 @@ if (isset($_POST['btnkfSave'])) {
                 // update item
                 $itemRs = new ItemRS();
                 $itemRs->idItem->setStoredVal(ItemId::KeyDeposit);
-                $rows = EditRS::select($dbh, $itemRs, array($itemRs->idItem));
+                $rows = EditRS::select($dbh, $itemRs, array(
+                    $itemRs->idItem
+                ));
 
                 if (count($rows) == 1) {
                     $itemRs->Description->setNewVal(filter_var($_POST['kdesc'][$k], FILTER_SANITIZE_STRING));
-                    EditRS::update($dbh, $itemRs, array($itemRs->idItem));
+                    EditRS::update($dbh, $itemRs, array(
+                        $itemRs->idItem
+                    ));
                 }
             }
         }
@@ -586,10 +608,15 @@ if (isset($_POST['btnkfSave'])) {
                 $glRs = new GenLookupsRS();
                 $glRs->Table_Name->setStoredVal('Visit_Fee_Code');
                 $glRs->Description->setStoredVal($newDesc);
-                $rows = EditRS::select($dbh, $glRs, array($glRs->Table_Name, $glRs->Description));
+                $rows = EditRS::select($dbh, $glRs, array(
+                    $glRs->Table_Name,
+                    $glRs->Description
+                ));
 
                 if (count($rows) > 0) {
-                    $rateTableErrorMessage = HTMLContainer::generateMarkup('p', 'Visit fee code "' . $newDesc . '" is already defined. ', array('style'=>'color:red;'));
+                    $rateTableErrorMessage = HTMLContainer::generateMarkup('p', 'Visit fee code "' . $newDesc . '" is already defined. ', array(
+                        'style' => 'color:red;'
+                    ));
                 } else {
 
                     // Insert new cleaning fee
@@ -604,7 +631,6 @@ if (isset($_POST['btnkfSave'])) {
                     EditRS::insert($dbh, $glRs);
                     $logText = HouseLog::getInsertText($glRs, 'Visit_Fee_Code');
                     HouseLog::logGenLookups($dbh, 'Visit_Fee_Code', $newCode, $logText, 'insert', $uS->username);
-
                 }
             }
         }
@@ -654,13 +680,11 @@ if (isset($_POST['btnkfSave'])) {
         }
     }
 
-
     // Excess Pay
     if (isset($_POST['epdesc'][$uS->VisitExcessPaid])) {
 
         saveGenLk($dbh, 'ExcessPays', $_POST['epdesc'], array(), NULL);
     }
-
 
     // Financial Asst. Break points.
     if (isset($_POST['faIa'])) {
@@ -676,7 +700,6 @@ if (isset($_POST['btnkfSave'])) {
             $faRs = new Fa_CategoryRs();
             EditRS::loadRow($r, $faRs);
 
-
             $idFa = $faRs->idFa_category->getStoredVal();
 
             $faRs->Income_A->setNewVal(str_replace(',', '', str_replace('$', '', $faIa[$idFa])));
@@ -686,7 +709,9 @@ if (isset($_POST['btnkfSave'])) {
             $faRs->Updated_By->setNewVal($uS->username);
             $faRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
-            EditRS::update($dbh, $faRs, array($faRs->idFa_category));
+            EditRS::update($dbh, $faRs, array(
+                $faRs->idFa_category
+            ));
         }
     }
 }
@@ -708,12 +733,17 @@ if (isset($_POST['btnhSave'])) {
 
         // Delete?
         if (isset($_POST['hdel'][$idHosp])) {
-            EditRS::delete($dbh, $hospRs, array($hospRs->idHospital));
+            EditRS::delete($dbh, $hospRs, array(
+                $hospRs->idHospital
+            ));
 
             // Delete any attribute entries
             $query = "delete from attribute_entity where idEntity = :id and Type = :tpe";
             $stmt = $dbh->prepare($query);
-            $stmt->execute(array(':id' => $idHosp, ':tpe' => Attribute_Types::Hospital));
+            $stmt->execute(array(
+                ':id' => $idHosp,
+                ':tpe' => Attribute_Types::Hospital
+            ));
             continue;
         }
 
@@ -749,7 +779,9 @@ if (isset($_POST['btnhSave'])) {
         }
 
         if ($idHosp > 0) {
-            $rows = EditRS::select($dbh, $hospRs, array($hospRs->idHospital));
+            $rows = EditRS::select($dbh, $hospRs, array(
+                $hospRs->idHospital
+            ));
             if (count($rows) == 1) {
                 EditRS::loadRow($rows[0], $hospRs);
             } else {
@@ -767,8 +799,10 @@ if (isset($_POST['btnhSave'])) {
         $hospRs->Last_Updated->setNewVal(date('Y-m-d'));
 
         if ($idHosp > 0) {
-            //update
-            EditRS::update($dbh, $hospRs, array($hospRs->idHospital));
+            // update
+            EditRS::update($dbh, $hospRs, array(
+                $hospRs->idHospital
+            ));
 
             // Check attributes
             $capturedAttributes = array();
@@ -783,7 +817,7 @@ if (isset($_POST['btnhSave'])) {
             $cHosp = new ConstraintsHospital($dbh, $idHosp);
             $cHosp->saveConstraints($dbh, $capturedAttributes);
         } else {
-            //insert
+            // insert
             EditRS::insert($dbh, $hospRs);
         }
     }
@@ -807,7 +841,9 @@ if (isset($_POST['btnAttrSave'])) {
         // Delete?
         if (isset($_POST['atdel'][$idAttr])) {
 
-            EditRS::delete($dbh, $atRs, array($atRs->idAttribute));
+            EditRS::delete($dbh, $atRs, array(
+                $atRs->idAttribute
+            ));
 
             // delete from attribute_entity
             $dbh->query("Delete from attribute_entity where idAttribute = $idAttr");
@@ -836,7 +872,9 @@ if (isset($_POST['btnAttrSave'])) {
         }
 
         if ($idAttr > 0) {
-            $rows = EditRS::select($dbh, $atRs, array($atRs->idAttribute));
+            $rows = EditRS::select($dbh, $atRs, array(
+                $atRs->idAttribute
+            ));
             if (count($rows) == 1) {
                 EditRS::loadRow($rows[0], $atRs);
             } else {
@@ -852,10 +890,12 @@ if (isset($_POST['btnAttrSave'])) {
         $atRs->Last_Updated->setNewVal(date('Y-m-d'));
 
         if ($idAttr > 0) {
-            //update
-            EditRS::update($dbh, $atRs, array($atRs->idAttribute));
+            // update
+            EditRS::update($dbh, $atRs, array(
+                $atRs->idAttribute
+            ));
         } else {
-            //insert
+            // insert
             EditRS::insert($dbh, $atRs);
         }
     }
@@ -869,7 +909,6 @@ if (isset($_POST['btnItemSave'])) {
     $iistmt = $dbh->query("Select * from item_item");
     $taxItemMap = $iistmt->fetchAll(\PDO::FETCH_ASSOC);
 
-
     $sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage
     from item i left join item_type_map itm on itm.Item_Id = i.idItem");
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
@@ -882,14 +921,12 @@ if (isset($_POST['btnItemSave'])) {
             continue;
         }
 
-
         if (isset($_POST['txtItem'][$idItem])) {
 
             $desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_STRING);
             $glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_STRING);
 
             $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
-
         }
 
         if (isset($_POST['cbtax'][$idItem])) {
@@ -901,9 +938,7 @@ if (isset($_POST['btnItemSave'])) {
                 if ($idTaxItem > 0) {
                     $dbh->exec("Replace into item_item (idItem, Item_Id) values ($idItem, $idTaxItem)");
                 }
-
             }
-
         }
 
         // delete unchecked tax items
@@ -913,8 +948,6 @@ if (isset($_POST['btnItemSave'])) {
                 $dbh->exec("delete from item_item where idItem = $idItem and Item_Id = " . $m['Item_Id']);
             }
         }
-
-
     }
 }
 
@@ -922,7 +955,7 @@ if (isset($_POST['btnTaxSave'])) {
     $tabIndex = 7;
 
     $sitems = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
-        from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax );
+        from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax);
     $items = $sitems->fetchAll(PDO::FETCH_ASSOC);
 
     // Get the latest visit id
@@ -946,16 +979,16 @@ if (isset($_POST['btnTaxSave'])) {
             if ($maxDays != $i['Timeout_Days'] || $percentage != $i['Percentage']) {
 
                 if ($last != 0) {
-                    $itemMessage = HTMLContainer::generateMarkup('span', 'Cannot change that tax item.', array('style'=>'color:red;'));
+                    $itemMessage = HTMLContainer::generateMarkup('span', 'Cannot change that tax item.', array(
+                        'style' => 'color:red;'
+                    ));
                 } else {
 
                     // save this one with the last order id
-                    $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', Last_Order_Id = $maxVisitId "
-                        . " where `idItem` = " . $i['idItem']);
+                    $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode', Last_Order_Id = $maxVisitId " . " where `idItem` = " . $i['idItem']);
 
                     // Create the a new item with the new percentage or maxDays
-                    $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) "
-                            . "Values ('$desc', '$glCode', '$percentage', '$maxDays', $nextVisitId)");
+                    $dbh->exec("insert into `item` (`Description`, `Gl_Code`, `Percentage`, `Timeout_Days`, First_Order_Id) " . "Values ('$desc', '$glCode', '$percentage', '$maxDays', $nextVisitId)");
 
                     $newItemId = $dbh->lastInsertId();
 
@@ -969,13 +1002,12 @@ if (isset($_POST['btnTaxSave'])) {
 
                     // add to item_item to connet with the taxed item id.
                     while ($t = $tstmt->fetch(\PDO::FETCH_NUM)) {
-                        $dbh->exec("Insert into item_item (idItem, Item_Id) values (" . $t[0] . ", $newItemId)" );
+                        $dbh->exec("Insert into item_item (idItem, Item_Id) values (" . $t[0] . ", $newItemId)");
                     }
                 }
             } else {
 
-                $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode'"
-                    . " where `idItem` = " . $i['idItem']);
+                $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode'" . " where `idItem` = " . $i['idItem']);
             }
         }
     }
@@ -994,7 +1026,6 @@ if (isset($_POST['btnTaxSave'])) {
             $dbh->exec("insert into `item_type_map` Values ('" . $dbh->lastInsertId() . "', '" . ItemType::Tax . "')");
         }
     }
-
 }
 
 // Get forms
@@ -1007,6 +1038,10 @@ if (isset($_POST['ldfm'])) {
 
     $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
 
+    //get available doc replacements
+    $replacements = $replacementStmt = $dbh->query("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = '$formType'");
+    $replacementRows = $replacementStmt->fetchAll();
+    
     // Look for a match
     foreach ($rarry as $f) {
 
@@ -1017,48 +1052,55 @@ if (isset($_POST['ldfm'])) {
         }
     }
 
-    if (empty($formDef) === FALSE) {
-        // Caught us a form
-
-        $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef'");
-        $docRows = $formstmt->fetchAll();
-
-
-        $li = '';
-        $tabContent = '';
-
-        foreach ($docRows as $r) {
-
-            $li .= HTMLContainer::generateMarkup('li',
-                    HTMLContainer::generateMarkup('a', $r['Description'] , array('href'=>'#'.$r['Code'])));
-
-            $tabContent .= HTMLContainer::generateMarkup('div',
-'<form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="ui-widget-content" style="margin-bottom:15px; padding: 5px 7px; ">
-<input type="hidden" name="docId" value="'.$r['idDocument'] . '"/>
-Upload new file: <input name="formfile" type="file" />
-<input type="submit" name="docUpload" value="Send File" />
-</form>'
-                .HTMLContainer::generateMarkup('div', $r['Doc'], array('id'=>'form'.$r['idDocument'])),
-                array('id'=>$r['Code']));
-
-        }
-
-        // add New documt
-        $li .= HTMLContainer::generateMarkup('li', 
-                HTMLContainer::generateMarkup('a', 'New...' , array('href'=>'#newDoc')), array('id'=>'liNewForm', 'data-type'=>$formType, 'data-title'=>$formTitle));
-
-        $tabContent .= HTMLContainer::generateMarkup('div', ' ', array('id'=>'newDoc'));
-
-        // Make the final tab control
-        $ul = HTMLContainer::generateMarkup('ul', $li, array());
-        $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
-
-        echo $output;
-
-
-    } else {
-        echo "Nothing specified.  ";
+    if (empty($formDef)) {
+        
+        $formDef = "FormDef-" . incCounter($dbh, 'codes');
+        $dbh->exec("UPDATE `gen_lookups` SET `Substitute` = '$formDef' WHERE `Table_Name` = 'Form_Upload' AND `Code` = '$formType'");
     }
+
+    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef'");
+    $docRows = $formstmt->fetchAll();
+
+    $li = '';
+    $tabContent = '';
+
+    foreach ($docRows as $r) {
+
+        $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', $r['Description'], array(
+            'href' => '#' . $r['Code']
+        )));
+
+        $tabContent .= HTMLContainer::generateMarkup('div', '<div class="mb-3"><button class="replaceForm mb-3" style="display:block; margin: 0 0 0 auto">Replace Form</button><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="ui-widget-content" style="margin-bottom:15px; padding: 5px 7px; display: none;">
+<input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>
+Upload new file: <input name="formfile" type="file" required />
+<input type="submit" name="docUpload" value="Send File" />
+</form></div>' . HTMLContainer::generateMarkup('div', $r['Doc'], array(
+            'id' => 'form' . $r['idDocument']
+        )), array(
+            'id' => $r['Code']
+        ));
+    }
+    // add New documt
+    $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'New...', array(
+        'href' => '#newDoc'
+    )), array(
+        'id' => 'liNewForm',
+        'data-type' => $formType,
+        'data-title' => $formTitle
+    ));
+
+    $tabContent .= HTMLContainer::generateMarkup('div', ' ', array(
+        'id' => 'newDoc'
+    ));
+
+    // Make the final tab control
+    $ul = HTMLContainer::generateMarkup('ul', $li, array());
+    $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array(
+        'id' => 'regTabDiv'
+    ));
+
+    echo $output;
+
     exit();
 }
 
@@ -1066,8 +1108,10 @@ Upload new file: <input name="formfile" type="file" />
 if (isset($_POST['docUpload'])) {
 
     $tabIndex = 8;
-
-    $docId = -1;
+    
+    if(is_uploaded_file($_FILES['formfile']['tmp_name'])) {
+    
+    $docId = - 1;
     if (isset($_POST['docId'])) {
         $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
     }
@@ -1084,6 +1128,8 @@ if (isset($_POST['docUpload'])) {
     $dbh->beginTransaction();
     $ustmt->execute();
     $dbh->commit();
+    
+    }
 }
 
 if (isset($_POST['txtformLang'])) {
@@ -1093,7 +1139,7 @@ if (isset($_POST['txtformLang'])) {
     $formType = '';
     $formDef = '';
     $formTitle = '';
-    
+
     if ($lang != '') {
 
         if (isset($_POST['hdnFormType'])) {
@@ -1124,10 +1170,8 @@ if (isset($_POST['txtformLang'])) {
             if (count($langRows) > 0) {
                 // Ah, a recognized language
                 $langCode = $langRows[0]['Code'];
-
             } else {
-                // Make our own code.
-
+                $langCode = incCounter($dbh, 'codes');
             }
 
             if ($langCode != '') {
@@ -1177,11 +1221,16 @@ $kTbl->addHeaderTr(HTMLTable::makeTh('Selected Model'));
 
 $kTbl->addBodyTr(HTMLTable::makeTd($rPrices[$uS->RoomPriceModel][1]));
 
-$pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Pricing Model', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'margin:7px;'));
+$pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Pricing Model', array(
+    'style' => 'font-weight:bold;'
+)) . $kTbl->generateMarkup(array(
+    'style' => 'margin:7px;'
+)), array(
+    'style' => 'margin:7px;'
+));
 
 $rescTable = ResourceView::resourceTable($dbh);
 $roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit);
-
 
 // Room Pricing
 $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
@@ -1194,22 +1243,35 @@ $sTbl = new HTMLTable();
 $sTbl->addHeaderTr(HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount'));
 
 foreach ($rp as $r) {
-    $sTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'srrDesc[' . $r[0] . ']', 'size' => '16')))
-            . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array('name' => 'srrAmt[' . $r[0] . ']', 'size' => '6', 'class' => 'number-only')))
-    );
+    $sTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array(
+        'name' => 'srrDesc[' . $r[0] . ']',
+        'size' => '16'
+    ))) . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array(
+        'name' => 'srrAmt[' . $r[0] . ']',
+        'size' => '6',
+        'class' => 'number-only'
+    ))));
 }
 
-$sTbl->addBodyTr(HTMLTable::makeTd('New static room rate:', array('colspan' => '3')));
-$sTbl->addBodyTr(
-        HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'srrDesc[0]', 'size' => '16')))
-        . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name' => 'srrAmt[0]', 'size' => '6', 'class' => 'number-only')))
-);
+$sTbl->addBodyTr(HTMLTable::makeTd('New static room rate:', array(
+    'colspan' => '3'
+)));
+$sTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'srrDesc[0]',
+    'size' => '16'
+))) . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array(
+    'name' => 'srrAmt[0]',
+    'size' => '6',
+    'class' => 'number-only'
+))));
 
-
-$sMarkup = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Static Room Rate', array('style' => 'font-weight:bold;')) .
-                $sTbl->generateMarkup(array('style' => 'float:left;margin:7px;')), array('style' => 'clear:left;float:left;margin:7px;'));
-
+$sMarkup = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Static Room Rate', array(
+    'style' => 'font-weight:bold;'
+)) . $sTbl->generateMarkup(array(
+    'style' => 'float:left;margin:7px;'
+)), array(
+    'style' => 'clear:left;float:left;margin:7px;'
+));
 
 // Rate Calculator
 $rcMarkup = '';
@@ -1218,35 +1280,55 @@ if ($priceModel->hasRateCalculator()) {
 
     $tbl = new HTMLTable();
 
-    $tbl->addHeaderTr(
-            HTMLTable::makeTh('Room Rate')
-            . HTMLTable::makeTh('Credit')
-            . ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? HTMLTable::makeTh('Guest Nights') : HTMLTable::makeTh('Nights'))
-            . HTMLTable::makeTh('Total'));
+    $tbl->addHeaderTr(HTMLTable::makeTh('Room Rate') . HTMLTable::makeTh('Credit') . ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? HTMLTable::makeTh('Guest Nights') : HTMLTable::makeTh('Nights')) . HTMLTable::makeTh('Total'));
 
-    $attrFixed = array('id' => 'spnRateTB', 'class' => 'hhk-fxFixed', 'style' => 'margin-left:.5em;display:none;');
+    $attrFixed = array(
+        'id' => 'spnRateTB',
+        'class' => 'hhk-fxFixed',
+        'style' => 'margin-left:.5em;display:none;'
+    );
     $rateCategories = RoomRate::makeSelectorOptions($priceModel);
 
+    $tbl->addBodyTr(HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), ''), array(
+        'name' => 'selRateCategory'
+    )) . HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup('', array(
+        'name' => 'txtFixedRate',
+        'size' => '4'
+    )), $attrFixed)) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+        'name' => 'txtCredit',
+        'size' => '4'
+    )), array(
+        'style' => 'text-align:center;'
+    )) . HTMLTable::makeTd(HTMLInput::generateMarkup('1', array(
+        'name' => 'txtNites',
+        'size' => '4'
+    )), array(
+        'style' => 'text-align:center;'
+    )) . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', '0', array(
+        'name' => 'spnAmount'
+    )), array(
+        'style' => 'text-align:center;'
+    )));
 
-    $tbl->addBodyTr(
-            HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), ''), array('name' => 'selRateCategory'))
-                    . HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup('', array('name' => 'txtFixedRate', 'size' => '4')), $attrFixed))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtCredit', 'size' => '4')), array('style' => 'text-align:center;'))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup('1', array('name' => 'txtNites', 'size' => '4')), array('style' => 'text-align:center;'))
-            . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', '0', array('name' => 'spnAmount')), array('style' => 'text-align:center;'))
-    );
-
-    $rcMarkup = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rate Calculator', array('style' => 'font-weight:bold;')) .
-                    $tbl->generateMarkup(array('style' => 'float:left;margin:7px;')), array('style' => 'clear:left;float:left;margin:7px;'));
+    $rcMarkup = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rate Calculator', array(
+        'style' => 'font-weight:bold;'
+    )) . $tbl->generateMarkup(array(
+        'style' => 'float:left;margin:7px;'
+    )), array(
+        'style' => 'clear:left;float:left;margin:7px;'
+    ));
 }
 
 // Wrap rate table and rate calculator
-$feesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rates', array('style' => 'font-weight:bold;'))
-                . HTMLContainer::generateMarkup('div', $fTbl->generateMarkup(array('style' => 'margin:7px;')), array('style'=>'max-height:310px; overflow-y:scroll;'))
-                . $rcMarkup
-                . $sMarkup
-                , array('style' => 'clear:left;float:left;margin:7px;'));
-
+$feesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Room Rates', array(
+    'style' => 'font-weight:bold;'
+)) . HTMLContainer::generateMarkup('div', $fTbl->generateMarkup(array(
+    'style' => 'margin:7px;'
+)), array(
+    'style' => 'max-height:310px; overflow-y:scroll;'
+)) . $rcMarkup . $sMarkup, array(
+    'style' => 'clear:left;float:left;margin:7px;'
+));
 
 // Visit Fees - cleaning fees
 $visitFeesTable = '';
@@ -1263,7 +1345,10 @@ if ($uS->VisitFee) {
             continue;
         }
 
-        $ptAttrs = array('type' => 'radio', 'name' => 'vfrbdefault');
+        $ptAttrs = array(
+            'type' => 'radio',
+            'name' => 'vfrbdefault'
+        );
 
         if ($uS->DefaultVisitFee == $r[0]) {
             $ptAttrs['checked'] = 'checked';
@@ -1271,23 +1356,38 @@ if ($uS->VisitFee) {
             unset($ptAttrs['checked']);
         }
 
-        $kTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r[0], $ptAttrs), array('style' => 'text-align:center;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'vfdesc[' . $r[0] . ']', 'size' => '16')))
-                . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array('name' => 'vfrate[' . $r[0] . ']', 'size' => '6', 'class' => 'number-only')))
-        );
+        $kTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup($r[0], $ptAttrs), array(
+            'style' => 'text-align:center;'
+        )) . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array(
+            'name' => 'vfdesc[' . $r[0] . ']',
+            'size' => '16'
+        ))) . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array(
+            'name' => 'vfrate[' . $r[0] . ']',
+            'size' => '6',
+            'class' => 'number-only'
+        ))));
     }
 
     // add empty fee row
-        $kTbl->addBodyTr(
-                HTMLTable::makeTd('', array('style' => 'text-align:center;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'vfdesc[0]', 'size' => '16')))
-                . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name' => 'vfrate[0]', 'size' => '6', 'class' => 'number-only'))));
+    $kTbl->addBodyTr(HTMLTable::makeTd('', array(
+        'style' => 'text-align:center;'
+    )) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+        'name' => 'vfdesc[0]',
+        'size' => '16'
+    ))) . HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array(
+        'name' => 'vfrate[0]',
+        'size' => '6',
+        'class' => 'number-only'
+    ))));
 
-
-    $visitFeesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ' Amount', array('style' => 'font-weight:bold;')) . $kTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'float:left;margin:7px;'));
+    $visitFeesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee') . ' Amount', array(
+        'style' => 'font-weight:bold;'
+    )) . $kTbl->generateMarkup(array(
+        'style' => 'margin:7px;'
+    )), array(
+        'style' => 'float:left;margin:7px;'
+    ));
 }
-
 
 // Financial Assistance Categories
 $faMarkup = '';
@@ -1300,28 +1400,43 @@ if ($uS->IncomeRated) {
 
     $faTbl->addHeaderTr(HTMLTable::makeTh('Household Size') . HTMLTable::makeTh('A') . HTMLTable::makeTh('B') . HTMLTable::makeTh('C') . HTMLTable::makeTh('D'));
     foreach ($faRows as $r) {
-        $faTbl->addBodyTr(
-                HTMLTable::makeTd($r['HouseHoldSize'], array('style' => 'text-align:center;'))
-                . HTMLTable::makeTd('< $' . HTMLInput::generateMarkup(number_format($r['Income_A']), array('name' => 'faIa[' . $r['idFa_category'] . ']', 'size' => '4')))
-                . HTMLTable::makeTd('<= $' . HTMLInput::generateMarkup(number_format($r['Income_B']), array('name' => 'faIb[' . $r['idFa_category'] . ']', 'size' => '4')))
-                . HTMLTable::makeTd('<= $' . HTMLInput::generateMarkup(number_format($r['Income_C']), array('name' => 'faIc[' . $r['idFa_category'] . ']', 'size' => '4')))
-                . HTMLTable::makeTd('> ' . number_format($r['Income_C']))
-        );
+        $faTbl->addBodyTr(HTMLTable::makeTd($r['HouseHoldSize'], array(
+            'style' => 'text-align:center;'
+        )) . HTMLTable::makeTd('< $' . HTMLInput::generateMarkup(number_format($r['Income_A']), array(
+            'name' => 'faIa[' . $r['idFa_category'] . ']',
+            'size' => '4'
+        ))) . HTMLTable::makeTd('<= $' . HTMLInput::generateMarkup(number_format($r['Income_B']), array(
+            'name' => 'faIb[' . $r['idFa_category'] . ']',
+            'size' => '4'
+        ))) . HTMLTable::makeTd('<= $' . HTMLInput::generateMarkup(number_format($r['Income_C']), array(
+            'name' => 'faIc[' . $r['idFa_category'] . ']',
+            'size' => '4'
+        ))) . HTMLTable::makeTd('> ' . number_format($r['Income_C'])));
     }
 
-    $faTbl->addBodyTr(HTMLTable::makeTd('Key:  "<=" means Income Amount is Less Than or Equal To', array('colspan' => '5')));
+    $faTbl->addBodyTr(HTMLTable::makeTd('Key:  "<=" means Income Amount is Less Than or Equal To', array(
+        'colspan' => '5'
+    )));
 
     // fa calculator
     $fin = new FinAssistance($dbh, 0);
     $calcTbl = $fin->createRateCalcMarkup();
 
-    $fcTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Financial Assistance Rate Calculator', array('style' => 'font-weight:bold;')) .
-                    $calcTbl->generateMarkup(array('style' => 'float:left;margin:7px;')), array('style' => 'clear:left;float:left;margin:7px;'));
+    $fcTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Financial Assistance Rate Calculator', array(
+        'style' => 'font-weight:bold;'
+    )) . $calcTbl->generateMarkup(array(
+        'style' => 'float:left;margin:7px;'
+    )), array(
+        'style' => 'clear:left;float:left;margin:7px;'
+    ));
 
-    $faMarkup = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Financial Assistance Breakpoints', array('style' => 'font-weight:bold;'))
-                    . $faTbl->generateMarkup(array('style' => 'float:left;margin:7px;'))
-                    . $fcTable
-                    , array('style' => 'float:left;margin:7px;'));
+    $faMarkup = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Financial Assistance Breakpoints', array(
+        'style' => 'font-weight:bold;'
+    )) . $faTbl->generateMarkup(array(
+        'style' => 'float:left;margin:7px;'
+    )) . $fcTable, array(
+        'style' => 'float:left;margin:7px;'
+    ));
 }
 
 // Key deposit options
@@ -1331,22 +1446,29 @@ $rateTableTabTitle = 'Room Rates';
 if ($uS->KeyDeposit) {
     $kFees = readGenLookupsPDO($dbh, 'Key_Deposit_Code');
     $kTbl = new HTMLTable();
-    $kTbl->addHeaderTr(HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount'));  //.HTMLTable::makeTh('Delete'));
+    $kTbl->addHeaderTr(HTMLTable::makeTh('Description') . HTMLTable::makeTh('Amount')); // .HTMLTable::makeTh('Delete'));
 
     foreach ($kFees as $r) {
-        $kTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'kdesc[' . $r[0] . ']', 'size' => '16')))
-                . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array('name' => 'krate[' . $r[0] . ']', 'size' => '6', 'class' => 'number-only')))
-        );
+        $kTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array(
+            'name' => 'kdesc[' . $r[0] . ']',
+            'size' => '16'
+        ))) . HTMLTable::makeTd('$' . HTMLInput::generateMarkup($r[2], array(
+            'name' => 'krate[' . $r[0] . ']',
+            'size' => '6',
+            'class' => 'number-only'
+        ))));
     }
 
-    $keysTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('resourceBuilder', 'keyDepositLabel', 'Key Deposit') . ' Amounts', array('style' => 'font-weight:bold;'))
-                    . $kTbl->generateMarkup(array('style' => 'margin:7px;'))
-                    , array('style' => 'float:left;margin:7px;'));
+    $keysTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', $labels->getString('resourceBuilder', 'keyDepositLabel', 'Key Deposit') . ' Amounts', array(
+        'style' => 'font-weight:bold;'
+    )) . $kTbl->generateMarkup(array(
+        'style' => 'margin:7px;'
+    )), array(
+        'style' => 'float:left;margin:7px;'
+    ));
 
     $rateTableTabTitle .= ' & ' . $labels->getString('resourceBuilder', 'keyDepositLabel', 'Key Deposit') . 's';
 }
-
 
 // Payment Types
 $payTypesTable = '';
@@ -1359,7 +1481,10 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
     foreach ($payTypes as $r) {
 
-        $ptAttrs = array('type' => 'radio', 'name' => 'ptrbdefault');
+        $ptAttrs = array(
+            'type' => 'radio',
+            'name' => 'ptrbdefault'
+        );
 
         if ($uS->DefaultPayType == $r[0]) {
             $ptAttrs['checked'] = 'checked';
@@ -1367,13 +1492,21 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
             unset($ptAttrs['checked']);
         }
 
-        $ptTbl->addBodyTr(
-                HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), array('style' => 'text-align:center;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'ptdesc[' . $r[0] . ']', 'size' => '16')))
-        );
+        $ptTbl->addBodyTr(HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), array(
+            'style' => 'text-align:center;'
+        )) . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array(
+            'name' => 'ptdesc[' . $r[0] . ']',
+            'size' => '16'
+        ))));
     }
 
-    $payTypesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Pay Types', array('style' => 'font-weight:bold;')) . $ptTbl->generateMarkup(array('style' => 'margin:7px;')), array('style' => 'float:left;margin:7px;'));
+    $payTypesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Pay Types', array(
+        'style' => 'font-weight:bold;'
+    )) . $ptTbl->generateMarkup(array(
+        'style' => 'margin:7px;'
+    )), array(
+        'style' => 'float:left;margin:7px;'
+    ));
 }
 
 // Hospitals and associations
@@ -1382,10 +1515,8 @@ $hrows = EditRS::select($dbh, $hospRs, array());
 
 $hospTypes = readGenLookupsPDO($dbh, 'Hospital_Type');
 
-
 $constraints = new Constraints($dbh);
 $hospConstraints = $constraints->getConstraintsByType(Constraint_Type::Hospital);
-
 
 $hTbl = new HTMLTable();
 $hths = HTMLTable::makeTh('Id') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Type') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('Color') . HTMLTable::makeTh('Text Color');
@@ -1398,7 +1529,10 @@ $hTbl->addHeaderTr($hths);
 
 foreach ($hrows as $h) {
 
-    $hattr = array('name' => 'hstat[' . $h['idHospital'] . ']', 'type' => 'checkbox');
+    $hattr = array(
+        'name' => 'hstat[' . $h['idHospital'] . ']',
+        'type' => 'checkbox'
+    );
     if ($h['Status'] == 'a') {
         $hattr['checked'] = 'checked';
     }
@@ -1406,42 +1540,64 @@ foreach ($hrows as $h) {
     $myConsts = new ConstraintsHospital($dbh, $h['idHospital']);
     $hConst = $myConsts->getConstraints();
 
-
-    $htds = HTMLTable::makeTd($h['idHospital'])
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Title'], array('name' => 'hTitle[' . $h['idHospital'] . ']')))
-            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, $h['Type'], FALSE), array('name' => 'hType[' . $h['idHospital'] . ']')))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Description'], array('name' => 'hDesc[' . $h['idHospital'] . ']', 'size' => '25')))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Reservation_Style'], array('name' => 'hColor[' . $h['idHospital'] . ']', 'class' => 'color', 'size' => '5')))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Stay_Style'], array('name' => 'hText[' . $h['idHospital'] . ']', 'class' => 'color', 'size' => '5')));
+    $htds = HTMLTable::makeTd($h['idHospital']) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Title'], array(
+        'name' => 'hTitle[' . $h['idHospital'] . ']'
+    ))) . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, $h['Type'], FALSE), array(
+        'name' => 'hType[' . $h['idHospital'] . ']'
+    ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Description'], array(
+        'name' => 'hDesc[' . $h['idHospital'] . ']',
+        'size' => '25'
+    ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Reservation_Style'], array(
+        'name' => 'hColor[' . $h['idHospital'] . ']',
+        'class' => 'color',
+        'size' => '5'
+    ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Stay_Style'], array(
+        'name' => 'hText[' . $h['idHospital'] . ']',
+        'class' => 'color',
+        'size' => '5'
+    )));
 
     foreach ($hConst as $a) {
-        $cbAttrs = array('name' => 'hpattr[' . $h['idHospital'] . '][' . $a['idConstraint'] . ']', 'type' => 'checkbox');
+        $cbAttrs = array(
+            'name' => 'hpattr[' . $h['idHospital'] . '][' . $a['idConstraint'] . ']',
+            'type' => 'checkbox'
+        );
         if ($a['isActive'] == 1) {
             $cbAttrs['checked'] = 'checked';
         }
-        $htds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $cbAttrs), array('style' => 'text-align:center;'));
+        $htds .= HTMLTable::makeTd(HTMLInput::generateMarkup('', $cbAttrs), array(
+            'style' => 'text-align:center;'
+        ));
     }
 
-
-    $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated'])))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hdel[' . $h['idHospital'] . ']', 'type' => 'checkbox')), array('style' => 'text-align:center;'));
+    $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated']))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+        'name' => 'hdel[' . $h['idHospital'] . ']',
+        'type' => 'checkbox'
+    )), array(
+        'style' => 'text-align:center;'
+    ));
 
     $hTbl->addBodyTr($htds);
 }
 
 // new hospital
-$hTbl->addBodyTr(HTMLTable::makeTd('')
-        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hTitle[0]')))
-        . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, ''), array('name' => 'hType[0]')))
-        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hDesc[0]')))
-        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hColor[0]', 'size' => '5')))
-        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'hText[0]', 'size' => '5')))
-        . HTMLTable::makeTd('Create New', array('colspan' => '4'))
-);
+$hTbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'hTitle[0]'
+))) . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hospTypes, ''), array(
+    'name' => 'hType[0]'
+))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'hDesc[0]'
+))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'hColor[0]',
+    'size' => '5'
+))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'hText[0]',
+    'size' => '5'
+))) . HTMLTable::makeTd('Create New', array(
+    'colspan' => '4'
+)));
 
 $hospTable = $hTbl->generateMarkup();
-
-
 
 // attributes
 $attributes = new Attributes($dbh);
@@ -1453,34 +1609,38 @@ $aTbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Title') . HTMLTa
 
 foreach ($arows as $h) {
 
-    $aTbl->addBodyTr(HTMLTable::makeTd($h['idAttribute'])
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Title'], array('name' => 'atTitle[' . $h['idAttribute'] . ']', 'size' => '30')))
-            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrTypes, $h['Type'], FALSE), array('name' => 'atType[' . $h['idAttribute'] . ']')))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Category'], array('name' => 'atCat[' . $h['idAttribute'] . ']')))
-            . HTMLTable::makeTd($h['Last_Updated'] == '' ? '' : date('M j, Y', strtotime($h['Last_Updated'])))
-            . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'atdel[' . $h['idAttribute'] . ']', 'type' => 'checkbox')))
-    );
+    $aTbl->addBodyTr(HTMLTable::makeTd($h['idAttribute']) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Title'], array(
+        'name' => 'atTitle[' . $h['idAttribute'] . ']',
+        'size' => '30'
+    ))) . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrTypes, $h['Type'], FALSE), array(
+        'name' => 'atType[' . $h['idAttribute'] . ']'
+    ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Category'], array(
+        'name' => 'atCat[' . $h['idAttribute'] . ']'
+    ))) . HTMLTable::makeTd($h['Last_Updated'] == '' ? '' : date('M j, Y', strtotime($h['Last_Updated']))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+        'name' => 'atdel[' . $h['idAttribute'] . ']',
+        'type' => 'checkbox'
+    ))));
 }
 
 // new attribute
-$aTbl->addBodyTr(HTMLTable::makeTd('')
-        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'atTitle[0]')))
-        . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrTypes, ''), array('name' => 'atType[0]')))
-        . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'atCat[0]')))
-        . HTMLTable::makeTd('Create New', array('colspan' => '2'))
-);
+$aTbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'atTitle[0]'
+))) . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrTypes, ''), array(
+    'name' => 'atType[0]'
+))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'atCat[0]'
+))) . HTMLTable::makeTd('Create New', array(
+    'colspan' => '2'
+)));
 
 $attrTable = $aTbl->generateMarkup();
-
 
 // Constraints
 $constraintTable = $constraints->createConstraintTable($dbh);
 
-
 // Demographics Selection table
 $tbl = getSelections($dbh, 'Demographics', 'm', $labels);
 $demoSelections = $tbl->generateMarkup();
-
 
 // Demographics category selectors
 $stmt = $dbh->query("SELECT DISTINCT
@@ -1496,10 +1656,12 @@ WHERE
 
 $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-$selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array('name' => 'selDemoLookup', 'data-type'=>'d', 'class' => 'hhk-selLookup'));
+$selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array(
+    'name' => 'selDemoLookup',
+    'data-type' => 'd',
+    'class' => 'hhk-selLookup'
+));
 $lookupErrMsg = '';
-
-
 
 // General Lookup categories
 $stmt2 = $dbh->query("select distinct `Type`, `Table_Name` from gen_lookups where `Type` in ('h','u', 'ha', 'm');");
@@ -1526,11 +1688,12 @@ foreach ($rows2 as $r) {
     if ($r[1] != 'Demographics') {
         $lkups[] = $r;
     }
-
 }
 
-$selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array('name' => 'sellkLookup', 'class' => 'hhk-selLookup'));
-
+$selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, ''), array(
+    'name' => 'sellkLookup',
+    'class' => 'hhk-selLookup'
+));
 
 // Additional charges and discounts
 // Lookup categories
@@ -1547,13 +1710,23 @@ foreach ($rows3 as $r) {
     }
 }
 
-$seldiscs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows3, ''), array('name' => 'seldiscs', 'class' => 'hhk-selLookup'));
+$seldiscs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows3, ''), array(
+    'name' => 'seldiscs',
+    'class' => 'hhk-selLookup'
+));
 
 // Misc Codes (cancel codes, etc
-$rows4 = [["ReservStatus", "Reservation Cancel Codes"]];
+$rows4 = [
+    [
+        "ReservStatus",
+        "Reservation Cancel Codes"
+    ]
+];
 
-$selmisc = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows4, ''), array('name' => 'selmisc', 'class' => 'hhk-selLookup'));
-
+$selmisc = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows4, ''), array(
+    'name' => 'selmisc',
+    'class' => 'hhk-selLookup'
+));
 
 // Items
 $sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage, i.Last_Order_Id
@@ -1562,7 +1735,7 @@ $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
 
 $itbl = new HTMLTable();
 
-$ths = HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code');
+$ths = HTMLTable::makeTh('Description') . HTMLTable::makeTh('GL Code');
 $colCounter = array();
 
 // Make tax columns
@@ -1579,9 +1752,7 @@ foreach ($items as $d) {
 $iistmt = $dbh->query("Select * from item_item");
 $taxItemMap = $iistmt->fetchAll(\PDO::FETCH_ASSOC);
 
-
 $itbl->addHeaderTr($ths);
-
 
 foreach ($items as $d) {
 
@@ -1592,17 +1763,23 @@ foreach ($items as $d) {
     $trs = '';
 
     if ($d['idItem'] == ItemId::AddnlCharge) {
-        $trs .= HTMLTable::makeTd('(Additional Charges)')
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txtGlCode[' . $d['idItem'] . ']')));
+        $trs .= HTMLTable::makeTd('(Additional Charges)') . HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array(
+            'name' => 'txtGlCode[' . $d['idItem'] . ']'
+        )));
     } else {
-        $trs .=
-            HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txtItem[' . $d['idItem'] . ']')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txtGlCode[' . $d['idItem'] . ']')));
+        $trs .= HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array(
+            'name' => 'txtItem[' . $d['idItem'] . ']'
+        ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array(
+            'name' => 'txtGlCode[' . $d['idItem'] . ']'
+        )));
     }
 
     foreach ($colCounter as $c) {
 
-        $attrs = array('type'=>'checkbox', 'name'=>'cbtax[' . $d['idItem'] . '][' . $c . ']');
+        $attrs = array(
+            'type' => 'checkbox',
+            'name' => 'cbtax[' . $d['idItem'] . '][' . $c . ']'
+        );
 
         // Look for tax item connection
         foreach ($taxItemMap as $m) {
@@ -1611,18 +1788,21 @@ foreach ($items as $d) {
             }
         }
 
-        $trs .= HTMLTable::makeTd(HTMLInput::generateMarkup($c, $attrs), array('style'=>'text-align:center;'));
+        $trs .= HTMLTable::makeTd(HTMLInput::generateMarkup($c, $attrs), array(
+            'style' => 'text-align:center;'
+        ));
     }
 
     $itbl->addBodyTr($trs);
 }
 
-$itemTable = $itbl->generateMarkup(array('style' => 'float:left;'));
-
+$itemTable = $itbl->generateMarkup(array(
+    'style' => 'float:left;'
+));
 
 // Taxes
 $tstmt = $dbh->query("Select i.idItem, i.Description, i.Gl_Code, i.Percentage, i.Timeout_Days, i.First_Order_Id, i.Last_Order_Id
-from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax ." order by i.Last_Order_Id");
+from item i join item_type_map itm on itm.Item_Id = i.idItem and itm.Type_Id = " . ItemType::Tax . " order by i.Last_Order_Id");
 $titems = $tstmt->fetchAll(\PDO::FETCH_ASSOC);
 $hotTaxes = 0;
 $lastId = 0;
@@ -1634,7 +1814,7 @@ foreach ($titems as $d) {
     $trArry = [];
 
     if ($d['Last_Order_Id'] == 0) {
-        $hotTaxes++;
+        $hotTaxes ++;
     }
 
     if ($d['Last_Order_Id'] > 0) {
@@ -1643,33 +1823,51 @@ foreach ($titems as $d) {
 
     $lastId = $d['Last_Order_Id'];
 
-    $tiTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array('name' => 'txttItem[' . $d['idItem'] . ']', 'size'=>'18')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array('name' => 'txttGlCode[' . $d['idItem'] . ']', 'size'=>'18')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3), array('name' => 'txttPercentage[' . $d['idItem'] . ']', 'size'=>'8')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($d['Timeout_Days'], array('name' => 'txttMaxDays[' . $d['idItem'] . ']', 'size'=>'5')))
-            .HTMLTable::makeTd($d['First_Order_Id'])
-            .HTMLTable::makeTd($d['Last_Order_Id'])
-            , $trArry);
-
+    $tiTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup($d['Description'], array(
+        'name' => 'txttItem[' . $d['idItem'] . ']',
+        'size' => '18'
+    ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($d['Gl_Code'], array(
+        'name' => 'txttGlCode[' . $d['idItem'] . ']',
+        'size' => '18'
+    ))) . HTMLTable::makeTd(HTMLInput::generateMarkup(number_format($d['Percentage'], 3), array(
+        'name' => 'txttPercentage[' . $d['idItem'] . ']',
+        'size' => '8'
+    ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($d['Timeout_Days'], array(
+        'name' => 'txttMaxDays[' . $d['idItem'] . ']',
+        'size' => '5'
+    ))) . HTMLTable::makeTd($d['First_Order_Id']) . HTMLTable::makeTd($d['Last_Order_Id']), $trArry);
 }
 
 // New Tax item
-$tiTbl->addBodyTr(
-        HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttItem[0]', 'placeholder'=>'New Tax', 'size'=>'18')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttGlCode[0]', 'size'=>'18')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttPercentage[0]', 'size'=>'8')))
-        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txttMaxDays[0]', 'size'=>'5'))));
+$tiTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'txttItem[0]',
+    'placeholder' => 'New Tax',
+    'size' => '18'
+))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'txttGlCode[0]',
+    'size' => '18'
+))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'txttPercentage[0]',
+    'size' => '8'
+))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+    'name' => 'txttMaxDays[0]',
+    'size' => '5'
+))));
 
-$tiTbl->addHeaderTr(HTMLTable::makeTh($hotTaxes . ' Taxes' . (count($titems) > $hotTaxes ? ' and '.(count($titems) - $hotTaxes) . ' Old taxes' : ''), array('colspan'=>'6')));
-$tiTbl->addHeaderTr(HTMLTable::makeTh('Description').HTMLTable::makeTh('GL Code').HTMLTable::makeTh('Percentage').HTMLTable::makeTh('Max Days').HTMLTable::makeTh('First Visit').HTMLTable::makeTh('Last Visit'));
+$tiTbl->addHeaderTr(HTMLTable::makeTh($hotTaxes . ' Taxes' . (count($titems) > $hotTaxes ? ' and ' . (count($titems) - $hotTaxes) . ' Old taxes' : ''), array(
+    'colspan' => '6'
+)));
+$tiTbl->addHeaderTr(HTMLTable::makeTh('Description') . HTMLTable::makeTh('GL Code') . HTMLTable::makeTh('Percentage') . HTMLTable::makeTh('Max Days') . HTMLTable::makeTh('First Visit') . HTMLTable::makeTh('Last Visit'));
 
-$taxTable = $tiTbl->generateMarkup(array('style' => 'float:left;'));
-
+$taxTable = $tiTbl->generateMarkup(array(
+    'style' => 'float:left;'
+));
 
 // Form Upload
 
-$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Form_Upload')), 'ra', FALSE), array('name'=>'selFormUpload'));
+$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Form_Upload')), 'ra', FALSE), array(
+    'name' => 'selFormUpload'
+));
 
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
@@ -1684,32 +1882,38 @@ $resultMessage = $alertMsg->createMarkup();
 ?>
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $wInit->pageTitle; ?></title>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
         <style>
-            @media screen {
-                .hhk-printmedia {display:none;}
-            }
-            @media print {
-                .hhk-printmedia {display:inline;}
-            }
-        </style>
+@media screen {
+	.hhk-printmedia {
+		display: none;
+	}
+}
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+@media print {
+	.hhk-printmedia {
+		display: inline;
+	}
+}
+</style>
 
-        <script type="text/javascript">
+<script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
+<script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+<script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+<script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
+<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+
+<script type="text/javascript">
     function isNumber(n) {
         "use strict";
         return !isNaN(parseFloat(n)) && isFinite(n);
@@ -2048,6 +2252,9 @@ $resultMessage = $alertMsg->createMarkup();
                                 }
                             }
                         });
+
+                        $('#divUploadForm button').button();
+                        $('#divUploadForm input[type=submit]').button();
                     }
                 });
         });
@@ -2141,176 +2348,227 @@ $resultMessage = $alertMsg->createMarkup();
             $(this).val(this.value);
         });
         $('#mainTabs').show();
+
+        $(document).on('click', '.replaceForm', function(){
+            var form = $(this).closest("div").find('form');
+            if(form.is(':hidden')){
+				$(this).text('Cancel');
+            }else{
+				$(this).text('Replace Form');
+				form.find('input[type=file]').val('');
+            }
+			form.toggle();
+			
+        });
     });
         </script>
-    </head>
-    <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
+</head>
+<body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-            <div style="float:left; margin-right: 100px; margin-top:10px;">
-                <h1><?php echo $wInit->pageHeading; ?>&nbsp; (Any changes require everybody to log out and log back in!)</h1>
-            </div>
+		<div style="float: left; margin-right: 100px; margin-top: 10px;">
+			<h1><?php echo $wInit->pageHeading; ?>&nbsp; (Any changes require everybody to log out and log back in!)</h1>
+		</div>
 <?php echo $resultMessage ?>
-            <div id="mainTabs" style="font-size: .9em; clear:left; display:none;" class="hhk-member-detail">
-                <ul>
-                    <li><a href="#rescTable">Resources</a></li>
-                    <li><a href="#roomTable">Rooms</a></li>
-                    <li><a href="#rateTable"><?php echo $rateTableTabTitle; ?></a></li>
-                    <li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
-                    <li><a href="#demoTable">Demographics</a></li>
-                    <li><a href="#lkTable">Lookups</a></li>
-                    <li><a href="#itemTable">Items</a></li>
-                    <li><a href="#taxTable">Taxes</a></li>
-                    <li><a href="#formUpload">Forms Upload</a></li>
-                    <li><a href="#attrTable">Attributes</a></li>
-                    <li><a href="#constr">Constraints</a></li>
-                </ul>
-                <div id="rescTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+            <div id="mainTabs"
+			style="font-size: .9em; clear: left; display: none;"
+			class="hhk-member-detail">
+			<ul>
+				<li><a href="#rescTable">Resources</a></li>
+				<li><a href="#roomTable">Rooms</a></li>
+				<li><a href="#rateTable"><?php echo $rateTableTabTitle; ?></a></li>
+				<li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
+				<li><a href="#demoTable">Demographics</a></li>
+				<li><a href="#lkTable">Lookups</a></li>
+				<li><a href="#itemTable">Items</a></li>
+				<li><a href="#taxTable">Taxes</a></li>
+				<li><a href="#formUpload">Forms Upload</a></li>
+				<li><a href="#attrTable">Attributes</a></li>
+				<li><a href="#constr">Constraints</a></li>
+			</ul>
+			<div id="rescTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
+				style="font-size: .9em;">
                     <?php echo $rescTable; ?>
                 </div>
-                <div id="roomTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+			<div id="roomTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
+				style="font-size: .9em;">
                     <?php echo $roomTable; ?>
                 </div>
-                <div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-                    <div style="float:left;">
-                        <h3>Demographic Categories</h3>
-                        <form id="formdemo">
-                            <div>
+			<div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
+				style="font-size: .9em;">
+				<div style="float: left;">
+					<h3>Demographic Categories</h3>
+					<form id="formdemo">
+						<div>
                                 <?php echo $demoSelections; ?>
                             </div>
-                            <span style="margin:10px;float:right;"><input type="button" id='btndemoSave' class="hhk-savedemoCat" data-type="h" value="Save"/></span>
-                        </form>
-                    </div>
+						<span style="margin: 10px; float: right;"><input type="button"
+							id='btndemoSave' class="hhk-savedemoCat" data-type="h"
+							value="Save" /></span>
+					</form>
+				</div>
 
-                    <div style="float:left; margin-left:30px;">
-                        <h3>Demographics</h3>
-                        <form id="formdemoCat">
-                            <table><tr>
-                                <th>Demographic</th>
-                                <td><?php echo $selDemos; ?></td>
-                                </tr>
-                            </table>
-                            <div id="divdemoCat"></div>
-                            <span style="margin:10px;float:right;"><input type="button" id='btndemoSaveCat' class="hhk-saveLookup" data-type="d" value="Save"/></span>
-                        </form>
-                    </div>
-                </div>
-                <div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
-                    <div style="float:left;">
-                        <h3>General Lookups</h3>
-                        <form method="POST" action="ResourceBuilder.php" id="formlk">
-                            <table><tr>
-                                    <th>Category</th>
-                                    <td><?php echo $selLookups; ?></td>
-                                </tr></table>
-                            <div id="divlk" class="hhk-divLk"></div>
-                            <span style="margin:10px;float:right;">
+				<div style="float: left; margin-left: 30px;">
+					<h3>Demographics</h3>
+					<form id="formdemoCat">
+						<table>
+							<tr>
+								<th>Demographic</th>
+								<td><?php echo $selDemos; ?></td>
+							</tr>
+						</table>
+						<div id="divdemoCat"></div>
+						<span style="margin: 10px; float: right;"><input type="button"
+							id='btndemoSaveCat' class="hhk-saveLookup" data-type="d"
+							value="Save" /></span>
+					</form>
+				</div>
+			</div>
+			<div id="lkTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
+				style="font-size: .9em;">
+				<div style="float: left;">
+					<h3>General Lookups</h3>
+					<form method="POST" action="ResourceBuilder.php" id="formlk">
+						<table>
+							<tr>
+								<th>Category</th>
+								<td><?php echo $selLookups; ?></td>
+							</tr>
+						</table>
+						<div id="divlk" class="hhk-divLk"></div>
+						<span style="margin: 10px; float: right;">
                                 <?php if (!$hasDiags) { ?>
-                                <input type="submit" name='btnAddDiags' id="btnAddDiags" value="Add Diagnosis"/>
+                                <input type="submit" name='btnAddDiags'
+							id="btnAddDiags" value="Add Diagnosis" />
                                 <?php } if (!$hasLocs) { ?>
-                                <input type="submit" id='btnAddLocs' name="btnAddLocs" value="Add Location"/>
+                                <input type="submit" id='btnAddLocs'
+							name="btnAddLocs" value="Add Location" />
                                 <?php } ?>
-                                <input type="button" id='btnlkSave' class="hhk-saveLookup"data-type="h" value="Save"/>
-                            </span>
-                        </form></div>
-                    <div style="float:left; margin-left:30px;">
-                        <h3>Discounts & Additional Charges</h3>
-                        <form method="POST" action="ResourceBuilder.php"  id="formdisc">
-                            <table><tr>
-                                    <th>Category</th>
-                                    <td><?php echo $seldiscs; ?></td>
-                                </tr></table>
-                            <div id="divdisc" class="hhk-divLk"></div>
-                            <span style="margin:10px;float:right;">
+                                <input type="button" id='btnlkSave'
+							class="hhk-saveLookup" data-type="h" value="Save" />
+						</span>
+					</form>
+				</div>
+				<div style="float: left; margin-left: 30px;">
+					<h3>Discounts & Additional Charges</h3>
+					<form method="POST" action="ResourceBuilder.php" id="formdisc">
+						<table>
+							<tr>
+								<th>Category</th>
+								<td><?php echo $seldiscs; ?></td>
+							</tr>
+						</table>
+						<div id="divdisc" class="hhk-divLk"></div>
+						<span style="margin: 10px; float: right;">
                                 <?php if (!$hasDiscounts) { ?>
-                                <input type="submit" name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts"/>
+                                <input type="submit"
+							name='btnHouseDiscs' id="btnHouseDiscs" value="Add Discounts" />
                                 <?php } if (!$hasAddnl) { ?>
-                                <input type="submit" id='btnAddnlCharge' name="btnAddnlCharge" value="Add Additional Charges"/>
+                                <input type="submit" id='btnAddnlCharge'
+							name="btnAddnlCharge" value="Add Additional Charges" />
                                 <?php } ?>
-                                <input type="button" id='btndiscSave' class="hhk-saveLookup" data-type="ha" value="Save"/>
-                            </span>
-                        </form>
-                    </div>
-                	<div style="float:left; margin-left:30px;">
-                        <h3>Miscelaneous Lookups</h3>
-                        <form method="POST" action="ResourceBuilder.php"  id="formmisc">
-                            <table><tr>
-                                    <th>Category</th>
-                                    <td><?php echo $selmisc; ?></td>
-                                </tr></table>
-                            <div id="divmisc" class="hhk-divLk"></div>
-                            <span style="margin:10px;float:right;">
-                                <input type="button" id='btnmiscSave' class="hhk-saveLookup" data-type="ha" value="Save"/>
-                            </span>
-                        </form>
-                    </div>
-                	
-                </div>
-                <div id="rateTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-                    <p style="padding:3px;background-color: #fff7db;">Make changes directly into the text boxes below and press 'Save'.</p>
+                                <input type="button" id='btndiscSave'
+							class="hhk-saveLookup" data-type="ha" value="Save" />
+						</span>
+					</form>
+				</div>
+				<div style="float: left; margin-left: 30px;">
+					<h3>Miscelaneous Lookups</h3>
+					<form method="POST" action="ResourceBuilder.php" id="formmisc">
+						<table>
+							<tr>
+								<th>Category</th>
+								<td><?php echo $selmisc; ?></td>
+							</tr>
+						</table>
+						<div id="divmisc" class="hhk-divLk"></div>
+						<span style="margin: 10px; float: right;"> <input type="button"
+							id='btnmiscSave' class="hhk-saveLookup" data-type="ha"
+							value="Save" />
+						</span>
+					</form>
+				</div>
+
+			</div>
+			<div id="rateTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+				<p style="padding: 3px; background-color: #fff7db;">Make changes
+					directly into the text boxes below and press 'Save'.</p>
                     <?php echo $rateTableErrorMessage; ?>
-                    <form method="POST" action="ResourceBuilder.php" name="form1">
-                        <div style="clear:left;float:left;"><?php echo $pricingModelTable; ?></div>
+                    <form method="POST" action="ResourceBuilder.php"
+					name="form1">
+					<div style="clear: left; float: left;"><?php echo $pricingModelTable; ?></div>
 <?php echo $visitFeesTable . $keysTable . $payTypesTable . $feesTable . $faMarkup; ?>
-                        <div style="clear:both"></div>
-                        <span style="margin:10px;float:right;"><input type="submit" id='btnkfSave' name="btnkfSave" value="Save"/></span>
-                    </form>
-                </div>
-                <div id="hospTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-                    <form method="POST" action="ResourceBuilder.php" name="formh">
+                        <div style="clear: both"></div>
+					<span style="margin: 10px; float: right;"><input type="submit"
+						id='btnkfSave' name="btnkfSave" value="Save" /></span>
+				</form>
+			</div>
+			<div id="hospTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+				<form method="POST" action="ResourceBuilder.php" name="formh">
 <?php echo $hospTable; ?>
-                        <div style="clear:both"></div>
-                        <span style="margin:10px;float:right;"><input type="submit" id='btnhSave' name="btnhSave" value="Save"/></span>
-                    </form>
-                </div>
-                <div id="formUpload" class="ui-tabs-hide" >
-                    <p>Select the form to upload: <?php echo $rteSelectForm; ?>
-                    <input id="formGo" type="button" value="Get" />
-                    <span id="spnFrmLoading" style="font-style: italic; display:none;">Loading...</span></p>
-                    <p id="rteMsg" style="float:left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
-                    <div id="divUploadForm" style="margin-top: 1em;"></div>
-                </div>
-                <div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-                    <form method="POST" action="ResourceBuilder.php" name="formitem">
+                        <div style="clear: both"></div>
+					<span style="margin: 10px; float: right;"><input type="submit"
+						id='btnhSave' name="btnhSave" value="Save" /></span>
+				</form>
+			</div>
+			<div id="formUpload" class="ui-tabs-hide">
+				<p>Select the form to upload: <?php echo $rteSelectForm; ?>
+                    <input id="formGo" type="button" value="Get" /> <span
+						id="spnFrmLoading" style="font-style: italic; display: none;">Loading...</span>
+				</p>
+				<p id="rteMsg" style="float: left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
+				<div id="divUploadForm" style="margin-top: 1em;"></div>
+			</div>
+			<div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+				<form method="POST" action="ResourceBuilder.php" name="formitem">
 <?php echo $itemTable; ?>
-                        <div style="clear:both"></div>
-                        <span style="margin:10px;float:right;"><input type="submit" id='btnItemSave' name="btnItemSave" value="Save"/></span>
-                    </form>
-                </div>
-                <div id="taxTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+                        <div style="clear: both"></div>
+					<span style="margin: 10px; float: right;"><input type="submit"
+						id='btnItemSave' name="btnItemSave" value="Save" /></span>
+				</form>
+			</div>
+			<div id="taxTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                     <?php echo $itemMessage; ?>
-                    <form method="POST" action="ResourceBuilder.php" name="formtax">
+                    <form method="POST" action="ResourceBuilder.php"
+					name="formtax">
 <?php echo $taxTable; ?>
-                        <div style="clear:both"></div>
-                        <span style="margin:10px;float:right;"><input type="submit" id='btnItemSave' name="btnTaxSave" value="Save"/></span>
-                    </form>
-                </div>
-                <div id="attrTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-                    <form method="POST" action="ResourceBuilder.php" name="format">
+                        <div style="clear: both"></div>
+					<span style="margin: 10px; float: right;"><input type="submit"
+						id='btnItemSave' name="btnTaxSave" value="Save" /></span>
+				</form>
+			</div>
+			<div id="attrTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+				<form method="POST" action="ResourceBuilder.php" name="format">
 <?php echo $attrTable; ?>
-                        <div style="clear:both"></div>
-                        <span style="margin:10px;float:right;"><input type="submit" id='btnAttrSave' name="btnAttrSave" value="Save"/></span>
-                    </form>
-                </div>
-                <div id="constr" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+                        <div style="clear: both"></div>
+					<span style="margin: 10px; float: right;"><input type="submit"
+						id='btnAttrSave' name="btnAttrSave" value="Save" /></span>
+				</form>
+			</div>
+			<div id="constr" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
                         <?php echo $constraintTable; ?>
                 </div>
-            </div>
-            <div id="divNewForm" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;">
-                <form method="POST" action="ResourceBuilder.php" id="formFormNew" name="formFormNew">
-                <table>
-                    <tr>
-                        <th colspan="2"><span id="spanFrmTypeTitle"></span></th>
-                    </tr>
-                    <tr>
-                        <th>Language or other title</th>
-                        <td><input id="txtformLang" name="txtformLang" type="text" value=''/></td>
-                    </tr>
-                </table>
-                <input type="hidden" id="hdnFormType" name="hdnFormType" />
-                </form>
-            </div>
-            <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;"></div>
-        </div>  <!-- div id="contentDiv"-->
-    </body>
+		</div>
+		<div id="divNewForm" class="hhk-tdbox hhk-visitdialog"
+			style="font-size: .9em;">
+			<form method="POST" action="ResourceBuilder.php" id="formFormNew"
+				name="formFormNew">
+				<table>
+					<tr>
+						<th colspan="2"><span id="spanFrmTypeTitle"></span></th>
+					</tr>
+					<tr>
+						<th>Language or other title</th>
+						<td><input id="txtformLang" name="txtformLang" type="text"
+							value='' /></td>
+					</tr>
+				</table>
+				<input type="hidden" id="hdnFormType" name="hdnFormType" />
+			</form>
+		</div>
+		<div id="statEvents" class="hhk-tdbox hhk-visitdialog"
+			style="font-size: .9em;"></div>
+	</div>
+	<!-- div id="contentDiv"-->
+</body>
 </html>

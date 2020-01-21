@@ -1,3 +1,4 @@
+rateChooser
 <?php
 /**
  * CheckingIn.php
@@ -198,6 +199,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
 		<?php echo INCIDENT_CSS; ?>
+		<?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
 
 <!--        Fix the ugly checkboxes-->
@@ -230,7 +232,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu() ?>
-        <div id="contentDiv" <?php echo $pageStyle; ?>>
+        <div id="contentDiv" class="container-fluid" style="margin-left: auto;" <?php echo $pageStyle; ?>>
             <h1><?php echo $pageHdr; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
 
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
@@ -240,11 +242,10 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
                 <?php echo $mk1; ?>
             </div>
             <form action="CheckingIn.php" method="post"  id="form1">
-                <div id="datesSection" style="clear:left; float:left; display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel"></div>
-                <div id="famSection" style="clear:left; float:left; font-size: .9em; display:none; margin-bottom:.5em;min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
-                <div id="hospitalSection" style="font-size: .9em; margin-bottom:.5em; clear:left; float:left; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog"></div>
-                <div id="resvSection" style="clear:left; float:left; font-size:.9em; display:none; margin-bottom:.5em; min-width: 810px;" class="ui-widget hhk-visitdialog"></div>
-                <div style="clear:both;min-height: 70px;">.</div>
+                <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"></div>
+                <div id="famSection" style="font-size: .9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog mb-3"></div>
+                <div id="hospitalSection" style="font-size: .9em; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog mb-3"></div>
+                <div id="resvSection" style="font-size:.9em; display:none; min-width: 810px; margin-bottom: 70px;" class="ui-widget hhk-visitdialog"></div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >
                         <tr><td>

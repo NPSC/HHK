@@ -123,7 +123,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('FB_Status','w','Waiting','','',0),
 ('FB_Status','x','Prohibited','','',0),
 
-('Form_Upload', 'c', 'Reservation Comfirmation', '', '', 0),
+('Form_Upload', 'c', 'Reservation Comfirmation', 'Resv_Conf', '', 0),
 ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement', '', 0),
 ('Form_Upload', 's', 'Survey Form', '', '', 0),
 
@@ -320,6 +320,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('registration', 'Pamphlet', 'Pamphlet', 'y', 'm', 20),
 ('registration', 'Referral', 'Referral', 'y', 'm', 310),
 ('registration', 'Guest_Ident', 'Guest Id', 'y', 'm', 40),
+
+('Resv_Conf', 'en', 'English', '2','',0),
 
 ('rel_type','chd','Child','par','',0),
 ('rel_type','par','Parent','chd','',0),
@@ -590,6 +592,8 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('Zip_Code','60115','s','h','','Organization zip code, used for distance calculations','');
 -- ;
 
+
+REPLACE INTO `template_tag` VALUES (6,'Confirmation','Guest Name','${GuestName}',''),(7,'Confirmation','Expected Arrival','${ExpectedArrival}',''),(8,'Confirmation','Expected Departure','${ExpectedDeparture}',''),(9,'Confirmation','Date Today','${DateToday}',''),(10,'Confirmation','Nights','${Nites}',''),(11,'Confirmation','Amount','${Amount}',''),(12,'Confirmation','Notes','${Notes}',''),(13,'Confirmation','Visit Fee Notice','${VisitFeeNotice}',''),(14,'Survey','First Name','${FirstName}',''),(15,'Survey','Last Name','${LastName}',''),(16,'Survey','Name Suffix','${NameSuffix}',''),(17,'Survey','Name Prefix','${NamePrefix}','');
 
 
 replace into `item` (`idItem`, `Description`) values
@@ -893,6 +897,7 @@ REPLACE INTO `language` (`idLanguage`,`Title`,`ISO_639_1`,`Display`) VALUES
 --
 INSERT INTO `document` VALUES 
 (1,'Registration Form','','form','html','','','en',NULL,'<p style=\"margin-bottom:10px;\">The (House Name) is a not-for-profit healthcare hospitality house. The Guest House is <span style=\"font-style: italic;\">strictly a lodging facility for referred patients that are actively receiving care at our partner institutions and their families/friends.</span></p>\r\n<ul style=\"list-style-type:disc;margin-left: 20px;\">\r\n    <li><span style=\"font-weight: bold;\">All guests must register at the Front Desk</span></li>\r\n    <li><span style=\"font-weight: bold;\">Smoking is strictly prohibited</span></li>\r\n    <li><span style=\"font-weight: bold;\">Staff must have access to room</span> to perform regular cleaning and maintenance. Rooms must be kept orderly to ensure that they are cleaned properly.</li>\r\n    <li><span style=\"font-weight: bold;\">In case of an emergency,</span> call ###.</li>\r\n    <li><span style=\"font-weight: bold;\">Pets are prohibited.</span> If a pet is found in a guest room, staff will ask that it be removed and may ask guest to leave the facility.</li>\r\n    <li>Do not burn candles, incense or any other flammable objects in the rooms.</li>\r\n    <li><span style=\"font-weight: bold;\">Food must be stored properly</span> in sealed containers or in the refrigerator. Dispose of food properly at time of check out.</li>\r\n    <li><span style=\"font-weight: bold;\">Do not remove anything from the rooms.</span>  Everything has been generously donated to us and is for the comfort of all our guests.  If you find an item missing, please contact our office so that we can replace it before the next guest.</li>\r\n    <li><span style=\"font-weight: bold;\">Do not try to make any repairs yourself.</span> Please contact the House Manager or Front Desk for any problems with appliances, electrical outlets, or plumbing.</li>\r\n    <li>The House strives to provide a supportive, welcoming community for its guests; <span style=\"font-weight: bold;\">please help us by being respectful of all staff, volunteers, fellow guests, and residents.</span></li>\r\n    <li><span style=\"font-weight: bold;\">Check out time is 10 AM.</span> Drop off your key(s) at the Front Desk.</li>\r\n</ul>\r\n<p style=\"margin-top:10px;\">Failure to follow any or all of these policies or to abuse the privilege of staying at the House in anyway can result in the forfeiture of the family&rsquo;s stay. Guests are responsible to communicate any issues or problems directly to (staff).</p>\r\n<p style=\"margin-top:10px;\"><span style=\"font-weight: bold;\">Disclaimer:</span>  I have executed this release willingly and understand that by signing this release. I give up any right I may have to sue or make any claim or demand on my behalf or on the behalf of any family member for any injuries incurred during the course of residency at the House.  I understand and intend that this release cover all injuries, even if such injuries are a result of the negligence of the (House) or any person associated with the House.  The authorization and release constitutes the entire agreement between the House and myself regarding the subjects addressed in this document.  The House reserves the right to inspect any room at any time.</p>\r\n<p style=\"font-weight: bold;margin-top:10px; font-style: italic;\">I/We have read, understand, and agree to all the conditions of this agreement that I/we received today. By signing this guest registration form I/WE agree to abide by the rules and regulations of the House and will communicate this to the other members of my party.</p>\r\n','a','2019-10-12 14:57:39','','patch','2019-10-12 19:57:39');
+(2,'Reservation Confirmation','','form','html','','en','en',NULL,'<p>Dear ${GuestName}:</p><p>Thank you for your reservation. This is a confirmation for the following dates: ${ExpectedArrival} until ${ExpectedDeparture} for ${Nites} nights for an estimated $${Amount}.</p><p>${VisitFeeNotice}</p><p>Should your plans change, please let us know as soon as possible so that we can serve others in need accommodations.</p><h4>Please enter the facility at:</h4><blockquote><p>(address)</p><p>(City, State, Zip)</p></blockquote><p><b><br></b></p><p><b>Check-in:</b> 4pm-12am</p><p><b>Check-out:</b> Before 10am.</p><h4><br></h4><h4>Parking</h4><p>(Parking Instructions)</p><h4><br></h4><h4>Before You Arrive</h4><p>(Arrival Instructions)</p><p>Should you have any questions or comments or need to change your reservation, please call our office at (phone).</p><p>We look forward to seeing you,</p><p>Hospitality House Staff</p>${Notes}<br>','a','2019-10-12 14:57:39','','patch','2019-10-12 19:57:39');
 
 --
 -- Dumping data for table `country_code`

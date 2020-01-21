@@ -1952,6 +1952,17 @@ CREATE TABLE if not exists `syslog` (
 ) ENGINE = MyISAM;
 
 
+-- -----------------------------------------------------
+-- Table `template_tag`
+-- -----------------------------------------------------
+CREATE TABLE `template_tag` (
+  `idTemplate_tag` int(11) NOT NULL AUTO_INCREMENT,
+  `Doc_Name` varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `Tag_Title` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `Tag_Name` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `Replacement_Wrapper` varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  PRIMARY KEY (`idTemplate_tag`)
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- -----------------------------------------------------
 -- Table `trans`
