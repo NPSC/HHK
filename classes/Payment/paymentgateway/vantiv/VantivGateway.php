@@ -28,7 +28,7 @@ class VantivGateway extends PaymentGateway {
         return 'vantiv';
     }
 
-    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
+    public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
         $payResult = NULL;
