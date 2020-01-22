@@ -165,12 +165,18 @@ class CreditToken {
         $idReg = intval($idRegistration);
         $idGst = intval($idGuest);
 
+        $whMerchant = '';
+
+        if ($merchant != '') {
+            $whMerchant = " and t.Merchant = '$merchant' ";
+        }
+
 
         // Get Billing Agent tokens
         if ($idReg > 0) {
 
             $stmt = $dbh->query("select t.* from guest_token t left join name_volunteer2 nv on t.idGuest = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ba'
-where t.idRegistration = $idReg and t.Merchant = '$merchant' and nv.idName is null");
+where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Merchant");
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 

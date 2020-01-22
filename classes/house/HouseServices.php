@@ -1274,14 +1274,19 @@ class HouseServices {
      * @param integer $idGuest
      * @return string
      */
-    public static function viewCreditTable(\PDO $dbh, $idRegistration, $idGuest) {
+    public static function viewCreditTable(\PDO $dbh, $idRegistration, $idGuest, $allMerchants = FALSE) {
 
         $uS = Session::getInstance();
 
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, $idRegistration));
         $tbl = new HTMLTable();
 
-        $tkRsArray = CreditToken::getGuestTokenRSs($dbh, $idGuest);
+        if ($allMerchants) {
+            $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
+        } else {
+            $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, $gateway->getMerchant(), $idGuest);
+        }
+
         $prefTokenId = Registration::readPrefTokenId($dbh, $idRegistration);
 
         PaymentChooser::CreditBlock($dbh, $tbl, $tkRsArray, $gateway, $prefTokenId, '', '', FALSE);
@@ -1305,14 +1310,15 @@ class HouseServices {
         $uS = Session::getInstance();
 
         $dataArray = array();
-
-        // Delete any credit tokens
         $keys = array_keys($post);
         $msg = '';
 
+
+        // Delete any credit tokens
         foreach ($keys as $k) {
 
             $parts = explode('_', $k);
+
             if (count($parts) > 1 && $parts[0] == 'crdel') {
 
                 $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);

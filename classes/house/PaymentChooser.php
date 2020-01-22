@@ -887,8 +887,8 @@ ORDER BY v.idVisit , v.Span;");
         $payTbl = new HTMLTable();
 
         // Payment Amount
-        $payTbl->addBodyTr(HTMLTable::makeTd('Payment Amount:', array('class'=>'tdlabel', 'style'=>'font-weight:bold;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('colspan'=>'2', 'style'=>'font-weight:bold;')));
+        $payTbl->addBodyTr(HTMLTable::makeTd('Payment Amount:', array('colspan'=>'2', 'class'=>'tdlabel', 'style'=>'font-weight:bold;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('style'=>'font-weight:bold;')));
 
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
@@ -1002,6 +1002,7 @@ ORDER BY v.idVisit , v.Span;");
         }
 
         $attr = array('type'=>'radio', 'name'=>'rbUseCard' . $index, 'class' => 'hhk-feeskeys');
+        $cbAttr = array('type'=>'checkbox', 'name'=>'cbDelCard' . $index, 'class' => 'hhk-feeskeys');
 
         // List any valid stored cards on file
         foreach ($tkRsArray as $tkRs) {
@@ -1017,7 +1018,8 @@ ORDER BY v.idVisit , v.Span;");
                 $merchant = '';
             }
 
-            $tbl->addBodyTr(HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant)
+            $tbl->addBodyTr(
+                    HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant)
                     . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
                 , array('style'=>$display, 'class'=>'tblCredit' . $index));

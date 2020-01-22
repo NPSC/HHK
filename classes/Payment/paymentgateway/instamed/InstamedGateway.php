@@ -1042,7 +1042,7 @@ where r.idRegistration =" . $idReg);
                 HTMLTable::makeTd(
                     HTMLContainer::generateMarkup('label', 'Key Account:', array('for'=>'btnvrKeyNumber', 'class'=>'hhkvrKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
                     . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber', 'class'=>'hhk-feeskeys hhkvrKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number'))
-                , array('class'=>'tdlabel hhkvrKeyNumber'))
+                , array('class'=>'tdlabel hhkvrKeyNumber', 'colspan'=>'2'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName', 'class'=>'hhk-feeskeys hhkvrKeyNumber')), array('colspan'=>'2', 'style'=>'min-width:140px'))
             , array('id'=>'trvdCHName'));
 

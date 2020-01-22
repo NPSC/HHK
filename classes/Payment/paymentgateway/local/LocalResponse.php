@@ -19,7 +19,7 @@ class LocalResponse extends CreditResponse {
     protected $cardType;
 
 
-    function __construct($amount, $idPayor, $invoiceNumber, $idToken, $cardType, $cardAcct, $payNote, $payDate) {
+    function __construct($amount, $idPayor, $invoiceNumber, $idToken, $cardType, $cardAcct, $payNote, $payDate, $paymentStatusCode = PaymentStatusCode::Paid) {
 
         $this->idPayor = $idPayor;
         $this->amount = $amount;
@@ -29,6 +29,7 @@ class LocalResponse extends CreditResponse {
         $this->setIdToken($idToken);
         $this->setPaymentNotes($payNote);
         $this->setPaymentDate($payDate);
+        $this->setPaymentStatusCode($paymentStatusCode);
 
     }
 
@@ -61,10 +62,6 @@ class LocalResponse extends CreditResponse {
 
     public function getPaymentMethod() {
         return PaymentMethod::Charge;
-    }
-
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
     }
 
 }

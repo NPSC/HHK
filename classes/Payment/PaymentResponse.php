@@ -18,14 +18,14 @@ abstract class PaymentResponse {
     protected $payNotes = '';
     protected $refund;
     protected $result;  // vendor specific
+    protected $paymentStatusCode;
 
     public $idPayor = 0;
     public $idVisit;
     public $idReservation;
     public $idRegistration;
     public $idTrans = 0;
-    public $idGuestToken = 0;
-    public $idPayment;
+    protected $idPayment;
 
     public abstract function getStatus();
 
@@ -34,8 +34,6 @@ abstract class PaymentResponse {
     // One of the PaymentMethods
     public abstract function getPaymentMethod();
 
-    // One of the PaymentStatusCodes
-    public abstract function getPaymentStatusCode();
 
     // Record a payment
     public function recordPayment(\PDO $dbh, $username, $attempts = 1) {
@@ -54,9 +52,18 @@ abstract class PaymentResponse {
         $payRs->Notes->setNewVal($this->getPaymentNotes());
         $payRs->Is_Refund->setNewVal($this->isRefund());
 
-        $this->idPayment = EditRS::insert($dbh, $payRs);
-        $payRs->idPayment->setNewVal($this->idPayment);
+        $this->setIdPayment(EditRS::insert($dbh, $payRs));
+        $payRs->idPayment->setNewVal($this->getIdPayment());
         EditRS::updateStoredVals($payRs);
+    }
+
+    // One of the PaymentStatusCodes
+    public function getPaymentStatusCode() {
+        return $this->paymentStatusCode;
+    }
+
+    public function setPaymentStatusCode($v) {
+        $this->paymentStatusCode = $v;
     }
 
     public function getAmount() {
@@ -103,8 +110,8 @@ abstract class PaymentResponse {
         return $this->idPayment;
     }
 
-    public function getIdToken() {
-        return $this->idGuestToken;
+    public function setIdPayment($v) {
+        $this->idPayment = intval($v, 10);
     }
 
     public function getIdTrans() {
@@ -121,6 +128,7 @@ abstract class CreditResponse extends PaymentResponse {
 
     public $response;
     public $idPaymentAuth;
+    public $idGuestToken = 0;
 
     public function getResult() {
         return MpStatusValues::Approved;
@@ -184,28 +192,16 @@ abstract class CreditResponse extends PaymentResponse {
         }
     }
 
+    public function getIdToken() {
+        return $this->idGuestToken;
+    }
+
     public function setIdToken($idToken) {
         $this->idGuestToken = intval($idToken, 10);
     }
 
-    public function getIdPayment() {
-        return $this->idPayment;
-    }
-    public function setIdPayment($v) {
-        $this->idPayment = intval($v, 10);
-    }
-
     public function getIdPaymentAuth() {
         return $this->idPaymentAuth;
-    }
-
-    public function getIdTrans() {
-        return $this->idTrans;
-    }
-
-    public function setIdTrans($idTrans) {
-        $this->idTrans = $idTrans;
-        return $this;
     }
 
 }
@@ -230,10 +226,6 @@ class CheckResponse extends PaymentResponse {
         return PaymentMethod::Check;
     }
 
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
-    }
-
     public function getStatus() {
         return CreditPayments::STATUS_APPROVED;
     }
@@ -246,13 +238,13 @@ class CheckResponse extends PaymentResponse {
 
     public function recordInfoCheck(\PDO $dbh) {
 
-        if ($this->idPayment > 0) {
+        if ($this->getIdPayment() > 0) {
 
             // Check table
             $ckRs = new PaymentInfoCheckRS();
             $ckRs->Check_Date->setNewVal($this->getPaymentDate());
             $ckRs->Check_Number->setNewVal($this->getCheckNumber);
-            $ckRs->idPayment->setNewVal($this->idPayment);
+            $ckRs->idPayment->setNewVal($this->getIdPayment());
 
             $this->idInfoCheck = EditRS::insert($dbh, $ckRs);
         }
@@ -290,10 +282,6 @@ class CashResponse extends PaymentResponse {
         if ($this->getAmount() != 0) {
             $tbl->addBodyTr(HTMLTable::makeTd("Cash Tendered:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
         }
-    }
-
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
     }
 
 }

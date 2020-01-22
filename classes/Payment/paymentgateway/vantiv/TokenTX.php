@@ -95,7 +95,7 @@ class TokenTX {
         $creditResponse = $voidSale->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
 
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId());
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId(), PaymentStatusCode::VoidSale);
         $vr->setPaymentDate($payDate);
 
         // Save raw transaction in the db.
@@ -140,7 +140,8 @@ class TokenTX {
         // Call to web service
         $creditResponse = $reverseSale->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $reverseSale->getTokenId());
+
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $reverseSale->getTokenId(), PaymentStatusCode::Reverse);
         $vr->setPaymentDate($payDate);
 
         // Save raw transaction in the db.
@@ -186,7 +187,8 @@ class TokenTX {
         // Call to web service
         $creditResponse = $returnSale->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnSale->getTokenId());
+
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnSale->getTokenId(), PaymentStatusCode::Retrn);
         $vr->setPaymentDate($payDate);
 
 
@@ -232,7 +234,7 @@ class TokenTX {
         $creditResponse = $returnVoid->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
 
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnVoid->getTokenId());
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnVoid->getTokenId(), PaymentStatusCode::Retrn);
         $vr->setPaymentDate($payDate);
 
 
@@ -263,7 +265,7 @@ class TokenTX {
 class TokenResponse extends CreditResponse {
 
 
-    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken) {
+    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $paymentStatusCode = PaymentStatusCode::Paid) {
 
         $this->response = $creditTokenResponse;
         $this->idPayor = $idPayor;
@@ -271,14 +273,11 @@ class TokenResponse extends CreditResponse {
         $this->idRegistration = $idRegistration;
         $this->invoiceNumber = $creditTokenResponse->getInvoiceNumber();
         $this->amount = $creditTokenResponse->getAuthorizedAmount();
+        $this->setPaymentStatusCode($paymentStatusCode);
     }
 
     public function getPaymentMethod() {
         return PaymentMethod::Charge;
-    }
-
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
     }
 
     public function getStatus() {

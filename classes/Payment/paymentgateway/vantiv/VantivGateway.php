@@ -728,7 +728,7 @@ class VantivGateway extends PaymentGateway {
             $sel = HTMLSelector::doOptionsMkup(array(0=>array(0=>$this->getGatewayType(), 1=> ucfirst($this->getGatewayType()))), $this->getGatewayType(), FALSE);
 
             $payTbl->addBodyTr(
-                    HTMLTable::makeTh('Selected Location:')
+                    HTMLTable::makeTh('Selected Location:', array('colspan'=>'2'))
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
                     , array('id'=>'trvdCHName')
             );
@@ -746,7 +746,7 @@ class VantivGateway extends PaymentGateway {
                 $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
 
                 $payTbl->addBodyTr(
-                        HTMLTable::makeTh('Select Location:')
+                        HTMLTable::makeTh('Select Location:', array('colspan'=>'2'))
                         .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
                         , array('id'=>'trvdCHName')
                 );

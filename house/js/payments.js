@@ -1105,7 +1105,7 @@ function verifyAmtTendrd() {
 
     $('#tdCashMsg').hide('fade');
     $('#tdInvceeMsg').text('').hide();
-    $('#tdChargeMsg').text('');
+    $('#tdChargeMsg').text('').hide();
 
     if ($('#PayTypeSel').val() === 'ca') {
 
@@ -1147,7 +1147,8 @@ function verifyAmtTendrd() {
     } else if ($('#PayTypeSel').val() === 'cc') {
         
         if ($('#selccgw').length > 0 && $('#selccgw').val() === '') {
-            $('#tdChargeMsg').text('Select a location.');
+            $('#tdChargeMsg').text('Select a location.').show('fade');
+            return false;
         }
     }
     return true;
