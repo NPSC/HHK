@@ -140,7 +140,7 @@ abstract class ContactPoint {
     /**
      *
      * @param string $code
-     * @return iTable or null
+     * @return string or null
      */
     public function get_recordSet($code) {
 

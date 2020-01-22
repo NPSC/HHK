@@ -553,8 +553,6 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
-} catch (Hk_Exception $ex) {
-    $events = array("error" => "HouseKeeper Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Exception $ex) {
     $events = array("error" => "Web Server Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 }

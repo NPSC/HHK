@@ -525,7 +525,7 @@
     function createViewer($wrapper, settings) {
 
         if (settings.guestId > 0 || settings.psgId > 0 || settings.rid > 0) {
-            var newBtn = $('<button class="ui-button ui-corner-all ui-state-default" id="incident-create"><span class="ui-icon ui-icon-plus"></span>New Incident</button>').appendTo($wrapper);
+            var newBtn = $('<div class="ui-button ui-corner-all ui-state-default" id="incident-create"><span class="ui-icon ui-icon-plus"></span>New Incident</div>').appendTo($wrapper);
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
             var dtTable = $table

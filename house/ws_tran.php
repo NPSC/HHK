@@ -113,7 +113,7 @@ switch ($c) {
 
         try {
             $events = $transfer->searchAccount($searchCriteria);
-        } catch (Execption $ex) {
+        } catch (Exception $ex) {
             $events = array("error" => "Transfer Error: " . $ex->getMessage());
         }
 
@@ -255,7 +255,7 @@ switch ($c) {
 
     $events = array("error" => "Database Error: " . $ex->getMessage());
 
-} catch (Hk_Exception $ex) {
+} catch (Exception $ex) {
 
     $events = array("error" => "HouseKeeper Error: " . $ex->getMessage());
 }

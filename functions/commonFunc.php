@@ -707,35 +707,22 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
  * Show guest photo HTML
  *
  * @param int $idGuest
- * @param int $widthPx
- *            - desired pixel width of image
- * @return HTML
+ * @param int $widthPx - desired pixel width of image
+ * @return string HTML formatted
  */
-function showGuestPicture($idGuest, $widthPx)
-{
-    return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('img ', '', array(
-        'id' => 'guestPhoto',
-        'src' => "ws_resc.php?cmd=getguestphoto&guestId=$idGuest",
-        'width' => $widthPx
-    )) . HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('span', '', array(
-        'class' => 'ui-icon ui-icon-plusthick'
-    )), array(
-        "class" => "ui-button ui-corner-all ui-widget",
-        'style' => 'padding: .3em; margin-right:0.3em;',
-        'data-uppload-button' => 'true'
-    )) . HTMLContainer::generateMarkup('div', htmlContainer::generateMarkup('span', '', array(
-        'class' => 'ui-icon ui-icon-trash'
-    )), array(
-        "class" => "ui-button ui-corner-all ui-widget delete-guest-photo",
-        'style' => 'padding: .3em'
-    )), array(
-        'style' => "position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;",
-        'id' => 'hhk-guest-photo-actions'
-    )), array(
-        'class' => 'hhk-panel',
-        'style' => 'display: inline-block; position:relative',
-        'id' => 'hhk-guest-photo'
-    ));
+
+function showGuestPicture ($idGuest, $widthPx) {
+
+    return HTMLContainer::generateMarkup('div',
+        HTMLContainer::generateMarkup('img ', '', array('id'=>'guestPhoto', 'src'=>"ws_resc.php?cmd=getguestphoto&guestId=$idGuest", 'width'=>$widthPx)) .
+        HTMLContainer::generateMarkup('div',
+        HTMLContainer::generateMarkup('div',
+        HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-plusthick'))
+        , array("class"=>"ui-button ui-corner-all ui-widget", 'style'=>'padding: .3em; margin-right:0.3em;', 'data-uppload-button'=>'true')) . HTMLContainer::generateMarkup('div',
+        htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
+        , array("class"=>"ui-button ui-corner-all ui-widget delete-guest-photo", 'style'=>'padding: .3em'))
+        , array('style'=>"position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;", 'id'=>'hhk-guest-photo-actions'))
+        ,array('class'=>'hhk-panel', 'style'=>'display: inline-block; position:relative', 'id'=>'hhk-guest-photo'));
 }
 
 /**
@@ -744,7 +731,7 @@ function showGuestPicture($idGuest, $widthPx)
  * @param $_FILES['photo'] $photo
  * @param int $newwidth
  * @param int $newheight
- * @return binary photo data
+ * @return object photo data
  */
 function makeThumbnail($photo, $newwidth, $newheight)
 {

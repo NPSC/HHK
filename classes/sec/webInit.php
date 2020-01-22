@@ -109,13 +109,13 @@ class webInit {
                     . "default-src data: $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net; "
                     . "script-src $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline'; "
                     . "style-src $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline';"
-                    . "object-src 'none'; "); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+                    . "object-src $cspURL; "); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
 
             header("X-Content-Security-Policy: "
                     . "default-src data: $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net; "
                     . "script-src $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline'; "
                     . "style-src $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline'; "
-                    . "object-src 'none';"); // IE 10+
+                    . "object-src $cspURL;"); // IE 10+
 
             header('X-Frame-Options: DENY');
 

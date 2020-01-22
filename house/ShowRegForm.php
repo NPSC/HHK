@@ -165,7 +165,7 @@ foreach ($reservArray['docs'] as $r) {
 
 
     $tabContent .= HTMLContainer::generateMarkup('div',
-        HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrint', 'data-tab'=>$r['tabIndex']))
+        HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint', 'data-tab'=>$r['tabIndex']))
         .HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex'])),
         array('id'=>$r['tabIndex']));
 
@@ -221,7 +221,7 @@ $(document).ready(function() {
         popY       : 20,
         popTitle   : 'Guest Registration Form'};
 
-    $('#btnPrint').click(function() {
+    $('.btnPrint').click(function() {
         opt.popHt = $('div#PrintArea' + $(this).data('tab')).height();
         $('div#PrintArea' + $(this).data('tab')).printArea(opt);
     }).button();

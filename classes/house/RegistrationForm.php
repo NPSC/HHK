@@ -71,7 +71,7 @@ class RegistrationForm {
             // Make Emergency contact.
             $ec = $priGuest->getEmergContactObj($dbh);
 
-            $doc .= $this->makeFirstAdditional($ec->getEcNameFirst(), $ec->getEcNameLast(), '', $ec->getEcRelationship(), $ec->getEcPhone(), '', $this->labels);
+            $doc .= $this->makeFirstAdditional($ec->getEcNameFirst(), $ec->getEcNameLast(), '', $ec->getEcRelationship(), $ec->getEcPhone(), '');
 
             // blank additional guest
             $doc .= $this->makeBlankGuest(3);

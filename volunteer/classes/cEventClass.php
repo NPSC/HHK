@@ -654,7 +654,7 @@ class cEventClass {
 
     function set_volCatCode($v) {
         if (!is_null($v)) {
-            $prms = UserCategory::splitVcc($v);
+        	$prms = UserCategories::splitVcc($v);
             if (count($prms) >= 2) {
                 $this->set_volCat($prms[0]);
                 $this->set_volCode($prms[1]);
@@ -664,7 +664,7 @@ class cEventClass {
 
     function get_volCatCode() {
         if ($this->get_volCat() != "" && $this->get_volCode() != "") {
-            return UserCategory::combineVcc($this->get_volCat(), $this->get_volCode());
+        	return UserCategories::combineVcc($this->get_volCat(), $this->get_volCode());
         } else {
             return "";
         }

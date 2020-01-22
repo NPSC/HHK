@@ -22,3 +22,5 @@ INSERT INTO `template_tag` VALUES (14,'s','First Name','${FirstName}','');
 INSERT INTO `template_tag` VALUES (15,'s','Last Name','${LastName}','');
 INSERT INTO `template_tag` VALUES (16,'s','Name Suffix','${NameSuffix}','');
 INSERT INTO `template_tag` VALUES (17,'s','Name Prefix','${NamePrefix}','');
+
+ALTER TABLE `document` CHANGE COLUMN `Doc` `Doc` MEDIUMBLOB NULL DEFAULT NULL ;
