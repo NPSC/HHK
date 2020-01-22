@@ -1038,10 +1038,17 @@ if (isset($_POST['ldfm'])) {
 
     $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
 
-    //get available doc replacements
-    $replacements = $replacementStmt = $dbh->query("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = '$formType'");
+    // get available doc replacements
+    $replacementStmt = $dbh->query("SELECT `idTemplate_tag`, `Tag_Title`, `Tag_Name` FROM `template_tag` WHERE `Doc_Name` = '$formType'");
     $replacementRows = $replacementStmt->fetchAll();
-    
+    $rTbl = new HTMLTable();
+
+    $rTbl->addHeaderTr(HTMLTable::makeTh('Name') . HTMLTable::makeTh('Code'));
+
+    foreach ($replacementRows as $row) {
+        $rTbl->addBodyTr(HTMLTable::makeTd($row[1]) . HTMLTable::makeTd($row[2]));
+    }
+
     // Look for a match
     foreach ($rarry as $f) {
 
@@ -1053,7 +1060,7 @@ if (isset($_POST['ldfm'])) {
     }
 
     if (empty($formDef)) {
-        
+
         $formDef = "FormDef-" . incCounter($dbh, 'codes');
         $dbh->exec("UPDATE `gen_lookups` SET `Substitute` = '$formDef' WHERE `Table_Name` = 'Form_Upload' AND `Code` = '$formType'");
     }
@@ -1070,16 +1077,17 @@ if (isset($_POST['ldfm'])) {
             'href' => '#' . $r['Code']
         )));
 
-        $tabContent .= HTMLContainer::generateMarkup('div', '<div class="mb-3"><button class="replaceForm mb-3" style="display:block; margin: 0 0 0 auto">Replace Form</button><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="ui-widget-content" style="margin-bottom:15px; padding: 5px 7px; display: none;">
+        $tabContent .= HTMLContainer::generateMarkup('div', '<div class="row mb-3"><div class="col-10"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="ui-widget-content" style="padding: 5px 7px; display: none;">
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>
 Upload new file: <input name="formfile" type="file" required />
 <input type="submit" name="docUpload" value="Send File" />
-</form></div>' . HTMLContainer::generateMarkup('div', $r['Doc'], array(
+</form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>' . HTMLContainer::generateMarkup('div', $r['Doc'], array(
             'id' => 'form' . $r['idDocument']
         )), array(
             'id' => $r['Code']
         ));
     }
+
     // add New documt
     $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'New...', array(
         'href' => '#newDoc'
@@ -1092,6 +1100,21 @@ Upload new file: <input name="formfile" type="file" required />
     $tabContent .= HTMLContainer::generateMarkup('div', ' ', array(
         'id' => 'newDoc'
     ));
+
+    if (count($replacementRows) > 0) {
+
+        // add replacements tab
+        $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'Replacement Codes', array(
+            'href' => '#replacements'
+        )), array(
+            'id' => 'liReplacements',
+            'style' => 'float: right;'
+        ));
+
+        $tabContent .= HTMLContainer::generateMarkup('div', '<div class="mb-3">You may use the following codes in your document to personalize the document to each guest</div>' . $rTbl->generateMarkup(), array(
+            'id' => 'replacements'
+        ));
+    }
 
     // Make the final tab control
     $ul = HTMLContainer::generateMarkup('ul', $li, array());
@@ -1108,27 +1131,26 @@ Upload new file: <input name="formfile" type="file" required />
 if (isset($_POST['docUpload'])) {
 
     $tabIndex = 8;
-    
-    if(is_uploaded_file($_FILES['formfile']['tmp_name'])) {
-    
-    $docId = - 1;
-    if (isset($_POST['docId'])) {
-        $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
 
-    // Get the file and convert it.
-    $file = file_get_contents($_FILES['formfile']['tmp_name']);
-    $doc = iconv('Windows-1252', 'UTF-8', $file);
-    $uName = $uS->username;
+    if (! empty($_FILES['formfile']['tmp_name'])) {
 
-    $ustmt = $dbh->prepare("update document set Doc = ?, Updated_By = ?, Last_Updated = now() where idDocument = ?");
-    $ustmt->bindParam(1, $doc, PDO::PARAM_LOB);
-    $ustmt->bindParam(2, $uName);
-    $ustmt->bindParam(3, $docId);
-    $dbh->beginTransaction();
-    $ustmt->execute();
-    $dbh->commit();
-    
+        $docId = - 1;
+        if (isset($_POST['docId'])) {
+            $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        // Get the file and convert it.
+        $file = file_get_contents($_FILES['formfile']['tmp_name']);
+        $doc = iconv('Windows-1252', 'UTF-8', $file);
+        $uName = $uS->username;
+
+        $ustmt = $dbh->prepare("update document set Doc = ?, Updated_By = ?, Last_Updated = now() where idDocument = ?");
+        $ustmt->bindParam(1, $doc, PDO::PARAM_LOB);
+        $ustmt->bindParam(2, $uName);
+        $ustmt->bindParam(3, $docId);
+        $dbh->beginTransaction();
+        $ustmt->execute();
+        $dbh->commit();
     }
 }
 
@@ -2350,7 +2372,7 @@ $resultMessage = $alertMsg->createMarkup();
         $('#mainTabs').show();
 
         $(document).on('click', '.replaceForm', function(){
-            var form = $(this).closest("div").find('form');
+            var form = $(this).closest("div.row").find('form');
             if(form.is(':hidden')){
 				$(this).text('Cancel');
             }else{
@@ -2511,7 +2533,7 @@ $resultMessage = $alertMsg->createMarkup();
 						id='btnhSave' name="btnhSave" value="Save" /></span>
 				</form>
 			</div>
-			<div id="formUpload" class="ui-tabs-hide">
+			<div id="formUpload" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
 				<p>Select the form to upload: <?php echo $rteSelectForm; ?>
                     <input id="formGo" type="button" value="Get" /> <span
 						id="spnFrmLoading" style="font-style: italic; display: none;">Loading...</span>
