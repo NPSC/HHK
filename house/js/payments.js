@@ -1321,13 +1321,6 @@ function cardOnFile(id, idGroup, postBackPage) {
             if (this.checked !== false) {
                 parms[$(this).attr('id')] = 'on';
             }
-        } else if ($(this).hasClass('ckdate')) {
-            var tdate = $(this).datepicker('getDate');
-            if (tdate) {
-                parms[$(this).attr('id')] = tdate.toJSON();
-            } else {
-                 parms[$(this).attr('id')] = '';
-            }
         } else if ($(this).attr('type') === 'radio') {
             if (this.checked !== false) {
                 parms[$(this).attr('id')] = this.value;
@@ -1336,6 +1329,10 @@ function cardOnFile(id, idGroup, postBackPage) {
             parms[$(this).attr('id')] = this.value;
         }
     });
+    
+    if ($('#selccgw').length > 0) {
+        parms['selccgw'] = $('#selccgw').val();
+    }
 
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
     $.post('ws_ckin.php', parms,
@@ -1368,12 +1365,13 @@ function cardOnFile(id, idGroup, postBackPage) {
             if (data.COFmkup && data.COFmkup !== '') {
                 $('#tblupCredit').remove();
                 $('#upCreditfs').append($(data.COFmkup));
-                setupCOF();
+                setupCOF($('#trvdCHName'));
             }
         }
     });
 }
 
+// Update credit dialog box
 function updateCredit(id, idReg, name, strCOFdiag, pbp) {
 
     var gnme = '';

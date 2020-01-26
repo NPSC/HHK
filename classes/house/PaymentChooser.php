@@ -1002,7 +1002,6 @@ ORDER BY v.idVisit , v.Span;");
         }
 
         $attr = array('type'=>'radio', 'name'=>'rbUseCard' . $index, 'class' => 'hhk-feeskeys');
-        $cbAttr = array('type'=>'checkbox', 'name'=>'cbDelCard' . $index, 'class' => 'hhk-feeskeys');
 
         // List any valid stored cards on file
         foreach ($tkRsArray as $tkRs) {

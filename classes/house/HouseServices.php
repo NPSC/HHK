@@ -1310,30 +1310,30 @@ class HouseServices {
         $uS = Session::getInstance();
 
         $dataArray = array();
-        $keys = array_keys($post);
-        $msg = '';
+//        $keys = array_keys($post);
+//        $msg = '';
 
 
         // Delete any credit tokens
-        foreach ($keys as $k) {
-
-            $parts = explode('_', $k);
-
-            if (count($parts) > 1 && $parts[0] == 'crdel') {
-
-                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
-
-                if ($idGt > 0) {
-
-                    $cnt = $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
-
-                    if ($cnt > 0) {
-                        $gtRs = CreditToken::getTokenRsFromId($dbh, $idGt);
-                        $msg .= 'Card ' . $gtRs->MaskedAccount->getStoredVal() . ', Name ' . $gtRs->CardHolderName->getStoredVal() . ' deleted.  ';
-                    }
-                }
-            }
-        }
+//        foreach ($keys as $k) {
+//
+//            $parts = explode('_', $k);
+//
+//            if (count($parts) > 1 && $parts[0] == 'crdel') {
+//
+//                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
+//
+//                if ($idGt > 0) {
+//
+//                    $cnt = $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
+//
+//                    if ($cnt > 0) {
+//                        $gtRs = CreditToken::getTokenRsFromId($dbh, $idGt);
+//                        $msg .= 'Card ' . $gtRs->MaskedAccount->getStoredVal() . ', Name ' . $gtRs->CardHolderName->getStoredVal() . ' deleted.  ';
+//                    }
+//                }
+//            }
+//        }
 
         // Add a new card
         if (isset($post['rbUseCard']) && $post['rbUseCard'] == 0) {
@@ -1350,6 +1350,7 @@ class HouseServices {
                 $manualKey = TRUE;
             }
 
+            // For mulitple merchants
             if (isset($post['selccgw'])) {
                 $selGw = strtolower(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
             }
@@ -1364,11 +1365,6 @@ class HouseServices {
 
                 $dataArray['error'] = $ex->getMessage();
             }
-        }
-
-        if ($msg != '' && isset($post['rbUseCard']) === FALSE) {
-            $dataArray['success'] = $msg;
-            $dataArray['COFmkup'] = HouseServices::viewCreditTable($dbh, $idGroup, $idGuest);
         }
 
         return $dataArray;

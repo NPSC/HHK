@@ -95,38 +95,6 @@ function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_admin.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
 
-function setupCOF() {
-
-    // Card on file Cardholder name.
-    if ($('#trvdCHName').length > 0) {
-
-        $('input[name=rbUseCard]').on('change', function () {
-            if ($(this).val() == 0) {
-                $('#trvdCHName').show();
-            } else {
-                $('#trvdCHName').hide();
-                $('#btnvrKeyNumber').prop('checked', false).change();
-            }
-        });
-
-        if ($('input[name=rbUseCard]:checked').val() > 0) {
-            $('#trvdCHName').hide();
-        }
-
-        $('#btnvrKeyNumber').change(function() {
-
-            if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
-                $('#txtvdNewCardName').show();
-            } else {
-                $('#txtvdNewCardName').hide();
-                $('#txtvdNewCardName').val('');
-            }
-        });
-
-        $('#btnvrKeyNumber').change();
-    }
-
-}
 
 // Init j-query.
 $(document).ready(function () {
@@ -334,10 +302,6 @@ $(document).ready(function () {
 
     $('#btnSubmit, #btnReset, #btnCred').button();
 
-    $('#btnCred').click(function () {
-        cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg);
-    });
-
     // phone - email tabs block
     $('#phEmlTabs').tabs();
     $('#emergTabs').tabs();
@@ -542,7 +506,11 @@ $(document).ready(function () {
 	$(this).data("dirrty-initial-value", $(this).data('country'));
     });
 
-    setupCOF();
+    $('#btnCred').click(function () {
+        cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg);
+    });
+
+    setupCOF($('#trvdCHName'));
 
     $('#keysfees').mousedown(function (event) {
         var target = $(event.target);
