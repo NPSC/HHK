@@ -886,21 +886,8 @@ class PaymentSvcs {
                 $payResp->paymentRs = $payRs;
                 break;
 
-//             case PaymentMethod::ChgAsCash:
-
-//                 $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by idPayment_auth");
-//                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-//                 if (count($rows) < 1) {
-//                     return array('warning'=>'Charge payment record not found.');
-//                 }
-
-//                 $pAuthRs = new Payment_AuthRS();
-//                 EditRS::loadRow($rows[0], $pAuthRs);
-
-//                 $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
-//                 $payResp->paymentRs = $payRs;
-//                 break;
+            default:
+                return array('warning'=>'Payment Method not recognized: '.$payRs->idPayment_Method->getStoredVal());
 
         }
 

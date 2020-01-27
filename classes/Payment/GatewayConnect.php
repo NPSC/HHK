@@ -203,14 +203,15 @@ class StandInGwResponse implements iGatewayResponse {
     protected $token;
     protected $processor;
     protected $merchant;
+    protected $status;
 
-    public function __construct(Payment_AuthRS $pAuthRs, $operatorId, $cardholderName, $expDate, $token, $invoiceNumber, $amount) {
+    public function __construct(Payment_AuthRS $pAuthRs, $operatorId, $cardholderName, $expDate, $token, $invoiceNumber, $amount, $status = MpStatusValues::Approved) {
 
         $this->pAuthRs = $pAuthRs;
 
         $this->invoiceNumber = $invoiceNumber;
         $this->requestAmount = $amount;
-
+        $this->$status = $status;
         $this->operatorId = $operatorId;
         $this->expDate = $expDate;
         $this->cardholderName = $cardholderName;
@@ -273,6 +274,10 @@ class StandInGwResponse implements iGatewayResponse {
 
     public function getExpDate() {
         return $this->expDate;
+    }
+
+    public function getStatus() {
+        return $this->status;
     }
 
     public function SignatureRequired() {

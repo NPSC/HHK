@@ -9,7 +9,7 @@
  */
 
 
-class ImPaymentResponse extends PaymentResponse {
+class ImPaymentResponse extends CreditResponse {
 
 
     function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $isPartialApprovalAmount = FALSE) {
@@ -111,7 +111,7 @@ class ImPaymentResponse extends PaymentResponse {
 
 }
 
-class ImReturnResponse extends PaymentResponse {
+class ImReturnResponse extends CreditResponse {
 
 
     function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $isPartialApprovalAmount = FALSE) {
@@ -208,7 +208,7 @@ class ImReturnResponse extends PaymentResponse {
 
 }
 
-class ImCofResponse extends PaymentResponse {
+class ImCofResponse extends CreditResponse {
 
     public $idToken;
 
@@ -228,7 +228,7 @@ class ImCofResponse extends PaymentResponse {
     public function getPaymentStatusCode() {
         return PaymentStatusCode::Paid;
     }
-    
+
     public function getStatus() {
 
         switch ($this->response->getResponseCode()) {

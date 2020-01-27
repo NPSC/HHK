@@ -29,8 +29,8 @@ class TokenTX {
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
-            $cstReq->setAddress('4')->setZip('30329')->setOperatorID('test');
+        if (strtolower($uS->mode) !== Mode::Live) {
+            $cstReq->setOperatorID('test');
             //$trace = TRUE;
         }
 
@@ -38,7 +38,7 @@ class TokenTX {
         $creditResponse = $cstReq->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
 
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $cstReq->getTokenId());
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $cstReq->getTokenId(), PaymentStatusCode::Paid);
         $vr->setPaymentDate($payDate);
         $vr->setPaymentNotes($payNotes);
 
@@ -82,11 +82,9 @@ class TokenTX {
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
 
+        if (strtolower($uS->mode) !== Mode::Live) {
             $voidSale->setOperatorID('test');
-            //$trace = TRUE;
-
         } else {
             $voidSale->setOperatorID($uS->username);
         }
@@ -130,7 +128,8 @@ class TokenTX {
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
+
+        if (strtolower($uS->mode) !== Mode::Live) {
             $reverseSale->setOperatorID('test');
             //$trace = TRUE;
         } else {
@@ -177,7 +176,7 @@ class TokenTX {
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
+        if (strtolower($uS->mode) !== Mode::Live) {
             $returnSale->setOperatorID('test');
             //$trace = TRUE;
        } else {
@@ -225,7 +224,7 @@ class TokenTX {
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
+        if (strtolower($uS->mode) !== Mode::Live) {
             $returnVoid->setOperatorID('test');
             //$trace = TRUE;
         }
@@ -234,7 +233,7 @@ class TokenTX {
         $creditResponse = $returnVoid->submit($gway->getCredentials(), $trace);
         $creditResponse->setMerchant($gway->getGatewayType());
 
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnVoid->getTokenId(), PaymentStatusCode::Retrn);
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnVoid->getTokenId(), PaymentStatusCode::VoidReturn);
         $vr->setPaymentDate($payDate);
 
 
@@ -265,7 +264,7 @@ class TokenTX {
 class TokenResponse extends CreditResponse {
 
 
-    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $paymentStatusCode = PaymentStatusCode::Paid) {
+    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $paymentStatusCode) {
 
         $this->response = $creditTokenResponse;
         $this->idPayor = $idPayor;
@@ -274,6 +273,7 @@ class TokenResponse extends CreditResponse {
         $this->invoiceNumber = $creditTokenResponse->getInvoiceNumber();
         $this->amount = $creditTokenResponse->getAuthorizedAmount();
         $this->setPaymentStatusCode($paymentStatusCode);
+
     }
 
     public function getPaymentMethod() {
@@ -281,6 +281,7 @@ class TokenResponse extends CreditResponse {
     }
 
     public function getStatus() {
+
         switch ($this->response->getStatus()) {
 
             case MpStatusValues::Approved:

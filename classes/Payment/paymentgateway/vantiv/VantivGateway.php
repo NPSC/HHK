@@ -54,7 +54,8 @@ class VantivGateway extends PaymentGateway {
                     ->setFrequency(MpFrequencyValues::OneTime)
                     ->setInvoice($invoice->getInvoiceNumber())
                     ->setTokenId($tokenRS->idGuest_token->getStoredVal())
-                    ->setMemo(MpVersion::PosVersion);
+                    ->setMemo(MpVersion::PosVersion)
+                    ->setOperatorID($uS->username);
 
             // Run the token transaction
             $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes(), $pmp->getPayDate());
@@ -371,7 +372,6 @@ class VantivGateway extends PaymentGateway {
         // Set CC Gateway name
         $uS->ccgw = $this->getGatewayType();
 
-
         $pay = new InitCkOutRequest($uS->siteName, 'Custom');
 
         // Card reader?
@@ -386,7 +386,6 @@ class VantivGateway extends PaymentGateway {
 
         $pay->setAVSZip($addr["Postal_Code"])
                 ->setAVSAddress($addr['Address_1'])
-                ->setAVSZip($addr["Postal_Code"])
                 ->setCardHolderName($guest->getRoleMember()->get_fullName())
                 ->setFrequency(MpFrequencyValues::OneTime)
                 ->setInvoice($invoice->getInvoiceNumber())
@@ -408,8 +407,6 @@ class VantivGateway extends PaymentGateway {
     public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
 
         $uS = Session::getInstance();
-
-        // Do a hosted payment.
         $secure = new SecurityComponent();
 
         $houseUrl = $secure->getSiteURL();
@@ -683,7 +680,7 @@ class VantivGateway extends PaymentGateway {
     }
 
     public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
-        return new TokenResponse($creditTokenResponse, $idPayor, $idToken, $payNotes);
+        return new TokenResponse($creditTokenResponse, $idPayor, $idToken, $payNotes, '');
     }
 
     public function getCofResponseObj(iGatewayResponse $verifyCiResponse, $idPayor, $idGroup) {
