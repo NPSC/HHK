@@ -518,59 +518,6 @@ dateFormat: "M d, yy" ';
 
     }
 
-    public static function createResvMarkup(\PDO $dbh, $idGuest, \Registration $reg, $payTypes, $defaultPayType, $ccgw) {
-
-//        $labels = new Config_Lite(LABEL_FILE);
-        $cof = '';
-
-
-        if ($ccgw != '') {
-            // show card on file button
-            $cof = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Put card on file (no payment)', array('style'=>'font-weight:bold;'))
-                . HouseServices::viewCreditTable($dbh, $reg->getIdRegistration(), 0)
-                , array('id'=>'hhk-COF', 'class'=>'hhk-panel', 'style'=>'float:left;'));
-        }
-
-
-//        unset($payTypes[PayType::Invoice]);
-//
-//        $mkup = HTMLContainer::generateMarkup('div',
-//                self::createPaymentMarkup(
-//                    TRUE,
-//                    FALSE,
-//                    0,
-//                    0,
-//                    FALSE,
-//                    0,
-//                    0,
-//                    0,
-//                    FALSE,
-//                    FALSE,
-//                    array(),
-//                    $labels)
-//                , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
-//        );
-//
-//        // payment types panel
-//        $panelMkup = self::showPaySelection($dbh,
-//                $defaultPayType,
-//                $payTypes,
-//                readGenLookupsPDO($dbh, 'Charge_Cards'),
-//                array(),
-//                $labels,
-//                $ccgw,
-//                $idGuest, $reg->getIdRegistration(), $reg->getPreferredTokenId());
-//
-//        $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
-
-//        $payToday = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Pre-paying Today', array('style'=>'font-weight:bold;'))
-//                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
-
-
-        return $cof;
-
-    }
-
     public static function createPayInvMarkup(\PDO $dbh, $id, $iid, $paymentGateway, $prefTokenId = 0) {
 
         $uS = Session::getInstance();

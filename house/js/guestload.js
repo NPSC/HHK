@@ -486,10 +486,7 @@ $(document).ready(function () {
             $('input.hhk-ex').prop('checked', false);
         }
     });
-
-    // Hide the member status and basis controls
-    $(".hhk-hideStatus, .hhk-hideBasis").hide();
-
+    
     $('#divFuncTabs').show();
 
     $('.hhk-showonload').show();
@@ -507,10 +504,10 @@ $(document).ready(function () {
     });
 
     $('#btnCred').click(function () {
-        cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg);
+        cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg, $(this).data('indx'));
     });
 
-    setupCOF($('#trvdCHName'));
+    setupCOF($('#trvdCHNameg'), $('#btnCred').data('indx'));
 
     $('#keysfees').mousedown(function (event) {
         var target = $(event.target);

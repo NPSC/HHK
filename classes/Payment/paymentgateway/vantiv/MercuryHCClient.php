@@ -161,7 +161,7 @@ class CVVResult {
     const P = '(P) CVV Not Processed.';
     const S = '(S) CVV should be on card but merchant indicated it is not present (Visa/Discover only).';
     const U = '(U) CVV Issuer is Not Certified, CID not checked (AMEX only).';
-    const BLANK = 'CVV is Blank.';
+    const BLANK = '';
 
     const MATCH = 'm';
     const NO_MATCH = 'nm';

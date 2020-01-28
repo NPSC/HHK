@@ -39,8 +39,14 @@ class TokenTX {
         $creditResponse->setMerchant($gway->getGatewayType());
 
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $cstReq->getTokenId(), PaymentStatusCode::Paid);
+
         $vr->setPaymentDate($payDate);
         $vr->setPaymentNotes($payNotes);
+        $vr->setResult($creditResponse->getStatus());
+
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($cstReq->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditSaleToken');
@@ -95,6 +101,11 @@ class TokenTX {
 
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId(), PaymentStatusCode::VoidSale);
         $vr->setPaymentDate($payDate);
+        $vr->setResult($creditResponse->getStatus());
+
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($voidSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidSaleToken');
@@ -142,6 +153,11 @@ class TokenTX {
 
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $reverseSale->getTokenId(), PaymentStatusCode::Reverse);
         $vr->setPaymentDate($payDate);
+        $vr->setResult($creditResponse->getStatus());
+
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($reverseSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReverseToken');
@@ -189,7 +205,11 @@ class TokenTX {
 
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnSale->getTokenId(), PaymentStatusCode::Retrn);
         $vr->setPaymentDate($payDate);
+        $vr->setResult($creditResponse->getStatus());
 
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReturnToken');
@@ -235,7 +255,11 @@ class TokenTX {
 
         $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnVoid->getTokenId(), PaymentStatusCode::VoidReturn);
         $vr->setPaymentDate($payDate);
+        $vr->setResult($creditResponse->getStatus());
 
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnVoid->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidReturnToken');

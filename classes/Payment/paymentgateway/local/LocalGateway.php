@@ -134,14 +134,14 @@ class LocalGateway extends PaymentGateway {
 
     }
 
-    public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
+    public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
         // Charge as Cash markup
         $payTbl->addBodyTr(
             HTMLTable::makeTd('New Card: ', array('class'=>'tdlabel'))
-            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), '', TRUE), array('name'=>'selChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
-            .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
-            , array('id'=>'trvdCHName'));
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), '', TRUE), array('name'=>'selChargeType'.$index, 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys'.$index)))
+            .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct'.$index, 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys'.$index)))
+            , array('id'=>'trvdCHName'.$index));
 
     }
 

@@ -1036,7 +1036,7 @@ where r.idRegistration =" . $idReg);
         return new ImCofResponse($vcr, $idPayor, $idGroup);
     }
 
-    public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
+    public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
         $payTbl->addBodyTr(
                 HTMLTable::makeTd(

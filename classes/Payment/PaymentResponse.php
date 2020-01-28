@@ -74,6 +74,10 @@ abstract class PaymentResponse {
         return $this->result;
     }
 
+    public function setResult($v) {
+        $this->result = $v;
+    }
+
     public function getPaymentDate() {
         return $this->paymentDate;
     }
@@ -129,10 +133,6 @@ abstract class CreditResponse extends PaymentResponse {
     public $response;
     public $idPaymentAuth;
     public $idGuestToken = 0;
-
-    public function getResult() {
-        return MpStatusValues::Approved;
-    }
 
     public function recordPaymentAuth(\PDO $dbh, $paymentGatewayName, $username) {
 

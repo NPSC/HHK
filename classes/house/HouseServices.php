@@ -1265,6 +1265,74 @@ class HouseServices {
         return $adrArray;
     }
 
+    // Just credit cards with delete checkboxes.
+    public static function guestEditCreditTable(\PDO $dbh, $idRegistration, $idGuest, $index) {
+
+        $uS = Session::getInstance();
+
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, $idRegistration));
+        $tbl = new HTMLTable();
+
+        $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
+
+        $prefTokenId = Registration::readPrefTokenId($dbh, $idRegistration);
+
+        $tbl->addBodyTr(HTMLTable::makeTh("X") . HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use"));
+
+        // preset useCardRb
+        if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
+            $keys = array_keys($tkRsArray);
+            $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
+        }
+
+        $attr = array('type'=>'radio', 'name'=>'rbUseCard'.$index);
+        $cbattr = array('type'=>'checkbox', 'name'=>'cbDelCard'.$index);
+
+        // List any valid stored cards on file
+        foreach ($tkRsArray as $tkRs) {
+
+            if ($tkRs->idGuest_token->getStoredVal() == $prefTokenId) {
+                $attr['checked'] = 'checked';
+            } else if (isset($attr['checked'])) {
+                unset($attr['checked']);
+            }
+
+            $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
+            if (strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+                $merchant = '';
+            }
+
+            $tbl->addBodyTr(
+                    HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbDelCard'.$index. '_'.$tkRs->idGuest_token->getStoredVal())))
+                    . HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant)
+                    . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
+
+                );
+
+        }
+
+        // New card.  Not for credit return.
+
+        if ($prefTokenId == 0) {
+            $attr['checked'] = 'checked';
+        } else {
+            unset($attr['checked']);
+        }
+
+        $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '3'))
+            .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
+        );
+
+        $gwTbl = new HTMLTable();
+        $gateway->selectPaymentMarkup($dbh, $gwTbl, $index);
+        $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(), array('colspan'=>'4')));
+
+        return $tbl->generateMarkup(array('id' => 'tblupCredit'.$index));
+
+    }
+
+
     /**
      * This credit card viewer does not take any money.
      * Just show credit cards on file
@@ -1305,38 +1373,41 @@ class HouseServices {
      * @param string $postBackPage
      * @return array
      */
-    public static function cardOnFile(\PDO $dbh, $idGuest, $idGroup, $post, $postBackPage) {
+    public static function cardOnFile(\PDO $dbh, $idGuest, $idGroup, $post, $postBackPage, $idx) {
         // Credit card processing
         $uS = Session::getInstance();
 
         $dataArray = array();
-//        $keys = array_keys($post);
-//        $msg = '';
+
+        $keys = array_keys($post);
+        $msg = '';
 
 
         // Delete any credit tokens
-//        foreach ($keys as $k) {
-//
-//            $parts = explode('_', $k);
-//
-//            if (count($parts) > 1 && $parts[0] == 'crdel') {
-//
-//                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
-//
-//                if ($idGt > 0) {
-//
-//                    $cnt = $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
-//
-//                    if ($cnt > 0) {
-//                        $gtRs = CreditToken::getTokenRsFromId($dbh, $idGt);
-//                        $msg .= 'Card ' . $gtRs->MaskedAccount->getStoredVal() . ', Name ' . $gtRs->CardHolderName->getStoredVal() . ' deleted.  ';
-//                    }
-//                }
-//            }
-//        }
+        foreach ($keys as $k) {
+
+            $parts = explode('_', $k);
+
+            if (count($parts) > 1 && $parts[0] == 'cbDelCard'.$idx) {
+
+                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
+
+                if ($idGt > 0) {
+
+                    $cnt = $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
+
+                    if ($cnt > 0) {
+                        $gtRs = CreditToken::getTokenRsFromId($dbh, $idGt);
+                        $msg .= 'Card ' . $gtRs->MaskedAccount->getStoredVal() . ', Name ' . $gtRs->CardHolderName->getStoredVal() . ' deleted.  ';
+                    }
+                }
+            }
+        }
+
+        $dataArray['success'] = $msg;
 
         // Add a new card
-        if (isset($post['rbUseCard']) && $post['rbUseCard'] == 0) {
+        if (isset($post['rbUseCard'.$idx]) && $post['rbUseCard'.$idx] == 0) {
 
             $manualKey = FALSE;
             $selGw = '';
@@ -1345,14 +1416,14 @@ class HouseServices {
             $newCardHolderName = $guest->getRoleMember()->get_fullName();
 
             // for instamed
-            if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
-                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
+            if (isset($post['txtNewCardName'.$idx]) && isset($post['cbKeyNumber'.$idx])) {
+                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'.$idx], FILTER_SANITIZE_STRING));
                 $manualKey = TRUE;
             }
 
             // For mulitple merchants
-            if (isset($post['selccgw'])) {
-                $selGw = strtolower(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
+            if (isset($post['selccgw'.$idx])) {
+                $selGw = strtolower(filter_var($post['selccgw'.$idx], FILTER_SANITIZE_STRING));
             }
 
             try {

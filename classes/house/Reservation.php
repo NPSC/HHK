@@ -1581,14 +1581,6 @@ FROM reservation r
                         PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())
                         , array('style'=>'clear:left; float:left;'));
 
-//                // Card on file
-//                if ($uS->ccgw != '') {
-//
-//                    $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
-//                            HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
-//                            . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
-//                        ,array('style'=>'float:left;', 'class'=>'hhk-panel')));
-//                }
             }
 
         }

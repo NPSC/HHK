@@ -798,7 +798,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             $('.hhk-transfer').hide();
             $('.hhk-tfnum').hide();
             chg.hide();
-            $('#trvdCHName').hide();
+            $chrgExpand.hide();
             $('#tdCashMsg').hide();
             $('.paySelectNotes').show();
 
@@ -1275,47 +1275,54 @@ function paymentRedirect (data, $xferForm) {
 /**
  * 
  * @param {jqobject} $chgExpand
+ * @param {string} $idx
  * @returns {undefined}
  */
-function setupCOF($chgExpand) {
+function setupCOF($chgExpand, idx) {
 
+    if (idx === undefined || idx === null) {
+        idx = '';
+    }
+    
     // Card on file Cardholder name.
     if ($chgExpand.length > 0) {
 
-        $('input[name=rbUseCard]').on('change', function () {
+        $('input[name=rbUseCard'+idx+']').on('change', function () {
             if ($(this).val() == 0) {
                 $chgExpand.show();
             } else {
                 $chgExpand.hide();
-                $('#btnvrKeyNumber').prop('checked', false).change();
+                $('#btnvrKeyNumber'+idx).prop('checked', false).change();
             }
         });
 
-        if ($('input[name=rbUseCard]:checked').val() > 0) {
+        if ($('input[name=rbUseCard'+idx+']:checked').val() > 0) {
             $chgExpand.hide();
         }
 
         // Instamed-specific controls
-        $('#btnvrKeyNumber').change(function() {
+        if ($('#btnvrKeyNumber'+idx).length > 0) {
+            $('#btnvrKeyNumber'+idx).change(function() {
 
-            if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
-                $('#txtvdNewCardName').show();
-            } else {
-                $('#txtvdNewCardName').hide();
-                $('#txtvdNewCardName').val('');
-            }
-        });
+                if (this.checked && $('input[name=rbUseCard'+idx+']:checked').val() == 0) {
+                    $('#txtvdNewCardName'+idx).show();
+                } else {
+                    $('#txtvdNewCardName'+idx).hide();
+                    $('#txtvdNewCardName'+idx).val('');
+                }
+            });
 
-        $('#btnvrKeyNumber').change();
+            $('#btnvrKeyNumber'+idx).change();
+        }
     }
 
 }
 
-function cardOnFile(id, idGroup, postBackPage) {
+function cardOnFile(id, idGroup, postBackPage, idx) {
 
-    var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage};
+    var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage, index: idx};
 
-    $('#tblupCredit').find('input').each(function() {
+    $('#tblupCredit'+idx).find('input').each(function() {
 
         if ($(this).attr('type') === 'checkbox') {
             if (this.checked !== false) {
@@ -1330,8 +1337,8 @@ function cardOnFile(id, idGroup, postBackPage) {
         }
     });
     
-    if ($('#selccgw').length > 0) {
-        parms['selccgw'] = $('#selccgw').val();
+    if ($('#selccgw'+idx).length > 0) {
+        parms['selccgw'] = $('#selccgw'+idx).val();
     }
 
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
@@ -1363,65 +1370,9 @@ function cardOnFile(id, idGroup, postBackPage) {
             }
 
             if (data.COFmkup && data.COFmkup !== '') {
-                $('#tblupCredit').remove();
+                $('#tblupCredit'+idx).remove();
                 $('#upCreditfs').append($(data.COFmkup));
-                setupCOF($('#trvdCHName'));
-            }
-        }
-    });
-}
-
-// Update credit dialog box
-function updateCredit(id, idReg, name, strCOFdiag, pbp) {
-
-    var gnme = '';
-
-    if (name && name != '') {
-        gnme = ' - ' + name;
-    }
-
-    $.post('ws_ckin.php',
-            {
-                cmd: 'viewCredit',
-                idGuest: id,
-                reg: idReg,
-                pbp: pbp
-            },
-        function(data) {
-          if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, 'error');
-            }
-
-            var buttons = {
-                "Continue": function() {
-                    cardOnFile(id, idReg, data.pbp);
-                    $(this).dialog("close");
-                },
-                "Cancel": function() {
-                    $(this).dialog("close");
-                }
-            };
-
-            if (data.success) {
-                var cof = $('#' + strCOFdiag);
-                cof.children().remove();
-                cof.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>').append($(data.success)));
-                cof.dialog('option', 'buttons', buttons);
-                cof.dialog('option', 'width', 400);
-                cof.dialog('option', 'title', 'Card On File' + gnme);
-
-                setupCOF();
-                cof.dialog('open');
+                setupCOF($('#trvdCHName'+idx), idx);
             }
         }
     });

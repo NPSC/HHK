@@ -77,7 +77,7 @@ class HostedCheckout {
         $verifyResponse->setMerchant($gway->getGatewayType());
 
         $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes, $payDate);
-
+        $vr->setResult($verifyResponse->getStatus());  // Set result string.
 
         // Save raw transaction in the db.
         try {

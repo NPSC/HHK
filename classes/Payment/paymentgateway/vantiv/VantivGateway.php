@@ -716,9 +716,9 @@ class VantivGateway extends PaymentGateway {
         $this->credentials = $gwRow;
     }
 
-    public function selectPaymentMarkup(\PDO $dbh, &$payTbl) {
+    public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
-        $selArray = array('id'=>'selccgw', 'name'=>'selccgw', 'class'=>'hhk-feeskeys');
+        $selArray = array('id'=>'selccgw'.$index, 'name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index);
 
         if ($this->getGatewayType() != '') {
 
@@ -727,7 +727,7 @@ class VantivGateway extends PaymentGateway {
             $payTbl->addBodyTr(
                     HTMLTable::makeTh('Selected Location:')
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
-                    , array('id'=>'trvdCHName')
+                    , array('id'=>'trvdCHName'.$index)
             );
 
         } else {
@@ -743,9 +743,9 @@ class VantivGateway extends PaymentGateway {
                 $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
 
                 $payTbl->addBodyTr(
-                        HTMLTable::makeTh('Select Location:', array('colspan'=>'2'))
+                        HTMLTable::makeTh('Select Location:')
                         .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
-                        , array('id'=>'trvdCHName')
+                        , array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
                 );
 
             }

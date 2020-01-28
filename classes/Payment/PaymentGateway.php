@@ -55,7 +55,7 @@ abstract class PaymentGateway {
 
     public abstract function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate);
 
-    public abstract function selectPaymentMarkup(\PDO $dbh, &$payTable);
+    public abstract function selectPaymentMarkup(\PDO $dbh, &$payTable, $index = '');
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
         return array('warning' => 'Credit Sale is not implemented. ');
