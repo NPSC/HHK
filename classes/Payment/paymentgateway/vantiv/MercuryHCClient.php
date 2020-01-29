@@ -1107,7 +1107,7 @@ abstract class MercTokenRequest extends MercRequest {
      * The password is handled differently for Tokens.
      *
      * @param array $gway
-     * @return \CreditResponse
+     * @return MercResponse
      * @throws Hk_Exception_Payment
      */
     public function submit(array $gway, $trace = FALSE) {
@@ -1652,5 +1652,3 @@ class CreditTokenResponse extends MercResponse implements iGatewayResponse {
 
 
 }
-
-

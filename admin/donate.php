@@ -161,12 +161,12 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
     }
 
     // Date
+    $dte = date('Y-m-d H:i:s');
     if (isset($data["ddate"])) {
         $dte = filter_var($data["ddate"], FILTER_SANITIZE_STRING);
     } else {
         $dte = date('Y-m-d H:i:s');
     }
-
 
     // These three have valid defaults
     $salut = SalutationCodes::FirstOnly;
@@ -471,4 +471,3 @@ function genDonationMarkup(PDO $dbh, $id) {
 
     return array('success'=> $tbl->generateMarkup(array('style'=>'width:100%')));
 }
-

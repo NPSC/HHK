@@ -137,7 +137,7 @@ abstract class ContactPoint {
 
     public abstract function isRecordSetDefined($code);
 
-    
+
     public function get_recordSet($code) {
 
         if (isset($this->rSs[$code])) {
@@ -1253,6 +1253,3 @@ class Emails extends ContactPoint {
     }
 
 }
-
-
-

@@ -432,7 +432,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
  * @param array $aList
  * @param boolean $local
  * @param boolean $visitFee  Flag to show/hide visit fees
- * @return 
+ * @return array
  */
 function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $visitFee, $statsOnly, $rescGroup, $labels) {
 
@@ -666,11 +666,6 @@ where
     $sml = null;
     $reportRows = 0;
 
-    if ($numberAssocs > 0) {
-        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital').' / Assoc';
-    } else {
-        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital');
-    }
 
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
@@ -713,7 +708,7 @@ where
     $totalCharged = 0;
     $totalVisitFee = 0;
     $totalLodgingCharge = 0;
-    $totalFullCharge = 0;
+    //$totalFullCharge = 0;
     $totalAddnlCharged = 0;
 
     $totalAddnlTax = 0;
@@ -728,7 +723,7 @@ where
     $totalthrdPaid = 0;
     $totalSubsidy = 0;
     $totalUnpaid = 0;
-    $totalAddnlPaid = 0;
+    //$totalAddnlPaid = 0;
     $totalDonationPaid = 0;
 
     $totalNights = 0;
@@ -775,7 +770,7 @@ where
                 }
 
                 $totalCharged += $visit['chg'];
-                $totalFullCharge += $visit['fcg'];
+                //$totalFullCharge += $visit['fcg'];
                 $totalAmtPending += $visit['pndg'];
                 $totalNights += $visit['nit'];
                 $totalGuestNights += $visit['gnit'];
@@ -865,7 +860,7 @@ where
                 $totalHousePaid += $visit['hpd'];
                 $totalGuestPaid += $visit['gpd'];
                 $totalthrdPaid += $visit['thdpd'];
-                $totalAddnlPaid += $visit['addpd'];
+                //$totalAddnlPaid += $visit['addpd'];
                 $totalDonationPaid += $visit['donpd'];
                 $totalUnpaid += $unpaid;
                 $totalSubsidy += ($visit['fcg'] - $visit['chg']);
@@ -1000,7 +995,7 @@ where
         $totalAddnlCharged += ($visit['addch']);
         $totalVisitFee += $visit['vfa'];
         $totalCharged += $visit['chg'];
-        $totalFullCharge += $visit['fcg'];
+        //$totalFullCharge += $visit['fcg'];
         $totalAmtPending += $visit['pndg'];
         $totalNights += $visit['nit'];
         $totalGuestNights += $visit['gnit'];
@@ -1097,7 +1092,7 @@ where
         $totalHousePaid += $visit['hpd'];
         $totalGuestPaid += $visit['gpd'];
         $totalthrdPaid += $visit['thdpd'];
-        $totalAddnlPaid += $visit['addpd'];
+        //$totalAddnlPaid += $visit['addpd'];
         $totalDonationPaid += $visit['donpd'];
         $totalUnpaid += $unpaid;
         $totalSubsidy += ($visit['fcg'] - $visit['chg']);
@@ -1204,8 +1199,12 @@ where
                     break;
 
                 case 'meanRate':
-                    $entry = '$' . number_format($avDailyFee,2);
-                    break;
+                	$entry = '$' . number_format($avDailyFee,2);
+                	break;
+
+                case 'meanGstRate':
+                	$entry = '$' . number_format($avGuestFee,2);
+                	break;
 
                 case 'donpd':
                     $entry = '$' . number_format($totalDonationPaid,2);
@@ -1378,7 +1377,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
 
         $cFields[] = array("Guest Nights", 'gnights', 'checked', '', 'n', '', array('style'=>'text-align:center;'));
         $cFields[] = array("Rate Per Guest", 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
-        $cFields[] = array("Mean Rate Per Guest", 'meanRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+        $cFields[] = array("Mean Rate Per Guest", 'meanGstRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
     } else {
 

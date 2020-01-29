@@ -612,7 +612,7 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
  *
  * @param int $idGuest
  * @param int $widthPx - desired pixel width of image
- * @return string
+ * @return string HTML formatted
  */
 
 function showGuestPicture ($idGuest, $widthPx) {
