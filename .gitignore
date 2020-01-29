@@ -2,3 +2,5 @@
 /patch/soapLog.xml
 .project
 /nbproject/
+/.settings/
+.buildpath

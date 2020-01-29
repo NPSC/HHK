@@ -386,7 +386,7 @@ class PaymentChooser {
         return $trs;
     }
 
-    public static function createChangeRoomMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, $prefTokenId = 0) {
+    public static function createChangeRoomMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, PaymentGateway $paymentGateway, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -400,7 +400,8 @@ class PaymentChooser {
 
         $labels = new Config_Lite(LABEL_FILE);
 
-        $mkup = HTMLContainer::generateMarkup('div',
+        $mkup = HTMLContainer::generateMarkup(
+            'div',
             self::createPaymentMarkup(
                 FALSE,
                 $uS->KeyDeposit,
@@ -426,9 +427,8 @@ class PaymentChooser {
                 $dbh,
                 $uS->DefaultPayType,
                 $payTypes,
-                removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')),
                 $labels,
-                PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayTypes($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan())),
+                $paymentGateway,
                 $idGuest, $idRegistration, $prefTokenId);
 
         $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
@@ -518,11 +518,11 @@ dateFormat: "M d, yy" ';
 
     }
 
-    public static function createPayInvMarkup(\PDO $dbh, $id, $iid, $paymentGateway, $prefTokenId = 0) {
+    public static function createPayInvMarkup(\PDO $dbh, $id, $invoiceId, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
-        $idInvoice = intval($iid, 10);
+        $idInvoice = intval($invoiceId, 10);
 
         if ($idInvoice > 0) {
 
@@ -587,9 +587,8 @@ ORDER BY v.idVisit , v.Span;");
                 $panelMkup = self::showPaySelection(
                         $dbh, $uS->DefaultPayType,
                         $payTypes,
-                        removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')),
                         $labels,
-                        $paymentGateway,
+                        PaymentGateway::factory($dbh, $uS->PaymentGateway, ''),
                         $id, 0, $prefTokenId, '');
 
                 $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
@@ -930,7 +929,7 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblRtnSelect'));
     }
 
-    public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;', $newCardChecked = TRUE) {
+    public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, PaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;', $newCardChecked = TRUE) {
 
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
             // Cannot return to a new card...

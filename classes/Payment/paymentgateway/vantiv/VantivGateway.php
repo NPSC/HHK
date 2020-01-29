@@ -737,7 +737,7 @@ class VantivGateway extends PaymentGateway {
 
             $selArray['size'] = count($gwRows);
 
-            if (is_array($this->gwType) && count($this->gwType) > 1) {
+//            if (is_array($this->gwType) && count($this->gwType) > 1) {
                 // Show choice of gateway
 
                 $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
@@ -748,7 +748,7 @@ class VantivGateway extends PaymentGateway {
                         , array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
                 );
 
-            }
+//            }
         }
     }
 

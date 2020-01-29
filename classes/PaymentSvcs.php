@@ -533,7 +533,7 @@ class PaymentSvcs {
 
         // Payment Gateway
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
-        return array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs));
+        return array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs, $bid));
 
     }
 

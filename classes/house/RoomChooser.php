@@ -225,7 +225,9 @@ class RoomChooser {
             $keyDepAmount = $visitCharge->getKeyFeesPaid();
 
             if ($keyDepAmount == 0) {
-                $paymentMarkup = PaymentChooser::createChangeRoomMarkup($dbh, $idGuest, $this->resv->getIdRegistration(), $visitCharge);
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan()));
+
+                $paymentMarkup = PaymentChooser::createChangeRoomMarkup($dbh, $idGuest, $this->resv->getIdRegistration(), $visitCharge, $gateway);
             }
         }
 
