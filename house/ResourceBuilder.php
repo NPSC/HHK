@@ -1077,13 +1077,13 @@ if (isset($_POST['ldfm'])) {
             'href' => '#' . $r['Code']
         )));
 
-        $tabContent .= HTMLContainer::generateMarkup('div', '<div class="row mb-3"><div class="col-10"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="ui-widget-content" style="padding: 5px 7px; display: none;">
+        $tabContent .= HTMLContainer::generateMarkup('div', ($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
+            'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3')): '') . 
+            '<div class="row"><div class="col-10 uploadFormDiv" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="ui-widget-content" style="padding: 5px 7px;">
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>
 Upload new file: <input name="formfile" type="file" required />
-<input type="submit" name="docUpload" value="Send File" />
-</form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>' . HTMLContainer::generateMarkup('div', $r['Doc'], array(
-            'id' => 'form' . $r['idDocument']
-        )), array(
+<input type="submit" name="docUpload" value="Save Form" />
+</form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
             'id' => $r['Code']
         ));
     }
@@ -2372,7 +2372,7 @@ $resultMessage = $alertMsg->createMarkup();
         $('#mainTabs').show();
 
         $(document).on('click', '.replaceForm', function(){
-            var form = $(this).closest("div.row").find('form');
+            var form = $(this).closest("div.row").find('.uploadFormDiv');
             if(form.is(':hidden')){
 				$(this).text('Cancel');
             }else{

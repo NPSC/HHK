@@ -1718,7 +1718,7 @@ class PriceNdayBlock extends PriceModel {
         $fTbl->addHeaderTr(
             HTMLTable::makeTh('Title')
             .HTMLTable::makeTh('Default')
-            .HTMLTable::makeTh('Dailey Rate')
+            .HTMLTable::makeTh('Daily Rate')
             .HTMLTable::makeTh('Block Rate')
             .HTMLTable::makeTh('Days in Block')
             );

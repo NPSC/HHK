@@ -1018,7 +1018,7 @@ class VisitView {
             return '';
         }
 
-        if (abs($endDelta) > ($uS->CalViewWeeks * 7) || abs($startDelta) > ($uS->CalViewWeeks * 7)) {
+        if (abs($endDelta) > ($uS->MaxExpected) || abs($startDelta) > ($uS->MaxExpected)) {
             return 'Move refused, change too large: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta;
         }
 

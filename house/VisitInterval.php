@@ -1,4 +1,5 @@
 <?php
+
 /**
  * VisitInterval.php
  *
@@ -747,6 +748,8 @@ where
 
     $vat = new ValueAddedTax($dbh);
 
+    file_put_contents("query.sql", $query);
+    
     $stmt = $dbh->query($query);
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
