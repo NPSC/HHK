@@ -53,7 +53,7 @@ define('NOTY_CSS', "<link href='css/noty/noty.css' rel='stylesheet' type='text/c
 define('INCIDENT_CSS', '<link href="css/incidentReports.css" rel="stylesheet" type="text/css" />');
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js');
-define('JQ_JS', '../js/jquery-3.1.1.min.js');
+define('JQ_JS', '../js/jquery-3.4.1.js');
 define('JQ_DT_JS', '../js/datatables.min.js');
 define('NOTY_JS', '../js/noty-min.js');
 define('NOTY_SETTINGS_JS', 'js/notySettings.js');  //These are local
