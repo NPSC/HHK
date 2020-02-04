@@ -86,6 +86,8 @@ require (HOUSE . 'Reservation_1.php');
 require (HOUSE . 'ReservationSvcs.php');
 require (HOUSE . 'RegisterForm.php');
 require (HOUSE . 'RegistrationForm.php');
+require (HOUSE . 'TemplateForm.php');
+require (HOUSE . 'ConfirmationForm.php');
 require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'RoomLog.php');
 require (HOUSE . 'Vehicle.php');

@@ -1871,6 +1871,8 @@ function resvManager(initData, options) {
                         $("#frmConfirm").html(data.confrv)
                             .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
 
+                        $("#frmConfirm").find('#confirmTabDiv').tabs();
+                        
                         $("#confirmDialog").dialog('open');
                     }
                 });

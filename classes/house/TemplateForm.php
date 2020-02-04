@@ -15,30 +15,13 @@
  */
 abstract class TemplateForm {
 
-    protected $mime;
-    protected $template;
-    protected $templateFileName;
-    public $templateFile;
-
-
-    function __construct($fileName, $path = 'conf/') {
-
-        $this->mime = array(
-            'txt'      => 'text/html',
-            'html'      => 'text/html',
-            'htm'      => 'text/html',
-            'mht'      => 'text/html',
-            'mhtml'      => 'text/html',
-        );
-
-        $this->templateFileName = REL_BASE_DIR . $path . $fileName;
-        $this->getFormTemplate();
-
-    }
-
+   public $template;
+       
+   function __construct($template){
+       $this->template = $template;
+   }
+    
     public function createForm($replacements) {
-
-        $this->template = $this->templateFile;
 
         $vars = $this->getVariables();
 
@@ -74,30 +57,6 @@ abstract class TemplateForm {
         preg_match_all('/\$\{(.*?)}/i', $this->template, $matches);
 
         return array_unique($matches[1]);
-
-    }
-
-    protected function getFormTemplate() {
-
-        $this->templateFile = '';
-
-        if (file_exists($this->templateFileName)) {
-
-            $pathInfo = pathinfo($this->templateFileName);
-
-            if (isset($pathInfo['extension']) === FALSE || isset($this->mime[strtolower($pathInfo['extension'])]) === FALSE) {
-                throw new Hk_Exception_Runtime("File extension not supported, file = " . $this->templateFileName);
-            }
-
-            if (($text = file_get_contents($this->templateFileName)) === FALSE) {
-                throw new Hk_Exception_Runtime("File template not read, file = " . $this->templateFileName);
-            }
-
-            $this->templateFile = $text;
-
-        } else {
-            throw new Hk_Exception_Runtime("File template does not exist, file = " . $this->templateFileName);
-        }
 
     }
 }

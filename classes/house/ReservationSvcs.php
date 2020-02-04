@@ -1,4 +1,5 @@
 <?php
+
 /**
  * ReservationSvcs.php
  *
@@ -13,42 +14,39 @@
  *
  * @author Eric
  */
+class ReservationSvcs
+{
 
-class ReservationSvcs {
-
-
-    public static function viewActivity(\PDO $dbh, $idResv) {
-
+    public static function viewActivity(\PDO $dbh, $idResv)
+    {
         if ($idResv < 1) {
-            return array('error'=>'Reservation not defined.  ');
+            return array(
+                'error' => 'Reservation not defined.  '
+            );
         }
 
-        return array('activity'=>  ActivityReport::reservLog($dbh, '', '', $idResv));
+        return array(
+            'activity' => ActivityReport::reservLog($dbh, '', '', $idResv)
+        );
     }
 
-    public static function getCurrentReservations(\PDO $dbh, $idResv, $id, $idPsg, \DateTime $startDT, \DateTime $endDT) {
-
+    public static function getCurrentReservations(\PDO $dbh, $idResv, $id, $idPsg, \DateTime $startDT, \DateTime $endDT)
+    {
         $rows = array();
 
         if ($idPsg > 0 && $id > 0) {
             // look for both
-            $stmt = $dbh->query("select * from vresv_guest "
-                    . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and "
-                . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vresv_guest " . "where (idPsg = $idPsg or idGuest = $id) and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
         } else if ($idPsg > 0) {
 
-            $stmt = $dbh->query("select * from vresv_guest where idPsg = $idPsg and idReservation != $idResv and "
-                . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vresv_guest where idPsg = $idPsg and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
         } else if ($id > 0) {
 
-            $stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and "
-                . "Date(Arrival_Date) < DATE('".$endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('".$startDT->format('Y-m-d') . "')");
+            $stmt = $dbh->query("select * from vresv_guest where idGuest= $id and idReservation != $idResv and " . "Date(Arrival_Date) < DATE('" . $endDT->format('Y-m-d') . "') and Date(Departure_Date) > DATE('" . $startDT->format('Y-m-d') . "')");
 
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
@@ -56,34 +54,74 @@ class ReservationSvcs {
         return $rows;
     }
 
-    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '') {
-
+    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '')
+    {
         if ($idReservation == 0) {
-            return array('error'=>'Bad reservation Id: ' . $idReservation);
+            return array(
+                'error' => 'Bad reservation Id: ' . $idReservation
+            );
         }
-
-        require(HOUSE . 'TemplateForm.php');
-        require(HOUSE . 'ConfirmationForm.php');
-
+        
         $uS = Session::getInstance();
+        $docs = array();
+        $li = '';
+        $tabContent = '';
         $dataArray = array();
-
+        
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
-
+        
         if ($idGuest == 0) {
             $idGuest = $reserv->getIdGuest();
         }
-
+        
         $guest = new Guest($dbh, '', $idGuest);
+        
+        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 'c' AND fu.`Table_Name` = 'Form_Upload'");
+        $docRows = $stmt->fetchAll();
 
-        $confirmForm = new ConfirmationForm('confirmation.txt');
+        if (count($docRows) > 0) {
 
-        $formNotes = $confirmForm->createNotes($notes, !$sendEmail);
+            foreach ($docRows as $d) {
 
-        $form = $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes));
+                $confirmForm = new ConfirmationForm($d['Doc']);
+                $formNotes = $confirmForm->createNotes($notes, ! $sendEmail);
+                
+                $docs[] = array(
+                    'doc' => $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes)),
+                    'style' => RegisterForm::getStyling(),
+                    'tabIndex' => $d['Code'],
+                    'tabTitle' => $d['Description']
+                );
+            }
+        } else {
+
+            $docs[] = array(
+                'doc' => 'The confirmation document is missing.',
+                'style' => RegisterForm::getStyling(),
+                'tabIndex' => 'en',
+                'tabTitle' => 'English'
+            );
+        }
+
+        foreach ($docs as $r) {
+            
+            $li .= HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])));
+            
+            
+            $tabContent .= HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex'])),
+                array('id'=>$r['tabIndex']));
+            
+            $sty = $r['style'];
+        }
+        
+        $ul = HTMLContainer::generateMarkup('ul', $li, array());
+        $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'confirmTabDiv'));
 
         if ($emailAddr == '') {
-            $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
+            $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()
+                ->get_preferredCode());
             $emailAddr = $emAddr["Email"];
         }
 
@@ -94,12 +132,12 @@ class ReservationSvcs {
                 $mail = prepareEmail();
                 $mail->From = $uS->FromAddress;
                 $mail->FromName = $uS->siteName;
-                $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL));     // Add a recipient
+                $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
                 $mail->addReplyTo($uS->ReplyTo);
 
                 $bccs = explode(',', $uS->BccAddress);
                 foreach ($bccs as $bcc) {
-                    if ($bcc != ''){
+                    if ($bcc != '') {
                         $mail->addBCC(filter_var($bcc, FILTER_SANITIZE_EMAIL));
                     }
                 }
@@ -109,39 +147,35 @@ class ReservationSvcs {
                 $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation';
                 $mail->msgHTML($form);
 
-
-                if($mail->send()) {
+                if ($mail->send()) {
 
                     // Make a note in the reservation.
                     $noteText = 'Confirmation Email sent to ' . $emailAddr;
-                    if($notes){ //add special note if any are present
-                    	$noteText .= ' with the following as a special note: ' . str_replace('\n', ' ', $notes);
+                    if ($notes) { // add special note if any are present
+                        $noteText .= ' with the following as a special note: ' . str_replace('\n', ' ', $notes);
                     }
                     LinkNote::save($dbh, $noteText, $reserv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
 
                     $reserv->saveReservation($dbh, $reserv->getIdRegistration(), $uS->username);
 
                     $dataArray['mesg'] = "Email sent.  ";
-
                 } else {
                     $dataArray['mesg'] = "Email failed!  " . $mail->ErrorInfo;
                 }
-
             } else {
                 $dataArray['mesg'] = "Guest email address is blank.  ";
             }
-
         } else {
 
-            $dataArray['confrv'] = utf8_decode($form);
+            $dataArray['confrv'] = $tabControl;
             $dataArray['email'] = $emailAddr;
         }
 
         return $dataArray;
     }
 
-    public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $span = 0, $logoURL = '', $notes = '') {
-
+    public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $span = 0, $logoURL = '', $notes = '')
+    {
         $uS = Session::getInstance();
         $docs = array();
 
@@ -154,23 +188,24 @@ class ReservationSvcs {
 
             if (count($docRows) > 0) {
 
-                foreach($docRows as $d) {
+                foreach ($docRows as $d) {
 
-                    $docs[] = array('doc'=>$regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d['Doc']),
-                        'style'=>RegisterForm::getStyling(),
-                        'tabIndex'=>$d['Code'],
-                        'tabTitle'=>$d['Description']);
+                    $docs[] = array(
+                        'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d['Doc']),
+                        'style' => RegisterForm::getStyling(),
+                        'tabIndex' => $d['Code'],
+                        'tabTitle' => $d['Description']
+                    );
                 }
-
             } else {
 
-                $docs[] = array('doc'=>$regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
-                    'style'=>RegisterForm::getStyling(),
-                    'tabIndex'=>'en',
-                    'tabTitle'=>'English');
-
+                $docs[] = array(
+                    'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
+                    'style' => RegisterForm::getStyling(),
+                    'tabIndex' => 'en',
+                    'tabTitle' => 'English'
+                );
             }
-
         } else if ($uS->RegForm == 2) {
 
             // IMD and St. Mary's
@@ -189,16 +224,20 @@ class ReservationSvcs {
             $expectedPayType = '';
             $todaysDate = '';
 
-
             if ($idVisit > 0) {
 
                 // arrival date and time
                 $stmtv = $dbh->prepare("Select idPrimaryGuest, idHospital_stay, idRegistration from visit where idVisit = :idv");
-                $stmtv->execute(array(':idv'=>$idVisit));
+                $stmtv->execute(array(
+                    ':idv' => $idVisit
+                ));
                 $rows = $stmtv->fetchAll(PDO::FETCH_NUM);
 
                 if (count($rows) == 0) {
-                    return array('doc'=>'Error - Visit not found.', 'style'=>' ');
+                    return array(
+                        'doc' => 'Error - Visit not found.',
+                        'style' => ' '
+                    );
                 }
 
                 $todaysDate = date('M j, Y');
@@ -209,7 +248,9 @@ class ReservationSvcs {
 
                 // Get additional Guests
                 $query = "select * from vadditional_guests where Status in ('" . VisitStatus::Active . "','" . VisitStatus::CheckedOut . "') and idVisit = :idv LIMIT 6";
-                $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+                $stmt = $dbh->prepare($query, array(
+                    PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY
+                ));
                 $stmt->bindValue(':idv', $idVisit, PDO::PARAM_INT);
                 $stmt->execute();
                 $stays = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -235,15 +276,12 @@ class ReservationSvcs {
                         $guest->setCheckinDate($s['Checkin_Date']);
                         $guest->setExpectedCheckOut($s['Expected_Co_Date']);
                         $additionalGuests[] = $guest;
-
                     } else {
 
                         $priGuest->setCheckinDate($s['Checkin_Date']);
                         $priGuest->setExpectedCheckOut($s['Expected_Co_Date']);
-
                     }
                 }
-
             } else if ($idReservation > 0) {
 
                 // Room title
@@ -267,7 +305,6 @@ class ReservationSvcs {
 
                         $priGuest = new Guest($dbh, '', $id);
                         $priGuest->setCheckinDate($resv->getExpectedArrival());
-
                     } else {
 
                         $guest = new Guest($dbh, '', $id);
@@ -275,9 +312,11 @@ class ReservationSvcs {
                         $additionalGuests[] = $guest;
                     }
                 }
-
             } else {
-                return array('doc'=>'Error - Parameters are not specified.', 'style'=>' ');
+                return array(
+                    'doc' => 'Error - Parameters are not specified.',
+                    'style' => ' '
+                );
             }
 
             // Patient and Hospital
@@ -301,9 +340,7 @@ class ReservationSvcs {
                     $patientName = $r['Name_Full'] . ($r['BirthDate'] == '' ? '' : ' (' . date('M j, Y', strtotime($r['BirthDate'])) . ')');
                     $hospitalName = ($r['Assoc'] == '' || $r['Assoc'] == '(None)' ? $r['Hosp'] : $r['Assoc'] . ' / ' . $r['Hosp']);
                 }
-
             }
-
 
             // Set the billing guest
             $billingGuest = new Guest($dbh, '', 0);
@@ -314,7 +351,9 @@ class ReservationSvcs {
                 $t = new Guest_TokenRS();
 
                 $t->idRegistration->setStoredVal($idRegistration);
-                $rows = EditRS::select($dbh, $t, array($t->idRegistration));
+                $rows = EditRS::select($dbh, $t, array(
+                    $t->idRegistration
+                ));
 
                 foreach ($rows as $r) {
 
@@ -329,7 +368,6 @@ class ReservationSvcs {
                         $cardNumber = $t->MaskedAccount->getStoredVal();
                         $cardType = $t->CardType->getStoredVal();
                         break;
-
                     } else if ($t->idGuest->getStoredVal() != 0) {
 
                         $billingGuest = new Guest($dbh, '', $t->idGuest->getStoredVal());
@@ -349,67 +387,38 @@ class ReservationSvcs {
             $logoWidth = 114;
 
             if (count($docRows) > 0) {
-                foreach($docRows as $d) {
+                foreach ($docRows as $d) {
 
                     $docs[] = array(
-                        'doc'=>$regdoc->getDocument($dbh,
-                        $priGuest,
-                        $billingGuest,
-                        $additionalGuests,
-                        $patientName,
-                        $hospitalName,
-                        $roomTitle,
-                        $cardName,
-                        $cardType,
-                        $cardNumber,
-                        $logoURL,
-                        $logoWidth,
-                        $instructFileName,
-                        $d['Doc'],
-                        $expectedPayType,
-                        $notes,
-                        $todaysDate),
-                    'style'=>$regdoc->getStyle(),
-                    'tabIndex'=>$d['Code'],
-                    'tabTitle'=>$d['Description']
+                        'doc' => $regdoc->getDocument($dbh, $priGuest, $billingGuest, $additionalGuests, $patientName, $hospitalName, $roomTitle, $cardName, $cardType, $cardNumber, $logoURL, $logoWidth, $instructFileName, $d['Doc'], $expectedPayType, $notes, $todaysDate),
+                        'style' => $regdoc->getStyle(),
+                        'tabIndex' => $d['Code'],
+                        'tabTitle' => $d['Description']
                     );
                 }
             } else {
 
                 $docs[] = array(
-                    'doc'=>$regdoc->getDocument($dbh,
-                        $priGuest,
-                        $billingGuest,
-                        $additionalGuests,
-                        $patientName,
-                        $hospitalName,
-                        $roomTitle,
-                        $cardName,
-                        $cardType,
-                        $cardNumber,
-                        $logoURL,
-                        $logoWidth,
-                        $instructFileName,
-                        '',
-                        $expectedPayType,
-                        $notes,
-                        $todaysDate),
-                    'style'=>$regdoc->getStyle(),
-                    'tabIndex'=>'en',
-                    'tabTitle'=>'English'
+                    'doc' => $regdoc->getDocument($dbh, $priGuest, $billingGuest, $additionalGuests, $patientName, $hospitalName, $roomTitle, $cardName, $cardType, $cardNumber, $logoURL, $logoWidth, $instructFileName, '', $expectedPayType, $notes, $todaysDate),
+                    'style' => $regdoc->getStyle(),
+                    'tabIndex' => 'en',
+                    'tabTitle' => 'English'
                 );
             }
-
         } else {
-            return array('docs'=>'Error - Registration Form is not defined in the system configuration.', 'style'=>' ');
+            return array(
+                'docs' => 'Error - Registration Form is not defined in the system configuration.',
+                'style' => ' '
+            );
         }
 
-        return array('docs'=>$docs);
-
+        return array(
+            'docs' => $docs
+        );
     }
 
-    public static function getReservGuests(\PDO $dbh, $idReservation) {
-
+    public static function getReservGuests(\PDO $dbh, $idReservation)
+    {
         $idResv = intval($idReservation, 10);
         $ids = array();
 
@@ -420,10 +429,10 @@ class ReservationSvcs {
         }
 
         return $ids;
-
     }
 
-    public static function moveResvAway(\PDO $dbh, DateTime $firstArrival, DateTime $lastDepart, $idResource, $uname) {
+    public static function moveResvAway(\PDO $dbh, DateTime $firstArrival, DateTime $lastDepart, $idResource, $uname)
+    {
 
         // Move other reservations to alternative rooms?
         $rRows = Reservation_1::findReservations($dbh, $firstArrival->format('Y-m-d H:i:s'), $lastDepart->format('Y-m-d H:i:s'), $idResource);
@@ -440,33 +449,39 @@ class ReservationSvcs {
                     $resv->move($dbh, 0, 0, $uname, TRUE);
                     $reply .= $resv->getResultMessage();
                 }
-
             }
         }
 
         return $reply;
-
     }
 
-    public static function moveReserv(\PDO $dbh, $idReservation, $startDelta, $endDelta) {
-
+    public static function moveReserv(\PDO $dbh, $idReservation, $startDelta, $endDelta)
+    {
         $uS = Session::getInstance();
         $dataArray = array();
 
         if (SecurityComponent::is_Authorized('guestadmin') === FALSE) {
-            return array("error" => "User not authorized to move reservations.");
+            return array(
+                "error" => "User not authorized to move reservations."
+            );
         }
 
         if ($idReservation == 0) {
-            return array("error" => "Reservation not specified.");
+            return array(
+                "error" => "Reservation not specified."
+            );
         }
 
         if ($startDelta == 0 && $endDelta == 0) {
-            return array("error" => "Reservation not moved.");
+            return array(
+                "error" => "Reservation not moved."
+            );
         }
 
         if (abs($endDelta) > ($uS->MaxExpected) || abs($startDelta) > ($uS->MaxExpected)) {
-            return array("error" => 'Move refused, change too large: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta);
+            return array(
+                "error" => 'Move refused, change too large: Start Delta = ' . $startDelta . ', End Delta = ' . $endDelta
+            );
         }
 
         // save the reservation info
@@ -488,11 +503,10 @@ class ReservationSvcs {
 
         $dataArray["success"] = $reply;
         return $dataArray;
-
     }
 
-    public static function getIncomeDialog(\PDO $dbh, $rid, $rgId) {
-
+    public static function getIncomeDialog(\PDO $dbh, $rid, $rgId)
+    {
         $dataArray = array();
         $cat = Default_Settings::Rate_Category;
 
@@ -504,9 +518,9 @@ class ReservationSvcs {
 
         $finApp = new FinAssistance($dbh, $rgId, $cat);
 
-        $dataArray['incomeDiag'] = HTMLContainer::generateMarkup(
-                'form', HTMLContainer::generateMarkup('div', $finApp->createIncomeDialog()),
-                array('id'=>'formf'));
+        $dataArray['incomeDiag'] = HTMLContainer::generateMarkup('form', HTMLContainer::generateMarkup('div', $finApp->createIncomeDialog()), array(
+            'id' => 'formf'
+        ));
 
         $dataArray['rstat'] = $finApp->isApproved();
         $dataArray['rcat'] = $finApp->getFaCategory();
@@ -514,9 +528,8 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-
-    public static function saveFinApp(\PDO $dbh, $post) {
-
+    public static function saveFinApp(\PDO $dbh, $post)
+    {
         $uS = Session::getInstance();
 
         $idReserv = 0;
@@ -537,7 +550,9 @@ class ReservationSvcs {
         }
 
         if ($idRegistration < 1) {
-            return array('error'=>'The Registration is not defined.  ');
+            return array(
+                'error' => 'The Registration is not defined.  '
+            );
         }
 
         $finApp = new FinAssistance($dbh, $idRegistration);
@@ -549,12 +564,12 @@ class ReservationSvcs {
         $faStatDate = '';
 
         if (isset($post['txtFaIncome'])) {
-            $income = filter_var(str_replace(',', '', $post['txtFaIncome']),FILTER_SANITIZE_NUMBER_INT);
+            $income = filter_var(str_replace(',', '', $post['txtFaIncome']), FILTER_SANITIZE_NUMBER_INT);
             $finApp->setMontylyIncome($income);
         }
 
         if (isset($post['txtFaSize'])) {
-            $size = intval(filter_var($post['txtFaSize'],FILTER_SANITIZE_NUMBER_INT), 10);
+            $size = intval(filter_var($post['txtFaSize'], FILTER_SANITIZE_NUMBER_INT), 10);
             $finApp->setHhSize($size);
         }
 
@@ -585,12 +600,10 @@ class ReservationSvcs {
         // Save Fin App dialog.
         $finApp->saveDialogMarkup($dbh, $faStat, $faCategory, $reason, $faStatDate, $notes, $uS->username);
 
-
         if (is_null($reserv) === FALSE && isset($post['fadjAmount']) && isset($post['txtFaFixedRate'])) {
 
             $rateAdj = intval(filter_var($post['fadjAmount'], FILTER_SANITIZE_NUMBER_INT), 10);
             $assignedRate = filter_var($post['txtFaFixedRate'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-
 
             // update the reservation.
             if ($finApp->isApproved()) {
@@ -598,7 +611,6 @@ class ReservationSvcs {
                 $reserv->setRateAdjust($rateAdj);
                 $reserv->setRoomRateCategory($finApp->getFaCategory());
                 $reserv->setFixedRoomRate($assignedRate);
-
             } else {
 
                 $reserv->setRateAdjust(0);
@@ -607,7 +619,6 @@ class ReservationSvcs {
             }
 
             $reserv->saveReservation($dbh, $reserv->getIdRegistration(), $uS->username);
-
         }
 
         $dataArray['rstat'] = $finApp->isApproved();
@@ -616,10 +627,12 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-    public static function changeReservStatus(\PDO $dbh, $idReservation, $status) {
-
+    public static function changeReservStatus(\PDO $dbh, $idReservation, $status)
+    {
         if ($idReservation == 0 || $status == '') {
-            return array('error'=>'Bad input parameters: Reservation Id = ' . $idReservation . ', new Status = ' . $status);
+            return array(
+                'error' => 'Bad input parameters: Reservation Id = ' . $idReservation . ', new Status = ' . $status
+            );
         }
 
         $uS = Session::getInstance();
@@ -628,7 +641,9 @@ class ReservationSvcs {
         $oldStatus = $resv->getStatus();
 
         if ($oldStatus == ReservationStatus::Waitlist && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted)) {
-            return array('error'=>'Cannot change from Waitlist to Confirmed or Unconfirmed here.');
+            return array(
+                'error' => 'Cannot change from Waitlist to Confirmed or Unconfirmed here.'
+            );
         }
 
         if ($status == ReservationStatus::Waitlist) {
@@ -640,7 +655,6 @@ class ReservationSvcs {
         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
         $dataArray['success'] = 'Reservation status changed to ' . $uS->guestLookups['ReservStatus'][$status][1];
-
 
         if ($oldStatus == ReservationStatus::Committed || $status == ReservationStatus::Committed) {
             $dataArray['reservs'] = 'y';
@@ -657,16 +671,24 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-    public static function getRoomList(\PDO $dbh, Reservation_1 $resv, $eid, $isAuthorized, $numGuests = 0) {
-
+    public static function getRoomList(\PDO $dbh, Reservation_1 $resv, $eid, $isAuthorized, $numGuests = 0)
+    {
         if ($numGuests <= 0) {
             $numGuests = $resv->getNumberGuests();
         }
 
         if ($isAuthorized) {
-            $resv->findGradedResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $numGuests, array('room','rmtroom','part'), TRUE);
+            $resv->findGradedResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $numGuests, array(
+                'room',
+                'rmtroom',
+                'part'
+            ), TRUE);
         } else {
-            $resv->findResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $numGuests, array('room','rmtroom','part'), TRUE);
+            $resv->findResources($dbh, $resv->getExpectedArrival(), $resv->getExpectedDeparture(), $numGuests, array(
+                'room',
+                'rmtroom',
+                'part'
+            ), TRUE);
         }
 
         $resources = array();
@@ -674,12 +696,19 @@ class ReservationSvcs {
 
         // Load available resources
         foreach ($resv->getAvailableResources() as $r) {
-            $resources[$r->getIdResource()] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);
+            $resources[$r->getIdResource()] = array(
+                $r->getIdResource(),
+                $r->getTitle(),
+                $r->optGroup
+            );
         }
 
         // add waitlist option to the top of the list
-        $resources[0] = array(0, '-None-', '');
-
+        $resources[0] = array(
+            0,
+            '-None-',
+            ''
+        );
 
         // Selected resource
         $idResourceChosen = $resv->getIdResource();
@@ -687,7 +716,6 @@ class ReservationSvcs {
         if ($resv->getStatus() == ReservationStatus::Waitlist) {
 
             $idResourceChosen = 0;
-
         } else if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted) && isset($resources[$resv->getIdResource()])) {
 
             $myResc = $resources[$resv->getIdResource()];
@@ -695,7 +723,6 @@ class ReservationSvcs {
             if (isset($myResc[2]) && $myResc[2] != '') {
                 $errorMessage = $myResc[2];
             }
-
         } else {
 
             $untestedRescs = $resv->getUntestedResources();
@@ -714,10 +741,17 @@ class ReservationSvcs {
             $selSize = 4;
         }
 
-        $dataArray['ctrl'] = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array('name'=>'selResource'));
-        $dataArray['container'] = HTMLContainer::generateMarkup('div',
-            HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array('id'=>'selRoom', 'size'=>$selSize))
-                , array('id'=>'pudiv', 'class'=>"ui-widget ui-widget-content ui-helper-clearfix ui-corner-all", 'style'=>"font-size:0.9em;position: absolute; z-index: 1; display: block;"));  // top:".$y."px; left:".$xa."px;
+        $dataArray['ctrl'] = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array(
+            'name' => 'selResource'
+        ));
+        $dataArray['container'] = HTMLContainer::generateMarkup('div', HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array(
+            'id' => 'selRoom',
+            'size' => $selSize
+        )), array(
+            'id' => 'pudiv',
+            'class' => "ui-widget ui-widget-content ui-helper-clearfix ui-corner-all",
+            'style' => "font-size:0.9em;position: absolute; z-index: 1; display: block;"
+        )); // top:".$y."px; left:".$xa."px;
         $dataArray['eid'] = $eid;
         $dataArray['msg'] = $errorMessage;
         $dataArray['rid'] = $resv->getIdReservation();
@@ -725,8 +759,8 @@ class ReservationSvcs {
         return $dataArray;
     }
 
-    public static function reviseConstraints(\PDO $dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $isAuthorized = FALSE, $omitSelf = TRUE) {
-
+    public static function reviseConstraints(\PDO $dbh, $idResv, $idResc, $numGuests, $expArr, $expDep, $cbs, $isAuthorized = FALSE, $omitSelf = TRUE)
+    {
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
 
         $resv->saveConstraints($dbh, $cbs);
@@ -737,12 +771,16 @@ class ReservationSvcs {
         $resOptions = $roomChooser->makeRoomSelectorOptions();
         $errorMessage = $roomChooser->getRoomSelectionError($dbh, $resOptions);
 
-        return array('rooms'=>$roomChooser->makeRoomsArray(), 'selectr'=>$roomChooser->makeRoomSelector($resOptions, $idResc), 'idResource' => $idResc, 'msg'=>$errorMessage);
-
+        return array(
+            'rooms' => $roomChooser->makeRoomsArray(),
+            'selectr' => $roomChooser->makeRoomSelector($resOptions, $idResc),
+            'idResource' => $idResc,
+            'msg' => $errorMessage
+        );
     }
 
-
-    public static function deleteReservation(\PDO $dbh, $rid) {
+    public static function deleteReservation(\PDO $dbh, $rid)
+    {
 
         // Get labels
         $labels = new Config_Lite(LABEL_FILE);
@@ -755,14 +793,12 @@ class ReservationSvcs {
             if ($resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
 
                 $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' status "' . $resv->getStatusTitle($dbh) . '" cannot be deleted';
-
             } else {
                 // Okay to delete
                 $resv->deleteMe($dbh, $uS->username);
 
                 $dataArray['result'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Deleted.';
             }
-
         } else {
             $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Id is not valid.  ';
         }
