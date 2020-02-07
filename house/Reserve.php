@@ -103,9 +103,10 @@ try {
 }
 
 
-if (isset($_POST['hdnCfmRid'])) {
+if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode'])) {
 
     $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $docId = intval(filter_var($_POST['hdnCfmDocCode'], FILTER_SANITIZE_NUMBER_INT), 10);
     $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
 
     $idGuest = $resv->getIdGuest();
@@ -121,7 +122,7 @@ if (isset($_POST['hdnCfmRid'])) {
     require(HOUSE . 'ConfirmationForm.php');
 
     try {
-        $confirmForm = new ConfirmationForm('confirmation.txt');
+        $confirmForm = new ConfirmationForm($dbh, $docId);
 
         $formNotes = $confirmForm->createNotes($notes, FALSE);
         $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, 0, $formNotes));

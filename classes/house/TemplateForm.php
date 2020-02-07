@@ -15,10 +15,26 @@
  */
 abstract class TemplateForm {
 
-   public $template;
+    public $docId;
+    public $template;
        
-   function __construct($template){
-       $this->template = $template;
+   /**
+    * @param \PDO $dbh
+    * @param integer $docId
+    */
+   function __construct(\PDO $dbh, $docId){
+       
+       if(intval($docId) > 0 && $dbh){
+           $stmt = $dbh->query("Select `Doc` from `document` where `idDocument` = $docId");
+           $docRow = $stmt->fetch(PDO::FETCH_ASSOC);
+           if(isset($docRow['Doc'])){
+               $this->template = $docRow['Doc'];
+           }else{
+               $this->template = "";
+           }
+       }else{
+           $this->template = "";
+       }
    }
     
     public function createForm($replacements) {

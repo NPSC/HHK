@@ -257,7 +257,12 @@ try {
                 $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
             }
 
-            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr);
+            $tabIndex = false;
+            if (isset($_POST['tabIndex'])) {
+                $tabIndex = filter_var($_POST['tabIndex'], FILTER_SANITIZE_STRING);
+            }
+            
+            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $tabIndex);
             break;
 
         case 'void':

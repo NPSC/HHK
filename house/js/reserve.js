@@ -44,11 +44,23 @@ $(document).ready(function() {
         buttons: {
             'Download MS Word': function () {
                 var $confForm = $("form#frmConfirm");
-                $confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'));
+                var $hdnCfmRid = $confForm.find('input[name="hdnCfmRid"]');
+                var $hdnCfmDocCode = $confForm.find('input[name="hdnCfmDocCode"]');
+                
+                if($hdnCfmRid.length > 0){
+                	$hdnCfmRid.val($('#btnShowCnfrm').data('rid'));
+                }else{
+                	$confForm.append($('<input name="hdnCfmRid" type="hidden" value="' + $('#btnShowCnfrm').data('rid') + '"/>'));
+                }
+                if($hdnCfmDocCode.length > 0){
+                	$hdnCfmDocCode.val($('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("data-docId"));
+                }else{
+                	$confForm.append($('<input name="hdnCfmDocCode" type="hidden" value="' + $('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("data-docId") + '"/>'));
+                }
                 $confForm.submit();
             },
             'Send Email': function() {
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val()}, function(data) {
+                $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val(), tabIndex: $('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("aria-controls")}, function(data) {
                     data = $.parseJSON(data);
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
@@ -59,6 +71,7 @@ $(document).ready(function() {
             },
             "Cancel": function() {
                 $(this).dialog("close");
+                
             }
         }
     });

@@ -54,7 +54,7 @@ class ReservationSvcs
         return $rows;
     }
 
-    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '')
+    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '', $docCode = false)
     {
         if ($idReservation == 0) {
             return array(
@@ -76,21 +76,22 @@ class ReservationSvcs
         
         $guest = new Guest($dbh, '', $idGuest);
         
-        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 'c' AND fu.`Table_Name` = 'Form_Upload'");
+        $stmt = $dbh->query("Select d.`idDocument`, g.`Code`, g.`Description` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 'c' AND fu.`Table_Name` = 'Form_Upload'");
         $docRows = $stmt->fetchAll();
 
         if (count($docRows) > 0) {
 
             foreach ($docRows as $d) {
 
-                $confirmForm = new ConfirmationForm($d['Doc']);
+                $confirmForm = new ConfirmationForm($dbh, $d['idDocument']);
                 $formNotes = $confirmForm->createNotes($notes, ! $sendEmail);
                 
-                $docs[] = array(
+                $docs[$d['Code']] = array(
                     'doc' => $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes)),
                     'style' => RegisterForm::getStyling(),
                     'tabIndex' => $d['Code'],
-                    'tabTitle' => $d['Description']
+                    'tabTitle' => $d['Description'],
+                    'docId' => $d['idDocument']
                 );
             }
         } else {
@@ -99,18 +100,19 @@ class ReservationSvcs
                 'doc' => 'The confirmation document is missing.',
                 'style' => RegisterForm::getStyling(),
                 'tabIndex' => 'en',
-                'tabTitle' => 'English'
+                'tabTitle' => 'English',
+                'docId' => false
             );
         }
 
         foreach ($docs as $r) {
             
             $li .= HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])));
+                HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])), array('data-docId'=>$r['docId']));
             
             
             $tabContent .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex'])),
+                HTMLContainer::generateMarkup('div', ($r['doc'] != '' ? $r['doc']: '<div class="ui-state-error">The confirmation document is empty</div>'), array('id'=>'PrintArea'.$r['tabIndex'])),
                 array('id'=>$r['tabIndex']));
             
             $sty = $r['style'];
@@ -125,7 +127,7 @@ class ReservationSvcs
             $emailAddr = $emAddr["Email"];
         }
 
-        if ($sendEmail) {
+        if ($sendEmail && $docCode && isset($docs[$docCode])) {
 
             if ($emailAddr != '') {
 
@@ -145,7 +147,7 @@ class ReservationSvcs
                 $mail->isHTML(true);
 
                 $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation';
-                $mail->msgHTML($form);
+                $mail->msgHTML($docs[$docCode]['doc']);
 
                 if ($mail->send()) {
 
