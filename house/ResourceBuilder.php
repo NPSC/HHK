@@ -1079,11 +1079,11 @@ if (isset($_POST['ldfm'])) {
 
         $tabContent .= HTMLContainer::generateMarkup('div', ($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
             'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3')): '') . 
-            '<div class="row"><div class="col-10 uploadFormDiv" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="ui-widget-content" style="padding: 5px 7px;">
+            '<div class="row"><div class="col-10 uploadFormDiv ui-widget-content" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="d-inline-block" style="padding: 5px 7px;">
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>
 Upload new file: <input name="formfile" type="file" required />
 <input type="submit" name="docUpload" value="Save Form" />
-</form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
+</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docId" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Edit Form</button></div></div>', array(
             'id' => $r['Code']
         ));
     }
@@ -1152,6 +1152,18 @@ if (isset($_POST['docUpload'])) {
         $ustmt->execute();
         $dbh->commit();
     }
+}
+
+if (isset($_POST['delfm']) && isset($_POST['docId']) && isset($_POST['formDef'])) {
+    
+    $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_STRING);
+    
+    $tabIndex = 8;
+    
+    $formdelstmt = $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docId'");
+    $docdelstmt = $dbh->exec("UPDATE `document` SET `status` = 'd' WHERE `idDocument` = '$docId'");
+    
 }
 
 if (isset($_POST['txtformLang'])) {

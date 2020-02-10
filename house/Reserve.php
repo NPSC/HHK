@@ -103,10 +103,14 @@ try {
 }
 
 
-if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode'])) {
+if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST['hdnCfmAmt'])) {
 
     $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
     $docId = intval(filter_var($_POST['hdnCfmDocCode'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $amt = filter_var($_POST['hdnCfmAmt'], FILTER_SANITIZE_STRING);
+    $amt = preg_replace('/\D/', '', $amt);
+    $amt = floatval($amt/100);
+    
     $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
 
     $idGuest = $resv->getIdGuest();
@@ -125,7 +129,7 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode'])) {
         $confirmForm = new ConfirmationForm($dbh, $docId);
 
         $formNotes = $confirmForm->createNotes($notes, FALSE);
-        $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, 0, $formNotes));
+        $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, $amt, $formNotes));
 
         header('Content-Disposition: attachment; filename=confirm.doc');
         header("Content-Description: File Transfer");

@@ -46,6 +46,7 @@ $(document).ready(function() {
                 var $confForm = $("form#frmConfirm");
                 var $hdnCfmRid = $confForm.find('input[name="hdnCfmRid"]');
                 var $hdnCfmDocCode = $confForm.find('input[name="hdnCfmDocCode"]');
+                var $hdnCfmAmt = $confForm.find('input[name="hdnCfmAmt"]');
                 
                 if($hdnCfmRid.length > 0){
                 	$hdnCfmRid.val($('#btnShowCnfrm').data('rid'));
@@ -56,6 +57,11 @@ $(document).ready(function() {
                 	$hdnCfmDocCode.val($('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("data-docId"));
                 }else{
                 	$confForm.append($('<input name="hdnCfmDocCode" type="hidden" value="' + $('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("data-docId") + '"/>'));
+                }
+                if($hdnCfmAmt.length > 0){
+                	$hdnCfmAmt.val($('#spnAmount').text());
+                }else{
+                	$confForm.append($('<input name="hdnCfmAmt" type="hidden" value="' + $('#spnAmount').text() + '"/>'));
                 }
                 $confForm.submit();
             },
