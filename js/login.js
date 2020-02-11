@@ -28,6 +28,7 @@ var parms = {},
     $psw = $('#txtPW'),
     $btn = $('#btnLogn'),
     $chall = $('#challenge');
+    $xf = $('#xf');
 $('.hhk-logerrmsg').hide();
 $('#valMsg').text('');
 if ($uname.val() === '') {
@@ -40,7 +41,8 @@ if ($psw.val() === '') {
 }
 parms = {
     challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
-    txtUname: $uname.val()
+    txtUname: $uname.val(),
+    xf: $xf.val()
 };
 $.post('index.php', parms, function (data){
     try {

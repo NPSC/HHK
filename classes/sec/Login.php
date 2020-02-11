@@ -103,8 +103,8 @@ class Login {
 
 
         // Get next page address
-        if (isset($_GET["xf"])) {
-            $pge = filter_var(urldecode($_GET["xf"]), FILTER_SANITIZE_STRING);
+        if (isset($_POST["xf"]) && $_POST["xf"] != '') {
+            $pge = filter_var(urldecode($_POST["xf"]), FILTER_SANITIZE_STRING);
         } else {
             $pge = $defaultPage;
         }
@@ -153,7 +153,7 @@ class Login {
         if ($uname != '' && $this->userName == '') {
             $this->setUserName($uname);
         }
-
+        
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')), array('colspan'=>'2')));
         $tbl->addBodyTr(
@@ -168,7 +168,15 @@ class Login {
             .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
                     . HTMLInput::generateMarkup($this->getChallengeVar(), array('type'=>'hidden', 'id'=>'challenge')))
         );
-        $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
+        
+        //pass xf to login
+        if(isset($_GET['xf'])){
+            $xfInput = HTMLInput::generateMarkup($_GET['xf'], array('name'=>'xf', 'id'=>'xf', 'type'=>'hidden'));
+        }else{
+            $xfInput = '';
+        }
+        
+        $tbl->addBodyTr(HTMLTable::makeTd($xfInput . HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
 
 
         return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls'));
