@@ -330,9 +330,14 @@ if ($uS->county) {
     $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . ' County', 'County', '', '', 's', '', array());
 }
 
-$cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
-$cFields[] = array("Payments", 'payments', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
-$cFields[] = array("Balance", 'Balance', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+//$cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+//$cFields[] = array("Payments", 'payments', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+//$cFields[] = array("Balance", 'Balance', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+
+//updated number format to fix $1 output on >1,000 as per https://stackoverflow.com/questions/5669941/phpexcel-accounting-formats
+$cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+$cFields[] = array("Payments", 'payments', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+$cFields[] = array("Balance", 'Balance', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
 $cFields[] = array("Notes", 'Notes', 'checked', '', 's', '', array());
 
