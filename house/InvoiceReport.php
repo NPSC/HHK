@@ -130,7 +130,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
 
 
     $g['Amount'] = number_format($r['Amount'], 2);
-
+        
     // Show Delete Icon?
     if (($r['Amount'] == 0 || $r['Item_Id'] == ItemId::Discount) && $r['Deleted'] != 1) {
         $g['Amount'] .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$r['idInvoice'], 'data-inv'=>$r['Invoice_Number'], 'data-iid'=>$r['idInvoice'], 'data-stat'=>'del', 'style'=>'cursor:pointer;float:left;', 'title'=>'Delete This Invoice'));
@@ -161,7 +161,9 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
         $g['Patient'] = $r['Patient_Name'];
         $g['Notes'] = $r['Notes'];
         $g['payments'] = $r['Amount'] - $r['Balance'];
-
+        $g['Amount'] = $r['Amount'];
+        $g['Balance'] = $r['Balance'];
+        
         $n = 0;
         $flds = array();
 
