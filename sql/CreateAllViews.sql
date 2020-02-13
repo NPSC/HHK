@@ -1851,7 +1851,8 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
         n.Title,
         n.Note_Text,
         v.idVisit,
-        n.`Timestamp`
+        n.`Timestamp`,
+        n.`flag`
     FROM
         note n
             JOIN

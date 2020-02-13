@@ -672,6 +672,10 @@ BEGIN
     update vehicle set
             idRegistration = goodReg
     where idRegistration = badReg;
+	
+	update psg_note set
+			Psg_Id = keepIdPsg 
+	where Psg_Id = dupIdPsg;
 
     delete from registration where idRegistration = badReg;
     delete from psg where idPsg = dupIdPsg;

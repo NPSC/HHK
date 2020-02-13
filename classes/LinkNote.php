@@ -29,7 +29,7 @@ class LinkNote {
 
             LinkNote::saveLink($dbh, $note, $linkId, $linkType);
 
-            if ($concatNotes && $linkType != Note::PsgLink) {
+            if ($linkType != Note::PsgLink) {
 
                 $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
 
