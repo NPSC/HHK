@@ -508,7 +508,10 @@ class SiteConfig {
                 $cat = $r['Cat'];
             }
 
-
+            if($r['Key'] == "PaymentDisclaimer"){
+                $r['Value'] = str_replace("<br/>", "\r\n", $r['Value']);
+            }
+            
             if ($r['Type'] == 'b') {
                 // Boolean
 
@@ -584,9 +587,13 @@ class SiteConfig {
 
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
-
+            
             $value = filter_var($val, FILTER_SANITIZE_STRING);
             $key = filter_var($itemName, FILTER_SANITIZE_STRING);
+            
+            if($itemName == "PaymentDisclaimer"){
+                $value = str_replace("\r\n", "<br/>", $value);
+            }
 
             SysConfig::saveKeyValue($dbh, 'sys_config', $key, $value);
 
