@@ -284,6 +284,8 @@ class Visit {
 
     public function changeRooms(\PDO $dbh, Resource $resc, $uname, \DateTime $chgDT, $isAdmin) {
 
+        $uS = Session::getInstance();
+
         $rtnMessage = '';
 
         if ($resc->isNewResource()) {
@@ -340,23 +342,11 @@ class Visit {
             $rooms = $this->resource->getRooms();
         }
 
-        // check room size
-        $numGuests = 0;
-        foreach ($this->stays as $stayRS) {
-
-            if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                $numGuests++;
-            }
-        }
-
-        $rm = $this->resource->testAllocateRoom($numGuests, $this->overrideMaxOccupants);
-        if ($rm === FALSE) {
-            return 'The Room is too small.  Change rooms failed.  ';
-        }
-
         // if room change date = span start date, just replace the room in the visit record.
         $roomChangeDate = new \DateTime($chgDT->format('Y-m-d'));
         $roomChangeDate->setTime(0,0,0);
+
+        $houseKeepingEmail = $uS->HouseKeepingEmail;
 
         if ($spanStartDT == $roomChangeDate) {
             // Just replace the room
@@ -364,6 +354,7 @@ class Visit {
             $this->resource = $resc;
 
             $cnt = $this->updateVisitRecord($dbh, $uname);
+            $houseKeepingEmail = '';  // Don't trigger housekeeping for replace room
 
             if ($cnt > 0) {
 
@@ -407,23 +398,20 @@ class Visit {
             }
         }
 
-        $uS = Session::getInstance();
-
-            // Send email
-        if (is_null($this->getResource($dbh)) === FALSE && $uS->noreplyAddr != '' && $uS->Guest_Track_Address != '') {
+        // Send email
+        if ($uS->NoReplyAddr != '' && ($uS->Guest_Track_Address != '' || $houseKeepingEmail != '')) {
 
             try {
-                // Get the site configuration object
-
                 $mail = prepareEmail();
 
                 $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = $uS->siteName;
                 $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
 
-                $tos = explode(',', $uS->Guest_Track_Address);
+                $tos = array_merge(explode(',', $uS->Guest_Track_Address), explode(',', $uS->HouseKeepingEmail));
+
                 foreach ($tos as $t) {
-                    $to = filter_var($t, FILTER_SANITIZE_EMAIL);
+                    $to = filter_var(trim($t), FILTER_SANITIZE_EMAIL);
                     if ($to !== FALSE && $to != '') {
                         $mail->addAddress($to);
                     }
@@ -431,7 +419,7 @@ class Visit {
 
                 $mail->isHTML(true);
 
-                $mail->Subject = "Change rooms from " . $oldRoom . " to " . $this->resource->getTitle() . " by " . $uS->username;
+                $mail->Subject = "Change rooms from " . $oldRoom . " to " . $resc->getTitle() . " by " . $uS->username;
                 $mail->msgHTML("Room change Date: " . $chgDT->format('g:ia D M jS, Y') . "<br />");
 
                 if ($mail->send() === FALSE) {
@@ -881,7 +869,7 @@ class Visit {
         return $guestName . " checked out on " . $dateDepartedDT->format('M j, Y') . ".  " . $msg;
     }
 
-    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, $sendEmail = TRUE) {
+    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, &$sendEmail) {
 
         $msg = '';
         $uS = Session::getInstance();
@@ -950,6 +938,10 @@ class Visit {
 
         try {
             if ($sendEmail && $uS->NoReplyAddr != '' && ($uS->Guest_Track_Address != '' || $uS->HouseKeepingEmail != '')) {
+
+                // Don't send out individual checkout messages.
+                $sendEmail = FALSE;
+
                 // Get room name
                 $roomTitle = 'Unknown';
                 if (is_null($this->getResource($dbh)) === FALSE) {
@@ -1354,8 +1346,6 @@ class Visit {
         // Init the latest departure date for the visit
         $lastDepartureDT = new \DateTime($this->getArrivalDate());
         $lastDepartureDT->setTime(0, 0, 0);
-
-        $visitArrivalDT = new \DateTime($this->getArrivalDate());
 
         $visitArrivalDT = new \DateTime($this->getArrivalDate());
 

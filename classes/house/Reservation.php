@@ -1827,7 +1827,7 @@ FROM reservation r
         }
 
         // email the form
-        if ($uS->adminEmailAddr != '' && $uS->noreplyAddr != '') {
+        if ($uS->Guest_Track_Address != '' && $uS->NoReplyAddr != '') {
 
             // Generate Reg form
             $reservArray = ReservationSvcs::generateCkinDoc($dbh, 0, $this->visit->getIdVisit(), $this->visit->getSpan(), $uS->resourceURL . 'images/receiptlogo.png');
@@ -1836,10 +1836,10 @@ FROM reservation r
 
                 $mail = prepareEmail();
 
-                $mail->From = $uS->noreplyAddr;
+                $mail->From = $uS->NoReplyAddr;
                 $mail->FromName = $uS->siteName;
 
-                $tos = explode(',', $uS->adminEmailAddr);
+                $tos = explode(',', $uS->Guest_Track_Address);
                 foreach ($tos as $t) {
                     $to = filter_var($t, FILTER_SANITIZE_EMAIL);
                     if ($to !== FALSE && $to != '') {
@@ -1847,7 +1847,7 @@ FROM reservation r
                     }
                 }
 
-                $mail->addReplyTo($uS->noreplyAddr, $uS->siteName);
+                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
                 $mail->isHTML(true);
 
                 $mail->Subject = "New Check-In to " . $this->resc->getTitle() . " by " . $uS->username;
@@ -1856,7 +1856,7 @@ FROM reservation r
                 $mail->send();
 
             } catch (Exception $ex) {
-                $reply .= $ex->getMessage();
+                $dataArray['warning'] = "Email not sent.  Error: ".$ex->getMessage();
             }
         }
 

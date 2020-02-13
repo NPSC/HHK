@@ -249,13 +249,10 @@ class HouseServices {
             if (isset($post['txtUndoDate'])) {
 
                 $newExpectedDT = new \DateTime(filter_var($post['txtUndoDate'], FILTER_SANITIZE_STRING));
-                $newExpectedDT->setTimezone(new \DateTimeZone($uS->tz));
 
             } else {
 
-                $newExpectedDT = new \DateTime();
-                $newExpectedDT->setTimezone(new \DateTimeZone($uS->tz));
-                $newExpectedDT->add(new \DateInterval('P1D'));
+                $newExpectedDT = new \DateTime($visit->getActualDeparture());
             }
 
             $reply .= self::undoCheckout($dbh, $visit, $newExpectedDT, $uS->username);
@@ -947,7 +944,6 @@ class HouseServices {
             return 'Cannot undo checkout, visit continues in another room or at another rate.  ';
         }
 
-        // only allow 15 days to undo the checkout
         $actDeptDT = new \DateTime($visit->getActualDeparture());
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
@@ -957,36 +953,36 @@ class HouseServices {
 
 
         // Check room availability
-        $availResc = $resv->isResourceOpen($dbh, $visit->getidResource(), $startDT->format('Y-m-d H:i:s'), $newExpectedDT->format('Y-m-d 01:00:00'), 1, array('room', 'rmtroom', 'part'), TRUE, TRUE);
-
-        if ($availResc === FALSE) {
-            $reply .= 'Cannot undo checkout, the room is not available.  ';
-            return $reply;
-        }
-
-        $idPsg = $resv->getIdPsg($dbh);
-
-        // Check for pending reservations
-        $resvs = ReservationSvcs::getCurrentReservations($dbh, $resv->getIdReservation(), 0, $idPsg, $startDT, $newExpectedDT);
-
-        //if (count($resvs) >= $uS->RoomsPerPatient)
-        $roomsUsed = array($visit->getidResource() => 'y');  // this room
-
-        foreach ($resvs as $rv) {
-
-            // another concurrent reservation already there
-            if ($rv['idPsg'] == $idPsg) {
-                $roomsUsed[$rv['idResource']] = 'y';
-            }
-        }
-
-        if (count($roomsUsed) > $uS->RoomsPerPatient) {
-            return ('Cannot undo the checkout, the maximum rooms per patient would be exceeded.');
-        }
+//        $availResc = $resv->isResourceOpen($dbh, $visit->getidResource(), $startDT->format('Y-m-d H:i:s'), $newExpectedDT->format('Y-m-d 01:00:00'), 1, array('room', 'rmtroom', 'part'), TRUE, TRUE);
+//
+//        if ($availResc === FALSE) {
+//            $reply .= 'Cannot undo checkout, the room is not available.  ';
+//            return $reply;
+//        }
+//
+//        $idPsg = $resv->getIdPsg($dbh);
+//
+//        // Check for pending reservations
+//        $resvs = ReservationSvcs::getCurrentReservations($dbh, $resv->getIdReservation(), 0, $idPsg, $startDT, $newExpectedDT);
+//
+//        //if (count($resvs) >= $uS->RoomsPerPatient)
+//        $roomsUsed = array($visit->getidResource() => 'y');  // this room
+//
+//        foreach ($resvs as $rv) {
+//
+//            // another concurrent reservation already there
+//            if ($rv['idPsg'] == $idPsg) {
+//                $roomsUsed[$rv['idResource']] = 'y';
+//            }
+//        }
+//
+//        if (count($roomsUsed) > $uS->RoomsPerPatient) {
+//            return ('Cannot undo the checkout, the maximum rooms per patient would be exceeded.');
+//        }
 
         // Undo reservation termination
         $resv->setActualDeparture('');
-        $resv->setExpectedDeparture($newExpectedDT->format('Y-m-d 10:00:00'));
+        $resv->setExpectedDeparture($newExpectedDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
         $resv->setStatus(ReservationStatus::Staying);
 
         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uname);
@@ -995,7 +991,7 @@ class HouseServices {
         // Undo visit checkout
         $visit->visitRS->Actual_Departure->setNewVal('');
         $visit->visitRS->Span_End->setNewVal('');
-        $visit->visitRS->Expected_Departure->setNewVal($newExpectedDT->format('Y-m-d 10:00:00'));
+        $visit->visitRS->Expected_Departure->setNewVal($newExpectedDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
         $visit->visitRS->Status->setNewVal(VisitStatus::CheckedIn);
         $visit->visitRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
         $visit->visitRS->Updated_By->setNewVal($uname);
@@ -1021,7 +1017,7 @@ class HouseServices {
                 $s->Checkout_Date->setNewVal('');
                 $s->Span_End_Date->setNewVal('');
                 $s->Status->setNewVal(VisitStatus::CheckedIn);
-                $s->Expected_Co_Date->setNewVal($newExpectedDT->format('Y-m-d 10:00:00'));
+                $s->Expected_Co_Date->setNewVal($newExpectedDT->format('Y-m-d '. $uS->CheckOutTime . ':00:00'));
 
                 // cancel on-leave
                 $s->On_Leave->setNewVal(0);

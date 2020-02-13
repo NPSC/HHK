@@ -711,14 +711,17 @@ $(document).ready(function () {
         }
     });
 
-    createAutoComplete($('#txtsearch'), 3, {cmd: "role",  mode: 'mo', gp:'1'}, 
-        function(item) { 
-            var cid = item.id;
-            if (cid > 0) {
-                window.location.assign("GuestEdit.php?id=" + cid);
-            }
-        },
-        false
+    createAutoComplete(
+            $('#txtsearch'), 
+            3, 
+            {cmd: "role",  mode: 'mo', gp:'1'}, 
+            function(item) { 
+                var cid = item.id;
+                if (cid > 0) {
+                    window.location.assign("GuestEdit.php?id=" + cid);
+                }
+            },
+            false
     );
 
     var dateIncrementObj = null;
