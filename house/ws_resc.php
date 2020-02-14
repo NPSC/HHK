@@ -66,7 +66,6 @@ require (CLASSES . 'Photo.php');
 require (CLASSES . 'SiteConfig.php');
 require (CLASSES . 'Document.php');
 require (CLASSES . 'ListDocuments.php');
-require(CLASSES . 'DataTableServer.php');
 
 $wInit = new webInit(WebPageCode::Service);
 
