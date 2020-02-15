@@ -16,8 +16,8 @@ abstract class PaymentResponse {
     protected $partialPaymentFlag = FALSE;
     protected $paymentDate;
     protected $payNotes = '';
-    protected $refund;
-    protected $result;  // vendor specific
+    protected $refund = FALSE;
+    protected $result = '';  // vendor specific
     protected $paymentStatusCode;
 
     public $idPayor = 0;
@@ -25,6 +25,7 @@ abstract class PaymentResponse {
     public $idReservation;
     public $idRegistration;
     public $idTrans = 0;
+    public $idGuestToken = 0;
     protected $idPayment;
 
     public abstract function getStatus();
@@ -110,12 +111,28 @@ abstract class PaymentResponse {
         }
     }
 
+    public function setRefund($v) {
+        if ($v) {
+            $this->refund = TRUE;
+        } else {
+            $this->refund = FALSE;
+        }
+    }
+
     public function getIdPayment() {
         return $this->idPayment;
     }
 
     public function setIdPayment($v) {
         $this->idPayment = intval($v, 10);
+    }
+
+    public function getIdToken() {
+        return $this->idGuestToken;
+    }
+
+    public function setIdToken($idToken) {
+        $this->idGuestToken = intval($idToken, 10);
     }
 
     public function getIdTrans() {
@@ -132,7 +149,6 @@ abstract class CreditResponse extends PaymentResponse {
 
     public $response;
     public $idPaymentAuth;
-    public $idGuestToken = 0;
 
     public function recordPaymentAuth(\PDO $dbh, $paymentGatewayName, $username) {
 
@@ -192,14 +208,6 @@ abstract class CreditResponse extends PaymentResponse {
         }
     }
 
-    public function getIdToken() {
-        return $this->idGuestToken;
-    }
-
-    public function setIdToken($idToken) {
-        $this->idGuestToken = intval($idToken, 10);
-    }
-
     public function getIdPaymentAuth() {
         return $this->idPaymentAuth;
     }
@@ -210,6 +218,8 @@ abstract class CreditResponse extends PaymentResponse {
 class CheckResponse extends PaymentResponse {
 
     public $idInfoCheck;
+
+    protected $checkNumber;
 
     function __construct($amount, $idPayor, $invoiceNumber, $checkNumber = '', $payNotes = '') {
 
@@ -233,7 +243,7 @@ class CheckResponse extends PaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Check:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(abs($this->getAmount()), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd('Check Number:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->checkNumber));
+        $tbl->addBodyTr(HTMLTable::makeTd('Check Number:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
     }
 
     public function recordInfoCheck(\PDO $dbh) {
@@ -243,7 +253,7 @@ class CheckResponse extends PaymentResponse {
             // Check table
             $ckRs = new PaymentInfoCheckRS();
             $ckRs->Check_Date->setNewVal($this->getPaymentDate());
-            $ckRs->Check_Number->setNewVal($this->getCheckNumber);
+            $ckRs->Check_Number->setNewVal($this->getCheckNumber());
             $ckRs->idPayment->setNewVal($this->getIdPayment());
 
             $this->idInfoCheck = EditRS::insert($dbh, $ckRs);
@@ -256,6 +266,25 @@ class CheckResponse extends PaymentResponse {
     }
 
 }
+
+class TransferResponse extends CheckResponse {
+
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Transfer;
+    }
+
+    public function receiptMarkup(\PDO $dbh, &$tbl) {
+
+        $tbl->addBodyTr(HTMLTable::makeTd("Transfer:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
+        $tbl->addBodyTr(HTMLTable::makeTd('Transfer Acct:', array('class'=>'tdlabel')) . HTMLTable::makeTd($this->getCheckNumber()));
+
+    }
+
+}
+
+
+
 
 class CashResponse extends PaymentResponse {
 

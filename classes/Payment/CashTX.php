@@ -15,32 +15,17 @@
  */
 class CashTX {
 
-    public static function cashSale(\PDO $dbh, CashResponse &$pr, $userName, $paymentDate) {
+    public static function cashSale(\PDO $dbh, CashResponse &$pr, $username, $paymentDate) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Sale, TransMethod::Cash);
         $pr->setIdTrans($transRs->idTrans->getStoredVal());
 
+        $pr->setPaymentStatusCode(PaymentStatusCode::Paid);
+        $pr->setPaymentDate($paymentDate);
 
         // Record Payment
-        $payRs = new PaymentRS();
-        $payRs->Amount->setNewVal($pr->getAmount());
-        $payRs->Payment_Date->setNewVal($paymentDate);
-        $payRs->idPayor->setNewVal($pr->idPayor);
-        $payRs->idTrans->setNewVal($pr->getIdTrans());
-
-        $payRs->Notes->setNewVal($pr->payNotes);
-        $payRs->idPayment_Method->setNewVal(PaymentMethod::Cash);
-        $payRs->Attempt->setNewVal(1);
-        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
-        $payRs->Created_By->setNewVal($userName);
-
-        $idPayment = EditRS::insert($dbh, $payRs);
-        $payRs->idPayment->setNewVal($idPayment);
-        EditRS::updateStoredVals($payRs);
-
-        $pr->setPaymentDate($paymentDate);
-        $pr->paymentRs = $payRs;
+        $pr->recordPayment($dbh, $username);
 
     }
 
@@ -52,32 +37,19 @@ class CashTX {
      * @param string $userName
      * @param string $paymentDate
      */
-    public static function returnAmount(\PDO $dbh, CashResponse &$pr, $userName, $paymentDate) {
+    public static function returnAmount(\PDO $dbh, CashResponse &$pr, $username, $paymentDate) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::Retrn, TransMethod::Cash);
         $pr->setIdTrans($transRs->idTrans->getStoredVal());
 
+        $pr->setPaymentStatusCode(PaymentStatusCode::Paid);
+        $pr->setRefund(TRUE);
+        $pr->setPaymentDate($paymentDate);
+
 
         // Record Payment
-        $payRs = new PaymentRS();
-        $payRs->Amount->setNewVal($pr->getAmount());
-        $payRs->Payment_Date->setNewVal($paymentDate);
-        $payRs->idPayor->setNewVal($pr->idPayor);
-        $payRs->idTrans->setNewVal($pr->getIdTrans());
-        $payRs->Notes->setNewVal($pr->payNotes);
-        $payRs->idPayment_Method->setNewVal(PaymentMethod::Cash);
-        $payRs->Attempt->setNewVal(1);
-        $payRs->Is_Refund->setNewVal(1);
-        $payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
-        $payRs->Created_By->setNewVal($userName);
-
-        $idPayment = EditRS::insert($dbh, $payRs);
-        $payRs->idPayment->setNewVal($idPayment);
-        EditRS::updateStoredVals($payRs);
-
-        $pr->setPaymentDate($paymentDate);
-        $pr->paymentRs = $payRs;
+        $pr->recordPayment($dbh, $username);
 
     }
 
