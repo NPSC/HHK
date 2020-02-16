@@ -2005,6 +2005,21 @@ function resvManager(initData, options) {
                 }
             }
 
+            // Cared on file
+            if ($('#rbUseCard').length > 0 && $('#rbUseCard:checked').length > 0) {
+                
+                $('#selccgw').removeClass('ui-state-highlight');
+                $('#tdChargeMsg').text('').parent().hide();
+                
+                if ($('#selccgw option:selected').length === 0) {
+                    
+                    $('#selccgw').addClass('ui-state-highlight');
+                    flagAlertMessage('Select a location for card on file.  ', 'alert', $pWarning);
+                    $('#tdChargeMsg').text('Select a location for card on file').parent().show();
+                    return false;
+                }
+            }
+            
             return true;
 
         }

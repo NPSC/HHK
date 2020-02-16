@@ -1270,7 +1270,6 @@ class HouseServices {
 
         $uS = Session::getInstance();
 
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, $idRegistration));
         $tbl = new HTMLTable();
 
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
@@ -1323,6 +1322,8 @@ class HouseServices {
         $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '3'))
             .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
         );
+
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
 
         $gwTbl = new HTMLTable();
         $gateway->selectPaymentMarkup($dbh, $gwTbl, $index);

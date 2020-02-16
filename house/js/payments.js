@@ -1336,9 +1336,9 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
             parms[$(this).attr('id')] = this.value;
         }
     });
-    
+
     if ($('#selccgw'+idx).length > 0) {
-        parms['selccgw'] = $('#selccgw'+idx).val();
+        parms['selccgw'+idx] = $('#selccgw'+idx).val();
     }
 
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
@@ -1389,6 +1389,7 @@ function paymentsTable(tableID, containerID) {
          ],
         'dom': '<"top"if>rt<"bottom"lp><"clear">',
         'displayLength': 50,
+        'order': [[ 8, 'asc' ]],
         'lengthMenu': [[25, 50, -1], [25, 50, "All"]]
     });
 

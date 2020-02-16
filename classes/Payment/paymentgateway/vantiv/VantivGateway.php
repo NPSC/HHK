@@ -33,54 +33,73 @@ class VantivGateway extends PaymentGateway {
         $uS = Session::getInstance();
         $payResult = NULL;
 
-        $guest = new Guest($dbh, '', $invoice->getSoldToId());
-        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
-
-        $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
-
-        // Do we have a token?
-        if (CreditToken::hasToken($tokenRS)) {
-
-            $cpay = new CreditSaleTokenRequest();
-
-            $cpay->setPurchaseAmount($invoice->getAmountToPay())
-                    ->setTaxAmount(0)
-                    ->setCustomerCode($invoice->getSoldToId())
-                    ->setAddress($addr["Address_1"])
-                    ->setZip($addr["Postal_Code"])
-                    ->setToken($tokenRS->Token->getStoredVal())
-                    ->setPartialAuth(FALSE)
-                    ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
-                    ->setFrequency(MpFrequencyValues::OneTime)
-                    ->setInvoice($invoice->getInvoiceNumber())
-                    ->setTokenId($tokenRS->idGuest_token->getStoredVal())
-                    ->setMemo(MpVersion::PosVersion)
-                    ->setOperatorID($uS->username);
-
-            // Run the token transaction
-            $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes(), $pmp->getPayDate());
-
-            // Analyze the result
-            $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
+        if ($this->getGatewayType() == '') {
+            // Undefined Gateway.
+            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->feePaymentError($dbh, $uS);
+            $payResult->setDisplayMessage('Location not selected. ');
 
         } else {
 
-            // Initialiaze hosted payment
-            $fwrder = $this->initHostedPayment($dbh, $invoice, $guest, $addr, $postbackUrl);
+            try {
 
-            $payIds = array();
-            if (isset($uS->paymentIds)) {
-                $payIds = $uS->paymentIds;
+                $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+
+            } catch (Hk_Exception_Member $ex) {
+
+                $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
             }
 
-            $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
-            $uS->paymentIds = $payIds;
-            $uS->paymentNotes = $pmp->getPayNotes();
-            $uS->paymentDate = $pmp->getPayDate();
+            $address = new Address($dbh, $guest, $uS->nameLookups[GL_TableNames::AddrPurpose]);
+            $addr = $address->get_data('');
 
-            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-            $payResult->setForwardHostedPayment($fwrder);
-            $payResult->setDisplayMessage('Forward to Payment Page. ');
+            $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
+
+            // Do we have a token?
+            if (CreditToken::hasToken($tokenRS)) {
+
+                $cpay = new CreditSaleTokenRequest();
+
+                $cpay->setPurchaseAmount($invoice->getAmountToPay())
+                        ->setTaxAmount(0)
+                        ->setCustomerCode($invoice->getSoldToId())
+                        ->setAddress($addr["Address_1"])
+                        ->setZip($addr["Postal_Code"])
+                        ->setToken($tokenRS->Token->getStoredVal())
+                        ->setPartialAuth(FALSE)
+                        ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
+                        ->setFrequency(MpFrequencyValues::OneTime)
+                        ->setInvoice($invoice->getInvoiceNumber())
+                        ->setTokenId($tokenRS->idGuest_token->getStoredVal())
+                        ->setMemo(MpVersion::PosVersion)
+                        ->setOperatorID($uS->username);
+
+                // Run the token transaction
+                $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes(), $pmp->getPayDate());
+
+                // Analyze the result
+                $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
+
+            } else {
+
+                // Initialiaze hosted payment
+                $fwrder = $this->initHostedPayment($dbh, $invoice, $guest->get_fullName(), $addr, $postbackUrl);
+
+                $payIds = array();
+                if (isset($uS->paymentIds)) {
+                    $payIds = $uS->paymentIds;
+                }
+
+                $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
+                $uS->paymentIds = $payIds;
+                $uS->paymentNotes = $pmp->getPayNotes();
+                $uS->paymentDate = $pmp->getPayDate();
+
+                $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $payResult->setForwardHostedPayment($fwrder);
+                $payResult->setDisplayMessage('Forward to Payment Page. ');
+            }
         }
 
         return $payResult;
@@ -350,7 +369,7 @@ class VantivGateway extends PaymentGateway {
         return $rtnResult;
     }
 
-    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
+    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $guestFullName, $addr, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -386,7 +405,7 @@ class VantivGateway extends PaymentGateway {
 
         $pay->setAVSZip($addr["Postal_Code"])
                 ->setAVSAddress($addr['Address_1'])
-                ->setCardHolderName($guest->getRoleMember()->get_fullName())
+                ->setCardHolderName($guestFullName)
                 ->setFrequency(MpFrequencyValues::OneTime)
                 ->setInvoice($invoice->getInvoiceNumber())
                 ->setMemo(MpVersion::PosVersion)
