@@ -283,9 +283,6 @@ class TransferResponse extends CheckResponse {
 
 }
 
-
-
-
 class CashResponse extends PaymentResponse {
 
     function __construct($amount, $idPayor, $invoiceNumber, $payNote = '') {

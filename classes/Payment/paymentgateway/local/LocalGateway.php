@@ -85,11 +85,11 @@ class LocalGateway extends PaymentGateway {
         //ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
 
         // Update invoice
-        $invoice->updateInvoiceBalance($dbh, $invoice->getAmountToPay(), $uS->username);
-
-        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-        $payResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
-        $payResult->setDisplayMessage('External Credit Payment Recorded.  ');
+//        $invoice->updateInvoiceBalance($dbh, $invoice->getAmountToPay(), $uS->username);
+//
+//        $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+//        $payResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
+//        $payResult->setDisplayMessage('External Credit Payment Recorded.  ');
     }
 
     protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {

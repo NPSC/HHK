@@ -149,56 +149,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
     }
 
-    protected function processCOF(\PDO $dbh, $idGuest, $idReg, $post, $postbackPage) {
-
-        $uS = Session::getInstance();
-
-        // Delete any credit cards on file
-        $keys = array_keys($post);
-
-        foreach ($keys as $k) {
-
-            $parts = explode('_', $k);
-
-            if (count($parts) > 1 && $parts[0] == 'crdel') {
-
-                $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
-
-                if ($idGt > 0) {
-                    $dbh->exec("update guest_token set Token = '' where idGuest_token = " . $idGt);
-                }
-            }
-        }
-
-        // Adding a new card?
-        if (isset($post['rbUseCard']) && $post['rbUseCard'] == 0) {
-
-            $selGw = '';
-            $newCardHolderName = '';
-            $manualKey = FALSE;
-
-            if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
-                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
-                $manualKey = TRUE;
-            }
-
-            if (isset($post['selccgw'])) {
-                $selGw = strtolower(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
-            }
-
-            try {
-                // Payment Gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $selGw);
-
-                $this->cofResult = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idReg, $manualKey, $newCardHolderName, $postbackPage);
-
-            } catch (Hk_Exception_Payment $ex) {
-
-                $this->reserveData->addError($ex->getMessage());
-            }
-        }
-    }
-
     public function createMarkup(\PDO $dbh) {
 
         // Add the family, hospital, etc sections.
@@ -502,10 +452,12 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 // Card on file
                 if ($uS->PaymentGateway != '') {
 
-                    $dataArray['cof'] = HTMLcontainer::generateMarkup('div' ,HTMLContainer::generateMarkup('fieldset',
-                            HTMLContainer::generateMarkup('legend', 'Credit Cards on File', array('style'=>'font-weight:bold;'))
-                            . HouseServices::viewCreditTable($dbh, $resv->getIdRegistration(), $resv->getIdGuest())
-                        ,array('style'=>'float:left;', 'class'=>'hhk-panel')));
+                    $dataArray['cof'] = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+                            HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
+                            . HouseServices::guestEditCreditTable($dbh, $reg->getIdRegistration(), $resv->getIdGuest(), 'g')
+                            . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnUpdtCred', 'data-indx'=>'g', 'data-id'=>$resv->getIdGuest(), 'data-idreg'=>$reg->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
+                        ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel ignrSave')));
+
                 }
             }
 
@@ -1200,16 +1152,6 @@ class ActiveReservation extends Reservation {
 
     public function createMarkup(\PDO $dbh) {
 
-        // COF?
-        if ($this->cofResult !== NULL) {
-
-            if (count($this->cofResult) > 0) {
-                $this->cofResult['resvTitle'] = $this->reserveData->getResvTitle();
-
-                return $this->cofResult;
-            }
-        }
-
         // Checking In?
         if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
             return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
@@ -1237,9 +1179,7 @@ class ActiveReservation extends Reservation {
 
     public function save(\PDO $dbh, $post) {
 
-        $resv = $this->saveResv($dbh, $post);
-
-        $this->processCOF($dbh, $resv->getIdGuest(), $resv->getIdRegistration(), $post, 'Reserve.php?rid=' . $this->reserveData->getIdResv());
+        $this->saveResv($dbh, $post);
 
         return $this;
 
@@ -1388,7 +1328,6 @@ class ActiveReservation extends Reservation {
         // Room Choice
         $this->setRoomChoice($dbh, $resv, $idRescPosted);
 
-        return $resv;
     }
 
     public function changeRoom(\PDO $dbh, $idResv, $idResc) {

@@ -1143,9 +1143,9 @@ function verifyAmtTendrd() {
             $('#tdInvceeMsg').text('The Invoicee is missing. ').show('fade');
             return false;
         }
-        
+
     } else if ($('#PayTypeSel').val() === 'cc') {
-        
+
         if ($('#selccgw').length > 0 && $('#selccgw').val() === '') {
             $('#tdChargeMsg').text('Select a location.').show('fade');
             return false;
@@ -1294,6 +1294,9 @@ function setupCOF($chgExpand, idx) {
                 $chgExpand.hide();
                 $('#btnvrKeyNumber'+idx).prop('checked', false).change();
             }
+            
+            $('#tdChargeMsg'+idx).text('').hide();
+            $('#selccgw'+idx).removeClass('ui-state-highlight');
         });
 
         if ($('input[name=rbUseCard'+idx+']:checked').val() > 0) {
@@ -1319,7 +1322,22 @@ function setupCOF($chgExpand, idx) {
 }
 
 function cardOnFile(id, idGroup, postBackPage, idx) {
+    
+    $('#tdChargeMsg'+idx).text('').hide();
+    
+    // Selected Merchant?
+    if ($('#selccgw'+idx).length > 0 && $('input[name=rbUseCard'+idx+']:checked').val() == 0) {
+        
+        $('#selccgw'+idx).removeClass('ui-state-highlight');
+    
+        if ($('#selccgw'+idx+' option:selected').length === 0) {
+            $('#tdChargeMsg'+idx).text('Select a location.').show('fade');
+            $('#selccgw'+idx).addClass('ui-state-highlight');
+            return false;
+        }
+    }
 
+    // Set up ajax call
     var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage, index: idx};
 
     $('#tblupCredit'+idx).find('input').each(function() {
@@ -1371,7 +1389,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
 
             if (data.COFmkup && data.COFmkup !== '') {
                 $('#tblupCredit'+idx).remove();
-                $('#upCreditfs').append($(data.COFmkup));
+                $('#upCreditfs').prepend($(data.COFmkup));
                 setupCOF($('#trvdCHName'+idx), idx);
             }
         }

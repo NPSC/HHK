@@ -436,6 +436,12 @@ class VantivGateway extends PaymentGateway {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
         }
 
+        if ($this->getGatewayType() == '') {
+            // Undefined Gateway.
+            $dataArray['error'] = 'Location not selected. ';
+            return $dataArray;
+        }
+
         // Set CC Gateway name
         $uS->ccgw = $this->getGatewayType();
 

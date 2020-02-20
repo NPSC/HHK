@@ -1266,7 +1266,7 @@ class HouseServices {
     }
 
     // Just credit cards with delete checkboxes.
-    public static function guestEditCreditTable(\PDO $dbh, $idRegistration, $idGuest, $index) {
+    public static function guestEditCreditTable(\PDO $dbh, $idRegistration, $idGuest, $index, $defaultMerchant = '') {
 
         $uS = Session::getInstance();
 
@@ -1278,14 +1278,13 @@ class HouseServices {
 
         $tbl->addBodyTr(HTMLTable::makeTh("X") . HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use"));
 
-        // preset useCardRb
+        //
         if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
             $keys = array_keys($tkRsArray);
             $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
         }
 
         $attr = array('type'=>'radio', 'name'=>'rbUseCard'.$index);
-        $cbattr = array('type'=>'checkbox', 'name'=>'cbDelCard'.$index);
 
         // List any valid stored cards on file
         foreach ($tkRsArray as $tkRs) {
@@ -1312,55 +1311,21 @@ class HouseServices {
         }
 
         // New card.  Not for credit return.
-
-        if ($prefTokenId == 0) {
-            $attr['checked'] = 'checked';
-        } else {
-            unset($attr['checked']);
-        }
+        unset($attr['checked']);
 
         $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '3'))
             .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
         );
 
+        $tbl->addBodyTr( HTMLTable::makeTd('', array('id'=>'tdChargeMsg' . $index, 'colspan'=>'4', 'style'=>'color:red; display:none;')));
+
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
 
         $gwTbl = new HTMLTable();
-        $gateway->selectPaymentMarkup($dbh, $gwTbl, $index);
+        $gateway->selectPaymentMarkup($dbh, $gwTbl, $index, $defaultMerchant);
         $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(), array('colspan'=>'4')));
 
         return $tbl->generateMarkup(array('id' => 'tblupCredit'.$index));
-
-    }
-
-
-    /**
-     * This credit card viewer does not take any money.
-     * Just show credit cards on file
-     *
-     * @param PDO $dbh
-     * @param integer $idRegistration
-     * @param integer $idGuest
-     * @return string
-     */
-    public static function viewCreditTable(\PDO $dbh, $idRegistration, $idGuest, $allMerchants = FALSE) {
-
-        $uS = Session::getInstance();
-
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, $idRegistration));
-        $tbl = new HTMLTable();
-
-        if ($allMerchants) {
-            $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
-        } else {
-            $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, $gateway->getMerchant(), $idGuest);
-        }
-
-        $prefTokenId = Registration::readPrefTokenId($dbh, $idRegistration);
-
-        PaymentChooser::CreditBlock($dbh, $tbl, $tkRsArray, $gateway, $prefTokenId, '', '', FALSE);
-
-        return $tbl->generateMarkup(array('id' => 'tblupCredit'));
 
     }
 
@@ -1437,6 +1402,9 @@ class HouseServices {
 
                 $dataArray['error'] = $ex->getMessage();
             }
+        } else {
+            // return new form
+            $dataArray['COFmkup'] = self::guestEditCreditTable($dbh, $idGroup, $idGuest, $idx);
         }
 
         return $dataArray;
