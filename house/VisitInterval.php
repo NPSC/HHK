@@ -1,3 +1,4 @@
+query.sql
 <?php
 
 /**
@@ -15,7 +16,7 @@ require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'PaymentGwRS.php');
 
 require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php';
+require (THIRD_PARTY . 'Spout/Autoloader/autoload.php');
 require(CLASSES . 'Purchase/RoomRate.php');
 require(CLASSES . 'ValueAddedTax.php');
 require (CLASSES . 'PaymentSvcs.php');
@@ -39,6 +40,10 @@ require (PMT . 'CreditToken.php');
 
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 
+use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
+use Box\Spout\Common\Entity\Row;
+use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
+use Box\Spout\Common\Entity\Style\CellAlignment;
 
 try {
     $wInit = new webInit();
@@ -395,13 +400,13 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
         $r['Status'] = $uS->guestLookups['Visit_Status'][$r['Status']][1];
         $r['idPrimaryGuest'] = $r['Name_Last'] . ', ' . $r['Name_First'];
-        $r['Arrival'] = PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
-        $r['Departure'] = PHPExcel_Shared_Date::PHPToExcel($departureDT);
+        $r['Arrival'] = $arrivalDT->format('Y-m-d');
+        $r['Departure'] = $departureDT->format('Y-m-d');
         $r['idPatient'] = $r['Patient_Last'] . ', ' . $r['Patient_First'];
 
         if ($r['pBirth'] != '') {
             $pBirthDT = new DateTime($r['pBirth']);
-            $r['pBirth'] = PHPExcel_Shared_Date::PHPToExcel($pBirthDT);
+            $r['pBirth'] = $pBirthDT->format('Y-m-d');
         } else {
             $r['pBirth'] = '';
         }
@@ -410,15 +415,19 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         $flds = array();
 
         foreach ($fltrdFields as $f) {
-            if ($r[$f[1]] == '' && $f[5] != '') {
-                $f[5] = '';
-                $f[4] = 's';
+
+            //$flds[$n++] = array('type' => $f[4], 'value' => $r[$f[1]], 'style'=>$f[5]);
+            if ($r[$f[1]] != '' && $f[5] != ''){
+                $flds[$n++] = floatval($r[$f[1]]);
+            }else{
+                $flds[$n++] = $r[$f[1]];
             }
-
-            $flds[$n++] = array('type' => $f[4], 'value' => $r[$f[1]], 'style'=>$f[5]);
         }
-
-        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+        
+        $row = WriterEntityFactory::createRowFromArray($flds);
+            
+        $sml->addRow($row);
+        
 
     }
 }
@@ -682,21 +691,27 @@ where
 
     } else {
 
-        ini_set('memory_limit', "380M");
+        //ini_set('memory_limit', "380M");
         $reportRows = 1;
 
-        $file = 'VisitReport';
-        $sml = OpenXML::createExcel('', 'Visit Report');
-
+        $fileName = 'VisitReport.xlsx';
+        $writer = WriterEntityFactory::createXLSXWriter();
+        $writer->openToBrowser($fileName);
+        
         // build header
-        $hdr = array();
-        $n = 0;
-
-        foreach ($fltrdTitles as $t) {
-            $hdr[$n++] = $t;
+        $hdrStyle = (new StyleBuilder())
+            ->setFontBold()
+            ->setCellAlignment(CellAlignment::CENTER)
+            ->build();
+        
+        $hdrRow = WriterEntityFactory::createRowFromArray($fltrdTitles, $hdrStyle);
+        try{
+            $writer->addRow($hdrRow);
+        }catch(\Exception $e){
+            $writer->close();
+            die();
         }
-
-        OpenXML::writeHeaderRow($sml, $hdr);
+        
         $reportRows++;
 
     }
@@ -747,8 +762,6 @@ where
     $now->setTime(0, 0, 0);
 
     $vat = new ValueAddedTax($dbh);
-
-    file_put_contents("query.sql", $query);
     
     $stmt = $dbh->query($query);
 
@@ -870,7 +883,13 @@ where
                 $nites[] = $visit['nit'];
 
                 if (!$statsOnly) {
-                    doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $reportRows, $rateTitles, $uS, $visitFee);
+                    try{
+                        doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $reportRows, $rateTitles, $uS, $visitFee);
+                    }catch(\Exception $e){
+                        if(isset($writer)){
+                            $writer->close();
+                        }
+                    }
                 }
             }
 
@@ -1102,7 +1121,16 @@ where
         $nites[] = $visit['nit'];
 
         if (!$statsOnly) {
-            doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $reportRows, $rateTitles, $uS, $visitFee);
+            if(!$local){
+                try{
+                    doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $reportRows, $rateTitles, $uS, $visitFee);
+                }catch(\Exception $e){
+                    $writer->close();
+                    die();
+                }
+            }else{
+                doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $reportRows, $rateTitles, $uS, $visitFee);
+            }
         }
     }
 
@@ -1237,11 +1265,7 @@ where
 
     } else {
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
+        $writer->close();
         exit();
 
     }
@@ -1318,7 +1342,7 @@ if ($uS->PatientAddr) {
 }
 
 if ($uS->ShowBirthDate) {
-    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient').' DOB', 'pBirth', '', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient').' DOB', 'pBirth', '', '', 'n', "", array(), 'date');
 }
 
 // Referral Agent
@@ -1351,8 +1375,8 @@ if (count($diags) > 0) {
 }
 
 
-$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
-$cFields[] = array("Depart", 'Departure', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', '', array(), 'date');
+$cFields[] = array("Depart", 'Departure', 'checked', '', 'n', '', array(), 'date');
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
 
 if ($uS->VisitFee) {
