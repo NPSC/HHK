@@ -1396,7 +1396,7 @@ class CreditReversalTokenRequest extends MercTokenRequest {
 class CreditAdjustTokenRequest extends MercTokenRequest {
 
     protected function execute(\SoapClient $txClient, array $data) {
-        return new CreditTokenResponse($txClient->CreditAdjustToken($data), 'CreditAdjustTokenResult');
+        return new CreditTokenResponse($txClient->CreditAdjustToken($data), 'CreditAdjustTokenResult', MpTranType::Adjust);
     }
 
     public function setPurchaseAmount($v) {

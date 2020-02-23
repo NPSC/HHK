@@ -236,6 +236,20 @@ Class MpFrequencyValues {
     const Recurring = 'Recurring';
 }
 
+Class MpTranType {
+    const Sale = 'Sale';
+    const PreAuth = 'PreAuth';
+    const ZeroAuth = 'ZeroAuth';
+    const ReturnAmt = 'ReturnAmount';
+    const ReturnSale = 'ReturnSale';
+    const Void = 'VoidSale';
+    const VoidReturn = 'VoidReturn';
+    const Reverse = 'ReverseSale';
+    const CardOnFile = 'COF';
+    const Adjust = 'CreditAdjust';
+}
+
+
 class NoteCategory {
     const Reservation = 'ncr';
     const PSG = 'ncf';

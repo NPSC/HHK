@@ -764,17 +764,11 @@ class PaymentManagerPayment {
 
 
     public function getChargeCard() {
-        if ($this->getPayType() == PayType::ChargeAsCash) {
-            return $this->chargeCard;
-        }
-        return '';
+        return $this->chargeCard;
     }
 
     public function getChargeAcct() {
-        if ($this->getPayType() == PayType::ChargeAsCash) {
-            return $this->chargeAcct;
-        }
-        return '';
+        return $this->chargeAcct;
     }
 
     public function setChargeCard($chargeCard) {

@@ -47,7 +47,7 @@ class LocalGateway extends PaymentGateway {
         $this->credentials = $credentials;
     }
 
-    public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, $invoice, $postbackUrl) {
+    public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -61,7 +61,13 @@ class LocalGateway extends PaymentGateway {
             $pmp->setCardHolderName($tokenRS->CardHolderName->getStoredVal());
         }
 
-        $vr = new LocalResponse($invoice->getAmountToPay(), $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getIdToken(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes(), $pmp->getPayDate());
+        $gwResp = new LocalGwResp($invoice->getAmountToPay(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getCardHolderName(), MpTranType::Sale, $uS->username);
+
+        $vr = new LocalResponse($gwResp, $invoice->getSoldToId(), $invoice->getIdGroup(), $pmp->getIdToken(), PaymentStatusCode::Paid);
+
+        $vr->setPaymentDate($pmp->getPayDate());
+        $vr->setPaymentNotes($pmp->getPayNotes());
+
 
         // New Token?
         if ($vr->response->getIdToken() != '') {
@@ -81,7 +87,9 @@ class LocalGateway extends PaymentGateway {
 
 
         // Record Payment
-        return SaleReply::processReply($dbh, $vr, $uS->username);
+        $vrr = SaleReply::processReply($dbh, $vr, $uS->username);
+
+
         //ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
 
         // Update invoice
@@ -136,11 +144,18 @@ class LocalGateway extends PaymentGateway {
 
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
-        // Charge as Cash markup
-        $payTbl->addBodyTr(
+        $tbl = new HTMLTable();
+        $tbl->addBodyTr(
             HTMLTable::makeTd('New Card: ', array('class'=>'tdlabel'))
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), '', TRUE), array('name'=>'selChargeType'.$index, 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys'.$index)))
             .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct'.$index, 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys'.$index)))
+             );
+        $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'size'=>'40', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName', 'class'=>'hhk-feeskeys')), array('colspan'=>'4')));
+
+
+        // Charge as Cash markup
+        $payTbl->addBodyTr(
+            HTMLTable::makeTd($tbl->generateMarkup(), array('colspan'=>'5'))
             , array('id'=>'trvdCHName'.$index));
 
     }

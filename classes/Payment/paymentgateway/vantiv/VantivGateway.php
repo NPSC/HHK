@@ -643,7 +643,7 @@ class VantivGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function analyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken) {
+    public function analyzeCredSaleResult(\PDO $dbh, CreditResponse $payResp, \Invoice $invoice, $idToken) {
 
         $uS = Session::getInstance();
 

@@ -8,18 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-Class MpTranType {
-    const Sale = 'Sale';
-    const PreAuth = 'PreAuth';
-    const ZeroAuth = 'ZeroAuth';
-    const ReturnAmt = 'ReturnAmount';
-    const ReturnSale = 'ReturnSale';
-    const Void = 'VoidSale';
-    const VoidReturn = 'VoidReturn';
-    const Reverse = 'ReverseSale';
-    const CardOnFile = 'COF';
-}
-
 abstract class PaymentGateway {
 
     const VANTIV = 'vantiv';
@@ -115,10 +103,6 @@ abstract class PaymentGateway {
 
                 return InstamedGateway::_createEditMarkup($dbh, $gatewayName);
 
-            case PaymentGateway::CONVERGE:
-
-                return ConvergeGateway::_createEditMarkup($dbh, $gatewayName);
-
             default:
 
                 return LocalGateway::_createEditMarkup($dbh, $gatewayName);
@@ -136,10 +120,6 @@ abstract class PaymentGateway {
             case PaymentGateway::INSTAMED:
 
                 return InstamedGateway::_saveEditMarkup($dbh, $gatewayName, $post);
-
-            case PaymentGateway::CONVERGE:
-
-                return ConvergeGateway::_saveEditMarkup($dbh, $gatewayName, $post);
 
             default:
 
@@ -170,10 +150,6 @@ abstract class PaymentGateway {
             case PaymentGateway::INSTAMED:
 
                 return new InstamedGateway($dbh, $gwType);
-
-            case PaymentGateway::CONVERGE:
-
-                return new ConvergeGateway($dbh, $gwType);
 
             default:
 

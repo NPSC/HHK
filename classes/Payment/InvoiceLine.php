@@ -94,7 +94,7 @@ abstract class InvoiceLine {
 
     }
 
-    public function save(\PDO $dbh, $deleted = FALSE) {
+    public function save(PDO $dbh, $deleted = FALSE) {
 
         //
         $ilRs1 = new InvoiceLineRS();
@@ -119,7 +119,7 @@ abstract class InvoiceLine {
 
     }
 
-    public function updateLine(\PDO $dbh) {
+    public function updateLine(PDO $dbh) {
 
         $affected = 0;
         $this->invLineRs->Description->setNewVal($this->getDescription());
@@ -279,7 +279,7 @@ class RecurringInvoiceLine extends InvoiceLine {
         parent::createNewLine($item, $quantity, $this->var);
     }
 
-    public function save(\PDO $dbh, $deleted = FALSE) {
+    public function save(PDO $dbh, $deleted = FALSE) {
 
         //
         $ilRs1 = new InvoiceLineRS();
@@ -306,7 +306,7 @@ class RecurringInvoiceLine extends InvoiceLine {
 
     }
 
-    public function updateLine(\PDO $dbh) {
+    public function updateLine(PDO $dbh) {
 
         $this->invLineRs->Period_Start->setNewVal($this->getPeriodStart());
         $this->invLineRs->Period_End->setNewVal($this->getPeriodEnd());
