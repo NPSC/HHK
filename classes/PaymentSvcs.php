@@ -65,22 +65,6 @@ class PaymentSvcs {
 
             break;
 
-//          case PayType::ChargeAsCash:
-//
-//            $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
-//
-//            ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
-//
-//            // Update invoice
-//            $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
-//
-//            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-//            $payResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
-//            $payResult->setDisplayMessage('External Credit Payment Recorded.  ');
-//
-//            break;
-//
-
           case PayType::Cash:
 
             $cashResp = new CashResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getPayNotes());

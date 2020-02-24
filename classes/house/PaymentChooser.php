@@ -939,7 +939,7 @@ ORDER BY v.idVisit , v.Span;");
         $tbl->addBodyTr(HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use")
                 , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
-        // preset useCardRb
+        //
         if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
             $keys = array_keys($tkRsArray);
             $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
@@ -950,15 +950,20 @@ ORDER BY v.idVisit , v.Span;");
         // List any valid stored cards on file
         foreach ($tkRsArray as $tkRs) {
 
+            if ($tkRs->CardType->getStoredVal() == '' || $tkRs->MaskedAccount->getStoredVal() == '') {
+                continue;
+            }
+
             if ($tkRs->idGuest_token->getStoredVal() == $prefTokenId) {
                 $attr['checked'] = 'checked';
             } else if (isset($attr['checked'])) {
                 unset($attr['checked']);
             }
 
-            $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
-            if (strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+            if ($tkRs->Merchant->getStoredVal() == '' || strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
                 $merchant = '';
+            } else {
+                $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
             }
 
             $tbl->addBodyTr(

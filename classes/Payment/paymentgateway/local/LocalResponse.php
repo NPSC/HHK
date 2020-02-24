@@ -16,7 +16,7 @@
 class LocalResponse extends CreditResponse {
 
 
-    function __construct(LocalGwResp $gwResp, $idPayor, $idRegistration, $idToken, $paymentStatusCode) {
+    function __construct( $gwResp, $idPayor, $idRegistration, $idToken, $paymentStatusCode = '') {
 
         $this->response = $gwResp;
         $this->idPayor = $idPayor;
@@ -34,15 +34,8 @@ class LocalResponse extends CreditResponse {
 
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
-        $chgTypes = readGenLookupsPDO($dbh, 'Charge_Cards');
-        $cgType = $this->getChargeType();
-
-        if (isset($chgTypes[$this->getChargeType()])) {
-            $cgType = $chgTypes[$this->response->getCardType()][1];
-        }
-
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($cgType . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxx...". $this->response->getMaskedAccount()));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxx...". $this->response->getMaskedAccount()));
 
         if ($this->response->getCardHolderName() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getCardHolderName()));
@@ -73,11 +66,15 @@ class LocalGwResp implements iGatewayResponse {
 
         $this->result = array(
             'CardHolderName' => $cardHolderName,
-            'AuthorizeAmount' => $amount,
+            'AuthorizedAmount' => $amount,
             'Account' => $cardAcct,
             'CardType' => $cardType,
             'Invoice' => $invoiceNumber,
         );
+    }
+
+    public function getStatus() {
+        return '';
     }
 
     public function getTranType() {
@@ -96,42 +93,38 @@ class LocalGwResp implements iGatewayResponse {
     }
 
     public function getCardHolderName() {
-        if (isset($this->result->CardHolderName)) {
-            return $this->result->CardHolderName;
+        if (isset($this->result['CardHolderName'])) {
+            return $this->result['CardHolderName'];
         }
 
         return '';
     }
 
     public function getMaskedAccount() {
-        if (isset($this->result->Account)) {
-            return str_ireplace('x', '', $this->result->Account);
-        } else if (isset($this->result->MaskedAccount)) {
-            return str_ireplace('x', '', $this->result->MaskedAccount);
+        if (isset($this->result['Account'])) {
+            return str_ireplace('x', '', $this->result['Account']);
         }
 
         return '';
     }
 
     public function getAuthorizedAmount() {
-        if (isset($this->result->AuthorizeAmount)) {
-            return $this->result->AuthorizeAmount;
-        } else if (isset($this->result->Amount)) {
-            return $this->result->Amount;
+        if (isset($this->result['AuthorizedAmount'])) {
+            return $this->result['AuthorizedAmount'];
         }
         return 0.00;
     }
 
     public function getCardType() {
-        if (isset($this->result->CardType)) {
-            return $this->result->CardType;
+        if (isset($this->result['CardType'])) {
+            return $this->result['CardType'];
         }
         return '';
     }
 
     public function getInvoiceNumber() {
-        if (isset($this->result->Invoice)) {
-            return $this->result->Invoice;
+        if (isset($this->result['Invoice'])) {
+            return $this->result['Invoice'];
         }
         return '';
     }
@@ -189,11 +182,11 @@ class LocalGwResp implements iGatewayResponse {
     }
 
     public function getResponseMessage() {
-        return $this->getMessage();
+        return '';
     }
 
     public function getResponseCode() {
-        return $this->getMessage();
+        return '';
     }
 
     public function getTransPostTime() {

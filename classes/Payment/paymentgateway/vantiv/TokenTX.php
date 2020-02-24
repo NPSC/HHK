@@ -288,7 +288,7 @@ class TokenTX {
 class TokenResponse extends CreditResponse {
 
 
-    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $paymentStatusCode) {
+    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $paymentStatusCode = '') {
 
         $this->response = $creditTokenResponse;
         $this->idPayor = $idPayor;

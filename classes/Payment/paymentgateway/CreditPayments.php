@@ -144,8 +144,7 @@ class VoidReply extends CreditPayments {
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
 
-        //$pr->setPaymentDate(date("Y-m-d H:i:s"));
-        $$pr->setIdPayment($payRs->idPayment->getStoredVal());
+        $pr->setIdPayment($payRs->idPayment->getStoredVal());
 
         // Payment Detail
         $pr->recordPaymentAuth($dbh, $uS->PaymentGateway, $username);

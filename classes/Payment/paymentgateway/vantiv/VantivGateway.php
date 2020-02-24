@@ -573,7 +573,7 @@ class VantivGateway extends PaymentGateway {
     protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid = '') {
 
         $uS = Session::getInstance();
-        $dataArray = array();
+        $dataArray = array('bid'=>$bid);
 
         // find the token record
         if ($payRs->idToken->getStoredVal() > 0) {
@@ -704,12 +704,12 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
-        return new TokenResponse($creditTokenResponse, $idPayor, $idToken, $payNotes, '');
+    public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $invoiceNumber, $idToken = 0, $payNotes = '') {
+        return new TokenResponse($creditTokenResponse, $idPayor, 0, $idToken);
     }
 
     public function getCofResponseObj(iGatewayResponse $verifyCiResponse, $idPayor, $idGroup) {
-        return new TokenResponse($verifyCiResponse, $idPayor, $idGroup);
+        return new TokenResponse($verifyCiResponse, $idPayor, $idGroup, 0);
     }
 
     protected function loadGateway(\PDO $dbh) {
