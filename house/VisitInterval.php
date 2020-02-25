@@ -1,4 +1,3 @@
-query.sql
 <?php
 
 /**
@@ -16,7 +15,7 @@ require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'PaymentGwRS.php');
 
 require (CLASSES . 'ColumnSelectors.php');
-require (THIRD_PARTY . 'Spout/Autoloader/autoload.php');
+require (THIRD_PARTY . 'mk-j/PHP_XLSXWriter/xlsxwriter.php');
 require(CLASSES . 'Purchase/RoomRate.php');
 require(CLASSES . 'ValueAddedTax.php');
 require (CLASSES . 'PaymentSvcs.php');
@@ -39,11 +38,6 @@ require (PMT . 'Transaction.php');
 require (PMT . 'CreditToken.php');
 
 require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-
-use Box\Spout\Writer\Common\Creator\WriterEntityFactory;
-use Box\Spout\Common\Entity\Row;
-use Box\Spout\Writer\Common\Creator\Style\StyleBuilder;
-use Box\Spout\Common\Entity\Style\CellAlignment;
 
 try {
     $wInit = new webInit();
@@ -397,7 +391,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         $tbl->addBodyTr($tr);
 
     } else {
-
+        
         $r['Status'] = $uS->guestLookups['Visit_Status'][$r['Status']][1];
         $r['idPrimaryGuest'] = $r['Name_Last'] . ', ' . $r['Name_First'];
         $r['Arrival'] = $arrivalDT->format('Y-m-d');
@@ -418,16 +412,17 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
             //$flds[$n++] = array('type' => $f[4], 'value' => $r[$f[1]], 'style'=>$f[5]);
             if ($r[$f[1]] != '' && $f[5] != ''){
-                $flds[$n++] = floatval($r[$f[1]]);
+                if($r[$f[1]] == ""){
+                    $flds[$n++] = "0.00";
+                }else{
+                    $flds[$n++] = strval(str_replace(',', '', $r[$f[1]]));
+                }
             }else{
-                $flds[$n++] = $r[$f[1]];
+                $flds[$n++] = strval($r[$f[1]]);
             }
         }
         
-        $row = WriterEntityFactory::createRowFromArray($flds);
-            
-        $sml->addRow($row);
-        
+        $sml->writeSheetRow('Sheet1',$flds);        
 
     }
 }
@@ -692,23 +687,46 @@ where
     } else {
 
         //ini_set('memory_limit', "380M");
+        ini_set('max_execution_time', "60");
         $reportRows = 1;
 
-        $fileName = 'VisitReport.xlsx';
-        $writer = WriterEntityFactory::createXLSXWriter();
-        $writer->openToBrowser($fileName);
+        $fileName = 'VisitReport';
+        $writer = new XLSXWriter();
+        $types = [
+            's'=>'string',
+            'n'=>'integer',
+            'money'=>'money', // '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'
+            'date'=>'MM/DD/YYYY'
+        ];
         
-        // build header
-        $hdrStyle = (new StyleBuilder())
-            ->setFontBold()
-            ->setCellAlignment(CellAlignment::CENTER)
-            ->build();
         
-        $hdrRow = WriterEntityFactory::createRowFromArray($fltrdTitles, $hdrStyle);
+        //build header
+        $hdrstyle = ['font-style'=>'bold', 'halign'=>'center', 'auto_filter'=>true, 'widths'=>[]];
+        
+        $header = array();
+        foreach($fltrdFields as $field){
+              if($field[5] != "" && $field[5] == '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'){ //if format is money
+                  $header[$field[0]] = $types['s'];
+                  $hdrstyle['widths'][] = 15;
+             }elseif(isset($field[7]) && $field[7] == "date"){ //if format is date
+                 $header[$field[0]] = $types['date'];
+                 $hdrstyle['widths'][] = 15;
+             }elseif($field[4] == 'n'){ //if format is integer
+                 $header[$field[0]] = 'integer';
+                 $hdrstyle['widths'][] = 10;
+             }else{ //otherwise set format as string
+                $header[$field[0]] = 'string';
+                $hdrstyle['widths'][] = 20;
+             }            
+        }
+        
         try{
-            $writer->addRow($hdrRow);
+            $writer->writeSheetHeader('Sheet1', $header, $hdrstyle);
         }catch(\Exception $e){
-            $writer->close();
+            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            header('Content-Disposition: attachment;filename="' . $fileName . '.xlsx"');
+            header('Cache-Control: max-age=0');
+            $writer->writeToStdOut();
             die();
         }
         
@@ -887,7 +905,7 @@ where
                         doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $reportRows, $rateTitles, $uS, $visitFee);
                     }catch(\Exception $e){
                         if(isset($writer)){
-                            $writer->close();
+                            die();
                         }
                     }
                 }
@@ -1264,8 +1282,11 @@ where
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
     } else {
-
-        $writer->close();
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header('Content-Disposition: attachment;filename="' . $fileName . '.xlsx"');
+        header('Cache-Control: max-age=0');
+        
+        $writer->writeToStdOut();
         exit();
 
     }
