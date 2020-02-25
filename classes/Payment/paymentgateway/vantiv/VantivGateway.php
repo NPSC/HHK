@@ -704,8 +704,8 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $invoiceNumber, $idToken = 0, $payNotes = '') {
-        return new TokenResponse($creditTokenResponse, $idPayor, 0, $idToken);
+    public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
+        return new TokenResponse($creditTokenResponse, $idPayor, $idGroup, $idToken);
     }
 
     public function getCofResponseObj(iGatewayResponse $verifyCiResponse, $idPayor, $idGroup) {

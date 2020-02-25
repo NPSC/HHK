@@ -64,7 +64,7 @@ abstract class PaymentGateway {
 
     public function returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid && $pAuthRs->Status_Code->getStoredVal() != PaymentStatusCode::VoidReturn) {
+        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
             return $this->_returnPayment($dbh, $invoice, $payRs, $pAuthRs, $pAuthRs->Approved_Amount->getStoredVal(), $bid);
         }
 
