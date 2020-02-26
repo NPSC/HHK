@@ -77,16 +77,6 @@ class CashTX {
         $payRs->Updated_By->setNewVal($username);
         $payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
 
-        // payment Note
-        if ($pr->payNotes != '') {
-
-            if ($payRs->Notes->getStoredVal() != '') {
-                $payRs->Notes->setNewVal($payRs->Notes->getStoredVal() . " | " . $pr->payNotes);
-            } else {
-                $payRs->Notes->setNewVal($pr->payNotes);
-            }
-        }
-
         EditRS::update($dbh, $payRs, array($payRs->idPayment));
         EditRS::updateStoredVals($payRs);
         $pr->paymentRs = $payRs;
