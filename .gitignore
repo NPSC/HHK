@@ -1,8 +1,4 @@
-/nbproject/private/
 /patch/soapLog.xml
 .project
-/nbproject/
-/.settings/
+.settings/
 .buildpath
-.settings/org.eclipse.php.core.prefs
-.settings/org.eclipse.php.core.prefs

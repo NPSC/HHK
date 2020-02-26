@@ -218,7 +218,8 @@ class LocalGateway extends PaymentGateway {
 		$ccs = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 
 		foreach ( $ccs as $k => $v ) {
-			$cardNames [$v [1]] = $v;
+		    $v[0] = $v[1];
+			$cardNames [$v[1]] = $v;
 		}
 
 		$tbl = new HTMLTable ();
@@ -238,8 +239,8 @@ class LocalGateway extends PaymentGateway {
 				'type' => 'textbox',
 				'size' => '40',
 				'placeholder' => 'Cardholder Name',
-				'name' => 'txtvdNewCardName',
-				'class' => 'hhk-feeskeys'
+		        'name' => 'txtvdNewCardName' . $index,
+		        'class' => 'hhk-feeskeys' . $index
 		) ), array (
 				'colspan' => '4'
 		) ) );

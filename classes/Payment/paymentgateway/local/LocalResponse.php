@@ -52,25 +52,26 @@ class LocalResponse extends CreditResponse {
 
 class LocalGwResp implements iGatewayResponse {
 
-    protected $result;
-
     protected $tranType;
     protected $merchant = '';
     protected $processor = 'local';
     protected $operatorId;
+    protected $cardHolderName;
+    protected $authorizedAmount;
+    protected $account;
+    protected $cardType;
+    protected $invoiceNumber;
 
     public function __construct($amount, $invoiceNumber, $cardType, $cardAcct, $cardHolderName, $tranType, $operatorId) {
 
         $this->tranType = $tranType;
-        $this->operatorId = $operatorId;
-
-        $this->result = array(
-            'CardHolderName' => $cardHolderName,
-            'AuthorizedAmount' => $amount,
-            'Account' => $cardAcct,
-            'CardType' => $cardType,
-            'Invoice' => $invoiceNumber,
-        );
+        $this->setOperatorId($operatorId);
+        $this->setCardHolderName( $cardHolderName);
+        $this->authorizedAmount = $amount;
+        $this->account = $cardAcct;
+        $this->cardType = $cardType;
+        $this->invoiceNumber = $invoiceNumber;
+;
     }
 
     public function getStatus() {
@@ -93,40 +94,31 @@ class LocalGwResp implements iGatewayResponse {
     }
 
     public function getCardHolderName() {
-        if (isset($this->result['CardHolderName'])) {
-            return $this->result['CardHolderName'];
-        }
-
-        return '';
+        return $this->cardHolderName;
+    }
+    
+    public function setCardHolderName($v) {
+        $this->cardHolderName = $v;
     }
 
     public function getMaskedAccount() {
-        if (isset($this->result['Account'])) {
-            return str_ireplace('x', '', $this->result['Account']);
-        }
-
-        return '';
+        return $this->account;
     }
-
+    
+    public function setMaskedAccount($v) {
+        $this->aaccount = $v;
+    }
+    
     public function getAuthorizedAmount() {
-        if (isset($this->result['AuthorizedAmount'])) {
-            return $this->result['AuthorizedAmount'];
-        }
-        return 0.00;
+        return $this->authorizedAmount;
     }
 
     public function getCardType() {
-        if (isset($this->result['CardType'])) {
-            return $this->result['CardType'];
-        }
-        return '';
+        return $this->cardType;
     }
 
     public function getInvoiceNumber() {
-        if (isset($this->result['Invoice'])) {
-            return $this->result['Invoice'];
-        }
-        return '';
+        return $this->invoiceNumber;
     }
 
     public function getEMVApplicationIdentifier() {
@@ -180,7 +172,11 @@ class LocalGwResp implements iGatewayResponse {
     public function getOperatorId() {
         return $this->operatorId;
     }
-
+    
+    public function setOperatorId($v) {
+        $this->operatorId = $v;
+    }
+    
     public function getResponseMessage() {
         return '';
     }
