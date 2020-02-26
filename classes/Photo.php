@@ -80,18 +80,23 @@ class Photo {
 
         $id = intval($idGuest, 10);
 
-        $stmt = $dbh->query("SELECT Guest_Photo_Id FROM `name_demog` WHERE `idName` = $id");
+        $stmt = $dbh->query("SELECT Guest_Photo_Id FROM `name_demog` nd JOIN photo p ON nd.Guest_Photo_Id = p.idPhoto WHERE `idName` = $id");
         $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $this->setImageSizePx($imageSizePx, $defaultSizePx);
-        $this->setImageId(intval($results[0]['Guest_Photo_Id']) , 10);
+        if(isset($results[0]['Guest_Photo_Id'])){
+            $this->setImageId(intval($results[0]['Guest_Photo_Id']) , 10);
+        }else{
+            $this->setImageId(0);
+        }
+        
         $this->setImageType($imageFile['type']);
 
         $this->convertToSquareThumbnail($imageFile);
 
         if ($this->getImageId() > 0) {
 
-            $update = "UPDATE photo SET `Image_Type` = '" . $this->getImageType() . "', `Image` = '" . $this->getImageBase64() . "' , `Updated_By` = '" . $userName . "' WHERE `idPhoto` = " . $this->getImageId() . ";";
+            $update = "UPDATE photo SET `Image_Type` = '" . $this->getImageType() . "', `Image` = '" . $this->getImageBase64() . "' , `Updated_By` = '" . $userName . "', timestamp = current_timestamp WHERE `idPhoto` = " . $this->getImageId() . ";";
             $dbh->exec($update);
 
         } else {
