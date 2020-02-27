@@ -163,7 +163,6 @@ abstract class CreditResponse extends PaymentResponse {
             $pDetailRS->Reference_Num->setNewVal($this->response->getRefNo());
             $pDetailRS->Acct_Number->setNewVal($this->response->getMaskedAccount());
             $pDetailRS->Card_Type->setNewVal($this->response->getCardType());
-            $pDetailRS->Cardholder_Name->setNewVal($this->response->getCardHolderName());
             $pDetailRS->AVS->setNewVal($this->response->getAVSResult());
             $pDetailRS->Invoice_Number->setNewVal($this->getInvoiceNumber());
             $pDetailRS->idTrans->setNewVal($this->getIdTrans());

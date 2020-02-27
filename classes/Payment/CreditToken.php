@@ -36,7 +36,7 @@ class CreditToken {
         $gtRs->idRegistration->setNewVal($idRegistration);
         $gtRs->Merchant->setNewVal($vr->getMerchant());
 
-        if ($vr->getCardHolderName() != '') {
+        if (trim($vr->getCardHolderName()) != '') {
             $gtRs->CardHolderName->setNewVal($vr->getCardHolderName());
         }
         $gtRs->CardType->setNewVal($vr->getCardType());

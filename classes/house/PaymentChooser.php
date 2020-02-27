@@ -58,6 +58,7 @@ class PaymentChooser {
             $pmp->setIdToken(intval(filter_var($post['rbUseCard'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
+        // Merchant
         if (isset($post['selccgw'])) {
             $pmp->setMerchant(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
         }
@@ -73,6 +74,7 @@ class PaymentChooser {
             $pmp->setManualKeyEntry(FALSE);
         }
 
+        // Manual cardholder name
         if (isset($post['txtvdNewCardName'])) {
             $pmp->setCardHolderName(strtoupper(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_STRING)));
         }
