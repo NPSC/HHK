@@ -28,7 +28,10 @@ require (MEMBER . "EmergencyContact.php");
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'PaymentSvcs.php');
-require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 require CLASSES . 'TableLog.php';
 
 require (PMT . 'GatewayConnect.php');

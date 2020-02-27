@@ -22,7 +22,10 @@ require (DB_TABLES . 'ActivityRS.php');
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'Relation.php');
-require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 require (CLASSES . "volunteer.php");
 
 $wInit = new webInit();

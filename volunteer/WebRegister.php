@@ -14,7 +14,10 @@ require(SEC . 'UserClass.php');
 require(SEC . 'ChallengeGenerator.php');
 require(SEC . 'Login.php');
 require(CLASSES . 'fbUserClass.php');
-require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 
 require THIRD_PARTY .'reCAPTCHA.php';
 use Phelium\Component\reCAPTCHA;

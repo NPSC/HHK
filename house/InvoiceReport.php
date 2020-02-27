@@ -27,7 +27,10 @@ require (PMT . 'CreditToken.php');
 
 require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'Purchase/RoomRate.php');
-require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 require CLASSES . 'TableLog.php';
 
 require (CLASSES . 'FinAssistance.php');

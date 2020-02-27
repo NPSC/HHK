@@ -13,7 +13,10 @@
 require("VolIncludes.php");
 require(SEC . 'UserClass.php');
 require(SEC . 'ChallengeGenerator.php');
-require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 
 
 

@@ -27,7 +27,10 @@ require PMT . 'Receipt.php';
 require PMT . 'Invoice.php';
 require (PMT . 'CreditToken.php');
 
-require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');

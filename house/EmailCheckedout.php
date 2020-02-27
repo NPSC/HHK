@@ -12,8 +12,10 @@ require 'homeIncludes.php';
 require(HOUSE . 'TemplateForm.php');
 require(HOUSE . 'SurveyForm.php');
 
-require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-
+//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 
 try {
     $config = new Config_Lite(ciCFG_FILE);

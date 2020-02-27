@@ -160,14 +160,15 @@ function doExcelDownLoad($rows, $fileName)
 
 function prepareEmail()
 {
+    
     $uS = Session::getInstance();
 
-    $mail = new PHPMailer();
+    $mail = new PHPMailer\PHPMailer\PHPMailer();
 
     switch (strtolower($uS->EmailType)) {
 
         case 'smtp':
-
+            
             $mail->isSMTP();
 
             $mail->Host = $uS->SMTP_Host;

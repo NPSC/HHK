@@ -36,8 +36,10 @@ require (CLASSES . 'PaymentSvcs.php');
 require (CLASSES . 'FinAssistance.php');
 require (CLASSES . "ValueAddedTax.php");
 
-require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-
+//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
+require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 
 require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');

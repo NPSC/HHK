@@ -12,7 +12,10 @@ require ("AdminIncludes.php");
 
 require (DB_TABLES . 'nameRS.php');
 require (CLASSES . 'AuditLog.php');
-require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');
+//require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteDbBackup.php';
 require CLASSES . 'SiteLog.php';
