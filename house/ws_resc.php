@@ -361,7 +361,7 @@ try {
             }
 
             if ($id > 0) {
-                $events = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, '', '', array(0 => ''), array(0 => ''), $id, 'Payment History', FALSE), array('id' => 'rptfeediv', 'class' => 'ignrSave'));
+                $events = HTMLContainer::generateMarkup('div', ActivityReport::feesLog($dbh, NULL, NULL, array(0 => ''), array(0 => ''), $id, 'Payment History', FALSE), array('id' => 'rptfeediv', 'class' => 'ignrSave'));
             } else {
                 $events = '';
             }

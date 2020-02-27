@@ -177,22 +177,6 @@ class PaymentSvcs {
 
                 break;
 
-//            case PayType::ChargeAsCash:
-//
-//                // Manual Charge// $amount, $idPayor, $invoiceNumber, $chargeType, $chargeAcct, $payNote = '', $idToken = 0
-//                $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getRtnChargeCard(), $pmp->getRtnChargeAcct(), $pmp->getPayNotes());
-//
-//                ChargeAsCashTX::refundAmount($dbh, $cashResp, $uS->username, $paymentDate);
-//
-//                // Update invoice
-//                $invoice->updateInvoiceBalance($dbh, (0 - $cashResp->getAmount()), $uS->username);
-//
-//                $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-//                $rtnResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
-//                $rtnResult->setDisplayMessage('External Credit Refund Recorded.  ');
-//
-//                break;
-
             case PayType::Cash:
 
                 $cashResp = new CashResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getPayNotes());
@@ -385,33 +369,6 @@ class PaymentSvcs {
 
                 break;
 
-//            case PaymentMethod::ChgAsCash:
-//
-//                // Find hte detail record.
-//                $pAuthRs = new Payment_AuthRS();
-//                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
-//                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
-//
-//                if (count($arows) != 1) {
-//                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
-//                }
-//
-//                EditRS::loadRow($arows[0], $pAuthRs);
-//
-//                $cashResp = new ManualChargeResponse($pAuthRs->Approved_Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
-//
-//                ChargeAsCashTX::returnPayment($dbh, $cashResp, $uS->username, $payRs);
-//
-//                // Update invoice
-//                $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
-//
-//                $reply .= 'Payment is Returned.  ';
-//
-//                $cashResp->idVisit = $invoice->getOrderNumber();
-//                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
-//
-//                break;
-
             case PaymentMethod::Check:
 
                 // Find hte detail record.
@@ -600,32 +557,6 @@ class PaymentSvcs {
 
                 break;
 
-//          case PaymentMethod::ChgAsCash:
-//
-//                $pAuthRs = new Payment_AuthRS();
-//                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
-//                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
-//
-//                if (count($arows) < 1) {
-//                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
-//                }
-//
-//                EditRS::loadRow($arows[count($arows) - 1], $pAuthRs);
-//
-//                $cashResp = new ManualChargeResponse($pAuthRs->Approved_Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
-//
-//                ChargeAsCashTX::undoReturnPayment($dbh, $cashResp, $uS->username, $payRs);
-//
-//                // Update invoice
-//                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
-//
-//                $cashResp->idVisit = $invoice->getOrderNumber();
-//
-//                $dataArray['success'] = 'External Credit Return is undone.  ';
-//                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $cashResp);
-//
-//                break;
-
             default:
                 throw new Hk_Exception_Payment('The pay type is ineligible.  ');
         }
@@ -686,30 +617,6 @@ class PaymentSvcs {
                 $dataArray['success'] = 'Cash Refund is undone.  ';
 
                 break;
-
-//          case PaymentMethod::ChgAsCash:
-//
-//                $pAuthRs = new Payment_AuthRS();
-//                $pAuthRs->idPayment->setStoredVal($idPayment);
-//                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
-//
-//                if (count($arows) < 1) {
-//                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
-//                }
-//
-//                EditRS::loadRow($arows[count($arows) - 1], $pAuthRs);
-//
-//                $cashResp = new ManualChargeResponse($pAuthRs->Approved_Amount->getStoredVal(), 0, $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
-//
-//                ChargeAsCashTX::undoReturnAmount($dbh, $cashResp, $idPayment);
-//
-//                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
-//                // delete invoice
-//                $invoice->deleteInvoice($dbh, $uS->username);
-//
-//                $dataArray['success'] = 'External Credit Refund is undone.  ';
-//
-//                break;
 
             default:
                 throw new Hk_Exception_Payment('This pay type is ineligible.  ');

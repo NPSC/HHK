@@ -466,7 +466,7 @@ class PaymentManager {
 
     }
 
-    public function makeHouseReturn(\PDO $dbh, $paymentDate = '') {
+    public function makeHouseReturn(\PDO $dbh, $paymentDate) {
 
         if (! $this->hasInvoice()) {
             $rtnResult = new ReturnResult(0, 0, 0);
