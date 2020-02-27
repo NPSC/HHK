@@ -709,9 +709,9 @@ function amtPaid() {
         $('.hhk-minPayment').show('fade');
 
         // manage cof box
-        if ($('#cbNewCard').length > 0) {
-            $('#cbNewCard').prop('checked', false).change().prop('disabled', true);
-        }
+//        if ($('#cbNewCard').length > 0) {
+//            $('#cbNewCard').prop('checked', false).change().prop('disabled', true);
+//        }
 
         if (totPay < 0 && ! isChdOut) {
             $('#txtRtnAmount').val((0 - totPay).toFixed(2).toString());
@@ -724,9 +724,9 @@ function amtPaid() {
         $('.paySelectTbl').hide();
 
         // manage cof box
-        if ($('#cbNewCard').length > 0) {
-            $('#cbNewCard').prop('disabled', false);
-        }
+//        if ($('#cbNewCard').length > 0) {
+//            $('#cbNewCard').prop('disabled', false);
+//        }
 
         if (isChdOut === false && ckedInCharges === 0.0) {
             $('.hhk-minPayment').hide();

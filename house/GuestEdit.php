@@ -952,6 +952,6 @@ $uS->guestId = $id;
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js?vn=38"></script>
+        <script type="text/javascript" src="js/guestload-min.js?rt=36"></script>
     </body>
 </html>

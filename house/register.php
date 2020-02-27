@@ -521,7 +521,7 @@ if ($uS->UseWLnotes) {
         <input  type="hidden" id="wlTitle" value='<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>' />
         <input  type="hidden" id="showCharges" value='<?php echo $showCharges ?>' />
 
-        <script type="text/javascript" src="js/register-min.js?pu=5"></script>
+        <script type="text/javascript" src="js/register-min.js?sd=3"></script>
 
     </body>
 </html>
