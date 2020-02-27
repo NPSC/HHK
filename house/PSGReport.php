@@ -1186,7 +1186,9 @@ if ($uS->CoTod) {
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <h2><?php echo $wInit->pageHeading; ?></h2>
+        	<div class="title" style="margin-bottom: 1em;">
+            	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span style="margin-left: 1em;">Report shows people who stayed in the time frame selected below</span>
+            </div>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="PSGReport.php" method="post">
