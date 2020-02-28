@@ -822,7 +822,7 @@ class VantivGateway extends PaymentGateway {
             $indx = $gwRs->idcc_gateway->getStoredVal();
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Name', array('style' => 'border-top:2px solid black;'))
+                    HTMLTable::makeTh('Merchant Name', array('style' => 'border-top:2px solid black;'))
                     . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
             );
 
@@ -870,6 +870,9 @@ class VantivGateway extends PaymentGateway {
             );
 
         }
+        
+        // New Merchant
+        // TODO
 
         if ($resultMessage != '') {
             $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));

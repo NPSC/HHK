@@ -57,7 +57,7 @@ class InstamedGateway extends PaymentGateway {
         return 'instamed';
     }
 
-    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
+    public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
         $payResult = NULL;
@@ -897,20 +897,20 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
     protected function loadGateway(\PDO $dbh) {
 
         $gwRs = new InstamedGatewayRS();
-        $gwRs->cc_name->setStoredVal($this->gwType);
+        
         $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
-
-        $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name, $gwRs->cc_name));
+        $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
 
         if (count($rows) < 1) {
-            $rows[0] = array();
+            throw new Hk_Exception_Payment('Payment Gateway Merchant is undefined. ');
         }
 
         $gwRs = new InstamedGatewayRS();
         EditRS::loadRow($rows[0], $gwRs);
+        
+        $this->gwType = $gwRs->cc_name->getStoredVal();
 
         $this->ssoUrl = $gwRs->providersSso_Url->getStoredVal();
-        $this->soapUrl = '';  //$gwRs->soap_Url->getStoredVal();
         $this->NvpUrl = $gwRs->nvp_Url->getStoredVal();
 
         $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
@@ -1056,7 +1056,7 @@ where r.idRegistration =" . $idReg);
 
         $tbl = new HTMLTable();
 
-        foreach ($rows as $r) {
+        $r = $rows[0];
 
             $gwRs = new InstamedGatewayRS();
             EditRS::loadRow($r, $gwRs);
@@ -1064,8 +1064,8 @@ where r.idRegistration =" . $idReg);
             $indx = $gwRs->idcc_gateway->getStoredVal();
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Mode', array('style' => 'border-top:2px solid black;', 'class' => 'tdlabel'))
-                    . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
+                    HTMLTable::makeTh('Merchant', array('style' => 'border-top:2px solid black;', 'class' => 'tdlabel'))
+            		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->cc_name->getStoredVal(), array('name' => $indx . '_txtmerch', 'size' => '80')), array('style' => 'border-top:2px solid black;'))
             );
 
             $tbl->addBodyTr(
@@ -1108,7 +1108,7 @@ where r.idRegistration =" . $idReg);
                     HTMLTable::makeTh('NVP URL', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->nvp_Url->getStoredVal(), array('name' => $indx . '_txtnvpurl', 'size' => '90')))
             );
-        }
+
 
         if ($resultMessage != '') {
             $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));
@@ -1124,16 +1124,20 @@ where r.idRegistration =" . $idReg);
         $ccRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
-        foreach ($rows as $r) {
-
+        $r = $rows[0];
+        
             EditRS::loadRow($r, $ccRs);
 
             $indx = $ccRs->idcc_gateway->getStoredVal();
 
-            if (isset($post[$indx . '_txtaid'])) {
-                $ccRs->account_Id->setNewVal(filter_var($post[$indx . '_txtaid'], FILTER_SANITIZE_STRING));
+            if (isset($post[$indx . '_txtmerch'])) {
+            	$ccRs->cc_name->setNewVal(filter_var($post[$indx . '_txtmerch'], FILTER_SANITIZE_STRING));
             }
-
+            
+            if (isset($post[$indx . '_txtaid'])) {
+            	$ccRs->account_Id->setNewVal(filter_var($post[$indx . '_txtaid'], FILTER_SANITIZE_STRING));
+            }
+            
             if (isset($post[$indx . '_txtsalias'])) {
                 $ccRs->sso_Alias->setNewVal(filter_var($post[$indx . '_txtsalias'], FILTER_SANITIZE_STRING));
             }
@@ -1194,7 +1198,7 @@ where r.idRegistration =" . $idReg);
             } else {
                 $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
             }
-        }
+
 
         return $msg;
     }

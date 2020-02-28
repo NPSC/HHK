@@ -225,6 +225,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Newsletter', 'z', 'Unknown', '', 'd', '1000'),
 
 ('NoReturnReason', 'n1', 'Irresponsible', '', 'h',0),
+('NoReturnReason', 'n2', 'Smokes in Room', '', 'h',0),
 
 ('Note_Category', 'ncr', 'Reservation', '', '', 0),
 ('Note_Category', 'ncf', 'PSG', '', '', 0),
@@ -655,7 +656,10 @@ REPLACE INTO `payment_method` (`idPayment_method`, `Method_Name`) VALUES
 ('5', 'Transfer');
 -- ;
 
-
+REPLACE into cc_hosted_gateway (Gateway_Name) VALUES
+('instamed'),
+('vantiv');
+-- ;
 
 replace INTO invoice_line_type (id, Description, Order_Position) VALUES
 (1,'item recurring',2),
