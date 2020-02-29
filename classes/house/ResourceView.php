@@ -108,7 +108,7 @@ order by r.Title;");
 
     }
 
-    public static function roomTable(\PDO $dbh, $keyDeposit = FALSE) {
+    public static function roomTable(\PDO $dbh, $keyDeposit = FALSE, $payGW = '') {
 
         $rooms = array();
         // Get labels
@@ -124,7 +124,11 @@ order by r.Title;");
         $depositTitle = $labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit');
 
         if ($keyDeposit) {
-            $depositCol = ", g5.Description as `$depositTitle ` ";
+            $depositCol .= ", g5.Description as `$depositTitle` ";
+        }
+
+        if ($payGW != '') {
+            $depositCol .= ", ifnull(l.Merchant, '') as `Merchant` ";
         }
 
 
@@ -137,6 +141,7 @@ left join gen_lookups g4 on g4.`Table_Name`='Static_Room_Rate' and g4.`Code`=r.R
 left join gen_lookups g5 on g5.`Table_Name`='Key_Deposit_Code' and g5.`Code`=r.Key_Deposit_Code
 left join gen_lookups g6 on g6.`Table_Name` = 'Room_Cleaning_Days' and g6.`Code` = r.Cleaning_Cycle_Code
 left join gen_lookups g7 on g7.`Table_Name` = 'Room_Rpt_Cat' and g7.`Code` = r.Report_Category
+left join location l on r.idLocation = l.idLocation
 order by r.Title;");
 
         $numResc = $stmt->rowCount();
@@ -179,6 +184,10 @@ order by r.Title;");
        if ($keyDeposit) {
            $newRow[$depositTitle] = '';
        }
+
+        if ($payGW != '') {
+            $newRow[`Merchant`] = '';
+        }
 
         foreach ($attrs as $a) {
             $newRow[$a['Title']] = '';
@@ -444,6 +453,7 @@ order by r.Title;");
 
     public static function saveRoom(\PDO $dbh, $idRoom, $post, $user, $keyDeposit) {
 
+        $uS = Session::getInstance();
         $room = new Room($dbh, $idRoom);
         $rTitle = '';
 
@@ -510,6 +520,11 @@ order by r.Title;");
 
         }
 
+        if (isset($post['selLocId'])) {
+            $idLoc = intval(filter_var($post['selLocId'], FILTER_SANITIZE_NUMBER_INT));
+            $roomRs->idLocation->setNewVal($idLoc);
+        }
+
         if (isset($post['selKeyCode'])) {
             $code = filter_var($post['selKeyCode'], FILTER_SANITIZE_STRING);
 
@@ -554,7 +569,7 @@ order by r.Title;");
         $roomAttr = new RoomAttributes($dbh, $room->getIdRoom());
         $roomAttr->saveAttributes($dbh, $capturedAttributes);
 
-        return array("roomList"=>self::roomTable($dbh, $keyDeposit));
+        return array("roomList"=>self::roomTable($dbh, $keyDeposit, $uS->PaymentGateway));
     }
 
     public static function saveResc(\PDO $dbh, $idResc, $post, $username, $showPartitions) {
@@ -668,6 +683,8 @@ order by r.Title;");
 
     public static function roomDialog(\PDO $dbh, $idRoom, $roomTypes, $roomCategories, $reportCategories, $rateCodes, $keyDepositCodes, $keyDeposit) {
 
+        $uS = Session::getInstance();
+
         $roomRs = new RoomRs();
         $roomRs->idRoom->setStoredVal($idRoom);
 
@@ -714,6 +731,22 @@ order by r.Title;");
                     HTMLSelector::doOptionsMkup(removeOptionGroups($keyDepositCodes), $room->getKeyDepositCode(), FALSE), array('id'=>'selKeyCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
         }
 
+        if ($uS->PaymentGateway != '') {
+
+            $gstmt = $dbh->query("Select idLocation, Title from location where ifnull(Merchant, '') != '';");
+            $ccGateways = $gstmt->fetchAll(PDO::FETCH_NUM);
+
+            $opts = array();
+
+            // Furn into options
+            foreach ($ccGateways as $l) {
+                $opts[] = array(0=>$l[0], 1=> ucfirst($l[1]));
+            }
+
+            $tr .= HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                    HTMLSelector::doOptionsMkup($opts, $room->getIdLocation(), FALSE), array('id'=>'selLocId', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));
+
+        }
 
         $roomAttr = new RoomAttributes($dbh, $room->getIdRoom());
         $rattribute = $roomAttr->getAttributes();

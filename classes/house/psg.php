@@ -143,9 +143,6 @@ class Psg {
         unset($relListLessSlf[RelLinkType::Self]);
         $relListLessSlf = removeOptionGroups($relListLessSlf);
 
-        // Members that are not patients anywhere
-        $notPatients = array();
-        $changePatientMU = '';
 
         $mTable = new HTMLTable();
         $mTable->addHeaderTr(HTMLTable::makeTh('Remove').HTMLTable::makeTh('Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Relationship to '.$labels->getString('MemberType', 'patient', 'Patient')).HTMLTable::makeTh('Guardian').HTMLTable::makeTh('Phone'));
@@ -154,15 +151,12 @@ class Psg {
             ng.idName AS `idGuest`,
             ng.Relationship_Code,
             ng.Legal_Custody,
-            IFNULL(p2.idPsg, 0) AS `idPsg2`,
             IFNULL(n.Name_Full, '') AS `Name_Full`,
             IFNULL(np.Phone_Num, '') AS `Preferred_Phone`
         FROM
             name_guest ng
                 JOIN
             psg p ON ng.idPsg = p.idPsg
-                LEFT JOIN
-            psg p2 ON ng.idName = p2.idPatient
                 JOIN
             name n ON n.idName = ng.idName
                 LEFT JOIN
@@ -170,7 +164,6 @@ class Psg {
                 AND n.Preferred_Phone = np.Phone_Code
         WHERE
             ng.idPsg = " . $this->getIdPsg() . " ;");
-
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -209,10 +202,6 @@ class Psg {
                     .HTMLTable::makeTd($r['Preferred_Phone'])
                     );
 
-            // Members that are not patients anywhere
-            if ($r['idPsg2'] == 0) {
-                $notPatients[] = array('0'=>$r['idGuest'], '1'=>$r['Name_Full']);
-            }
         }
 
         $memMkup =  HTMLContainer::generateMarkup('div',
@@ -236,19 +225,6 @@ class Psg {
                     . HTMLInput::generateMarkup($lastConfDate, array('name'=>'txtLastConfirmed', 'class'=>'ckdate','style'=>'margin-left:1em;'))
                     , array('class'=>'hhk-panel')),
             array('style'=>'float:left;'));
-
-
-        // change patient Selector
-//        if (count($notPatients) > 0) {
-//
-//            $changePatientMU = HTMLContainer::generateMarkup('div',
-//                HTMLContainer::generateMarkup('fieldset',
-//                        HTMLContainer::generateMarkup('legend', 'Change Patient', array('style'=>'font-weight:bold;'))
-//                        . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($notPatients, '', TRUE), array('id'=>'selChangePsgPat', 'data-psg'=>$this->getIdPsg()))
-//                        , array('class'=>'hhk-panel','title'=>'Change the patient to another person in this PSG.')),
-//            array('style'=>'float:left;'))
-//            . "<script type='text/javascript'>$(document).ready(function() { $('#selChangePsgPat').change(function () {changePsgPatient($(this).data('psg'), $(this).val(), $(this).children('option:selected').text());});});</script>";
-//        }
 
 
         // Change log
@@ -291,7 +267,7 @@ class Psg {
         $editDiv = $pTable
                 .$table
                 . $memMkup
-                . $lastConfirmed . $changePatientMU
+                . $lastConfirmed
                 . $notesContainer //$nTable->generateMarkup(array('style'=>'clear:left;width:700px;float:left;'))
                 . $c . $v;
 

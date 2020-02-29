@@ -114,6 +114,7 @@ CREATE TABLE if not exists `card_id` (
   `Transaction` varchar(14) NOT NULL DEFAULT '',
   `InvoiceNumber` varchar(36) NOT NULL DEFAULT '',
   `Amount` DECIMAL(11,2) NOT NULL DEFAULT 0.00,
+  `Merchant` VARCHAR(45) NOT NULL DEFAULT '',
   PRIMARY KEY (`idName`,`idGroup`)
 ) ENGINE=InnoDB;
 
@@ -504,6 +505,7 @@ CREATE TABLE if not exists `guest_token` (
   `Running_Total` decimal(10,2) NOT NULL DEFAULT '0.00',
   `idRegistration` int(11) NOT NULL DEFAULT '0',
   `Token` varchar(100) NOT NULL DEFAULT '',
+  `Merchant` VARCHAR(45) NOT NULL DEFAULT '',
   `Granted_Date` datetime DEFAULT NULL,
   `LifetimeDays` int(11) NOT NULL DEFAULT '0',
   `MaskedAccount` varchar(15) NOT NULL DEFAULT '',
@@ -806,7 +808,7 @@ CREATE TABLE if not exists `location` (
   `Description` varchar(245) DEFAULT '',
   `Status` varchar(5) DEFAULT '',
   `Address` varchar(145) NOT NULL DEFAULT '',
-  `Phone` varchar(45) NOT NULL DEFAULT '',
+  `Merchant` varchar(45) NOT NULL DEFAULT '',
   `Map` varchar(510) NOT NULL DEFAULT '',
   `Owner_Id` int(11) NOT NULL DEFAULT '0',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
@@ -1390,6 +1392,7 @@ CREATE TABLE if not exists `payment_auth` (
   `idPayment` int(11) NOT NULL DEFAULT '0',
   `idTrans` int(11) NOT NULL DEFAULT '0',
   `Processor` varchar(45) NOT NULL DEFAULT '',
+  `Merchant` VARCHAR(45) NOT NULL DEFAULT '',
   `Approved_Amount` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Approval_Code` varchar(20) NOT NULL DEFAULT '',
   `Status_Message` varchar(45) NOT NULL DEFAULT '',

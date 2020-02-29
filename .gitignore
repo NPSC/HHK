@@ -1,6 +1,5 @@
-/nbproject/private/
 /patch/soapLog.xml
 .project
-.settings
-.buildpath
 vendor
+.settings/
+.buildpath

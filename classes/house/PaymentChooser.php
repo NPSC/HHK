@@ -3,7 +3,7 @@
  * PaymentChooser.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
   */
@@ -58,6 +58,11 @@ class PaymentChooser {
             $pmp->setIdToken(intval(filter_var($post['rbUseCard'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
+        // Merchant
+        if (isset($post['selccgw'])) {
+            $pmp->setMerchant(filter_var($post['selccgw'], FILTER_SANITIZE_STRING));
+        }
+
         if (isset($post['rbUseCard' . $rtnIndex])) {
             $pmp->setRtnIdToken(intval(filter_var($post['rbUseCard' . $rtnIndex], FILTER_SANITIZE_NUMBER_INT), 10));
         }
@@ -69,6 +74,7 @@ class PaymentChooser {
             $pmp->setManualKeyEntry(FALSE);
         }
 
+        // Manual cardholder name
         if (isset($post['txtvdNewCardName'])) {
             $pmp->setCardHolderName(strtoupper(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_STRING)));
         }
@@ -250,7 +256,7 @@ class PaymentChooser {
     }
 
 
-    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
+    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, PaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -302,17 +308,13 @@ class PaymentChooser {
             unset($payTypes[PayType::Transfer]);
         }
 
-        $chargeCards = removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards'));
-
         // Collect panels for payments
         $panelMkup = self::showPaySelection($dbh,
                 $defaultPayType,
                 $payTypes,
-                $chargeCards,
                 $labels,
-                $uS->PaymentGateway,
+                $paymentGateway,
                 $idGuest, $idRegistration, $prefTokenId);
-
 
 
         if (isset($uS->nameLookups[GL_TableNames::PayType][PayType::Invoice])) {
@@ -328,8 +330,7 @@ class PaymentChooser {
         $mkup .= HTMLContainer::generateMarkup('div', self::showReturnSelection($dbh,
                 $defaultPayType,
                 $payTypes,
-                $chargeCards,
-                $uS->PaymentGateway,
+                $paymentGateway,
                 $idGuest, $idRegistration, $prefTokenId),
                 array('id'=>'divReturnPay', 'style'=>'float:left;display:none;'));
 
@@ -387,7 +388,7 @@ class PaymentChooser {
         return $trs;
     }
 
-    public static function createChangeRoomMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, $prefTokenId = 0) {
+    public static function createChangeRoomMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, PaymentGateway $paymentGateway, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -401,7 +402,8 @@ class PaymentChooser {
 
         $labels = new Config_Lite(LABEL_FILE);
 
-        $mkup = HTMLContainer::generateMarkup('div',
+        $mkup = HTMLContainer::generateMarkup(
+            'div',
             self::createPaymentMarkup(
                 FALSE,
                 $uS->KeyDeposit,
@@ -421,8 +423,14 @@ class PaymentChooser {
             , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
         );
 
+
         // payment types panel
-        $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, $uS->PaymentGateway,
+        $panelMkup = self::showPaySelection(
+                $dbh,
+                $uS->DefaultPayType,
+                $payTypes,
+                $labels,
+                $paymentGateway,
                 $idGuest, $idRegistration, $prefTokenId);
 
         $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
@@ -512,64 +520,11 @@ dateFormat: "M d, yy" ';
 
     }
 
-    public static function createResvMarkup(\PDO $dbh, $idGuest, \Registration $reg, $payTypes, $defaultPayType, $ccgw) {
-
-//        $labels = new Config_Lite(LABEL_FILE);
-        $cof = '';
-
-
-        if ($ccgw != '') {
-            // show card on file button
-            $cof = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Put card on file (no payment)', array('style'=>'font-weight:bold;'))
-                . HouseServices::viewCreditTable($dbh, $reg->getIdRegistration(), 0)
-                , array('id'=>'hhk-COF', 'class'=>'hhk-panel', 'style'=>'float:left;'));
-        }
-
-
-//        unset($payTypes[PayType::Invoice]);
-//
-//        $mkup = HTMLContainer::generateMarkup('div',
-//                self::createPaymentMarkup(
-//                    TRUE,
-//                    FALSE,
-//                    0,
-//                    0,
-//                    FALSE,
-//                    0,
-//                    0,
-//                    0,
-//                    FALSE,
-//                    FALSE,
-//                    array(),
-//                    $labels)
-//                , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
-//        );
-//
-//        // payment types panel
-//        $panelMkup = self::showPaySelection($dbh,
-//                $defaultPayType,
-//                $payTypes,
-//                readGenLookupsPDO($dbh, 'Charge_Cards'),
-//                array(),
-//                $labels,
-//                $ccgw,
-//                $idGuest, $reg->getIdRegistration(), $reg->getPreferredTokenId());
-//
-//        $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
-
-//        $payToday = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Pre-paying Today', array('style'=>'font-weight:bold;'))
-//                . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
-
-
-        return $cof;
-
-    }
-
-    public static function createPayInvMarkup(\PDO $dbh, $id, $iid, $prefTokenId = 0) {
+    public static function createPayInvMarkup(\PDO $dbh, $id, $invoiceId, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
-        $idInvoice = intval($iid, 10);
+        $idInvoice = intval($invoiceId, 10);
 
         if ($idInvoice > 0) {
 
@@ -630,18 +585,13 @@ ORDER BY v.idVisit , v.Span;");
                 $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
                 unset($payTypes[PayType::Invoice]);
 
-                // House return invoices
-//                if ($id == $uS->returnId) {
-//                    unset($payTypes[PayType::Charge]);
-//                    unset($payTypes[PayType::ChargeAsCash]);
-//                    $panelMkup = self::showReturnSelection($dbh, PayType::Check, $payTypes, array(), $uS->ccgw,
-//                        $id, 0, 0, '');
-//
-//                } else {
-                    // payment types panel
-                    $panelMkup = self::showPaySelection($dbh, $uS->DefaultPayType, $payTypes, removeOptionGroups(readGenLookupsPDO($dbh, 'Charge_Cards')), $labels, $uS->PaymentGateway,
+
+                $panelMkup = self::showPaySelection(
+                        $dbh, $uS->DefaultPayType,
+                        $payTypes,
+                        $labels,
+                        PaymentGateway::factory($dbh, $uS->PaymentGateway, ''),
                         $id, 0, $prefTokenId, '');
-//                }
 
                 $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
 
@@ -880,29 +830,18 @@ ORDER BY v.idVisit , v.Span;");
         return $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
     }
 
-    protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $chargeCards, $labels, $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
+    protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $labels, PaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();
 
         // Payment Amount
-        $payTbl->addBodyTr(HTMLTable::makeTd('Payment Amount:', array('class'=>'tdlabel', 'style'=>'font-weight:bold;'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('colspan'=>'2', 'style'=>'font-weight:bold;')));
+        $payTbl->addBodyTr(HTMLTable::makeTd('Payment Amount:', array('colspan'=>'2', 'class'=>'tdlabel', 'style'=>'font-weight:bold;'))
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnPayAmount')), array('style'=>'font-weight:bold;')));
 
         // Payment Types
         $payTbl->addBodyTr(HTMLTable::makeTd('Pay With:', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $defaultPayType, FALSE), array('name'=>'PayTypeSel', 'class'=>'hhk-feeskeys'))
-                        . ($paymentGateway == PaymentGateway::INSTAMED ?
-                        HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'btnvrKeyNumber', 'class'=>'hhkvrKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
-                        . HTMLInput::generateMarkup('Key', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber', 'class'=>'hhk-feeskeys hhkvrKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan'=>'2')));
-
-        if ($paymentGateway == PaymentGateway::INSTAMED) {
-
-            $payTbl->addBodyTr(
-                    HTMLTable::makeTd('Cardholder Name', array('class'=>'tdlabel hhkvrKeyNumber'))
-                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', array('type' => 'textbox', 'name' => 'txtvdNewCardName', 'class'=>'hhk-feeskeys hhkvrKeyNumber', 'style' => 'margin-right:4px;')), array('colspan' => '2'))
-                , array('id'=>'trvdCHName'));
-        }
-
+                    , array('colspan'=>'2')));
 
         // Cash Amt Tendered
         $payTbl->addBodyTr(
@@ -930,20 +869,11 @@ ORDER BY v.idVisit , v.Span;");
                 , array('style'=>'display:none;', 'class'=>'hhk-transfer'));
 
         // credit info
-        if (isset($payTypes[PayType::Charge]) && $payTypes[PayType::Charge][2] == PaymentMethod::Charge) {
+        if (isset($payTypes[PayType::Charge])) {
 
             // Charge card gateway
-            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId);
-
-        } else if (isset($payTypes[PayType::Charge])) {
-
-            // Charge as Cash markup
-            $payTbl->addBodyTr(
-                HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
-                .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
-                , array('style'=>'display:none;', 'class'=>'hhk-mcred'));
-
+            $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $paymentGateway->getGatewayType(), $idPrimaryGuest);
+            self::CreditBlock($dbh, $payTbl, $tkRsArray, $paymentGateway, $prefTokenId);
         }
 
         // Payment notes
@@ -956,7 +886,7 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblPaySelect'));
     }
 
-    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, $chargeCards, $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
+    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, PaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();
 
@@ -982,19 +912,11 @@ ORDER BY v.idVisit , v.Span;");
 
 
         // credit info
-        if (isset($payTypes[PayType::Charge]) && $payTypes[PayType::Charge][2] == PaymentMethod::Charge) {
+        if (isset($payTypes[PayType::Charge])) {
 
-            // Credit gateway
-            self::CreditBlock($dbh, $payTbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId, ReturnIndex::ReturnIndex);
-
-        } else if (isset($payTypes[PayType::Charge])) {
-
-            // Charge as Cash markup
-            $payTbl->addBodyTr(
-                HTMLTable::makeTd('Card: ', array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($chargeCards, '', TRUE), array('name'=>'selRtnChargeType', 'style'=>'margin-right:.4em;', 'class'=>'hhk-feeskeys')))
-                .HTMLTable::makeTd(' Acct. #: '.HTMLInput::generateMarkup('', array('name'=>'txtRtnChargeAcct', 'size'=>'4', 'title'=>'Only the last 4 digits.', 'class'=>'hhk-feeskeys')))
-                , array('style'=>'display:none;', 'class'=>'hhk-mcredr'));
+            // Charge card gateway
+            $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $paymentGateway->getGatewayType(), $idPrimaryGuest);
+            self::CreditBlock($dbh, $payTbl, $tkRsArray, $paymentGateway, $prefTokenId, ReturnIndex::ReturnIndex);
 
         }
 
@@ -1007,20 +929,19 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblRtnSelect'));
     }
 
-    protected static function CreditBlock(\PDO $dbh, &$tbl, $idPrimaryGuest, $idReg, $paymentGateway, $prefTokenId = 0, $index = '') {
-
-        $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idReg, $idPrimaryGuest);
+    public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, PaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;', $newCardChecked = TRUE) {
 
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
+            // Cannot return to a new card...
             $tbl->addBodyTr(HTMLTable::makeTh("No Cards on file", array('colspan'=>'3'))
-                , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                , array('style'=>$display, 'class'=>'tblCredit' . $index));
             return;
         }
 
         $tbl->addBodyTr(HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use")
-                , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
-        // preset useCardRb
+        //
         if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
             $keys = array_keys($tkRsArray);
             $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
@@ -1031,23 +952,34 @@ ORDER BY v.idVisit , v.Span;");
         // List any valid stored cards on file
         foreach ($tkRsArray as $tkRs) {
 
+            if ($tkRs->CardType->getStoredVal() == '' || $tkRs->MaskedAccount->getStoredVal() == '') {
+                continue;
+            }
+
             if ($tkRs->idGuest_token->getStoredVal() == $prefTokenId) {
                 $attr['checked'] = 'checked';
             } else if (isset($attr['checked'])) {
                 unset($attr['checked']);
             }
 
-            $tbl->addBodyTr(HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal())
+            if ($tkRs->Merchant->getStoredVal() == '' || strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+                $merchant = '';
+            } else {
+                $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
+            }
+
+            $tbl->addBodyTr(
+                    HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant)
                     . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
-                , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
         }
 
         // New card.  Not for credit return.
         if ($index !== ReturnIndex::ReturnIndex) {
 
-            if ($prefTokenId == 0) {
+            if ($prefTokenId == 0 && $newCardChecked) {
                 $attr['checked'] = 'checked';
             } else {
                 unset($attr['checked']);
@@ -1055,7 +987,12 @@ ORDER BY v.idVisit , v.Span;");
 
             $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '2'))
                 .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
-                    , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+                    , array('style'=>$display, 'class'=>'tblCredit' . $index));
+            $tbl->addBodyTr(
+                 HTMLTable::makeTd('', array('id'=>'tdChargeMsg', 'colspan'=>'3', 'style'=>'color:red;'))
+                     , array('style'=>'display:none;', 'class'=>'tblCredit' . $index));
+
+            $paymentGateway->selectPaymentMarkup($dbh, $tbl);
 
         }
 

@@ -14,6 +14,8 @@ interface iGatewayResponse {
     public function getResponseCode();
     public function getResponseMessage();
     public function getTranType();
+    public function getMerchant();
+    public function getProcessor();
 
     public function getAuthorizedAmount();
     public function getRequestAmount();
@@ -68,6 +70,8 @@ abstract class GatewayResponse {
     protected $result;
 
     protected $tranType;
+    protected $processor;
+    protected $merchant;
 
     /**
      * The child is expected to define $result.
@@ -102,6 +106,14 @@ abstract class GatewayResponse {
 
     public function getTranType() {
         return $this->tranType;
+    }
+
+    public function getProcessor() {
+        return $this->processor;
+    }
+
+    public function getMerchant() {
+        return $this->merchant;
     }
 
     public function getErrorMessage() {
@@ -189,18 +201,22 @@ class StandInGwResponse implements iGatewayResponse {
     protected $cardholderName;
     protected $expDate;
     protected $token;
+    protected $processor;
+    protected $merchant;
+    protected $status;
 
-    public function __construct(Payment_AuthRS $pAuthRs, $operatorId, $cardholderName, $expDate, $token, $invoiceNumber, $amount) {
+    public function __construct(Payment_AuthRS $pAuthRs, $operatorId, $cardholderName, $expDate, $token, $invoiceNumber, $amount, $status = MpStatusValues::Approved) {
 
         $this->pAuthRs = $pAuthRs;
 
         $this->invoiceNumber = $invoiceNumber;
         $this->requestAmount = $amount;
-
+        $this->$status = $status;
         $this->operatorId = $operatorId;
         $this->expDate = $expDate;
         $this->cardholderName = $cardholderName;
         $this->token = $token;
+        $this->merchant = $this->pAuthRs->Merchant->getStoredVal();
     }
 
     public function getAVSAddress() {
@@ -218,7 +234,6 @@ class StandInGwResponse implements iGatewayResponse {
     public function getOperatorId() {
         return $this->operatorId;
     }
-
 
     public function getAcqRefData() {
         return $this->pAuthRs->AcqRefData->getStoredVal();
@@ -259,6 +274,10 @@ class StandInGwResponse implements iGatewayResponse {
 
     public function getExpDate() {
         return $this->expDate;
+    }
+
+    public function getStatus() {
+        return $this->status;
     }
 
     public function SignatureRequired() {
@@ -323,6 +342,22 @@ class StandInGwResponse implements iGatewayResponse {
 
     public function getTranType() {
         return '';
+    }
+
+    public function getProcessor() {
+        return $this->processor;
+    }
+
+    public function getMerchant() {
+        return $this->merchant;
+    }
+
+    public function setProcessor($v) {
+        $this->processor = $v;
+    }
+
+    public function setMerchant($v) {
+        $this->merchant = $v;
     }
 
     public function getTransPostTime() {

@@ -21,6 +21,7 @@ class Guest_TokenRS extends TableRS {
     public $Running_Total;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $idRegistration;   // int(11) NOT NULL DEFAULT '0',
     public $Token;   // varchar(100) NOT NULL DEFAULT '',
+    public $Merchant;  // VARCHAR(45) NOT NULL DEFAULT ''
     public $Granted_Date;   // datetime DEFAULT NULL,
     public $LifetimeDays;   // int(11) NOT NULL DEFAULT '0',
     public $MaskedAccount;   // varchar(18) NOT NULL DEFAULT '',
@@ -43,6 +44,7 @@ class Guest_TokenRS extends TableRS {
         $this->Running_Total = new DB_Field('Running_Total', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->idRegistration = new DB_Field("idRegistration", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Token = new DB_Field("Token", "", new DbStrSanitizer(100), TRUE, TRUE);
+        $this->Merchant = new DB_Field("Merchant", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Granted_Date = new DB_Field("Granted_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->LifetimeDays = new DB_Field("LifetimeDays", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->MaskedAccount = new DB_Field("MaskedAccount", "", new DbStrSanitizer(18), TRUE, TRUE);
@@ -204,6 +206,8 @@ class Card_IdRS extends TableRS {
     public $Transaction;   // varchar(14) NOT NULL DEFAULT '',
     public $InvoiceNumber;   // varchar(36) NOT NULL DEFAULT '',
     public $Amount;  // DECIMAL(11,2) NOT NULL DEFAULT 0.00,
+    public $Merchant;   // varchar(45) NOT NULL DEFAULT '',
+
 
     function __construct($TableName = "card_id") {
         $this->idName = new DB_Field("idName", 0, new DbIntSanitizer(), TRUE, TRUE);
@@ -217,6 +221,7 @@ class Card_IdRS extends TableRS {
         $this->Transaction = new DB_Field("Transaction", "", new DbStrSanitizer(14), TRUE, TRUE);
         $this->InvoiceNumber = new DB_Field("InvoiceNumber", "", new DbStrSanitizer(36), TRUE, TRUE);
         $this->Amount = new DB_Field("Amount", 0, new DbDecimalSanitizer(), TRUE, TRUE);
+        $this->Merchnt = new DB_Field("Merchant", "", new DbStrSanitizer(45), TRUE, TRUE);
 
         parent::__construct($TableName);
     }

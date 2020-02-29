@@ -9,9 +9,9 @@
  */
 
 class CodeVersion {
-    const BUILD = 178;
-    const VERSION = 3.13;
-    const PATCH = 3;
+    const BUILD = '179';
+    const VERSION = '3.13';
+    const PATCH = 0;
     const GIT_Id = 'dev';
     const REL_DATE = '';
 }
@@ -236,6 +236,20 @@ Class MpFrequencyValues {
     const Recurring = 'Recurring';
 }
 
+Class MpTranType {
+    const Sale = 'Sale';
+    const PreAuth = 'PreAuth';
+    const ZeroAuth = 'ZeroAuth';
+    const ReturnAmt = 'ReturnAmount';
+    const ReturnSale = 'ReturnSale';
+    const Void = 'VoidSale';
+    const VoidReturn = 'VoidReturn';
+    const Reverse = 'ReverseSale';
+    const CardOnFile = 'COF';
+    const Adjust = 'CreditAdjust';
+}
+
+
 class NoteCategory {
     const Reservation = 'ncr';
     const PSG = 'ncf';
@@ -383,6 +397,7 @@ class TransType {
     const VoidReturn = 'vr';
     const Reverse = 'rv';
     const undoRetrn = 'ur';
+    const ZeroAuth = 'za';
 }
 
 

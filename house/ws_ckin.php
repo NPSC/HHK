@@ -668,12 +668,17 @@ try {
             $postbackPage = filter_var($_POST['pbp'], FILTER_SANITIZE_STRING);
         }
 
+        $index = '';
+        if (isset($_POST['index'])) {
+            $index = filter_var($_POST['index'], FILTER_SANITIZE_STRING);
+        }
+
         $idGroup = 0;
         if (isset($_POST['idGrp'])) {
             $idGroup = intval(filter_var($_POST['idGrp'], FILTER_SANITIZE_STRING), 10);
         }
 
-        $events = HouseServices::cardOnFile($dbh, $idGuest, $idGroup, $_POST, $postbackPage);
+        $events = HouseServices::cardOnFile($dbh, $idGuest, $idGroup, $_POST, $postbackPage, $index);
 
         break;
 

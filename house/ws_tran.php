@@ -125,7 +125,6 @@ switch ($c) {
             $results = $transfer->listCustomFields();
 
             $tbl = new HTMLTable();
-            $custom_fields = array();
             $th = '';
 
             foreach ($results as $v) {
@@ -163,8 +162,6 @@ switch ($c) {
         if (isset($_POST['accountId'])) {
             $accountId = intval(filter_var($_POST['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
-
-        $source = 'remote';
 
         if (isset($_POST['src']) && $_POST['src'] === 'hhk') {
 

@@ -14,6 +14,52 @@ DETERMINISTIC NO SQL
 RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end  -- ;
 
 
+-- --------------------------------------------------------
+--
+-- Procedure `get_credit_gw`
+--
+DROP procedure IF EXISTS `get_credit_gw`; -- ;
+
+CREATE PROCEDURE `get_credit_gw`(
+    IN visitId INT,
+    IN spanId INT,
+    IN regId INT)
+BEGIN
+
+    DECLARE myResc INT;
+    
+    if (visitId > 0) then
+	Select ifnull(idResource, 0) into myResc from visit where idVisit = visitId and Span = spanId;
+    ELSE
+	select ifnull(r.idResource, 0) into myResc from reservation r join registration rg on r.idRegistration = rg.idRegistration where rg. idRegistration = regId order by r.idReservation DESC limit 0, 1;
+    END IF;
+    
+    if (myResc > 0) THEN
+
+        SELECT 
+            ifnull(l.Merchant, '') as `Merchant`, l.idLocation
+        FROM
+            resource_room rr
+                LEFT JOIN
+            room rm on rm.idRoom = rr.idRoom
+                LEFT JOIN
+            location l on l.idLocation = rm.idLocation
+        where
+            l.Status = 'a' and rr.idResource = myResc;
+
+    ELSE
+
+        SELECT 
+           DISTINCT ifnull(l.Merchant, '') as `Merchant`, l.idLocation
+        FROM
+            room rm
+                LEFT JOIN
+            location l  on l.idLocation = rm.idLocation
+        where
+            l.`Status` = 'a' or l.`Status` is null;
+
+    END if;
+END -- ;
 
 
 -- --------------------------------------------------------

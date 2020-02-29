@@ -40,3 +40,6 @@ class Hk_Exception_Duplicate
 
 }
 
+class Hk_Exception_Member extends RuntimeException {
+
+}

@@ -86,7 +86,7 @@ class UserClass {
 			    $ipRS->IP_addr->setNewVal($remoteIp);
 			    $ipRS->Title->setNewVal($pcName);
 			    
-				$id = EditRS::insert($dbh, $ipRS);
+				EditRS::insert($dbh, $ipRS);
 			
 			    if (count(EditRS::select($dbh, $ipRS, array($remoteIp))) > 0) {
 			        return "IP-Restricted Access is set for this device.";

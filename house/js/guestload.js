@@ -95,37 +95,6 @@ function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_admin.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
 
-function setupCOF() {
-
-    // Card on file Cardholder name.
-    if ($('#trCHName').length > 0) {
-
-        $('#cbNewCard').change(function () {
-
-            if (this.checked) {
-                $('.hhkKeyNumber').show();
-            } else {
-                $('.hhkKeyNumber').hide();
-                $('#cbKeyNumber').prop('checked', false).change();
-
-            }
-        });
-
-        $('#cbNewCard').change();
-
-        $('#cbKeyNumber').change(function() {
-
-            if (this.checked && $('#cbNewCard').prop('checked') === true) {
-                $('#trCHName').show();
-            } else {
-                $('#trCHName').hide();
-            }
-        });
-
-        $('#cbKeyNumber').change();
-    }
-
-}
 
 // Init j-query.
 $(document).ready(function () {
@@ -333,14 +302,11 @@ $(document).ready(function () {
 
     $('#btnSubmit, #btnReset, #btnCred').button();
 
-    $('#btnCred').click(function () {
-        cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg);
-    });
-
     // phone - email tabs block
     $('#phEmlTabs').tabs();
     $('#emergTabs').tabs();
     $('#addrsTabs').tabs();
+    
     $psgList = $('#psgList').tabs({
         collapsible: true,
         beforeActivate: function (event, ui) {
@@ -354,6 +320,11 @@ $(document).ready(function () {
                 if (ui.newTab.prop('id') === 'lipsg' && !setupNotes) {
                     setupNotes = setupPsgNotes(memData.idPsg, $('#psgNoteViewer'));
                 }
+            }
+        },
+        load: function (event, ui) {
+            if (ui.tab.prop('id') === 'pmtsTable') {
+                paymentsTable('feesTable', 'rptfeediv');
             }
         }
     });
@@ -515,10 +486,7 @@ $(document).ready(function () {
             $('input.hhk-ex').prop('checked', false);
         }
     });
-
-    // Hide the member status and basis controls
-    $(".hhk-hideStatus, .hhk-hideBasis").hide();
-
+    
     $('#divFuncTabs').show();
 
     $('.hhk-showonload').show();
@@ -535,7 +503,11 @@ $(document).ready(function () {
 	$(this).data("dirrty-initial-value", $(this).data('country'));
     });
 
-    setupCOF();
+    $('#btnCred').click(function () {
+        cardOnFile($(this).data('id'), $(this).data('idreg'), 'GuestEdit.php?id=' + $(this).data('id') + '&psg=' + memData.idPsg, $(this).data('indx'));
+    });
+
+    setupCOF($('#trvdCHNameg'), $('#btnCred').data('indx'));
 
     $('#keysfees').mousedown(function (event) {
         var target = $(event.target);

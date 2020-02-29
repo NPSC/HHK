@@ -9,150 +9,24 @@
  */
 
 
-
-/**
- * CardInfo - Create markup for  the Hosted CC portal.
- *
- * @author Eric
- */
-class CardInfo {
-
-    public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, InitCiRequest $initCi) {
-
-        $dataArray = array();
-        $trace = FALSE;
-
-        if (strtolower($gway->getGatewayType()) == 'test') {
-            $initCi->setOperatorID('test');
-            $trace = TRUE;
-        }
-
-        $ciResponse = $initCi->submit($gway->getCredentials(), $trace);
-
-        // Save raw transaction in the db.
-        try {
-            PaymentGateway::logGwTx($dbh, $ciResponse->getResponseCode(), json_encode($initCi->getFieldsArray()), json_encode($ciResponse->getResultArray()), 'CardInfoInit');
-        } catch(Exception $ex) {
-            // Do Nothing
-        }
-
-        if ($ciResponse->getResponseCode() == 0) {
-
-            // Save the CardID in the database indexed by the guest id.
-            $ciq = "replace into `card_id` (`idName`, `idGroup`, `Transaction`, `CardID`, `Init_Date`, `Frequency`, `ResponseCode`)"
-                . " values ($idPayor, $idGroup, 'cof', '" . $ciResponse->getCardId() . "', now(), 'OneTime', '" . $ciResponse->getResponseCode() . "')";
-
-            $dbh->exec($ciq);
-
-            $dataArray = array('xfer' => $ciResponse->getCardInfoUrl(), 'cardId' => $ciResponse->getCardId());
-
-        } else {
-
-            // The initialization failed.
-            throw new Hk_Exception_Payment("Card-On-File Gateway Error: " . $ciResponse->getResponseText());
-
-        }
-
-        return $dataArray;
-    }
-
-
-    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cidInfo) {
-
-        $verify = new VerifyCIRequest();
-        $verify->setCardId($cidInfo['CardID']);
-
-        $trace = FALSE;
-
-        if (strtolower($gway->getGatewayType()) == 'test') {
-            $trace = TRUE;
-        }
-
-        // Verify request
-        $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
-        $vr = new CardInfoResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup']);
-
-        // Save raw transaction in the db.
-        try {
-            PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($verify->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CardInfoVerify');
-        } catch(Exception $ex) {
-            // Do Nothing
-        }
-
-
-        if ($vr->response->getResponseCode() == 0 && $vr->response->getStatus() == MpStatusValues::Approved) {
-
-            if ($vr->response->getToken() != '') {
-
-                try {
-                    $vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
-                } catch(Exception $ex) {
-                    $vr->idToken = 0;
-                }
-
-            } else {
-                $vr->idToken = 0;
-            }
-        }
-
-        return $vr;
-
-    }
-}
-
-class CardInfoResponse extends PaymentResponse {
-
-
-    function __construct(VerifyCiResponse $verifyCiResponse, $idPayor, $idGroup) {
-        $this->response = $verifyCiResponse;
-        $this->idPayor = $idPayor;
-        $this->idRegistration = $idGroup;
-        $this->expDate = $verifyCiResponse->getExpDate();
-        $this->cardNum = $verifyCiResponse->getMaskedAccount();
-        $this->cardType = $verifyCiResponse->getCardType();
-        $this->cardName = $verifyCiResponse->getCardHolderName();
-    }
-
-    public function getStatus() {
-
-        switch ($this->response->getStatus()) {
-
-            case MpStatusValues::Approved:
-                $pr = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case MpStatusValues::Declined:
-                $pr = CreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-                $pr = CreditPayments::STATUS_DECLINED;
-        }
-
-        return $pr;
-    }
-
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
-        return array('error'=>'Receipts not available.');
-    }
-
-}
-
-
 class HostedCheckout {
 
     public static function sendToPortal(\PDO $dbh, VantivGateway $gway, $idPayor, $idGroup, $invoiceNumber, InitCkOutRequest $initCoRequest) {
 
+        $uS = Session::getInstance();
         $dataArray = array();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
-            $initCoRequest->setAVSAddress('4')->setAVSZip('30329');
+        if (strtolower($uS->mode) !== Mode::Live) {
+//            $initCoRequest->setAVSAddress('4')->setAVSZip('30329');
             $initCoRequest->setOperatorID('test');
-            $trace = TRUE;
+//            $trace = TRUE;
+        } else {
+            $initCoRequest->setOperatorID($uS->username);
         }
 
         $ciResponse = $initCoRequest->submit($gway->getCredentials(), $trace);
+        $ciResponse->setMerchant($gway->getGatewayType());
 
         // Save raw transaction in the db.
         try {
@@ -165,8 +39,8 @@ class HostedCheckout {
         if ($ciResponse->getResponseCode() == 0) {
 
             // Save payment ID
-            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode)"
-                . " values ($idPayor, $idGroup, 'hco', '$invoiceNumber', '" . $ciResponse->getPaymentId() . "', now(), 'OneTime', '" . $ciResponse->getResponseCode() . "')";
+            $ciq = "replace into card_id (idName, `idGroup`, `Transaction`, InvoiceNumber, CardID, Init_Date, Frequency, ResponseCode, Merchant)"
+                . " values ($idPayor, $idGroup, 'hco', '$invoiceNumber', '" . $ciResponse->getPaymentId() . "', now(), 'OneTime', '" . $ciResponse->getResponseCode() . "', '".$gway->getGatewayName()."')";
 
             $dbh->exec($ciq);
 
@@ -183,7 +57,7 @@ class HostedCheckout {
         return $dataArray;
     }
 
-    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cidInfo, $payNotes) {
+    public static function portalReply(\PDO $dbh, VantivGateway $gway, $cidInfo, $payNotes, $payDate) {
 
         $uS = Session::getInstance();
 
@@ -200,8 +74,10 @@ class HostedCheckout {
         // Verify request
         $verifyResponse = $verify->submit($gway->getCredentials(), $trace);
 
-        $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes);
+        $verifyResponse->setMerchant($gway->getGatewayType());
 
+        $vr = new CheckOutResponse($verifyResponse, $cidInfo['idName'], $cidInfo['idGroup'], $cidInfo['InvoiceNumber'], $payNotes, $payDate);
+        $vr->setResult($verifyResponse->getStatus());  // Set result string.
 
         // Save raw transaction in the db.
         try {
@@ -217,6 +93,8 @@ class HostedCheckout {
                 $trType = TransType::Retrn;
             } else if ($verifyResponse->getTranType() == MpTranType::Sale) {
                 $trType = TransType::Sale;
+            } else if ($verifyResponse->getTranType() == MpTranType::ZeroAuth) {
+                $trType = TransType::ZeroAuth;
             }
 
             $transRs = Transaction::recordTransaction($dbh, $vr, $gway->getGatewayType(), $trType, TransMethod::HostedPayment);
@@ -226,17 +104,40 @@ class HostedCheckout {
 
         }
 
-        // record payment
-        return SaleReply::processReply($dbh, $vr, $uS->username);
+        if ($verifyResponse->getTranType() == MpTranType::ZeroAuth) {
+
+            // Zero Auth Response
+            if ($vr->response->getResponseCode() == 0 && $vr->response->getStatus() == MpStatusValues::Approved) {
+
+                if ($vr->response->getToken() != '') {
+
+                    try {
+                        $vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
+                    } catch(Exception $ex) {
+                        $vr->idToken = 0;
+                    }
+
+                } else {
+                    $vr->idToken = 0;
+                }
+            }
+
+            return $vr;
+
+        } else {
+
+            // record payment
+            return SaleReply::processReply($dbh, $vr, $uS->username);
+        }
 
     }
 
 }
 
 
-class CheckOutResponse extends PaymentResponse {
+class CheckOutResponse extends CreditResponse {
 
-    function __construct($verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes) {
+    function __construct($verifyCkOutResponse, $idPayor, $idGroup, $invoiceNumber, $payNotes, $payDate) {
         $this->response = $verifyCkOutResponse;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
@@ -248,6 +149,11 @@ class CheckOutResponse extends PaymentResponse {
         $this->cardName = $verifyCkOutResponse->getCardHolderName();
         $this->amount = $verifyCkOutResponse->getAuthorizedAmount();
         $this->payNotes = $payNotes;
+        $this->setPaymentDate($payDate);
+    }
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
     }
 
     public function getStatus() {
@@ -279,7 +185,7 @@ class CheckOutResponse extends PaymentResponse {
         }
 
         if ($this->response->getAuthCode() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode() . ' ('.ucfirst($this->response->getMerchant()). ')', array('style'=>'font-size:.8em;')));
         }
 
         if ($this->response->getResponseMessage() != '') {
@@ -288,6 +194,15 @@ class CheckOutResponse extends PaymentResponse {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
 
+    }
+
+    public function getPaymentStatusCode() {
+
+        if ($this->getStatus() == CreditPayments::STATUS_APPROVED) {
+            return PaymentStatusCode::Paid;
+        } else {
+            return PaymentStatusCode::Declined;
+        }
     }
 
 }

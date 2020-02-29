@@ -1706,13 +1706,6 @@ class PriceNdayBlock extends PriceModel {
     public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
 
         $rp = readGenLookupsPDO($dbh, 'Rate_Block');
-        $seld = '';
-
-        foreach ($rp as $d) {
-            if ($d[2] == '1') {
-                $seld = $d[0];
-            }
-        }
 
         $fTbl = new HTMLTable();
         $fTbl->addHeaderTr(

@@ -659,7 +659,8 @@ class HouseServices {
                     // We can pay it now and return a receipt.
                     $paymentManager = new PaymentManager(new PaymentManagerPayment(PayType::Cash));
                     $paymentManager->setInvoice($invoice);
-                    $payResult = $paymentManager->makeHousePayment($dbh, '', $invDate);
+                    $paymentManager->pmp->setPayDate($invDate);
+                    $payResult = $paymentManager->makeHousePayment($dbh, '');
 
                     if (is_null($payResult->getReceiptMarkup()) === FALSE && $payResult->getReceiptMarkup() != '') {
                         $dataArray['receipt'] = HTMLContainer::generateMarkup('div', $payResult->getReceiptMarkup());
@@ -707,11 +708,11 @@ class HouseServices {
 
             if ($invoice->getAmountToPay() >= 0) {
                 // Make guest payment
-                $payResult = $paymentManager->makeHousePayment($dbh, $postbackPage, $paymentManager->pmp->getPayDate());
+                $payResult = $paymentManager->makeHousePayment($dbh, $postbackPage);
 
             } else if ($invoice->getAmountToPay() < 0) {
                 // Make guest return
-                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate());
+                $payResult = $paymentManager->makeHouseReturn($dbh, date('Y-m-d H:i:s'));
             }
         }
 
@@ -1260,64 +1261,68 @@ class HouseServices {
         return $adrArray;
     }
 
-    /**
-     * This credit card viewer does not take any money.
-     * Just show credit cards on file
-     *
-     * @param PDO $dbh
-     * @param integer $idRegistration
-     * @param integer $idGuest
-     * @return string
-     */
-    public static function viewCreditTable(\PDO $dbh, $idRegistration, $idGuest) {
+    // Just credit cards with delete checkboxes.
+    public static function guestEditCreditTable(\PDO $dbh, $idRegistration, $idGuest, $index, $defaultMerchant = '') {
 
         $uS = Session::getInstance();
 
-        $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, $idGuest);
+        $tbl = new HTMLTable();
 
-        $tblPayment = new HTMLTable();
-        //$tblPayment->addHeaderTr(HTMLTable::makeTh("Credit Card on File", array('colspan' => '4')));
-        $tblPayment->addBodyTr(HTMLTable::makeTh("Type") . HTMLTable::makeTh("Account") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Delete"));
+        $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
 
-        // Offer to delete any stored cards
+        $prefTokenId = Registration::readPrefTokenId($dbh, $idRegistration);
+
+        $tbl->addBodyTr(HTMLTable::makeTh("X") . HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use"));
+
+        //
+        if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
+            $keys = array_keys($tkRsArray);
+            $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
+        }
+
+        $attr = array('type'=>'radio', 'name'=>'rbUseCard'.$index);
+
+        // List any valid stored cards on file
         foreach ($tkRsArray as $tkRs) {
 
-            if (CreditToken::hasToken($tkRs)) {
-
-                $attr = array('type' => 'checkbox', 'class'=>'ignrSave', 'name' => 'crdel_' . $tkRs->idGuest_token->getStoredVal());
-
-                $tblPayment->addBodyTr(
-                        HTMLTable::makeTd($tkRs->CardType->getStoredVal())
-                        . HTMLTable::makeTd($tkRs->MaskedAccount->getStoredVal())
-                        . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
-                        . HTMLTable::makeTd(
-                                HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr), array('style' => 'text-align:center;'))
-                );
+            if ($tkRs->idGuest_token->getStoredVal() == $prefTokenId) {
+                $attr['checked'] = 'checked';
+            } else if (isset($attr['checked'])) {
+                unset($attr['checked']);
             }
+
+            $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
+            if (strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+                $merchant = '';
+            }
+
+            $tbl->addBodyTr(
+                    HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbDelCard'.$index. '_'.$tkRs->idGuest_token->getStoredVal())))
+                    . HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant)
+                    . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
+
+                );
+
         }
 
-        // Offer for storing a new card.
-        $attr = array('type' => 'checkbox', 'name' => 'cbNewCard', 'class'=>'ignrSave', 'style' => 'margin-right:4px;');
-        $nameAttr = array('type' => 'textbox', 'name' => 'txtNewCardName', 'class'=>'ignrSave', 'style' => 'margin-right:4px;');
+        // New card.  Not for credit return.
+        unset($attr['checked']);
 
-        $tblPayment->addBodyTr(
-                HTMLTable::makeTd(
-                        HTMLInput::generateMarkup('', $attr)
-                        . HTMLContainer::generateMarkup('label', 'Put a new card on file', array('for' => 'cbNewCard'))
-                        . ($uS->PaymentGateway == PaymentGateway::INSTAMED ?
-                           HTMLContainer::generateMarkup('label', 'Key:', array('for'=>'cbKeyNumber', 'class'=>'hhkKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
-                        . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbKeyNumber', 'class'=>'ignrSave hhkKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number')) : ''), array('colspan' => '4'))
+        $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '3'))
+            .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
         );
 
-        if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {
+        $tbl->addBodyTr( HTMLTable::makeTd('', array('id'=>'tdChargeMsg' . $index, 'colspan'=>'4', 'style'=>'color:red; display:none;')));
 
-            $tblPayment->addBodyTr(
-                    HTMLTable::makeTd('Cardholder Name', array('colspan' => '2', 'class'=>'tdlabel'))
-                    .HTMLTable::makeTd( HTMLInput::generateMarkup('', $nameAttr), array('colspan' => '2','class'=>'ignrSave'))
-                , array('id'=>'trCHName'));
-        }
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
 
-        return $tblPayment->generateMarkup(array('id' => 'tblupCredit'));
+        $gwTbl = new HTMLTable();
+        $gateway->selectPaymentMarkup($dbh, $gwTbl, $index, $defaultMerchant);
+        $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(), array('colspan'=>'4')));
+
+        return $tbl->generateMarkup(array('id' => 'tblupCredit'.$index));
+
     }
 
     /**
@@ -1330,24 +1335,22 @@ class HouseServices {
      * @param string $postBackPage
      * @return array
      */
-    public static function cardOnFile(\PDO $dbh, $idGuest, $idGroup, $post, $postBackPage) {
+    public static function cardOnFile(\PDO $dbh, $idGuest, $idGroup, $post, $postBackPage, $idx) {
         // Credit card processing
         $uS = Session::getInstance();
 
         $dataArray = array();
 
-        if ($uS->ccgw == '') {
-            return $dataArray;
-        }
-
-        // Delete any tokens
         $keys = array_keys($post);
         $msg = '';
 
+
+        // Delete any credit tokens
         foreach ($keys as $k) {
 
             $parts = explode('_', $k);
-            if (count($parts) > 1 && $parts[0] == 'crdel') {
+
+            if (count($parts) > 1 && $parts[0] == 'cbDelCard'.$idx) {
 
                 $idGt = intval(filter_var($parts[1], FILTER_SANITIZE_NUMBER_INT), 10);
 
@@ -1363,20 +1366,31 @@ class HouseServices {
             }
         }
 
+        $dataArray['success'] = $msg;
+
         // Add a new card
-        if (isset($post['cbNewCard'])) {
+        if (isset($post['rbUseCard'.$idx]) && $post['rbUseCard'.$idx] == 0) {
 
-            $newCardHolderName = '';
             $manualKey = FALSE;
+            $selGw = '';
 
-            if (isset($post['txtNewCardName']) && isset($post['cbKeyNumber'])) {
-                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'], FILTER_SANITIZE_STRING));
+            $guest = new Guest($dbh, '', $idGuest);
+            $newCardHolderName = $guest->getRoleMember()->get_fullName();
+
+            // for instamed
+            if (isset($post['txtNewCardName'.$idx]) && isset($post['cbKeyNumber'.$idx])) {
+                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'.$idx], FILTER_SANITIZE_STRING));
                 $manualKey = TRUE;
             }
 
+            // For mulitple merchants
+            if (isset($post['selccgw'.$idx])) {
+                $selGw = strtolower(filter_var($post['selccgw'.$idx], FILTER_SANITIZE_STRING));
+            }
+
             try {
-                // Payment Gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $selGw);
 
                 $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage);
 
@@ -1384,11 +1398,9 @@ class HouseServices {
 
                 $dataArray['error'] = $ex->getMessage();
             }
-        }
-
-        if ($msg != '' && isset($post['cbNewCard']) === FALSE) {
-            $dataArray['success'] = $msg;
-            $dataArray['COFmkup'] = HouseServices::viewCreditTable($dbh, $idGroup, $idGuest);
+        } else {
+            // return new form
+            $dataArray['COFmkup'] = self::guestEditCreditTable($dbh, $idGroup, $idGuest, $idx);
         }
 
         return $dataArray;

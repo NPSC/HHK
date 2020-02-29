@@ -111,22 +111,23 @@ var singleDs = [];
 					$(this).attr("data-is-dirrty", "false");
 				}
  			});
+                        
  			//prevent field that have .ignoreme class to get dirrty
-            this.form.find("." + d.options.ignoreClass).each( function(){
-                var initialValue = $(this).attr("data-dirrty-initial-value");
+                        this.form.find("." + d.options.ignoreClass).each( function(){
+                            var initialValue = $(this).attr("data-dirrty-initial-value");
 
-                if($(this).val() != initialValue){
-                    $(this).attr("data-is-dirrty", "false");
-                }
-            });
-            this.form.find("." + d.options.ignoreClass + " input, ." + d.options.ignoreClass + " select, ." + d.options.ignoreClass + " textarea").each( function(){
-                var initialValue = $(this).attr("data-dirrty-initial-value");
+                            if($(this).val() != initialValue){
+                                $(this).attr("data-is-dirrty", "false");
+                            }
+                        });
+                        this.form.find("." + d.options.ignoreClass + " input, ." + d.options.ignoreClass + " select, ." + d.options.ignoreClass + " textarea").each( function(){
+                            var initialValue = $(this).attr("data-dirrty-initial-value");
 
-                if($(this).val() != initialValue){
-                    $(this).attr("data-is-dirrty", "false");
-                }
-            });
- 			var isDirty = false;
+                            if($(this).val() != initialValue){
+                                $(this).attr("data-is-dirrty", "false");
+                            }
+                        });
+                                    var isDirty = false;
  			this.form.find("input, select, textarea").each( function(){
  				if( $(this).attr("data-is-dirrty") == "true" ){
  					isDirty = true;

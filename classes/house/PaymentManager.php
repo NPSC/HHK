@@ -437,14 +437,14 @@ class PaymentManager {
         return $this->invoice;
     }
 
-    public function makeHousePayment(\PDO $dbh, $postBackPage, $paymentDate = '') {
+    public function makeHousePayment(\PDO $dbh, $postBackPage) {
 
         if ($this->hasInvoice()) {
 
             try {
 
                 // Make the payment
-                $payResult = PaymentSvcs::payAmount($dbh, $this->invoice, $this->pmp, $postBackPage, $paymentDate);
+                $payResult = PaymentSvcs::payAmount($dbh, $this->invoice, $this->pmp, $postBackPage);
                 $payResult->setReplyMessage($payResult->getDisplayMessage() . '  ' . $this->result);
 
 
@@ -466,7 +466,7 @@ class PaymentManager {
 
     }
 
-    public function makeHouseReturn(\PDO $dbh, $paymentDate = '') {
+    public function makeHouseReturn(\PDO $dbh, $paymentDate) {
 
         if (! $this->hasInvoice()) {
             $rtnResult = new ReturnResult(0, 0, 0);
@@ -555,6 +555,7 @@ class PaymentManagerPayment {
     protected $balWith;
     protected $manualKeyEntry;
     protected $cardHolderName = '';
+    protected $merchant = '';
     /**
      *
      * @var PriceModel
@@ -743,6 +744,15 @@ class PaymentManagerPayment {
         return $this;
     }
 
+    public function getMerchant() {
+        return $this->merchant;
+    }
+
+    public function setMerchant($v) {
+        $this->merchant = $v;
+        return $this;
+    }
+
     public function getCashTendered() {
         return $this->cashTendered;
     }
@@ -754,17 +764,11 @@ class PaymentManagerPayment {
 
 
     public function getChargeCard() {
-        if ($this->getPayType() == PayType::ChargeAsCash) {
-            return $this->chargeCard;
-        }
-        return '';
+        return $this->chargeCard;
     }
 
     public function getChargeAcct() {
-        if ($this->getPayType() == PayType::ChargeAsCash) {
-            return $this->chargeAcct;
-        }
-        return '';
+        return $this->chargeAcct;
     }
 
     public function setChargeCard($chargeCard) {
@@ -824,12 +828,29 @@ class PaymentManagerPayment {
     public function getPayDate() {
 
         if ($this->payDate != '') {
-            $d = date('Y-m-d H:i:s', strtotime($this->payDate));
+
+            try {
+                $payDT = new DateTime($this->payDate);
+                $paymentDate = $payDT->format('Y-m-d H:i:s');
+
+                $now = new DateTime();
+                $now->setTime(0, 0, 0);
+                $payDT->setTime(0, 0, 0);
+
+                if ($payDT >= $now) {
+                    $paymentDate = date('Y-m-d H:i:s');
+                }
+
+            } catch (Exception $ex) {
+                $paymentDate = date('Y-m-d H:i:s');
+            }
+
         } else {
-            $d = date('Y-m-d H:i:s');
+
+            $paymentDate = date('Y-m-d H:i:s');
         }
 
-        return $d;
+        return $paymentDate;
     }
 
     public function getIdToken() {
@@ -879,14 +900,6 @@ class PaymentManagerPayment {
     }
 
     public function setPayType($payType) {
-
-        $uS = Session::getInstance();
-
-        // Check for Charge as Cash case.
-        if ($payType == PayType::Charge && $uS->ccgw == ''){
-           $payType = PayType::ChargeAsCash;
-        }
-
         $this->payType = $payType;
         return $this;
     }
@@ -904,13 +917,6 @@ class PaymentManagerPayment {
     }
 
     public function setRtnPayType($rtnPayType) {
-
-        $uS = Session::getInstance();
-
-        // Check for Charge as Cash case.
-        if ($rtnPayType == PayType::Charge && $uS->ccgw == ''){
-           $rtnPayType = PayType::ChargeAsCash;
-        }
 
         $this->rtnPayType = $rtnPayType;
     }

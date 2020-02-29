@@ -115,6 +115,7 @@ WHERE
     public function loadInvoice(\PDO $dbh, $idInvoice = 0, $idPayment = 0) {
 
         $this->invoiceNum = '';
+        $rows = array();
 
         if ($idInvoice > 0) {
 
@@ -752,7 +753,6 @@ where
         }
     }
 
-
     protected function unwindCarriedInv(\PDO $dbh, $id, &$invIds) {
 
         $stmt = $dbh->query("select idInvoice from invoice where Delegated_Invoice_Id = " . $id);
@@ -765,7 +765,6 @@ where
         }
 
     }
-
 
     protected function deleteCarriedInvoice(\PDO $dbh, $user) {
 

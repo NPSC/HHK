@@ -1,3 +1,4 @@
+
 <p>Dear ${GuestName}:</p>
 <p>Thank you for your reservation. This is a confirmation for the following dates: ${ExpectedArrival} until ${ExpectedDeparture} for ${Nites} nights for an estimated $${Amount}.</p><p>${VisitFeeNotice}</p>
 <p>Should your plans change, please let us know as soon as possible so that we can serve others in need accommodations.</p>

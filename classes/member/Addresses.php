@@ -137,11 +137,7 @@ abstract class ContactPoint {
 
     public abstract function isRecordSetDefined($code);
 
-    /**
-     *
-     * @param string $code
-     * @return string or null
-     */
+
     public function get_recordSet($code) {
 
         if (isset($this->rSs[$code])) {
@@ -995,7 +991,7 @@ class Phones extends ContactPoint {
 
         // update the recordset
         EditRS::updateStoredVals($a);
-
+        return $message;
     }
 
     private function loadPostData(NamePhoneRS $a, array $p, $typeCode, $uname, $idPrefix = '') {
@@ -1257,6 +1253,3 @@ class Emails extends ContactPoint {
     }
 
 }
-
-
-

@@ -73,10 +73,10 @@ abstract class Member {
             if (isset($uS->nameLookups[GL_TableNames::MemberBasis][$this->nameRS->Member_Type->getStoredVal()])) {
 
                 if ($this->getMemberDesignation() != $uS->nameLookups[GL_TableNames::MemberBasis][$this->nameRS->Member_Type->getStoredVal()][Member::SUBT]) {
-                    throw new Hk_Exception_Runtime("Wrong member Designation for this member object.");
+                    throw new Hk_Exception_Member("Wrong member Designation for this member object.");
                 }
             } else {
-                throw new Hk_Exception_Runtime("Undefined member Basis.");
+                throw new Hk_Exception_Member("Undefined member Basis.");
             }
 
             // Get demography data

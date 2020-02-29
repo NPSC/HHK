@@ -1684,7 +1684,9 @@ function resvManager(initData, options) {
             }
 
             if ($('#selResource').length > 0) {
+                
                 $('#selResource').change(function () {
+                    
                     $('#selRateCategory').change();
 
                     var selected = $("option:selected", this);
@@ -1695,8 +1697,34 @@ function resvManager(initData, options) {
                     } else {
                         $('#hhkroomMsg').text(selparent).show();
                     }
+                    
+                    // Set merchant for payments
+                    if ($('#selccgw').length > 0) {
+                        setupGatewayChooser('')
+                    } else if ($('#selccgwg').length > 0) {
+                        // Card on file
+                        setupGatewayChooser('g')
+                    }
                 });
             }
+        }
+        
+        function setupGatewayChooser(idx) {
+            var room = rooms[$('#selResource').val()];
+            var notThere = true;
+            // option available
+            $('#selccgw'+idx+' option').each(function() {
+                if (this.value === room.merchant) {
+                    notThere = false;
+                }
+            });
+
+            if (notThere) {
+                $('#selccgw'+idx).append('<option value="'+room.merchant+'">'+room.merchant+'</option>');
+            }
+
+            $('#selccgw'+idx).val(room.merchant);
+
         }
 
         function setupPay(data){
@@ -1720,7 +1748,6 @@ function resvManager(initData, options) {
 
             // Room selector update for constraints changes.
             $('input.hhk-constraintsCB').change( function () {
-
                 updateRescChooser.go($('#gstDate').val(), $('#gstCoDate').val());
             });
         }
@@ -1887,8 +1914,17 @@ function resvManager(initData, options) {
             if (data.resv.rdiv.pay !== undefined) {
                 setupPay(data);
             }
+
             if (data.resv.rdiv.cof !== undefined) {
-                setupCOF();
+                var room = rooms[$('#selResource').val()];
+                
+                $('#btnUpdtCred').button().click(function () {
+                    cardOnFile($(this).data('id'), $(this).data('idreg'), 'Reserve.php?rid=' + idResv, $(this).data('indx'));
+                });
+
+                setupCOF($('#trvdCHNameg'), $('#btnUpdtCred').data('indx'));
+                         
+                $('#selccgwg').val(room.merchant);
             }
 
             if ($('#addGuestHeader').length > 0) {
@@ -1988,7 +2024,7 @@ function resvManager(initData, options) {
                     }
                 }
             }
-
+            
             return true;
 
         }
