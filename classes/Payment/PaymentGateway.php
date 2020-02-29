@@ -79,7 +79,7 @@ abstract class PaymentGateway {
         return array('warning' => 'Not Available.  ');
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes) {
         return array('warning' => 'Return Amount is not implemented. ');
     }
 

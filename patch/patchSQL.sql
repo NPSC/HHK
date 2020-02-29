@@ -10,7 +10,7 @@ ALTER TABLE `card_id`
 
 
 ALTER TABLE `guest_token`
-    CHANGE COLUMN `CC_Gateway` `Merchant` VARCHAR(45) NOT NULL DEFAULT '';
+     ADD COLUMN  `Merchant` VARCHAR(45) NOT NULL DEFAULT '';
 
 ALTER TABLE `payment_auth`
     ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Processor`;

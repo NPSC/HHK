@@ -170,7 +170,7 @@ class LocalGateway extends PaymentGateway {
 				'warning' => 'Not Available.  '
 		);
 	}
-	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
 		
 		$uS = Session::getInstance ();
 

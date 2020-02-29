@@ -447,7 +447,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+    Public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
 
         $uS = Session::getInstance();
 

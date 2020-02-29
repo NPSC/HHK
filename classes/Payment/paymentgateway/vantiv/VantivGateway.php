@@ -305,7 +305,7 @@ class VantivGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken) {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes) {
 
         $uS = Session::getInstance();
         $rtnResult = NULL;
@@ -331,6 +331,7 @@ class VantivGateway extends PaymentGateway {
 
 
             $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $returnRequest, NULL, date('Y-m-d H:i:s'));
+            $tokenResp->setPaymentNotes($payNotes);
 
             // Analyze the result
             $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $tokenRS->idGuest_token->getStoredVal());
