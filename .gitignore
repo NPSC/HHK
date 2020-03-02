@@ -1,8 +1,5 @@
-/nbproject/private/
 /patch/soapLog.xml
 .project
+vendor
 .settings
 .buildpath
-vendor
-.settings/org.eclipse.php.core.prefs
-.settings/org.eclipse.wst.common.project.facet.core.xml

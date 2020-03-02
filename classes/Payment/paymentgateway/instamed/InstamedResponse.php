@@ -9,7 +9,7 @@
  */
 
 
-class ImPaymentResponse extends PaymentResponse {
+class ImPaymentResponse extends CreditResponse {
 
 
     function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $isPartialApprovalAmount = FALSE) {
@@ -29,6 +29,14 @@ class ImPaymentResponse extends PaymentResponse {
         }
     }
 
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
+    }
+
     public function getStatus() {
 
         $status = '';
@@ -103,7 +111,7 @@ class ImPaymentResponse extends PaymentResponse {
 
 }
 
-class ImReturnResponse extends PaymentResponse {
+class ImReturnResponse extends CreditResponse {
 
 
     function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $isPartialApprovalAmount = FALSE) {
@@ -118,6 +126,14 @@ class ImReturnResponse extends PaymentResponse {
 
     }
 
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Retrn;
+    }
+
     public function getStatus() {
 
         $status = '';
@@ -192,7 +208,7 @@ class ImReturnResponse extends PaymentResponse {
 
 }
 
-class ImCofResponse extends PaymentResponse {
+class ImCofResponse extends CreditResponse {
 
     public $idToken;
 
@@ -203,6 +219,14 @@ class ImCofResponse extends PaymentResponse {
         $this->idRegistration = $idGroup;
         $this->idToken = $vcr->getToken();
 
+    }
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
+    }
+
+    public function getPaymentStatusCode() {
+        return PaymentStatusCode::Paid;
     }
 
     public function getStatus() {

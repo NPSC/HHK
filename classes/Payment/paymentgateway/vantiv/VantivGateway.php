@@ -20,7 +20,7 @@ class VantivGateway extends PaymentGateway {
     const CARD_ID = 'CardID';
     const PAYMENT_ID = 'PaymentID';
 
-    public function getPaymentMethod() {
+    public static function getPaymentMethod() {
         return PaymentMethod::Charge;
     }
 
@@ -28,93 +28,84 @@ class VantivGateway extends PaymentGateway {
         return 'vantiv';
     }
 
-    public function creditSale(\PDO $dbh, $pmp, $invoice, $postbackUrl) {
+    public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
         $payResult = NULL;
 
-        $guest = new Guest($dbh, '', $invoice->getSoldToId());
-        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
+        if ($this->getGatewayType() == '') {
+            // Undefined Gateway.
+            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+            $payResult->setStatus(PaymentResult::ERROR);
+            $payResult->feePaymentError($dbh, $uS);
+            $payResult->setDisplayMessage('Location not selected. ');
 
-        $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
-
-        // Do we have a token?
-        if (CreditToken::hasToken($tokenRS)) {
-
-            $cpay = new CreditSaleTokenRequest();
-
-            $cpay->setPurchaseAmount($invoice->getAmountToPay())
-                    ->setTaxAmount(0)
-                    ->setCustomerCode($invoice->getSoldToId())
-                    ->setAddress($addr["Address_1"])
-                    ->setZip($addr["Postal_Code"])
-                    ->setToken($tokenRS->Token->getStoredVal())
-                    ->setPartialAuth(FALSE)
-                    ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
-                    ->setFrequency(MpFrequencyValues::OneTime)
-                    ->setInvoice($invoice->getInvoiceNumber())
-                    ->setTokenId($tokenRS->idGuest_token->getStoredVal())
-                    ->setMemo(MpVersion::PosVersion);
-
-            // Run the token transaction
-            $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes());
-
-            // Analyze the result
-            $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken(), $this->useAVS, $this->useCVV);
         } else {
 
-            // Initialiaze hosted payment
-            $fwrder = $this->initHostedPayment($dbh, $invoice, $guest, $addr, $postbackUrl);
+            try {
 
-            $payIds = array();
-            if (isset($uS->paymentIds)) {
-                $payIds = $uS->paymentIds;
+                $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+
+            } catch (Hk_Exception_Member $ex) {
+
+                $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
             }
 
-            $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
-            $uS->paymentIds = $payIds;
-            $uS->paymentNotes = $pmp->getPayNotes();
+            $address = new Address($dbh, $guest, $uS->nameLookups[GL_TableNames::AddrPurpose]);
+            $addr = $address->get_data('');
 
-            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-            $payResult->setForwardHostedPayment($fwrder);
-            $payResult->setDisplayMessage('Forward to Payment Page. ');
+            $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
+
+            // Do we have a token?
+            if (CreditToken::hasToken($tokenRS)) {
+
+                $cpay = new CreditSaleTokenRequest();
+
+                $cpay->setPurchaseAmount($invoice->getAmountToPay())
+                        ->setTaxAmount(0)
+                        ->setCustomerCode($invoice->getSoldToId())
+                        ->setAddress($addr["Address_1"])
+                        ->setZip($addr["Postal_Code"])
+                        ->setToken($tokenRS->Token->getStoredVal())
+                        ->setPartialAuth(FALSE)
+                        ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
+                        ->setFrequency(MpFrequencyValues::OneTime)
+                        ->setInvoice($invoice->getInvoiceNumber())
+                        ->setTokenId($tokenRS->idGuest_token->getStoredVal())
+                        ->setMemo(MpVersion::PosVersion)
+                        ->setOperatorID($uS->username);
+
+                // Run the token transaction
+                $tokenResp = TokenTX::CreditSaleToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $cpay, $pmp->getPayNotes(), $pmp->getPayDate());
+
+                // Analyze the result
+                $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
+
+            } else {
+
+                // Initialiaze hosted payment
+                $fwrder = $this->initHostedPayment($dbh, $invoice, $guest->get_fullName(), $addr, $postbackUrl);
+
+                $payIds = array();
+                if (isset($uS->paymentIds)) {
+                    $payIds = $uS->paymentIds;
+                }
+
+                $payIds[$fwrder['paymentId']] = $invoice->getIdInvoice();
+                $uS->paymentIds = $payIds;
+                $uS->paymentNotes = $pmp->getPayNotes();
+                $uS->paymentDate = $pmp->getPayDate();
+
+                $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
+                $payResult->setForwardHostedPayment($fwrder);
+                $payResult->setDisplayMessage('Forward to Payment Page. ');
+            }
         }
 
         return $payResult;
     }
 
-    public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, $paymentNotes, $bid) {
-
-        // find the token record
-        if ($payRs->idToken->getStoredVal() > 0) {
-            $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
-        } else {
-            return array('warning' => 'Payment Token Id not found.  Unable to Void this purchase.  ', 'bid' => $bid);
-        }
-
-        if (CreditToken::hasToken($tknRs) === FALSE) {
-            return array('warning' => 'Payment Token not found.  Unable to Void this purchase.  ', 'bid' => $bid);
-        }
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Void this purchase. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
-
-        if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
-            return $this->sendVoid($dbh, $payRs, $pAuthRs, $tknRs, $invoice, $paymentNotes);
-        }
-
-        return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
-    }
-
-    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs) {
+    public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         $uS = Session::getInstance();
 
@@ -122,11 +113,11 @@ class VantivGateway extends PaymentGateway {
         if ($payRs->idToken->getStoredVal() > 0) {
             $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
         } else {
-            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ');
+            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ', 'bid' => $bid);
         }
 
         if (CreditToken::hasToken($tknRs) === FALSE) {
-            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ');
+            return array('warning' => 'Card-on-File not found.  Unable to Void this return.  ', 'bid' => $bid);
         }
 
         // Set up request
@@ -143,7 +134,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs);
+            $csResp = TokenTX::creditVoidReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs, date('Y-m-d H:i:s'));
 
             switch ($csResp->getStatus()) {
 
@@ -174,12 +165,14 @@ class VantivGateway extends PaymentGateway {
             $dataArray['warning'] = "Void-Return Error = " . $exPay->getMessage();
         }
 
+        $dataArray['bid'] = $bid;
         return $dataArray;
     }
 
-    public function reverseSale(\PDO $dbh, PaymentRS $payRs, Invoice $invoice, $bid, $paymentNotes) {
+    public function reverseSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         $uS = Session::getInstance();
+        $dataArray = array();
 
         // find the token record
         if ($payRs->idToken->getStoredVal() > 0) {
@@ -191,17 +184,6 @@ class VantivGateway extends PaymentGateway {
         if (CreditToken::hasToken($tknRs) === FALSE) {
             return array('warning' => 'Payment Token not found.  Unable to Reverse this purchase.  ', 'bid' => $bid);
         }
-
-        // Find hte detail record.
-        $stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
-        $arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($arows) < 1) {
-            return array('warning' => 'Payment Detail record not found.  Unable to Reverse this purchase. ', 'bid' => $bid);
-        }
-
-        $pAuthRs = new Payment_AuthRS();
-        EditRS::loadRow(array_pop($arows), $pAuthRs);
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid || $pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::VoidReturn) {
 
@@ -221,7 +203,7 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs, $paymentNotes);
+                $csResp = TokenTX::creditReverseToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $revRequest, $payRs, date('Y-m-d H:i:s'));
 
                 switch ($csResp->response->getStatus()) {
 
@@ -240,7 +222,7 @@ class VantivGateway extends PaymentGateway {
                     case MpStatusValues::Declined:
 
                         // Try Void
-                        $dataArray = self::sendVoid($dbh, $payRs, $pAuthRs, $tknRs, $invoice, $paymentNotes);
+                        $dataArray = $this->_voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
                         $dataArray['reversal'] = 'Reversal Declined, trying Void.  ';
 
                         break;
@@ -254,6 +236,7 @@ class VantivGateway extends PaymentGateway {
                 $dataArray['warning'] = "Reversal Error = " . $exPay->getMessage();
             }
 
+            $dataArray['bid'] = $bid;
             return $dataArray;
         }
 
@@ -261,7 +244,7 @@ class VantivGateway extends PaymentGateway {
     }
 
     // Returns a Payment
-    protected function _returnPayment(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $returnAmt, $bid) {
+    protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $returnAmt, $bid) {
 
         $uS = Session::getInstance();
 
@@ -288,7 +271,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $returnRequest, $payRs);
+            $csResp = TokenTX::creditReturnToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $returnRequest, $payRs, date('Y-m-d H:i:s'));
 
             switch ($csResp->response->getStatus()) {
 
@@ -322,7 +305,7 @@ class VantivGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes = '') {
+    public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes) {
 
         $uS = Session::getInstance();
         $rtnResult = NULL;
@@ -347,7 +330,8 @@ class VantivGateway extends PaymentGateway {
             $returnRequest->setTokenId($tokenRS->idGuest_token->getStoredVal());
 
 
-            $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $returnRequest, NULL, $paymentNotes);
+            $tokenResp = TokenTX::creditReturnToken($dbh, $invoice->getSoldToId(), $invoice->getIdGroup(), $this, $returnRequest, NULL, date('Y-m-d H:i:s'));
+            $tokenResp->setPaymentNotes($payNotes);
 
             // Analyze the result
             $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId(), $tokenRS->idGuest_token->getStoredVal());
@@ -386,7 +370,7 @@ class VantivGateway extends PaymentGateway {
         return $rtnResult;
     }
 
-    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, Guest $guest, $addr, $postbackUrl) {
+    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $guestFullName, $addr, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -402,26 +386,27 @@ class VantivGateway extends PaymentGateway {
         }
 
         if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
-            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
+            throw new Hk_Exception_Runtime("The Invoice is missing.  ");
         }
 
-        $pay = new InitCkOutRequest($uS->siteName, 'Custom');
+        // Set CC Gateway name
+        $uS->ccgw = $this->getGatewayType();
 
+        $pay = new InitCkOutRequest($uS->siteName, 'Custom');
 
         // Card reader?
         if ($uS->CardSwipe) {
             $pay->setDefaultSwipe('Swipe')
                     ->setCardEntryMethod('Both')
-                    ->setPaymentPageCode('Checkout_Url');
+                    ->setPaymentPageCode('CheckoutPOS_Url');
         } else {
             $pay->setPaymentPageCode('Checkout_Url');
         }
 
-        $pay->setPartialAuth(TRUE);
 
         $pay->setAVSZip($addr["Postal_Code"])
                 ->setAVSAddress($addr['Address_1'])
-                ->setCardHolderName($guest->getRoleMember()->get_fullName())
+                ->setCardHolderName($guestFullName)
                 ->setFrequency(MpFrequencyValues::OneTime)
                 ->setInvoice($invoice->getInvoiceNumber())
                 ->setMemo(MpVersion::PosVersion)
@@ -431,7 +416,7 @@ class VantivGateway extends PaymentGateway {
                 ->setReturnURL($houseUrl . $postbackUrl)
                 ->setTranType(MpTranType::Sale)
                 ->setLogoUrl($siteUrl . $logo)
-                ->setCVV('on')
+                ->setCVV($this->useCVV ? 'on' : '')
                 ->setAVSFields('both');
 
         $CreditCheckOut = HostedCheckout::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pay);
@@ -439,48 +424,67 @@ class VantivGateway extends PaymentGateway {
         return $CreditCheckOut;
     }
 
-    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postBackPage) {
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
 
         $uS = Session::getInstance();
-
         $secure = new SecurityComponent();
-        $config = new Config_Lite(ciCFG_FILE);
 
         $houseUrl = $secure->getSiteURL();
         $siteUrl = $secure->getRootURL();
-        $logo = $config->getString('financial', 'PmtPageLogoUrl', '');
+        $logo = $uS->PmtPageLogoUrl;
 
         if ($houseUrl == '' || $siteUrl == '') {
             throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
         }
 
-        if ($idGuest < 1 || $idGroup < 1) {
-            throw new Hk_Exception_Runtime("Card Holder information is missing.  ");
+        if ($this->getGatewayType() == '') {
+            // Undefined Gateway.
+            $dataArray['error'] = 'Location not selected. ';
+            return $dataArray;
         }
 
+        // Set CC Gateway name
+        $uS->ccgw = $this->getGatewayType();
 
-        $initCi = new InitCiRequest($pageTitle, 'Custom');
+        $guest = new Guest($dbh, '', $idGuest);
+        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
+
+        if ($cardHolderName == '') {
+            $cardHolderName = $guest->getRoleMember()->getMemberFullName();
+        }
+
+        $pay = new InitCkOutRequest($uS->siteName, 'Custom');
 
         // Card reader?
         if ($uS->CardSwipe) {
-            $initCi->setDefaultSwipe('Swipe')
+            $pay->setDefaultSwipe('Manual') // set to  key in the acct number manually for this
                     ->setCardEntryMethod('Both')
-                    ->setPaymentPageCode('CardInfo_Url');
+                    ->setPaymentPageCode('CheckoutPOS_Url');
         } else {
-            $initCi->setPaymentPageCode('CardInfo_Url');
+            $pay->setPaymentPageCode('Checkout_Url');
         }
 
-        $initCi->setCardHolderName($cardHolderName)
+
+        $pay->setAVSZip($addr["Postal_Code"])
+                ->setAVSAddress($addr['Address_1'])
+                ->setCardHolderName($cardHolderName)
                 ->setFrequency(MpFrequencyValues::OneTime)
-                ->setCompleteURL($houseUrl . $postBackPage)
-                ->setReturnURL($houseUrl . $postBackPage)
-                ->setLogoUrl($siteUrl . $logo);
+                ->setInvoice('CardInfo')
+                ->setMemo(MpVersion::PosVersion)
+                ->setTaxAmount(0)
+                ->setTotalAmount(0)
+                ->setCompleteURL($houseUrl . $postbackUrl)
+                ->setReturnURL($houseUrl . $postbackUrl)
+                ->setTranType(MpTranType::ZeroAuth)
+                ->setLogoUrl($siteUrl . $logo)
+                ->setCVV($this->useCVV ? 'on' : '')
+                ->setAVSFields('both');
 
+        return HostedCheckout::sendToPortal($dbh, $this, $idGuest, $idGroup, 'CardInfo', $pay);
 
-        return CardInfo::sendToPortal($dbh, $this, $idGuest, $idGroup, $initCi);
     }
 
-    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes) {
+    public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate) {
 
         $payResult = NULL;
         $rtnCode = '';
@@ -495,35 +499,7 @@ class VantivGateway extends PaymentGateway {
         }
 
 
-        if (isset($post[VantivGateway::CARD_ID])) {
-
-            $cardId = filter_var($post[VantivGateway::CARD_ID], FILTER_SANITIZE_STRING);
-            $cidInfo = $this->getInfoFromCardId($dbh, $cardId);
-
-            // Save postback in the db.
-            try {
-                self::logGwTx($dbh, $rtnCode, '', json_encode($post), 'CardInfoPostBack');
-            } catch (Exception $ex) {
-                // Do nothing
-            }
-
-            if ($rtnCode > 0) {
-
-                $payResult = new cofResult($rtnMessage, PaymentResult::ERROR, 0, 0);
-                return $payResult;
-            }
-
-            try {
-
-                $vr = CardInfo::portalReply($dbh, $this, $cidInfo);
-
-                $payResult = new CofResult($vr->response->getDisplayMessage(), $vr->response->getStatus(), $vr->idPayor, $vr->idRegistration);
-
-            } catch (Hk_Exception_Payment $hex) {
-                $payResult = new cofResult($hex->getMessage(), PaymentResult::ERROR, 0, 0);
-            }
-
-        } else if (isset($post[VantivGateway::PAYMENT_ID])) {
+        if (isset($post[VantivGateway::PAYMENT_ID])) {
 
             $paymentId = filter_var($post[VantivGateway::PAYMENT_ID], FILTER_SANITIZE_STRING);
 
@@ -545,20 +521,44 @@ class VantivGateway extends PaymentGateway {
 
             try {
 
-                $csResp = HostedCheckout::portalReply($dbh, $this, $cidInfo, $payNotes);
+                $csResp = HostedCheckout::portalReply($dbh, $this, $cidInfo, $payNotes, $payDate);
 
-                if ($csResp->getInvoiceNumber() != '') {
+                if ($csResp->response->getTranType() == MpTranType::ZeroAuth) {
 
-                    $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
+                    // Zero auth card info
+                    $payResult = new CofResult($csResp->response->getDisplayMessage(), $csResp->response->getStatus(), $csResp->idPayor, $csResp->idRegistration);
 
-                    // Analyze the result
-                    $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0, $this->useAVS, $this->useCVV);
+                    if ($this->useAVS) {
+                        $avsResult = new AVSResult($csResp->response->getAVSResult());
+
+                        if ($avsResult->isZipMatch() === FALSE) {
+                            $payResult->setDisplayMessage($avsResult->getResultMessage() . '  ');
+                        }
+                    }
+
+                    if ($this->useCVV) {
+                        $cvvResult = new CVVResult($csResp->response->getCvvResult());
+                        if ($cvvResult->isCvvMatch() === FALSE) {
+                            $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
+                        }
+                    }
 
                 } else {
 
-                    $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
-                    $payResult->setStatus(PaymentResult::ERROR);
-                    $payResult->setDisplayMessage('Invoice Not Found!  ');
+                    // Hosted payment response.
+                    if ($csResp->getInvoiceNumber() != '') {
+
+                        $invoice = new Invoice($dbh, $csResp->getInvoiceNumber());
+
+                        // Analyze the result
+                        $payResult = $this->analyzeCredSaleResult($dbh, $csResp, $invoice, 0);
+
+                    } else {
+
+                        $payResult = new PaymentResult($idInv, $cidInfo['idGroup'], $cidInfo['idName']);
+                        $payResult->setStatus(PaymentResult::ERROR);
+                        $payResult->setDisplayMessage('Invoice Not Found!  ');
+                    }
                 }
             } catch (Hk_Exception_Payment $hex) {
 
@@ -571,10 +571,21 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    protected function sendVoid(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Guest_TokenRS $tknRs, Invoice $invoice, $paymentNotes = '') {
+    protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid = '') {
 
         $uS = Session::getInstance();
-        $dataArray = array();
+        $dataArray = array('bid'=>$bid);
+
+        // find the token record
+        if ($payRs->idToken->getStoredVal() > 0) {
+            $tknRs = CreditToken::getTokenRsFromId($dbh, $payRs->idToken->getStoredVal());
+        } else {
+            return array('warning' => 'Payment Token Id not found.  Unable to Void this purchase.  ', 'bid' => $bid);
+        }
+
+        if (CreditToken::hasToken($tknRs) === FALSE) {
+            return array('warning' => 'Payment Token not found.  Unable to Void this purchase.  ', 'bid' => $bid);
+        }
 
         // Set up request
         $voidRequest = new CreditVoidSaleTokenRequest();
@@ -589,7 +600,7 @@ class VantivGateway extends PaymentGateway {
 
         try {
 
-            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $voidRequest, $payRs, $paymentNotes);
+            $csResp = TokenTX::creditVoidSaleToken($dbh, $payRs->idPayor->getstoredVal(), $invoice->getIdGroup(), $this, $voidRequest, $payRs, date('Y-m-d H:i:s'));
 
             switch ($csResp->response->getStatus()) {
 
@@ -633,7 +644,7 @@ class VantivGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function analyzeCredSaleResult(\PDO $dbh, PaymentResponse $payResp, \Invoice $invoice, $idToken, $useAVS, $useCVV) {
+    public function analyzeCredSaleResult(\PDO $dbh, CreditResponse $payResp, \Invoice $invoice, $idToken) {
 
         $uS = Session::getInstance();
 
@@ -654,7 +665,7 @@ class VantivGateway extends PaymentGateway {
                     $payResult->setDisplayMessage('** Partially Approved Amount: ' . number_format($payResp->response->getAuthorizedAmount(), 2) . ' (Remaining Balance Due: ' . number_format($invoice->getBalance(), 2) . ').  ');
                 }
 
-                if ($useAVS) {
+                if ($this->useAVS) {
                     $avsResult = new AVSResult($payResp->response->getAVSResult());
 
                     if ($avsResult->isZipMatch() === FALSE) {
@@ -662,7 +673,7 @@ class VantivGateway extends PaymentGateway {
                     }
                 }
 
-                if ($useCVV) {
+                if ($this->useCVV) {
                     $cvvResult = new CVVResult($payResp->response->getCvvResult());
                     if ($cvvResult->isCvvMatch() === FALSE && $uS->CardSwipe === FALSE) {
                         $payResult->setDisplayMessage($cvvResult->getResultMessage() . '  ');
@@ -695,18 +706,17 @@ class VantivGateway extends PaymentGateway {
     }
 
     public function getPaymentResponseObj(iGatewayResponse $creditTokenResponse, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
-        return new TokenResponse($creditTokenResponse, $idPayor, $idToken, $payNotes);
+        return new TokenResponse($creditTokenResponse, $idPayor, $idGroup, $idToken);
     }
 
     public function getCofResponseObj(iGatewayResponse $verifyCiResponse, $idPayor, $idGroup) {
-        return new CardInfoResponse($verifyCiResponse, $idPayor, $idGroup);
+        return new TokenResponse($verifyCiResponse, $idPayor, $idGroup, 0);
     }
 
     protected function loadGateway(\PDO $dbh) {
 
-        $query = "select * from `cc_hosted_gateway` where cc_name = :ccn and Gateway_Name = 'vantiv'";
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':ccn' => $this->gwType));
+        $query = "select * from `cc_hosted_gateway` where `cc_name` = '" . $this->getGatewayType() . "' and `Gateway_Name` = '" .$this->getGatewayName()."'";
+        $stmt = $dbh->query($query);
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -732,30 +742,47 @@ class VantivGateway extends PaymentGateway {
         $this->credentials = $gwRow;
     }
 
-    public function createEditMarkup(\PDO $dbh, $resultMessage = '') {
+    public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
+
+        $selArray = array('id'=>'selccgw'.$index, 'name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index);
+
+        if ($this->getGatewayType() != '') {
+
+            $sel = HTMLSelector::doOptionsMkup(array(0=>array(0=>$this->getGatewayType(), 1=> ucfirst($this->getGatewayType()))), $this->getGatewayType(), FALSE);
+
+            $payTbl->addBodyTr(
+                    HTMLTable::makeTh('Selected Location:')
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
+                    , array('id'=>'trvdCHName'.$index)
+            );
+
+        } else {
+
+            $stmt = $dbh->query("Select DISTINCT l.`Merchant`, l.`Title` from `location` l join `room` r on l.idLocation = r.idLocation where r.idLocation is not null and l.`Status` = 'a'");
+            $gwRows = $stmt->fetchAll();
+
+            $selArray['size'] = count($gwRows);
+
+//            if (is_array($this->gwType) && count($this->gwType) > 1) {
+                // Show choice of gateway
+
+                $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
+
+                $payTbl->addBodyTr(
+                        HTMLTable::makeTh('Select Location:')
+                        .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
+                        , array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
+                );
+
+//            }
+        }
+    }
+
+    protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
 
         $gwRs = new Cc_Hosted_GatewayRS();
-        $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $gwRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
-
-
-        if (count($rows) < 1) {
-            // Define new gateway rows
-            $gwrRs = new Cc_Hosted_GatewayRS();
-            $gwrRs->Gateway_Name->setNewVal($this->getGatewayName());
-            $gwrRs->cc_name->setNewVal('test');
-
-            EditRS::insert($dbh, $gwrRs);
-
-            $gwpRs = new Cc_Hosted_GatewayRS();
-            $gwpRs->Gateway_Name->setNewVal($this->getGatewayName());
-            $gwpRs->cc_name->setNewVal('production');
-            EditRS::insert($dbh, $gwpRs);
-
-            $gwRs = new Cc_Hosted_GatewayRS();
-            $gwRs->Gateway_Name->setStoredVal($this->getGatewayName());
-            $rows = EditRS::select($dbh, $gwRs, array($gwRs->Gateway_Name));
-        }
 
         $opts = array(
             array(0, 'False'),
@@ -796,7 +823,7 @@ class VantivGateway extends PaymentGateway {
             $indx = $gwRs->idcc_gateway->getStoredVal();
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Mode', array('style' => 'border-top:2px solid black;'))
+                    HTMLTable::makeTh('Merchant Name', array('style' => 'border-top:2px solid black;'))
                     . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
             );
 
@@ -844,6 +871,9 @@ class VantivGateway extends PaymentGateway {
             );
 
         }
+        
+        // New Merchant
+        // TODO
 
         if ($resultMessage != '') {
             $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));
@@ -852,17 +882,18 @@ class VantivGateway extends PaymentGateway {
         return $tbl->generateMarkup();
     }
 
-    public function SaveEditMarkup(\PDO $dbh, $post) {
+    protected static function _saveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
         $msg = '';
         $ccRs = new Cc_Hosted_GatewayRS();
-        $ccRs->Gateway_Name->setStoredVal($this->getGatewayName());
+        $ccRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
         // Use POS
         if (isset($post['selCardSwipe'])) {
             SysConfig::saveKeyValue($dbh, 'sys_config', 'CardSwipe', filter_var($post['selCardSwipe'], FILTER_SANITIZE_STRING));
         }
+
         // host page image URL
         if (isset($post['txtppUrl'])) {
             SysConfig::saveKeyValue($dbh, 'sys_config', 'PmtPageLogoUrl', filter_var($post['txtppUrl'], FILTER_SANITIZE_STRING));

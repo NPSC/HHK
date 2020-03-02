@@ -585,11 +585,11 @@ $(document).ready(function () {
         $(".hhk-alert").hide();
         getApplyDiscDiag($(this).data('vid'), $('#pmtRcpt'));
     });
-    $('#vstays, #vresvs, #vwls, #vuncon').on('click', '.stupCredit', function (event) {
-        event.preventDefault();
-        $(".hhk-alert").hide();
-        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile', 'register.php');
-    });
+//    $('#vstays, #vuncon').on('click', '.stupCredit', function (event) {
+//        event.preventDefault();
+//        $(".hhk-alert").hide();
+//        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile', 'register.php');
+//    });
     $('#vstays').on('click', '.stckout', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
@@ -670,18 +670,18 @@ $(document).ready(function () {
         modal: true,
         title: 'Payment Receipt'
     });
-    $('#cardonfile').dialog({
-        autoOpen: false,
-        resizable: true,
-        modal: true,
-        title: 'Update Credit Card On File',
-        close: function (event, ui) {
-            $('div#submitButtons').show();
-        },
-        open: function (event, ui) {
-            $('div#submitButtons').hide();
-        }
-    });
+//    $('#cardonfile').dialog({
+//        autoOpen: false,
+//        resizable: true,
+//        modal: true,
+//        title: 'Update Credit Card On File',
+//        close: function (event, ui) {
+//            $('div#submitButtons').show();
+//        },
+//        open: function (event, ui) {
+//            $('div#submitButtons').hide();
+//        }
+//    });
 
     if ($('#txtactstart').val() === '') {
         var nowdt = new Date();
@@ -1023,10 +1023,6 @@ $(document).ready(function () {
     // disappear the pop-up room chooser.
     $(document).mousedown(function (event) {
         var target = $(event.target);
-        if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
-            $('div#pudiv').remove();
-        }
-        
         if (target[0].id !== 'divRoomGrouping' && target[0].id !== 'selRoomGroupScheme') {
             $('#divRoomGrouping').hide();
         }
@@ -1167,75 +1163,8 @@ $(document).ready(function () {
                     $('#rptfeediv').remove();
                     $('#vfees').append($('<div id="rptfeediv"/>').append($(data.success)));
                     
-                    $('#feesTable').dataTable({
-                        'columnDefs': [
-                            {'targets': 8,
-                             'type': 'date',
-                             'render': function ( data, type, row ) {return dateRender(data, type);}
-                            }
-                         ],
-                        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                        "displayLength": 50,
-                        "lengthMenu": [[25, 50, -1], [25, 50, "All"]]
-                    });
-                    
-                    // Invoice viewer
-                    $('#rptfeediv').on('click', '.invAction', function (event) {
-                        invoiceAction($(this).data('iid'), 'view', event.target.id);
-                    });
-                    
-                    // Void/Reverse button
-                    $('#rptfeediv').on('click', '.hhk-voidPmt', function () {
-                        var btn = $(this);
-                        var amt = parseFloat(btn.data("amt"));
-                        if (btn.val() != "Saving..." && confirm("Void/Reverse this payment for $" + amt.toFixed(2).toString() + "?")) {
-                            btn.val('Saving...');
-                            sendVoidReturn(btn.attr('id'), 'rv', btn.data('pid'));
-                        }
-                    });
-                    
-                    // Void-return button
-                    $('#rptfeediv').on('click', '.hhk-voidRefundPmt', function () {
-                        var btn = $(this);
-                        if (btn.val() != 'Saving...' && confirm('Void this Return?')) {
-                            btn.val('Saving...');
-                            sendVoidReturn(btn.attr('id'), 'vr', btn.data('pid'));
-                        }
-                    });
-                    
-                    // Return button
-                    $("#rptfeediv").on("click", ".hhk-returnPmt", function() {
-                        var btn = $(this);
-                        var amt = parseFloat(btn.data("amt"));
-                        if (btn.val() != "Saving..." && confirm("Return this payment for $" + amt.toFixed(2).toString() + "?")) {
-                            btn.val("Saving...");
-                            sendVoidReturn(btn.attr("id"), "r", btn.data("pid"), amt);
-                        }
-                    });
-                    
-                    // Undo Return
-                    $("#rptfeediv").on("click", ".hhk-undoReturnPmt", function () {
-                        var btn = $(this);
-                        var amt = parseFloat(btn.data("amt"));
-                        if (btn.val() != "Saving..." && confirm("Undo this Return/Refund for $" + amt.toFixed(2).toString() + "?")) {
-                            btn.val("Saving...");
-                            sendVoidReturn(btn.attr("id"), "ur", btn.data("pid"));
-                        }
-                    });
-                    
-                    // Delete waive button
-                    $('#rptfeediv').on('click', '.hhk-deleteWaive', function () {
-                        var btn = $(this);
-                        
-                        if (btn.val() != 'Deleting...' && confirm('Delete this House payment?')) {
-                            btn.val('Deleting...');
-                            sendVoidReturn(btn.attr('id'), 'd', btn.data('ilid'), btn.data('iid'));
-                        }
-                    });
-                    
-                    $('#rptfeediv').on('click', '.pmtRecpt', function () {
-                        reprintReceipt($(this).data('pid'), '#pmtRcpt');
-                    });
+                    // Set up controls for table.
+                    paymentsTable('feesTable', 'rptfeediv');
                 }
             }
         });

@@ -300,30 +300,6 @@ function setupRates(ckIn) {
     $selRateCat.change();
 }
 
-
-function changePsgPatient(idPsg, idGuest, patientName) {
-    "use strict";
-    if (!confirm('Change PSG patient to: ' + patientName)) {
-        return;
-    }
-    $.getJSON("ws_ckin.php", {psg: idPsg, gid: idGuest, cmd: 'changePatient'})
-        .done(function(data) {
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, 'error');
-                return;
-            } else if (data.warning) {
-                flagAlertMessage(data.warning, 'warning');
-
-            } else if (data.result) {
-                $('#divPSGContainer').children().remove();
-                $('#divPSGContainer').append($(data.result));
-            }
-        });
-}
-
 function getRegistrationDialog(idReg) {
     "use strict";
     $.post(

@@ -313,7 +313,7 @@ class LocationRS extends TableRS {
     public $Description;   // varchar(245) DEFAULT '',
     public $Status;   // varchar(5) DEFAULT '',
     public $Address;   // varchar(145) NOT NULL DEFAULT '',
-    public $Phone;   // varchar(45) NOT NULL DEFAULT '',
+    public $Merchant;   // varchar(45) NOT NULL DEFAULT '',
     public $Map;   // varchar(45) NOT NULL DEFAULT '',
     public $Owner_Id;   // int(11) NOT NULL DEFAULT '0',
     public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
@@ -327,7 +327,7 @@ class LocationRS extends TableRS {
         $this->Description = new DB_Field("Description", "", new DbStrSanitizer(2000));
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5));
         $this->Address = new DB_Field("Address", "", new DbStrSanitizer(145));
-        $this->Phone = new DB_Field("Phone", "", new DbStrSanitizer(45));
+        $this->Merchant = new DB_Field("Merchant", "", new DbStrSanitizer(45));
         $this->Map = new DB_Field("Map", "", new DbStrSanitizer(45));
         $this->Owner_Id = new DB_Field("Owner_Id", 0, new DbIntSanitizer());
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

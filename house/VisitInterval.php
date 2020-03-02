@@ -1253,11 +1253,11 @@ where
                 case 'meanRate':
                 	$entry = '$' . number_format($avDailyFee,2);
                 	break;
-                	
+
                 case 'meanGstRate':
                 	$entry = '$' . number_format($avGuestFee,2);
                 	break;
-                	
+
                 case 'donpd':
                     $entry = '$' . number_format($totalDonationPaid,2);
                     break;

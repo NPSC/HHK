@@ -22,6 +22,7 @@ abstract class Resource {
     public $optGroup;
     protected $rooms = array();
     protected $currentOccupantsLoaded = FALSE;
+    protected $merchant = '';
 
     //protected $roomOcc = array();
 
@@ -49,8 +50,9 @@ abstract class Resource {
         $rooms = array();
 
          // Load rooms if not a new resource
-        $stmt = $dbh->prepare("select r.*
+        $stmt = $dbh->prepare("select r.*, ifnull(l.Merchant, '') as `Merchant`
 from resource_room rr join room r on rr.idRoom = r.idRoom
+left join location l on r.idLocation = l.idLocation
 where rr.idResource = :idr
 order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
@@ -60,9 +62,10 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
             $roomRs = new RoomRs();
             EditRS::loadRow($r, $roomRs);
-            $rm = new Room($dbh, 0, $roomRs);
+            $rm = new Room($dbh, 0, $roomRs, RoomType::Room, $r['Merchant']);
 
             $rooms[$r['idRoom']] = $rm;
+            $this->merchant = $r['Merchant'];
         }
 
         return $rooms;
@@ -266,6 +269,9 @@ order by r.Util_Priority;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         return $this->resourceRS->Rate_Adjust_Code->getStoredVal();
     }
 
+    public function getMerchant() {
+        return $this->merchant;
+    }
 
     public function getRate($rateCodes = array()) {
         // computed from room availablity and inService

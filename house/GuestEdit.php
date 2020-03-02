@@ -104,14 +104,12 @@ $id = 0;
 $idPsg = 0;
 $psg = NULL;
 $uname = $uS->username;
-$receipt = '';
 $guestTabIndex = 0;
 $guestName = '';
 $psgmkup = '';
 $memberData = array();
 $showSearchOnly = FALSE;
 $ngRss = array();
-$isPatient = FALSE;
 
 $memberFlag = SecurityComponent::is_Authorized("guestadmin");
 
@@ -184,12 +182,11 @@ if ($id > 0) {
             while ($r = $stmv->fetch(\PDO::FETCH_NUM)) {
 
                 if ($r[0] == VolMemberType::Patient) {
-                    $isPatient = TRUE;
                 }
             }
 
         } else {
-            $alertMessage = 'This person is not a '.$labels->getString('hospital', 'hospital', 'Hospital').' or guest.  ' . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
+            $alertMessage = 'This person is not a '.$labels->getString('MemberType', 'patient', 'Patient').' or guest.  ' . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
             $showSearchOnly = TRUE;
         }
     }
@@ -231,12 +228,10 @@ if ($idPsg > 0) {
         $alertMessage = 'Guest is not a memeber of the PSG indicated on the URL (GET param).  ';
         $idPsg = 0;
     }
-}
 
+} else {
 
-// PSG Chooser
-if ($idPsg == 0) {
-
+    // PSG Chooser
     if (count($ngRss) > 1) {
 
         // Select psg
@@ -444,10 +439,6 @@ if (isset($_POST["btnSubmit"])) {
 }
 
 
-// Get labels
-$labels = new Config_Lite(LABEL_FILE);
-
-
 
 // Heading member name text
 if ($name->isNew()) {
@@ -506,7 +497,7 @@ $regTabMarkup = "";
 $psgTabMarkup = "";
 $vehicleTabMarkup = "";
 $reservMarkup = '';
-$finMarkup = '';
+
 
 
 //
@@ -517,13 +508,13 @@ if ($psg->getIdPsg() > 0) {
     $psgTabMarkup = $psg->createEditMarkup($dbh, $uS->guestLookups[GL_TableNames::PatientRel], $labels, 'GuestEdit.php', $id, FALSE);
 
     $ccMarkup = '';
-    if ($uS->ccgw != '') {
+    if ($uS->PaymentGateway != '') {
 
         $ccMarkup = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
-                . HouseServices::viewCreditTable($dbh, $registration->getIdRegistration(), $id)
-                . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
-            ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel')));
+                . HouseServices::guestEditCreditTable($dbh, $registration->getIdRegistration(), $id, 'g')
+                . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-indx'=>'g', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
+            ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel ignrSave')));
 
     }
 
@@ -662,15 +653,6 @@ if ($psg->getIdPsg() > 0) {
     }
 
 
-    // Financial Assistance
-    if ($uS->IncomeRated) {
-        $finApp = new FinAssistance($dbh, $registration->getIdRegistration());
-        $finMarkup = $finApp->createIncomeDialog();
-    }
-
-
-
-
 } else {
     $psgTabMarkup = $psgmkup;
     $psgOnly = TRUE;
@@ -769,8 +751,9 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-		<script type="text/javascript" src="js/documentUpload.js"></script>
         <script type="text/javascript" src="../js/uppload.polyfills.js"></script>
+
+		<script type="text/javascript" src="js/documentUpload.min.js"></script>
 
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
@@ -819,7 +802,7 @@ $uS->guestId = $id;
                         <?php echo $demogTab; ?>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table style="width:100%;" id="dataTbl" cellpadding="0" cellspacing="0" border="0"></table>
+                      <table style="width:100%;" id="dataTbl" border-style: none></table>
                     </div>
                     <div id="exclTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
                         <?php echo $ExcludeTab; ?>
@@ -865,12 +848,12 @@ $uS->guestId = $id;
                     <ul>
                         <li><a href="#vVisits">Visits</a></li>
                         <li id="lipsg"><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
-                        <li><a href="#vregister"><?php echo ($uS->ccgw == '' ? 'Registration' : 'Registration/Credit') ?></a></li>
+                        <li><a href="#vregister"><?php echo ($uS->PaymentGateway == '' ? 'Registration' : 'Registration/Credit') ?></a></li>
                         <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>
                         <?php if ($uS->IncomeRated && $showCharges) {  ?>
                         <li id="fin"><a href="#vfin">Financial Assistance...</a></li>
                         <?php } if ($showCharges) {  ?>
-                        <li><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
+                        <li id="pmtsTable"><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
                         <?php } ?>
                         <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>
                         <?php if ($uS->TrackAuto) { ?>
@@ -898,7 +881,7 @@ $uS->guestId = $id;
                         </div>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table style="width:100%;" id="dataTbl" cellpadding="0" cellspacing="0" border="0"></table>
+                      <table style="width:100%;" id="dataTbl" border-style: none></table>
                     </div>
                     <div id="vfin"></div>
                     <div id="vVisits" class="ui-tabs-hide" style="min-width: 600px; display:none">
@@ -962,6 +945,7 @@ $uS->guestId = $id;
             </div>
         </div>  <!-- div id="contentDiv"-->
         <form name="xform" id="xform" method="post"></form>
+        <table id="feesTable" style="display:none;"></table>
         <script type="text/javascript">
             var memberData = <?php echo json_encode($memberData); ?>;
             var psgTabIndex = parseInt('<?php echo $guestTabIndex; ?>', 10);
@@ -971,6 +955,6 @@ $uS->guestId = $id;
             var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload.min.js?vn=38"></script>
+        <script type="text/javascript" src="js/guestload-min.js?rt=36"></script>
     </body>
 </html>

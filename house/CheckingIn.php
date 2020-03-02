@@ -201,6 +201,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
+
 		<?php echo INCIDENT_CSS; ?>
 		<?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>

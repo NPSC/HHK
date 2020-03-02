@@ -225,7 +225,9 @@ class RoomChooser {
             $keyDepAmount = $visitCharge->getKeyFeesPaid();
 
             if ($keyDepAmount == 0) {
-                $paymentMarkup = PaymentChooser::createChangeRoomMarkup($dbh, $idGuest, $this->resv->getIdRegistration(), $visitCharge);
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan()));
+
+                $paymentMarkup = PaymentChooser::createChangeRoomMarkup($dbh, $idGuest, $this->resv->getIdRegistration(), $visitCharge, $gateway);
             }
         }
 
@@ -279,7 +281,8 @@ class RoomChooser {
                 "rate" => $assignedRate,
                 "title" => $rc->getTitle(),
                 'key' => $rc->getKeyDeposit($uS->guestLookups[GL_TableNames::KeyDepositCode]),
-                'status' => 'a'
+                'status' => 'a',
+                'merchant' => $rc->getMerchant(),
             );
         }
 
@@ -289,7 +292,8 @@ class RoomChooser {
             "rate" => 0,
             "title" => '',
             'key' => 0,
-            'status' => ''
+            'status' => '',
+            'merchant' => ''
         );
 
         return $resArray;

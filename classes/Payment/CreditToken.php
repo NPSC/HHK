@@ -28,14 +28,15 @@ class CreditToken {
         if ($idToken > 0) {
             $gtRs = self::getTokenRsFromId($dbh, $idToken);
         } else {
-            $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum);
+            $gtRs = self::findTokenRS($dbh, $idPayor, $vr->getCardHolderName(), $vr->getCardType(), $cardNum, $vr->getMerchant());
         }
 
         // Load values
         $gtRs->idGuest->setNewVal($idPayor);
         $gtRs->idRegistration->setNewVal($idRegistration);
+        $gtRs->Merchant->setNewVal($vr->getMerchant());
 
-        if ($vr->getCardHolderName() != '') {
+        if (trim($vr->getCardHolderName()) != '') {
             $gtRs->CardHolderName->setNewVal($vr->getCardHolderName());
         }
         $gtRs->CardType->setNewVal($vr->getCardType());
@@ -135,16 +136,47 @@ class CreditToken {
         return $gtRs;
     }
 
-
-    public static function getRegTokenRSs(\PDO $dbh, $idRegistration, $idGuest = 0) {
+    public static function getGuestTokenRSs(\PDO $dbh, $idGuest) {
 
         $rsRows = array();
+        $idGst = intval($idGuest);
 
-        // Get registration tokens
-        if ($idRegistration > 0) {
+        if ($idGst > 0) {
+
+            $gtRs = new Guest_TokenRS();
+            $gtRs->idGuest->setStoredVal($idGst);
+            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest), 'and', array($gtRs->Merchant));
+
+            foreach ($rows as $r) {
+                $gtRs = new Guest_TokenRS();
+                EditRS::loadRow($r, $gtRs);
+
+                if (self::hasToken($gtRs)) {
+                    $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
+                }
+            }
+        }
+        return $rsRows;
+    }
+
+    public static function getRegTokenRSs(\PDO $dbh, $idRegistration, $merchant, $idGuest = 0) {
+
+        $rsRows = array();
+        $idReg = intval($idRegistration);
+        $idGst = intval($idGuest);
+
+        $whMerchant = '';
+
+        if ($merchant != '') {
+            $whMerchant = " and t.Merchant = '$merchant' ";
+        }
+
+
+        // Get Billing Agent tokens
+        if ($idReg > 0) {
 
             $stmt = $dbh->query("select t.* from guest_token t left join name_volunteer2 nv on t.idGuest = nv.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = 'ba'
-where t.idRegistration = $idRegistration and nv.idName is null");
+where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Merchant");
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -157,11 +189,12 @@ where t.idRegistration = $idRegistration and nv.idName is null");
             }
         }
 
-        if ($idGuest > 0) {
+        if ($idGst > 0) {
 
             $gtRs = new Guest_TokenRS();
-            $gtRs->idGuest->setStoredVal($idGuest);
-            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest));
+            $gtRs->idGuest->setStoredVal($idGst);
+            $gtRs->Merchant->setStoredVal($merchant);
+            $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->Merchant));
 
             foreach ($rows as $r) {
                 $gtRs = new Guest_TokenRS();
@@ -176,7 +209,7 @@ where t.idRegistration = $idRegistration and nv.idName is null");
 
     }
 
-    public static function findTokenRS(\PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount) {
+    public static function findTokenRS(\PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount, $merchant) {
 
         $gtRs = new Guest_TokenRS();
         $gtRs->idGuest->setStoredVal($gid);
@@ -184,7 +217,11 @@ where t.idRegistration = $idRegistration and nv.idName is null");
         $gtRs->CardType->setStoredVal($cardType);
         $gtRs->MaskedAccount->setStoredVal($maskedAccount);
 
-        $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CardHolderName, $gtRs->CardType, $gtRs->MaskedAccount));
+        if ($merchant != '') {
+            $gtRs->Merchant->setStoredVal($merchant);
+        }
+
+        $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->CardHolderName, $gtRs->CardType, $gtRs->MaskedAccount, $gtRs->Merchant));
 
         if (count($rows) == 1) {
 
@@ -196,7 +233,7 @@ where t.idRegistration = $idRegistration and nv.idName is null");
 
         } else {
 
-            throw new Hk_Exception_Runtime('Multiple Payment Tokens for guest Id: '.$gid);
+            throw new Hk_Exception_Runtime('Multiple Payment Tokens for guest Id: '.$gid.', ccgw='.$merchant);
         }
 
         return $gtRs;

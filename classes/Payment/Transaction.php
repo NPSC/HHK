@@ -24,13 +24,16 @@ class Transaction {
         $transRs->Amount->setNewVal($vr->getAmount());
         $transRs->Invoice_Number->setNewVal($vr->getInvoiceNumber());
         $transRs->Date_Entered->setNewVal(date("Y-m-d H:i:s"));
-        $transRs->Payment_Type->setNewVal($vr->getPaymentType());
-        $transRs->idName->setNewVal($vr->idPayor);
+        $transRs->Payment_Type->setNewVal($vr->getPaymentMethod());
+        $transRs->idName->setNewVal($vr->getIdPayor());
         $transRs->Trans_Date->setNewVal(date("Y-m-d H:i:s"));
         $transRs->Gateway_Ref->setNewVal($gwName);
         $transRs->Trans_Type->setNewVal($transType);
         $transRs->Trans_Method->setNewVal($transMethod);
-        $transRs->Check_Number->setNewVal($vr->checkNumber);
+
+        if (is_a($vr, 'CheckResponse') || is_a($vr, 'TransferResponse')) {
+            $transRs->Check_Number->setNewVal($vr->getCheckNumber());
+        }
 
 
         if (isset($vr->response)) {

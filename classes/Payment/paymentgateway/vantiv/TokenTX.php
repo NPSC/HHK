@@ -24,21 +24,29 @@ class TokenTX {
      * @param \CreditSaleTokenRequest $cstReq
      * @return \TokenResponse
      */
-    public static function CreditSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditSaleTokenRequest $cstReq, $payNotes = '') {
+    public static function CreditSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditSaleTokenRequest $cstReq, $payNotes, $payDate) {
 
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
-            $cstReq->setAddress('4')->setZip('30329')->setOperatorID('test');
+        if (strtolower($uS->mode) !== Mode::Live) {
+            $cstReq->setOperatorID('test');
             //$trace = TRUE;
         }
 
         // Call to web service
         $creditResponse = $cstReq->submit($gway->getCredentials(), $trace);
+        $creditResponse->setMerchant($gway->getGatewayType());
 
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $cstReq->getTokenId(), $payNotes);
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $cstReq->getTokenId(), PaymentStatusCode::Paid);
 
+        $vr->setPaymentDate($payDate);
+        $vr->setPaymentNotes($payNotes);
+        $vr->setResult($creditResponse->getStatus());
+
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($cstReq->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditSaleToken');
@@ -67,11 +75,11 @@ class TokenTX {
 
     }
 
-    public static function CreditAdjustToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditAdjustTokenRequest $cstReq, $payNotes = '') {
+    public static function CreditAdjustToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditAdjustTokenRequest $cstReq) {
         throw new Hk_Exception_Payment("Credit Adjust Sale Amount is not implememnted yet. ");
     }
 
-    public static function creditVoidSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidSaleTokenRequest $voidSale, PaymentRS $payRs, $payNotes = '') {
+    public static function creditVoidSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidSaleTokenRequest $voidSale, PaymentRS $payRs, $payDate) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
@@ -80,18 +88,24 @@ class TokenTX {
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
 
+        if (strtolower($uS->mode) !== Mode::Live) {
             $voidSale->setOperatorID('test');
-            //$trace = TRUE;
-
         } else {
             $voidSale->setOperatorID($uS->username);
         }
 
         // Call to web service
         $creditResponse = $voidSale->submit($gway->getCredentials(), $trace);
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId(), $payNotes);
+        $creditResponse->setMerchant($gway->getGatewayType());
+
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $voidSale->getTokenId(), PaymentStatusCode::VoidSale);
+        $vr->setPaymentDate($payDate);
+        $vr->setResult($creditResponse->getStatus());
+
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($voidSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidSaleToken');
@@ -116,7 +130,7 @@ class TokenTX {
 
     }
 
-    public static function creditReverseToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReversalTokenRequest $reverseSale, PaymentRS $payRs, $payNotes = '') {
+    public static function creditReverseToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReversalTokenRequest $reverseSale, PaymentRS $payRs, $payDate) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
@@ -125,7 +139,8 @@ class TokenTX {
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
+
+        if (strtolower($uS->mode) !== Mode::Live) {
             $reverseSale->setOperatorID('test');
             //$trace = TRUE;
         } else {
@@ -134,7 +149,15 @@ class TokenTX {
 
         // Call to web service
         $creditResponse = $reverseSale->submit($gway->getCredentials(), $trace);
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $reverseSale->getTokenId(), $payNotes);
+        $creditResponse->setMerchant($gway->getGatewayType());
+
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $reverseSale->getTokenId(), PaymentStatusCode::Reverse);
+        $vr->setPaymentDate($payDate);
+        $vr->setResult($creditResponse->getStatus());
+
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($reverseSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReverseToken');
@@ -160,7 +183,7 @@ class TokenTX {
 
     }
 
-    public static function creditReturnToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReturnTokenRequest $returnSale, $payRs, $payNotes = '') {
+    public static function creditReturnToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReturnTokenRequest $returnSale, $payRs, $payDate) {
 
         if (is_null($payRs) === FALSE && $payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('Payment Id not given.  ');
@@ -169,7 +192,7 @@ class TokenTX {
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
+        if (strtolower($uS->mode) !== Mode::Live) {
             $returnSale->setOperatorID('test');
             //$trace = TRUE;
        } else {
@@ -178,8 +201,15 @@ class TokenTX {
 
         // Call to web service
         $creditResponse = $returnSale->submit($gway->getCredentials(), $trace);
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnSale->getTokenId(), $payNotes);
+        $creditResponse->setMerchant($gway->getGatewayType());
 
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnSale->getTokenId(), PaymentStatusCode::Retrn);
+        $vr->setPaymentDate($payDate);
+        $vr->setResult($creditResponse->getStatus());
+
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReturnToken');
@@ -205,7 +235,7 @@ class TokenTX {
 
     }
 
-    public static function creditVoidReturnToken (\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidReturnTokenRequest $returnVoid, PaymentRS $payRs) {
+    public static function creditVoidReturnToken (\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidReturnTokenRequest $returnVoid, PaymentRS $payRs, $payDate) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
             throw new Hk_Exception_Payment('DB Payment Id not given.  ');
@@ -214,15 +244,22 @@ class TokenTX {
         $uS = Session::getInstance();
         $trace = FALSE;
 
-        if (strtolower($gway->getGatewayType()) == 'test') {
+        if (strtolower($uS->mode) !== Mode::Live) {
             $returnVoid->setOperatorID('test');
             //$trace = TRUE;
         }
 
         // Call to web service
         $creditResponse = $returnVoid->submit($gway->getCredentials(), $trace);
-        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnVoid->getTokenId());
+        $creditResponse->setMerchant($gway->getGatewayType());
 
+        $vr = new TokenResponse($creditResponse, $idGuest, $idReg, $returnVoid->getTokenId(), PaymentStatusCode::VoidReturn);
+        $vr->setPaymentDate($payDate);
+        $vr->setResult($creditResponse->getStatus());
+
+        if ($creditResponse->getStatus() != MpStatusValues::Approved) {
+            $vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        }
 
         // Save raw transaction in the db.
         PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnVoid->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidReturnToken');
@@ -248,29 +285,27 @@ class TokenTX {
 }
 
 
-class TokenResponse extends PaymentResponse {
-
-    /**
-     *
-     * @var CreditTokenResponse
-     */
-    public $response;
+class TokenResponse extends CreditResponse {
 
 
-
-    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $payNotes = '') {
+    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $paymentStatusCode = '') {
 
         $this->response = $creditTokenResponse;
-        $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
         $this->setIdToken($idToken);
         $this->idRegistration = $idRegistration;
         $this->invoiceNumber = $creditTokenResponse->getInvoiceNumber();
         $this->amount = $creditTokenResponse->getAuthorizedAmount();
-        $this->payNotes = $payNotes;
+        $this->setPaymentStatusCode($paymentStatusCode);
+
+    }
+
+    public function getPaymentMethod() {
+        return PaymentMethod::Charge;
     }
 
     public function getStatus() {
+
         switch ($this->response->getStatus()) {
 
             case MpStatusValues::Approved:
@@ -291,14 +326,14 @@ class TokenResponse extends PaymentResponse {
     public function receiptMarkup(\PDO $dbh, &$tbl) {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxxxx...". $this->response->getMaskedAccount()));
+        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxx...". $this->response->getMaskedAccount()));
 
         if ($this->response->getCardHolderName() != '') {
             $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getCardHolderName()));
         }
 
         if ($this->response->getAuthCode() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode(), array('style'=>'font-size:.8em;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode() . ' ('.ucfirst($this->response->getMerchant()). ')', array('style'=>'font-size:.8em;')));
         }
 
         if ($this->response->getResponseMessage() != '') {
@@ -311,3 +346,4 @@ class TokenResponse extends PaymentResponse {
     }
 
 }
+

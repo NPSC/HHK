@@ -721,7 +721,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     $('#keysfees').css('background-color', 'white');
 
     // Unlock Put Neo Card On file. 
-    $('#cbNewCard').prop('disabled', false);
+    //$('#cbNewCard').prop('disabled', false);
     
     //working
     $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');

@@ -38,9 +38,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Campaign_Type','ink','In Kind','','',0),
 ('Campaign_Type', 'sch', 'Scholarship', '','',0),
 
-('CC_Gateway_Name', 'test', 'Test','','',0),
-('CC_Gateway_Name', 'production', 'Production','','',0),
-
 ('Constraint_Type', 'hos', 'Hospital', '','',0),
 ('Constraint_Type', 'rv', 'Reservation','','',0),
 ('Constraint_Type', 'v', 'Visit', '','',0),
@@ -228,6 +225,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Newsletter', 'z', 'Unknown', '', 'd', '1000'),
 
 ('NoReturnReason', 'n1', 'Irresponsible', '', 'h',0),
+('NoReturnReason', 'n2', 'Smokes in Room', '', 'h',0),
 
 ('Note_Category', 'ncr', 'Reservation', '', '', 0),
 ('Note_Category', 'ncf', 'PSG', '', '', 0),
@@ -485,7 +483,6 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('CalResourceGroupBy','Type','s','h','','Calendar resource grouping parameter',''),
 ('CalViewWeeks','3','i','h','','Number of weeks showing in the calendar view',''),
 ('CardSwipe','false','b','fg','','Use POS terminal',''),
-('ccgw','','lu','fg','','Credit Card Gateway mode','CC_Gateway_Name'),
 ('CheckInTime','16','i','h','','Normal House Check in time of day in 24-hour format, hh',''),
 ('CheckOutTime','10','i','h','','Normal House Checkout time of day.  Format hh',''),
 ('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true.',''),
@@ -663,7 +660,10 @@ REPLACE INTO `payment_method` (`idPayment_method`, `Method_Name`) VALUES
 ('5', 'Transfer');
 -- ;
 
-
+REPLACE into cc_hosted_gateway (Gateway_Name) VALUES
+('instamed'),
+('vantiv');
+-- ;
 
 replace INTO invoice_line_type (id, Description, Order_Position) VALUES
 (1,'item recurring',2),

@@ -122,6 +122,21 @@ where
         return $dbh->exec("update registration set Pref_Token_Id = $tokenId where idregistration = $regId and Pref_Token_Id != $tokenId");
     }
 
+    public static function readPrefTokenId(\PDO $dbh, $idRegistration) {
+
+        $tokenId = 0;
+
+        if ($idRegistration > 0) {
+            $stmt = $dbh->query("select Pref_Token_Id from registration where idRegistration = $idRegistration");
+            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            if (count($rows) == 1) {
+                $tokenId = $rows[0][0];
+            }
+        }
+
+        return $tokenId;
+    }
+
     /**
      *
      * @param \PDO $dbh

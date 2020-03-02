@@ -136,7 +136,7 @@ where `n`.`idName` > 0 and `n`.`Member_Status` in ('a','d','in');
 -- View `vadditional_guests`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vadditional_guests` AS
-    SELECT 
+    SELECT
         `s`.`idVisit` AS `idVisit`,
         `s`.`idName` AS `idName`,
         `s`.`Status` AS `Status`,
@@ -167,7 +167,7 @@ CREATE OR REPLACE VIEW `vadditional_guests` AS
 -- View `vadmin_history_records`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vadmin_history_records` AS
-    SELECT 
+    SELECT
         `m`.`Id` AS `Id`,
         (CASE
             WHEN (`m`.`MemberRecord` = 1) THEN `m`.`Fullname`
@@ -215,7 +215,7 @@ CREATE OR REPLACE VIEW `vadmin_history_records` AS
 -- View `vaudit_log`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vaudit_log` AS
-    (SELECT 
+    (SELECT
         `name_log`.`Timestamp` AS `LogDate`,
         `name_log`.`Log_Type` AS `LogType`,
         `name_log`.`Sub_Type` AS `Subtype`,
@@ -224,7 +224,7 @@ CREATE OR REPLACE VIEW `vaudit_log` AS
         `name_log`.`Log_Text` AS `LogText`
     FROM
         `name_log`)
-    UNION (SELECT 
+    UNION (SELECT
         `a`.`Effective_Date` AS `LogDate`,
         'Volunteer' AS `LogType`,
         `a`.`Action_Codes` AS `Subtype`,
@@ -357,7 +357,7 @@ from
 -- View `vcleaning_log`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vcleaning_log` AS
-    SELECT 
+    SELECT
         IFNULL(`rr`.`idResource`, 0) AS `idResource`,
         `c`.`idRoom` AS `idRoom`,
         IFNULL(`r`.`Title`, '') AS `Title`,
@@ -381,7 +381,7 @@ CREATE OR REPLACE VIEW `vcleaning_log` AS
 -- View `vcredit_payments`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vcredit_payments` AS
-    SELECT 
+    SELECT
         IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
         `p`.`idPayment` AS `idPayment`,
         IFNULL(`pa`.`Approved_Amount`, 0) AS `Approved_Amount`,
@@ -408,7 +408,7 @@ CREATE OR REPLACE VIEW `vcredit_payments` AS
 -- View `vcurrent_residents`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vcurrent_residents` AS
-    SELECT 
+    SELECT
         `s`.`idName` AS `Id`,
         CONCAT((CASE
                     WHEN (IFNULL(`m`.`Name_Nickname`, '') = '') THEN IFNULL(`m`.`Name_First`, '')
@@ -820,7 +820,7 @@ FROM ((`report` `r` left join `name_guest` `ng` on((`r`.`Guest_Id` = `ng`.`idNam
 -- View `vguest_audit_log`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_audit_log` AS
-    SELECT 
+    SELECT
         `Timestamp` AS `LogDate`,
         `Log_Type` AS `LogType`,
         `Sub_Type` AS `Subtype`,
@@ -828,8 +828,8 @@ CREATE OR REPLACE VIEW `vguest_audit_log` AS
         `idName`,
         `Log_Text` AS `LogText`
     FROM
-        `name_log` 
-    UNION SELECT 
+        `name_log`
+    UNION SELECT
         `Timestamp` AS `LogDate`,
         `Log_Type` AS `LogType`,
         `Sub_Type` AS `Subtype`,
@@ -848,7 +848,7 @@ CREATE OR REPLACE VIEW `vguest_audit_log` AS
 -- View `vguest_export`
 -- -----------------------------------------------------
 create or replace view `vguest_export` as
-Select 
+Select
     ng.idName as `Guest_Id`,
     ifnull(rv.idReservation, '') as `Reservation_Id`,
     ifnull(l.`Title`, '') as `Status_Title`,
@@ -865,10 +865,10 @@ Select
     ifnull(ne.Email, '') as `Email`,
     ifnull(np.Phone_Num, '') as `Phone`
 from
-    name_guest ng 
+    name_guest ng
             left join
     registration rg on ng.idPsg = rg.idPsg
-            left join 
+            left join
     reservation rv on rg.idRegistration = rv.idRegistration
             left join
     `name` n on ng.idName = n.idName
@@ -889,7 +889,7 @@ from
 -- View `vguest_history_records`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_history_records` AS
-    SELECT 
+    SELECT
         `m`.`Id` AS `Id`,
         (CASE
             WHEN (`m`.`MemberRecord` = 1) THEN `m`.`Fullname`
@@ -937,7 +937,7 @@ CREATE OR REPLACE VIEW `vguest_history_records` AS
 -- View `vguest_listing`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_listing` AS
-    SELECT 
+    SELECT
         `n`.`idName` AS `Id`,
         IFNULL(`g1`.`Description`, '') AS `Prefix`,
         `n`.`Name_First` AS `First`,
@@ -967,8 +967,7 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
         `ng`.`Relationship_Code` AS `Relationship_Code`,
         `ng`.`idPsg` AS `idPsg`,
         `nd`.`No_Return` AS `ngStatus`,
-        IFNULL(`n`.`External_Id`, '') AS `External_Id`,
-        `n`.`Member_Status` AS `Member_Status`
+        IFNULL(`n`.`External_Id`, '') AS `External_Id`
     FROM
         ((((((((`name_guest` `ng`
         LEFT JOIN `name` `n` ON ((`ng`.`idName` = `n`.`idName`)))
@@ -996,7 +995,7 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
 -- View `vguest_search_neon`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_search_neon` AS
-    SELECT 
+    SELECT
         `n`.`idName` AS `HHK_ID`,
         `n`.`External_Id` AS `Account Id`,
         IFNULL(`g1`.`Description`, '') AS `Prefix`,
@@ -1021,7 +1020,7 @@ CREATE OR REPLACE VIEW `vguest_search_neon` AS
             AND (`g2`.`Table_Name` = 'Name_Suffix'))))
     WHERE
         ((`n`.`idName` > 0)
-            AND `n`.`idName` IN (SELECT 
+            AND `n`.`idName` IN (SELECT
                 `name_guest`.`idName`
             FROM
                 `name_guest`)
@@ -1034,7 +1033,7 @@ CREATE OR REPLACE VIEW `vguest_search_neon` AS
 -- View `vguest_data_neon`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_data_neon` AS
-    SELECT 
+    SELECT
         `n`.`idName` AS `HHK_ID`,
         `n`.`External_Id` AS `accountId`,
         IFNULL(`g1`.`Description`, '') AS `prefix`,
@@ -1113,7 +1112,7 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         LEFT JOIN `neon_type_map` `ni` ON ni.Neon_Name = 'individualType' and `nv`.`Vol_Code` = `ni`.`HHK_Type_Code`
     WHERE
         ((`n`.`idName` > 0)
-            AND `n`.`idName` IN (SELECT 
+            AND `n`.`idName` IN (SELECT
                 `name_guest`.`idName`
             FROM
                 `name_guest`)
@@ -1125,7 +1124,7 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
 -- View `vguest_neon_payment`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_neon_payment` AS
-SELECT 
+SELECT
     p.idPayment,
     p.idPayor as `hhkId`,
     n.External_Id AS `accountId`,
@@ -1165,14 +1164,14 @@ FROM
 WHERE
     p.Status_Code = 's' and p.Is_Refund = 0 and p.External_Id = '' and n.Record_Member = 1 and n.idName > 0 and p.Amount > 0
         AND p.idPayment_Method IN (1 , 2, 3, 4);
-        
+
 
 
 -- -----------------------------------------------------
 -- View `vneon_payment_display`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vneon_payment_display` AS
-SELECT 
+SELECT
     p.idPayment as `HHK Payment Id`,
     p.idPayor as `HHK Id`,
     n.Name_Full as `Name`,
@@ -1212,18 +1211,18 @@ FROM
         AND gc.Substitute = pa.Card_Type
         LEFT JOIN
     neon_type_map nc ON nc.List_Name = 'creditCardTypes'
-        AND nc.HHK_Type_Code = gc.Code  
+        AND nc.HHK_Type_Code = gc.Code
 WHERE
     p.Status_Code = 's' and p.Is_Refund = 0 and p.External_Id = '' and n.Record_Member = 1 and n.idName > 0 and p.Amount > 0
         AND p.idPayment_Method IN (1 , 2, 3, 4);
-        
+
 
 
 -- -----------------------------------------------------
 -- View `vguest_view`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_view` AS
-    SELECT 
+    SELECT
         IFNULL((CASE
                     WHEN (`n`.`Name_Suffix` = '') THEN `n`.`Name_Last`
                     ELSE CONCAT(`n`.`Name_Last`, ' ', `g`.`Description`)
@@ -1263,7 +1262,7 @@ CREATE OR REPLACE VIEW `vguest_view` AS
 -- View `vhospitalstay_log`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vhospitalstay_log` AS
-    SELECT 
+    SELECT
         `l`.`Sub_Type` AS `Sub_Type`,
         `l`.`User_Name` AS `User_Name`,
         `l`.`idName` AS `idName`,
@@ -1354,7 +1353,7 @@ CREATE or replace VIEW `vindividual_donations` AS
             else ifnull(`ve`.`Address_Code`, '')
         end) AS `Assoc_Preferred_Addr_Code`,
         (case
-            when `vm`.`MemberRecord` then `vm`.`Preferred_Email` 
+            when `vm`.`MemberRecord` then `vm`.`Preferred_Email`
             else ifnull(`ve`.`Preferred_Email`, '')
         end) AS `Assoc_Email`,
         (case
@@ -1442,7 +1441,7 @@ CREATE or replace VIEW `vindividual_donations` AS
 -- View `vitem_list`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vitem_list` AS
-    SELECT 
+    SELECT
         `i`.`idItem` AS `idItem`,
         `i`.`Percentage` AS `Percentage`,
         `i`.`Deleted` AS `Deleted`,
@@ -1472,7 +1471,7 @@ CREATE OR REPLACE VIEW `vitem_list` AS
 -- View `vlist_inv_pments`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vlist_inv_pments` AS
-   SELECT 
+   SELECT
         `i`.`idInvoice` AS `idInvoice`,
         `i`.`Invoice_Number` AS `Invoice_Number`,
         `i`.`Amount` AS `Invoice_Amount`,
@@ -1512,6 +1511,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
         IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
         IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
         IFNULL(`pa`.`Customer_Id`, 0) AS `Charge_Customer_Id`,
+        IFNULL(`pa`.`Merchant`, '') AS `Merchant`,
         IFNULL(`pa`.`Acct_Number`, `p`.`Data2`) AS `Masked_Account`,
         IFNULL(`pa`.`Card_Type`, '') AS `Card_Type`,
         IFNULL(`pa`.`Approved_Amount`, '') AS `Approved_Amount`,
@@ -1541,7 +1541,7 @@ CREATE OR REPLACE VIEW `vlist_inv_pments` AS
 -- View `vlist_pments`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vlist_pments` AS
-   SELECT 
+   SELECT
         ifnull(`i`.`idInvoice` ,0) AS `idInvoice`,
         ifnull(`i`.`Invoice_Number`, '') AS `Invoice_Number`,
         `i`.`Amount` AS `Invoice_Amount`,
@@ -1581,6 +1581,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
         IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
         IFNULL(`pa`.`idPayment_auth`, 0) AS `idPayment_auth`,
         IFNULL(`pa`.`Customer_Id`, 0) AS `Charge_Customer_Id`,
+        IFNULL(`pa`.`Merchant`, '') AS `Merchant`,
         IFNULL(`pa`.`Acct_Number`, `p`.`Data2`) AS `Masked_Account`,
         IFNULL(`pa`.`Card_Type`, '') AS `Card_Type`,
         IFNULL(`pa`.`Approved_Amount`, '') AS `Approved_Amount`,
@@ -1617,7 +1618,7 @@ Select
     l.Description,
     l.Status,
     l.Address,
-    l.Phone,
+    l.Merchant,
     l.Owner_Id as `Owner Id`,
     ifnull(v.Name_Last, '') AS Owner,
     l.Updated_By as `Updated By`,
@@ -1822,11 +1823,10 @@ order by n.Name_Last_First;
 -- -----------------------------------------------------
 -- View `vresv_notes`
 -- -----------------------------------------------------
-create or replace view vresv_notes as
-    SELECT 
+CREATE OR REPLACE VIEW `vresv_notes` AS
+    SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
-        n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
@@ -1837,42 +1837,21 @@ create or replace view vresv_notes as
             JOIN
         reservation_note rn ON n.idNote = rn.Note_Id
     WHERE
-        rn.Reservation_Id > 0 && n.Status = 'a'
-	UNION
-		SELECT 
-        n.idNote AS `Note_Id`,
-        n.idNote AS `Action`,
-        n.flag,
-        n.User_Name,
-        n.Title,
-        n.Note_Text,
-        res.idReservation,
-        n.`Timestamp`
-    FROM
-        note n
-            JOIN
-        psg_note pn ON n.idNote = pn.Note_Id
-			JOIN
-		registration reg ON pn.Psg_Id = reg.idPsg
-			JOIN
-		reservation res ON reg.idRegistration = res.idRegistration
-	WHERE
-		n.flag = '1';
+        rn.Reservation_Id > 0 && n.Status = 'a';
 
 
 -- -----------------------------------------------------
 -- View `vvisit_notes`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vvisit_notes` AS
-    SELECT 
+    SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
         n.User_Name,
         n.Title,
         n.Note_Text,
         v.idVisit,
-        n.`Timestamp`,
-        n.`flag`
+        n.`Timestamp`
     FROM
         note n
             JOIN
@@ -1880,37 +1859,16 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
             join
         visit v on v.idReservation = rn.Reservation_Id and v.Span = 0
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a'
-	UNION
-		SELECT 
-        n.idNote AS `Note_Id`,
-        n.idNote AS `Action`,
-        n.User_Name,
-        n.Title,
-        n.Note_Text,
-        v.idVisit as idVisit,
-        n.`Timestamp`,
-        n.`flag`
-    FROM
-        note n
-            JOIN
-        psg_note pn ON n.idNote = pn.Note_Id
-			JOIN
-		registration reg ON pn.Psg_Id = reg.idPsg
-			JOIN
-		visit v ON reg.idRegistration = v.idRegistration
-	WHERE
-		n.flag = '1';
+        rn.Reservation_Id > 0 && n.`Status` = 'a';
 
 
 -- -----------------------------------------------------
 -- View `vpsg_notes`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vpsg_notes` AS
-    SELECT 
+    SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
-        n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
@@ -2016,11 +1974,11 @@ select
         `name` n on v.idPrimaryGuest = n.idName
             left join
 	`name_demog` nd on v.idPrimaryGuest = nd.idName
-            left join 
+            left join
 	stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span and v.`Status` = s.`Status`
-            left join 
+            left join
         gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = n.Name_Suffix
-            left join 
+            left join
         gen_lookups gv on gv.Table_Name = 'Visit_Status' and gv.Code = v.Status
     group by v.idVisit, v.Span;
 
@@ -2030,11 +1988,11 @@ select
 -- view vregister_resv
 -- -----------------------------------------------------
 CREATE or Replace VIEW `vregister_resv` AS
-    select 
+    select
         `r`.`idReservation` AS `idReservation`,
         `r`.`idResource` AS `idResource`,
         `r`.`Status` AS `Status`,
-        `r`.`Expected_Arrival`, 
+        `r`.`Expected_Arrival`,
         `r`.`Expected_Departure` AS `Expected_Departure`,
         `r`.`idGuest` AS `idGuest`,
         ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') AS `Guest Last`,
@@ -2060,9 +2018,9 @@ CREATE or Replace VIEW `vregister_resv` AS
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join
 	`name_demog` nd on `r`.`idGuest` = nd.idName
-            left join 
+            left join
         gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix
-            left join 
+            left join
         lookups gv on gv.Category = 'ReservStatus' and gv.Code = r.Status;
 
 
@@ -2098,7 +2056,7 @@ from
 -- View `vreservation_events`
 -- -----------------------------------------------------
 CREATE or Replace VIEW `vreservation_events` AS
-    select 
+    select
         `r`.`idReservation` AS `idReservation`,
         `r`.`idResource` AS `idResource`,
         `r`.`Status` AS `Status`,
@@ -2141,7 +2099,7 @@ CREATE or Replace VIEW `vreservation_events` AS
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join
 	`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
-            left join 
+            left join
         `name` n2 ON hs.idPatient = n2.idName
             left join
         gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix
@@ -2158,7 +2116,7 @@ CREATE or Replace VIEW `vreservation_events` AS
 -- View `vresv_guest`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vresv_guest` AS
-select 
+select
     hs.idPsg,
     rg.idGuest as `idGuest`,
     rg.idReservation,
@@ -2174,7 +2132,7 @@ from reservation_guest rg
     hospital_stay hs on r.idHospital_Stay = hs.idHospital_stay
 where r.`Status` in ('a', 'uc', 'w')
 union
-select 
+select
     hs.idPsg,
     s.idName as `idGuest`,
     v.idReservation,
@@ -2196,7 +2154,7 @@ where s.`Status` = 'a';
 -- View `vreservation_guests`
 -- -----------------------------------------------------
 create or replace view `vreservation_guests` as
-select 
+select
     r.idReservation, r.idGuest, ng.idPsg, n.Name_Full, np.Phone_Num, r.`Primary_Guest`, g.Description as `Relationship_Code`
 from
     reservation_guest r
@@ -2341,7 +2299,7 @@ CREATE or replace VIEW `vresources_ready` AS
 -- View `vresv_patient`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vresv_patient` AS
-        select 
+        select
         `r`.`idReservation` AS `idReservation`,
         `r`.`idRegistration` AS `idRegistration`,
         `r`.`idGuest` AS `idGuest`,
@@ -2414,10 +2372,22 @@ order by r.Util_Priority,r.Title;
 
 
 -- -----------------------------------------------------
+-- View `vroom_paygateway`
+-- -----------------------------------------------------
+CREATE  OR REPLACE VIEW `vroom_paygateway` AS
+Select r.idRoom, ifnull(l.Merchant, '') as `Merchant`
+from
+    room r
+        left join
+    location l on r.idLocation = l.idLocation;
+
+
+
+-- -----------------------------------------------------
 -- View `vspan_listing`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vspan_listing` AS
-    select 
+    select
         `v`.`idVisit`,
         `v`.`Span`,
         `r`.`idPsg` AS `idPsg`,
@@ -2533,7 +2503,7 @@ order by l.idVisit, l.Span, l.idStay, l.Timestamp;
 -- View `vsyslog`
 -- -----------------------------------------------------
 CREATE  OR REPLACE VIEW `vsyslog` AS
-    SELECT 
+    SELECT
         `house_log`.`Log_Type` AS `Log_Type`,
         `house_log`.`Sub_Type` AS `Sub_Type`,
         `house_log`.`User_Name` AS `User_Name`,
@@ -2549,7 +2519,7 @@ CREATE  OR REPLACE VIEW `vsyslog` AS
 -- View `vvisit_patient`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW vvisit_patient AS
-    SELECT 
+    SELECT
         v.idReservation,
         v.idPrimaryGuest,
         v.Arrival_Date,
@@ -2558,7 +2528,7 @@ CREATE OR REPLACE VIEW vvisit_patient AS
         hs.idPsg,
         hs.idPatient,
         n.Name_Full AS `Patient_Name`,
-        (SELECT 
+        (SELECT
                 COUNT(*)
             FROM
                 stays
@@ -2751,4 +2721,3 @@ left join `gen_lookups` `gr` on(((`a`.`Role_Id` = `gr`.`Code`) and (`gr`.`Table_
 left join `gen_lookups` `gs` on(((`u`.`Status` = `gs`.`Code`) and (`gs`.`Table_Name` = 'Web_User_Status'))))
 left join `gen_lookups` `gf` on(((`f`.`Status` = `gf`.`Code`) and (`gf`.`Table_Name` = 'FB_Status'))))
 where (`n`.`idName` > 0);
-

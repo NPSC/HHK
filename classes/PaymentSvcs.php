@@ -18,7 +18,7 @@
 class PaymentSvcs {
 
 
-    public static function payAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $postbackUrl, $paymentDate = '') {
+    public static function payAmount(\PDO $dbh, Invoice $invoice, PaymentManagerPayment $pmp, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -53,62 +53,23 @@ class PaymentSvcs {
         $payResult = NULL;
 
 
-        if ($paymentDate != '') {
-
-            try {
-                $payDT = new DateTime($paymentDate);
-                $paymentDate = $payDT->format('Y-m-d H:i:s');
-
-                $now = new DateTime();
-                $now->setTime(0, 0, 0);
-                $payDT->setTime(0, 0, 0);
-                if ($payDT > $now) {
-                    $paymentDate = date('Y-m-d H:i:s');
-                }
-
-            } catch (Exception $ex) {
-                $paymentDate = date('Y-m-d H:i:s');
-            }
-
-        } else {
-
-            $paymentDate = date('Y-m-d H:i:s');
-        }
-
-
         switch ($pmp->getPayType()) {
 
           case PayType::Charge:
 
             // Payment Gateway
-            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+            $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant());
 
             $payResult = $gateway->CreditSale($dbh, $pmp, $invoice, $postbackUrl);
 
 
             break;
 
-          case PayType::ChargeAsCash:
-
-             $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getChargeCard(), $pmp->getChargeAcct(), $pmp->getPayNotes());
-
-            ChargeAsCashTX::sale($dbh, $cashResp, $uS->username, $paymentDate);
-
-            // Update invoice
-            $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
-
-            $payResult = new PaymentResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-            $payResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
-            $payResult->setDisplayMessage('External Credit Payment Recorded.  ');
-
-            break;
-
-
           case PayType::Cash:
 
             $cashResp = new CashResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getPayNotes());
 
-            CashTX::cashSale($dbh, $cashResp, $uS->username, $paymentDate);
+            CashTX::cashSale($dbh, $cashResp, $uS->username, $pmp->getPayDate());
 
             // Update invoice
             $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
@@ -123,7 +84,7 @@ class PaymentSvcs {
 
             $ckResp = new CheckResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getCheckNumber(), $pmp->getPayNotes());
 
-            CheckTX::checkSale($dbh, $ckResp, $uS->username, $paymentDate);
+            CheckTX::checkSale($dbh, $ckResp, $uS->username, $pmp->getPayDate());
 
             // Update invoice
             $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
@@ -138,7 +99,7 @@ class PaymentSvcs {
 
             $ckResp = new TransferResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getTransferAcct(), $pmp->getPayNotes());
 
-            TransferTX::sale($dbh, $ckResp, $uS->username, $paymentDate);
+            TransferTX::sale($dbh, $ckResp, $uS->username, $pmp->getPayDate());
 
             // Update invoice
             $invoice->updateInvoiceBalance($dbh, $ckResp->getAmount(), $uS->username);
@@ -206,52 +167,13 @@ class PaymentSvcs {
         $amount = abs($invoice->getAmountToPay());
         $rtnResult = NULL;
 
-
-        if ($paymentDate != '') {
-
-            try {
-                $payDT = new DateTime($paymentDate);
-                $paymentDate = $payDT->format('Y-m-d H:i:s');
-
-                $now = new DateTime();
-                $now->setTime(0, 0, 0);
-                $payDT->setTime(0, 0, 0);
-                if ($payDT > $now) {
-                    $paymentDate = date('Y-m-d H:i:s');
-                }
-
-            } catch (Exception $ex) {
-                $paymentDate = date('Y-m-d H:i:s');
-            }
-
-        } else {
-
-            $paymentDate = date('Y-m-d H:i:s');
-        }
-
         switch ($pmp->getRtnPayType()) {
 
             case PayType::Charge:
 
                 // Load gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant());
                 $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes());
-
-                break;
-
-            case PayType::ChargeAsCash:
-
-                // Manual Charge// $amount, $idPayor, $invoiceNumber, $chargeType, $chargeAcct, $payNote = '', $idToken = 0
-                $cashResp = new ManualChargeResponse($amount, $invoice->getSoldToId(), $invoice->getInvoiceNumber(), $pmp->getRtnChargeCard(), $pmp->getRtnChargeAcct(), $pmp->getPayNotes());
-
-                ChargeAsCashTX::refundAmount($dbh, $cashResp, $uS->username, $paymentDate);
-
-                // Update invoice
-                $invoice->updateInvoiceBalance($dbh, (0 - $cashResp->getAmount()), $uS->username);
-
-                $rtnResult = new ReturnResult($invoice->getIdInvoice(), $invoice->getIdGroup(), $invoice->getSoldToId());
-                $rtnResult->feePaymentAccepted($dbh, $uS, $cashResp, $invoice);
-                $rtnResult->setDisplayMessage('External Credit Refund Recorded.  ');
 
                 break;
 
@@ -295,7 +217,7 @@ class PaymentSvcs {
         return $rtnResult;
     }
 
-    public static function voidFees(\PDO $dbh, $idPayment, $bid, $postbackUrl, $paymentNotes = '') {
+    public static function voidFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
 
@@ -314,6 +236,17 @@ class PaymentSvcs {
             return array('warning' => 'Payment is ineligable for Void/Reverse.  ', 'bid' => $bid);
         }
 
+        // Find the Payment detail record.
+        $pAuthRs = new Payment_AuthRS();
+        $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+        $pAuths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment), 'and', array($pAuthRs->idPayment_auth));
+
+        if (count($pAuths) < 1) {
+            return array('warning' => 'Payment Auth record not found for Void/Reverse.  ', 'bid' => $bid);
+        }
+
+        EditRS::loadRow(array_pop($pAuths), $pAuthRs);
+
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
@@ -322,13 +255,13 @@ class PaymentSvcs {
         }
 
         // Load gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
 
-        return $gateway->voidSale($dbh, $invoice, $payRs, $paymentNotes, $bid, $postbackUrl);
+        return $gateway->voidSale($dbh, $invoice, $payRs, $$pAuths, $bid);
 
     }
 
-    public static function reversalFees(\PDO $dbh, $idPayment, $bid, $paymentNotes = '') {
+    public static function reversalFees(\PDO $dbh, $idPayment, $bid) {
 
         $uS = Session::getInstance();
 
@@ -347,6 +280,17 @@ class PaymentSvcs {
             return array('warning' => 'Payment is ineligable for Reversal/Void.  ', 'bid' => $bid);
         }
 
+        // Find the Payment detail record.
+        $pAuthRs = new Payment_AuthRS();
+        $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+        $pAuths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment), 'and', array($pAuthRs->idPayment_auth));
+
+        if (count($pAuths) < 1) {
+            return array('warning' => 'Payment Auth record not found for Void/Reverse.  ', 'bid' => $bid);
+        }
+
+        EditRS::loadRow(array_pop($pAuths), $pAuthRs);
+
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
@@ -355,9 +299,9 @@ class PaymentSvcs {
         }
 
         // Load gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
 
-        return $gateway->reverseSale($dbh, $payRs, $invoice, $bid, $paymentNotes);
+        return $gateway->reverseSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
 
     }
 
@@ -392,9 +336,20 @@ class PaymentSvcs {
 
             case PaymentMethod::Charge:
 
+                // Find the Payment detail record.
+                $pAuthRs = new Payment_AuthRS();
+                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
+                $pAuths = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment), 'and', array($pAuthRs->idPayment_auth));
+
+                if (count($pAuths) < 1) {
+                    return array('warning' => 'Payment detail record not found.  Unable to return this payment. ', 'bid' => $bid);
+                }
+
+                EditRS::loadRow(array_pop($pAuths), $pAuthRs);
+
                 // Load gateway
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-                $dataArray = $gateway->returnPayment($dbh, $payRs, $invoice, $bid);
+                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
+                $dataArray = $gateway->returnPayment($dbh, $invoice, $payRs, $pAuthRs, $bid);
 
                 break;
 
@@ -403,33 +358,6 @@ class PaymentSvcs {
                 $cashResp = new CashResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber());
 
                 CashTX::returnPayment($dbh, $cashResp, $uS->username, $payRs);
-
-                // Update invoice
-                $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
-
-                $reply .= 'Payment is Returned.  ';
-
-                $cashResp->idVisit = $invoice->getOrderNumber();
-                $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
-
-                break;
-
-            case PaymentMethod::ChgAsCash:
-
-                // Find hte detail record.
-                $pAuthRs = new Payment_AuthRS();
-                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
-                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
-
-                if (count($arows) != 1) {
-                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
-                }
-
-                EditRS::loadRow($arows[0], $pAuthRs);
-
-                $cashResp = new ManualChargeResponse($pAuthRs->Approved_Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
-
-                ChargeAsCashTX::returnPayment($dbh, $cashResp, $uS->username, $payRs);
 
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
@@ -545,8 +473,8 @@ class PaymentSvcs {
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
         // Payment Gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
-        return array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs));
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $pAuthRs->Merchant->getStoredVal());
+        return array_merge($dataArray,  $gateway->voidReturn($dbh, $invoice, $payRs, $pAuthRs, $bid));
 
     }
 
@@ -629,32 +557,6 @@ class PaymentSvcs {
 
                 break;
 
-          case PaymentMethod::ChgAsCash:
-
-                $pAuthRs = new Payment_AuthRS();
-                $pAuthRs->idPayment->setStoredVal($payRs->idPayment->getStoredVal());
-                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
-
-                if (count($arows) < 1) {
-                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
-                }
-
-                EditRS::loadRow($arows[count($arows) - 1], $pAuthRs);
-
-                $cashResp = new ManualChargeResponse($pAuthRs->Approved_Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
-
-                ChargeAsCashTX::undoReturnPayment($dbh, $cashResp, $uS->username, $payRs);
-
-                // Update invoice
-                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
-
-                $cashResp->idVisit = $invoice->getOrderNumber();
-
-                $dataArray['success'] = 'External Credit Return is undone.  ';
-                $dataArray['receipt'] = Receipt::createSaleMarkup($dbh, $invoice, $uS->siteName, $uS->sId, $cashResp);
-
-                break;
-
             default:
                 throw new Hk_Exception_Payment('The pay type is ineligible.  ');
         }
@@ -716,30 +618,6 @@ class PaymentSvcs {
 
                 break;
 
-          case PaymentMethod::ChgAsCash:
-
-                $pAuthRs = new Payment_AuthRS();
-                $pAuthRs->idPayment->setStoredVal($idPayment);
-                $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
-
-                if (count($arows) < 1) {
-                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
-                }
-
-                EditRS::loadRow($arows[count($arows) - 1], $pAuthRs);
-
-                $cashResp = new ManualChargeResponse($pAuthRs->Approved_Amount->getStoredVal(), 0, $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
-
-                ChargeAsCashTX::undoReturnAmount($dbh, $cashResp, $idPayment);
-
-                $invoice->updateInvoiceBalance($dbh, $cashResp->getAmount(), $uS->username);
-                // delete invoice
-                $invoice->deleteInvoice($dbh, $uS->username);
-
-                $dataArray['success'] = 'External Credit Refund is undone.  ';
-
-                break;
-
             default:
                 throw new Hk_Exception_Payment('This pay type is ineligible.  ');
         }
@@ -747,12 +625,12 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    public static function processWebhook(\PDO $dbh, $data) {
+    public static function processWebhook(\PDO $dbh, $ccgw, $data) {
 
         $uS = Session::getInstance();
 
         // Payment Gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $ccgw);
 
         $payNotes = '';
 
@@ -764,16 +642,27 @@ class PaymentSvcs {
 
         $uS = Session::getInstance();
 
+        //Quick exti?
+        if ($uS->PaymentGateway == '' || $uS->ccgw == '') {
+            return NULL;
+        }
+
         // Payment Gateway
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $uS->ccgw);
 
         $payNotes = '';
+        $payDate = date('Y-m-d H:i:s');
         $idInv = 0;
         $tokenId = '';
 
         if (isset($uS->paymentNotes)) {
             $payNotes = $uS->paymentNotes;
             unset($uS->paymentNotes);
+        }
+
+        if (isset($uS->paymentDate)) {
+            $payDate = $uS->paymentDate;
+            unset($uS->paymentDate);
         }
 
         if (isset($uS->imtoken)) {
@@ -790,7 +679,7 @@ class PaymentSvcs {
             unset($uS->imcomplete);
         }
 
-        return $gateway->processHostedReply($dbh, $post, $tokenId, $idInv, $payNotes, $uS->username);
+        return $gateway->processHostedReply($dbh, $post, $tokenId, $idInv, $payNotes, $payDate);
 
     }
 
@@ -878,7 +767,7 @@ class PaymentSvcs {
                 $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $gTRs->CardHolderName->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
 
                 try {
-                    $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $uS->ccgw);
+                    $gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $pAuthRs->Merchant->getStoredVal());
                 } catch (Exception $ex) {
                     // Grab the local gateway
                     $gateway = PaymentGateway::factory($dbh, '', '');
@@ -888,21 +777,8 @@ class PaymentSvcs {
                 $payResp->paymentRs = $payRs;
                 break;
 
-            case PaymentMethod::ChgAsCash:
-
-                $stmt = $dbh->query("SELECT * FROM payment_auth where idPayment = $idPayment order by idPayment_auth");
-                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-                if (count($rows) < 1) {
-                    return array('warning'=>'Charge payment record not found.');
-                }
-
-                $pAuthRs = new Payment_AuthRS();
-                EditRS::loadRow($rows[0], $pAuthRs);
-
-                $payResp = new ManualChargeResponse($payRs->Amount->getStoredVal(), $payRs->idPayor->getStoredVal(), $invoice->getInvoiceNumber(), $pAuthRs->Card_Type->getStoredVal(), $pAuthRs->Acct_Number->getStoredVal());
-                $payResp->paymentRs = $payRs;
-                break;
+            default:
+                return array('warning'=>'Payment Method not recognized: '.$payRs->idPayment_Method->getStoredVal());
 
         }
 
@@ -950,6 +826,5 @@ class PaymentSvcs {
 
         return $dataArray;
     }
-
 
 }

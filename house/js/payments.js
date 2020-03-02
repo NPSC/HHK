@@ -709,9 +709,9 @@ function amtPaid() {
         $('.hhk-minPayment').show('fade');
 
         // manage cof box
-        if ($('#cbNewCard').length > 0) {
-            $('#cbNewCard').prop('checked', false).change().prop('disabled', true);
-        }
+//        if ($('#cbNewCard').length > 0) {
+//            $('#cbNewCard').prop('checked', false).change().prop('disabled', true);
+//        }
 
         if (totPay < 0 && ! isChdOut) {
             $('#txtRtnAmount').val((0 - totPay).toFixed(2).toString());
@@ -724,9 +724,9 @@ function amtPaid() {
         $('.paySelectTbl').hide();
 
         // manage cof box
-        if ($('#cbNewCard').length > 0) {
-            $('#cbNewCard').prop('disabled', false);
-        }
+//        if ($('#cbNewCard').length > 0) {
+//            $('#cbNewCard').prop('disabled', false);
+//        }
 
         if (isChdOut === false && ckedInCharges === 0.0) {
             $('.hhk-minPayment').hide();
@@ -783,6 +783,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     "use strict";
     var ptsel = $('#PayTypeSel');
     var chg = $('.tblCredit');
+    var $chrgExpand = $('#trvdCHName');
     var p = new payCtrls();
 
     if (chg.length === 0) {
@@ -797,14 +798,14 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             $('.hhk-transfer').hide();
             $('.hhk-tfnum').hide();
             chg.hide();
-            $('.hhkvrKeyNumber').hide();
+            $chrgExpand.hide();
             $('#tdCashMsg').hide();
             $('.paySelectNotes').show();
 
             if ($(this).val() === 'cc') {
                 chg.show('fade');
                 if ($('input[name=rbUseCard]:checked').val() == 0) {
-                    $('.hhkvrKeyNumber').show();
+                    $chrgExpand.show();
                 }
             } else if ($(this).val() === 'ck') {
                 $('.hhk-cknum').show('fade');
@@ -821,33 +822,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     }
 
     // Card on file Cardholder name.
-    if ($('#trvdCHName').length > 0) {
-
-        $('input[name=rbUseCard]').on('change', function () {
-            if ($(this).val() == 0) {
-                $('.hhkvrKeyNumber').show();
-            } else {
-                $('.hhkvrKeyNumber').hide();
-                $('#btnvrKeyNumber').prop('checked', false).change();
-            }
-        });
-
-        if ($('input[name=rbUseCard]:checked').val() > 0) {
-            $('.hhkvrKeyNumber').hide();
-        }
-
-        $('#btnvrKeyNumber').change(function() {
-
-            if (this.checked && $('input[name=rbUseCard]:checked').val() == 0) {
-                $('#trvdCHName').show();
-            } else {
-                $('#trvdCHName').hide();
-            }
-        });
-
-        $('#btnvrKeyNumber').change();
-    }
-
+    setupCOF($chrgExpand);
 
 
     // Set up return table
@@ -1130,6 +1105,7 @@ function verifyAmtTendrd() {
 
     $('#tdCashMsg').hide('fade');
     $('#tdInvceeMsg').text('').hide();
+    $('#tdChargeMsg').text('').hide();
 
     if ($('#PayTypeSel').val() === 'ca') {
 
@@ -1165,6 +1141,13 @@ function verifyAmtTendrd() {
 
         if ((isNaN(idPayor) || idPayor < 1) && total != 0) {
             $('#tdInvceeMsg').text('The Invoicee is missing. ').show('fade');
+            return false;
+        }
+
+    } else if ($('#PayTypeSel').val() === 'cc') {
+
+        if ($('#selccgw').length > 0 && $('#selccgw').val() === '') {
+            $('#tdChargeMsg').text('Select a location.').show('fade');
             return false;
         }
     }
@@ -1289,53 +1272,79 @@ function paymentRedirect (data, $xferForm) {
     }
 }
 
-function setupCOF() {
+/**
+ * 
+ * @param {jqobject} $chgExpand
+ * @param {string} $idx
+ * @returns {undefined}
+ */
+function setupCOF($chgExpand, idx) {
 
+    if (idx === undefined || idx === null) {
+        idx = '';
+    }
+    
     // Card on file Cardholder name.
-    if ($('#trCHName').length > 0) {
+    if ($chgExpand.length > 0) {
 
-        $('#cbNewCard').change(function () {
-
-            if (this.checked) {
-                $('.hhkKeyNumber').show();
+        $('input[name=rbUseCard'+idx+']').on('change', function () {
+            if ($(this).val() == 0) {
+                $chgExpand.show();
             } else {
-                $('.hhkKeyNumber').hide();
-                $('#cbKeyNumber').prop('checked', false).change();
+                $chgExpand.hide();
+                $('#btnvrKeyNumber'+idx).prop('checked', false).change();
             }
+            
+            $('#tdChargeMsg'+idx).text('').hide();
+            $('#selccgw'+idx).removeClass('ui-state-highlight');
         });
 
-        $('#cbNewCard').change();
+        if ($('input[name=rbUseCard'+idx+']:checked').val() > 0) {
+            $chgExpand.hide();
+        }
 
-        $('#cbKeyNumber').change(function() {
+        // Instamed-specific controls
+        if ($('#btnvrKeyNumber'+idx).length > 0) {
+            $('#btnvrKeyNumber'+idx).change(function() {
 
-            if (this.checked && $('#cbNewCard').prop('checked') === true) {
-                $('#trCHName').show();
-            } else {
-                $('#trCHName').hide();
-            }
-        });
+                if (this.checked && $('input[name=rbUseCard'+idx+']:checked').val() == 0) {
+                    $('#txtvdNewCardName'+idx).show();
+                } else {
+                    $('#txtvdNewCardName'+idx).hide();
+                    $('#txtvdNewCardName'+idx).val('');
+                }
+            });
 
-        $('#cbKeyNumber').change();
+            $('#btnvrKeyNumber'+idx).change();
+        }
     }
 
 }
 
-function cardOnFile(id, idGroup, postBackPage) {
+function cardOnFile(id, idGroup, postBackPage, idx) {
+    
+    $('#tdChargeMsg'+idx).text('').hide();
+    
+    // Selected Merchant?
+    if ($('#selccgw'+idx).length > 0 && $('input[name=rbUseCard'+idx+']:checked').val() == 0) {
+        
+        $('#selccgw'+idx).removeClass('ui-state-highlight');
+    
+        if ($('#selccgw'+idx+' option:selected').length === 0) {
+            $('#tdChargeMsg'+idx).text('Select a location.').show('fade');
+            $('#selccgw'+idx).addClass('ui-state-highlight');
+            return false;
+        }
+    }
 
-    var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage};
+    // Set up ajax call
+    var parms = {cmd: 'cof', idGuest: id, idGrp: idGroup, pbp: postBackPage, index: idx};
 
-    $('#tblupCredit').find('input').each(function() {
+    $('#tblupCredit'+idx).find('input').each(function() {
 
         if ($(this).attr('type') === 'checkbox') {
             if (this.checked !== false) {
                 parms[$(this).attr('id')] = 'on';
-            }
-        } else if ($(this).hasClass('ckdate')) {
-            var tdate = $(this).datepicker('getDate');
-            if (tdate) {
-                parms[$(this).attr('id')] = tdate.toJSON();
-            } else {
-                 parms[$(this).attr('id')] = '';
             }
         } else if ($(this).attr('type') === 'radio') {
             if (this.checked !== false) {
@@ -1345,6 +1354,10 @@ function cardOnFile(id, idGroup, postBackPage) {
             parms[$(this).attr('id')] = this.value;
         }
     });
+
+    if ($('#selccgw'+idx).length > 0) {
+        parms['selccgw'+idx] = $('#selccgw'+idx).val();
+    }
 
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
     $.post('ws_ckin.php', parms,
@@ -1375,65 +1388,92 @@ function cardOnFile(id, idGroup, postBackPage) {
             }
 
             if (data.COFmkup && data.COFmkup !== '') {
-                $('#tblupCredit').remove();
-                $('#upCreditfs').append($(data.COFmkup));
-                setupCOF();
+                $('#tblupCredit'+idx).remove();
+                $('#upCreditfs').prepend($(data.COFmkup));
+                setupCOF($('#trvdCHName'+idx), idx);
             }
         }
     });
 }
 
-function updateCredit(id, idReg, name, strCOFdiag, pbp) {
-
-    var gnme = '';
-
-    if (name && name != '') {
-        gnme = ' - ' + name;
-    }
-
-    $.post('ws_ckin.php',
-            {
-                cmd: 'viewCredit',
-                idGuest: id,
-                reg: idReg,
-                pbp: pbp
-            },
-        function(data) {
-          if (data) {
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
+function paymentsTable(tableID, containerID) {
+    
+    $('#' + tableID).dataTable({
+        'columnDefs': [
+            {'targets': 8,
+             'type': 'date',
+             'render': function ( data, type, row ) {return dateRender(data, type);}
             }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.location.assign(data.gotopage);
-                }
-                flagAlertMessage(data.error, 'error');
-            }
+         ],
+        'dom': '<"top"if>rt<"bottom"lp><"clear">',
+        'displayLength': 50,
+        'order': [[ 8, 'asc' ]],
+        'lengthMenu': [[25, 50, -1], [25, 50, "All"]]
+    });
 
-            var buttons = {
-                "Continue": function() {
-                    cardOnFile(id, idReg, data.pbp);
-                    $(this).dialog("close");
-                },
-                "Cancel": function() {
-                    $(this).dialog("close");
-                }
-            };
+    // Invoice viewer
+    $('#' + containerID).on('click', '.invAction', function (event) {
+        invoiceAction($(this).data('iid'), 'view', event.target.id);
+    });
 
-            if (data.success) {
-                var cof = $('#' + strCOFdiag);
-                cof.children().remove();
-                cof.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>').append($(data.success)));
-                cof.dialog('option', 'buttons', buttons);
-                cof.dialog('option', 'width', 400);
-                cof.dialog('option', 'title', 'Card On File' + gnme);
-
-                setupCOF();
-                cof.dialog('open');
-            }
+    // Void/Reverse button
+    $('#' + containerID).on('click', '.hhk-voidPmt', function () {
+        var btn = $(this);
+        var amt = parseFloat(btn.data("amt"));
+        if (btn.val() !== "Saving..." && confirm("Void/Reverse this payment for $" + amt.toFixed(2).toString() + "?")) {
+            btn.val('Saving...');
+            sendVoidReturn(btn.attr('id'), 'rv', btn.data('pid'));
         }
     });
+
+    // Void-return button
+    $('#' + containerID).on('click', '.hhk-voidRefundPmt', function () {
+        var btn = $(this);
+        if (btn.val() !== 'Saving...' && confirm('Void this Return?')) {
+            btn.val('Saving...');
+            sendVoidReturn(btn.attr('id'), 'vr', btn.data('pid'));
+        }
+    });
+
+    // Return button
+    $('#' + containerID).on("click", ".hhk-returnPmt", function() {
+        var btn = $(this);
+        var amt = parseFloat(btn.data("amt"));
+        if (btn.val() !== "Saving..." && confirm("Return this payment for $" + amt.toFixed(2).toString() + "?")) {
+            btn.val("Saving...");
+            sendVoidReturn(btn.attr("id"), "r", btn.data("pid"), amt);
+        }
+    });
+
+    // Undo Return
+    $('#' + containerID).on("click", ".hhk-undoReturnPmt", function () {
+        var btn = $(this);
+        var amt = parseFloat(btn.data("amt"));
+        if (btn.val() !== "Saving..." && confirm("Undo this Return/Refund for $" + amt.toFixed(2).toString() + "?")) {
+            btn.val("Saving...");
+            sendVoidReturn(btn.attr("id"), "ur", btn.data("pid"));
+        }
+    });
+
+    // Delete waive button
+    $('#' + containerID).on('click', '.hhk-deleteWaive', function () {
+        var btn = $(this);
+
+        if (btn.val() !== 'Deleting...' && confirm('Delete this House payment?')) {
+            btn.val('Deleting...');
+            sendVoidReturn(btn.attr('id'), 'd', btn.data('ilid'), btn.data('iid'));
+        }
+    });
+
+    $('#' + containerID).on('click', '.pmtRecpt', function () {
+        reprintReceipt($(this).data('pid'), '#pmtRcpt');
+    });
+
+    $('#' + containerID).mousedown(function (event) {
+        var target = $(event.target);
+        if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
+            $('div#pudiv').remove();
+        }
+    });
+
 }

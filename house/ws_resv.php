@@ -359,7 +359,7 @@ try {
 
         $psgId = 0;
         $guestId = 0;
-        $rId = 0;
+
 
         if (isset($_GET['psgId'])) {
             $psgId = intval(filter_input(INPUT_GET, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);

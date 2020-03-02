@@ -327,7 +327,7 @@ class History {
             $hospList = $uS->guestLookups[GL_TableNames::Hospital];
         }
 
-        return self::getCheckedInMarkup($dbh, $uS->ccgw, $hospList, $page, $includeAction, $static, $patientColName, $hospColName);
+        return self::getCheckedInMarkup($dbh, $uS->PaymentGateway, $hospList, $page, $includeAction, $static, $patientColName, $hospColName);
     }
 
     public static function getCheckedInMarkup(\PDO $dbh, $creditGw, $hospitals, $page, $includeAction = TRUE, $static = FALSE, $patientColName = 'Patient', $hospColName = 'Hospital') {
@@ -380,7 +380,7 @@ class History {
                               . HTMLContainer::generateMarkup('li', ($r['Room_Status'] == RoomState::Clean || $r['Room_Status'] == RoomState::Ready ? HTMLContainer::generateMarkup('div', 'Set Room Dirty', array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>RoomState::Dirty)) : HTMLContainer::generateMarkup('div', 'Set Room Clean', array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>  RoomState::Clean))))
                               . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Change Rooms', array('class'=>'stchgrooms', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
                               . (SecurityComponent::is_Authorized('guestadmin') === FALSE || count($hdArry) == 0 ? '' : HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Apply Discount', array('class'=>'applyDisc', 'data-vid'=>$r['idVisit']))))
-                              . ($creditGw != '' ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['Id'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest']))) : '')
+//                              . ($creditGw != '' ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['Id'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest']))) : '')
                         )), array('class' => 'gmenu'));
 
                 }

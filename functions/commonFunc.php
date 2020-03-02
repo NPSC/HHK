@@ -65,11 +65,7 @@ function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw)
     return new \PDO("mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw);
 }
 
-function creditIncludes($gatewayName)
-{
-    if ($gatewayName == '') {
-        return;
-    }
+function creditIncludes($gatewayName) {
 
     require (PMT . 'paymentgateway/CreditPayments.php');
 
@@ -90,6 +86,11 @@ function creditIncludes($gatewayName)
             require (PMT . 'paymentgateway/vantiv/TokenTX.php');
             require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
             break;
+
+        default:
+            require (PMT . 'paymentgateway/local/LocalResponse.php');
+            require (PMT . 'paymentgateway/local/LocalGateway.php');
+
     }
 }
 
@@ -383,7 +384,7 @@ function decryptMessage($encrypt)
  *            can be 'encrypt' or 'decrypt'
  * @param string $string:
  *            string to encrypt or decrypt
- *            
+ *
  * @return string
  */
 function encrypt_decrypt($action, $string, $secret_key, $secret_iv)

@@ -32,6 +32,7 @@ class VisitCharges {
     protected $nightsToPay = 0;
     protected $glideCredit = 0;
     protected $idVisit;
+    protected $span;
 
     /**
      *
@@ -41,8 +42,9 @@ class VisitCharges {
 
     private $taxItemIds;
 
-    public function __construct($idVisit) {
+    public function __construct($idVisit, $span = 0) {
         $this->idVisit = $idVisit;
+        $this->span = $span;
     }
 
     public function sumCurrentRoomCharge(\PDO $dbh, PriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
@@ -488,6 +490,9 @@ where
 
     public function getIdVisit() {
         return $this->idVisit;
+    }
+    public function getSpan() {
+        return $this->span;
     }
 
 }

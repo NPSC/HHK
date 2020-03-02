@@ -1264,7 +1264,7 @@ $pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::ge
 ));
 
 $rescTable = ResourceView::resourceTable($dbh);
-$roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit);
+$roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->PaymentGateway);
 
 // Room Pricing
 $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
