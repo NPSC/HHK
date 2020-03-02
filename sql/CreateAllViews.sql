@@ -1827,6 +1827,7 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
     SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
+        n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
@@ -1837,7 +1838,27 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
             JOIN
         reservation_note rn ON n.idNote = rn.Note_Id
     WHERE
-        rn.Reservation_Id > 0 && n.Status = 'a';
+        rn.Reservation_Id > 0 && n.Status = 'a'
+    UNION
+		SELECT 
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        res.idReservation,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        psg_note pn ON n.idNote = pn.Note_Id
+			JOIN
+		registration reg ON pn.Psg_Id = reg.idPsg
+			JOIN
+		reservation res ON reg.idRegistration = res.idRegistration
+	WHERE
+		n.flag = '1';;
 
 
 -- -----------------------------------------------------
@@ -1847,6 +1868,7 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
     SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
+        n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
@@ -1859,7 +1881,27 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
             join
         visit v on v.idReservation = rn.Reservation_Id and v.Span = 0
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a';
+        rn.Reservation_Id > 0 && n.`Status` = 'a'
+    UNION
+		SELECT 
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        v.idVisit as idVisit,
+        n.`Timestamp`,
+        n.`flag`
+    FROM
+        note n
+            JOIN
+        psg_note pn ON n.idNote = pn.Note_Id
+			JOIN
+		registration reg ON pn.Psg_Id = reg.idPsg
+			JOIN
+		visit v ON reg.idRegistration = v.idRegistration
+	WHERE
+		n.flag = '1';
 
 
 -- -----------------------------------------------------
@@ -1869,6 +1911,7 @@ CREATE OR REPLACE VIEW `vpsg_notes` AS
     SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
+        n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
