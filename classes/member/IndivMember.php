@@ -894,6 +894,5 @@ ORDER BY `List_Order`");
         return $this->demogRS->No_Return->getStoredVal();
     }
 
-
 }
 
