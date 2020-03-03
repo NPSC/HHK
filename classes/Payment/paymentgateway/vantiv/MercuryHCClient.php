@@ -530,6 +530,7 @@ abstract class MercRequest {
 
     public function setPaymentPageCode($v) {
         $this->paymentPageCode = $v;
+        return $this;
     }
 }
 
@@ -742,7 +743,12 @@ class InitCkOutRequest extends MercRequest {
     }
 
     public function setOperatorID($v) {
-        $this->fields["OperatorID"] = $v;
+    	
+    	if ($v != '') {
+    		$v = substr($v, 0, 10);
+    	}
+    	
+    	$this->fields["OperatorID"] = $v;
         return $this;
     }
 
@@ -1188,7 +1194,7 @@ abstract class MercTokenRequest extends MercRequest {
 
     public function setOperatorID($v) {
         if ($v != '') {
-            $a = substr($v, 0, 16);
+            $a = substr($v, 0, 10);
             $this->fields["OperatorID"] = $a;
         }
         return $this;

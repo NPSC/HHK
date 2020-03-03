@@ -844,17 +844,17 @@ class VantivGateway extends PaymentGateway {
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Trans_Url->getStoredVal(), array('name' => $indx . '_txttransurl', 'size' => '90')))
             );
 
-            if ($usePOS) {
+
                 $tbl->addBodyTr(
                     HTMLTable::makeTh('CheckoutPOS URL', array())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CheckoutPOS_Url->getStoredVal(), array('name' => $indx . '_txtcoposurl', 'size' => '90')))
                 );
-            } else {
+
                 $tbl->addBodyTr(
                         HTMLTable::makeTh('Checkout URL', array())
                         . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Checkout_Url->getStoredVal(), array('name' => $indx . '_txtckouturl', 'size' => '90')))
                 );
-            }
+
 
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Card Info URL', array())
