@@ -1482,7 +1482,7 @@ CREATE TABLE if not exists `payment_method` (
 -- -----------------------------------------------------
 -- Table `photo`
 -- -----------------------------------------------------
-CREATE TABLE `photo` (
+CREATE TABLE if not exists `photo` (
   `idPhoto` INT NOT NULL AUTO_INCREMENT,
   `Image_Type` VARCHAR(45) NOT NULL DEFAULT '',
   `Category` VARCHAR(5) NOT NULL DEFAULT '',
