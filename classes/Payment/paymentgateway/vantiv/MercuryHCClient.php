@@ -151,7 +151,7 @@ class MpTokenLifetimeDays {
 }
 
 class MpVersion {
-    const PosVersion = 'hhkpos-3.13';
+    const PosVersion = 'hhkpos 3.7';
 }
 
 class CVVResult {
@@ -810,12 +810,20 @@ class InitCkOutRequest extends MercRequest {
     }
 
     public function setCardEntryMethod($v) {
-        if ($v != '') {
-            $this->fields["CardEntryMethod"] = $v;
-        }
-        return $this;
+    	if ($v != '') {
+    		$this->fields["CardEntryMethod"] = $v;
+    	}
+    	return $this;
     }
-
+    public function setKeypad($v) {
+    	if (strtolower($v) == 'on') {
+    		$this->fields["Keypad"] = 'On';
+    	} else if (strtolower($v) == 'off') {
+    		$this->fields['Keypad'] = 'Off';
+    	}
+    	return $this;
+    }
+    
 
 }
 

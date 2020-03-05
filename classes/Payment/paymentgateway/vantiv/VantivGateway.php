@@ -19,6 +19,9 @@ class VantivGateway extends PaymentGateway {
 
     const CARD_ID = 'CardID';
     const PAYMENT_ID = 'PaymentID';
+    
+    protected $paymentPageLogoUrl = '';
+    protected $manualKey = FALSE;
 
     public static function getPaymentMethod() {
         return PaymentMethod::Charge;
@@ -82,6 +85,8 @@ class VantivGateway extends PaymentGateway {
                 $payResult = $this->analyzeCredSaleResult($dbh, $tokenResp, $invoice, $pmp->getIdToken());
 
             } else {
+            	
+            	$this->manualKey = $pmp->getManualKeyEntry();
 
                 // Initialiaze hosted payment
                 $fwrder = $this->initHostedPayment($dbh, $invoice, $guest->get_fullName(), $addr, $postbackUrl);
@@ -376,13 +381,10 @@ class VantivGateway extends PaymentGateway {
 
         // Do a hosted payment.
         $secure = new SecurityComponent();
-
         $houseUrl = $secure->getSiteURL();
-        $siteUrl = $secure->getRootURL();
-        $logo = $uS->PmtPageLogoUrl;
 
-        if ($houseUrl == '' || $siteUrl == '') {
-            throw new Hk_Exception_Runtime("The site/house URL is missing.  ");
+        if ($houseUrl == '') {
+            throw new Hk_Exception_Runtime("The house URL is missing.  ");
         }
 
         if ($invoice->getSoldToId() < 1 || $invoice->getIdGroup() < 1) {
@@ -391,11 +393,12 @@ class VantivGateway extends PaymentGateway {
 
         // Set CC Gateway name
         $uS->ccgw = $this->getGatewayType();
+        $uS->manualKey = $this->manualKey;
 
         $pay = new InitCkOutRequest($uS->siteName, 'Custom');
 
         // Card reader?
-        if ($uS->CardSwipe) {
+        if ($this->usePOS && ! $this->manualKey) {
             $pay->setDefaultSwipe('Swipe')
                     ->setCardEntryMethod('Both')
                     ->setPaymentPageCode('CheckoutPOS_Url');
@@ -415,7 +418,7 @@ class VantivGateway extends PaymentGateway {
                 ->setCompleteURL($houseUrl . $postbackUrl)
                 ->setReturnURL($houseUrl . $postbackUrl)
                 ->setTranType(MpTranType::Sale)
-                ->setLogoUrl($siteUrl . $logo)
+                ->setLogoUrl($this->getPaymentPageLogoUrl())
                 ->setCVV($this->useCVV ? 'on' : '')
                 ->setAVSFields('both');
 
@@ -443,9 +446,12 @@ class VantivGateway extends PaymentGateway {
             return $dataArray;
         }
 
+        $this->manualKey = $manualKey;
+        
         // Set CC Gateway name
         $uS->ccgw = $this->getGatewayType();
-
+        $uS->manualKey = $this->manualKey;
+        
         $guest = new Guest($dbh, '', $idGuest);
         $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
 
@@ -456,12 +462,12 @@ class VantivGateway extends PaymentGateway {
         $pay = new InitCkOutRequest($uS->siteName, 'Custom');
 
         // Card reader?
-        if ($uS->CardSwipe) {
-            $pay->setDefaultSwipe('Manual') // set to  key in the acct number manually for this
-                    ->setCardEntryMethod('Both')
-                    ->setPaymentPageCode('CheckoutPOS_Url');
+        if ($this->usePOS && ! $this->manualKey) {
+        	$pay->setDefaultSwipe('Swipe')
+        	->setCardEntryMethod('Both')
+        	->setPaymentPageCode('CheckoutPOS_Url');
         } else {
-            $pay->setPaymentPageCode('Checkout_Url');
+        	$pay->setPaymentPageCode('Checkout_Url');
         }
 
 
@@ -486,7 +492,8 @@ class VantivGateway extends PaymentGateway {
 
     public function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate) {
 
-        $payResult = NULL;
+    	$uS = Session::getInstance();
+    	$payResult = NULL;
         $rtnCode = '';
         $rtnMessage = '';
 
@@ -496,6 +503,11 @@ class VantivGateway extends PaymentGateway {
 
         if (isset($post['ReturnMessage'])) {
             $rtnMessage = filter_var($post['ReturnMessage'], FILTER_SANITIZE_STRING);
+        }
+        
+        // THis eventually selects the merchant id
+        if (isset($uS->manualKey)) {
+        	$this->manualKey = $uS->manualKey;
         }
 
 
@@ -724,15 +736,26 @@ class VantivGateway extends PaymentGateway {
             $rows[0] = array();
         }
 
-        if (isset($rows[0]['Password']) && $rows[0]['Password'] != '') {
-            $rows[0]['Password'] = decryptMessage($rows[0]['Password']);
-        }
-
         $gwRs = new Cc_Hosted_GatewayRS();
         EditRS::loadRow($rows[0], $gwRs);
 
+        $manualPassword = $gwRs->Manual_Password->getStoredVal();
+        if ($manualPassword != '') {
+        	$rows[0]['Manual_Password'] = decryptMessage($manualPassword);
+        }
+        
+        $rows[0]['Manual_Mid'] = $gwRs->Manual_MerchantId->getStoredVal();
+
+        $password = $gwRs->Password->getStoredVal();
+        if ($password != '') {
+        	$rows[0]['Password'] = decryptMessage($password);
+        }
+
         $this->useAVS = filter_var($gwRs->Use_AVS_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
         $this->useCVV = filter_var($gwRs->Use_Ccv_Flag->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
+        $this->usePOS = filter_var($gwRs->Retry_Count->getStoredVal(), FILTER_VALIDATE_BOOLEAN);
+        
+        $this->paymentPageLogoUrl = $gwRs->Page_Header_URL->getStoredVal();
 
         return $rows[0];
     }
@@ -740,6 +763,27 @@ class VantivGateway extends PaymentGateway {
     protected function setCredentials($gwRow) {
 
         $this->credentials = $gwRow;
+    }
+    
+    public function getCredentials() {
+    	
+    	if ($this->manualKey) {
+    		
+    		$cred = new ArrayObject($this->credentials);
+    		$copy = $cred->getArrayCopy();
+    		
+    		$copy['Merchant_Id'] = $copy['Manual_Mid'];
+    		$copy['Password'] = $copy['Manual_Password'];
+    		
+    		return $copy;
+    		
+    	} else {
+    		return $this->credentials;
+    	}
+    }
+    
+    public function getPaymentPageLogoUrl() {
+    	return $this->paymentPageLogoUrl;
     }
 
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
@@ -763,19 +807,21 @@ class VantivGateway extends PaymentGateway {
 
             $selArray['size'] = count($gwRows);
 
-//            if (is_array($this->gwType) && count($this->gwType) > 1) {
-                // Show choice of gateway
 
-                $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
+            $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
 
-                $payTbl->addBodyTr(
-                        HTMLTable::makeTh('Select Location:')
-                        .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
-                        , array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
-                );
+            $payTbl->addBodyTr(
+                    HTMLTable::makeTh('Select a Location:')
+                    .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
+                    , array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
+            );
 
-//            }
         }
+        
+        $payTbl->addBodyTr(HTMLTable::makeTh('Manual Entry')
+        		. HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index, 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Check to Key in credit account number')))
+        		, array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
+        );
     }
 
     protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
@@ -789,28 +835,7 @@ class VantivGateway extends PaymentGateway {
             array(1, 'True'),
         );
 
-        $usePOS = SysConfig::getKeyValue($dbh, 'sys_config', 'CardSwipe');
-
-        if ($usePOS) {
-            $pos = 1;
-        } else {
-            $pos = 0;
-        }
-
         $tbl = new HTMLTable();
-
-        // Use Care Swipe
-        $tbl->addBodyTr(
-                HTMLTable::makeTh('Use Card Swiper', array('style' => 'border-top:2px solid black;'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $pos, FALSE), array('name' => 'selCardSwipe')))
-                , array('style' => 'border-top:2px solid black;')
-        );
-
-        // hosted co page image
-        $tbl->addBodyTr(
-                HTMLTable::makeTh('Payment Page Logo URL', array())
-                .HTMLTable::makeTd(HTMLInput::generateMarkup(SysConfig::getKeyValue($dbh, 'sys_config', 'PmtPageLogoUrl'), array('name' => 'txtppUrl', 'size' => '80')))
-        );
 
         // Spacer
         $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
@@ -833,7 +858,7 @@ class VantivGateway extends PaymentGateway {
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Password', array())
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '80')) . ' (Obfuscated)')
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Credit URL', array())
@@ -845,31 +870,43 @@ class VantivGateway extends PaymentGateway {
             );
 
 
-                $tbl->addBodyTr(
+            $tbl->addBodyTr(
                     HTMLTable::makeTh('CheckoutPOS URL', array())
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CheckoutPOS_Url->getStoredVal(), array('name' => $indx . '_txtcoposurl', 'size' => '90')))
-                );
+            );
 
-                $tbl->addBodyTr(
+            $tbl->addBodyTr(
                         HTMLTable::makeTh('Checkout URL', array())
                         . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Checkout_Url->getStoredVal(), array('name' => $indx . '_txtckouturl', 'size' => '90')))
-                );
-
-
-            $tbl->addBodyTr(
-                    HTMLTable::makeTh('Card Info URL', array())
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CardInfo_Url->getStoredVal(), array('name' => $indx . '_txtciurl', 'size' => '90')))
-            );
-            $tbl->addBodyTr(
-                    HTMLTable::makeTh('Use AVS', array())
-                    .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_AVS_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseAVS')))
             );
 
+            $tbl->addBodyTr(
+                		HTMLTable::makeTh('Manual Merchant Id', array())
+                		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Manual_MerchantId->getStoredVal(), array('name' => $indx . '_txtManMerchId', 'size' => '90')))
+       		);
+            $tbl->addBodyTr(
+                		HTMLTable::makeTh('Manual Password', array())
+                		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Manual_Password->getStoredVal(), array('name' => $indx . '_txtManMerchPW', 'size' => '90')). ' (Obfuscated)')
+            );
+            $tbl->addBodyTr(
+            		HTMLTable::makeTh('Use AVS', array())
+            		.HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_AVS_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseAVS')))
+            		);
+            
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Use CCV', array())
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_Ccv_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseCVV')))
             );
 
+            $tbl->addBodyTr(
+            		HTMLTable::makeTh('Use Card Swiper', array())
+            		.HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Retry_Count->getStoredVal(), FALSE), array('name' => $indx . '_txtuseSwipe')))
+            		);
+            
+            $tbl->addBodyTr(
+            		HTMLTable::makeTh('Payment Page Logo URL', array())
+            		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Page_Header_URL->getStoredVal(), array('name' => $indx . '_txtpageLogourl', 'size' => '90')))
+            		);
         }
         
         // New Merchant
@@ -894,10 +931,6 @@ class VantivGateway extends PaymentGateway {
             SysConfig::saveKeyValue($dbh, 'sys_config', 'CardSwipe', filter_var($post['selCardSwipe'], FILTER_SANITIZE_STRING));
         }
 
-        // host page image URL
-        if (isset($post['txtppUrl'])) {
-            SysConfig::saveKeyValue($dbh, 'sys_config', 'PmtPageLogoUrl', filter_var($post['txtppUrl'], FILTER_SANITIZE_STRING));
-        }
 
         foreach ($rows as $r) {
 
@@ -927,14 +960,31 @@ class VantivGateway extends PaymentGateway {
 
             // Chekout POS URL
             if (isset($post[$indx . '_txtcoposurl'])) {
-                $ccRs->CheckoutPOS_Url->setNewVal(filter_var($post[$indx . '_txtcoposurl'], FILTER_SANITIZE_STRING));
+            	$ccRs->CheckoutPOS_Url->setNewVal(filter_var($post[$indx . '_txtcoposurl'], FILTER_SANITIZE_STRING));
             }
-
-            // Card Info URL
-            if (isset($post[$indx . '_txtciurl'])) {
-                $ccRs->CardInfo_Url->setNewVal(filter_var($post[$indx . '_txtciurl'], FILTER_SANITIZE_STRING));
+            
+            // Payment Page Logo URL
+            if (isset($post[$indx . '_txtpageLogourl'])) {
+            	$ccRs->Page_Header_URL->setNewVal(filter_var($post[$indx . '_txtpageLogourl'], FILTER_SANITIZE_STRING));
             }
-
+            
+            // Manual Merchant Id
+            if (isset($post[$indx . '_txtManMerchId'])) {
+            	$ccRs->Manual_MerchantId->setNewVal(filter_var($post[$indx . '_txtManMerchId'], FILTER_SANITIZE_STRING));
+            }
+            
+            // Manual Merchant PW
+            if (isset($post[$indx . '_txtManMerchPW'])) {
+            	
+            	$pw = filter_var($post[$indx . '_txtManMerchPW'], FILTER_SANITIZE_STRING);
+            	
+            	if ($pw != '' && $ccRs->Manual_Password->getStoredVal() != $pw) {
+            		$ccRs->Manual_Password->setNewVal(encryptMessage($pw));
+            	} else if ($pw == '') {
+            		$ccRs->Manual_Password->setNewVal('');
+            	}
+            }
+            
             // Use AVS
             if (isset($post[$indx . '_txtuseAVS'])) {
                 $ccRs->Use_AVS_Flag->setNewVal(filter_var($post[$indx . '_txtuseAVS'], FILTER_SANITIZE_STRING));
@@ -942,9 +992,14 @@ class VantivGateway extends PaymentGateway {
 
             // Use CCV
             if (isset($post[$indx . '_txtuseCVV'])) {
-                $ccRs->Use_Ccv_Flag->setNewVal(filter_var($post[$indx . '_txtuseCVV'], FILTER_SANITIZE_STRING));
+            	$ccRs->Use_Ccv_Flag->setNewVal(filter_var($post[$indx . '_txtuseCVV'], FILTER_SANITIZE_STRING));
             }
-
+            
+            // Use Card swipe
+            if (isset($post[$indx . '_txtuseSwipe'])) {
+            	$ccRs->Retry_Count->setNewVal(filter_var($post[$indx . '_txtuseSwipe'], FILTER_SANITIZE_STRING));
+            }
+            
             // Password
             if (isset($post[$indx . '_txtpwd'])) {
 

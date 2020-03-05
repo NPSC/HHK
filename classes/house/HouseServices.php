@@ -1377,12 +1377,15 @@ class HouseServices {
             $guest = new Guest($dbh, '', $idGuest);
             $newCardHolderName = $guest->getRoleMember()->get_fullName();
 
-            // for instamed
-            if (isset($post['txtNewCardName'.$idx]) && isset($post['cbKeyNumber'.$idx])) {
-                $newCardHolderName = strtoupper(filter_var($post['txtNewCardName'.$idx], FILTER_SANITIZE_STRING));
-                $manualKey = TRUE;
-            }
 
+            if (isset($post['btnvrKeyNumber'.$idx])) {
+            	$manualKey = TRUE;
+            }
+            
+            if (isset($post['txtvdNewCardName'.$idx]) && $post['txtvdNewCardName'.$idx] != '' && $manualKey) {
+            	$newCardHolderName = strtoupper(filter_var($post['txtvdNewCardName'.$idx], FILTER_SANITIZE_STRING));
+            }
+            
             // For mulitple merchants
             if (isset($post['selccgw'.$idx])) {
                 $selGw = strtolower(filter_var($post['selccgw'.$idx], FILTER_SANITIZE_STRING));

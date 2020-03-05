@@ -107,10 +107,10 @@ class Cc_Hosted_GatewayRS extends TableRS {
     public $Password;  // varchar(245) NOT NULL DEFAULT '',
     public $Credit_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $Trans_Url;  // varchar(145) NOT NULL DEFAULT '',
-    public $CardInfo_Url;  // varchar(145) NOT NULL DEFAULT '',
+    public $Page_Header_URL;  // varchar(145) NOT NULL DEFAULT '',
     public $Checkout_Url;  // varchar(145) NOT NULL DEFAULT '',
-    public $Mobile_CardInfo_Url;  // varchar(145) NOT NULL DEFAULT '',
-    public $Mobile_Checkout_Url;  // varchar(145) NOT NULL DEFAULT '',
+    public $Manual_MerchantId;  // varchar(145) NOT NULL DEFAULT '',
+    public $Manual_Password;  // varchar(145) NOT NULL DEFAULT '',
     public $CheckoutPOS_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $CheckoutPOSiFrame_Url;  // varchar(145) NOT NULL DEFAULT '',
     public $Use_AVS_Flag;  // bit(1) NOT NULL DEFAULT b'0',
@@ -128,10 +128,10 @@ class Cc_Hosted_GatewayRS extends TableRS {
         $this->Password = new DB_Field("Password", "", new DbStrSanitizer(245), TRUE, TRUE);
         $this->Credit_Url = new DB_Field("Credit_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->Trans_Url = new DB_Field("Trans_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-        $this->CardInfo_Url = new DB_Field("CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
+        $this->Page_Header_URL = new DB_Field("CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->Checkout_Url = new DB_Field("Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-        $this->Mobile_CardInfo_Url = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
-        $this->Mobile_Checkout_Url = new DB_Field("Mobile_Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
+        $this->Manual_MerchantId = new DB_Field("Mobile_CardInfo_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
+        $this->Manual_Password = new DB_Field("Mobile_Checkout_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->CheckoutPOS_Url = new DB_Field("CheckoutPOS_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->CheckoutPOSiFrame_Url = new DB_Field("CheckoutPOSiFrame_Url", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->Use_AVS_Flag = new DB_Field("Use_AVS_Flag", 0, new DbBitSanitizer(), TRUE, TRUE);

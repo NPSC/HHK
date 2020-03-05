@@ -20,6 +20,7 @@ abstract class PaymentGateway {
     protected $responseErrors;
     protected $useAVS;
     protected $useCVV;
+    protected $usePOS;
 
     public function __construct(\PDO $dbh, $gwType = '') {
 
