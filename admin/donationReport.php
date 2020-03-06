@@ -67,11 +67,6 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
     $eDate = filter_var($_POST["edate"], FILTER_SANITIZE_STRING);
 
     $selectRoll = filter_var($_POST["selrollup"], FILTER_SANITIZE_STRING);
-    if ($selectRoll == "rd") {
-        $rollup = 't';
-    } else {
-        $rollup = 'f';
-    }
 
     $letterSalSelector->setReturnValues($_POST[$letterSalSelector->get_htmlNameBase()]);
     $envSalSelector->setReturnValues($_POST[$envSalSelector->get_htmlNameBase()]);
@@ -241,9 +236,10 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                             <td style="max-height: 25px; min-width: 185px;"><input type="checkbox" id="overRideSal" name="overRideSal" <?php echo $overRideSalChecked ?>/><label for="overRideSal"> Over-ride Salutations</label></td>
                         </tr>
                         <tr>
-                            <td><select name="selrollup" id="selrollup" size="2">
+                            <td><select name="selrollup" id="selrollup" size="3">
                                     <option value="rd">Roll-up by Donor</option>
                                     <option value="in" selected="selected">Individual Donations</option>
+                                    <option value="ft" >First Donation</option>
                                 </select>
                                 <input type="hidden" id="hdnselrollup" value="<?php echo $selectRoll ?>" />
                             </td>

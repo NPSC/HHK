@@ -51,7 +51,6 @@ $(document).ready(function () {
                     if (memData.memDesig == 'i' && memData.coId > 0) {
                         donName = donName + '  (' + memData.coName + ')';
                     }
-                    //$(ui.newTab.parentnode).removeClass('ui-state-focus').removeClass('ui-state-hover');
                     // create the markup for the new donations list.
                     getDonationMarkup(memData.id);
                     // Write the selected campaign amount range info into the donor tab.

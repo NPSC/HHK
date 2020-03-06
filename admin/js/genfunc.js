@@ -1,15 +1,3 @@
-/**
- * genfunc.js
- *
- *
- * @category  member
- * @package   Hospitality HouseKeeper
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2014 <nonprofitsoftwarecorp.org>
- * @license   GPL and MIT
- * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
- */
-
 function updateTips(tips, t) {
     "use strict";
     tips.text(t).addClass("ui-state-highlight");
@@ -79,20 +67,25 @@ function getDonationMarkup(id) {
             var msg;
             data = $.parseJSON(data);
 
-        if (data.error) {
-            if (data.gotopage) {
-                window.open(data.gotopage, '_self');
-            }
-            msg = data.error;
+	        if (data.error) {
+	            if (data.gotopage) {
+	                window.open(data.gotopage, '_self');
+	            }
+	            msg = data.error;
+	
+	        } else {
+	            msg = data.success;
+	        }
+	        
+	        $('#divListDonation').children().remove();
+	        $("#divListDonation").append($(msg));
+	        
+	        $('.hhk-edit-donation').on('click', function () {
+	        	var idDonation = $(this).data('idDonation');
+	        	alert('Not implemented yet.');
+	        });
 
-        } else {
-            msg = data.success;
-        }
-        
-            $('#divListDonation').children().remove();
-            $("#divListDonation").append($(msg));
-        }
-    );
+        });
 }
 function donateDeleteMarkup(dataTxt, id) {
     "use strict";

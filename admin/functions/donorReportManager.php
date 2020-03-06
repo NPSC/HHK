@@ -154,8 +154,8 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             $eDate = date('Y-m-d');
         }
 
-        $dateClause = " and vd.Effective_Date >= '" . $sDate . "' and vd.Effective_Date <= '" . $eDate . "' ";
-
+     $dateClause = " and vd.Effective_Date >= '" . $sDate . "' and vd.Effective_Date <= '" . $eDate . "' ";
+     
     } else {
         $dateClause = "";
     }
@@ -166,7 +166,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $campCount = 0;
     $selClause = "";
     $campRecords = 0;
-    $hasStudents = FALSE;
+
 
     // check campaign codes
     if (isset($_POST["selDonCamp"])) {
@@ -185,9 +185,6 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                     $selClause .= " or LOWER(TRIM(vd.Campaign_Code)) = LOWER(TRIM('" . $rw[0] . "')) ";
                     $campList .= $rw[1] . ", ";
                     $campCount++;
-                    if ($rw[2] == CampaignType::Scholarship) {
-                        $hasStudents = TRUE;
-                    }
                 }
             }
         }
@@ -346,16 +343,31 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         }
 
     } else {
-        // Individual donation report
-        $sumaryRows['Report Type'] = "Individual Donation Report";
-
-        $query = "from vindividual_donations vd $ljClause where 1=1 $wclause $dateClause $selClause $totalClause $oClause";
-
-        $stmt = $dbh->query("select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree` " . $query);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        $reportTitle = "Individual Donation Report.   Date: " . date("m/d/Y");
-
+    	
+    	if ($roll == 'ft') {
+    		
+    		// First don report
+    		$sumaryRows['Report Type'] = "First Donations Report";
+    		
+    		$query = "from vindividual_donations vd $ljClause where 1=1 $wclause $selClause $totalClause group by vd.id having min(vd.Effective_Date) >= '" . $sDate . "' and min(vd.Effective_Date) <= '" . $eDate . "' $oClause ";
+    		
+    		$stmt = $dbh->query("select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree`, min(vd.Effective_Date)" . $query);
+    		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    		
+    		$reportTitle = "First Donations Report.   Date: " . date("m/d/Y");
+    	} else {
+	        // Individual donation report
+	        $sumaryRows['Report Type'] = "Individual Donation Report";
+	        
+	
+	        $query = "from vindividual_donations vd $ljClause where 1=1 $wclause $dateClause $selClause $totalClause $oClause";
+	
+	        $stmt = $dbh->query("select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree` " . $query);
+	        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	
+	        $reportTitle = "Individual Donation Report.   Date: " . date("m/d/Y");
+    	}
+    	
         // header - after opening the result set to get number of rows.
         if ($dlFlag) {
             $file = 'IndividualDonationReport';
@@ -414,9 +426,9 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
     if ($dlFlag) {
 
-        // Create a new worksheet called “My Data”
+        // Create a new worksheet called â€œMy Dataâ€�
         $myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
-        // Attach the “My Data” worksheet as the first worksheet in the PHPExcel object
+        // Attach the â€œMy Dataâ€� worksheet as the first worksheet in the PHPExcel object
         $sml->addSheet($myWorkSheet, 1);
         $sml->setActiveSheetIndex(1);
 

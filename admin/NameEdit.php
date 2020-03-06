@@ -439,6 +439,7 @@ $alertMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="js/genfunc.js"></script>
 
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
@@ -570,7 +571,6 @@ $alertMessage = $alertMsg->createMarkup();
                 <?php echo $webUserDialogMarkup; ?>
             </div>
         </div>  <!-- div id="page"-->
-        <script type="text/javascript" src="js/genfunc.js"></script>
         <script type="text/javascript"><?php include_once("js/nameEd.js") ?></script>
     </body>
 </html>

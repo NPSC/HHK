@@ -22,7 +22,6 @@ class Donate {
         $newDon = new HTMLTable();
         $newDon->addHeaderTr(
                 HTMLTable::makeTh('Campaign')
-                .HTMLTable::makeTh('Student', array('id'=>'dhdrStudent', 'style'=>'display:none;'))
                 .HTMLTable::makeTh('Date')
                 .HTMLTable::makeTh('Allowed')
                 .HTMLTable::makeTh('Pay With')
@@ -32,7 +31,6 @@ class Donate {
         $newDon->addBodyTr(
 
                 HTMLTable::makeTd(HTMLSelector::generateMarkup($campaignOptions, array('id'=>'dselCamp', 'class'=>'hhk-ajx-dondata')))
-                .(is_null($studentOptions) ? '' : HTMLTable::makeTd(HTMLSelector::generateMarkup($studentOptions, array('id'=>'dselStudent', 'class'=>'hhk-ajx-dondata')), array('id'=>'dbdyStudent', 'style'=>'display:none;')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'ddate', 'class'=>'ckdate hhk-ajx-dondata')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'cLimits', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(
