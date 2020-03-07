@@ -22,6 +22,7 @@ class VantivGateway extends PaymentGateway {
     
     protected $paymentPageLogoUrl = '';
     protected $manualKey = FALSE;
+    
 
     public static function getPaymentMethod() {
         return PaymentMethod::Charge;
@@ -785,23 +786,37 @@ class VantivGateway extends PaymentGateway {
     public function getPaymentPageLogoUrl() {
     	return $this->paymentPageLogoUrl;
     }
-
+    
     public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
-        $selArray = array('id'=>'selccgw'.$index, 'name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index);
+    	$selArray = array('name'=>'selccgw'.$index, 'class'=>'hhk-feeskeys'.$index, 'style'=>'width:min-content;', 'title'=>'Select the Location');
+    	$manualArray =  array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index, 'title'=>'Check to Key in credit account number');
+        
+        // Precheck the manual account number entry checkbox?
+        if ($this->checkManualEntryCheckbox) {
+        	$manualArray['checked'] = 'checked';
+        }
+        
+        $keyCb = HTMLContainer::generateMarkup('span', 
+        		HTMLContainer::generateMarkup('label', 'Type: ', array('for'=>'btnvrKeyNumber'.$index, 'title'=>'Check to Key in credit account number')) .HTMLInput::generateMarkup('', $manualArray)
+        , array('style'=>'float:right; margin-top:2px;'));
 
         if ($this->getGatewayType() != '') {
+        	// A location is already selected.
 
             $sel = HTMLSelector::doOptionsMkup(array(0=>array(0=>$this->getGatewayType(), 1=> ucfirst($this->getGatewayType()))), $this->getGatewayType(), FALSE);
 
             $payTbl->addBodyTr(
-                    HTMLTable::makeTh('Selected Location:')
-                    .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
+                    HTMLTable::makeTh('Selected Location:', array('style'=>'text-align:right;'))
+            		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray)
+            				. $keyCb
+            				, array('colspan'=>'2'))
                     , array('id'=>'trvdCHName'.$index)
             );
 
         } else {
-
+			// Show all locations, none is preselected.
+        	
             $stmt = $dbh->query("Select DISTINCT l.`Merchant`, l.`Title` from `location` l join `room` r on l.idLocation = r.idLocation where r.idLocation is not null and l.`Status` = 'a'");
             $gwRows = $stmt->fetchAll();
 
@@ -811,17 +826,16 @@ class VantivGateway extends PaymentGateway {
             $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
 
             $payTbl->addBodyTr(
-                    HTMLTable::makeTh('Select a Location:')
-                    .HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray), array('colspan'=>'2'))
+            		HTMLTable::makeTh('Select a Location:', array('style'=>'text-align:right; width:130px;'))
+                    .HTMLTable::makeTd(
+                    		HTMLSelector::generateMarkup($sel, $selArray)
+                    		. $keyCb
+                    		, array('colspan'=>'2'))
                     , array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
             );
 
         }
         
-        $payTbl->addBodyTr(HTMLTable::makeTh('Manual Entry')
-        		. HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index, 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Check to Key in credit account number')))
-        		, array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
-        );
     }
 
     protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {

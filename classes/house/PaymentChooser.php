@@ -929,7 +929,7 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblRtnSelect'));
     }
 
-    public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, PaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;', $newCardChecked = TRUE) {
+    public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, PaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;') {
 
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
             // Cannot return to a new card...
@@ -979,7 +979,7 @@ ORDER BY v.idVisit , v.Span;");
         // New card.  Not for credit return.
         if ($index !== ReturnIndex::ReturnIndex) {
 
-            if ($prefTokenId == 0 && $newCardChecked) {
+        	if (count($tkRsArray) == 0) {
                 $attr['checked'] = 'checked';
             } else {
                 unset($attr['checked']);

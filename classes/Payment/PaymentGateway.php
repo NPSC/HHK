@@ -21,7 +21,8 @@ abstract class PaymentGateway {
     protected $useAVS;
     protected $useCVV;
     protected $usePOS;
-
+    protected $checkManualEntryCheckbox = FALSE;
+    
     public function __construct(\PDO $dbh, $gwType = '') {
 
         $this->gwType = $gwType;
@@ -211,7 +212,17 @@ abstract class PaymentGateway {
     public function useAVS() {
         return FALSE;
     }
-
+    
+    public function setCheckManualEntryCheckbox($v) {
+    	
+    	if ($v) {
+    		$this->checkManualEntryCheckbox = TRUE;
+    	} else {
+    		$this->checkManualEntryCheckbox = FALSE;
+    	}
+    }
+    
+    
     protected function getInfoFromCardId(\PDO $dbh, $cardId) {
 
         $infoArray = array();
