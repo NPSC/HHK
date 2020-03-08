@@ -320,10 +320,10 @@ class PaymentReport {
 
     public static function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$sml, &$reportRows, $subsidyId) {
 
-        $uS = Session::getInstance();
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
         $payDetail = '';
+        $payGW = '';
         $payStatus = $p['Payment_Status_Title'];
         $dateDT = new \DateTime($p['Payment_Date']);
 
@@ -336,16 +336,20 @@ class PaymentReport {
         $payType = $p['Payment_Method_Title'];
         $statusAttr = array();
 
-        if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
+        if ($p['idPayment_Method'] == PaymentMethod::Charge) {
 
             if (isset($p['auths'])) {
 
                 foreach ($p['auths'] as $a) {
 
-                    if ($a['Card_Type'] != '') {
-                        $payDetail = $a['Card_Type'] . ' - ' . $a['Masked_Account'];
-                    }
-
+                	if ($a['Card_Type'] != '') {
+                		$payDetail = $a['Card_Type'] . ' - ' . $a['Masked_Account'];
+                	}
+                	
+                	if ($a['Merchant'] != '') {
+                		$payGW = ucfirst($a['Merchant']);
+                	}
+                	
                     if ($a['Auth_Last_Updated'] !== '') {
                         $dateDT = new DateTime($a['Auth_Last_Updated']);
                     }
@@ -448,7 +452,8 @@ class PaymentReport {
             'Detail' => $payDetail,
             'Payment_External_Id'=>$p['Payment_External_Id'],
             'By' => $p['Payment_Created_By'],
-            'Notes'=>$p['Payment_Note']
+            'Notes'=>$p['Payment_Note'],
+        	'Merchant'=>$payGW
         );
 
 

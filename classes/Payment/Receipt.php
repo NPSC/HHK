@@ -690,7 +690,8 @@ WHERE
                         'Card_Type' => $p['Card_Type'],
                         'Approved_Amount' => $p['Approved_Amount'],
                         'Approval_Code' => $p['Approval_Code'],
-                        'Auth_Last_Updated' => $p['Auth_Last_Updated']
+                        'Auth_Last_Updated' => $p['Auth_Last_Updated'],
+                    	'Merchant' => $p['Merchant']
                     );
                 }
             }

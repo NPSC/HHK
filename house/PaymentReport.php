@@ -54,6 +54,9 @@ $assocSelections = array();
 $statusSelections = array();
 $payTypeSelections = array();
 $calSelection = '19';
+$gwList = array();
+$gwSelector = '';
+$gwSelections = array();
 
 $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
@@ -100,6 +103,17 @@ if (count($hospList) > 0) {
     }
 }
 
+// Payment gateway lists
+$gwstmt = $dbh->query("Select cc_name from cc_hosted_gateway where Gateway_Name = '" . $uS->PaymentGateway . "' and cc_name not in ('Production', 'Test', '')");
+$gwRows = $gwstmt->fetchAll(PDO::FETCH_NUM);
+
+if (count($gwRows) > 1) {
+	
+	foreach ($gwRows as $g) {
+		$gwList[$g[0]] = array(0=>$g[0], 1=>ucfirst($g[0]));
+	}
+}
+
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms, DT Type
 $cFields[] = array('Payor Last', 'Last', 'checked', '', 's', '', array());
@@ -121,8 +135,13 @@ $cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
 $cFields[] = array("Original Amount", 'Orig_Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)' , array('style'=>'text-align:right;'));
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
+// Show payment gateway
+if (count($gwList) > 1) {
+	$cFields[] = array('Location', 'Merchant', 'checked', '', 's', '', array());
+}
+
 // Show External Id (external payment record id)
-if ($config->getString('webServices', 'ContactManager', '') != '') {
+if ($config->getString('webServices', 'Service_Name', '') != '') {
     $cFields[] = array('External Id', 'Payment_External_Id', '', '', 's', '', array());
 }
 
@@ -186,29 +205,23 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     }
 
     if (isset($_POST['selPayType'])) {
-        // Payment Types
-        $reqs = $_POST['selPayType'];
-
-        if (is_array($reqs)) {
-            $addType = 0;
-            $payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-
-            // Select both charge types of one is selected.
-            foreach ($payTypeSelections as $s) {
-                if ($s == PaymentMethod::Charge) {
-                    $addType = PaymentMethod::ChgAsCash;
-                } else if ($s == PaymentMethod::ChgAsCash) {
-                    $addType = PaymentMethod::Charge;
-                }
-            }
-
-            if ($addType > 0) {
-                $payTypeSelections[] = $addType;
-            }
-
-        }
+    	// Payment Types
+    	$reqs = $_POST['selPayType'];
+    	
+    	if (is_array($reqs)) {
+    		$payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+    	}
     }
-
+    
+    if (isset($_POST['selGateway'])) {
+    	// Payment Types
+    	$reqs = $_POST['selGateway'];
+    	
+    	if (is_array($reqs)) {
+    		$gwSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+    	}
+    }
+    
 
     // Determine time span
     if ($calSelection == 20) {
@@ -363,9 +376,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         if ($s != '') {
             // Set up query where part.
             if ($whType == '') {
-                $whType = $s ;
+            	$whType = "'" . $s . "'";
             } else {
-                $whType .= ",".$s;
+            	$whType .= ",'".$s . "'";
             }
 
             if ($payTypeText == '') {
@@ -385,6 +398,34 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $headerTable->addBodyTr(HTMLTable::makeTd('Pay Types: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($payTypeText));
 
+    $whGw = '';
+    $gwText = '';
+    foreach ($gwSelections as $s) {
+    	if ($s != '') {
+    		// Set up query where part.
+    		if ($whGw == '') {
+    			$whGw = " '" . $s . "' ";
+    		} else {
+    			$whGw .= ", '" . $s . "' ";
+    		}
+    		
+    		if ($gwText == '') {
+    			$gwText .= (isset($gwList[$s][1]) ? $gwList[$s][1] : '');
+    		} else {
+    			
+    			$gwText .= (isset($gwList[$s][1]) ? ', ' .$gwList[$s][1] : '');
+    		}
+    	}
+    }
+    
+    if ($whGw != '') {
+    	$whGw = " and lp.`Merchant` in (" . $whGw . ") ";
+    } else {
+    	$gwText = 'All';
+    }
+    
+    $headerTable->addBodyTr(HTMLTable::makeTd('Locations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($gwText));
+    
     $query = "Select
     lp.*,
     ifnull(n.Name_First, '') as `First`,
@@ -409,7 +450,7 @@ from
         left join
     name np on hs.idPatient = np.idName
 where lp.idPayment > 0
- $whHosp $whAssoc $whDates $whStatus $whType ";
+ $whHosp $whAssoc $whDates $whStatus $whType $whGw ";
 
     $stmt = $dbh->query($query);
     $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idHospital', 'idAssociation', 'Patient_Last', 'Patient_First', 'Hosp_Arrival'));
@@ -418,11 +459,6 @@ where lp.idPayment > 0
     $sml = null;
     $reportRows = 0;
 
-    if (count($aList) > 0) {
-        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital').' / Assoc';
-    } else {
-        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital');
-    }
 
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
@@ -471,16 +507,12 @@ where lp.idPayment > 0
 
             // Hospital
             $hospital = '';
-            $assoc = '';
-            $hosp = '';
 
             if ($r['i']['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['i']['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['i']['idAssociation']][1] != '(None)') {
                 $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['i']['idAssociation']][1] . ' / ';
-                $assoc = $uS->guestLookups[GL_TableNames::Hospital][$r['i']['idAssociation']][1];
             }
             if ($r['i']['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['i']['idHospital']])) {
                 $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['i']['idHospital']][1];
-                $hosp = $uS->guestLookups[GL_TableNames::Hospital][$r['i']['idHospital']][1];
             }
 
 
@@ -541,6 +573,7 @@ $statusSelector = HTMLSelector::generateMarkup(
 $payTypeSelector = HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($payTypes, $payTypeSelections), array('name' => 'selPayType[]', 'size' => '5', 'multiple' => 'multiple'));
 
+$gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($gwList, $gwSelections), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($gwList) + 1)));
 
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>$monSize, 'multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
@@ -710,6 +743,14 @@ try {
                         </tr>
                         <tr>
                            <td><?php echo $statusSelector; ?></td>
+                        </tr>
+                    </table>
+                    <table style="float: left;">
+                        <tr>
+                            <th colspan="2">Location</th>
+                        </tr>
+                        <tr>
+                           <td><?php echo $gwSelector; ?></td>
                         </tr>
                     </table>
                     <?php echo $columSelector; ?>
