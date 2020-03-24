@@ -139,8 +139,11 @@ class HouseServices {
             $mkup = HTMLContainer::generateMarkup('div',
                     VisitView::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coDate) . $mkup, array('id'=>'divksStays'));
 
-            $mkup .= HTMLContainer::generateMarkup('div',
+            // Show fees if not hf = hide fees.
+            if ($action != 'hf') {
+            	$mkup .= HTMLContainer::generateMarkup('div',
                     VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
+            }
         }
 
         $dataArray['success'] = $mkup;

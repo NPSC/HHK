@@ -2361,7 +2361,7 @@ function resvManager(initData, options) {
                         $(this).dialog("close");
                     }
                 };
-                viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
+                viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, 'hf', span);
                 $('#submitButtons').hide();
             });
 

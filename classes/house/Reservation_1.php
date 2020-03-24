@@ -618,7 +618,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         $vStat = VisitStatus::Pending;
 
         // Find resources in use
-        if ($uS->IncludeLastDay) {
+        if (!$uS->IncludeLastDay) {
 
             $query = "select r.idResource "
                 . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
