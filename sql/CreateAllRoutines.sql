@@ -284,8 +284,7 @@ BEGIN
     UPDATE counter SET Next = (@n:= Next) + 1 WHERE Table_Name = tabl;
     select @n into num;
 
-END
- -- ;
+END -- ;
 
 
 
@@ -770,7 +769,7 @@ BEGIN
 
     end if;
 
-END --;
+END -- ;
 
 
 
@@ -802,9 +801,8 @@ BEGIN
 
     select idPage into p from `page` where `File_Name` = fileName;
 
-    -- Take care of page table
     if p > 0 then
-        -- update
+
         update `page` set `Login_Page_Id` = loginPageId, `Title` = pageTitle, `Hide` = hideMe, `Menu_Parent` = menuParent, `Menu_Position` = menuPosition, `Type` = pageType,
                 `Validity_Code` = validityCode, `Updated_By` = updatedBy, `Last_Updated` = lastUpdated
                 where idPage = p;
@@ -812,7 +810,7 @@ BEGIN
         Select p into id;
 
     else
-        -- insert
+
         INSERT INTO `page`
         (`File_Name`, `Login_Page_Id`, `Title`,	`Hide`,	`Web_Site`,	`Menu_Parent`, `Menu_Position`,	`Type`,	`Validity_Code`, `Updated_By`, `Last_Updated`)
         VALUES
@@ -823,7 +821,7 @@ BEGIN
 
     call set_pagesecurity(id, secCode);
 
-END --;
+END -- ;
 
 -- --------------------------------------------------------
 --
@@ -841,4 +839,36 @@ BEGIN
     delete from photo where idPhoto = idPhoto;
     update name_demog set Guest_Photo_Id = 0 where idName = guest_id;
 
+END -- ;
+
+
+-- --------------------------------------------------------
+--
+-- Procedure `incidents_report`
+--
+DROP procedure IF EXISTS `incidents_report`; -- ;
+
+CREATE PROCEDURE `incidents_report`()
+BEGIN
+    CREATE TEMPORARY TABLE IF NOT EXISTS tble (
+        idPsg int,
+        count_idPsg int
+    );
+
+    insert into tble 
+		SELECT 
+			Psg_Id, COUNT(Psg_Id)
+		FROM
+			report
+		GROUP BY Psg_Id
+		ORDER BY COUNT(Psg_Id) DESC;
+	
+    select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, r.Report_Date, r.Resolution_Date, r.`Status`
+    from 
+		tble t join report r on t.idPsg = r.Psg_Id
+		left join hospital_stay hs on t.idPsg = hs.idPsg
+        left join name n on hs.idPatient = n.idName;
+	
+    drop table tble;
+    
 END -- ;

@@ -830,7 +830,7 @@ class VisitView {
                 . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', number_format(abs($curAccount->getDueToday()), 2)
                         , array(
                             'id'=>'spnCfBalDue',
-                            'data-rmbal'=> number_format($curAccount->getRoomFeeBalance(), 2, '.', ''),
+                        		'data-rmbal'=> number_format($curAccount->getRoomFeeBalance(), 2, '.', ''),
                             'data-vfee'=>number_format($curAccount->getVfeeBal(), 2, '.', ''),
                             'data-totbal'=>number_format($curAccount->getDueToday(), 2, '.', '')))
                         , $balAttr)

@@ -104,7 +104,9 @@ class CurrentAccount {
         }
 
         // Room fee balance
-        $this->setRoomFeeBalance(($this->getRoomCharge() + $visitCharge->getItemInvCharges(ItemId::Discount)) - $visitCharge->getRoomFeesPaid() - $visitCharge->getRoomFeesPending());
+        $fees = $this->getRoomCharge() + $visitCharge->getItemInvCharges(ItemId::Discount);
+        $pending = $visitCharge->getRoomFeesPaid() + $visitCharge->getRoomFeesPending();
+        $this->setRoomFeeBalance($fees - $pending);
 
         // Lodging tax already paid
         foreach ($visitCharge->getTaxItemIds() as $tid =>$v) {

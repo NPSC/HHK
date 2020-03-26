@@ -353,7 +353,7 @@ function amtPaid() {
         totReturnPreTax = 0,
         isChdOut = isCheckedOut,
         roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal')),
-        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal')),
+//        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal')),
         $taxingItems = $('.hhk-TaxingItem');
 
     if (isNaN(roomBalDue)) {
@@ -541,6 +541,28 @@ function amtPaid() {
             p.guestCredit.val(totRmBalDue.toFixed(2).toString());
             $('.hhk-RoomCharge').hide();
             $('.hhk-GuestCredit').show();
+            
+            // pay any invoice charges with guest credit
+            if (invAmt > 0) {
+	            if (totRmBalDue + invAmt <= 0) {
+	            	totRmBalDue = totRmBalDue + invAmt;
+	            	invAmt = 0;
+	            } else {
+	            	invAmt = totRmBalDue + invAmt;
+	            	totRmBalDue = 0;
+	            }
+	        }
+            
+            // pay any cleaning fee charges with guest credit
+            if (vfee > 0) {
+	            if (totRmBalDue + vfee <= 0) {
+	            	totRmBalDue = totRmBalDue + vfee;
+	            	vfee = 0;
+	            } else {
+	            	vfee = totRmBalDue + vfee;
+	            	totRmBalDue = 0;
+	            }
+            }
         }
 
 
@@ -708,11 +730,6 @@ function amtPaid() {
         $('.paySelectTbl').show('fade');
         $('.hhk-minPayment').show('fade');
 
-        // manage cof box
-//        if ($('#cbNewCard').length > 0) {
-//            $('#cbNewCard').prop('checked', false).change().prop('disabled', true);
-//        }
-
         if (totPay < 0 && ! isChdOut) {
             $('#txtRtnAmount').val((0 - totPay).toFixed(2).toString());
         }
@@ -722,11 +739,6 @@ function amtPaid() {
         totPay = 0;
 
         $('.paySelectTbl').hide();
-
-        // manage cof box
-//        if ($('#cbNewCard').length > 0) {
-//            $('#cbNewCard').prop('disabled', false);
-//        }
 
         if (isChdOut === false && ckedInCharges === 0.0) {
             $('.hhk-minPayment').hide();
