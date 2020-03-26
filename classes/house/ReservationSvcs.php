@@ -436,7 +436,9 @@ class ReservationSvcs
     public static function moveResvAway(\PDO $dbh, DateTime $firstArrival, DateTime $lastDepart, $idResource, $uname)
     {
 
-        // Move other reservations to alternative rooms?
+    	$uS = Session::getInstance();
+    	
+    	// Move other reservations to alternative rooms?
         $rRows = Reservation_1::findReservations($dbh, $firstArrival->format('Y-m-d H:i:s'), $lastDepart->format('Y-m-d H:i:s'), $idResource);
 
         $reply = '';
@@ -447,7 +449,16 @@ class ReservationSvcs
             foreach ($rRows as $r) {
 
                 $resv = Reservation_1::instantiateFromIdReserv($dbh, $r[0]);
-                if ($resv->getStatus() != ReservationStatus::Staying && $resv->getStatus() != ReservationStatus::Checkedout) {
+                $rArrivalDT = new DateTime($resv->getExpectedArrival());
+                $move = TRUE;
+                
+                if ($uS->IncludeLastDay == TRUE && $rArrivalDT->format('Y-m-d') == $lastDepart->format('Y-m-d')) {
+                	// Dont move
+                	$move = FALSE;
+                }
+                
+                if ($resv->getStatus() != ReservationStatus::Staying && $resv->getStatus() != ReservationStatus::Checkedout && $move) {
+                	
                     $resv->move($dbh, 0, 0, $uname, TRUE);
                     $reply .= $resv->getResultMessage();
                 }

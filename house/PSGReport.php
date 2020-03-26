@@ -615,11 +615,8 @@ $year = date('Y');
 $months = array(date('n'));     // logically overloaded.
 $txtStart = '';
 $txtEnd = '';
-$status = '';
-$statsTable = '';
 $start = '';
 $end = '';
-$errorMessage = '';
 $calSelection = '19';
 
 
@@ -971,6 +968,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             $showAssoc = TRUE;
         }
         
+        $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
+
         switch ($rptSetting) {
             
             case 'psg':
@@ -994,8 +993,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 
                 
             case 'p':
-                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and Relationship_Code = '" . RelLinkType::Self . "' ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
-                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just Patients', array('colspan'=>'4')));
+                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and vg.Id = hs.idPatient ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just '.$patTitle, array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
                 if ($showDiag) {
@@ -1011,7 +1010,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 
             case 'g':
                 $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
-                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Patients & Guests', array('colspan'=>'4')));
+                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $patTitle.' & Guests', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
                 if ($showDiag) {
@@ -1100,11 +1099,11 @@ $coAttr['data-country'] = $countrySelection;
 
 $selCountry = HTMLSelector::generateMarkup('', $coAttr);
 
-$dateFormat = $labels->getString("momentFormats", "report", "MMM D, YYYY");
+// $dateFormat = $labels->getString("momentFormats", "report", "MMM D, YYYY");
 
-if ($uS->CoTod) {
-    $dateFormat .= ' H:mm';
-}
+// if ($uS->CoTod) {
+//     $dateFormat .= ' H:mm';
+// }
 
 
 ?>
@@ -1198,7 +1197,7 @@ if ($uS->CoTod) {
                             <th><label for='rbpsg'><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></label><input type="radio" id='rbpsg' name="rbReport" value="psg" style='margin-left:.5em;' <?php if ($rptSetting == 'psg') {echo 'checked="checked"';} ?>/></th>
                             <?php if ($uS->PatientAsGuest) { ?><th><label for='rbp'>Just <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbp' name="rbReport" value="p" style='margin-left:.5em;' <?php if ($rptSetting == 'p') {echo 'checked="checked"';} ?>/></th><?php } ?>
                             <th><label for='rbg'>Guests & <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbg' name="rbReport" value="g" style='margin-left:.5em;' <?php if ($rptSetting == 'g') {echo 'checked="checked"';} ?>/></th>
-                            <th><label for='nrp'>No Return People</label><input type="radio" id='nrp' name="rbReport" value="nr" style='margin-left:.5em;' <?php if ($rptSetting == 'nr') {echo 'checked="checked"';} ?>/></th>
+                            <th><label for='nrp'>No-Return Guests</label><input type="radio" id='nrp' name="rbReport" value="nr" style='margin-left:.5em;' <?php if ($rptSetting == 'nr') {echo 'checked="checked"';} ?>/></th>
                         </tr>
                     </table>
                     </fieldset>

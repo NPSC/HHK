@@ -295,6 +295,9 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
     $sub = $visit['fcg'] - $visit['chg'];
     $r['sub'] = ($sub == 0 ? '' : number_format($sub,2));
+    
+    $rateAdj = $visit['adj'];
+    $r['rateAdj'] = ($rateAdj == 0 ? '' : number_format($rateAdj, 2) . '%');
 
     $r['gpaid'] = ($visit['gpd'] == 0 ? '': number_format($visit['gpd'], 2));
     $r['hpaid'] = ($visit['hpd'] == 0 ? '': number_format($visit['hpd'], 2));
@@ -987,7 +990,7 @@ where
         }
 
         $adjRatio = (1 + $r['Expected_Rate']/100);
-        $visit['adj'] = $adjRatio;
+        $visit['adj'] = $r['Expected_Rate'];
 
         //  Add up any pre-interval charges
         if ($r['Pre_Interval_Nights'] > 0) {
@@ -1247,9 +1250,13 @@ where
                     break;
 
                 case 'sub':
-                    $entry = '$' . number_format($totalSubsidy,2);
-                    break;
-
+                	$entry = '$' . number_format($totalSubsidy,2);
+                	break;
+                	
+                case 'rateAdj':
+                	$entry = ' ';
+                	break;
+                	
                 case 'meanRate':
                 	$entry = '$' . number_format($avDailyFee,2);
                 	break;
@@ -1433,6 +1440,11 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     } else {
 
         $cFields[] = array("Rate", 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
+        
+        if ($uS->RoomPriceModel == ItemPriceCode::NdayBlock) {
+        	$cFields[] = array("Adj. Rate", 'rateAdj', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+        }
+        
         $cFields[] = array("Mean Rate", 'meanRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
 
@@ -1458,7 +1470,10 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
         $cFields[] = array('Tax Pending', 'taxpndg', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
 
-    $cFields[] = array("Rate Subsidy", 'sub', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+    if ($uS->RoomPriceModel != ItemPriceCode::NdayBlock) {
+    	$cFields[] = array("Rate Subsidy", 'sub', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+    }
+    
     $cFields[] = array("Contribution", 'donpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 }
 

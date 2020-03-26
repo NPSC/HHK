@@ -1686,6 +1686,11 @@ class PriceNdayBlock extends PriceModel {
         $dailyRate = $rrateRs->Reduced_Rate_1->getStoredVal();
 
         $interval = $rrateRs->Reduced_Rate_3->getStoredVal();
+        
+        if ($interval == 0) {
+        	$interval = 7;
+        }
+        
         $creditNites = $this->creditDays % $interval;
 
         $blocks = floor($nites / $interval);

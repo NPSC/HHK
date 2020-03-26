@@ -69,12 +69,12 @@ abstract class Role {
         $phoneSearchMkup = '';
 
         if ($showPhoneSearch) {
-            $phoneSearchMkup = HTMLContainer::generateMarkup('span', 'Phone # Search: ', array('style'=>'margin-left:1em; '))
-                    .HTMLInput::generateMarkup('', array('id'=>$prefix.'phSearch', 'size'=>'14', 'title'=>'Enter at least 5 numbers to invoke search'));
+            $phoneSearchMkup = HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch', 'style'=>'margin-left:1em; '))
+                    .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'14', 'title'=>'Enter at least 5 numbers to invoke search'));
         }
 
         $frst = HTMLContainer::generateMarkup('span', HTMLContainer::generateMarkup('span', $title, array('id'=>$prefix.'prompt'))
-                .HTMLInput::generateMarkup('', array('id'=>$prefix.'Search', 'size'=>'25', 'title'=>'Enter at least 3 characters to invoke search'))
+        		.HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'Search', 'size'=>'25', 'title'=>'Enter at least 3 characters to invoke search'))
                 .$phoneSearchMkup
                 , array('id'=>$prefix . 'span'))
                 .HTMLContainer::generateMarkup('span', 'Room Full', array('id'=>$prefix.'fullspan', 'style'=>'display:none;'));

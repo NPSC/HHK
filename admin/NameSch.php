@@ -182,7 +182,7 @@ try {
                         <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" value="m" />
                         <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" value="e" />
                     </span><input type="hidden" id="txtBasis" value="m"/>
-                    <input type="text" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                    <input type="search" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
                 </div>
             </div>
             <div style="clear:both; margin-top:50px"></div>

@@ -47,7 +47,7 @@ $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Reservation Report', array('style'=>'margin-top: .5em;'))
         . HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
-$status = '';
+
 $statusSelections = array();
 
 $filter = new ReportFilter();
@@ -114,6 +114,7 @@ $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', PHPExcel_Style_Numbe
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 $cFields[] = array("Nights", 'Nights', 'checked', '', 'n', '');
 $cFields[] = array("Rate", 'FA_Category', 'checked', '', 's', '');
+$cFields[] = array('Guests', 'numGuests', 'checked', '', 's', '');
 $cFields[] = array("Status", 'Status_Title', 'checked', '', 's', '');
 $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
@@ -223,10 +224,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
     ifnull(g2.`Description`, '') as `Location`,
     r.`Timestamp` as `Created_Date`,
-    r.Last_Updated
+    r.Last_Updated,
+	count(rg.idReservation) as `numGuests`
+
 from
     reservation r
         left join
+	reservation_guest rg on r.idReservation = rg.idReservation
+		left join
     resource re ON re.idResource = r.idResource
         left join
     name n ON r.idGuest = n.idName
@@ -253,7 +258,8 @@ from
         LEFT JOIN
     gen_lookups g2 ON g2.Table_Name = 'Location'
         and g2.`Code` = hs.`Location`
-where " . $whDates . $whHosp . $whAssoc . $whStatus . " order by r.idRegistration";
+where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration 
+";
 
 
     $fltrdTitles = $colSelector->getFilteredTitles();

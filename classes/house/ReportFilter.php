@@ -71,9 +71,9 @@ class ReportFilter {
 
     public function createTimePeriod($defaultYear, $defaultCalendarOption, $fiscalYearDiffMonths = 0, $omits = array()) {
         $this->months = array(
-            0 => array(0, 'December'), 1 => array(1, 'January'), 2 => array(2, 'February'),
-            3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-            7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'), 13 => array(13, 'January'));
+            0 => array(1, 'January'), 1 => array(2, 'February'),
+            2 => array(3, 'March'), 3 => array(4, 'April'), 4 => array(5, 'May'), 5 => array(6, 'June'),
+            6 => array(7, 'July'), 7 => array(8, 'August'), 8 => array(9, 'September'), 9 => array(10, 'October'), 10 => array(11, 'November'), 11 => array(12, 'December'));
 
 
         $this->calendarOptions = array(

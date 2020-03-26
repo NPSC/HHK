@@ -18,7 +18,7 @@ function resvManager(initData, options) {
     var idVisit = initData.vid;
     var span = initData.span;
     var arrival = initData.arrival;
-
+    var insistPayFilledIn = initData.insistPayFilledIn;
 
     var rooms = [];
     var people = new Items();
@@ -2007,7 +2007,7 @@ function resvManager(initData, options) {
 
 
                     // Room fees paid
-                    if ($('input#feesPayment').length > 0 && $('input#feesPayment').val() == '') {
+                    if ($('input#feesPayment').length > 0 && $('input#feesPayment').val() == '' && insistPayFilledIn) {
 
                         flagAlertMessage("Set the Room Fees to an amount, or 0.", 'alert', $pWarning);
                         $('#payChooserMsg').text("Set the Room Fees to an amount, or 0.").show();

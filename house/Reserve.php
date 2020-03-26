@@ -78,7 +78,6 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 creditIncludes($uS->PaymentGateway);
 
-$menuMarkup = $wInit->generatePageMenu();
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -189,6 +188,7 @@ $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
+$resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
 
 $resvManagerOptions = [];
 if($uS->UseIncidentReports){

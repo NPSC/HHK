@@ -120,9 +120,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('FB_Status','w','Waiting','','',0),
 ('FB_Status','x','Prohibited','','',0),
 
-('Form_Upload', 'c', 'Reservation Comfirmation', 'Resv_Conf', '', 0),
+('Form_Upload', 'c', 'Comfirmation', 'Resv_Conf', '', 0),
 ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement', '', 0),
-('Form_Upload', 's', 'Survey Form', '', '', 0),
+('Form_Upload', 's', 'Survey Form', 'Survy_Form', '', 0),
 
 ('Fund', '1', 'External Donation', '', 'u', '100'),
 
@@ -497,6 +497,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('EmailType','','lu','es','','\"mail\" or \"SMTP\"','Email_Server'),
 ('EmergContactFill','true','b','h','','Insist on Filling in the emergency contact (or check the \"skip\")',''),
 ('EmptyExtendLimit','0','i','h','','Extend visit (go on leave) limit # of days',''),
+('ExtendToday', '0', 'i', 'h', '', 'Extend the Check in day by this many hours into tomorrow', ''),
 ('ForceNamePrefix','false','b','h','','Force the name prefix to be entered',''),
 ('FromAddress','','ea','g','','House from address for guest emails',''),
 ('FutureLimit','1','i','v','','Max years in the future volunteers can reserve shifts',''),
@@ -511,6 +512,8 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('HouseKeepingSteps','1','i','h','','Number of steps to cleaning/preparing rooms for new guests.',''),
 ('IncludeLastDay','false','b','h','','Include the departure day in room searches.',''),
 ('IncomeRated','true','b','h','','Use Income chooser rate assistance',''),
+('InsistCkinPayAmt', 'true', 'b', 'h','', 'Insist on the user filling in the payment amount on checkin page',''),
+('InsistCkinDemog', 'false', 'b', 'h','', 'Insist that user fill in the demographics on the check in page (see ShowDemographics)',''),
 ('InitResvStatus','a','s','h','','Initial reservation status setting, confirmed or unconfirmed',''),
 ('InsistPatBD','false','b','h','','Insist on user filling in the patients birthdate',''),
 ('InsuranceChooser','false','b','h','','Show patient insurance chooser',''),

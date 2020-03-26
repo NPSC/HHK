@@ -1,4 +1,3 @@
-rateChooser
 <?php
 /**
  * CheckingIn.php
@@ -177,6 +176,7 @@ $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 $resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : FALSE;
 $resvAr['isCheckin'] = TRUE;
+$resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
 
 $resvObjEncoded = json_encode($resvAr);
 
