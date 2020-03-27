@@ -74,7 +74,9 @@ class Reservation {
 
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
 
-        // Load reservation
+    	$uS = Session::getInstance();
+    	
+    	// Load reservation
         $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`, ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
 FROM reservation r
         LEFT JOIN
@@ -103,6 +105,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
+        	$rData->setInsistCkinDemog($uS->InsistCkinDemog);
             return new StayingReservation($rData, $rRs, new FamilyAddGuest($dbh, $rData, TRUE));
         }
 
@@ -1393,7 +1396,9 @@ class CheckingIn extends ActiveReservation {
 
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
 
-        // Load reservation and visit
+    	$uS = Session::getInstance();
+    	
+    	// Load reservation and visit
         $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.`idVisit`, 0) as `idVisit`, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`, ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
 FROM reservation r
         LEFT JOIN
@@ -1432,11 +1437,13 @@ FROM reservation r
 
         // Staying resv - add guests
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
+        	$rData->setInsistCkinDemog($uS->InsistCkinDemog);
             return new StayingReservation($rData, $rRs, new FamilyAddGuest($dbh, $rData, TRUE));
         }
 
         // Otherwise we can check in.
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
+        	$rData->setInsistCkinDemog($uS->InsistCkinDemog);
             return new CheckingIn($rData, $rRs, new Family($dbh, $rData, TRUE));
         }
 

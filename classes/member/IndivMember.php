@@ -240,7 +240,7 @@ class IndivMember extends Member {
                     . HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[$d[0]]), $this->getDemographicsEntry($d[0])),
-                                array('name'=>$idPrefix.'sel_' . $d[0])
+                        		array('name'=>$idPrefix.'sel_' . $d[0], 'class'=>$idPrefix.'hhk-demog-input')
                                 )
                         , array('style'=>'display:table-cell;')
                         )

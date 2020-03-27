@@ -48,7 +48,7 @@ class RegisterForm {
   <td width=153 style='width:91.8pt;border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class=MsoNormal style='margin-bottom:0;line-height: normal'>$"  . number_format($rate, 2) . "</p>") ."</td>
   <td width=180 style='width:1.5in;border-top:none;border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
-  <p class='label'>" . $this->labels->getString('hospital', 'referralAgent', 'Agent') . "</p>
+  <p class='label'>Staff</p>
   </td>
   <td width=278 style='width:166.5pt;border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>$agent</p>

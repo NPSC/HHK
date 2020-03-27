@@ -201,9 +201,20 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 // Page title
 $title = $wInit->pageHeading;
 
+// Imediate checkin, no prior reservation
 if (isset($_GET['title'])) {
+	
+	$nowDT = new DateTime();
+	$extendHours = intval($uS->ExtendToday);
+	
+
+	if ($extendHours > 0 && $extendHours < 10 && intval($nowDT->format('H')) <= $extendHours) {
+		$nowDT->sub(new DateInterval('P1D'));
+	}
+	
+	$resvAr['arrival'] = $nowDT->format('M j, Y');
     $title = 'Check In';
-    $resvAr['arrival'] = date('M j, Y');
+    
 }
 
 $resvObjEncoded = json_encode($resvAr);

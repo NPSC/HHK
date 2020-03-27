@@ -727,6 +727,7 @@ VALUES
 ('dm','Donation Management','Donation Management','','','','\0',''),
 ('dna','Donors (No Amounts)','View lists of donors but without donation amounts','','','','\0',''),
 ('g','Guest Operations','Guest Operations, basic access to guest tracking site','','','','',''),
+('gr','Guest Reports','Guest Reports','','','','\0',''),
 ('ga','Guest Admin','Guest Administration level access to guest tracking site','','','','\0',''),
 ('mm','Member Management','Member Management, basic access to admin site.','','','','\0',''),
 ('pub','Public','Public','','','','\0',''),

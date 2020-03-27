@@ -19,7 +19,7 @@ function resvManager(initData, options) {
     var span = initData.span;
     var arrival = initData.arrival;
     var insistPayFilledIn = initData.insistPayFilledIn;
-
+    var insistCkinDemog = false;
     var rooms = [];
     var people = new Items();
     var addrs = new Items();
@@ -71,7 +71,9 @@ function resvManager(initData, options) {
         return idName;
     }
 
-
+    function getInsistCkinDemog() {
+    	return insistCkinDemog;
+    }
 
     function FamilySection($wrapper) {
         var t = this;
@@ -268,12 +270,31 @@ function resvManager(initData, options) {
                 }
             });
 
-//            if (msg) {
-//                return 'Indicated phone numbers are invalid.  ';
-//            }
-
             return '';
 
+        }
+        
+        function verifyCheckinDemog(prefix) {
+        	var msg = false;
+        	
+            $('.' + prefix + 'hhk-demog-input').each(function (){
+
+                if ($(this).val() === '') {
+
+                    // error
+                    $(this).addClass('ui-state-error');
+                    msg = true;
+
+                } else {
+                    $(this).removeClass('ui-state-error');
+                }
+            });
+            
+            if (msg) {
+            	return 'Some or all Demographics are not set';
+            }
+            
+            return '';
         }
 
         function verifyEmergencyContacts(prefix) {
@@ -1140,11 +1161,29 @@ function resvManager(initData, options) {
                     }
                 }
 
+                // Check Demographic responses
+                if (getInsistCkinDemog()) {
+
+                    var pMessage = verifyCheckinDemog(p);
+
+                    if (pMessage !== '') {
+
+                        flagAlertMessage(pMessage, 'alert', $pWarning);
+                        openSection(true);
+
+                        // Open address row
+                        if ($('#' + p + 'toggleAddr').find('span').hasClass('ui-icon-circle-triangle-s')) {
+                            $('#' + p + 'toggleAddr').click();
+                        }
+
+                        return false;
+                    }
+                }
             }
 
             setupComplete = false;
             return true;
-        };
+        }
     }
 
     function ExpDatesSection() {
@@ -2377,6 +2416,8 @@ function resvManager(initData, options) {
 
             // Checking in now button
             manageCheckInNowButton($('#gstDate').val(), data.rid, data.resv.rdiv.hideCiNowBtn);
+            
+            insistCkinDemog = data.insistCkinDemog;
 
         }
 

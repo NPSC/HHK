@@ -80,6 +80,7 @@ class ReserveData {
     protected $psgMembers;
     protected $errors;
     protected $resvPrompt;
+    protected $insistCkinDemog;
 
     function __construct($post, $reservationTitle = '') {
 
@@ -132,6 +133,7 @@ class ReserveData {
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->InsistPatBD;
         $this->showBirthDate = $uS->ShowBirthDate;
+        $this->insistCkinDemog = FALSE;
         $this->fillEmergencyContact = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
@@ -215,6 +217,7 @@ class ReserveData {
             'patLabel' => $this->getPatLabel(),
             'resvTitle' => $this->getResvTitle(),
             'saveButtonLabel' => $this->saveButtonLabel,
+        	'insistCkinDemog' => $this->insistCkinDemog,
         );
 
         if ($this->resvChooser != '') {
@@ -481,10 +484,15 @@ class ReserveData {
     }
 
     public function setSpanStatus($id) {
-        $this->spanStatus = $id;
-        return $this;
+    	$this->spanStatus = $id;
+    	return $this;
     }
-
+    
+    public function setInsistCkinDemog($id) {
+    	$this->insistCkinDemog = $id;
+    	return $this;
+    }
+    
     public function setSpanStartDT($id) {
         if ($id != '') {
             $this->spanStartDT = new DateTimeImmutable($id);
