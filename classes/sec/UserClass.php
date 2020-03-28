@@ -37,8 +37,8 @@ class UserClass {
 
         $r = self::getUserCredentials($dbh, $username);
 
-        if ($r != NULL && md5($r['Enc_PW'] . $challenge) == $password) {
-
+        if ($r != NULL && md5($r['Enc_PW'] . $challenge) == $password && $r['Status'] == 'a') {
+                
             //Regenerate session ID to prevent session fixation attacks
             $ssn = Session::getInstance();
             $ssn->regenSessionId();
@@ -61,7 +61,8 @@ class UserClass {
             $this->defaultPage = $r['Default_Page'];
 
             return TRUE;
-
+        }else if($r != NULL && md5($r['Enc_PW'] . $challenge) == $password && $r['Status'] == 'd'){ //is user disabled?
+            $this->logMessage = "Account disabled, please contact your administrator. ";
         } else {
             $this->logMessage = "Bad username or password.  ";
         }
@@ -241,7 +242,7 @@ class UserClass {
         $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
-WHERE n.idName is not null and u.Status='a' and u.User_Name = '$uname'");
+WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'");
 
         if ($stmt->rowCount() === 1) {
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);

@@ -62,3 +62,5 @@ INSERT INTO `sys_config` VALUES
 ('PriorPasswords','5','i','pr','','Number of prior passwords user cannot use',''),
 ('userInactiveDays','90','i','pr','','Number of days of inactivity before user becomes inactive','');
 
+ALTER TABLE `w_users` 
+ADD COLUMN `Chg_PW` TINYINT NOT NULL DEFAULT 1 AFTER `PW_Change_Date`;
