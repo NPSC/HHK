@@ -2200,6 +2200,19 @@ CREATE TABLE if not exists `w_group_ip` (
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
+-- Table `w_user_answers`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `w_user_answers` (
+  `idAnswer` int(11) NOT NULL AUTO_INCREMENT,
+  `idUser` int(11) NOT NULL DEFAULT '0',
+  `idQuestion` int(11) NOT NULL,
+  `Answer` varchar(100) NOT NULL,
+  `Timesetamp` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idAnswer`)
+) ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `w_user_log`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `w_user_log` (
@@ -2211,6 +2224,28 @@ CREATE TABLE if not exists `w_user_log` (
   `Action` VARCHAR(45) NOT NULL DEFAULT ''
 ) ENGINE = MyISAM;
 
+-- -----------------------------------------------------
+-- Table `w_user_passwords`
+-- -----------------------------------------------------
+CREATE TABLE if not exists`w_user_passwords` (
+  `idPassword` int(11) NOT NULL AUTO_INCREMENT,
+  `idUser` int(11) NOT NULL,
+  `Enc_PW` varchar(100) NOT NULL,
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idPassword`)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `w_user_questions`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `w_user_questions` (
+  `idQuestion` int(11) NOT NULL AUTO_INCREMENT,
+  `Question` varchar(180) NOT NULL,
+  `Status` varchar(1) NOT NULL DEFAULT 'a',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idQuestion`),
+  UNIQUE KEY `Question_UNIQUE` (`Question`)
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------

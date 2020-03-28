@@ -28,7 +28,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('InsistCkinDemog', 'false', 'b', 'h', 'Insist that user fill in the demographics on the check in page (see ShowDemographics)');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'c', 'Comfirmation', 'Resv_Conf'),
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'c', 'Comfirmation', 'Resv_Conf');
 
 ALTER TABLE `note`
 ADD COLUMN `flag` BOOL default false AFTER `Note_Type`;
@@ -54,3 +54,11 @@ Update `gen_lookups` set `Substitute` = '2' where `Table_Name` = 'Pay_Type' and 
 
 DELETE FROM `sys_config` WHERE `Key`='PmtPageLogoUrl';
 DELETE FROM `sys_config` WHERE `Key`='CardSwipe';
+
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Sys_Config_Category', 'pr', 'Password Rules','','',0);
+
+INSERT INTO `sys_config` VALUES
+('passResetDays','180','i','pr','','Number of days between automatic password resets',''),
+('PriorPasswords','5','i','pr','','Number of prior passwords user cannot use',''),
+('userInactiveDays','90','i','pr','','Number of days of inactivity before user becomes inactive','');
+
