@@ -29,7 +29,18 @@ abstract class cron {
             $this->success = false;
             $this->response = $e->getMessage();
         }
+        
+        $this->insertLog($dbh);
         return $this;
+    }
+    
+    function insertLog(\PDO $dbh){
+        $remoteIp = self::getRemoteIp();
+        if($dbh->exec("insert into syslog () values ()")){
+            return true;
+        }else{
+            return false;
+        }
     }
 
 }
