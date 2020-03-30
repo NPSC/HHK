@@ -581,7 +581,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('subsidyId','11','i','f','','Member Id to use for House Discount payment source',''),
 ('TrackAuto','false','b','h','','Track vehicles',''),
 ('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone'),
-('userInactiveDays','90','i','pr','','Number of days of inactivity before user becomes inactive',''),
+('userInactiveDays','90','i','pr','','Number of days of inactivity before user becomes disabled',''),
 ('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', ''),
 ('UseHouseWaive', 'true', 'b', 'h','', 'Show the house waive checkbox on checkout.', ''),
 ('UseIncidentReports', 'false', 'b', 'h', '', 'Use the Incident Reports feature', ''),

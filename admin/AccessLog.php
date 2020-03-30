@@ -8,13 +8,22 @@
 -- @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-require CLASSES . 'CreateMarkupFromDB.php';
-
+require (CLASSES . 'CreateMarkupFromDB.php');
+require (SEC . 'UserClass.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
 
 $menuMarkup = $wInit->generatePageMenu();
+
+//disable inactive users
+$stmt = $dbh->query("select * from w_users");
+if ($stmt->rowCount() > 0) {
+    $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    foreach($users as $user){
+        $user = UserClass::disableInactiveUser($dbh, $user);
+    }
+}
 
 // View user log
 $log = '';

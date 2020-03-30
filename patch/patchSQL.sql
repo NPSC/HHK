@@ -60,7 +60,7 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `T
 INSERT INTO `sys_config` VALUES
 ('passResetDays','180','i','pr','','Number of days between automatic password resets',''),
 ('PriorPasswords','5','i','pr','','Number of prior passwords user cannot use',''),
-('userInactiveDays','90','i','pr','','Number of days of inactivity before user becomes inactive','');
+('userInactiveDays','90','i','pr','','Number of days of inactivity before user becomes disabled','');
 
 ALTER TABLE `w_users` 
 ADD COLUMN `Chg_PW` TINYINT NOT NULL DEFAULT 1 AFTER `PW_Change_Date`;

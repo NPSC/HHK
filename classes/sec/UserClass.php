@@ -37,6 +37,11 @@ class UserClass {
 
         $r = self::getUserCredentials($dbh, $username);
 
+        //disable user if inactive
+        if ($r != NULL){
+            $r = self::disableInactiveUser($dbh, $r); //returns updated user array
+        }
+        
         if ($r != NULL && md5($r['Enc_PW'] . $challenge) == $password && $r['Status'] == 'a') {
                 
             //Regenerate session ID to prevent session fixation attacks
@@ -250,6 +255,27 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
         }
 
         return NULL;
+    }
+    
+    
+    public static function disableInactiveUser(\PDO $dbh, array $user){
+        if($user['Last_Login'] && ($user['User_Name'] != 'admin' || $user['User_Name'] != 'npscuser')){
+            $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
+            $lastLogin = new DateTime($user['Last_Login']);
+            $lastLogin->setTime(0,0);
+            $now = new DateTime();
+            $today = $now->setTime(0,0);
+            $days = $lastLogin->diff($today)->format('%a');
+            if($days >= $userInactiveDays){
+                $stmt = "update w_users set `status` = 'd' where idName = $user[idName]";
+                if($dbh->exec($stmt) > 0){
+                    $user['status'] = 'd';
+                    $this->insertUserLog($this->dbh, $user['User_Name'], "User deactivated from inactivity");
+                }
+                
+            }
+        }
+        return $user;
     }
 
     protected static function setSecurityGroups(\PDO $dbh, $idName, $housePc = FALSE) {
