@@ -9,12 +9,14 @@
  */
 
 abstract class cron {
-
+    
+    public $title;
     public $success;
     public $response;
+    protected $dbh;
     
-    function __construct() {
-        
+    function __construct($dbh) {
+        $this->dbh = $dbh;
     }
     
     function action(){
@@ -23,24 +25,21 @@ abstract class cron {
     
     function run(){
         try{
-            self::action();
+            $this->response = $this->action();
             $this->success = true;
         }catch(\Exception $e){
             $this->success = false;
             $this->response = $e->getMessage();
         }
         
-        $this->insertLog($dbh);
-        return $this;
-    }
-    
-    function insertLog(\PDO $dbh){
-        $remoteIp = self::getRemoteIp();
-        if($dbh->exec("insert into syslog () values ()")){
-            return true;
+        if($this->success){
+            SiteLog::writeLog($this->dbh, "Cron", $this->title . " succeeded: ".$this->response, '');
         }else{
-            return false;
+            SiteLog::writeLog($this->dbh, "Cron", $this->title . " Failed: " . $this->response , '');
         }
+        
+        
+        return $this;
     }
 
 }
