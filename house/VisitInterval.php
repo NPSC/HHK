@@ -787,6 +787,8 @@ where
 
     $vat = new ValueAddedTax($dbh);
     
+    $dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
+    
     $stmt = $dbh->query($query);
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1032,6 +1034,9 @@ where
         $savedr = $r;
 
     }   // End of while
+    
+    $dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, TRUE);
+    
 
 
     // Print the last visit.

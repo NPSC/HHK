@@ -158,6 +158,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('House_Discount', 'hd1', 'Service Issue','10', 'ca',0),
 ('House_Discount', 'hd2', 'Facilities Issue','15', 'ca',0),
 
+('Incident_Status', 'a', 'Active', '', 'h'. 0),
+('Incident_Status', 'r', 'Resolved', '', 'h'. 0),
+('Incident_Status', 'd', 'Deleted', '', 'h'. 0),
+
+
 ('Income_Bracket', 'ib1', '0 - 25,000', '', 'd',10),
 ('Income_Bracket', 'ib2', '26 - 50,000', '', 'd',20),
 ('Income_Bracket', 'ib3', '51 - 75,000', '', 'd',30),

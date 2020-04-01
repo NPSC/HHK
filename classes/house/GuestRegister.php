@@ -13,7 +13,7 @@ class GuestRegister {
 
     protected $noAssocId;
 
-    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $view) {
+    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $view, $rescGroupBy) {
 
         $uS = Session::getInstance();
         $rescs = array();
@@ -54,7 +54,18 @@ class GuestRegister {
             }
         }
 
-
+        //Resource grouping controls
+        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+        
+        $groupBy = ''; 
+        
+        foreach ($rescGroups as $g) {
+        	if ($rescGroupBy = $g[0]) {
+        		$groupBy = $g[0] . ',';
+        		break;
+        	}
+        }
+        
         // Get list of resources
         $qu = "SELECT
     r.idResource as `id`,
@@ -77,16 +88,13 @@ resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . Resource
     left join gen_lookups gc on gc.Table_Name = 'Room_Category' and gc.Code = rm.Category
     left join gen_lookups gr on gr.Table_Name = 'Room_Rpt_Cat' and gr.Code = rm.Report_Category
 where ru.idResource_use is null
- order by r.Util_Priority;";
+ order by $groupBy r.Util_Priority;";
         $rstmt = $dbh->query($qu);
 
         $rawRescs = $rstmt->fetchAll(\PDO::FETCH_ASSOC);
 
         // Resource grouping types
         $roomGroups = array();
-
-        //Resource grouping controls
-        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
 
         // Count the room grouping types
         foreach ($rawRescs as $r) {

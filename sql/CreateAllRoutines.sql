@@ -848,7 +848,11 @@ END -- ;
 --
 DROP procedure IF EXISTS `incidents_report`; -- ;
 
-CREATE PROCEDURE `incidents_report`()
+CREATE PROCEDURE `incidents_report`(
+	IN activ varchar(3),
+	IN resol varchar(3),
+	IN del varchar(3)
+	)
 BEGIN
     CREATE TEMPORARY TABLE IF NOT EXISTS tble (
         idPsg int,
@@ -860,14 +864,18 @@ BEGIN
 			Psg_Id, COUNT(Psg_Id)
 		FROM
 			report
-		GROUP BY Psg_Id
-		ORDER BY COUNT(Psg_Id) DESC;
+		WHERE 
+			`Status` in (activ, resol, del)
+		GROUP BY Psg_Id;
+
 	
-    select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, r.Report_Date, r.Resolution_Date, r.`Status`
+    select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, ifnull(r.Report_Date, '') as `Report_Date`, ifnull(r.Resolution_Date, '') as `Resolution_Date`, ifnull(g.Description, '') as `Status`
     from 
-		tble t join report r on t.idPsg = r.Psg_Id
+		tble t join report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, del)
 		left join hospital_stay hs on t.idPsg = hs.idPsg
-        left join name n on hs.idPatient = n.idName;
+        left join name n on hs.idPatient = n.idName
+        left join gen_lookups g on g.Table_Name = 'Incident_Status' and g.Code = r.`Status`
+	order by t.count_idPsg DESC, r.Psg_Id;
 	
     drop table tble;
     

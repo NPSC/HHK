@@ -19,6 +19,8 @@ function initPDO($override = FALSE)
 
     $dbuName = $ssn->databaseUName;
     $dbPw = $ssn->databasePWord;
+    $dbHost = $ssn->databaseURL;
+    $dbName = $ssn->databaseName;
 
     if ($roleCode >= WebRole::Guest && $override === FALSE) {
         // Get the site configuration object
@@ -34,17 +36,20 @@ function initPDO($override = FALSE)
     }
 
     try {
+    	
+    	$dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
+    	$options = [
+    			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    			PDO::ATTR_EMULATE_PREPARES   => false,
+    	];
 
-        $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $dbuName, $dbPw);
-
+    	$dbh = new PDO($dsn, $dbuName, $dbPw, $options);
+    	
         $dbh->exec("SET SESSION wait_timeout = 3600;");
-
-        $dbh->setAttribute(\PDO::ATTR_EMULATE_PREPARES, false);
-        $dbh->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-        $dbh->setAttribute(\PDO::ATTR_CASE, \PDO::CASE_NATURAL);
 
         // Syncromize PHP and mySQL timezones
         syncTimeZone($dbh);
+        
     } catch (\PDOException $e) {
 
         $ssn->destroy(TRUE);
@@ -58,11 +63,6 @@ function initPDO($override = FALSE)
     }
 
     return $dbh;
-}
-
-function initMy_SQL($dbURL, $dbName, $dbuName, $dbPw)
-{
-    return new \PDO("mysql:host=" . $dbURL . ";dbname=" . $dbName, $dbuName, $dbPw);
 }
 
 function creditIncludes($gatewayName) {

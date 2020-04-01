@@ -821,9 +821,13 @@ class VantivGateway extends PaymentGateway {
             $gwRows = $stmt->fetchAll();
 
             $selArray['size'] = count($gwRows);
-
-
-            $sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
+            
+            if (count($gwRows) == 1) {
+            	// only one merchant
+            	$sel = HTMLSelector::doOptionsMkup($gwRows, $gwRows[0][0], FALSE);
+            } else {
+            	$sel = HTMLSelector::doOptionsMkup($gwRows, '', FALSE);
+            }
 
             $payTbl->addBodyTr(
             		HTMLTable::makeTh('Select a Location:', array('style'=>'text-align:right; width:130px;'))
@@ -835,7 +839,7 @@ class VantivGateway extends PaymentGateway {
             );
 
         }
-        
+
     }
 
     protected static function _createEditMarkup(\PDO $dbh, $gatewayName, $resultMessage = '') {
