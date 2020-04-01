@@ -1129,7 +1129,7 @@ where g3.Substitute > 0 and ru.idResource_use is null");
 
     public static function CleanLog(\PDO $dbh, $id, $get) {
 
-        require(CLASSES . 'DataTableServer.php');
+//        require(CLASSES . 'DataTableServer.php');
 
         $columns = array(
 
