@@ -229,11 +229,22 @@ class UserClass {
         return $remoteIp;
     }
 
-    protected function insertUserLog(\PDO $dbh, $action) {
+    protected static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false) {
 
+        if(!$username){
+            $ssn = Session::getInstance();
+            $username = $ssn->username;
+        }
+        
+        if($date){
+            $timestamp = "'" . $date . "'"; //add quotes to date
+        }else{
+            $timestamp = "now()";
+        }
+        
         $ssn = Session::getInstance();
         $remoteIp = self::getRemoteIp();
-        $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`) values ('" . $ssn->username . "', now(), '$remoteIp', '$action')");
+        $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`) values ('" . $username . "', $timestamp , '$remoteIp', '$action')");
     }
 
     public static function getUserCredentials(\PDO $dbh, $username) {
@@ -259,18 +270,19 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
     
     
     public static function disableInactiveUser(\PDO $dbh, array $user){
-        if($user['Last_Login'] && ($user['User_Name'] != 'admin' || $user['User_Name'] != 'npscuser')){
+        if($user['Last_Login'] && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a'){
             $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
-            $lastLogin = new DateTime($user['Last_Login']);
-            $lastLogin->setTime(0,0);
+            $lastLogin = new DateTimeImmutable($user['Last_Login']);
+            $lastLogin = $lastLogin->setTime(0,0);
+            $deactivateDate = $lastLogin->add(new DateInterval('P' . $userInactiveDays . 'D')); //add inactivedays
             $now = new DateTime();
             $today = $now->setTime(0,0);
             $days = $lastLogin->diff($today)->format('%a');
             if($days >= $userInactiveDays){
-                $stmt = "update w_users set `status` = 'd' where idName = $user[idName]";
+                $stmt = "update w_users set `Status` = 'd' where idName = $user[idName]";
                 if($dbh->exec($stmt) > 0){
-                    $user['status'] = 'd';
-                    $this->insertUserLog($this->dbh, $user['User_Name'], "User deactivated from inactivity");
+                    $user['Status'] = 'd';
+                    self::insertUserLog($dbh, "User deactivated from inactivity", $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
                 }
                 
             }
