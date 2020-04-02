@@ -29,9 +29,10 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'c', 'Comfirmation', 'Resv_Conf'),
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Incident_Status', 'a', 'Active', 'h'),
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Incident_Status', 'r', 'Resolved', 'h'),
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ('Incident_Status', 'd', 'Deleted', 'h'),
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'a', 'Active', 'h', '1'),
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'r', 'Resolved', 'h', '7'),
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'd', 'Deleted', 'h', '10'),
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'h', 'On Hold', 'h', '4');
 
 ALTER TABLE `note`
 ADD COLUMN `flag` BOOL default false AFTER `Note_Type`;
@@ -49,7 +50,9 @@ INSERT INTO `template_tag` VALUES (15,'s','Last Name','${LastName}','');
 INSERT INTO `template_tag` VALUES (16,'s','Name Suffix','${NameSuffix}','');
 INSERT INTO `template_tag` VALUES (17,'s','Name Prefix','${NamePrefix}','');
 
-ALTER TABLE `document` CHANGE COLUMN `Doc` `Doc` MEDIUMBLOB NULL DEFAULT NULL ;
+ALTER TABLE `document` 
+	CHANGE COLUMN `Doc` `Doc` MEDIUMBLOB NULL DEFAULT NULL ;
+	
 UPDATE `sys_config` SET `Category`='h' WHERE `Key`='ShowUncfrmdStatusTab';
 
 -- Update gen_lookups Pay_Types to index paymentId 2 instead of 4
@@ -57,3 +60,8 @@ Update `gen_lookups` set `Substitute` = '2' where `Table_Name` = 'Pay_Type' and 
 
 DELETE FROM `sys_config` WHERE `Key`='PmtPageLogoUrl';
 DELETE FROM `sys_config` WHERE `Key`='CardSwipe';
+
+ALTER TABLE `name_demog`
+ 	CHANGE COLUMN `Ethnicity` `Ethnicity` VARCHAR(5) NOT NULL DEFAULT '' ;
+ALTER TABLE `name_demog`
+ 	ADD COLUMN `Gl_Code` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Special_Needs`;

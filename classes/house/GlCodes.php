@@ -6,19 +6,156 @@ class GlCodes {
 	
 	protected $fileId;
 	protected $journalCat;
+	protected $startDate;
+	protected $invoices;
 	
 	public function __construct(\PDO $dbh, $month, $year, $journalCategory) {
 		
 		$this->fileId = $year . $month . '01';
+		
+		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
 
 		$this->journalCat = $journalCategory;
 		
-	}
-	
-	public function mapGlCodes() {
+		$this->invoices = $this->getData($dbh);
 		
 	}
 	
+	public function mapData() {
+		
+	}
+	
+	protected function getData(\PDO $dbh) {
+		
+		$idInvoice = 0;
+		$idPayment = 0;
+		$idInvoiceLine = 0;
+		
+		$invoices = array();
+		$invoice = array();
+		$payments = array();
+		$invoiceLines = array();
+		
+		$endDate = $this->startDate->add(new \DateInterval('P1M'));
+		
+		$query = "
+   SELECT
+        ifnull(`i`.`idInvoice` ,0) AS `idInvoice`,
+        `i`.`Amount` AS `Invoice_Amount`,
+        `i`.`Status` AS `Invoice_Status`,
+        `i`.`Carried_Amount` AS `Carried_Amount`,
+        `i`.`Balance` AS `Invoice_Balance`,
+        `i`.`Delegated_Invoice_Id` AS `Delegated_Invoice_Id`,
+        `i`.`Deleted` AS `Deleted`,
+        ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
+        ifnull(`il`.`Amount`, 0) as `il_Amount`,
+		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
+        IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
+        IFNULL(`p`.`Amount`, 0) AS `Payment_Amount`,
+        IFNULL(`p`.`Balance`, 0) AS `Payment_Balance`,
+        IFNULL(`p`.`idPayment_Method`, 0) AS `idPayment_Method`,
+        IFNULL(`p`.`Status_Code`, 0) AS `Payment_Status`,
+        IFNULL(`p`.`Payment_Date`, '') AS `Payment_Date`,
+        IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
+        IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
+        IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
+        IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
+		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
+        IFNULL(`nv`.`Vol_Status`, '') AS `Bill_Agent`,
+		IFNULL(`nd`.`Gl_Code`, '') as `Bill_Agent_Gl_Code`
+    FROM
+        `payment` `p`
+        JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
+        JOIN `invoice` `i` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
+        JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Deleted` < 1
+        LEFT JOIN `name_volunteer2` `nv` ON `p`.`idPayor` = `nv`.`idName`
+            AND (`nv`.`Vol_Category` = 'Vol_Type')
+            AND (`nv`.`Vol_Code` = 'ba')
+		LEFT JOIN name_demog nd on p.idPayor = nd.idName
+		LEFT JOIN item it on it.idItem = il.Item_Id
+	where DATE(`p`.`Timestamp`) >= DATE('" . $this->startDate->format('Y-m-d') . "') && DATE(`p`.`Timestamp`) < DATE('" . $endDate->format('Y-m-d') . "')
+    ORDER BY i.idInvoice, il.idInvoice_Line, p.idPayment;";
+		
+    	$stmt = $dbh->query($query);
+    	
+    	
+    	while ($p = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+    		
+    		if ($p['idInvoice'] != $idInvoice) {
+    			// Next Invoice
+
+    			if ($idInvoice > 0) {
+    				// close last invoice
+    				$invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'l'=>$invoiceLines);
+    			}
+
+    			$idInvoice = $p['idInvoice'];
+
+    			// new invoice
+    			$invoice = array(
+    					'idInvoice'=>$p['idInvoice'],
+    					'Invoice_Amount'=>$p['Invoice_Amount'],
+    					'Bill_Agent'=>$p['Bill_Agent'],
+    					'Invoice_Status'=>$p['Invoice_Status'],
+    					'Carried_Amount'=>$p['Carried_Amount'],
+    					'Invoice_Balance'=>$p['Invoice_Balance'],
+    					'Delegated_Invoice_Id'=>$p['Delegated_Invoice_Id'],
+    			);
+    			
+    			$idPayment = 0;
+    			$idInvoiceLine = 0;
+    			$payments = array();
+    			$invoiceLines = array();
+    		}
+
+    		if ($p['idPayment'] != 0) {
+    			// Payment exists
+
+    			if ($idPayment != $p['idPayment']) {
+    				// Next Payment
+
+    				$idPayment = $p['idPayment'];
+
+    				$payments[$idPayment] = array(
+    						'idPayment'=>$p['idPayment'],
+    						'Payment_Amount'=>$p['Payment_Amount'],
+    						'idPayment_Method'=>$p['idPayment_Method'],
+    						'Payment_Status'=>$p['Payment_Status'],
+    						'Payment_Date'=>$p['Payment_Date'],
+    						'Payment_Timestamp'=>$p['Payment_Timestamp'],
+    						'Is_Refund'=>$p['Is_Refund'],
+    						'Payment_idPayor'=>$p['Payment_idPayor'],
+    						'Last_Updated'=>$p['Payment_Last_Updated'],
+    						'Bill_Agent_Gl_Code'=>$p['Bill_Agent_Gl_Code'],
+    				);
+    			}
+    		}
+
+    		if ($p['il_Id'] != 0) {
+    			// Invoice line exists
+
+    			if ($idInvoiceLine != $p['il_Id']) {
+    				// Next Line
+
+    				$idInvoiceLine = $p['il_Id'];
+
+    				$invoiceLines[$idInvoiceLine] = array(
+    						`il_Id`=>$p['il_Id'],
+    						`il_Amount`=>$p['il_Amount'],
+    						`Item_Gl_Code`=>$p['Item_Gl_Code'],
+    				);
+    			}
+    		}
+    	}
+
+    	if ($idInvoice > 0) {
+    		// close last invoice
+    		$invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'h'=>$invoiceLines);
+    	}
+
+    	return $invoices;
+	}
+
 }
 
 interface iGlTemplateRecord {

@@ -731,7 +731,7 @@ $txtEnd = '';
 $start = '';
 $end = '';
 $calSelection = '19';
-$irSelection = array('0'=>'a', '1'=>'r');
+$irSelection = array('0'=>'a', '1'=>'r', '2'=>'h');
 
 
 $monthArray = array(
@@ -1237,7 +1237,7 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
 $selirStat = '';
 if ($uS->UseIncidentReports) {
 	
-	$selirStat = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($incidentStatuses, $irSelection, FALSE), array('name' => 'selIrStat[]', 'size'=>'3', 'multiple'=>'multiple'));
+	$selirStat = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($incidentStatuses, $irSelection, FALSE), array('name' => 'selIrStat[]', 'size'=>'4', 'multiple'=>'multiple'));
 }
 
 

@@ -1,4 +1,6 @@
 <?php
+use classes\house\GlCodes;
+
 /**
  * InvoiceReport.php
  *
@@ -234,6 +236,7 @@ $baSelections = array();
 $baSelector = '';
 $paymentMarkup = '';
 $receiptMarkup = '';
+$tabReturn = 0;
 
 $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
@@ -763,6 +766,17 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 }
 
+// Gl REport
+if (isset($_POST['btnGlGo'])) {
+	
+	require (HOUSE.'GlCodes.php');
+	$tabReturn = 2;
+	$glCodes = new GlCodes($dbh, 3, 2020, 'test');
+	
+	var_dump($glCodes);
+	
+}
+;
 // Setups for the page.
 if (count($aList) > 0) {
 $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections),
@@ -852,6 +866,7 @@ $(document).ready(function() {
     var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
     var pmtMkup = '<?php echo $paymentMarkup; ?>';
     var rctMkup = '<?php echo $receiptMarkup; ?>';
+    var tabReturn = '<?php echo $tabReturn; ?>';
     challVar = $('#challVar').val();
 
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo').button();
@@ -930,6 +945,9 @@ $(document).ready(function() {
             }
         }
     });
+
+    $('#mainTabs').tabs("option", "active", tabReturn);
+    
 
     $('#btnInvGo').click(function () {
         var statuses = ['up'];
@@ -1067,6 +1085,7 @@ $(document).ready(function() {
             <ul>
                 <li><a href="#invr">All Invoices</a></li>
                 <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
+                <li id="gl"><a href="#vGl">GL Report</a></li>
             </ul>
             <div id="invr" >
                 <form id="fcat" action="InvoiceReport.php" method="post">
@@ -1150,6 +1169,12 @@ $(document).ready(function() {
                 <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                     <input type="button" id="btnInvGo" value="Refresh"/>
                       <div id="rptInvdiv" class="hhk-visitdialog"></div>
+                </div>
+                <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
+                	<form name="glform" method="post" action="InvoiceReport.php">
+                    	<input type="submit" id="btnGlGo" name="btnGlGo" value="Get It"/>
+                    </form>
+                      <div id="rptGl" class="hhk-visitdialog"></div>
                 </div>
         </div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
