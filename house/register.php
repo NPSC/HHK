@@ -487,11 +487,11 @@ if ($uS->UseWLnotes) {
             <table><tr>
                     <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName"><?php echo $uS->username; ?></span></td>
                 </tr><tr>
-                    <td class="tdlabel">Enter Old Password:</td><td><input id="txtOldPw" type="password" value=""  /></td>
+                    <td class="tdlabel">Enter Old Password:</td><td><input id="txtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
                 </tr><tr>
-                    <td class="tdlabel">Enter New Password:</td><td><input id="txtNewPw1" type="password" value=""  /></td>
+                    <td class="tdlabel">Enter New Password:</td><td><input id="txtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
                 </tr><tr>
-                    <td class="tdlabel">New Password Again:</td><td><input id="txtNewPw2" type="password" value=""  /></td>
+                    <td class="tdlabel">New Password Again:</td><td><input id="txtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
                 </tr><tr>
                     <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
                 </tr><tr>

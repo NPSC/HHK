@@ -110,11 +110,25 @@ $(document).ready(function () {
         $('#version').click(function () {
             $('div#dchgPw').find('input').removeClass("ui-state-error").val('');
             $('#pwChangeErrMsg').text('');
+            
+            $('div#dchgPw').find('button').button();
 
             $('#dchgPw').dialog("option", "title", "Change Your Password");
             $('#dchgPw').dialog('open');
             $('#txtOldPw').focus();
         });
+        
+        $('div#dchgPw').on('click', '.showPw', function(){
+        	var input = $(this).closest("td").find("input");
+        	if(input.prop("type") == 'password'){
+        		input.prop("type", "text");
+        		$(this).text("Hide");
+        	}else{
+        		input.prop("type", "password");
+        		$(this).text("Show");
+        	}
+        });
+        
         $('div#dchgPw').on('change', 'input', function () {
             $(this).removeClass("ui-state-error");
             $(".hhk-alert").hide();
@@ -136,6 +150,9 @@ $(document).ready(function () {
                             newpwMD5,
                             msg = $('#pwChangeErrMsg');
 
+                    $('div#dchgPw').find("input").prop("type", "password");
+                    $('div#dchgPw').find("button.showPw").text("Show");
+                    
                     if (oldpw.val() == "") {
                         oldpw.addClass("ui-state-error");
                         oldpw.focus();
