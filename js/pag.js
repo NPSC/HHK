@@ -113,7 +113,7 @@ $(document).ready(function () {
             
             $('div#dchgPw').find('button').button();
 
-            $('#dchgPw').dialog("option", "title", "Change Your Password");
+            $('#dchgPw').dialog("option", "title", "User Settings");
             $('#dchgPw').dialog('open');
             $('#txtOldPw').focus();
         });
@@ -137,7 +137,8 @@ $(document).ready(function () {
     
         $('#dchgPw').dialog({
             autoOpen: false,
-            width: 490,
+            width: 'auto',
+            autoResize: true,
             resizable: true,
             modal: true,
             buttons: {

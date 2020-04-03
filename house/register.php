@@ -53,7 +53,7 @@ require (HOUSE . 'RoomReport.php');
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Notes.php');
 require(SEC . 'ChallengeGenerator.php');
-
+require (SEC . 'UserClass.php');
 
 $wInit = new webInit();
 
@@ -484,20 +484,7 @@ if ($uS->UseWLnotes) {
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
-            <table><tr>
-                    <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName"><?php echo $uS->username; ?></span></td>
-                </tr><tr>
-                    <td class="tdlabel">Enter Old Password:</td><td><input id="txtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
-                </tr><tr>
-                    <td class="tdlabel">Enter New Password:</td><td><input id="txtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
-                </tr><tr>
-                    <td class="tdlabel">New Password Again:</td><td><input id="txtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
-                </tr><tr>
-                    <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
-                </tr><tr>
-                    <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
-                </tr>
-            </table>
+        	<?php echo UserClass::createUserSettingsMarkup($dbh); ?>
         </div>
         <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />

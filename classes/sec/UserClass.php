@@ -178,9 +178,16 @@ class UserClass {
     public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw) {
 
         $ssn = Session::getInstance();
-
+        $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
+        
         if ($oldPw == $newPw) {
             $this->logMessage = "The new password must be different from the old one.  ";
+            return FALSE;
+        }
+        
+        //check if password has already been used
+        if($this->isPasswordUsed($dbh, $newPw)){
+            $this->logMessage = "You cannot use any of the prior " . $priorPasswords . " passwords";
             return FALSE;
         }
 
@@ -194,6 +201,12 @@ class UserClass {
 
             if ($stmt->rowCount() == 1) {
                 $this->insertUserLog($dbh, UserClass::PW_Changed);
+                
+                $user = self::getUserCredentials($dbh, $ssn->username);
+                
+                $query = "insert into w_user_passwords (idUser, Enc_PW) values(:idUser, :newPw);";
+                $stmt = $dbh->prepare($query);
+                $stmt->execute(array(':idUser'=>$user['idName'], ':newPw'=>$newPw));
 
                 return TRUE;
             }
@@ -201,6 +214,22 @@ class UserClass {
         return FALSE;
     }
 
+    public function isPasswordUsed(\PDO $dbh, $newPw){
+        $uS = Session::getInstance();
+        $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
+        
+        //get prior password hashes
+        $query = "select P.Enc_Pw from w_user_passwords P join w_users U on P.idUser = U.idName where U.User_Name = '" . $uS->username . "' order by P.Timestamp desc limit " . $priorPasswords . ";";
+        $stmt = $dbh->query($query);
+        $passwords = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        
+        if(in_array($newPw, $passwords)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
     public function setPassword(\PDO $dbh, $id, $newPw) {
 
         if ($newPw != '' && $id != 0) {
@@ -218,6 +247,74 @@ class UserClass {
         return FALSE;
     }
 
+    public static function createUserSettingsMarkup(\PDO $dbh){
+        $uS = Session::getInstance();
+        
+        //get available questions
+        $query = "select idQuestion, Question from w_user_questions where Status = 'a';";
+        $stmt = $dbh->query($query);
+        $questions = $stmt->fetchAll(\PDO::FETCH_BOTH);
+        
+        //get user questions
+        $query = "select idQuestion from w_user_answers A join w_users U on A.idUser = U.idName where U.User_Name='" . $uS->username . "' limit 3;";
+        $stmt = $dbh->query($query);
+        $userQuestions = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        //password markup
+        $mkup = '
+            <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+        		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
+        			Change your Password
+        		</div>
+        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+        		
+                    <table style="width: 100%"><tr>
+                            <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName">' . $uS->username . '</span></td>
+                        </tr><tr>
+                            <td class="tdlabel">Enter Old Password:</td><td style="display: flex"><input style="width: 100%" id="txtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                        </tr><tr>
+                            <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                        </tr><tr>
+                            <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                        </tr><tr>
+                            <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
+                        </tr><tr>
+                            <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>';
+         //Question markup   
+        $mkup .= '
+            <div class="ui-widget hhk-visitdialog hhk-row">
+        		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
+        			Update Security Questions
+        		</div>
+        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+        		
+                    <table style="width: 100%"><tr>
+                            <td class="tdlabel">Question 1:</td><td><select id="secQ1" style="width: 100%">' . doOptionsMkup($questions, $userQuestions[0]['idQuestion'] ?? '') . '</select></td>
+                        </tr><tr>
+                            <td class="tdlabel">Answer 1:</td><td style="display: flex"><input style="width: 100%" id="txtAns1" type="password" value="" placeholder="' . (isset($userQuestions[0]['idQuestion']) ? '(unchanged)': '') . '"  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                        </tr><tr>
+                            <td class="tdlabel">Question 2:</td><td><select id="secQ2" style="width: 100%">' . doOptionsMkup($questions, $userQuestions[1]['idQuestion'] ?? '') . '</select></td>
+                        </tr><tr>
+                            <td class="tdlabel">Answer 2:</td><td style="display: flex"><input style="width: 100%" id="txtAns2" type="password" value="" placeholder="' . (isset($userQuestions[1]['idQuestion']) ? '(unchanged)': '') . '" /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                        </tr><tr>
+							<td class="tdlabel">Question 3:</td><td><select id="secQ3" style="width: 100%">' . doOptionsMkup($questions, $userQuestions[2]['idQuestion'] ?? '') . '</select></td>
+						</tr><tr>
+                        	<td class="tdlabel">Answer 3:</td><td style="display: flex"><input style="width: 100%" id="txtAns3" type="password" value="" placeholder="' . (isset($userQuestions[2]['idQuestion']) ? '(unchanged)': '') . '" /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                        </tr><tr>
+                            <td colspan="2" style="text-align: center;padding-top:10px;"><span id="SecQuestionErrMsg" style="color:red;"></span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        ';
+        
+        return $mkup;
+    }
+    
     public static function getRemoteIp() {
 
         if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
