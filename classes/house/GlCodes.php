@@ -1,13 +1,23 @@
 <?php
 
 namespace classes\house;
+use Hk_Exception_Payment;
+use SFTPConnection;
 
 class GlCodes {
+	
+	const JOURNAL_TEST_CAT = 'Test Category1';
+	const JOURNAL_PRODUCTION_CAT = '';
+
+	// General GL codes
+	const ALL_GROSS_SALES = '200-1007582-500014';
+	const CASH_CHECK = '200-0000000-140007';
+	const CREDIT_CARD = '200-0000000-100010';
 	
 	protected $fileId;
 	protected $journalCat;
 	protected $startDate;
-	protected $invoices;
+	protected $records;
 	
 	public function __construct(\PDO $dbh, $month, $year, $journalCategory) {
 		
@@ -17,15 +27,23 @@ class GlCodes {
 
 		$this->journalCat = $journalCategory;
 		
-		$this->invoices = $this->getData($dbh);
+		$this->records = $this->getDbRecords($dbh);
 		
 	}
 	
-	public function mapData() {
+	public function mapRecords() {
 		
+		if (count($this->records) < 1) {
+			throw new Hk_Exception_Payment('No Records');
+		}
+		
+		foreach ($this->records as $r) {
+			
+			
+		}
 	}
 	
-	protected function getData(\PDO $dbh) {
+	protected function getDbRecords(\PDO $dbh) {
 		
 		$idInvoice = 0;
 		$idPayment = 0;
@@ -52,10 +70,8 @@ class GlCodes {
 		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
         IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
         IFNULL(`p`.`Amount`, 0) AS `Payment_Amount`,
-        IFNULL(`p`.`Balance`, 0) AS `Payment_Balance`,
         IFNULL(`p`.`idPayment_Method`, 0) AS `idPayment_Method`,
         IFNULL(`p`.`Status_Code`, 0) AS `Payment_Status`,
-        IFNULL(`p`.`Payment_Date`, '') AS `Payment_Date`,
         IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
         IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
@@ -73,11 +89,11 @@ class GlCodes {
             AND (`nv`.`Vol_Code` = 'ba')
 		LEFT JOIN name_demog nd on p.idPayor = nd.idName
 		LEFT JOIN item it on it.idItem = il.Item_Id
-	where DATE(`p`.`Timestamp`) >= DATE('" . $this->startDate->format('Y-m-d') . "') && DATE(`p`.`Timestamp`) < DATE('" . $endDate->format('Y-m-d') . "')
+	where (DATE(`p`.`Timestamp`) >= DATE('" . $this->startDate->format('Y-m-d') . "') && DATE(`p`.`Timestamp`) < DATE('" . $endDate->format('Y-m-d') . "'))
+		OR (DATE(`p`.`Last_Updated`) >= DATE('" . $this->startDate->format('Y-m-d') . "') && DATE(`p`.`Last_Updated`) < DATE('" . $endDate->format('Y-m-d') . "'))
     ORDER BY i.idInvoice, il.idInvoice_Line, p.idPayment;";
 		
     	$stmt = $dbh->query($query);
-    	
     	
     	while ($p = $stmt->fetch(\PDO::FETCH_ASSOC)) {
     		
@@ -98,7 +114,6 @@ class GlCodes {
     					'Bill_Agent'=>$p['Bill_Agent'],
     					'Invoice_Status'=>$p['Invoice_Status'],
     					'Carried_Amount'=>$p['Carried_Amount'],
-    					'Invoice_Balance'=>$p['Invoice_Balance'],
     					'Delegated_Invoice_Id'=>$p['Delegated_Invoice_Id'],
     			);
     			
@@ -121,7 +136,7 @@ class GlCodes {
     						'Payment_Amount'=>$p['Payment_Amount'],
     						'idPayment_Method'=>$p['idPayment_Method'],
     						'Payment_Status'=>$p['Payment_Status'],
-    						'Payment_Date'=>$p['Payment_Date'],
+    						'Payment_Last_Updated'=>$p['Payment_Last_Updated'],
     						'Payment_Timestamp'=>$p['Payment_Timestamp'],
     						'Is_Refund'=>$p['Is_Refund'],
     						'Payment_idPayor'=>$p['Payment_idPayor'],
@@ -155,20 +170,35 @@ class GlCodes {
 
     	return $invoices;
 	}
+	
+	public function createChooserMarkup() {
+		
+		
+	}
+
+	public function transferRecords(\PDO $dbh) {
+		
+		$creds = readGenLookupsPDO($dbh, 'Gl_Codes');
+		
+		$data = implode(',', $this->invoices);
+		
+		try
+		{
+			$sftp = new SFTPConnection($creds['Host'][1], $creds['Port'][1]);
+			$sftp->login($creds['Username'][1], decryptMessage($creds['Password'][1]));
+			$sftp->uploadFile($data, $creds['RemoteFilePath'][1] . 'ggh' . $this->fileId);
+		}
+		catch (Exception $e)
+		{
+			echo $e->getMessage() . "\n";
+		}
+		
+	}
 
 }
 
-interface iGlTemplateRecord {
-	
-	public function setGlCode($v);
-	public function setCreditAmount($v);
-	public function setDebitAmount($v);
-	public function setPurchaseDate($v);
-	public function setJournalCategory($v);
-	
-}
 
-class GlTemplateRecord implements iGlTemplateRecord {
+class GlTemplateRecord {
 	// CentraCare journal record (Gorecki)
 	
 	const STATUS = 0;
