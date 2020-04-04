@@ -143,89 +143,175 @@ $(document).ready(function () {
             modal: true,
             buttons: {
                 "Save": function () {
-
+                	
                     var oldpw = $('#txtOldPw'), 
                             pw1 = $('#txtNewPw1'),
                             pw2 = $('#txtNewPw2'),
                             oldpwMD5, 
                             newpwMD5,
-                            msg = $('#pwChangeErrMsg');
-
+                            questions = [$('#secQ1').val(), $('#secQ2').val(), $('#secQ3').val()],
+                            answerIds = [$('#txtAns1').data('ansid'), $('#txtAns2').data('ansid'), $('#txtAns3').data('ansid')],
+                            answers = [$('#txtAns1').val(), $('#txtAns2').val(), $('#txtAns3').val()],
+                            msg = $('#pwChangeErrMsg'),
+                    		qmsg= $('#SecQuestionErrMsg');
                     $('div#dchgPw').find("input").prop("type", "password");
                     $('div#dchgPw').find("button.showPw").text("Show");
+                    var errors = false;
+                    msg.empty();
+                    qmsg.empty();
                     
-                    if (oldpw.val() == "") {
-                        oldpw.addClass("ui-state-error");
-                        oldpw.focus();
-                        msg.text('Enter your old password');
-                        return;
-                    } else {
-                        oldpw.removeClass("ui-state-error");
+                    if($.inArray("", questions) > -1){
+                    	qmsg.append('You must choose 3 security questions<br>');
+                    	errors = true;
                     }
-
-                    if (pw1.val() !== pw2.val()) {
-                        msg.text("New passwords do not match");
-                        return;
-                    }
-
-                    if (oldpw.val() == pw1.val()) {
-                        pw1.addClass("ui-state-error");
-                        msg.text("The new password must be different from the old password");
-                        pw1.focus();
-                        pw2.val('');
-                        return;
-                    }
-
-                    if (checkStrength(pw1) === false) {
-                        pw1.addClass("ui-state-error");
-                        msg.text('Password must have at least 8 characters including at least one uppercase, one lower case letter, one number and one symbol.');
-                        pw1.focus();
-                        return;
-                    }
-
-                    pw1.removeClass("ui-state-error");
-
-                    // make MD5 hash of password and concatenate challenge value
-                    // next calculate MD5 hash of combined values
-                    oldpwMD5 = hex_md5(hex_md5(oldpw.val()) + challVar);
-                    newpwMD5 = hex_md5(pw1.val());
-
-                    oldpw.val('');
-                    pw1.val('');
-                    pw2.val('');
-
-                    $.post("ws_admin.php",
-                        {
-                            cmd: 'chgpw',
-                            old: oldpwMD5,
-                            newer: newpwMD5
-                        },
-                        function (data) {
-                            if (data) {
-                                try {
-                                    data = $.parseJSON(data);
-                                } catch (err) {
-                                    alert("Parser error - " + err.message);
-                                    return;
-                                }
-                                if (data.error) {
-
-                                    if (data.gotopage) {
-                                        window.open(data.gotopage, '_self');
-                                    }
-                                    flagAlertMessage(data.error, 'error');
-
-                                } else if (data.success) {
-
-                                    $('#dchgPw').dialog("close");
-                                    flagAlertMessage(data.success, 'success');
-
-                                } else if (data.warning) {
-                                    $('#pwChangeErrMsg').text(data.warning);
-                                }
-                            }
+                    
+                    //check for duplicate questions
+                    var alreadySeen = []
+                    questions.forEach(function(str) {
+                    	if(str != ""){
+                    		
+		                    if (alreadySeen[str]){
+		                    	qmsg.append('You cannot choose the same question twice<br>');
+		                    	errors = true;
+		                    	return false;
+		                    }else{
+		                    	alreadySeen[str] = true;
+		                    }
+                    	}
+                    });
+                    
+                    //If answer is new, ensure it is not blank
+                    questions.forEach(function(val, i) {
+                    	var answerNum = parseInt(i)+1;
+                        if (answerIds[i] == "" && answers[i] == ""){
+                        	qmsg.append('Answer ' + answerNum + ' is required<br>');
+                        	errors = true;
                         }
-                    );
+                    });
+                    if(errors){
+                    	return;
+                    }
+                    
+                    //if updating security questions
+                    var changed = false;
+                    answers.forEach(function(val, i) {
+                        if (val != ""){
+                        	answers[i] = hex_md5(answers[i]);
+                        	changed = true;
+                        }
+                    });
+                    
+                    if(changed){
+                    	
+                    	$.post("ws_admin.php",
+	                        {
+	                            cmd: 'chgquestions',
+	                            q1: questions[0],
+	                            aid1: answerIds[0],
+	                            a1: answers[0],
+	                            q2: questions[1],
+	                            aid2: answerIds[1],
+	                            a2: answers[1],
+	                            q3: questions[2],
+	                            aid3: answerIds[2],
+	                            a3: answers[2]
+	                        },
+	                        function (data) {
+	                            if (data) {
+	                                try {
+	                                    data = $.parseJSON(data);
+	                                } catch (err) {
+	                                    alert("Parser error - " + err.message);
+	                                    return;
+	                                }
+	                                if (data.error) {
+	
+	                                    if (data.gotopage) {
+	                                        window.open(data.gotopage, '_self');
+	                                    }
+	                                    flagAlertMessage(data.error, 'error');
+	
+	                                } else if (data.success) {
+	
+	                                    $('#dchgPw').dialog("close");
+	                                    flagAlertMessage(data.success, 'success');
+	
+	                                } else if (data.warning) {
+	                                    $('#pwChangeErrMsg').text(data.warning);
+	                                }
+	                            }
+	                        }
+	                    );
+                    	
+                    }
+                    
+                    //if intent is to change password
+                    if (oldpw.val() != "") {
+
+	                    if (pw1.val() !== pw2.val()) {
+	                        msg.text("New passwords do not match");
+	                        return;
+	                    }
+	
+	                    if (oldpw.val() == pw1.val()) {
+	                        pw1.addClass("ui-state-error");
+	                        msg.text("The new password must be different from the old password");
+	                        pw1.focus();
+	                        pw2.val('');
+	                        return;
+	                    }
+	
+	                    if (checkStrength(pw1) === false) {
+	                        pw1.addClass("ui-state-error");
+	                        msg.text('Password must have at least 8 characters including at least one uppercase, one lower case letter, one number and one symbol.');
+	                        pw1.focus();
+	                        return;
+	                    }
+	
+	                    pw1.removeClass("ui-state-error");
+	
+	                    // make MD5 hash of password and concatenate challenge value
+	                    // next calculate MD5 hash of combined values
+	                    oldpwMD5 = hex_md5(hex_md5(oldpw.val()) + challVar);
+	                    newpwMD5 = hex_md5(pw1.val());
+	
+	                    oldpw.val('');
+	                    pw1.val('');
+	                    pw2.val('');
+	
+	                    $.post("ws_admin.php",
+	                        {
+	                            cmd: 'chgpw',
+	                            old: oldpwMD5,
+	                            newer: newpwMD5
+	                        },
+	                        function (data) {
+	                            if (data) {
+	                                try {
+	                                    data = $.parseJSON(data);
+	                                } catch (err) {
+	                                    alert("Parser error - " + err.message);
+	                                    return;
+	                                }
+	                                if (data.error) {
+	
+	                                    if (data.gotopage) {
+	                                        window.open(data.gotopage, '_self');
+	                                    }
+	                                    flagAlertMessage(data.error, 'error');
+	
+	                                } else if (data.success) {
+	
+	                                    $('#dchgPw').dialog("close");
+	                                    flagAlertMessage(data.success, 'success');
+	
+	                                } else if (data.warning) {
+	                                    $('#pwChangeErrMsg').text(data.warning);
+	                                }
+	                            }
+	                        }
+	                    );
+                    };
                 },
                 "Cancel": function () {
                     $(this).dialog("close");

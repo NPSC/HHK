@@ -175,6 +175,40 @@ class UserClass {
 		return ( ( $ip_decimal & $netmask_decimal ) == ( $range_decimal & $netmask_decimal ) );
 	}
 
+	public function updateSecurityQuestions(\PDO $dbh, array $questions) {
+	    
+	    $ssn = Session::getInstance();
+	    
+	    foreach ($questions as $question){
+	        //if question already exists, update
+	        if($question['idAnswer']){
+	            $query = "update w_user_answers set idQuestion = :idQuestion, Answer = :answer, Enc_PW = :newPw where idAnswer = :idAnswer;";
+	            $stmt = $dbh->prepare($query);
+	            $stmt->execute(array(':idQuestion'=>$question['idQuestion'], ':idAnswer'=>$question['idAnswer'], ':answer'=>$question['answer']));
+	        }else{
+	            $query = "insert into w_user_answers (idUser, idQuestion, Answer) values (:idUser, :idQuestion, :answer);";
+	            $stmt = $dbh->prepare($query);
+	            $stmt->execute(array(':idUser'=>"-1", ':idQuestion'=>$question['idQuestion'], ':answer'=>$question['answer']));
+	        }
+	    }
+        $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw where idName = :id and Status='a';";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute(array(':uname'=>$ssn->username, ':newPw'=>$newPw, ':id'=>$id));
+        
+        if ($stmt->rowCount() == 1) {
+            $this->insertUserLog($dbh, UserClass::PW_Changed);
+            
+            $user = self::getUserCredentials($dbh, $ssn->username);
+            
+            $query = "insert into w_user_passwords (idUser, Enc_PW) values(:idUser, :newPw);";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(':idUser'=>$user['idName'], ':newPw'=>$newPw));
+            
+            return TRUE;
+        }
+
+	}
+	
     public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw) {
 
         $ssn = Session::getInstance();
@@ -256,7 +290,7 @@ class UserClass {
         $questions = $stmt->fetchAll(\PDO::FETCH_BOTH);
         
         //get user questions
-        $query = "select idQuestion from w_user_answers A join w_users U on A.idUser = U.idName where U.User_Name='" . $uS->username . "' limit 3;";
+        $query = "select idAnswer, idQuestion from w_user_answers A join w_users U on A.idUser = U.idName where U.User_Name='" . $uS->username . "' limit 3;";
         $stmt = $dbh->query($query);
         $userQuestions = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
@@ -273,9 +307,9 @@ class UserClass {
                         </tr><tr>
                             <td class="tdlabel">Enter Old Password:</td><td style="display: flex"><input style="width: 100%" id="txtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
                         </tr><tr>
-                            <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                            <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw1 type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
                         </tr><tr>
-                            <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                            <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw2 type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
                         </tr><tr>
                             <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
                         </tr><tr>
@@ -295,15 +329,15 @@ class UserClass {
                     <table style="width: 100%"><tr>
                             <td class="tdlabel">Question 1:</td><td><select id="secQ1" style="width: 100%">' . doOptionsMkup($questions, $userQuestions[0]['idQuestion'] ?? '') . '</select></td>
                         </tr><tr>
-                            <td class="tdlabel">Answer 1:</td><td style="display: flex"><input style="width: 100%" id="txtAns1" type="password" value="" placeholder="' . (isset($userQuestions[0]['idQuestion']) ? '(unchanged)': '') . '"  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                            <td class="tdlabel">Answer 1:</td><td style="display: flex"><input style="width: 100%" id="txtAns1" data-ansid="' . ($userQuestions[0]['idAnswer'] ?? '') . '" type="password" value="" placeholder="' . (isset($userQuestions[0]['idQuestion']) ? '(unchanged)': '') . '"  /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
                         </tr><tr>
                             <td class="tdlabel">Question 2:</td><td><select id="secQ2" style="width: 100%">' . doOptionsMkup($questions, $userQuestions[1]['idQuestion'] ?? '') . '</select></td>
                         </tr><tr>
-                            <td class="tdlabel">Answer 2:</td><td style="display: flex"><input style="width: 100%" id="txtAns2" type="password" value="" placeholder="' . (isset($userQuestions[1]['idQuestion']) ? '(unchanged)': '') . '" /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                            <td class="tdlabel">Answer 2:</td><td style="display: flex"><input style="width: 100%" id="txtAns2" data-ansid="' . ($userQuestions[1]['idAnswer'] ?? '') . '" type="password" value="" placeholder="' . (isset($userQuestions[1]['idQuestion']) ? '(unchanged)': '') . '" /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
                         </tr><tr>
 							<td class="tdlabel">Question 3:</td><td><select id="secQ3" style="width: 100%">' . doOptionsMkup($questions, $userQuestions[2]['idQuestion'] ?? '') . '</select></td>
 						</tr><tr>
-                        	<td class="tdlabel">Answer 3:</td><td style="display: flex"><input style="width: 100%" id="txtAns3" type="password" value="" placeholder="' . (isset($userQuestions[2]['idQuestion']) ? '(unchanged)': '') . '" /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
+                        	<td class="tdlabel">Answer 3:</td><td style="display: flex"><input style="width: 100%" id="txtAns3" data-ansid="' . ($userQuestions[2]['idAnswer'] ?? '') . '" type="password" value="" placeholder="' . (isset($userQuestions[2]['idQuestion']) ? '(unchanged)': '') . '" /><button class="showPw" style="font-size: .75em; margin-left: 1em;">Show</button></td>
                         </tr><tr>
                             <td colspan="2" style="text-align: center;padding-top:10px;"><span id="SecQuestionErrMsg" style="color:red;"></span></td>
                         </tr>
