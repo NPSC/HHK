@@ -166,6 +166,7 @@ abstract class PaymentGateway {
         $volStmt = $dbh->prepare("call get_credit_gw(:idVisit, :span, :idReg);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         $volStmt->execute(array(':idVisit'=>intval($idVisit), ':span'=>intval($span), ':idReg'=>intval($idRegistration)));
         $rows = $volStmt->fetchAll(PDO::FETCH_ASSOC);
+        $volStmt->nextRowset();
 
         if (count($rows) > 0) {
 
@@ -193,12 +194,12 @@ abstract class PaymentGateway {
         $myType = '';
 
         if (is_array($this->gwType) && count($this->gwType) == 1) {
-            $myType = strtolower(array_values($this->gwType)[0]);
+            $myType = array_values($this->gwType)[0];
         } else if (is_array($this->gwType) === FALSE) {
             $myType = $this->gwType;
         }
 
-        return $myType;
+        return strtolower($myType);
     }
 
     public function getResponseErrors() {

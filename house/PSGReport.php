@@ -24,7 +24,7 @@ try {
 $dbh = $wInit->dbh;
 
 $pageTitle = $wInit->pageTitle;
-$pageHeader = $wInit->pageHeading;
+
 
 // get session instance
 $uS = Session::getInstance();
@@ -532,12 +532,12 @@ order by ng.idPsg";
 }
 
 function getNoReturn(\PDO $dbh, $local){
-    $uS = Session::getInstance();
+
     
-    $query = "SELECT N.idName AS 'Id', N.Name_First AS 'First Name', N.Name_Last AS 'Last Name', NRT.Description AS 'No Return Reason' FROM `name` N
+    $query = "SELECT N.idName AS `Id`, N.Name_First AS `First Name`, N.Name_Last AS `Last Name`, NRT.Description AS `No Return Reason` FROM `name` N
     JOIN `name_demog` ND on N.idName = ND.idName
-    LEFT JOIN `gen_lookups` NRT on ND.No_Return = NRT.Code AND NRT.Table_Name = 'NoReturnReason'
-    WHERE ND.No_Return != '';";
+    LEFT JOIN `gen_lookups` NRT on ND.`No_Return` = NRT.`Code` AND NRT.`Table_Name` = 'NoReturnReason'
+    WHERE ND.`No_Return` != '';";
     
     $stmt = $dbh->query($query);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -597,6 +597,119 @@ function getNoReturn(\PDO $dbh, $local){
     }
 }
 
+function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
+
+	$whStatus = array(
+			0=>'',
+			1=>'',
+			2=>'',
+	);
+
+	$ctr = 0;
+
+	foreach ($irSelection as $s) {
+		$whStatus[$ctr] = $s;
+		$ctr++;
+	}
+
+	$stmt = $dbh->query("CALL incidents_report('" . $whStatus[0] . "','" . $whStatus[1] . "','" . $whStatus[2]. "')");
+	$nested = $stmt->fetchAll(PDO::FETCH_ASSOC);
+	$stmt->nextRowset();
+
+
+	if($local){
+
+		$tbl = new HTMLTable();
+		$ctr = 0;
+		$psgId = 0;
+
+		foreach ($nested as $r) {
+
+			if ($ctr != $r['count_idPsg']) {
+				
+				if ($r['count_idPsg'] == 1) {
+					$txt = ' report each';
+				} else {
+					$txt = ' reports each';
+				}
+				$tbl->addBodyTr(
+						HTMLTable::makeTh($r['count_idPsg'] . $txt, array('colspan'=>'10', 'style'=>'text-align:left;')));
+				$ctr = $r['count_idPsg'];
+				$psgId = 0;
+			}
+
+			if ($psgId != $r['Psg_Id']) {
+					
+				$tbl->addBodyTr(
+						HTMLTable::makeTh(HTMLContainer::generateMarkup('a', $r['Psg_Id'], array('href'=>'GuestEdit.php?id=' . $r['idName'] . '&psg='.$r['Psg_Id'] . '&tab=8')), array('rowspan'=>$ctr + 1))
+				);
+					
+				$psgId = $r['Psg_Id'];
+			}
+				
+			$tbl->addBodyTr(
+					HTMLTable::makeTd($r['Name_Full'])
+					.HTMLTable::makeTd($r['Status'])
+					.HTMLTable::makeTd($r['Title'])
+					.HTMLTable::makeTd(date('M j, Y', strtotime($r['Report_Date'])))
+					.HTMLTable::makeTd(date($r['Resolution_Date'] == '' ? '' : 'M j, Y', strtotime($r['Resolution_Date'])))
+			);
+	
+		}
+		
+		$tbl->addHeaderTr(HTMLTable::makeTh('Psg Id'). HTMLTable::makeTh('Patient Name'). HTMLTable::makeTh('Status'). HTMLTable::makeTh('Title'). HTMLTable::makeTh('Report Date'). HTMLTable::makeTh('Resolution Date'));
+		
+		$dataTable = $tbl->generateMarkup(array('id'=>'tblrpt'));
+		return $dataTable;
+		
+	}else{
+		
+		$file = 'Incidents_Report';
+		$sml = OpenXML::createExcel('Guest Tracker', 'People Report');
+		$firstRow = true;
+		$reportRows = 1;
+		
+		foreach($nested as $key=>$row){
+			
+			if ($firstRow) {
+				
+				$firstRow = FALSE;
+				
+				// build header
+				$hdr = array();
+				$n = 0;
+				
+				// Header row
+				$keys = array_keys($row);
+				foreach ($keys as $k) {
+					
+					$hdr[$n++] =  $k;
+				}
+				
+				OpenXML::writeHeaderRow($sml, $hdr);
+				$reportRows++;
+			}
+			
+			$n = 0;
+			$flds = array();
+			
+			foreach ($row as $col) {
+				$flds[$n++] = array('type' => "s", 'value' => $col);
+			}
+			
+			$reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+		}
+		
+		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+		header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
+		header('Cache-Control: max-age=0');
+		
+		OpenXML::finalizeExcel($sml);
+		exit();
+	}
+	
+}
+
 $assocSelections = array();
 $hospitalSelections = array();
 $stateSelection = '';
@@ -618,6 +731,7 @@ $txtEnd = '';
 $start = '';
 $end = '';
 $calSelection = '19';
+$irSelection = array('0'=>'a', '1'=>'r', '2'=>'h');
 
 
 $monthArray = array(
@@ -630,8 +744,6 @@ if ($uS->fy_diff_Months == 0) {
 } else {
     $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
 }
-
-
 
 // Hospital and association lists
 $hospList = array();
@@ -649,6 +761,10 @@ foreach ($hospList as $h) {
     }
 }
 
+
+$incidentStatuses = readGenLookupsPDO($dbh, 'Incident_Status', 'Order');
+
+
 // Diagnozis
 $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
 $locs = readGenLookupsPDO($dbh, 'Location', 'Description');
@@ -661,6 +777,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     }
     
     // gather input
+    
+    if (isset($_POST['selIrStat'])) {
+    	$reqs = $_POST['selIrStat'];
+    	if (is_array($reqs)) {
+    		$irSelection = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+    	}
+    }
+    
     
     if (isset($_POST['selResvStatus'])) {
         $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
@@ -922,6 +1046,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     } else {
         $tdStatus = 'All';
     }
+
     
     
     if (isset($_POST['rbReport'])) {
@@ -954,6 +1079,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             $showNoReturnSelection = 'checked="checked"';
         }
         
+        
         // Create settings markup
         $sTbl = new HTMLTable();
         
@@ -969,10 +1095,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         }
         
         $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
-
+        $mkTable = 1;
+        
         switch ($rptSetting) {
-            
-            case 'psg':
+
+        	case 'psg':
                 $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GL_TableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
@@ -1025,14 +1152,21 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 break;
                 
             case 'nr':
-                $dataTable = getNoReturn($dbh, $local);
-                $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' No Return People', array('colspan'=>'4')));
-                $settingstable = $sTbl->generateMarkup();
-                break;
-                
+            	$dataTable = getNoReturn($dbh, $local);
+            	$sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' No Return People', array('colspan'=>'4')));
+            	$settingstable = $sTbl->generateMarkup();
+            	break;
+            	
+            case 'in':
+            	$dataTable = getIncidentsReport($dbh, $local, $irSelection);
+            	$sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Incidents Report', array('colspan'=>'4')));
+            	$settingstable = '';
+            	$mkTable = 2;
+            	break;
+            	
         }
         
-        $mkTable = 1;
+
     }
     
     
@@ -1099,6 +1233,14 @@ $coAttr['data-country'] = $countrySelection;
 
 $selCountry = HTMLSelector::generateMarkup('', $coAttr);
 
+// incidents report  
+$selirStat = '';
+if ($uS->UseIncidentReports) {
+	
+	$selirStat = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($incidentStatuses, $irSelection, FALSE), array('name' => 'selIrStat[]', 'size'=>'4', 'multiple'=>'multiple'));
+}
+
+
 // $dateFormat = $labels->getString("momentFormats", "report", "MMM D, YYYY");
 
 // if ($uS->CoTod) {
@@ -1130,15 +1272,17 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
 
         var makeTable = '<?php echo $mkTable; ?>';
         $('#btnHere, #btnExcel').button();
-        if (makeTable === '1') {
+        if (makeTable >= 1) {
             $('div#printArea').show();
             $('#divPrintButton').show();
 
-            $('#tblrpt').dataTable({
-                "displayLength": 50,
-                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
-            });
+            if (makeTable === 1) {
+                $('#tblrpt').dataTable({
+	                "displayLength": 50,
+	                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+	                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+            	});
+            }
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });
@@ -1164,6 +1308,9 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
             }
         });
         $('#selCalendar').change();
+
+        $('.hhk-IncdtRpt').hide();
+        
         $('input[name="rbReport"]').change(function () {
             if ($('#rbpsg').prop('checked')) {
                 $('.psgsel').hide();
@@ -1171,6 +1318,10 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
                 $('.checkboxesShow').show();
             } else if($('#nrp').prop('checked')) {
                 $('.filters').hide();
+                $('.checkboxesShow').hide();
+            } else if($('#incdt').prop('checked')) {
+                $('.filters').hide();
+                $('.hhk-IncdtRpt').show();
                 $('.checkboxesShow').hide();
             } else {
                 $('.filters').show();
@@ -1198,10 +1349,19 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
                             <?php if ($uS->PatientAsGuest) { ?><th><label for='rbp'>Just <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbp' name="rbReport" value="p" style='margin-left:.5em;' <?php if ($rptSetting == 'p') {echo 'checked="checked"';} ?>/></th><?php } ?>
                             <th><label for='rbg'>Guests & <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbg' name="rbReport" value="g" style='margin-left:.5em;' <?php if ($rptSetting == 'g') {echo 'checked="checked"';} ?>/></th>
                             <th><label for='nrp'>No-Return Guests</label><input type="radio" id='nrp' name="rbReport" value="nr" style='margin-left:.5em;' <?php if ($rptSetting == 'nr') {echo 'checked="checked"';} ?>/></th>
+                            <?php if ($uS->UseIncidentReports) { ?><th><label for='incdt'>Incidents Report</label><input type="radio" id='incdt' name="rbReport" value="in" style='margin-left:.5em;' <?php if ($rptSetting == 'in') {echo 'checked="checked"';} ?>/></th><?php } ?>
                         </tr>
                     </table>
                     </fieldset>
-                    <div class="filters">
+                    <table class="hhk-IncdtRpt" style="clear:left;float:left;display:none;">
+                        <tr>
+                            <th > Incident Reports Status</th>
+                        </tr>
+                        <tr>
+                        	<td><?php echo $selirStat; ?></td>
+                        </tr>
+                    </table>
+                    <div class="filters" style="display:none;">
                     <table style="clear:left;float: left;">
                         <tr>
                             <th colspan="3">Time Period</th>

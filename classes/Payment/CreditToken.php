@@ -196,17 +196,21 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
             $gtRs->Merchant->setStoredVal($merchant);
             $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->Merchant));
 
-            foreach ($rows as $r) {
-                $gtRs = new Guest_TokenRS();
-                EditRS::loadRow($r, $gtRs);
-
-                if (self::hasToken($gtRs)) {
-                    $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
-                }
+            if (count($rows) > 0) {
+            	
+	            foreach ($rows as $r) {
+	            	
+	                $gtRs = new Guest_TokenRS();
+	                EditRS::loadRow($r, $gtRs);
+	
+	                if (self::hasToken($gtRs)) {
+	                    $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
+	                }
+	            }
             }
         }
+        
         return $rsRows;
-
     }
 
     public static function findTokenRS(\PDO $dbh, $gid, $cardHolderName, $cardType, $maskedAccount, $merchant) {

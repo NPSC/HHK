@@ -832,7 +832,8 @@ $(document).ready(function () {
                 data: {
                     cmd: 'resclist',
                     start: calStartDate.format('YYYY-MM-DD'),
-                    view: defaultView
+                    view: defaultView,
+                    gpby: $('#selRoomGroupScheme').val()
                 },
                 success: function (data) {
                     callback(data);

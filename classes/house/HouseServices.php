@@ -1295,7 +1295,7 @@ class HouseServices {
             }
 
             $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
-            if (strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+            if (strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
                 $merchant = '';
             }
 

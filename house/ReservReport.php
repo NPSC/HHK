@@ -225,7 +225,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(g2.`Description`, '') as `Location`,
     r.`Timestamp` as `Created_Date`,
     r.Last_Updated,
-	count(rg.idReservation) as `numGuests`
+	CASE WHEN r.Status in ('a','uc','w') THEN count(rg.idReservation) ELSE '' END as `numGuests`
 
 from
     reservation r

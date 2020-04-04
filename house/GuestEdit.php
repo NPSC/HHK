@@ -153,6 +153,14 @@ if (isset($_GET['psg'])) {
 
 }
 
+
+if (isset($_GET["tab"])) {
+	
+	$guestTabIndex = intval(filter_var($_GET["tab"], FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
+
+
 /*
 * This is the ID that the previous page instance saved for us.
 */

@@ -621,7 +621,7 @@ class VisitView {
                 $showFinalPayment = TRUE;
             }
 
-             $paymentGateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan()));
+            $paymentGateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan(), $r['idRegistration']));
 
             // New Payments
             $paymentMarkup = PaymentChooser::createMarkup(

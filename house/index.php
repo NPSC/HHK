@@ -34,7 +34,7 @@ if (isset($_GET["log"])) {
 try {
 
     $login = new Login();
-    $config = $login->initializeSession(ciCFG_FILE);
+    $config = $login->initHhkSession(ciCFG_FILE);
 
 } catch (Hk_Exception_InvalidArguement $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");

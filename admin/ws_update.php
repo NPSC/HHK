@@ -98,7 +98,7 @@ if ($cd == '' || $so == '' || $un == '') {
 try {
 
     $login = new Login();
-    $config = $login->initializeSession(ciCFG_FILE);
+    $config = $login->initHhkSession(ciCFG_FILE);
 
     // define db connection obj
     $dbh = initPDO(TRUE);
