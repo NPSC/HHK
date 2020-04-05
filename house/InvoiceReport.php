@@ -248,6 +248,11 @@ $showDeleted = FALSE;
 $useVisitDates = FALSE;
 $cFields = array();
 
+$useGlReport = TRUE;  //FALSE;
+if (stristr($uS->siteName, 'gorecki') !== FALSE) {
+	$useGlReport = TRUE;
+}
+
 $monthArray = array(
     1 => array(1, 'January'),
     2 => array(2, 'February'),
@@ -676,7 +681,6 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
     $totalPaid = 0.0;
     $totalBalance = 0.0;
 
-    $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
 
 
     // Now the data ...
@@ -763,16 +767,48 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 }
 
 // Gl REport
-if (isset($_POST['btnGlGo'])) {
+$glChooser = '';
+
+if ($useGlReport) {
 	
 	require (HOUSE.'GlCodes.php');
-	$tabReturn = 2;
-	$glCodes = new GlCodes($dbh, 3, 2020, 'test');
 	
-	var_dump($glCodes);
+	// Check for new parameters
+	if (isset($_POST['btnSaveGlParms'])) {
+		GlCodes::saveParameters($dbh, $_POST);
+	}
 	
+	// GL Parms chooser markup
+	$glVars = readGenLookupsPDO($dbh, 'Gl_Code', 'Order');
+	$glTbl = new HTMLTable();
+	
+	foreach ($glVars as $g) {
+		
+		$glTbl->addBodyTr(
+				HTMLTable::makeTh($g[0], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(HTMLInput::generateMarkup($g[1], array('name'=>'gl_'.$g[0])))
+				);
+	}
+	
+	$glTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Value'));
+	
+	// Add save button
+	$glTbl->addBodyTr(HTMLTable::makeTh(HTMLInput::generateMarkup('Save Parameters', array('name'=>'btnSaveGlParms', 'type'=>'submit')), array('colspan'=>'2')));
+	
+	$glChooser = $glTbl->generateMarkup();
+	
+	// Output report
+	if (isset($_POST['btnGlGo'])) {
+		
+	
+		$tabReturn = 2;
+		$glCodes = new GlCodes($dbh, 3, 2020, 'test');
+		
+		var_dump($glCodes);
+		
+	}
 }
-;
+
 // Setups for the page.
 if (count($aList) > 0) {
 $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections),
@@ -865,7 +901,7 @@ $(document).ready(function() {
     var tabReturn = '<?php echo $tabReturn; ?>';
     challVar = $('#challVar').val();
 
-    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo').button();
+    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo').button();
     $('.ckdate').datepicker({
         yearRange: '-05:+01',
         changeMonth: true,
@@ -1081,7 +1117,9 @@ $(document).ready(function() {
             <ul>
                 <li><a href="#invr">All Invoices</a></li>
                 <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
+                <?php if ($useGlReport) {?>
                 <li id="gl"><a href="#vGl">GL Report</a></li>
+                <?php }?>
             </ul>
             <div id="invr" >
                 <form id="fcat" action="InvoiceReport.php" method="post">
@@ -1168,6 +1206,7 @@ $(document).ready(function() {
                 </div>
                 <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                 	<form name="glform" method="post" action="InvoiceReport.php">
+                	<?php echo $glChooser;?>
                     	<input type="submit" id="btnGlGo" name="btnGlGo" value="Get It"/>
                     </form>
                       <div id="rptGl" class="hhk-visitdialog"></div>

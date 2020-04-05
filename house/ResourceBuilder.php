@@ -248,7 +248,7 @@ if ($uS->rolecode > WebRole::WebUser) {
 }
 
 $tabIndex = 0;
-$feFileSelection = '';
+
 $rteMsg = '';
 $rateTableErrorMessage = '';
 $itemMessage = '';

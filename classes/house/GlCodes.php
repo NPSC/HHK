@@ -19,13 +19,11 @@ class GlCodes {
 	protected $startDate;
 	protected $records;
 	
-	public function __construct(\PDO $dbh, $month, $year, $journalCategory) {
+	public function __construct(\PDO $dbh, $month, $year) {
 		
 		$this->fileId = $year . $month . '01';
 		
 		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
-
-		$this->journalCat = $journalCategory;
 		
 		$this->records = $this->getDbRecords($dbh);
 		
@@ -40,6 +38,32 @@ class GlCodes {
 		foreach ($this->records as $r) {
 			
 			
+		}
+	}
+	
+	public static function getParameters(\PDO $dbh, $tableName = 'Gl_Code') {
+		return readGenLookupsPDO($dbh, $tableName, 'Order');
+	}
+	
+	public static function saveParameters(\PDO $dbh, $post) {
+		
+		$glVars = self::getParameters($dbh);
+		
+		foreach ($glVars as $g) {
+			
+			if (isset($post['gl_' . $g[0]])) {
+				
+				$desc = filter_var($post['gl_' . $g[0]], FILTER_SANITIZE_STRING);
+				
+				if (strtolower($g[0]) == 'password' && $desc != '') {
+					$desc = encryptMessage($desc);
+				} else {
+					$desc = addslashes($desc);
+				}
+				
+				$dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = 'Gl_Code' and `Code` = '" . $g[0] . "'");
+				
+			}
 		}
 	}
 	
@@ -171,14 +195,10 @@ class GlCodes {
     	return $invoices;
 	}
 	
-	public function createChooserMarkup() {
-		
-		
-	}
 
 	public function transferRecords(\PDO $dbh) {
 		
-		$creds = readGenLookupsPDO($dbh, 'Gl_Codes');
+		$creds = new GlParameters($dbh, 'Gl_Codes');
 		
 		$data = implode(',', $this->invoices);
 		
@@ -195,6 +215,124 @@ class GlCodes {
 		
 	}
 
+}
+
+
+class GlParameters {
+	
+	protected $host;
+	protected $username;
+	protected $password;
+	protected $remoteFilePath;
+	protected $Port;
+	protected $startDay;
+	protected $journalCat;
+	
+	public function __construct() {
+		
+	}
+	
+	/**
+	 * @return mixed
+	 */
+	public function getHost() {
+		return $this->host;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getUsername() {
+		return $this->username;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getPassword() {
+		return $this->password;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getRemoteFilePath() {
+		return $this->remoteFilePath;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getPort() {
+		return $this->Port;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getStartDay() {
+		return $this->startDay;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getJournalCat() {
+		return $this->journalCat;
+	}
+
+	/**
+	 * @param mixed $host
+	 */
+	public function setHost($host) {
+		$this->host = $host;
+	}
+
+	/**
+	 * @param mixed $username
+	 */
+	public function setUsername($username) {
+		$this->username = $username;
+	}
+
+	/**
+	 * @param mixed $password
+	 */
+	public function setPassword($password) {
+		$this->password = $password;
+	}
+
+	/**
+	 * @param mixed $remoteFilePath
+	 */
+	public function setRemoteFilePath($remoteFilePath) {
+		$this->remoteFilePath = $remoteFilePath;
+	}
+
+	/**
+	 * @param mixed $Port
+	 */
+	public function setPort($Port) {
+		$this->Port = $Port;
+	}
+
+	/**
+	 * @param mixed $startDay
+	 */
+	public function setStartDay($startDay) {
+		$this->startDay = $startDay;
+	}
+
+	/**
+	 * @param mixed $journalCat
+	 */
+	public function setJournalCat($journalCat) {
+		$this->journalCat = $journalCat;
+	}
+
+	
+	
+	
 }
 
 
