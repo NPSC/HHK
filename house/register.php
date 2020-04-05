@@ -487,6 +487,7 @@ if ($uS->UseWLnotes) {
         	<?php echo UserClass::createUserSettingsMarkup($dbh); ?>
         </div>
         <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
+        <input  type="hidden" id="isUserNew" value='<?php echo UserClass::isUserNew($dbh, $uS) ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />

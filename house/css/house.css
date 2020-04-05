@@ -5,6 +5,11 @@
 .testbody {
     background-color: #FFCC9F;
 }
+
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
 #submitButtons, .submitButtons {
     position: fixed;
     right: 30px;

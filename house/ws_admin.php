@@ -16,6 +16,7 @@ require (CLASSES . 'Relation.php');
 require (CLASSES . 'AuditLog.php');
 require(SEC . 'UserClass.php');
 require(SEC . 'ChallengeGenerator.php');
+require(DB_TABLES . 'WebSecRS.php');
 
 require (MEMBER . 'MemberSearch.php');
 
@@ -172,6 +173,37 @@ switch ($c) {
 
         break;
 
+    case "chgquestions":
+        $questions = array();
+        
+        if (isset($_POST["q1"]) && isset($_POST["a1"]) && isset($_POST["aid1"])) {
+            $questions[] = [
+                'idQuestion'=>filter_var($_POST["q1"], FILTER_SANITIZE_STRING),
+                'idAnswer'=>filter_var($_POST["aid1"], FILTER_SANITIZE_STRING),
+                'Answer'=>filter_var($_POST["a1"], FILTER_SANITIZE_STRING)
+            ];
+        }
+        
+        if (isset($_POST["q2"]) && isset($_POST["a2"]) && isset($_POST["aid2"])) {
+            $questions[] = [
+                'idQuestion'=>filter_var($_POST["q2"], FILTER_SANITIZE_STRING),
+                'idAnswer'=>filter_var($_POST["aid2"], FILTER_SANITIZE_STRING),
+                'Answer'=>filter_var($_POST["a2"], FILTER_SANITIZE_STRING)
+            ];
+        }
+        
+        if (isset($_POST["q3"]) && isset($_POST["a3"]) && isset($_POST["aid3"])) {
+            $questions[] = [
+                'idQuestion'=>filter_var($_POST["q3"], FILTER_SANITIZE_STRING),
+                'idAnswer'=>filter_var($_POST["aid3"], FILTER_SANITIZE_STRING),
+                'Answer'=>filter_var($_POST["a3"], FILTER_SANITIZE_STRING)
+            ];
+        }
+        
+        $events = changeQuestions($dbh, $questions);
+        
+        break;
+        
     default:
         $events = array("error" => "Bad Command");
 }
@@ -284,3 +316,17 @@ function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
     return $event;
 }
 
+function changeQuestions(\PDO $dbh, array $questions) {
+    
+    $event = array();
+    
+    $u = new UserClass();
+    
+    if ($u->updateSecurityQuestions($dbh, $questions) === TRUE) {
+        $event = array('success'=>'User Security Questions Updated.');
+    } else {
+        $event = array('warning'=>$u->logMessage);
+    }
+    
+    return $event;
+}
