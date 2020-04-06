@@ -62,6 +62,77 @@ BEGIN
 END -- ;
 
 
+
+-- --------------------------------------------------------
+--
+-- Procedure `gl_report`
+--
+DROP procedure IF EXISTS `gl_report`; -- ;
+
+CREATE PROCEDURE `gl_report` (
+	IN pmtStart VARCHAR(15), 
+    IN pmtEnd VARCHAR(15))
+BEGIN
+	create temporary table idinp (idInvoice int);
+	create temporary table idind (idInvoice int);
+
+	insert into idinp
+		select 
+			`i`.`idInvoice`
+		FROM
+			`payment` `p`
+			JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
+			JOIN `invoice` `i` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
+		where 
+			i.Status != 'c' and 
+            ((DATE(`p`.`Timestamp`) >= DATE(pmtStart) && DATE(`p`.`Timestamp`) < DATE(pmtEnd))
+			OR (DATE(`p`.`Last_Updated`) >= DATE(pmtStart) && DATE(`p`.`Last_Updated`) < DATE(pmtEnd)));
+        
+	insert into idind
+		select idInvoice from invoice where Delegated_Invoice_Id in (select idinvoice from idinp);
+
+	insert into idinp select idInvoice from idind;
+
+	select  `i`.`idInvoice`,
+        `i`.`Amount` AS `Invoice_Amount`,
+        `i`.`Status` AS `Invoice_Status`,
+        `i`.`Carried_Amount` AS `Carried_Amount`,
+        `i`.`Balance` AS `Invoice_Balance`,
+        `i`.`Delegated_Invoice_Id` AS `Delegated_Invoice_Id`,
+        `i`.`Deleted` AS `Deleted`,
+        ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
+        ifnull(`il`.`Amount`, 0) as `il_Amount`,
+		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
+        IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
+        IFNULL(`p`.`Amount`, 0) AS `Payment_Amount`,
+        IFNULL(`p`.`idPayment_Method`, 0) AS `idPayment_Method`,
+        IFNULL(`p`.`Status_Code`, 0) AS `Payment_Status`,
+        IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
+        IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
+        IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
+        IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
+		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
+        IFNULL(`nv`.`Vol_Status`, '') AS `Bill_Agent`,
+		IFNULL(`nd`.`Gl_Code`, '') as `Bill_Agent_Gl_Code`
+	from 
+        `invoice` `i` 
+        Join idinp on i.idInvoice = idinp.idInvoice
+        LEFT JOIN `payment_invoice` `pi` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
+        LEFT JOIN `payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
+        JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Deleted` < 1
+        LEFT JOIN `name_volunteer2` `nv` ON `p`.`idPayor` = `nv`.`idName`
+            AND (`nv`.`Vol_Category` = 'Vol_Type')
+            AND (`nv`.`Vol_Code` = 'ba')
+		LEFT JOIN name_demog nd on p.idPayor = nd.idName
+		LEFT JOIN item it on it.idItem = il.Item_Id
+	ORDER BY i.idInvoice, il.idInvoice_Line, p.idPayment;
+
+	drop table idinp;
+	drop table idind;
+END -- ;
+
+
+
 -- --------------------------------------------------------
 --
 -- Procedure `sum_visit_days`

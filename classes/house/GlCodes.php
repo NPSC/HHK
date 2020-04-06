@@ -1,14 +1,9 @@
 <?php
 
-namespace classes\house;
-use Hk_Exception_Payment;
-use SFTPConnection;
+
 
 class GlCodes {
 	
-	const JOURNAL_TEST_CAT = 'Test Category1';
-	const JOURNAL_PRODUCTION_CAT = '';
-
 	// General GL codes
 	const ALL_GROSS_SALES = '200-1007582-500014';
 	const CASH_CHECK = '200-0000000-140007';
@@ -17,15 +12,19 @@ class GlCodes {
 	protected $fileId;
 	protected $journalCat;
 	protected $startDate;
+	protected $glParm;
 	protected $records;
+
 	
-	public function __construct(\PDO $dbh, $month, $year) {
+	public function __construct(\PDO $dbh, $month, $year, $glParm) {
 		
 		$this->fileId = $year . $month . '01';
 		
 		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
 		
-		$this->records = $this->getDbRecords($dbh);
+		$this->glParm = $glParm;
+		
+		$this->loadDbRecords($dbh);
 		
 	}
 	
@@ -37,37 +36,22 @@ class GlCodes {
 		
 		foreach ($this->records as $r) {
 			
-			
-		}
-	}
-	
-	public static function getParameters(\PDO $dbh, $tableName = 'Gl_Code') {
-		return readGenLookupsPDO($dbh, $tableName, 'Order');
-	}
-	
-	public static function saveParameters(\PDO $dbh, $post) {
-		
-		$glVars = self::getParameters($dbh);
-		
-		foreach ($glVars as $g) {
-			
-			if (isset($post['gl_' . $g[0]])) {
-				
-				$desc = filter_var($post['gl_' . $g[0]], FILTER_SANITIZE_STRING);
-				
-				if (strtolower($g[0]) == 'password' && $desc != '') {
-					$desc = encryptMessage($desc);
-				} else {
-					$desc = addslashes($desc);
-				}
-				
-				$dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = 'Gl_Code' and `Code` = '" . $g[0] . "'");
-				
+			// Must be paid
+			if ($r['i']['Invoice_Status'] != InvoiceStatus::Paid) {
+				continue;
 			}
+			
+			// Ignore Void or Reverse payemnts.
+			if ($r['p']['PaymentStatus'] == PaymentStatusCode::Reverse || $r['p']['PaymentStatus'] == PaymentStatusCode::Void) {
+				continue;
+			}
+			
+			
 		}
 	}
 	
-	protected function getDbRecords(\PDO $dbh) {
+	
+	protected function loadDbRecords(\PDO $dbh) {
 		
 		$idInvoice = 0;
 		$idPayment = 0;
@@ -77,49 +61,17 @@ class GlCodes {
 		$invoice = array();
 		$payments = array();
 		$invoiceLines = array();
+		$delegatedInvoiceLines = array();
 		
 		$endDate = $this->startDate->add(new \DateInterval('P1M'));
 		
-		$query = "
-   SELECT
-        ifnull(`i`.`idInvoice` ,0) AS `idInvoice`,
-        `i`.`Amount` AS `Invoice_Amount`,
-        `i`.`Status` AS `Invoice_Status`,
-        `i`.`Carried_Amount` AS `Carried_Amount`,
-        `i`.`Balance` AS `Invoice_Balance`,
-        `i`.`Delegated_Invoice_Id` AS `Delegated_Invoice_Id`,
-        `i`.`Deleted` AS `Deleted`,
-        ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
-        ifnull(`il`.`Amount`, 0) as `il_Amount`,
-		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
-        IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
-        IFNULL(`p`.`Amount`, 0) AS `Payment_Amount`,
-        IFNULL(`p`.`idPayment_Method`, 0) AS `idPayment_Method`,
-        IFNULL(`p`.`Status_Code`, 0) AS `Payment_Status`,
-        IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
-        IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
-        IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
-        IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
-		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
-        IFNULL(`nv`.`Vol_Status`, '') AS `Bill_Agent`,
-		IFNULL(`nd`.`Gl_Code`, '') as `Bill_Agent_Gl_Code`
-    FROM
-        `payment` `p`
-        JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
-        JOIN `invoice` `i` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
-        JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Deleted` < 1
-        LEFT JOIN `name_volunteer2` `nv` ON `p`.`idPayor` = `nv`.`idName`
-            AND (`nv`.`Vol_Category` = 'Vol_Type')
-            AND (`nv`.`Vol_Code` = 'ba')
-		LEFT JOIN name_demog nd on p.idPayor = nd.idName
-		LEFT JOIN item it on it.idItem = il.Item_Id
-	where (DATE(`p`.`Timestamp`) >= DATE('" . $this->startDate->format('Y-m-d') . "') && DATE(`p`.`Timestamp`) < DATE('" . $endDate->format('Y-m-d') . "'))
-		OR (DATE(`p`.`Last_Updated`) >= DATE('" . $this->startDate->format('Y-m-d') . "') && DATE(`p`.`Last_Updated`) < DATE('" . $endDate->format('Y-m-d') . "'))
-    ORDER BY i.idInvoice, il.idInvoice_Line, p.idPayment;";
+		$query = "call gl_report('" . $this->startDate->format('Y-m-d') . "','" . $endDate->format('Y-m-d') . "')";
 		
     	$stmt = $dbh->query($query);
+    	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    	$stmt->nextRowset();
     	
-    	while ($p = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+    	foreach ($rows as $p) {
     		
     		if ($p['idInvoice'] != $idInvoice) {
     			// Next Invoice
@@ -128,7 +80,7 @@ class GlCodes {
     				// close last invoice
     				$invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'l'=>$invoiceLines);
     			}
-
+    			
     			$idInvoice = $p['idInvoice'];
 
     			// new invoice
@@ -155,7 +107,7 @@ class GlCodes {
 
     				$idPayment = $p['idPayment'];
 
-    				$payments[$idPayment] = array(
+    				$payments[] = array(
     						'idPayment'=>$p['idPayment'],
     						'Payment_Amount'=>$p['Payment_Amount'],
     						'idPayment_Method'=>$p['idPayment_Method'],
@@ -177,22 +129,40 @@ class GlCodes {
     				// Next Line
 
     				$idInvoiceLine = $p['il_Id'];
-
-    				$invoiceLines[$idInvoiceLine] = array(
-    						`il_Id`=>$p['il_Id'],
-    						`il_Amount`=>$p['il_Amount'],
-    						`Item_Gl_Code`=>$p['Item_Gl_Code'],
+    				
+    				$line = array(
+    						'il_Id'=>$p['il_Id'],
+    						'il_Amount'=>$p['il_Amount'],
+    						'il_Item_Id'=>$p['il_Item_Id'],
+    						'Item_Gl_Code'=>$p['Item_Gl_Code'],
     				);
+    				
+    				if ($p['Delegated_Invoice_Id'] > 0) {
+    					
+    					$delegatedInvoiceLines[$p['Delegated_Invoice_Id']][] = $line;
+    					
+    				} else if ($p['il_Item_Id'] != ItemId::InvoiceDue) {
+    					$invoiceLines[] = $line;
+    				}
     			}
     		}
     	}
 
     	if ($idInvoice > 0) {
     		// close last invoice
-    		$invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'h'=>$invoiceLines);
+    		$invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'l'=>$invoiceLines);
+    	}
+    	
+    	// Add the delegated items to their carried-by invoice.
+    	foreach ($delegatedInvoiceLines as $k => $l) {
+    		
+    		foreach ($l as $line) {
+    			
+    			$invoices[$k]['l'][] = $line;
+    		}
     	}
 
-    	return $invoices;
+    	$this->records =  $invoices;
 	}
 	
 
@@ -214,6 +184,11 @@ class GlCodes {
 		}
 		
 	}
+	
+	
+	public function getInvoices() {
+		return $this->records;
+	}
 
 }
 
@@ -228,8 +203,77 @@ class GlParameters {
 	protected $startDay;
 	protected $journalCat;
 	
-	public function __construct() {
+	protected $glParms;
+	protected $tableName;
+	
+	public function __construct(\PDO $dbh, $tableName = 'Gl_Code') {
 		
+		$this->tableName = filter_var($tableName, FILTER_SANITIZE_STRING);
+		$this->loadParameters($dbh);
+		
+		
+	}
+	
+	public function loadParameters(\PDO $dbh) {
+		
+		$this->glParms = readGenLookupsPDO($dbh, $this->tableName, 'Order');
+		
+		$this->setHost($this->glParms['Host'][2]);
+		$this->setJournalCat($this->glParms['JournalCategory'][2]);
+		$this->setStartDay($this->glParms['StartDay'][2]);
+		$this->setRemoteFilePath($this->glParms['RemoteFilePath'][2]);
+		$this->setPort($this->glParms['Port'][2]);
+		$this->setUsername($this->glParms['Username'][2]);
+		$this->setPassword($this->glParms['Password'][2]);
+		
+	}
+	
+	public function saveParameters(\PDO $dbh, $post, $prefix = 'gl_') {
+		
+		foreach ($this->glParms as $g) {
+			
+			if (isset($post[$prefix . $g[0]])) {
+				
+				$desc = filter_var($post[$prefix . $g[0]], FILTER_SANITIZE_STRING);
+				
+				if (strtolower($g[0]) == 'password' && $desc != '') {
+					$desc = encryptMessage($desc);
+				} else {
+					$desc = addslashes($desc);
+				}
+				
+				$dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = '" .$this->tableName . "' and `Code` = '" . $g[0] . "'");
+				
+			}
+		}
+		
+		$this->loadParameters($dbh);
+	}
+	
+	public function getChooserMarkup($prefix) {
+		
+		// GL Parms chooser markup
+		$glTbl = new HTMLTable();
+		
+		foreach ($this->getParmsArray() as $g) {
+			
+			$glTbl->addBodyTr(
+					HTMLTable::makeTh($g[0], array('class'=>'tdlabel'))
+					. HTMLTable::makeTd(HTMLInput::generateMarkup($g[1], array('name'=>$prefix.$g[0])))
+					);
+		}
+		
+		$glTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Value'));
+		
+		// Add save button
+		$glTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Save Parameters', array('name'=>'btnSaveGlParms', 'type'=>'submit')), array('colspan'=>'2', 'style'=>'text-align:right;')));
+		
+		return $glTbl->generateMarkup();
+		
+	}
+	
+	public function getParmsArray() {
+		return $this->glParms;
 	}
 	
 	/**
@@ -371,13 +415,13 @@ class GlTemplateRecord {
 	protected $purchaseDate;
 	protected $journalCategory;
 	
-	public function __construct($fileId, $glCOde, $creditAmount, $debitAmount, $purchaseDate, $journalCategory) {
+	public function __construct($fileId, $glCode, $creditAmount, $debitAmount, $purchaseDate, $journalCategory) {
 		
 		$this->fieldArray = $this->setStaticFields($fileId);
 		
 		$this->setCreditAmount($creditAmount);
 		$this->setDebitAmount($debitAmount);
-		$this->setGlCode($glCOde);
+		$this->setGlCode($glCode);
 		$this->setJournalCategory($journalCategory);
 		$this->setPurchaseDate($purchaseDate);
 

@@ -1,5 +1,5 @@
 <?php
-use classes\house\GlCodes;
+
 
 /**
  * InvoiceReport.php
@@ -768,43 +768,70 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 // Gl REport
 $glChooser = '';
-
+$glInvoices = '';
 if ($useGlReport) {
 	
 	require (HOUSE.'GlCodes.php');
 	
+	$glParm = new GlParameters($dbh, 'Gl_Code');
+	$glPrefix = 'gl_';
+	
 	// Check for new parameters
 	if (isset($_POST['btnSaveGlParms'])) {
-		GlCodes::saveParameters($dbh, $_POST);
+		$glParm->saveParameters($dbh, $_POST, $glPrefix);
+		$tabReturn = 2;
 	}
 	
 	// GL Parms chooser markup
-	$glVars = readGenLookupsPDO($dbh, 'Gl_Code', 'Order');
-	$glTbl = new HTMLTable();
-	
-	foreach ($glVars as $g) {
-		
-		$glTbl->addBodyTr(
-				HTMLTable::makeTh($g[0], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(HTMLInput::generateMarkup($g[1], array('name'=>'gl_'.$g[0])))
-				);
-	}
-	
-	$glTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Value'));
-	
-	// Add save button
-	$glTbl->addBodyTr(HTMLTable::makeTh(HTMLInput::generateMarkup('Save Parameters', array('name'=>'btnSaveGlParms', 'type'=>'submit')), array('colspan'=>'2')));
-	
-	$glChooser = $glTbl->generateMarkup();
+	$glChooser = $glParm->getChooserMarkup($glPrefix);
 	
 	// Output report
 	if (isset($_POST['btnGlGo'])) {
 		
 	
 		$tabReturn = 2;
-		$glCodes = new GlCodes($dbh, 3, 2020, 'test');
+		$glCodes = new GlCodes($dbh, 3, 2020, $glParm);
+				
+		$tbl = new HTMLTable();
 		
-		var_dump($glCodes);
+		foreach ($glCodes->getInvoices() as $r) {
+			$mkupRow = '';
+			
+			foreach ($r['i'] as $col) {
+				
+				$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+			}
+			$tbl->addBodyTr($mkupRow);
+			
+			if (isset($r['p'])) {
+				
+				foreach ($r['p'] as $p) {
+					$mkupRow = '<td>p</td>';
+					foreach ($p as $col) {
+						
+						$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+						
+					}
+					$tbl->addBodyTr($mkupRow);
+					
+				}
+			}
+			
+			if (isset($r['l'])) {
+				foreach ($r['l'] as $h) {
+					$mkupRow = '<td> </td><td>l</td>';
+					foreach ($h as $col) {
+						
+						$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+						
+					}
+					$tbl->addBodyTr($mkupRow);
+					
+				}
+			}
+		}
+		
+		$glInvoices = $tbl->generateMarkup();
 		
 	}
 }
@@ -1102,7 +1129,9 @@ $(document).ready(function() {
             event.preventDefault();
             invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
         });
+        
     }
+    $('#mainTabs').show();
 });
  </script>
     </head>
@@ -1113,7 +1142,7 @@ $(document).ready(function() {
         <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
         <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
 
-        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog">
+        <div id="mainTabs" style="font-size:.9em;display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog">
             <ul>
                 <li><a href="#invr">All Invoices</a></li>
                 <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
@@ -1200,17 +1229,19 @@ $(document).ready(function() {
                     <?php echo $dataTable; ?>
                 </div>
             </div>
-                <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
-                    <input type="button" id="btnInvGo" value="Refresh"/>
-                      <div id="rptInvdiv" class="hhk-visitdialog"></div>
-                </div>
-                <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
-                	<form name="glform" method="post" action="InvoiceReport.php">
+            <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
+                <input type="button" id="btnInvGo" value="Refresh"/>
+                  <div id="rptInvdiv" class="hhk-visitdialog"></div>
+            </div>
+            <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
+                <form name="glform" method="post" action="InvoiceReport.php">
                 	<?php echo $glChooser;?>
-                    	<input type="submit" id="btnGlGo" name="btnGlGo" value="Get It"/>
-                    </form>
-                      <div id="rptGl" class="hhk-visitdialog"></div>
-                </div>
+                    <input type="submit" id="btnGlGo" name="btnGlGo" value="Get Invoices"/>
+                </form>
+                 <div id="rptGl" class="hhk-visitdialog">
+                     <?php echo $glInvoices; ?>
+                 </div>
+            </div>
         </div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <form name="xform" id="xform" method="post"></form>
@@ -1235,7 +1266,7 @@ $(document).ready(function() {
                 </tr>
             </table>
         </div>
-        <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;">
+        <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
             <span class="ui-helper-hidden-accessible"><input type="text"/></span>
             <table><tr>
                     <td class="tdlabel">Invoice Number:</td>
