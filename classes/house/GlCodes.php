@@ -14,6 +14,8 @@ class GlCodes {
 	protected $startDate;
 	protected $glParm;
 	protected $records;
+	protected $lines;
+	protected $errors;
 
 	
 	public function __construct(\PDO $dbh, $month, $year, $glParm) {
@@ -37,16 +39,77 @@ class GlCodes {
 		foreach ($this->records as $r) {
 			
 			// Must be paid
-			if ($r['i']['Invoice_Status'] != InvoiceStatus::Paid) {
+			if ($r['i']['iStatus'] != InvoiceStatus::Paid) {
 				continue;
 			}
 			
-			// Ignore Void or Reverse payemnts.
-			if ($r['p']['PaymentStatus'] == PaymentStatusCode::Reverse || $r['p']['PaymentStatus'] == PaymentStatusCode::Void) {
+			// Just one payment
+			if (count($r['p']) !== 1) {
+				$this->errors[] = "Too many Payments for invoice: " . $r['i']['iNumber'];
 				continue;
 			}
 			
+			// Void or reverse
+			if ($r['p'][0]['pStatus'] == PaymentStatusCode::Reverse || $r['p'][0]['pStatus'] == PaymentStatusCode::VoidSale) {
+				continue;
+			}
 			
+			$this->makePaymentLine($r);
+			
+		}
+	}
+	
+	protected function makePaymentLine($r) {
+		
+		$p = $r['p'][0];
+		
+		$isReturn = FALSE;
+		$pDate = $p['pTimestamp'];
+		
+		if ($p['pMethod'] == PaymentMethod::Charge) {
+			$glCode = self::CREDIT_CARD;
+		} else {
+			$glCode = self::CASH_CHECK;
+		}
+		
+		// override with 3rd party paying
+		if ($p['ba_Gl_Code'] != '') {
+			$glCode = $p['ba_Gl_Code'];
+		}
+		
+		if ($p['pStatus'] == PaymentStatusCode::Retrn || $p['Is_Refund'] > 0) {
+			
+			$isReturn = TRUE;
+			$pDate = $p['pUpdated'];
+			
+			if ($pDate == '') {
+				$pDate = $p['pTimestamp'];
+			}
+			
+			$line = new GlTemplateRecord($this->fileId, $glCode, 0, abs($p['pAmount']), $pDate, $this->glParm->getJournalCat());
+			$this->lines[] = $line->getFieldArray();
+			
+		} else if ($p['pStatus'] == PaymentStatusCode::Paid || $p['Is_Refund'] == 0) {
+			
+			$line = new GlTemplateRecord($this->fileId, $glCode, abs($p['pAmount']), 0, $p['pTimestamp'], $this->glParm->getJournalCat());
+			$this->lines[] = $line->getFieldArray();
+			
+		} else {
+			$this->errors[] = "Unanticipated Payment Status: ". $p['pStatus'];
+		}
+		
+		
+		foreach($r['l'] as $l) {
+			
+			// map gl code
+			if ($isReturn) {
+				
+				$line = new GlTemplateRecord($this->fileId, $l['Item_Gl_Code'], 0, abs($l['il_Amount']), $pDate, $this->glParm->getJournalCat());
+				$this->lines[] = $line->getFieldArray();
+			} else {
+				$line = new GlTemplateRecord($this->fileId, $l['Item_Gl_Code'], abs($l['il_Amount']), 0, $pDate, $this->glParm->getJournalCat());
+				$this->lines[] = $line->getFieldArray();
+			}
 		}
 	}
 	
@@ -85,12 +148,11 @@ class GlCodes {
 
     			// new invoice
     			$invoice = array(
-    					'idInvoice'=>$p['idInvoice'],
-    					'Invoice_Amount'=>$p['Invoice_Amount'],
-    					'Bill_Agent'=>$p['Bill_Agent'],
-    					'Invoice_Status'=>$p['Invoice_Status'],
-    					'Carried_Amount'=>$p['Carried_Amount'],
-    					'Delegated_Invoice_Id'=>$p['Delegated_Invoice_Id'],
+    					'iNum'=>$p['iNumber'],
+    					'iAmount'=>$p['iAmount'],
+    					'iStatus'=>$p['iStatus'],
+    					'Delegated_Id'=>$p['Delegated_Id'],
+    					'iDeleted'=>$p['iDeleted'],
     			);
     			
     			$idPayment = 0;
@@ -109,15 +171,14 @@ class GlCodes {
 
     				$payments[] = array(
     						'idPayment'=>$p['idPayment'],
-    						'Payment_Amount'=>$p['Payment_Amount'],
-    						'idPayment_Method'=>$p['idPayment_Method'],
-    						'Payment_Status'=>$p['Payment_Status'],
-    						'Payment_Last_Updated'=>$p['Payment_Last_Updated'],
-    						'Payment_Timestamp'=>$p['Payment_Timestamp'],
+    						'pAmount'=>$p['pAmount'],
+    						'pMethod'=>$p['pMethod'],
+    						'pStatus'=>$p['pStatus'],
+    						'pUpdated'=>($p['pUpdated'] == '' ? '' : date('Y-m-d', strtotime($p['pUpdated']))),
+    						'pTimestamp'=>date('Y-m-d', strtotime($p['pTimestamp'])),
     						'Is_Refund'=>$p['Is_Refund'],
-    						'Payment_idPayor'=>$p['Payment_idPayor'],
-    						'Last_Updated'=>$p['Payment_Last_Updated'],
-    						'Bill_Agent_Gl_Code'=>$p['Bill_Agent_Gl_Code'],
+    						'idPayor'=>$p['idPayor'],
+    						'ba_Gl_Code'=>$p['ba_Gl_Code'],
     				);
     			}
     		}
@@ -137,9 +198,9 @@ class GlCodes {
     						'Item_Gl_Code'=>$p['Item_Gl_Code'],
     				);
     				
-    				if ($p['Delegated_Invoice_Id'] > 0) {
+    				if ($p['Delegated_Id'] > 0) {
     					
-    					$delegatedInvoiceLines[$p['Delegated_Invoice_Id']][] = $line;
+    					$delegatedInvoiceLines[$p['Delegated_Id']][] = $line;
     					
     				} else if ($p['il_Item_Id'] != ItemId::InvoiceDue) {
     					$invoiceLines[] = $line;
@@ -170,7 +231,7 @@ class GlCodes {
 		
 		$creds = new GlParameters($dbh, 'Gl_Codes');
 		
-		$data = implode(',', $this->invoices);
+		$data = implode(',', $this->lines);
 		
 		try
 		{
@@ -189,7 +250,15 @@ class GlCodes {
 	public function getInvoices() {
 		return $this->records;
 	}
-
+	
+	public function getLines() {
+		return $this->lines;
+	}
+	
+	public function getErrors() {
+		return $this->errors;
+	}
+	
 }
 
 
@@ -218,13 +287,13 @@ class GlParameters {
 		
 		$this->glParms = readGenLookupsPDO($dbh, $this->tableName, 'Order');
 		
-		$this->setHost($this->glParms['Host'][2]);
-		$this->setJournalCat($this->glParms['JournalCategory'][2]);
-		$this->setStartDay($this->glParms['StartDay'][2]);
-		$this->setRemoteFilePath($this->glParms['RemoteFilePath'][2]);
-		$this->setPort($this->glParms['Port'][2]);
-		$this->setUsername($this->glParms['Username'][2]);
-		$this->setPassword($this->glParms['Password'][2]);
+		$this->setHost($this->glParms['Host'][1]);
+		$this->setJournalCat($this->glParms['JournalCategory'][1]);
+		$this->setStartDay($this->glParms['StartDay'][1]);
+		$this->setRemoteFilePath($this->glParms['RemoteFilePath'][1]);
+		$this->setPort($this->glParms['Port'][1]);
+		$this->setUsername($this->glParms['Username'][1]);
+		$this->setPassword($this->glParms['Password'][1]);
 		
 	}
 	
@@ -440,6 +509,7 @@ class GlTemplateRecord {
 		
 		$fa[self::STATUS] = 'NEW';
 		$fa[self::JOURNAL_SOURCE] = 'HHK';
+
 		$fa[self::CURRENCY_CODE] = 'USD';
 		$fa[self::ACTUAL_FLAG] = 'A';
 		$fa[self::PAYOR_ID] = '0';

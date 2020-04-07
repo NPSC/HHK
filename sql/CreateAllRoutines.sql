@@ -94,26 +94,25 @@ BEGIN
 	insert into idinp select idInvoice from idind;
 
 	select  `i`.`idInvoice`,
-        `i`.`Amount` AS `Invoice_Amount`,
-        `i`.`Status` AS `Invoice_Status`,
-        `i`.`Carried_Amount` AS `Carried_Amount`,
-        `i`.`Balance` AS `Invoice_Balance`,
-        `i`.`Delegated_Invoice_Id` AS `Delegated_Invoice_Id`,
-        `i`.`Deleted` AS `Deleted`,
+        `i`.`Amount` AS `iAmount`,
+        `i`.`Status` AS `iStatus`,
+        `i`.`Carried_Amount` AS `icAmount`,
+        `i`.`Invoice_Number` AS `iNumber`,
+        `i`.`Delegated_Invoice_Id` AS `Delegated_Id`,
+        `i`.`Deleted` AS `iDeleted`,
         ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
         ifnull(`il`.`Amount`, 0) as `il_Amount`,
 		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
         IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
-        IFNULL(`p`.`Amount`, 0) AS `Payment_Amount`,
-        IFNULL(`p`.`idPayment_Method`, 0) AS `idPayment_Method`,
-        IFNULL(`p`.`Status_Code`, 0) AS `Payment_Status`,
-        IFNULL(`p`.`Last_Updated`, '') AS `Payment_Last_Updated`,
+        IFNULL(`p`.`Amount`, 0) AS `pAmount`,
+        IFNULL(`p`.`idPayment_Method`, 0) AS `pMethod`,
+        IFNULL(`p`.`Status_Code`, 0) AS `pStatus`,
+        IFNULL(`p`.`Last_Updated`, '') AS `pUpdated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
-        IFNULL(`p`.`idPayor`, 0) AS `Payment_idPayor`,
-        IFNULL(`p`.`Timestamp`, '') as `Payment_Timestamp`,
+        IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
+        IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
 		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
-        IFNULL(`nv`.`Vol_Status`, '') AS `Bill_Agent`,
-		IFNULL(`nd`.`Gl_Code`, '') as `Bill_Agent_Gl_Code`
+		IFNULL(`nd`.`Gl_Code`, '') as `ba_Gl_Code`
 	from 
         `invoice` `i` 
         Join idinp on i.idInvoice = idinp.idInvoice

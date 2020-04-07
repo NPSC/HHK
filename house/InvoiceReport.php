@@ -833,6 +833,16 @@ if ($useGlReport) {
 		
 		$glInvoices = $tbl->generateMarkup();
 		
+		$glCodes->mapRecords();
+		
+		$tbl = new HTMLTable();
+		
+		foreach ($glCodes->getLines() as $l) {
+			
+			$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
+		}
+		
+		$glInvoices .= $tbl->generateMarkup();
 	}
 }
 
@@ -1238,7 +1248,7 @@ $(document).ready(function() {
                 	<?php echo $glChooser;?>
                     <input type="submit" id="btnGlGo" name="btnGlGo" value="Get Invoices"/>
                 </form>
-                 <div id="rptGl" class="hhk-visitdialog">
+                 <div id="rptGl" class="hhk-visitdialog" style="font-size:0.9em;">
                      <?php echo $glInvoices; ?>
                  </div>
             </div>
