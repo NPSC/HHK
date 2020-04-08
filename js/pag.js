@@ -140,98 +140,20 @@ $(document).ready(function () {
                             answerIds = [$('#txtAns1').data('ansid'), $('#txtAns2').data('ansid'), $('#txtAns3').data('ansid')],
                             answers = [$('#txtAns1').val(), $('#txtAns2').val(), $('#txtAns3').val()],
                             msg = $('#pwChangeErrMsg'),
-                    		qmsg= $('#SecQuestionErrMsg');
+                    		qmsg= $('#SecQuestionErrMsg'),
+                    		success = false;
                     $('div#dchgPw').find("input").prop("type", "password");
                     $('div#dchgPw').find("button.showPw").text("Show");
                     var errors = false;
                     msg.empty();
                     qmsg.empty();
                     
-                    if($.inArray(null, questions) > -1){
-                    	qmsg.append('You must choose 3 security questions<br>');
-                    	errors = true;
-                    }
                     
-                    //check for duplicate questions
-                    var alreadySeen = []
-                    questions.forEach(function(str) {
-                    	if(str){
-                    		
-    	                    if (alreadySeen[str]){
-    	                    	qmsg.append('You cannot choose the same question twice<br>');
-    	                    	errors = true;
-    	                    	return false;
-    	                    }else{
-    	                    	alreadySeen[str] = true;
-    	                    }
-                    	}
-                    });
-                    
-                    //If answer is new, ensure it is not blank
-                    questions.forEach(function(val, i) {
-                    	var answerNum = parseInt(i)+1;
-                        if (answerIds[i] == "" && answers[i] == ""){
-                        	qmsg.append('Answer ' + answerNum + ' is required<br>');
-                        	errors = true;
-                        }
-                    });
-                    if(errors){
+                    if (isUserNew && oldpw.val() == ""){
+                    	msg.text("Old password is required");
                     	return;
                     }
-                    
-                    //if updating security questions
-                    var changed = false;
-                    answers.forEach(function(val, i) {
-                        if (val != ""){
-                        	answers[i] = hex_md5(answers[i]);
-                        	changed = true;
-                        }
-                    });
-                    
-                    if(changed){
                     	
-                    	$.post("ws_admin.php",
-                            {
-                                cmd: 'chgquestions',
-                                q1: questions[0],
-                                aid1: answerIds[0],
-                                a1: answers[0],
-                                q2: questions[1],
-                                aid2: answerIds[1],
-                                a2: answers[1],
-                                q3: questions[2],
-                                aid3: answerIds[2],
-                                a3: answers[2]
-                            },
-                            function (data) {
-                                if (data) {
-                                    try {
-                                        data = $.parseJSON(data);
-                                    } catch (err) {
-                                        alert("Parser error - " + err.message);
-                                        return;
-                                    }
-                                    if (data.error) {
-
-                                        if (data.gotopage) {
-                                            window.open(data.gotopage, '_self');
-                                        }
-                                        flagAlertMessage(data.error, 'error');
-
-                                    } else if (data.success) {
-
-                                        $('#dchgPw').dialog("close");
-                                        flagAlertMessage(data.success, 'success');
-
-                                    } else if (data.warning) {
-                                        $('#pwChangeErrMsg').text(data.warning);
-                                    }
-                                }
-                            }
-                        );
-                    	
-                    }
-                    
                     //if intent is to change password
                     if (oldpw.val() != "") {
 
@@ -289,7 +211,6 @@ $(document).ready(function () {
 
                                     } else if (data.success) {
 
-                                        $('#dchgPw').dialog("close");
                                         flagAlertMessage(data.success, 'success');
 
                                     } else if (data.warning) {
@@ -299,11 +220,99 @@ $(document).ready(function () {
                             }
                         );
                     };
-                },
-                "Cancel": function(){
-                	$(this).dialog('close');
-                }
-            };
+                    
+                    if($.inArray(null, questions) > -1){
+                    	qmsg.append('You must choose 3 security questions<br>');
+                    	errors = true;
+                    }
+                    
+                    //check for duplicate questions
+                    var alreadySeen = []
+                    questions.forEach(function(str) {
+                    	if(str){
+                    		
+    	                    if (alreadySeen[str]){
+    	                    	qmsg.append('You cannot choose the same question twice<br>');
+    	                    	errors = true;
+    	                    	return false;
+    	                    }else{
+    	                    	alreadySeen[str] = true;
+    	                    }
+                    	}
+                    });
+                    
+                    //If answer is new, ensure it is not blank
+                    questions.forEach(function(val, i) {
+                    	var answerNum = parseInt(i)+1;
+                        if (answerIds[i] == "" && answers[i] == ""){
+                        	qmsg.append('Answer ' + answerNum + ' is required<br>');
+                        	errors = true;
+                        }
+                    });
+                    
+                    //if updating security questions
+                    var changed = false;
+                    answers.forEach(function(val, i) {
+                        if (val != ""){
+                        	answers[i] = hex_md5(answers[i]);
+                        	changed = true;
+                        }
+                    });
+                    
+                    if(changed){
+                    	
+                    	$.post("ws_admin.php",
+                            {
+                                cmd: 'chgquestions',
+                                q1: questions[0],
+                                aid1: answerIds[0],
+                                a1: answers[0],
+                                q2: questions[1],
+                                aid2: answerIds[1],
+                                a2: answers[1],
+                                q3: questions[2],
+                                aid3: answerIds[2],
+                                a3: answers[2]
+                            },
+                            function (data) {
+                                if (data) {
+                                    try {
+                                        data = $.parseJSON(data);
+                                    } catch (err) {
+                                        alert("Parser error - " + err.message);
+                                        return;
+                                    }
+                                    if (data.error) {
+
+                                        if (data.gotopage) {
+                                            window.open(data.gotopage, '_self');
+                                        }
+                                        flagAlertMessage(data.error, 'error');
+
+                                    } else if (data.success) {
+                                        flagAlertMessage(data.success, 'success');
+
+                                    } else if (data.warning) {
+                                        qmsg.text(data.warning);
+                                    }
+                                }
+                            }
+                        );
+                    	
+                    }
+                    
+                    
+                    
+                    console.log(success);
+                    if(success){
+                    	if(isUserNew){
+                    		location.reload(true);
+                    	}else{
+                    		$('#dchgPw').dialog("close");
+                    	}
+                    }
+            }
+        };
         
         var isUserNew = $("input#isUserNew").val();
         

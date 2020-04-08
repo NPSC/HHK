@@ -261,7 +261,7 @@ class UserClass {
         $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
         
         //get prior password hashes
-        $query = "select P.Enc_Pw from w_user_passwords where idUser = " . $uS->uid . " order by P.Timestamp desc limit " . $priorPasswords . ";";
+        $query = "select Enc_Pw from w_user_passwords where idUser = " . $uS->uid . " order by Timestamp desc limit " . $priorPasswords . ";";
         $stmt = $dbh->query($query);
         $passwords = $stmt->fetchAll(\PDO::FETCH_COLUMN);
         
@@ -347,9 +347,9 @@ class UserClass {
                         </tr><tr>
                             <td class="tdlabel">Enter Old Password:</td><td style="display: flex"><input style="width: 100%" id="txtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                         </tr><tr>
-                            <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw1 type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                         </tr><tr>
-                            <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw2 type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                         </tr><tr>
                             <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
                         </tr><tr>
