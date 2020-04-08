@@ -1065,17 +1065,20 @@ if (isset($_POST['ldfm'])) {
         $dbh->exec("UPDATE `gen_lookups` SET `Substitute` = '$formDef' WHERE `Table_Name` = 'Form_Upload' AND `Code` = '$formType'");
     }
 
-    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef'");
+    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef' order by g.Order asc");
     $docRows = $formstmt->fetchAll();
 
     $li = '';
     $tabContent = '';
 
+    //set help text
+    $help = '<p style="margin: .5em 0 .5em 0;">NOTE: To set form order, drag and drop tabs</p>';
+    
     foreach ($docRows as $r) {
 
         $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', $r['Description'], array(
             'href' => '#' . $r['Code']
-        )));
+        )), array('class'=>'hhk-sortable', 'data-code'=>$r['Code']));
 
         $tabContent .= HTMLContainer::generateMarkup('div', ($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
             'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3')): '') . 
@@ -1083,12 +1086,12 @@ if (isset($_POST['ldfm'])) {
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>
 Upload new file: <input name="formfile" type="file" required />
 <input type="submit" name="docUpload" value="Save Form" />
-</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docId" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Edit Form</button></div></div>', array(
+</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Edit Form</button></div></div>' . $help, array(
             'id' => $r['Code']
         ));
     }
 
-    // add New documt
+    // add New document
     $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'New...', array(
         'href' => '#newDoc'
     )), array(
@@ -1115,11 +1118,12 @@ Upload new file: <input name="formfile" type="file" required />
             'id' => 'replacements'
         ));
     }
-
+    
     // Make the final tab control
     $ul = HTMLContainer::generateMarkup('ul', $li, array());
     $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array(
-        'id' => 'regTabDiv'
+        'id' => 'regTabDiv',
+        'data-formDef' => $formDef
     ));
 
     echo $output;
@@ -1154,16 +1158,39 @@ if (isset($_POST['docUpload'])) {
     }
 }
 
-if (isset($_POST['delfm']) && isset($_POST['docId']) && isset($_POST['formDef'])) {
+if (isset($_POST['delfm']) && isset($_POST['docCode']) && isset($_POST['formDef'])) {
     
-    $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
     $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_STRING);
     
     $tabIndex = 8;
     
-    $formdelstmt = $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docId'");
-    $docdelstmt = $dbh->exec("UPDATE `document` SET `status` = 'd' WHERE `idDocument` = '$docId'");
+    $docdelstmt = $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
+    $formdelstmt = $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
     
+}
+
+// Make sure Content-Type is application/json
+$content_type = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
+if (stripos($content_type, 'application/json') !== false) {
+    // Read the input stream
+    $body = file_get_contents("php://input");
+    $data = json_decode($body);
+    
+    if($data->cmd == "reorderfm"){
+        $output = "";
+        try{
+            foreach($data->order as $i=>$v){
+                $docreorderstmt = $dbh->exec("UPDATE `gen_lookups` SET `Order` = $i WHERE `Table_Name` = '" . $data->formDef . "' AND `Code` = '$v';");
+            }
+        }catch(\Exception $e){
+            echo json_encode(["status"=>"error", "message"=>$e->getMessage()]);
+            exit;
+        }
+        echo json_encode(["status"=>"success"]);
+    }
+    
+    exit;
 }
 
 if (isset($_POST['txtformLang'])) {
@@ -2286,6 +2313,36 @@ $resultMessage = $alertMsg->createMarkup();
                                 }
                             }
                         });
+
+                        $('#regTabDiv .ui-tabs-nav').sortable({
+                            axis: "x",
+                            items: "> li.hhk-sortable",
+                            stop: function(event, ui) {
+                              $('#regTabDiv').tabs( "refresh" );
+
+                              var order = $('#regTabDiv .ui-tabs-nav').sortable('toArray', {'attribute': 'data-code'});
+                              
+							  data = {
+									  'cmd':'reorderfm',
+									  'formDef':$(document).find('#regTabDiv').data('formdef'),
+									  'order':order
+									  };
+							  
+                              $.ajax({
+                           		url: 'ResourceBuilder.php',
+                            	type: "POST",
+                            	data: JSON.stringify(data),
+                            	processData: false,
+                            	contentType: "application/json; charset=UTF-8",
+                            	dataType: 'json',
+                            	success: function(data) {
+                                	if(data && data.status == "error"){
+                                		flagAlertMessage("Unable to set form order: " + data.message, true);
+                                	}
+                            	}
+                              });
+                            }
+                          });
 
                         $('#divUploadForm button').button();
                         $('#divUploadForm input[type=submit]').button();
