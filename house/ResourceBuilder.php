@@ -1083,7 +1083,7 @@ if (isset($_POST['ldfm'])) {
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>
 Upload new file: <input name="formfile" type="file" required />
 <input type="submit" name="docUpload" value="Save Form" />
-</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docId" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Edit Form</button></div></div>', array(
+</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Edit Form</button></div></div>', array(
             'id' => $r['Code']
         ));
     }
@@ -1154,15 +1154,15 @@ if (isset($_POST['docUpload'])) {
     }
 }
 
-if (isset($_POST['delfm']) && isset($_POST['docId']) && isset($_POST['formDef'])) {
+if (isset($_POST['delfm']) && isset($_POST['docCode']) && isset($_POST['formDef'])) {
     
-    $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
     $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_STRING);
     
     $tabIndex = 8;
     
-    $formdelstmt = $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docId'");
-    $docdelstmt = $dbh->exec("UPDATE `document` SET `status` = 'd' WHERE `idDocument` = '$docId'");
+    $docdelstmt = $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
+    $formdelstmt = $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
     
 }
 
