@@ -745,7 +745,7 @@ try {
                            <td><?php echo $statusSelector; ?></td>
                         </tr>
                     </table>
-                    <table style="float: left;">
+                    <?php if (count($gwList) > 1) { ?><table style="float: left;">
                         <tr>
                             <th colspan="2">Location</th>
                         </tr>
@@ -753,7 +753,7 @@ try {
                            <td><?php echo $gwSelector; ?></td>
                         </tr>
                     </table>
-                    <?php echo $columSelector; ?>
+                    <?php } echo $columSelector; ?>
                    <table style="width:100%; clear:both;">
                         <tr>
                             <td style="width:50%;"></td>

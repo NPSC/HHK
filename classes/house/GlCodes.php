@@ -26,6 +26,8 @@ class GlCodes {
 		
 		$this->glParm = $glParm;
 		
+		$this->errors = '';
+		
 		$this->loadDbRecords($dbh);
 		
 	}
@@ -33,7 +35,7 @@ class GlCodes {
 	public function mapRecords() {
 		
 		if (count($this->records) < 1) {
-			throw new Hk_Exception_Payment('No Records');
+			$this->errors .= 'No Records to Map. ';
 		}
 		
 		foreach ($this->records as $r) {
@@ -45,7 +47,7 @@ class GlCodes {
 			
 			// Just one payment
 			if (count($r['p']) !== 1) {
-				$this->errors[] = "Too many Payments for invoice: " . $r['i']['iNumber'];
+				$this->errors .= "Too many Payments for invoice: " . $r['i']['iNumber'];
 				continue;
 			}
 			
@@ -57,6 +59,8 @@ class GlCodes {
 			$this->makePaymentLine($r);
 			
 		}
+		
+		return $this;
 	}
 	
 	protected function makePaymentLine($r) {
@@ -148,7 +152,7 @@ class GlCodes {
 
     			// new invoice
     			$invoice = array(
-    					'iNum'=>$p['iNumber'],
+    					'iNumber'=>$p['iNumber'],
     					'iAmount'=>$p['iAmount'],
     					'iStatus'=>$p['iStatus'],
     					'Delegated_Id'=>$p['Delegated_Id'],
@@ -227,21 +231,32 @@ class GlCodes {
 	}
 	
 
-	public function transferRecords(\PDO $dbh) {
+	public function transferRecords() {
 		
-		$creds = new GlParameters($dbh, 'Gl_Codes');
+		$creds = $this->glParm;
+		$data = '';
 		
-		$data = implode(',', $this->lines);
+		if (count($this->lines) == 0) {
+			$this->errors .= "No records to Transfer. ";
+			return FALSE;
+		}
+		
+		foreach ($this->lines as $l) {
+			$data .= implode(',', $l) . "/n";
+		}
 		
 		try
 		{
-			$sftp = new SFTPConnection($creds['Host'][1], $creds['Port'][1]);
-			$sftp->login($creds['Username'][1], decryptMessage($creds['Password'][1]));
-			$sftp->uploadFile($data, $creds['RemoteFilePath'][1] . 'ggh' . $this->fileId);
+			$sftp = new SFTPConnection($creds->getHost(), $creds->getPort());
+			$sftp->login($creds->getUsername(), $creds->getClearPassword());
+			$sftp->uploadFile($data, $creds->getRemoteFilePath() . 'ggh' . $this->fileId);
+			
+			return TRUE;
 		}
 		catch (Exception $e)
 		{
-			echo $e->getMessage() . "\n";
+			$this->errors .= $e->getMessage() . "\n";
+			return FALSE;
 		}
 		
 	}
@@ -316,10 +331,26 @@ class GlParameters {
 			}
 		}
 		
+		foreach ($post as $k => $v) {
+			
+			if (stristr($k, 'bagl')) {
+				
+				$parts = explode('_', $k);
+				
+				if (isset($parts[1]) && $parts[1] > 0) {
+					
+					$id = intval($parts[1]);
+					$gl = filter_var($v, FILTER_SANITIZE_STRING);
+								
+					$dbh->exec("Update name_demog set Gl_Code = '$gl' where idName = $id");
+				}
+			}
+		}
+
 		$this->loadParameters($dbh);
 	}
 	
-	public function getChooserMarkup($prefix) {
+	public function getChooserMarkup(\PDO $dbh, $prefix) {
 		
 		// GL Parms chooser markup
 		$glTbl = new HTMLTable();
@@ -331,11 +362,55 @@ class GlParameters {
 					. HTMLTable::makeTd(HTMLInput::generateMarkup($g[1], array('name'=>$prefix.$g[0])))
 					);
 		}
-		
+
 		$glTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Value'));
+		$glTbl->generateMarkup(array('style'=>'float:left; margin-right:1em;'));
+		
+		$tbl = new HTMLTable();
+		$tbl->addBodyTr(
+				HTMLTable::makeTd($glTbl->generateMarkup(), array('style'=>'vertical-align:top;'))
+				.HTMLTable::makeTd($this->getBaMarkup($dbh), array('style'=>'vertical-align:top;'))
+		);
 		
 		// Add save button
-		$glTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Save Parameters', array('name'=>'btnSaveGlParms', 'type'=>'submit')), array('colspan'=>'2', 'style'=>'text-align:right;')));
+		$tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Save', array('name'=>'btnSaveGlParms', 'type'=>'submit')), array('colspan'=>'2', 'style'=>'text-align:right;')));
+		
+		return $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
+		
+	}
+
+	protected function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
+		
+		$stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company, nd.Gl_Code " .
+				" FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
+				" JOIN name_demog nd on n.idName = nd.idName  ".
+				" where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First");
+
+		// Billing agent markup
+		$glTbl = new HTMLTable();
+		
+		while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+			$entry = '';
+			
+			if ($r['Name_First'] != '' || $r['Name_Last'] != '') {
+				$entry = trim($r['Name_First'] . ' ' . $r['Name_Last']);
+			}
+			
+			if ($entry != '' && $r['Company'] != '') {
+				$entry .= '; ' . $r['Company'];
+			}
+			
+			if ($entry == '' && $r['Company'] != '') {
+				$entry = $r['Company'];
+			}
+			
+			$glTbl->addBodyTr(
+					HTMLTable::makeTh($entry, array('class'=>'tdlabel'))
+					. HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code'], array('name'=>$prefix.'_'.$r['idName'], 'size'=>'25')))
+			);
+		}
+		
+		$glTbl->addHeaderTr(HTMLTable::makeTh('Billing Agent') . HTMLTable::makeTh('GL Code'));
 		
 		return $glTbl->generateMarkup();
 		
@@ -365,8 +440,12 @@ class GlParameters {
 	public function getPassword() {
 		return $this->password;
 	}
+	
+	public function getClearPassword() {
+		return decryptMessage($this->password);
+	}
 
-	/**
+/**
 	 * @return mixed
 	 */
 	public function getRemoteFilePath() {
@@ -512,10 +591,10 @@ class GlTemplateRecord {
 
 		$fa[self::CURRENCY_CODE] = 'USD';
 		$fa[self::ACTUAL_FLAG] = 'A';
-		$fa[self::PAYOR_ID] = '0';
-		$fa[self::INTERCOMPANY] = '0';
-		$fa[self::FUTURE_1] = '0';
-		$fa[self::FUTURE_2] = '0';
+		$fa[self::PAYOR_ID] = '00';
+		$fa[self::INTERCOMPANY] = '000';
+		$fa[self::FUTURE_1] = '0000';
+		$fa[self::FUTURE_2] = '000000';
 		$fa[self::BATCH_ID] = 'HHK_Oracle_Category_Code_' . $fileId;
 		$fa[self::BATCH_NAME] = 'HHKJournal' . $fileId;
 		$fa[self::FILE_ID] = $fileId;
@@ -531,7 +610,9 @@ class GlTemplateRecord {
 		$codes = explode('-', $v);
 
 		if (count($codes) != 3) {
-			throw new Hk_Exception_Payment('Bad GL Code: ' . $v);
+			$codes[0]= '0';
+			$codes[1]= '0';
+			$codes[2]= '0';
 		}
 		
 		$this->fieldArray[self::COMPANY_CODE] = $codes[0];

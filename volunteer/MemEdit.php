@@ -419,7 +419,7 @@ function getVolGroupList($rows, $volGroup, $page = "MemEdit.php") {
                 </div>
                 <div id="searchDiv"  style="display:<?php echo $showMemSearch; ?>; margin: 15px;">
                     <input type="hidden" id="selVolGroup" name="selVolGroup" value="<?php echo $volGroupCode; ?>" />
-                    <p>Member Search:<input type="text" class="ui-widget allSearch" id="txtsearch" name="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                    <p>Member Search:<input type="search" class="ui-widget allSearch" id="txtsearch" name="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
                     </p>
                 </div>
                 </div>
