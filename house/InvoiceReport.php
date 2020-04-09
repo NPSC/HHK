@@ -839,8 +839,11 @@ if ($useGlReport) {
 					
 					foreach ($r['p'] as $p) {
 						$mkupRow = '<td>p</td>';
-						foreach ($p as $col) {
+						foreach ($p as $k => $col) {
 							
+							if ($k == 'pTimestamp') {
+								$col = date('Y/m/d', strtotime($col));
+							}
 							$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
 							
 						}
@@ -852,7 +855,11 @@ if ($useGlReport) {
 				if (isset($r['l'])) {
 					foreach ($r['l'] as $h) {
 						$mkupRow = '<td> </td><td>l</td>';
-						foreach ($h as $col) {
+						foreach ($h as $k => $col) {
+							
+							if ($k == 'il_Amount') {
+								$col = number_format($col, 2);
+							}
 							
 							$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
 							
@@ -866,7 +873,7 @@ if ($useGlReport) {
 			$glInvoices = $tbl->generateMarkup();
 			
 			// Comma delemeted file.
-			$glCodes->mapRecords();
+			$glCodes->mapRecords(TRUE);
 			
 			$tbl = new HTMLTable();
 			
