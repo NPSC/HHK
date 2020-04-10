@@ -28,10 +28,10 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('InsistCkinDemog', 'false', 'b', 'h', 'Insist that user fill in the demographics on the check in page (see ShowDemographics)');
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'c', 'Comfirmation', 'Resv_Conf'),
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'a', 'Active', 'h', '1'),
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'r', 'Resolved', 'h', '7'),
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'd', 'Deleted', 'h', '10'),
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'c', 'Comfirmation', 'Resv_Conf');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'a', 'Active', 'h', '1');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'r', 'Resolved', 'h', '7');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'd', 'Deleted', 'h', '10');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'h', 'On Hold', 'h', '4');
 
 ALTER TABLE `note`
@@ -66,12 +66,12 @@ ALTER TABLE `name_demog`
 ALTER TABLE `name_demog`
  	ADD COLUMN `Gl_Code` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Special_Needs`;
 
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Host', 'localhost');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Host', '');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Username', '');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Password', '');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Port', '22');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'JournalCategory', 'hhk');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'JournalCategory', '');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'RemoteFilePath', '');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'StartDay', '01');
 
- 	
+ 

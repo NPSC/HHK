@@ -41,7 +41,6 @@ require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
 
 
-
 try {
     $wInit = new webInit();
 } catch (Exception $exw) {
@@ -248,8 +247,8 @@ $showDeleted = FALSE;
 $useVisitDates = FALSE;
 $cFields = array();
 
-$useGlReport = TRUE;  //FALSE;
-if (stristr($uS->siteName, 'gorecki') !== FALSE) {
+$useGlReport = FALSE;
+if (stristr($uS->siteName, 'gorecki') !== FALSE || strtolower($uS->mode) != 'live') {
 	$useGlReport = TRUE;
 }
 
@@ -264,6 +263,7 @@ if ($uS->fy_diff_Months == 0) {
 } else {
     $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
 }
+
 // Hosted payment return
 try {
 
@@ -769,9 +769,15 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 // Gl REport
 $glChooser = '';
 $glInvoices = '';
+$glMonthSelr = '';
+$glYearSelr = '';
+$glMonth = 0;
+$glyear = 0;
+
 if ($useGlReport) {
 	
 	require (HOUSE.'GlCodes.php');
+	require (CLASSES.'SFTPConnection.php');
 	
 	$glParm = new GlParameters($dbh, 'Gl_Code');
 	$glPrefix = 'gl_';
@@ -781,69 +787,112 @@ if ($useGlReport) {
 		$glParm->saveParameters($dbh, $_POST, $glPrefix);
 		$tabReturn = 2;
 	}
+
+	$m = date('m');
+	if ($m > 1) {
+		$m--;
+		$glMonth = $m;
+	} else {
+		$m = 12;
+		$glyear--;
+	}
 	
-	// GL Parms chooser markup
-	$glChooser = $glParm->getChooserMarkup($glPrefix);
+	$glMonth = $m;
+	
 	
 	// Output report
-	if (isset($_POST['btnGlGo'])) {
+	if (isset($_POST['btnGlGo']) || isset($_POST['btnGlTx'])) {
 		
-	
 		$tabReturn = 2;
-		$glCodes = new GlCodes($dbh, 3, 2020, $glParm);
-				
-		$tbl = new HTMLTable();
 		
-		foreach ($glCodes->getInvoices() as $r) {
-			$mkupRow = '';
+		if (isset($_POST['selGlMonth'])) {
+			$glMonth = filter_var($_POST['selGlMonth'], FILTER_SANITIZE_NUMBER_INT);
+		}
+		
+		if (isset($_POST['selGlYear'])) {
+			$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
+		}
+		
+		$glCodes = new GlCodes($dbh, $glMonth, $glyear, $glParm);
+
+		if (isset($_POST['btnGlTx'])) {
 			
-			foreach ($r['i'] as $col) {
-				
-				$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
-			}
-			$tbl->addBodyTr($mkupRow);
+			$glCodes->mapRecords()
+					->transferRecords();
 			
-			if (isset($r['p'])) {
+			$glInvoices = HTMLContainer::generateMarkup('div',$glCodes->getErrors(), array('style'=>'clear:both;color:red;font-size:large;'));
+			
+		} else {
+			
+			$tbl = new HTMLTable();
+			
+			foreach ($glCodes->getInvoices() as $r) {
+				$mkupRow = '';
 				
-				foreach ($r['p'] as $p) {
-					$mkupRow = '<td>p</td>';
-					foreach ($p as $col) {
-						
-						$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+				foreach ($r['i'] as $col) {
+					
+					$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+				}
+				$tbl->addBodyTr($mkupRow);
+				
+				if (isset($r['p'])) {
+					
+					foreach ($r['p'] as $p) {
+						$mkupRow = '<td>p</td>';
+						foreach ($p as $k => $col) {
+							
+							if ($k == 'pTimestamp') {
+								$col = date('Y/m/d', strtotime($col));
+							}
+							$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+							
+						}
+						$tbl->addBodyTr($mkupRow);
 						
 					}
-					$tbl->addBodyTr($mkupRow);
-					
+				}
+				
+				if (isset($r['l'])) {
+					foreach ($r['l'] as $h) {
+						$mkupRow = '<td> </td><td>l</td>';
+						foreach ($h as $k => $col) {
+							
+							if ($k == 'il_Amount') {
+								$col = number_format($col, 2);
+							}
+							
+							$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+							
+						}
+						$tbl->addBodyTr($mkupRow);
+						
+					}
 				}
 			}
 			
-			if (isset($r['l'])) {
-				foreach ($r['l'] as $h) {
-					$mkupRow = '<td> </td><td>l</td>';
-					foreach ($h as $col) {
-						
-						$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
-						
-					}
-					$tbl->addBodyTr($mkupRow);
-					
-				}
-			}
-		}
-		
-		$glInvoices = $tbl->generateMarkup();
-		
-		$glCodes->mapRecords();
-		
-		$tbl = new HTMLTable();
-		
-		foreach ($glCodes->getLines() as $l) {
+			$glInvoices = $tbl->generateMarkup();
 			
-			$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
+			// Comma delemeted file.
+			$glCodes->mapRecords(TRUE);
+			
+			$tbl = new HTMLTable();
+			
+			foreach ($glCodes->getLines() as $l) {
+				
+				$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
+			}
+			
+			$glInvoices .= "<p style='margin-top:20px;'>File</p>" .$tbl->generateMarkup();
 		}
-		
-		$glInvoices .= $tbl->generateMarkup();
 	}
+	
+	// GL Parms chooser markup
+	$glChooser = $glParm->getChooserMarkup($dbh, $glPrefix);
+	
+	//Month and Year chooser
+	$glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
+	$glYearSelr = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2019', 0, FALSE), array('name' => 'selGlYear', 'size'=>'5'));
+	
 }
 
 // Setups for the page.
@@ -938,7 +987,7 @@ $(document).ready(function() {
     var tabReturn = '<?php echo $tabReturn; ?>';
     challVar = $('#challVar').val();
 
-    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo').button();
+    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx').button();
     $('.ckdate').datepicker({
         yearRange: '-05:+01',
         changeMonth: true,
@@ -1246,7 +1295,15 @@ $(document).ready(function() {
             <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                 <form name="glform" method="post" action="InvoiceReport.php">
                 	<?php echo $glChooser;?>
-                    <input type="submit" id="btnGlGo" name="btnGlGo" value="Get Invoices"/>
+                	<table style="float:left;">
+                	<tr><th>Month</th><th>Year</th>
+                	<tr>
+                	<td><?php echo $glMonthSelr; ?></td>
+                    <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
+                	</tr><tr>
+                    <td colspan=2 style="text-align: right;"><input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/><input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer"/></td>
+                    </tr>
+                    </table>
                 </form>
                  <div id="rptGl" class="hhk-visitdialog" style="font-size:0.9em;">
                      <?php echo $glInvoices; ?>

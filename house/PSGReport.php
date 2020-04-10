@@ -1309,9 +1309,8 @@ if ($uS->UseIncidentReports) {
         });
         $('#selCalendar').change();
 
-        $('.hhk-IncdtRpt').hide();
-        
         $('input[name="rbReport"]').change(function () {
+        	$('.hhk-IncdtRpt').hide();
             if ($('#rbpsg').prop('checked')) {
                 $('.psgsel').hide();
                 $('.filters').show();
