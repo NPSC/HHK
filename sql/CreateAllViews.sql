@@ -1886,12 +1886,12 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
 		SELECT 
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
+        n.`flag`,
         n.User_Name,
         n.Title,
         n.Note_Text,
         v.idVisit as idVisit,
-        n.`Timestamp`,
-        n.`flag`
+        n.`Timestamp`
     FROM
         note n
             JOIN
