@@ -153,7 +153,7 @@
 		var flagContainer = $("<span />");
 		var flagLabel = $("<label />").prop("for", "flag-" + row.NoteId).text("Flag");
 		
-		if(flagged){
+		if(flagged == "1"){
 			var flagEl = $('<input type="checkbox" name="flag" checked="true" id="flag-' + row.NoteId + '" />').addClass("flag");
 		}else{
 			var flagEl = $('<input type="checkbox" name="flag" id="flag-' + row.NoteId + '" />').addClass("flag");
