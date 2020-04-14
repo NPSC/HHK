@@ -26,7 +26,7 @@ define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
 
 define('JQ_UI_JS', 'js/jquery-ui.min.js');
-define('JQ_JS', 'js/jquery-3.1.1.min.js');
+define('JQ_JS', 'js/jquery-3.4.1.js');
 define('MD5_JS', "js/md5-min.js");
 
 date_default_timezone_set('America/Chicago');

@@ -126,7 +126,7 @@ CREATE TABLE if not exists `card_id` (
 CREATE TABLE if not exists `cc_hosted_gateway` (
   `idcc_gateway` int(11) NOT NULL AUTO_INCREMENT,
   `Gateway_Name` VARCHAR(45) NOT NULL DEFAULT '',
-  `cc_name` varchar(45) NOT NULL,
+  `cc_name` varchar(45) NOT NULL DEFAULT '',
   `Merchant_Id` varchar(45) NOT NULL DEFAULT '',
   `Password` varchar(245) NOT NULL DEFAULT '',
   `Credit_Url` varchar(145) NOT NULL DEFAULT '',
@@ -2256,6 +2256,7 @@ CREATE TABLE if not exists `w_users` (
   `User_Name` varchar(100) NOT NULL DEFAULT '',
   `Enc_PW` varchar(100) NOT NULL DEFAULT '',
   `PW_Change_Date` DATETIME DEFAULT NULL,
+  `Chg_PW` bit(1) NOT NULL DEFAULT b'0',
   `PW_Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Certificate` varchar(145) NOT NULL DEFAULT '',
