@@ -588,7 +588,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('TrackAuto','false','b','h','','Track vehicles',''),
 ('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone'),
 ('userInactiveDays','90','i','pr','','Number of days of inactivity before user becomes disabled',''),
-('UserWelcomeText', 'Welcome to HHK, there are a few things we need to do to get you set up for the first time.', 's', 'pr', '', 'Welcome text shown to users on first login', ''),
+('UserWelcomeText', 'Welcome to HHK, there are a few things we need to do to get you set up for the first time.', 't', 'pr', '', 'Welcome text shown to users on first login', ''),
 ('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', ''),
 ('UseHouseWaive', 'true', 'b', 'h','', 'Show the house waive checkbox on checkout.', ''),
 ('UseIncidentReports', 'false', 'b', 'h', '', 'Use the Incident Reports feature', ''),
