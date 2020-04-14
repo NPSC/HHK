@@ -22,6 +22,7 @@ abstract class PaymentGateway {
     protected $useCVV;
     protected $usePOS;
     protected $checkManualEntryCheckbox = FALSE;
+
     
     public function __construct(\PDO $dbh, $gwType = '') {
 
@@ -89,6 +90,10 @@ abstract class PaymentGateway {
         return $this->voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
     }
 
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
+    	return array();
+    }
+    
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
         throw new Hk_Exception_Payment('Webhook not implemeneted');
     }
@@ -214,6 +219,10 @@ abstract class PaymentGateway {
         return FALSE;
     }
     
+    public function hasCofService() {
+    	return TRUE;
+    }
+    
     public function setCheckManualEntryCheckbox($v) {
     	
     	if ($v) {
@@ -222,7 +231,6 @@ abstract class PaymentGateway {
     		$this->checkManualEntryCheckbox = FALSE;
     	}
     }
-    
     
     protected function getInfoFromCardId(\PDO $dbh, $cardId) {
 

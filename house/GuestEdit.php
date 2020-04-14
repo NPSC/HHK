@@ -516,7 +516,7 @@ if ($psg->getIdPsg() > 0) {
     $psgTabMarkup = $psg->createEditMarkup($dbh, $uS->guestLookups[GL_TableNames::PatientRel], $labels, 'GuestEdit.php', $id, FALSE);
 
     $ccMarkup = '';
-    if ($uS->PaymentGateway != '') {
+//    if ($uS->PaymentGateway != '') {
 
         $ccMarkup = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
@@ -524,7 +524,7 @@ if ($psg->getIdPsg() > 0) {
                 . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-indx'=>'g', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
             ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel ignrSave')));
 
-    }
+//    }
 
     $regTabMarkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
             HTMLContainer::generateMarkup('legend', 'Registration', array('style'=>'font-weight:bold;'))
@@ -856,7 +856,7 @@ $uS->guestId = $id;
                     <ul>
                         <li><a href="#vVisits">Visits</a></li>
                         <li id="lipsg"><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
-                        <li><a href="#vregister"><?php echo ($uS->PaymentGateway == '' ? 'Registration' : 'Registration/Credit') ?></a></li>
+                        <li><a href="#vregister">Registration/Credit</a></li>
                         <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>
                         <?php if ($uS->IncomeRated && $showCharges) {  ?>
                         <li id="fin"><a href="#vfin">Financial Assistance...</a></li>
