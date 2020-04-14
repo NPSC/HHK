@@ -55,9 +55,12 @@ Update `gen_lookups` set `Substitute` = '2' where `Table_Name` = 'Pay_Type' and 
 DELETE FROM `sys_config` WHERE `Key`='PmtPageLogoUrl';
 DELETE FROM `sys_config` WHERE `Key`='CardSwipe';
 
+-- Password changes
+
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('Sys_Config_Category', 'pr', 'Password Rules','','',0);
 
 INSERT INTO `sys_config` VALUES
+('AllowPasswordRecovery', 'false','b','pr','Allow users to recover their own passwords (enables security questions)',''),
 ('passResetDays','180','i','pr','','Number of days between automatic password resets',''),
 ('PriorPasswords','5','i','pr','','Number of prior passwords user cannot use',''),
 ('userInactiveDays','90','i','pr','','Number of days of inactivity before user becomes disabled',''),

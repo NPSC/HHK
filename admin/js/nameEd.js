@@ -179,7 +179,8 @@ $(document).ready(function () {
                         pw1 = $('#txtNewPw1'),
                         pw2 = $('#txtNewPw2'),
                         oldpwMD5, 
-                        newpwMD5;
+                        newpwMD5,
+                		resetNext = $('#resetNext').prop('checked');
                 
                 oldpw.removeClass("ui-state-error");
                 pw1.removeClass("ui-state-error").css('background-color', 'white');
@@ -218,7 +219,8 @@ $(document).ready(function () {
                         cmd: 'adchgpw',
                         adpw: oldpwMD5,
                         uid: memData.id,
-                        newer: newpwMD5
+                        newer: newpwMD5,
+                        resetNext: resetNext
                     },
                     function (data) {
                         if (data) {
@@ -335,6 +337,7 @@ $(document).ready(function () {
                 parms['status'] = $('#selwStatus').val();
                 parms['admin'] = userData.userName;
                 parms['vaddr'] = $('#selwVerify').val();
+                parms['resetNext'] = $('#resetNew').prop('checked');
 
                 //$('div.ui-dialog-buttonset').css("display", "none");
                 $.post("ws_gen.php", {cmd: 'save', parms : parms}, function (rdata) {

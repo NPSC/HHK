@@ -242,6 +242,7 @@ try {
             $adPw = '';
             $newPw = '';
             $uid = 0;
+            $resetNext = false;
 
             if (isset($_POST["adpw"])) {
                 $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_STRING);
@@ -253,7 +254,12 @@ try {
             if (isset($_POST['uid'])) {
                 $uid = intval(filter_var($_POST['uid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
-            $events = adminChangePW($dbh, $adPw, $newPw, $uid);
+            
+            if(isset($_POST['resetNext'])){
+                $resetNext = intval(filter_var($_POST['resetNext'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            
+            $events = adminChangePW($dbh, $adPw, $newPw, $uid, $resetNext);
 
             break;
 
@@ -302,7 +308,7 @@ function searchZip(PDO $dbh, $zip) {
     return $events;
 }
 
-function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId) {
+function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId, $resetNext) {
 
     $event = array();
 
@@ -310,7 +316,7 @@ function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId) {
 
         $u = new UserClass();
 
-        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw) === TRUE) {
+        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $resetNext) === TRUE) {
             $event = array('success' => 'Password updated.');
         } else {
             $event = array('error' => $u->logMessage .  '.  Password is unchanged.');

@@ -158,6 +158,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('House_Discount', 'hd1', 'Service Issue','10', 'ca',0),
 ('House_Discount', 'hd2', 'Facilities Issue','15', 'ca',0),
 
+('Incident_Status', 'a', 'Active', '', 'h', 1),
+('Incident_Status', 'r', 'Resolved', '', 'h', 7),
+('Incident_Status', 'd', 'Deleted', '', 'h', 10),
+('Incident_Status', 'h', 'On Hold', '', 'h', 4),
+
 ('Income_Bracket', 'ib1', '0 - 25,000', '', 'd',10),
 ('Income_Bracket', 'ib2', '26 - 50,000', '', 'd',20),
 ('Income_Bracket', 'ib3', '51 - 75,000', '', 'd',30),
@@ -476,6 +481,7 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) V
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`, `GenLookup`) VALUES
 ('Admin_Address','','ea','v','','Volunteer administrator email address.',''),
 ('Auto_Email_Address','','ea','h','','Notified for each batch of automatic emails',''),
+('AllowPasswordRecovery', 'false','b','pr','','Allow users to recover their own passwords (enables security questions)',''),
 ('BatchSettlementHour','04:00','s','f','','Batch settlement time of day for auto-settlements',''),
 ('BccAddress','','ea','g','','Any email addresses listed here (comma delimited) will get a BCC of any receipts mailed to valid guest email accounts.',''),
 ('CalDateIncrement','1','s','h','','Number of weeks to increment Calendar view, auto = calViewWeeks',''),

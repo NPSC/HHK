@@ -79,6 +79,7 @@ class WebUser {
         // Password - add a row
         if (count($rws) == 0 && $maintFlag) {
             $tbl->addBodyTr(HTMLTable::makeTd('Password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtwUserPW', 'type'=>'password', 'class'=>'ignrSave'))));
+            $tbl->addBodyTr(HTMLTable::makeTd('Require user to reset password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'checked'=>'checked', 'class'=>'ignrSave'))));
         }
 
          $tbl->addBodyTr(
@@ -221,6 +222,11 @@ class WebUser {
         if (isset($parms["wupw"])) {
             $wUserPw = filter_var($parms["wupw"], FILTER_SANITIZE_STRING);
         }
+        
+        $resetNext = '1';
+        if (isset($parms["resetNext"])) {
+            $resetNext = intval(filter_var($parms["resetNext"], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
 
         if ($role == '') {
             $role = WebRole::WebUser;
@@ -259,7 +265,7 @@ class WebUser {
         } else if ($wUserName != '' && $wUserPw != '' && $id > 0 && $maintFlag) {
 
             // Register the user as a Volunteer (Group_Code = v)(Verify_address = y)
-            $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$wUserPw', 'v');";
+            $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$wUserPw', 'v', $resetNext);";
 
             if ($dbh->exec($query) === false) {
                 $err = $dbh->errorInfo();
