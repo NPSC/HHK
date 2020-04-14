@@ -1861,7 +1861,7 @@ class PriceNdayBlock extends PriceModel {
                 .HTMLTable::makeTd($r['title'], array('style'=>$separator))
                 .HTMLTable::makeTd($startDT->format('M j, Y'), array('style'=>$separator))
                 .HTMLTable::makeTd($startDT->add(new DateInterval('P' . $t['days'] . 'D'))->format('M j, Y'), array('style'=>$separator))
-                .HTMLTable::makeTd($t['rate'], array('style'=>'text-align:right;' . $separator))
+            		.HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
                 .HTMLTable::makeTd($t['dtext'], array('style'=>'text-align:center;' . $separator))
                 .HTMLTable::makeTd(number_format($t['amt'], 2), array('style'=>'text-align:right;' . $separator))
             );

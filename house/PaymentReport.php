@@ -575,7 +575,7 @@ $payTypeSelector = HTMLSelector::generateMarkup(
 
 $gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($gwList, $gwSelections), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($gwList) + 1)));
 
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>$monSize, 'multiple'=>'multiple'));
+$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
@@ -703,9 +703,9 @@ try {
                             <th>Year</th>
                         </tr>
                         <tr>
-                            <td><?php echo $calSelector; ?></td>
+                            <td style="vertical-align: top;"><?php echo $calSelector; ?></td>
                             <td><?php echo $monthSelector; ?></td>
-                            <td><?php echo $yearSelector; ?></td>
+                            <td style="vertical-align: top;"><?php echo $yearSelector; ?></td>
                         </tr>
                         <tr>
                             <td colspan="3">
@@ -725,7 +725,7 @@ try {
                             <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
-                            <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>
+                            <?php if (count($aList) > 0) { ?><td style="vertical-align: top;"><?php echo $assocs; ?></td><?php } ?>
                             <td><?php echo $hospitals; ?></td>
                         </tr>
                     </table><?php } ?>

@@ -244,11 +244,11 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
         $rateTxt = $rateTitles[$visit['rateId']];
 
-        if ($visit['adj'] != 1) {
+        if ($visit['adj'] != 0) {
             $parts = explode('$', $rateTxt);
 
             if (count($parts) == 2) {
-                $amt = floatval($parts[1]) * $visit['adj'];
+                $amt = floatval($parts[1]) * (1 + $visit['adj']/100);
                 $rateTxt = $parts[0] . '$' . number_format($amt, 2);
             }
         }

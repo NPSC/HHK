@@ -873,7 +873,7 @@ if ($useGlReport) {
 			$glInvoices = $tbl->generateMarkup();
 			
 			// Comma delemeted file.
-			$glCodes->mapRecords(TRUE);
+			$glCodes->mapRecords(FALSE);
 			
 			$tbl = new HTMLTable();
 			
@@ -881,8 +881,16 @@ if ($useGlReport) {
 				
 				$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
 			}
-			
+
 			$glInvoices .= "<p style='margin-top:20px;'>File</p>" .$tbl->generateMarkup();
+			
+			if (count($glCodes->getErrors()) > 0) {
+				$etbl = new HTMLTable();
+				foreach ($glCodes->getErrors() as $e) {
+					$etbl->addBodyTr(HTMLTable::makeTd($e));
+				}
+				$glInvoices = $etbl->generateMarkup() . $glInvoices;
+			}
 		}
 	}
 	
@@ -921,7 +929,7 @@ if (count($bagnts) > 0) {
     $baSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($bagnts, $baSelections), array('name' => 'selbillagent[]', 'size' => '4', 'multiple' => 'multiple'));
 }
 
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>$monSize, 'multiple'=>'multiple'));
+$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
@@ -1221,9 +1229,9 @@ $(document).ready(function() {
                             <th>Year</th>
                         </tr>
                         <tr>
-                            <td><?php echo $calSelector; ?></td>
+                            <td style="vertical-align: top;"><?php echo $calSelector; ?></td>
                             <td><?php echo $monthSelector; ?></td>
-                            <td><?php echo $yearSelector; ?></td>
+                            <td style="vertical-align: top;"><?php echo $yearSelector; ?></td>
                         </tr>
                         <tr>
                             <td colspan="3">
@@ -1245,7 +1253,7 @@ $(document).ready(function() {
                             <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
-                            <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>
+                            <?php if (count($aList) > 0) { ?><td style="vertical-align: top;"><?php echo $assocs; ?></td><?php } ?>
                             <td><?php echo $hospitals; ?></td>
                         </tr>
                     </table>
