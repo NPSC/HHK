@@ -14,6 +14,7 @@ require(SEC . 'UserClass.php');
 require(SEC . 'ChallengeGenerator.php');
 require(SEC . 'Login.php');
 require(CLASSES . 'fbUserClass.php');
+require(CLASSES . 'SiteConfig.php');
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
@@ -55,14 +56,14 @@ function processGuest(\PDO $dbh, $username, fbUserClass $fbc) {
         if (isset($events["success"])) {
             $mail = prepareEmail();
 
-            $mail->From = $uS->ReturnAddress;
-            $mail->addReplyTo($uS->ReturnAddress);
-            $mail->FromName = $uS->siteName;
+            $mail->From = SysConfig::getKeyValue($dbh, 'sys_config', 'ReturnAddress');
+            $mail->addReplyTo(SysConfig::getKeyValue($dbh, 'sys_config', 'ReturnAddress'));
+            $mail->FromName = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
             $mail->addAddress($fbc->get_em());     // Add a recipient
-            $mail->addBCC($uS->ReturnAddress);
+            $mail->addBCC(SysConfig::getKeyValue($dbh, 'sys_config', 'ReturnAddress'));
             $mail->isHTML(true);
 
-            $mail->Subject = $uS->RegSubj;
+            $mail->Subject = SysConfig::getKeyValue($dbh, 'sys_config', 'RegSubj');
 
             if ($fbc->get_ph() != "") {
                 $phon ='<tr><th class="tdlabel">Phone</th><td class="tdBox"><span>' . $fbc->get_ph().'</span></td></tr>';
@@ -110,8 +111,8 @@ table
 </style>
 </head>
     <body>
-      <h4>Thank you ' . $fbc->get_fn() . ' ' . $fbc->get_ln() . ' for signing up to the ' . $uS->siteName . ' Volunteer Website</h4>
-       <p>The ' . $uS->siteName . ' will contact you when you are cleared to log in to the Volunteer Website.</p>
+      <h4>Thank you ' . $fbc->get_fn() . ' ' . $fbc->get_ln() . ' for signing up to the ' . SysConfig::getKeyValue($dbh, 'sys_config', 'siteName') . ' Volunteer Website</h4>
+       <p>The ' . SysConfig::getKeyValue($dbh, 'sys_config', 'siteName') . ' will contact you when you are cleared to log in to the Volunteer Website.</p>
        <div>
             <table>
             <caption>Volunteer Information</caption>
@@ -130,7 +131,7 @@ table
 
 
             if($mail->send() === FALSE) {
-                 return array("error" => "Your registration succeeded, but the notification Email failed.  Please contact the " . $uS->siteName . ".");
+            	return array("error" => "Your registration succeeded, but the notification Email failed.  Please contact the " . SysConfig::getKeyValue($dbh, 'sys_config', 'siteName') . ".");
             }
 
         } else {
@@ -146,7 +147,7 @@ table
 try {
 
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
+    $login->initHhkSession(ciCFG_FILE);
 
 } catch (PDOException $pex) {
     exit("<h3>Database Error.  </h3>");
@@ -263,6 +264,15 @@ if (isset($_POST['g-recaptcha-response'])) {
 
 $getDonReplyMessage = $donAlert->createMarkup();
 
+$cspURL = $page->getHostName();
+
+header('X-Frame-Options: SAMEORIGIN');
+header("Content-Security-Policy: default-src $cspURL https://www.google.com/; style-src $cspURL https://www.gstatic.com/ 'unsafe-inline'; script-src $cspURL https://www.google.com/ https://www.gstatic.com/;"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL https://www.google.com/; style-src $cspURL https://www.gstatic.com/ 'unsafe-inline'; script-src $cspURL https://www.google.com/ https://www.gstatic.com/;"); // IE 10+
+
+if (SecurityComponent::isHTTPS()) {
+	header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
+}
 
 ?>
 <!DOCTYPE html>
@@ -278,177 +288,13 @@ $getDonReplyMessage = $donAlert->createMarkup();
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-
-        <style type="text/css">
-            .lblFor {
-                text-align: right;
-            }
-            div.dispNone {
-                display:none;
-            }
-            div.dispBlock {
-                display:block;
-                background-color: #FFFFFF;
-                border: 3px solid #CDC8B2;
-                padding: 25px;
-            }
-            .underNotes {
-                font-size: .85em;
-                font-style: italic;
-                color: #4E4E4E;
-            }
-            input.ui-state-error {
-                background:  repeat scroll 50% 50% #EFCFC2;
-                color: #4C3000;
-            }
-        </style>
-        <script type="text/javascript">
-function checkStrength(pwCtrl) {
-    var strongRegex = new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})");
-    var mediumRegex = new RegExp("^(((?=.*[a-z])(?=.*[A-Z]))|((?=.*[a-z])(?=.*[0-9]))|((?=.*[A-Z])(?=.*[0-9])))(?=.{8,})");
-    var rtn = true;
-    if(strongRegex.test(pwCtrl.val())) {
-        pwCtrl.css('background-color', 'green');
-    } else if(mediumRegex.test(pwCtrl.val())) {
-        pwCtrl.css('background-color', 'orange');
-    } else {
-        pwCtrl.css('background-color', 'red');
-        rtn = false;
-    }
-    return rtn;
-}
-function setAlert(msgText) {
-    msgText = msgText.replace(/^\s+|\s+$/g, "");
-    var spn = document.getElementById('donResultMessage');
-    if (msgText == '') {
-        // hide the control
-        $('#donateResponseContainer').attr("style", "display:none;");
-    }
-    else {
-        // define the error message markup
-        $('#donateResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
-        $('#donateResponseContainer').attr("style", "display:block;");
-        $('#donateResponseIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
-        spn.innerHTML = "<strong>Warning: </strong>" + msgText;
-    }
-}
-function updateTips(t) {
-    setAlert(t);
-}
-function checkLength(o, n, min, max) {
-    if (o.val().length > max || o.val().length < min) {
-        o.addClass("ui-state-error");
-        if (min == max)
-            updateTips("Length of the " + n + " must be " + max + ".");
-        else
-            updateTips("Length of the " + n + " must be between " +
-                    min + " and " + max + ".");
-        return false;
-    } else {
-        return true;
-    }
-}
-function checkRegexp(o, regexp, n) {
-    if (!regexp.test(o.val()) && o.val() != "") {
-        o.addClass("ui-state-error");
-
-        updateTips(n);
-        return false;
-    } else {
-        return true;
-    }
-}
-
-$(document).ready(function() {
-    var rexEmail = /^[A-Z0-9._%+-]+@(?:[A-Z0-9-]+\.)+[A-Z]{2,4}$/i,
-        regPhone = /^(?:(?:[\+]?([\d]{1,3}(?:[ ]+|[\-.])))?[(]?([2-9][\d]{2})[\-\/)]?(?:[ ]+)?)?([2-9][0-9]{2})[\-.\/)]?(?:[ ]+)?([\d]{4})(?:(?:[ ]+|[xX]|(i:ext[\.]?)){1,2}([\d]{1,5}))?$/,
-        $psw = $('#txtPW'),
-        $ps2 = $('#txtPW2'),
-        $phone = $('#txtPhone');
-
-
-    $('#btnCancel, #btnReg').button();
-
-    $("#btnCancel").click(function() {
-        // This is a one-way trip.
-        $('#cancelDiv').removeClass("dispNone").addClass("dispBlock");
-        $('#regFormDiv').removeClass("dispBlock").addClass("dispNone");
-    });
-
-    $psw.change(function() {
-        updateTips("");
-        if (checkStrength($psw)) {
-            if ($ps2.val() !== "" && $ps2.val() !== this.value) {
-                updateTips("Passwords do not match");
-            }
-        } else {
-            updateTips("A password must have at least 8 characters including upper case and lower case letters and numbers.");
-        }
-    });
-
-    $ps2.change(function() {
-        if ($psw.val() !== "" && $psw.val() !== this.value) {
-            updateTips("Passwords do not match");
-        }
-    });
-
-    $phone.change(function() {
-        regPhone.lastIndex = 0;
-        // 0 = matached, 1 = 1st capturing group, 2 = 2nd, etc.
-        var numarry = regPhone.exec(this.value);
-        if (numarry !== null && numarry.length > 3) {
-            this.value = "";
-            // Country code?
-            if (numarry[1] !== null && numarry[1] !== "")
-                this.value = '+' + numarry[1];
-            // The main part
-            this.value = '(' + numarry[2] + ') ' + numarry[3] + '-' + numarry[4].substr(0, 4);
-        }
-    });
-
-    $("#btnReg").click(function() {
-
-        $('.hhk-txtInput').removeClass("ui-state-error");
-        setAlert('');
-        $('#returnError').text('');
-
-        if ($('#g-recaptcha-response').val() == '') {
-            updateTips("Click the box on the reCAPTCHA");
-            return;
-        }
-
-        if (!checkLength($('#txtFirstName'), 'First name', 1, 45))
-            return;
-        if (!checkLength($('#txtLastName'), 'Last name', 1, 45))
-            return;
-        if (!checkLength($('#txtEmail'), 'Email address', 5, 100))
-            return;
-        if (!checkRegexp($('#txtEmail'), rexEmail, 'Incorrect Email'))
-            return;
-        if (!checkLength($('#txtPun'), 'User Name', 6, 45))
-            return;
-        if (!checkLength($psw, 'Password', 8, 45))
-            return;
-
-        if ($psw.val() !== $ps2.val()) {
-            updateTips("Passwords do not match");
-            return;
-        }
-
-        $('#pwHdn').val(hex_md5($psw.val()));
-
-        $('#form1').submit();
-
-    });
-
-    $('input:first').focus();
-
-});
-        </script>
+        <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
+	<script type="text/javascript" src="js/webReg.js"></script>
     </head>
     <body>
         <div id="wrapper">
-            <a href="<?php echo $logoLink; ?>"><div id="logoLT"></div></a>
+            <a href="<?php echo $logoLink; ?>"><span id="logoLT"></span></a>
             <div style="clear:both;"></div>
             <div id="cancelDiv" class="dispNone">
                 <h3>Registration Canceled.  <a href="index.php">Back to Login Page</a></h3>
@@ -500,7 +346,7 @@ $(document).ready(function() {
                     <tbody>
                         <tr>
                             <td>*<input title="Pick a user name with at least 6 alphanumeric characters"  id="txtPun" name='pun' type="text" value="" size='15' class='hhk-txtInput' /></td>
-                            <td>*<input title="Choose a password with at least 7 characters" id='txtPW' type='password' size='15' value="" class='hhk-txtInput' />
+                            <td>*<input title="Choose a password with at least 8 characters" id='txtPW' type='password' size='15' value="" class='hhk-txtInput' />
                                 <input type='hidden' id='pwHdn' name='pw' value=''/></td>
                             <td>*<input title="Enter your new password again" id='txtPW2' type='password' size='15' value="" class='hhk-txtInput' /></td>
                         </tr>

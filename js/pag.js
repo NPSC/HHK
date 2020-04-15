@@ -160,7 +160,7 @@ $(document).ready(function () {
 
                     if (checkStrength(pw1) === false) {
                         pw1.addClass("ui-state-error");
-                        msg.text('Password must have at least 8 characters including at least one uppercase, one lower case letter, one number and one symbol.');
+                        msg.text('Password must have 8 or more characters including uppercase and lowercase letters, numbers and symbols.');
                         pw1.focus();
                         return;
                     }

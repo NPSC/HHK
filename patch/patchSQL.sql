@@ -64,7 +64,9 @@ DELETE FROM `sys_config` WHERE `Key`='CardSwipe';
 ALTER TABLE `name_demog`
  	CHANGE COLUMN `Ethnicity` `Ethnicity` VARCHAR(5) NOT NULL DEFAULT '' ;
 ALTER TABLE `name_demog`
- 	ADD COLUMN `Gl_Code` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Special_Needs`;
+ 	ADD COLUMN `Gl_Code_Debit` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Special_Needs`;
+ALTER TABLE `name_demog`
+ 	ADD COLUMN `Gl_Code_Credit` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Gl_Code_Debit`;
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Host', '');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Username', '');

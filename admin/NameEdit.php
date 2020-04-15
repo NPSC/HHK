@@ -289,11 +289,6 @@ $emailMkup = $emails->createMarkup();
 $prefMkup = Addresses::getPreferredPanel($phones, $emails);
 
 
-//
-// Student
-$student = null;
-
-
 // Relationships
 $relationsMarkup = $name->createRelationsTabs($rel, 'NameEdit.php');
 

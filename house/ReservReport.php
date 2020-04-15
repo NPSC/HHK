@@ -78,7 +78,7 @@ if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
 }
 
-// Reservation statuses 
+// Reservation statuses
 //$statusList = removeOptionGroups($uS->guestLookups['ReservStatus']);
 $statusList = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", TRUE));
 
@@ -225,7 +225,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(g2.`Description`, '') as `Location`,
     r.`Timestamp` as `Created_Date`,
     r.Last_Updated,
-	CASE WHEN r.Status in ('a','uc','w') THEN count(rg.idReservation) ELSE '' END as `numGuests`
+	CASE WHEN r.Status not in ('s','co','im') THEN count(rg.idReservation) ELSE '' END as `numGuests`
 
 from
     reservation r
@@ -258,7 +258,7 @@ from
         LEFT JOIN
     gen_lookups g2 ON g2.Table_Name = 'Location'
         and g2.`Code` = hs.`Location`
-where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration 
+where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration
 ";
 
 

@@ -1300,7 +1300,7 @@ $(document).ready(function() {
                 <input type="button" id="btnInvGo" value="Refresh"/>
                   <div id="rptInvdiv" class="hhk-visitdialog"></div>
             </div>
-            <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
+            <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size:0.9em;">
                 <form name="glform" method="post" action="InvoiceReport.php">
                 	<?php echo $glChooser;?>
                 	<table style="float:left;">

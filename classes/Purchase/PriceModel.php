@@ -1710,7 +1710,6 @@ class PriceNdayBlock extends PriceModel {
 
     public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
 
-        $rp = readGenLookupsPDO($dbh, 'Rate_Block');
 
         $fTbl = new HTMLTable();
         $fTbl->addHeaderTr(
@@ -1808,7 +1807,7 @@ class PriceNdayBlock extends PriceModel {
         $adjRatio = (1 + $rateAdjust/100);
 
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategorys::FlatRateCategory) {
-            $tiers[] = array('rate'=> $rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio, 'days'=>$days, 'amt'=>($days * $rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio), 'dtext'=>$days);
+        	$tiers[] = array('rate'=> number_format($rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio, 2), 'days'=>$days, 'amt'=>($days * $rrateRs->Reduced_Rate_1->getStoredVal() * $adjRatio), 'dtext'=>$days);
             $this->daysAccumulator = 0;
             return  $tiers;
         }
@@ -1832,7 +1831,7 @@ class PriceNdayBlock extends PriceModel {
         }
 
         if ($blocks > 0) {
-            $tiers[] = array('rate'=>number_format($blockRate * $adjRatio,2).'/'.$this->blockTitle, 'days'=>($blocks * $interval), 'amt'=>($blocks * $blockRate) * $adjRatio, 'dtext'=>($blocks * $interval) . ' (' . $blocks . ')');
+            $tiers[] = array('rate'=>number_format($blockRate * $adjRatio,2), 'days'=>($blocks * $interval), 'amt'=>($blocks * $blockRate) * $adjRatio, 'dtext'=>($blocks * $interval) . ' (' . $blocks . ')');
             $this->blocks = $blocks;
         }
 
@@ -1861,7 +1860,7 @@ class PriceNdayBlock extends PriceModel {
                 .HTMLTable::makeTd($r['title'], array('style'=>$separator))
                 .HTMLTable::makeTd($startDT->format('M j, Y'), array('style'=>$separator))
                 .HTMLTable::makeTd($startDT->add(new DateInterval('P' . $t['days'] . 'D'))->format('M j, Y'), array('style'=>$separator))
-            		.HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
+            	.HTMLTable::makeTd($t['rate'], array('style'=>'text-align:right;' . $separator))
                 .HTMLTable::makeTd($t['dtext'], array('style'=>'text-align:center;' . $separator))
                 .HTMLTable::makeTd(number_format($t['amt'], 2), array('style'=>'text-align:right;' . $separator))
             );

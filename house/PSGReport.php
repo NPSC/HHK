@@ -59,10 +59,10 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     
     if ($showAddr && $showFullName) {
         
-        $query = "select s.idName, hs.idPsg, vg.Relationship_Code, v.idReservation as `Resv ID`, "
-            . "vg.`Patient Rel.`, vg.Prefix, vg.First as `Guest First`, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, v.idReservation as `Resv ID`, "
+            . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `Guest First`, vn.Last as `Guest Last`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
-                . " vg.Address, vg.City, vg.County, vg.State, vg.Zip, vg.Country, vg.Phone, vg.Email, "
+                . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Phone, vn.Email, "
                     . "r.title as `Room`,"
                         . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                             . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
@@ -72,8 +72,8 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
                                     
     } else if ($showAddr && !$showFullName) {
         
-        $query = "select s.idName, hs.idPsg, vg.Relationship_Code,
-            vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.Phone, vg.Email, vg.`Address`, vg.City, vg.County, vg.State, vg.Zip, case when vg.Country = '' then 'US' else vg.Country end as Country, vg.ngStatus, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code,
+            vn.Last as `Guest Last`, vn.First as `Guest First`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, `nd`.`No_Return`, "
             . "ifnull(g2.Description,'') as `Status`, "
                 . "r.title as `Room`,"
                     . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
@@ -84,7 +84,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
                             
     } else if (!$showAddr && $showFullName) {
         
-        $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Prefix, vg.First as `Guest First`, vg.Middle, vg.Last as `Guest Last`, vg.Suffix, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Prefix, vn.First as `Guest First`, vn.Middle, vn.Last as `Guest Last`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
             . "ifnull(g2.Description,'') as `Status`, "
                 . "r.title as `Room`,"
                     . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
@@ -95,7 +95,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
                         
     } else {
         
-        $query = "select s.idName, hs.idPsg, vg.Relationship_Code, vg.Last as `Guest Last`, vg.First as `Guest First`, ifnull(vg.BirthDate, '') as `Birth Date`, vg.`Patient Rel.`, vg.ngStatus, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `Guest Last`, vn.First as `Guest First`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
             . "ifnull(g2.Description,'') as `Status`, r.title as `Room`, ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
                 . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
                 . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
@@ -104,31 +104,39 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     }
     
     if ($showNoReturn) {
-        $whClause .= " and vg.ngStatus != '' ";
+        $whClause .= " and `nd`.`No_Return` != '' ";
     }
     
     $query .= " from stays s
-        join
-    vguest_listing vg on vg.Id = s.idName
-        join
+        JOIN
+    vname_list vn on vn.Id = s.idName
+        JOIN
     visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-	join
-    hospital_stay hs ON vg.idPsg = hs.idPsg
-        left join
+		JOIN
+	registration rg on v.idRegistration = rg.idRegistration
+		JOIN
+	name_guest `ng` on s.idName = ng.idName and ng.idPsg = rg.idPsg
+		JOIN
+    hospital_stay hs ON rg.idPsg = hs.idPsg
+		LEFT JOIN
+	name_demog nd on s.idName = nd.idName
+        LEFT JOIN
     name np on hs.idPatient = np.idName
-        left join
+        LEFT JOIN
     name n on hs.idDoctor = n.idName
-        left join
+        LEFT JOIN
     name nr on hs.idReferralAgent = nr.idName
-        left join
+        LEFT JOIN
     gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
-        left join
+        LEFT JOIN
     gen_lookups gl on gl.Table_Name = 'Location' and gl.Code = hs.Location
-        left join
+        LEFT JOIN
     gen_lookups g2 on g2.Code = s.Status and g2.Table_Name = 'Visit_Status'
-        left join
+        LEFT JOIN
+    `gen_lookups` `g3` ON `g3`.`Table_Name` = 'Patient_Rel_Type' AND `g3`.`Code` = `ng`.`Relationship_Code`
+		LEFT JOIN
     room_rate rr on v.idRoom_rate = rr.idRoom_rate
-    	join
+    	JOIN
     room r on s.idRoom = r.idRoom
 where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
     
@@ -156,7 +164,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         }
         
         if (!$showNoReturn) {
-            unset($r['ngStatus']);
+            unset($r['No_Return']);
         }
         
         if ($showRelationship === FALSE) {
@@ -226,7 +234,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
                 $keys = array_keys($r);
                 foreach ($keys as $k) {
                     
-                    if ($k == 'ngStatus') {
+                    if ($k == 'No_Return') {
                         $noReturn = 'No Return';
                         continue;
                     }
@@ -245,7 +253,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         
         if ($local) {
             
-            $r['Id'] = HTMLContainer::generateMarkup('a', $r['idName'], array('href'=>'GuestEdit.php?id=' . $r['idName'] . '&psg=' . $r['idPsg']));
+            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
             
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
                 $r['Birth Date'] = date('n/d/Y', strtotime($r['Birth Date']));
@@ -258,15 +266,15 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
             }
             unset($r['idPsg']);
             
-            if (isset($r['ngStatus'])) {
+            if (isset($r['No_Return'])) {
                 
-                if ($r['ngStatus'] != '' && isset($uS->nameLookups['NoReturnReason'][$r['ngStatus']])) {
-                    $r['No Return'] = $uS->nameLookups['NoReturnReason'][$r['ngStatus']][1];
+                if ($r['No_Return'] != '' && isset($uS->nameLookups['NoReturnReason'][$r['No_Return']])) {
+                    $r['No Return'] = $uS->nameLookups['NoReturnReason'][$r['No_Return']][1];
                 } else {
                     $r['No Return'] = ' ';
                 }
                 
-                unset($r['ngStatus']);
+                unset($r['No_Return']);
             }
             
             $rows[] = $r;
@@ -276,15 +284,15 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
             $n = 0;
             $flds = array();
             
-            if (isset($r['ngStatus'])) {
+            if (isset($r['No_Return'])) {
                 
-                if ($r['ngStatus'] != '' && isset($uS->nameLookups['NoReturnReason'][$r['ngStatus']])) {
-                    $r['No Return'] = $uS->nameLookups['NoReturnReason'][$r['ngStatus']][1];
+                if ($r['No_Return'] != '' && isset($uS->nameLookups['NoReturnReason'][$r['No_Return']])) {
+                    $r['No Return'] = $uS->nameLookups['NoReturnReason'][$r['No_Return']][1];
                 } else {
                     $r['No Return'] = '';
                 }
                 
-                unset($r['ngStatus']);
+                unset($r['No_Return']);
             }
             
             foreach ($r as $key => $col) {
@@ -1008,7 +1016,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $tdState = $stateSelection;
     
     if ($stateSelection != '') {
-        $whCountry .= " and vg.State = '$stateSelection' ";
+        $whCountry .= " and vn.State = '$stateSelection' ";
     } else {
         $tdState = 'All';
     }
@@ -1018,9 +1026,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if ($countrySelection != '') {
         
         if ($countrySelection == 'US') {
-            $whCountry .= " and (vg.Country = '$countrySelection' or vg.Country = '')  ";
+            $whCountry .= " and (vn.Country = '$countrySelection' or vn.Country = '')  ";
         } else {
-            $whCountry .= " and vg.Country = '$countrySelection' ";
+            $whCountry .= " and vn.Country = '$countrySelection' ";
         }
     } else {
         $tdCountry = 'All';
@@ -1120,7 +1128,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 
                 
             case 'p':
-                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and vg.Id = hs.idPatient ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
+                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and s.idName = hs.idPatient ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just '.$patTitle, array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
@@ -1233,7 +1241,7 @@ $coAttr['data-country'] = $countrySelection;
 
 $selCountry = HTMLSelector::generateMarkup('', $coAttr);
 
-// incidents report  
+// incidents report
 $selirStat = '';
 if ($uS->UseIncidentReports) {
 	
@@ -1276,12 +1284,15 @@ if ($uS->UseIncidentReports) {
             $('div#printArea').show();
             $('#divPrintButton').show();
 
-            if (makeTable === 1) {
+            if (makeTable == 1) {
+                try{
                 $('#tblrpt').dataTable({
 	                "displayLength": 50,
 	                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
 	                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+	                "order": [[1, 'asc']]
             	});
+                } catch (error) {}
             }
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
@@ -1346,7 +1357,7 @@ if ($uS->UseIncidentReports) {
                         <tr>
                             <th><label for='rbpsg'><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></label><input type="radio" id='rbpsg' name="rbReport" value="psg" style='margin-left:.5em;' <?php if ($rptSetting == 'psg') {echo 'checked="checked"';} ?>/></th>
                             <?php if ($uS->PatientAsGuest) { ?><th><label for='rbp'>Just <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbp' name="rbReport" value="p" style='margin-left:.5em;' <?php if ($rptSetting == 'p') {echo 'checked="checked"';} ?>/></th><?php } ?>
-                            <th><label for='rbg'>Guests & <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbg' name="rbReport" value="g" style='margin-left:.5em;' <?php if ($rptSetting == 'g') {echo 'checked="checked"';} ?>/></th>
+                            <th><label for='rbg'>Guests &amp; <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s</label><input type="radio" id='rbg' name="rbReport" value="g" style='margin-left:.5em;' <?php if ($rptSetting == 'g') {echo 'checked="checked"';} ?>/></th>
                             <th><label for='nrp'>No-Return Guests</label><input type="radio" id='nrp' name="rbReport" value="nr" style='margin-left:.5em;' <?php if ($rptSetting == 'nr') {echo 'checked="checked"';} ?>/></th>
                             <?php if ($uS->UseIncidentReports) { ?><th><label for='incdt'>Incidents Report</label><input type="radio" id='incdt' name="rbReport" value="in" style='margin-left:.5em;' <?php if ($rptSetting == 'in') {echo 'checked="checked"';} ?>/></th><?php } ?>
                         </tr>
