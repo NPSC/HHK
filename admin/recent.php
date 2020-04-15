@@ -41,6 +41,7 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript">
             function handleResponse(dataTxt, statusTxt, xhrObject) {
 

@@ -52,8 +52,6 @@ require (HOUSE . 'RoomReport.php');
 
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Notes.php');
-require(SEC . 'ChallengeGenerator.php');
-require (SEC . 'UserClass.php');
 
 $wInit = new webInit();
 
@@ -236,15 +234,6 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
 }
 
 $rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), array('id'=>'selRoomGroupScheme'));
-
-
-// instantiate a ChallengeGenerator object
-try {
-    $chlgen = new ChallengeGenerator();
-    $challengeVar = $chlgen->getChallengeVar("challenge");
-} catch (Exception $e) {
-    //
-}
 
 $showCharges = TRUE;
 $addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
@@ -483,19 +472,14 @@ if ($uS->UseWLnotes) {
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
-        <div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
-        	<?php echo UserClass::createUserSettingsMarkup($dbh); ?>
-        </div>
+        
         <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
-        <input  type="hidden" id="isUserNew" value='<?php echo UserClass::isUserNew($dbh, $uS) ?>' />
-        <input  type="hidden" id="isPassExpired" value='<?php echo UserClass::isPassExpired($dbh, $uS) ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />
         <input  type="hidden" id="resourceGroupBy" value='<?php echo $resourceGroupBy; ?>' />
         <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />
-        <input  type="hidden" id="challVar" value='<?php echo $challengeVar; ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />

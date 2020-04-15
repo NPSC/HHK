@@ -238,7 +238,7 @@ function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRp
 
         // create summary table
         $myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
-        // Attach the “My Data” worksheet as the first worksheet in the PHPExcel object
+        // Attach the â€œMy Dataâ€� worksheet as the first worksheet in the PHPExcel object
         $sml->addSheet($myWorkSheet, 1);
         $sml->setActiveSheetIndex(1);
         $sRows = OpenXML::writeHeaderRow($sml, array(0=>'Filter', 1=>'Parameters'));
@@ -365,6 +365,7 @@ function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRp
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript">
             // Init j-query
             $(document).ready(function() {

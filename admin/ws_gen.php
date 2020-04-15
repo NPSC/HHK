@@ -256,7 +256,7 @@ try {
             }
             
             if(isset($_POST['resetNext'])){
-                $resetNext = intval(filter_var($_POST['resetNext'], FILTER_SANITIZE_NUMBER_INT), 10);
+                $resetNext = filter_var($_POST['resetNext'], FILTER_VALIDATE_BOOLEAN);
             }
             
             $events = adminChangePW($dbh, $adPw, $newPw, $uid, $resetNext);

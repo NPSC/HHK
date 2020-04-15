@@ -95,7 +95,6 @@ $pageTitle = $wInit->pageTitle;
 $uS = Session::getInstance();
 creditIncludes($uS->PaymentGateway);
 
-
 $labels = new Config_Lite(LABEL_FILE);
 
 $resultMessage = "";
@@ -752,7 +751,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="../js/uppload.polyfills.js"></script>
-
+		<script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 		<script type="text/javascript" src="js/documentUpload.min.js"></script>
 
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>

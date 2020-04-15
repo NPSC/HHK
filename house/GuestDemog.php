@@ -21,8 +21,6 @@ $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
-
-
 $demos = array();
 
 $whDemos = '';
@@ -207,5 +205,6 @@ $form = HTMLContainer::generateMarkup('form', $tbl->generateMarkup(array(), "Sho
             <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="font-size:.8em;padding:15px;margin-top:15px;">
                 <?php echo $form; ?>
             </div>
+        </div>
     </body>
 </html>

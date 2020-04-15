@@ -266,6 +266,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 
         <script type="text/javascript">
 $(document).ready(function() {

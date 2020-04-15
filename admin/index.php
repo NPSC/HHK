@@ -9,8 +9,6 @@
  */
 require ("AdminIncludes.php");
 
-require (SEC . 'UserClass.php');
-require(SEC . 'ChallengeGenerator.php');
 require(SEC . 'Login.php');
 
 // get session instance

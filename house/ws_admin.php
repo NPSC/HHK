@@ -14,8 +14,6 @@ require ("homeIncludes.php");
 require (DB_TABLES . 'nameRS.php');
 require (CLASSES . 'Relation.php');
 require (CLASSES . 'AuditLog.php');
-require(SEC . 'UserClass.php');
-require(SEC . 'ChallengeGenerator.php');
 require(DB_TABLES . 'WebSecRS.php');
 
 require (MEMBER . 'MemberSearch.php');

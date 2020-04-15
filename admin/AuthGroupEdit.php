@@ -190,6 +190,7 @@ $ip_tbl->addHeaderTr(HTMLTable::makeTh('Name') . HTMLTable::makeTh('IP Address')
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript">
             var table, accordIndex;
             $(document).ready(function () {

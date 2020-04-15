@@ -8,8 +8,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 include ("homeIncludes.php");
-require (SEC . 'UserClass.php');
-require(SEC . 'ChallengeGenerator.php');
 require(SEC . 'Login.php');
 
 // get session instance

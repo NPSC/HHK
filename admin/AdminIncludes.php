@@ -28,3 +28,5 @@ require (SEC . 'SecurityComponent.php');
 require (SEC . 'ScriptAuthClass.php');
 require (CLASSES . 'SysConst.php');
 require (SEC . 'webInit.php');
+require (SEC . 'UserClass.php');
+require(SEC . 'ChallengeGenerator.php');

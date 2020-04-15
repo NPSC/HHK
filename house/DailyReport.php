@@ -50,6 +50,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
         var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
@@ -105,5 +106,6 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
                 <?php echo $dailyLog; ?>
             </div>
         </div>
+                
     </body>
 </html>

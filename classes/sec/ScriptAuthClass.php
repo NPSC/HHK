@@ -259,7 +259,7 @@ class ScriptAuthClass extends SecurityComponent {
         return $this->pageType;
     }
 
-    public function generateMenu($pageHeader) {
+    public function generateMenu($pageHeader, $dbh = false) {
         // only generate menu for pages, not services or components
         if ($this->get_Page_Type() != WebPageCode::Page) {
             return '';
@@ -345,7 +345,22 @@ class ScriptAuthClass extends SecurityComponent {
         }
         $markup .= "</div></div></header>
             <div id='version'>$disclaimer User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
-
+        
+        // instantiate a ChallengeGenerator object
+        try {
+            $chlgen = new ChallengeGenerator();
+            $challengeVar = $chlgen->getChallengeVar("challenge");
+        } catch (Exception $e) {
+            //
+        }
+        
+        //add user settings modal
+        if($dbh && isset($challengeVar) && isset($uS)){
+            $markup .= UserClass::createUserSettingsMarkup($dbh);
+            $markup .= '<input  type="hidden" id="challVar" value="' . $challengeVar . '" />';
+            $markup .= '<input  type="hidden" id="isPassExpired" value="' . UserClass::isPassExpired($dbh, $uS) . '" />';
+        }
+        
         return $markup;
     }
 

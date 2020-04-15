@@ -243,7 +243,7 @@ class UserClass
         return FALSE;
     }
 
-    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $resetNextLogin = '0')
+    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $resetNextLogin = 0)
     {
         $ssn = Session::getInstance();
         $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
@@ -350,7 +350,7 @@ class UserClass
     {
         $uS = Session::getInstance();
 
-        $mkup = '';
+        $mkup = '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
         $passwordTitle = 'Change your Password';
         $securityQuestionTitle = 'Update Security Questions';
 
@@ -430,6 +430,8 @@ class UserClass
             </div>
         ';
         }
+        
+        $mkup .= "</div>";
         return $mkup;
     }
 
