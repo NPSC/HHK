@@ -1972,7 +1972,25 @@ CREATE OR REPLACE VIEW `vpsg_notes` AS
             JOIN
         psg_note pn ON n.idNote = pn.Note_Id
     WHERE
-        pn.Psg_Id > 0 && n.`Status` = 'a';
+        pn.Psg_Id > 0 && n.`Status` = 'a'
+        
+    UNION 
+        SELECT 
+        `n`.`idNote` AS `Note_Id`,
+        `n`.`idNote` AS `Action`,
+        `n`.`flag`,
+        `n`.`User_Name` AS `User_Name`,
+        `n`.`Title` AS `Title`,
+        `n`.`Note_Text` AS `Note_Text`,
+        `reg`.`idPsg` AS `Psg_Id`,
+        `n`.`Timestamp` AS `Timestamp`
+    FROM
+        `note` `n`
+        JOIN `reservation_note` `rn` ON `n`.`idNote` = `rn`.`Note_Id`
+        JOIN `reservation` `res` ON `rn`.`Reservation_Id` = `res`.`idReservation`
+        JOIN `registration` `reg` ON `res`.`idRegistration` = `reg`.`idRegistration`
+    WHERE
+        `reg`.`idPsg` > 0 && `n`.`Status` = 'a';
 
 
 

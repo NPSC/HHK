@@ -27,7 +27,6 @@ require (PMT . 'PaymentResponse.php');
 require (PMT . 'CreditToken.php');
 
 require SEC . 'Login.php';
-require SEC . 'ChallengeGenerator.php';
 
 require (FUNCTIONS . 'mySqlFunc.php');
 
