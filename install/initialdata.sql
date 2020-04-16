@@ -597,7 +597,19 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 -- ;
 
 
-REPLACE INTO `template_tag` VALUES (6,'Confirmation','Guest Name','${GuestName}',''),(7,'Confirmation','Expected Arrival','${ExpectedArrival}',''),(8,'Confirmation','Expected Departure','${ExpectedDeparture}',''),(9,'Confirmation','Date Today','${DateToday}',''),(10,'Confirmation','Nights','${Nites}',''),(11,'Confirmation','Amount','${Amount}',''),(12,'Confirmation','Notes','${Notes}',''),(13,'Confirmation','Visit Fee Notice','${VisitFeeNotice}',''),(14,'Survey','First Name','${FirstName}',''),(15,'Survey','Last Name','${LastName}',''),(16,'Survey','Name Suffix','${NameSuffix}',''),(17,'Survey','Name Prefix','${NamePrefix}','');
+REPLACE INTO `template_tag` VALUES 
+(6,'c','Guest Name','${GuestName}',''),
+(7,'c','Expected Arrival','${ExpectedArrival}',''),
+(8,'c','Expected Departure','${ExpectedDeparture}',''),
+(9,'c','Date Today','${DateToday}',''),
+(10,'c','Nights','${Nites}',''),
+(11,'c','Amount','${Amount}',''),
+(12,'c','Notes','${Notes}',''),
+(13,'c','Visit Fee Notice','${VisitFeeNotice}',''),
+(14,'s','First Name','${FirstName}',''),
+(15,'s','Last Name','${LastName}',''),
+(16,'s','Name Suffix','${NameSuffix}',''),
+(17,'s','Name Prefix','${NamePrefix}','');
 
 
 replace into `item` (`idItem`, `Description`) values
@@ -667,11 +679,6 @@ REPLACE INTO `payment_method` (`idPayment_method`, `Method_Name`) VALUES
 ('5', 'Transfer');
 -- ;
 
-REPLACE into cc_hosted_gateway (Gateway_Name) VALUES
-('instamed'),
-('vantiv');
--- ;
-
 replace INTO invoice_line_type (id, Description, Order_Position) VALUES
 (1,'item recurring',2),
 (2,'tax',6),
@@ -732,7 +739,7 @@ VALUES
 ('db','Maintenance','Configure metadata.','','','','\0',''),
 ('dm','Donation Management','Donation Management','','','','\0',''),
 ('dna','Donors (No Amounts)','View lists of donors but without donation amounts','','','','\0',''),
-('g','Guest Operations','Guest Operations, basic access to guest tracking site','','','','',''),
+('g','Guest Operations','Guest Operations, basic access to guest tracking site','','','','\0',''),
 ('gr','Guest Reports','Guest Reports','','','','\0',''),
 ('ga','Guest Admin','Guest Administration level access to guest tracking site','','','','\0',''),
 ('mm','Member Management','Member Management, basic access to admin site.','','','','\0',''),
@@ -763,7 +770,11 @@ REPLACE into `transaction_type` (`idtransaction_type`,`Title`,`Effect`,`Code`) v
 (1, 'Sale', '', 's'),
 (2, 'Void', '', 'vs'),
 (3, 'Return', '', 'r'),
-(4, 'Void Return', '', 'vr');
+(4, 'Void Return', '', 'vr'),
+(5, 'Reverse', '', 'rv'),
+(6, 'undoRetrn', '', 'ur'),
+(7, 'ZeroAuth', '', 'za'),
+;
 -- ;
 
 

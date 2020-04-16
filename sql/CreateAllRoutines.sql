@@ -112,7 +112,8 @@ BEGIN
         IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
         IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
 		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
-		IFNULL(`nd`.`Gl_Code`, '') as `ba_Gl_Code`
+		IFNULL(`nd`.`Gl_Code_Debit`, '') as `ba_Gl_Debit`,
+        IFNULL(`nd`.`Gl_Code_Credit`, '') as `ba_Gl_Credit`
 	from 
         `invoice` `i` 
         Join idinp on i.idInvoice = idinp.idInvoice

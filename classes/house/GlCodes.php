@@ -35,6 +35,8 @@ class GlCodes {
 		
 		$this->loadDbRecords($dbh);
 		
+		$this->lines = array();
+		
 		$this->titles =  array_flip(array(
 				// 'Gross sales' 	=>	'200-1007582-500014',
 				'County Sales'		=>	'200-1007582-500014',
@@ -67,12 +69,7 @@ class GlCodes {
 		
 		// Filter payment records.
 		foreach ($this->records as $r) {
-			
-			// Must be paid
-//			if ($r['i']['iStatus'] != InvoiceStatus::Paid) {
-//				continue;
-//			}
-			
+						
 			// Just one payment
 			if (count($r['p']) !== 1) {
 				$this->recordError("Too many Payments for invoice number: " . $r['i']['iNumber']);
@@ -95,14 +92,14 @@ class GlCodes {
 	protected function makePayment($r, $useTitles = FALSE) {
 		
 		$p = $r['p'][0];
-		
+
 		if ($p['pTimestamp'] != '') {
 			$pDate = new DateTime($p['pTimestamp']);
 		} else {
 			$this->recordError("Missing Payment Timestamp. Payment Id = ". $p['idPayment']);
 			return;
 		}
-		
+
 		if ($p['pMethod'] == PaymentMethod::Charge) {
 			$glCode = self::CREDIT_CARD;
 		} else {
@@ -200,7 +197,7 @@ class GlCodes {
 			$this->recordError("Unanticipated Payment Status: ". $p['pStatus'] . '  Payment Id = '.$p['idPayment']);
 		}
 		
-	}	
+	}
 	
 	protected function loadDbRecords(\PDO $dbh) {
 		
@@ -264,7 +261,8 @@ class GlCodes {
     						'pTimestamp'=>$p['pTimestamp'],
     						'Is_Refund'=>$p['Is_Refund'],
     						'idPayor'=>$p['idPayor'],
-    						'ba_Gl_Code'=>$p['ba_Gl_Code'],
+    						'ba_Gl_Debit'=>$p['ba_Gl_Debit'],
+    						'ba_Gl_Credit'=>$p['ba_Gl_Credit'],
     				);
     			}
     		}
@@ -428,7 +426,7 @@ class GlParameters {
 		
 		foreach ($post as $k => $v) {
 			
-			if (stristr($k, 'bagl')) {
+			if (stristr($k, 'bagld')) {
 				
 				$parts = explode('_', $k);
 				
@@ -437,9 +435,23 @@ class GlParameters {
 					$id = intval($parts[1]);
 					$gl = filter_var($v, FILTER_SANITIZE_STRING);
 								
-					$dbh->exec("Update name_demog set Gl_Code = '$gl' where idName = $id");
+					$dbh->exec("Update name_demog set Gl_Code_Debit = '$gl' where idName = $id");
 				}
 			}
+			
+			if (stristr($k, 'baglc')) {
+				
+				$parts = explode('_', $k);
+				
+				if (isset($parts[1]) && $parts[1] > 0) {
+					
+					$id = intval($parts[1]);
+					$gl = filter_var($v, FILTER_SANITIZE_STRING);
+					
+					$dbh->exec("Update name_demog set Gl_Code_Credit = '$gl' where idName = $id");
+				}
+			}
+			
 		}
 
 		$this->loadParameters($dbh);
@@ -476,7 +488,7 @@ class GlParameters {
 
 	protected function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
 		
-		$stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company, nd.Gl_Code " .
+		$stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company, nd.Gl_Code_Debit, nd.Gl_Code_Credit " .
 				" FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
 				" JOIN name_demog nd on n.idName = nd.idName  ".
 				" where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First");
@@ -501,11 +513,12 @@ class GlParameters {
 			
 			$glTbl->addBodyTr(
 					HTMLTable::makeTh($entry, array('class'=>'tdlabel'))
-					. HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code'], array('name'=>$prefix.'_'.$r['idName'], 'size'=>'25')))
-			);
+					. HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Debit'], array('name'=>$prefix.'d_'.$r['idName'], 'size'=>'25')))
+					. HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Credit'], array('name'=>$prefix.'c_'.$r['idName'], 'size'=>'25')))
+					);
 		}
 		
-		$glTbl->addHeaderTr(HTMLTable::makeTh('Billing Agent') . HTMLTable::makeTh('GL Code'));
+		$glTbl->addHeaderTr(HTMLTable::makeTh('Billing Agent') . HTMLTable::makeTh('GL Debit') . HTMLTable::makeTh('GL Credit'));
 		
 		return $glTbl->generateMarkup();
 		
@@ -634,7 +647,7 @@ class GlTemplateRecord {
 	const JOURNAL_CREATE_DATE = 6;
 	const ACTUAL_FLAG = 7;
 	
-	// gl code split among these three 
+	// gl code split among these three
 	const COMPANY_CODE = 8;
 	const COST_CENTER = 9;
 	const ACCOUNT = 10;
