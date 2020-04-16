@@ -2641,7 +2641,7 @@ $resultMessage = $alertMsg->createMarkup();
                 </div>
 		</div>
 		<div id="divNewForm" class="hhk-tdbox hhk-visitdialog"
-			style="font-size: .9em;">
+			style="font-size: .9em; display: none;">
 			<form method="POST" action="ResourceBuilder.php" id="formFormNew"
 				name="formFormNew">
 				<table>
