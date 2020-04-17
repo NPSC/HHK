@@ -29,14 +29,6 @@ class LinkNote {
 
             LinkNote::saveLink($dbh, $note, $linkId, $linkType);
 
-            if ($linkType != Note::PsgLink) {
-
-                $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
-
-                if ($idPsg > 0) {
-                    LinkNote::saveLink($dbh, $note, $idPsg, Note::PsgLink);
-                }
-            }
         }
 
         return $note->getIdNote();

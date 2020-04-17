@@ -1882,33 +1882,38 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         n.Title,
         n.Note_Text,
         rn.Reservation_Id,
+        reg.idPsg,
         n.`Timestamp`
     FROM
         note n
             JOIN
         reservation_note rn ON n.idNote = rn.Note_Id
+			JOIN
+		reservation r ON rn.Reservation_Id = r.idReservation
+			JOIN
+		registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.Status = 'a'
-    UNION
-		SELECT 
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && n.flag = '0'
+	UNION SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
         n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
-        res.idReservation,
+        "",
+        reg.idPsg,
         n.`Timestamp`
     FROM
         note n
             JOIN
-        psg_note pn ON n.idNote = pn.Note_Id
-			JOIN
-		registration reg ON pn.Psg_Id = reg.idPsg
-			JOIN
-		reservation res ON reg.idRegistration = res.idRegistration
-	WHERE
-		n.flag = '1';;
+        reservation_note rn ON n.idNote = rn.Note_Id
+			join
+		reservation r ON rn.Reservation_Id = r.idReservation
+			join
+		registration reg on r.idRegistration = reg.idRegistration
+    WHERE
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && flag = '1';
 
 
 -- -----------------------------------------------------
@@ -1923,6 +1928,7 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
         n.Title,
         n.Note_Text,
         v.idVisit,
+        reg.idPsg,
         n.`Timestamp`
     FROM
         note n
@@ -1930,28 +1936,34 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
         reservation_note rn ON n.idNote = rn.Note_Id
             join
         visit v on v.idReservation = rn.Reservation_Id and v.Span = 0
+			join
+		reservation r ON rn.Reservation_Id = r.idReservation
+			join
+		registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a'
-    UNION
-		SELECT 
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && n.flag = '0'
+	UNION SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
-        n.`flag`,
+        n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
-        v.idVisit as idVisit,
+        "",
+        reg.idPsg,
         n.`Timestamp`
     FROM
         note n
             JOIN
-        psg_note pn ON n.idNote = pn.Note_Id
-			JOIN
-		registration reg ON pn.Psg_Id = reg.idPsg
-			JOIN
-		visit v ON reg.idRegistration = v.idRegistration
-	WHERE
-		n.flag = '1';
+        reservation_note rn ON n.idNote = rn.Note_Id
+            join
+        visit v on v.idReservation = rn.Reservation_Id and v.Span = 0
+			join
+		reservation r ON rn.Reservation_Id = r.idReservation
+			join
+		registration reg on r.idRegistration = reg.idRegistration
+    WHERE
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && flag = '1';
 
 
 -- -----------------------------------------------------
@@ -1972,27 +1984,46 @@ CREATE OR REPLACE VIEW `vpsg_notes` AS
             JOIN
         psg_note pn ON n.idNote = pn.Note_Id
     WHERE
-        pn.Psg_Id > 0 && n.`Status` = 'a'
-        
-    UNION 
-        SELECT 
-        `n`.`idNote` AS `Note_Id`,
-        `n`.`idNote` AS `Action`,
-        `n`.`flag`,
-        `n`.`User_Name` AS `User_Name`,
-        `n`.`Title` AS `Title`,
-        `n`.`Note_Text` AS `Note_Text`,
-        `reg`.`idPsg` AS `Psg_Id`,
-        `n`.`Timestamp` AS `Timestamp`
+        pn.Psg_Id > 0 && n.`Status` = 'a';
+
+-- -----------------------------------------------------
+-- View `vpsg_notes_concat`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vpsg_notes_concat` AS
+    SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        pn.Psg_Id,
+        n.`Timestamp`
     FROM
-        `note` `n`
-        JOIN `reservation_note` `rn` ON `n`.`idNote` = `rn`.`Note_Id`
-        JOIN `reservation` `res` ON `rn`.`Reservation_Id` = `res`.`idReservation`
-        JOIN `registration` `reg` ON `res`.`idRegistration` = `reg`.`idRegistration`
+        note n
+            JOIN
+        psg_note pn ON n.idNote = pn.Note_Id
     WHERE
-        `reg`.`idPsg` > 0 && `n`.`Status` = 'a';
-
-
+        pn.Psg_Id > 0 && n.`Status` = 'a'
+    UNION DISTINCT SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        reg.idPsg,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        reservation_note rn ON n.idNote = rn.Note_Id
+			join
+		reservation r ON rn.Reservation_Id = r.idReservation
+			join
+		registration reg on r.idRegistration = reg.idRegistration
+    WHERE
+        rn.Reservation_Id > 0 && n.`Status` = 'a';
 
 -- -----------------------------------------------------
 -- View `vpsg_guest`
