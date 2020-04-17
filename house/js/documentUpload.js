@@ -304,12 +304,19 @@
             $(".dataTables_filter").addClass('ignrSave');
             $(".dtBottom").addClass('ignrSave');
             
+            var filename = '';
+            
             newDocUppload = new Uppload({
 	            call: ["#docUploadBtn"],
 				maxFileSize: 5000000,
 		        uploadFunction: function uploadFunction(file){
 			        var docTitle = $(newDocUppload.modalElement).find("input#newDocTitle").val();
-
+			        
+			        //set title if none specified
+			        if(docTitle == ""){
+			        	docTitle = filename;
+			        }
+			        
 		            return new Promise(function (resolve, reject) {
 		                var formData = new FormData();
 		                formData.append('cmd', 'putdoc');
@@ -319,12 +326,6 @@
 		                formData.append("mimetype", file.type);
 		                formData.append('file', file);
 						
-						/* print formData to console for debugging
-						for (var pair of formData.entries()) {
-							console.log(pair[0]+ ': ' + pair[1]); 
-						}
-						*/
-						
 						$.ajax({
 			                url: settings.serviceURL,
 			                dataType: 'JSON',
@@ -333,10 +334,8 @@
 			                contentType: false,
 							processData: false,
 			                success: function (data) {
-				                console.log(data);
 			                    if (data.idDoc > 0) {
 			                        dtTable.ajax.reload();
-			                        console.log($table);
 			                        clearform($wrapper);
 			                        resolve("success");
 			                    } else {
@@ -358,6 +357,11 @@
 		        ignoreFontAwesome: true
 		    });
 		    
+            //set filename
+		    newDocUppload.on("fileSelected", function(file){
+			    filename = file.name.replace(/\.[^/.]+$/, ""); //trim off extension
+		    });
+            
 		    //hide/show extra fields
 		    newDocUppload.on("pageChanged", function(page){
 			    if(page == "upload"){
@@ -369,15 +373,6 @@
 			   }
 		    });
 		    
-		    //set title to filename if no title given
-		    newDocUppload.on("fileSelected", function(file){
-			    console.log("Title: " + $("#newDocTitle").val());
-			    console.log("Filename: " + file.name);
-			    if($("#newDocTitle").val() == ""){
-				    $("#newDocTitle").val(file.name.replace(/\.[^/.]+$/, "")); //trim off extension
-			    }
-		    });
-		    
 		    //add docTitle field
 		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; top: 1.5em; width: 100%"><input type="text" name="docTitle" id="newDocTitle" placeholder="Enter Document Title" style="margin: 0 auto"></div>');  
 		    		    
@@ -387,9 +382,8 @@
 		    $wrapper.on("click", "#docUploadBtn", function(e){
 			    e.preventDefault();
 		    })
-		    newDocUppload.on("modalOpened", function(e){
-			    $(newDocUppload.modalElement).find("input#newDocTitle").val('');
-			    console.log(e);
+		    newDocUppload.on("modalOpened", function(){
+			    $(newDocUppload.modalElement).find("input#newDocTitle").val();
 		    });
     
         }
