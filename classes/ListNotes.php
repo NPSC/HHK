@@ -29,13 +29,14 @@ class ListNotes {
 
         $dbView = '';
         $whereField = '';
+        $whereClause = '';
         $priKey = 'Note_Id';
-
+        $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
+        
         if ($concatNotes) {
-            $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
 
             if ($idPsg > 0) {
-                $linkType = Note::PsgLink;
+                $linkType = "concat";
                 $linkId = $idPsg;
             }
         }
@@ -50,18 +51,27 @@ class ListNotes {
 
                 $dbView = 'vresv_notes';
                 $whereField = 'Reservation_Id';
+                $whereClause = "$whereField IN ($linkId, '') AND idPsg = $idPsg";
                 break;
 
             case Note::VisitLink:
 
                 $dbView = 'vvisit_notes';
                 $whereField = 'idVisit';
+                $whereClause = "$whereField IN ($linkId, '') AND idPsg = $idPsg";
                 break;
 
             case Note::PsgLink:
 
                 $dbView = 'vpsg_notes';
                 $whereField = 'Psg_Id';
+                $whereClause = "$whereField = $linkId";
+                break;
+                
+            case "concat":
+                $dbView = 'vpsg_notes_concat';
+                $whereField = 'Psg_Id';
+                $whereClause = "$whereField = $linkId";
                 break;
 
             case Note::MemberLink:
@@ -76,7 +86,7 @@ class ListNotes {
                 return array('error'=>'The Link Type is not found: ' . $linkType);
         }
 
-        return SSP::complex ( $parms, $dbh, $dbView, $priKey, $columns, null, "$whereField = $linkId" );
+        return SSP::complex ( $parms, $dbh, $dbView, $priKey, $columns, null, "$whereClause" );
 
     }
 
