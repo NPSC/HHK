@@ -675,7 +675,7 @@ p.label {
 
         $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
-        $rate = (1 + $rateAdj) * $priceModel->amountCalculator(1, $idRate, $rateCat, $pledgedRate);
+        $rate = (1 + $rateAdj/100) * $priceModel->amountCalculator(1, $idRate, $rateCat, $pledgedRate);
 
         $houseAddr = '';
 

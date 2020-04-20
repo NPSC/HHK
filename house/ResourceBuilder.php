@@ -248,10 +248,11 @@ if ($uS->rolecode > WebRole::WebUser) {
 }
 
 $tabIndex = 0;
-$feFileSelection = '';
+
 $rteMsg = '';
 $rateTableErrorMessage = '';
 $itemMessage = '';
+$formType = '';
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -298,7 +299,6 @@ if (isset($_POST['table'])) {
 
     $cmd = '';
     $type = '';
-    $order = 0;
 
     if (isset($_POST['cmd'])) {
         $cmd = filter_var($_POST['cmd'], FILTER_SANITIZE_STRING);
@@ -1065,41 +1065,31 @@ if (isset($_POST['ldfm'])) {
         $dbh->exec("UPDATE `gen_lookups` SET `Substitute` = '$formDef' WHERE `Table_Name` = 'Form_Upload' AND `Code` = '$formType'");
     }
 
-    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef'");
+    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef' order by g.Order asc");
     $docRows = $formstmt->fetchAll();
 
     $li = '';
     $tabContent = '';
 
+    //set help text
+    $help = '<p style="margin: .5em 0 .5em 0;">(NOTE: To set the form order, drag and drop the tabs above.)</p>';
+    
     foreach ($docRows as $r) {
 
         $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', $r['Description'], array(
             'href' => '#' . $r['Code']
-        )));
+        )), array('class'=>'hhk-sortable', 'data-code'=>$r['Code']));
 
-        $tabContent .= HTMLContainer::generateMarkup('div', ($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
-            'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3')): '') . 
+        $tabContent .= HTMLContainer::generateMarkup('div',  $help .($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
+            'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3')): '') .
             '<div class="row"><div class="col-10 uploadFormDiv ui-widget-content" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="d-inline-block" style="padding: 5px 7px;">
-<input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>
+<input type="hidden" name="docId" value="' . $r['idDocument'] . '"/><input type="hidden" name="filefrmtype" value="' . $formType . '"/>
 Upload new file: <input name="formfile" type="file" required />
 <input type="submit" name="docUpload" value="Save Form" />
-</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docId" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Edit Form</button></div></div>', array(
+</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><input type="hidden" name="docfrmtype" value="' . $formType . '"/><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
             'id' => $r['Code']
         ));
     }
-
-    // add New documt
-    $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'New...', array(
-        'href' => '#newDoc'
-    )), array(
-        'id' => 'liNewForm',
-        'data-type' => $formType,
-        'data-title' => $formTitle
-    ));
-
-    $tabContent .= HTMLContainer::generateMarkup('div', ' ', array(
-        'id' => 'newDoc'
-    ));
 
     if (count($replacementRows) > 0) {
 
@@ -1115,14 +1105,19 @@ Upload new file: <input name="formfile" type="file" required />
             'id' => 'replacements'
         ));
     }
-
+    
     // Make the final tab control
     $ul = HTMLContainer::generateMarkup('ul', $li, array());
     $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array(
-        'id' => 'regTabDiv'
+        'id' => 'regTabDiv',
+        'data-formDef' => $formDef
     ));
+    
+    $dataArray['type'] = $formType;
+    $dataArray['title'] = $formTitle;
+    $dataArray['mkup'] = $output;
 
-    echo $output;
+    echo json_encode($dataArray);
 
     exit();
 }
@@ -1132,6 +1127,10 @@ if (isset($_POST['docUpload'])) {
 
     $tabIndex = 8;
 
+    if (isset($_POST['filefrmtype'])) {
+    	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
+    }
+    
     if (! empty($_FILES['formfile']['tmp_name'])) {
 
         $docId = - 1;
@@ -1154,31 +1153,57 @@ if (isset($_POST['docUpload'])) {
     }
 }
 
-if (isset($_POST['delfm']) && isset($_POST['docId']) && isset($_POST['formDef'])) {
+if (isset($_POST['delfm']) && isset($_POST['docCode']) && isset($_POST['formDef'])) {
     
-    $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
+    $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
     $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_STRING);
     
     $tabIndex = 8;
     
-    $formdelstmt = $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docId'");
-    $docdelstmt = $dbh->exec("UPDATE `document` SET `status` = 'd' WHERE `idDocument` = '$docId'");
+    $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
+    $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
     
+    if (isset($_POST['docfrmtype'])) {
+    	$formType = filter_var($_POST['docfrmtype'], FILTER_SANITIZE_STRING);
+    }
+    
+}
+
+// Make sure Content-Type is application/json
+$content_type = isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : '';
+if (stripos($content_type, 'application/json') !== false) {
+    // Read the input stream
+    $body = file_get_contents("php://input");
+    $data = json_decode($body);
+    
+    if($data->cmd == "reorderfm"){
+        $output = "";
+        try{
+            foreach($data->order as $i=>$v){
+                $dbh->exec("UPDATE `gen_lookups` SET `Order` = $i WHERE `Table_Name` = '" . $data->formDef . "' AND `Code` = '$v';");
+            }
+        }catch(\Exception $e){
+            echo json_encode(["status"=>"error", "message"=>$e->getMessage()]);
+            exit;
+        }
+        echo json_encode(["status"=>"success"]);
+    }
+    
+    exit;
 }
 
 if (isset($_POST['txtformLang'])) {
 
     $tabIndex = 8;
     $lang = trim(filter_var($_POST['txtformLang'], FILTER_SANITIZE_STRING));
-    $formType = '';
     $formDef = '';
     $formTitle = '';
 
+    if (isset($_POST['hdnFormType'])) {
+    	$formType = filter_var($_POST['hdnFormType'], FILTER_SANITIZE_STRING);
+    }
+    
     if ($lang != '') {
-
-        if (isset($_POST['hdnFormType'])) {
-            $formType = filter_var($_POST['hdnFormType'], FILTER_SANITIZE_STRING);
-        }
 
         $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
 
@@ -1899,7 +1924,7 @@ $taxTable = $tiTbl->generateMarkup(array(
 
 // Form Upload
 
-$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Form_Upload')), 'ra', FALSE), array(
+$rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups(readGenLookupsPDO($dbh, 'Form_Upload')), $formType, TRUE), array(
     'name' => 'selFormUpload'
 ));
 
@@ -2265,35 +2290,73 @@ $resultMessage = $alertMsg->createMarkup();
         $('div#mainTabs').on('click', '.reStatBtn', function () {
             getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
         });
-        $('#formGo').button().click(function () {
-            $('#spnFrmLoading').show();
+        $('#btnNewForm').button().click(function () {
+        	$('#divNewForm').dialog('open');
+        });
+        $('#selFormUpload').change(function () {
+
             $('#hdnFormType').val('');
             
-            $.post('ResourceBuilder.php', {'ldfm': $('#selFormUpload').val()},
+            if ($(this).val() == '') {
+            	$('#divUploadForm').empty();
+            	$('#btnNewForm').hide()
+            	return;
+            }
+            $('#spnFrmLoading').show();
+            
+            $.post('ResourceBuilder.php', {'ldfm': $(this).val()},
                 function (data) {
                     $('#spnFrmLoading').hide();
 
                     if (data) {
-                        $('#divUploadForm').empty().append(data);
+                    	data = $.parseJSON(data);
+
+                        $('#divUploadForm').empty().append(data.mkup);
+                        $('#btnNewForm').show();
+                        $('#hdnFormType').val(data.type);
+                       	$('#spanFrmTypeTitle').text(data.title);
+                       	$('#txtformLang').val('');
+
                         $('#regTabDiv').tabs({
                             collapsible: true,
-                            beforeActivate: function (event, ui) {
-                                if (ui.newTab.prop('id') === 'liNewForm') {
-                                    $('#hdnFormType').val(ui.newTab.data('type'));
-                                    $('#spanFrmTypeTitle').text(ui.newTab.data('title'));
-                                    $('#txtformLang').val('');
-
-                                    $('#divNewForm').dialog('open');
-                                }
-                            }
                         });
+
+                        $('#regTabDiv .ui-tabs-nav').sortable({
+                            axis: "x",
+                            items: "> li.hhk-sortable",
+                            stop: function(event, ui) {
+                              $('#regTabDiv').tabs( "refresh" );
+
+                              var order = $('#regTabDiv .ui-tabs-nav').sortable('toArray', {'attribute': 'data-code'});
+                              
+							  data = {
+									  'cmd':'reorderfm',
+									  'formDef':$(document).find('#regTabDiv').data('formdef'),
+									  'order':order
+									  };
+							  
+                              $.ajax({
+                           		url: 'ResourceBuilder.php',
+                            	type: "POST",
+                            	data: JSON.stringify(data),
+                            	processData: false,
+                            	contentType: "application/json; charset=UTF-8",
+                            	dataType: 'json',
+                            	success: function(data) {
+                                	if(data && data.status == "error"){
+                                		flagAlertMessage("Unable to set form order: " + data.message, true);
+                                	}
+                            	}
+                              });
+                            }
+                          });
 
                         $('#divUploadForm button').button();
                         $('#divUploadForm input[type=submit]').button();
                     }
                 });
         });
-
+        $('#selFormUpload').change();
 
         $('#tblroom, #tblresc').dataTable({
             "dom": '<"top"if>rt<"bottom"lp><"clear">',
@@ -2485,7 +2548,7 @@ $resultMessage = $alertMsg->createMarkup();
 					</form>
 				</div>
 				<div style="float: left; margin-left: 30px;">
-					<h3>Discounts & Additional Charges</h3>
+					<h3>Discounts &amp; Additional Charges</h3>
 					<form method="POST" action="ResourceBuilder.php" id="formdisc">
 						<table>
 							<tr>
@@ -2548,8 +2611,8 @@ $resultMessage = $alertMsg->createMarkup();
 			</div>
 			<div id="formUpload" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
 				<p>Select the form to upload: <?php echo $rteSelectForm; ?>
-                    <input id="formGo" type="button" value="Get" /> <span
-						id="spnFrmLoading" style="font-style: italic; display: none;">Loading...</span>
+                     <span id="spnFrmLoading" style="font-style: italic; display: none;">Loading...</span>
+                     <input type="button" id="btnNewForm" value="New Form" style="display:none;" />
 				</p>
 				<p id="rteMsg" style="float: left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
 				<div id="divUploadForm" style="margin-top: 1em;"></div>
@@ -2585,7 +2648,7 @@ $resultMessage = $alertMsg->createMarkup();
                 </div>
 		</div>
 		<div id="divNewForm" class="hhk-tdbox hhk-visitdialog"
-			style="font-size: .9em;">
+			style="font-size: .9em; display: none;">
 			<form method="POST" action="ResourceBuilder.php" id="formFormNew"
 				name="formFormNew">
 				<table>

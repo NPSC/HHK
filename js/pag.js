@@ -84,8 +84,7 @@ function checkStrength(pwCtrl) {
 	return rtn;
 }
 
-$(document)
-		.ready(
+$(document).ready(
 				function() {
 					"use strict";
 					// Hover states on the nav bar left icons.
@@ -376,3 +375,4 @@ $(document)
 						});
 					}
 				});
+

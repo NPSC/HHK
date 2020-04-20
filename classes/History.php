@@ -24,7 +24,7 @@ class History {
         if ($id > 0 && $role < WebRole::Guest) {
             $query = "INSERT INTO member_history (idName, Guest_Access_Date) VALUES ($id, now())
         ON DUPLICATE KEY UPDATE Guest_Access_Date = now();";
-            //$query = "replace guest_history (idName, Access_Date) values ($id, now());";
+           
             $stmt = $dbh->prepare($query);
             $stmt->execute();
         }

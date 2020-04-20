@@ -5,6 +5,7 @@
         var defaults = {
             linkId: 0,
             linkType: 0,
+            uid: 0,
             serviceURL: 'ws_resv.php',
             newLabel: 'New Note',
             tableAttrs: {
@@ -88,6 +89,11 @@
         var settings = $.extend(true, {}, defaults, options);
 
         var $wrapper = $(this);
+        
+        //set uid
+        $wrapper.attr('id', '');
+        $wrapper.uniqueId();
+        uid = $wrapper.attr('id');
 
         createViewer($wrapper, settings);
         
@@ -151,12 +157,12 @@
 
 	function showFlag(flagged, row){
 		var flagContainer = $("<span />");
-		var flagLabel = $("<label />").prop("for", "flag-" + row.NoteId).text("Flag");
+		var flagLabel = $("<label />").prop("for", "flag-" + uid + "-" + row.NoteId).text("Flag");
 		
-		if(flagged){
-			var flagEl = $('<input type="checkbox" name="flag" checked="true" id="flag-' + row.NoteId + '" />').addClass("flag");
+		if(flagged == "1"){
+			var flagEl = $('<input type="checkbox" name="flag" checked="true" id="flag-' + uid + "-" + row.NoteId + '" />').addClass("flag");
 		}else{
-			var flagEl = $('<input type="checkbox" name="flag" id="flag-' + row.NoteId + '" />').addClass("flag");
+			var flagEl = $('<input type="checkbox" name="flag" id="flag-' + uid + "-" + row.NoteId + '" />').addClass("flag");
 
 		}
 		

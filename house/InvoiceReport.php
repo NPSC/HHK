@@ -1,4 +1,6 @@
 <?php
+
+
 /**
  * InvoiceReport.php
  *
@@ -36,7 +38,6 @@ require (CLASSES . 'FinAssistance.php');
 
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
-
 
 
 try {
@@ -233,6 +234,7 @@ $baSelections = array();
 $baSelector = '';
 $paymentMarkup = '';
 $receiptMarkup = '';
+$tabReturn = 0;
 
 $year = date('Y');
 $months = array(date('n'));       // logically overloaded.
@@ -243,6 +245,11 @@ $end = '';
 $showDeleted = FALSE;
 $useVisitDates = FALSE;
 $cFields = array();
+
+$useGlReport = FALSE;
+if (stristr($uS->siteName, 'gorecki') !== FALSE || strtolower($uS->mode) != 'live') {
+	$useGlReport = TRUE;
+}
 
 $monthArray = array(
     1 => array(1, 'January'),
@@ -255,6 +262,7 @@ if ($uS->fy_diff_Months == 0) {
 } else {
     $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
 }
+
 // Hosted payment return
 try {
 
@@ -333,10 +341,6 @@ $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'Pati
 if ($uS->county) {
     $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . ' County', 'County', '', '', 's', '', array());
 }
-
-//$cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
-//$cFields[] = array("Payments", 'payments', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
-//$cFields[] = array("Balance", 'Balance', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 
 //updated number format to fix $1 output on >1,000 as per https://stackoverflow.com/questions/5669941/phpexcel-accounting-formats
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
@@ -676,7 +680,6 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
     $totalPaid = 0.0;
     $totalBalance = 0.0;
 
-    $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
 
 
     // Now the data ...
@@ -762,6 +765,143 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 }
 
+// Gl REport
+$glChooser = '';
+$glInvoices = '';
+$glMonthSelr = '';
+$glYearSelr = '';
+$glMonth = 0;
+$glyear = 0;
+
+if ($useGlReport) {
+	
+	require (HOUSE.'GlCodes.php');
+	require (CLASSES.'SFTPConnection.php');
+	
+	$glParm = new GlParameters($dbh, 'Gl_Code');
+	$glPrefix = 'gl_';
+	
+	// Check for new parameters
+	if (isset($_POST['btnSaveGlParms'])) {
+		$glParm->saveParameters($dbh, $_POST, $glPrefix);
+		$tabReturn = 2;
+	}
+
+	$m = date('m');
+	if ($m > 1) {
+		$m--;
+		$glMonth = $m;
+	} else {
+		$m = 12;
+		$glyear--;
+	}
+	
+	$glMonth = $m;
+	
+	
+	// Output report
+	if (isset($_POST['btnGlGo']) || isset($_POST['btnGlTx'])) {
+		
+		$tabReturn = 2;
+		
+		if (isset($_POST['selGlMonth'])) {
+			$glMonth = filter_var($_POST['selGlMonth'], FILTER_SANITIZE_NUMBER_INT);
+		}
+		
+		if (isset($_POST['selGlYear'])) {
+			$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
+		}
+		
+		$glCodes = new GlCodes($dbh, $glMonth, $glyear, $glParm);
+
+		if (isset($_POST['btnGlTx'])) {
+			
+			$glCodes->mapRecords()
+					->transferRecords();
+			
+			$glInvoices = HTMLContainer::generateMarkup('div',$glCodes->getErrors(), array('style'=>'clear:both;color:red;font-size:large;'));
+			
+		} else {
+			
+			$tbl = new HTMLTable();
+			
+			foreach ($glCodes->getInvoices() as $r) {
+				$mkupRow = '';
+				
+				foreach ($r['i'] as $col) {
+					
+					$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+				}
+				$tbl->addBodyTr($mkupRow);
+				
+				if (isset($r['p'])) {
+					
+					foreach ($r['p'] as $p) {
+						$mkupRow = '<td>p</td>';
+						foreach ($p as $k => $col) {
+							
+							if ($k == 'pTimestamp') {
+								$col = date('Y/m/d', strtotime($col));
+							}
+							$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+							
+						}
+						$tbl->addBodyTr($mkupRow);
+						
+					}
+				}
+				
+				if (isset($r['l'])) {
+					foreach ($r['l'] as $h) {
+						$mkupRow = '<td> </td><td>l</td>';
+						foreach ($h as $k => $col) {
+							
+							if ($k == 'il_Amount') {
+								$col = number_format($col, 2);
+							}
+							
+							$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+							
+						}
+						$tbl->addBodyTr($mkupRow);
+						
+					}
+				}
+			}
+			
+			$glInvoices = $tbl->generateMarkup();
+			
+			// Comma delemeted file.
+			$glCodes->mapRecords(FALSE);
+			
+			$tbl = new HTMLTable();
+			
+			foreach ($glCodes->getLines() as $l) {
+				
+				$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
+			}
+
+			$glInvoices .= "<p style='margin-top:20px;'>File</p>" .$tbl->generateMarkup();
+			
+			if (count($glCodes->getErrors()) > 0) {
+				$etbl = new HTMLTable();
+				foreach ($glCodes->getErrors() as $e) {
+					$etbl->addBodyTr(HTMLTable::makeTd($e));
+				}
+				$glInvoices = $etbl->generateMarkup() . $glInvoices;
+			}
+		}
+	}
+	
+	// GL Parms chooser markup
+	$glChooser = $glParm->getChooserMarkup($dbh, $glPrefix);
+	
+	//Month and Year chooser
+	$glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
+	$glYearSelr = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2019', 0, FALSE), array('name' => 'selGlYear', 'size'=>'5'));
+	
+}
+
 // Setups for the page.
 if (count($aList) > 0) {
 $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections),
@@ -788,7 +928,7 @@ if (count($bagnts) > 0) {
     $baSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($bagnts, $baSelections), array('name' => 'selbillagent[]', 'size' => '4', 'multiple' => 'multiple'));
 }
 
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>$monSize, 'multiple'=>'multiple'));
+$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
@@ -851,9 +991,10 @@ $(document).ready(function() {
     var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
     var pmtMkup = '<?php echo $paymentMarkup; ?>';
     var rctMkup = '<?php echo $receiptMarkup; ?>';
+    var tabReturn = '<?php echo $tabReturn; ?>';
     challVar = $('#challVar').val();
 
-    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo').button();
+    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx').button();
     $('.ckdate').datepicker({
         yearRange: '-05:+01',
         changeMonth: true,
@@ -929,6 +1070,9 @@ $(document).ready(function() {
             }
         }
     });
+
+    $('#mainTabs').tabs("option", "active", tabReturn);
+    
 
     $('#btnInvGo').click(function () {
         var statuses = ['up'];
@@ -1051,7 +1195,9 @@ $(document).ready(function() {
             event.preventDefault();
             invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
         });
+        
     }
+    $('#mainTabs').show();
 });
  </script>
     </head>
@@ -1062,10 +1208,13 @@ $(document).ready(function() {
         <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
         <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
 
-        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog">
+        <div id="mainTabs" style="font-size:.9em;display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog">
             <ul>
                 <li><a href="#invr">All Invoices</a></li>
                 <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
+                <?php if ($useGlReport) {?>
+                <li id="gl"><a href="#vGl">GL Report</a></li>
+                <?php }?>
             </ul>
             <div id="invr" >
                 <form id="fcat" action="InvoiceReport.php" method="post">
@@ -1079,9 +1228,9 @@ $(document).ready(function() {
                             <th>Year</th>
                         </tr>
                         <tr>
-                            <td><?php echo $calSelector; ?></td>
+                            <td style="vertical-align: top;"><?php echo $calSelector; ?></td>
                             <td><?php echo $monthSelector; ?></td>
-                            <td><?php echo $yearSelector; ?></td>
+                            <td style="vertical-align: top;"><?php echo $yearSelector; ?></td>
                         </tr>
                         <tr>
                             <td colspan="3">
@@ -1103,7 +1252,7 @@ $(document).ready(function() {
                             <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
                         </tr><?php } ?>
                         <tr>
-                            <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>
+                            <?php if (count($aList) > 0) { ?><td style="vertical-align: top;"><?php echo $assocs; ?></td><?php } ?>
                             <td><?php echo $hospitals; ?></td>
                         </tr>
                     </table>
@@ -1146,18 +1295,34 @@ $(document).ready(function() {
                     <?php echo $dataTable; ?>
                 </div>
             </div>
-                <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
-                    <input type="button" id="btnInvGo" value="Refresh"/>
-                      <div id="rptInvdiv" class="hhk-visitdialog"></div>
-                </div>
+            <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
+                <input type="button" id="btnInvGo" value="Refresh"/>
+                  <div id="rptInvdiv" class="hhk-visitdialog"></div>
+            </div>
+            <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size:0.8em;">
+                <form name="glform" method="post" action="InvoiceReport.php">
+                	<?php echo $glChooser;?>
+                	<table style="float:left;">
+                	<tr><th>Month</th><th>Year</th>
+                	<tr>
+                	<td><?php echo $glMonthSelr; ?></td>
+                    <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
+                	</tr><tr>
+                    <td colspan=2 style="text-align: right;"><input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/><input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer"/></td>
+                    </tr>
+                    </table>
+                </form>
+                 <div id="rptGl" class="hhk-visitdialog" style="font-size:0.9em;">
+                     <?php echo $glInvoices; ?>
+                 </div>
+            </div>
         </div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <form name="xform" id="xform" method="post"></form>
         <div id="keysfees" style="font-size: .9em;"></div>
 
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
-
-        <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em;">
+        <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
             <span class="ui-helper-hidden-accessible"><input type="text"/></span>
             <table><tr>
                     <td class="tdlabel">Invoice Number:</td>

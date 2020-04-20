@@ -51,7 +51,7 @@ $sequence = ChallengeGenerator::getRandomString();
 
 try {
     $login = new Login();
-    $config = $login->initializeSession('conf/site.cfg');
+    $config = $login->initHhkSession('conf/site.cfg');
 
 } catch (Exception $ex) {
     session_unset();

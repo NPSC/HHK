@@ -100,6 +100,7 @@ class LocalGateway extends PaymentGateway {
 
 		return $payResult;
 	}
+	
 	protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 		$uS = Session::getInstance ();
 		$dataArray = array (
@@ -212,6 +213,10 @@ class LocalGateway extends PaymentGateway {
 	public function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup) {
 		throw new Hk_Exception_Payment ( 'Card on file services are not implemented.  ' );
 	}
+	public function hasCofService() {
+		return FALSE;
+	}
+	
 	public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
 		// Charge card list

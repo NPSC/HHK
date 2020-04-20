@@ -62,6 +62,77 @@ BEGIN
 END -- ;
 
 
+
+-- --------------------------------------------------------
+--
+-- Procedure `gl_report`
+--
+DROP procedure IF EXISTS `gl_report`; -- ;
+
+CREATE PROCEDURE `gl_report` (
+	IN pmtStart VARCHAR(15), 
+    IN pmtEnd VARCHAR(15))
+BEGIN
+	create temporary table idinp (idInvoice int);
+	create temporary table idind (idInvoice int);
+
+	insert into idinp
+		select 
+			`i`.`idInvoice`
+		FROM
+			`payment` `p`
+			JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
+			JOIN `invoice` `i` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
+		where 
+			i.Status != 'c' and 
+            ((DATE(`p`.`Timestamp`) >= DATE(pmtStart) && DATE(`p`.`Timestamp`) < DATE(pmtEnd))
+			OR (DATE(`p`.`Last_Updated`) >= DATE(pmtStart) && DATE(`p`.`Last_Updated`) < DATE(pmtEnd)));
+        
+	insert into idind
+		select idInvoice from invoice where Delegated_Invoice_Id in (select idinvoice from idinp);
+
+	insert into idinp select idInvoice from idind;
+
+	select  `i`.`idInvoice`,
+        `i`.`Amount` AS `iAmount`,
+        `i`.`Status` AS `iStatus`,
+        `i`.`Carried_Amount` AS `icAmount`,
+        `i`.`Invoice_Number` AS `iNumber`,
+        `i`.`Delegated_Invoice_Id` AS `Delegated_Id`,
+        `i`.`Deleted` AS `iDeleted`,
+        ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
+        ifnull(`il`.`Amount`, 0) as `il_Amount`,
+		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
+        IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
+        IFNULL(`p`.`Amount`, 0) AS `pAmount`,
+        IFNULL(`p`.`idPayment_Method`, 0) AS `pMethod`,
+        IFNULL(`p`.`Status_Code`, 0) AS `pStatus`,
+        IFNULL(`p`.`Last_Updated`, '') AS `pUpdated`,
+        IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
+        IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
+        IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
+		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
+		IFNULL(`nd`.`Gl_Code_Debit`, '') as `ba_Gl_Debit`,
+        IFNULL(`nd`.`Gl_Code_Credit`, '') as `ba_Gl_Credit`
+	from 
+        `invoice` `i` 
+        Join idinp on i.idInvoice = idinp.idInvoice
+        LEFT JOIN `payment_invoice` `pi` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
+        LEFT JOIN `payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
+        JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Deleted` < 1
+        LEFT JOIN `name_volunteer2` `nv` ON `p`.`idPayor` = `nv`.`idName`
+            AND (`nv`.`Vol_Category` = 'Vol_Type')
+            AND (`nv`.`Vol_Code` = 'ba')
+		LEFT JOIN name_demog nd on p.idPayor = nd.idName
+		LEFT JOIN item it on it.idItem = il.Item_Id
+	ORDER BY i.idInvoice, il.idInvoice_Line, p.idPayment;
+
+	drop table idinp;
+	drop table idind;
+END -- ;
+
+
+
 -- --------------------------------------------------------
 --
 -- Procedure `sum_visit_days`
@@ -849,7 +920,11 @@ END -- ;
 --
 DROP procedure IF EXISTS `incidents_report`; -- ;
 
-CREATE PROCEDURE `incidents_report`()
+CREATE PROCEDURE `incidents_report`(
+	IN activ varchar(3),
+	IN resol varchar(3),
+	IN del varchar(3)
+	)
 BEGIN
     CREATE TEMPORARY TABLE IF NOT EXISTS tble (
         idPsg int,
@@ -861,14 +936,18 @@ BEGIN
 			Psg_Id, COUNT(Psg_Id)
 		FROM
 			report
-		GROUP BY Psg_Id
-		ORDER BY COUNT(Psg_Id) DESC;
+		WHERE 
+			`Status` in (activ, resol, del)
+		GROUP BY Psg_Id;
+
 	
-    select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, r.Report_Date, r.Resolution_Date, r.`Status`
+    select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, ifnull(r.Report_Date, '') as `Report_Date`, ifnull(r.Resolution_Date, '') as `Resolution_Date`, ifnull(g.Description, '') as `Status`
     from 
-		tble t join report r on t.idPsg = r.Psg_Id
+		tble t join report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, del)
 		left join hospital_stay hs on t.idPsg = hs.idPsg
-        left join name n on hs.idPatient = n.idName;
+        left join name n on hs.idPatient = n.idName
+        left join gen_lookups g on g.Table_Name = 'Incident_Status' and g.Code = r.`Status`
+	order by t.count_idPsg DESC, r.Psg_Id;
 	
     drop table tble;
     

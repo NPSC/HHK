@@ -213,6 +213,27 @@ input.ro {
         font-weight: bold;
         }
 
+            .lblFor {
+                text-align: right;
+            }
+            div.dispNone {
+                display:none;
+            }
+            div.dispBlock {
+                display:block;
+                background-color: #FFFFFF;
+                border: 3px solid #CDC8B2;
+                padding: 25px;
+            }
+            .underNotes {
+                font-size: .85em;
+                font-style: italic;
+                color: #4E4E4E;
+            }
+            input.ui-state-error {
+                background:  repeat scroll 50% 50% #EFCFC2;
+                color: #4C3000;
+            }
 
 
 div#global-title {

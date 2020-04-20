@@ -19,7 +19,7 @@ class Login {
     protected $validateMsg = '';
 
 
-    public static function initializeSession($configFileName) {
+    public static function initHhkSession($configFileName) {
 
         // get session instance
         $ssn = Session::getInstance();
@@ -59,7 +59,9 @@ class Login {
         $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
         // Initialize role code
-        $ssn->rolecode = WebRole::Guest;
+        if (isset($ssn->rolecode) === FALSE) {
+        	$ssn->rolecode = WebRole::Guest;
+        }
 
         // Set Timezone
         self::dbParmsToSession($config);

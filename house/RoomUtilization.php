@@ -66,9 +66,9 @@ $output = '';
 
 
 $monthArray = array(
-    0 => array(0, 'December'), 1 => array(1, 'January'), 2 => array(2, 'February'),
+    1 => array(1, 'January'), 2 => array(2, 'February'),
     3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'), 13 => array(13, 'January'));
+    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
 
 if ($uS->fy_diff_Months == 0) {
     $calOpts = array(19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
@@ -241,7 +241,7 @@ $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $
                 array('name'=>'selHospital[]', 'size'=>$numHosp, 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 
 
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'14', 'multiple'=>'multiple'));
+$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
 
 $roomGrouping = HTMLSelector::generateMarkup(

@@ -107,7 +107,7 @@ class webInit {
             $cspURL = $this->page->getHostName();
             header("Content-Security-Policy: "
                     . "default-src data: $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net; "
-                    . "script-src $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline'; "
+                    . "script-src $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline' 'unsafe-eval'; "
                     . "style-src $cspURL https://online.instamed.com https://pay.instamed.com https://instamedprd.cachefly.net 'unsafe-inline';"
                     . "object-src $cspURL; "); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
 

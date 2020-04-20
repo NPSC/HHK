@@ -23,7 +23,7 @@ require CLASSES . 'AuditLog.php';
 try {
 
     $login = new Login();
-    $config = $login->initializeSession(ciCFG_FILE);
+    $config = $login->initHhkSession(ciCFG_FILE);
 } catch (PDOException $pex) {
     echo ("Database Error.  " . $pex->getMessage());
 } catch (Exception $ex) {

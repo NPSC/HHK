@@ -1295,7 +1295,7 @@ class HouseServices {
             }
 
             $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
-            if (strtolower($tkRs->Merchant->getStoredVal()) == 'production' || strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
+            if (strtolower($tkRs->Merchant->getStoredVal()) == 'local') {
                 $merchant = '';
             }
 
@@ -1310,25 +1310,29 @@ class HouseServices {
         }
 
         // New card.
-        if (count($tkRsArray) == 0) {
-        	$attr['checked'] = 'checked';
-        } else {
-        	unset($attr['checked']);
-        }
-
-        $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '3'))
-            .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
-        );
-
-        $tbl->addBodyTr( HTMLTable::makeTd('', array('id'=>'tdChargeMsg' . $index, 'colspan'=>'4', 'style'=>'color:red; display:none;')));
-
         $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
-        $gateway->setCheckManualEntryCheckbox(TRUE);
-
-        $gwTbl = new HTMLTable();
-        $gateway->selectPaymentMarkup($dbh, $gwTbl, $index, $defaultMerchant);
-        $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(array('style'=>'width:100%;')), array('colspan'=>'4', 'style'=>'padding:0;')));
-
+        
+        if ($gateway->hasCofService()) {
+        	
+        	if (count($tkRsArray) == 0) {
+	        	$attr['checked'] = 'checked';
+	        } else {
+	        	unset($attr['checked']);
+	        }
+	
+	        $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '3'))
+	            .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
+	        );
+	
+	        $tbl->addBodyTr( HTMLTable::makeTd('', array('id'=>'tdChargeMsg' . $index, 'colspan'=>'4', 'style'=>'color:red; display:none;')));
+	
+	        $gateway->setCheckManualEntryCheckbox(TRUE);
+	
+	        $gwTbl = new HTMLTable();
+	        $gateway->selectPaymentMarkup($dbh, $gwTbl, $index, $defaultMerchant);
+	        $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(array('style'=>'width:100%;')), array('colspan'=>'4', 'style'=>'padding:0;')));
+        }
+        
         return $tbl->generateMarkup(array('id' => 'tblupCredit'.$index, 'class'=>'igrs'));
 
     }
@@ -1402,8 +1406,10 @@ class HouseServices {
             try {
 
                 $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $selGw);
-
-                $dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage);
+                
+                if ($gateway->hasCofService()) {
+                	$dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage);
+                }
 
             } catch (Hk_Exception_Payment $ex) {
 

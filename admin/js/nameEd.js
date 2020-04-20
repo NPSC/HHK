@@ -18,7 +18,7 @@ $(document).ready(function () {
             ) * 1.1 );
         }
     });
-    
+
     // phone - email tabs block
     $('#phEmlTabs').tabs();
     $('#demographicTabs').tabs();
@@ -59,7 +59,7 @@ $(document).ready(function () {
                     $('#vdon').dialog('open');
                     event.preventDefault();
                 }
-                
+
                 if (ui.newTab.prop('id') === 'wbuser') {
                     $('#vwebUser').dialog("option", "title", 'Web Access Info for ' + memData.memName);
                     $('#vwebUser').dialog('open');
@@ -200,7 +200,7 @@ $(document).ready(function () {
                     }
                     
                 } else {
-                    updateTips(tips, "Password must have 8 characters including at least one uppercase and one lower case letter, one number and one symbol.");
+                    updateTips(tips, "Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.");
                     return;
                 }
 
@@ -322,7 +322,7 @@ $(document).ready(function () {
                         return;
                     }
                     if (!checkStrength($('#txtwUserPW'))) {
-                        updateTips(tipmsg, 'Password must have 8 characters including at least one uppercase and one lower case alphabetical character and one number.');
+                        updateTips(tipmsg, 'Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.');
                         return;
                     }
                     parms['wuname'] = $('#txtwUserName').val();

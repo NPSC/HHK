@@ -242,11 +242,11 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
         $rateTxt = $rateTitles[$visit['rateId']];
 
-        if ($visit['adj'] != 1) {
+        if ($visit['adj'] != 0) {
             $parts = explode('$', $rateTxt);
 
             if (count($parts) == 2) {
-                $amt = floatval($parts[1]) * $visit['adj'];
+                $amt = floatval($parts[1]) * (1 + $visit['adj']/100);
                 $rateTxt = $parts[0] . '$' . number_format($amt, 2);
             }
         }
@@ -785,6 +785,8 @@ where
 
     $vat = new ValueAddedTax($dbh);
     
+    $dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
+    
     $stmt = $dbh->query($query);
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1030,6 +1032,9 @@ where
         $savedr = $r;
 
     }   // End of while
+    
+    $dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, TRUE);
+    
 
 
     // Print the last visit.

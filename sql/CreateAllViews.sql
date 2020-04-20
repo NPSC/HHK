@@ -1794,6 +1794,56 @@ from
 
 
 
+-- -----------------------------------------------------
+-- View `vname_list`
+-- -----------------------------------------------------
+create or replace view `vname_list` as
+    SELECT
+        `n`.`idName` AS `Id`,
+        IFNULL(`g1`.`Description`, '') AS `Prefix`,
+        `n`.`Name_First` AS `First`,
+        `n`.`Name_Middle` AS `Middle`,
+        `n`.`Name_Last` AS `Last`,
+        IFNULL(`g2`.`Description`, '') AS `Suffix`,
+        (CASE
+            WHEN (IFNULL(`np`.`Phone_Extension`, '') = '') THEN IFNULL(`np`.`Phone_Num`, '')
+            ELSE CONCAT_WS('x',
+                    `np`.`Phone_Num`,
+                    `np`.`Phone_Extension`)
+        END) AS `Phone`,
+        IFNULL(`ne`.`Email`, '') AS `Email`,
+        (CASE
+            WHEN (IFNULL(`na`.`Address_2`, '') = '') THEN IFNULL(`na`.`Address_1`, '')
+            ELSE CONCAT(IFNULL(`na`.`Address_1`, ''),
+                    ', ',
+                    `na`.`Address_2`)
+        END) AS `Address`,
+        IFNULL(`na`.`City`, '') AS `City`,
+        IFNULL(`na`.`County`, '') AS `County`,
+        IFNULL(`na`.`State_Province`, '') AS `State`,
+        IFNULL(`na`.`Postal_Code`, '') AS `Zip`,
+        IFNULL(`na`.`Country_Code`, '') AS `Country`,
+        IFNULL(`n`.`BirthDate`, '') AS `BirthDate`,
+        IFNULL(`n`.`External_Id`, '') AS `External_Id`
+    FROM
+        `name` `n`
+        LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
+            AND `n`.`Preferred_Email` = `ne`.`Purpose`
+        LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
+        LEFT JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`
+        LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
+            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
+            AND `g2`.`Table_Name` = 'Name_Suffix'
+    WHERE
+        `n`.`idName` > 0
+            AND `n`.`Record_Member` = 1
+            AND `n`.`Member_Status` IN ('a' , 'd', 'in');
+
+
 
 -- -----------------------------------------------------
 -- View `vnon_reporting_list`
@@ -1832,33 +1882,38 @@ CREATE OR REPLACE VIEW `vresv_notes` AS
         n.Title,
         n.Note_Text,
         rn.Reservation_Id,
+        reg.idPsg,
         n.`Timestamp`
     FROM
         note n
             JOIN
         reservation_note rn ON n.idNote = rn.Note_Id
+			JOIN
+		reservation r ON rn.Reservation_Id = r.idReservation
+			JOIN
+		registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.Status = 'a'
-    UNION
-		SELECT 
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && n.flag = '0'
+	UNION SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
         n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
-        res.idReservation,
+        "",
+        reg.idPsg,
         n.`Timestamp`
     FROM
         note n
             JOIN
-        psg_note pn ON n.idNote = pn.Note_Id
-			JOIN
-		registration reg ON pn.Psg_Id = reg.idPsg
-			JOIN
-		reservation res ON reg.idRegistration = res.idRegistration
-	WHERE
-		n.flag = '1';;
+        reservation_note rn ON n.idNote = rn.Note_Id
+			join
+		reservation r ON rn.Reservation_Id = r.idReservation
+			join
+		registration reg on r.idRegistration = reg.idRegistration
+    WHERE
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && flag = '1';
 
 
 -- -----------------------------------------------------
@@ -1873,6 +1928,7 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
         n.Title,
         n.Note_Text,
         v.idVisit,
+        reg.idPsg,
         n.`Timestamp`
     FROM
         note n
@@ -1880,28 +1936,34 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
         reservation_note rn ON n.idNote = rn.Note_Id
             join
         visit v on v.idReservation = rn.Reservation_Id and v.Span = 0
+			join
+		reservation r ON rn.Reservation_Id = r.idReservation
+			join
+		registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a'
-    UNION
-		SELECT 
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && n.flag = '0'
+	UNION SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
+        n.flag,
         n.User_Name,
         n.Title,
         n.Note_Text,
-        v.idVisit as idVisit,
-        n.`Timestamp`,
-        n.`flag`
+        "",
+        reg.idPsg,
+        n.`Timestamp`
     FROM
         note n
             JOIN
-        psg_note pn ON n.idNote = pn.Note_Id
-			JOIN
-		registration reg ON pn.Psg_Id = reg.idPsg
-			JOIN
-		visit v ON reg.idRegistration = v.idRegistration
-	WHERE
-		n.flag = '1';
+        reservation_note rn ON n.idNote = rn.Note_Id
+            join
+        visit v on v.idReservation = rn.Reservation_Id and v.Span = 0
+			join
+		reservation r ON rn.Reservation_Id = r.idReservation
+			join
+		registration reg on r.idRegistration = reg.idRegistration
+    WHERE
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && flag = '1';
 
 
 -- -----------------------------------------------------
@@ -1924,7 +1986,44 @@ CREATE OR REPLACE VIEW `vpsg_notes` AS
     WHERE
         pn.Psg_Id > 0 && n.`Status` = 'a';
 
-
+-- -----------------------------------------------------
+-- View `vpsg_notes_concat`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vpsg_notes_concat` AS
+    SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        pn.Psg_Id,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        psg_note pn ON n.idNote = pn.Note_Id
+    WHERE
+        pn.Psg_Id > 0 && n.`Status` = 'a'
+    UNION DISTINCT SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        reg.idPsg,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        reservation_note rn ON n.idNote = rn.Note_Id
+			join
+		reservation r ON rn.Reservation_Id = r.idReservation
+			join
+		registration reg on r.idRegistration = reg.idRegistration
+    WHERE
+        rn.Reservation_Id > 0 && n.`Status` = 'a';
 
 -- -----------------------------------------------------
 -- View `vpsg_guest`

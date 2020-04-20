@@ -22,6 +22,7 @@ abstract class PaymentGateway {
     protected $useCVV;
     protected $usePOS;
     protected $checkManualEntryCheckbox = FALSE;
+
     
     public function __construct(\PDO $dbh, $gwType = '') {
 
@@ -89,6 +90,10 @@ abstract class PaymentGateway {
         return $this->voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
     }
 
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
+    	return array();
+    }
+    
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
         throw new Hk_Exception_Payment('Webhook not implemeneted');
     }
@@ -166,6 +171,7 @@ abstract class PaymentGateway {
         $volStmt = $dbh->prepare("call get_credit_gw(:idVisit, :span, :idReg);", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
         $volStmt->execute(array(':idVisit'=>intval($idVisit), ':span'=>intval($span), ':idReg'=>intval($idRegistration)));
         $rows = $volStmt->fetchAll(PDO::FETCH_ASSOC);
+        $volStmt->nextRowset();
 
         if (count($rows) > 0) {
 
@@ -193,12 +199,12 @@ abstract class PaymentGateway {
         $myType = '';
 
         if (is_array($this->gwType) && count($this->gwType) == 1) {
-            $myType = strtolower(array_values($this->gwType)[0]);
+            $myType = array_values($this->gwType)[0];
         } else if (is_array($this->gwType) === FALSE) {
             $myType = $this->gwType;
         }
 
-        return $myType;
+        return strtolower($myType);
     }
 
     public function getResponseErrors() {
@@ -213,6 +219,10 @@ abstract class PaymentGateway {
         return FALSE;
     }
     
+    public function hasCofService() {
+    	return TRUE;
+    }
+    
     public function setCheckManualEntryCheckbox($v) {
     	
     	if ($v) {
@@ -221,7 +231,6 @@ abstract class PaymentGateway {
     		$this->checkManualEntryCheckbox = FALSE;
     	}
     }
-    
     
     protected function getInfoFromCardId(\PDO $dbh, $cardId) {
 

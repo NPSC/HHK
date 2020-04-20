@@ -25,7 +25,7 @@ require ('classes' . DS . 'sec' . DS . 'webInit.php');
 require('classes' . DS . 'sec' . DS . 'Login.php');
 
 
-$config = Login::initializeSession(ciCFG_FILE);
+$config = Login::initHhkSession(ciCFG_FILE);
 
 
 try {
