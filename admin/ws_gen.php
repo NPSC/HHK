@@ -18,8 +18,6 @@ require (CLASSES . 'Relation.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'member/WebUser.php');
 
-require(SEC . 'UserClass.php');
-require(SEC . 'ChallengeGenerator.php');
 require(SEC . 'Pages.php');
 
 
@@ -255,11 +253,15 @@ try {
                 $uid = intval(filter_var($_POST['uid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
             
+            if (isset($_POST["uname"])) {
+                $uname = filter_var($_POST["uname"], FILTER_SANITIZE_STRING);
+            }
+            
             if(isset($_POST['resetNext'])){
                 $resetNext = filter_var($_POST['resetNext'], FILTER_VALIDATE_BOOLEAN);
             }
             
-            $events = adminChangePW($dbh, $adPw, $newPw, $uid, $resetNext);
+            $events = adminChangePW($dbh, $adPw, $newPw, $uid, $uname, $resetNext);
 
             break;
 
@@ -308,7 +310,7 @@ function searchZip(PDO $dbh, $zip) {
     return $events;
 }
 
-function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId, $resetNext) {
+function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId, $uname, $resetNext) {
 
     $event = array();
 
@@ -316,7 +318,7 @@ function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId, $resetNext) {
 
         $u = new UserClass();
 
-        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $resetNext) === TRUE) {
+        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, $resetNext) === TRUE) {
             $event = array('success' => 'Password updated.');
         } else {
             $event = array('error' => $u->logMessage .  '.  Password is unchanged.');

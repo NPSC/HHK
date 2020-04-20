@@ -80,6 +80,8 @@ class WebUser {
         if (count($rws) == 0 && $maintFlag) {
             $tbl->addBodyTr(HTMLTable::makeTd('Password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtwUserPW', 'type'=>'password', 'class'=>'ignrSave'))));
             $tbl->addBodyTr(HTMLTable::makeTd('Require user to reset password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'checked'=>'checked', 'class'=>'ignrSave'))));
+        }else{
+            $tbl->addBodyTr(HTMLTable::makeTd('Require user to reset password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'class'=>'ignrSave'))));
         }
 
          $tbl->addBodyTr(
@@ -225,7 +227,7 @@ class WebUser {
         
         $resetNext = '1';
         if (isset($parms["resetNext"])) {
-            $resetNext = intval(filter_var($parms["resetNext"], FILTER_SANITIZE_NUMBER_INT), 10);
+            $resetNext = filter_var($parms['resetNext'], FILTER_VALIDATE_BOOLEAN);
         }
 
         if ($role == '') {
@@ -253,6 +255,7 @@ class WebUser {
             $usersRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
             $usersRS->Updated_By->setNewVal($admin);
             $usersRS->Default_Page->setNewVal($defaultPage);
+            $usersRS->Chg_PW->setNewVal($resetNext);
 
             $n = EditRS::update($dbh, $usersRS, array($usersRS->idName));
 

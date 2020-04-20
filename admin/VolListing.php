@@ -14,9 +14,9 @@ $wInit = new webInit();
 $dbh = $wInit->dbh;
 $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
+$uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
-
 
 // Create volunteer report
 $query = "SELECT * FROM vweb_users where Id > 0 order by Id;";
@@ -28,7 +28,10 @@ $markup = "";
 
 if (count($rows) > 0) {
     // Table header row
-    $markup = "<thead><tr><th>x</th>";
+    $markup = "<thead><tr>";
+    if($uS->rolecode == '10'){ //if Admin User
+        $markup .= "<th>x</th>";
+    }
     foreach ($rows[0] as $k => $v) {
         $markup .= "<th>" . $k . "</th>";
     }
@@ -75,7 +78,9 @@ if (count($rows) > 0) {
 
 
             if ($k == 'Id') {
-                $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
+                if($uS->rolecode == '10'){
+                    $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
+                }
                 $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
             } else if ($k == 'Last Login') {
                 $markup .= "<td>" . ($r == '' ? '' : date('m/d/Y g:ia', strtotime($r))) . "</td>";
@@ -100,12 +105,16 @@ $volReport = $markup;
         <?php echo JQ_DT_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        
         <script type="text/javascript">
     $(document).ready(function() {
 

@@ -20,6 +20,8 @@ class UserClass
     const PW_New = 'PS';
 
     const Login = 'L';
+    
+    const Lockout = 'PL';
 
     public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE)
     {
@@ -243,7 +245,7 @@ class UserClass
         return FALSE;
     }
 
-    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $resetNextLogin = 0)
+    public function updateDbPassword(\PDO $dbh, $id, $oldPw, $newPw, $uname, $resetNextLogin = 0)
     {
         $ssn = Session::getInstance();
         $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
@@ -273,7 +275,7 @@ class UserClass
             ));
 
             if ($stmt->rowCount() == 1) {
-                $this->insertUserLog($dbh, UserClass::PW_Changed);
+                $this->insertUserLog($dbh, UserClass::PW_Changed, $uname);
 
                 $query = "insert into w_user_passwords (idUser, Enc_PW) values(:idUser, :newPw);";
                 $stmt = $dbh->prepare($query);
@@ -352,22 +354,18 @@ class UserClass
 
         $mkup = '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
         $passwordTitle = 'Change your Password';
-        $securityQuestionTitle = 'Update Security Questions';
 
-        if (self::isUserNew($dbh, $uS)) {
+        if (self::isPassExpired($dbh, $uS)){
             $mkup .= '
-            <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+            <div class="ui-widget hhk-visitdialog hhk-row PassExpDesc" style="margin-bottom: 1em;">
                 <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
-        			Welcome
+        			Password Expired
         		</div>
         		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-                    <p style="margin: 0.5em">' . $uS->UserWelcomeText . '</p>
+                    <p style="margin: 0.5em">Your password has expired, please choose a new one below</p>
                 </div>
             </div>
             ';
-
-            $passwordTitle = 'Step 1. Set your Password';
-            $securityQuestionTitle = 'Step 2. Set your Security Questions';
         }
 
         // password markup
@@ -377,59 +375,21 @@ class UserClass
         		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
         		
                     <table style="width: 100%"><tr>
-                            <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName">' . $uS->username . '</span></td>
+                            <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
                         </tr><tr>
-                            <td class="tdlabel">Enter Old Password:</td><td style="display: flex"><input style="width: 100%" id="txtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            <td class="tdlabel">Enter Old Password:</td><td style="display: flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                         </tr><tr>
-                            <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="utxtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                         </tr><tr>
-                            <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="txtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                         </tr><tr>
-                            <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
+                            <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter,<br> 1 lowercase letter, a number and a symbol. Do not use names or dictionary words</span></td>
                         </tr><tr>
                             <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
                         </tr>
                     </table>
                 </div>
             </div>';
-
-        if ($uS->AllowPasswordRecovery) {
-            // get available questions
-            $query = "select idQuestion, Question from w_user_questions where Status = 'a';";
-            $stmt = $dbh->query($query);
-            $questions = $stmt->fetchAll(\PDO::FETCH_BOTH);
-
-            // get user questions
-            $query = "select idAnswer, idQuestion from w_user_answers A join w_users U on A.idUser = U.idName where U.User_Name='" . $uS->username . "' limit 3;";
-            $stmt = $dbh->query($query);
-            $userQuestions = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            // Question markup
-            $mkup .= '
-            <div class="ui-widget hhk-visitdialog hhk-row">
-        		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $securityQuestionTitle . '</div>
-        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-        		
-                    <table style="width: 100%"><tr>
-                            <td class="tdlabel">Question 1:</td><td><select id="secQ1" style="width: 100%">' . doOptionsMkup($questions, $userQuestions[0]['idQuestion'] ?? '', true, "Select a Question") . '</select></td>
-                        </tr><tr>
-                            <td class="tdlabel">Answer 1:</td><td style="display: flex"><input style="width: 100%" id="txtAns1" data-ansid="' . ($userQuestions[0]['idAnswer'] ?? '') . '" type="password" value="" placeholder="' . (isset($userQuestions[0]['idQuestion']) ? '(unchanged)' : '') . '"  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td class="tdlabel">Question 2:</td><td><select id="secQ2" style="width: 100%">' . doOptionsMkup($questions, $userQuestions[1]['idQuestion'] ?? '', true, "Select a Question") . '</select></td>
-                        </tr><tr>
-                            <td class="tdlabel">Answer 2:</td><td style="display: flex"><input style="width: 100%" id="txtAns2" data-ansid="' . ($userQuestions[1]['idAnswer'] ?? '') . '" type="password" value="" placeholder="' . (isset($userQuestions[1]['idQuestion']) ? '(unchanged)' : '') . '" /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-							<td class="tdlabel">Question 3:</td><td><select id="secQ3" style="width: 100%">' . doOptionsMkup($questions, $userQuestions[2]['idQuestion'] ?? '', true, "Select a Question") . '</select></td>
-						</tr><tr>
-                        	<td class="tdlabel">Answer 3:</td><td style="display: flex"><input style="width: 100%" id="txtAns3" data-ansid="' . ($userQuestions[2]['idAnswer'] ?? '') . '" type="password" value="" placeholder="' . (isset($userQuestions[2]['idQuestion']) ? '(unchanged)' : '') . '" /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td colspan="2" style="text-align: center;padding-top:10px;"><span id="SecQuestionErrMsg" style="color:red;"></span></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-        ';
-        }
         
         $mkup .= "</div>";
         return $mkup;
@@ -490,16 +450,19 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
         if ($user['Last_Login'] && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a' && $user['Chg_PW'] == 0) {
             $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
             $lastLogin = new DateTimeImmutable($user['Last_Login']);
+            $lastUpdated = new DateTimeImmutable($user['Last_Updated']);
+            $lastUpdated = $lastUpdated->setTime(0, 0);
             $lastLogin = $lastLogin->setTime(0, 0);
             $deactivateDate = $lastLogin->add(new DateInterval('P' . $userInactiveDays . 'D')); // add inactivedays
             $now = new DateTime();
             $today = $now->setTime(0, 0);
-            $days = $lastLogin->diff($today)->format('%a');
-            if ($days >= $userInactiveDays) {
-                $stmt = "update w_users set `Status` = 'd' where idName = $user[idName]";
+            $lastLoginDays = $lastLogin->diff($today)->format('%a');
+            $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
+            if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
+                $stmt = "update w_users set `Status` = 'd', `Last_Updated` = " . $deactivateDate->format("Y-m-d H:i:s") . " where idName = $user[idName]";
                 if ($dbh->exec($stmt) > 0) {
                     $user['Status'] = 'd';
-                    self::insertUserLog($dbh, "User deactivated from inactivity", $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
+                    self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
                 }
             }
         }

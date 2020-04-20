@@ -9,7 +9,6 @@
  */
 require ("AdminIncludes.php");
 require (CLASSES . 'CreateMarkupFromDB.php');
-require (SEC . 'UserClass.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -79,7 +78,13 @@ if (isset($_POST['btnAccess'])) {
 
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $edRows = array();
-
+    $actNames = array(
+        'L'=>"Login",
+        'PS' => "Set Password",
+        'PC' => "Changed Password",
+        'PL' => "Locked Out"
+    );
+    
     foreach ($rows as $r) {
 
         $r['Date'] = date('M j, Y H:i:s', strtotime($r['Access_Date']));
@@ -89,6 +94,8 @@ if (isset($_POST['btnAccess'])) {
         }
 
         unset($r['Access_Date']);
+        
+        $r['Action'] = $actNames[$r["Action"]];
 
         $edRows[] = $r;
     }
@@ -116,11 +123,15 @@ $actionsel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($actOpts, 
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
+        <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        
 
         <script type="text/javascript">
 $(document).ready(function() {

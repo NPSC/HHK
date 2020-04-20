@@ -77,4 +77,18 @@ $('#txtPW, #txtUname').keypress(function (event) {
 });
 $('#txtPW').val('');
 $('#txtUname').focus();
+
+$("button").button();
+
+$(document).on('click', '.showPw', function() {
+	var input = $(this).closest("td").find("input");
+	if (input.prop("type") == 'password') {
+		input.prop("type", "text");
+		$(this).text("Hide");
+	} else {
+		input.prop("type", "password");
+		$(this).text("Show");
+	}
+});
+
 });

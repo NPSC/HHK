@@ -174,7 +174,7 @@ $(document).ready(function () {
         modal: true,
         buttons: {
             "Save": function () {
-                var tips = $('#pwChangeErrMsg'),
+                var tips = $('#apwChangeErrMsg'),
                         oldpw = $('#txtOldPw'), 
                         pw1 = $('#txtNewPw1'),
                         pw2 = $('#txtNewPw2'),
@@ -219,6 +219,7 @@ $(document).ready(function () {
                         cmd: 'adchgpw',
                         adpw: oldpwMD5,
                         uid: memData.id,
+                        uname: memData.webUserName,
                         newer: newpwMD5,
                         resetNext: resetNext
                     },
@@ -299,8 +300,8 @@ $(document).ready(function () {
     
     $('#vwebUser').dialog({
         autoOpen: false,
-        height: 420,
-        width: 732,
+        height: 450,
+        width: 'auto', // 732
         resizable: true,
         modal: true,
         buttons: {

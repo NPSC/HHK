@@ -18,6 +18,11 @@ body {
 body.testbody {
     background-color: #C7EFB3; /* #DFF7FF;*/
 }
+
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
 .pageSpacer {
     width: 100%;
     background-color: #459e00;
@@ -80,7 +85,7 @@ h2.logo {
     z-index: 99;
 }
 #version {
-    height: 25px;
+    height: 15px;
     position: absolute;
     right: 2px;
     top: 47px;

@@ -131,6 +131,7 @@ class W_usersRS extends TableRS {
         $this->Last_Login = new DB_Field("Last_Login", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->PW_Change_Date = new DB_Field("PW_Change_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->PW_Updated_By = new DB_Field("PW_Updated_By", "", new DbStrSanitizer(45), FALSE);
+        $this->Chg_PW = new DB_Field("Chg_PW", '0', new DbIntSanitizer(1), TRUE, TRUE);
 
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

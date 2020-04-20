@@ -543,7 +543,7 @@ $alertMessage = $alertMsg->createMarkup();
                     </tr><tr>
                         <td class="tdlabel">Require password change on next login</td><td><input id="resetNext" type="checkbox" value="1" checked="checked"  /></td>
                     </tr><tr>
-                        <td colspan ="2"><span id="pwChangeErrMsg"><?php echo $PWresultMessage; ?></span></td>
+                        <td colspan ="2"><span id="apwChangeErrMsg"><?php echo $PWresultMessage; ?></span></td>
                     </tr>
                 </table>
             </div>
