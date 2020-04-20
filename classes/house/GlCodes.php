@@ -8,6 +8,7 @@ class GlCodes {
 	const ALL_GROSS_SALES = '200-1007582-500014';
 	const CASH_CHECK = '200-0000000-140007';
 	const CREDIT_CARD = '200-0000000-100010';
+	const FOUNDATION_DON = '200-0000000-180100';
 	
 	protected $fileId;
 	protected $journalCat;
@@ -18,6 +19,7 @@ class GlCodes {
 	protected $lines;
 	protected $errors;
 	protected $titles;
+	protected $paymentDate;
 
 	
 	public function __construct(\PDO $dbh, $month, $year, $glParm) {
@@ -36,32 +38,11 @@ class GlCodes {
 		$this->loadDbRecords($dbh);
 		
 		$this->lines = array();
-		
-		$this->titles =  array_flip(array(
-				// 'Gross sales' 	=>	'200-1007582-500014',
-				'County Sales'		=>	'200-1007582-500014',
-				'Foundation Donations'	=>	'200-1007582-500105',
 				
-				'Check or Cash'	=>	'200-0000000-140007',
-				'Credit Card'	=>	'200-0000000-100010',
-				'County Fee Liability'	=>	'200-0000000-210134',
-				'Foundation Donation'	=>	'200-0000000-180100',
-				
-				'Funded by Cardio Surgery'	=>	'200-10029108-860023',
-				'Funded by NICU'	=>	'200-1001313-860023',
-				'Funded by Neurology'	=>	'200-1007536-860023',
-				'Funded by Csurgery'	=>	'200-1002200-860023',
-				
-				'Sales Tax'	=> '200-0000000-210100',
-				'Hospitality Tax'	=>	'200-0000000-210115',
-				'Unknown Code' => '',
-		));
-		
-		
 	}
 	
 	
-	public function mapRecords($useTitles = FALSE) {
+	public function mapRecords() {
 		
 		if (count($this->records) < 1) {
 			$this->recordError('No Records to Map. ');
@@ -82,44 +63,58 @@ class GlCodes {
 			}
 			
 			// Got one - go with it.
-			$this->makePayment($r, $useTitles);
+			$this->makePayment($r);
 			
 		}
 		
 		return $this;
 	}
 	
-	protected function makePayment($r, $useTitles = FALSE) {
+	protected function makePayment($r) {
 		
 		$p = $r['p'][0];
+		$invLines = array();
+		$hasWaive = FALSE;
 
 		if ($p['pTimestamp'] != '') {
-			$pDate = new DateTime($p['pTimestamp']);
+			$this->paymentDate = new DateTime($p['pTimestamp']);
 		} else {
 			$this->recordError("Missing Payment Timestamp. Payment Id = ". $p['idPayment']);
 			return;
 		}
+		
+		//
+		foreach ($r['l'] as $l) {
+			
+			$invLines[] = $l;
+			
+			if ($l['Item_Gl_Code'] == ItemId::Waive) {
+				$hasWaive = TRUE;
+			}
+		}
+		
+		// Take care of waived payments first
+		if ($hasWaive) {
+			
+			$invLines = $this->makeWaivePayments($invLines);
+		}
 
-		if ($p['pMethod'] == PaymentMethod::Charge) {
+		// override with 3rd party paying
+		if ($p['ba_Gl_Debit'] != '') {
+			
+			// process 3rd party payments
+			
+		} else if ($p['pMethod'] == PaymentMethod::Charge) {
 			$glCode = self::CREDIT_CARD;
 		} else {
 			$glCode = self::CASH_CHECK;
 		}
-		
-		// override with 3rd party paying
-		if ($p['ba_Gl_Code'] != '') {
-			$glCode = $p['ba_Gl_Code'];
-		}
-		
-		if ($useTitles) {
-			$glCode = $this->titles[$glCode];
-		}
-		
+				
 		// Payment Status Return earlier sale
 		if ($p['pStatus'] == PaymentStatusCode::Retrn) {
 			
 			// if original payment is in the same report as this return, then ignore.
-			if ($pDate >= $this->startDate && $pDate < $this->endDate) {
+			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
 				return;
 			}
 			
@@ -133,13 +128,9 @@ class GlCodes {
 			$line = new GlTemplateRecord($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
 			$this->lines[] = $line->getFieldArray();
 			
-			foreach($r['l'] as $l) {
+			foreach($invLines as $l) {
 
-				if ($useTitles) {
-					$glCode = $this->titles[$l['Item_Gl_Code']];
-				} else {
-					$glCode = $l['Item_Gl_Code'];
-				}
+				$glCode = $l['Item_Gl_Code'];
 
 				// map gl code
 				$line = new GlTemplateRecord($this->fileId, $glCode, 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
@@ -149,27 +140,24 @@ class GlCodes {
 		// Status = Sale
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] == 0) {
 
-			$line = new GlTemplateRecord($this->fileId, $glCode, $p['pAmount'], 0, $pDate, $this->glParm->getJournalCat());
+			$line = new GlTemplateRecord($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
 			$this->lines[] = $line->getFieldArray();
 
 			// Case 1: payment = 0 and waived amount.
 			if ($p['pAmount'] == 0 && $this->hasWaive($r['l'])) {
 
-				foreach($r['l'] as $l) {
+				foreach($invLines as $l) {
 					
 				}
 
 			} else {
 
-				foreach($r['l'] as $l) {
+				foreach($invLines as $l) {
 
-					if ($useTitles) {
-						$glCode = $this->titles[$l['Item_Gl_Code']];
-					} else {
-						$glCode = $l['Item_Gl_Code'];
-					}
+					$glCode = $l['Item_Gl_Code'];
+
 					
-					$line = new GlTemplateRecord($this->fileId, $glCode, 0, $l['il_Amount'], $pDate, $this->glParm->getJournalCat());
+					$line = new GlTemplateRecord($this->fileId, $glCode, 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
 					$this->lines[] = $line->getFieldArray();
 				}
 			}
@@ -177,26 +165,80 @@ class GlCodes {
 		// Status = refund amount
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
 
-			$line = new GlTemplateRecord($this->fileId, $glCode, $p['pAmount'], 0, $pDate, $this->glParm->getJournalCat());
+			$line = new GlTemplateRecord($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
 			$this->lines[] = $line->getFieldArray();
 			
-			foreach($r['l'] as $l) {
+			foreach($invLines as $l) {
 				
-				if ($useTitles) {
-					$glCode = $this->titles[$l['Item_Gl_Code']];
-				} else {
 					$glCode = $l['Item_Gl_Code'];
-				}
+
 				
 				// map gl code
-				$line = new GlTemplateRecord($this->fileId, $glCode, 0, $l['il_Amount'], $pDate, $this->glParm->getJournalCat());
+					$line = new GlTemplateRecord($this->fileId, $glCode, 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
 				$this->lines[] = $line->getFieldArray();
 			}
 			
 		} else {
 			$this->recordError("Unanticipated Payment Status: ". $p['pStatus'] . '  Payment Id = '.$p['idPayment']);
 		}
+		}
+	}
+	
+	protected function make3rdPartyPayments() {
 		
+	}
+	
+	protected function makeWaivePayments(array $invLines) {
+		
+		// add up waiveable items
+		$waiveAmt = 0;
+		$waiveGlCode = '';
+		$remainingItems = array();
+		
+		foreach ($invLines as $l) {
+			
+			if ($l['Item_Gl_Code'] = ItemId::Waive) {
+				$waiveAmt += abs($l['il_Amount']);
+				$waiveGlCode = $l['Item_Gl_Code'];
+			}
+		}
+		
+		if ($waiveAmt > 0) {
+			
+			// credit the waive gl code
+			$line = new GlTemplateRecord($this->fileId, $waiveGlCode, 0, $waiveAmt, $this->paymentDate, $this->glParm->getJournalCat());
+			$this->lines[] = $line->getFieldArray();
+			
+			// debit the foundation donation
+			$line = new GlTemplateRecord($this->fileId, self::FOUNDATION_DON, 0, $waiveAmt, $this->paymentDate, $this->glParm->getJournalCat());
+			$this->lines[] = $line->getFieldArray();
+			
+		}
+		
+		// reduce the waiveable items
+		foreach ($invLines as $l) {
+			
+			// Don't return the waiving item
+			if ($l['Item_Gl_Code'] = ItemId::Waive) {
+				continue;
+			}
+			
+			// Adjust the amounts after the waive.
+			if ($l['Item_Gl_Code'] = ItemId::Lodging || $l['Item_Gl_Code'] = ItemId::AddnlCharge) {
+				
+				if ($l['il_Amount'] >= $waiveAmt) {
+					$l['il_Amount'] -= $waiveAmt;
+					$waiveAmt = 0;
+				} else {
+					$waiveAmt -= $l['il_Amount'];
+					$l['il_Amount'] = 0;
+				}
+			}
+			
+			$remainingItems[] = $l;
+		}
+		
+		return $remainingItems;
 	}
 	
 	protected function loadDbRecords(\PDO $dbh) {
@@ -283,9 +325,7 @@ class GlCodes {
     				);
     				
     				if ($p['Delegated_Id'] > 0) {
-    					
     					$delegatedInvoiceLines[$p['Delegated_Id']][] = $line;
-    					
     				} else if ($p['il_Item_Id'] != ItemId::InvoiceDue) {
     					$invoiceLines[] = $line;
     				}
@@ -671,7 +711,7 @@ class GlTemplateRecord {
 	protected $purchaseDate;
 	protected $journalCategory;
 	
-	public function __construct($fileId, $glCode, $creditAmount, $debitAmount, $purchaseDate, $journalCategory) {
+	public function __construct($fileId, $glCode, $debitAmount, $creditAmount, $purchaseDate, $journalCategory) {
 		
 		$this->fieldArray = $this->setStaticFields($fileId);
 		

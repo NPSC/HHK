@@ -120,7 +120,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('FB_Status','w','Waiting','','',0),
 ('FB_Status','x','Prohibited','','',0),
 
-('Form_Upload', 'c', 'Comfirmation', 'Resv_Conf', '', 0),
+('Form_Upload', 'c', 'Confirmation', 'Resv_Conf', '', 0),
 ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement', '', 0),
 ('Form_Upload', 's', 'Survey Form', 'Survy_Form', '', 0),
 
