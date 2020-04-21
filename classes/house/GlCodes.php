@@ -18,7 +18,6 @@ class GlCodes {
 	protected $records;
 	protected $lines;
 	protected $errors;
-	protected $titles;
 	protected $paymentDate;
 
 	
@@ -41,7 +40,7 @@ class GlCodes {
 				
 	}
 	
-	
+
 	public function mapRecords() {
 		
 		if (count($this->records) < 1) {
@@ -99,10 +98,11 @@ class GlCodes {
 			$invLines = $this->makeWaivePayments($invLines);
 		}
 
-		// override with 3rd party paying
+		// payment type
 		if ($p['ba_Gl_Debit'] != '') {
 			
-			// process 3rd party payments
+			// process 3rd party payment
+			$glCode = $p['ba_Gl_Debit'];
 			
 		} else if ($p['pMethod'] == PaymentMethod::Charge) {
 			$glCode = self::CREDIT_CARD;
@@ -117,7 +117,7 @@ class GlCodes {
 			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
 				return;
 			}
-			
+
 			if ($p['pUpdated'] != '') {
 				$pUpDate = new DateTime($p['pUpdated']);
 			} else {
@@ -127,13 +127,15 @@ class GlCodes {
 
 			$line = new GlTemplateRecord($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
 			$this->lines[] = $line->getFieldArray();
-			
+
 			foreach($invLines as $l) {
 
-				$glCode = $l['Item_Gl_Code'];
+				if ($l['Item_Gl_Code'] == '') {
+					continue;
+				}
 
 				// map gl code
-				$line = new GlTemplateRecord($this->fileId, $glCode, 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
+				$line = new GlTemplateRecord($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
 				$this->lines[] = $line->getFieldArray();
 			}
 
@@ -143,48 +145,36 @@ class GlCodes {
 			$line = new GlTemplateRecord($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
 			$this->lines[] = $line->getFieldArray();
 
-			// Case 1: payment = 0 and waived amount.
-			if ($p['pAmount'] == 0 && $this->hasWaive($r['l'])) {
+			foreach($invLines as $l) {
 
-				foreach($invLines as $l) {
-					
+				if ($l['Item_Gl_Code'] == '') {
+					continue;
 				}
 
-			} else {
-
-				foreach($invLines as $l) {
-
-					$glCode = $l['Item_Gl_Code'];
-
-					
-					$line = new GlTemplateRecord($this->fileId, $glCode, 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
-					$this->lines[] = $line->getFieldArray();
-				}
+				$line = new GlTemplateRecord($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
+				$this->lines[] = $line->getFieldArray();
 			}
 
 		// Status = refund amount
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
 
-			$line = new GlTemplateRecord($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+			$line = new GlTemplateRecord($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->glParm->getJournalCat());
 			$this->lines[] = $line->getFieldArray();
-			
-			foreach($invLines as $l) {
-				
-					$glCode = $l['Item_Gl_Code'];
 
-				
+			foreach($invLines as $l) {
+
+				if ($l['Item_Gl_Code'] == '') {
+					continue;
+				}
+
 				// map gl code
-					$line = new GlTemplateRecord($this->fileId, $glCode, 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
+				$line = new GlTemplateRecord($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate, $this->glParm->getJournalCat());
 				$this->lines[] = $line->getFieldArray();
 			}
 			
 		} else {
 			$this->recordError("Unanticipated Payment Status: ". $p['pStatus'] . '  Payment Id = '.$p['idPayment']);
 		}
-		}
-	}
-	
-	protected function make3rdPartyPayments() {
 		
 	}
 	
@@ -379,16 +369,6 @@ class GlCodes {
 			return FALSE;
 		}
 		
-	}
-	
-	protected function hasWaive($invLInes) {
-		
-		foreach ($invLInes as $l) {
-			if ($l['il_Item_Id'] == ItemId::Waive) {
-				return TRUE;
-			}
-		}
-		return FALSE;
 	}
 	
 	protected function recordError($error) {

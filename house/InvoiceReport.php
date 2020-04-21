@@ -820,8 +820,14 @@ if ($useGlReport) {
 			$glCodes->mapRecords()
 					->transferRecords();
 			
-			$glInvoices = HTMLContainer::generateMarkup('div',$glCodes->getErrors(), array('style'=>'clear:both;color:red;font-size:large;'));
-			
+			if (count($glCodes->getErrors()) > 0) {
+				$etbl = new HTMLTable();
+				foreach ($glCodes->getErrors() as $e) {
+					$etbl->addBodyTr(HTMLTable::makeTd($e));
+				}
+				$glInvoices = $etbl->generateMarkup() . $glInvoices;
+			}
+					
 		} else {
 			
 			$tbl = new HTMLTable();

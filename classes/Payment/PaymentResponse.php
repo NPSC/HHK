@@ -80,6 +80,9 @@ abstract class PaymentResponse {
     }
 
     public function getPaymentDate() {
+    	if ($this->paymentDate == '') {
+    		return date('Y-m-d H:i:s');
+    	}
         return $this->paymentDate;
     }
 
