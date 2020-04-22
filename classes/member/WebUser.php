@@ -59,14 +59,14 @@ class WebUser {
 
         // Values for new web user
         if (count($rws) == 0 && $maintFlag) {
-            $webUserName = HTMLInput::generateMarkup('', array('id'=>'txtwUserName', 'class'=>'ignrSave'));
+            $webUserName = HTMLInput::generateMarkup('', array('id'=>'txtwUserName', 'class'=>'ignrSave', 'style'=>'width: 98%'));
         } else {
             $webUserName = $wUserRS->User_Name->getStoredVal();
         }
 
         // Values for defalut page
         if ($maintFlag) {
-            $defaultPage = HTMLInput::generateMarkup($wUserRS->Default_Page->getStoredVal(), array('id'=>'txtwDefaultPage', 'class'=>'ignrSave'));
+            $defaultPage = HTMLInput::generateMarkup($wUserRS->Default_Page->getStoredVal(), array('id'=>'txtwDefaultPage', 'class'=>'ignrSave', 'style'=>'width: 98%'));
         } else {
             $defaultPage = $wUserRS->Default_Page->getStoredVal();
         }
@@ -78,7 +78,7 @@ class WebUser {
 
         // Password - add a row
         if (count($rws) == 0 && $maintFlag) {
-            $tbl->addBodyTr(HTMLTable::makeTd('Password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtwUserPW', 'type'=>'password', 'class'=>'ignrSave'))));
+            $tbl->addBodyTr(HTMLTable::makeTd('Password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtwUserPW', 'type'=>'password', 'class'=>'ignrSave', 'style'=>'width: 100%')) . '<button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button>', array('style'=>'display: flex')));
             $tbl->addBodyTr(HTMLTable::makeTd('Require user to reset password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'checked'=>'checked', 'class'=>'ignrSave'))));
         }else{
             $tbl->addBodyTr(HTMLTable::makeTd('Require user to reset password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'class'=>'ignrSave'))));
@@ -90,7 +90,7 @@ class WebUser {
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd("Web Status:", array('class'=>'tdlable'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($wStatusMkup, $wUserRS->Status->getStoredVal()), array('id'=>'selwStatus', 'class'=>'ignrSave')))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($wStatusMkup, $wUserRS->Status->getStoredVal()), array('id'=>'selwStatus', 'class'=>'ignrSave', 'style'=>'width: 100%')))
                 );
         $tbl->addBodyTr(
                 HTMLTable::makeTd("Last Login:", array('class'=>'tdlable'))
@@ -102,10 +102,10 @@ class WebUser {
                 );
         $tbl->addBodyTr(
                 HTMLTable::makeTd("Verify Address:", array('class'=>'tdlable'))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($wVerifyAddr, $wUserRS->Verify_Address->getStoredVal()), array('id'=>'selwVerify', 'class'=>'ignrSave')))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($wVerifyAddr, $wUserRS->Verify_Address->getStoredVal()), array('id'=>'selwVerify', 'class'=>'ignrSave', 'style'=>'width: 100%')))
                 );
 
-        $attr = array('id'=>'selwRole', 'class'=>'ignrSave');
+        $attr = array('id'=>'selwRole', 'class'=>'ignrSave', 'style'=>'width: 100%');
         if ($maintFlag === FALSE) {
             $attr['disabled'] = 'disabled';
         }

@@ -533,13 +533,13 @@ $alertMessage = $alertMsg->createMarkup();
             <div id="achgPw" class="hhk-member-detail" style="display:none;font-size:0.95em;">
                 <table>
                     <tr>
-                        <td class="tdlabel">User Name</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" /></td>
+                        <td class="tdlabel">User Name</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" style="width: 100%" /></td>
                     </tr><tr>
-                        <td class="tdlabel">Admin Password</td><td><input id="txtOldPw" type="password" value="" title="Enter your password, not the users old password." /></td>
+                        <td class="tdlabel">Admin Password</td><td style="display: flex"><input id="txtOldPw" type="password" value="" title="Enter your password, not the users old password." /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                     </tr><tr>
-                        <td class="tdlabel">Enter New Password</td><td><input id="txtNewPw1" type="password" value="" title="This will be the users new password."/></td>
+                        <td class="tdlabel">Enter New Password</td><td style="display: flex"><input id="txtNewPw1" type="password" value="" title="This will be the users new password."/><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                     </tr><tr>
-                        <td class="tdlabel">Enter New Password Again</td><td><input id="txtNewPw2" type="password" value=""  /></td>
+                        <td class="tdlabel">Enter New Password Again</td><td style="display: flex"><input id="txtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                     </tr><tr>
                         <td class="tdlabel">Require password change on next login</td><td><input id="resetNext" type="checkbox" value="1" checked="checked"  /></td>
                     </tr><tr>

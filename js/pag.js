@@ -220,15 +220,14 @@ $(document).ready(
 									$('#txtOldPw').focus();
 								});
 
-						$('div#dchgPw').on('click', '.showPw', function() {
+						$('div#dchgPw').on('mousedown', '.showPw', function() {
 							var input = $(this).closest("td").find("input");
-							if (input.prop("type") == 'password') {
-								input.prop("type", "text");
-								$(this).text("Hide");
-							} else {
-								input.prop("type", "password");
-								$(this).text("Show");
-							}
+							input.prop("type", "text");
+						});
+						
+						$('div#dchgPw').on('mouseup', '.showPw', function() {
+							var input = $(this).closest("td").find("input");
+							input.prop("type", "password");
 						});
 
 						

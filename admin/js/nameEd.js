@@ -167,6 +167,18 @@ $(document).ready(function () {
         $('#txtOldPw').focus();
     });
     
+    $(document).on('mousedown', '.showPw', function() {
+		var input = $(this).closest("td").find("input");
+		input.prop("type", "text");
+	});
+	
+	$(document).on('mouseup', '.showPw', function() {
+		var input = $(this).closest("td").find("input");
+		input.prop("type", "password");
+	});
+	
+	$('.showPw').button();
+    
     $('#achgPw').dialog({
         autoOpen: false,
         width: 550,

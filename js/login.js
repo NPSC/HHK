@@ -81,15 +81,14 @@ $('#txtUname').focus();
 
 $("button").button();
 
-$(document).on('click', '.showPw', function() {
+$(document).on('mousedown', '.showPw', function() {
 	var input = $(this).closest("td").find("input");
-	if (input.prop("type") == 'password') {
-		input.prop("type", "text");
-		$(this).text("Hide");
-	} else {
-		input.prop("type", "password");
-		$(this).text("Show");
-	}
+	input.prop("type", "text");
+});
+
+$(document).on('mouseup', '.showPw', function() {
+	var input = $(this).closest("td").find("input");
+	input.prop("type", "password");
 });
 
 });
