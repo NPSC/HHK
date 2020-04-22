@@ -73,25 +73,23 @@ CREATE PROCEDURE `gl_report` (
 	IN pmtStart VARCHAR(15), 
     IN pmtEnd VARCHAR(15))
 BEGIN
-	create temporary table idinp (idInvoice int);
+	create temporary table idinp (idInvoice int NOT NULL, PRIMARY KEY (idInvoice));
 	create temporary table idind (idInvoice int);
 
-	insert into idinp
+	replace into idinp
 		select 
-			`i`.`idInvoice`
+			`pi`.`Invoice_Id`
 		FROM
 			`payment` `p`
 			JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
-			JOIN `invoice` `i` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
 		where 
-			i.Status != 'c' and 
             ((DATE(`p`.`Timestamp`) >= DATE(pmtStart) && DATE(`p`.`Timestamp`) < DATE(pmtEnd))
 			OR (DATE(`p`.`Last_Updated`) >= DATE(pmtStart) && DATE(`p`.`Last_Updated`) < DATE(pmtEnd)));
         
 	insert into idind
 		select idInvoice from invoice where Delegated_Invoice_Id in (select idinvoice from idinp);
 
-	insert into idinp select idInvoice from idind;
+	replace into idinp select idInvoice from idind;
 
 	select  `i`.`idInvoice`,
         `i`.`Amount` AS `iAmount`,

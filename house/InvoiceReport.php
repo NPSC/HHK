@@ -42,7 +42,7 @@ require CLASSES . 'OpenXML.php';
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new webInit(WebPageCode::Page, FALSE);
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -879,7 +879,7 @@ if ($useGlReport) {
 			$glInvoices = $tbl->generateMarkup();
 			
 			// Comma delemeted file.
-			$glCodes->mapRecords(FALSE);
+			$glCodes->mapRecords();
 			
 			$tbl = new HTMLTable();
 			
@@ -888,7 +888,7 @@ if ($useGlReport) {
 				$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
 			}
 
-			$glInvoices .= "<p style='margin-top:20px;'>File</p>" .$tbl->generateMarkup();
+			$glInvoices .= "<p style='margin-top:20px;'>Total Credits = " . number_format($glCodes->getTotalCredit(), 2) . " Total Debits = " . number_format($glCodes->getTotalDebit(), 2) . "</p>" .$tbl->generateMarkup();
 			
 			if (count($glCodes->getErrors()) > 0) {
 				$etbl = new HTMLTable();
