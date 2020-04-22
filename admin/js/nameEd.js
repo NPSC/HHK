@@ -206,8 +206,8 @@ $(document).ready(function () {
 
                 // make MD5 hash of password and concatenate challenge value
                 // next calculate MD5 hash of combined values
-                oldpwMD5 = hex_md5(hex_md5(oldpw.val()) + '<?php echo $challengeVar; ?>');
-                newpwMD5 = hex_md5(pw1.val());
+                var oldpwval = oldpw.val();
+                var newpwval = pw1.val();
 
                 oldpw.val('');
                 pw1.val('');
@@ -217,10 +217,10 @@ $(document).ready(function () {
                 $.post("ws_gen.php",
                     {
                         cmd: 'adchgpw',
-                        adpw: oldpwMD5,
+                        adpw: oldpwval,
                         uid: memData.id,
                         uname: memData.webUserName,
-                        newer: newpwMD5,
+                        newer: newpwval,
                         resetNext: resetNext
                     },
                     function (data) {
@@ -327,7 +327,7 @@ $(document).ready(function () {
                         return;
                     }
                     parms['wuname'] = $('#txtwUserName').val();
-                    parms['wupw'] = hex_md5($('#txtwUserPW').val());
+                    parms['wupw'] = $('#txtwUserPW').val();
                     parms['grpSec_v'] = 'checked';  // check the volunteer auth code.
                     
                 }

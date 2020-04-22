@@ -25,6 +25,7 @@ class UserClass
 
     public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE)
     {
+        $ssn = Session::getInstance();
         // instantiate a ChallengeGenerator object
         $chlgen = new ChallengeGenerator(FALSE);
 
@@ -50,7 +51,16 @@ class UserClass
             $r = self::disableInactiveUser($dbh, $r); // returns updated user array
         }
 
-        if ($r != NULL && md5($r['Enc_PW'] . $challenge) == $password && $r['Status'] == 'a') {
+        //check PW
+        $match = false;
+        //new method
+        if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
+            $match = true;
+        }else if ($r != NULL && md5($r['Enc_PW'] . $challenge) == md5(md5($password) . $challenge)) { //old method
+            $match = true;
+        }
+        
+        if ($match && $r['Status'] == 'a') {
 
             // Regenerate session ID to prevent session fixation attacks
             $ssn = Session::getInstance();
@@ -74,7 +84,7 @@ class UserClass
             $this->defaultPage = $r['Default_Page'];
 
             return TRUE;
-        } else if ($r != NULL && md5($r['Enc_PW'] . $challenge) == $password && $r['Status'] == 'd') { // is user disabled?
+        } else if ($match && $r['Status'] == 'd') { // is user disabled?
             $this->logMessage = "Account disabled, please contact your administrator. ";
         } else {
             $this->logMessage = "Bad username or password.  ";
@@ -255,8 +265,16 @@ class UserClass
             return FALSE;
         }
 
+        if(isset($ssn->sitePepper) && $ssn->sitePepper != ''){
+            $newPwHash = password_hash($newPw . $ssn->sitePepper, PASSWORD_ARGON2ID);
+        }else{
+            $this->logMessage = "Configuration Error: sitePepper not found";
+            return FALSE;
+        }
+        
+        
         // check if password has already been used
-        if ($this->isPasswordUsed($dbh, $newPw)) {
+        if ($this->isPasswordUsed($dbh, $newPwHash)) {
             $this->logMessage = "You cannot use any of the prior " . $priorPasswords . " passwords";
             return FALSE;
         }
@@ -269,7 +287,7 @@ class UserClass
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':uname' => $ssn->username,
-                ':newPw' => $newPw,
+                ':newPw' => $newPwHash,
                 ':id' => $id,
                 ':reset' => $resetNextLogin
             ));
@@ -281,7 +299,7 @@ class UserClass
                 $stmt = $dbh->prepare($query);
                 $stmt->execute(array(
                     ':idUser' => $ssn->uid,
-                    ':newPw' => $newPw
+                    ':newPw' => $newPwHash
                 ));
 
                 return TRUE;
@@ -309,12 +327,15 @@ class UserClass
 
     public function setPassword(\PDO $dbh, $id, $newPw)
     {
+        $uS = Session::getInstance();
         if ($newPw != '' && $id != 0) {
 
+            $newPwHash = password_hash($newPw . $uS->sitePepper, PASSWORD_ARGON2ID);
+            
             $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = 'install', Enc_PW = :newPw where idName = :id;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
-                ':newPw' => $newPw,
+                ':newPw' => $newPwHash,
                 ':id' => $id
             ));
 
@@ -447,16 +468,23 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
 
     public static function disableInactiveUser(\PDO $dbh, array $user)
     {
-        if ($user['Last_Login'] && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a' && $user['Chg_PW'] == 0) {
+        $date = false;
+        //use creation date if never logged in
+        if($user['Last_Login'] != ''){
+            $date = new DateTimeImmutable($user['Last_Login']);
+        }else{
+            $date = new DateTimeImmutable($user['Timestamp']);
+        }
+        
+        if ($date && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a') {
             $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
-            $lastLogin = new DateTimeImmutable($user['Last_Login']);
             $lastUpdated = new DateTimeImmutable($user['Last_Updated']);
             $lastUpdated = $lastUpdated->setTime(0, 0);
-            $lastLogin = $lastLogin->setTime(0, 0);
-            $deactivateDate = $lastLogin->add(new DateInterval('P' . $userInactiveDays . 'D')); // add inactivedays
+            $date = $date->setTime(0, 0);
+            $deactivateDate = $date->add(new DateInterval('P' . $userInactiveDays . 'D')); // add inactivedays
             $now = new DateTime();
             $today = $now->setTime(0, 0);
-            $lastLoginDays = $lastLogin->diff($today)->format('%a');
+            $lastLoginDays = $date->diff($today)->format('%a');
             $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
             if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
                 $stmt = "update w_users set `Status` = 'd', `Last_Updated` = " . $deactivateDate->format("Y-m-d H:i:s") . " where idName = $user[idName]";

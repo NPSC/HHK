@@ -40,7 +40,8 @@ if ($psw.val() === '') {
     return;
 }
 parms = {
-    challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
+    //challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
+	challenge: $psw.val(),
     txtUname: $uname.val(),
     xf: $xf.val()
 };

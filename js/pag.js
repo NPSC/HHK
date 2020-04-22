@@ -145,19 +145,21 @@ $(document).ready(
 										// challenge value
 										// next calculate MD5 hash of combined
 										// values
-										console.log("challVar: " + challVar);
-										oldpwMD5 = hex_md5(hex_md5(oldpw.val())
-												+ challVar);
-										newpwMD5 = hex_md5(pw1.val());
+										//console.log("challVar: " + challVar);
+										//oldpwMD5 = hex_md5(hex_md5(oldpw.val())
+										//		+ challVar);
+										//newpwMD5 = hex_md5(pw1.val());
 
+										var oldpwval = oldpw.val();
+										var newpwval = pw1.val();
 										oldpw.val('');
 										pw1.val('');
 										pw2.val('');
 
 										$.post("../house/ws_admin.php", {
 											cmd : 'chgpw',
-											old : oldpwMD5,
-											newer : newpwMD5
+											old : oldpwval,
+											newer : newpwval
 										}, function(data) {
 											if (data) {
 												try {
