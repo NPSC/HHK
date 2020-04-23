@@ -101,6 +101,7 @@ BEGIN
         ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
         ifnull(`il`.`Amount`, 0) as `il_Amount`,
 		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
+ 		ifnull(`il`.`Type_Id`, 0) as `il_Type_Id`,
         IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
         IFNULL(`p`.`Amount`, 0) AS `pAmount`,
         IFNULL(`p`.`idPayment_Method`, 0) AS `pMethod`,

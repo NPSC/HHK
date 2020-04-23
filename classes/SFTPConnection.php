@@ -6,6 +6,10 @@ class SFTPConnection
 	
 	public function __construct($host, $port=22)
 	{
+		if (function_exists('ssh2_connect') === FALSE) {
+			throw new Exception("ssh2_sftp is missing. ");
+		}
+		
 		$this->connection = ssh2_connect($host, $port);
 		
 		if (! $this->connection) {
@@ -38,15 +42,32 @@ class SFTPConnection
 			
 		//$data_to_send = @file_get_contents($local_file);
 		
-		if ($data_to_send === false) {
+		if ($data_to_send === FALSE) {
 			throw new Exception("No data to send.");
 		}
-				
-		if (fwrite($stream, $data_to_send) === false) {
-			throw new Exception("Could not send data.");
-		}
+
+//		if (fwrite($stream, $data_to_send) === FALSE) {
+//			throw new Exception("Could not send data.");
+//		}
+
+		$bytesWritten = $this->fwriteStream($stream, $data_to_send);
 					
 		fclose($stream);
+		
+		return $bytesWritten;
 	}
+	
+	// Writing to a network stream may end before the whole string is written.
+	protected function fwriteStream($fp, $string) {
+		$fwrite = 0;
+		for ($written = 0; $written < strlen($string); $written += $fwrite) {
+			$fwrite = fwrite($fp, substr($string, $written));
+			if ($fwrite === false) {
+				return $written;
+			}
+		}
+		return $written;
+	}
+
 }
 

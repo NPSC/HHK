@@ -773,6 +773,7 @@ $glMonthSelr = '';
 $glYearSelr = '';
 $glMonth = 0;
 $glyear = 0;
+$bytesWritten = '';
 
 if ($useGlReport) {
 	
@@ -817,16 +818,20 @@ if ($useGlReport) {
 
 		if (isset($_POST['btnGlTx'])) {
 			
-			$glCodes->mapRecords()
+			$bytesWritten = $glCodes->mapRecords()
 					->transferRecords();
 			
-			if (count($glCodes->getErrors()) > 0) {
-				$etbl = new HTMLTable();
-				foreach ($glCodes->getErrors() as $e) {
-					$etbl->addBodyTr(HTMLTable::makeTd($e));
-				}
-				$glInvoices = $etbl->generateMarkup() . $glInvoices;
+			$etbl = new HTMLTable();
+			
+			foreach ($glCodes->getErrors() as $e) {
+				$etbl->addBodyTr(HTMLTable::makeTd($e));
 			}
+			
+			if ($bytesWritten != '') {
+				$etbl->addBodyTr(HTMLTable::makeTd("Bytes Written: ".$bytesWritten));
+			}
+			
+			$glInvoices = $etbl->generateMarkup() . $glInvoices;
 					
 		} else {
 			
@@ -999,6 +1004,7 @@ $(document).ready(function() {
     var pmtMkup = '<?php echo $paymentMarkup; ?>';
     var rctMkup = '<?php echo $receiptMarkup; ?>';
     var tabReturn = '<?php echo $tabReturn; ?>';
+
     challVar = $('#challVar').val();
 
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx').button();
@@ -1186,7 +1192,6 @@ $(document).ready(function() {
             "dom": '<"top"ilf>rt<"bottom"ilp><"clear">'
         });
 
-
         $('#printButton').button().click(function() {
             $("div#printArea").printArea();
         });
@@ -1204,6 +1209,7 @@ $(document).ready(function() {
         });
         
     }
+
     $('#mainTabs').show();
 });
  </script>
@@ -1315,7 +1321,7 @@ $(document).ready(function() {
                 	<td><?php echo $glMonthSelr; ?></td>
                     <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
                 	</tr><tr>
-                    <td colspan=2 style="text-align: right;"><input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/><input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer"/></td>
+                    <td colspan=2><input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/><input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer"/></td>
                     </tr>
                     </table>
                 </form>

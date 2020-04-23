@@ -9,6 +9,7 @@ class GlCodes {
 	const CASH_CHECK = '200-0000000-140007';
 	const CREDIT_CARD = '200-0000000-100010';
 	const FOUNDATION_DON = '200-0000000-180100';
+	const COUNTY_LIABILITY = '200-0000000-210134';
 
 	protected $fileId;
 	protected $journalCat;
@@ -61,7 +62,7 @@ class GlCodes {
 
 			foreach ($r['p'] as $p) {
 
-				if ($p['pStatus'] == PaymentStatusCode::Reverse || $p['pStatus'] == PaymentStatusCode::VoidSale) {
+				if ($p['pStatus'] == PaymentStatusCode::Reverse || $p['pStatus'] == PaymentStatusCode::VoidSale || $p['pStatus'] == PaymentStatusCode::Declined) {
 					continue;
 				}
 
@@ -81,14 +82,14 @@ class GlCodes {
 			}
 
 			// Got one - go with it.
-			$this->makePayment($r, array_pop($payments));
+			$this->mapPayment($r, array_pop($payments));
 
 		}
 
 		return $this;
 	}
 
-	protected function makePayment($r, $p) {
+	protected function mapPayment($r, $p) {
 
 		$invLines = array();
 		$hasWaive = FALSE;
@@ -100,7 +101,7 @@ class GlCodes {
 			return;
 		}
 
-		// Look for waived payments.
+		// Copy invoice lines and Look for waived payments.
 		foreach ($r['l'] as $l) {
 
 			$invLines[] = $l;
@@ -112,24 +113,35 @@ class GlCodes {
 
 		// Special handling for waived payments.
 		if ($hasWaive) {
-			$invLines = $this->makeWaivePayments($invLines);
+			$invLines = $this->mapWaivePayments($invLines);
 		}
 
-		// payment type
+		// payment type sets glCode.
 		if ($p['ba_Gl_Debit'] != '') {
-			
 			// process 3rd party payment
+			
 			$glCode = $p['ba_Gl_Debit'];
+			
+			if ($glCode == self::COUNTY_LIABILITY) {
+				// Special handling for county payments
+				$invLines = $this->mapCountyPayments($invLines, $p);
+			}
 
 		} else if ($p['pMethod'] == PaymentMethod::Charge) {
+			
 			$glCode = self::CREDIT_CARD;
+			
 		} else {
+			
 			$glCode = self::CASH_CHECK;
+			
 		}
-	
-		// Payment Status Return earlier sale
-		if ($p['pStatus'] == PaymentStatusCode::Retrn) {
 
+
+		// Payment Status
+		if ($p['pStatus'] == PaymentStatusCode::Retrn) {
+			//Return earlier sale
+			
 			// if original payment is in the same report as this return, then ignore.
 			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
 				return;
@@ -154,9 +166,9 @@ class GlCodes {
 				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
 			}
 
-		// Status = Sale
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] == 0) {
-
+			// Status = Sale
+			
 			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
 
 			foreach($invLines as $l) {
@@ -168,9 +180,9 @@ class GlCodes {
 				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
 			}
 
-		// Status = refund amount
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
-
+			// Status = refund amount
+			
 			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->glParm->getJournalCat());
 
 			foreach($invLines as $l) {
@@ -186,6 +198,27 @@ class GlCodes {
 		} else {
 			$this->recordError("Unanticipated Payment Status: ". $p['pStatus'] . '  Payment Id = '.$p['idPayment']);
 		}
+	}
+	
+	protected function mapCountyPayments(array $invLines, array $p) {
+		
+		$lodgingCharge = 0;
+		$taxCharge = 0;
+
+		foreach ($invLines as $l) {
+
+			if ($l['il_Item_Id'] == ItemId::Lodging) {
+				$lodgingCharge += $l['il_Amount'];
+			}
+			
+			if ($l['il_Type_Id'] == InvoiceLineType::Tax) {
+				$taxCharge += $l['il_Amount'];
+			}
+		}
+		
+		
+		
+		
 	}
 
 	protected function makeWaivePayments(array $invLines) {
@@ -319,6 +352,7 @@ class GlCodes {
     						'il_Id'=>$p['il_Id'],
     						'il_Amount'=>$p['il_Amount'],
     						'il_Item_Id'=>$p['il_Item_Id'],
+    						'il_Type_Id'=>$p['il_Type_Id'],
     						'Item_Gl_Code'=>$p['Item_Gl_Code'],
     				);
     				
@@ -352,8 +386,7 @@ class GlCodes {
 	
 
 	public function transferRecords() {
-		
-		$creds = $this->glParm;
+
 		$data = '';
 		
 		if (count($this->lines) == 0) {
@@ -367,9 +400,9 @@ class GlCodes {
 		
 		try
 		{
-			$sftp = new SFTPConnection($creds->getHost(), $creds->getPort());
-			$sftp->login($creds->getUsername(), $creds->getClearPassword());
-			$sftp->uploadFile($data, $creds->getRemoteFilePath() . 'ggh' . $this->fileId);
+			$sftp = new SFTPConnection($this->glParm->getHost(), $this->glParm->getPort());
+			$sftp->login($this->glParm->getUsername(), $this->glParm->getClearPassword());
+			$bytesWritten = $sftp->uploadFile($data, $this->glParm->getRemoteFilePath() . 'ggh' . $this->fileId);
 			
 		}
 		catch (Exception $e)
@@ -378,8 +411,7 @@ class GlCodes {
 			return FALSE;
 		}
 		
-		return TRUE;
-		
+		return $bytesWritten;
 	}
 	
 	protected function recordError($error) {
@@ -450,7 +482,7 @@ class GlParameters {
 				
 				$desc = filter_var($post[$prefix . $g[0]], FILTER_SANITIZE_STRING);
 				
-				if (strtolower($g[0]) == 'password' && $desc != '') {
+				if (strtolower($g[0]) == 'password' && $desc != '' && $desc != $g[1]) {
 					$desc = encryptMessage($desc);
 				} else {
 					$desc = addslashes($desc);
