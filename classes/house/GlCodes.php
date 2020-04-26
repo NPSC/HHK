@@ -22,10 +22,10 @@ class GlCodes {
 	protected $paymentDate;
 	protected $glLineMapper;
 
-	
+
 	public function __construct(\PDO $dbh, $month, $year, $glParm) {
 
-		$this->fileId = $year . $month . '01';
+		$this->fileId = $year . $month . getRandomString(4);
 
 		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
 
@@ -33,6 +33,10 @@ class GlCodes {
 		$this->endDate = $this->startDate->add(new DateInterval('P1M'));
 
 		$this->glParm = $glParm;
+		
+		if ($this->glParm->getCountyPayment() < 1) {
+			throw new Exception('County Payment is not set');
+		}
 
 		$this->errors = array();
 
@@ -124,7 +128,7 @@ class GlCodes {
 			
 			if ($glCode == self::COUNTY_LIABILITY) {
 				// Special handling for county payments
-				$invLines = $this->mapCountyPayments($invLines, $p);
+				$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']));
 			}
 
 		} else if ($p['pMethod'] == PaymentMethod::Charge) {
@@ -200,10 +204,9 @@ class GlCodes {
 		}
 	}
 	
-	protected function mapCountyPayments(array $invLines, array $p) {
+	protected function mapCountyPayments(array $invLines, array &$p, $rate) {
 		
 		$lodgingCharge = 0;
-		$taxCharge = 0;
 
 		foreach ($invLines as $l) {
 
@@ -211,17 +214,24 @@ class GlCodes {
 				$lodgingCharge += $l['il_Amount'];
 			}
 			
-			if ($l['il_Type_Id'] == InvoiceLineType::Tax) {
-				$taxCharge += $l['il_Amount'];
-			}
 		}
-		
-		
-		
-		
+
+		if ($rate != 0) {
+			$days = $lodgingCharge / $rate;
+
+			$county = round($days * $this->glParm->getCountyPayment(), 2);
+
+			$dbit = $p['pAmount'] - $county;
+			
+			// make a debit line for hte difference
+			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, $dbit, 0, $this->paymentDate, $this->glParm->getJournalCat());
+			$p['pAmount'] = $county;
+			
+		}
+
 	}
 
-	protected function makeWaivePayments(array $invLines) {
+	protected function mapWaivePayments(array $invLines) {
 
 		// add up waiveable items
 		$waiveAmt = 0;
@@ -309,6 +319,8 @@ class GlCodes {
     					'iStatus'=>$p['iStatus'],
     					'Delegated_Id'=>$p['Delegated_Id'],
     					'iDeleted'=>$p['iDeleted'],
+    					'Pledged'=>$p['Pledged_Rate'],
+    					'Rate'=>$p['Rate'],
     			);
     			
     			$idPayment = 0;
@@ -395,19 +407,21 @@ class GlCodes {
 		}
 		
 		foreach ($this->lines as $l) {
-			$data .= implode(',', $l) . "/n";
+			$data .= implode(',', $l) . "\r\n";
 		}
 		
+		$this->recordError($this->fileId . '.csv');
+
 		try
 		{
 			$sftp = new SFTPConnection($this->glParm->getHost(), $this->glParm->getPort());
 			$sftp->login($this->glParm->getUsername(), $this->glParm->getClearPassword());
-			$bytesWritten = $sftp->uploadFile($data, $this->glParm->getRemoteFilePath() . 'ggh' . $this->fileId);
+			$bytesWritten = $sftp->uploadFile($data, $this->glParm->getRemoteFilePath() . $this->fileId . '.csv');
 			
 		}
 		catch (Exception $e)
 		{
-			$this->recordError($e->getMessage() . "\n");
+			$this->recordError($e->getMessage());
 			return FALSE;
 		}
 		
@@ -448,22 +462,33 @@ class GlParameters {
 	protected $Port;
 	protected $startDay;
 	protected $journalCat;
+	protected $countyPayment;
 	
 	protected $glParms;
 	protected $tableName;
 	
+	/*  Add this to gen_lookups:
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Host', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Username', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Password', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Port', '22');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'JournalCategory', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'RemoteFilePath', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'StartDay', '01');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyPayment', '50');
+	 */
+
 	public function __construct(\PDO $dbh, $tableName = 'Gl_Code') {
-		
+
 		$this->tableName = filter_var($tableName, FILTER_SANITIZE_STRING);
 		$this->loadParameters($dbh);
-		
-		
+
 	}
-	
+
 	public function loadParameters(\PDO $dbh) {
-		
+
 		$this->glParms = readGenLookupsPDO($dbh, $this->tableName, 'Order');
-		
+
 		$this->setHost($this->glParms['Host'][1]);
 		$this->setJournalCat($this->glParms['JournalCategory'][1]);
 		$this->setStartDay($this->glParms['StartDay'][1]);
@@ -471,13 +496,14 @@ class GlParameters {
 		$this->setPort($this->glParms['Port'][1]);
 		$this->setUsername($this->glParms['Username'][1]);
 		$this->setPassword($this->glParms['Password'][1]);
-		
+		$this->setCountyPayment($this->glParms['CountyPayment'][1]);
+
 	}
-	
+
 	public function saveParameters(\PDO $dbh, $post, $prefix = 'gl_') {
-		
+
 		foreach ($this->glParms as $g) {
-			
+
 			if (isset($post[$prefix . $g[0]])) {
 				
 				$desc = filter_var($post[$prefix . $g[0]], FILTER_SANITIZE_STRING);
@@ -649,7 +675,15 @@ class GlParameters {
 	public function getJournalCat() {
 		return $this->journalCat;
 	}
+	
+	public function getCountyPayment() {
+		return $this->countyPayment;
+	}
 
+	public function setCountyPayment($v) {
+		$this->countyPayment = $v;
+	}
+	
 	/**
 	 * @param mixed $host
 	 */
@@ -808,7 +842,7 @@ class GlTemplateRecord {
 	}
 
 	public function setPurchaseDate($v) {
-		$this->fieldArray[self::EFFECTIVE_DATE] = $v->format('Y-m-d');
+		$this->fieldArray[self::EFFECTIVE_DATE] = $v->format('Y/m/d');
 	}
 
 	public function setJournalCategory($v) {

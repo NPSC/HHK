@@ -39,16 +39,10 @@ class SFTPConnection
 		if (! $stream) {
 			throw new Exception("Could not open file: $remote_file");
 		}
-			
-		//$data_to_send = @file_get_contents($local_file);
-		
+				
 		if ($data_to_send === FALSE) {
 			throw new Exception("No data to send.");
 		}
-
-//		if (fwrite($stream, $data_to_send) === FALSE) {
-//			throw new Exception("Could not send data.");
-//		}
 
 		$bytesWritten = $this->fwriteStream($stream, $data_to_send);
 					
