@@ -25,13 +25,13 @@ class GlCodes {
 
 	public function __construct(\PDO $dbh, $month, $year, $glParm) {
 
-		$this->fileId = $year . $month . getRandomString(4);
-
 		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
 
 		// End date is the beginning of the next month.
 		$this->endDate = $this->startDate->add(new DateInterval('P1M'));
 
+		$this->fileId = $this->startDate->format('Ym') . getRandomString(4);
+		
 		$this->glParm = $glParm;
 		
 		if ($this->glParm->getCountyPayment() < 1) {
@@ -216,17 +216,38 @@ class GlCodes {
 			
 		}
 
-		if ($rate != 0) {
+		if ($rate != 0 && $lodgingCharge != 0) {
+			
 			$days = $lodgingCharge / $rate;
 
 			$county = round($days * $this->glParm->getCountyPayment(), 2);
 
-			$dbit = $p['pAmount'] - $county;
-			
-			// make a debit line for hte difference
-			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, $dbit, 0, $this->paymentDate, $this->glParm->getJournalCat());
-			$p['pAmount'] = $county;
-			
+			if ($county > 0 && $p['pAmount'] > 0) {
+				
+				if ($p['pAmount'] > $county) {
+					
+					$dbit = $p['pAmount'] - $county;
+				
+					// make a debit line for hte difference
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, $dbit, 0, $this->paymentDate, $this->glParm->getJournalCat());
+					
+					// Reduce original payment line by the above amount.
+					$p['pAmount'] = $county;
+				}
+				
+			} else if ($county < 0 && $p['pAmount'] < 0) {
+				
+				if ($p['pAmount'] < $county) {
+					
+					$dbit = $p['pAmount'] - $county;
+					
+					// make a debit line for hte difference
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, $dbit, 0, $this->paymentDate, $this->glParm->getJournalCat());
+					
+					// Reduce original payment line by the above amount.
+					$p['pAmount'] = $county;
+				}
+			}
 		}
 
 	}

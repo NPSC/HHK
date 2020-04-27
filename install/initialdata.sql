@@ -534,6 +534,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('MemberImageSizePx','75','i','h','','Guest image thumbnail size',''),
 ('NightsCounter','calYear','s','h','','Count nights by year (calYear) or by grand total.',''),
 ('NoReplyAddr','','ea','h','','No reply email address',''),
+('NotificationAddress','','ea','f','','Gets financial notifications.', ''),
 ('OpenCheckin','true','b','h','','Allow walk-ups to check in',''),
 ('PatientAddr','true','b','h','','Collect the patient address.',''),
 ('PatientAsGuest','true','b','h','','House allows patients to stay as guests',''),
