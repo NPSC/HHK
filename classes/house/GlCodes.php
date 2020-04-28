@@ -30,7 +30,7 @@ class GlCodes {
 		// End date is the beginning of the next month.
 		$this->endDate = $this->startDate->add(new DateInterval('P1M'));
 
-		$this->fileId = $this->startDate->format('Ym') . getRandomString(4);
+		$this->fileId = 'GL_HHK_' . $this->startDate->format('Ymd') . '_' . getRandomString(3);
 		
 		$this->glParm = $glParm;
 		

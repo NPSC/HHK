@@ -83,6 +83,7 @@ class InstamedGateway extends PaymentGateway {
             $resp['Amount'] = $invoice->getAmountToPay();
 
             $curlResponse = new VerifyCurlResponse($resp, MpTranType::Sale);
+            $curlResponse->setMerchant($this->getMerchant());
 
             // Save raw transaction in the db.
             try {
@@ -268,6 +269,7 @@ class InstamedGateway extends PaymentGateway {
 
             $payIds[$headerResponse->getToken()] = $invoice->getIdInvoice();
             $uS->paymentIds = $payIds;
+            $uS->ccgw = $this->getMerchant();
 
             $dataArray = array('inctx' => $headerResponse->getRelayState(), 'PaymentId' => $headerResponse->getToken());
         } else {
@@ -329,6 +331,7 @@ class InstamedGateway extends PaymentGateway {
 
             $uS->imtoken = $headerResponse->getToken();
             $uS->cardHolderName = $cardHolderName;
+            $uS->ccgw = $this->getMerchant();
 
             $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken());
         } else {
@@ -623,6 +626,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
     public function processWebhook(\PDO $dbh, $data, $payNotes, $userName) {
 
         $webhookResp = new WebhookResponse($data);
+        $webhookResp->setMerchant($this->getMerchant());
         $error = FALSE;
 
         if ($webhookResp->getSsoToken() == '') {
@@ -749,6 +753,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         }
 
         $response = new VerifyCurlCofResponse($resp);
+        $response->setMerchant($this->getMerchant());
 
         // Save raw transaction in the db.
         try {

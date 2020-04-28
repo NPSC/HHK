@@ -125,7 +125,7 @@ try {
 // Process the webhook.
 try {
 
-    $error = PaymentSvcs::processWebhook($wInit->dbh, 'Production', $data);
+    $error = PaymentSvcs::processWebhook($wInit->dbh, $data);
 
 } catch (Exception $ex) {
 
