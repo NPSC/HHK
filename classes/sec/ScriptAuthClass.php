@@ -343,8 +343,10 @@ class ScriptAuthClass extends SecurityComponent {
         if ($uS->mode != Mode::Live) {
             $disclaimer = HTMLContainer::generateMarkup('span', 'Demo Site - Do not use actual guest or patient names!', array('style'=>'font-weight:bold;margin-right:.9em;'));
         }
+        //$markup .= "</div></div></header>
+        //    <div id='version'>$disclaimer User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
         $markup .= "</div></div></header>
-            <div id='version'>$disclaimer User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
+            <div id='version'>$disclaimer Build:" . $uS->ver . "  <button id='userSettingsBtn' style='margin-left: .5em'>Hello, " . $uS->username . "</button></div>";
         
         // instantiate a ChallengeGenerator object
         try {

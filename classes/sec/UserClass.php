@@ -268,8 +268,7 @@ class UserClass
         if(isset($ssn->sitePepper) && $ssn->sitePepper != ''){
             $newPwHash = password_hash($newPw . $ssn->sitePepper, PASSWORD_ARGON2ID);
         }else{
-            $this->logMessage = "Configuration Error: sitePepper not found";
-            return FALSE;
+            $newPwHash = md5($newPw);
         }
         
         
@@ -427,7 +426,7 @@ class UserClass
         return $remoteIp;
     }
 
-    protected static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false)
+    public static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false)
     {
         if (! $username) {
             $ssn = Session::getInstance();

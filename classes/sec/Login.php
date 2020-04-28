@@ -57,6 +57,7 @@ class Login {
         $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
         $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
         $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
+        $ssn->sitePepper = $config->getString('site', 'sitePepper', false);
 
         // Initialize role code
         if (isset($ssn->rolecode) === FALSE) {

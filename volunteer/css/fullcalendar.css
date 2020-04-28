@@ -71,6 +71,7 @@ html .fc,
 .fc-header .fc-button {
 	margin-bottom: 1em;
 	vertical-align: top;
+	padding: .4em 1em;
 	}
 	
 /* buttons edges butting together */

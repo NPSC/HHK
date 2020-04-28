@@ -79,11 +79,12 @@ class WebUser {
         // Password - add a row
         if (count($rws) == 0 && $maintFlag) {
             $tbl->addBodyTr(HTMLTable::makeTd('Password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtwUserPW', 'type'=>'password', 'class'=>'ignrSave', 'style'=>'width: 100%')) . '<button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button>', array('style'=>'display: flex')));
-            $tbl->addBodyTr(HTMLTable::makeTd('Require user to reset password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'checked'=>'checked', 'class'=>'ignrSave'))));
         }else{
-            $tbl->addBodyTr(HTMLTable::makeTd('Require user to reset password:'). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'class'=>'ignrSave'))));
+            $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Change Password... ', array('id'=>"chgPW", 'type'=>'button')), array('colspan'=>'2')));
         }
 
+        $tbl->addBodyTr(HTMLTable::makeTd('Require password change:' . '<span class="ui-icon ui-icon-help"></span>', ['class'=>'hhk-tooltip', 'title'=>'If selected, user will be prompted to change their password next time they log in with their current password']). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'class'=>'ignrSave'))));
+        
          $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('style'=>'color:red;font-size:.9em;', 'id'=>'hhk-wuprompt')), array('colspan'=>'2')));
 
@@ -114,10 +115,6 @@ class WebUser {
                 HTMLTable::makeTd("Role:", array('class'=>'tdlable'))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($roleMkup, $wAuthRS->Role_Id->getStoredVal()), $attr))
                 );
-
-        if ($maintFlag !== FALSE && count($rws) > 0) {
-            $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Change Password... ', array('id'=>"chgPW", 'type'=>'button')), array('colspan'=>'2')));
-        }
 
         $webAlert = new alertMessage("webContainer");
         $webAlert->set_DisplayAttr("none");
@@ -275,6 +272,8 @@ class WebUser {
                 return array("error", $err[0] . "; " . $err[2]);
             }
 
+            UserClass::insertUserLog($dbh, "PS", $wUserName);
+            
             $success .= "New Web User.  ";
 
         } else {

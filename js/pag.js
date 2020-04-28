@@ -194,7 +194,13 @@ $(document).ready(
 								}
 							};
 						
-						$('#version').css('cursor', 'pointer');
+						$('.hhk-tooltip').tooltip({
+							classes: {
+								"ui-tooltip": "ui-corner-all"
+							}
+						});
+						
+/*						$('#version').css('cursor', 'pointer');
 						$('#version').hover(function() {
 							$(this).addClass("ui-state-hover");
 						}, function() {
@@ -202,6 +208,8 @@ $(document).ready(
 						});
 
 						$('#version').click(
+*/
+						$('#userSettingsBtn').button().click(
 								function() {
 									chPwButtons["Cancel"] = function() {
 										$(this).dialog("close");

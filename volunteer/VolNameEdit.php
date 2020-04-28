@@ -24,9 +24,7 @@ require (CLASSES . 'Relation.php');
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
 
-require (SEC . 'UserClass.php');
 require (CLASSES . 'UserCategories.php');
-require(SEC . 'ChallengeGenerator.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;

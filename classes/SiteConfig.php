@@ -535,7 +535,7 @@ class SiteConfig {
             } else if ($r['Type'] == 'lu' && $r['GenLookup'] != '') {
                 // lookup
 
-                $opts = readGenLookupsPDO($dbh, $r['GenLookup']);
+                $opts = readGenLookupsPDO($dbh, $r['GenLookup'], 'order');
 
                 $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($opts), $r['Value'], TRUE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
 

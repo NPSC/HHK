@@ -305,3 +305,10 @@ li.hhk-myMenuTop {
     margin: 0 4px;
 }
 
+.hhk-tooltip .ui-icon-help {
+	border: 1px solid #dfd9c3;
+    border-radius: 1em;
+    background-color: #fff;
+    margin-left: 2px;
+}
+
