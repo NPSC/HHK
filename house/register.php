@@ -205,10 +205,13 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital' || (strt
 
     while ($r = $stmth->fetch(\PDO::FETCH_ASSOC)) {
 
-        $attrs = array('class'=>'spnHosp', 'data-id'=>$r['idHospital']);
-        $attrs['style'] = 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';';
+    	if (strtolower($r['Reservation_Style']) != 'transparent') {
 
-        $colorKey .= HTMLContainer::generateMarkup('span', $r['Title'], $attrs);
+	        $attrs = array('class'=>'spnHosp', 'data-id'=>$r['idHospital']);
+	        $attrs['style'] = 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';';
+	
+	        $colorKey .= HTMLContainer::generateMarkup('span', $r['Title'], $attrs);
+    	}
     }
 }
 

@@ -37,6 +37,9 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`)
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'd', 'Deleted', 'h', '10');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'h', 'On Hold', 'h', '4');
 
+UPDATE `gen_lookups` SET `Type`='u' WHERE `Table_Name`='Room_Status';
+
+
 ALTER TABLE `note`
 ADD COLUMN `flag` BOOL default false AFTER `Note_Type`;
 

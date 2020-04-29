@@ -1103,7 +1103,7 @@ $(document).ready(function () {
                                 };
                                 viewVisit(0, parts[0], buttons, 'View Visit', 'n', parts[1]);
                             } else if ($(this).data('reservid')) {
-                                window.location.assign('Referral.php?id=' + $(this).data('reservid'));
+                                window.location.assign('Reserve.php?rid=' + $(this).data('reservid'));
                             }
                         });
                     }

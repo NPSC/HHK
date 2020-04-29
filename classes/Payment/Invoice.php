@@ -252,9 +252,7 @@ where pi.Invoice_Id = " . $this->getIdInvoice());
 
 
         $uS = Session::getInstance();
-        $config = new Config_Lite(ciCFG_FILE);
 
-        $invoiceTerm = $config->getString('financial', 'InvoiceTerm', '30');
         $hospital = '';
         $roomTitle = '';
         $idGuest = 0;
@@ -326,7 +324,7 @@ where
         // Invoice dates
         $invDate = new DateTime($this->getDate());
         $invDateString = $invDate->format('M jS, Y');
-        $invDate->add(new DateInterval('P' . $invoiceTerm . 'D'));
+        $invDate->add(new DateInterval('P' . $uS->InvoiceTerm . 'D'));
 
         $invTbl = new HTMLTable();
 
@@ -348,8 +346,10 @@ where
                 .HTMLTable::makeTd($invDateString)
                 );
 
-        $invTbl->addBodyTr(HTMLTable::makeTd('TERMS NET:', array('class'=>'tdlabel')) . HTMLTable::makeTd($invoiceTerm));
-        $invTbl->addBodyTr(HTMLTable::makeTd('DUE DATE:', array('class'=>'tdlabel')) . HTMLTable::makeTd($invDate->format('M jS, Y')));
+        if ($uS->InvoiceTerm > 0) {
+        	$invTbl->addBodyTr(HTMLTable::makeTd('TERMS NET:', array('class'=>'tdlabel')) . HTMLTable::makeTd($uS->InvoiceTerm));
+        	$invTbl->addBodyTr(HTMLTable::makeTd('DUE DATE:', array('class'=>'tdlabel')) . HTMLTable::makeTd($invDate->format('M jS, Y')));
+        }
 
         if ($this->getDelegatedStatus() == InvoiceStatus::Paid) {
             $invTbl->addBodyTr(HTMLTable::makeTd('BALANCE DUE:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$0.00'));

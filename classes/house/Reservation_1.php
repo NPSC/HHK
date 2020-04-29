@@ -780,6 +780,8 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         }
 
         if (count($rows) > 0) {
+        	
+        	$roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 
             if ($shoDirtyRooms) {
                 $cleanCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
@@ -859,7 +861,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                                     $roomAttr = array('style'=>'text-align:center; background-color:yellow;');
 
                                 } else if ($room->isClean() === FALSE && $room->isReady() === FALSE) {
-                                    $dirtyRoom = '(Dirty)';
+                                	$dirtyRoom = '('. $roomStatuses[RoomState::Dirty][1].')';
                                     $roomAttr = array('style'=>'text-align:center; background-color:yellow;');
                                 }
                             }
