@@ -657,9 +657,15 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
             // Make a sale response...
             $sr = new ImPaymentResponse($webhookResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $payNotes, date("Y-m-d H:i:s"), $isPartialPayment);
 
+            $sr->setPaymentNotes($payNotes);
+            $sr->setResult($webhookResp->getStatus());
+            
+            if ($webhookResp->getStatus() != MpStatusValues::Approved) {
+            	$vr->setPaymentStatusCode(PaymentStatusCode::Declined);
+            }
             // Record transaction
             try {
-                $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::Webhook);
+                $transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Sale, TransMethod::Webhook);
                 $sr->setIdTrans($transRs->idTrans->getStoredVal());
             } catch (Exception $ex) {
                 // do nothing
@@ -1034,7 +1040,7 @@ where r.idRegistration =" . $idReg);
     }
 
     public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
-        return new ImPaymentResponse($vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes);
+        return new ImPaymentResponse($vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, date('Y-m-d'), FALSE);
     }
 
     public function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup) {

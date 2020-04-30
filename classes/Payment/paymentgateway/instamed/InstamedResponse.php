@@ -12,7 +12,7 @@
 class ImPaymentResponse extends CreditResponse {
 
 
-    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $payDate, $isPartialApprovalAmount = FALSE) {
+    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $payDate, $isPartialApprovalAmount, $paymentStatusCode = '') {
         $this->response = $vcr;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
@@ -20,7 +20,8 @@ class ImPaymentResponse extends CreditResponse {
         $this->invoiceNumber = $invoiceNumber;
         $this->payNotes = $payNotes;
         $this->amount = $vcr->getRequestAmount();
-
+        $this->setPaymentStatusCode($paymentStatusCode);
+        
         if ($isPartialApprovalAmount) {
             $this->setPartialPayment(TRUE);
             $this->amount = $vcr->getPartialPaymentAmount();
@@ -33,10 +34,6 @@ class ImPaymentResponse extends CreditResponse {
 
     public function getPaymentMethod() {
         return PaymentMethod::Charge;
-    }
-
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
     }
 
     public function getStatus() {
