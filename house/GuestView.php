@@ -37,12 +37,10 @@ $resultMessage = "";
 
 
 // Guest listing
-$stmt = $dbh->query("select * from vguest_view");
-$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
 $guests = array();
+$stmt = $dbh->query("select * from vguest_view");
 
-foreach ($rows as $r) {
+while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
     $g = array(
         'Last Name' => $r['Last Name'],
@@ -67,6 +65,7 @@ foreach ($rows as $r) {
         $g['Color'] = $r['Color'];
         $g['State Reg.'] = $r['State Reg.'];
         $g[$labels->getString('referral', 'licensePlate', 'License Plate')] = $r['License Plate'];
+        $g['Notes'] = $r['Note'];
     }
 
     $guests[] = $g;
@@ -95,7 +94,8 @@ if ($uS->TrackAuto) {
     ifnull(v.Model, '') as `Model`,
     ifnull(v.Color, '') as `Color`,
     ifnull(v.State_Reg, '') as `State Reg.`,
-    ifnull(v.License_Number, '') as `" . $labels->getString('referral', 'licensePlate', 'License Plate') . "`
+    ifnull(v.License_Number, '') as `" . $labels->getString('referral', 'licensePlate', 'License Plate') . "`,
+	ifnull(v.Note, '') as `Note`
 from
 	vehicle v join reservation r on v.idRegistration = r.idRegistration
         left join

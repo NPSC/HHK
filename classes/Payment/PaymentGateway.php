@@ -61,7 +61,7 @@ abstract class PaymentGateway {
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
     }
 
-    protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
+    protected function _voidSale(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $bid) {
         return array('warning' => '_voidSale is not implemented. ');
     }
 
