@@ -490,6 +490,10 @@ function amtPaid() {
         feePayText = p.feePayAmt.val().replace('$', '').replace(',', '');
         feePayPreTax = roundTo(parseFloat(feePayText), 2);
 
+    	if (feePayText === '0.00') {
+    		feePayText = '0';
+    	}
+    	
         // allow zeros through.
         if (feePayText !== '0') {
             feePayText = '';
