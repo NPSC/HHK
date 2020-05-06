@@ -1308,7 +1308,11 @@ class Visit {
                     $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->getReservationId());
                     $resv->setActualArrival($startStr);
                     $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+                    
+                    $startDelta = $visitStartDT->diff($firstStayStartDT)->days;
 
+                    // Update any invoice line dates
+                    Invoice::updateInvoiceLineDates($dbh, $this->getIdVisit(), $startDelta);
                 }
             }
         }
