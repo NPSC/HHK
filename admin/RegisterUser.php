@@ -56,23 +56,22 @@ if (isset($_POST["btnSave"])) {
 
     // each waiting person -
     while (isset($_POST["txtfb$n"])) {
+    	
         if (isset($_POST["cb$n"])) {
+        	
             $resps = manageRegistration($dbh, $n, $uname);
 
-            // deal with the response...
-            $sAlert = new alertMessage("resps$n");
-
-            if (isset($resps["success"])) {
+            if (isset($resps["success"]) && $resps["success"] != '') {
                 // success
-                $sAlert->set_Context(alertMessage::Success);
-                $sAlert->set_Text($resps["success"]);
-            } else {
+                $sAlert = "Success: " . $resps["success"];
+            } else if (isset($resps["error"]) && $resps["error"] != '') {
                 // error
-                $sAlert->set_Context(alertMessage::Alert);
-                $sAlert->set_Text($resps["error"]);
-
+            	$sAlert = "Error: " . $resps["error"];
+            } else {
+            	$sAlert = '<span class="ui-state-highlight">Uh-oh, a member must already be defined for this web user: ' . $_POST["txtfb$n"] . '</span>';
             }
-            $actionTakenTable .= "<tr><td>" . $sAlert->createMarkup() . "</td></tr>";
+            
+            $actionTakenTable .= "<tr><td>" . $sAlert . "</td></tr>";
         }
 
         $n++;
@@ -234,7 +233,7 @@ if ($toBeRegisteredRows["web"] == "") {
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="tabs-1" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
-<?php echo $actionTakenTable ?>
+
                 <form  action="RegisterUser.php" method="post"  id="form1" name="form1" >
                     <table>
                         <tr><th colspan="6" >Web</th></tr>
@@ -244,6 +243,7 @@ if ($toBeRegisteredRows["web"] == "") {
                         <input type="submit" value="Save" name="btnSave" />
                     </p>
                 </form>
+                <?php echo $actionTakenTable ?>
             </div>
         </div>
     </body>

@@ -210,7 +210,8 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                     flagAlertMessage(data.delete, 'success');
                     $('#btnInvGo').click();
                 } else {
-                    $('#' + data.eid).parents('tr').first().hide('fade');
+                    $('#' + data.eid).parents('tr').first().remove();
+                    amtPaid();
                 }
 
             }
@@ -231,36 +232,3 @@ function invoiceAction(idInvoice, action, eid, container, show) {
     });
 }
 
-
-//function invoiceAction(idInvoice, action, eid) {
-//    $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action},
-//      function(data) {
-//        if (data) {
-//            try {
-//                data = $.parseJSON(data);
-//            } catch (err) {
-//                alert("Parser error - " + err.message);
-//                return;
-//            }
-//            if (data.error) {
-//                if (data.gotopage) {
-//                    window.location.assign(data.gotopage);
-//                }
-//                flagAlertMessage(data.error, true);
-//                return;
-//            }
-//            if (data.delete) {
-//                flagAlertMessage(data.delete, false);
-//            }
-//            if (data.markup) {
-//                var contr = $(data.markup);
-//                $('body').append(contr);
-//                contr.position({
-//                    my: 'left top',
-//                    at: 'left bottom',
-//                    of: "#" + data.eid
-//                });
-//            }
-//        }
-//    });
-//}

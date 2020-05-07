@@ -76,7 +76,6 @@ $uS = Session::getInstance();
 creditIncludes($uS->PaymentGateway);
 
 $idVisit = 0;
-$idGuest = 0;
 $idResv = 0;
 $span =0;
 $idRegistration = 0;
@@ -129,10 +128,6 @@ if (isset($_GET['invoiceNumber'])) {
 
 if (isset($_GET['span'])) {
     $span = intval(filter_var($_REQUEST['span'], FILTER_SANITIZE_STRING), 10);
-}
-
-if (isset($_GET['gid'])) {
-    $idGuest = intval(filter_var($_REQUEST['gid'], FILTER_SANITIZE_STRING), 10);
 }
 
 if (isset($_GET['rid'])) {

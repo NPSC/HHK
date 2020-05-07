@@ -47,7 +47,10 @@ if ($resultStr == '') {
             $forwardPageParms['idPsg'] = $resultParms['idPsg'];
         }
         if (isset($resultParms['rid'])) {
-            $forwardPageParms['rid'] = $resultParms['rid'];
+        	$forwardPageParms['rid'] = $resultParms['rid'];
+        }
+        if (isset($resultParms['vid'])) {
+        	$forwardPageParms['vid'] = $resultParms['vid'];
         }
     }
 
