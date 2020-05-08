@@ -356,7 +356,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    protected function _voidSale(\PDO $dbh, PaymentRS $payRs, Payment_AuthRS $pAuthRs, Invoice $invoice, $bid) {
+    protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         $uS = Session::getInstance();
         $dataArray['bid'] = $bid;

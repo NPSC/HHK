@@ -133,6 +133,7 @@ class LocalGateway extends PaymentGateway {
 
 		return $dataArray;
 	}
+
 	protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $retAmount, $bid) {
 		$uS = Session::getInstance ();
 
@@ -166,6 +167,7 @@ class LocalGateway extends PaymentGateway {
 
 		return $dataArray;
 	}
+
 	public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 		return array (
 				'warning' => 'Not Available.  '

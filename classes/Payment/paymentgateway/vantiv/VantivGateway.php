@@ -584,7 +584,7 @@ class VantivGateway extends PaymentGateway {
         return $payResult;
     }
 
-    protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid = '') {
+    protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         $uS = Session::getInstance();
         $dataArray = array('bid'=>$bid);
@@ -797,7 +797,7 @@ class VantivGateway extends PaymentGateway {
         	$manualArray['checked'] = 'checked';
         }
         
-        $keyCb = HTMLContainer::generateMarkup('span', 
+        $keyCb = HTMLContainer::generateMarkup('span',
         		HTMLContainer::generateMarkup('label', 'Type: ', array('for'=>'btnvrKeyNumber'.$index, 'title'=>'Check to Key in credit account number')) .HTMLInput::generateMarkup('', $manualArray)
         , array('style'=>'float:right; margin-top:2px;'));
 
