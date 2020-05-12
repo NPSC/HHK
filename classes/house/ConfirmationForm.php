@@ -38,6 +38,7 @@ class ConfirmationForm extends TemplateForm {
             'Amount' => ($amount == '' ? 0 : number_format($amount, 2)),
             'Notes' => $notes,
             'VisitFeeNotice' => $visitFeeNotice,
+            'ImgPath' => $uS->resourceURL . 'conf/img/',
         );
 
     }

@@ -56,7 +56,7 @@ class UserClass
         //new method
         if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
             $match = true;
-        }else if ($r != NULL && md5($r['Enc_PW'] . $challenge) == md5(md5($password) . $challenge)) { //old method
+        }else if ($r != NULL && $r['Enc_PW'] == md5($password)) { //old method
             $match = true;
         }
         
