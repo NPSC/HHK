@@ -51,7 +51,7 @@ $sequence = ChallengeGenerator::getRandomString();
 
 try {
     $login = new Login();
-    $config = $login->initHhkSession('conf/site.cfg');
+    $login->initHhkSession('conf/site.cfg');
 
 } catch (Exception $ex) {
     session_unset();
@@ -125,7 +125,7 @@ try {
 // Process the webhook.
 try {
 
-    $error = PaymentSvcs::processWebhook($wInit->dbh, 'Production', $data);
+    $error = PaymentSvcs::processWebhook($wInit->dbh, $data);
 
 } catch (Exception $ex) {
 

@@ -625,16 +625,22 @@ class PaymentSvcs {
         return $dataArray;
     }
 
-    public static function processWebhook(\PDO $dbh, $ccgw, $data) {
+    public static function processWebhook(\PDO $dbh, $data) {
 
         $uS = Session::getInstance();
+        
+        $stmt = $dbh->query("Select cc_name from cc_hosted_gateway where Gateway_Name = 'instamed'");
+        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+        
+        if (count($rows) == 1) {
 
-        // Payment Gateway
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $ccgw);
-
-        $payNotes = '';
-
-        return $gateway->processWebhook($dbh, $data, $payNotes, $uS->username);
+	        // Payment Gateway
+	        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $rows[0][0]);
+	
+	        $payNotes = '';
+	
+	        return $gateway->processWebhook($dbh, $data, $payNotes, $uS->username);
+        }
 
     }
 

@@ -96,8 +96,6 @@ $(document).ready(function() {
             return;
         if (!checkLength($('#txtEmail'), 'Email address', 5, 100))
             return;
-        if (!checkRegexp($('#txtEmail'), rexEmail, 'Incorrect Email'))
-            return;
         if (!checkLength($('#txtPun'), 'User Name', 6, 45))
             return;
         if (!checkLength($psw, 'Password', 8, 45))

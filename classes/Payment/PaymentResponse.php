@@ -54,8 +54,9 @@ abstract class PaymentResponse {
         $payRs->Is_Refund->setNewVal($this->isRefund());
 
         $this->setIdPayment(EditRS::insert($dbh, $payRs));
-        $payRs->idPayment->setNewVal($this->getIdPayment());
-        EditRS::updateStoredVals($payRs);
+        
+//        $payRs->idPayment->setNewVal($this->getIdPayment());
+//        EditRS::updateStoredVals($payRs);
     }
 
     // One of the PaymentStatusCodes
@@ -80,6 +81,9 @@ abstract class PaymentResponse {
     }
 
     public function getPaymentDate() {
+    	if ($this->paymentDate == '') {
+    		return date('Y-m-d H:i:s');
+    	}
         return $this->paymentDate;
     }
 

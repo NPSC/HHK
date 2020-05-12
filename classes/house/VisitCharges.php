@@ -76,6 +76,8 @@ class VisitCharges {
         }
 
         $spans[(count($spans) - 1)] = $span;
+        
+        reset($spans);
 
         return $this->getVisitData($spans, $priceModel, $newPayment, $calcDaysPaid, $givenPaid);
     }

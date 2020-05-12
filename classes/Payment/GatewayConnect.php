@@ -116,6 +116,10 @@ abstract class GatewayResponse {
         return $this->merchant;
     }
 
+    public function setMerchant($v) {
+    	$this->merchant = $v;
+    }
+    
     public function getErrorMessage() {
 
         if (isset($this->result['errorMessage'])) {

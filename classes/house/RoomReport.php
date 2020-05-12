@@ -131,6 +131,8 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         $uS = Session::getInstance();
 
         $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+        
+        $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 
         // Get Rooms OOS
         $query1 = "SELECT
@@ -239,7 +241,7 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
             if ($idRoom != $r['idRoom']) {
 
                 if ($idRoom > 0 && (!isset($roomsOOS[$idRoom]) || $roomsOOS[$idRoom]['Status'] !== ResourceStatus::Unavailable)) {
-                    $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $notes, $priceModel);
+                    $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $notes, $priceModel, $roomStatuses);
                 }
 
                 $guests = '';
@@ -257,28 +259,28 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
 
         // Print the last room
         if ($last['idRoom'] > 0 && (!isset($roomsOOS[$last['idRoom']]) || $roomsOOS[$last['idRoom']]['Status'] !== ResourceStatus::Unavailable)) {
-            $tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $notes, $priceModel);
+        	$tableRows[] = self::doDailyMarkup($dbh, $last, $guests, $roomsOOS, $notes, $priceModel, $roomStatuses);
         }
 
         return $tableRows;
     }
 
-    protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, $notes, PriceModel $priceModel) {
+    protected static function doDailyMarkup(\PDO $dbh, $r, $guests, $roomsOOS, $notes, PriceModel $priceModel, $roomStatuses) {
 
         $fixed = array();
         $idVisit = intval($r['idVisit'], 10);
         $stat = '';
-
+        
         // Mangle room status
         if ($r['Cleaning_Days'] > 0) {
             if ($r['Status'] == RoomState::TurnOver) {
                 $stat = HTMLContainer::generateMarkup('span', $r['Status_Text'], array('style'=>'background-color:yellow;'));
             } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Dirty) {
-                $stat = HTMLContainer::generateMarkup('span', 'Active-Dirty', array('style'=>'background-color:#E3FF14;'));
+            	$stat = HTMLContainer::generateMarkup('span', 'Active-'.$roomStatuses[RoomState::Dirty][1], array('style'=>'background-color:#E3FF14;'));
             } else if ($r['idVisit'] > 0 && $r['Status'] == RoomState::Clean) {
                 $stat = HTMLContainer::generateMarkup('span', 'Active', array('style'=>'background-color:lightgreen;'));
             } else if ($r['Status'] == RoomState::Dirty) {
-                $stat = HTMLContainer::generateMarkup('span', 'Dirty', array('style'=>'background-color:yellow;'));
+            	$stat = HTMLContainer::generateMarkup('span', $roomStatuses[RoomState::Dirty][1], array('style'=>'background-color:yellow;'));
             } else {
                 $stat = HTMLContainer::generateMarkup('span', $r['Status_Text']);
             }

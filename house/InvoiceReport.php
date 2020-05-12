@@ -41,7 +41,7 @@ require CLASSES . 'OpenXML.php';
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new webInit(WebPageCode::Page, FALSE);
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -772,6 +772,7 @@ $glMonthSelr = '';
 $glYearSelr = '';
 $glMonth = 0;
 $glyear = 0;
+$bytesWritten = '';
 
 if ($useGlReport) {
 	
@@ -816,11 +817,21 @@ if ($useGlReport) {
 
 		if (isset($_POST['btnGlTx'])) {
 			
-			$glCodes->mapRecords()
+			$bytesWritten = $glCodes->mapRecords()
 					->transferRecords();
 			
-			$glInvoices = HTMLContainer::generateMarkup('div',$glCodes->getErrors(), array('style'=>'clear:both;color:red;font-size:large;'));
+			$etbl = new HTMLTable();
 			
+			foreach ($glCodes->getErrors() as $e) {
+				$etbl->addBodyTr(HTMLTable::makeTd($e));
+			}
+			
+			if ($bytesWritten != '') {
+				$etbl->addBodyTr(HTMLTable::makeTd("Bytes Written: ".$bytesWritten));
+			}
+			
+			$glInvoices = $etbl->generateMarkup() . $glInvoices;
+					
 		} else {
 			
 			$tbl = new HTMLTable();
@@ -872,7 +883,7 @@ if ($useGlReport) {
 			$glInvoices = $tbl->generateMarkup();
 			
 			// Comma delemeted file.
-			$glCodes->mapRecords(FALSE);
+			$glCodes->mapRecords();
 			
 			$tbl = new HTMLTable();
 			
@@ -881,7 +892,7 @@ if ($useGlReport) {
 				$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
 			}
 
-			$glInvoices .= "<p style='margin-top:20px;'>File</p>" .$tbl->generateMarkup();
+			$glInvoices .= "<p style='margin-top:20px;'>Total Credits = " . number_format($glCodes->getTotalCredit(), 2) . " Total Debits = " . number_format($glCodes->getTotalDebit(), 2) . "</p>" .$tbl->generateMarkup();
 			
 			if (count($glCodes->getErrors()) > 0) {
 				$etbl = new HTMLTable();
@@ -992,6 +1003,7 @@ $(document).ready(function() {
     var pmtMkup = '<?php echo $paymentMarkup; ?>';
     var rctMkup = '<?php echo $receiptMarkup; ?>';
     var tabReturn = '<?php echo $tabReturn; ?>';
+
     challVar = $('#challVar').val();
 
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx').button();
@@ -1179,7 +1191,6 @@ $(document).ready(function() {
             "dom": '<"top"ilf>rt<"bottom"ilp><"clear">'
         });
 
-
         $('#printButton').button().click(function() {
             $("div#printArea").printArea();
         });
@@ -1197,6 +1208,7 @@ $(document).ready(function() {
         });
         
     }
+
     $('#mainTabs').show();
 });
  </script>
@@ -1308,7 +1320,7 @@ $(document).ready(function() {
                 	<td><?php echo $glMonthSelr; ?></td>
                     <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
                 	</tr><tr>
-                    <td colspan=2 style="text-align: right;"><input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/><input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer"/></td>
+                    <td colspan=2><input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/><input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer"/></td>
                     </tr>
                     </table>
                 </form>

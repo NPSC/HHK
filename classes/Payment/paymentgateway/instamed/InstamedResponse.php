@@ -12,7 +12,7 @@
 class ImPaymentResponse extends CreditResponse {
 
 
-    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $isPartialApprovalAmount = FALSE) {
+    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $payDate, $isPartialApprovalAmount, $paymentStatusCode = '') {
         $this->response = $vcr;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
@@ -20,21 +20,20 @@ class ImPaymentResponse extends CreditResponse {
         $this->invoiceNumber = $invoiceNumber;
         $this->payNotes = $payNotes;
         $this->amount = $vcr->getRequestAmount();
-
+        $this->setPaymentStatusCode($paymentStatusCode);
+        
         if ($isPartialApprovalAmount) {
             $this->setPartialPayment(TRUE);
             $this->amount = $vcr->getPartialPaymentAmount();
         } else {
             $this->setPartialPayment(FALSE);
         }
+        
+        $this->setPaymentDate($payDate);
     }
 
     public function getPaymentMethod() {
         return PaymentMethod::Charge;
-    }
-
-    public function getPaymentStatusCode() {
-        return PaymentStatusCode::Paid;
     }
 
     public function getStatus() {
@@ -114,7 +113,7 @@ class ImPaymentResponse extends CreditResponse {
 class ImReturnResponse extends CreditResponse {
 
 
-    function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $isPartialApprovalAmount = FALSE) {
+	function __construct(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, $payDate, $isPartialApprovalAmount = FALSE) {
         $this->response = $vcr;
         $this->paymentType = PayType::Charge;
         $this->idPayor = $idPayor;
@@ -123,7 +122,8 @@ class ImReturnResponse extends CreditResponse {
         $this->payNotes = $payNotes;
         $this->amount = $vcr->getRequestAmount();
         $this->setPartialPayment(FALSE);
-
+        $this->setPaymentDate($payDate);
+        
     }
 
     public function getPaymentMethod() {

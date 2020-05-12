@@ -39,6 +39,9 @@ class InstamedGateway extends PaymentGateway {
     const DECLINE = 'D';
     const VOID = 'V';
     const CANCELLED = 'X';
+    
+    //Response Messages
+    const RESPONSE_APPROVED = 'APPROVAL';
 
     protected $ssoUrl;
     protected $soapUrl;
@@ -83,6 +86,7 @@ class InstamedGateway extends PaymentGateway {
             $resp['Amount'] = $invoice->getAmountToPay();
 
             $curlResponse = new VerifyCurlResponse($resp, MpTranType::Sale);
+            $curlResponse->setMerchant($this->getMerchant());
 
             // Save raw transaction in the db.
             try {
@@ -92,8 +96,16 @@ class InstamedGateway extends PaymentGateway {
             }
 
             // Make a sale response...
-            $sr = new ImPaymentResponse($curlResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pmp->getPayNotes(), ($curlResponse->getPartialPaymentAmount() > 0 ? TRUE : FALSE));
+            $sr = new ImPaymentResponse($curlResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pmp->getPayNotes(), $pmp->getPayDate(), ($curlResponse->getPartialPaymentAmount() > 0 ? TRUE : FALSE));
 
+            $sr->setResult($curlResponse->getStatus());
+            
+            if ($curlResponse->getResponseMessage() != self::RESPONSE_APPROVED) {
+            	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
+            } else {
+            	$sr->setPaymentStatusCode(PaymentStatusCode::Paid);
+            }
+            
             // Record transaction
             try {
                 $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::Token);
@@ -268,6 +280,7 @@ class InstamedGateway extends PaymentGateway {
 
             $payIds[$headerResponse->getToken()] = $invoice->getIdInvoice();
             $uS->paymentIds = $payIds;
+            $uS->ccgw = $this->getMerchant();
 
             $dataArray = array('inctx' => $headerResponse->getRelayState(), 'PaymentId' => $headerResponse->getToken());
         } else {
@@ -329,6 +342,7 @@ class InstamedGateway extends PaymentGateway {
 
             $uS->imtoken = $headerResponse->getToken();
             $uS->cardHolderName = $cardHolderName;
+            $uS->ccgw = $this->getMerchant();
 
             $dataArray = array('inctx' => $headerResponse->getRelayState(), 'CardId' => $headerResponse->getToken());
         } else {
@@ -363,7 +377,8 @@ class InstamedGateway extends PaymentGateway {
         $resp['lastFourDigits'] = $pAuthRs->Acct_Number->getStoredVal();
 
         $curlResponse = new VerifyCurlVoidResponse($resp, MpTranType::Void);
-
+        $curlResponse->setMerchant($this->getMerchant());
+        
         // Save raw transaction in the db.
         try {
             self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditVoidSaleToken');
@@ -372,8 +387,16 @@ class InstamedGateway extends PaymentGateway {
         }
 
         // Make a void response...
-        $sr = new ImPaymentResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber());
+        $sr = new ImPaymentResponse($curlResponse, $payRs->idPayor->getStoredVal(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), '', date('Y-m-d'), FALSE);
 
+        $sr->setResult($curlResponse->getStatus());
+        
+        if ($curlResponse->getResponseMessage() != 'VOIDED') {
+        	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        } else {
+        	$sr->setPaymentStatusCode(PaymentStatusCode::VoidSale);
+        }
+        
         // Record transaction
         try {
             $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Void, TransMethod::Token);
@@ -538,7 +561,8 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         $resp['Amount'] = $returnAmt;
 
         $curlResponse = new VerifyCurlReturnResponse($resp, MpTranType::ReturnSale);
-
+        $curlResponse->setMerchant($this->getMerchant());
+        
         // Save raw transaction in the db.
         try {
             self::logGwTx($dbh, $curlResponse->getResponseCode(), $params, json_encode($curlResponse->getResultArray()), 'CreditReturnToken');
@@ -547,8 +571,15 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         }
 
         // Make a return response...
-        $sr = new ImReturnResponse($curlResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes);
-
+        $sr = new ImReturnResponse($curlResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes, date('Y-m-d H:i:s'));
+        $sr->setResult($curlResponse->getStatus());
+        
+        if ($curlResponse->getResponseMessage() != self::RESPONSE_APPROVED) {
+        	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
+        } else {
+        	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
+        }
+        
         // Record transaction
         try {
             $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Retrn, TransMethod::Token);
@@ -623,6 +654,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
     public function processWebhook(\PDO $dbh, $data, $payNotes, $userName) {
 
         $webhookResp = new WebhookResponse($data);
+        $webhookResp->setMerchant($this->getMerchant());
         $error = FALSE;
 
         if ($webhookResp->getSsoToken() == '') {
@@ -651,11 +683,20 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
             }
 
             // Make a sale response...
-            $sr = new ImPaymentResponse($webhookResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $payNotes, $isPartialPayment);
+            $sr = new ImPaymentResponse($webhookResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $payNotes, date("Y-m-d H:i:s"), $isPartialPayment);
 
+            $sr->setPaymentNotes($payNotes);
+            $sr->setResult($webhookResp->getStatus());
+            
+            if ($webhookResp->getResponseMessage() != MpStatusValues::Approved) {
+            	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
+            } else {
+            	$sr->setPaymentStatusCode(PaymentStatusCode::Paid);
+            }
+            
             // Record transaction
             try {
-                $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::Webhook);
+                $transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Sale, TransMethod::Webhook);
                 $sr->setIdTrans($transRs->idTrans->getStoredVal());
             } catch (Exception $ex) {
                 // do nothing
@@ -749,6 +790,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         }
 
         $response = new VerifyCurlCofResponse($resp);
+        $response->setMerchant($this->getMerchant());
 
         // Save raw transaction in the db.
         try {
@@ -851,9 +893,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         }
 
         $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $pAuthRs->Cardholder_Name->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $idInv, $payRs->Amount->getStoredVal());
-        $payResp = new ImPaymentResponse($gwResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes, $partlyApproved);
-
-        $payResp->setPaymentDate($payRs->Payment_Date->getStoredVal());
+        $payResp = new ImPaymentResponse($gwResp, $ssoTknRs->idName->getStoredVal(), $ssoTknRs->idGroup->getStoredVal(), $ssoTknRs->InvoiceNumber->getStoredVal(), $paymentNotes, $payRs->Payment_Date->getStoredVal(), $partlyApproved);
 
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, $idInv);
@@ -1029,7 +1069,7 @@ where r.idRegistration =" . $idReg);
     }
 
     public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
-        return new ImPaymentResponse($vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes);
+        return new ImPaymentResponse($vcr, $idPayor, $idGroup, $invoiceNumber, $payNotes, date('Y-m-d'), FALSE);
     }
 
     public function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup) {

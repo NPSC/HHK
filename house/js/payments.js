@@ -392,6 +392,9 @@ function amtPaid() {
         } else {
             p.keyDepAmt.val(kdep.toFixed(2).toString());
         }
+        
+        // unhide row
+        $('.hhk-kdrow').show();
     }
 
     // Unpaid Invoices - invAmt
@@ -471,7 +474,7 @@ function amtPaid() {
     }
 
     totReturns = heldAmt + depRfAmt + reimburseAmt;
-
+    
     $taxingItems.each(function () {
         var rate = parseFloat($(this).data('taxrate'));
 
@@ -490,6 +493,10 @@ function amtPaid() {
         feePayText = p.feePayAmt.val().replace('$', '').replace(',', '');
         feePayPreTax = roundTo(parseFloat(feePayText), 2);
 
+    	if (feePayText === '0.00') {
+    		feePayText = '0';
+    	}
+    	
         // allow zeros through.
         if (feePayText !== '0') {
             feePayText = '';
@@ -570,7 +577,7 @@ function amtPaid() {
 
         totPay = vfee + invAmt + feePay;
 
-        if (totCharges >= totPay) {
+        if (totCharges >= totPay && totCharges > 0) {
 
             var hsPay = roundTo((vfee + invAmt + roomBalDue - totReturnPreTax - feePayPreTax), 2);
 
@@ -617,7 +624,11 @@ function amtPaid() {
             p.finalPaymentCb.prop('checked', false);
             p.hsDiscAmt.val('');
 
-            overPayAmt = totPay - totCharges;
+            if (totCharges >= 0) {
+            	overPayAmt = totPay - totCharges;
+            } else {
+            	overPayAmt = vfee + feePay - totCharges;
+            }
 
             if (p.selBalTo.val() === 'r') {
 

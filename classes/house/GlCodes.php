@@ -3,12 +3,14 @@
 
 
 class GlCodes {
-	
+
 	// General GL codes
 	const ALL_GROSS_SALES = '200-1007582-500014';
 	const CASH_CHECK = '200-0000000-140007';
 	const CREDIT_CARD = '200-0000000-100010';
-	
+	const FOUNDATION_DON = '200-0000000-180100';
+	const COUNTY_LIABILITY = '200-0000000-210134';
+
 	protected $fileId;
 	protected $journalCat;
 	protected $startDate;
@@ -17,112 +19,138 @@ class GlCodes {
 	protected $records;
 	protected $lines;
 	protected $errors;
-	protected $titles;
+	protected $paymentDate;
+	protected $glLineMapper;
 
-	
+
 	public function __construct(\PDO $dbh, $month, $year, $glParm) {
-		
-		$this->fileId = $year . $month . '01';
-		
+
 		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
-		
+
 		// End date is the beginning of the next month.
 		$this->endDate = $this->startDate->add(new DateInterval('P1M'));
+
+		$this->fileId = 'GL_HHK_' . $this->startDate->format('Ymd') . '_' . getRandomString(3);
 		
 		$this->glParm = $glParm;
 		
+		if ($this->glParm->getCountyPayment() < 1) {
+			throw new Exception('County Payment is not set');
+		}
+
 		$this->errors = array();
-		
+
 		$this->loadDbRecords($dbh);
-		
+
 		$this->lines = array();
-		
-		$this->titles =  array_flip(array(
-				// 'Gross sales' 	=>	'200-1007582-500014',
-				'County Sales'		=>	'200-1007582-500014',
-				'Foundation Donations'	=>	'200-1007582-500105',
-				
-				'Check or Cash'	=>	'200-0000000-140007',
-				'Credit Card'	=>	'200-0000000-100010',
-				'County Fee Liability'	=>	'200-0000000-210134',
-				'Foundation Donation'	=>	'200-0000000-180100',
-				
-				'Funded by Cardio Surgery'	=>	'200-10029108-860023',
-				'Funded by NICU'	=>	'200-1001313-860023',
-				'Funded by Neurology'	=>	'200-1007536-860023',
-				'Funded by Csurgery'	=>	'200-1002200-860023',
-				
-				'Sales Tax'	=> '200-0000000-210100',
-				'Hospitality Tax'	=>	'200-0000000-210115',
-				'Unknown Code' => '',
-		));
-		
-		
+
+		$this->glLineMapper = new GlTemplateRecord();
 	}
-	
-	
-	public function mapRecords($useTitles = FALSE) {
-		
+
+	public function mapRecords() {
+
 		if (count($this->records) < 1) {
 			$this->recordError('No Records to Map. ');
 		}
-		
+
 		// Filter payment records.
 		foreach ($this->records as $r) {
-						
-			// Just one payment
-			if (count($r['p']) !== 1) {
-				$this->recordError("Too many Payments for invoice number: " . $r['i']['iNumber']);
+
+			// Any payments?
+			if (count($r['p']) < 1) {
+				$this->recordError('No payment for Invoice ' . $r['i']['iNumber']);
 				continue;
 			}
-			
-			// Void or reverse
-			if ($r['p'][0]['pStatus'] == PaymentStatusCode::Reverse || $r['p'][0]['pStatus'] == PaymentStatusCode::VoidSale) {
+
+			$payments = array();
+
+			foreach ($r['p'] as $p) {
+
+				if ($p['pStatus'] == PaymentStatusCode::Reverse || $p['pStatus'] == PaymentStatusCode::VoidSale || $p['pStatus'] == PaymentStatusCode::Declined) {
+					continue;
+				}
+
+				$payments[$p['idPayment']] = $p;
+
+			}
+
+			// any payments left?
+			if (count($payments) == 0) {
 				continue;
 			}
-			
+
+			// We can only process one payment(?)
+			if (count($payments) !== 1) {
+				$this->recordError('To many payments('.count($payments) . ') for Invoice ' . $r['i']['iNumber']);
+				continue;
+			}
+
 			// Got one - go with it.
-			$this->makePayment($r, $useTitles);
-			
+			$this->mapPayment($r, array_pop($payments));
+
 		}
-		
+
 		return $this;
 	}
-	
-	protected function makePayment($r, $useTitles = FALSE) {
-		
-		$p = $r['p'][0];
+
+	protected function mapPayment($r, $p) {
+
+		$invLines = array();
+		$hasWaive = FALSE;
 
 		if ($p['pTimestamp'] != '') {
-			$pDate = new DateTime($p['pTimestamp']);
+			$this->paymentDate = new DateTime($p['pTimestamp']);
 		} else {
 			$this->recordError("Missing Payment Timestamp. Payment Id = ". $p['idPayment']);
 			return;
 		}
 
-		if ($p['pMethod'] == PaymentMethod::Charge) {
+		// Copy invoice lines and Look for waived payments.
+		foreach ($r['l'] as $l) {
+
+			$invLines[] = $l;
+
+			if ($l['il_Item_Id'] == ItemId::Waive) {
+				$hasWaive = TRUE;
+			}
+		}
+
+		// Special handling for waived payments.
+		if ($hasWaive) {
+			$invLines = $this->mapWaivePayments($invLines);
+		}
+
+		// payment type sets glCode.
+		if ($p['ba_Gl_Debit'] != '') {
+			// process 3rd party payment
+			
+			$glCode = $p['ba_Gl_Debit'];
+			
+			if ($glCode == self::COUNTY_LIABILITY) {
+				// Special handling for county payments
+				$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']));
+			}
+
+		} else if ($p['pMethod'] == PaymentMethod::Charge) {
+			
 			$glCode = self::CREDIT_CARD;
+			
 		} else {
+			
 			$glCode = self::CASH_CHECK;
+			
 		}
-		
-		// override with 3rd party paying
-		if ($p['ba_Gl_Code'] != '') {
-			$glCode = $p['ba_Gl_Code'];
-		}
-		
-		if ($useTitles) {
-			$glCode = $this->titles[$glCode];
-		}
-		
-		// Payment Status Return earlier sale
+
+
+		// Payment Status
 		if ($p['pStatus'] == PaymentStatusCode::Retrn) {
+			//Return earlier sale
 			
 			// if original payment is in the same report as this return, then ignore.
-			if ($pDate >= $this->startDate && $pDate < $this->endDate) {
+			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
 				return;
 			}
-			
+
 			if ($p['pUpdated'] != '') {
 				$pUpDate = new DateTime($p['pUpdated']);
 			} else {
@@ -130,73 +158,149 @@ class GlCodes {
 				return;
 			}
 
-			$line = new GlTemplateRecord($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
-			$this->lines[] = $line->getFieldArray();
-			
-			foreach($r['l'] as $l) {
+			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
 
-				if ($useTitles) {
-					$glCode = $this->titles[$l['Item_Gl_Code']];
-				} else {
-					$glCode = $l['Item_Gl_Code'];
+			foreach($invLines as $l) {
+
+				if ($l['Item_Gl_Code'] == '') {
+					continue;
 				}
 
 				// map gl code
-				$line = new GlTemplateRecord($this->fileId, $glCode, 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
-				$this->lines[] = $line->getFieldArray();
+				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
 			}
 
-		// Status = Sale
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] == 0) {
+			// Status = Sale
+			
+			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
 
-			$line = new GlTemplateRecord($this->fileId, $glCode, $p['pAmount'], 0, $pDate, $this->glParm->getJournalCat());
-			$this->lines[] = $line->getFieldArray();
+			foreach($invLines as $l) {
 
-			// Case 1: payment = 0 and waived amount.
-			if ($p['pAmount'] == 0 && $this->hasWaive($r['l'])) {
-
-				foreach($r['l'] as $l) {
-					
+				if ($l['Item_Gl_Code'] == '') {
+					continue;
 				}
 
-			} else {
-
-				foreach($r['l'] as $l) {
-
-					if ($useTitles) {
-						$glCode = $this->titles[$l['Item_Gl_Code']];
-					} else {
-						$glCode = $l['Item_Gl_Code'];
-					}
-					
-					$line = new GlTemplateRecord($this->fileId, $glCode, 0, $l['il_Amount'], $pDate, $this->glParm->getJournalCat());
-					$this->lines[] = $line->getFieldArray();
-				}
+				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
 			}
 
-		// Status = refund amount
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
+			// Status = refund amount
+			
+			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->glParm->getJournalCat());
 
-			$line = new GlTemplateRecord($this->fileId, $glCode, $p['pAmount'], 0, $pDate, $this->glParm->getJournalCat());
-			$this->lines[] = $line->getFieldArray();
-			
-			foreach($r['l'] as $l) {
-				
-				if ($useTitles) {
-					$glCode = $this->titles[$l['Item_Gl_Code']];
-				} else {
-					$glCode = $l['Item_Gl_Code'];
+			foreach($invLines as $l) {
+
+				if ($l['Item_Gl_Code'] == '') {
+					continue;
 				}
-				
+
 				// map gl code
-				$line = new GlTemplateRecord($this->fileId, $glCode, 0, $l['il_Amount'], $pDate, $this->glParm->getJournalCat());
-				$this->lines[] = $line->getFieldArray();
+				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate, $this->glParm->getJournalCat());
 			}
-			
+
 		} else {
 			$this->recordError("Unanticipated Payment Status: ". $p['pStatus'] . '  Payment Id = '.$p['idPayment']);
 		}
+	}
+	
+	protected function mapCountyPayments(array $invLines, array &$p, $rate) {
 		
+		$lodgingCharge = 0;
+
+		foreach ($invLines as $l) {
+
+			if ($l['il_Item_Id'] == ItemId::Lodging) {
+				$lodgingCharge += $l['il_Amount'];
+			}
+			
+		}
+
+		if ($rate != 0 && $lodgingCharge != 0) {
+			
+			$days = $lodgingCharge / $rate;
+
+			$county = round($days * $this->glParm->getCountyPayment(), 2);
+
+			if ($county > 0 && $p['pAmount'] > 0) {
+				
+				if ($p['pAmount'] > $county) {
+					
+					$dbit = $p['pAmount'] - $county;
+				
+					// make a debit line for hte difference
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, $dbit, 0, $this->paymentDate, $this->glParm->getJournalCat());
+					
+					// Reduce original payment line by the above amount.
+					$p['pAmount'] = $county;
+				}
+				
+			} else if ($county < 0 && $p['pAmount'] < 0) {
+				
+				if ($p['pAmount'] < $county) {
+					
+					$dbit = $p['pAmount'] - $county;
+					
+					// make a debit line for hte difference
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, $dbit, 0, $this->paymentDate, $this->glParm->getJournalCat());
+					
+					// Reduce original payment line by the above amount.
+					$p['pAmount'] = $county;
+				}
+			}
+		}
+
+	}
+
+	protected function mapWaivePayments(array $invLines) {
+
+		// add up waiveable items
+		$waiveAmt = 0;
+		$waiveGlCode = '';
+		$remainingItems = array();
+
+		foreach ($invLines as $l) {
+
+			if ($l['il_Item_Id'] == ItemId::Waive) {
+				$waiveAmt += abs($l['il_Amount']);
+				$waiveGlCode = $l['Item_Gl_Code'];
+			}
+		}
+
+		if ($waiveAmt > 0) {
+
+			// credit the waive gl code
+			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $waiveGlCode, 0, $waiveAmt, $this->paymentDate, $this->glParm->getJournalCat());
+
+			// debit the foundation donation
+			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::FOUNDATION_DON, $waiveAmt, 0, $this->paymentDate, $this->glParm->getJournalCat());
+
+		}
+
+		// reduce the waiveable items
+		foreach ($invLines as $l) {
+
+			// Don't return the waiving item
+			if ($l['il_Item_Id'] == ItemId::Waive) {
+				continue;
+			}
+
+			// Adjust the amounts after the waive.
+			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge) {
+
+				if ($l['il_Amount'] >= $waiveAmt) {
+					$l['il_Amount'] -= $waiveAmt;
+					$waiveAmt = 0;
+				} else {
+					$waiveAmt -= $l['il_Amount'];
+					$l['il_Amount'] = 0;
+				}
+			}
+
+			$remainingItems[] = $l;
+		}
+
+		return $remainingItems;
 	}
 	
 	protected function loadDbRecords(\PDO $dbh) {
@@ -236,6 +340,8 @@ class GlCodes {
     					'iStatus'=>$p['iStatus'],
     					'Delegated_Id'=>$p['Delegated_Id'],
     					'iDeleted'=>$p['iDeleted'],
+    					'Pledged'=>$p['Pledged_Rate'],
+    					'Rate'=>$p['Rate'],
     			);
     			
     			$idPayment = 0;
@@ -252,7 +358,7 @@ class GlCodes {
 
     				$idPayment = $p['idPayment'];
 
-    				$payments[] = array(
+    				$payments[$idPayment] = array(
     						'idPayment'=>$p['idPayment'],
     						'pAmount'=>$p['pAmount'],
     						'pMethod'=>$p['pMethod'],
@@ -279,19 +385,20 @@ class GlCodes {
     						'il_Id'=>$p['il_Id'],
     						'il_Amount'=>$p['il_Amount'],
     						'il_Item_Id'=>$p['il_Item_Id'],
+    						'il_Type_Id'=>$p['il_Type_Id'],
     						'Item_Gl_Code'=>$p['Item_Gl_Code'],
     				);
     				
     				if ($p['Delegated_Id'] > 0) {
-    					
-    					$delegatedInvoiceLines[$p['Delegated_Id']][] = $line;
-    					
+    					$delegatedInvoiceLines[$p['Delegated_Id']][$idInvoiceLine] = $line;
     				} else if ($p['il_Item_Id'] != ItemId::InvoiceDue) {
-    					$invoiceLines[] = $line;
+    					$invoiceLines[$idInvoiceLine] = $line;
     				}
     			}
     		}
     	}
+    	
+    	unset($rows);
 
     	if ($idInvoice > 0) {
     		// close last invoice
@@ -303,7 +410,7 @@ class GlCodes {
     		
     		foreach ($l as $line) {
     			
-    			$invoices[$k]['l'][] = $line;
+    			$invoices[$k]['l'][$line['il_Id']] = $line;
     		}
     	}
 
@@ -312,8 +419,7 @@ class GlCodes {
 	
 
 	public function transferRecords() {
-		
-		$creds = $this->glParm;
+
 		$data = '';
 		
 		if (count($this->lines) == 0) {
@@ -322,33 +428,25 @@ class GlCodes {
 		}
 		
 		foreach ($this->lines as $l) {
-			$data .= implode(',', $l) . "/n";
+			$data .= implode(',', $l) . "\r\n";
 		}
 		
+		$this->recordError($this->fileId . '.csv');
+
 		try
 		{
-			$sftp = new SFTPConnection($creds->getHost(), $creds->getPort());
-			$sftp->login($creds->getUsername(), $creds->getClearPassword());
-			$sftp->uploadFile($data, $creds->getRemoteFilePath() . 'ggh' . $this->fileId);
+			$sftp = new SFTPConnection($this->glParm->getHost(), $this->glParm->getPort());
+			$sftp->login($this->glParm->getUsername(), $this->glParm->getClearPassword());
+			$bytesWritten = $sftp->uploadFile($data, $this->glParm->getRemoteFilePath() . $this->fileId . '.csv');
 			
-			return TRUE;
 		}
 		catch (Exception $e)
 		{
-			$this->recordError($e->getMessage() . "\n");
+			$this->recordError($e->getMessage());
 			return FALSE;
 		}
 		
-	}
-	
-	protected function hasWaive($invLInes) {
-		
-		foreach ($invLInes as $l) {
-			if ($l['il_Item_Id'] == ItemId::Waive) {
-				return TRUE;
-			}
-		}
-		return FALSE;
+		return $bytesWritten;
 	}
 	
 	protected function recordError($error) {
@@ -367,6 +465,12 @@ class GlCodes {
 		return $this->errors;
 	}
 	
+	public function getTotalCredit() {
+		return $this->glLineMapper->getTotalCredit();
+	}
+	public function getTotalDebit() {
+		return $this->glLineMapper->getTotalDebit();
+	}
 }
 
 
@@ -379,22 +483,33 @@ class GlParameters {
 	protected $Port;
 	protected $startDay;
 	protected $journalCat;
+	protected $countyPayment;
 	
 	protected $glParms;
 	protected $tableName;
 	
+	/*  Add this to gen_lookups:
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Host', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Username', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Password', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Port', '22');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'JournalCategory', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'RemoteFilePath', '');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'StartDay', '01');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyPayment', '50');
+	 */
+
 	public function __construct(\PDO $dbh, $tableName = 'Gl_Code') {
-		
+
 		$this->tableName = filter_var($tableName, FILTER_SANITIZE_STRING);
 		$this->loadParameters($dbh);
-		
-		
+
 	}
-	
+
 	public function loadParameters(\PDO $dbh) {
-		
+
 		$this->glParms = readGenLookupsPDO($dbh, $this->tableName, 'Order');
-		
+
 		$this->setHost($this->glParms['Host'][1]);
 		$this->setJournalCat($this->glParms['JournalCategory'][1]);
 		$this->setStartDay($this->glParms['StartDay'][1]);
@@ -402,18 +517,19 @@ class GlParameters {
 		$this->setPort($this->glParms['Port'][1]);
 		$this->setUsername($this->glParms['Username'][1]);
 		$this->setPassword($this->glParms['Password'][1]);
-		
+		$this->setCountyPayment($this->glParms['CountyPayment'][1]);
+
 	}
-	
+
 	public function saveParameters(\PDO $dbh, $post, $prefix = 'gl_') {
-		
+
 		foreach ($this->glParms as $g) {
-			
+
 			if (isset($post[$prefix . $g[0]])) {
 				
 				$desc = filter_var($post[$prefix . $g[0]], FILTER_SANITIZE_STRING);
 				
-				if (strtolower($g[0]) == 'password' && $desc != '') {
+				if (strtolower($g[0]) == 'password' && $desc != '' && $desc != $g[1]) {
 					$desc = encryptMessage($desc);
 				} else {
 					$desc = addslashes($desc);
@@ -491,7 +607,7 @@ class GlParameters {
 		$stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company, nd.Gl_Code_Debit, nd.Gl_Code_Credit " .
 				" FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
 				" JOIN name_demog nd on n.idName = nd.idName  ".
-				" where n.Member_Status='a' and n.Record_Member = 1 order by n.Name_Last, n.Name_First");
+				" where n.Member_Status='a' and n.Record_Member = 1 order by n.Company");
 
 		// Billing agent markup
 		$glTbl = new HTMLTable();
@@ -580,7 +696,15 @@ class GlParameters {
 	public function getJournalCat() {
 		return $this->journalCat;
 	}
+	
+	public function getCountyPayment() {
+		return $this->countyPayment;
+	}
 
+	public function setCountyPayment($v) {
+		$this->countyPayment = $v;
+	}
+	
 	/**
 	 * @param mixed $host
 	 */
@@ -638,7 +762,7 @@ class GlParameters {
 
 class GlTemplateRecord {
 	// CentraCare journal record (Gorecki)
-	
+
 	const STATUS = 0;
 	const EFFECTIVE_DATE = 2;
 	const JOURNAL_SOURCE = 3;
@@ -646,12 +770,12 @@ class GlTemplateRecord {
 	const CURRENCY_CODE = 5;
 	const JOURNAL_CREATE_DATE = 6;
 	const ACTUAL_FLAG = 7;
-	
+
 	// gl code split among these three
 	const COMPANY_CODE = 8;
 	const COST_CENTER = 9;
 	const ACCOUNT = 10;
-	
+
 	const PAYOR_ID = 11;
 	const INTERCOMPANY = 12;
 	const FUTURE_1 = 13;
@@ -662,38 +786,37 @@ class GlTemplateRecord {
 	const BATCH_NAME = 45;
 	const FILE_ID = 66;
 	const LEDGER_NAME = 91;
-	
+
+	protected $totalDebit;
+	protected $totalCredit;
 	protected $fieldArray;
-	
-	protected $glCode;
-	protected $creditAmount;
-	protected $debitAmount;
-	protected $purchaseDate;
-	protected $journalCategory;
-	
-	public function __construct($fileId, $glCode, $creditAmount, $debitAmount, $purchaseDate, $journalCategory) {
-		
+
+	public function __construct() {
+
+		$this->totalCredit = 0;
+		$this->totalDebit = 0;
+	}
+
+	public function makeLine($fileId, $glCode, $debitAmount, $creditAmount, $purchaseDate, $journalCategory) {
+
 		$this->fieldArray = $this->setStaticFields($fileId);
-		
+
 		$this->setCreditAmount($creditAmount);
 		$this->setDebitAmount($debitAmount);
 		$this->setGlCode($glCode);
 		$this->setJournalCategory($journalCategory);
 		$this->setPurchaseDate($purchaseDate);
 
-	}
-	
-	public function getFieldArray() {
 		return $this->fieldArray;
 	}
-	
+
 	protected function setStaticFields($fileId) {
-		
+	
 		$fa = array();
 		for ($i = 0; $i <= 93; $i++) {
 			$fa[$i] = '';
 		}
-		
+	
 		$fa[self::STATUS] = 'NEW';
 		$fa[self::JOURNAL_SOURCE] = 'HHK';
 		$fa[self::JOURNAL_CREATE_DATE] = date('Y/m/d');
@@ -708,14 +831,13 @@ class GlTemplateRecord {
 		$fa[self::BATCH_NAME] = 'HHKJournal' . $fileId;
 		$fa[self::FILE_ID] = $fileId;
 		$fa[self::LEDGER_NAME] = 'CentraCare US';
-		
-		
-		return $fa;
-		
-	}
 	
+		return $fa;
+	
+	}
+
 	public function setGlCode($v) {
-		
+	
 		$codes = explode('-', $v);
 
 		if (count($codes) != 3) {
@@ -723,26 +845,36 @@ class GlTemplateRecord {
 			$codes[1]= '0';
 			$codes[2]= '0';
 		}
-		
+	
 		$this->fieldArray[self::COMPANY_CODE] = $codes[0];
 		$this->fieldArray[self::COST_CENTER] = $codes[1];
 		$this->fieldArray[self::ACCOUNT] = $codes[2];
 		
 	}
+
 	public function setCreditAmount($v) {
 		$this->fieldArray[self::CREDIT_AMOUNT] = number_format($v, 2, '.', '');
-		
+		$this->totalCredit += $v;
 	}
+
 	public function setDebitAmount($v) {
 		$this->fieldArray[self::DEBIT_AMOUNT] = number_format($v, 2, '.', '');
-		
+		$this->totalDebit += $v;
 	}
+
 	public function setPurchaseDate($v) {
-		$this->fieldArray[self::EFFECTIVE_DATE] = $v->format('Y-m-d');
-		
+		$this->fieldArray[self::EFFECTIVE_DATE] = $v->format('Y/m/d');
 	}
+
 	public function setJournalCategory($v) {
 		$this->fieldArray[self::JOURNAL_CATEGORY] = $v;
-		
+	}
+
+	public function getTotalCredit() {
+		return $this->totalCredit;
+	}
+
+	public function getTotalDebit() {
+		return $this->totalDebit;
 	}
 }

@@ -73,25 +73,23 @@ CREATE PROCEDURE `gl_report` (
 	IN pmtStart VARCHAR(15), 
     IN pmtEnd VARCHAR(15))
 BEGIN
-	create temporary table idinp (idInvoice int);
+	create temporary table idinp (idInvoice int NOT NULL, PRIMARY KEY (idInvoice));
 	create temporary table idind (idInvoice int);
 
-	insert into idinp
+	replace into idinp
 		select 
-			`i`.`idInvoice`
+			`pi`.`Invoice_Id`
 		FROM
 			`payment` `p`
 			JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
-			JOIN `invoice` `i` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
 		where 
-			i.Status != 'c' and 
             ((DATE(`p`.`Timestamp`) >= DATE(pmtStart) && DATE(`p`.`Timestamp`) < DATE(pmtEnd))
 			OR (DATE(`p`.`Last_Updated`) >= DATE(pmtStart) && DATE(`p`.`Last_Updated`) < DATE(pmtEnd)));
         
 	insert into idind
 		select idInvoice from invoice where Delegated_Invoice_Id in (select idinvoice from idinp);
 
-	insert into idinp select idInvoice from idind;
+	replace into idinp select idInvoice from idind;
 
 	select  `i`.`idInvoice`,
         `i`.`Amount` AS `iAmount`,
@@ -100,9 +98,12 @@ BEGIN
         `i`.`Invoice_Number` AS `iNumber`,
         `i`.`Delegated_Invoice_Id` AS `Delegated_Id`,
         `i`.`Deleted` AS `iDeleted`,
+        ifnull(`v`.`Pledged_Rate`, 0) as `Pledged_Rate`,
+        ifnull(`rr`.`Reduced_Rate_1`, 0) as `Rate`,
         ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
         ifnull(`il`.`Amount`, 0) as `il_Amount`,
 		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
+ 		ifnull(`il`.`Type_Id`, 0) as `il_Type_Id`,
         IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
         IFNULL(`p`.`Amount`, 0) AS `pAmount`,
         IFNULL(`p`.`idPayment_Method`, 0) AS `pMethod`,
@@ -120,6 +121,8 @@ BEGIN
         LEFT JOIN `payment_invoice` `pi` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
         LEFT JOIN `payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
         JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Deleted` < 1
+        left join `visit` `v` on `i`.`Order_Number` = `v`.`idVisit` and `i`.`Suborder_Number` = `v`.`Span`
+        left join `room_rate` `rr` on `v`.`idRoom_Rate` = `rr`.`idRoom_rate`
         LEFT JOIN `name_volunteer2` `nv` ON `p`.`idPayor` = `nv`.`idName`
             AND (`nv`.`Vol_Category` = 'Vol_Type')
             AND (`nv`.`Vol_Code` = 'ba')
@@ -534,6 +537,7 @@ BEGIN
             values (id, groupcode);
 
 END -- ;
+
 
 
 

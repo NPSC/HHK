@@ -1257,52 +1257,8 @@ class VisitView {
 
 
         // Update any invoice line dates
-        if ($uS->ShowLodgDates) {
-
-            $lines = array();
-            $itemDesc = '';
-            $stmt = $dbh->query("Select il.*, it.Description as `Item_Description` from
-            invoice i left join invoice_line il on i.idInvoice = il.Invoice_Id
-            left join item it on il.Item_Id = it.idItem
-    where i.Deleted = 0 and il.Deleted = 0 and il.Item_Id = " . ItemId::Lodging . " and i.Order_Number = '$idVisit'");
-
-            while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-                $ilRs = new InvoiceLineRS();
-                EditRS::loadRow($r, $ilRs);
-
-                $iLine = InvoiceLine::invoiceLineFactory($ilRs->Type_Id->getStoredVal());
-                $iLine->loadRecord($ilRs);
-                $lines[] = $iLine;
-                $itemDesc = $r['Item_Description'];
-            }
-
-
-            if (count($lines) > 0 && $startDelta != 0) {
-
-                foreach ($lines as $il) {
-
-                    $stDT = new \DateTime($il->getPeriodStart());
-                    $edDT = new \DateTime($il->getPeriodEnd());
-
-                    if ($startDelta > 0) {
-                        $stDT->add($startInterval);
-                        $edDT->add($startInterval);
-                    } else {
-                        $stDT->sub($startInterval);
-                        $edDT->sub($startInterval);
-                    }
-
-                    $il->setPeriodStart($stDT->format('Y-m-d'));
-                    $il->setPeriodEnd($edDT->format('Y-m-d'));
-                    $il->setDescription($itemDesc);
-
-                    $il->updateLine($dbh);
-
-                }
-           }
-        }
-
+		Invoice::updateInvoiceLineDates($dbh, $idVisit, $startDelta);
+		
         $lastVisit = array_pop($visits);
         $lastVisitRs = $lastVisit['rs'];
 

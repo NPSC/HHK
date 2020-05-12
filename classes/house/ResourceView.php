@@ -905,6 +905,8 @@ from
 
         $endDT = new DateTime();
         $endDT->add(new DateInterval('P2D'));
+        
+        $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 
         $stmt = $dbh->query("select
     r.idRoom,
@@ -1003,16 +1005,16 @@ where g3.Substitute > 0 and ru.idResource_use is null");
 
                 if ($isDirty) {
                     $action = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'id'=>$filter.'cbClean' . $r['idRoom']))
-                        .HTMLContainer::generateMarkup('label', 'Set Clean', array('for'=>$filter.'cbClean' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
+                    .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Clean][1], array('for'=>$filter.'cbClean' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
 
                 } else if ($isClean && $uS->HouseKeepingSteps > 1) {
                     $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbReady[' . $r['idRoom'] . ']', 'id'=>$filter.'cbReady' . $r['idRoom']))
-                        .HTMLContainer::generateMarkup('label', 'Set Ready', array('for'=>$filter.'cbReady' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
+                        .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Ready][1], array('for'=>$filter.'cbReady' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
                     $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
-                        .HTMLContainer::generateMarkup('label', 'Set Dirty', array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
+                        .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Dirty][1], array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
                 } else {
                     $action .= HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDirty[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDirty' . $r['idRoom']))
-                        .HTMLContainer::generateMarkup('label', 'Set Dirty', array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
+                        .HTMLContainer::generateMarkup('label', 'Set '.$roomStatuses[RoomState::Dirty][1], array('for'=>$filter.'cbDirty' . $r['idRoom'], 'style'=>'margin-left:.2em;')) . "<br/>";
                 }
 
                 $action .= ($guestAdmin === FALSE ? '' : HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbDeln[' . $r['idRoom'] . ']', 'id'=>$filter.'cbDeln' . $r['idRoom']))

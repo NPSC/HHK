@@ -11,17 +11,12 @@
 require 'homeIncludes.php';
 require(HOUSE . 'TemplateForm.php');
 require(HOUSE . 'SurveyForm.php');
+require(SEC . 'Login.php');
 
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-try {
-    $config = new Config_Lite(ciCFG_FILE);
-} catch (Exception $ex) {
-    exit("Configurtion file is missing, path=".ciCFG_FILE);
-}
 
 try {
     $labels = new Config_Lite(LABEL_FILE);
@@ -31,29 +26,22 @@ try {
 
 
 try {
-    $dbConfig = $config->getSection('db');
-} catch (Config_Lite_Exception $e) {
-    exit("Database configurtion data is missing.");
+	
+	$login = new Login();
+	$login->initHhkSession(ciCFG_FILE);
+	
+} catch (Hk_Exception_InvalidArguement $pex) {
+	exit ("Database Access Error.");
+	
+} catch (Exception $ex) {
+	exit ($ex->getMessage());
 }
 
-
-if (is_array($dbConfig)) {
-
-    if (strtoupper($dbConfig['DBMS']) != 'MYSQL') {
-        exit('Only works on MySQL.  You are using: ' . $dbConfig['DBMS']);
-    }
-
-    // Don't use local UNIX socket
-    $url = $dbConfig['URL'];
-    if (strtolower($url) == 'localhost') {
-        $url = '127.0.0.1';
-    }
-
-    $dbh = initMY_SQL($url, $dbConfig['Schema'], $dbConfig['User'], decryptMessage($dbConfig['Password']));
-
-} else {
-
-    exit("Bad Database Configurtion");
+// Override user DB login credentials
+try {
+	$dbh = initPDO(TRUE);
+} catch (Hk_Exception_Runtime $hex) {
+	exit( $hex->getMessage());
 }
 
 

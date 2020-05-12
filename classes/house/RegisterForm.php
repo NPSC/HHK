@@ -146,6 +146,12 @@ class RegisterForm {
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" .$veh->License_Number->getStoredVal() . "</p>
   </td>
  </tr>";
+                
+                if ($veh->Note->getStoredVal() != '') {
+                	$mkup .= "<tr><td style='width:.5in;border-top:none; border-left:none;border-bottom:none;border-right:solid windowtext 1pt;'>
+  <p class=MsoNormal align=right style='margin-bottom:0; text-align:right;line-height:normal'>&nbsp;</p>
+  </td><td style='border-top:none; border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;' colspan='10'>".$veh->Note->getStoredVal()."</td></tr>";
+                }
             }
 
             $mkup .= "</table>";
