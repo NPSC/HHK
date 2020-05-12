@@ -10,7 +10,6 @@
 require_once ("InstallIncludes.php");
 
 require_once (SEC . 'UserClass.php');
-require_once(SEC . 'ChallengeGenerator.php');
 require_once(SEC . 'Login.php');
 require CLASSES . 'SiteLog.php';
 require CLASSES . 'TableLog.php';

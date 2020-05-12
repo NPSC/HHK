@@ -22,7 +22,6 @@ require ('classes/tables/PaymentsRS.php');
 
 require ('classes/sec/sessionClass.php');
 require ('classes/sec/UserClass.php');
-require ('classes/sec/ChallengeGenerator.php');
 require ('classes/sec/Login.php');
 require ('classes/sec/SecurityComponent.php');
 require ('classes/sec/ScriptAuthClass.php');
@@ -47,7 +46,7 @@ require ('classes/Payment/paymentgateway/instamed/InstamedGateway.php');
 
 require ('classes/PaymentSvcs.php');
 
-$sequence = ChallengeGenerator::getRandomString();
+$sequence = getRandomString();
 
 try {
     $login = new Login();

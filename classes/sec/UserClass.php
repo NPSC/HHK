@@ -26,23 +26,13 @@ class UserClass
     public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE)
     {
         $ssn = Session::getInstance();
-        // instantiate a ChallengeGenerator object
-        $chlgen = new ChallengeGenerator(FALSE);
 
-        // get challenge variable
-        $challenge = $chlgen->getChallengeVar();
-
-        if ($challenge === FALSE) {
-            $this->logMessage = "Challange variable is missing.  ";
-            return FALSE;
-        }
-
-        if ($chlgen->testTries() === FALSE) {
+        if ($this->testTries() === FALSE) {
             $this->logMessage = "To many log-in attempts.  ";
             return FALSE;
         }
 
-        $chlgen->incrementTries();
+        $this->incrementTries();
 
         $r = self::getUserCredentials($dbh, $username);
 
@@ -65,6 +55,9 @@ class UserClass
             // Regenerate session ID to prevent session fixation attacks
             $ssn = Session::getInstance();
             $ssn->regenSessionId();
+            
+            //reset login tries
+            $this->resetTries();
 
             // Get magic PC cookie
             $housePc = FALSE;
@@ -548,5 +541,29 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
     {
         $uS = Session::getInstance();
         $uS->destroy();
+    }
+    
+    private function incrementTries() {
+        $ssn = Session::getInstance();
+        if (isset($ssn->Challtries) === FALSE) {
+            $ssn->Challtries = 0;
+        }
+        $ssn->Challtries++;
+        return $ssn->Challtries;
+    }
+    
+    private function testTries($max = 3) {
+        $ssn = Session::getInstance();
+        if (isset($ssn->Challtries) && $ssn->Challtries > $max) {
+            return FALSE;
+        }
+        return TRUE;
+    }
+    
+    private function resetTries(){
+        $ssn = Session::getInstance();
+        if (isset($ssn->Challtries)){
+            unset($ssn->Challtries);
+        }
     }
 }

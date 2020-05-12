@@ -348,18 +348,9 @@ class ScriptAuthClass extends SecurityComponent {
         $markup .= "</div></div></header>
             <div id='version'>$disclaimer Build:" . $uS->ver . "  <button id='userSettingsBtn' style='margin-left: .5em'>Hello, " . $uS->username . "</button></div>";
         
-        // instantiate a ChallengeGenerator object
-        try {
-            $chlgen = new ChallengeGenerator();
-            $challengeVar = $chlgen->getChallengeVar("challenge");
-        } catch (Exception $e) {
-            //
-        }
-        
         //add user settings modal
-        if($dbh && isset($challengeVar) && isset($uS)){
+        if($dbh && isset($uS)){
             $markup .= UserClass::createUserSettingsMarkup($dbh);
-            $markup .= '<input  type="hidden" id="challVar" value="' . $challengeVar . '" />';
             $markup .= '<input  type="hidden" id="isPassExpired" value="' . UserClass::isPassExpired($dbh, $uS) . '" />';
         }
         

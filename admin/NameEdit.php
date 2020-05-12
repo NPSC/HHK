@@ -368,10 +368,6 @@ $memberData['webUserName'] = $userName;
 $webUserDialogMarkup = WebUser::getSecurityGroupMarkup($dbh, $id, $maintFlag) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS);
 
 
-// instantiate a ChallengeGenerator object
-$challengeVar = $uS->challenge;
-
-
 $memberData["id"] = $id;
 $memberData["coId"] = $name->get_companyId();
 $memberData["coName"] = $name->get_company();

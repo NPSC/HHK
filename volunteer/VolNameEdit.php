@@ -181,18 +181,6 @@ $pwMsg = AlertControl::createMarkup('pw');
 $pwAlertJSON = json_encode(AlertControl::makeJsonPackage('pw'));
 
 
-
-// instantiate a ChallengeGenerator object
-try {
-    $chlgen = new ChallengeGenerator();
-    // register challenge variable
-    //$chlgen->setChallengeVar();
-    $challengeVar = $chlgen->getChallengeVar("challenge");
-} catch (Exception $e) {
-    die("Uh-oh.  Error.");
-}
-
-
 //// Squirms
 //$plus5 = time() + (1 * 60 * 60);
 //$squirm = date("Y/m/d H:i:s", $plus5);

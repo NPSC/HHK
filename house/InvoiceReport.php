@@ -962,13 +962,6 @@ $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
 
-// instantiate a ChallengeGenerator object
-try {
-    $chlgen = new ChallengeGenerator();
-    $challengeVar = $chlgen->getChallengeVar("challenge");
-} catch (Exception $e) {
-    //
-}
 
 ?>
 <!DOCTYPE html>
@@ -995,7 +988,6 @@ try {
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 <script type="text/javascript">
-    var challVar;
 $(document).ready(function() {
     var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
     var makeTable = '<?php echo $mkTable; ?>';
@@ -1003,8 +995,6 @@ $(document).ready(function() {
     var pmtMkup = '<?php echo $paymentMarkup; ?>';
     var rctMkup = '<?php echo $receiptMarkup; ?>';
     var tabReturn = '<?php echo $tabReturn; ?>';
-
-    challVar = $('#challVar').val();
 
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx').button();
     $('.ckdate').datepicker({
