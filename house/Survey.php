@@ -240,6 +240,7 @@ order by h.idPsg, na.Address_1, na.Address_2";
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo GRID_CSS; ?>
 
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>

@@ -219,6 +219,8 @@ $(document).ready(
 											"ui-state-error").val('');
 									$('#pwChangeErrMsg').text('');
 
+									$('div#dchgPw').find("#qrcode").empty();
+									$('div#dchgPw').find("#otpForm").hide();
 									$('div#dchgPw').find('button').button();
 									$('#dchgPw').dialog("option", "title","User Settings");
 									$('#dchgPw').dialog("option", "closeOnEscape",true);
@@ -265,7 +267,7 @@ $(document).ready(
 
 						$('#dchgPw').dialog({
 							autoOpen : autoOpen,
-							width : 'auto',
+							width : '60em',
 							autoResize : true,
 							resizable : true,
 							modal : true,
@@ -273,6 +275,58 @@ $(document).ready(
 							closeOnEscape : closeOnEscape,
 							title : "Welcome",
 							buttons : chPwButtons
+						});
+						
+						//two factor Auth
+						
+						$('div#dchgPw').on('click', 'button#genSecret', function(){
+							$.post("../house/ws_admin.php", {
+								cmd : 'gen2fa'
+							}, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										
+										$('div#qrcode').html('<p><strong>Secret: </strong> <span id="OTPSecret">' + data.secret + '</span></p><img src="'+ data.url + '"></p>');
+										$('div#otpForm').show();
+										$('button#genSecret').text("Regenerate QR Code");
+									}
+								}
+							});
+						});
+						
+						$('div#dchgPw').on('click', 'button#submitSetupOTP', function(){
+							var secret = $('div#dchgPw').find("#OTPSecret").text();
+							var otp = $('#setupOTP').val();
+							$.post("../house/ws_admin.php", {
+								cmd : 'save2fa',
+								secret: secret,
+								OTP: otp
+							}, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										flagAlertMessage("Two Factor Authentication enabled successfully", 'success');
+										$('div#dchgPw').dialog('close');
+									}
+								}
+							});
 						});
 					}
 				});

@@ -17,6 +17,7 @@ require (CLASSES . 'AuditLog.php');
 require(DB_TABLES . 'WebSecRS.php');
 
 require (MEMBER . 'MemberSearch.php');
+require (THIRD_PARTY . 'GoogleAuthenticator.php');
 
 
 // Set page type for AdminPageCommon
@@ -202,6 +203,23 @@ switch ($c) {
         
         break;
         
+    case "gen2fa":
+        $events = generateTwoFA($uS->username);
+        break;
+        
+    case "save2fa":
+        
+        if (isset($_POST["secret"])) {
+            $secret = filter_var($_POST["secret"], FILTER_SANITIZE_STRING);
+        }
+        
+        if (isset($_POST["OTP"])) {
+            $otp = filter_var($_POST["OTP"], FILTER_SANITIZE_STRING);
+        }
+        
+        $events = saveTwoFA($dbh, $secret, $otp);
+        break;
+        
     default:
         $events = array("error" => "Bad Command");
 }
@@ -324,6 +342,33 @@ function changeQuestions(\PDO $dbh, array $questions) {
         $event = array('success'=>'User Security Questions Updated.');
     } else {
         $event = array('warning'=>$u->logMessage);
+    }
+    
+    return $event;
+}
+
+function generateTwoFA($uname){
+    try{
+        $ga = new PHPGangsta_GoogleAuthenticator();
+    
+        $secret = $ga->createSecret();
+        $qrCodeUrl = $ga->getQRCodeGoogleUrl($uname, $secret, "HHK");
+        
+        $event = array('success'=>true, 'secret'=>$secret, 'url'=> $qrCodeUrl);
+    }catch(Exception $e){
+        $event = array('status'=>"failed", 'msg'=>$e->getMessage());
+    }
+    
+    return $event;
+}
+
+function saveTwoFA(\PDO $dbh, $secret, $OTP){
+    $u = new UserClass();
+    
+    if($u->saveTwoFactorSecret($dbh, $secret, $OTP)){
+        $event = array('success'=>'Two Factor Authentication enabled');
+    } else {
+        $event = array('error'=>$u->logMessage);
     }
     
     return $event;

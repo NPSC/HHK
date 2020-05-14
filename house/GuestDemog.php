@@ -186,6 +186,7 @@ $form = HTMLContainer::generateMarkup('form', $tbl->generateMarkup(array(), "Sho
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>

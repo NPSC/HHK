@@ -208,6 +208,7 @@ if ($checkingIn == '') {
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo GRID_CSS; ?>
 
         <style type="text/css" rel="stylesheet"  media="print">
             #ckout {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}

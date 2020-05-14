@@ -426,7 +426,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
             }
         }
         
-        $sml->writeSheetRow('Sheet1',$flds);        
+        $sml->writeSheetRow('Sheet1',$flds);
 
     }
 }
@@ -721,7 +721,7 @@ where
              }else{ //otherwise set format as string
                 $header[$field[0]] = 'string';
                 $hdrstyle['widths'][] = 20;
-             }            
+             }
         }
         
         try{
@@ -1599,6 +1599,7 @@ if ($uS->CoTod) {
         <?php echo JQ_DT_CSS ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

@@ -291,6 +291,7 @@ if ($uS->UseWLnotes) {
         <link href='css/scheduler.min.css'  rel='stylesheet' type='text/css' />
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

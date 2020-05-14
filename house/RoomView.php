@@ -259,6 +259,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo GRID_CSS; ?>
         <style>
             #roomMonth { width: 600px; height: 300px; float:left; }
         </style>

@@ -9,7 +9,7 @@
  */
 
 define('DEFAULT_CSS', '<link href="css/default.css" rel="stylesheet" type="text/css" />');
-
+define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
 
 /*
  * includes

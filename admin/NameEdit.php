@@ -414,6 +414,7 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
+        <?php echo GRID_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>

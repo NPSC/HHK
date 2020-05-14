@@ -396,6 +396,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo GRID_CSS; ?>
         <style>
             .hhk-rowseparater { border-top: 2px #0074c7 solid !important; }
             #aLoginLink:hover {background-color: #337a8e; }

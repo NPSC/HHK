@@ -510,6 +510,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('EmailType','','lu','es','','\"mail\" or \"SMTP\"','Email_Server'),
 ('EmergContactFill','true','b','h','','Insist on Filling in the emergency contact (or check the \"skip\")',''),
 ('EmptyExtendLimit','0','i','h','','Extend visit (go on leave) limit # of days',''),
+('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication'),
 ('ExtendToday', '0', 'i', 'h', '', 'Extend the Check in day by this many hours into tomorrow', ''),
 ('ForceNamePrefix','false','b','h','','Force the name prefix to be entered',''),
 ('FromAddress','','ea','g','','House from address for guest emails',''),

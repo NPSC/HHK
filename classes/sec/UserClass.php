@@ -22,6 +22,8 @@ class UserClass
     const Login = 'L';
     
     const Lockout = 'PL';
+    
+    const OTPSecChanged = 'OTPC';
 
     public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE)
     {
@@ -360,6 +362,16 @@ class UserClass
         
         return false;
     }
+    
+    public static function hasTOTP(\PDO $dbh, $uS)
+    {
+        $u = self::getUserCredentials($dbh, $uS->username);
+        if ($u['OTP']) {
+            return true;
+        }
+        
+        return false;
+    }
 
     public static function createUserSettingsMarkup(\PDO $dbh)
     {
@@ -368,6 +380,49 @@ class UserClass
         $mkup = '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
         $passwordTitle = 'Change your Password';
 
+        $mkup .= '
+            <div class="row">
+            <div class="col-md-6">
+        ';
+        
+        //TOTP authentication
+        $mkup .= '
+            <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+                <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
+        			Two Factor Authentication
+        		</div>
+        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+        ';
+        
+        if(self::hasTOTP($dbh, $uS)){
+            $mkup.= '
+                <p style="margin: 0.5em">Two Factor authentication is enabled</p>
+                <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
+                    <button id="genSecret">Regenerate QR Code</button>
+            ';
+        }else{
+            $mkup.= '
+                <p style="margin: 0.5em">Two Factor authentication is NOT enabled</p>
+                <p style="margin: 0.5em">Two factor authentication adds a second layer of security to your account by requiring you to enter a temporary code in addition to your password when logging in.</p>
+                <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
+                    <button id="genSecret">Enable Two Factor Authentication</button>
+            ';
+        }
+        
+        $mkup .= '
+                <div id="qrcode" style="margin: 1em 0;"></div>
+                <div id="otpForm" style="display: none;">
+                    <label for"setupOTP" style="display: block; margin-bottom: 1em">Enter Code from Authenticator App</label>
+                    <input type="text" id="setupOTP" size="10">
+                    <button id="submitSetupOTP" style="margin-left: 1em;">Submit Code</button>
+                </div>
+                </div>
+                </div>
+            </div>
+            </div> <!--end col-md-6 -->
+            <div class="col-md-6">
+        ';
+        
         if (self::isPassExpired($dbh, $uS)){
             $mkup .= '
             <div class="ui-widget hhk-visitdialog hhk-row PassExpDesc" style="margin-bottom: 1em;">
@@ -402,7 +457,9 @@ class UserClass
                         </tr>
                     </table>
                 </div>
-            </div>';
+            </div>
+            </div> <!--end col-md-6 -->
+            </div> <!--end row -->';
         
         $mkup .= "</div>";
         return $mkup;
@@ -564,6 +621,36 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries)){
             unset($ssn->Challtries);
+        }
+    }
+    
+    //two factor authentication
+    
+    public function saveTwoFactorSecret(\PDO $dbh, $secret = '', $OTP = ''){
+        $uS = Session::getInstance();
+        
+        $ga = new PHPGangsta_GoogleAuthenticator();
+            
+        if($ga->verifyCode($secret, $OTP) == false){
+            $this->logMessage = "One Time Code is invalid";
+            return false;
+        }
+        
+        if($uS->username && $secret != ''){
+            $query = "update w_users set OTP = 1, OTPCode = :secret, Last_Updated = now() where User_Name = :username and Status='a';";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(
+                ':secret' => $secret,
+                ':username' => $uS->username
+            ));
+            
+            if ($stmt->rowCount() == 1) {
+                $this->insertUserLog($dbh, UserClass::OTPSecChanged, $uS->username);
+            }
+            return true;
+        }else{
+            $this->logMessage = 'Two Factor Setup failed';
+            return false;
         }
     }
 }

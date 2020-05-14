@@ -278,6 +278,8 @@ function getPieChartMarkup($title, $chartId, $width = "335", $height = "120") {
         <?php echo JQ_DT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo GRID_CSS; ?>
+        
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>

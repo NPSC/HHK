@@ -85,9 +85,12 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 ('dayIncrements', '365', '365 days', '','', '5');
 
 INSERT IGNORE INTO `sys_config` VALUES
+('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication'),
 ('passResetDays','365','lu','pr','','Number of days between automatic password resets','dayIncrements'),
 ('PriorPasswords','0','i','pr','','Number of prior passwords user cannot use',''),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements');
 
 ALTER TABLE `w_users` 
-ADD COLUMN `Chg_PW` TINYINT NOT NULL DEFAULT 1 AFTER `PW_Change_Date`;
+ADD COLUMN `Chg_PW` TINYINT NOT NULL DEFAULT 1 AFTER `PW_Change_Date`,
+ADD COLUMN `OTP` bit(1) NOT NULL DEFAULT b'0' AFTER `Chg_PW`,
+ADD COLUMN `OTPcode` VARCHAR(45) NOT NULL DEFAULT '' AFTER `OTP`;

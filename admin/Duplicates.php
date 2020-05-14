@@ -142,6 +142,7 @@ $resultMessage = $alertMsg->createMarkup();
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo GRID_CSS; ?>
 
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
