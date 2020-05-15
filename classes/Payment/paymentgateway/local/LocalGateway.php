@@ -42,6 +42,13 @@ class LocalGateway extends PaymentGateway {
 	public function getGatewayType() {
 		return '';
 	}
+	public function hasVoidReturn() {
+		return FALSE;
+	}
+	
+	public function hasCofService() {
+		return FALSE;
+	}
 	protected function setCredentials($credentials) {
 		$this->credentials = $credentials;
 	}
@@ -185,6 +192,7 @@ class LocalGateway extends PaymentGateway {
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $rtnToken, PaymentStatusCode::Paid );
 		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
 		$vr->setPaymentNotes ( $paymentNotes );
+		$vr->setRefund(TRUE);
 
 		$vrr = ReturnReply::processReply ( $dbh, $vr, $uS->username, NULL );
 
@@ -214,9 +222,6 @@ class LocalGateway extends PaymentGateway {
 	}
 	public function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup) {
 		throw new Hk_Exception_Payment ( 'Card on file services are not implemented.  ' );
-	}
-	public function hasCofService() {
-		return FALSE;
 	}
 	
 	public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {

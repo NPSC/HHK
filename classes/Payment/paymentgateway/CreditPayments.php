@@ -217,6 +217,7 @@ class ReturnReply extends CreditPayments {
         if (is_null($payRs)) {
 
             // New Return payment
+            $pr->setRefund(TRUE);
             $pr->recordPayment($dbh, $username);
 
         } else if ($payRs->idPayment->getStoredVal() > 0) {

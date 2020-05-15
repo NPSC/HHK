@@ -29,7 +29,7 @@ class VantivGateway extends PaymentGateway {
     }
 
     public function getGatewayName() {
-        return 'vantiv';
+        return PaymentGateway::VANTIV;
     }
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {

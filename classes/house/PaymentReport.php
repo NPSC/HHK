@@ -346,7 +346,7 @@ class PaymentReport {
                 		$payDetail = $a['Card_Type'] . ' - ' . $a['Masked_Account'];
                 	}
                 	
-                	if ($a['Merchant'] != '') {
+                	if ($a['Merchant'] != '' && $a['Merchant'] != 'Production') {
                 		$payGW = ucfirst($a['Merchant']);
                 	}
                 	

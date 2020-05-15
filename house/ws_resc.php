@@ -20,6 +20,7 @@ require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'AttributeRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'PaymentGwRS.php');
 
 require CLASSES . 'AuditLog.php';
 require CLASSES . 'History.php';

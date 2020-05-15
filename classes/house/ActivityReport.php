@@ -417,9 +417,11 @@ class ActivityReport {
         $labels = new Config_Lite(LABEL_FILE);
         $config = new Config_Lite(ciCFG_FILE);
 
-        if($config->getString('webServices', 'ContactManager', '') != '') {
+        if($config->getString('webServices', 'Service_Name', '') != '') {
             $showExternlId = TRUE;
         }
+        
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
 
         // Dates
         if ($startDT != NULL) {
@@ -647,7 +649,7 @@ where `lp`.`idPayment` > 0
                         $attr['style'] .= 'color:red;';
 
                         // Void return
-                        if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Last_Updated'])) == date('Y-m-d')) {
+                        if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Last_Updated'])) == date('Y-m-d') && $gateway->hasVoidReturn()) {
                             $actionButtonArray['class'] = 'hhk-voidRefundPmt';
                             $voidContent .= HTMLInput::generateMarkup('Void-Return', $actionButtonArray);
                         }

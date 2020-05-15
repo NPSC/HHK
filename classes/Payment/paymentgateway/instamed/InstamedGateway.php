@@ -57,9 +57,13 @@ class InstamedGateway extends PaymentGateway {
     }
 
     public function getGatewayName() {
-        return 'instamed';
+        return PaymentGateway::INSTAMED;
     }
 
+    public function hasVoidReturn() {
+    	return FALSE;
+    }
+    
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -108,7 +112,7 @@ class InstamedGateway extends PaymentGateway {
             
             // Record transaction
             try {
-                $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::Token);
+            	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Sale, TransMethod::Token);
                 $sr->setIdTrans($transRs->idTrans->getStoredVal());
             } catch (Exception $ex) {
                 // do nothing
@@ -399,7 +403,7 @@ class InstamedGateway extends PaymentGateway {
         
         // Record transaction
         try {
-            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Void, TransMethod::Token);
+        	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Void, TransMethod::Token);
             $sr->setIdTrans($transRs->idTrans->getStoredVal());
         } catch (Exception $ex) {
             // do nothing
@@ -582,7 +586,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         
         // Record transaction
         try {
-            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Retrn, TransMethod::Token);
+        	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Retrn, TransMethod::Token);
             $sr->setIdTrans($transRs->idTrans->getStoredVal());
         } catch (Exception $ex) {
             // do nothing

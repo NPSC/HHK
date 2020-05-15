@@ -47,15 +47,23 @@ abstract class PaymentGateway {
     public abstract function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate);
 
     public abstract function selectPaymentMarkup(\PDO $dbh, &$payTable, $index = '');
+    
+    public function hasVoidReturn() {
+    	return TRUE;
+    }
 
+    public function hasCofService() {
+    	return TRUE;
+    }
+    
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
         return array('warning' => 'Credit Sale is not implemented. ');
     }
-
+    
     public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
-            return $this->_voidSale($dbh, $payRs, $pAuthRs, $invoice, $bid);
+        	return $this->_voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
         }
 
         return array('warning' => 'Payment is ineligable for void.  ', 'bid' => $bid);
@@ -217,10 +225,6 @@ abstract class PaymentGateway {
 
     public function useAVS() {
         return FALSE;
-    }
-    
-    public function hasCofService() {
-    	return TRUE;
     }
     
     public function setCheckManualEntryCheckbox($v) {
