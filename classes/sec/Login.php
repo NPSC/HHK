@@ -107,19 +107,26 @@ class Login {
         }
 
 
-        if (isset($post["txtUname"]) && isset($post["challenge"])) {
+        if (isset($post["txtUname"]) && isset($post["txtPass"])) {
 
             $this->userName = strtolower(filter_var($post["txtUname"], FILTER_SANITIZE_STRING));
 
-            $password = filter_var($post["challenge"], FILTER_SANITIZE_STRING);
+            $password = filter_var($post["txtPass"], FILTER_SANITIZE_STRING);
 
+            $otp = '';
+            if(isset($post["otp"])){
+                $otp = filter_var($post["otp"], FILTER_SANITIZE_STRING);
+            }
+            
             $u = new UserClass();
-
-            if ($u->_checkLogin($dbh, $this->userName, $password, false) === FALSE) {
-
-                // Failed
-                $this->validateMsg .= $u->logMessage;
-
+            
+            if ($u->_checkLogin($dbh, $this->userName, $password, false, $otp) === FALSE) {
+                if($u->logMessage == "OTPRequired"){
+                    $events['OTPRequired'] = true;
+                }else{
+                    // Failed
+                    $this->validateMsg .= $u->logMessage;
+                }
             } else {
 
                 if ($u->getDefaultPage() != '') {
@@ -171,8 +178,18 @@ class Login {
         
         $tbl->addBodyTr(HTMLTable::makeTd($xfInput . HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button', 'style'=>'margin-top: 1em;')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
 
-
-        return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls'));
+        //Two Factor dialog
+        $dialogMkup = '
+            <div id="OTPDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display: none;">
+                <div id="otpForm" style="text-align:center">
+                    <div id="OTPMsg" style="color: red"></div>
+                    <label for"txtOTP" style="display: block; margin-bottom: 1em">Enter Temporary Two Factor Code</label>
+                    <input type="text" id="txtOTP" size="10">
+                </div>
+            </div>
+        ';
+        
+        return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls')) . $dialogMkup;
 
     }
 

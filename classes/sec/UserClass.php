@@ -25,7 +25,7 @@ class UserClass
     
     const OTPSecChanged = 'OTPC';
 
-    public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE)
+    public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE, $otp = '')
     {
         $ssn = Session::getInstance();
 
@@ -53,32 +53,42 @@ class UserClass
         }
         
         if ($match && $r['Status'] == 'a') {
-
-            // Regenerate session ID to prevent session fixation attacks
-            $ssn = Session::getInstance();
-            $ssn->regenSessionId();
+            $ga = new PHPGangsta_GoogleAuthenticator();
             
-            //reset login tries
-            $this->resetTries();
+            //if OTP is required
+            if($r['OTP'] && $r['OTPcode'] != '' && $otp == ''){
+                $this->logMessage = "OTPRequired";
+                return FALSE;
+            }else if($otp != '' && isset($r['OTPcode']) && $ga->verifyCode($r['OTPcode'], $otp) == true){
 
-            // Get magic PC cookie
-            $housePc = FALSE;
-            if (filter_has_var(INPUT_COOKIE, 'housepc')) {
-
-                $remoteIp = self::getRemoteIp();
-
-                if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
-                    $housePc = TRUE;
+                // Regenerate session ID to prevent session fixation attacks
+                $ssn = Session::getInstance();
+                $ssn->regenSessionId();
+                
+                //reset login tries
+                $this->resetTries();
+    
+                // Get magic PC cookie
+                $housePc = FALSE;
+                if (filter_has_var(INPUT_COOKIE, 'housepc')) {
+    
+                    $remoteIp = self::getRemoteIp();
+    
+                    if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
+                        $housePc = TRUE;
+                    }
                 }
+    
+                $this->setSession($dbh, $ssn, $r);
+    
+                $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+    
+                $this->defaultPage = $r['Default_Page'];
+    
+                return TRUE;
+            }else{
+                $this->logMessage = "Two Factor Code invalid";
             }
-
-            $this->setSession($dbh, $ssn, $r);
-
-            $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
-
-            $this->defaultPage = $r['Default_Page'];
-
-            return TRUE;
         } else if ($match && $r['Status'] == 'd') { // is user disabled?
             $this->logMessage = "Account disabled, please contact your administrator. ";
         } else {

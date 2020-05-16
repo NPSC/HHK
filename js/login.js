@@ -29,6 +29,7 @@ var parms = {},
     $btn = $('#btnLogn'),
     $chall = $('#challenge');
     $xf = $('#xf');
+    $otp = $('#txtOTP');
 $('.hhk-logerrmsg').hide();
 $('#valMsg').text('');
 if ($uname.val() === '') {
@@ -41,9 +42,10 @@ if ($psw.val() === '') {
 }
 parms = {
     //challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
-	challenge: $psw.val(),
     txtUname: $uname.val(),
-    xf: $xf.val()
+    txtPass: $psw.val(),
+    xf: $xf.val(),
+    otp: $otp.val()
 };
 $.post('index.php', parms, function (data){
     try {
@@ -53,11 +55,20 @@ $.post('index.php', parms, function (data){
         $('#divLoginCtls').remove();
         return;
     }
+    if(data.OTPRequired){
+    	$("div#OTPDialog").dialog('open');
+    }
     if (data.page && data.page !== '') {
         window.location.assign(data.page);
     }
     if (data.mess) {
-        $('#valMsg').text(data.mess);
+    	if($('#OTPDialog').dialog('isOpen')){
+    		$('#OTPMsg').text(data.mess);
+    		$('#valMsg').empty();
+    	}else{
+    		$('#valMsg').text(data.mess);
+    		$('#OTPMsg').empty();
+    	}
     }
     if (data.chall && data.chall !== '') {
         $chall.val(data.chall);
@@ -89,6 +100,21 @@ $(document).on('mousedown', '.showPw', function() {
 $(document).on('mouseup', '.showPw', function() {
 	var input = $(this).closest("td").find("input");
 	input.prop("type", "password");
+});
+
+$("div#OTPDialog").dialog({
+	autoOpen : false,
+	width : '315px',
+	autoResize : true,
+	resizable : true,
+	modal : true,
+	closeOnEscape : true,
+	title : "Two Factor Authentication",
+	buttons : {
+		"Login" : function() {
+			sendHhkLogin();
+		}
+	}
 });
 
 });
