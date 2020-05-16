@@ -206,39 +206,33 @@ DROP procedure IF EXISTS `constraint_room`; -- ;
 CREATE PROCEDURE `constraint_room` (resvId int)
 BEGIN
 
-Declare hospId int;
-Declare asscId int;
-Declare rId int;
+	Declare rId int;
 
--- Pick up the hospital and association id's
-select
-	CASE WHEN ce.idEntity is null THEN 0 Else hs.idHospital End,
-    CASE WHEN ce2.idEntity is null THEN 0 Else hs.idAssociation  END,
-    CASE WHEN ce3.idEntity is null THEN 0 Else r.idReservation  END
-		into hospId, asscId, rId
-from hospital_stay hs
-	join reservation r on hs.idHospital_stay = r.idHospital_stay
-    left join constraint_entity ce on ce.idEntity = hs.idHospital and ce.`Type` = 'hos'
-    left join constraint_entity ce2 on ce2.idEntity = hs.idAssociation and ce2.`Type` = 'hos'
-    left join constraint_entity ce3 on ce3.idEntity = r.idReservation and ce3.`Type` = 'rv'
-where r.idReservation = resvId LIMIT 1;
-
-if (hospId + asscId + rId) > 0 THEN
-	-- find the rooms that have the attributes.
-	select idEntity, count(idEntity) as `num`
-	from attribute_entity
-	where idAttribute in (
-		select ca.idAttribute
-		from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
-		where ce.idEntity in (hospId, asscId, rId))
-	group by idEntity having `num` = (
-		select count(ca.idAttribute)
-		from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
-		where ce.idEntity in (hospId, asscId, rId));
-ELSE
-	-- there are no constraints.
-	select 0 as `idEntity`, 0 as `num`;
-END if;
+	-- Pick up the reserv id's
+	select
+	    CASE WHEN ce3.idEntity is null THEN 0 Else r.idReservation  END
+			into rId
+	from hospital_stay hs
+		join reservation r on hs.idHospital_stay = r.idHospital_stay
+	    left join constraint_entity ce3 on ce3.idEntity = r.idReservation and ce3.`Type` = 'rv'
+	where r.idReservation = resvId LIMIT 1;
+	
+	if (rId) > 0 THEN
+		-- find the rooms that have the attributes.
+		select idEntity, count(idEntity) as `num`
+		from attribute_entity
+		where idAttribute in (
+			select ca.idAttribute
+			from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
+			where ce.idEntity = rId)
+		group by idEntity having `num` = (
+			select count(ca.idAttribute)
+			from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
+			where ce.idEntity = rId);
+	ELSE
+		-- there are no constraints.
+		select 0 as `idEntity`, 0 as `num`;
+	END if;
 
 END -- ;
 

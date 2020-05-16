@@ -21,6 +21,7 @@ Insert into location (idLocation, Title, Merchant, Status) select 1, ifnull(`Val
 update room r set r.idLocation = (select ifnull(idLocation, '') from location where idLocation = 1) where r.idLocation = 0;
 
 UPDATE `sys_config` SET `Category`='fg' WHERE `Key`='BatchSettlementHour';
+UPDATE `sys_config` SET `Type`='lu', `GenLookup`='ExcessPays' WHERE `Key`='VisitExcessPaid';
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`, `GenLookup`) VALUES('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', '');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ExtendToday', '0', 'i', 'h', 'Extend immediate Check-in by this many hours into tomorrow');

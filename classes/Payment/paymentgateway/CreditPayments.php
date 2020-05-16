@@ -218,6 +218,7 @@ class ReturnReply extends CreditPayments {
 
             // New Return payment
             $pr->setRefund(TRUE);
+            $pr->setPaymentStatusCode(PaymentStatusCode::Paid);
             $pr->recordPayment($dbh, $username);
 
         } else if ($payRs->idPayment->getStoredVal() > 0) {
@@ -267,6 +268,8 @@ class ReturnReply extends CreditPayments {
             $uS = Session::getInstance();
 //            $vr = $pr->response;
 
+            $pr->setRefund(TRUE);
+            $pr->setPaymentStatusCode(PaymentStatusCode::Declined);
             $pr->recordPayment($dbh, $username, $attempts);
 
             $pr->recordPaymentAuth($dbh, $uS->PaymentGateway, $username);

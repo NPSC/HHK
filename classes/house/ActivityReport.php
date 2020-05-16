@@ -630,13 +630,6 @@ where `lp`.`idPayment` > 0
 
                         break;
 
-                    case PaymentStatusCode::VoidReturn:
-                        $stat = 'Voided Return';
-                        $attr['style'] .= 'color:red;';
-                        $amt = 0 - $amt;
-
-                        break;
-
                     case PaymentStatusCode::Reverse:
                         $stat = 'Reverse';
                         $attr['style'] .= 'color:red;';
@@ -662,6 +655,7 @@ where `lp`.`idPayment` > 0
 
                         break;
 
+                    case PaymentStatusCode::VoidReturn:
                     case PaymentStatusCode::Paid:
 
                         if ($p['Is_Refund'] > 0) {

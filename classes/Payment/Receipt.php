@@ -1100,14 +1100,14 @@ WHERE
             // Payments
             foreach ($r['p'] as $p) {
 
-                $amt = floatval($p['Payment_Amount']);  // - floatval($p['Payment_Balance']);
+                $amt = floatval($p['Payment_Amount']);
 
                 if ($p['Is_Refund'] > 0) {
                     $amt = 0 - $amt;
                 }
                 $amtStyle = 'text-align:right;';
 
-                if ($p['Payment_Status'] != PaymentStatusCode::Paid) {
+                if ($p['Payment_Status'] != PaymentStatusCode::Paid && $p['Payment_Status'] != PaymentStatusCode::VoidReturn) {
                     $amtMkup = HTMLContainer::generateMarkup('span', number_format(floatval($p['Payment_Amount']), 2), array('style'=>'color:red;'));
                     $amtStyle = 'text-align:left;';
                 } else {
@@ -1116,6 +1116,8 @@ WHERE
 
                     if ($r['i']['Invoice_Balance'] != 0 && $r['i']['Invoice_Balance'] != $r['i']['Invoice_Amount']) {
                         $p['Payment_Status_Title'] = 'Paying';
+                    } else {
+                    	$p['Payment_Status_Title'] = 'Paid';
                     }
 
                 }

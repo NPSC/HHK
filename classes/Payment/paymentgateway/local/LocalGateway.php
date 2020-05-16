@@ -229,7 +229,7 @@ class LocalGateway extends PaymentGateway {
 		// Charge card list
 		$ccs = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 
-		foreach ( $ccs as $k => $v ) {
+		foreach ( $ccs as $v ) {
 		    $v[0] = $v[1];
 			$cardNames [$v[1]] = $v;
 		}

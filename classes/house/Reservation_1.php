@@ -1281,13 +1281,6 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this;
     }
 
-//    public function setNotes($notes, $uname) {
-//        if ($notes != '') {
-//            $oldNotes = (is_null($this->reservRs->Notes->getStoredVal()) ? '' : $this->reservRs->Notes->getStoredVal());
-//            $this->reservRs->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', ' . $uname . ' - ' . $notes);
-//        }
-//    }
-
     public function saveNote(\PDO $dbh, $noteText, $uname, $concatNotes) {
 
         if ($noteText != '') {
