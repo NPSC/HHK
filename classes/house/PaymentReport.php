@@ -224,12 +224,6 @@ class PaymentReport {
                 $amt = 0;
                 break;
 
-            case PaymentStatusCode::VoidReturn:
-                $amt = 0;
-                $origAmt = 0 - $origAmt;
-
-                break;
-
             case PaymentStatusCode::Reverse:
 
                 $amt = 0;
@@ -240,6 +234,7 @@ class PaymentReport {
                 $amt = 0;
                 break;
 
+            case PaymentStatusCode::VoidReturn:
             case PaymentStatusCode::Paid:
 
                 if ($p['Is_Refund'] == 1) {
@@ -370,11 +365,6 @@ class PaymentReport {
                 $statusAttr['style'] = 'color:#ea4848;';
                 break;
 
-            case PaymentStatusCode::VoidReturn:
-                $statusAttr['style'] = 'color:#ea4848;';
-                $origAmt = 0 - $origAmt;
-                break;
-
             case PaymentStatusCode::Reverse:
                 $statusAttr['style'] = 'color:#ea4848;';
                 break;
@@ -385,6 +375,7 @@ class PaymentReport {
                 $timeDT = new DateTime($p['Last_Updated']);
                 break;
 
+            case PaymentStatusCode::VoidReturn:
             case PaymentStatusCode::Paid:
 
                 if ($p['Is_Refund'] == 1) {  // Return Amount
