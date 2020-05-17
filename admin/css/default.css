@@ -312,3 +312,7 @@ li.hhk-myMenuTop {
     margin-left: 2px;
 }
 
+*:focus {
+outline: none;
+}
+

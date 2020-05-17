@@ -207,6 +207,10 @@ switch ($c) {
         $events = generateTwoFA($uS->username);
         break;
         
+    case "get2fa":
+        $events = getTwoFA($dbh, $uS->username);
+        break;
+        
     case "save2fa":
         
         if (isset($_POST["secret"])) {
@@ -371,5 +375,20 @@ function saveTwoFA(\PDO $dbh, $secret, $OTP){
         $event = array('error'=>$u->logMessage);
     }
     
+    return $event;
+}
+
+function getTwoFA(\PDO $dbh, $username){
+    $ga = new PHPGangsta_GoogleAuthenticator();
+    
+    $u = new UserClass();
+    $user = $u->getUserCredentials($dbh, $username);
+    if($user['OTP'] && isset($user['OTPcode']) && $user['OTPcode'] != ''){
+        $secret = $user['OTPcode'];
+        $qrCodeUrl = $ga->getQRCodeGoogleUrl($username, $secret, "HHK");
+        $event = array('success'=>true, 'url'=>$qrCodeUrl);
+    }else{
+        $event = array('error'=>'Two Factor authentication not configured');
+    }
     return $event;
 }

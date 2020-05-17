@@ -415,3 +415,8 @@ li.hhk-myMenuTop {
 	margin: 0 0 0 -1px;
 	float: left;
 }*/
+
+*:focus {
+outline: none;
+}
+

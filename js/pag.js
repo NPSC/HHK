@@ -279,6 +279,12 @@ $(document).ready(
 						
 						//two factor Auth
 						
+						$('div#dchgPw #TwoFactorHelp').accordion({
+							active: false,
+							collapsible:true,
+							heightStyle: 'content',
+						});
+						
 						$('div#dchgPw').on('click', 'button#genSecret', function(){
 							$.post("../house/ws_admin.php", {
 								cmd : 'gen2fa'
@@ -298,6 +304,29 @@ $(document).ready(
 										$('div#qrcode').html('<p><strong>Secret: </strong> <span id="OTPSecret">' + data.secret + '</span></p><img src="'+ data.url + '"></p>');
 										$('div#otpForm').show();
 										$('button#genSecret').text("Regenerate QR Code");
+									}
+								}
+							});
+						});
+						
+						$('div#dchgPw').on('click', 'button#getSecret', function(){
+							$.post("../house/ws_admin.php", {
+								cmd : 'get2fa'
+							}, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										
+										$('div#qrcode').html('<img src="'+ data.url + '"></p>');
+										$('div#otpForm').hide();
 									}
 								}
 							});

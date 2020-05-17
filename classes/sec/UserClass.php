@@ -34,8 +34,6 @@ class UserClass
             return FALSE;
         }
 
-        $this->incrementTries();
-
         $r = self::getUserCredentials($dbh, $username);
 
         // disable user if inactive
@@ -60,7 +58,14 @@ class UserClass
                 $this->logMessage = "OTPRequired";
                 return FALSE;
             }else if($otp != '' && isset($r['OTPcode']) && $ga->verifyCode($r['OTPcode'], $otp) == true){
-
+                $success = true;
+            }else if(!$r['OTP']){
+                $success = true;
+            }else{
+                $success = false;
+            }
+            
+            if($success){
                 // Regenerate session ID to prevent session fixation attacks
                 $ssn = Session::getInstance();
                 $ssn->regenSessionId();
@@ -87,11 +92,13 @@ class UserClass
     
                 return TRUE;
             }else{
+                $this->incrementTries();
                 $this->logMessage = "Two Factor Code invalid";
             }
         } else if ($match && $r['Status'] == 'd') { // is user disabled?
             $this->logMessage = "Account disabled, please contact your administrator. ";
         } else {
+            $this->incrementTries();
             $this->logMessage = "Bad username or password.  ";
         }
 
@@ -408,12 +415,19 @@ class UserClass
             $mkup.= '
                 <p style="margin: 0.5em">Two Factor authentication is enabled</p>
                 <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
-                    <button id="genSecret">Regenerate QR Code</button>
+                    <button id="getSecret">Show QR Code</button>
+                    <button id="genSecret">Generate new QR Code</button>
             ';
         }else{
             $mkup.= '
                 <p style="margin: 0.5em">Two Factor authentication is NOT enabled</p>
                 <p style="margin: 0.5em">Two factor authentication adds a second layer of security to your account by requiring you to enter a temporary code in addition to your password when logging in.</p>
+                <div id="TwoFactorHelp">
+                    <h3>How it works</h3>
+                    <div>
+                        <p>Lorem Ipsum</p>
+                    </div>
+                </div>
                 <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
                     <button id="genSecret">Enable Two Factor Authentication</button>
             ';
@@ -660,6 +674,26 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
             return true;
         }else{
             $this->logMessage = 'Two Factor Setup failed';
+            return false;
+        }
+    }
+    
+    public function disableTwoFactor(\PDO $dbh, $username){
+        $uS = Session::getInstance();
+        
+        if($username){
+            $query = "update w_users set OTP = 0, OTPCode = '', Last_Updated = now() where User_Name = :username and Status='a';";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(
+                ':username' => $username
+            ));
+            
+            if ($stmt->rowCount() == 1) {
+                $this->insertUserLog($dbh, UserClass::OTPSecChanged, $username);
+            }
+            return true;
+        }else{
+            $this->logMessage = 'Failed to disable Two Factor Authentication';
             return false;
         }
     }
