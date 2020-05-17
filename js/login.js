@@ -109,7 +109,7 @@ $("div#OTPDialog").dialog({
 	resizable : true,
 	modal : true,
 	closeOnEscape : true,
-	title : "Two Factor Authentication",
+	title : "Two Step Verification",
 	buttons : {
 		"Login" : function() {
 			sendHhkLogin();

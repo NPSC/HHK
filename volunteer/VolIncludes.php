@@ -14,6 +14,8 @@ define('MAX_IDLE_TIME', '1800');
 
 define('PUBLIC_CSS', "<link href='css/publicStyle.css' rel='stylesheet' type='text/css' />");
 
+define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
+
 require ('../functions/commonDefines.php');
 
 require (CLASSES . 'PDOdata.php');

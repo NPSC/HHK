@@ -183,7 +183,7 @@ class Login {
             <div id="OTPDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display: none;">
                 <div id="otpForm" style="text-align:center">
                     <div id="OTPMsg" style="color: red"></div>
-                    <label for"txtOTP" style="display: block; margin-bottom: 1em">Enter Temporary Two Factor Code</label>
+                    <label for"txtOTP" style="display: block; margin-bottom: 1em">Enter Two Step Verification Code</label>
                     <input type="text" id="txtOTP" size="10">
                 </div>
             </div>

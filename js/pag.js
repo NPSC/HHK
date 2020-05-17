@@ -351,7 +351,7 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
-										flagAlertMessage("Two Factor Authentication enabled successfully", 'success');
+										flagAlertMessage("Two Step Verification enabled successfully", 'success');
 										$('div#dchgPw').dialog('close');
 									}
 								}

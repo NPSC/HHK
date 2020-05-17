@@ -93,7 +93,7 @@ class UserClass
                 return TRUE;
             }else{
                 $this->incrementTries();
-                $this->logMessage = "Two Factor Code invalid";
+                $this->logMessage = "Two Step Code invalid";
             }
         } else if ($match && $r['Status'] == 'd') { // is user disabled?
             $this->logMessage = "Account disabled, please contact your administrator. ";
@@ -406,37 +406,50 @@ class UserClass
         $mkup .= '
             <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
                 <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
-        			Two Factor Authentication
+        			Two Step Verification
         		</div>
         		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
         ';
         
         if(self::hasTOTP($dbh, $uS)){
             $mkup.= '
-                <p style="margin: 0.5em">Two Factor authentication is enabled</p>
+                <p style="margin: 0.5em">Two Step Verification is ON</p>
                 <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
                     <button id="getSecret">Show QR Code</button>
                     <button id="genSecret">Generate new QR Code</button>
             ';
         }else{
             $mkup.= '
-                <p style="margin: 0.5em">Two Factor authentication is NOT enabled</p>
-                <p style="margin: 0.5em">Two factor authentication adds a second layer of security to your account by requiring you to enter a temporary code in addition to your password when logging in.</p>
-                <div id="TwoFactorHelp">
+                <p style="margin: 0.5em">Two Step Verification is OFF</p>
+                <p style="margin: 0.5em">Two step verification adds a second layer of security to your account by requiring you to enter a temporary code in addition to your password when logging in.</p>
+                <div id="TwoFactorHelp" style="margin: 0.5em;">
                     <h3>How it works</h3>
                     <div>
-                        <p>Lorem Ipsum</p>
+                        <p>Once set up, you will be asked for a temporary code after entering your password when logging in. This temporary code can be found in the Authenticator browser extension configured during set up. These codes change every 30 seconds, so you\'ll need a new one each time you login.</p>
+                        <p><strong>Follow these steps to configure Two Step Verification</strong></p>
+                        <ol>
+                            <li>Install the Authenticator browser extension - <a href="https://authenticator.cc/" target="_blank">Click here</a></li>
+                            <li>Click "Enable Two Step Verification" below</li>
+                            <li>Click the Authenticator icon at the top right corner of your browser</li>
+                            <li>Click the Scan QR Code icon</li>
+                            <li>Click and drag from the upper left to the lower right of the QR code generated in Step 2 to select it</li>
+                            <li>If you see a message that says "(user) has been added.", then you have successfully configured the Authenticator extension</li>
+                            <li>Click the code shown in the Authenticator extension to copy it</li>
+                            <li>Click inside the text box below the QR code and press Ctrl-V to paste the code.</li>
+                            <li>Click "Submit Code"</li>
+                            <li>Two Step Verification is now enabled</li>
+                        </ol>
                     </div>
                 </div>
                 <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
-                    <button id="genSecret">Enable Two Factor Authentication</button>
+                    <button id="genSecret">Enable Two Step Verification</button>
             ';
         }
         
         $mkup .= '
                 <div id="qrcode" style="margin: 1em 0;"></div>
                 <div id="otpForm" style="display: none;">
-                    <label for"setupOTP" style="display: block; margin-bottom: 1em">Enter Code from Authenticator App</label>
+                    <label for"setupOTP" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
                     <input type="text" id="setupOTP" size="10">
                     <button id="submitSetupOTP" style="margin-left: 1em;">Submit Code</button>
                 </div>
@@ -673,7 +686,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
             }
             return true;
         }else{
-            $this->logMessage = 'Two Factor Setup failed';
+            $this->logMessage = 'Two Step Verification Setup failed';
             return false;
         }
     }
@@ -693,7 +706,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
             }
             return true;
         }else{
-            $this->logMessage = 'Failed to disable Two Factor Authentication';
+            $this->logMessage = 'Failed to disable Two Step Verification';
             return false;
         }
     }

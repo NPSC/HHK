@@ -420,3 +420,10 @@ li.hhk-myMenuTop {
 outline: none;
 }
 
+#TwoFactorHelp p {
+	margin-bottom: 1em;
+}
+
+#TwoFactorHelp li {
+	margin-bottom: 0.5em;
+}
