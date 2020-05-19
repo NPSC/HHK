@@ -47,7 +47,7 @@ require ('classes/Payment/paymentgateway/instamed/InstamedGateway.php');
 
 require ('classes/PaymentSvcs.php');
 
-$sequence = ChallengeGenerator::getRandomString();
+$sequence = getRandomString();
 
 try {
     $login = new Login();

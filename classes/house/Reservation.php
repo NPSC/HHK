@@ -201,8 +201,20 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     ->setArrivalDT($expArrDT)
                     ->setDepartureDT($expDepDT);
 
-        }
+        } else if ($this->reservRs->Expected_Arrival->getStoredVal() == '') {
+        	
+        	$uS = Session::getInstance();
+        	$nowDT = new DateTime();
+        	$extendHours = intval($uS->ExtendToday);
+        	
+        	
+        	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) <= $extendHours) {
+        		$nowDT->sub(new DateInterval('P1D'));
+        		$nowDT->setTime(23, 0);
+        		$this->reserveData->setArrivalDT($nowDT);
+        	}
 
+        }
 
         // Resv Expected dates
         $this->reserveData->setExpectedDatesSection($this->createExpDatesControl());
