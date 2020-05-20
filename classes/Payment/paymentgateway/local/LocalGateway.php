@@ -47,7 +47,7 @@ class LocalGateway extends PaymentGateway {
 	}
 	
 	public function hasCofService() {
-		return FALSE;
+		return TRUE;
 	}
 	protected function setCredentials($credentials) {
 		$this->credentials = $credentials;
@@ -106,6 +106,30 @@ class LocalGateway extends PaymentGateway {
 		$payResult->setDisplayMessage ( 'Paid by Credit Card.  ' );
 
 		return $payResult;
+	}
+	public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
+		$uS = Session::getInstance ();
+		
+		
+		if ($cardHolderName == '') {
+			$guest = new Guest($dbh, '', $idGuest);
+			$cardHolderName = $guest->getRoleMember()->getMemberFullName();
+		}
+
+		
+		$gwResp = new LocalGwResp ( 0, '', $selChgType, $chgAcct, $cardHolderName, MpTranType::CardOnFile, $uS->username );
+		
+		$vr = new LocalResponse ( $gwResp, $idGuest, $idGroup, 0, PaymentStatusCode::Paid );
+		
+		try {
+			$vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
+		} catch(Exception $ex) {
+			$vr->idToken = 0;
+		}
+		
+		
+		$dataArray['COFmkup'] = HouseServices::guestEditCreditTable($dbh, $idGroup, $idGuest, $idx);
+		return $dataArray;
 	}
 	
 	protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {

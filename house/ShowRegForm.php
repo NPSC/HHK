@@ -225,6 +225,8 @@ $(document).ready(function() {
         popY       : 20,
         popTitle   : 'Guest Registration Form'};
 
+    $('#mainTabs').tabs();
+    
     $('.btnPrint').click(function() {
         opt.popHt = $('div#PrintArea' + $(this).data('tab')).height();
         $('div#PrintArea' + $(this).data('tab')).printArea(opt);
@@ -261,7 +263,7 @@ $(document).ready(function() {
         window.open('ShowInvoice.php?invnum=' + invoiceNumber);
     }
 
-    $('#mainTabs').tabs().show();
+    $('#mainTabs').show();
     $('#regTabDiv').tabs();
 
 });

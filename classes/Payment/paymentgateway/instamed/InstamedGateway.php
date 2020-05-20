@@ -297,7 +297,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
 
         $uS = Session::getInstance();
         $dataArray = array();

@@ -465,7 +465,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), $reg->getIdRegistration());
 
                 // Card on file
-                if ($uS->PaymentGateway != '') {
+//                if ($uS->PaymentGateway != '') {
 
                     $dataArray['cof'] = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                             HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
@@ -474,7 +474,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                         ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel ignrSave')));
 
 
-                }
+//                }
             }
 
             // Array with amount calculated for each rate.

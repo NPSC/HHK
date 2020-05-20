@@ -98,7 +98,7 @@ abstract class PaymentGateway {
         return $this->voidSale($dbh, $invoice, $payRs, $pAuthRs, $bid);
     }
 
-    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
     	return array();
     }
     

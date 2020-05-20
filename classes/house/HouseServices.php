@@ -1385,6 +1385,8 @@ class HouseServices {
 
             $manualKey = FALSE;
             $selGw = '';
+            $cardType = '';
+            $chargeAcct = '';
 
             $guest = new Guest($dbh, '', $idGuest);
             $newCardHolderName = $guest->getRoleMember()->get_fullName();
@@ -1400,15 +1402,29 @@ class HouseServices {
             
             // For mulitple merchants
             if (isset($post['selccgw'.$idx])) {
-                $selGw = strtolower(filter_var($post['selccgw'.$idx], FILTER_SANITIZE_STRING));
+            	$selGw = strtolower(filter_var($post['selccgw'.$idx], FILTER_SANITIZE_STRING));
             }
+            
+            if (isset($post['selChargeType'.$idx])) {
+            	$cardType = filter_var($post['selChargeType'.$idx], FILTER_SANITIZE_STRING);
+            }
+            
+            if (isset($post['txtChargeAcct'.$idx])) {
+            	
+            	$chargeAcct = filter_var($post['txtChargeAcct'.$idx], FILTER_SANITIZE_STRING);
+            	
+            	if (strlen($chargeAcct) > 4) {
+            		$chargeAcct = substr($chargeAcct, -4, 4);
+            	}
 
+            }
+            
             try {
 
                 $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $selGw);
                 
                 if ($gateway->hasCofService()) {
-                	$dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage);
+                	$dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage, $cardType, $chargeAcct, $idx);
                 }
 
             } catch (Hk_Exception_Payment $ex) {

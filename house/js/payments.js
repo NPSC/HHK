@@ -1382,6 +1382,11 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
         parms['selccgw'+idx] = $('#selccgw'+idx).val();
     }
 
+    // For local gateway
+    if ($('#selChargeType'+idx).length > 0) {
+        parms['selChargeType'+idx] = $('#selChargeType'+idx).val();
+    }
+
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
     $.post('ws_ckin.php', parms,
       function(data) {
