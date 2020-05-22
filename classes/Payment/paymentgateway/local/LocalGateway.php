@@ -110,13 +110,15 @@ class LocalGateway extends PaymentGateway {
 	public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
 		$uS = Session::getInstance ();
 		
+		if ($selChgType == '' || $chgAcct == '') {
+			return array('COFmsg'=>'Missing charge type and/or account number');
+		}
 		
 		if ($cardHolderName == '') {
 			$guest = new Guest($dbh, '', $idGuest);
 			$cardHolderName = $guest->getRoleMember()->getMemberFullName();
 		}
 
-		
 		$gwResp = new LocalGwResp ( 0, '', $selChgType, $chgAcct, $cardHolderName, MpTranType::CardOnFile, $uS->username );
 		
 		$vr = new LocalResponse ( $gwResp, $idGuest, $idGroup, 0, PaymentStatusCode::Paid );
@@ -124,10 +126,10 @@ class LocalGateway extends PaymentGateway {
 		try {
 			$vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
 		} catch(Exception $ex) {
-			$vr->idToken = 0;
+			return array('error'=> $ex->getMessage());
 		}
 		
-		
+		$dataArray['COFmsg'] = 'Card Added.';
 		$dataArray['COFmkup'] = HouseServices::guestEditCreditTable($dbh, $idGroup, $idGuest, $idx);
 		return $dataArray;
 	}

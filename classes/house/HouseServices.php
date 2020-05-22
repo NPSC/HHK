@@ -1273,26 +1273,10 @@ class HouseServices {
 
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
 
-        $prefTokenId = Registration::readPrefTokenId($dbh, $idRegistration);
-
-        $tbl->addBodyTr(HTMLTable::makeTh("X") . HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use"));
-
-        //
-        if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
-            $keys = array_keys($tkRsArray);
-            $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
-        }
-
-        $attr = array('type'=>'radio', 'name'=>'rbUseCard'.$index);
+        $tbl->addBodyTr(HTMLTable::makeTh("X") . HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name"));
 
         // List any valid stored cards on file
         foreach ($tkRsArray as $tkRs) {
-
-            if ($tkRs->idGuest_token->getStoredVal() == $prefTokenId) {
-                $attr['checked'] = 'checked';
-            } else if (isset($attr['checked'])) {
-                unset($attr['checked']);
-            }
 
             $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
             if (strtolower($tkRs->Merchant->getStoredVal()) == 'local' || $tkRs->Merchant->getStoredVal() == '') {
@@ -1303,8 +1287,6 @@ class HouseServices {
                     HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbDelCard'.$index. '_'.$tkRs->idGuest_token->getStoredVal())))
                     . HTMLTable::makeTd($tkRs->CardType->getStoredVal() . ' - ' . $tkRs->MaskedAccount->getStoredVal() . $merchant)
                     . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal())
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($tkRs->idGuest_token->getStoredVal(), $attr))
-
                 );
 
         }
@@ -1314,14 +1296,15 @@ class HouseServices {
         
         if ($gateway->hasCofService()) {
         	
+        	$attr = array('type'=>'checkbox', 'name'=>'rbUseCard'.$index);
         	if (count($tkRsArray) == 0) {
 	        	$attr['checked'] = 'checked';
 	        } else {
 	        	unset($attr['checked']);
 	        }
 	
-	        $tbl->addBodyTr(HTMLTable::makeTd('New', array('style'=>'text-align:right;', 'colspan'=> '3'))
-	            .  HTMLTable::makeTd(HTMLInput::generateMarkup('0', $attr))
+	        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'New', array('for'=>'rbUseCard'.$index, 'style'=>'margin-right: .5em;'))
+	        		.  HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:right;', 'colspan'=> '3'))
 	        );
 	
 	        $tbl->addBodyTr( HTMLTable::makeTd('', array('id'=>'tdChargeMsg' . $index, 'colspan'=>'4', 'style'=>'color:red; display:none;')));
@@ -1381,7 +1364,7 @@ class HouseServices {
         $dataArray['success'] = $msg;
 
         // Add a new card
-        if (isset($post['rbUseCard'.$idx]) && $post['rbUseCard'.$idx] == 0) {
+        if (isset($post['rbUseCard'.$idx])) {
 
             $manualKey = FALSE;
             $selGw = '';
@@ -1396,7 +1379,7 @@ class HouseServices {
             	$manualKey = TRUE;
             }
             
-            if (isset($post['txtvdNewCardName'.$idx]) && $post['txtvdNewCardName'.$idx] != '' && $manualKey) {
+            if (isset($post['txtvdNewCardName'.$idx]) && $post['txtvdNewCardName'.$idx] != '') {
             	$newCardHolderName = strtoupper(filter_var($post['txtvdNewCardName'.$idx], FILTER_SANITIZE_STRING));
             }
             

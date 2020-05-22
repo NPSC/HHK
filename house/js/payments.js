@@ -1311,18 +1311,19 @@ function setupCOF($chgExpand, idx) {
     if ($chgExpand.length > 0) {
 
         $('input[name=rbUseCard'+idx+']').on('change', function () {
-            if ($(this).val() == 0) {
+            if ($(this).val() == 0 || $(this).prop('checked') === true) {
                 $chgExpand.show();
             } else {
                 $chgExpand.hide();
                 $('#btnvrKeyNumber'+idx).prop('checked', false).change();
+                $('#txtvdNewCardName'+idx).val('');
             }
             
             $('#tdChargeMsg'+idx).text('').hide();
             $('#selccgw'+idx).removeClass('ui-state-highlight');
         });
 
-        if ($('input[name=rbUseCard'+idx+']:checked').val() > 0) {
+        if ($('input[name=rbUseCard'+idx+']:checked').val() > 0 || $('input[name=rbUseCard'+idx+']').prop('checked') === false) {
             $chgExpand.hide();
         }
 
@@ -1349,7 +1350,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
     $('#tdChargeMsg'+idx).text('').hide();
     
     // Selected Merchant?
-    if ($('#selccgw'+idx).length > 0 && $('input[name=rbUseCard'+idx+']:checked').val() == 0) {
+    if ($('#selccgw'+idx).length > 0 && ($('input[name=rbUseCard'+idx+']:checked').val() == 0 || $('input[name=rbUseCard'+idx+']').prop('checked') === true)) {
         
         $('#selccgw'+idx).removeClass('ui-state-highlight');
     
@@ -1411,8 +1412,8 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
 
             paymentRedirect (data, $('#xform'));
 
-            if (data.success && data.success != '') {
-                flagAlertMessage(data.success, 'success');
+            if ((data.success && data.success != '') || (data.COFmsg && data.COFmsg != '')) {
+                flagAlertMessage((data.success === undefined ? '' : data.success) + (data.COFmsg === undefined ? '' : data.COFmsg), 'success');
             }
 
             if (data.COFmkup && data.COFmkup !== '') {

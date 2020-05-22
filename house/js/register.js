@@ -670,19 +670,6 @@ $(document).ready(function () {
         modal: true,
         title: 'Payment Receipt'
     });
-//    $('#cardonfile').dialog({
-//        autoOpen: false,
-//        resizable: true,
-//        modal: true,
-//        title: 'Update Credit Card On File',
-//        close: function (event, ui) {
-//            $('div#submitButtons').show();
-//        },
-//        open: function (event, ui) {
-//            $('div#submitButtons').hide();
-//        }
-//    });
-
     if ($('#txtactstart').val() === '') {
         var nowdt = new Date();
         nowdt.setTime(nowdt.getTime() - (5 * 86400000));
@@ -990,7 +977,7 @@ $(document).ready(function () {
                 // Reservations
                 if (event.idReservation !== undefined) {
 
-                    element.prop('title', event.fullName + (event.resourceId > 0 ? ', Room: ' + resource.title : '') +  ', Status: ' + event.resvStatus + (shoHospitalName ? ', Hospital: ' + event.hospName : ''));
+                    element.prop('title', event.fullName + (event.resourceId > 0 ? ', Room: ' + resource.title : '') +  ', Status: ' + event.resvStatus + (shoHospitalName ? ', ' + hospTitle + ': ' + event.hospName : ''));
 
                     // update border for uncommitted reservations.
                     if (event.status === 'uc') {
@@ -1002,7 +989,7 @@ $(document).ready(function () {
                 // visits
                 } else if (event.idVisit !== undefined) {
                     
-                    element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', ' + event.guests + (event.guests > 1 ? ' guests': ' guest') + (shoHospitalName ? ', Hospital: ' + event.hospName : ''));
+                    element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', ' + event.guests + (event.guests > 1 ? ' guests': ' guest') + (shoHospitalName ? ', ' + hospTitle + ': ' + event.hospName : ''));
                     
                     if (event.extended !== undefined && event.extended) {
                         element.find('div.fc-content')
