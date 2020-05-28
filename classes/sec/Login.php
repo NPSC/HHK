@@ -120,7 +120,7 @@ class Login {
             
             $u = new UserClass();
             
-            if ($u->_checkLogin($dbh, $this->userName, $password, false, $otp) === FALSE) {
+            if ($u->_checkLogin($dbh, $this->userName, $password, false, true, $otp) === FALSE) {
                 if($u->logMessage == "OTPRequired"){
                     $events['OTPRequired'] = true;
                 }else{

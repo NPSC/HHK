@@ -222,6 +222,7 @@ $(document).ready(
 									$('div#dchgPw').find("#qrcode").empty();
 									$('div#dchgPw').find("#otpForm").hide();
 									$('div#dchgPw').find('button').button();
+									$('div#dchgPw').find('a.button').button();
 									$('#dchgPw').dialog("option", "title","User Settings");
 									$('#dchgPw').dialog("option", "closeOnEscape",true);
 									$('#dchgPw').dialog("option", "dialogClass",'');

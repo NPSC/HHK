@@ -25,7 +25,7 @@ class UserClass
     
     const OTPSecChanged = 'OTPC';
 
-    public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE, $otp = '')
+    public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE, $checkOTP = true, $otp = '')
     {
         $ssn = Session::getInstance();
 
@@ -51,16 +51,21 @@ class UserClass
         }
         
         if ($match && $r['Status'] == 'a') {
-            $ga = new PHPGangsta_GoogleAuthenticator();
             
             //if OTP is required
-            if($r['OTP'] && $r['OTPcode'] != '' && $otp == ''){
+            if(!$r['OTP'] && $checkOTP == false){
+                $success = true;
+            }else if($r['OTP'] && $r['OTPcode'] != '' && $otp == ''){
                 $this->logMessage = "OTPRequired";
                 return FALSE;
-            }else if($otp != '' && isset($r['OTPcode']) && $ga->verifyCode($r['OTPcode'], $otp) == true){
-                $success = true;
-            }else if(!$r['OTP']){
-                $success = true;
+            }else if($otp != '' && isset($r['OTPcode'])){
+                $ga = new PHPGangsta_GoogleAuthenticator();
+                if($ga->verifyCode($r['OTPcode'], $otp) == true){
+                    $success = true;
+                }else{
+                    $success = false;
+                }
+                
             }else{
                 $success = false;
             }
@@ -291,7 +296,7 @@ class UserClass
         }
 
         // Are we legit?
-        $success = $this->_checkLogin($dbh, $ssn->username, $oldPw);
+        $success = $this->_checkLogin($dbh, $ssn->username, $oldPw, false, false);
 
         if ($success) {
             $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw, Chg_PW = :reset where idName = :id and Status='a';";
@@ -428,10 +433,10 @@ class UserClass
                         <p>Once set up, you will be asked for a temporary code after entering your password when logging in. This temporary code can be found in the Authenticator browser extension configured during set up. These codes change every 30 seconds, so you\'ll need a new one each time you login.</p>
                         <p><strong>Follow these steps to configure Two Step Verification</strong></p>
                         <ol>
-                            <li>Install the Authenticator browser extension - <a href="https://authenticator.cc/" target="_blank">Click here</a></li>
+                            <li>Install the Authenticator browser extension<br><a href="https://authenticator.cc/" target="_blank" class="button">Download here</a></li>
                             <li>Click "Enable Two Step Verification" below</li>
-                            <li>Click the Authenticator icon at the top right corner of your browser</li>
-                            <li>Click the Scan QR Code icon</li>
+                            <li>Click the Authenticator icon <img src="' . $uS->resourceURL . '/conf/img/authenticator.png"> at the top right corner of your browser</li>
+                            <li>Click the Scan QR Code icon <img src="' . $uS->resourceURL . '/conf/img/authenticator-scan-qr.png"></li>
                             <li>Click and drag from the upper left to the lower right of the QR code generated in Step 2 to select it</li>
                             <li>If you see a message that says "(user) has been added.", then you have successfully configured the Authenticator extension</li>
                             <li>Click the code shown in the Authenticator extension to copy it</li>

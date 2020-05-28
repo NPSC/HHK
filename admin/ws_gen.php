@@ -258,7 +258,7 @@ try {
             }
             
             if(isset($_POST['resetNext'])){
-                $resetNext = filter_var($_POST['resetNext'], FILTER_VALIDATE_BOOLEAN);
+                $resetNext = intval(filter_var($_POST['resetNext'], FILTER_VALIDATE_BOOLEAN));
             }
             
             $events = adminChangePW($dbh, $adPw, $newPw, $uid, $uname, $resetNext);
