@@ -39,6 +39,7 @@ try {
 }
 
 $today = new DateTime();
+$today->sub(new DateInterval('P1M'));
 
 try {
 	$glParm = new GlParameters($dbh, 'Gl_Code');
