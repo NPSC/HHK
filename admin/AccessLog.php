@@ -95,7 +95,9 @@ if (isset($_POST['btnAccess'])) {
 
         unset($r['Access_Date']);
         
-        $r['Action'] = $actNames[$r["Action"]];
+        if(isset($actNames[$r["Action"]])){
+            $r['Action'] = $actNames[$r["Action"]];
+        }
 
         $edRows[] = $r;
     }
@@ -124,25 +126,140 @@ $actionsel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($actOpts, 
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo JQ_DT_CSS; ?>
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         
 
         <script type="text/javascript">
-$(document).ready(function() {
+            $(document).ready(function() {
 
-    $( "input.autoCal" ).datepicker({
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        dateFormat: 'M d, yy'
-    });
-});
+				function getActionName(data) {
+					switch(data) {
+                    	case 'L':
+                        	return "Login";
+                        	break;
+                    	case 'PS':
+                        	return "Set Password";
+                    		break;
+                    	case 'PC':
+                        	return "Password Change";
+                        	break;
+                    	case "PL":
+                        	return "Locked Out";
+                        	break;
+                        default:
+                            return data;
+                            break;
+                    }
+				}
+            	
+            	var dtCols = [
+                    {
+                        "targets": [0],
+                        title: "Username",
+                        data: "Username",
+                        sortable: true,
+                        searchable: true
+                    },
+                    {
+                        "targets": [1],
+                        title: "IP",
+                        data: 'IP',
+                        sortable: true,
+                        searchable: true
+                    },
+                    {
+                        "targets": [2],
+                        title: "Action",
+                        searchable: true,
+                        sortable: true,
+                        data: "Action",
+                        render: function (data, type) {
+                            return getActionName(data);
+                        }
+                    },
+                    {
+                        "targets": [3],
+                        title: "Date",
+                        searchable: true,
+                        sortable: true,
+                        data: "Date",
+                        render: function (data, type) {
+                            return dateRender(data, type, 'MMM D, YYYY h:mm a');
+                        }
+                    }
+                ];
+            	
+            	var tableAttrs = {
+                    class: 'display compact',
+                    width: '100%'
+                }
+
+                var dtTable = $('#dtLog')
+                        .DataTable({
+                            "columnDefs": dtCols,
+                            "serverSide": true,
+                            "processing": true,
+                            "deferRender": true,
+                            "language": {"sSearch": "Search Access Log :"},
+                            "sorting": [[3, 'desc']],
+                            "paging": true,
+                            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                            //"dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+                            "Dom": '<"top"ilf>rt<"bottom"ip>',
+                            ajax: {
+                                url: "ws_gen.php",
+                                data: {
+                                    'cmd': 'accesslog'
+                                },
+                            },
+                            initComplete: function () {
+                                this.api().columns().every( function () {
+                                    var column = this;
+                                    var select = $('<select style="max-width: 100%"><option value="" selected>No Filter</option></select>')
+                                        .appendTo( $(column.header()) )
+                                        .on( 'change', function () {
+                                            var val = $.fn.dataTable.util.escapeRegex(
+                                                $(this).val()
+                                            );
+                     
+                                            column
+                                                .search( val ? val : '')
+                                                .draw();
+                                        } );
+                                    select.click( function(e) {
+                                        e.stopPropagation();
+                                  	});
+                                    if(column.index() == 2){
+                                    	column.data().unique().sort().each( function ( d, j ) {
+                                        	console.log(d);
+                                        	select.append( '<option value="'+d+'">'+getActionName(d)+'</option>' )
+                                    	} );
+                                    }else{
+                                    	column.data().unique().sort().each( function ( d, j ) {
+                                        	select.append( '<option value="'+d+'">'+d+'</option>' )
+                                    	} );
+                                    }
+                                } );
+                            }
+                        });
+    				
+                
+                $( "input.autoCal" ).datepicker({
+                    changeMonth: true,
+                    changeYear: true,
+                    autoSize: true,
+                    dateFormat: 'M d, yy'
+                });
+            });
         </script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -170,6 +287,9 @@ $(document).ready(function() {
                     </tr>
                 </table>
 
+				<div style="margin: 10px;">
+					<table style="width:100%;" class="display ignrSave" id="dtLog"></table>
+				</div>
                 <div style="margin-top:10px;">
                     <?php echo $log; ?>
                 </div>

@@ -264,7 +264,12 @@ try {
             $events = adminChangePW($dbh, $adPw, $newPw, $uid, $uname, $resetNext);
 
             break;
-
+            
+        case "accesslog":
+            $events = AccessLog($dbh, $_GET);
+            
+            break;
+            
         default:
             $events = array("error" => "Bad Command");
     }
@@ -697,4 +702,18 @@ function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $pa
     return $reply;
 }
 
-
+function AccessLog(\PDO $dbh, $get) {
+    
+    require(CLASSES . 'DataTableServer.php');
+    
+    $columns = array(
+        
+        //array( 'db' => 'id',  'dt' => 'id' ),
+        array( 'db' => 'Username',   'dt' => 'Username' ),
+        array( 'db' => 'IP',     'dt' => 'IP' ),
+        array( 'db'  => 'Action', 'dt' => 'Action' ),
+        array( 'db' => 'Access_Date',   'dt' => 'Date' )
+    );
+    
+    return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
+}
