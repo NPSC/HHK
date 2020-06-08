@@ -326,8 +326,13 @@ class SSP {
 
 				if ( $requestColumn['searchable'] == 'true' &&
 				 $str != '' ) {
-					$binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
-					$columnSearch[] = "`".$column['db']."` LIKE ".$binding;
+				     if($requestColumn['search']['regex']){
+				         $binding = self::bind( $bindings, $str, PDO::PARAM_STR );
+				         $columnSearch[] = "`".$column['db']."` REGEXP ".$binding;
+				     }else{
+				         $binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
+				         $columnSearch[] = "`".$column['db']."` LIKE ".$binding;
+				     }
 				}
 			}
 		}

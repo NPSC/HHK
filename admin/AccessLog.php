@@ -224,29 +224,62 @@ $actionsel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($actOpts, 
                             initComplete: function () {
                                 this.api().columns().every( function () {
                                     var column = this;
-                                    var select = $('<select style="max-width: 100%"><option value="" selected>No Filter</option></select>')
+                                    if(column.index() == 3){
+                                    	var input = $('<input type="text" style="max-width: 100%" class="autoCal hasDatepicker">')
+                                    	.datepicker({
+                    						changeMonth: true,
+                    						changeYear: true,
+                    						autoSize: true,
+                    						dateFormat: 'M d, yy'
+                						})
                                         .appendTo( $(column.header()) )
                                         .on( 'change', function () {
-                                            var val = $.fn.dataTable.util.escapeRegex(
-                                                $(this).val()
-                                            );
-                     
+                                            var data = $(this).val();
+                                        	var searchStr = data ? '^' + $.fn.dataTable.util.escapeRegex(
+                                            	data
+                                        	) + '$' : '';
+
                                             column
-                                                .search( val ? val : '')
+                                            .search(searchStr, true, false )
                                                 .draw();
                                         } );
-                                    select.click( function(e) {
+                                    input.click( function(e) {
                                         e.stopPropagation();
                                   	});
-                                    if(column.index() == 2){
-                                    	column.data().unique().sort().each( function ( d, j ) {
-                                        	console.log(d);
-                                        	select.append( '<option value="'+d+'">'+getActionName(d)+'</option>' )
-                                    	} );
                                     }else{
-                                    	column.data().unique().sort().each( function ( d, j ) {
-                                        	select.append( '<option value="'+d+'">'+d+'</option>' )
-                                    	} );
+                                        var select = $('<select style="max-width: 100%" multiple><option value="" selected>No Filter</option></select>')
+                                            .appendTo( $(column.header()) )
+                                            .on( 'change', function () {
+                                                var data = $(this).val();
+                                                if($.isArray(data)){
+                                                    $.each(data, function(i,v){
+    													data[i] = v ? '^' + v + '$': '';
+                                                    });
+    												var searchStr = data.join('|');
+                                                	
+                                                }else{
+                                                    
+                                                	var searchStr = data ? '^' + $.fn.dataTable.util.escapeRegex(
+                                                    	data
+                                                	) + '$' : '';
+                                                }
+    
+                                                column
+                                                .search(searchStr, true, false )
+                                                    .draw();
+                                            } );
+                                        select.click( function(e) {
+                                            e.stopPropagation();
+                                      	});
+                                        if(column.index() == 2){
+                                        	column.data().unique().sort().each( function ( d, j ) {
+                                            	select.append( '<option value="'+d+'">'+getActionName(d)+'</option>' )
+                                        	} );
+                                        }else{
+                                        	column.data().unique().sort().each( function ( d, j ) {
+                                            	select.append( '<option value="'+d+'">'+d+'</option>' )
+                                        	} );
+                                        }
                                     }
                                 } );
                             }
