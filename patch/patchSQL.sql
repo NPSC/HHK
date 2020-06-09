@@ -82,7 +82,11 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 ('dayIncrements', '60', '60 days', '','', '2'),
 ('dayIncrements', '90', '90 days', '','', '3'),
 ('dayIncrements', '180', '180 days', '','', '4'),
-('dayIncrements', '365', '365 days', '','', '5');
+('dayIncrements', '365', '365 days', '','', '5'),
+("Web_User_Actions", "L", "Login", '', '', '0'),
+("Web_User_Actions", "PS", "Set Password", '', '', '0'),
+("Web_User_Actions", "PC", "Password Change", '', '', '0'),
+("Web_User_Actions", "PL", "Locked Out", '', '', '0');
 
 INSERT IGNORE INTO `sys_config` VALUES
 ('passResetDays','365','lu','pr','','Number of days between automatic password resets','dayIncrements'),
