@@ -533,12 +533,6 @@ $alertMessage = $alertMsg->createMarkup();
                     </tr><tr>
                         <td class="tdlabel">Admin Password</td><td style="display: flex"><input id="txtOldPw" type="password" value="" title="Enter your password, not the users old password." /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                     </tr><tr>
-                        <td class="tdlabel">Enter New Password</td><td style="display: flex"><input id="txtNewPw1" type="password" value="" title="This will be the users new password."/><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                    </tr><tr>
-                        <td class="tdlabel">Enter New Password Again</td><td style="display: flex"><input id="txtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                    </tr><tr>
-                        <td class="tdlabel">Require password change on login</td><td><input id="resetNext" type="checkbox" value="1" checked="checked"  /></td>
-                    </tr><tr>
                         <td colspan ="2"><span id="apwChangeErrMsg"><?php echo $PWresultMessage; ?></span></td>
                     </tr>
                 </table>

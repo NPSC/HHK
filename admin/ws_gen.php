@@ -238,15 +238,10 @@ try {
 
         case "adchgpw":
             $adPw = '';
-            $newPw = '';
             $uid = 0;
-            $resetNext = false;
-
+            
             if (isset($_POST["adpw"])) {
                 $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_STRING);
-            }
-            if (isset($_POST["newer"])) {
-                $newPw = filter_var($_POST["newer"], FILTER_SANITIZE_STRING);
             }
 
             if (isset($_POST['uid'])) {
@@ -257,11 +252,7 @@ try {
                 $uname = filter_var($_POST["uname"], FILTER_SANITIZE_STRING);
             }
             
-            if(isset($_POST['resetNext'])){
-                $resetNext = filter_var($_POST['resetNext'], FILTER_VALIDATE_BOOLEAN);
-            }
-            
-            $events = adminChangePW($dbh, $adPw, $newPw, $uid, $uname, $resetNext);
+            $events = adminChangePW($dbh, $adPw, $uid, $uname);
 
             break;
             
@@ -315,16 +306,18 @@ function searchZip(PDO $dbh, $zip) {
     return $events;
 }
 
-function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId, $uname, $resetNext) {
+function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
 
     $event = array();
 
     if (SecurityComponent::is_Admin()) {
-
+        
         $u = new UserClass();
 
-        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, $resetNext) === TRUE) {
-            $event = array('success' => 'Password updated.');
+        $newPw = $u->generateStrongPassword();
+        
+        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, TRUE) === TRUE) {
+            $event = array('success' => 'Password updated.<br><br><strong>New Temporary Password:</strong>  ' . $newPw);
         } else {
             $event = array('error' => $u->logMessage .  '.  Password is unchanged.');
         }

@@ -157,7 +157,7 @@ $(document).ready(function () {
     });
     
     $('#chgPW').click(function () {
-        $('#achgPw').dialog("option", "title", "Change Password for " + memData.memName);
+        $('#achgPw').dialog("option", "title", "Reset Password for " + memData.memName);
         $('#txtOldPw').val('');
         $('#txtNewPw1').val('');
         $('#txtNewPw2').val('');
@@ -187,15 +187,9 @@ $(document).ready(function () {
         buttons: {
             "Save": function () {
                 var tips = $('#apwChangeErrMsg'),
-                        oldpw = $('#txtOldPw'), 
-                        pw1 = $('#txtNewPw1'),
-                        pw2 = $('#txtNewPw2'),
-                        oldpwMD5, 
-                        newpwMD5,
-                		resetNext = $('#resetNext').prop('checked');
+                        oldpw = $('#txtOldPw');
                 
                 oldpw.removeClass("ui-state-error");
-                pw1.removeClass("ui-state-error").css('background-color', 'white');
                 updateTips(tips, '');
 
                 if (oldpw.val() == "") {
@@ -204,27 +198,9 @@ $(document).ready(function () {
                     return;
                 }
 
-                if (checkStrength(pw1)) {
-
-                    if (pw1.val() !== pw2.val()) {
-                        updateTips(tips, "New passwords do not match");
-                        return;
-                    }
-                    
-                } else {
-                    updateTips(tips, "Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.");
-                    return;
-                }
-
-                // make MD5 hash of password and concatenate challenge value
-                // next calculate MD5 hash of combined values
                 var oldpwval = oldpw.val();
-                var newpwval = pw1.val();
 
                 oldpw.val('');
-                pw1.val('');
-                pw2.val('');
-                pw1.removeClass("ui-state-error").css('background-color', 'white');
                 
                 $.post("ws_gen.php",
                     {
@@ -232,8 +208,6 @@ $(document).ready(function () {
                         adpw: oldpwval,
                         uid: memData.id,
                         uname: memData.webUserName,
-                        newer: newpwval,
-                        resetNext: resetNext
                     },
                     function (data) {
                         if (data) {
