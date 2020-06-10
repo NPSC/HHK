@@ -264,8 +264,15 @@ class WebUser {
 
         } else if ($wUserName != '' && $wUserPw != '' && $id > 0 && $maintFlag) {
 
+            $uS = Session::getInstance();
+            if(isset($uS->sitePepper)){
+                $pwHash = password_hash($wUserPw . $uS->sitePepper, PASSWORD_ARGON2ID);
+            }else{
+                $pwHash = md5($wUserPw);
+            }
+            
             // Register the user as a Volunteer (Group_Code = v)(Verify_address = y)
-            $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$wUserPw', 'v', $resetNext);";
+            $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$wUserPw', 'v', '$resetNext');";
 
             if ($dbh->exec($query) === false) {
                 $err = $dbh->errorInfo();

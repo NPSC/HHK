@@ -316,8 +316,8 @@ function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
 
         $newPw = $u->generateStrongPassword();
         
-        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, TRUE) === TRUE) {
-            $event = array('success' => 'Password updated.<br><br><strong>New Temporary Password:</strong>  ' . $newPw);
+        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, true) === TRUE) {
+            $event = array('success' => 'Password updated.', 'tempPW'=>$newPw);
         } else {
             $event = array('error' => $u->logMessage .  '.  Password is unchanged.');
         }

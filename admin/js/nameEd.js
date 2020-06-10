@@ -163,7 +163,8 @@ $(document).ready(function () {
         $('#txtNewPw2').val('');
 
         $('#achgPw').dialog('open');
-        $('#pwChangeErrMsg').val('');
+        $('#apwChangeErrMsg').text('').removeClass("ui-state-highlight");
+        $('#apwNewPW').text('').hide();
         $('#txtOldPw').focus();
     });
     
@@ -187,6 +188,7 @@ $(document).ready(function () {
         buttons: {
             "Save": function () {
                 var tips = $('#apwChangeErrMsg'),
+                		tempPWmsg = $('#apwNewPW'),
                         oldpw = $('#txtOldPw');
                 
                 oldpw.removeClass("ui-state-error");
@@ -226,6 +228,9 @@ $(document).ready(function () {
                             } else if (data.success) {
                                 
                                 updateTips(tips, data.success);
+                                if(data.tempPW){
+                                	tempPWmsg.html("<strong>New Temporary Password:</strong> " + data.tempPW).show();
+                                }
                             }
                         }
                     }

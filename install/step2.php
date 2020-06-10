@@ -157,7 +157,7 @@ if (isset($_POST['btnNext'])) {
                         return;
                     }
 
-                    $.post('ws_install.php', {cmd: 'loadmd', 'new': hex_md5(pword)}, function (data) {
+                    $.post('ws_install.php', {cmd: 'loadmd', 'new': pword}, function (data) {
                         if (data) {
                             try {
                                 data = $.parseJSON(data);
