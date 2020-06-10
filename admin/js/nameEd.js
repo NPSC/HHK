@@ -182,7 +182,7 @@ $(document).ready(function () {
     
     $('#achgPw').dialog({
         autoOpen: false,
-        width: 580,
+        width: "auto",
         resizable: true,
         modal: true,
         buttons: {
