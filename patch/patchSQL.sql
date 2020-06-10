@@ -94,4 +94,4 @@ INSERT IGNORE INTO `sys_config` VALUES
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements');
 
 ALTER TABLE `w_users` 
-ADD COLUMN `Chg_PW` TINYINT NOT NULL DEFAULT 1 AFTER `PW_Change_Date`;
+ADD COLUMN `Chg_PW` BOOL NOT NULL DEFAULT 'true' AFTER `PW_Change_Date`;
