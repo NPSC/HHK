@@ -212,18 +212,18 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
  * @param {int} orderNum
  * @returns {undefined}
  */
-function getInvoicee(item, orderNum) {
+function getInvoicee(item, orderNum, index) {
     "use strict";
     var cid = parseInt(item.id, 10);
     if (isNaN(cid) === false && cid > 0) {
-        $('#txtInvName').val(item.value);
-        $('#txtInvId').val(cid);
+        $('#txtInvName'+index).val(item.value);
+        $('#txtInvId'+index).val(cid);
     } else {
-        $('#txtInvName').val('');
-        $('#txtInvId').val('');
+        $('#txtInvName'+index).val('');
+        $('#txtInvId'+index).val('');
     }
     $('#txtOrderNum').val(orderNum);
-    $('#txtInvSearch').val('');
+    $('#txtInvSearch'+index).val('');
 }
 
 /**
@@ -750,6 +750,7 @@ function amtPaid() {
         totPay = 0;
 
         $('.paySelectTbl').hide();
+        $('#divReturnPay').hide();
 
         if (isChdOut === false && ckedInCharges === 0.0) {
             $('.hhk-minPayment').hide();
@@ -861,15 +862,17 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             rtnchg.hide();
             $('.hhk-transferr').hide();
             $('.payReturnNotes').show();
-            $('.hhk-cknum').hide();
+            $('.hhk-cknumr').hide();
+            $('.hhk-rtn-invoice').hide();
 
             if ($(this).val() === 'cc') {
                 rtnchg.show('fade');
             } else if ($(this).val() === 'ck') {
-                $('.hhk-cknum').show('fade');
+                $('.hhk-cknumr').show('fade');
             } else if ($(this).val() === 'tf') {
                 $('.hhk-transferr').show('fade');
             } else if ($(this).val() === 'in') {
+            	$('.hhk-rtn-invoice').show('fade');
                 $('.payReturnNotes').hide();
             }
         });
@@ -983,44 +986,9 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     });
 
     // Billing agent chooser set up
-    if ($('#txtInvSearch').length > 0) {
-
-        $('#txtInvSearch').keypress(function (event) {
-
-            var mm = $(this).val();
-            if (event.keyCode == '13') {
-
-                if (mm == '' || !isNumber(parseInt(mm, 10))) {
-
-                    alert("Don't press the return key unless you enter an Id.");
-                    event.preventDefault();
-
-                } else {
-
-                    $.getJSON("../house/roleSearch.php", {cmd: "filter", 'basis':'ba', letters:mm},
-                    function(data) {
-                        try {
-                            data = data[0];
-                        } catch (err) {
-                            alert("Parser error - " + err.message);
-                            return;
-                        }
-                        if (data && data.error) {
-                            if (data.gotopage) {
-                                response();
-                                window.open(data.gotopage);
-                            }
-                            data.value = data.error;
-                        }
-                        getInvoicee(data, idVisit);
-                    });
-
-                }
-            }
-        });
-        createAutoComplete($('#txtInvSearch'), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit); }, false);
-    }
-
+    createInvChooser(idVisit, '');
+    createInvChooser(idVisit, 'r');
+    
     // Days - Payment calculator
     $('#daystoPay').change(function () {
         var days = parseInt($(this).val()),
@@ -1064,6 +1032,48 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     });
 
     amtPaid();
+}
+
+function createInvChooser(idVisit, index) {
+	
+    if ($('#txtInvSearch'+index).length > 0) {
+
+        $('#txtInvSearch'+index).keypress(function (event) {
+
+            var mm = $(this).val();
+            if (event.keyCode == '13') {
+
+                if (mm == '' || !isNumber(parseInt(mm, 10))) {
+
+                    alert("Don't press the return key unless you enter an Id.");
+                    event.preventDefault();
+
+                } else {
+
+                    $.getJSON("../house/roleSearch.php", {cmd: "filter", 'basis':'ba', letters:mm},
+                    function(data) {
+                        try {
+                            data = data[0];
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
+                        }
+                        if (data && data.error) {
+                            if (data.gotopage) {
+                                response();
+                                window.open(data.gotopage);
+                            }
+                            data.value = data.error;
+                        }
+                        getInvoicee(data, idVisit, index);
+                    });
+
+                }
+            }
+        });
+        createAutoComplete($('#txtInvSearch'+index), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit, index); }, false);
+
+    }	
 }
 
 function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idResv, rtnFunction) {

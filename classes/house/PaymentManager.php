@@ -302,8 +302,8 @@ class PaymentManager {
 
                     // Add reversal itself
                     $invLine = new OneTimeInvoiceLine();
-                    $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, (0 - $reversalAmt)), 1, 'Lodging');
-
+                    $invLine->createNewLine(new Item($dbh, ItemId::LodgingReversal, (0 - $reversalAmt)), 1, $notes);
+                    //$invLine->appendDescription($notes);
                     $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                     $this->invoice->addLine($dbh, $invLine, $uS->username);
 

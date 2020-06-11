@@ -18,6 +18,42 @@ Define('NEWLINE', "\n");
  * @author Eric
  */
 class Receipt {
+	
+	protected static function makeInvoiceLineMarkup(\PDO $dbh, Invoice $invoice, &$tbl) {
+		$uS = Session::getInstance();
+		
+		// Taxes
+		$tax = floatval($uS->ImpliedTaxRate)/100;
+		
+		if ($tax > 0) {
+			// Implement tax
+			$taxAmt = 0;
+			
+			foreach ($invoice->getLines($dbh) as $line) {
+				
+				$lineAmt = $line->getAmount();
+				
+				// Tax on lodging only
+				if ($line->getItemId() == ItemId::Lodging) {
+					$lineAmt = round($line->getAmount() / (1 + $tax), 2);
+					$taxAmt += $line->getAmount() - $lineAmt;
+				}
+				
+				$tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($lineAmt, 2), array('style'=>'font-size:.8em;')));
+			}
+			
+			// Tax amount
+			if ($taxAmt > 0) {
+				$tbl->addBodyTr(HTMLTable::makeTd('Taxes (' . $tax*100 . '%):', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($taxAmt, 2), array('style'=>'font-size:.8em;')));
+			}
+			
+		} else {
+			// No taxes.
+			foreach ($invoice->getLines($dbh) as $line) {
+				$tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
+			}
+		}
+	}
 
     public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
 
@@ -58,37 +94,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getInvoiceNumber()));
 
-        // Taxes
-        $tax = floatval($uS->ImpliedTaxRate)/100;
-
-        if ($tax > 0) {
-            // Implement tax
-            $taxAmt = 0;
-
-            foreach ($invoice->getLines($dbh) as $line) {
-
-                $lineAmt = $line->getAmount();
-
-                // Tax on lodging only
-                if ($line->getItemId() == ItemId::Lodging) {
-                    $lineAmt = round($line->getAmount() / (1 + $tax), 2);
-                    $taxAmt += $line->getAmount() - $lineAmt;
-                }
-
-                $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($lineAmt, 2), array('style'=>'font-size:.8em;')));
-            }
-
-            // Tax amount
-            if ($taxAmt > 0) {
-                $tbl->addBodyTr(HTMLTable::makeTd('Taxes (' . $tax*100 . '%):', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($taxAmt, 2), array('style'=>'font-size:.8em;')));
-            }
-
-        } else {
-            // No taxes.
-            foreach ($invoice->getLines($dbh) as $line) {
-                $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
-            }
-        }
+        self::makeInvoiceLineMarkup($dbh, $invoice, $tbl);
 
         //Total Amount
         $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
@@ -249,6 +255,8 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
+        self::makeInvoiceLineMarkup($dbh, $invoice, $tbl);
+        
         $tbl->addBodyTr(HTMLTable::makeTd("Total Refunded:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
