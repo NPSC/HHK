@@ -527,6 +527,7 @@ $alertMessage = $alertMsg->createMarkup();
                 </table>
             </div>
             <div id="achgPw" class="hhk-member-detail" style="display:none;font-size:0.95em;">
+            	<div style="margin: 0.5em 0 0.5em 0;">The user's password will be reset to a random temporary password. <br>They will be required to change their password when they log in.</div>
                 <table>
                     <tr>
                         <td class="tdlabel">User Name</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" style="width: 100%" /></td>

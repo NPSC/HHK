@@ -460,6 +460,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Web_User_Status','w','Waiting','','',0),
 ('Web_User_Status','x','Prohibited','','',0),
 
+("Web_User_Actions", "L", "Login", '', '', '0'),
 ("Web_User_Actions", "PS", "Set Password", '', '', '0'),
 ("Web_User_Actions", "PC", "Password Change", '', '', '0'),
 ("Web_User_Actions", "PL", "Locked Out", '', '', '0');

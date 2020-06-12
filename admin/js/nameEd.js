@@ -229,7 +229,7 @@ $(document).ready(function () {
                                 
                                 updateTips(tips, data.success);
                                 if(data.tempPW){
-                                	tempPWmsg.html("<strong>New Temporary Password:</strong> " + data.tempPW).show();
+                                	tempPWmsg.html('<strong>New Temporary Password:</strong> <span style="user-select:all;">' + data.tempPW + '</span>').show();
                                 }
                             }
                         }
@@ -313,12 +313,12 @@ $(document).ready(function () {
                     if (!checkLength($('#txtwUserName'), 'User Name', 6, 35, tipmsg)) {
                         return;
                     }
-                    if (!checkStrength($('#txtwUserPW'))) {
-                        updateTips(tipmsg, 'Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.');
-                        return;
-                    }
+//                    if (!checkStrength($('#txtwUserPW'))) {
+//                        updateTips(tipmsg, 'Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.');
+//                        return;
+//                    }
                     parms['wuname'] = $('#txtwUserName').val();
-                    parms['wupw'] = $('#txtwUserPW').val();
+//                    parms['wupw'] = $('#txtwUserPW').val();
                     parms['grpSec_v'] = 'checked';  // check the volunteer auth code.
                     
                 }
@@ -358,14 +358,14 @@ $(document).ready(function () {
                         
                     } else if (data.success) {
                         
-                        mess = "Success: " + data.success;
+                        mess = "Success: " + data.success + '<div style="margin: 0.5em 0 0.5em 0">Temporary Password (click to select):</div><div style="user-select: all">' + data.tempPW + '</div>'
                         $('webResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
                         $('#webIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
 
                     }
 
                     if (mess !== '') {
-                        $('#webMessage').text(mess);
+                        $('#webMessage').html(mess);
                         $("#webContainer").show("pulsate");
                     }
 
