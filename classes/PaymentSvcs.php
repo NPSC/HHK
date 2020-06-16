@@ -451,7 +451,7 @@ class PaymentSvcs {
 
         // only available to charge cards.
         if ($payRs->idPayment_Method->getStoredVal() != PaymentMethod::Charge) {
-            return array('warning' => 'Not Available.  ', 'bid' => $bid);
+            return array('warning' => 'Void Return is Not Available.  ', 'bid' => $bid);
         }
 
         // Find hte detail record.
@@ -557,6 +557,14 @@ class PaymentSvcs {
 
                 break;
 
+            case PaymentMethod::Charge:
+            	
+            	If ($uS->PaymentGateway == PaymentGateway::LOCAL) {
+            		$dataArray = self::voidReturnFees($dbh, $idPayment, $bid, date('Y-m-d'));
+            	}
+            	
+            	break;
+            	
             default:
                 throw new Hk_Exception_Payment('The pay type is ineligible.  ');
         }
@@ -617,6 +625,10 @@ class PaymentSvcs {
                 $dataArray['success'] = 'Cash Refund is undone.  ';
 
                 break;
+                
+            case PaymentMethod::Charge:
+            	
+            	break;
 
             default:
                 throw new Hk_Exception_Payment('This pay type is ineligible.  ');

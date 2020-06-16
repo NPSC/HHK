@@ -589,6 +589,7 @@ where `lp`.`idPayment` > 0
 
             $invNumber = $r['Invoice_Number'];
 
+            // Invoice number
             if ($invNumber != '') {
 
                 $iAttr = array('href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank');
@@ -609,7 +610,7 @@ where `lp`.`idPayment` > 0
 
             $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style" => 'white-space:nowrap'));
 
-
+			// Set up actions
             foreach ($i['p'] as $p) {
 
                 $stat = '';
@@ -648,7 +649,7 @@ where `lp`.`idPayment` > 0
                         }
 
                         // Clawback
-                        if ($p['idPayment_Method'] != PaymentMethod::Charge) {
+                        else if ($p['idPayment_Method'] != PaymentMethod::Charge || $uS->PaymentGateway == PaymentGateway::LOCAL) {
                             $actionButtonArray['class'] = 'hhk-undoReturnPmt';
                             $voidContent .= HTMLInput::generateMarkup('Undo Return', $actionButtonArray);
                         }
@@ -666,9 +667,9 @@ where `lp`.`idPayment` > 0
                             $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
 
 
-                            if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
-                                //$voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
-                            } else if ($p['idPayment_Method'] != PaymentMethod::Charge) {
+                            if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d') && $gateway->hasVoidReturn()) {
+                                $voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                            } else if ($p['idPayment_Method'] != PaymentMethod::Charge || $uS->PaymentGateway == PaymentGateway::LOCAL) {
                                 $actionButtonArray['class'] = 'hhk-undoReturnPmt';
                                 $voidContent .= HTMLInput::generateMarkup('Undo Refund', $actionButtonArray);
                             }

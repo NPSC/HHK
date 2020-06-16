@@ -43,7 +43,7 @@ class LocalGateway extends PaymentGateway {
 		return '';
 	}
 	public function hasVoidReturn() {
-		return FALSE;
+		return TRUE;
 	}
 	
 	public function hasCofService() {
@@ -143,8 +143,10 @@ class LocalGateway extends PaymentGateway {
 		// find the token record
 		if ($payRs->idToken->getStoredVal () > 0) {
 			$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
+		}else {
+			$tknRs = new Guest_TokenRS();
 		}
-
+		
 		$gwResp = new LocalGwResp ( $pAuthRs->Approved_Amount->getStoredVal (), $invoice->getInvoiceNumber (), $pAuthRs->Card_Type->getStoredVal (), $pAuthRs->Acct_Number->getStoredVal (), $tknRs->CardHolderName->getStoredVal (), MpTranType::Void, $uS->username );
 
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $tknRs->idGuest_token->getStoredVal (), PaymentStatusCode::VoidSale );
@@ -173,10 +175,12 @@ class LocalGateway extends PaymentGateway {
 		// find the token
 		if ($payRs->idToken->getStoredVal () > 0) {
 			$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
+		}else {
+			$tknRs = new Guest_TokenRS();
 		}
 
 		$dataArray = array (
-				'bid' => $bid
+			'bid' => $bid
 		);
 
 		$gwResp = new LocalGwResp ( $pAuthRs->Approved_Amount->getStoredVal (), $invoice->getInvoiceNumber (), $pAuthRs->Card_Type->getStoredVal (), $pAuthRs->Acct_Number->getStoredVal (), $tknRs->CardHolderName->getStoredVal (), MpTranType::ReturnSale, $uS->username );
@@ -202,9 +206,47 @@ class LocalGateway extends PaymentGateway {
 	}
 
 	public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
-		return array (
-				'warning' => 'Not Available.  '
+		
+		$uS = Session::getInstance ();
+		
+		// find the token
+		if ($payRs->idToken->getStoredVal () > 0) {
+			$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
+		}else {
+			$tknRs = new Guest_TokenRS();
+		}
+		
+		$dataArray = array (
+				'bid' => $bid
 		);
+		
+		$gwResp = new LocalGwResp ( $pAuthRs->Approved_Amount->getStoredVal (), $invoice->getInvoiceNumber (), $pAuthRs->Card_Type->getStoredVal (), $pAuthRs->Acct_Number->getStoredVal (), $tknRs->CardHolderName->getStoredVal (), MpTranType::VoidReturn, $uS->username );
+		
+		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $tknRs->idGuest_token->getStoredVal (), PaymentStatusCode::VoidReturn );
+		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
+		
+		// New Token?
+		if ($vr->response->getToken() != '') {
+			$guestTokenRs = CreditToken::getTokenRsFromId($dbh, $vr->getIdToken());
+			$vr->response->setMaskedAccount($guestTokenRs->MaskedAccount->getStoredVal());
+			$vr->response->setCardHolderName($guestTokenRs->CardHolderName->getStoredVal());
+			$vr->expDate = $guestTokenRs->ExpDate->getStoredVal();
+		}
+		
+		// Record transaction
+		$transRs = Transaction::recordTransaction ( $dbh, $vr, $this->getGatewayType (), TransType::VoidReturn, TransMethod::Token );
+		$vr->setIdTrans ( $transRs->idTrans->getStoredVal () );
+	
+		$vrr = VoidReturnReply::processReply($dbh, $vr, $uS->username, $payRs);
+		
+		$invoice->updateInvoiceBalance($dbh, $vrr->response->getAuthorizedAmount(), $uS->username);
+		
+		$vrr->idVisit = $invoice->getOrderNumber();
+		$dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createVoidMarkup($dbh, $vrr, $uS->siteName, $uS->sId, 'Void Return')));
+		$dataArray['success'] = 'Return is Voided.  ';
+		
+		return $dataArray;
+		
 	}
 	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
 		

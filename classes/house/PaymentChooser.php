@@ -327,6 +327,7 @@ class PaymentChooser {
 
         // Collect panels for Returns
         unset($payTypes[PayType::Check]);
+        unset($payTypes[PayType::Invoice]);
         $rtninvoiceBlock = '';
         
         if (isset($uS->nameLookups[GL_TableNames::PayType][PayType::Invoice])) {
@@ -920,10 +921,10 @@ ORDER BY v.idVisit , v.Span;");
                 , array('style'=>'display:none;', 'class'=>'hhk-transferr'));
 
 
-        // Invoice
-        $payTbl->addBodyTr(
-        		HTMLTable::makeTd($invBlock, array('colspan'=>'4'))
-        		, array('style'=>'display:none;', 'class'=>'hhk-rtn-invoice'));
+//         // Invoice
+//         $payTbl->addBodyTr(
+//         		HTMLTable::makeTd($invBlock, array('colspan'=>'4'))
+//         		, array('style'=>'display:none;', 'class'=>'hhk-rtn-invoice'));
         
         
         
