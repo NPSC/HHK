@@ -29,7 +29,7 @@ class VantivGateway extends PaymentGateway {
     }
 
     public function getGatewayName() {
-        return 'vantiv';
+        return PaymentGateway::VANTIV;
     }
 
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
@@ -428,7 +428,7 @@ class VantivGateway extends PaymentGateway {
         return $CreditCheckOut;
     }
 
-    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
 
         $uS = Session::getInstance();
         $secure = new SecurityComponent();

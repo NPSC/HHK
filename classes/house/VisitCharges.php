@@ -153,6 +153,7 @@ class VisitCharges {
             $rateAmt['days2pay'] = $srd->daysToPay;
             $rateAmt['daysPaid'] = $srd->totalDaysPaid;
             $rateAmt['aveGDay'] = $srd->aveGuestsDay;
+            $rateAmt['span'] = $r['span'];
 
 
             $rateSummary[] = $rateAmt;
@@ -181,9 +182,9 @@ class VisitCharges {
 
                 // Do I have enough to pay this span?
                 $unpaid = $rateAmt['charged'] - ($payment + $rateAmt['paid']);
-
-                if ($payment >= $unpaid && ($unpaid > 0 || $rateAmt['charged'] == 0)) {
-
+                
+                if ($payment >= $unpaid && ($unpaid > 0 || $rateAmt['charged'] == 0) && $rateAmt['span'] < (count($rateSummary) - 1)) {
+                		
                     $daysBeingPaid += $rateAmt['days2pay'];
                     $payment -= $unpaid;
                     continue;

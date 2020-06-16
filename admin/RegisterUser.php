@@ -68,7 +68,7 @@ if (isset($_POST["btnSave"])) {
                 // error
             	$sAlert = "Error: " . $resps["error"];
             } else {
-            	$sAlert = '<span class="ui-state-highlight">Uh-oh, a member must already be defined for this web user: ' . $_POST["txtfb$n"] . '</span>';
+            	$sAlert = '<span class="ui-state-highlight">Uh-oh, cannot find an existing member for this web user: ' . $_POST["txtfb$n"] . '</span>';
             }
             
             $actionTakenTable .= "<tr><td>" . $sAlert . "</td></tr>";

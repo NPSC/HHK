@@ -79,8 +79,7 @@ if (count($diags) > 0) {
 }
 
 // Reservation statuses
-//$statusList = removeOptionGroups($uS->guestLookups['ReservStatus']);
-$statusList = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", TRUE));
+$statusList = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
 
 if ($uS->Doctor) {
     $cFields[] = array("Doctor", 'Name_Doctor', '', '', 's', '');
@@ -295,20 +294,20 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
     $curVisit = 0;
     $curRoom = '';
     $curRate = '';
-    $nites = 0;
-    $totalNights = 0;
+//    $nites = 0;
+//    $totalNights = 0;
 
 
-    $rrates = array();
+//     $rrates = array();
 
-    $roomRateRS = new Room_RateRS();
-    $rows = EditRS::select($dbh, $roomRateRS, array());
+//     $roomRateRS = new Room_RateRS();
+//     $rows = EditRS::select($dbh, $roomRateRS, array());
 
-    foreach ($rows as $r) {
-        $roomRateRS = new Room_RateRS();
-        EditRS::loadRow($r, $roomRateRS);
-        $rrates[$roomRateRS->FA_Category->getStoredVal()] = $roomRateRS;
-    }
+//     foreach ($rows as $r) {
+//         $roomRateRS = new Room_RateRS();
+//         EditRS::loadRow($r, $roomRateRS);
+//         $rrates[$roomRateRS->FA_Category->getStoredVal()] = $roomRateRS;
+//     }
 
     $stmt = $dbh->query($query);
 
@@ -318,18 +317,18 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
             $curVisit = $r['idReservation'];
             $curRoom = $r['Room'];
             $curRate = $r['FA_Category'];
-            $nites = 0;
+//            $nites = 0;
         } else if ($curRoom != $r['Room']) {
             $curRoom = $r['Room'];
         } else if ($curRate != $r['FA_Category']) {
             $curRate = $r['FA_Category'];
         } else {
-            $nites += $r['Nights'];
+//            $nites += $r['Nights'];
             continue;
         }
 
-        $nites += $r['Nights'];
-        $totalNights += $r['Nights'];
+//        $nites += $r['Nights'];
+//        $totalNights += $r['Nights'];
 
         if ($r['FA_Category'] == RoomRateCategorys::Fixed_Rate_Category) {
             $rate = $r['Fixed_Room_Rate'];

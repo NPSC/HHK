@@ -57,9 +57,13 @@ class InstamedGateway extends PaymentGateway {
     }
 
     public function getGatewayName() {
-        return 'instamed';
+        return PaymentGateway::INSTAMED;
     }
 
+    public function hasVoidReturn() {
+    	return FALSE;
+    }
+    
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
@@ -108,7 +112,7 @@ class InstamedGateway extends PaymentGateway {
             
             // Record transaction
             try {
-                $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Sale, TransMethod::Token);
+            	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Sale, TransMethod::Token);
                 $sr->setIdTrans($transRs->idTrans->getStoredVal());
             } catch (Exception $ex) {
                 // do nothing
@@ -242,7 +246,7 @@ class InstamedGateway extends PaymentGateway {
         );
 
         if ($manualKey && $cardHolderName != '') {
-            $data['cardHolderName'] = $cardHolderName;
+        	$data['cardHolderName'] = html_entity_decode($cardHolderName, ENT_QUOTES);
         }
 
         $req = array_merge($data, $this->getCredentials()->toSSO());
@@ -293,7 +297,7 @@ class InstamedGateway extends PaymentGateway {
         return $dataArray;
     }
 
-    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl) {
+    public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
 
         $uS = Session::getInstance();
         $dataArray = array();
@@ -399,7 +403,7 @@ class InstamedGateway extends PaymentGateway {
         
         // Record transaction
         try {
-            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Void, TransMethod::Token);
+        	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Void, TransMethod::Token);
             $sr->setIdTrans($transRs->idTrans->getStoredVal());
         } catch (Exception $ex) {
             // do nothing
@@ -582,7 +586,7 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         
         // Record transaction
         try {
-            $transRs = Transaction::recordTransaction($dbh, $sr, $this->gwName, TransType::Retrn, TransMethod::Token);
+        	$transRs = Transaction::recordTransaction($dbh, $sr, $this->getGatewayName(), TransType::Retrn, TransMethod::Token);
             $sr->setIdTrans($transRs->idTrans->getStoredVal());
         } catch (Exception $ex) {
             // do nothing
@@ -1080,11 +1084,11 @@ where r.idRegistration =" . $idReg);
 
         $payTbl->addBodyTr(
                 HTMLTable::makeTd(
-                    HTMLContainer::generateMarkup('label', 'Key Account:', array('for'=>'btnvrKeyNumber', 'class'=>'hhkvrKeyNumber', 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
-                    . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber', 'class'=>'hhk-feeskeys hhkvrKeyNumber', 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number'))
-                , array('class'=>'tdlabel hhkvrKeyNumber', 'colspan'=>'2'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName', 'class'=>'hhk-feeskeys hhkvrKeyNumber')), array('colspan'=>'2', 'style'=>'min-width:140px'))
-            , array('id'=>'trvdCHName'));
+                		HTMLContainer::generateMarkup('label', 'Key Account:', array('for'=>'btnvrKeyNumber'.$index, 'class'=>'hhkvrKeyNumber'.$index, 'style'=>'margin-left:1em;', 'title'=>'Key in credit account number'))
+                		. HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'btnvrKeyNumber'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index, 'style'=>'margin-left:.3em;margin-top:2px;', 'title'=>'Key in credit account number'))
+                		, array('class'=>'tdlabel hhkvrKeyNumber'.$index, 'colspan'=>'2'))
+        		.HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type' => 'textbox', 'placeholder'=>'Cardholder Name', 'name' => 'txtvdNewCardName'.$index, 'class'=>'hhk-feeskeys'.$index.' hhkvrKeyNumber'.$index)), array('colspan'=>'2', 'style'=>'min-width:140px'))
+        		, array('id'=>'trvdCHName'.$index));
 
     }
 

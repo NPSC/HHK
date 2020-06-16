@@ -46,6 +46,7 @@ SysConfig::getCategory($dbh, $ssn, "'f'", webInit::SYS_CONFIG);
 SysConfig::getCategory($dbh, $ssn, "'r'", webInit::SYS_CONFIG);
 SysConfig::getCategory($dbh, $ssn, "'d'", webInit::SYS_CONFIG);
 SysConfig::getCategory($dbh, $ssn, "'h'", webInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, "'a'", WebInit::SYS_CONFIG);
 
 $pageTitle = $ssn->siteName;
 
@@ -81,8 +82,8 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
             // create room record
             $dbh->exec("insert into room "
                     . "(`idRoom`,`idHouse`,`Item_Id`,`Title`,`Type`,`Category`,`Status`,`State`,`Availability`,
-`Max_Occupants`,`Min_Occupants`,`Rate_Code`,`Key_Deposit_Code`,`Cleaning_Cycle_Code`) VALUES
-($idRoom, 0, 1, '$title', 'r', 'dh', 'a', 'a', 'a', 4, 0,'rb', 'k0', 'a');");
+`Max_Occupants`,`Min_Occupants`,`Rate_Code`,`Key_Deposit_Code`,`Cleaning_Cycle_Code`, `idLocation`) VALUES
+($idRoom, 0, 1, '$title', 'r', 'dh', 'a', 'a', 'a', 4, 0,'rb', 'k0', 'a', 1);");
 
             // create resource record
             $dbh->exec("insert into resource "

@@ -1242,7 +1242,7 @@ CREATE OR REPLACE VIEW `vguest_view` AS
         IFNULL(`v`.`Color`, '') AS `Color`,
         IFNULL(`v`.`State_Reg`, '') AS `State Reg.`,
         IFNULL(`v`.`License_Number`, '') AS `License Plate`,
-        IFNULL(v.Note, '') as `Note`
+        IFNULL(`v`.`Note`, '') as `Note`
     FROM
         ((((((`stays` `s`
         LEFT JOIN `name` `n` ON ((`n`.`idName` = `s`.`idName`)))

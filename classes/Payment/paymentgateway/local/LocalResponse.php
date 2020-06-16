@@ -106,7 +106,7 @@ class LocalGwResp implements iGatewayResponse {
     }
     
     public function setMaskedAccount($v) {
-        $this->aaccount = $v;
+        $this->account = $v;
     }
     
     public function getAuthorizedAmount() {

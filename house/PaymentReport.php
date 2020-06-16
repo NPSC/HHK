@@ -451,9 +451,6 @@ from
 where lp.idPayment > 0
  $whHosp $whAssoc $whDates $whStatus $whType $whGw ";
 
-    $stmt = $dbh->query($query);
-    $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idHospital', 'idAssociation', 'Patient_Last', 'Patient_First', 'Hosp_Arrival'));
-
     $tbl = null;
     $sml = null;
     $reportRows = 0;
@@ -498,7 +495,11 @@ where lp.idPayment > 0
     $uS->nameLookups = $name_lk;
     $total = 0;
 
+    
     // Now the data ...
+    $stmt = $dbh->query($query);
+    $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idHospital', 'idAssociation', 'Patient_Last', 'Patient_First', 'Hosp_Arrival'));
+
     foreach ($invoices as $r) {
 
         // Payments

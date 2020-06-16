@@ -133,6 +133,7 @@ $title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Resident Guests f
 $guestMessage = '';
 $vehicleMessage = '';
 $emtableMarkupv = '';
+$tab = 0;
 
 if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
 
@@ -140,13 +141,20 @@ if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
     $subject = '';
 
     if (isset($_POST['txtEmail'])) {
-        $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_STRING);
+    	$emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_STRING);
     }
-
+    
+    if (isset($_POST['txtEmailv'])) {
+    	$emAddr = filter_var($_POST['txtEmailv'], FILTER_SANITIZE_STRING);
+    }
+    
     if (isset($_POST['txtSubject'])) {
-        $subject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
+    	$subject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
     }
-
+    if (isset($_POST['txtSubjectv'])) {
+    	$subject = filter_var($_POST['txtSubjectv'], FILTER_SANITIZE_STRING);
+    }
+    
     if ($emAddr != '' && $subject != '') {
 
         $mail = prepareEmail();
@@ -187,6 +195,7 @@ if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
         $guestMessage = $resultMessage;
     } else {
         $vehicleMessage = $resultMessage;
+        $tab = 1;
     }
 
 }
@@ -238,6 +247,7 @@ if ($uS->TrackAuto) {
     $(document).ready(function () {
         "use strict";
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
+        var tabReturn = '<?php echo $tab; ?>';
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
         $('#tblList, #tblListv').dataTable({
             "displayLength": 50,
@@ -294,6 +304,7 @@ if ($uS->TrackAuto) {
         );
 
         $('#mainTabs').tabs();
+        $('#mainTabs').tabs("option", "active", tabReturn);
         $('#mainTabs').show();
     });
         </script>

@@ -42,6 +42,13 @@ class LocalGateway extends PaymentGateway {
 	public function getGatewayType() {
 		return '';
 	}
+	public function hasVoidReturn() {
+		return FALSE;
+	}
+	
+	public function hasCofService() {
+		return TRUE;
+	}
 	protected function setCredentials($credentials) {
 		$this->credentials = $credentials;
 	}
@@ -99,6 +106,32 @@ class LocalGateway extends PaymentGateway {
 		$payResult->setDisplayMessage ( 'Paid by Credit Card.  ' );
 
 		return $payResult;
+	}
+	public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
+		$uS = Session::getInstance ();
+		
+		if ($selChgType == '' || $chgAcct == '') {
+			return array('COFmsg'=>'Missing charge type and/or account number');
+		}
+		
+		if ($cardHolderName == '') {
+			$guest = new Guest($dbh, '', $idGuest);
+			$cardHolderName = $guest->getRoleMember()->getMemberFullName();
+		}
+
+		$gwResp = new LocalGwResp ( 0, '', $selChgType, $chgAcct, $cardHolderName, MpTranType::CardOnFile, $uS->username );
+		
+		$vr = new LocalResponse ( $gwResp, $idGuest, $idGroup, 0, PaymentStatusCode::Paid );
+		
+		try {
+			$vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
+		} catch(Exception $ex) {
+			return array('error'=> $ex->getMessage());
+		}
+		
+		$dataArray['COFmsg'] = 'Card Added.';
+		$dataArray['COFmkup'] = HouseServices::guestEditCreditTable($dbh, $idGroup, $idGuest, $idx);
+		return $dataArray;
 	}
 	
 	protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
@@ -185,6 +218,7 @@ class LocalGateway extends PaymentGateway {
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $rtnToken, PaymentStatusCode::Paid );
 		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
 		$vr->setPaymentNotes ( $paymentNotes );
+		$vr->setRefund(TRUE);
 
 		$vrr = ReturnReply::processReply ( $dbh, $vr, $uS->username, NULL );
 
@@ -215,16 +249,13 @@ class LocalGateway extends PaymentGateway {
 	public function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup) {
 		throw new Hk_Exception_Payment ( 'Card on file services are not implemented.  ' );
 	}
-	public function hasCofService() {
-		return FALSE;
-	}
 	
 	public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
 		// Charge card list
 		$ccs = readGenLookupsPDO ( $dbh, 'Charge_Cards' );
 
-		foreach ( $ccs as $k => $v ) {
+		foreach ( $ccs as $v ) {
 		    $v[0] = $v[1];
 			$cardNames [$v[1]] = $v;
 		}

@@ -208,7 +208,7 @@ if (isset($_GET['title'])) {
 	$extendHours = intval($uS->ExtendToday);
 	
 
-	if ($extendHours > 0 && $extendHours < 10 && intval($nowDT->format('H')) <= $extendHours) {
+	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) <= $extendHours) {
 		$nowDT->sub(new DateInterval('P1D'));
 	}
 	

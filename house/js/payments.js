@@ -212,18 +212,18 @@ function saveDiscountPayment(orderNumber, item, amt, discount, addnlCharge, adjD
  * @param {int} orderNum
  * @returns {undefined}
  */
-function getInvoicee(item, orderNum) {
+function getInvoicee(item, orderNum, index) {
     "use strict";
     var cid = parseInt(item.id, 10);
     if (isNaN(cid) === false && cid > 0) {
-        $('#txtInvName').val(item.value);
-        $('#txtInvId').val(cid);
+        $('#txtInvName'+index).val(item.value);
+        $('#txtInvId'+index).val(cid);
     } else {
-        $('#txtInvName').val('');
-        $('#txtInvId').val('');
+        $('#txtInvName'+index).val('');
+        $('#txtInvId'+index).val('');
     }
     $('#txtOrderNum').val(orderNum);
-    $('#txtInvSearch').val('');
+    $('#txtInvSearch'+index).val('');
 }
 
 /**
@@ -750,6 +750,7 @@ function amtPaid() {
         totPay = 0;
 
         $('.paySelectTbl').hide();
+        $('#divReturnPay').hide();
 
         if (isChdOut === false && ckedInCharges === 0.0) {
             $('.hhk-minPayment').hide();
@@ -861,15 +862,17 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             rtnchg.hide();
             $('.hhk-transferr').hide();
             $('.payReturnNotes').show();
-            $('.hhk-cknum').hide();
+            $('.hhk-cknumr').hide();
+            $('.hhk-rtn-invoice').hide();
 
             if ($(this).val() === 'cc') {
                 rtnchg.show('fade');
             } else if ($(this).val() === 'ck') {
-                $('.hhk-cknum').show('fade');
+                $('.hhk-cknumr').show('fade');
             } else if ($(this).val() === 'tf') {
                 $('.hhk-transferr').show('fade');
             } else if ($(this).val() === 'in') {
+            	$('.hhk-rtn-invoice').show('fade');
                 $('.payReturnNotes').hide();
             }
         });
@@ -983,44 +986,9 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     });
 
     // Billing agent chooser set up
-    if ($('#txtInvSearch').length > 0) {
-
-        $('#txtInvSearch').keypress(function (event) {
-
-            var mm = $(this).val();
-            if (event.keyCode == '13') {
-
-                if (mm == '' || !isNumber(parseInt(mm, 10))) {
-
-                    alert("Don't press the return key unless you enter an Id.");
-                    event.preventDefault();
-
-                } else {
-
-                    $.getJSON("../house/roleSearch.php", {cmd: "filter", 'basis':'ba', letters:mm},
-                    function(data) {
-                        try {
-                            data = data[0];
-                        } catch (err) {
-                            alert("Parser error - " + err.message);
-                            return;
-                        }
-                        if (data && data.error) {
-                            if (data.gotopage) {
-                                response();
-                                window.open(data.gotopage);
-                            }
-                            data.value = data.error;
-                        }
-                        getInvoicee(data, idVisit);
-                    });
-
-                }
-            }
-        });
-        createAutoComplete($('#txtInvSearch'), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit); }, false);
-    }
-
+    createInvChooser(idVisit, '');
+    createInvChooser(idVisit, 'r');
+    
     // Days - Payment calculator
     $('#daystoPay').change(function () {
         var days = parseInt($(this).val()),
@@ -1064,6 +1032,48 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
     });
 
     amtPaid();
+}
+
+function createInvChooser(idVisit, index) {
+	
+    if ($('#txtInvSearch'+index).length > 0) {
+
+        $('#txtInvSearch'+index).keypress(function (event) {
+
+            var mm = $(this).val();
+            if (event.keyCode == '13') {
+
+                if (mm == '' || !isNumber(parseInt(mm, 10))) {
+
+                    alert("Don't press the return key unless you enter an Id.");
+                    event.preventDefault();
+
+                } else {
+
+                    $.getJSON("../house/roleSearch.php", {cmd: "filter", 'basis':'ba', letters:mm},
+                    function(data) {
+                        try {
+                            data = data[0];
+                        } catch (err) {
+                            alert("Parser error - " + err.message);
+                            return;
+                        }
+                        if (data && data.error) {
+                            if (data.gotopage) {
+                                response();
+                                window.open(data.gotopage);
+                            }
+                            data.value = data.error;
+                        }
+                        getInvoicee(data, idVisit, index);
+                    });
+
+                }
+            }
+        });
+        createAutoComplete($('#txtInvSearch'+index), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit, index); }, false);
+
+    }	
 }
 
 function daysCalculator(days, idRate, idVisit, fixedAmt, adjAmt, numGuests, idResv, rtnFunction) {
@@ -1311,18 +1321,19 @@ function setupCOF($chgExpand, idx) {
     if ($chgExpand.length > 0) {
 
         $('input[name=rbUseCard'+idx+']').on('change', function () {
-            if ($(this).val() == 0) {
+            if ($(this).val() == 0 || $(this).prop('checked') === true) {
                 $chgExpand.show();
             } else {
                 $chgExpand.hide();
                 $('#btnvrKeyNumber'+idx).prop('checked', false).change();
+                $('#txtvdNewCardName'+idx).val('');
             }
             
             $('#tdChargeMsg'+idx).text('').hide();
             $('#selccgw'+idx).removeClass('ui-state-highlight');
         });
 
-        if ($('input[name=rbUseCard'+idx+']:checked').val() > 0) {
+        if ($('input[name=rbUseCard'+idx+']:checked').val() > 0 || $('input[name=rbUseCard'+idx+']').prop('checked') === false) {
             $chgExpand.hide();
         }
 
@@ -1349,7 +1360,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
     $('#tdChargeMsg'+idx).text('').hide();
     
     // Selected Merchant?
-    if ($('#selccgw'+idx).length > 0 && $('input[name=rbUseCard'+idx+']:checked').val() == 0) {
+    if ($('#selccgw'+idx).length > 0 && ($('input[name=rbUseCard'+idx+']:checked').val() == 0 || $('input[name=rbUseCard'+idx+']').prop('checked') === true)) {
         
         $('#selccgw'+idx).removeClass('ui-state-highlight');
     
@@ -1382,6 +1393,11 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
         parms['selccgw'+idx] = $('#selccgw'+idx).val();
     }
 
+    // For local gateway
+    if ($('#selChargeType'+idx).length > 0) {
+        parms['selChargeType'+idx] = $('#selChargeType'+idx).val();
+    }
+
     // Go to the server for payment data, then come back and submit to new URL to enter credit info.
     $.post('ws_ckin.php', parms,
       function(data) {
@@ -1406,8 +1422,8 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
 
             paymentRedirect (data, $('#xform'));
 
-            if (data.success && data.success != '') {
-                flagAlertMessage(data.success, 'success');
+            if ((data.success && data.success != '') || (data.COFmsg && data.COFmsg != '')) {
+                flagAlertMessage((data.success === undefined ? '' : data.success) + (data.COFmsg === undefined ? '' : data.COFmsg), 'success');
             }
 
             if (data.COFmkup && data.COFmkup !== '') {

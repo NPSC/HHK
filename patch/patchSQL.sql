@@ -1,25 +1,9 @@
 ALTER TABLE `w_groups`
  ADD COLUMN `IP_Restricted` BOOLEAN NOT NULL DEFAULT 0 AFTER `Cookie_Restricted`;
 
-ALTER TABLE `location`
-    CHANGE COLUMN `Phone` `Merchant` VARCHAR(45) NOT NULL DEFAULT '' ;
-
-ALTER TABLE `card_id`
-    ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Amount`;
-
-
-ALTER TABLE `guest_token`
-     ADD COLUMN  `Merchant` VARCHAR(45) NOT NULL DEFAULT '';
-
-ALTER TABLE `payment_auth`
-    ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Processor`;
-
-update `guest_token` set `Merchant` = ifnull((Select `Value`  from `sys_config` where `Key` = 'ccgw'), '');
-update `payment_auth` set `Merchant` = ifnull((Select `Value`  from `sys_config` where `Key` = 'ccgw'), '');
-Insert into location (idLocation, Title, Merchant, Status) select 1, ifnull(`Value`, ''), ifnull(`Value`, ''), 'a' from `sys_config` where `Key` = 'ccgw';
-update room r set r.idLocation = (select ifnull(idLocation, '') from location where idLocation = 1) where r.idLocation = 0;
 
 UPDATE `sys_config` SET `Category`='fg' WHERE `Key`='BatchSettlementHour';
+UPDATE `sys_config` SET `Type`='lu', `GenLookup`='ExcessPays' WHERE `Key`='VisitExcessPaid';
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`, `GenLookup`) VALUES('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', '');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ExtendToday', '0', 'i', 'h', 'Extend immediate Check-in by this many hours into tomorrow');
@@ -57,8 +41,7 @@ INSERT INTO `template_tag` VALUES (17,'s','Name Prefix','${NamePrefix}','');
 
 ALTER TABLE `document` 
 	CHANGE COLUMN `Doc` `Doc` MEDIUMBLOB NULL DEFAULT NULL ;
-	
-UPDATE `sys_config` SET `Category`='h' WHERE `Key`='ShowUncfrmdStatusTab';
+
 
 -- Update gen_lookups Pay_Types to index paymentId 2 instead of 4
 Update `gen_lookups` set `Substitute` = '2' where `Table_Name` = 'Pay_Type' and `Code` = 'cc';
@@ -72,26 +55,22 @@ ALTER TABLE `name_demog`
  	ADD COLUMN `Gl_Code_Debit` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Special_Needs`;
 ALTER TABLE `name_demog`
  	ADD COLUMN `Gl_Code_Credit` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Gl_Code_Debit`;
-
-
--- Password changes
-
-INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES 
-('Sys_Config_Category', 'pr', 'Password Rules','','',0),
-('dayIncrements', '30', '30 days', '','', '1'),
-('dayIncrements', '60', '60 days', '','', '2'),
-('dayIncrements', '90', '90 days', '','', '3'),
-('dayIncrements', '180', '180 days', '','', '4'),
-('dayIncrements', '365', '365 days', '','', '5'),
-("Web_User_Actions", "L", "Login", '', '', '0'),
-("Web_User_Actions", "PS", "Set Password", '', '', '0'),
-("Web_User_Actions", "PC", "Password Change", '', '', '0'),
-("Web_User_Actions", "PL", "Locked Out", '', '', '0');
-
-INSERT IGNORE INTO `sys_config` VALUES
-('passResetDays','365','lu','pr','','Number of days between automatic password resets','dayIncrements'),
-('PriorPasswords','0','i','pr','','Number of prior passwords user cannot use',''),
-('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements');
-
-ALTER TABLE `w_users` 
+	
+-- Password changes	
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES 	
+('Sys_Config_Category', 'pr', 'Password Rules','','',0),	
+('dayIncrements', '30', '30 days', '','', '1'),	
+('dayIncrements', '60', '60 days', '','', '2'),	
+('dayIncrements', '90', '90 days', '','', '3'),	
+('dayIncrements', '180', '180 days', '','', '4'),	
+('dayIncrements', '365', '365 days', '','', '5'),	
+("Web_User_Actions", "L", "Login", '', '', '0'),	
+("Web_User_Actions", "PS", "Set Password", '', '', '0'),	
+("Web_User_Actions", "PC", "Password Change", '', '', '0'),	
+("Web_User_Actions", "PL", "Locked Out", '', '', '0');	
+INSERT IGNORE INTO `sys_config` VALUES	
+('passResetDays','365','lu','pr','','Number of days between automatic password resets','dayIncrements'),	
+('PriorPasswords','0','i','pr','','Number of prior passwords user cannot use',''),	
+('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements');	
+ALTER TABLE `w_users` 	
 ADD COLUMN `Chg_PW` BOOL NOT NULL DEFAULT false AFTER `PW_Change_Date`;
