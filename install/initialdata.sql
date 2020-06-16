@@ -172,6 +172,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Income_Bracket', 'ib6', '200,000 & up', '', 'd',60),
 ('Income_Bracket', 'z', 'Unknown', '', 'd',1000),
 
+('Init_Reserv_Status', 'a', 'Confirmed', '', '',0),
+('Init_Reserv_Status', 'uc', 'Unconfirmed', '', '',0),
+
 ('Invoice_Status', 'p', 'Paid', '','',0),
 ('Invoice_Status', 'up', 'Unpaid', '','',0),
 ('Invoice_Status', 'c', 'Carried', '','',0),
