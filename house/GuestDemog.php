@@ -10,6 +10,7 @@
 require("homeIncludes.php");
 require(CLASSES . 'AuditLog.php');
 require(DB_TABLES . "nameRS.php");
+require(CLASSES . 'DataTableServer.php');
 
 $wInit = new webInit();
 
@@ -25,6 +26,11 @@ $demos = array();
 
 $whDemos = '';
 $fields = '';
+$columns = array(
+            array("db"=>'idName', "dt"=>"id"),
+            array("db"=>'Name_Full', "dt"=>"Name"),
+            array("db"=>'Patient_Name', "dt"=>"Patient Name")
+           );
 
 $numRecords = 25;
 $startAt = 0;
@@ -43,9 +49,11 @@ foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
         if ($d[0] == 'Gender') {
             $whDemos .= " n.`Gender` = '' ";
             $fields .= "ifnull(n.`Gender`,'') as `Gender`,";
+            $columns[] = array("db"=>"Gender", 'dt'=>"Gender");
         } else {
             $whDemos .= " nd.`" . $d[0] . "` = '' ";
             $fields .= "ifnull(nd.`" . $d[0] . "`, '') as `" . $d[0] . "`,";
+            $columns[] = array("db"=>$d[0], "dt"=>$d[0]);
         }
 
         $demos[$d[0]] = array(
@@ -72,6 +80,41 @@ function getDemographicField($tableName, $recordSet) {
     }
 
     return NULL;
+}
+
+function getMissingDemogs($dbh, $columns){
+    return SSP::complex($_REQUEST, $dbh, 'vguest_demog', 'idName', $columns);
+}
+
+$cmd = isset($_REQUEST['cmd']) ? $_REQUEST['cmd']: '';
+$events = '';
+
+if ($cmd){
+    
+    switch ($cmd){
+        case 'getMissingDemog':
+            $events = getMissingDemogs($dbh, $columns);
+            break;
+        default:
+            $events = array("error" => "Bad Command: \"" . $c . "\"");
+    }
+    
+    if (is_array($events)) {
+        
+        $json = json_encode($events);
+        
+        if ($json !== FALSE) {
+            echo ($json);
+        } else {
+            $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
+            echo json_encode($events);
+        }
+        
+    } else {
+        echo $events;
+    }
+    
+    exit;
 }
 
 if (isset($_POST['btnnotind'])) {
@@ -122,10 +165,6 @@ if (isset($_POST['btnnotind'])) {
     $startAt = intval(filter_input(INPUT_POST, 'btnNext'), 10) + 50;
 
 }
-
-
-
-
 
 
 $query = "select distinct $fields
@@ -186,10 +225,13 @@ $form = HTMLContainer::generateMarkup('form', $tbl->generateMarkup(array(), "Sho
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo JQ_DT_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="js/missingDemog.js"></script>
         <script type="text/javascript">
     $(document).ready(function() {
         "use strict";
@@ -202,9 +244,16 @@ $form = HTMLContainer::generateMarkup('form', $tbl->generateMarkup(array(), "Sho
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
+            <!--
             <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="font-size:.8em;padding:15px;margin-top:15px;">
                 <?php echo $form; ?>
             </div>
+            -->
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="font-size:.8em;padding:15px;margin-top:15px;">
+            	<table id="dataTbl"></table>
+            </div>
+            <input type="hidden" id="columns" value='<?php echo json_encode($columns); ?>'>
+            <input type="hidden" id="demos" value='<?php echo json_encode($demos); ?>'>
         </div>
     </body>
 </html>
