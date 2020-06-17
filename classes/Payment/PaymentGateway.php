@@ -56,6 +56,14 @@ abstract class PaymentGateway {
     	return TRUE;
     }
     
+    public function hasUndoReturnPmt() {
+    	return FALSE;
+    }
+    
+    public function hasUndoReturnAmt() {
+    	return FALSE;
+    }
+    
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
         return array('warning' => 'Credit Sale is not implemented. ');
     }
@@ -87,7 +95,7 @@ abstract class PaymentGateway {
     }
 
     public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
-        return array('warning' => 'Not Available.  ');
+        return array('warning' => 'Void Return is not Available.  ');
     }
 
     public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $payNotes) {
