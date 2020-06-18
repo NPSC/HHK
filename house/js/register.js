@@ -381,6 +381,10 @@ function getRoomList(idResv, eid) {
     }
 }
 
+function refreshPayments() {
+	$('#btnFeesGo').click();
+}
+
 var isGuestAdmin,
     pmtMkup,
     rctMkup,
@@ -1097,6 +1101,7 @@ $(document).ready(function () {
                 }
             });
     });
+    
 
     $('#btnFeesGo').click(function () {
         $(".hhk-alert").hide();
@@ -1150,9 +1155,13 @@ $(document).ready(function () {
                     
                     $('#rptfeediv').remove();
                     $('#vfees').append($('<div id="rptfeediv"/>').append($(data.success)));
-                    
+
                     // Set up controls for table.
-                    paymentsTable('feesTable', 'rptfeediv');
+                    paymentsTable('feesTable', 'rptfeediv', refreshPayments);
+                    
+                    // Hide refresh button.
+                    $('#btnPayHistRef').hide();
+
                 }
             }
         });

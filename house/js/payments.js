@@ -234,7 +234,7 @@ function getInvoicee(item, orderNum, index) {
  * @param {float} amt
  * @returns {undefined}
  */
-function sendVoidReturn(btnid, vorr, idPayment, amt) {
+function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
 
     var prms = {pid: idPayment, bid: btnid};
 
@@ -263,10 +263,10 @@ function sendVoidReturn(btnid, vorr, idPayment, amt) {
                 alert("Parser error - " + err.message);
                 return;
             }
-            if (data.bid) {
-                // clear button control
-                $('#' + data.bid).remove();
-            }
+//            if (data.bid) {
+//                // clear button control
+//                $('#' + data.bid).remove();
+//            }
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
@@ -283,7 +283,9 @@ function sendVoidReturn(btnid, vorr, idPayment, amt) {
             }
             if (data.success) {
                  flagAlertMessage(revMessage + data.success, 'success');
+                 refresh();
             }
+            
             if (data.receipt) {
                 showReceipt('#pmtRcpt', data.receipt, 'Receipt');
             }
@@ -863,7 +865,6 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             $('.hhk-transferr').hide();
             $('.payReturnNotes').show();
             $('.hhk-cknumr').hide();
-            $('.hhk-rtn-invoice').hide();
 
             if ($(this).val() === 'cc') {
                 rtnchg.show('fade');
@@ -871,9 +872,6 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
                 $('.hhk-cknumr').show('fade');
             } else if ($(this).val() === 'tf') {
                 $('.hhk-transferr').show('fade');
-            } else if ($(this).val() === 'in') {
-            	$('.hhk-rtn-invoice').show('fade');
-                $('.payReturnNotes').hide();
             }
         });
         rtnsel.change();
@@ -1435,7 +1433,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
     });
 }
 
-function paymentsTable(tableID, containerID) {
+function paymentsTable(tableID, containerID, refreshPayments) {
     
     $('#' + tableID).dataTable({
         'columnDefs': [
@@ -1449,6 +1447,11 @@ function paymentsTable(tableID, containerID) {
         'order': [[ 8, 'asc' ]],
         'lengthMenu': [[25, 50, -1], [25, 50, "All"]]
     });
+    
+    $('#btnPayHistRef').button().click(function() {
+    	refreshPayments();
+    });
+    
 
     // Invoice viewer
     $('#' + containerID).on('click', '.invAction', function (event) {
@@ -1461,7 +1464,7 @@ function paymentsTable(tableID, containerID) {
         var amt = parseFloat(btn.data("amt"));
         if (btn.val() !== "Saving..." && confirm("Void/Reverse this payment for $" + amt.toFixed(2).toString() + "?")) {
             btn.val('Saving...');
-            sendVoidReturn(btn.attr('id'), 'rv', btn.data('pid'));
+            sendVoidReturn(btn.attr('id'), 'rv', btn.data('pid'), null, refreshPayments);
         }
     });
 
@@ -1470,7 +1473,7 @@ function paymentsTable(tableID, containerID) {
         var btn = $(this);
         if (btn.val() !== 'Saving...' && confirm('Void this Return?')) {
             btn.val('Saving...');
-            sendVoidReturn(btn.attr('id'), 'vr', btn.data('pid'));
+            sendVoidReturn(btn.attr('id'), 'vr', btn.data('pid'), null, refreshPayments);
         }
     });
 
@@ -1480,7 +1483,7 @@ function paymentsTable(tableID, containerID) {
         var amt = parseFloat(btn.data("amt"));
         if (btn.val() !== "Saving..." && confirm("Return this payment for $" + amt.toFixed(2).toString() + "?")) {
             btn.val("Saving...");
-            sendVoidReturn(btn.attr("id"), "r", btn.data("pid"), amt);
+            sendVoidReturn(btn.attr("id"), "r", btn.data("pid"), amt, refreshPayments);
         }
     });
 
@@ -1490,7 +1493,7 @@ function paymentsTable(tableID, containerID) {
         var amt = parseFloat(btn.data("amt"));
         if (btn.val() !== "Saving..." && confirm("Undo this Return/Refund for $" + amt.toFixed(2).toString() + "?")) {
             btn.val("Saving...");
-            sendVoidReturn(btn.attr("id"), "ur", btn.data("pid"));
+            sendVoidReturn(btn.attr("id"), "ur", btn.data("pid"), null, refreshPayments);
         }
     });
 
@@ -1500,7 +1503,7 @@ function paymentsTable(tableID, containerID) {
 
         if (btn.val() !== 'Deleting...' && confirm('Delete this House payment?')) {
             btn.val('Deleting...');
-            sendVoidReturn(btn.attr('id'), 'd', btn.data('ilid'), btn.data('iid'));
+            sendVoidReturn(btn.attr('id'), 'd', btn.data('ilid'), btn.data('iid'), null, refreshPayments);
         }
     });
 

@@ -931,7 +931,7 @@ $uS->guestId = $id;
                 </div>
             </div>
             <div id="zipSearch" class="hhk-tdbox-noborder" style="display:none;">
-                <table width="100%">
+                <table style="width:100%;">
                     <tr>
                         <td class="tdlabel">Postal Code: </td><td><input type="text" id="txtZipSch" class="input-medium ignrSave" value="" title="Type in the postal code."/></td>
                     </tr>

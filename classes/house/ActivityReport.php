@@ -836,8 +836,10 @@ where `lp`.`idPayment` > 0
             $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), array('style' => 'float:left; margin-left:.8em;'));
             $summary .= HTMLContainer::generateMarkup('div', $pType->generateMarkup(), array('style' => 'float:left; margin-left:.8em;'));
         }
+        
+        $refresh = HTMLInput::generateMarkup("Refresh", array('type'=>'button', 'id'=>'btnPayHistRef', 'style'=>'float:right; margin-right:0.8em;margin-top:1em;'));
 
-        return HTMLContainer::generateMarkup('div', $header . $summary . $listing, array('style' => 'min-width:900px;'));
+        return HTMLContainer::generateMarkup('div', $header . $summary . $refresh . $listing, array('style' => 'min-width:900px;'));
     }
 
     public static function unpaidInvoiceLog(\PDO $dbh, $includeAction = TRUE) {

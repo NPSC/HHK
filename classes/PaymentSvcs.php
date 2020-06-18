@@ -309,7 +309,7 @@ class PaymentSvcs {
 
         $uS = Session::getInstance();
         $dataArray = array('bid' => $bid);
-        $reply = '';
+
 
         $payRs = new PaymentRS();
         $payRs->idPayment->setStoredVal($idPayment);
@@ -362,7 +362,7 @@ class PaymentSvcs {
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
 
-                $reply .= 'Payment is Returned.  ';
+                $dataArray['success'] = 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
@@ -389,7 +389,7 @@ class PaymentSvcs {
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
 
-                $reply .= 'Payment is Returned.  ';
+                $dataArray['success'] = 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
@@ -415,7 +415,7 @@ class PaymentSvcs {
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
 
-                $reply .= 'Payment is Returned.  ';
+                $dataArray['success'] = 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
@@ -425,7 +425,6 @@ class PaymentSvcs {
                 throw new Hk_Exception_Payment('Unknown pay type.  ');
         }
 
-        $dataArray['success'] = $reply;
         return $dataArray;
     }
 

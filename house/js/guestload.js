@@ -96,6 +96,12 @@ function manageRelation(id, rId, relCode, cmd) {
 }
 
 
+function paymentRefresh() {
+	var indx = $('#psgList').tabs('option','active');
+	$('#psgList').tabs('load', indx);
+}
+
+
 // Init j-query.
 $(document).ready(function () {
     "use strict";
@@ -324,7 +330,7 @@ $(document).ready(function () {
         },
         load: function (event, ui) {
             if (ui.tab.prop('id') === 'pmtsTable') {
-                paymentsTable('feesTable', 'rptfeediv');
+                paymentsTable('feesTable', 'rptfeediv', paymentRefresh);
             }
         }
     });
