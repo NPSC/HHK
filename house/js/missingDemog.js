@@ -18,8 +18,8 @@ $(document).ready(function () {
     		}
     	}else if(demos[column.dt]){
     		title = demos[column.dt].title;
-    		render = function ( data, type ) {
-    			var select = $("<select>");
+    		render = function ( data, type, row ) {
+    			var select = $("<select>").attr("name", 'sel' + column.dt + '[' + row.id + ']');
     			var option = $("<option>");
     			select.append(option);
     			$.each(demos[column.dt].list, function(key, item){
@@ -28,7 +28,7 @@ $(document).ready(function () {
     					option.attr("selected","selected");
     				}
     				select.append(option);
-    			})        			
+    			});
                 return select[0].outerHTML;
     		}
     	}else{
@@ -57,8 +57,9 @@ $(document).ready(function () {
 		"searchable": false,
 		"sortable": false,
 		"data": "idName",
+		className: "dt-body-center",
 		render: function ( data, type ){
-			return $("<input>").attr({"type":"checkbox"})[0].outerHTML;
+			return $("<input>").attr({"type":"checkbox", "class": "cbUnkn"})[0].outerHTML;
 		}
 	});
     
@@ -70,10 +71,122 @@ $(document).ready(function () {
         "language": {"search": "Search missing demographics:"},
         "sorting": [[0,'desc']],
         "displayLength": 25,
-        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-        "Dom": '<"top"ilf>rt<"bottom"ip>',
+        "lengthMenu": [[10, 25, 50], [10, 25, 50]],
+        "dom": '<"top fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-tl ui-corner-tr"lf>rt<"bottom fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-bl ui-corner-br"ip>',
         ajax: {
             url: "GuestDemog.php?cmd=getMissingDemog"
+        },
+        "initComplete": function(settings, json) {
+        	$('.bottom').append('<div class="savebtns" style="float:right; padding-top: 0.25em;"><button id="dt-save" style="padding:0.5em; margin-right: 2px;">Save</button><button id="dt-cancel" style="padding:0.5em; margin-left: 2px;">Cancel</button></div>');
+        	$('.bottom .savebtns').buttonset().hide();
+        	
+        	/*this.api().columns().every( function () {
+                var column = this;
+                var filter = false;
+                if(column.index() > 2){
+	                var filter = $("<select>");
+	    			var option = $("<option>");
+	    			filter.append(option);
+	    			$.each(demos["Age_Bracket"].list, function(key, item){
+	    				var option = $("<option>").attr("value", item[0]).text(item[1]);
+	    				filter.append(option);
+	    			});
+                };
+
+                if(filter){
+                    filter.appendTo( $(column.header()))
+                    .on( 'change', function () {
+                        var data = $(this).val();
+                        if($.isArray(data)){
+                            $.each(data, function(i,v){
+								data[i] = v ? '^' + v + '$': '';
+                            });
+							var searchStr = data.join('|');
+                        }else if($(this).hasClass('autoCal')){
+                        	var d = $.datepicker.parseDate("M d, yy", data);
+	                        var date = $.datepicker.formatDate("yy-mm-dd", d);
+                        	var searchStr = data ? '^' + $.fn.dataTable.util.escapeRegex(
+                                	date
+                                ) : '';
+                        }else{
+                        	var searchStr = data ? '^' + $.fn.dataTable.util.escapeRegex(
+                            	data
+                            ) + '$' : '';
+                        }
+
+                        column
+                        .search(searchStr, true, false )
+                        .draw();
+                    } );
+                    
+                    filter.click( function(e) {
+                        e.stopPropagation();
+                    });
+
+                    if(filter.is("select")){
+						filter.multiselect({
+							noneSelectedText: "Select Filter"
+                        });
+                    }
+                }else{
+					filter = $('<div>&nbsp;</div>').appendTo( $(column.header()));
+                }
+        	});
+*/        },
+        "drawCallback": function(){
+        	$('.bottom .savebtns').hide();
+        	$('.bottom .dataTables_paginate').show();
         }
-        });
+    });
+    
+    $('#dataTbl').on('change', '.cbUnkn', function(e){
+    	var cb = $(this);
+    	var row = cb.closest("tr");
+    	if(cb.prop("checked")){
+    		row.find('select').each(function(k,select){
+    			if($(select).val() == ""){
+    				$(select).find('option[value="z"]').attr("selected", "selected");
+    			}
+    		});
+    	}else{
+    		row.find('select').each(function(k,select){
+    			if($(select).val() == "z"){
+    				$(select).find('option[value="z"]').removeAttr("selected");
+    			}
+    		});
+    	}
+    	
+    	row.find("select").trigger("change");
+    });
+    
+    $('#dataTbl').on('change', 'select', function(e){
+    	$(".bottom .dataTables_paginate").hide();
+    	$(".bottom .savebtns").show();
+    });
+    
+    $(document).on("click", ".savebtns #dt-cancel", function(e){
+    	$('#dataTbl').DataTable().ajax.reload(null, false);
+    });
+    
+    $(document).on("click", ".savebtns #dt-save", function(e){
+    	var data = $("#dataTbl select").serializeArray();
+    	data.push({name: "cmd", value: "save"});
+    	console.log(data);
+    	$.ajax({
+    		type: "POST",
+            url: "GuestDemog.php",
+                    data: data,
+                    dataType: "json",
+                    success: function(data){
+                    	flagAlertMessage(data.success, 'success');
+                    },
+                    error: function(data){
+                    	flagAlertMessage(data.error, 'error');
+                    },
+                    datatype: "json"
+                });
+    	
+    	$('#dataTbl').DataTable().ajax.reload(null, false);
+    });
+    
 });
