@@ -393,10 +393,10 @@ function amtPaid() {
             p.keyDepAmt.val('');
         } else {
             p.keyDepAmt.val(kdep.toFixed(2).toString());
+            // unhide row
+            $('.hhk-kdrow').show();
         }
         
-        // unhide row
-        $('.hhk-kdrow').show();
     }
 
     // Unpaid Invoices - invAmt
@@ -985,7 +985,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 
     // Billing agent chooser set up
     createInvChooser(idVisit, '');
-    createInvChooser(idVisit, 'r');
+    //createInvChooser(idVisit, 'r');
     
     // Days - Payment calculator
     $('#daystoPay').change(function () {
@@ -1069,8 +1069,8 @@ function createInvChooser(idVisit, index) {
                 }
             }
         });
+        
         createAutoComplete($('#txtInvSearch'+index), 3, {cmd: "filter", 'basis':'ba'}, function (item) { getInvoicee(item, idVisit, index); }, false);
-
     }	
 }
 
@@ -1319,7 +1319,7 @@ function setupCOF($chgExpand, idx) {
     if ($chgExpand.length > 0) {
 
         $('input[name=rbUseCard'+idx+']').on('change', function () {
-            if ($(this).val() == 0 || $(this).prop('checked') === true) {
+            if ($(this).val() == 0 || ($(this).prop('checked') === true && $(this).prop('type') === 'checkbox')) {
                 $chgExpand.show();
             } else {
                 $chgExpand.hide();
@@ -1331,7 +1331,7 @@ function setupCOF($chgExpand, idx) {
             $('#selccgw'+idx).removeClass('ui-state-highlight');
         });
 
-        if ($('input[name=rbUseCard'+idx+']:checked').val() > 0 || $('input[name=rbUseCard'+idx+']').prop('checked') === false) {
+        if ($('input[name=rbUseCard'+idx+']:checked').val() > 0 || ($('input[name=rbUseCard'+idx+']').prop('checked') === false && $('input[name=rbUseCard'+idx+']').prop('type') === 'checkbox')) {
             $chgExpand.hide();
         }
 
