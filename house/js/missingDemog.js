@@ -17,6 +17,7 @@ $(document).ready(function () {
     			return '<a href="GuestEdit.php?id=' + data + '">' + data + '</a>';
     		}
     	}else if(demos[column.dt]){
+    		search = true;
     		title = demos[column.dt].title;
     		render = function ( data, type, row ) {
     			var select = $("<select>").attr("name", 'sel' + column.dt + '[' + row.id + ']');
@@ -77,17 +78,25 @@ $(document).ready(function () {
             url: "GuestDemog.php?cmd=getMissingDemog"
         },
         "initComplete": function(settings, json) {
-        	$('.bottom').append('<div class="savebtns" style="float:right; padding-top: 0.25em;"><button id="dt-save" style="padding:0.5em; margin-right: 2px;">Save</button><button id="dt-cancel" style="padding:0.5em; margin-left: 2px;">Cancel</button></div>');
+        	$('.bottom').append('<div class="savebtns" style="float:right; padding-top: 0.25em;"><button id="dt-cancel" style="padding:0.5em; margin-right: 2px;">Cancel</button><button id="dt-save" style="padding:0.5em; margin-left: 2px;">Save</button></div>');
         	$('.bottom .savebtns').buttonset().hide();
         	
-        	/*this.api().columns().every( function () {
+        	this.api().columns().every( function () {
                 var column = this;
                 var filter = false;
-                if(column.index() > 2){
-	                var filter = $("<select>");
-	    			var option = $("<option>");
-	    			filter.append(option);
-	    			$.each(demos["Age_Bracket"].list, function(key, item){
+                //get column title from columns object
+                if(columns[column.index()]){
+                	var columnTitle = columns[column.index()].dt;
+                }else{
+                	var columnTitle = dtCols[column.index()].title;
+                }
+                
+                if(demos[columnTitle]){
+                //if(column.index() > 2){
+	                var filter = $("<select>").prop("multiple", "multiple");
+	                var option = $("<option>").prop("value", "").text("Not set");
+	                filter.append(option);
+	    			$.each(demos[columnTitle].list, function(key, item){
 	    				var option = $("<option>").attr("value", item[0]).text(item[1]);
 	    				filter.append(option);
 	    			});
@@ -97,23 +106,20 @@ $(document).ready(function () {
                     filter.appendTo( $(column.header()))
                     .on( 'change', function () {
                         var data = $(this).val();
+                        
                         if($.isArray(data)){
                             $.each(data, function(i,v){
-								data[i] = v ? '^' + v + '$': '';
+								data[i] = v ? '^' + v + '$': '^$';
                             });
 							var searchStr = data.join('|');
-                        }else if($(this).hasClass('autoCal')){
-                        	var d = $.datepicker.parseDate("M d, yy", data);
-	                        var date = $.datepicker.formatDate("yy-mm-dd", d);
-                        	var searchStr = data ? '^' + $.fn.dataTable.util.escapeRegex(
-                                	date
-                                ) : '';
                         }else{
                         	var searchStr = data ? '^' + $.fn.dataTable.util.escapeRegex(
                             	data
-                            ) + '$' : '';
+                            ) + '$' : '^$';
                         }
 
+                        console.log(searchStr);
+                        
                         column
                         .search(searchStr, true, false )
                         .draw();
@@ -125,14 +131,15 @@ $(document).ready(function () {
 
                     if(filter.is("select")){
 						filter.multiselect({
-							noneSelectedText: "Select Filter"
+							noneSelectedText: "Select Filter",
+							buttonWidth: "150"
                         });
                     }
                 }else{
 					filter = $('<div>&nbsp;</div>').appendTo( $(column.header()));
                 }
         	});
-*/        },
+        },
         "drawCallback": function(){
         	$('.bottom .savebtns').hide();
         	$('.bottom .dataTables_paginate').show();
