@@ -117,8 +117,6 @@ $(document).ready(function () {
                             	data
                             ) + '$' : '^$';
                         }
-
-                        console.log(searchStr);
                         
                         column
                         .search(searchStr, true, false )
@@ -132,7 +130,8 @@ $(document).ready(function () {
                     if(filter.is("select")){
 						filter.multiselect({
 							noneSelectedText: "Select Filter",
-							buttonWidth: "150"
+							buttonWidth: "150",
+							selectedList: 3
                         });
                     }
                 }else{
@@ -178,7 +177,6 @@ $(document).ready(function () {
     $(document).on("click", ".savebtns #dt-save", function(e){
     	var data = $("#dataTbl select").serializeArray();
     	data.push({name: "cmd", value: "save"});
-    	console.log(data);
     	$.ajax({
     		type: "POST",
             url: "GuestDemog.php",
