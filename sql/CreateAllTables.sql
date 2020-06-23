@@ -2367,6 +2367,8 @@ ALTER TABLE `visit`
     ADD INDEX `Index_Span_End` (`Span_End` ASC);
 ALTER TABLE `visit`
     ADD INDEX `Index_Exp_Depart` (`Expected_Departure` ASC);
+ALTER TABLE `visit`
+    ADD INDEX `Index_Arrival_Date` (`Arrival_Date` ASC);
 ALTER TABLE `visit` 
     ADD INDEX `Index_idReservation` (`idReservation` ASC);
 

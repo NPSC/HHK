@@ -428,7 +428,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
             }
         }
         
-        $sml->writeSheetRow('Sheet1',$flds);        
+        $sml->writeSheetRow('Sheet1',$flds);
 
     }
 }
@@ -459,6 +459,24 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
 
     // Make titles for all the rates
     $rateTitles = RoomRate::makeDescriptions($dbh);
+    
+    $guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
+    
+    if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
+    	$guestNightsSql = "CASE WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start') THEN 0
+        WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
+        ELSE (SELECT SUM(DATEDIFF(CASE WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$end')
+        THEN DATE('$end') ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END,
+        CASE WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start') ELSE DATE(s.Span_Start_Date) END))
+        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
+    	END AS `Actual_Guest_Nights`,
+    	CASE WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0 WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
+    	THEN (SELECT SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))), DATE(s.Span_Start_Date)))
+    	FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)ELSE (SELECT SUM(DATEDIFF(CASE
+      	WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start') THEN DATE('$start')
+      	ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END, DATE(s.Span_Start_Date)))
+        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";
+    }
 
     $query = "select
     v.idVisit,
@@ -500,58 +518,6 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
                 END
             )
         END AS `Actual_Month_Nights`,
-
-    CASE
-        WHEN
-            DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
-        THEN 0
-        WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
-        ELSE (SELECT
-                SUM(DATEDIFF(CASE
-                                WHEN
-                                    DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$end')
-                                THEN DATE('$end')
-                                ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure)))
-                            END,
-                            CASE
-                                WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
-                                ELSE DATE(s.Span_Start_Date)
-                            END))
-            FROM
-                stays s
-            WHERE
-                s.idVisit = v.idVisit
-                    AND s.Visit_Span = v.Span)
-    END AS `Actual_Guest_Nights`,
-
-    CASE
-        WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
-        WHEN
-            DATE(IFNULL(v.Span_End,
-                        datedefaultnow(v.Expected_Departure))) <= DATE('$start')
-        THEN
-            (SELECT
-                    SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))),
-                                DATE(s.Span_Start_Date)))
-                FROM
-                    stays s
-                WHERE
-                    s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
-        ELSE (SELECT
-            SUM(DATEDIFF(CASE
-                            WHEN
-                                DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start')
-                            THEN
-                                DATE('$start')
-                            ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure)))
-                        END,
-                        DATE(s.Span_Start_Date)))
-        FROM
-            stays s
-        WHERE
-            s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
-    END AS `PI_Guest_Nights`,
-
     CASE
         WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
         WHEN
@@ -569,6 +535,8 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
                 DATE(v.Span_Start))
     END AS `Pre_Interval_Nights`,
 
+	$guestNightsSql
+
     ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
     ifnull(n.Name_Last,'') as Name_Last,
     ifnull(n.Name_First,'') as Name_First,
@@ -579,7 +547,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(na.Country_Code, '') as pCountry,
     ifnull(na.Postal_Code, '') as pZip,
     ifnull(na.Bad_Address, '') as pBad_Address,
-    ifnull(r.Title, '') as Title,
+    ifnull(rm.Title, '') as Title,
     ifnull(np.Name_Last,'') as Patient_Last,
     ifnull(np.Name_First,'') as Patient_First,
     ifnull(np.BirthDate, '') as pBirth,
@@ -635,9 +603,7 @@ from
         left join
     reservation rv ON v.idReservation = rv.idReservation
         left join
-    resource r ON v.idResource = r.idResource
-        left join
-    resource_room rr ON r.idResource = rr.idResource
+    resource_room rr ON v.idResource = rr.idResource
         left join
     room rm ON rr.idRoom = rm.idRoom
         left join
@@ -723,7 +689,7 @@ where
              }else{ //otherwise set format as string
                 $header[$field[0]] = 'string';
                 $hdrstyle['widths'][] = 20;
-             }            
+             }
         }
         
         try{

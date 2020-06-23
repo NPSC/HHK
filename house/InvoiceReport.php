@@ -836,11 +836,45 @@ if ($useGlReport) {
 		} else {
 			
 			$tbl = new HTMLTable();
+
+			$invHdr = '';
+			foreach ($glCodes->invoiceHeader() as $h) {
+				$invHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
+			}
+			$tbl->addBodyTr($invHdr);
+			
+			$pmtHdr = '';
+			foreach ($glCodes->paymentHeader() as $h) {
+				$pmtHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
+			}
+			$tbl->addBodyTr($pmtHdr);
+			
+			$lineHdr = '';
+			foreach ($glCodes->lineHeader() as $h) {
+				$lineHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
+			}
+			$tbl->addBodyTr($lineHdr);
+			
+			$pmstmt = $dbh->query("Select idPayment_method, Method_Name from payment_method;");
+			$pmtMethods = $pmstmt->fetchAll(\PDO::FETCH_NUM);
+			$recordCtr = 0;
 			
 			foreach ($glCodes->getInvoices() as $r) {
+				
+				if ($recordCtr++ > 16) {
+					$tbl->addBodyTr($invHdr);
+					$tbl->addBodyTr($pmtHdr);
+					$tbl->addBodyTr($lineHdr);
+					$recordCtr = 0;
+				}
+				
 				$mkupRow = '';
 				
-				foreach ($r['i'] as $col) {
+				foreach ($r['i'] as $k=> $col) {
+					
+					if ($k == 'iStatus' && $col == 'p') {
+						$col = 'paid';
+					}
 					
 					$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
 				}
@@ -849,12 +883,19 @@ if ($useGlReport) {
 				if (isset($r['p'])) {
 					
 					foreach ($r['p'] as $p) {
-						$mkupRow = '<td>p</td>';
+						$mkupRow = '<td> </td>';
 						foreach ($p as $k => $col) {
 							
 							if ($k == 'pTimestamp') {
 								$col = date('Y/m/d', strtotime($col));
+							} else if ($k == 'pMethod') {
+								$col = $pmtMethods[$col][1];
+							} else if ($k == 'pStatus' && $col == 's') {
+								$col = "sale";
+							} else if ($k == 'pStatus' && $col == 'r') {
+								$col = "return";
 							}
+							
 							$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
 							
 						}
@@ -865,7 +906,7 @@ if ($useGlReport) {
 				
 				if (isset($r['l'])) {
 					foreach ($r['l'] as $h) {
-						$mkupRow = '<td> </td><td>l</td>';
+						$mkupRow = '<td> </td><td> </td>';
 						foreach ($h as $k => $col) {
 							
 							if ($k == 'il_Amount') {
@@ -884,14 +925,20 @@ if ($useGlReport) {
 			$glInvoices = $tbl->generateMarkup();
 			
 			// Comma delemeted file.
-			$glCodes->mapRecords();
+			$glCodes->mapRecords(TRUE);
 			
 			$tbl = new HTMLTable();
 			
 			foreach ($glCodes->getLines() as $l) {
 				
 				$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
+				
 			}
+			
+			if ($glCodes->getStopoAtInvoice() != '') {
+				$tbl->addBodyTr(HTMLTable::makeTd('Stop at Invoice number ' . $glCodes->getStopoAtInvoice(), array()));
+			}
+			
 
 			$glInvoices .= "<p style='margin-top:20px;'>Total Credits = " . number_format($glCodes->getTotalCredit(), 2) . " Total Debits = " . number_format($glCodes->getTotalDebit(), 2) . "</p>" .$tbl->generateMarkup();
 			
