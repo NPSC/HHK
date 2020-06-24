@@ -49,6 +49,14 @@ class LocalGateway extends PaymentGateway {
 	public function hasCofService() {
 		return TRUE;
 	}
+	public function hasUndoReturnPmt() {
+		return TRUE;
+	}
+	
+	public function hasUndoReturnAmt() {
+		return TRUE;
+	}
+	
 	protected function setCredentials($credentials) {
 		$this->credentials = $credentials;
 	}
@@ -61,14 +69,29 @@ class LocalGateway extends PaymentGateway {
 			$pmp->setChargeCard ( $chgTypes [$pmp->getChargeCard ()] [1] );
 		}
 
+		
 		// Check token id for pre-stored credentials.
 		$tokenRS = CreditToken::getTokenRsFromId ( $dbh, $pmp->getIdToken () );
 
 		// Do we have a token?
 		if (CreditToken::hasToken ( $tokenRS )) {
+			
 			$pmp->setChargeCard ( $tokenRS->CardType->getStoredVal () );
 			$pmp->setChargeAcct ( $tokenRS->MaskedAccount->getStoredVal () );
 			$pmp->setCardHolderName ( $tokenRS->CardHolderName->getStoredVal () );
+			
+		} else {
+			try {
+				
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+				
+			} catch (Hk_Exception_Member $ex) {
+				
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+			}
+			
+			$pmp->setCardHolderName($guest->get_fullName());
+			
 		}
 
 		$gwResp = new LocalGwResp ( $invoice->getAmountToPay (), $invoice->getInvoiceNumber (), $pmp->getChargeCard (), $pmp->getChargeAcct (), $pmp->getCardHolderName (), MpTranType::Sale, $uS->username );
@@ -135,17 +158,37 @@ class LocalGateway extends PaymentGateway {
 	}
 	
 	protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
+		
 		$uS = Session::getInstance ();
+		
 		$dataArray = array (
 				'bid' => $bid
 		);
-
+		
 		// find the token record
-		if ($payRs->idToken->getStoredVal () > 0) {
-			$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
-		}
+		$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
+		$cardHolderName = $tknRs->CardHolderName->getStoredVal ();
 
-		$gwResp = new LocalGwResp ( $pAuthRs->Approved_Amount->getStoredVal (), $invoice->getInvoiceNumber (), $pAuthRs->Card_Type->getStoredVal (), $pAuthRs->Acct_Number->getStoredVal (), $tknRs->CardHolderName->getStoredVal (), MpTranType::Void, $uS->username );
+		// Get cardholder name
+		if ($cardHolderName == '') {
+
+			try {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (Hk_Exception_Member $ex) {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+			}
+			
+			$cardHolderName = $guest->get_fullName();
+		}
+		
+		// create gw response
+		$gwResp = new LocalGwResp (
+				$pAuthRs->Approved_Amount->getStoredVal (),
+				$invoice->getInvoiceNumber (),
+				$pAuthRs->Card_Type->getStoredVal (),
+				$pAuthRs->Acct_Number->getStoredVal (),
+				$cardHolderName,
+				MpTranType::Void, $uS->username );
 
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $tknRs->idGuest_token->getStoredVal (), PaymentStatusCode::VoidSale );
 		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
@@ -169,17 +212,35 @@ class LocalGateway extends PaymentGateway {
 
 	protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $retAmount, $bid) {
 		$uS = Session::getInstance ();
-
-		// find the token
-		if ($payRs->idToken->getStoredVal () > 0) {
-			$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
-		}
-
+		
 		$dataArray = array (
 				'bid' => $bid
 		);
+		
+		// find the token
+		$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
+		$cardHolderName = $tknRs->CardHolderName->getStoredVal ();
 
-		$gwResp = new LocalGwResp ( $pAuthRs->Approved_Amount->getStoredVal (), $invoice->getInvoiceNumber (), $pAuthRs->Card_Type->getStoredVal (), $pAuthRs->Acct_Number->getStoredVal (), $tknRs->CardHolderName->getStoredVal (), MpTranType::ReturnSale, $uS->username );
+		// Get cardholder name
+		if ($cardHolderName == '') {
+			
+			try {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (Hk_Exception_Member $ex) {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+			}
+			
+			$cardHolderName = $guest->get_fullName();
+		}
+		
+		$gwResp = new LocalGwResp (
+				$pAuthRs->Approved_Amount->getStoredVal (),
+				$invoice->getInvoiceNumber (),
+				$pAuthRs->Card_Type->getStoredVal (),
+				$pAuthRs->Acct_Number->getStoredVal (),
+				$cardHolderName,
+				MpTranType::ReturnSale,
+				$uS->username );
 
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $tknRs->idGuest_token->getStoredVal (), PaymentStatusCode::Retrn );
 		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
@@ -195,25 +256,39 @@ class LocalGateway extends PaymentGateway {
 		$invoice->updateInvoiceBalance ( $dbh, 0 - $vrr->response->getAuthorizedAmount (), $uS->username );
 
 		$vrr->idVisit = $invoice->getOrderNumber ();
-		$dataArray ['receipt'] = HTMLContainer::generateMarkup ( 'div', nl2br ( Receipt::createVoidMarkup ( $dbh, $vrr, $uS->siteName, $uS->sId ) ) );
+		$dataArray ['receipt'] = HTMLContainer::generateMarkup ( 'div', nl2br ( Receipt::createReturnMarkup ( $dbh, $vrr, $uS->siteName, $uS->sId ) ) );
 		$dataArray ['success'] = 'Payment is Returned.  ';
 
 		return $dataArray;
 	}
 
-	public function voidReturn(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
-		return array (
-				'warning' => 'Not Available.  '
-		);
-	}
 	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
 		
 		$uS = Session::getInstance ();
-
+		
 		$tokenRS = CreditToken::getTokenRsFromId ( $dbh, $rtnToken );
 		$amount = abs ( $invoice->getAmount () );
+		$cardHolderName = $tokenRS->CardHolderName->getStoredVal();
+		
+		if ($cardHolderName == '') {
+			
+			try {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (Hk_Exception_Member $ex) {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+			}
+			
+			$cardHolderName = $guest->get_fullName();
+		}
 
-		$gwResp = new LocalGwResp ( $amount, $invoice->getInvoiceNumber (), $tokenRS->CardType->getStoredVal (), $tokenRS->MaskedAccount->getStoredVal (), $tokenRS->CardHolderName->getStoredVal (), MpTranType::Sale, $uS->username );
+		$gwResp = new LocalGwResp (
+				$amount,
+				$invoice->getInvoiceNumber (),
+				$tokenRS->CardType->getStoredVal (),
+				$tokenRS->MaskedAccount->getStoredVal (),
+				$cardHolderName,
+				MpTranType::Sale,
+				$uS->username );
 
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $rtnToken, PaymentStatusCode::Paid );
 		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
@@ -232,13 +307,121 @@ class LocalGateway extends PaymentGateway {
 
 		return $rtnResult;
 	}
+
 	public function reverseSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 		return $this->_voidSale ( $dbh, $invoice, $payRs, $pAuthRs, $bid );
 	}
+	
+	public function undoReturnPayment(\PDO $dbh, $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
+		
+		$uS = Session::getInstance();
+		$dataArray = array('bid' => $bid);
+		
+		// find the token
+		$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
+		$cardHolderName = $tknRs->CardHolderName->getStoredVal();
+		
+		if ($cardHolderName == '') {
+			
+			try {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (Hk_Exception_Member $ex) {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+			}
+			
+			$cardHolderName = $guest->get_fullName();
+		}
+		
+		$gwResp = new LocalGwResp (
+				$pAuthRs->Approved_Amount->getStoredVal (),
+				$invoice->getInvoiceNumber (),
+				$pAuthRs->Card_Type->getStoredVal (),
+				$pAuthRs->Acct_Number->getStoredVal (),
+				$cardHolderName,
+				MpTranType::ReturnSale,
+				$uS->username );
+		
+		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $tknRs->idGuest_token->getStoredVal (), PaymentStatusCode::VoidReturn );
+		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
+		
+		// Record transaction
+		$transRs = Transaction::recordTransaction ( $dbh, $vr, $this->getGatewayType(), TransType::undoRetrn, TransMethod::Token );
+		$vr->setIdTrans ( $transRs->idTrans->getStoredVal () );
+		
+		// Payment record
+		$payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
+		$payRs->Updated_By->setNewVal($uS->username);
+		$payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+		
+		EditRS::update($dbh, $payRs, array($payRs->idPayment));
+		EditRS::updateStoredVals($payRs);
+		
+		// Payment Auth record
+		EditRS::delete($dbh, $pAuthRs, array($pAuthRs->idPayment_auth));
+		
+		// Update invoice
+		$invoice->updateInvoiceBalance ( $dbh, $vr->response->getAuthorizedAmount (), $uS->username );
+		
+		$vr->idVisit = $invoice->getOrderNumber ();
+		$dataArray ['receipt'] = HTMLContainer::generateMarkup ( 'div', nl2br ( Receipt::createSaleMarkup( $dbh, $invoice, $uS->siteName, $uS->sId, $vr ) ) );
+		$dataArray ['success'] = 'Return is Undone.  ';
+		
+		return $dataArray;
+	}
+	
+	public function undoReturnAmount(\PDO $dbh, $invoice, PaymentRs $payRs, Payment_AuthRS $pAuthRs, $bid) {
+		
+		$uS = Session::getInstance();
+		$dataArray = array('bid' => $bid);
+		
+		// find the token
+		$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
+		$cardHolderName = $tknRs->CardHolderName->getStoredVal();
+		
+		if ($cardHolderName == '') {
+			
+			try {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (Hk_Exception_Member $ex) {
+				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+			}
+			
+			$cardHolderName = $guest->get_fullName();
+		}
+		
+		$gwResp = new LocalGwResp (
+				$pAuthRs->Approved_Amount->getStoredVal (),
+				$invoice->getInvoiceNumber (),
+				$pAuthRs->Card_Type->getStoredVal (),
+				$pAuthRs->Acct_Number->getStoredVal (),
+				$cardHolderName,
+				MpTranType::ReturnAmt,
+				$uS->username );
+		
+		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $tknRs->idGuest_token->getStoredVal (), PaymentStatusCode::VoidSale );
+		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
+		
+		// Record transaction
+		Transaction::recordTransaction($dbh, $vr, '', TransType::undoRetrn, TransMethod::Token);
+		
+		// Payment records.
+		$dbh->exec("delete from payment_invoice where Payment_Id = " . $payRs->idPayment->getStoredVal ());
+		$dbh->exec("delete from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal ());
+		$dbh->exec("delete from payment where idPayment = " . $payRs->idPayment->getStoredVal ());
+		
+		$invoice->updateInvoiceBalance($dbh, $pAuthRs->Approved_Amount->getStoredVal (), $uS->username);
+		// delete invoice
+		$invoice->deleteInvoice($dbh, $uS->username);
+		
+		$dataArray['success'] = 'Refund is undone.  ';
+		return $dataArray;
+		
+	}
+	
 	protected static function _saveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 	}
 	protected static function _createEditMarkup(\PDO $dbh, $gatewayName) {
-		return '';
+		return 'The House is using a separate un-integrated credit card gateway.';
 	}
 	public function processHostedReply(\PDO $dbh, $post, $ssoTtoken, $idInv, $payNotes, $payDate) {
 		throw new Hk_Exception_Payment ( 'Local gateway does not process gateway replys.  ' );
@@ -247,7 +430,7 @@ class LocalGateway extends PaymentGateway {
 		return new LocalResponse ( $vcr, $idPayor, $idGroup, $idToken );
 	}
 	public function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup) {
-		throw new Hk_Exception_Payment ( 'Card on file services are not implemented.  ' );
+		return new LocalResponse ( $vcr, $idPayor, $idGroup, 0 );
 	}
 	
 	public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {

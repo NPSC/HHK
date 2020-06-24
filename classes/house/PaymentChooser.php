@@ -327,6 +327,7 @@ class PaymentChooser {
 
         // Collect panels for Returns
         unset($payTypes[PayType::Check]);
+        unset($payTypes[PayType::Invoice]);
         $rtninvoiceBlock = '';
         
         if (isset($uS->nameLookups[GL_TableNames::PayType][PayType::Invoice])) {
@@ -632,8 +633,8 @@ ORDER BY v.idVisit , v.Span;");
                 . HTMLTable::makeTd(
                      HTMLContainer::generateMarkup('label', "Pay", array('for'=>'keyDepRx', 'style'=>'margin-left:5px;margin-right:3px;'))
                     .HTMLInput::generateMarkup('', array('name'=>'keyDepRx', 'type'=>'checkbox', 'class'=>'hhk-feeskeys', 'style'=>'margin-right:.4em;', 'title'=>'Check if ' . $depositLabel . ' Received.'))
-                    .HTMLContainer::generateMarkup('span', ($visitCharge->getDepositCharged() > 0 ? '($' . $visitCharge->getDepositCharged() . ')' : ''), array('id'=>'spnDepAmt')))
-                    .HTMLInput::generateMarkup($visitCharge->getDepositCharged(), array('id'=>'hdnKeyDepAmt', 'type'=>'hidden'))
+                    .HTMLContainer::generateMarkup('span', ($visitCharge->getDepositCharged() > 0 ? '($' . $visitCharge->getDepositCharged() . ')' : ''), array('id'=>'spnDepAmt'))
+                    .HTMLInput::generateMarkup($visitCharge->getDepositCharged(), array('id'=>'hdnKeyDepAmt', 'type'=>'hidden')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup($visitCharge->getDepositCharged(), array('name'=>'keyDepAmt', 'size'=>'8', 'style'=>'border:none;text-align:right;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'title'=>$depositLabel . ' Amount')), array('style'=>'text-align:right;'));
 
             $attrs = array('class'=>'hhk-kdrow', 'style'=>'display:none;');
@@ -920,10 +921,10 @@ ORDER BY v.idVisit , v.Span;");
                 , array('style'=>'display:none;', 'class'=>'hhk-transferr'));
 
 
-        // Invoice
-        $payTbl->addBodyTr(
-        		HTMLTable::makeTd($invBlock, array('colspan'=>'4'))
-        		, array('style'=>'display:none;', 'class'=>'hhk-rtn-invoice'));
+//         // Invoice
+//         $payTbl->addBodyTr(
+//         		HTMLTable::makeTd($invBlock, array('colspan'=>'4'))
+//         		, array('style'=>'display:none;', 'class'=>'hhk-rtn-invoice'));
         
         
         

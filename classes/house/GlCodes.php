@@ -21,6 +21,7 @@ class GlCodes {
 	protected $errors;
 	protected $paymentDate;
 	protected $glLineMapper;
+	protected $stopAtInvoice;
 
 
 	public function __construct(\PDO $dbh, $month, $year, $glParm) {
@@ -39,6 +40,7 @@ class GlCodes {
 		}
 
 		$this->errors = array();
+		$this->stopAtInvoice = '';
 
 		$this->loadDbRecords($dbh);
 
@@ -47,7 +49,11 @@ class GlCodes {
 		$this->glLineMapper = new GlTemplateRecord();
 	}
 
-	public function mapRecords() {
+	/**
+	 * @param boolean $stopAtUnbalance
+	 * @return GlCodes
+	 */
+	public function mapRecords($stopAtUnbalance = FALSE) {
 
 		if (count($this->records) < 1) {
 			$this->recordError('No Records to Map. ');
@@ -58,7 +64,12 @@ class GlCodes {
 
 			// Any payments?
 			if (count($r['p']) < 1) {
-				$this->recordError('No payment for Invoice ' . $r['i']['iNumber']);
+				
+				// Don't flag carried.
+				if ($r['i']['iStatus'] != InvoiceStatus::Carried) {
+					$this->recordError('No payment for Invoice ' . $r['i']['iNumber']);
+				}
+				
 				continue;
 			}
 
@@ -80,16 +91,31 @@ class GlCodes {
 			}
 
 			// We can only process one payment(?)
-			if (count($payments) !== 1) {
-				$this->recordError('To many payments('.count($payments) . ') for Invoice ' . $r['i']['iNumber']);
-				continue;
-			}
+// 			if (count($payments) !== 1) {
+// 				$this->recordError('To many payments('.count($payments) . ') for Invoice ' . $r['i']['iNumber']);
+// 				continue;
+// 			}
 
 			// Got one - go with it.
-			$this->mapPayment($r, array_pop($payments));
+//			$this->mapPayment($r, array_pop($payments));
+			
+			foreach ($payments as $pay) {
+				$this->mapPayment($r, $pay);
+			}
 
+			if ($stopAtUnbalance) {
+				
+				if ($this->glLineMapper->getTotalCredit() != $this->glLineMapper->getTotalDebit()) {
+					$this->stopAtInvoice = $r['i']['iNumber'];
+					break;
+				}
+			}
 		}
 
+		if ($this->glLineMapper->getTotalCredit() != $this->glLineMapper->getTotalDebit()) {
+			$this->recordError('Credits not equal debits.');
+		}
+		
 		return $this;
 	}
 
@@ -303,6 +329,19 @@ class GlCodes {
 		return $remainingItems;
 	}
 	
+	public function invoiceHeader() {
+		
+		return array('Inv #', 'Delegated', 'Status', 'Amt', 'Deleted', 'Pledged', 'Rate');
+	}
+	public function lineHeader() {
+		
+		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'Gl Code');
+	}
+	public function paymentHeader() {
+		
+		return array(' ', 'id', 'Status', 'Amt', 'Method', 'Updated', 'Timestamp', 'Refund', 'Payor', 'Ba Debit', 'Ba Cred');
+	}
+	
 	protected function loadDbRecords(\PDO $dbh) {
 		
 		$idInvoice = 0;
@@ -336,9 +375,9 @@ class GlCodes {
     			// new invoice
     			$invoice = array(
     					'iNumber'=>$p['iNumber'],
-    					'iAmount'=>$p['iAmount'],
-    					'iStatus'=>$p['iStatus'],
     					'Delegated_Id'=>$p['Delegated_Id'],
+    					'iStatus'=>$p['iStatus'],
+    					'iAmount'=>$p['iAmount'],
     					'iDeleted'=>$p['iDeleted'],
     					'Pledged'=>$p['Pledged_Rate'],
     					'Rate'=>$p['Rate'],
@@ -360,9 +399,9 @@ class GlCodes {
 
     				$payments[$idPayment] = array(
     						'idPayment'=>$p['idPayment'],
+    						'pStatus'=>$p['pStatus'],
     						'pAmount'=>$p['pAmount'],
     						'pMethod'=>$p['pMethod'],
-    						'pStatus'=>$p['pStatus'],
     						'pUpdated'=>($p['pUpdated'] == '' ? '' : $p['pUpdated']),
     						'pTimestamp'=>$p['pTimestamp'],
     						'Is_Refund'=>$p['Is_Refund'],
@@ -470,6 +509,9 @@ class GlCodes {
 	}
 	public function getTotalDebit() {
 		return $this->glLineMapper->getTotalDebit();
+	}
+	public function getStopoAtInvoice() {
+		return $this->stopAtInvoice;
 	}
 }
 

@@ -309,7 +309,7 @@ class PaymentSvcs {
 
         $uS = Session::getInstance();
         $dataArray = array('bid' => $bid);
-        $reply = '';
+
 
         $payRs = new PaymentRS();
         $payRs->idPayment->setStoredVal($idPayment);
@@ -362,7 +362,7 @@ class PaymentSvcs {
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
 
-                $reply .= 'Payment is Returned.  ';
+                $dataArray['success'] = 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
@@ -389,7 +389,7 @@ class PaymentSvcs {
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
 
-                $reply .= 'Payment is Returned.  ';
+                $dataArray['success'] = 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
@@ -415,7 +415,7 @@ class PaymentSvcs {
                 // Update invoice
                 $invoice->updateInvoiceBalance($dbh, 0 - $cashResp->getAmount(), $uS->username);
 
-                $reply .= 'Payment is Returned.  ';
+                $dataArray['success'] = 'Payment is Returned.  ';
 
                 $cashResp->idVisit = $invoice->getOrderNumber();
                 $dataArray['receipt'] = HTMLContainer::generateMarkup('div', nl2br(Receipt::createReturnMarkup($dbh, $cashResp, $uS->siteName, $uS->sId)));
@@ -425,7 +425,6 @@ class PaymentSvcs {
                 throw new Hk_Exception_Payment('Unknown pay type.  ');
         }
 
-        $dataArray['success'] = $reply;
         return $dataArray;
     }
 
@@ -451,7 +450,7 @@ class PaymentSvcs {
 
         // only available to charge cards.
         if ($payRs->idPayment_Method->getStoredVal() != PaymentMethod::Charge) {
-            return array('warning' => 'Not Available.  ', 'bid' => $bid);
+            return array('warning' => 'Void Return is Not Available.  ', 'bid' => $bid);
         }
 
         // Find hte detail record.
@@ -499,7 +498,7 @@ class PaymentSvcs {
 
         // ineligible
         if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Retrn) {
-            return array('warning' => 'Payment is ineligable.  ', 'bid' => $bid);
+            return array('warning' => 'Undo Payment is ineligable.  ', 'bid' => $bid);
         }
 
         $invoice = new Invoice($dbh);
@@ -557,6 +556,31 @@ class PaymentSvcs {
 
                 break;
 
+            case PaymentMethod::Charge:
+            	
+            	// Find the detail record.
+            	$stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
+            	$arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            	
+            	if (count($arows) < 1) {
+            		$dataArray['warning'] = 'Payment Detail record not found.  Unable to Undo this Return. ';
+            		return $dataArray;
+            	}
+            	
+            	$pAuthRs = new Payment_AuthRS();
+            	EditRS::loadRow(array_pop($arows), $pAuthRs);
+            	
+            	if ($pAuthRs->Status_Code->getStoredVal() !== PaymentStatusCode::Retrn) {
+            		$dataArray['warning'] = 'Return is ineligable for Undoing.  ';
+            		return $dataArray;
+            	}
+            	
+            	// Payment Gateway
+            	$gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $pAuthRs->Merchant->getStoredVal());
+            	$dataArray = $gateway->undoReturnPayment($dbh, $invoice, $payRs, $pAuthRs, $bid);
+            	
+            	break;
+            	
             default:
                 throw new Hk_Exception_Payment('The pay type is ineligible.  ');
         }
@@ -617,9 +641,49 @@ class PaymentSvcs {
                 $dataArray['success'] = 'Cash Refund is undone.  ';
 
                 break;
+                
+            case PaymentMethod::Charge:
+            	
+            	$payRs = new PaymentRS();
+            	$payRs->idPayment->setStoredVal($idPayment);
+            	$pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
+            	
+            	if (count($pments) != 1) {
+            		return array('warning' => 'Payment record not found.  Unable to Undo this refund.  ', 'bid' => $bid);
+            	}
+            	
+            	EditRS::loadRow($pments[0], $payRs);
+            	
+            	// ineligible
+            	if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
+            		return array('warning' => 'Undo Refund is ineligable.  ', 'bid' => $bid);
+            	}
+            	
+            	// Find the detail record.
+            	$stmt = $dbh->query("Select * from payment_auth where idPayment = $idPayment order by idPayment_auth");
+            	$arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            	
+            	if (count($arows) < 1) {
+            		$dataArray['warning'] = 'Payment Detail record not found.  Unable to Undo this Refund. ';
+            		return $dataArray;
+            	}
+            	
+            	$pAuthRs = new Payment_AuthRS();
+            	EditRS::loadRow(array_pop($arows), $pAuthRs);
+            	
+            	if ($pAuthRs->Status_Code->getStoredVal() !== PaymentStatusCode::Paid) {
+            		$dataArray['warning'] = 'Refund is ineligable for Undoing.  ';
+            		return $dataArray;
+            	}
+            	
+            	// Payment Gateway
+            	$gateway = PaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $pAuthRs->Merchant->getStoredVal());
+            	$dataArray = $gateway->undoReturnAmount($dbh, $invoice, $payRs, $pAuthRs, $bid);
+            	
+            	break;
 
             default:
-                throw new Hk_Exception_Payment('This pay type is ineligible.  ');
+                throw new Hk_Exception_Payment('This pay type is ineligible for Undo Refund Amount.  ');
         }
 
         return $dataArray;
@@ -762,13 +826,7 @@ class PaymentSvcs {
                 $pAuthRs = new Payment_AuthRS();
                 EditRS::loadRow($rows[count($rows)-1], $pAuthRs);
 
-                $gTRs = new Guest_TokenRS();
-                $gTRs->idGuest_token->setStoredVal($payRs->idToken->getStoredVal());
-                $guestTkns = EditRS::select($dbh, $gTRs, array($gTRs->idGuest_token));
-
-                if (count($guestTkns) > 0) {
-                    EditRS::loadRow($guestTkns[0], $gTRs);
-                }
+                $gTRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
 
                 $gwResp = new StandInGwResponse($pAuthRs, $gTRs->OperatorID->getStoredVal(), $gTRs->CardHolderName->getStoredVal(), $gTRs->ExpDate->getStoredVal(), $gTRs->Token->getStoredVal(), $invoice->getInvoiceNumber(), $payRs->Amount->getStoredVal());
 

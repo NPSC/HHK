@@ -440,57 +440,13 @@ function doReport(\PDO $dbh, $start, $end, $local, $visitFee,  $labels) {
     // get session instance
     $uS = Session::getInstance();
 
-//    $categories = readGenLookupsPDO($dbh, $rescGroup[2], 'Description');
-        // add default category
-    $categories[] = array(0=>'', 1=>'(default)');
-
-
     $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
-    // Make titles for all the rates
-    $rateTitles = RoomRate::makeDescriptions($dbh);
-
-    $query = "select
-    v.idVisit,
-    v.Span,
-    v.idPrimaryGuest,
-    v.idResource,
-    v.Expected_Departure,
-    ifnull(v.Actual_Departure, '') as Actual_Departure,
-    v.Arrival_Date,
-    v.Span_Start,
-    ifnull(v.Span_End, '') as Span_End,
-    v.Pledged_Rate,
-    v.Expected_Rate,
-    v.Rate_Category,
-    v.idRoom_Rate,
-    v.Status,
-    v.Rate_Glide_Credit,
-    DATEDIFF(DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))),DATE(v.Span_Start)) as `Span_Age`,
-    CASE
-        WHEN
-            DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
-        THEN 0
-        WHEN
-            DATE(v.Span_Start) >= DATE('$end')
-        THEN 0
-        ELSE
-            DATEDIFF(
-                CASE
-                    WHEN
-                        DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$end')
-                    THEN
-                        DATE('$end')
-                    ELSE DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
-                END,
-                CASE
-                    WHEN DATE(v.Span_Start) < DATE('$start') THEN DATE('$start')
-                    ELSE DATE(v.Span_Start)
-                END
-            )
-        END AS `Actual_Month_Nights`,
-
-    CASE
+    $guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
+    
+    if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
+    	
+    	$guestNightsSql = "    CASE
         WHEN
             DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
         THEN 0
@@ -512,7 +468,7 @@ function doReport(\PDO $dbh, $start, $end, $local, $visitFee,  $labels) {
                 s.idVisit = v.idVisit
                     AND s.Visit_Span = v.Span)
     END AS `Actual_Guest_Nights`,
-
+    
     CASE
         WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
         WHEN
@@ -539,84 +495,92 @@ function doReport(\PDO $dbh, $start, $end, $local, $visitFee,  $labels) {
             stays s
         WHERE
             s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
-    END AS `PI_Guest_Nights`,
+    END AS `PI_Guest_Nights`,";
+    	
+    }
+    
+    $query = "SELECT
+    v.idVisit,
+    v.Span,
+    v.idResource,
+    v.Expected_Departure,
+    IFNULL(v.Actual_Departure, '') AS Actual_Departure,
+    v.Arrival_Date,
+    v.Span_Start,
+    IFNULL(v.Span_End, '') AS Span_End,
+    v.Pledged_Rate,
+    v.Expected_Rate,
+    v.Rate_Category,
+    v.idRoom_Rate,
+    v.Status,
+    IFNULL(rv.Visit_Fee, 0) AS `Visit_Fee_Amount`,
+    IFNULL(rm.Rate_Code, '') AS Rate_Code,
+    IFNULL(rm.Category, '') AS Category,
+    IFNULL(rm.Type, '') AS Type,
+    IFNULL(rm.Report_Category, '') AS Report_Category,
 
+    DATEDIFF(DATE(IFNULL(v.Span_End,
+                        DATEDEFAULTNOW(v.Expected_Departure))),
+            DATE(v.Span_Start)) AS `Span_Age`,
+    CASE
+        WHEN
+            DATE(IFNULL(v.Span_End,
+                        DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start')
+        THEN 0
+        WHEN DATE(v.Span_Start) >= DATE('$end')
+		THEN 0
+        ELSE DATEDIFF(CASE
+                    WHEN
+                        DATE(IFNULL(v.Span_End,
+                                    DATEDEFAULTNOW(v.Expected_Departure))) > DATE('$end')
+                    THEN
+                        DATE('$end')
+                    ELSE DATE(IFNULL(v.Span_End,
+                                DATEDEFAULTNOW(v.Expected_Departure)))
+                END,
+                CASE
+                    WHEN DATE(v.Span_Start) < DATE('$start') THEN DATE('$start')
+                    ELSE DATE(v.Span_Start)
+                END)
+    END AS `Actual_Month_Nights`,
     CASE
         WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
         WHEN
-            DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
+            DATE(IFNULL(v.Span_End,
+                        DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start')
         THEN
-            DATEDIFF(DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))),
+            DATEDIFF(DATE(IFNULL(v.Span_End,
+                                DATEDEFAULTNOW(v.Expected_Departure))),
                     DATE(v.Span_Start))
         ELSE DATEDIFF(CASE
                     WHEN
-                        DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$start')
+                        DATE(IFNULL(v.Span_End,
+                                    DATEDEFAULTNOW(v.Expected_Departure))) > DATE('$start')
                     THEN
                         DATE('$start')
-                    ELSE DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
+                    ELSE DATE(IFNULL(v.Span_End,
+                                DATEDEFAULTNOW(v.Expected_Departure)))
                 END,
                 DATE(v.Span_Start))
-    END AS `Pre_Interval_Nights`,
-
-    ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
-    ifnull(hs.idPsg, 0) as idPsg,
-    ifnull(rm.Rate_Code, '') as Rate_Code,
-    ifnull(rm.Category, '') as Category,
-    ifnull(rm.Type, '') as Type,
-    ifnull(rm.Report_Category, '') as Report_Category,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::Waive . ", " . ItemId::Discount . ", " . ItemId::LodgingReversal . ") and i.Sold_To_Id != " . $uS->subsidyId . "  and i.Order_Number = v.idVisit),
-            0) as `AmountPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Type_Id = " . ItemType::Tax . " and il.Source_Item_Id in ( " . ItemId::Lodging . ", " . ItemId::LodgingReversal . ") and i.Order_Number = v.idVisit),
-            0) as `TaxPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::LodgingDonate . " and i.Order_Number = v.idVisit),
-            0) as `ContributionPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-            LEFT JOIN
-        name_volunteer2 nv ON i.Sold_To_Id = nv.idName AND nv.Vol_Category = 'Vol_Type' AND nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::Waive . ", " . ItemId::Discount . ", " . ItemId::LodgingReversal . ") and ifnull(nv.idName, 0) > 0 and i.Sold_To_Id != " . $uS->subsidyId . " and i.Order_Number = v.idVisit),
-            0) as `ThrdPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id in (" . ItemId::Discount . ", " . ItemId::Waive . ") and i.Order_Number = v.idVisit),
-            0) as `HouseDiscount`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-    where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::AddnlCharge . " and i.Order_Number = v.idVisit),
-            0) as `AddnlPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-    where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Type_Id = " . ItemType::Tax . " and il.Source_Item_Id = " . ItemId::AddnlCharge . " and  i.Order_Number = v.idVisit),
-            0) as `AddnlTaxPaid`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-    where il.Deleted = 0 and i.Deleted = 0 and il.Item_Id = " . ItemId::AddnlCharge . " and i.Order_Number = v.idVisit),
-            0) as `AddnlCharged`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status = '" . InvoiceStatus::Unpaid . "' and il.Item_Id in (" . ItemId::Lodging . ", " . ItemId::Waive . ", " . ItemId::Discount . ", " . ItemId::LodgingReversal . ") and i.Order_Number = v.idVisit),
-            0) as `AmountPending`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-        where il.Deleted = 0 and i.Deleted = 0 and i.Status = '" . InvoiceStatus::Unpaid . "' and il.Type_Id = " . ItemType::Tax . "  and il.Source_Item_Id in (" . ItemId::Lodging . ", " . ItemId::LodgingReversal . ") and i.Order_Number = v.idVisit),
-            0) as `TaxPending`,
-    ifnull((select sum(il.Amount) from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
-    where il.Deleted = 0 and i.Deleted = 0 and i.Status in ('" . InvoiceStatus::Paid . "', '" . InvoiceStatus::Carried . "') and il.Item_Id = " . ItemId::VisitFee . " and i.Order_Number = v.idVisit),
-            0) as `VisitFeePaid`
-from
+    END AS `Pre_Interval_Nights`
+$guestNightsSql
+FROM
     visit v
-        left join
+        LEFT JOIN
     reservation rv ON v.idReservation = rv.idReservation
-        left join
+        LEFT JOIN
     resource_room rr ON v.idResource = rr.idResource
-        left join
+        LEFT JOIN
     room rm ON rr.idRoom = rm.idRoom
-        left join
-    hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
-where
-            v.`Status` <> 'p'
-                and DATE(v.Arrival_Date) <= DATE('$end')
-                and DATE(ifnull(v.Span_End,
-                    case
-                        when now() > v.Expected_Departure then now()
-                        else v.Expected_Departure
-                end)) >= DATE('$start')  order by v.idVisit, v.Span";
+WHERE
+    v.`Status` <> 'p'
+        AND DATE(v.Arrival_Date) <= DATE('$end')
+        AND DATE(IFNULL(v.Span_End,
+                CASE
+                    WHEN NOW() > v.Expected_Departure THEN NOW()
+                    ELSE v.Expected_Departure
+                END)) >= DATE('$start')
+ORDER BY v.idVisit , v.Span";
 
 
     $tbl = new HTMLTable();

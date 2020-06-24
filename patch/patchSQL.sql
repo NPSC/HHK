@@ -45,6 +45,7 @@ ALTER TABLE `document`
 
 -- Update gen_lookups Pay_Types to index paymentId 2 instead of 4
 Update `gen_lookups` set `Substitute` = '2' where `Table_Name` = 'Pay_Type' and `Code` = 'cc';
+update `payment` set `idPayment_Method` = 2 where `idPayment_Method` = 4;
 
 DELETE FROM `sys_config` WHERE `Key`='PmtPageLogoUrl';
 DELETE FROM `sys_config` WHERE `Key`='CardSwipe';
@@ -55,7 +56,7 @@ ALTER TABLE `name_demog`
  	ADD COLUMN `Gl_Code_Debit` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Special_Needs`;
 ALTER TABLE `name_demog`
  	ADD COLUMN `Gl_Code_Credit` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Gl_Code_Debit`;
-	
+
 -- Password changes	
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES 	
 ('Sys_Config_Category', 'pr', 'Password Rules','','',0),	

@@ -589,6 +589,7 @@ where `lp`.`idPayment` > 0
 
             $invNumber = $r['Invoice_Number'];
 
+            // Invoice number
             if ($invNumber != '') {
 
                 $iAttr = array('href' => 'ShowInvoice.php?invnum=' . $r['Invoice_Number'], 'style' => 'float:left;', 'target' => '_blank');
@@ -609,7 +610,7 @@ where `lp`.`idPayment` > 0
 
             $invoiceMkup = HTMLContainer::generateMarkup('span', $invNumber, array("style" => 'white-space:nowrap'));
 
-
+			// Set up actions
             foreach ($i['p'] as $p) {
 
                 $stat = '';
@@ -631,25 +632,22 @@ where `lp`.`idPayment` > 0
                         break;
 
                     case PaymentStatusCode::Reverse:
-                        $stat = 'Reverse';
+                        $stat = 'Reversed';
                         $attr['style'] .= 'color:red;';
-
 
                         break;
 
                     case PaymentStatusCode::Retrn:
-                        $stat = 'Return';
+                        $stat = 'Returned';
                         $attr['style'] .= 'color:red;';
 
-                        // Void return
                         if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Last_Updated'])) == date('Y-m-d') && $gateway->hasVoidReturn()) {
-                            $actionButtonArray['class'] = 'hhk-voidRefundPmt';
+                        	// Void return
+                        	$actionButtonArray['class'] = 'hhk-voidRefundPmt';
                             $voidContent .= HTMLInput::generateMarkup('Void-Return', $actionButtonArray);
-                        }
-
-                        // Clawback
-                        if ($p['idPayment_Method'] != PaymentMethod::Charge) {
-                            $actionButtonArray['class'] = 'hhk-undoReturnPmt';
+                        } else if ($p['idPayment_Method'] != PaymentMethod::Charge || $gateway->hasUndoReturnPmt()) {
+                        	// Clawback
+                        	$actionButtonArray['class'] = 'hhk-undoReturnPmt';
                             $voidContent .= HTMLInput::generateMarkup('Undo Return', $actionButtonArray);
                         }
 
@@ -666,9 +664,9 @@ where `lp`.`idPayment` > 0
                             $payTypeTotals[$p['idPayment_Method']]['amount'] += $amt;
 
 
-                            if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d')) {
-                                //$voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
-                            } else if ($p['idPayment_Method'] != PaymentMethod::Charge) {
+                            if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d') && $gateway->hasVoidReturn()) {
+                                $voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                            } else if ($p['idPayment_Method'] != PaymentMethod::Charge || $gateway->hasUndoReturnAmt()) {
                                 $actionButtonArray['class'] = 'hhk-undoReturnPmt';
                                 $voidContent .= HTMLInput::generateMarkup('Undo Refund', $actionButtonArray);
                             }
@@ -710,10 +708,6 @@ where `lp`.`idPayment` > 0
                     $attr['readonly'] = 'readonly';
                 }
 
-                if ($p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
-                    $payTypeTitle = 'Credit Card';
-                }
-
                 // Over rides the above
                 if ($r['Sold_To_Id'] == $uS->subsidyId) {
                     // House Subsidy
@@ -738,7 +732,7 @@ where `lp`.`idPayment` > 0
 
 
                 $payDetail = '';
-                if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
+                if ($p['idPayment_Method'] == PaymentMethod::Charge) {
 
                     if (isset($p['auths'])) {
 
@@ -842,8 +836,10 @@ where `lp`.`idPayment` > 0
             $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), array('style' => 'float:left; margin-left:.8em;'));
             $summary .= HTMLContainer::generateMarkup('div', $pType->generateMarkup(), array('style' => 'float:left; margin-left:.8em;'));
         }
+        
+        $refresh = HTMLInput::generateMarkup("Refresh", array('type'=>'button', 'id'=>'btnPayHistRef', 'style'=>'float:right; margin-right:0.8em;margin-top:1em;'));
 
-        return HTMLContainer::generateMarkup('div', $header . $summary . $listing, array('style' => 'min-width:900px;'));
+        return HTMLContainer::generateMarkup('div', $header . $summary . $refresh . $listing, array('style' => 'min-width:900px;'));
     }
 
     public static function unpaidInvoiceLog(\PDO $dbh, $includeAction = TRUE) {
