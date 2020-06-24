@@ -67,10 +67,12 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 ("Web_User_Actions", "L", "Login", '', '', '0'),	
 ("Web_User_Actions", "PS", "Set Password", '', '', '0'),	
 ("Web_User_Actions", "PC", "Password Change", '', '', '0'),	
-("Web_User_Actions", "PL", "Locked Out", '', '', '0');	
+("Web_User_Actions", "PL", "Locked Out", '', '', '0'),
+("Web_User_Actions", "E", "Password Expired", '', '', '0');
+
 INSERT IGNORE INTO `sys_config` VALUES	
-('passResetDays','365','lu','pr','','Number of days between automatic password resets','dayIncrements'),	
+('passResetDays','','lu','pr','','Number of days between automatic password resets','dayIncrements'),	
 ('PriorPasswords','0','i','pr','','Number of prior passwords user cannot use',''),	
-('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements');	
+('userInactiveDays','','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements');	
 ALTER TABLE `w_users` 	
 ADD COLUMN `Chg_PW` BOOL NOT NULL DEFAULT false AFTER `PW_Change_Date`;

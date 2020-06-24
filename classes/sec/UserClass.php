@@ -22,6 +22,8 @@ class UserClass
     const Login = 'L';
     
     const Lockout = 'PL';
+    
+    const Expired = 'E';
 
     public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE)
     {
@@ -36,9 +38,10 @@ class UserClass
 
         $r = self::getUserCredentials($dbh, $username);
 
-        // disable user if inactive
+        // disable user if inactive || force password reset
         if ($r != NULL) {
             $r = self::disableInactiveUser($dbh, $r); // returns updated user array
+            $r = self::setPassExpired($dbh, $r);
         }
 
         //check PW
@@ -360,6 +363,35 @@ class UserClass
         
         return false;
     }
+    
+    public static function setPassExpired(\PDO $dbh, array $user){
+        $date = false;
+        //use creation date if never logged in
+        if($user['PW_Change_Date'] != ''){
+            $date = new DateTimeImmutable($user['PW_Change_Date']);
+        }else{
+            $date = new DateTimeImmutable($user['Timestamp']);
+        }
+        
+        $passResetDays = SysConfig::getKeyValue($dbh, 'sys_config', 'passResetDays');
+        
+        if ($date && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a' && $passResetDays) {
+            
+            $date = $date->setTime(0, 0);
+            $deactivateDate = $date->add(new DateInterval('P' . $passResetDays . 'D')); // add resetdays
+            $now = new DateTime();
+            $today = $now->setTime(0, 0);
+            $lastChangeDays = $date->diff($today)->format('%a');
+            if ($lastChangeDays >= $passResetDays) {
+                $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
+                if ($dbh->exec($stmt) > 0) {
+                    $user['Chg_PW'] = '1';
+                    self::insertUserLog($dbh, UserClass::Expired, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
+                }
+            }
+        }
+        return $user;
+    }
 
     public static function createUserSettingsMarkup(\PDO $dbh)
     {
@@ -468,8 +500,10 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
             $date = new DateTimeImmutable($user['Timestamp']);
         }
         
-        if ($date && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a') {
-            $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
+        $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
+        
+        if ($date && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a' && $userInactiveDays) {
+            
             $lastUpdated = new DateTimeImmutable($user['Last_Updated']);
             $lastUpdated = $lastUpdated->setTime(0, 0);
             $date = $date->setTime(0, 0);

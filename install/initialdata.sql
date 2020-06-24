@@ -459,7 +459,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ("Web_User_Actions", "L", "Login", '', '', '0'),
 ("Web_User_Actions", "PS", "Set Password", '', '', '0'),
 ("Web_User_Actions", "PC", "Password Change", '', '', '0'),
-("Web_User_Actions", "PL", "Locked Out", '', '', '0');
+("Web_User_Actions", "PL", "Locked Out", '', '', '0'),
+("Web_User_Actions", "E", "Password Expired", '', '', '0');
 -- ;
 
 
@@ -544,7 +545,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('NoReplyAddr','','ea','h','','No reply email address',''),
 ('NotificationAddress','','ea','f','','Gets financial notifications.', ''),
 ('OpenCheckin','true','b','h','','Allow walk-ups to check in',''),
-('passResetDays','365','lu','pr','','Number of days between automatic password resets','dayIncrements'),
+('passResetDays','','lu','pr','','Number of days between automatic password resets','dayIncrements'),
 ('PatientAddr','true','b','h','','Collect the patient address.',''),
 ('PatientAsGuest','true','b','h','','House allows patients to stay as guests',''),
 ('PayAtCkin','true','b','h','','Allow/Disallow payments at check-in time',''),
@@ -599,7 +600,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', ''),
 ('UseHouseWaive', 'true', 'b', 'h','', 'Show the house waive checkbox on checkout.', ''),
 ('UseIncidentReports', 'false', 'b', 'h', '', 'Use the Incident Reports feature', ''),
-('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements'),
+('userInactiveDays','','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements'),
 ('UseWLnotes','false','b','h','','Use wait list notes feature on reservations',''),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry',''),
 ('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays'),

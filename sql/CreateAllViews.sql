@@ -1119,6 +1119,26 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
             AND (`n`.`Record_Member` = 1)
             AND (`n`.`Member_Status` IN ('a' , 'd', 'in')));
 
+-- -----------------------------------------------------
+-- View `vguest_demog`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_demog` AS
+	SELECT DISTINCT
+        `nd`.`idName` AS `idName`,
+        `n`.`Name_Full` AS `Name_Full`,
+        `np`.`Name_Full` AS `Patient_Name`,
+        `n`.`Gender` AS `Gender`,
+        `nd`.*
+    FROM
+        ((((`name_guest` `ng`
+        JOIN `name_demog` `nd` ON ((`ng`.`idName` = `nd`.`idName`)))
+        LEFT JOIN `name` `n` ON ((`n`.`idName` = `ng`.`idName`)))
+        LEFT JOIN `psg` `p` ON ((`ng`.`idPsg` = `p`.`idPsg`)))
+        LEFT JOIN `name` `np` ON ((`p`.`idPatient` = `np`.`idName`)))
+    WHERE
+        (`n`.`Member_Status` IN ('a' , 'in', 'd'))
+    ORDER BY `n`.`idName` DESC
+
 
 -- -----------------------------------------------------
 -- View `vguest_neon_payment`

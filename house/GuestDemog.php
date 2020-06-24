@@ -31,9 +31,6 @@ $columns = array(
             array("db"=>'Patient_Name', "dt"=>"Patient Name")
            );
 
-$numRecords = 25;
-$labels = new Config_Lite(LABEL_FILE);
-
 foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
     if (strtolower($d[2]) == 'y') {
@@ -201,11 +198,6 @@ if ($cmd){
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <!--
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="font-size:.8em;padding:15px;margin-top:15px;">
-                <?php echo $form; ?>
-            </div>
-            -->
             <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="font-size:.8em;padding:15px;margin-top:15px;">
             	<table id="dataTbl"></table>
             </div>
