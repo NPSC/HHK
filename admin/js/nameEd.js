@@ -358,7 +358,10 @@ $(document).ready(function () {
                         
                     } else if (data.success) {
                         
-                        mess = "Success: " + data.success + '<div style="margin: 0.5em 0 0.5em 0">Temporary Password (click to select):</div><div style="user-select: all">' + data.tempPW + '</div>'
+                        mess = "Success: " + data.success;
+                        if(data.tempPW){
+                        	mess += '<div style="margin: 0.5em 0 0.5em 0">Temporary Password (click to select):</div><div style="user-select: all">' + data.tempPW + '</div>';
+                        }
                         $('webResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
                         $('#webIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
 
