@@ -357,7 +357,7 @@ class UserClass
     public static function isPassExpired(\PDO $dbh, $uS)
     {
         $u = self::getUserCredentials($dbh, $uS->username);
-        if ($u['Chg_PW']) {
+        if (isset($u['Chg_PW']) && $u['Chg_PW']) {
             return true;
         }
         

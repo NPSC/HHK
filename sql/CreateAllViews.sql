@@ -1124,7 +1124,6 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_demog` AS
 	SELECT DISTINCT
-        `nd`.`idName` AS `idName`,
         `n`.`Name_Full` AS `Name_Full`,
         `np`.`Name_Full` AS `Patient_Name`,
         `n`.`Gender` AS `Gender`,
@@ -1137,7 +1136,7 @@ CREATE OR REPLACE VIEW `vguest_demog` AS
         LEFT JOIN `name` `np` ON ((`p`.`idPatient` = `np`.`idName`)))
     WHERE
         (`n`.`Member_Status` IN ('a' , 'in', 'd'))
-    ORDER BY `n`.`idName` DESC
+    ORDER BY `n`.`idName` DESC;
 
 
 -- -----------------------------------------------------

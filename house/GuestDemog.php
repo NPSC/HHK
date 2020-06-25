@@ -76,7 +76,12 @@ function getDemographicField($tableName, $recordSet) {
 }
 
 function getMissingDemogs($dbh, $columns, $whDemos){
-    return SSP::complex($_REQUEST, $dbh, 'vguest_demog', 'idName', $columns, null, $whDemos);
+    try{
+        return SSP::complex($_REQUEST, $dbh, 'vguest_demog', 'idName', $columns, null, $whDemos);
+    }catch(\Exception $e){
+        return array("error"=>"An error occurred while loading DataTable: " . $e->getMessage());
+    }
+    
 }
 
 function saveMissingDemogs($dbh, $uS, $demos){
@@ -177,6 +182,17 @@ if ($cmd){
         <?php echo FAVICON; ?>
         <?php echo JQ_DT_CSS; ?>
 		<?php echo MULTISELECT_CSS; ?>
+		
+		<style>
+		  .fixedHeader-floating, .fixedHeader-locked {
+		      font-size: 0.8em !important;
+		      font-family: Lucida Grande,Lucida Sans,Arial,sans-serif !important;
+		  }
+		  
+		  .fixedHeader-floating *, .fixedHeader-locked * {
+		      font-size: 1em;
+		  }
+		</style>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>

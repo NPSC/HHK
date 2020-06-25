@@ -77,6 +77,9 @@ $(document).ready(function () {
         ajax: {
             url: "GuestDemog.php?cmd=getMissingDemog"
         },
+        "fixedHeader": {
+        	headerOffset: 38,
+        },
         "initComplete": function(settings, json) {
         	$('.bottom').append('<div class="savebtns" style="float:right; padding-top: 0.25em;"><button id="dt-cancel" style="padding:0.5em; margin-right: 2px;">Cancel</button><button id="dt-save" style="padding:0.5em; margin-left: 2px;">Save</button></div>');
         	$('.bottom .savebtns').buttonset().hide();
