@@ -133,8 +133,7 @@ $(document).ready(
 
 										if (checkStrength(pw1) === false) {
 											pw1.addClass("ui-state-error");
-											msg
-													.text('Password must have at least 8 characters including at least one uppercase, one lower case letter, one number and one symbol.');
+											msg.html('Password must have at least 8 characters including at least <br>one uppercase, one lower case letter, one number and one symbol.');
 											pw1.focus();
 											return;
 										}
@@ -243,12 +242,8 @@ $(document).ready(
 						var chgPW = $("input#isPassExpired").val();
 						if (chgPW) {
 							var autoOpen = true;
-							var closeOnEscape = false;
-							var dialogClass = "no-close";
 						} else {
 							var autoOpen = false;
-							var closeOnEscape = true;
-							var dialogClass = '';
 							chPwButtons["Cancel"] = function() {
 								$(this).dialog("close");
 							};
@@ -269,8 +264,6 @@ $(document).ready(
 							autoResize : true,
 							resizable : true,
 							modal : true,
-							dialogClass : dialogClass,
-							closeOnEscape : closeOnEscape,
 							title : "Welcome",
 							buttons : chPwButtons
 						});

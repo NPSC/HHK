@@ -291,7 +291,7 @@ $(document).ready(function () {
     
     $('#vwebUser').dialog({
         autoOpen: false,
-        height: 450,
+        height: 500,
         width: 'auto', // 732
         resizable: true,
         modal: true,
