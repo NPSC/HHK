@@ -2233,6 +2233,7 @@ CREATE TABLE if not exists `w_users` (
   `Enc_PW` varchar(100) NOT NULL DEFAULT '',
   `PW_Change_Date` DATETIME DEFAULT NULL,
   `Chg_PW` BOOL NOT NULL DEFAULT true,
+  `pass_rules` BOOL NOT NULL DEFAULT true,
   `PW_Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Certificate` varchar(145) NOT NULL DEFAULT '',

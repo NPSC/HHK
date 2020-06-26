@@ -365,28 +365,30 @@ class UserClass
     }
     
     public static function setPassExpired(\PDO $dbh, array $user){
-        $date = false;
-        //use creation date if never logged in
-        if($user['PW_Change_Date'] != ''){
-            $date = new DateTimeImmutable($user['PW_Change_Date']);
-        }else{
-            $date = new DateTimeImmutable($user['Timestamp']);
-        }
-        
-        $passResetDays = SysConfig::getKeyValue($dbh, 'sys_config', 'passResetDays');
-        
-        if ($date && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a' && $passResetDays) {
+        if(isset($user['pass_rules']) && $user['pass_rules']){ //if password rules apply
+            $date = false;
+            //use creation date if never logged in
+            if($user['PW_Change_Date'] != ''){
+                $date = new DateTimeImmutable($user['PW_Change_Date']);
+            }else{
+                $date = new DateTimeImmutable($user['Timestamp']);
+            }
             
-            $date = $date->setTime(0, 0);
-            $deactivateDate = $date->add(new DateInterval('P' . $passResetDays . 'D')); // add resetdays
-            $now = new DateTime();
-            $today = $now->setTime(0, 0);
-            $lastChangeDays = $date->diff($today)->format('%a');
-            if ($lastChangeDays >= $passResetDays) {
-                $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
-                if ($dbh->exec($stmt) > 0) {
-                    $user['Chg_PW'] = '1';
-                    self::insertUserLog($dbh, UserClass::Expired, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
+            $passResetDays = SysConfig::getKeyValue($dbh, 'sys_config', 'passResetDays');
+            
+            if ($date && ($user['idName'] > 0) && $user['Status'] == 'a' && $passResetDays) {
+                
+                $date = $date->setTime(0, 0);
+                $deactivateDate = $date->add(new DateInterval('P' . $passResetDays . 'D')); // add resetdays
+                $now = new DateTime();
+                $today = $now->setTime(0, 0);
+                $lastChangeDays = $date->diff($today)->format('%a');
+                if ($lastChangeDays >= $passResetDays) {
+                    $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
+                    if ($dbh->exec($stmt) > 0) {
+                        $user['Chg_PW'] = '1';
+                        self::insertUserLog($dbh, UserClass::Expired, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
+                    }
                 }
             }
         }
@@ -492,31 +494,34 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
 
     public static function disableInactiveUser(\PDO $dbh, array $user)
     {
-        $date = false;
-        //use creation date if never logged in
-        if($user['Last_Login'] != ''){
-            $date = new DateTimeImmutable($user['Last_Login']);
-        }else{
-            $date = new DateTimeImmutable($user['Timestamp']);
-        }
-        
-        $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
-        
-        if ($date && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a' && $userInactiveDays) {
+        if(isset($user['pass_rules']) && $user['pass_rules']){ //if password rules apply
             
-            $lastUpdated = new DateTimeImmutable($user['Last_Updated']);
-            $lastUpdated = $lastUpdated->setTime(0, 0);
-            $date = $date->setTime(0, 0);
-            $deactivateDate = $date->add(new DateInterval('P' . $userInactiveDays . 'D')); // add inactivedays
-            $now = new DateTime();
-            $today = $now->setTime(0, 0);
-            $lastLoginDays = $date->diff($today)->format('%a');
-            $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
-            if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
-                $stmt = "update w_users set `Status` = 'd', `Last_Updated` = " . $deactivateDate->format("Y-m-d H:i:s") . " where idName = $user[idName]";
-                if ($dbh->exec($stmt) > 0) {
-                    $user['Status'] = 'd';
-                    self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
+            $date = false;
+            //use creation date if never logged in
+            if($user['Last_Login'] != ''){
+                $date = new DateTimeImmutable($user['Last_Login']);
+            }else{
+                $date = new DateTimeImmutable($user['Timestamp']);
+            }
+            
+            $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
+            
+            if ($date && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a' && $userInactiveDays) {
+                
+                $lastUpdated = new DateTimeImmutable($user['Last_Updated']);
+                $lastUpdated = $lastUpdated->setTime(0, 0);
+                $date = $date->setTime(0, 0);
+                $deactivateDate = $date->add(new DateInterval('P' . $userInactiveDays . 'D')); // add inactivedays
+                $now = new DateTime();
+                $today = $now->setTime(0, 0);
+                $lastLoginDays = $date->diff($today)->format('%a');
+                $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
+                if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
+                    $stmt = "update w_users set `Status` = 'd', `Last_Updated` = " . $deactivateDate->format("Y-m-d H:i:s") . " where idName = $user[idName]";
+                    if ($dbh->exec($stmt) > 0) {
+                        $user['Status'] = 'd';
+                        self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
+                    }
                 }
             }
         }
