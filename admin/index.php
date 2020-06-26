@@ -64,7 +64,7 @@ if (isset($_POST['txtUname'])) {
 
 // disclamer
 if ($uS->mode != Mode::Live) {
-    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA complient and not intended to be used for storing Protected Health Information.';
+    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA compliant and not intended to be used for storing Protected Health Information.';
 } else {
     $disclaimer = '';
 }

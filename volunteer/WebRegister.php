@@ -10,7 +10,6 @@
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 require('VolIncludes.php');
-require(SEC . 'UserClass.php');
 require(SEC . 'Login.php');
 require(CLASSES . 'fbUserClass.php');
 require(CLASSES . 'SiteConfig.php');
