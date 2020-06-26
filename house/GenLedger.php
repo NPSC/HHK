@@ -38,6 +38,20 @@ try {
 	exit($hex->getMessage());
 }
 
+// Authenticate user
+$user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
+$pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+
+$u = new UserClass();
+
+if ($u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
+    
+    header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
+    header('HTTP/1.0 401 Unauthorized');
+    exit("Not authorized");
+    
+}
+
 $today = new DateTime();
 $today->sub(new DateInterval('P1M'));
 
