@@ -21,3 +21,11 @@ ALTER TABLE `w_users`
 ADD COLUMN `Chg_PW` BOOL NOT NULL DEFAULT false AFTER `PW_Change_Date`;
 ALTER TABLE `w_users` 	
 ADD COLUMN `pass_rules` BOOL NOT NULL DEFAULT true AFTER `Chg_PW`;
+
+-- turn off password expiration for certain users
+UPDATE `w_users` SET `pass_rules` = false WHERE `User_Name` IN ('admin', 'npscuser');
+
+-- allow everyone to change their password
+INSERT IGNORE INTO `page_securitygroup` (`idPage`, `Group_Code`) VALUES
+(59, 'mm'),
+(59, 'gr');

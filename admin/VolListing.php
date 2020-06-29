@@ -18,6 +18,15 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
+//disable inactive users
+$stmt = $dbh->query("select * from w_users");
+if ($stmt->rowCount() > 0) {
+    $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    foreach($users as $user){
+        $user = UserClass::disableInactiveUser($dbh, $user);
+    }
+}
+
 // Create volunteer report
 $query = "SELECT * FROM vweb_users where Id > 0 order by Id;";
 $stmt = $dbh->query($query);
@@ -33,7 +42,9 @@ if (count($rows) > 0) {
         $markup .= "<th>x</th>";
     }
     foreach ($rows[0] as $k => $v) {
-        $markup .= "<th>" . $k . "</th>";
+        if($k != 'Created' && $k != 'pass_rules'){
+            $markup .= "<th>" . $k . "</th>";
+        }
     }
     $markup .= "</tr></thead><tbody>";
 
@@ -82,8 +93,18 @@ if (count($rows) > 0) {
                     $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
                 }
                 $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
-            } else if ($k == 'Last Login') {
+            } else if ($k == 'Last Login' || $k == 'Password Changed') {
                 $markup .= "<td>" . ($r == '' ? '' : date('m/d/Y g:ia', strtotime($r))) . "</td>";
+            } else if($k == 'Password Expires' && isset($uS->passResetDays) && $uS->passResetDays > 0 && isset($rw['pass_rules']) && $rw['pass_rules']){
+                if(isset($rw['Password Changed']) && $rw['Password Changed']){
+                    $date = new DateTimeImmutable($rw['Password Changed']);
+                }else{
+                    $date = new DateTimeImmutable($rw['Created']);
+                }
+                $expires = $date->add(new DateInterval('P' . $uS->passResetDays . 'D'));
+                $markup .= "<td>" . $expires->format('m/d/Y') . "</td>";
+            }else if($k == 'Created' || $k == 'pass_rules'){
+                //skip
             } else {
                 $markup .= "<td>" . $r . "</td>";
             }

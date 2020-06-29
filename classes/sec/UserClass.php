@@ -394,7 +394,7 @@ class UserClass
         }
         return $user;
     }
-
+    
     public static function createUserSettingsMarkup(\PDO $dbh)
     {
         $uS = Session::getInstance();

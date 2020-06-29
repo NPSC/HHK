@@ -2846,8 +2846,16 @@ select
     u.Default_Page AS `Default Page`,
     wg.Title as `Authorization Code`,
     u.Last_Login AS `Last Login`,
+    `u`.`PW_Change_Date` AS `Password Changed`,
+    '' AS `Password Expires`,
+    CASE
+        WHEN `u`.`Chg_PW` THEN 'yes'
+        ELSE ''
+    END AS `Password Change Required`,
+    `u`.`pass_rules` AS `pass_rules`,
     u.Updated_By AS `Updated By`,
-    DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`
+    DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`,
+    `u`.`Timestamp` AS `Created`
 from
     ((((w_users u
     left join vmember_listing v ON ((u.idName = v.Id)))
