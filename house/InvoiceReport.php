@@ -814,7 +814,7 @@ if ($useGlReport) {
 			$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
 		}
 		
-		$glCodes = new GlCodes($dbh, $glMonth, $glyear, $glParm);
+		$glCodes = new GlCodes($dbh, $glMonth, $glyear, $glParm, new GlTemplateRecord());
 
 		if (isset($_POST['btnGlTx'])) {
 			
@@ -855,8 +855,14 @@ if ($useGlReport) {
 			}
 			$tbl->addBodyTr($lineHdr);
 			
+			// Get payment methods (types) labels.
 			$pmstmt = $dbh->query("Select idPayment_method, Method_Name from payment_method;");
-			$pmtMethods = $pmstmt->fetchAll(\PDO::FETCH_NUM);
+			$pmRows = $pmstmt->fetchAll(\PDO::FETCH_NUM);
+			$pmtMethods = array();
+			foreach ($pmRows as $r) {
+				$pmtMethods[$r[0]] = $r[1];
+			}
+			
 			$recordCtr = 0;
 			
 			foreach ($glCodes->getInvoices() as $r) {
@@ -889,7 +895,7 @@ if ($useGlReport) {
 							if ($k == 'pTimestamp') {
 								$col = date('Y/m/d', strtotime($col));
 							} else if ($k == 'pMethod') {
-								$col = $pmtMethods[$col][1];
+								$col = $pmtMethods[$col];
 							} else if ($k == 'pStatus' && $col == 's') {
 								$col = "sale";
 							} else if ($k == 'pStatus' && $col == 'r') {

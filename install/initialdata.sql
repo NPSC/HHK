@@ -673,7 +673,7 @@ REPLACE INTO `payment_method` (`idPayment_method`, `Method_Name`) VALUES
 ('1', 'Cash'),
 ('2', 'Charge'),
 ('3', 'Check'),
-('4', 'ChgAsCash'),
+('4', 'Charge'),
 ('5', 'Transfer');
 -- ;
 

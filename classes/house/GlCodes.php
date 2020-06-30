@@ -6,8 +6,6 @@ class GlCodes {
 
 	// General GL codes
 	const ALL_GROSS_SALES = '200-1007582-500014';
-	const CASH_CHECK = '200-0000000-140007';
-	const CREDIT_CARD = '200-0000000-100010';
 	const FOUNDATION_DON = '200-0000000-180100';
 	const COUNTY_LIABILITY = '200-0000000-210134';
 
@@ -24,7 +22,7 @@ class GlCodes {
 	protected $stopAtInvoice;
 
 
-	public function __construct(\PDO $dbh, $month, $year, $glParm) {
+	public function __construct(\PDO $dbh, $month, $year, $glParm, $mapperTemplate) {
 
 		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
 
@@ -35,9 +33,9 @@ class GlCodes {
 		
 		$this->glParm = $glParm;
 		
-		if ($this->glParm->getCountyPayment() < 1) {
-			throw new Exception('County Payment is not set');
-		}
+//		if ($this->glParm->getCountyPayment() < 1) {
+//			throw new Exception('County Payment is not set');
+//		}
 
 		$this->errors = array();
 		$this->stopAtInvoice = '';
@@ -46,7 +44,7 @@ class GlCodes {
 
 		$this->lines = array();
 
-		$this->glLineMapper = new GlTemplateRecord();
+		$this->glLineMapper = $mapperTemplate;
 	}
 
 	/**
@@ -90,14 +88,6 @@ class GlCodes {
 				continue;
 			}
 
-			// We can only process one payment(?)
-// 			if (count($payments) !== 1) {
-// 				$this->recordError('To many payments('.count($payments) . ') for Invoice ' . $r['i']['iNumber']);
-// 				continue;
-// 			}
-
-			// Got one - go with it.
-//			$this->mapPayment($r, array_pop($payments));
 			
 			foreach ($payments as $pay) {
 				$this->mapPayment($r, $pay);
@@ -156,14 +146,10 @@ class GlCodes {
 				// Special handling for county payments
 				$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']));
 			}
-
-		} else if ($p['pMethod'] == PaymentMethod::Charge) {
-			
-			$glCode = self::CREDIT_CARD;
 			
 		} else {
 			
-			$glCode = self::CASH_CHECK;
+			$glCode = $p['pm_Gl_Code'];
 			
 		}
 
@@ -329,19 +315,6 @@ class GlCodes {
 		return $remainingItems;
 	}
 	
-	public function invoiceHeader() {
-		
-		return array('Inv #', 'Delegated', 'Status', 'Amt', 'Deleted', 'Pledged', 'Rate');
-	}
-	public function lineHeader() {
-		
-		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'Gl Code');
-	}
-	public function paymentHeader() {
-		
-		return array(' ', 'id', 'Status', 'Amt', 'Method', 'Updated', 'Timestamp', 'Refund', 'Payor', 'Ba Debit', 'Ba Cred');
-	}
-	
 	protected function loadDbRecords(\PDO $dbh) {
 		
 		$idInvoice = 0;
@@ -406,6 +379,7 @@ class GlCodes {
     						'pTimestamp'=>$p['pTimestamp'],
     						'Is_Refund'=>$p['Is_Refund'],
     						'idPayor'=>$p['idPayor'],
+    						'pm_Gl_Code'=>$p['PayMethod_Gl_Code'],
     						'ba_Gl_Debit'=>$p['ba_Gl_Debit'],
     						'ba_Gl_Credit'=>$p['ba_Gl_Credit'],
     				);
@@ -456,7 +430,6 @@ class GlCodes {
     	$this->records =  $invoices;
 	}
 	
-
 	public function transferRecords() {
 
 		$data = '';
@@ -486,6 +459,19 @@ class GlCodes {
 		}
 		
 		return $bytesWritten;
+	}
+	
+	public function invoiceHeader() {
+		
+		return array('Inv #', 'Delegated', 'Status', 'Amt', 'Deleted', 'Pledged', 'Rate');
+	}
+	public function lineHeader() {
+		
+		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'Gl Code');
+	}
+	public function paymentHeader() {
+		
+		return array(' ', 'id', 'Status', 'Amt', 'Method', 'Updated', 'Timestamp', 'Refund', 'Payor', 'Pm Gl', 'Ba Debit', 'Ba Cred');
 	}
 	
 	protected function recordError($error) {
@@ -878,7 +864,7 @@ class GlTemplateRecord {
 	
 	}
 
-	public function setGlCode($v) {
+	protected function setGlCode($v) {
 	
 		$codes = explode('-', $v);
 
@@ -894,21 +880,21 @@ class GlTemplateRecord {
 		
 	}
 
-	public function setCreditAmount($v) {
+	protected function setCreditAmount($v) {
 		$this->fieldArray[self::CREDIT_AMOUNT] = number_format($v, 2, '.', '');
 		$this->totalCredit += $v;
 	}
 
-	public function setDebitAmount($v) {
+	protected function setDebitAmount($v) {
 		$this->fieldArray[self::DEBIT_AMOUNT] = number_format($v, 2, '.', '');
 		$this->totalDebit += $v;
 	}
 
-	public function setPurchaseDate($v) {
+	protected function setPurchaseDate($v) {
 		$this->fieldArray[self::EFFECTIVE_DATE] = $v->format('Y/m/d');
 	}
 
-	public function setJournalCategory($v) {
+	protected function setJournalCategory($v) {
 		$this->fieldArray[self::JOURNAL_CATEGORY] = $v;
 	}
 

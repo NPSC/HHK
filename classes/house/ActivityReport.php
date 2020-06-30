@@ -490,7 +490,7 @@ class ActivityReport {
         // get payment methods
         $stmtp = $dbh->query("select * from payment_method");
         while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
-            if ($t[0] > 0) {
+            if ($t[0] > 0 && $t[0] != PaymentMethod::ChgAsCash) {
                 $payTypeTotals[$t[0]] = array('amount' => 0.00, 'count' => 0, 'title' => $t[1], 'active' => $active);
             }
         }
@@ -823,11 +823,6 @@ where `lp`.`idPayment` > 0
                     continue;
                 }
 
-                if ($uS->ccgw != '' && $k == PaymentMethod::ChgAsCash) {
-                    continue;
-                } else if ($uS->ccgw == '' && $k == PaymentMethod::Charge) {
-                    continue;
-                }
 
                 $pType->addBodyTr(HTMLTable::makeTd($p['title']) . HTMLTable::makeTd($p['count']) . HTMLTable::makeTd(number_format($p['amount'], 2), array('style' => 'text-align:right;')));
             }

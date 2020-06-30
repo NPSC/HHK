@@ -679,6 +679,22 @@ if (isset($_POST['btnkfSave'])) {
             }
         }
     }
+    
+    // Payment types GL Codes
+    if (isset($_POST['ptGlCode'])) {
+    	
+    	$stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+    	$payMethods = $stmtp->fetchAll(\PDO::FETCH_NUM);
+    	
+    	foreach ($payMethods as $t) {
+    		
+    		if (isset($_POST['ptGlCode'][$t[0]])) {
+    			$gl = filter_var($_POST['ptGlCode'][$t[0]], FILTER_SANITIZE_STRING);
+    			
+    			$dbh->exec("Update payment_method set Gl_Code = '$gl' where idPayment_method = ". $t[0]);
+    		}
+    	}
+    }
 
     // Excess Pay
     if (isset($_POST['epdesc'][$uS->VisitExcessPaid])) {
@@ -1533,10 +1549,18 @@ if ($uS->KeyDeposit) {
 $payTypesTable = '';
 
 if ($uS->RoomPriceModel != ItemPriceCode::None) {
+	
+	$payMethods = array();
+	$stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+	while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
+		$payMethods[$t[0]] = $t[1];
+	}
+	$payMethods[''] = '';
+	
 
     $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
     $ptTbl = new HTMLTable();
-    $ptTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description'));
+    $ptTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('GL Code'));
 
     foreach ($payTypes as $r) {
 
@@ -1551,12 +1575,11 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
             unset($ptAttrs['checked']);
         }
 
-        $ptTbl->addBodyTr(HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), array(
-            'style' => 'text-align:center;'
-        )) . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array(
-            'name' => 'ptdesc[' . $r[0] . ']',
-            'size' => '16'
-        ))));
+        $ptTbl->addBodyTr(
+        		HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), array('style' => 'text-align:center;'))
+        		. HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'ptdesc[' . $r[0] . ']', 'size' => '16')))
+        		. HTMLTable::makeTd(HTMLInput::generateMarkup($payMethods[$r[2]], array('name' => 'ptGlCode[' . $r[2] . ']', 'size' => '19')))
+        );
     }
 
     $payTypesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Pay Types', array(

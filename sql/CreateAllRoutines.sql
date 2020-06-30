@@ -92,6 +92,8 @@ BEGIN
 	replace into idinp select idInvoice from idind;
 
 	select  `i`.`idInvoice`,
+		`i`.`Order_Number`,
+		`i`.`Suborder_Number`,
         `i`.`Amount` AS `iAmount`,
         `i`.`Status` AS `iStatus`,
         `i`.`Carried_Amount` AS `icAmount`,
@@ -99,7 +101,10 @@ BEGIN
         `i`.`Delegated_Invoice_Id` AS `Delegated_Id`,
         `i`.`Deleted` AS `iDeleted`,
         ifnull(`v`.`Pledged_Rate`, 0) as `Pledged_Rate`,
-        ifnull(`rr`.`Reduced_Rate_1`, 0) as `Rate`,
+        ifnull(`v`.`Expected_Rate`, 0) as `Expected_Rate`,
+        ifnull(`v`.`idRoom_Rate`, 0) as `idRoom_Rate`,
+        case when ifnull(`v`.`Expected_Rate`, 0) = 0 THEN ifnull(`rr`.`Reduced_Rate_1`, 0)
+        	ELSE (1 + (`v`.`Expected_Rate` / 100)) * `rr`.`Reduced_Rate_1` END as `Rate`,
         ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
         ifnull(`il`.`Amount`, 0) as `il_Amount`,
 		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
@@ -112,6 +117,7 @@ BEGIN
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
         IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
         IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
+        IFNULL(`pm`.`Gl_Code`, '') as `PayMethod_Gl_Code`,
 		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
 		IFNULL(`nd`.`Gl_Code_Debit`, '') as `ba_Gl_Debit`,
         IFNULL(`nd`.`Gl_Code_Credit`, '') as `ba_Gl_Credit`
@@ -120,12 +126,10 @@ BEGIN
         Join idinp on i.idInvoice = idinp.idInvoice
         LEFT JOIN `payment_invoice` `pi` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
         LEFT JOIN `payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
+        left join `payment_method` `pm` on `p`.`idPayment_Method` = `pm`.`idPayment_method`
         JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Deleted` < 1
         left join `visit` `v` on `i`.`Order_Number` = `v`.`idVisit` and `i`.`Suborder_Number` = `v`.`Span`
         left join `room_rate` `rr` on `v`.`idRoom_Rate` = `rr`.`idRoom_rate`
-        LEFT JOIN `name_volunteer2` `nv` ON `p`.`idPayor` = `nv`.`idName`
-            AND (`nv`.`Vol_Category` = 'Vol_Type')
-            AND (`nv`.`Vol_Code` = 'ba')
 		LEFT JOIN name_demog nd on p.idPayor = nd.idName
 		LEFT JOIN item it on it.idItem = il.Item_Id
 	ORDER BY i.idInvoice, il.idInvoice_Line, p.idPayment;

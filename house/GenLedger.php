@@ -43,7 +43,7 @@ $today->sub(new DateInterval('P1M'));
 
 try {
 	$glParm = new GlParameters($dbh, 'Gl_Code');
-	$glCodes = new GlCodes($dbh, $today->format('m'), $today->format('Y'), $glParm);
+	$glCodes = new GlCodes($dbh, $today->format('m'), $today->format('Y'), $glParm, new GlTemplateRecord());
 	$bytesWritten = $glCodes->mapRecords()->transferRecords();
 	
 } catch (Exception $ex) {

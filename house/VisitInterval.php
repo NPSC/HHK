@@ -623,8 +623,7 @@ from
         left join
     name_address na on ifnull(hs.idPatient, 0) = na.idName and np.Preferred_Mail_Address = na.Purpose
 where
-     v.`Status` <> 'p'
-    and DATE(v.Span_Start) < DATE('$end')
+    DATE(v.Span_Start) < DATE('$end')
     and v.idVisit in (select
         idVisit
         from
@@ -636,7 +635,8 @@ where
                     case
                         when now() > Expected_Departure then now()
                         else Expected_Departure
-                end)) >= DATE('$start')) " . $whHosp . $whAssoc . " order by v.idVisit, v.Span";
+                end)) >= DATE('$start')) "
+    . $whHosp . $whAssoc . " order by v.idVisit, v.Span";
 
 
     $tbl = new HTMLTable();

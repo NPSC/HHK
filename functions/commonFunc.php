@@ -200,6 +200,56 @@ function prepareEmail()
     return $mail;
 }
 
+function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
+	
+	$startDT = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
+	$start = $startDT->format('Y-m-d');
+	
+	// End date is the beginning of the next month.
+	$endDT = $startDT->add(new DateInterval('P1M'));
+	$end = $endDT->format('Y-m-d');
+	
+	$tbl = new HTMLTable();
+	
+	// get payment methods
+	$payTypes = array();
+	$stmtp = $dbh->query("select * from payment_method");
+	while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
+		if ($t[0] > 0 && $t[0] != PaymentMethod::ChgAsCash) {
+			$payTypes[$t[0]] = $t[1];
+		}
+	}
+	$payTypes[''] = 'Total';
+	
+	// Payment Method Totals
+	$pmStmt = $dbh->query("Select p.idPayment_Method,
+    		sum(Case
+    				When p.Is_Refund = 1 Then (0 - p.Amount)
+    				When p.Status_Code = 'r' and Date(p.Timestamp) < Date('$end') and Date(p.Timestamp) >= Date('$start')
+    				  and Date(p.Last_Updated) < Date('$end') and Date(p.Last_Updated) >= Date('$start') then 0
+    				When p.Status_Code = 'r' and Date(p.Timestamp) < Date('$start')
+    				  and Date(p.Last_Updated) < Date('$end') and Date(p.Last_Updated) >= Date('$start') then (0 - p.Amount)
+    				Else p.Amount
+    				END
+    				) as mAmount
+    		FROM
+    		`payment` `p`
+    		where
+    		p.Status_Code not in ('d', 'v')
+    		and (
+    				(Date(p.Timestamp) < Date('2020-07-01') and Date(p.Timestamp) >= Date('$start'))
+    				or (Date(p.Last_Updated) < Date('2020-07-01') and Date(p.Last_Updated) >= Date('$start'))
+    				)
+    		Group by p.idPayment_Method WITH ROLLUP");
+	
+	while ($r = $pmStmt->fetch(PDO::FETCH_NUM)) {
+		$tbl->addBodyTr(HTMLTable::makeTd($payTypes[$r[0]], array('class'=>'tdlabel')) . HTMLTable::makeTd($r[1], array('style'=>'text-align:right;')));
+	}
+	
+	return $tbl->generateMarkup();
+}
+
+
 // This is named backwards. I'll start the new name, but it may take a while for all the code to comply
 function addslashesextended(&$arr_r)
 {
