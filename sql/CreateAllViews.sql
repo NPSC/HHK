@@ -2847,15 +2847,17 @@ select
     wg.Title as `Authorization Code`,
     u.Last_Login AS `Last Login`,
     `u`.`PW_Change_Date` AS `Password Changed`,
-    '' AS `Password Expires`,
     CASE
-        WHEN `u`.`Chg_PW` THEN 'yes'
+        WHEN `u`.`Chg_PW` THEN 'Next Login'
+        WHEN (`u`.`pass_rules` = 0) THEN 'Never'
+        WHEN `u`.`PW_Change_Date`
+            THEN DATE_FORMAT((`u`.`PW_Change_Date` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
+        WHEN `u`.`Timestamp`
+            THEN DATE_FORMAT((`u`.`Timestamp` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
         ELSE ''
-    END AS `Password Change Required`,
-    `u`.`pass_rules` AS `pass_rules`,
+    END AS `Password Expires`,
     u.Updated_By AS `Updated By`,
-    DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`,
-    `u`.`Timestamp` AS `Created`
+    DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`
 from
     ((((w_users u
     left join vmember_listing v ON ((u.idName = v.Id)))
@@ -2863,7 +2865,8 @@ from
 	left join id_securitygroup s on s.idName = u.idName
 	left join w_groups wg on s.Group_Code = wg.Group_Code
     left join gen_lookups gr ON (((a.Role_Id = gr.Code) and (gr.Table_Name = 'Role_Codes'))))
-    left join gen_lookups gs ON (((u.Status = gs.Code) and (gs.Table_Name = 'Web_User_Status'))));
+    left join gen_lookups gs ON (((u.Status = gs.Code) and (gs.Table_Name = 'Web_User_Status')))
+    left join sys_config sc ON (sc.Key = 'passResetDays'));
 
 
 

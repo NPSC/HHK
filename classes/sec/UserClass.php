@@ -269,7 +269,7 @@ class UserClass
         
         
         // check if password has already been used
-        if ($this->isPasswordUsed($dbh, $newPwHash)) {
+        if ($this->isPasswordUsed($dbh, $newPw)) {
             $this->logMessage = "You cannot use any of the prior " . $priorPasswords . " passwords";
             return FALSE;
         }
@@ -306,18 +306,19 @@ class UserClass
     public function isPasswordUsed(\PDO $dbh, $newPw)
     {
         $uS = Session::getInstance();
-        $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
 
         // get prior password hashes
-        $query = "select Enc_Pw from w_user_passwords where idUser = " . $uS->uid . " order by Timestamp desc limit " . $priorPasswords . ";";
+        $query = "select Enc_PW from w_user_passwords where idUser = " . $uS->uid . " order by Timestamp desc limit " . $uS->PriorPasswords . ";";
         $stmt = $dbh->query($query);
-        $passwords = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        $hashes = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
-        if (in_array($newPw, $passwords)) {
-            return true;
-        } else {
-            return false;
+        foreach($hashes as $hash){
+            if(isset($uS->sitePepper) && $uS->sitePepper && password_verify($newPw . $uS->sitePepper, $hash)){
+                return true;
+            }
         }
+        
+        return false;
     }
 
     public function setPassword(\PDO $dbh, $id, $newPw)
@@ -506,7 +507,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
             
             $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
             
-            if ($date && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a' && $userInactiveDays) {
+            if ($date && $user['idName'] > 0 && $user['Status'] == 'a' && $userInactiveDays) {
                 
                 $lastUpdated = new DateTimeImmutable($user['Last_Updated']);
                 $lastUpdated = $lastUpdated->setTime(0, 0);
