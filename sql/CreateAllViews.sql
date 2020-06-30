@@ -2849,7 +2849,7 @@ select
     `u`.`PW_Change_Date` AS `Password Changed`,
     CASE
         WHEN `u`.`Chg_PW` THEN 'Next Login'
-        WHEN (`u`.`pass_rules` = 0) THEN 'Never'
+        WHEN (`u`.`pass_rules` = 0 || `sc`.`Value` = 0) THEN 'Never'
         WHEN `u`.`PW_Change_Date`
             THEN DATE_FORMAT((`u`.`PW_Change_Date` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
         WHEN `u`.`Timestamp`
