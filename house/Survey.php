@@ -240,11 +240,14 @@ order by h.idPsg, na.Address_1, na.Address_2";
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>
@@ -263,5 +266,6 @@ order by h.idPsg, na.Address_1, na.Address_2";
             <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog" style="padding:5px;margin-top:15px; <?php echo $showTable; ?>">
                 <?php echo $dataTable; ?>
             </div>
+        </div>
     </body>
 </html>

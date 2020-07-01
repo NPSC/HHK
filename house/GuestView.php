@@ -234,6 +234,7 @@ if ($uS->TrackAuto) {
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <?php echo FAVICON; ?>
+        <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -243,6 +244,8 @@ if ($uS->TrackAuto) {
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript">
     $(document).ready(function () {
         "use strict";
