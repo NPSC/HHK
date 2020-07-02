@@ -293,7 +293,7 @@ class UserClass
                 $query = "insert into w_user_passwords (idUser, Enc_PW) values(:idUser, :newPw);";
                 $stmt = $dbh->prepare($query);
                 $stmt->execute(array(
-                    ':idUser' => $ssn->uid,
+                    ':idUser' => $id,
                     ':newPw' => $newPwHash
                 ));
 
@@ -518,7 +518,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
                 $lastLoginDays = $date->diff($today)->format('%a');
                 $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
                 if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
-                    $stmt = "update w_users set `Status` = 'd', `Last_Updated` = " . $deactivateDate->format("Y-m-d H:i:s") . " where idName = $user[idName]";
+                    $stmt = "update w_users set `Status` = 'd', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
                     if ($dbh->exec($stmt) > 0) {
                         $user['Status'] = 'd';
                         self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));

@@ -40,6 +40,7 @@ define('SEC', CLASSES . 'sec' . DS);
 define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
+define('CJSV', '?eG=90');
 
 // Page header links and scripts
 define('JQ_UI_CSS', '<link href="css/jqui/jquery-ui.min.css" rel="stylesheet" type="text/css" />');
@@ -64,9 +65,9 @@ define('PRINT_AREA_JS', '../js/jquery.PrintArea.js');
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js');
 define('ADDR_PREFS_JS', '../js/addrPrefs-min.js');
 define('STATE_COUNTRY_JS', '../js/stateCountry.js');
-define('PAG_JS', '../js/pag.js');
+define('PAG_JS', '../js/pag.js' . CJSV);
 define('MD5_JS', '../js/md5-min.js');
-define('LOGIN_JS', '../js/login.js');
+define('LOGIN_JS', '../js/login.js' . CJSV);
 define('MOMENT_JS', '../js/moment.min.js');
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js');
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js');
