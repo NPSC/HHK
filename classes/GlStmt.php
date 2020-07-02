@@ -127,20 +127,20 @@ class GlStmt {
 		// payment type sets glCode.
 		if ($p['ba_Gl_Debit'] != '') {
 			// process 3rd party payment
-			
+
 			$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate);
-			
+
 		}
-			
+
 		$glCode = $p['pm_Gl_Code'];
-			
+
 
 		// Payment Status
 		if ($p['pStatus'] == PaymentStatusCode::Retrn) {
 			//Return earlier sale
-			
+
 			// if original payment is in the same report as this return, then ignore.
-			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
+			if ($this->paymentDate >= $this->startDate && $this->paymentDate <= $this->endDate) {
 				return;
 			}
 
@@ -155,9 +155,9 @@ class GlStmt {
 
 			foreach($invLines as $l) {
 
-				if ($l['Item_Gl_Code'] == '') {
-					continue;
-				}
+				//if ($l['Item_Gl_Code'] == '') {
+				//	continue;
+				//}
 
 				// map gl code
 				$this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate);
@@ -170,9 +170,9 @@ class GlStmt {
 
 			foreach($invLines as $l) {
 
-				if ($l['Item_Gl_Code'] == '') {
-					continue;
-				}
+				//if ($l['Item_Gl_Code'] == '') {
+				//	continue;
+				//}
 
 				 $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
 			}
@@ -184,9 +184,9 @@ class GlStmt {
 
 			foreach($invLines as $l) {
 
-				if ($l['Item_Gl_Code'] == '') {
-					continue;
-				}
+				//if ($l['Item_Gl_Code'] == '') {
+				//	continue;
+				//}
 
 				// map gl code
 				$this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate);
@@ -272,6 +272,8 @@ class GlStmt {
     					'iDeleted'=>$p['iDeleted'],
     					'Pledged'=>$p['Pledged_Rate'],
     					'Rate'=>$p['Rate'],
+    					'Order_Number' => $p['Order_Number'],
+    					'Suborder_Number' => $p['Suborder_Number'],
     			);
     			
     			$idPayment = 0;
@@ -357,6 +359,25 @@ class GlStmt {
 		
 		$guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
 		
+		$ordersArray = array();
+		foreach ($this->getInvoices() as $r) {
+			$ordersArray[$r['i']['Order_Number']] = 'y';
+		}
+		
+		$orderNumbers = '';
+		
+		if (count($ordersArray) > 0) {
+			
+			foreach ($ordersArray as $k => $i) {
+				if ($orderNumbers == '') {
+					$orderNumbers = $k;
+				} else {
+					$orderNumbers .= ','. $k;
+				}
+			}
+			
+			$orderNumbers = " or v.idVisit in ($orderNumbers) ";
+		}
 		
 		$query = "select
 	v.idVisit,
@@ -431,7 +452,7 @@ class GlStmt {
 	IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
 	IFNULL(`p`.`Amount`, 0) AS `pAmount`,
 	IFNULL(`p`.`idPayment_Method`, 0) AS `pMethod`,
-	IFNULL(`p`.`Status_Code`, 0) AS `pStatus`,
+	IFNULL(`p`.`Status_Code`, '') AS `pStatus`,
 	IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
 	IFNULL(`p`.`Last_Updated`, '') AS `pUpdated`,
 	IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
@@ -463,15 +484,18 @@ from
 	name_demog nd on p.idPayor = nd.idName
 						
 where
-	v.idVisit in (select idVisit from visit
-        where
-            `Status` <> 'p'
-			and DATE(Arrival_Date) <= DATE('$end')
-			and DATE(ifnull(Span_End,
-				case
+	v.idVisit in
+		(select idVisit from visit
+        	where
+            	`Status` <> 'p'
+				and DATE(Arrival_Date) <= DATE('$end')
+				and DATE(ifnull(Span_End,
+					case
 					when now() > Expected_Departure then now()
 					else Expected_Departure
-                end)) >= DATE('$start'))
+                	end)) >= DATE('$start')
+		)
+	$orderNumbers
 order by v.idVisit, v.Span";
 		
 		$categories = readGenLookupsPDO($dbh, 'Room_Category');
@@ -483,70 +507,138 @@ order by v.idVisit, v.Span";
 		
 		$priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 		
-		
-		$preIntervalCharge = 0;
-		$preIntervalGuestCharge = 0;
-		
-		$intervalCharge = 0;
-		$fullIntervalCharge = 0;
-		
+		$overPay = 0;
+		$preIntervalPay = 0;
+		$intervalPay = 0;
 		$totalPayment = array();
+		
+		$vIntervalCharge = 0;
+		$vPreIntervalCharge = 0;
+		$vFullIntervalCharge = 0;
+		
+		$vIntervalPay = 0;
 		
 		$istmt = $dbh->query("select idItem from item");
 		while( $i = $istmt->fetch(PDO::FETCH_NUM)) {
 			$totalPayment[$i[0]] = 0;
 		}
 		
+		$serialId = 0;
+		$visitId = 0;
+		$record = NULL;
+		
 		$stmt = $dbh->query($query);
 		
 		while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+			$serial = ($r['idVisit'] * 100) + $r['Span'];
 			
-			$adjRatio = (1 + $r['Expected_Rate']/100);
-			
-			$totalCatNites[$r['Room_Category']] += $r['Actual_Interval_Nights'];
-			
-			//  Add up any pre-interval charges
-			if ($r['Pre_Interval_Nights'] > 0) {
+			if ($serialId != $serial) {
+				// Span Change
 				
-				// collect all pre-charges
-				$priceModel->setCreditDays($r['Rate_Glide_Credit']);
-				$preIntervalCharge += ($priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['PI_Guest_Nights']) * $adjRatio);
+				If ($visitId != $r['idVisit'] && $visitId != 0) {
+					// Visit Change
+					
+					if ($vIntervalPay > ($vIntervalCharge + $vPreIntervalCharge)) {
+						$overPay += $vIntervalPay - ($vIntervalCharge + $vPreIntervalCharge);
+						$intervalPay += $vIntervalCharge;
+						$preIntervalPay += $vPreIntervalCharge;
+					} else if ($vIntervalPay > $vPreIntervalCharge) {
+						$preIntervalPay += $vPreIntervalCharge;
+						$intervalPay += ($vIntervalPay - $vPreIntervalCharge);
+					} else {
+						$preIntervalPay += $vIntervalPay;
+					}
+					
+					$vIntervalCharge = 0;
+					$vPreIntervalCharge = 0;
+					$vFullIntervalCharge = 0;
+					$vIntervalPay = 0;
+					
+					$visitId = $r['idVisit'];
+				}
 				
-			}
-			
-			// Add up interval charges
-			if ($r['Actual_Interval_Nights'] > 0) {
+				$adjRatio = (1 + $r['Expected_Rate']/100);
 				
-				$priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
-				$intervalCharge += $priceModel->amountCalculator($r['Actual_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['Actual_Guest_Nights']) * $adjRatio;
+				$totalCatNites[$r['Room_Category']] += $r['Actual_Interval_Nights'];
 				
+				//  Add up any pre-interval charges
+				if ($r['Pre_Interval_Nights'] > 0) {
+					
+					// collect all pre-charges
+					$priceModel->setCreditDays(0);
+					$vPreIntervalCharge += $priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['PI_Guest_Nights']) * $adjRatio;
+					
+				}
 				
-				$priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
-				$fullIntervalCharge = $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategorys::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
-				
-				if ($adjRatio > 0) {
-					// Only adjust when the charge will be more.
-					$fullIntervalCharge = $fullIntervalCharge * $adjRatio;
+				// Add up interval charges
+				if ($r['Actual_Interval_Nights'] > 0) {
+					
+					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
+					$vIntervalCharge += $priceModel->amountCalculator($r['Actual_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['Actual_Guest_Nights']) * $adjRatio;
+					
+					
+					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
+					$vFullIntervalCharge += $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategorys::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
+					
+					if ($adjRatio > 0) {
+						// Only adjust when the charge will be more.
+						$vFullIntervalCharge = $vFullIntervalCharge * $adjRatio;
+					}
 				}
 			}
 			
+			$serialId = $serial;
+			$visitId = $r['idVisit'];
+			$record = $r;
+			
 			// Add up payments
 			if ($r['pTimestamp'] != '') {
-				$this->paymentDate = new DateTime($r['pTimestamp']);
+				$paymentDate = new DateTime($r['pTimestamp']);
 			} else {
-				
 				// No payment
 				continue;
 			}
 			
+			if ($r['pUpdated'] != '') {
+				$returnDate = new DateTime($r['pUpdated']);
+			} else {
+				$returnDate = NULL;
+			}
+			
+			// TEst payment dates
+			if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
+				$isTimely = TRUE;
+			} else if (is_null($returnDate) === FALSE && $returnDate >= $this->startDate && $returnDate < $this->endDate) {
+				$isTimely = TRUE;
+			} else {
+				$isTimely = FALSE;
+			}
+			
 			// Payments
-			if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 0) {
+			if (($r['pStatus'] == PaymentStatusCode::Paid || $r['pStatus'] == PaymentStatusCode::VoidReturn) && $r['Is_Refund'] == 0) {
 				// Sale
-				$totalPayment[$r['Item_Id']] += $r['il_Amount'];
+				// Payment must be within the .
+				if ($isTimely) {
+				
+					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
+						$vIntervalPay += $r['il_Amount'];
+					}
+					
+					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
+				}
 				
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 				// Refund Amount
-				$totalPayment[$r['Item_Id']] -= $r['il_Amount'];
+				// Payment must be within the .
+				if ($isTimely) {
+					
+					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
+						$vIntervalPay += $r['il_Amount'];;
+					}
+				
+					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
+				}
 				
 			} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
 				//Return earlier sale
@@ -556,34 +648,45 @@ order by v.idVisit, v.Span";
 					continue;
 				}
 				
-				$totalPayment[$r['Item_Id']] -= $r['il_Amount'];
+				if (is_null($returnDate)) {
+					$this->recordError('LastUpdated is null for this return payment Id: ' . $r['idPayment']);
+				}
+				
+				// Payment must be within the .
+				if ($returnDate >= $this->startDate && $returnDate < $this->endDate) {
+					
+					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
+						$vIntervalPay -= $r['il_Amount'];
+					}
+				
+					$totalPayment[$r['Item_Id']] -= $r['il_Amount'];
+				}
 			}
 		}
 		
-		$tbl = new HTMLTable();
-		
-		$overPay = 0;
-		$preIntervalPay = 0;
-		$intervalPay = 0;
-		$visitCharge = $preIntervalCharge + $intervalCharge;
-		
-		if ($totalPayment[ItemId::Lodging] > $visitCharge) {
-			$overPay = $totalPayment[ItemId::Lodging] - $visitCharge;
-			$intervalPay = $intervalCharge;
-			$preIntervalPay = $preIntervalCharge;
-		} else if ($totalPayment[ItemId::Lodging] > $preIntervalCharge) {
-			$preIntervalPay = $preIntervalCharge;
-			$intervalPay = $totalPayment[ItemId::Lodging] - $preIntervalCharge;
-		} else {
-			$preIntervalPay = $totalPayment[ItemId::Lodging];
+		if ($record != NULL) {
+						
+			if ($vIntervalPay >= ($vIntervalCharge + $vPreIntervalCharge)) {
+				$overPay += $vIntervalPay - ($vIntervalCharge + $vPreIntervalCharge);
+				$intervalPay += $vIntervalCharge;
+				$preIntervalPay += $vPreIntervalCharge;
+			} else if ($vIntervalPay >= $vPreIntervalCharge) {
+				$preIntervalPay += $vPreIntervalCharge;
+				$intervalPay += ($vIntervalPay - $vPreIntervalCharge);
+			} else {
+				$preIntervalPay += $vIntervalPay;
+			}
+
 		}
+		
+		
+		$tbl = new HTMLTable();
 		
 		$tbl->addHeaderTr(HTMLTable::makeTh('Lodging Payment Distribution', array('colspan'=>'2')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Pre-Interval Payment', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($preIntervalPay, 2), array('style'=>'text-align:right;')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Interval Payment', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Over Payment', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($overPay, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Total', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($totalPayment[ItemId::Lodging], 2), array('style'=>'text-align:right;')));
-		
+		$tbl->addBodyTr(HTMLTable::makeTd('Total', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal]), 2), array('style'=>'text-align:right;')));
 		
 		return $tbl->generateMarkup($tableAttrs);
 	}
@@ -617,12 +720,14 @@ class GlStmtTotals {
 	protected $totalDebit;
 	protected $totalCredit;
 	protected $totals;
+	private $pmCodes;
 
 
 	public function __construct($pmCodes = array()) {
 
 		$this->totalCredit = 0;
 		$this->totalDebit = 0;
+		$this->pmCodes = array_flip($pmCodes);
 		
 		foreach ($pmCodes as $p) {
 			
@@ -655,19 +760,50 @@ class GlStmtTotals {
 				.HTMLTable::makeTh('Debit')
 				);
 		
+		$totCredit = 0;
+		$totDebit = 0;
+		
+		// Payment Methods only
 		foreach ($this->getTotals() as $k => $t) {
 			
-			$tbl->addBodyTr(
+			if (isset($this->pmCodes[$k])) {
+				
+				$totCredit += $t['Credit'];
+				$totDebit += $t['Debit'];
+			
+				$tbl->addBodyTr(
 					HTMLTable::makeTd($k, array('class'=>'tdlabel'))
 					. HTMLTable::makeTd(($t['Credit'] == 0 ? '' : number_format($t['Credit'], 2)), array('style'=>'text-align:right;'))
 					. HTMLTable::makeTd(($t['Debit'] == 0 ? '' : number_format($t['Debit'], 2)), array('style'=>'text-align:right;'))
 					);
+			}
 		}
 		
-		$tbl->addFooterTr(
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('SubTotals', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				);
+		
+		foreach ($this->getTotals() as $k => $t) {
+			
+			if (isset($this->pmCodes[$k]) === FALSE) {
+				
+				$totCredit += $t['Credit'];
+				$totDebit += $t['Debit'];
+				
+				$tbl->addBodyTr(
+						HTMLTable::makeTd($k, array('class'=>'tdlabel'))
+						. HTMLTable::makeTd(($t['Credit'] == 0 ? '' : number_format($t['Credit'], 2)), array('style'=>'text-align:right;'))
+						. HTMLTable::makeTd(($t['Debit'] == 0 ? '' : number_format($t['Debit'], 2)), array('style'=>'text-align:right;'))
+						);
+			}
+		}
+		
+		$tbl->addBodyTr(
 				HTMLTable::makeTd('Totals', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($this->getTotalCredit(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				. HTMLTable::makeTd(number_format($this->getTotalDebit(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				. HTMLTable::makeTd(number_format($totCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($totDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
 				);
 		
 		return $tbl->generateMarkup($tableAttrs);

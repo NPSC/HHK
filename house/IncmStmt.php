@@ -15,6 +15,7 @@ require (THIRD_PARTY . 'mk-j/PHP_XLSXWriter/xlsxwriter.php');
 require(CLASSES . 'Purchase/RoomRate.php');
 require(CLASSES . 'ValueAddedTax.php');
 require (CLASSES . 'GlStmt.php');
+require(CLASSES . 'CreateMarkupFromDB.php');
 
 
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
@@ -152,7 +153,7 @@ if (isset($_POST['btnHere'])) {
     
     $glCodes->mapRecords();
     
-    $dataTable = '';
+    $dataTable = HTMLContainer::generateMarkup('div', 'Report for the month of ' . $monthArray[$glMonth][1] . ', '. $glyear);
 
     if (count($glCodes->getErrors()) > 0) {
     	$etbl = new HTMLTable();
@@ -163,6 +164,7 @@ if (isset($_POST['btnHere'])) {
     }
     
     $tableAttrs = array('style'=>"float:left;margin-right:1em;");
+    
     $dataTable .= $glCodes->getGlMarkup($tableAttrs) . $glCodes->getBaMarkup($tableAttrs) . $glCodes->doReport($dbh, $tableAttrs);
 
 }

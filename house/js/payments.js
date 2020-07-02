@@ -1339,7 +1339,7 @@ function setupCOF($chgExpand, idx) {
         if ($('#btnvrKeyNumber'+idx).length > 0) {
             $('#btnvrKeyNumber'+idx).change(function() {
 
-                if (this.checked && $('input[name=rbUseCard'+idx+']:checked').val() == 0) {
+                if ($('input[name=rbUseCard'+idx+']:checked').val() == 0 || ($('input[name=rbUseCard'+idx+']').prop('checked') === true && $('input[name=rbUseCard'+idx+']').prop('type') === 'checkbox')) {
                     $('#txtvdNewCardName'+idx).show();
                 } else {
                     $('#txtvdNewCardName'+idx).hide();
