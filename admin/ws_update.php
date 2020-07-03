@@ -59,7 +59,6 @@ require CLASSES . 'Patch.php';
 require CLASSES . 'UpdateSite.php';
 
 require SEC . 'Login.php';
-require SEC . 'UserClass.php';
 
 require DB_TABLES . 'GenLookupsRS.php';
 
