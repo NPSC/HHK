@@ -20,7 +20,7 @@ $(document).ready(function () {
     		search = true;
     		title = demos[column.dt].title;
     		render = function ( data, type, row ) {
-    			var select = $("<select>").attr("name", 'sel' + column.dt + '[' + row.id + ']');
+    			var select = $("<select>").attr("name", 'sel' + column.dt + '[' + row.id + ']').addClass('demog');
     			var option = $("<option>");
     			select.append(option);
     			$.each(demos[column.dt].list, function(key, item){
@@ -96,7 +96,7 @@ $(document).ready(function () {
                 
                 if(demos[columnTitle]){
                 //if(column.index() > 2){
-	                var filter = $("<select>").prop("multiple", "multiple");
+	                var filter = $("<select>").prop("multiple","multiple").addClass("filter");
 	                var option = $("<option>").prop("value", "").text("Not set");
 	                filter.append(option);
 	    			$.each(demos[columnTitle].list, function(key, item){
@@ -108,6 +108,20 @@ $(document).ready(function () {
                 if(filter){
                     filter.appendTo( $(column.header()))
                     .on( 'change', function () {
+                    	if($(".bottom .savebtns").is(':visible')){
+                    		if(confirm("You have unsaved data, would you like to save first?")){
+                    			$(".savebtns #dt-save").click();
+                    		}else{
+                    			var prevValue = $(this).data('prevValue');
+                    			$(this).val(prevValue);
+                    			$(this).multiselect("refresh");
+                    			$(this).blur();
+                    			return;
+                    		}
+                    	}
+                    	
+                    	$(this).data("prevValue", $(this).val());
+                    	
                         var data = $(this).val();
                         
                         if($.isArray(data)){
@@ -168,7 +182,7 @@ $(document).ready(function () {
     	row.find("select").trigger("change");
     });
     
-    $('#dataTbl').on('change', 'select', function(e){
+    $('#dataTbl').on('change', 'select.demog', function(e){
     	$(".bottom .dataTables_paginate").hide();
     	$(".bottom .savebtns").show();
     });
@@ -196,5 +210,11 @@ $(document).ready(function () {
     	
     	$('#dataTbl').DataTable().ajax.reload(null, false);
     });
+    
+    $(window).on('beforeunload', function(){
+		if($(".bottom .savebtns").is(':visible')){
+			return true; //prevent user from leaving
+		}
+	});
     
 });
