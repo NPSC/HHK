@@ -206,8 +206,16 @@ if (isset($_POST['g-recaptcha-response'])) {
 
     if ($reCAPTCHA->isValid($_POST['g-recaptcha-response'])) {
 
+        $data = $_POST;
+        //encyrpt PW
+        if(isset($ssn->sitePepper) && $ssn->sitePepper != ''){
+            $data['pw'] = password_hash($_POST['pw'] . $ssn->sitePepper, PASSWORD_ARGON2ID);
+        }else{
+            $data['pw'] = md5($_POST['pw']);
+        }
+        
         $web = new fbUserClass("");
-        $web->loadFromArray($_POST);
+        $web->loadFromArray($data);
 
         if ($web->get_pifhUsername() != "") {
 
