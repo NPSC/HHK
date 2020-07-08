@@ -629,7 +629,7 @@ CREATE TABLE if not exists `insurance` (
   `Title` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Opens_Type` VARCHAR(15) NOT NULL DEFAULT '' COMMENT '',
   `Timestamp` TIMESTAMP NOT NULL DEFAULT now() COMMENT '',
-  PRIMARY KEY (`idInsurance`)  COMMENT ''
+  PRIMARY KEY (`idInsurance`)
 ) ENGINE=InnoDB;
 
 
@@ -643,7 +643,8 @@ CREATE TABLE if not exists `insurance_type` (
   `Is_Primary` INT(1) NOT NULL DEFAULT 0 COMMENT '',
   `Multiselect` INT NOT NULL DEFAULT 1 COMMENT '',
   `List_Order` VARCHAR(4) NOT NULL DEFAULT '' COMMENT '',
-  PRIMARY KEY (`idInsurance_type`)  COMMENT '');
+  PRIMARY KEY (`idInsurance_type`)
+  ) ENGINE=InnoDB;
 
 
 
@@ -2393,3 +2394,17 @@ ALTER TABLE `name_log`
 ALTER TABLE `visit_log`
     ADD INDEX `INDX_IDNAME` (`idName` ASC),
     ADD INDEX `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);
+    
+    
+    
+-------Functions-------
+    
+--
+-- function `dateDefaultNow`
+--
+DROP function IF EXISTS `datedefaultnow`; -- ;
+
+CREATE FUNCTION `datedefaultnow` (dt DateTime)
+RETURNS DATETIME
+DETERMINISTIC NO SQL
+RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end  -- ;

@@ -739,10 +739,10 @@ REPLACE INTO `w_auth` (`idName`,`Role_Id`,`Organization_Id`,`Policy_id`,`Updated
 
 
 REPLACE INTO `w_users`
-(`idName`,`User_Name`,`Enc_PW`, `pass_rules`, `Status`,`Certificate`,`Cookie`,`Session`,`Ip`,`Verify_Address`,`Last_Login`,`Hash_PW`,`Updated_By`,`Last_Updated`,`Timestamp`)
+(`idName`,`User_Name`,`Enc_PW`, `Chg_PW`, `pass_rules`, `Status`,`Certificate`,`Cookie`,`Session`,`Ip`,`Verify_Address`,`Last_Login`,`Hash_PW`,`Updated_By`,`Last_Updated`,`Timestamp`)
 VALUES
-(-1,'admin','539e17171312c324d3c23908f85f3149',false,'a','','','','','done',NULL,'','',NULL,now()),
-(10,'npscuser','VEFhRldOWVFqVmZ5bjhENVZvd29ldz09',false,'a','','','','','done',NULL,'','',NULL,now());
+(-1,'admin','539e17171312c324d3c23908f85f3149',false, false,'a','','','','','done',NULL,'','',NULL,now()),
+(10,'npscuser','VEFhRldOWVFqVmZ5bjhENVZvd29ldz09',false, false,'a','','','','','done',NULL,'','',NULL,now());
 -- ;
 
 
