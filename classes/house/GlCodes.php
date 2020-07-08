@@ -7,7 +7,7 @@ class GlCodes {
 	// General GL codes
 	const ALL_GROSS_SALES = '200-1007582-500014';
 	const FOUNDATION_DON = '200-0000000-180100';
-	const COUNTY_LIABILITY = '200-0000000-210134';
+	const COUNTY_LIABILITY = '200-0000000-140521';
 
 	protected $fileId;
 	protected $journalCat;
@@ -22,7 +22,7 @@ class GlCodes {
 	protected $stopAtInvoice;
 
 
-	public function __construct(\PDO $dbh, $month, $year, $glParm, $mapperTemplate) {
+	public function __construct(\PDO $dbh, $month, $year, $glParm, GlTemplateRecord $mapperTemplate) {
 
 		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
 
@@ -33,9 +33,9 @@ class GlCodes {
 		
 		$this->glParm = $glParm;
 		
-//		if ($this->glParm->getCountyPayment() < 1) {
-//			throw new Exception('County Payment is not set');
-//		}
+		if ($this->glParm->getCountyPayment() < 1) {
+			throw new Exception('County Payment is not set');
+		}
 
 		$this->errors = array();
 		$this->stopAtInvoice = '';
@@ -102,8 +102,10 @@ class GlCodes {
 			}
 		}
 
-		if ($this->glLineMapper->getTotalCredit() != $this->glLineMapper->getTotalDebit()) {
-			$this->recordError('Credits not equal debits.');
+		$d = round($this->getTotalDebit(), 2);
+		$c = round($this->getTotalCredit(), 2);
+		if ($c != $d) {
+			$this->recordError('Credits not equal debits. ' . ($c - $d));
 		}
 		
 		return $this;
@@ -114,6 +116,7 @@ class GlCodes {
 		$invLines = array();
 		$hasWaive = FALSE;
 
+		// Check dates
 		if ($p['pTimestamp'] != '') {
 			$this->paymentDate = new DateTime($p['pTimestamp']);
 		} else {
@@ -121,6 +124,12 @@ class GlCodes {
 			return;
 		}
 
+		if ($p['pUpdated'] != '') {
+			$pUpDate = new DateTime($p['pUpdated']);
+		} else {
+			$pUpDate = NULL;
+		}
+		
 		// Copy invoice lines and Look for waived payments.
 		foreach ($r['l'] as $l) {
 
@@ -138,14 +147,9 @@ class GlCodes {
 
 		// payment type sets glCode.
 		if ($p['ba_Gl_Debit'] != '') {
-			// process 3rd party payment
+			// 3rd party payment
 			
 			$glCode = $p['ba_Gl_Debit'];
-			
-			if ($glCode == self::COUNTY_LIABILITY) {
-				// Special handling for county payments
-				$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']));
-			}
 			
 		} else {
 			
@@ -158,46 +162,99 @@ class GlCodes {
 		if ($p['pStatus'] == PaymentStatusCode::Retrn) {
 			//Return earlier sale
 			
-			// if original payment is in the same report as this return, then ignore.
-			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
+			if (is_null($pUpDate)) {
+				$this->recordError("Missing Last Updated. Payment Id = ". $p['idPayment']);
 				return;
 			}
-
-			if ($p['pUpdated'] != '') {
-				$pUpDate = new DateTime($p['pUpdated']);
-			} else {
-				$this->recordError("Missing Payment Updated Date on RETURN. Payment Id = ". $p['idPayment']);
+			
+			// if return payment is in the same report as origional, then ignore.
+			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate && $this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
 				return;
 			}
-
-			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
-
-			foreach($invLines as $l) {
-
-				if ($l['Item_Gl_Code'] == '') {
-					continue;
+			
+			// Returned during this period?
+			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
+				// It is a return in this period.
+				
+				if ($glCode == self::COUNTY_LIABILITY) {
+					// Special handling for county payments
+					$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $pUpDate);
 				}
-
-				// map gl code
-				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
+				
+				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
+	
+				foreach($invLines as $l) {
+	
+					if ($l['Item_Gl_Code'] == '') {
+						continue;
+					}
+	
+					// map gl code
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
+				}
+				
+			} else if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
+				// It is still a payment in this period.
+				
+				if ($glCode == self::COUNTY_LIABILITY) {
+					// Special handling for county payments
+					$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
+				}
+				
+				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+				
+				foreach($invLines as $l) {
+					
+					if ($l['Item_Gl_Code'] == '') {
+						continue;
+					}
+					
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
+				}
 			}
-
+			
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] == 0) {
 			// Status = Sale
 			
-			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+			// un-returned payments are dated on the update.
+			if (is_null($pUpDate) === FALSE) {
+				
+				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
 
-			foreach($invLines as $l) {
+					$this->paymentDate = $pUpDate;
 
-				if ($l['Item_Gl_Code'] == '') {
-					continue;
+				} else {
+					return;
 				}
-
-				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
+			}
+			
+			// Payment is in this period?
+			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
+			
+				if ($glCode == self::COUNTY_LIABILITY) {
+					// Special handling for county payments
+					$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
+				}
+				
+				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+	
+				foreach($invLines as $l) {
+	
+					if ($l['Item_Gl_Code'] == '') {
+						continue;
+					}
+	
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
+				}
 			}
 
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
 			// Status = refund amount
+			
+			if ($glCode == self::COUNTY_LIABILITY) {
+				// Special handling for county payments
+				$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
+			}
 			
 			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->glParm->getJournalCat());
 
@@ -216,7 +273,7 @@ class GlCodes {
 		}
 	}
 	
-	protected function mapCountyPayments(array $invLines, array &$p, $rate) {
+	protected function mapCountyPayments(array $invLines, array &$p, $rate, $pDate) {
 		
 		$lodgingCharge = 0;
 
@@ -234,34 +291,26 @@ class GlCodes {
 
 			$county = round($days * $this->glParm->getCountyPayment(), 2);
 
-			if ($county > 0 && $p['pAmount'] > 0) {
-				
-				if ($p['pAmount'] > $county) {
+			if ($county > 0 && $p['pAmount'] > 0 && $p['pAmount'] > $county) {
 					
-					$dbit = $p['pAmount'] - $county;
+				$dbit = $p['pAmount'] - $county;
 				
+				// Reduce original payment line by the above amount.
+				$p['pAmount'] = $county;
+					
+				if ($p['pStatus'] == PaymentStatusCode::Retrn) {
+						
 					// make a debit line for hte difference
-					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, $dbit, 0, $this->paymentDate, $this->glParm->getJournalCat());
-					
-					// Reduce original payment line by the above amount.
-					$p['pAmount'] = $county;
-				}
-				
-			} else if ($county < 0 && $p['pAmount'] < 0) {
-				
-				if ($p['pAmount'] < $county) {
-					
-					$dbit = $p['pAmount'] - $county;
-					
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, (0 - $dbit), 0, $pDate, $this->glParm->getJournalCat());
+						
+				} else {
+						
 					// make a debit line for hte difference
-					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, $dbit, 0, $this->paymentDate, $this->glParm->getJournalCat());
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, $dbit, 0, $pDate, $this->glParm->getJournalCat());
 					
-					// Reduce original payment line by the above amount.
-					$p['pAmount'] = $county;
 				}
 			}
 		}
-
 	}
 
 	protected function mapWaivePayments(array $invLines) {

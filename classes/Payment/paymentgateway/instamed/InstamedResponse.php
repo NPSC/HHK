@@ -45,8 +45,8 @@ class ImPaymentResponse extends CreditResponse {
            $status = CreditPayments::STATUS_DECLINED;
 
         } else if ($this->response->getTransactionStatus() == InstamedGateway::CAPTURED_APPROVED
-                || $this->response->getTransactionStatus() == 'O'
-                || $this->response->getResponseCode() == '000') {
+                || $this->response->getTransactionStatus() == InstaMedGateway::SAVE_ON_FILE_APPROVAL
+        		|| $this->response->getResponseCode() == '000') {
 
             $status = CreditPayments::STATUS_APPROVED;
 
@@ -143,7 +143,7 @@ class ImReturnResponse extends CreditResponse {
            $status = CreditPayments::STATUS_DECLINED;
 
         } else if ($this->response->getTransactionStatus() == InstamedGateway::CAPTURED_APPROVED
-                || $this->response->getTransactionStatus() == 'O'
+                || $this->response->getTransactionStatus() == InstamedGateway::SAVE_ON_FILE_APPROVAL
                 || $this->response->getResponseCode() == '000') {
 
             $status = CreditPayments::STATUS_APPROVED;

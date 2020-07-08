@@ -607,7 +607,7 @@ order by v.idVisit, v.Span";
 			}
 			
 			// TEst payment dates
-			if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
+			if (is_null($returnDate) === TRUE && $paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 				$isTimely = TRUE;
 			} else if (is_null($returnDate) === FALSE && $returnDate >= $this->startDate && $returnDate < $this->endDate) {
 				$isTimely = TRUE;
@@ -643,13 +643,14 @@ order by v.idVisit, v.Span";
 			} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
 				//Return earlier sale
 				
-				// if original payment is in the same report as this return, then ignore.
-				if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
+				if (is_null($returnDate)) {
+					$this->recordError('LastUpdated is null for this return payment Id: ' . $r['idPayment']);
 					continue;
 				}
 				
-				if (is_null($returnDate)) {
-					$this->recordError('LastUpdated is null for this return payment Id: ' . $r['idPayment']);
+				// if original payment is in the same report as this return, then ignore.
+				if ($returnDate >= $this->startDate && $returnDate < $this->endDate && $paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
+					continue;
 				}
 				
 				// Payment must be within the .

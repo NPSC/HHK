@@ -35,6 +35,7 @@ class InstamedGateway extends PaymentGateway {
     // Transaction Status Codes
     const AUTH = 'A';
     const CAPTURED_APPROVED = 'C';
+    const SAVE_ON_FILE_APPROVAL = 'O';
     const CHARGEBACK = 'CB';
     const DECLINE = 'D';
     const VOID = 'V';
@@ -104,10 +105,10 @@ class InstamedGateway extends PaymentGateway {
 
             $sr->setResult($curlResponse->getStatus());
             
-            if ($curlResponse->getResponseMessage() != self::RESPONSE_APPROVED) {
-            	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
-            } else {
+            if ($sr->getStatus() == CreditPayments::STATUS_APPROVED) {
             	$sr->setPaymentStatusCode(PaymentStatusCode::Paid);
+            } else {
+            	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
             }
             
             // Record transaction
@@ -578,11 +579,16 @@ where p.Status_Code = 's' and p.Is_Refund = 0 and p.idToken = $idToken and i.idG
         $sr = new ImReturnResponse($curlResponse, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $paymentNotes, date('Y-m-d H:i:s'));
         $sr->setResult($curlResponse->getStatus());
         
-        if ($curlResponse->getResponseMessage() != self::RESPONSE_APPROVED) {
-        	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
-        } else {
+        if ($sr->getStatus() == CreditPayments::STATUS_APPROVED) {
         	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
+        } else {
+        	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
         }
+//         if ($curlResponse->getResponseMessage() != self::RESPONSE_APPROVED) {
+//         	$sr->setPaymentStatusCode(PaymentStatusCode::Declined);
+//         } else {
+//         	$sr->setPaymentStatusCode(PaymentStatusCode::Retrn);
+//         }
         
         // Record transaction
         try {

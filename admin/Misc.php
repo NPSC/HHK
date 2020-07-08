@@ -464,65 +464,6 @@ if (isset($_POST["btnDelDups"])) {
 }
 
 
-// View user log
-$log = '';
-$users = array();
-$userNameDate = '';
-
-if (isset($_POST['btnAccess'])) {
-    $accordIndex = 6;
-
-    $whereStr = '';
-    $dte = filter_var($_POST['aclogdate'], FILTER_SANITIZE_STRING);
-
-    if ($dte != '') {
-        $userNameDate = date('M j, Y', strtotime($dte));
-        $whereStr = " DATE(Access_Date) = DATE('" . date('Y-m-d', strtotime($dte)) . "') ";
-    }
-
-    $userStr = '';
-
-    if (isset($_POST['selUsers'])) {
-
-        $postUsers = filter_var_array($_POST['selUsers']);
-
-        foreach ($postUsers as $u) {
-            $userStr .= ($userStr == '' ? "'" : ",'") . $u . "'";
-            $users[$u] = $u;
-        }
-
-        if ($userStr != '') {
-            $userStr = " w.idName in (" . $userStr . ")";
-        }
-    }
-
-    if ($whereStr != '' && $userStr != '') {
-        $whereStr = " where " . $whereStr . ' and ' . $userStr;
-    } else if ($whereStr != '' && $userStr == '') {
-        $whereStr = " where " . $whereStr;
-    } else if ($whereStr == '' && $userStr != '') {
-        $whereStr = "where " . $userStr;
-    }
-
-    $stmt = $dbh->query("Select w.idName as Id, l.* from w_user_log l left join w_users w on l.Username = w.User_Name $whereStr order by Access_Date DESC Limit 100;");
-
-    $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    $edRows = array();
-
-    foreach ($rows as $r) {
-
-        $r['Date'] = date('M j, Y H:i:s', strtotime($r['Access_Date']));
-
-        unset($r['Session_Id']);
-        unset($r['Access_Date']);
-        unset($r['Page']);
-
-        $edRows[] = $r;
-    }
-
-    $log = CreateMarkupFromDB::generateHTML_Table($edRows, 'userlog');
-
-}
 
 $usernames = HTMLSelector::generateMarkup(HTMLSelector::getLookups($dbh, "select idName, User_Name from w_users", $users), array('name'=>'selUsers[]', 'multiple'=>'multiple', 'size'=>'5'));
 
@@ -803,29 +744,9 @@ $selLookups = getGenLookups($dbh);
                         <li><a href="#backup">Backup Database</a></li>
                         <li><a href="#changlog">View Change Log</a></li>
                         <li><a href="#delid">Delete Member Records</a></li>
-                        <li><a href="#access">View User Access Log</a></li>
+
 
                     </ul>
-                    <div id="access" class="ui-tabs-hide">
-                        <table>
-                            <tr>
-                                <td class="tdlabel">Choose a date (leave empty for most recent entries):</td>
-                                <td><input type="text" id ="aclogdate" class="autoCal" name="aclogdate" VALUE='<?php echo $userNameDate; ?>' /></td>
-                            </tr>
-                            <tr>
-                                <td class="tdlabel">Choose one or more usernames:</td>
-                                <td><?php echo $usernames; ?></td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" style="text-align: right;"><input name="btnAccess" type="submit" value="View Access Log"/></td>
-                            </tr>
-                        </table>
-
-                        <div style="margin-top:10px;">
-                            <?php echo $log; ?>
-                        </div>
-                    </div>
-
                     <div id="lookups" class="ui-tabs-hide" >
                         <table>
                             <tr>

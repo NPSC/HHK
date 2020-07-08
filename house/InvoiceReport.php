@@ -845,13 +845,13 @@ if ($useGlReport) {
 			
 			$pmtHdr = '';
 			foreach ($glCodes->paymentHeader() as $h) {
-				$pmtHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
+				$pmtHdr .= "<td style='color:blue;'>" . ($h == '' ? ' ' : $h) . "</td>";
 			}
 			$tbl->addBodyTr($pmtHdr);
 			
 			$lineHdr = '';
 			foreach ($glCodes->lineHeader() as $h) {
-				$lineHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
+				$lineHdr .= "<td style='color:green;'>" . ($h == '' ? ' ' : $h) . "</td>";
 			}
 			$tbl->addBodyTr($lineHdr);
 			
@@ -902,7 +902,7 @@ if ($useGlReport) {
 								$col = "return";
 							}
 							
-							$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+							$mkupRow .= "<td style='color:blue;'>" . ($col == '' ? ' ' : $col) . "</td>";
 							
 						}
 						$tbl->addBodyTr($mkupRow);
@@ -919,7 +919,7 @@ if ($useGlReport) {
 								$col = number_format($col, 2);
 							}
 							
-							$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+							$mkupRow .= "<td style='color:green;'>" . ($col == '' ? ' ' : $col) . "</td>";
 							
 						}
 						$tbl->addBodyTr($mkupRow);
@@ -931,7 +931,7 @@ if ($useGlReport) {
 			$glInvoices = $tbl->generateMarkup();
 			
 			// Comma delemeted file.
-			$glCodes->mapRecords(TRUE);
+			$glCodes->mapRecords(FALSE);
 			
 			$tbl = new HTMLTable();
 			
