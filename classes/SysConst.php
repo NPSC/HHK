@@ -9,9 +9,9 @@
  */
 
 class CodeVersion {
-    const BUILD = '188';
+    const BUILD = '189';
     const VERSION = '3.15';
-    const PATCH = 0;
+    const PATCH = 1;
     const GIT_Id = 'dev';
     const REL_DATE = '';
 }
