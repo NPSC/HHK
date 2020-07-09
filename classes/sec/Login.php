@@ -57,6 +57,7 @@ class Login {
         $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
         $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
         $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
+        $ssn->sitePepper = $config->getString('site', 'sitePepper', false);
 
         // Initialize role code
         if (isset($ssn->rolecode) === FALSE) {
@@ -98,12 +99,6 @@ class Login {
         $this->validateMsg = '';
         $events = array();
 
-        $chal = new ChallengeGenerator(FALSE);
-        if ($chal->testTries() === FALSE) {
-            return array('mess'=>'Too many invalid login attempts.', 'stop'=>'y');
-        }
-
-
         // Get next page address
         if (isset($_POST["xf"]) && $_POST["xf"] != '') {
             $pge = filter_var(urldecode($_POST["xf"]), FILTER_SANITIZE_STRING);
@@ -140,9 +135,6 @@ class Login {
             }
 
             $events['mess'] = $this->getValidateMsg();
-
-            $chal->setChallengeVar();
-            $events['chall'] = $chal->getChallengeVar();
         }
 
         return $events;
@@ -161,14 +153,13 @@ class Login {
         $tbl->addBodyTr(
             HTMLTable::makeTh('User Name:', array('class'=>'hhk-loginLabel'))
             .HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', 'size'=>'17')))
+                    HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', 'style'=>'width: 98%')))
             .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg')))
         );
         $tbl->addBodyTr(
             HTMLTable::makeTh('Password:', array('class'=>'hhk-loginLabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'17', 'type'=>'password')))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
-                    . HTMLInput::generateMarkup($this->getChallengeVar(), array('type'=>'hidden', 'id'=>'challenge')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'17', 'type'=>'password')) . '<button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button>')
+            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg')))
         );
         
         //pass xf to login
@@ -178,30 +169,11 @@ class Login {
             $xfInput = '';
         }
         
-        $tbl->addBodyTr(HTMLTable::makeTd($xfInput . HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
+        $tbl->addBodyTr(HTMLTable::makeTd($xfInput . HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button', 'style'=>'margin-top: 1em;')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
 
 
         return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls'));
 
-    }
-
-    public function getChallengeVar() {
-
-        // get session instance
-        $uS = Session::getInstance();
-
-        $resetTries = TRUE;
-        if (isset($uS->Challtries) && $uS->Challtries > 0) {
-            $resetTries = FALSE;
-        }
-
-        // instantiate a ChallengeGenerator object
-        $chlgen = new ChallengeGenerator($resetTries);
-        // register challenge variable
-        $chlgen->setChallengeVar();
-        $challengeVar = $chlgen->getChallengeVar();
-
-        return $challengeVar;
     }
 
     public function getUserName() {

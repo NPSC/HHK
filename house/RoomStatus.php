@@ -208,6 +208,7 @@ if ($checkingIn == '') {
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
         <style type="text/css" rel="stylesheet"  media="print">
             #ckout {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -222,6 +223,9 @@ if ($checkingIn == '') {
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript">
             var dateFormat = '<?php echo "ddd MMM D, YYYY"; ?>';
             var cgCols = [

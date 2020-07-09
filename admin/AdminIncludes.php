@@ -8,7 +8,9 @@
 -- @link      https://github.com/NPSC/HHK
  */
 
-define('DEFAULT_CSS', '<link href="css/default.css" rel="stylesheet" type="text/css" />');
+define('JSV', '?eG=90');
+
+define('DEFAULT_CSS', '<link href="css/default.css' . JSV . '" rel="stylesheet" type="text/css" />');
 
 
 /*
@@ -28,3 +30,4 @@ require (SEC . 'SecurityComponent.php');
 require (SEC . 'ScriptAuthClass.php');
 require (CLASSES . 'SysConst.php');
 require (SEC . 'webInit.php');
+require (SEC . 'UserClass.php');

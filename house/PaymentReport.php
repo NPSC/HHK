@@ -15,7 +15,6 @@ require (PMT . 'Receipt.php');
 require (CLASSES . 'ColumnSelectors.php');
 require CLASSES . 'OpenXML.php';
 require HOUSE . 'PaymentReport.php';
-require(SEC . 'ChallengeGenerator.php');
 
 try {
     $wInit = new webInit();
@@ -581,13 +580,6 @@ $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010',
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
-// instantiate a ChallengeGenerator object
-try {
-    $chlgen = new ChallengeGenerator();
-    $challengeVar = $chlgen->getChallengeVar("challenge");
-} catch (Exception $e) {
-    //
-}
 
 ?>
 <!DOCTYPE html>
@@ -599,6 +591,7 @@ try {
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <?php echo FAVICON; ?>
+        <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -611,12 +604,10 @@ try {
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
 <script type="text/javascript">
-    var challVar;
     $(document).ready(function() {
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-        challVar = $('#challVar').val();
 
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
         $('.ckdate').datepicker({
@@ -772,23 +763,6 @@ try {
                 </div>
                 <?php echo $dataTable; ?>
             </div>
-        </div>
-        <input  type="hidden" id="challVar" value='<?php echo $challengeVar; ?>' />
-        <div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
-            <table><tr>
-                    <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName"><?php echo $uS->username; ?></span></td>
-                </tr><tr>
-                    <td class="tdlabel">Enter Old Password:</td><td><input id="txtOldPw" type="password" value=""  /></td>
-                </tr><tr>
-                    <td class="tdlabel">Enter New Password:</td><td><input id="txtNewPw1" type="password" value=""  /></td>
-                </tr><tr>
-                    <td class="tdlabel">New Password Again:</td><td><input id="txtNewPw2" type="password" value=""  /></td>
-                </tr><tr>
-                    <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
-                </tr><tr>
-                    <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
-                </tr>
-            </table>
         </div>
     </body>
 </html>

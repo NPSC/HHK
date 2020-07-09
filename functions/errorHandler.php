@@ -46,7 +46,7 @@ function formHandler($error, $uS) {
 
         $name = $_POST['name'];
         $email = $_POST['email'];
-        $message = "New bug report received from " . $uS->siteName . "\r\n\r\n";
+        $message = "New bug report received from " . getSiteName($uS) . "\r\n\r\n";
         $message .= "Name: " . $name . "\r\n\r\n";
         $message .= "Email: " . $email . "\r\n\r\n";
         $message .= "Message: " . $_POST['message'] . "\r\n\r\n";
@@ -61,11 +61,26 @@ function formHandler($error, $uS) {
     }
 }
 
+function getSiteName($uS){
+    $host = explode('.', $_SERVER['HTTP_HOST']);
+    $requestURI = explode('/', $_SERVER['REQUEST_URI']);
+    
+    if($uS->siteName){
+        return $uS->siteName;
+    }else if(count($host) == 3){
+        return $host[0]; //return subdomain if it exists
+    }else if($requestURI[1] == 'demo'){
+        return $requestURI[2]; //if demo, skip /demo/
+    }else{
+        return $requestURI[1];
+    }
+}
+
 function sendMail($message, $uS) {
     if ($message) {
         //get report email address
         $to = $uS->Error_Report_Email == "" ? "support@nonprofitsoftwarecorp.org" : $uS->Error_Report_Email;
-        $subject = "New bug report received from " . $uS->siteName;
+        $subject = "New bug report received from " . getSiteName($uS);
         $headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>" . "\r\n";
 
         mail($to, $subject, $message, $headers);

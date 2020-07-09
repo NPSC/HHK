@@ -56,7 +56,7 @@ function manageRegistration(PDO $dbh, $n, $admin) {
         }
 
         // Register the user as a Volunteer (Group_Code = v)(Verify_address = y)
-        $query = "call register_web_user($id, '$fbId', '$uname', '$apprvd', '$orgCode', '$roleCode', '$pw', 'v');";
+        $query = "call register_web_user($id, '$fbId', '$uname', '$apprvd', '$orgCode', '$roleCode', '$pw', 'v', 0);";
         $dbh->exec($query);
 
         $rtnMsg .= "Web user " . $uname . " is registered.  ";

@@ -18,6 +18,11 @@ body {
 body.testbody {
     background-color: #C7EFB3; /* #DFF7FF;*/
 }
+
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
 .pageSpacer {
     width: 100%;
     background-color: #459e00;
@@ -80,12 +85,15 @@ h2.logo {
     z-index: 99;
 }
 #version {
-    height: 25px;
-    position: absolute;
+/*    height: 15px; */
+/*    position: absolute; */
+    position: relative;
     right: 2px;
-    top: 47px;
+/*     top: 47px; */
     font-size: .6em;
-    padding: 0 6px;
+/*     padding: 0 6px; */
+    padding: 7px 6px;
+    float: right;
 }
 #banner {
     height: 45px;
@@ -298,5 +306,12 @@ li.hhk-myMenuTop {
 #divNavIcons #ulIcons span.ui-icon {
     float: left;
     margin: 0 4px;
+}
+
+.hhk-tooltip .ui-icon-help {
+	border: 1px solid #dfd9c3;
+    border-radius: 1em;
+    background-color: #fff;
+    margin-left: 2px;
 }
 

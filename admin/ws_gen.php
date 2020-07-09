@@ -18,8 +18,6 @@ require (CLASSES . 'Relation.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'member/WebUser.php');
 
-require(SEC . 'UserClass.php');
-require(SEC . 'ChallengeGenerator.php');
 require(SEC . 'Pages.php');
 
 
@@ -240,23 +238,29 @@ try {
 
         case "adchgpw":
             $adPw = '';
-            $newPw = '';
             $uid = 0;
-
+            
             if (isset($_POST["adpw"])) {
                 $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_STRING);
-            }
-            if (isset($_POST["newer"])) {
-                $newPw = filter_var($_POST["newer"], FILTER_SANITIZE_STRING);
             }
 
             if (isset($_POST['uid'])) {
                 $uid = intval(filter_var($_POST['uid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
-            $events = adminChangePW($dbh, $adPw, $newPw, $uid);
+            
+            if (isset($_POST["uname"])) {
+                $uname = filter_var($_POST["uname"], FILTER_SANITIZE_STRING);
+            }
+            
+            $events = adminChangePW($dbh, $adPw, $uid, $uname);
 
             break;
-
+            
+        case "accesslog":
+            $events = AccessLog($dbh, $_GET);
+            
+            break;
+            
         default:
             $events = array("error" => "Bad Command");
     }
@@ -302,16 +306,18 @@ function searchZip(PDO $dbh, $zip) {
     return $events;
 }
 
-function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId) {
+function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
 
     $event = array();
 
     if (SecurityComponent::is_Admin()) {
-
+        
         $u = new UserClass();
 
-        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw) === TRUE) {
-            $event = array('success' => 'Password updated.');
+        $newPw = $u->generateStrongPassword();
+        
+        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, true) === TRUE) {
+            $event = array('success' => 'Password updated.', 'tempPW'=>$newPw);
         } else {
             $event = array('error' => $u->logMessage .  '.  Password is unchanged.');
         }
@@ -689,4 +695,18 @@ function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $pa
     return $reply;
 }
 
-
+function AccessLog(\PDO $dbh, $get) {
+    
+    require(CLASSES . 'DataTableServer.php');
+    
+    $columns = array(
+        
+        //array( 'db' => 'id',  'dt' => 'id' ),
+        array( 'db' => 'Username',   'dt' => 'Username' ),
+        array( 'db' => 'IP',     'dt' => 'IP' ),
+        array( 'db'  => 'Action', 'dt' => 'Action' ),
+        array( 'db' => 'Access_Date',   'dt' => 'Date' )
+    );
+    
+    return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
+}

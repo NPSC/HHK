@@ -499,13 +499,13 @@ function readLookups(\PDO $dbh, $tbl, $orderBy = "Code", $includeUnused = false)
     return $genArray;
 }
 
-function doOptionsMkup($gArray, $sel, $offerBlank = true)
+function doOptionsMkup($gArray, $sel, $offerBlank = true, $placeholder = "")
 {
     $data = "";
     if ($offerBlank) {
         $sel = trim($sel);
         if (is_null($sel) || $sel == "") {
-            $data = "<option value='' selected='selected'></option>";
+            $data = "<option value='' selected='selected' disabled='disabled'>" . $placeholder . "</option>";
         } else {
             $data = "<option value=''></option>";
         }

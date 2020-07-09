@@ -126,7 +126,7 @@ CREATE TABLE if not exists `card_id` (
 CREATE TABLE if not exists `cc_hosted_gateway` (
   `idcc_gateway` int(11) NOT NULL AUTO_INCREMENT,
   `Gateway_Name` VARCHAR(45) NOT NULL DEFAULT '',
-  `cc_name` varchar(45) NOT NULL,
+  `cc_name` varchar(45) NOT NULL DEFAULT '',
   `Merchant_Id` varchar(45) NOT NULL DEFAULT '',
   `Password` varchar(245) NOT NULL DEFAULT '',
   `Credit_Url` varchar(145) NOT NULL DEFAULT '',
@@ -629,7 +629,7 @@ CREATE TABLE if not exists `insurance` (
   `Title` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Opens_Type` VARCHAR(15) NOT NULL DEFAULT '' COMMENT '',
   `Timestamp` TIMESTAMP NOT NULL DEFAULT now() COMMENT '',
-  PRIMARY KEY (`idInsurance`)  COMMENT ''
+  PRIMARY KEY (`idInsurance`)
 ) ENGINE=InnoDB;
 
 
@@ -643,7 +643,8 @@ CREATE TABLE if not exists `insurance_type` (
   `Is_Primary` INT(1) NOT NULL DEFAULT 0 COMMENT '',
   `Multiselect` INT NOT NULL DEFAULT 1 COMMENT '',
   `List_Order` VARCHAR(4) NOT NULL DEFAULT '' COMMENT '',
-  PRIMARY KEY (`idInsurance_type`)  COMMENT '');
+  PRIMARY KEY (`idInsurance_type`)
+  ) ENGINE=InnoDB;
 
 
 
@@ -2213,7 +2214,16 @@ CREATE TABLE if not exists `w_user_log` (
   `Action` VARCHAR(45) NOT NULL DEFAULT ''
 ) ENGINE = MyISAM;
 
-
+-- -----------------------------------------------------
+-- Table `w_user_passwords`
+-- -----------------------------------------------------
+CREATE TABLE if not exists`w_user_passwords` (
+  `idPassword` int(11) NOT NULL AUTO_INCREMENT,
+  `idUser` int(11) NOT NULL,
+  `Enc_PW` varchar(100) NOT NULL,
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idPassword`)
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `w_users`
@@ -2223,6 +2233,8 @@ CREATE TABLE if not exists `w_users` (
   `User_Name` varchar(100) NOT NULL DEFAULT '',
   `Enc_PW` varchar(100) NOT NULL DEFAULT '',
   `PW_Change_Date` DATETIME DEFAULT NULL,
+  `Chg_PW` BOOL NOT NULL DEFAULT true,
+  `pass_rules` BOOL NOT NULL DEFAULT true,
   `PW_Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Certificate` varchar(145) NOT NULL DEFAULT '',
@@ -2382,3 +2394,17 @@ ALTER TABLE `name_log`
 ALTER TABLE `visit_log`
     ADD INDEX `INDX_IDNAME` (`idName` ASC),
     ADD INDEX `INDX_IDVISIT` (`idVisit` ASC, `Span` ASC);
+    
+    
+    
+-------Functions-------
+    
+--
+-- function `dateDefaultNow`
+--
+DROP function IF EXISTS `datedefaultnow`; -- ;
+
+CREATE FUNCTION `datedefaultnow` (dt DateTime)
+RETURNS DATETIME
+DETERMINISTIC NO SQL
+RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end  -- ;

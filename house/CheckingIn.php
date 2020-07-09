@@ -77,7 +77,6 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 creditIncludes($uS->PaymentGateway);
 
-
 $pageHdr = $wInit->pageHeading;
 $pageStyle = '';
 
@@ -232,6 +231,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

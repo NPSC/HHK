@@ -13,7 +13,6 @@
 require ("homeIncludes.php");
 require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
-require(SEC . 'ChallengeGenerator.php');
 
 require (PMT . 'GatewayConnect.php');
 require (PMT . 'PaymentGateway.php');
@@ -1016,13 +1015,6 @@ $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
 
-// instantiate a ChallengeGenerator object
-try {
-    $chlgen = new ChallengeGenerator();
-    $challengeVar = $chlgen->getChallengeVar("challenge");
-} catch (Exception $e) {
-    //
-}
 
 ?>
 <!DOCTYPE html>
@@ -1049,7 +1041,6 @@ try {
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 <script type="text/javascript">
-    var challVar;
 $(document).ready(function() {
     var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
     var makeTable = '<?php echo $mkTable; ?>';
@@ -1057,8 +1048,6 @@ $(document).ready(function() {
     var pmtMkup = '<?php echo $paymentMarkup; ?>';
     var rctMkup = '<?php echo $receiptMarkup; ?>';
     var tabReturn = '<?php echo $tabReturn; ?>';
-
-    challVar = $('#challVar').val();
 
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx').button();
     $('.ckdate').datepicker({
@@ -1388,24 +1377,6 @@ $(document).ready(function() {
         <div id="keysfees" style="font-size: .9em;"></div>
 
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
-        <input  type="hidden" id="challVar" value='<?php echo $challengeVar; ?>' />
-
-        <div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
-            <table><tr>
-                    <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName"><?php echo $uS->username; ?></span></td>
-                </tr><tr>
-                    <td class="tdlabel">Enter Old Password:</td><td><input id="txtOldPw" type="password" value=""  /></td>
-                </tr><tr>
-                    <td class="tdlabel">Enter New Password:</td><td><input id="txtNewPw1" type="password" value=""  /></td>
-                </tr><tr>
-                    <td class="tdlabel">New Password Again:</td><td><input id="txtNewPw2" type="password" value=""  /></td>
-                </tr><tr>
-                    <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
-                </tr><tr>
-                    <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
-                </tr>
-            </table>
-        </div>
         <div id="setBillDate" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
             <span class="ui-helper-hidden-accessible"><input type="text"/></span>
             <table><tr>

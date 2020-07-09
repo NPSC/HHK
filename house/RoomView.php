@@ -259,6 +259,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo NOTY_CSS; ?>
         <style>
             #roomMonth { width: 600px; height: 300px; float:left; }
         </style>
@@ -267,6 +268,9 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 <script type="text/javascript">
 $(document).ready(function () {
     "use strict";

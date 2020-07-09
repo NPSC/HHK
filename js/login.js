@@ -40,7 +40,8 @@ if ($psw.val() === '') {
     return;
 }
 parms = {
-    challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
+    //challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
+	challenge: $psw.val(),
     txtUname: $uname.val(),
     xf: $xf.val()
 };
@@ -77,4 +78,17 @@ $('#txtPW, #txtUname').keypress(function (event) {
 });
 $('#txtPW').val('');
 $('#txtUname').focus();
+
+$("button").button();
+
+$(document).on('mousedown', '.showPw', function() {
+	var input = $(this).closest("td").find("input");
+	input.prop("type", "text");
+});
+
+$(document).on('mouseup', '.showPw', function() {
+	var input = $(this).closest("td").find("input");
+	input.prop("type", "password");
+});
+
 });

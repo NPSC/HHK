@@ -137,7 +137,7 @@ class webInit {
 
     public function generatePageMenu() {
         // generate menu markup if page type = 'p'
-        return $this->page->generateMenu($this->menuTitle);
+        return $this->page->generateMenu($this->menuTitle, $this->dbh);
 
     }
 
@@ -186,6 +186,7 @@ class webInit {
         SysConfig::getCategory($this->dbh, $uS, "'es'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'f'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'fg'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'pr'", webInit::SYS_CONFIG);
 
         return $uS->nameLookups;
 

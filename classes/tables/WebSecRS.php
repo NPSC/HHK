@@ -65,6 +65,42 @@ class W_auth_ipRS extends TableRS {
 
 }
 
+class W_userQuestionsRS extends TableRS {
+    
+    public $idQuestion; // int(11) NOT NULL
+    public $Question; // varchar(180)
+    public $Status; // varchar(1),
+    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    function __construct($TableName = "w_user_questions") {
+        $this->idQuestion = new DB_Field("idQuestion", 0, new DbIntSanitizer());
+        $this->Question = new DB_Field("Question", "", new DBStrSanitizer(180), TRUE, TRUE);
+        $this->Status = new DB_Field("Status", "a", new DBStrSanitizer(1), TRUE, TRUE);
+        $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
+        parent::__construct($TableName);
+    }
+    
+}
+
+class W_userAnswersRS extends TableRS {
+    
+    public $idAnswer; // int(11) NOT NULL
+    public $idUser; // int(11) NOT NULL
+    public $idQuestion; // int(11) NOT NULL,
+    public $Answer; // varchar(100)
+    public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    function __construct($TableName = "w_user_answers") {
+        $this->idAnswer = new DB_Field("idAnswer", 0, new DbIntSanitizer());
+        $this->idUser = new DB_Field("idUser", 0, new DBIntSanitizer());
+        $this->idQuestion = new DB_Field("idQuestion", 0, new DBIntSanitizer());
+        $this->Answer = new DB_Field("Answer", "", new DbStrSanitizer(100), TRUE, TRUE);
+        $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
+        parent::__construct($TableName);
+    }
+    
+}
+
 class W_usersRS extends TableRS {
 
     public $idName;  // int(11) NOT NULL,
@@ -95,6 +131,7 @@ class W_usersRS extends TableRS {
         $this->Last_Login = new DB_Field("Last_Login", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->PW_Change_Date = new DB_Field("PW_Change_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->PW_Updated_By = new DB_Field("PW_Updated_By", "", new DbStrSanitizer(45), FALSE);
+        $this->Chg_PW = new DB_Field("Chg_PW", '0', new DbIntSanitizer(1), TRUE, TRUE);
 
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

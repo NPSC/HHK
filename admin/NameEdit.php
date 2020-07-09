@@ -368,10 +368,6 @@ $memberData['webUserName'] = $userName;
 $webUserDialogMarkup = WebUser::getSecurityGroupMarkup($dbh, $id, $maintFlag) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS);
 
 
-// instantiate a ChallengeGenerator object
-$challengeVar = $uS->challenge;
-
-
 $memberData["id"] = $id;
 $memberData["coId"] = $name->get_companyId();
 $memberData["coName"] = $name->get_company();
@@ -531,17 +527,17 @@ $alertMessage = $alertMsg->createMarkup();
                 </table>
             </div>
             <div id="achgPw" class="hhk-member-detail" style="display:none;font-size:0.95em;">
+            	<div style="margin: 0.5em 0 0.5em 0;">The user's password will be reset to a random temporary password. <br>They will be required to change their password when they log in.</div>
                 <table>
                     <tr>
-                        <td class="tdlabel">User Name</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" /></td>
+                        <td class="tdlabel">User Name</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" style="width: 100%" /></td>
                     </tr><tr>
-                        <td class="tdlabel">Admin Password</td><td><input id="txtOldPw" type="password" value="" title="Enter your password, not the users old password." /></td>
+                        <td class="tdlabel">Admin Password</td><td style="display: flex"><input id="txtOldPw" type="password" value="" title="Enter your password, not the users old password." /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                     </tr><tr>
-                        <td class="tdlabel">Enter New Password</td><td><input id="txtNewPw1" type="password" value="" title="This will be the users new password."/></td>
-                    </tr><tr>
-                        <td class="tdlabel">Enter New Password Again</td><td><input id="txtNewPw2" type="password" value=""  /></td>
-                    </tr><tr>
-                        <td colspan ="2"><span id="pwChangeErrMsg"><?php echo $PWresultMessage; ?></span></td>
+                        <td colspan ="2">
+                        	<span id="apwChangeErrMsg"><?php echo $PWresultMessage; ?></span>
+                        	<div id="apwNewPW" style="display:hidden; margin: 0.5em 0 0.5em 0;"></div>
+                        </td>
                     </tr>
                 </table>
             </div>

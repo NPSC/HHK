@@ -24,9 +24,7 @@ require (CLASSES . 'Relation.php');
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
 
-require (SEC . 'UserClass.php');
 require (CLASSES . 'UserCategories.php');
-require(SEC . 'ChallengeGenerator.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -181,18 +179,6 @@ $memDataJSON = json_encode($memberData);
 $pwMsg = AlertControl::createMarkup('pw');
 
 $pwAlertJSON = json_encode(AlertControl::makeJsonPackage('pw'));
-
-
-
-// instantiate a ChallengeGenerator object
-try {
-    $chlgen = new ChallengeGenerator();
-    // register challenge variable
-    //$chlgen->setChallengeVar();
-    $challengeVar = $chlgen->getChallengeVar("challenge");
-} catch (Exception $e) {
-    die("Uh-oh.  Error.");
-}
 
 
 //// Squirms

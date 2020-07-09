@@ -22,7 +22,6 @@ require ('classes/tables/PaymentsRS.php');
 
 require ('classes/sec/sessionClass.php');
 require ('classes/sec/UserClass.php');
-require ('classes/sec/ChallengeGenerator.php');
 require ('classes/sec/Login.php');
 require ('classes/sec/SecurityComponent.php');
 require ('classes/sec/ScriptAuthClass.php');
@@ -72,9 +71,9 @@ $user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
 $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
 
 $u = new UserClass();
-$password = md5(md5($pass) . $login->getChallengeVar());
 
-if ($u->_checkLogin($dbh, addslashes($user), $password, FALSE) === FALSE) {
+
+if ($u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
 
     header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
     header('HTTP/1.0 401 Unauthorized');

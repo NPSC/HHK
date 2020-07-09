@@ -52,8 +52,6 @@ require (HOUSE . 'RoomReport.php');
 
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Notes.php');
-require(SEC . 'ChallengeGenerator.php');
-
 
 $wInit = new webInit();
 
@@ -239,15 +237,6 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
 }
 
 $rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), array('id'=>'selRoomGroupScheme'));
-
-
-// instantiate a ChallengeGenerator object
-try {
-    $chlgen = new ChallengeGenerator();
-    $challengeVar = $chlgen->getChallengeVar("challenge");
-} catch (Exception $e) {
-    //
-}
 
 $showCharges = TRUE;
 $addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
@@ -486,22 +475,7 @@ if ($uS->UseWLnotes) {
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
-        <div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">
-            <table><tr>
-                    <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName"><?php echo $uS->username; ?></span></td>
-                </tr><tr>
-                    <td class="tdlabel">Enter Old Password:</td><td><input id="txtOldPw" type="password" value=""  /></td>
-                </tr><tr>
-                    <td class="tdlabel">Enter New Password:</td><td><input id="txtNewPw1" type="password" value=""  /></td>
-                </tr><tr>
-                    <td class="tdlabel">New Password Again:</td><td><input id="txtNewPw2" type="password" value=""  /></td>
-                </tr><tr>
-                    <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol.</span></td>
-                </tr><tr>
-                    <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
-                </tr>
-            </table>
-        </div>
+        
         <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
@@ -509,7 +483,6 @@ if ($uS->UseWLnotes) {
         <input  type="hidden" id="resourceGroupBy" value='<?php echo $resourceGroupBy; ?>' />
         <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />
-        <input  type="hidden" id="challVar" value='<?php echo $challengeVar; ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />

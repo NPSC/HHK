@@ -1119,6 +1119,25 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
             AND (`n`.`Record_Member` = 1)
             AND (`n`.`Member_Status` IN ('a' , 'd', 'in')));
 
+-- -----------------------------------------------------
+-- View `vguest_demog`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_demog` AS
+	SELECT DISTINCT
+        `n`.`Name_Full` AS `Name_Full`,
+        `np`.`Name_Full` AS `Patient_Name`,
+        `n`.`Gender` AS `Gender`,
+        `nd`.*
+    FROM
+        ((((`name_guest` `ng`
+        JOIN `name_demog` `nd` ON ((`ng`.`idName` = `nd`.`idName`)))
+        LEFT JOIN `name` `n` ON ((`n`.`idName` = `ng`.`idName`)))
+        LEFT JOIN `psg` `p` ON ((`ng`.`idPsg` = `p`.`idPsg`)))
+        LEFT JOIN `name` `np` ON ((`p`.`idPatient` = `np`.`idName`)))
+    WHERE
+        (`n`.`Member_Status` IN ('a' , 'in', 'd'))
+    ORDER BY `n`.`idName` DESC;
+
 
 -- -----------------------------------------------------
 -- View `vguest_neon_payment`
@@ -2827,6 +2846,16 @@ select
     u.Default_Page AS `Default Page`,
     wg.Title as `Authorization Code`,
     u.Last_Login AS `Last Login`,
+    `u`.`PW_Change_Date` AS `Password Changed`,
+    CASE
+        WHEN `u`.`Chg_PW` THEN 'Next Login'
+        WHEN (`u`.`pass_rules` = 0 || `sc`.`Value` = 0) THEN 'Never'
+        WHEN `u`.`PW_Change_Date`
+            THEN DATE_FORMAT((`u`.`PW_Change_Date` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
+        WHEN `u`.`Timestamp`
+            THEN DATE_FORMAT((`u`.`Timestamp` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
+        ELSE ''
+    END AS `Password Expires`,
     u.Updated_By AS `Updated By`,
     DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`
 from
@@ -2836,7 +2865,8 @@ from
 	left join id_securitygroup s on s.idName = u.idName
 	left join w_groups wg on s.Group_Code = wg.Group_Code
     left join gen_lookups gr ON (((a.Role_Id = gr.Code) and (gr.Table_Name = 'Role_Codes'))))
-    left join gen_lookups gs ON (((u.Status = gs.Code) and (gs.Table_Name = 'Web_User_Status'))));
+    left join gen_lookups gs ON (((u.Status = gs.Code) and (gs.Table_Name = 'Web_User_Status')))
+    left join sys_config sc ON (sc.Key = 'passResetDays'));
 
 
 

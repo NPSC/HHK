@@ -10,8 +10,6 @@
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 require ('VolIncludes.php');
-require (SEC . 'UserClass.php');
-require(SEC . 'ChallengeGenerator.php');
 require(SEC . 'Login.php');
 
 

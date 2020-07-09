@@ -51,6 +51,12 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '3', 'Discover','DCVR', '',0),
 ('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
 
+('dayIncrements', '30', '30 days', '','', '1'),
+('dayIncrements', '60', '60 days', '','', '2'),
+('dayIncrements', '90', '90 days', '','', '3'),
+('dayIncrements', '180', '180 days', '','', '4'),
+('dayIncrements', '365', '365 days', '','', '5'),
+
 ('Demographics', 'Age_Bracket', 'Age Bracket', 'y','m',5),
 ('Demographics', 'Ethnicity', 'Ethnicity', 'y','m',10),
 ('Demographics', 'Gender', 'Gender', 'y','m',15),
@@ -392,6 +398,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'v', 'Volunteer','','',0),
 ('Sys_Config_Category', 'es', 'Email Server','','',0),
 ('Sys_Config_Category', 'fg', 'Payment Gateway','','',0),
+('Sys_Config_Category', 'pr', 'Password Rules','','',0),
 ('Sys_Config_Category', 'c', 'Calendar','','',0),
 
 ('Time_Zone', 'America/Chicago', 'Central','','',0),
@@ -447,7 +454,13 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Web_User_Status','a','active','','',0),
 ('Web_User_Status','d','Disabled','','',0),
 ('Web_User_Status','w','Waiting','','',0),
-('Web_User_Status','x','Prohibited','','',0);
+('Web_User_Status','x','Prohibited','','',0),
+
+("Web_User_Actions", "L", "Login", '', '', '0'),
+("Web_User_Actions", "PS", "Set Password", '', '', '0'),
+("Web_User_Actions", "PC", "Password Change", '', '', '0'),
+("Web_User_Actions", "PL", "Locked Out", '', '', '0'),
+("Web_User_Actions", "E", "Password Expired", '', '', '0');
 -- ;
 
 
@@ -532,6 +545,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('NoReplyAddr','','ea','h','','No reply email address',''),
 ('NotificationAddress','','ea','f','','Gets financial notifications.', ''),
 ('OpenCheckin','true','b','h','','Allow walk-ups to check in',''),
+('passResetDays','','lu','pr','','Number of days between automatic password resets','dayIncrements'),
 ('PatientAddr','true','b','h','','Collect the patient address.',''),
 ('PatientAsGuest','true','b','h','','House allows patients to stay as guests',''),
 ('PayAtCkin','true','b','h','','Allow/Disallow payments at check-in time',''),
@@ -539,6 +553,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('PaymentGateway','','lu','fg','','Credut Card Payment Gateway','Pay_Gateway_Name'),
 ('PayVFeeFirst','false','b','h','','Default check the visit fees payment checkbox',''),
 ('PreviousNights','0','i','h','','Previous nights to add to nights counter',''),
+('PriorPasswords','0','i','pr','','Number of prior passwords user cannot use',''),
 ('RateChangeAuth','false','b','h','','true = Only authorized users can change the defailt room rate',''),
 ('RateGlideExtend','0','i','h','','# of days for the Room Rate Glide to time out after visit check-out',''),
 ('receiptLogoFile','../conf/receiptlogo.png','url','f','','',''),
@@ -585,6 +600,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 ('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', ''),
 ('UseHouseWaive', 'true', 'b', 'h','', 'Show the house waive checkbox on checkout.', ''),
 ('UseIncidentReports', 'false', 'b', 'h', '', 'Use the Incident Reports feature', ''),
+('userInactiveDays','','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements'),
 ('UseWLnotes','false','b','h','','Use wait list notes feature on reservations',''),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry',''),
 ('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays'),
@@ -723,10 +739,10 @@ REPLACE INTO `w_auth` (`idName`,`Role_Id`,`Organization_Id`,`Policy_id`,`Updated
 
 
 REPLACE INTO `w_users`
-(`idName`,`User_Name`,`Enc_PW`,`Status`,`Certificate`,`Cookie`,`Session`,`Ip`,`Verify_Address`,`Last_Login`,`Hash_PW`,`Updated_By`,`Last_Updated`,`Timestamp`)
+(`idName`,`User_Name`,`Enc_PW`, `Chg_PW`, `pass_rules`, `Status`,`Certificate`,`Cookie`,`Session`,`Ip`,`Verify_Address`,`Last_Login`,`Hash_PW`,`Updated_By`,`Last_Updated`,`Timestamp`)
 VALUES
-(-1,'admin','539e17171312c324d3c23908f85f3149','a','','','','','done',NULL,'','',NULL,now()),
-(10,'npscuser','VEFhRldOWVFqVmZ5bjhENVZvd29ldz09','a','','','','','done',NULL,'','',NULL,now());
+(-1,'admin','539e17171312c324d3c23908f85f3149',false, false,'a','','','','','done',NULL,'','',NULL,now()),
+(10,'npscuser','VEFhRldOWVFqVmZ5bjhENVZvd29ldz09',false, false,'a','','','','','done',NULL,'','',NULL,now());
 -- ;
 
 
@@ -863,7 +879,7 @@ LOCK TABLES `page_securitygroup` WRITE;
 INSERT INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES
 (1,'pub'),(2,'pub'),(3,'mm'),(4,'mm'),(5,'mm'),(6,'db'),(7,'db'),(8,'mm'),(9,'db'),(10,'mm'),(11,'db'),(12,'dm'),(13,'mm'),(14,'mm'),(15,'dm'),(16,'dm'),
 (18,'mm'),(19,'mm'),(20,'dm'),(21,'g'),(21,'ga'),(21,'mm'),(22,'v'),(23,'pub'),(24,'v'),(26,'pub'),(27,'pub'),(28,'pub'),(29,'v'),(31,'pub'),(32,'mm'),(33,'mm'),
-(34,'db'),(35,'mm'),(36,'dm'),(37,'db'),(39,'db'),(45,'v'),(46,'ga'),(47,'g'),(49,'mm'),(50,'mm'),(51,'dna'),(52,'dm'),(55,'v'),(56,'dna'),(57,'mm'),(59,'g'),(59,'ga'),
+(34,'db'),(35,'mm'),(36,'dm'),(37,'db'),(39,'db'),(45,'v'),(46,'ga'),(47,'g'),(49,'mm'),(50,'mm'),(51,'dna'),(52,'dm'),(55,'v'),(56,'dna'),(57,'mm'),(59,'g'),(59,'ga'),(59, 'mm'),(59, 'gr'),
 (60,'g'),(62,'g'),(62,'ga'),(65,'mm'),(66,'mm'),(67,'mm'),(68,'v'),(69,'pub'),(70,'pub'),(71,'pub'),(72,'g'),(72,'ga'),(74,'g'),(74,'ga'),(75,'g'),(75,'ga'),
 (76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
 (95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),

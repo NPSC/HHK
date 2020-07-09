@@ -5,6 +5,11 @@
 .testbody {
     background-color: #FFCC9F;
 }
+
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
 #submitButtons, .submitButtons {
     position: fixed;
     right: 30px;
@@ -176,12 +181,14 @@ div.logo {
     z-index: 99;
 }
 #version {
-    height: 15px;
-    position: absolute;
+/*     height: 15px; */
+/*     position: absolute; */
+    position: relative;
     right: 2px;
-    top: 47px;
+/*     top: 47px; */
     font-size: .6em;
-    padding: 0 6px;
+    padding: 7px 6px;
+    float: right;
 }
 table {
     border-collapse:collapse;

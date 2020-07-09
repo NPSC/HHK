@@ -259,7 +259,7 @@ class ScriptAuthClass extends SecurityComponent {
         return $this->pageType;
     }
 
-    public function generateMenu($pageHeader) {
+    public function generateMenu($pageHeader, $dbh = false) {
         // only generate menu for pages, not services or components
         if ($this->get_Page_Type() != WebPageCode::Page) {
             return '';
@@ -343,9 +343,17 @@ class ScriptAuthClass extends SecurityComponent {
         if ($uS->mode != Mode::Live) {
             $disclaimer = HTMLContainer::generateMarkup('span', 'Demo Site - Do not use actual guest or patient names!', array('style'=>'font-weight:bold;margin-right:.9em;'));
         }
+        //$markup .= "</div></div></header>
+        //    <div id='version'>$disclaimer User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
         $markup .= "</div></div></header>
-            <div id='version'>$disclaimer User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
-
+            <div id='version'>$disclaimer Build:" . $uS->ver . "  <button id='userSettingsBtn' style='margin-left: .5em'>Hello, " . $uS->username . "</button></div>";
+        
+        //add user settings modal
+        if($dbh && isset($uS)){
+            $markup .= UserClass::createUserSettingsMarkup($dbh);
+            $markup .= '<input  type="hidden" id="isPassExpired" value="' . UserClass::isPassExpired($dbh, $uS) . '" />';
+        }
+        
         return $markup;
     }
 

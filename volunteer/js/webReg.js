@@ -106,7 +106,7 @@ $(document).ready(function() {
             return;
         }
 
-        $('#pwHdn').val(hex_md5($psw.val()));
+        $('#pwHdn').val($psw.val());
 
         $('#form1').submit();
 
