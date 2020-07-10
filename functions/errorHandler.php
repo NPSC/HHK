@@ -1,33 +1,23 @@
 <?php
-$uS = Session::getInstance();
-
+$config = new Config_Lite(ciCFG_FILE);
 //only interfere on live and demo sites
-if ($uS->Mode != "dev") {
-    register_shutdown_function("fatal_handler");
+if ($config->getString('site', 'Mode', 'dev') != "dev") {
+    register_shutdown_function("fatal_handler", $config);
 }
-$errorMsg = "";
 
-function fatal_handler() {
-    $errfile = "unknown file";
-    $errstr = "shutdown";
-    $errno = E_CORE_ERROR;
-    $errline = 0;
+function fatal_handler($config) {
 
     //get error
     $error = error_get_last();
 
     //split error object into vars
-    if ($error !== NULL && isset($uS->Error_Report_Email)) {
-        $errno = $error["type"];
-        $errfile = $error["file"];
-        $errline = $error["line"];
-        $errstr = $error["message"];
+    if ($error !== NULL && $config->getString('site', 'Error_Report_Email', 'supportdefault@hhk.local')) {
 
-        formHandler($error, $uS);
+        formHandler($error, $config);
 
         //check if ajax request
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == "XMLHttpRequest") {
-            returnJSON($error, $uS);
+            returnJSON($error, $config);
         } else {
             buildPage($error);
         }
@@ -36,17 +26,15 @@ function fatal_handler() {
     }
 }
 
-function formHandler($error, $uS) {
+function formHandler($error, $config) {
     $sec = new SecurityComponent;
-
-
 
     //if post data exists, send email
     if ($_POST && isset($_POST['name'], $_POST['email'], $_POST['message'])) {
 
         $name = $_POST['name'];
         $email = $_POST['email'];
-        $message = "New bug report received from " . getSiteName($uS) . "\r\n\r\n";
+        $message = "New bug report received from " . getSiteName() . "\r\n\r\n";
         $message .= "Name: " . $name . "\r\n\r\n";
         $message .= "Email: " . $email . "\r\n\r\n";
         $message .= "Message: " . $_POST['message'] . "\r\n\r\n";
@@ -55,19 +43,17 @@ function formHandler($error, $uS) {
 
 
         // send email and redirect
-        sendMail($message, $uS);
+        sendMail($message, $config);
         buildPage("", true);
         exit;
     }
 }
 
-function getSiteName($uS){
+function getSiteName(){
     $host = explode('.', $_SERVER['HTTP_HOST']);
     $requestURI = explode('/', $_SERVER['REQUEST_URI']);
     
-    if($uS->siteName){
-        return $uS->siteName;
-    }else if(count($host) == 3){
+    if(count($host) == 3){
         return $host[0]; //return subdomain if it exists
     }else if($requestURI[1] == 'demo'){
         return $requestURI[2]; //if demo, skip /demo/
@@ -76,40 +62,38 @@ function getSiteName($uS){
     }
 }
 
-function sendMail($message, $uS) {
+function sendMail($message, $config) {
     if ($message) {
         //get report email address
-        $to = $uS->Error_Report_Email == "" ? "support@nonprofitsoftwarecorp.org" : $uS->Error_Report_Email;
-        $subject = "New bug report received from " . getSiteName($uS);
+        $to = $config->getString('site', 'Error_Report_Email', 'supportdefault@hhk.local');
+        $subject = "New bug report received from " . getSiteName();
         $headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>" . "\r\n";
 
         mail($to, $subject, $message, $headers);
     }
 }
 
-function returnJSON($error, $uS) {
+function returnJSON($error, $config) {
 
 
-    $message = "New bug report received from " . $uS->siteName . "\r\n\r\n";
+    $message = "New bug report received from " . getSiteName() . "\r\n\r\n";
     $message .= "Request Type: AJAX\r\n\r\n";
     $message .= "File: " . $error["file"] . " line " . $error["line"] . "\r\n\r\n";
     $message .= "Error: " . $error["message"];
 
-    sendMail($message, $uS);
+    sendMail($message, $config);
 
     echo json_encode(["status" => "error", "message" => "An error Occurred."]);
 }
 
 function buildPage($error, $success = false) {
-    $wInit = new webInit();
-    $pageTitle = $wInit->pageTitle;
     $sec = new SecurityComponent;
     ?>
     <!DOCTYPE html>
     <html lang="en">
         <head>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-            <title><?php echo $pageTitle; ?></title>
+            <title>HHK - Error</title>
             <meta http-equiv="x-ua-compatible" content="IE=edge">
     <?php echo JQ_UI_CSS; ?>
             <?php echo MULTISELECT_CSS; ?>
@@ -134,6 +118,7 @@ function buildPage($error, $success = false) {
 
                 .container {
                     width: 1140px;
+                    margin: 0 auto;
                 }
 
                 .col-6 {

@@ -253,16 +253,16 @@ function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
 // This is named backwards. I'll start the new name, but it may take a while for all the code to comply
 function addslashesextended(&$arr_r)
 {
-    if (get_magic_quotes_gpc()) {
+/*     if (get_magic_quotes_gpc()) {
         array_walk_recursive($arr_r, 'stripslashes_gpc');
-    }
+    } */
 }
 
 function stripSlashesExtended(&$arr_r)
 {
-    if (get_magic_quotes_gpc()) {
+/*     if (get_magic_quotes_gpc()) {
         array_walk_recursive($arr_r, 'stripslashes_gpc');
-    }
+    } */
 }
 
 function newDateWithTz($strDate, $strTz)
