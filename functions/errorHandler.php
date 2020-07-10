@@ -11,7 +11,7 @@ function fatal_handler($config) {
     $error = error_get_last();
 
     //split error object into vars
-    if ($error !== NULL && $config->getString('site', 'Error_Report_Email', 'supportdefault@hhk.local')) {
+    if ($error !== NULL && $config->getString('site', 'Error_Report_Email', 'support@nonprofitsoftwarecorp.org')) {
 
         formHandler($error, $config);
 
@@ -65,7 +65,7 @@ function getSiteName(){
 function sendMail($message, $config) {
     if ($message) {
         //get report email address
-        $to = $config->getString('site', 'Error_Report_Email', 'supportdefault@hhk.local');
+        $to = $config->getString('site', 'Error_Report_Email', 'support@nonprofitsoftwarecorp.org');
         $subject = "New bug report received from " . getSiteName();
         $headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>" . "\r\n";
 
