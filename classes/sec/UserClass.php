@@ -576,6 +576,10 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
             $this->insertUserLog($dbh, UserClass::Login);
         }
     }
+    
+    public static function isCron(){
+        return (php_sapi_name() == 'cli')? true:false;
+    }
 
     public static function _logout()
     {

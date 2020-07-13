@@ -44,19 +44,21 @@ try {
     exit( $hex->getMessage());
 }
 
-// Authenticate user
-$user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
-$pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-
 $u = new UserClass();
-
-if ($u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
+if(!$u->isCron()){
+    // Authenticate user
+    $user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
+    $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
     
-    header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
-    header('HTTP/1.0 401 Unauthorized');
-    exit("Not authorized");
-    
+    if ($u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
+        
+        header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
+        header('HTTP/1.0 401 Unauthorized');
+        exit("Not authorized");
+        
+    }
 }
+
 
 $sendEmail = TRUE;
 
@@ -143,6 +145,7 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
 
 $stmt->execute($paramList);
 $numRecipients = $stmt->rowCount();
+$recipients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if ($numRecipients > $maxAutoEmail) {
     // to many recipients.
@@ -159,13 +162,20 @@ $mail->FromName = $siteName;
 $mail->isHTML(true);
 $mail->Subject = $subjectLine;
 
-$sForm = new SurveyForm('survey.txt');
+$stmt = $dbh->query("Select d.`idDocument`, g.`Code`, g.`Description` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 's' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
+$docRow = $stmt->fetch();
+if($docRow){
+    $sForm = new SurveyForm($dbh, $docRow['idDocument']);
+}else{
+    exit("Cannot find Survey document");
+}
+
 $badAddresses = 0;
 $resultsRegister = '';
 $deparatureDT = new \DateTime();
 $deparatureDT->sub(new \DateInterval('P' . $delayDays . 'D'));
 
-foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+foreach ($recipients as $r) {
 
     $deparatureDT = new \DateTime($r['Last_Departure']);
 
@@ -218,7 +228,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
     $messg = "<p>Today's date: " . date('M j, Y');
     $messg .= "<p>For guests leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
     $messg .= "<p>Subject Line: </p>" . $subjectLine;
-    $messg .= "<p>Template Text: </p>" . $sForm->templateFile . "<br/>";
+    $messg .= "<p>Template Text: </p>" . $sForm->template . "<br/>";
     $messg .= "<p>Results:</p>" . $resultsRegister;
 
     $mail->msgHTML($messg);
@@ -227,8 +237,9 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
 
 } else if (!$sendEmail) {
     echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
+    echo "<p>For guests leaving " . $deparatureDT->format('M j, Y');
     echo "<br/> Subject Line: " . $subjectLine;
-    echo "<br/>Body Template:<br/>" . $sForm->templateFile;
+    echo "<br/>Body Template:<br/>" . $sForm->template;
 }
 
 // Log - Activity?

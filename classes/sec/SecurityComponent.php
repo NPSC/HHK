@@ -142,8 +142,8 @@ class SecurityComponent {
 
     private function defineThisURL() {
 
-        $scriptName = filter_var($_SERVER["SCRIPT_NAME"], FILTER_SANITIZE_STRING);
-        $serverName = filter_var($_SERVER["SERVER_NAME"], FILTER_SANITIZE_URL);
+        $scriptName = filter_var((isset($_SERVER["SCRIPT_NAME"]) ? $_SERVER["SCRIPT_NAME"]: false), FILTER_SANITIZE_STRING);
+        $serverName = filter_var((isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"]: false), FILTER_SANITIZE_URL);
 
         if (is_null($scriptName) || $scriptName === FALSE) {
             throw new Hk_Exception_Runtime('Script name not set.');
