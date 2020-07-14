@@ -355,10 +355,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Role_Codes','100','Web User','','',0),
 ('Role_Codes','700','Guest','','',0),
 
-('Room_Category','dh','House','','',0),
-('Room_Category','gada','Hospital','','',0),
-('Room_Category','jph','Private Host','','',0),
-('Room_Category','nm','Motel','','',0),
+('Room_Category','dh','House','','',10),
+('Room_Category','gada','Hospital','','',20),
+('Room_Category','jph','Private Host','','',30),
+('Room_Category','nm','Motel','','',40),
 
 ('Room_Cleaning_Days', 'a', '7 Days', '7', 'ha',10),
 ('Room_Cleaning_Days', 'b', '14 Days', '14', 'ha',20),
@@ -368,8 +368,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Room_Group', 'Category', 'Room Category', 'Room_Category','',0),
 ('Room_Group', 'Report_Category', 'Report Category', 'Room_Rpt_Cat','',0),
 
-('Room_Rpt_Cat', '1', '1st Floor', '', 'h', 0),
-('Room_Rpt_Cat', '2', '2nd Floor', '', 'h', 0),
+('Room_Rpt_Cat', '1', '1st Floor', '', 'h', 20),
+('Room_Rpt_Cat', '2', '2nd Floor', '', 'h', 30),
 
 ('Room_Status', 'a', 'Clean', '','u',0),
 ('Room_Status', 'dty', 'Dirty', '','u',0),

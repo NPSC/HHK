@@ -55,9 +55,9 @@ class GuestRegister {
         }
 
         //Resource grouping controls
-        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group', 'Order');
         
-        $groupBy = ''; 
+        $groupBy = '';
         
         foreach ($rescGroups as $g) {
         	if ($rescGroupBy = $g[0]) {
