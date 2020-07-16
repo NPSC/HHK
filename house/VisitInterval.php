@@ -422,7 +422,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
                     $flds[$n++] = strval(str_replace(',', '', $r[$f[1]]));
                 }
             }else{
-                $flds[$n++] = strval($r[$f[1]]);
+                $flds[$n++] = html_entity_decode(strval($r[$f[1]]), ENT_QUOTES, 'UTF-8');
             }
         }
         
