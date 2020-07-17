@@ -1,4 +1,8 @@
 <?php
+namespace sec;
+
+use Exception\RuntimeException;
+
 /**
  * Login.php
  *
@@ -29,9 +33,9 @@ class Login {
         // Get the site configuration object
         try {
             $config = new Config_Lite($configFileName);
-        } catch (Exception $ex) {
+        } catch (\Exception $ex) {
             $ssn->destroy();
-            throw new Hk_Exception_Runtime("Configurtion file is missing, path=".$configFileName, 999, $ex);
+            throw new RuntimeException("Configurtion file is missing, path=".$configFileName, 999, $ex);
         }
 
         // Check site maintenance
@@ -79,7 +83,7 @@ class Login {
             $dbConfig = $config->getSection('db');
         } catch (Config_Lite_Exception $e) {
             $ssn->destroy();
-            throw new Hk_Exception_Runtime("Database configuration parameters are missing.", 1, $e);
+            throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
         }
 
         if (is_array($dbConfig)) {
@@ -90,7 +94,7 @@ class Login {
             $ssn->dbms = $dbConfig['DBMS'];
         } else {
             $ssn->destroy();
-            throw new Hk_Exception_Runtime("Bad Database Configuration");
+            throw new RuntimeException("Bad Database Configuration");
         }
     }
 
@@ -194,3 +198,4 @@ class Login {
 
 
 }
+?>

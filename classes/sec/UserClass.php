@@ -1,4 +1,5 @@
 <?php
+namespace sec;
 
 /**
  * UserClass.php
@@ -659,3 +660,4 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
                                 return $dash_str;
     }
 }
+?>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Config_Lite (Config/Lite.php)
  *

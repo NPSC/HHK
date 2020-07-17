@@ -1,4 +1,8 @@
 <?php
+namespace Tables;
+
+use Tables\Fields\{DB_Field, DbStrSanitizer, DbDateSanitizer};
+
 /**
  * LookupsRS.php
  *
@@ -13,7 +17,7 @@
  *
  * @author Eric
  */
-class LookupsRS extends TableRS {
+class LookupsRS extends AbstractTableRS {
 
     public $Category;   // varchar(45) NOT NULL,
     public $Code;   // varchar(45) NOT NULL DEFAULT '',
@@ -39,3 +43,4 @@ class LookupsRS extends TableRS {
 
     }
 }
+?>

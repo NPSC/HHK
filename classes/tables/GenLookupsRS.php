@@ -1,4 +1,8 @@
 <?php
+namespace Tables;
+
+use Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer};
+
 /**
  * GenLookupsRS.php
  *
@@ -13,7 +17,7 @@
  *
  * @author Eric
  */
-class GenLookupsRS extends TableRS {
+class GenLookupsRS extends AbstractTableRS {
 
     public $Table_Name;   // varchar(45) NOT NULL,
     public $Code;   // varchar(65) NOT NULL DEFAULT '',
@@ -37,3 +41,4 @@ class GenLookupsRS extends TableRS {
 
     }
 }
+?>

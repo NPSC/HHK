@@ -1,4 +1,9 @@
 <?php
+namespace sec;
+
+use Exception\RuntimeException;
+use PDOException;
+
 /**
  * ScriptAuthClass.php
  *
@@ -31,7 +36,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             $site = $this->loadWebSite($dbh);
 
-        } catch (Hk_Exception_Runtime $hex) {
+        } catch (RuntimeException $hex) {
 
             $uS->destroy(TRUE);
             exit("error: ".$hex->getMessage());
@@ -110,7 +115,7 @@ class ScriptAuthClass extends SecurityComponent {
                 $uS->siteList = $sl;
 
             } else {
-                throw new Hk_Exception_Runtime("web_sites records not found.");
+                throw new RuntimeException("web_sites records not found.");
             }
         }
 
@@ -194,11 +199,11 @@ class ScriptAuthClass extends SecurityComponent {
 
                 $uS->webPages = $wp;
             } else {
-                throw new Hk_Exception_Runtime("Web pages list not found.");
+                throw new RuntimeException("Web pages list not found.");
             }
         } else {
 
-            throw new Hk_Exception_Runtime("web_sites not found.  Host: " . $this->getRootURL() . "  Doc Root: " . $this->getHhkSiteDir());
+            throw new RuntimeException("web_sites not found.  Host: " . $this->getRootURL() . "  Doc Root: " . $this->getHhkSiteDir());
         }
 
         return $uS->webSite;
@@ -406,3 +411,4 @@ class ScriptAuthClass extends SecurityComponent {
     }
 
 }
+?>

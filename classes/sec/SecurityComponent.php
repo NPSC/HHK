@@ -1,4 +1,6 @@
 <?php
+namespace sec;
+
 /**
  * SecurityComponent.php
  *
