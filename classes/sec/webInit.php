@@ -1,5 +1,8 @@
 <?php
-namespace sec;
+namespace HHK\sec;
+use HHK\Exception\RuntimeException;
+use HHK\SysConst\{WebPageCode, Mode};
+
 /**
  * WebInit.php
  *
@@ -38,7 +41,7 @@ class WebInit {
 
             $this->dbh = initPDO(FALSE);
 
-        } catch (Hk_Exception_Runtime $hex) {
+        } catch (RuntimeException $hex) {
 
             if ($page_Type == WebPageCode::Page) {
                 echo('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');

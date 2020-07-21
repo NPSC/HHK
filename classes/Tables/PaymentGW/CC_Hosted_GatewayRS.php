@@ -1,8 +1,8 @@
 <?php
-namespace Tables\PaymentGW;
+namespace HHK\ Tables\PaymentGW;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbBitSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbBitSanitizer};
 
 /**
  * CC_Hosted_GatewayRS.php

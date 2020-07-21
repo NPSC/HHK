@@ -8,6 +8,8 @@
  * @link      https://github.com/NPSC/HHK
  */
 
+use SysConst\SalutationPurpose;
+
 class MailList {
 
     // Do we collect company care/of names?

@@ -1,5 +1,8 @@
 <?php
-namespace sec;
+namespace HHK\sec;
+use HHK\Exception\RuntimeException;
+use HHK\TableLog\HouseLog;
+
 /**
  * SysConfig.php
  *
@@ -23,13 +26,13 @@ class SysConfig {
      * @param Session $uS
      * @param string $category
      * @param string $tableName
-     * @throws Hk_Exception_Runtime
+     * @throws RuntimeException
      */
     public static function getCategory(\PDO $dbh, Session $uS, $category, $tableName)
     {
 
         if ($tableName == '' || $category == '') {
-            throw new Hk_Exception_Runtime('System Configuration database table name or category not specified.  ');
+            throw new RuntimeException('System Configuration database table name or category not specified.  ');
         }
 
         $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
@@ -50,16 +53,16 @@ class SysConfig {
     public static function getKeyValue(\PDO $dbh, $tableName, $key) {
 
         if ($tableName == '' || $key == '') {
-            throw new Hk_Exception_Runtime('System Configuration database table name or key not specified.  ');
+            throw new RuntimeException('System Configuration database table name or key not specified.  ');
         }
 
         $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 1) {
             return self::getTypedVal($rows[0]['Type'], $rows[0]['Value']);
         } else {
-            throw new Hk_Exception_Runtime('System Configuration key not found: ' . $key);
+            throw new RuntimeException('System Configuration key not found: ' . $key);
         }
 
     }
@@ -67,11 +70,11 @@ class SysConfig {
     public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value) {
 
         if ($tableName == '' || $key == '') {
-            throw new Hk_Exception_Runtime('System Configuration database table name or key not specified.  ');
+            throw new RuntimeException('System Configuration database table name or key not specified.  ');
         }
 
         $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 1) {
 
@@ -92,7 +95,7 @@ class SysConfig {
 
             }
         } else {
-            throw new Hk_Exception_Runtime('System Configuration key not found: ' . $key);
+            throw new RuntimeException('System Configuration key not found: ' . $key);
         }
     }
 

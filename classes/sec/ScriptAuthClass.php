@@ -1,8 +1,10 @@
 <?php
-namespace sec;
+namespace HHK\sec;
 
-use Exception\RuntimeException;
-use PDOException;
+use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\{HTMLContainer};
+use HHK\SysConst\WebPageCode;
+use HHK\SysConst\{WebSiteCode, Mode};
 
 /**
  * ScriptAuthClass.php
@@ -166,7 +168,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             try {
                 $stmt = $dbh->query($query . $where . $orderBy);
-            } catch (PDOException $pex) {
+            } catch (\PDOException $pex) {
                 $where = " where p.Web_Site = '$wsCode' ";
                 $stmt = $dbh->query($query . $where . $orderBy);
             }
@@ -368,7 +370,7 @@ class ScriptAuthClass extends SecurityComponent {
         $siteCount = 0;
         $siteMu = '';
 
-        $config = new Config_Lite(ciCFG_FILE);
+        $config = new \Config_Lite(ciCFG_FILE);
         $tutorialURL = $config->getString('site', 'Tutorial_URL', '');
         $hufURL = $config->getString('site', 'HUF_URL', '');
 

@@ -8,6 +8,9 @@
  * @link      https://github.com/NPSC/HHK
  */
 
+use SysConst\VolRank;
+use sec\SecurityComponent;
+
 class UserCategories {
 
     private $myCats = array();

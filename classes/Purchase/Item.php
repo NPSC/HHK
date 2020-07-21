@@ -1,4 +1,11 @@
 <?php
+
+namespace HHK\Purchase;
+
+use HHK\Exception\RuntimeException;
+use HHK\Tables\EditRS;
+use HHK\Tables\Item\ItemRS;
+
 /**
  * Item.php
  *
@@ -36,7 +43,7 @@ class Item {
         $items = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($items) == 0) {
-            throw new Hk_Exception_Runtime('Item not found. Item Id = '. $this->idItem);
+            throw new RuntimeException('Item not found. Item Id = '. $this->idItem);
         }
 
         $this->itemRs = new ItemRS();

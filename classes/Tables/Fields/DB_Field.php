@@ -1,7 +1,7 @@
 <?php
-namespace Tables\Fields;
+namespace HHK\Tables\Fields;
 /**
- * PDOdata.php
+ * DB_Field.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>

@@ -1,8 +1,8 @@
 <?php
-namespace Tables\House;
+namespace HHK\Tables\House;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer};
 
 /**
  * House_LogRS.php

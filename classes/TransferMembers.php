@@ -1,4 +1,10 @@
 <?php
+use AuditLog\NameLog;
+use Exception\RuntimeException;
+use Exception\UploadException;
+use Tables\EditRS;
+use Tables\Name\NameRS;
+
 /*
  * TransferMembers.php
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
@@ -106,7 +112,7 @@ class TransferMembers {
      *
      * @param mixed $accountId Remote account Id
      * @return mixed The Remote account object.
-     * @throws Hk_Exception_Runtime
+     * @throws RuntimeException
      */
     public function retrieveAccount($accountId) {
 
@@ -116,7 +122,7 @@ class TransferMembers {
         $account = $this->webService->getIndividualAccount($accountId);
 
         if ($this->checkError($account)) {
-            throw new Hk_Exception_Runtime($this->errorMessage);
+            throw new RuntimeException($this->errorMessage);
         }
 
         return $account;
@@ -128,12 +134,12 @@ class TransferMembers {
      * @param array $accountData
      * @param int $idName
      * @return string
-     * @throws Hk_Exception_Runtime
+     * @throws RuntimeException
      */
     public function updateNeonAccount(\PDO $dbh, $accountData, $idName) {
 
         if ($idName < 1) {
-            throw new Hk_Exception_Runtime('HHK Member Id not specified: ' . $idName);
+            throw new RuntimeException('HHK Member Id not specified: ' . $idName);
         }
 
 
@@ -142,15 +148,15 @@ class TransferMembers {
 
 
         if (is_null($r)) {
-            throw new Hk_Exception_Runtime('HHK Member Id not found: ' . $idName);
+            throw new RuntimeException('HHK Member Id not found: ' . $idName);
         }
 
         if (isset($accountData['accountId']) === FALSE) {
-            throw new Hk_Exception_Runtime('Remote account id not found for: ' . $r['accountId']);
+            throw new RuntimeException('Remote account id not found for: ' . $r['accountId']);
         }
 
         if ($r['accountId'] != $accountData['accountId']) {
-            throw new Hk_Exception_Runtime('Account Id mismatch: local Id = ' . $r['accountId'] . ' remote Id = ' . $accountData['accountId']);
+            throw new RuntimeException('Account Id mismatch: local Id = ' . $r['accountId'] . ' remote Id = ' . $accountData['accountId']);
         }
 
         $unwound = array();
@@ -227,7 +233,7 @@ class TransferMembers {
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {
-            throw new Hk_Exception_Runtime($this->errorMessage);
+            throw new RuntimeException($this->errorMessage);
         }
 
         if (isset($result['customFields']['customField'])) {
@@ -250,7 +256,8 @@ class TransferMembers {
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {
-            throw new Hk_Exception_Runtime($this->errorMessage);
+            throw new RuntimeException($this->errorMessage);
+            
         }
 
         if (isset($result['countries']['country'])) {
@@ -276,7 +283,7 @@ class TransferMembers {
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {
-            throw new Hk_Exception_Runtime('Method:' . $method . ', List Name: ' . $listName . ', Error Message: ' .$this->errorMessage);
+            throw new RuntimeException('Method:' . $method . ', List Name: ' . $listName . ', Error Message: ' .$this->errorMessage);
         }
 
         if (isset($result[$listName][$listItem])) {
@@ -432,7 +439,7 @@ class TransferMembers {
                 $this->updateLocalPaymentRecord($dbh, $r['idPayment'], $wsResult['donationId']);
                 $f['Result'] = 'Success';
 
-            } catch (Hk_Exception_Upload $uex) {
+            } catch (UploadException $uex) {
 
                 $f['Result'] = $uex->getMessage();
             }
@@ -544,7 +551,7 @@ class TransferMembers {
                         try{
                             $retrieveResult = $this->retrieveAccount($result['searchResults'][0]['Account ID']);
                             $f['Result'] .= $this->updateNeonAccount($dbh, $retrieveResult, $r['HHK_ID']);
-                        } catch (Hk_Exception_Runtime $hex) {
+                        } catch (RuntimeException $hex) {
                             $f['Result'] .= 'Update Individual Type Error: ' . $hex->getMessage();
                             continue;
                         }
@@ -639,7 +646,7 @@ class TransferMembers {
             $extRows = $stmt->fetchAll(PDO::FETCH_NUM);
 
             if (count($extRows[0]) == 1 && $extRows[0][0] > 0) {
-                throw new Hk_Exception_Upload("HHK Payment Record (idPayment = $idPayment) already has a Donation Id = " . $extId);
+                throw new UploadException("HHK Payment Record (idPayment = $idPayment) already has a Donation Id = " . $extId);
             }
 
             $result = $dbh->exec("Update `payment` set External_Id = '$extId' where idPayment = $idPayment;");
@@ -1024,7 +1031,7 @@ class TransferMembers {
     protected function openTarget($userId, $apiKey) {
 
         if (function_exists('curl_version') === FALSE) {
-            throw new Hk_Exception_Upload('PHP configuration error: cURL functions are missing.');
+            throw new UploadException('PHP configuration error: cURL functions are missing.');
         }
 
         $keys = array('orgId'=>$userId, 'apiKey'=>$apiKey);
@@ -1034,11 +1041,11 @@ class TransferMembers {
 
 
         if ( isset( $loginResult['operationResult'] ) && $loginResult['operationResult'] != 'SUCCESS' ) {
-            throw new Hk_Exception_Upload('API Login failed');
+            throw new UploadException('API Login failed');
         }
 
         if ($loginResult['userSessionId'] == '') {
-            throw new Hk_Exception_Upload('API Session Id is missing');
+            throw new UploadException('API Session Id is missing');
         }
 
         return TRUE;

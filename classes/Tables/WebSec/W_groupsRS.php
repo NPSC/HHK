@@ -1,8 +1,8 @@
 <?php
-namespace Tables\WebSec;
+namespace HHK\ Tables\WebSec;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbBitSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbBitSanitizer};
 
 /**
  * W_groupsRS.php

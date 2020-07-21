@@ -1,5 +1,10 @@
 <?php
 
+namespace HHK;
+
+use HHK\Tables\{DocumentRS, EditRS};
+use HHK\Exception\RuntimeException;
+
 /**
  * Document.php
  *
@@ -127,7 +132,7 @@ class Document {
             $document->setCreatedBy($username);
             $document->idDocument = 0;
         } else {
-            throw new Hk_Exception_Runtime('Trying to create an invalid Document.  ');
+            throw new RuntimeException('Trying to create an invalid Document.  ');
         }
 
         return $document;

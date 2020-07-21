@@ -1,5 +1,7 @@
 <?php
 
+use Exception\RuntimeException;
+
 /*
  * The MIT License
  *
@@ -38,7 +40,7 @@ class ValueAddedTax {
      * @param \PDO $dbh
      * @param int $idVisit  must be NULL to use idRegistration.
      * @param int $idRegistration
-     * @throws Hk_Exception_Runtime
+     * @throws RuntimeException
      */
     public function __construct(\PDO $dbh) {
 
@@ -163,7 +165,7 @@ class ValueAddedTax {
 
         if (is_null($idVisit) || $idVisit < 0) {
             // throw an error
-            throw new Hk_Exception_Runtime('Invalid visit Id: ' . $idVisit);
+            throw new RuntimeException('Invalid visit Id: ' . $idVisit);
         }
 
         $taxSubset = [];

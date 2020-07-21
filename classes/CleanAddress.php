@@ -1,4 +1,7 @@
 <?php
+
+namespace HHK;
+
 /**
  * CleanAddress.php
  *
@@ -232,7 +235,7 @@ class CleanAddress {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from street_suffix order by Common");
 
-        foreach ($stmt->fetchAll(PDO::FETCH_NUM) as $rw) {
+        foreach ($stmt->fetchAll(\PDO::FETCH_NUM) as $rw) {
             $lst[trim($rw[0])] = $rw[1];
         }
         return $lst;
@@ -242,7 +245,7 @@ class CleanAddress {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from secondary_unit_desig order by Common");
 
-        foreach ($stmt->fetchAll(PDO::FETCH_NUM) as $rw) {
+        foreach ($stmt->fetchAll(\PDO::FETCH_NUM) as $rw) {
             $lst[trim($rw[0])] = $rw[1];
         }
         return $lst;

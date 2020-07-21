@@ -13,6 +13,8 @@
  *
  * @author Eric Crane <ecrane at nonprofitsoftwarecorp.org>
  */
+use sec\Session;
+
 class SiteDbBackup {
 
     public $return_var;

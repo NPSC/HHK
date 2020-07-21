@@ -1,6 +1,11 @@
 <?php
 
+namespace HHK;
 
+use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode, RoomRateCategories};
+use HHK\sec\Session;
+use HHK\HTMLControls\{HTMLTable};
+use HHK\Purchase\PriceModel\AbstractPriceModel;
 
 class GlStmt {
 
@@ -25,7 +30,7 @@ class GlStmt {
 		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
 
 		// End date is the beginning of the next month.
-		$this->endDate = $this->startDate->add(new DateInterval('P1M'));
+		$this->endDate = $this->startDate->add(new \DateInterval('P1M'));
 		
 		$this->errors = array();
 		$this->stopAtInvoice = '';
@@ -34,7 +39,7 @@ class GlStmt {
 
 		$pmCodes = array();
 		$stmt = $dbh->query("Select Gl_Code from payment_method where idPayment_method in (1, 2, 3)");
-		while ($p = $stmt->fetch(PDO::FETCH_NUM)) {
+		while ($p = $stmt->fetch(\PDO::FETCH_NUM)) {
 			$pmCodes[] = $p[0];
 		}
 		
@@ -44,7 +49,7 @@ class GlStmt {
 
 	/**
 	 * @param boolean $stopAtUnbalance
-	 * @return GlCodes
+	 * @return GlStmt
 	 */
 	public function mapRecords() {
 
@@ -103,7 +108,7 @@ class GlStmt {
 		$hasWaive = FALSE;
 
 		if ($p['pTimestamp'] != '') {
-			$this->paymentDate = new DateTime($p['pTimestamp']);
+			$this->paymentDate = new \DateTime($p['pTimestamp']);
 		} else {
 			$this->recordError("Missing Payment Timestamp. Payment Id = ". $p['idPayment']);
 			return;
@@ -145,7 +150,7 @@ class GlStmt {
 			}
 
 			if ($p['pUpdated'] != '') {
-				$pUpDate = new DateTime($p['pUpdated']);
+				$pUpDate = new \DateTime($p['pUpdated']);
 			} else {
 				$this->recordError("Missing Payment Updated Date on RETURN. Payment Id = ". $p['idPayment']);
 				return;
@@ -248,7 +253,7 @@ class GlStmt {
 		$query = "call gl_report('" . $this->startDate->format('Y-m-d') . "','" . $this->endDate->format('Y-m-d') . "')";
 		
     	$stmt = $dbh->query($query);
-    	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$stmt->nextRowset();
     	
     	foreach ($rows as $p) {
@@ -505,7 +510,7 @@ order by v.idVisit, v.Span";
 			$totalCatNites[$c[0]] = 0;
 		}
 		
-		$priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+		$priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 		
 		$overPay = 0;
 		$preIntervalPay = 0;
@@ -519,7 +524,7 @@ order by v.idVisit, v.Span";
 		$vIntervalPay = 0;
 		
 		$istmt = $dbh->query("select idItem from item");
-		while( $i = $istmt->fetch(PDO::FETCH_NUM)) {
+		while( $i = $istmt->fetch(\PDO::FETCH_NUM)) {
 			$totalPayment[$i[0]] = 0;
 		}
 		
@@ -579,7 +584,7 @@ order by v.idVisit, v.Span";
 					
 					
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
-					$vFullIntervalCharge += $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategorys::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
+					$vFullIntervalCharge += $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
 					
 					if ($adjRatio > 0) {
 						// Only adjust when the charge will be more.
@@ -594,14 +599,14 @@ order by v.idVisit, v.Span";
 			
 			// Add up payments
 			if ($r['pTimestamp'] != '') {
-				$paymentDate = new DateTime($r['pTimestamp']);
+				$paymentDate = new \DateTime($r['pTimestamp']);
 			} else {
 				// No payment
 				continue;
 			}
 			
 			if ($r['pUpdated'] != '') {
-				$returnDate = new DateTime($r['pUpdated']);
+				$returnDate = new \DateTime($r['pUpdated']);
 			} else {
 				$returnDate = NULL;
 			}

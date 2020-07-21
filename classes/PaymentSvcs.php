@@ -15,6 +15,13 @@
  *
  * @author Eric
  */
+use SysConst\{InvoiceStatus, PayType, PaymentStatusCode, PaymentMethod};
+use sec\Session;
+use Tables\EditRS;
+use Tables\Payment\{PaymentRS, Payment_AuthRS, PaymentInfoCheckRS};
+use HTMLControls\{HTMLContainer};
+use Exception\PaymentException;
+
 class PaymentSvcs {
 
 
@@ -377,7 +384,7 @@ class PaymentSvcs {
                 $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
 
                 if (count($arows) != 1) {
-                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
+                    throw new PaymentException('Payment Detail record not found. ');
                 }
 
                 EditRS::loadRow($arows[0], $pAuthRs);
@@ -403,7 +410,7 @@ class PaymentSvcs {
                 $arows = EditRS::select($dbh, $pAuthRs, array($pAuthRs->idPayment));
 
                 if (count($arows) != 1) {
-                    throw new Hk_Exception_Payment('Payment Detail record not found. ');
+                    throw new PaymentException('Payment Detail record not found. ');
                 }
 
                 EditRS::loadRow($arows[0], $pAuthRs);
@@ -422,7 +429,7 @@ class PaymentSvcs {
                 break;
 
             default:
-                throw new Hk_Exception_Payment('Unknown pay type.  ');
+                throw new PaymentException('Unknown pay type.  ');
         }
 
         return $dataArray;
@@ -582,7 +589,7 @@ class PaymentSvcs {
             	break;
             	
             default:
-                throw new Hk_Exception_Payment('The pay type is ineligible.  ');
+                throw new PaymentException('The pay type is ineligible.  ');
         }
 
         return $dataArray;
@@ -683,7 +690,7 @@ class PaymentSvcs {
             	break;
 
             default:
-                throw new Hk_Exception_Payment('This pay type is ineligible for Undo Refund Amount.  ');
+                throw new PaymentException('This pay type is ineligible for Undo Refund Amount.  ');
         }
 
         return $dataArray;

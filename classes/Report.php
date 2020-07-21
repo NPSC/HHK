@@ -1,4 +1,8 @@
 <?php
+
+use Tables\{EditRS, ReportRS};
+use Exception\RuntimeException;
+
 /**
  * Report.php
  *
@@ -125,7 +129,7 @@ class Report {
             $report->idReport = 0;
 
         } else {
-            throw new Hk_Exception_Runtime('Trying to create an invalid Incident.  ');
+            throw new RuntimeException('Trying to create an invalid Incident.  ');
         }
 
         return $report;

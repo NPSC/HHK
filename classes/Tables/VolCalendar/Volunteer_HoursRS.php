@@ -1,8 +1,8 @@
 <?php
-namespace Tables\VolCalendar;
+namespace HHK\ Tables\VolCalendar;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbDecimalSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbDecimalSanitizer};
 
 /**
  * Volunteer_HoursRS.php

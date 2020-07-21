@@ -1,8 +1,8 @@
 <?php
-namespace Tables\Donate;
+namespace HHK\Tables\Donate;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDecimalSanitizer, DbDateSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDecimalSanitizer, DbDateSanitizer};
 
 /**
  * CampaignRS.php

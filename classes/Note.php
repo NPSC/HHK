@@ -1,4 +1,8 @@
 <?php
+use Exception\RuntimeException;
+use Tables\EditRS;
+use Tables\Registration\NoteRS;
+
 /**
  * Note.php
  *
@@ -68,7 +72,7 @@ class Note {
 
         if ($this->idNote > 0) {
 
-            $noteRS = new NoteRs();
+            $noteRS = new NoteRS();
             $noteRS->idNote->setStoredVal($this->idNote);
             $rows = EditRS::select($dbh, $noteRS, array($noteRS->idNote));
 
@@ -117,7 +121,7 @@ class Note {
             $note->idNote = 0;
 
         } else {
-            throw new Hk_Exception_Runtime('Trying to create an invalid note.  ');
+            throw new RuntimeException('Trying to create an invalid note.  ');
         }
 
         return $note;

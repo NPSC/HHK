@@ -1,7 +1,7 @@
 <?php
-namespace Tables;
+namespace HHK\Tables;
 
-use Tables\Fields\{DB_Field, DbStrSanitizer, DbDateSanitizer};
+use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbDateSanitizer};
 
 /**
  * LookupsRS.php

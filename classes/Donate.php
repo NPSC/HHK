@@ -1,4 +1,10 @@
 <?php
+
+namespace HHK;
+
+use HHK\HTMLControls\{HTMLTable, HTMLSelector, HTMLInput};
+use HHK\AlertControl\AlertMessage;
+
 /**
  * Donate.php
  *
@@ -60,9 +66,9 @@ class Donate {
                 );
 
         // Reply message
-        $donAlert = new alertMessage("donateResponseContainer");
+        $donAlert = new AlertMessage("donateResponseContainer");
         $donAlert->set_DisplayAttr("none");
-        $donAlert->set_Context(alertMessage::Success);
+        $donAlert->set_Context(AlertMessage::Success);
         $donAlert->set_iconId("donateResponseIcon");
         $donAlert->set_styleId("donateResponse");
         $donAlert->set_txtSpanId("donResultMessage");

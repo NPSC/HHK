@@ -1,4 +1,9 @@
 <?php
+use Exception\RuntimeException;
+use HTMLControls\{HTMLTable, HTMLContainer};
+use SysConst\CodeVersion;
+use sec\Session;
+
 /**
  * Patch.php
  *
@@ -45,7 +50,7 @@ class Patch {
 
                     if ($fileSize === false) {
                         zip_close($zip);
-                        throw new Hk_Exception_Runtime("Unable to write patch version file.  ");
+                        throw new RuntimeException("Unable to write patch version file.  ");
                     }
 
                     break;
@@ -58,7 +63,7 @@ class Patch {
 
 
         if ($fileSize <= 0) {
-            throw new Hk_Exception_Runtime("Patch file not found or empty.  ");
+            throw new RuntimeException("Patch file not found or empty.  ");
         }
 
 
@@ -71,28 +76,28 @@ class Patch {
         $newVersions = explode('.', $newVersion);
 
         if (count($newVersions) < 2) {
-            throw new Hk_Exception_Runtime("New version not in proper format: " . $newVersion);
+            throw new RuntimeException("New version not in proper format: " . $newVersion);
         }
 
         $origBuilds = explode('.', $origBuild);
 
         if (count($origBuilds) < 3) {
-            throw new Hk_Exception_Runtime("Current site version not in proper format: " . $origBuild);
+            throw new RuntimeException("Current site version not in proper format: " . $origBuild);
         }
 
         // Major version
         if (intval($newVersions[0], 10) < intval($origBuilds[0], 10)) {
-            throw new Hk_Exception_Runtime("The major version of this update (" . $newVersions[0] . ") is lower than this site's major version (" . $origBuilds[0] . ").  ");
+            throw new RuntimeException("The major version of this update (" . $newVersions[0] . ") is lower than this site's major version (" . $origBuilds[0] . ").  ");
         }
 
         // Minor Version
         if (intval($newVersions[1], 10) < intval($origBuilds[1], 10)) {
-            throw new Hk_Exception_Runtime("The minor version of this update (" . $newVersions[1] . ") is lower than this site's minor version (" . $origBuilds[1] . ").  ");
+            throw new RuntimeException("The minor version of this update (" . $newVersions[1] . ") is lower than this site's minor version (" . $origBuilds[1] . ").  ");
         }
 
         // Build Number
         if ($newBuild < intval($origBuilds[2], 10)) {
-            throw new Hk_Exception_Runtime("The build number of this update (" . $newBuild . ") is lower than this site's build number (" . $origBuilds[2] . ").  ");
+            throw new RuntimeException("The build number of this update (" . $newBuild . ") is lower than this site's build number (" . $origBuilds[2] . ").  ");
         }
 
     }
@@ -347,7 +352,7 @@ class Patch {
             $result = $table->generateMarkup();
 
         } else {
-            throw new Hk_Exception_Runtime("Unable to open zip file.  ");
+            throw new RuntimeException("Unable to open zip file.  ");
         }
 
         return $result;

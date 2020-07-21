@@ -1,8 +1,8 @@
 <?php
-namespace Tables\Visit;
+namespace HHK\ Tables\Visit;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer, DbDecimalSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer, DbDecimalSanitizer};
 
 /**
  * VisitRS.php

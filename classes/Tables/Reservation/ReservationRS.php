@@ -1,8 +1,8 @@
 <?php
-namespace Tables\Reservation;
+namespace HHK\ Tables\Reservation;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer, DbDecimalSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer, DbDecimalSanitizer};
 
 /**
  * ReservationRS.php

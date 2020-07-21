@@ -1,8 +1,8 @@
 <?php
-namespace Tables\Payment;
+namespace HHK\ Tables\Payment;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbIntSanitizer, DbDecimalSanitizer, DbStrSanitizer, DbDateSanitizer, DbBitSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbDecimalSanitizer, DbStrSanitizer, DbDateSanitizer, DbBitSanitizer};
 
 /**
  * Payment_AuthRS.php

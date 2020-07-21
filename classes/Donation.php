@@ -1,4 +1,13 @@
 <?php
+
+namespace HHK;
+
+use HHK\Exception\RuntimeException;
+use HHK\SysConst\{AddressPurpose, SalutationCodes, ActivityTypes, MemBasis, MemDesignation};
+use HHK\Tables\{ActivityRS, EditRS};
+use HHK\Tables\Donate\DonationsRS;
+use HHK\sec\Session;
+
 /**
  * Donation.php
  *
@@ -28,7 +37,7 @@ class Donation {
     protected $maxDonationAmt;
     protected $payCodes;
 
-    function __construct(PDO $dbh, array $payCodes, $maxDonationAmt, $campaignCode = '') {
+    function __construct(\PDO $dbh, array $payCodes, $maxDonationAmt, $campaignCode = '') {
         $this->maxDonationAmt = $maxDonationAmt;
         $this->payCodes = $payCodes;
 
@@ -41,10 +50,10 @@ class Donation {
     }
 
 
-    public function newDonation(PDO $dbh, $amount, $donorId, $includedId, $payType, $date = '', $addressPurpose = Address_Purpose::Home, $salCode = SalutationCodes::FirstOnly, $envCode = SalutationCodes::Formal) {
+    public function newDonation(\PDO $dbh, $amount, $donorId, $includedId, $payType, $date = '', $addressPurpose = AddressPurpose::Home, $salCode = SalutationCodes::FirstOnly, $envCode = SalutationCodes::Formal) {
 
         if (is_null($this->campaign)) {
-            throw new Hk_Exception_Runtime('Campaign Code not set.  ');
+            throw new RuntimeException('Campaign Code not set.  ');
         }
 
         $this->setAmount($amount);
@@ -54,7 +63,7 @@ class Donation {
 
     }
 
-    public function saveDonation(PDO $dbh, $paymentId = 0) {
+    public function saveDonation(\PDO $dbh, $paymentId = 0) {
 
         if ($this->getAmount() == 0) {
             return;
@@ -114,20 +123,20 @@ class Donation {
             }
 
         } else {
-            throw new Hk_Exception_Runtime("DB Error, table=donations - insert failure.");
+            throw new RuntimeException("DB Error, table=donations - insert failure.");
         }
 
         return $donId;
     }
 
 
-    public function setCampaign(PDO $dbh, $campaignCode) {
+    public function setCampaign(\PDO $dbh, $campaignCode) {
 
         $this->campaign = new Campaign($dbh, $campaignCode);
 
         // Must be an existing campaign
         if ($this->campaign->get_idcampaign() == 0) {
-            throw new Hk_Exception_Runtime("Bad Campaign Code: " . $campaignCode);
+            throw new RuntimeException("Bad Campaign Code: " . $campaignCode);
         }
 
     }
@@ -144,7 +153,7 @@ class Donation {
         }
         // Filter donation amouont
         if ($amt <= 0 || $amt > $this->maxDonationAmt || $this->campaign->isAmountValid($amt) === FALSE) {
-            throw new Hk_Exception_Runtime("Invalid donation amount: " . $amt);
+            throw new RuntimeException("Invalid donation amount: " . $amt);
         }
 
         $this->amount = $amt;
@@ -155,12 +164,12 @@ class Donation {
         return $this->donor;
     }
 
-    public function setDonor(PDO $dbh, $id, $includedId = 0) {
+    public function setDonor(\PDO $dbh, $id, $includedId = 0) {
 
         $this->donor = Member::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
 
         if ($this->donor->isNew()) {
-            throw new Hk_Exception_Runtime("Bad Member Id: ".$id);
+            throw new RuntimeException("Bad Member Id: ".$id);
         }
 
         if ($this->donor->getMemberDesignation() == MemDesignation::Individual) {
@@ -204,9 +213,9 @@ class Donation {
     public function setDate($DonationDateTimeStr) {
 
         if ($DonationDateTimeStr != '') {
-            $this->DateDT = new DateTime($DonationDateTimeStr);
+            $this->DateDT = new \DateTime($DonationDateTimeStr);
         } else {
-            $this->DateDT = new DateTime();
+            $this->DateDT = new \DateTime();
         }
 
         return $this;
@@ -246,7 +255,7 @@ class Donation {
     public function setPayTypeCode($payTypeCode) {
 
         if (isset($this->payCodes[$payTypeCode]) === FALSE) {
-            throw new Hk_Exception_Runtime("Bad Pay type: " . $payTypeCode);
+            throw new RuntimeException("Bad Pay type: " . $payTypeCode);
         }
         $this->payTypeCode = $payTypeCode;
         return $this;

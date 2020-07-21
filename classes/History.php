@@ -1,4 +1,15 @@
 <?php
+
+namespace HHK;
+
+use HHK\Purchase\RoomRate;
+use HHK\SysConst\{WebRole, ReservationStatus, ItemPriceCode, RoomRateCategories, GLTableNames, RoomState};
+use HHK\Tables\EditRS;
+use HHK\Tables\House\Room_RateRS;
+use HHK\sec\{Session, SecurityComponent};
+use HHK\Exception\InvalidArgumentException;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer};
+
 /**
  * History.php
  *
@@ -13,6 +24,7 @@
  * @package name
  * @author Eric
  */
+
 class History {
 
     protected $resvEvents;
@@ -43,7 +55,7 @@ class History {
     public static function getHistoryMarkup(\PDO $dbh, $view, $page) {
 
         if ($view == "") {
-            throw new Hk_Exception_InvalidArguement("Database view name must be defined.");
+            throw new InvalidArgumentException("Database view name must be defined.");
         }
 
         $query = "select * from $view";
@@ -125,15 +137,15 @@ class History {
 
         if ($start != '') {
             try {
-                $startDT = new DateTime(filter_var($start, FILTER_SANITIZE_STRING));
+                $startDT = new \DateTime(filter_var($start, FILTER_SANITIZE_STRING));
                 $days = intval($days);
 
-                $endDT = new DateTime(filter_var($start, FILTER_SANITIZE_STRING));
-                $endDT->add(new DateInterval('P' . $days . 'D'));
+                $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_STRING));
+                $endDT->add(new \DateInterval('P' . $days . 'D'));
 
                 $whDate = " and DATE(Expected_Arrival) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Expected_Arrival) <= DATE('" . $endDT->format('Y-m-d') . "') ";
 
-            } catch (Exception $ex) {
+            } catch (\Exception $ex) {
                 $whDate = '';
             }
         }
@@ -167,7 +179,7 @@ class History {
 
         $uS = Session::getInstance();
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = new \Config_Lite(LABEL_FILE);
         $returnRows = array();
 
         foreach ($this->resvEvents as $r) {
@@ -255,7 +267,7 @@ class History {
 
                     $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']];
 
-                    if ($r['Rate'] == RoomRateCategorys::Fixed_Rate_Category && $r['Fixed_Room_Rate'] > 0) {
+                    if ($r['Rate'] == RoomRateCategories::Fixed_Rate_Category && $r['Fixed_Room_Rate'] > 0) {
                         $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']] . ': $' . number_format($r['Fixed_Room_Rate'], 2);
                     }
                 } else {
@@ -277,13 +289,13 @@ class History {
 
 
             // Hospital
-            if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) {
+            if (count($uS->guestLookups[GLTableNames::Hospital]) > 1) {
                 $hospital = '';
-                if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-                    $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
+                if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+                    $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] . ' / ';
                 }
-                if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-                    $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+                if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+                    $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
                 }
 
                 $fixedRows['Hospital'] = $hospital;
@@ -323,8 +335,8 @@ class History {
         $uS = Session::getInstance();
 
         $hospList = array();
-        if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-            $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+        if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+            $hospList = $uS->guestLookups[GLTableNames::Hospital];
         }
 
         return self::getCheckedInMarkup($dbh, $uS->PaymentGateway, $hospList, $page, $includeAction, $static, $patientColName, $hospColName);
@@ -462,9 +474,9 @@ class History {
 
                     $fixedRows['Rate'] = $roomRates[$r['idRoom_rate']]['Title'];
 
-                    if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategorys::Fixed_Rate_Category && $r['Pledged_Rate'] > 0) {
+                    if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategories::Fixed_Rate_Category && $r['Pledged_Rate'] > 0) {
                         $fixedRows['Rate'] .= ': $' .number_format($r['Pledged_Rate'], 2);
-                    } else if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategorys::FlatRateCategory) {
+                    } else if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategories::FlatRateCategory) {
                         $fixedRows['Rate'] .= ': $' . number_format($roomRates[$r['idRoom_rate']]['Reduced_Rate_1'], 2);
                     }
 

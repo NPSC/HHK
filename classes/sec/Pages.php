@@ -1,9 +1,11 @@
 <?php
-namespace sec;
+namespace HHK\sec;
 
-use Exception\RuntimeException;
-use Tables\EditRS;
-use Tables\WebSec\{PageRS, Page_SecurityGroupRS, Web_SitesRS};
+use HHK\Exception\RuntimeException;
+use HHK\SysConst\WebPageCode;
+use HHK\Tables\EditRS;
+use HHK\Tables\WebSec\{PageRS, Page_SecurityGroupRS, Web_SitesRS};
+use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
 
 /**
  * Pages.php

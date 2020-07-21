@@ -1,5 +1,5 @@
 <?php
-namespace Tables;
+namespace HHK\Tables;
 /**
  * AbstractTableRS.php
  *

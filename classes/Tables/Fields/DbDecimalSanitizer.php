@@ -1,5 +1,5 @@
 <?php
-namespace Tables\Fields;
+namespace HHK\Tables\Fields;
 
 /**
  * DbDecimalSanitizer.php

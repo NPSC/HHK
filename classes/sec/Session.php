@@ -1,5 +1,5 @@
 <?php
-namespace sec;
+namespace HHK\sec;
 
 /**
  * session.php

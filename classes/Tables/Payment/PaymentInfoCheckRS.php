@@ -1,8 +1,8 @@
 <?php
-namespace Tables\Payment;
+namespace HHK\ Tables\Payment;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer};
 
 /**
  * PaymentInfoCheckRS.php

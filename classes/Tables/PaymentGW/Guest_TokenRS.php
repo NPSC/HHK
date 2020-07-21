@@ -1,8 +1,8 @@
 <?php
-namespace Tables\PaymentGW;
+namespace HHK\ Tables\PaymentGW;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbDecimalSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbDecimalSanitizer};
 
 /**
  * Guest_TokenRS.php

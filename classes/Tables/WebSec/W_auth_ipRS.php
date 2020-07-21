@@ -1,8 +1,8 @@
 <?php
-namespace Tables\WebSec;
+namespace HHK\ Tables\WebSec;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer};
 
 /**
  * W_auth_ipRS.php

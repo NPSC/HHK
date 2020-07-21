@@ -14,6 +14,8 @@
  * @author Eric
  */
 
+use HTMLControls\HTMLContainer;
+
 class Notes {
 
 

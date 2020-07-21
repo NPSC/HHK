@@ -1,8 +1,8 @@
 <?php
-namespace Tables\Name;
+namespace HHK\ Tables\Name;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer};
 
 /**
  * NameLanguageRS.php

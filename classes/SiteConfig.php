@@ -1,5 +1,12 @@
 <?php
 
+use HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
+use Exception\RuntimeException;
+use TableLog\HouseLog;
+use Tables\EditRS;
+use Tables\House\Desig_HolidaysRS;
+use sec\{Session, SysConfig};
+
 /**
  * SiteConfig.php
  *
@@ -249,10 +256,10 @@ class SiteConfig {
         zip_close($zip);
 
         if ($content === FALSE) {
-            throw new Hk_Exception_Runtime("Problem reading zip file entry: $na.  ");
+            throw new RuntimeException("Problem reading zip file entry: $na.  ");
         }
     } else {
-        throw new Hk_Exception_Runtime("Problem opening zip file.  Error code = $zip.  ");
+        throw new RuntimeException("Problem opening zip file.  Error code = $zip.  ");
     }
 
     return $content;

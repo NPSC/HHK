@@ -1,7 +1,7 @@
 <?php
-namespace Tables;
+namespace HHK\Tables;
 
-use Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDecimalSanitizer, DbDateSanitizer};
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDecimalSanitizer, DbDateSanitizer};
 
 /**
  * ActivityRS.php

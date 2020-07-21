@@ -1,8 +1,8 @@
 <?php
-namespace Tables\Attribute;
+namespace HHK\Tables\Attribute;
 
-use Tables\AbstractTableRS;
-use Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer};
+use HHK\Tables\AbstractTableRS;
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer};
 
 /*
  * AttributeRS.php

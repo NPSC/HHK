@@ -1,5 +1,5 @@
 <?php
-namespace Exception;
+namespace HHK\Exception;
 
 /**
  * UploadException.php

@@ -13,6 +13,8 @@
  *
  * @author Eric
  */
+use sec\Session;
+
 class SiteLog {
 
     public static function logPatch(\PDO $dbh, $logText, $GIT_Id = '') {

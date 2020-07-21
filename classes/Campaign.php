@@ -1,4 +1,8 @@
 <?php
+namespace HHK;
+
+use HHK\Tables\Donate\CampaignRS;
+use HHK\Tables\EditRS;
 /**
  * Campaign.php
  *

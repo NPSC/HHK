@@ -1,4 +1,7 @@
 <?php
+
+namespace HHK;
+
 /**
  * DataTableServer.php
  *
@@ -93,7 +96,7 @@ class DataTableServer {
 
         /* Data set length after filtering */
         $stmtflt = $dbh->query("SELECT FOUND_ROWS()");
-        $rtots = $stmtflt->fetchAll(PDO::FETCH_NUM);
+        $rtots = $stmtflt->fetchAll(\PDO::FETCH_NUM);
 
         $iFilteredTotal = $rtots[0][0];
 
@@ -111,7 +114,7 @@ class DataTableServer {
                 ";
         }
         $stmtotal = $dbh->query($sQuery);
-        $tots = $stmtotal->fetchAll(PDO::FETCH_NUM);
+        $tots = $stmtotal->fetchAll(\PDO::FETCH_NUM);
         $iTotal = $tots[0][0];
 
 
@@ -309,7 +312,7 @@ class SSP {
 				$column = $columns[ $columnIdx ];
 
 				if ( $requestColumn['searchable'] == 'true' ) {
-					$binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
+					$binding = self::bind( $bindings, '%'.$str.'%', \PDO::PARAM_STR );
 					$globalSearch[] = "`".$column['db']."` LIKE ".$binding;
 				}
 			}
@@ -327,10 +330,10 @@ class SSP {
 				if ( $requestColumn['searchable'] == 'true' &&
 				 $str != '' ) {
 				     if($requestColumn['search']['regex']){
-				         $binding = self::bind( $bindings, $str, PDO::PARAM_STR );
+				         $binding = self::bind( $bindings, $str, \PDO::PARAM_STR );
 				         $columnSearch[] = "`".$column['db']."` REGEXP ".$binding;
 				     }else{
-				         $binding = self::bind( $bindings, '%'.$str.'%', PDO::PARAM_STR );
+				         $binding = self::bind( $bindings, '%'.$str.'%', \PDO::PARAM_STR );
 				         $columnSearch[] = "`".$column['db']."` LIKE ".$binding;
 				     }
 				}
@@ -366,7 +369,7 @@ class SSP {
 	 * sending back to the client.
 	 *
 	 *  @param  array $request Data sent to server by DataTables
-	 *  @param  array|PDO $conn PDO connection resource or connection parameters array
+	 *  @param  array|\PDO $conn PDO connection resource or connection parameters array
 	 *  @param  string $table SQL table to query
 	 *  @param  string $primaryKey Primary key of the table
 	 *  @param  array $columns Column information array
@@ -435,7 +438,7 @@ class SSP {
 	 *   particular records (for example, restricting by a login id).
 	 *
 	 *  @param  array $request Data sent to server by DataTables
-	 *  @param  array|PDO $conn PDO connection resource or connection parameters array
+	 *  @param  array|\PDO $conn PDO connection resource or connection parameters array
 	 *  @param  string $table SQL table to query
 	 *  @param  string $primaryKey Primary key of the table
 	 *  @param  array $columns Column information array
@@ -527,14 +530,14 @@ class SSP {
 	static function sql_connect ( $sql_details )
 	{
 		try {
-			$db = @new PDO(
+			$db = @new \PDO(
 				"mysql:host={$sql_details['host']};dbname={$sql_details['db']}",
 				$sql_details['user'],
 				$sql_details['pass'],
-				array( PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION )
+				array( \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION )
 			);
 		}
-		catch (PDOException $e) {
+		catch (\PDOException $e) {
 			self::fatal(
 				"An error occurred while connecting to the database. ".
 				"The error reported by the server was: ".$e->getMessage()
@@ -577,12 +580,12 @@ class SSP {
 		try {
 			$stmt->execute();
 		}
-		catch (PDOException $e) {
+		catch (\PDOException $e) {
 			self::fatal( "An SQL error occurred: ".$e->getMessage() );
 		}
 
 		// Return all
-		return $stmt->fetchAll( PDO::FETCH_BOTH );
+		return $stmt->fetchAll( \PDO::FETCH_BOTH );
 	}
 
 

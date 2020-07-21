@@ -1,4 +1,16 @@
 <?php
+
+namespace HHK;
+
+use HHK\sec\{Session, SecurityComponent};
+use HHK\SysConst\FinAppStatus;
+use HHK\Tables\Reservation\Fin_ApplicationRS;
+use HHK\Tables\EditRS;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput, HTMLSelector};
+use HHK\Exception\RuntimeException;
+use HHK\Purchase\RoomRate;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+
 /**
  * FinAssistance.php
  *
@@ -13,6 +25,7 @@
  *
  * @author Eric
  */
+
 class FinAssistance {
 
     protected $finAppRs;
@@ -48,14 +61,14 @@ class FinAssistance {
             $this->rateCategory = $finRs->FA_Category->getStoredVal();
         }
 
-        $this->rrates = RoomRate::makeSelectorOptions(PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
+        $this->rrates = RoomRate::makeSelectorOptions(AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
 
     }
 
 
     /**
      *
-     * @return \HTMLTable
+     * @return HTMLTable
      */
     public function createRateCalcMarkup() {
 
@@ -138,7 +151,7 @@ class FinAssistance {
             if ($newCategory != '' && $newCategory != $this->finAppRs->FA_Category->getStoredVal()) {
 
                 if (isset($this->rrates[$newCategory]) === FALSE) {
-                    throw new Hk_Exception_Runtime('Rate Category is undefined: ' . $newCategory);
+                    throw new RuntimeException('Rate Category is undefined: ' . $newCategory);
                 }
 
                 $this->finAppRs->Approved_Id->setNewVal($uname);
@@ -152,7 +165,7 @@ class FinAssistance {
             if ($newStatus != '' && $newStatus != $this->finAppRs->FA_Status->getStoredVal()) {
 
                 if (isset($uS->guestLookups['FinAppStatus'][$newStatus]) === FALSE) {
-                    throw new Hk_Exception_Runtime('Financial Application Status is undefined: ' . $newStatus);
+                    throw new RuntimeException('Financial Application Status is undefined: ' . $newStatus);
                 }
 
                 if ($faStatDate == '') {
@@ -332,7 +345,7 @@ class FinAssistance {
                 $cat = 'd';
             }
         } else {
-            throw new Hk_Exception_Runtime('Financial Assistance level not found.');
+            throw new RuntimeException('Financial Assistance level not found.');
         }
 
         return $cat;
