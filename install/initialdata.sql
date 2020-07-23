@@ -355,10 +355,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Role_Codes','100','Web User','','',0),
 ('Role_Codes','700','Guest','','',0),
 
-('Room_Category','dh','House','','',10),
-('Room_Category','gada','Hospital','','',20),
-('Room_Category','jph','Private Host','','',30),
-('Room_Category','nm','Motel','','',40),
+('Room_Category','dh','House','','u',10),
+('Room_Category','gada','Hospital','','u',20),
+('Room_Category','jph','Private Host','','u',30),
+('Room_Category','nm','Motel','','u',40),
 
 ('Room_Cleaning_Days', 'a', '7 Days', '7', 'ha',10),
 ('Room_Cleaning_Days', 'b', '14 Days', '14', 'ha',20),

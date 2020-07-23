@@ -22,22 +22,25 @@ class GlCodes {
 	protected $stopAtInvoice;
 
 
-	public function __construct(\PDO $dbh, $month, $year, $glParm, GlTemplateRecord $mapperTemplate) {
+	public function __construct(\PDO $dbh, $month, $year, GlParameters $glParm, GlTemplateRecord $mapperTemplate) {
 
-		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
-
-		// End date is the beginning of the next month.
-		$this->endDate = $this->startDate->add(new DateInterval('P1M'));
-
-		$this->fileId = 'GL_HHK_' . $this->startDate->format('Ymd') . '_' . getRandomString(3);
-		
+		$this->errors = array();
 		$this->glParm = $glParm;
 		
 		if ($this->glParm->getCountyPayment() < 1) {
-			throw new Exception('County Payment is not set');
+			$this->recordError('County Payment is not set');
 		}
+		
+		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->glParm->getStartDay());
 
-		$this->errors = array();
+		// End date is the beginning of the next month.
+		$this->endDate = $this->startDate->add(new DateInterval('P1M'));
+		
+		
+		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $this->endDate->sub(new DateInterval('P1D'))->format('M j, Y'));
+
+		$this->fileId = 'GL_HHK_' . $this->startDate->format('Ymd') . '_' . getRandomString(3);
+		
 		$this->stopAtInvoice = '';
 
 		$this->loadDbRecords($dbh);
@@ -167,19 +170,12 @@ class GlCodes {
 				return;
 			}
 			
-			// if return payment is in the same report as origional, then ignore.
-			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate && $this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
-				return;
-			}
-			
 			// Returned during this period?
 			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
 				// It is a return in this period.
 				
-				if ($glCode == self::COUNTY_LIABILITY) {
 					// Special handling for county payments
-					$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $pUpDate);
-				}
+				$this->mapCountyPayments($glCode, TRUE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $pUpDate);
 				
 				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
 	
@@ -193,13 +189,15 @@ class GlCodes {
 					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate, $this->glParm->getJournalCat());
 				}
 				
-			} else if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
+			}
+			
+			// Origionally Paid during this period?
+			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
 				// It is still a payment in this period.
 				
-				if ($glCode == self::COUNTY_LIABILITY) {
-					// Special handling for county payments
-					$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
-				}
+				
+				// Special handling for county payments
+				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
 				
 				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
 				
@@ -213,7 +211,7 @@ class GlCodes {
 				}
 			}
 			
-		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] == 0) {
+		} else if (($p['pStatus'] == PaymentStatusCode::Paid || $p['pStatus'] == PaymentStatusCode::VoidReturn) && $p['Is_Refund'] == 0) {
 			// Status = Sale
 			
 			// un-returned payments are dated on the update.
@@ -231,10 +229,8 @@ class GlCodes {
 			// Payment is in this period?
 			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
 			
-				if ($glCode == self::COUNTY_LIABILITY) {
-					// Special handling for county payments
-					$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
-				}
+				// Special handling for county payments
+				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
 				
 				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
 	
@@ -251,10 +247,8 @@ class GlCodes {
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
 			// Status = refund amount
 			
-			if ($glCode == self::COUNTY_LIABILITY) {
-				// Special handling for county payments
-				$this->mapCountyPayments($invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
-			}
+			// Special handling for county payments
+			$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
 			
 			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->glParm->getJournalCat());
 
@@ -273,7 +267,11 @@ class GlCodes {
 		}
 	}
 	
-	protected function mapCountyPayments(array $invLines, array &$p, $rate, $pDate) {
+	protected function mapCountyPayments($glCode, $isReturn, array $invLines, array &$p, $rate, $pDate) {
+		
+		if ($glCode != $this->glParm->getCountyLiability()) {
+			return;
+		}
 		
 		$lodgingCharge = 0;
 
@@ -298,7 +296,7 @@ class GlCodes {
 				// Reduce original payment line by the above amount.
 				$p['pAmount'] = $county;
 					
-				if ($p['pStatus'] == PaymentStatusCode::Retrn) {
+				if ($isReturn) {
 						
 					// make a debit line for hte difference
 					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, self::ALL_GROSS_SALES, (0 - $dbit), 0, $pDate, $this->glParm->getJournalCat());
@@ -561,6 +559,7 @@ class GlParameters {
 	protected $startDay;
 	protected $journalCat;
 	protected $countyPayment;
+	protected $countyLiability;
 	
 	protected $glParms;
 	protected $tableName;
@@ -574,6 +573,7 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'RemoteFilePath', '');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'StartDay', '01');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyPayment', '50');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyLiability', '');
 	 */
 
 	public function __construct(\PDO $dbh, $tableName = 'Gl_Code') {
@@ -764,7 +764,20 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code
 	 * @return mixed
 	 */
 	public function getStartDay() {
-		return $this->startDay;
+		$iDay = intval($this->startDay, 10);
+		$sDay = '';
+		
+		if ($iDay < 1 || $iDay > 28) {
+			throw new Hk_Exception_Runtime('The Start-Day is not viable: ' . $iDay);
+		}
+		
+		// Format with leading 0's
+		if ($iDay < 10) {
+			$sDay = '0' . $iDay;
+		} else {
+			$sDay = (string)$iDay;
+		}
+		return $sDay;
 	}
 
 	/**
@@ -777,12 +790,20 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code
 	public function getCountyPayment() {
 		return $this->countyPayment;
 	}
-
+	
 	public function setCountyPayment($v) {
 		$this->countyPayment = $v;
 	}
 	
-	/**
+	public function getCountyLiability() {
+		return $this->countyLiability;
+	}
+
+	public function setCountyLiability($v) {
+		$this->countyLiability = $v;
+	}
+	
+/**
 	 * @param mixed $host
 	 */
 	public function setHost($host) {
@@ -821,7 +842,12 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code
 	 * @param mixed $startDay
 	 */
 	public function setStartDay($startDay) {
-		$this->startDay = $startDay;
+		
+		if ($startDay > 0 && $startDay < 29) {
+			$this->startDay = $startDay;
+		} else {
+			$this->startDay = "Invalid";
+		}
 	}
 
 	/**
@@ -923,9 +949,9 @@ class GlTemplateRecord {
 			$codes[2]= '0';
 		}
 	
-		$this->fieldArray[self::COMPANY_CODE] = $codes[0];
-		$this->fieldArray[self::COST_CENTER] = $codes[1];
-		$this->fieldArray[self::ACCOUNT] = $codes[2];
+		$this->fieldArray[self::COMPANY_CODE] = trim($codes[0]);
+		$this->fieldArray[self::COST_CENTER] = trim($codes[1]);
+		$this->fieldArray[self::ACCOUNT] = trim($codes[2]);
 		
 	}
 

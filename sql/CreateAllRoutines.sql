@@ -73,7 +73,7 @@ BEGIN
 			`payment` `p`
 			JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
 		where 
-            ((DATE(`p`.`Timestamp`) >= DATE(pmtStart) && DATE(`p`.`Timestamp`) < DATE(pmtEnd))
+            ((DATE(`p`.`Payment_Date`) >= DATE(pmtStart) && DATE(`p`.`Payment_Date`) < DATE(pmtEnd))
 			OR (DATE(`p`.`Last_Updated`) >= DATE(pmtStart) && DATE(`p`.`Last_Updated`) < DATE(pmtEnd)));
         
 	insert into idind
@@ -106,7 +106,7 @@ BEGIN
         IFNULL(`p`.`Last_Updated`, '') AS `pUpdated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
         IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
-        IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
+        IFNULL(`p`.`Payment_Date`, '') as `pTimestamp`,
         IFNULL(`pm`.`Gl_Code`, '') as `PayMethod_Gl_Code`,
 		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
 		IFNULL(`nd`.`Gl_Code_Debit`, '') as `ba_Gl_Debit`,

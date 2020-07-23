@@ -31,9 +31,6 @@ try {
 
 $dbh = $wInit->dbh;
 
-// get session instance
-$uS = Session::getInstance();
-
 function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
 	
 	$stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company, nd.Gl_Code_Debit, nd.Gl_Code_Credit " .
@@ -66,7 +63,7 @@ function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
 				);
 	}
 	
-	$glTbl->addHeaderTr(HTMLTable::makeTh('Billing Agent') . HTMLTable::makeTh('GL Debit'));
+	$glTbl->addHeaderTr(HTMLTable::makeTh('') . HTMLTable::makeTh('GL Debit Code'));
 	
 	return $glTbl->generateMarkup();
 	
@@ -130,17 +127,7 @@ if (isset($_POST['btnSaveGlParms'])) {
 }
 
 if (isset($_POST['btnHere'])) {
-
-    
-    if (isset($_POST['selGlMonth'])) {
-    	$glMonth = filter_var($_POST['selGlMonth'], FILTER_SANITIZE_NUMBER_INT);
-    }
-    
-    if (isset($_POST['selGlYear'])) {
-    	$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-    
-    
+   
     if (isset($_POST['selGlMonth'])) {
     	$glMonth = filter_var($_POST['selGlMonth'], FILTER_SANITIZE_NUMBER_INT);
     }
@@ -153,13 +140,16 @@ if (isset($_POST['btnHere'])) {
     
     $glCodes->mapRecords();
     
-    $dataTable = HTMLContainer::generateMarkup('div', 'Report for the month of ' . $monthArray[$glMonth][1] . ', '. $glyear);
+    $dataTable = HTMLContainer::generateMarkup('h2', 'Report for the month of ' . $monthArray[$glMonth][1] . ', '. $glyear);
 
     if (count($glCodes->getErrors()) > 0) {
+    	
     	$etbl = new HTMLTable();
+    	
     	foreach ($glCodes->getErrors() as $e) {
     		$etbl->addBodyTr(HTMLTable::makeTd($e));
     	}
+    	
     	$dataTable .= $etbl->generateMarkup();
     }
     
@@ -180,7 +170,7 @@ $tbl->addBodyTr(
 		);
 
 // Add save button
-$tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Save', array('name'=>'btnSaveGlParms', 'type'=>'submit')), array('colspan'=>'2', 'style'=>'text-align:right;')));
+$tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Save 3rd Party Payers', array('name'=>'btnSaveGlParms', 'type'=>'submit', 'style'=>'font-size:smaller;')), array('colspan'=>'2', 'style'=>'text-align:right;')));
 
 $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 
@@ -225,13 +215,12 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
 
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="IncmStmt.php" method="post">
                 
                 	<table style="float:left;">
-                	<tr><th>Month</th><th>Year</th><th>Billing Agents</th>
+                	<tr><th>Month</th><th>Year</th><th>3rd Party Payers</th>
                 	<tr>
                 	<td><?php echo $glMonthSelr; ?></td>
                     <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>

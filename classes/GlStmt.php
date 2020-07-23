@@ -4,12 +4,9 @@
 
 class GlStmt {
 
-	// General GL codes
-
-	const FOUNDATION_DON = 'House Foundation';
-
 	protected $startDate;
 	protected $endDate;
+	protected $startDay;
 	protected $records;
 
 	protected $errors;
@@ -17,12 +14,11 @@ class GlStmt {
 	protected $glLineMapper;
 	protected $baLineMapper;
 
-	
 
+	public function __construct(\PDO $dbh, $month, $year, $day = '01') {
 
-	public function __construct(\PDO $dbh, $month, $year) {
-
-		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
+		$this->startDay = $day;
+		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->getStartDay());
 
 		// End date is the beginning of the next month.
 		$this->endDate = $this->startDate->add(new DateInterval('P1M'));
@@ -43,7 +39,7 @@ class GlStmt {
 	}
 
 	/**
-	 * @param boolean $stopAtUnbalance
+	 *
 	 * @return GlCodes
 	 */
 	public function mapRecords() {
@@ -102,11 +98,18 @@ class GlStmt {
 		$invLines = array();
 		$hasWaive = FALSE;
 
+		// Check dates
 		if ($p['pTimestamp'] != '') {
 			$this->paymentDate = new DateTime($p['pTimestamp']);
 		} else {
 			$this->recordError("Missing Payment Timestamp. Payment Id = ". $p['idPayment']);
 			return;
+		}
+		
+		if ($p['pUpdated'] != '') {
+			$pUpDate = new DateTime($p['pUpdated']);
+		} else {
+			$pUpDate = NULL;
 		}
 		
 		// Copy invoice lines and Look for waived payments.
@@ -124,14 +127,7 @@ class GlStmt {
 			$invLines = $this->mapWaivePayments($invLines);
 		}
 
-		// payment type sets glCode.
-		if ($p['ba_Gl_Debit'] != '') {
-			// process 3rd party payment
-
-			$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate);
-
-		}
-
+		
 		$glCode = $p['pm_Gl_Code'];
 
 
@@ -139,46 +135,102 @@ class GlStmt {
 		if ($p['pStatus'] == PaymentStatusCode::Retrn) {
 			//Return earlier sale
 
-			// if original payment is in the same report as this return, then ignore.
-			if ($this->paymentDate >= $this->startDate && $this->paymentDate <= $this->endDate) {
+			if (is_null($pUpDate)) {
+				$this->recordError("Missing Last Updated. Payment Id = ". $p['idPayment']);
 				return;
 			}
-
-			if ($p['pUpdated'] != '') {
-				$pUpDate = new DateTime($p['pUpdated']);
-			} else {
-				$this->recordError("Missing Payment Updated Date on RETURN. Payment Id = ". $p['idPayment']);
-				return;
+			
+// 			// if return payment is in the same report as origional, then ignore.
+// 			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate && $this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
+// 				return;
+// 			}
+			
+			// Returned during this period?
+			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
+				// It is a return in this period.
+				
+				// 3rd party payments
+				if ($p['ba_Gl_Debit'] != '') {
+					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $this->paymentDate);
+				}
+				
+				$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $pUpDate);
+				
+				foreach($invLines as $l) {
+					
+					if ($l['Item_Gl_Code'] == '') {
+						continue;
+					}
+					
+					// map gl code
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate);
+				}
+				
 			}
-
-			$this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $pUpDate);
-
-			foreach($invLines as $l) {
-
-				//if ($l['Item_Gl_Code'] == '') {
-				//	continue;
-				//}
-
-				// map gl code
-				$this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate);
+			
+			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
+				// It is still a payment in this period.
+				
+			
+				// 3rd party payments
+				if ($p['ba_Gl_Debit'] != '') {
+					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate);
+				}
+				
+				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate);
+				
+				foreach($invLines as $l) {
+					
+					if ($l['Item_Gl_Code'] == '') {
+						continue;
+					}
+					
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+				}
 			}
-
-		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] == 0) {
+			
+		} else if (($p['pStatus'] == PaymentStatusCode::Paid || $p['pStatus'] == PaymentStatusCode::VoidReturn)  && $p['Is_Refund'] == 0) {
 			// Status = Sale
 			
-			$this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate);
-
-			foreach($invLines as $l) {
-
-				//if ($l['Item_Gl_Code'] == '') {
-				//	continue;
-				//}
-
-				 $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+			// un-returned payments are dated on the update.
+			if (is_null($pUpDate) === FALSE) {
+				
+				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
+					
+					$this->paymentDate = $pUpDate;
+					
+				} else {
+					return;
+				}
+			}
+			
+			// Payment is in this period?
+			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
+				
+				// 3rd party payments
+				if ($p['ba_Gl_Debit'] != '') {
+					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate);
+				}
+				
+				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate);
+				
+				foreach($invLines as $l) {
+					
+					if ($l['Item_Gl_Code'] == '') {
+						continue;
+					}
+					
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+				}
 			}
 
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
 			// Status = refund amount
+			
+			// 3rd party payments
+			if ($p['ba_Gl_Debit'] != '') {
+				$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $this->paymentDate);
+			}
 			
 			$this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate);
 
@@ -361,7 +413,10 @@ class GlStmt {
 		
 		$ordersArray = array();
 		foreach ($this->getInvoices() as $r) {
-			$ordersArray[$r['i']['Order_Number']] = 'y';
+			
+			if ($r['i']['Order_Number'] != '') {
+				$ordersArray[$r['i']['Order_Number']] = 'y';
+			}
 		}
 		
 		$orderNumbers = '';
@@ -369,6 +424,11 @@ class GlStmt {
 		if (count($ordersArray) > 0) {
 			
 			foreach ($ordersArray as $k => $i) {
+				
+				if ($k == '' || $k == 0) {
+					continue;
+				}
+					
 				if ($orderNumbers == '') {
 					$orderNumbers = $k;
 				} else {
@@ -378,6 +438,7 @@ class GlStmt {
 			
 			$orderNumbers = " or v.idVisit in ($orderNumbers) ";
 		}
+		
 		
 		$query = "select
 	v.idVisit,
@@ -488,7 +549,7 @@ where
 		(select idVisit from visit
         	where
             	`Status` <> 'p'
-				and DATE(Arrival_Date) <= DATE('$end')
+				and DATE(Arrival_Date) < DATE('$end')
 				and DATE(ifnull(Span_End,
 					case
 					when now() > Expected_Departure then now()
@@ -496,7 +557,7 @@ where
                 	end)) >= DATE('$start')
 		)
 	$orderNumbers
-order by v.idVisit, v.Span";
+ order by v.idVisit, v.Span";
 		
 		$categories = readGenLookupsPDO($dbh, 'Room_Category');
 		
@@ -530,7 +591,7 @@ order by v.idVisit, v.Span";
 		$stmt = $dbh->query($query);
 		
 		while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
+			
 			$serial = ($r['idVisit'] * 100) + $r['Span'];
 			
 			if ($serialId != $serial) {
@@ -601,26 +662,25 @@ order by v.idVisit, v.Span";
 			}
 			
 			if ($r['pUpdated'] != '') {
-				$returnDate = new DateTime($r['pUpdated']);
+				$pUpDate = new DateTime($r['pUpdated']);
 			} else {
-				$returnDate = NULL;
-			}
-			
-			// TEst payment dates
-			if (is_null($returnDate) === TRUE && $paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
-				$isTimely = TRUE;
-			} else if (is_null($returnDate) === FALSE && $returnDate >= $this->startDate && $returnDate < $this->endDate) {
-				$isTimely = TRUE;
-			} else {
-				$isTimely = FALSE;
+				$pUpDate = NULL;
 			}
 			
 			// Payments
 			if (($r['pStatus'] == PaymentStatusCode::Paid || $r['pStatus'] == PaymentStatusCode::VoidReturn) && $r['Is_Refund'] == 0) {
 				// Sale
-				// Payment must be within the .
-				if ($isTimely) {
+				// un-returned payments are dated on the update.
+				if (is_null($pUpDate) === FALSE) {
+					
+					if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
+						$paymentDate = $pUpDate;
+					}
+				}
 				
+				// Payment is in this period?
+				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
+					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$vIntervalPay += $r['il_Amount'];
 					}
@@ -631,10 +691,10 @@ order by v.idVisit, v.Span";
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 				// Refund Amount
 				// Payment must be within the .
-				if ($isTimely) {
+				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vIntervalPay += $r['il_Amount'];;
+						$vIntervalPay += $r['il_Amount'];
 					}
 				
 					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
@@ -643,25 +703,38 @@ order by v.idVisit, v.Span";
 			} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
 				//Return earlier sale
 				
-				if (is_null($returnDate)) {
-					$this->recordError('LastUpdated is null for this return payment Id: ' . $r['idPayment']);
+				if (is_null($pUpDate)) {
+					$this->recordError("Missing Last Updated. Payment Id = ". $p['idPayment']);
 					continue;
 				}
 				
-				// if original payment is in the same report as this return, then ignore.
-				if ($returnDate >= $this->startDate && $returnDate < $this->endDate && $paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
+				// if return payment is in the same report as origional, then ignore.
+				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate && $paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 					continue;
 				}
 				
-				// Payment must be within the .
-				if ($returnDate >= $this->startDate && $returnDate < $this->endDate) {
+				// Returned during this period?
+				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
+					// It is a return in this period.
+					
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$vIntervalPay -= $r['il_Amount'];
 					}
-				
+					
 					$totalPayment[$r['Item_Id']] -= $r['il_Amount'];
+					
+				} else if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
+					// It is still a payment in this period.
+					
+					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
+						$vIntervalPay += $r['il_Amount'];
+					}
+					
+					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
+					
 				}
+				
 			}
 		}
 		
@@ -684,9 +757,9 @@ order by v.idVisit, v.Span";
 		$tbl = new HTMLTable();
 		
 		$tbl->addHeaderTr(HTMLTable::makeTh('Lodging Payment Distribution', array('colspan'=>'2')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Pre-Interval Payment', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($preIntervalPay, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Interval Payment', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Over Payment', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($overPay, 2), array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(HTMLTable::makeTd('Payments to earlier months', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($preIntervalPay, 2), array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(HTMLTable::makeTd('Payments to this month', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(HTMLTable::makeTd('Prepayments to future months', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($overPay, 2), array('style'=>'text-align:right;')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Total', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal]), 2), array('style'=>'text-align:right;')));
 		
 		return $tbl->generateMarkup($tableAttrs);
@@ -711,6 +784,24 @@ order by v.idVisit, v.Span";
 	public function getBaMarkup($tableAttrs) {
 		return $this->baLineMapper->createMarkup($tableAttrs);
 	}
+	
+	public function getStartDay() {
+		$iDay = intval($this->startDay, 10);
+		$sDay = '';
+		
+		if ($iDay < 1 || $iDay > 28) {
+			throw new Hk_Exception_Runtime('The Start-Day is not viable: ' . $iDay);
+		}
+		
+		// Format with leading 0's
+		if ($iDay < 10) {
+			$sDay = '0' . $iDay;
+		} else {
+			$sDay = (string)$iDay;
+		}
+		return $sDay;
+	}
+	
 	
 }
 
@@ -836,7 +927,8 @@ class BaStmtTotals extends GlStmtTotals {
 		$tbl = new HTMLTable();
 		$tbl->addHeaderTr(
 				HTMLTable::makeTh('3rd Parties')
-				.HTMLTable::makeTh('Amount')
+				.HTMLTable::makeTh('Paid')
+				.HTMLTable::makeTh('Pending')
 				
 		);
 		
@@ -844,14 +936,16 @@ class BaStmtTotals extends GlStmtTotals {
 			
 				$tbl->addBodyTr(
 					HTMLTable::makeTd($k, array('class'=>'tdlabel'))
-					. HTMLTable::makeTd(($t['Debit'] == 0 ? '' : number_format($t['Debit'], 2)), array('style'=>'text-align:right;'))
-				);
+						. HTMLTable::makeTd(($t['Debit'] == 0 ? '' : number_format($t['Debit'], 2)), array('style'=>'text-align:right;'))
+						. HTMLTable::makeTd(($t['Credit'] == 0 ? '' : number_format($t['Credit'], 2)), array('style'=>'text-align:right;'))
+						);
 		}
 		
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Totals', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($this->getTotalDebit(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
-		);
+				. HTMLTable::makeTd(number_format($this->getTotalCredit(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				);
 			
 		
 		return $tbl->generateMarkup($tableAttrs);

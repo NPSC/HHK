@@ -38,19 +38,16 @@ try {
 	exit($hex->getMessage());
 }
 
-// Authenticate user
-$user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
-$pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
-
 $u = new UserClass();
 
-if ($u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
-    
-    header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
-    header('HTTP/1.0 401 Unauthorized');
-    exit("Not authorized");
-    
+if(!$u->isCron()){
+
+	header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
+	header('HTTP/1.0 401 Unauthorized');
+	exit("Not authorized");
+
 }
+
 
 $today = new DateTime();
 $today->sub(new DateInterval('P1M'));
@@ -59,9 +56,8 @@ try {
 	$glParm = new GlParameters($dbh, 'Gl_Code');
 	$glCodes = new GlCodes($dbh, $today->format('m'), $today->format('Y'), $glParm, new GlTemplateRecord());
 	$bytesWritten = $glCodes->mapRecords()->transferRecords();
-	
-} catch (Exception $ex) {
 
+} catch (Exception $ex) {
 	exit($ex->getMessage());
 }
 
@@ -87,8 +83,6 @@ if ($notificationAddress != '') {
 	foreach ($addrArry as $a) {
 		$mail->addAddress($a['address']);
 	}
-
-	$mail->Subject = "General Ledger Transfer";
 
 	$etbl = new HTMLTable();
 

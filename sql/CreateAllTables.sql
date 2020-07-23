@@ -1476,6 +1476,7 @@ CREATE TABLE if not exists `payment_invoice`
 CREATE TABLE if not exists `payment_method` (
   `idPayment_method` int(11) NOT NULL AUTO_INCREMENT,
   `Method_Name` varchar(45) NOT NULL DEFAULT '',
+  `Gl_Code` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idPayment_method`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4;
