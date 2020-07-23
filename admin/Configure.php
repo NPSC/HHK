@@ -1,4 +1,14 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\SysConst\WebRole;
+use HHK\Config_Lite\Config_Lite;
+use HHK\Config_Lite\Exception\Config_Lite_Exception_Runtime;
+use HHK\{SiteConfig, TransferMembers, UpdateSite, SiteLog, CreateMarkupFromDB};
+use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
+use HHK\Exception\UploadException;
+
 /**
  * Configure.php
  *
@@ -9,7 +19,7 @@
  */
 require ("AdminIncludes.php");
 
-require DB_TABLES . 'PaymentGwRS.php';
+/* require DB_TABLES . 'PaymentGwRS.php';
 require DB_TABLES . 'GenLookupsRS.php';
 
 require CLASSES . 'SiteLog.php';
@@ -26,7 +36,7 @@ require (PMT . 'PaymentGateway.php');
 require (PMT . 'PaymentResponse.php');
 require (PMT . 'CreditToken.php');
 
-require SEC . 'Login.php';
+require SEC . 'Login.php'; */
 
 require (FUNCTIONS . 'mySqlFunc.php');
 
@@ -196,7 +206,7 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
             }
         }
 
-    } catch (Hk_Exception_Upload $ex) {
+    } catch (UploadException $ex) {
         $externalErrMsg = "Transfer Error: " . $ex->getMessage();
     }
 }
@@ -447,9 +457,9 @@ if (is_null($wsConfig) === FALSE) {
 }
 
 // Alert Message
-$webAlert = new alertMessage("webContainer");
+$webAlert = new AlertMessage("webContainer");
 $webAlert->set_DisplayAttr("none");
-$webAlert->set_Context(alertMessage::Success);
+$webAlert->set_Context(AlertMessage::Success);
 $webAlert->set_iconId("webIcon");
 $webAlert->set_styleId("webResponse");
 $webAlert->set_txtSpanId("webMessage");

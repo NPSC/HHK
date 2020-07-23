@@ -1,4 +1,9 @@
 <?php
+
+namespace HHK;
+
+use HHK\sec\Session;
+
 /**
  * SiteDbBackup.php
  *
@@ -13,7 +18,6 @@
  *
  * @author Eric Crane <ecrane at nonprofitsoftwarecorp.org>
  */
-use sec\Session;
 
 class SiteDbBackup {
 
@@ -29,7 +33,7 @@ class SiteDbBackup {
 
     function __construct($filePath, $configFileName) {
 
-        $this->config = new Config_Lite($configFileName);
+        $this->config = new \Config_Lite($configFileName);
 
         $this->filePath = $filePath;
         $this->clrFileSize = 0;
@@ -204,3 +208,4 @@ class SiteDbBackup {
     }
 
 }
+?>

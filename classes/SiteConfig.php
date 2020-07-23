@@ -1,11 +1,13 @@
 <?php
+namespace HHK;
 
-use HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
-use Exception\RuntimeException;
-use TableLog\HouseLog;
-use Tables\EditRS;
-use Tables\House\Desig_HolidaysRS;
-use sec\{Session, SysConfig};
+use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
+use HHK\Exception\RuntimeException;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\TableLog\HouseLog;
+use HHK\Tables\EditRS;
+use HHK\Tables\House\Desig_HolidaysRS;
+use HHK\sec\{Session, SysConfig};
 
 /**
  * SiteConfig.php
@@ -374,7 +376,7 @@ class SiteConfig {
         return $resultMsg;
     }
 
-    public static function createCliteMarkup(Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
+    public static function createCliteMarkup(\Config_Lite $config, \Config_Lite $titles = NULL, $onlySection = '') {
 
         $tbl = new HTMLTable();
         $inputSize = '40';
@@ -441,7 +443,7 @@ class SiteConfig {
         return $tbl;
     }
 
-    public static function createLabelsMarkup(Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
+    public static function createLabelsMarkup(\Config_Lite $config, \Config_Lite $titles = NULL, $onlySection = '') {
 
         $tbl = new HTMLTable();
         $inputSize = '40';
@@ -491,7 +493,7 @@ class SiteConfig {
         return $tbl;
     }
 
-    public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL) {
+    public static function createMarkup(\PDO $dbh, \Config_Lite $config, \Config_Lite $titles = NULL) {
 
         $tbl = self::createCliteMarkup($config, $titles);
 
@@ -559,7 +561,7 @@ class SiteConfig {
         return $tbl->generateMarkup() . $sctbl->generateMarkup();
     }
 
-    public static function saveConfig($dbh, Config_Lite $config, array $post, $userName = '') {
+    public static function saveConfig($dbh, \Config_Lite $config, array $post, $userName = '') {
 
         foreach ($post as $secName => $secArray) {
 
@@ -650,7 +652,7 @@ class SiteConfig {
         // Spacer
         $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
 
-        return $tbl->generateMarkup() . PaymentGateway::createEditMarkup($dbh, $uS->PaymentGateway, $resultMessage);
+        return $tbl->generateMarkup() . AbstractPaymentGateway::createEditMarkup($dbh, $uS->PaymentGateway, $resultMessage);
     }
 
     public static function savePaymentCredentials(\PDO $dbh, $post) {
@@ -698,7 +700,7 @@ class SiteConfig {
 
         } else {
             // Update current GW.
-            $msg = PaymentGateway::saveEditMarkup($dbh, $uS->PaymentGateway, $post);
+            $msg = AbstractPaymentGateway::saveEditMarkup($dbh, $uS->PaymentGateway, $post);
 
         }
 
@@ -706,3 +708,4 @@ class SiteConfig {
     }
 
 }
+?>

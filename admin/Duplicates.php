@@ -1,4 +1,11 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\Duplicate;
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
+use HHK\SysConst\GLTableNames;
+
 /**
  * Duplicates.php
  *
@@ -9,13 +16,13 @@
  */
 require ("AdminIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
+/* require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'visitRS.php');
 
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'PaymentsRS.php'); */
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
@@ -23,8 +30,8 @@ require (MEMBER . 'OrgMember.php');
 require (MEMBER . 'Addresses.php');
 
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+/* require(CLASSES . "chkBoxCtrlClass.php");
+require(CLASSES . "selCtrl.php"); */
 
 require (HOUSE . 'psg.php');
 require (HOUSE . 'Role.php');
@@ -69,7 +76,7 @@ if (isset($_POST['cmd'])) {
 
         $fullName = filter_var($_POST['nf'], FILTER_SANITIZE_STRING);
 
-        $markup = Duplicate::expand($dbh, $fullName, $_POST, $uS->guestLookups[GL_TableNames::PatientRel]);
+        $markup = Duplicate::expand($dbh, $fullName, $_POST, $uS->guestLookups[GLTableNames::PatientRel]);
 
         $events = array('mk' => $markup);
 
@@ -123,9 +130,9 @@ $mtypes = array(
 $mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, '', TRUE), array('name' => 'selmtype'));
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");

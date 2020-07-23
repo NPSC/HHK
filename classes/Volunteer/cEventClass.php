@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Volunteer;
 
+use HHK\UserCategories;
 use HHK\SysConst\VolCalendarStatus;
 
 

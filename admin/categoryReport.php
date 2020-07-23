@@ -1,4 +1,9 @@
 <?php
+
+use HHK\sec\{SecurityComponent, WebInit};
+use HHK\HTMLControls\selCtrl;
+use HHK\Config_Lite\Config_Lite;
+
 /**
  * categoryReport.php
  *
@@ -9,8 +14,8 @@
  */
 require("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 

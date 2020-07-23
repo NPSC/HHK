@@ -1,4 +1,11 @@
 <?php
+
+namespace HHK\Payment;
+
+use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
+use HHK\Tables\Payment\TransRS;
+use HHK\Tables\EditRS;
+
 /**
  * Transaction.php
  *
@@ -16,7 +23,7 @@
  */
 class Transaction {
 
-    public static function recordTransaction(\PDO $dbh, PaymentResponse $vr, $gwName, $transType, $transMethod) {
+    public static function recordTransaction(\PDO $dbh, AbstractPaymentResponse $vr, $gwName, $transType, $transMethod) {
 
         // Record transaction
         $transRs = new TransRs();
@@ -54,5 +61,5 @@ class Transaction {
 
     }
 
-
 }
+?>

@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\{Session, Login, ScriptAuthClass, SecurityComponent};
+use HHK\Exception\{InvalidArgumentException, RuntimeException};
+use HHK\SysConst\{Mode, CodeVersion};
+use HHK\HTMLControls\{HTMLContainer};
+
 /**
  * index.php  (admin)
  *
@@ -9,7 +15,7 @@
  */
 require ("AdminIncludes.php");
 
-require(SEC . 'Login.php');
+//require(SEC . 'Login.php');
 
 // get session instance
 $uS = Session::getInstance();
@@ -31,7 +37,7 @@ try {
     $login = new Login();
     $config = $login->initHhkSession(ciCFG_FILE);
 
-} catch (Hk_Exception_InvalidArguement $pex) {
+} catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 
 } catch (Exception $ex) {
@@ -42,7 +48,7 @@ try {
 // define db connection obj
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 
@@ -127,11 +133,12 @@ if (SecurityComponent::isHTTPS()) {
     <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >
         <div id="page">
             <div class='pageSpacer'>
-                <h2 style="color:white;"><?php echo $uS->siteName; ?></h2></div>
+                <h2 style="color:white;"><?php echo $uS->siteName; ?></h2>
+            </div>
             <div style="float:right;font-size: .6em;margin-right:5px;"><?php echo $build; ?></div>
             <div id="content">
-                    <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
-                    <div style="clear:left; margin-bottom: 20px;"></div>
+                <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
+                <div style="clear:left; margin-bottom: 20px;"></div>
                 <div id="formlogin" style="float:left;" >
                     <div><?php echo $siteName; ?>
                         <p style="margin-left:6px; width: 65%;"><?php echo $disclaimer ?></p>

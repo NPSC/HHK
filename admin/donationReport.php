@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\WebInit;
+use HHK\HTMLControls\{selCtrl, chkBoxCtrl};
+use HHK\SysConst\SalutationCodes;
+use HHK\Campaign;
+
 /**
  * donationReport.php
  *
@@ -9,11 +15,11 @@
  */
 require ("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
+/* require(CLASSES . "chkBoxCtrlClass.php");
 require(CLASSES . "selCtrl.php");
-require(CLASSES . 'Campaign.php');
+require(CLASSES . 'Campaign.php'); */
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 $pageTitle = $wInit->pageTitle;
@@ -36,7 +42,7 @@ $anddChecked = "checked='checked'";
 $ordChecked = "";
 $exDeceasedChecked = "";
 $donSelMemberType = new selCtrl($dbh, "Vol_Type", false, "donMT", true);
-$cbBasisDonor = new chkBoxCtrlClass($dbh, "Member_Basis", "Include", "cbDonBasis", true);
+$cbBasisDonor = new chkBoxCtrl($dbh, "Member_Basis", "Include", "cbDonBasis", true);
 $cbBasisDonor->set_class("ui-widget");
 $SelectDonCamp = "";
 $rollup = 't';

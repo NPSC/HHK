@@ -1,5 +1,8 @@
 <?php
-use Exception\RuntimeException;
+
+namespace HHK;
+
+use HHK\Exception\RuntimeException;
 
 /**
  * US_Holidays.php

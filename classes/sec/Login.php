@@ -1,9 +1,11 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Config_Lite\Exception\Config_Lite_Exception;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\SysConst\{CodeVersion, WebRole};
+use HHK\Config_Lite\Config_Lite;
 
 /**
  * Login.php
@@ -34,7 +36,7 @@ class Login {
 
         // Get the site configuration object
         try {
-            $config = new \Config_Lite($configFileName);
+            $config = new Config_Lite($configFileName);
         } catch (\Exception $ex) {
             $ssn->destroy();
             throw new RuntimeException("Configurtion file is missing, path=".$configFileName, 999, $ex);
@@ -76,14 +78,14 @@ class Login {
         return $config;
     }
 
-    public static function dbParmsToSession(\Config_Lite $config) {
+    public static function dbParmsToSession(Config_Lite $config) {
 
         // get session instance
         $ssn = Session::getInstance();
 
         try {
             $dbConfig = $config->getSection('db');
-        } catch (\Config_Lite_Exception $e) {
+        } catch (Config_Lite_Exception $e) {
             $ssn->destroy();
             throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
         }

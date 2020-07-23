@@ -1,5 +1,9 @@
 <?php
 
+use HHK\sec\{Session, SecurityComponent, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\DataTableServer\SSP;
+
 /**
  * ws_gen.php
  *
@@ -11,14 +15,14 @@
 require ("AdminIncludes.php");
 
 
-require (DB_TABLES . 'nameRS.php');
+/* require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'WebSecRS.php');
 
 require (CLASSES . 'Relation.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'member/WebUser.php');
 
-require(SEC . 'Pages.php');
+require(SEC . 'Pages.php'); */
 
 
 
@@ -155,7 +159,6 @@ try {
                 $where = " `Log_Type` = 'gen_lookups' ";
             }
 
-            require(CLASSES . 'DataTableServer.php');
             $events = SSP::complex ( $_GET, $dbh, $dbView, $priKey, $columns, null, $where );
 
             break;
@@ -696,9 +699,7 @@ function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $pa
 }
 
 function AccessLog(\PDO $dbh, $get) {
-    
-    require(CLASSES . 'DataTableServer.php');
-    
+        
     $columns = array(
         
         //array( 'db' => 'id',  'dt' => 'id' ),

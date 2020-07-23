@@ -1,4 +1,8 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\{WebSiteCode};
+
 /**
  * NameSch.php
  *
@@ -8,9 +12,9 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-require (CLASSES . 'History.php');
+// require (CLASSES . 'CreateMarkupFromDB.php');
+// require (CLASSES . 'Purchase/RoomRate.php');
+// require (CLASSES . 'History.php');
 
 $wInit = new webInit();
 

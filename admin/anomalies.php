@@ -1,4 +1,9 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\chkBoxCtrl;
+use HHK\AlertControl\AlertMessage;
+
 /**
  * anomalies.php
  *
@@ -10,9 +15,9 @@
 
 require ("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-require(CLASSES . "OpenXML.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
+// require(CLASSES . "OpenXML.php");
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -24,11 +29,11 @@ $menuMarkup = $wInit->generatePageMenu();
 
 
 // Member Status Selection control
-$cbMemStatus = new chkBoxCtrlClass($dbh, "validMemStatus", "Include", "cbMemStatus", false);
+$cbMemStatus = new chkBoxCtrl($dbh, "validMemStatus", "Include", "cbMemStatus", false);
 $cbMemStatus->set_cbValueArray(true, "a");
 
 // Report type selection control - options defined by Table_Name = anomalyTypes in table gen_loookups
-$cbRptType = new chkBoxCtrlClass($dbh, "anomalyTypes", "Include", "cbRptType", true);
+$cbRptType = new chkBoxCtrl($dbh, "anomalyTypes", "Include", "cbRptType", true);
 
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
@@ -121,7 +126,7 @@ if (isset($_POST["btnRunHere"]) || isset($_POST["btnDlExcel"])) {
 }
 
 
-function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRptType, $isExcel, $prefOnly, $includeBad) {
+function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $isExcel, $prefOnly, $includeBad) {
 
     $cbMemStatus->setReturnValues($_POST[$cbMemStatus->get_htmlNameBase()]);
     $cbRptType->setReturnValues($_POST[$cbRptType->get_htmlNameBase()]);

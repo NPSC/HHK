@@ -1,4 +1,16 @@
 <?php
+
+namespace HHK\Payment;
+
+use HHK\Payment\Invoice\Invoice;
+use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
+use HHK\Purchase\Item;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\sec\Session;
+use HHK\SysConst\{InvoiceLineType, InvoiceStatus, ItemId, PaymentMethod, PaymentStatusCode, GLTableNames};
+use HHK\SysConst\MemBasis;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer};
+
 /**
  * Receipt.php
  *
@@ -55,7 +67,7 @@ class Receipt {
 		}
 	}
 
-    public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
+    public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, AbstractPaymentResponse $payResp) {
 
         $uS = Session::getInstance();
 
@@ -119,7 +131,7 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
     }
 
-    public static function createVoidMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId, $type = 'Void Sale') {
+    public static function createVoidMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId, $type = 'Void Sale') {
 
        $rec = self::getHouseIconMarkup();
 
@@ -168,7 +180,7 @@ class Receipt {
     }
 
     // Return a Payment
-    public static function createReturnMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
+    public static function createReturnMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId) {
 
         $rec = self::getHouseIconMarkup();
 
@@ -217,7 +229,7 @@ class Receipt {
     }
 
     // Refund arbitrary Amount
-    public static function createRefundAmtMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
+    public static function createRefundAmtMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId) {
 
         $rec = self::getHouseIconMarkup();
 
@@ -267,7 +279,7 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
-    public static function createDeclinedMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
+    public static function createDeclinedMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, AbstractPaymentResponse $payResp) {
 
         // Assemble the statement
         $rec = self::getHouseIconMarkup();
@@ -387,7 +399,7 @@ where
                 }
             }
 
-        } catch (PDOException $pex) {
+        } catch (\PDOException $pex) {
             $data = array();
         }
 
@@ -425,7 +437,7 @@ where
                         $hsNames = $r['Hospital'];
                     }
                 }
-            } catch (PDOException $pex) {
+            } catch (\PDOException $pex) {
                 $hsNames = '';
             }
         }
@@ -740,7 +752,7 @@ WHERE
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, AbstractPriceModel $priceModel, \Config_Lite $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -821,10 +833,10 @@ WHERE
 
             }
 
-            $startDT = new DateTime($r['start']);
+            $startDT = new \DateTime($r['start']);
             $startDT->setTime(0,0,0);
             $startDateStr = $startDT->format('M j, Y');
-            $endDT = ($r['end'] == '' ? new DateTime($r['expEnd']) : new DateTime($r['end']));
+            $endDT = ($r['end'] == '' ? new \DateTime($r['expEnd']) : new \DateTime($r['end']));
             $endDT->setTime(0,0,0);
             $days = $startDT->diff($endDT, TRUE)->days;
 
@@ -891,7 +903,7 @@ WHERE
                             }
                         }
 
-                        $invDate = new DateTime($l['Invoice_Date']);
+                        $invDate = new \DateTime($l['Invoice_Date']);
                         $item = array(
                             'orderNum'=>$r['vid'] . '-' . $r['span'],
                             'date'=>$invDate->format('M j, Y'),
@@ -909,7 +921,7 @@ WHERE
                         $totalAmt += $discAmt;
                         $preTaxRmCharge += $discAmt;
 
-                        $invDate = new DateTime($l['Invoice_Date']);
+                        $invDate = new \DateTime($l['Invoice_Date']);
                         $item = array(
                             'orderNum'=>$r['vid'] . '-' . $r['span'],
                             'date'=>$invDate->format('M j, Y'),
@@ -924,7 +936,7 @@ WHERE
                         $moaAmt = floatval($l['Amount']);
                         $totalAmt += $moaAmt;
 
-                        $invDate = new DateTime($l['Invoice_Date']);
+                        $invDate = new \DateTime($l['Invoice_Date']);
                         $item = array(
                             'orderNum'=>$r['vid'] . '-' . $r['span'],
                             'date'=>$invDate->format('M j, Y'),
@@ -1265,7 +1277,7 @@ WHERE
         return $tbl;
     }
 
-    public static function makeThirdParyTable($invoices, $invLines,  Config_Lite $labels, &$totAmt, $tdClass = '') {
+    public static function makeThirdParyTable($invoices, $invLines,  \Config_Lite $labels, &$totAmt, $tdClass = '') {
 
         $tbl = new HTMLTable();
         $totalPment = 0.0;
@@ -1374,11 +1386,11 @@ WHERE
 
         // Hospital
         $hospital = '';
-        if ($spans[0]['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']][1] != '(None)') {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']][1] . ' / ';
+        if ($spans[0]['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] != '(None)') {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] . ' / ';
         }
-        if ($spans[0]['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idHospital']])) {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idHospital']][1];
+        if ($spans[0]['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']])) {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']][1];
         }
 
         // Collect rates and rooms
@@ -1388,7 +1400,7 @@ WHERE
         $totalNights = 0;
 
         // Get labels & config
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = new \Config_Lite(LABEL_FILE);
 
         // Payments
         $query = "select lp.*, ifnull(n.Name_First, '') as `First`,
@@ -1427,7 +1439,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         if ($idPsg > 0){
 
             $pstmt = $dbh->query("select n.Name_First, n.Name_Last from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
-            $rows = $pstmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
             }
@@ -1472,7 +1484,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $uS = Session::getInstance();
         $spans = array();
 
-        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+        $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         if ($idVisit > 0) {
             $spans = $priceModel->loadVisitNights($dbh, $idVisit);
@@ -1490,11 +1502,11 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         // Hospital
         $hospital = '';
-        if ($spans[0]['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']][1] != '(None)') {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']][1] . ' / ';
+        if ($spans[0]['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] != '(None)') {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] . ' / ';
         }
-        if ($spans[0]['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idHospital']])) {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idHospital']][1];
+        if ($spans[0]['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']])) {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']][1];
         }
 
         // Payments
@@ -1516,7 +1528,7 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
         $totalNights = 0;
 
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = new \Config_Lite(LABEL_FILE);
 
 
         // Visits and Rates
@@ -1638,3 +1650,4 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
     }
 
 }
+?>

@@ -1,4 +1,9 @@
 <?php
+
+namespace HHK;
+
+use HHK\sec\Session;
+
 /**
  * SiteLog.php
  *
@@ -13,7 +18,6 @@
  *
  * @author Eric
  */
-use sec\Session;
 
 class SiteLog {
 
@@ -54,3 +58,4 @@ class SiteLog {
     }
 
 }
+?>

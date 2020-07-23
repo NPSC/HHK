@@ -1,6 +1,15 @@
 <?php
+
+namespace HHK\Payment;
+
+use HHK\Payment\Invoice\Invoice;
+use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
+use HHK\Tables\EditRS;
+use HHK\Tables\Payment\PaymentInvoiceRS;
+use HHK\sec\Session;
+
 /**
- * CashTX.php
+ * PaymentResult.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
@@ -38,7 +47,7 @@ class PaymentResult {
         $this->idToken = $idToken;
     }
 
-    public function feePaymentAccepted(\PDO $dbh, Session $uS, PaymentResponse $payResp, Invoice $invoice) {
+    public function feePaymentAccepted(\PDO $dbh, Session $uS, AbstractPaymentResponse $payResp, Invoice $invoice) {
 
         // set status
         $this->status = PaymentResult::ACCEPTED;
@@ -55,13 +64,13 @@ class PaymentResult {
         // Email receipt
         try {
             $this->displayMessage .= $this->emailReceipt($dbh);
-        } catch (Exception $ex) {
+        } catch (\Exception $ex) {
             $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
         }
 
     }
 
-    public function feePaymentRejected(\PDO $dbh, Session $uS, PaymentResponse $payResp, Invoice $invoice) {
+    public function feePaymentRejected(\PDO $dbh, Session $uS, AbstractPaymentResponse $payResp, Invoice $invoice) {
 
         $this->status = PaymentResult::DENIED;
         $this->idPayment = $payResp->getIdPayment();
@@ -77,7 +86,7 @@ class PaymentResult {
         // Email receipt
         try {
             $this->displayMessage .= $this->emailReceipt($dbh);
-        } catch (Exception $ex) {
+        } catch (\Exception $ex) {
             $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
         }
 
@@ -289,7 +298,7 @@ class cofResult extends PaymentResult {
 
 class ReturnResult extends PaymentResult {
 
-    public function feePaymentAccepted(\PDO $dbh, Session $uS, PaymentResponse $rtnResp, Invoice $invoice) {
+    public function feePaymentAccepted(\PDO $dbh, Session $uS, AbstractPaymentResponse $rtnResp, Invoice $invoice) {
 
         // set status
         $this->status = PaymentResult::ACCEPTED;
@@ -306,7 +315,7 @@ class ReturnResult extends PaymentResult {
         // Email receipt
         try {
             $this->displayMessage .= $this->emailReceipt($dbh);
-        } catch (Exception $ex) {
+        } catch (\Exception $ex) {
             $this->displayMessage .= "Email Failed, Error = " . $ex->getMessage();
         }
     }
@@ -316,5 +325,4 @@ class ReturnResult extends PaymentResult {
     }
 
 }
-
-
+?>

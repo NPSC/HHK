@@ -5,6 +5,7 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\{WebSiteCode, Mode};
+use HHK\Config_Lite\Config_Lite;
 
 /**
  * ScriptAuthClass.php
@@ -370,7 +371,7 @@ class ScriptAuthClass extends SecurityComponent {
         $siteCount = 0;
         $siteMu = '';
 
-        $config = new \Config_Lite(ciCFG_FILE);
+        $config = new Config_Lite(ciCFG_FILE);
         $tutorialURL = $config->getString('site', 'Tutorial_URL', '');
         $hufURL = $config->getString('site', 'HUF_URL', '');
 

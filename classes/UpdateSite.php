@@ -1,5 +1,10 @@
 <?php
 
+namespace HHK;
+
+use HHK\SiteLog;
+use HHK\SysConst\CodeVersion;
+
 /*
  * The MIT License
  *
@@ -110,7 +115,7 @@ class UpdateSite {
             SiteLog::logPatch($dbh, $logText, CodeVersion::GIT_Id);
 
 
-        } catch (Exception $hex) {
+        } catch (\Exception $hex) {
 
             $this->errorMsg .= '***' . $hex->getMessage();
             // Log failure.
@@ -129,5 +134,5 @@ class UpdateSite {
         return $this->resultAccumulator;
     }
 
-
 }
+?>

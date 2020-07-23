@@ -1,4 +1,7 @@
 <?php
+
+use HHK\sec\{WebInit, UserClass};
+
 /**
  * AccessLog.php
  *

@@ -1,9 +1,11 @@
 <?php
-use AuditLog\NameLog;
-use Exception\RuntimeException;
-use Exception\UploadException;
-use Tables\EditRS;
-use Tables\Name\NameRS;
+
+namespace HHK;
+
+use HHK\AuditLog\NameLog;
+use HHK\Exception\{RuntimeException, UploadException};
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\NameRS;
 
 /*
  * TransferMembers.php
@@ -334,7 +336,7 @@ class TransferMembers {
         $this->openTarget($this->userId, $this->password);
 
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             // Don't process empty fund.id's
             if ($r['fund.id'] == '') {
@@ -643,7 +645,7 @@ class TransferMembers {
             $extId = filter_var($externalId, FILTER_SANITIZE_STRING);
 
             $stmt = $dbh->query("Select count(*) from payment where idPayment = $idPayment and External_Id = '$extId'");
-            $extRows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $extRows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
             if (count($extRows[0]) == 1 && $extRows[0][0] > 0) {
                 throw new UploadException("HHK Payment Record (idPayment = $idPayment) already has a Donation Id = " . $extId);
@@ -994,7 +996,7 @@ class TransferMembers {
         $stmt = $dbh->query("SHOW COLUMNS FROM`$tableName`;");
         $cols = array();
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $cols[] = $r['Field'];
         }
 
@@ -1074,3 +1076,4 @@ class TransferMembers {
         return $this->memberReplies;
     }
 }
+?>

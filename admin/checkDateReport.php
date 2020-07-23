@@ -1,4 +1,7 @@
 <?php
+
+use HHK\sec\WebInit;
+
 /**
  * checkDateReport.php
  *
@@ -11,9 +14,9 @@
 require_once ("AdminIncludes.php");
 
 require_once("functions" . DS . "CheckDateReport.php");
-require_once ("classes" . DS . "VolCats.php");
-require_once(CLASSES . "chkBoxCtrlClass.php");
-require_once(CLASSES . "selCtrl.php");
+// require_once ("classes" . DS . "VolCats.php");
+// require_once(CLASSES . "chkBoxCtrlClass.php");
+// require_once(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;

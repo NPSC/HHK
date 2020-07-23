@@ -1,6 +1,7 @@
 <?php
 namespace HHK\Volunteer;
 
+use HHK\UserCategories;
 use HHK\sec\{Session, SecurityComponent};
 use HHK\SysConst\{VolCalendarStatus, VolRank, WebRole};
 use HHK\Tables\EditRS;
@@ -83,7 +84,7 @@ class VolCal {
         return $events;
     }
 
-    public static function ResizeEvent(PDO $dbh, $gets, UserCategories $cats) {
+    public static function ResizeEvent(\PDO $dbh, $gets, UserCategories $cats) {
     // Event resizing.  Can only add or subtract from the end time.
         $events = array();
         $expr = "";
@@ -133,7 +134,7 @@ class VolCal {
         return $events;
     }
 
-    public static function DeleteCalEvent(PDO $dbh, $eId, $delAll, $justMe, $sendemail, UserCategories $cats) {
+    public static function DeleteCalEvent(\PDO $dbh, $eId, $delAll, $justMe, $sendemail, UserCategories $cats) {
         $events = array();
 
         $idMcal = intval($eId, 10);
@@ -1209,4 +1210,4 @@ table{ border-collapse:collapse;}
     }
 
 }
-
+?>

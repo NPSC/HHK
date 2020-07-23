@@ -1,4 +1,13 @@
 <?php
+
+use HHK\Campaign;
+use HHK\AlertControl\AlertMessage;
+use HHK\SysConst\CampaignType;
+use HHK\Tables\EditRS;
+use HHK\Tables\Donate\CampaignRS;
+use HHK\sec\WebInit;
+use HHK\HTMLControls\selCtrl;
+
 /**
  * campaignEdit.php
  *
@@ -8,12 +17,12 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-require ("AdminIncludes.php");
-require (DB_TABLES . "DonateRS.php");
-require (CLASSES . "Campaign.php");
+ require ("AdminIncludes.php");
+// require (DB_TABLES . "DonateRS.php");
+// require (CLASSES . "Campaign.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
 
 function saveCampaign(PDO $dbh, $campCode, $type, $post) {
 
@@ -164,7 +173,7 @@ if (isset($_POST["bttncamp"])) {
      addslashesextended($_POST);
     // validate and if okay, save data
     // if not okay, redisplay form with errors marked.
-    $campAlert = new alertMessage("campAlert");
+    $campAlert = new AlertMessage("campAlert");
 
     $selType->setReturnValues($_POST[$selType->get_htmlNameBase()]);
     $type = filter_var($_POST[$selType->get_htmlNameBase()], FILTER_SANITIZE_STRING);
@@ -173,7 +182,7 @@ if (isset($_POST["bttncamp"])) {
 
     $mes = saveCampaign($dbh, $campCode, $type, $_POST);
 
-    $campAlert->set_Context(alertMessage::Success);
+    $campAlert->set_Context(AlertMessage::Success);
     $campAlert->set_Text($mes);
 
     $resultMessage = $campAlert->createMarkup();

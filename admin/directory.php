@@ -1,4 +1,8 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{chkBoxCtrl, selCtrl};
+
 /**
  * directory.php
  *
@@ -9,11 +13,11 @@
  */
 require ("AdminIncludes.php");
 require("functions" . DS . "directoryReport.php");
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-require(CLASSES . "OpenXML.php");
-require(CLASSES . "MailList.php");
-require("classes" . DS . "Salutation.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
+// require(CLASSES . "OpenXML.php");
+// require(CLASSES . "MailList.php");
+// require("classes" . DS . "Salutation.php");
 
 $wInit = new webInit();
 
@@ -30,10 +34,10 @@ $uS = Session::getInstance();
 addslashesextended($_POST);
 
 // Checkbox controls
-$cbBasisDir = new chkBoxCtrlClass($dbh, "Member_Basis", "Include", "cbDirBasis", true);
+$cbBasisDir = new chkBoxCtrl($dbh, "Member_Basis", "Include", "cbDirBasis", true);
 $cbBasisDir->set_class("hhk-dirBasis");
 
-$cbRelationDir = new chkBoxCtrlClass($dbh, "Rel_Type", "Show", "cbRelt", false, "Description");
+$cbRelationDir = new chkBoxCtrl($dbh, "Rel_Type", "Show", "cbRelt", false, "Description");
 $cbRelationDir->set_class("hhk-dirRel");
 // Set partner true
 $cbRelationDir->set_cbValueArray(true, "sp");

@@ -1,5 +1,10 @@
 <?php
 
+use HHK\Exception\RuntimeException;
+use HHK\sec\Session;
+use HHK\SysConst\{WebRole};
+use HHK\Config_Lite\Config_Lite;
+
 /**
  * commonFunc.php
  *
@@ -14,7 +19,7 @@ function initPDO($override = FALSE)
     $roleCode = $ssn->rolecode;
 
     if (! isset($ssn->databaseURL)) {
-        throw new Hk_Exception_Runtime('<p>Missing Database URL (initPDO)</p>');
+        throw new RuntimeException('<p>Missing Database URL (initPDO)</p>');
     }
 
     $dbuName = $ssn->databaseUName;
@@ -28,7 +33,7 @@ function initPDO($override = FALSE)
             $config = new Config_Lite(ciCFG_FILE);
         } catch (Exception $ex) {
             $ssn->destroy();
-            throw new Hk_Exception_Runtime("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
+            throw new RuntimeException("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
         }
 
         $dbuName = $config->getString('db', 'ReadonlyUser', '');
@@ -55,7 +60,7 @@ function initPDO($override = FALSE)
         $ssn->destroy(TRUE);
 
         if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
-            throw new Hk_Exception_Runtime("<br/>Database Error: " . $e->getMessage());
+            throw new RuntimeException("<br/>Database Error: " . $e->getMessage());
         }
 
         header('location:../reset.php?r=' . $e->getMessage());
