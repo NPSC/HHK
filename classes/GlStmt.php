@@ -403,26 +403,26 @@ class GlStmt {
 	}
 	
 	public function doReport (\PDO $dbh, $tableAttrs) {
-		
+
 		$uS = Session::getInstance();
-		
+
 		$start = $this->startDate->format('Y-m-d');
 		$end = $this->endDate->format('Y-m-d');
-		
+
 		$guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
-		
+
 		$ordersArray = array();
 		foreach ($this->getInvoices() as $r) {
-			
+
 			if ($r['i']['Order_Number'] != '') {
 				$ordersArray[$r['i']['Order_Number']] = 'y';
 			}
 		}
-		
+
 		$orderNumbers = '';
-		
+
 		if (count($ordersArray) > 0) {
-			
+
 			foreach ($ordersArray as $k => $i) {
 				
 				if ($k == '' || $k == 0) {
@@ -435,11 +435,11 @@ class GlStmt {
 					$orderNumbers .= ','. $k;
 				}
 			}
-			
+
 			$orderNumbers = " or v.idVisit in ($orderNumbers) ";
 		}
-		
-		
+
+
 		$query = "select
 	v.idVisit,
 	v.Span,
@@ -558,27 +558,31 @@ where
 		)
 	$orderNumbers
  order by v.idVisit, v.Span";
-		
+
 		$categories = readGenLookupsPDO($dbh, 'Room_Category');
-		
+
 		$totalCatNites[] = array();
 		foreach ($categories as $c) {
 			$totalCatNites[$c[0]] = 0;
 		}
-		
+
 		$priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-		
+
 		$overPay = 0;
 		$preIntervalPay = 0;
 		$intervalPay = 0;
 		$totalPayment = array();
 		
+		$overCharge = 0;
+		$preIntervalCharge = 0;
+		$intervalCharge = 0;
+		$fullInvervalCharge = 0;
+		
 		$vIntervalCharge = 0;
 		$vPreIntervalCharge = 0;
 		$vFullIntervalCharge = 0;
-		
 		$vIntervalPay = 0;
-		
+
 		$istmt = $dbh->query("select idItem from item");
 		while( $i = $istmt->fetch(PDO::FETCH_NUM)) {
 			$totalPayment[$i[0]] = 0;
@@ -652,6 +656,7 @@ where
 			$serialId = $serial;
 			$visitId = $r['idVisit'];
 			$record = $r;
+			
 			
 			// Add up payments
 			if ($r['pTimestamp'] != '') {

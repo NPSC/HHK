@@ -1321,7 +1321,7 @@ class HouseServices {
     }
 
     /**
-     * Return from View Credit Table
+     * Return from View Credit Table; delete any indicated cards and send out COF transaction to Gateway
      *
      * @param PDO $dbh
      * @param integer $idGuest

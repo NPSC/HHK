@@ -311,7 +311,6 @@ class InstamedGateway extends PaymentGateway {
             'patientLastName' => html_entity_decode($patInfo['Name_Last'], ENT_QUOTES),
             InstaMedCredentials::U_ID => $uS->uid,
             InstaMedCredentials::U_NAME => $uS->username,
-            'cardHolderName' => html_entity_decode($cardHolderName, ENT_QUOTES),
             'lightWeight' => 'true',
             'creditCardKeyed' => ($manualKey ? 'true' : 'false'),
             'responseActionType' => 'header',
@@ -321,6 +320,10 @@ class InstamedGateway extends PaymentGateway {
             'RelayState' => $this->cofUrl,
         );
 
+        if ($manualKey && $cardHolderName != '') {
+        	$data['cardHolderName'] = html_entity_decode($cardHolderName, ENT_QUOTES);
+        }
+        
         $allData = array_merge($data, $this->getCredentials()->toSSO());
 
         $headerResponse = $this->doHeaderRequest(http_build_query($allData));

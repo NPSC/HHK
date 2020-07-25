@@ -80,7 +80,7 @@ if (SecurityComponent::isHTTPS()) {
                     </ul>
                     <div style="margin-top: 100px;">
                         <hr>
-                        <div class="nplogo"><a href ="http://nonprofitsoftwarecorp.org" ></a></div>
+                        <div class="nplogo"><a href ="https://nonprofitsoftwarecorp.org" ></a></div>
                         <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non-Profit Software Corporation</div>
                     </div>
                 </div>
