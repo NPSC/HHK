@@ -1,4 +1,16 @@
 <?php
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\{Session, WebInit};
+use HHK\AlertControl\AlertMessage;
+use HHK\SysConst\GLTableNames;
+use HHK\ColumnSelectors;
+use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector};
+use HHK\SysConst\PaymentStatusCode;
+use HHK\OpenXML;
+use HHK\Payment\Receipt;
+use HHK\House\Report\PaymentReport;
+
 /**
  * PaymentReport.php
  *
@@ -9,12 +21,12 @@
  */
 
 require ("homeIncludes.php");
-require (DB_TABLES . 'ItemRS.php');
+// require (DB_TABLES . 'ItemRS.php');
 
-require (PMT . 'Receipt.php');
-require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php';
-require HOUSE . 'PaymentReport.php';
+// require (PMT . 'Receipt.php');
+// require (CLASSES . 'ColumnSelectors.php');
+// require CLASSES . 'OpenXML.php';
+// require HOUSE . 'PaymentReport.php';
 
 try {
     $wInit = new webInit();
@@ -34,9 +46,9 @@ $menuMarkup = $wInit->generatePageMenu();
 $config = new Config_Lite(ciCFG_FILE);
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -81,14 +93,14 @@ $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
 
 $payTypes = array();
 
-foreach ($uS->nameLookups[GL_TableNames::PayType] as $p) {
+foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
     if ($p[2] != '') {
         $payTypes[$p[2]] = array($p[2], $p[1]);
     }
 }
 
 // Hospital and association lists
-$hospList = $uS->guestLookups[GL_TableNames::Hospital];
+$hospList = $uS->guestLookups[GLTableNames::Hospital];
 $hList = array();
 $aList = array();
 
@@ -117,8 +129,8 @@ if (count($gwRows) > 1) {
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms, DT Type
 $cFields[] = array('Payor Last', 'Last', 'checked', '', 's', '', array());
 $cFields[] = array("Payor First", 'First', 'checked', '', 's', '', array());
-$cFields[] = array("Date", 'Payment_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
-$cFields[] = array("Time", 'Payment_Timestamp', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_TIME3, array(), 'time');
+$cFields[] = array("Date", 'Payment_Date', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Time", 'Payment_Timestamp', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_TIME3, array(), 'time');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
 
@@ -508,11 +520,11 @@ where lp.idPayment > 0
             // Hospital
             $hospital = '';
 
-            if ($r['i']['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['i']['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['i']['idAssociation']][1] != '(None)') {
-                $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['i']['idAssociation']][1] . ' / ';
+            if ($r['i']['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['i']['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['i']['idAssociation']][1] != '(None)') {
+                $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['i']['idAssociation']][1] . ' / ';
             }
-            if ($r['i']['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['i']['idHospital']])) {
-                $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['i']['idHospital']][1];
+            if ($r['i']['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['i']['idHospital']])) {
+                $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['i']['idHospital']][1];
             }
 
 

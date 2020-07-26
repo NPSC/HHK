@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\OpenXML;
+use HHK\HTMLControls\HTMLTable;
+
+
 /**
  * Survey.php
  *
@@ -9,9 +15,9 @@
  */
 require ("homeIncludes.php");
 
-require (CLASSES . 'AuditLog.php');
+/* require (CLASSES . 'AuditLog.php');
 
-require(DB_TABLES . "nameRS.php");
+require(DB_TABLES . "nameRS.php"); */
 
 $wInit = new webInit();
 

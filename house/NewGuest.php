@@ -1,4 +1,12 @@
 <?php
+
+use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
+use HHK\sec\{Session, WebInit};
+use HHK\OpenXML;
+use HHK\ColumnSelectors;
+use HHK\SysConst\GLTableNames;
+use HHK\Config_Lite\Config_Lite;
+
 /**
  * NewGuest.php
  *
@@ -10,8 +18,8 @@
 
 require ("homeIncludes.php");
 
-require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php';
+/* require (CLASSES . 'ColumnSelectors.php');
+require CLASSES . 'OpenXML.php'; */
 
 
 
@@ -134,13 +142,13 @@ ORDER BY `First Stay`";
         // Hospital
         $hospital = '';
 
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
-            $assoc = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
+        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] . ' / ';
+            $assoc = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
         }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
-            $hosp = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
+            $hosp = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
         }
 
         $r['hospitalAssoc'] = $hospital;
@@ -165,7 +173,7 @@ ORDER BY `First Stay`";
 
         } else {
 
-            $r['First Stay'] = PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
+            $r['First Stay'] = \PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
 
 
             $n = 0;
@@ -244,8 +252,8 @@ if ($uS->fy_diff_Months == 0) {
 
 // Hospital and association lists
 $hospList = array();
-if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+    $hospList = $uS->guestLookups[GLTableNames::Hospital];
 }
 
 $hList[] = array(0=>'', 1=>'(All)');
@@ -283,7 +291,7 @@ $cFields[] = array("Primary Guest", 'Primary', 'checked', '', 's', '', array());
 
     $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
 
-$cFields[] = array("First Stay", 'First Stay', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("First Stay", 'First Stay', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Relation", 'Relationship', 'checked', '', 's', '', array());
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Group Id", 'idPsg', 'checked', '', 's', '', array());

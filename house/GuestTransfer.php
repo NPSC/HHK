@@ -1,4 +1,17 @@
 <?php
+use HHK\SysConst\WebPageCode;
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\AlertControl\AlertMessage;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\SecurityComponent;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\CreateMarkupFromDB;
+use HHK\OpenXML;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Neon\TransferMembers;
+use HHK\HTMLControls\HTMLSelector;
+
 /**
  * GuestTransfer.php
  *
@@ -10,13 +23,13 @@
 
 require ("homeIncludes.php");
 
-require CLASSES . 'CreateMarkupFromDB.php';
+/* require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'TransferMembers.php';
-require CLASSES . 'OpenXML.php';
+require CLASSES . 'OpenXML.php'; */
 
 try {
     // Do not add CSP.
-    $wInit = new webInit(WebPageCode::Page, FALSE);
+    $wInit = new WebInit(WebPageCode::Page, FALSE);
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -32,9 +45,9 @@ $uS = Session::getInstance();
 $menuMarkup = $wInit->generatePageMenu();
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -195,8 +208,8 @@ where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DAT
                 if (($key == 'Arrival' or $key == 'Departure' || $key == 'Birth Date') && $col != '') {
 
                     $flds[$n++] = array('type' => "n",
-                        'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
+                        'value' => \PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
+                        'style' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
 
                 } else {
                     $flds[$n++] = array('type' => "s", 'value' => $col);

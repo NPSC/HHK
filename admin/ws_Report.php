@@ -1,5 +1,9 @@
 <?php
 
+use HHK\sec\{WebInit};
+use HHK\House\Report\GuestReport;
+use HHK\SysConst\WebPageCode;
+
 /**
  * ws_Report.php
  *
@@ -9,7 +13,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 require("AdminIncludes.php");
-require(CLASSES . "Campaign.php");
+//require(CLASSES . "Campaign.php");
 
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;

@@ -1,5 +1,14 @@
 <?php
 
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\SysConst\VolMemberType;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+use HHK\GlStmt;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLSelector;
+
 /**
  * IncmStmt.php
  *
@@ -11,7 +20,7 @@
 
 require ("homeIncludes.php");
 
-require (THIRD_PARTY . 'mk-j/PHP_XLSXWriter/xlsxwriter.php');
+/* require (THIRD_PARTY . 'mk-j/PHP_XLSXWriter/xlsxwriter.php');
 require(CLASSES . 'Purchase/RoomRate.php');
 require(CLASSES . 'ValueAddedTax.php');
 require (CLASSES . 'GlStmt.php');
@@ -22,9 +31,9 @@ require(CLASSES . 'CreateMarkupFromDB.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
+ */
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }

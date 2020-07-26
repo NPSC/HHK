@@ -1,4 +1,42 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Session;
+use HHK\sec\SecurityComponent;
+use HHK\Payment\PaymentSvcs;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\Exception\RuntimeException;
+use HHK\House\HouseServices;
+use HHK\House\PSG;
+use HHK\SysConst\VolMemberType;
+use HHK\SysConst\MemBasis;
+use HHK\Member\RoleMember\GuestMember;
+use HHK\Member\Address\Address;
+use HHK\Member\Address\Phones;
+use HHK\Member\Address\Emails;
+use HHK\History;
+use HHK\HTMLControls\HTMLTable;
+use HHK\House\Registration;
+use HHK\Member\EmergencyContact\EmergencyContact;
+use HHK\House\Hospital\HospitalStay;
+use HHK\House\Vehicle;
+use HHK\House\Hospital\Hospital;
+use HHK\Purchase\FinAssistance;
+use HHK\Member\Address\Addresses;
+use HHK\SysConst\GLTableNames;
+use HHK\HTMLControls\HTMLInput;
+use HHK\SysConst\VisitStatus;
+use HHK\Tables\Reservation\ReservationRS;
+use HHK\Tables\EditRS;
+use HHK\House\Reservation\Reservation_1;
+use HHK\Purchase\RoomRate;
+use HHK\SysConst\ItemPriceCode;
+use HHK\SysConst\MemStatus;
+use HHK\CreateMarkupFromDB;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\SysConst\RoomRateCategories;
+use HHK\House\Room\RoomChooser;
+
 /**
  * GuestEdit.php
  *
@@ -9,7 +47,7 @@
  */
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'visitRS.php');
+/* require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');
@@ -82,10 +120,10 @@ require (PMT . 'InvoiceLine.php');
 require (PMT . 'CheckTX.php');
 require (PMT . 'CashTX.php');
 require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
+require (PMT . 'CreditToken.php'); */
 
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 
@@ -128,7 +166,7 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
@@ -178,7 +216,7 @@ if (isset($_POST["hdnid"])) {
 if ($id > 0) {
 
     // Check psg
-    $ngRss = Psg::getNameGuests($dbh, $id);
+    $ngRss = PSG::getNameGuests($dbh, $id);
 
     if (count($ngRss) == 0) {
         // Check for guest/patient category
@@ -210,9 +248,9 @@ $name = new GuestMember($dbh, MemBasis::Indivual, $id, NULL);
 $name->setIdPrefix('');
 $id = $name->get_idName();
 
-$address = new Address($dbh, $name, $uS->nameLookups[GL_TableNames::AddrPurpose]);
-$phones = new Phones($dbh, $name, $uS->nameLookups[GL_TableNames::PhonePurpose]);
-$emails = new Emails($dbh, $name, $uS->nameLookups[GL_TableNames::EmailPurpose]);
+$address = new Address($dbh, $name, $uS->nameLookups[GLTableNames::AddrPurpose]);
+$phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+$emails = new Emails($dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
 
 
 // Guest History - add this ID.
@@ -495,7 +533,7 @@ if ($name->get_lastUpdated() != '') {
 
 // Add Emergency contact
 $emergencyTabMarkup = HTMLContainer::generateMarkup('div',
-        $emergContact->createMarkup($uS->guestLookups[GL_TableNames::PatientRel]));
+        $emergContact->createMarkup($uS->guestLookups[GLTableNames::PatientRel]));
 
 
 $visitList = "";
@@ -512,7 +550,7 @@ $reservMarkup = '';
 //
 if ($psg->getIdPsg() > 0) {
 
-    $psgTabMarkup = $psg->createEditMarkup($dbh, $uS->guestLookups[GL_TableNames::PatientRel], $labels, 'GuestEdit.php', $id, FALSE);
+    $psgTabMarkup = $psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], $labels, 'GuestEdit.php', $id, FALSE);
 
     $ccMarkup = '';
 //    if ($uS->PaymentGateway != '') {
@@ -762,7 +800,7 @@ $uS->guestId = $id;
 		<script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo DOC_UPLOAD_JS; ?>"></script>
 
-        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -959,7 +997,7 @@ $uS->guestId = $id;
             var rctMkup = '<?php echo $receiptMarkup; ?>';
             var pmtMkup = '<?php echo $paymentMarkup; ?>';
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
-            var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+            var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
         </script>
         <script type="text/javascript" src="js/guestload-min.js?rt=36"></script>

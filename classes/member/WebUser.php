@@ -1,4 +1,15 @@
 <?php
+
+namespace HHK\Member;
+
+use HHK\AlertControl\AlertMessage;
+use HHK\AuditLog\NameLog;
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\sec\{SecurityComponent, Session, UserClass};
+use HHK\SysConst\WebRole;
+use HHK\Tables\EditRS;
+use HHK\Tables\WebSec\{Id_SecurityGroupRS, W_authRS, W_usersRS};
+
 /**
  * WebUser.php
  *
@@ -118,9 +129,9 @@ class WebUser {
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($roleMkup, $wAuthRS->Role_Id->getStoredVal()), $attr))
                 );
 
-        $webAlert = new alertMessage("webContainer");
+        $webAlert = new AlertMessage("webContainer");
         $webAlert->set_DisplayAttr("none");
-        $webAlert->set_Context(alertMessage::Success);
+        $webAlert->set_Context(AlertMessage::Success);
         $webAlert->set_iconId("webIcon");
         $webAlert->set_styleId("webResponse");
         $webAlert->set_txtSpanId("webMessage");

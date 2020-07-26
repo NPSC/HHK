@@ -2,7 +2,10 @@
 
 namespace HHK\House\TemplateForm;
 
+use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\House\Reservation\Reservation_1;
+use HHK\Member\Role\Guest;
 use HHK\sec\Session;
 
 /**
@@ -25,7 +28,7 @@ class ConfirmationForm extends AbstractTemplateForm {
     public function makeReplacements(Reservation_1 $reserv, Guest $guest, $amount, $notes) {
 
 		$uS = Session::getInstance();
-		$labels = new \Config_Lite(LABEL_FILE);
+		$labels = new Config_Lite(LABEL_FILE);
 		$visitFeeNotice = "";
 
 		//populate visitFeeNotice

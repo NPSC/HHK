@@ -1,4 +1,11 @@
 <?php
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\{Session, WebInit};
+use HHK\House\Report\ReportFilter;
+use HHK\House\Report\GuestReport;
+
 /**
  * occDemo.php
  *
@@ -8,8 +15,8 @@
  * @link      https://github.com/NPSC/HHK
  */
 require('homeIncludes.php');
-require(HOUSE . 'ReportFilter.php');
-require(HOUSE . 'GuestReport.php');
+/* require(HOUSE . 'ReportFilter.php');
+require(HOUSE . 'GuestReport.php'); */
 
 $wInit = new webInit();
 

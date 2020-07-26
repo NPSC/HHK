@@ -1,4 +1,13 @@
 <?php
+use HHK\sec\Login;
+use HHK\Exception\RuntimeException;
+use HHK\sec\Session;
+use HHK\sec\SysConfig;
+use HHK\sec\WebInit;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\TableLog\HouseLog;
+use HHK\HTMLControls\HTMLSelector;
+
 /**
  * step3.php
  *
@@ -8,7 +17,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("InstallIncludes.php");
-require (CLASSES . 'PDOdata.php');
+/* require (CLASSES . 'PDOdata.php');
 require (DB_TABLES . 'WebSecRS.php');
 require (DB_TABLES . 'HouseRS.php');
 require(SEC . 'Login.php');
@@ -18,7 +27,7 @@ require (CLASSES . 'Purchase/PriceModel.php');
 require (CLASSES . 'TableLog.php');
 require (CLASSES . 'HouseLog.php');
 require CLASSES . 'AuditLog.php';
-
+ */
 
 try {
 
@@ -34,7 +43,7 @@ try {
 // define db connection obj
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 
@@ -42,7 +51,7 @@ try {
 // get session instance
 $ssn = Session::getInstance();
 
-SysConfig::getCategory($dbh, $ssn, "'f'", webInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, "'f'", WebInit::SYS_CONFIG);
 SysConfig::getCategory($dbh, $ssn, "'r'", webInit::SYS_CONFIG);
 SysConfig::getCategory($dbh, $ssn, "'d'", webInit::SYS_CONFIG);
 SysConfig::getCategory($dbh, $ssn, "'h'", webInit::SYS_CONFIG);
@@ -108,7 +117,7 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
 
         $dbh->exec("delete from `room_rate`");
 
-        PriceModel::installRates($dbh, $rateCode);
+        AbstractPriceModel::installRates($dbh, $rateCode);
 
     }
 

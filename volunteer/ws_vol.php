@@ -1,4 +1,10 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\Session;
+use HHK\sec\UserClass;
+use HHK\HTMLControls\HTMLTable;
+
 /**
  * ws_vol.php
  *
@@ -11,15 +17,15 @@
  */
 
 require("VolIncludes.php");
-require(SEC . 'UserClass.php');
+/* require(SEC . 'UserClass.php');
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
+ */
 
 
-
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 
@@ -292,4 +298,4 @@ function listMembers(\PDO $dbh, $codes) {
 
     return array("error" => "invalid vol codes: " . $codes);
 }
-
+?>

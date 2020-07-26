@@ -1,5 +1,28 @@
 <?php
 
+use HHK\sec\{Session, WebInit};
+use HHK\House\Resource\ResourceTypes;
+use HHK\SysConst\ResourceStatus;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\SysConst\RoomRateCategories;
+use HHK\SysConst\GLTableNames;
+use HHK\ColumnSelectors;
+use HHK\SysConst\ItemPriceCode;
+use HHK\Purchase\RoomRate;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\SysConst\InvoiceStatus;
+use HHK\SysConst\ItemType;
+use HHK\SysConst\ItemId;
+use HHK\SysConst\VolMemberType;
+use HHK\Purchase\ValueAddedTax;
+use HHK\Config_Lite\Config_Lite;
+use HHK\Payment\PaymentSvcs;
+use HHK\Exception\RuntimeException;
+use HHK\House\Report\ReportFilter;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+
+
 /**
  * VisitInterval.php
  *
@@ -10,7 +33,7 @@
  */
 
 require ("homeIncludes.php");
-require (DB_TABLES . 'PaymentsRS.php');
+/* require (DB_TABLES . 'PaymentsRS.php');
 require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'PaymentGwRS.php');
 
@@ -38,7 +61,7 @@ require (PMT . 'CreditToken.php');
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php'); */
 
 try {
     $wInit = new webInit();
@@ -223,10 +246,10 @@ order by r.idResource;";
  * @param \DateTime $departureDT
  * @param HTMLTable $tbl
  * @param boolean $local  Flag for Excel output
- * @param \PHPExcel $sml
+ * @param PHPExcel $sml
  * @param Object $reportRows  PHPExecl object
  * @param array $rateTitles  Room rates
- * @param \Session $uS
+ * @param Session $uS
  * @param Boolean $visitFee  Flag to show/hide visit fees
 
  */
@@ -234,7 +257,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
     $arrivalDT = new DateTime($r['Arrival_Date']);
 
-    if ($r['Rate_Category'] == RoomRateCategorys::Fixed_Rate_Category) {
+    if ($r['Rate_Category'] == RoomRateCategories::Fixed_Rate_Category) {
 
         $r['rate'] = $r['Pledged_Rate'];
 
@@ -269,13 +292,13 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
     $assoc = '';
     $hosp = '';
 
-    if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-        $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
-        $assoc = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
+    if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+        $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] . ' / ';
+        $assoc = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
     }
-    if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-        $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
-        $hosp = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+    if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+        $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
+        $hosp = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
     }
 
     $r['Doctor'] = $r['Doctor_Last'] . ($r['Doctor_First'] == '' ? '' : ', ' . $r['Doctor_First']);
@@ -453,7 +476,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     $categories[] = array(0=>'', 1=>'(default)');
 
 
-    $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+    $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
     // Make titles for all the rates
     $rateTitles = RoomRate::makeDescriptions($dbh);
@@ -938,8 +961,8 @@ where
 
         // Count rate changes
         if ($curRateId != $r['idRoom_Rate']
-                || ($curRate == RoomRateCategorys::Fixed_Rate_Category && $curAmt != $r['Pledged_Rate'])
-                || ($curRate != RoomRateCategorys::Fixed_Rate_Category && $curAdj != $r['Expected_Rate'])) {
+                || ($curRate == RoomRateCategories::Fixed_Rate_Category && $curAmt != $r['Pledged_Rate'])
+                || ($curRate != RoomRateCategories::Fixed_Rate_Category && $curAdj != $r['Expected_Rate'])) {
 
             $curRate = $r['Rate_Category'];
             $curRateId = $r['idRoom_Rate'];
@@ -984,7 +1007,7 @@ where
             $visit['taxcgd'] += round($visit['chg'] * $lodgeTax, 2);
 
             $priceModel->setCreditDays($r['Rate_Glide_Credit'] + $r['Pre_Interval_Nights']);
-            $fullCharge = ($priceModel->amountCalculator($days, 0, RoomRateCategorys::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays));
+            $fullCharge = ($priceModel->amountCalculator($days, 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $gdays));
 
             if ($adjRatio > 0) {
                 // Only adjust when the charge will be more.
@@ -1294,7 +1317,7 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
@@ -1581,10 +1604,10 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
 <script type="text/javascript">
-    var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+    var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
     var rctMkup, pmtMkup;
     var dateFormat = '<?php echo $dateFormat; ?>';
     $(document).ready(function() {

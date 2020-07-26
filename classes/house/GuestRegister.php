@@ -1,5 +1,15 @@
 <?php
 
+namespace HHK\House;
+
+use HHK\sec\Session;
+use HHK\SysConst\ResourceStatus;
+use HHK\US_Holidays;
+use HHK\House\Reservation\Reservation_1;
+use HHK\SysConst\VisitStatus;
+use HHK\SysConst\ReservationStatus;
+use HHK\SysConst\CalEventKind;
+
 /*
  * GuestRegister.php
  *
@@ -26,29 +36,29 @@ class GuestRegister {
             $timezone = $uS->tz;
         }
 
-        $beginDT = self::parseDateTime($startDate, new DateTimeZone($timezone));
+        $beginDT = self::parseDateTime($startDate, new \DateTimeZone($timezone));
 
         if ($endDate != '') {
-            $endDT = self::parseDateTime($endDate, new DateTimeZone($timezone));
+            $endDT = self::parseDateTime($endDate, new \DateTimeZone($timezone));
         } else if ($view != '') {
 
-            $endDT = self::parseDateTime($startDate, new DateTimeZone($timezone));
+            $endDT = self::parseDateTime($startDate, new \DateTimeZone($timezone));
 
             switch ($view) {
                 case 'timeline1weeks':
-                    $endDT->add(new DateInterval('P1W'));
+                    $endDT->add(new \DateInterval('P1W'));
                     break;
 
                 case 'timeline2weeks':
-                    $endDT->add(new DateInterval('P2W'));
+                    $endDT->add(new \DateInterval('P2W'));
                     break;
 
                 case 'timeline3weeks':
-                    $endDT->add(new DateInterval('P3W'));
+                    $endDT->add(new \DateInterval('P3W'));
                     break;
 
                 case 'timeline4weeks':
-                    $endDT->add(new DateInterval('P26W'));
+                    $endDT->add(new \DateInterval('P26W'));
                     break;
 
             }
@@ -57,7 +67,7 @@ class GuestRegister {
         //Resource grouping controls
         $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
         
-        $groupBy = ''; 
+        $groupBy = '';
         
         foreach ($rescGroups as $g) {
         	if ($rescGroupBy = $g[0]) {
@@ -147,7 +157,7 @@ where ru.idResource_use is null
 
     /**
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param string $startTime
      * @param string $endTime
      * @return array
@@ -169,8 +179,8 @@ where ru.idResource_use is null
             $timezone = $uS->tz;
         }
 
-        $beginDate = self::parseDateTime($startTime, new DateTimeZone($timezone));
-        $endDate = self::parseDateTime($endTime, new DateTimeZone($timezone));
+        $beginDate = self::parseDateTime($startTime, new \DateTimeZone($timezone));
+        $endDate = self::parseDateTime($endTime, new \DateTimeZone($timezone));
 
         // get list of hospital colors
         $hospitals = $this->getHospitals($dbh);
@@ -252,7 +262,7 @@ where ru.idResource_use is null
 
             // show event on first day of calendar
             if ($endDT->format('Y-m-d') == $beginDate->format('Y-m-d') && $extended) {
-                $endDT->add(new DateInterval('P1D'));
+                $endDT->add(new \DateInterval('P1D'));
             }
 
             // Render Event
@@ -350,7 +360,7 @@ where ru.idResource_use is null
                 while ($myHolidays->is_holiday($stDT->format('U'))) {
                     $c = array(
                         'id' => 'H' . $eventId++,
-                        'kind' => CalEvent_Kind::BO,
+                        'kind' => CalEventKind::BO,
                         'editable' => false,
                         'resourceId' => $r["idResource"],
                         'start' => $stDT->format('Y-m-d\TH:i:00'),
@@ -377,7 +387,7 @@ where ru.idResource_use is null
                     // Add a Cleaning Black-Out Event
                     $c = array(
                         'id' => 'BO' . $eventId++,
-                        'kind' => CalEvent_Kind::BO,
+                        'kind' => CalEventKind::BO,
                         'editable' => false,
                         'resourceId' => $r["idResource"],
                         'start' => $stDT->format('Y-m-d\TH:i:00'),
@@ -401,7 +411,7 @@ where ru.idResource_use is null
                 while ($myHolidays->is_holiday($stDT->format('U'))) {
                     $c = array(
                         'id' => 'H' . $eventId++,
-                        'kind' => CalEvent_Kind::BO,
+                        'kind' => CalEventKind::BO,
                         'editable' => false,
                         'resourceId' => $r["idResource"],
                         'start' => $stDT->format('Y-m-d\TH:i:00'),
@@ -439,7 +449,7 @@ where ru.idResource_use is null
 
                     $c = array(
                         'id' => 'H' . $eventId++,
-                        'kind' => CalEvent_Kind::BO,
+                        'kind' => CalEventKind::BO,
                         'editable' => false,
                         'resourceId' => $r["idResource"],
                         'start' => $clDate->format('Y-m-d\TH:i:00'),
@@ -467,7 +477,7 @@ where ru.idResource_use is null
                 // Add a Cleaning Black-Out Event
                 $c = array(
                     'id' => 'BO' . $eventId++,
-                    'kind' => CalEvent_Kind::BO,
+                    'kind' => CalEventKind::BO,
                     'editable' => false,
                     'resourceId' => $r["idResource"],
                     'start' => $clDate->format('Y-m-d\TH:i:00'),
@@ -490,7 +500,7 @@ where ru.idResource_use is null
             while ($beginHolidays->is_holiday($clDate->format('U')) || $endHolidays->is_holiday($clDate->format('U'))) {
                 $c = array(
                     'id' => 'H' . $eventId++,
-                    'kind' => CalEvent_Kind::BO,
+                    'kind' => CalEventKind::BO,
                     'editable' => FALSE,
                     'resourceId' => $r["idResource"],
                     'start' => $clDate->format('Y-m-d\TH:i:00'),
@@ -548,9 +558,9 @@ where ru.idResource_use is null
 
     // Parses a string into a DateTime object, optionally forced into the given timezone.
     public static function parseDateTime($string, $timezone=null) {
-      $date = new DateTime(
+      $date = new \DateTime(
         $string,
-        $timezone ? $timezone : new DateTimeZone('UTC')
+        $timezone ? $timezone : new \DateTimeZone('UTC')
           // Used only when the string is ambiguous.
           // Ignored if string has a timezone offset in it.
       );
@@ -565,7 +575,7 @@ where ru.idResource_use is null
     // Takes the year/month/date values of the given DateTime and converts them to a new DateTime,
     // but in UTC.
     public static function stripTime($datetime) {
-      return new DateTime($datetime->format('Y-m-d'));
+      return new \DateTime($datetime->format('Y-m-d'));
     }
 
 
@@ -579,7 +589,7 @@ where ru.idResource_use is null
 
             // Background Event
             $h['rendering'] = 'background';
-            $h['kind'] = CalEvent_Kind::BAK;
+            $h['kind'] = CalEventKind::BAK;
             $h['editable'] = FALSE;
             $h['id'] = 'b' . (isset($r['id']) ? $r['id'] : $r['idReservation']);
             $h['idHosp'] = $r['idHospital'];
@@ -615,7 +625,7 @@ where ru.idResource_use is null
         while ($myHolidays->is_holiday($dtendDate->format('U'))) {
                     $c = array(
                         'id' => 'H' . $idResc,
-                        'kind' => CalEvent_Kind::BO,
+                        'kind' => CalEventKind::BO,
                         'editable' => FALSE,
                         'resourceId' => $idResc,
                         'start' => $dtendDate->format('Y-m-d\TH:i:00'),
@@ -644,7 +654,7 @@ where ru.idResource_use is null
 
                     $c = array(
                         'id' => 'BO' . $idResc,
-                        'kind' => CalEvent_Kind::BO,
+                        'kind' => CalEventKind::BO,
                         'editable' => FALSE,
                         'resourceId' => $idResc,
                         'start' => $dtendDate->format('Y-m-d\TH:i:00'),
@@ -671,7 +681,7 @@ where ru.idResource_use is null
                 while ($myHolidays->is_holiday($dtendDate->format('U'))) {
                     $c = array(
                         'id' => 'H' . $idResc,
-                        'kind' => CalEvent_Kind::BO,
+                        'kind' => CalEventKind::BO,
                         'editable' => FALSE,
                         'resourceId' => $idResc,
                         'start' => $dtendDate->format('Y-m-d\TH:i:00'),
@@ -731,7 +741,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
             // Set Start and end for fullCalendar control
             $c = array(
                 'id' => 'RR' . $idCounter++,
-                'kind' => CalEvent_Kind::OOS,
+                'kind' => CalEventKind::OOS,
                 'resourceId' => $r["idResource"],
                 'reason' => $r['reasonTitle'],
                 'start' => $r['Start_Date'],
@@ -926,7 +936,4 @@ class Event {
   }
 
 }
-
-
-
-
+?>

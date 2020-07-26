@@ -1,4 +1,8 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\selCtrl;
+
 /**
  * timeReport.php
  *
@@ -9,8 +13,8 @@
  */
 require("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 

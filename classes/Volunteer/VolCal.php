@@ -569,7 +569,7 @@ class VolCal {
 
             // pickup all the shell events.
             foreach ($rows as $r) {
-                $shell = new shellEvent_Class();
+                $shell = new ShellEvent();
                 $shell->loadFromDbRow($r);
 
                 $s[] = $shell;
@@ -691,7 +691,7 @@ class VolCal {
 
             // pickup all the shell events.
             foreach ($rows as $r) {
-                $shell = new shellEvent_Class();
+                $shell = new ShellEvent();
                 $shell->loadFromDbRow($r);
 
                 $s[] = $shell;

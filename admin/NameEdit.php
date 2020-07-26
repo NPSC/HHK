@@ -1,4 +1,14 @@
 <?php
+
+use HHK\Donation\{Campaign, DonateMarkup};
+use HHK\History;
+use HHK\AlertControl\AlertMessage;
+use HHK\Member\{AbstractMember, WebUser};
+use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, SalutationCodes};
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\Volunteer\VolunteerCategory;
+use HHK\Member\Address\{Address, Phones, Emails, Addresses};
+
 /**
  * NameEdit.php
  *
@@ -11,7 +21,7 @@
 require ("AdminIncludes.php");
 
 
-require (DB_TABLES . 'nameRS.php');
+/* require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'WebSecRS.php');
 require (DB_TABLES . 'registrationRS.php');
@@ -33,7 +43,7 @@ require (CLASSES . 'Donate.php');
 require (CLASSES . 'AuditLog.php');
 require (CLASSES . 'Relation.php');
 
-require (CLASSES . 'Notes.php');
+require (CLASSES . 'Notes.php'); */
 
 $wInit = new webInit();
 
@@ -106,7 +116,7 @@ if (is_null($cmd) === FALSE) {
 
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 
 
 /*
@@ -128,8 +138,8 @@ if ($id < 0) {
 $mbasis = filter_input(INPUT_POST, 'selMbrType', FILTER_SANITIZE_STRING);
 if (is_null($mbasis) === FALSE) {
 
-    if (isset($uS->nameLookups[GL_TableNames::MemberBasis][$mbasis])) {
-        if ($uS->nameLookups[GL_TableNames::MemberBasis][$mbasis][Member::SUBT] == MemDesignation::Organization) {
+    if (isset($uS->nameLookups[GLTableNames::MemberBasis][$mbasis])) {
+        if ($uS->nameLookups[GLTableNames::MemberBasis][$mbasis][AbstractMember::SUBT] == MemDesignation::Organization) {
             $setForOrg = TRUE;
         }
     }
@@ -146,7 +156,7 @@ if ($setForOrg) {
 // Instantiate the member object
 try {
 
-    $name = Member::GetDesignatedMember($dbh, $id, $defBasis);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, $defBasis);
 
 } catch (Exception $ex) {
 
@@ -155,7 +165,7 @@ try {
     $resultMessage = $alertMsg->createMarkup();
 
     $id = 0;
-    $name = Member::GetDesignatedMember($dbh, $id, $defBasis);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, $defBasis);
 
 }
 
@@ -163,9 +173,9 @@ try {
 // the rest
 try {
 
-    $address = new Address($dbh, $name, $uS->nameLookups[GL_TableNames::AddrPurpose]);
-    $phones = new Phones($dbh, $name, $uS->nameLookups[GL_TableNames::PhonePurpose]);
-    $emails = new Emails($dbh, $name, $uS->nameLookups[GL_TableNames::EmailPurpose]);
+    $address = new Address($dbh, $name, $uS->nameLookups[GLTableNames::AddrPurpose]);
+    $phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+    $emails = new Emails($dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
 
     $rel = $name->loadRealtionships($dbh);
 
@@ -339,17 +349,17 @@ if ($id != 0 && $donationsFlag) {
 
     $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', false, false);
 
-    $donateMkup = Donate::createDonateMarkup(
+    $donateMkup = DonateMarkup::createDonateMarkup(
             $CampOpt,
-            removeOptionGroups($uS->nameLookups[GL_TableNames::AddrPurpose]),
+            removeOptionGroups($uS->nameLookups[GLTableNames::AddrPurpose]),
             $name->get_preferredMailAddr(),
-            $uS->nameLookups[GL_TableNames::SalutationCodes],
+            $uS->nameLookups[GLTableNames::SalutationCodes],
             SalutationCodes::FirstOnly,
             SalutationCodes::Formal,
             $name->getAssocDonorList($rel),
             $name->getDefaultDonor($rel),
             $name->getAssocDonorLabel(),
-            removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]),
+            removeOptionGroups($uS->nameLookups[GLTableNames::PayType]),
             NULL
             );
 

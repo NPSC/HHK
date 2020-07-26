@@ -1,4 +1,9 @@
 <?php
+
+namespace HHK;
+
+use HHK\HTMLControls\HTMLContainer;
+
 /**
  * Notes.php
  *
@@ -13,8 +18,6 @@
  *
  * @author Eric
  */
-
-use HTMLControls\HTMLContainer;
 
 class Notes {
 

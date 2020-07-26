@@ -1,4 +1,17 @@
 <?php
+
+use HHK\SiteLog;
+use HHK\AlertControl\AlertMessage;
+use HHK\AuditLog\NameLog;
+use HHK\sec\{Session, WebInit};
+use HHK\Config_Lite\Config_Lite;
+use HHK\SysConst\GLTableNames;
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\NameRS;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\Admin\SiteDbBackup;
+use HHK\Member\AbstractMember;
+
 /**
  * Misc.php
  *
@@ -10,7 +23,7 @@
 
 require ("AdminIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
+/* require (DB_TABLES . 'nameRS.php');
 require (CLASSES . 'AuditLog.php');
 //require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
@@ -18,7 +31,7 @@ require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'SiteDbBackup.php';
-require CLASSES . 'SiteLog.php';
+require CLASSES . 'SiteLog.php'; */
 
 
 try {
@@ -194,8 +207,8 @@ $accordIndex = 0;
 if (isset($_POST["btnGenLookups"])) {
 
     $accordIndex = 0;
-    $lookUpAlert = new alertMessage("lookUpAlert");
-    $lookUpAlert->set_Context(alertMessage::Alert);
+    $lookUpAlert = new AlertMessage("lookUpAlert");
+    $lookUpAlert->set_Context(AlertMessage::Alert);
     
     if ($wInit->page->is_TheAdmin() == FALSE) {
         $lookUpAlert->set_Text("Don't mess with these settings.  ");
@@ -244,7 +257,7 @@ if (isset($_POST["btnGenLookups"])) {
 
             if ($query != "") {
                 $dbh->exec($query);
-                $lookUpAlert->set_Context(alertMessage::Success);
+                $lookUpAlert->set_Context(AlertMessage::Success);
                 $lookUpAlert->set_Text("Okay");
             }
         }
@@ -324,11 +337,11 @@ if (isset($_POST['btnClnNames'])) {
             $prefix = '';
             $suffix = '';
             $qstring = '';
-            if (isset($uS->nameLookups[GL_TableNames::NamePrefix][$n->Name_Prefix->getNewVal()])) {
-                $prefix = $uS->nameLookups[GL_TableNames::NamePrefix][$n->Name_Prefix->getNewVal()][Member::DESC];
+            if (isset($uS->nameLookups[GLTableNames::NamePrefix][$n->Name_Prefix->getNewVal()])) {
+                $prefix = $uS->nameLookups[GLTableNames::NamePrefix][$n->Name_Prefix->getNewVal()][AbstractMember::DESC];
             }
-            if (isset($uS->nameLookups[GL_TableNames::NameSuffix][$n->Name_Suffix->getNewVal()])) {
-                $suffix = $uS->nameLookups[GL_TableNames::NameSuffix][$n->Name_Suffix->getNewVal()][Member::DESC];
+            if (isset($uS->nameLookups[GLTableNames::NameSuffix][$n->Name_Suffix->getNewVal()])) {
+                $suffix = $uS->nameLookups[GLTableNames::NameSuffix][$n->Name_Suffix->getNewVal()][AbstractMember::DESC];
             }
 
             if ($n->Name_Middle->getNewVal() != "") {

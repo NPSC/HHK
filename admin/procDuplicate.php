@@ -283,7 +283,9 @@
 //         }
 //     }
 // }
-// ?>
+// use HHK\SysConst\MemType;
+
+?>
 <!DOCTYPE html>
 <!-- <html> -->
 <!--     <head> -->

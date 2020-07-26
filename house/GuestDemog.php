@@ -1,4 +1,12 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\DataTableServer\SSP;
+use HHK\Tables\Name\NameRS;
+use HHK\Tables\Name\NameDemogRS;
+use HHK\Tables\EditRS;
+use HHK\AuditLog\NameLog;
+
 /**
  * GiestDemog.php
  *
@@ -8,11 +16,11 @@
  * @link      https://github.com/NPSC/HHK
  */
 require("homeIncludes.php");
-require(CLASSES . 'AuditLog.php');
+/* require(CLASSES . 'AuditLog.php');
 require(DB_TABLES . "nameRS.php");
-require(CLASSES . 'DataTableServer.php');
+require(CLASSES . 'DataTableServer.php'); */
 
-$wInit = new webInit();
+$wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 

@@ -1,4 +1,9 @@
 <?php
+
+namespace HHK;
+
+use HHK\Exception\RuntimeException;
+
 /**
  * OpenXML.php
  *
@@ -9,7 +14,7 @@
  */
 
 
-require THIRD_PARTY . 'PHPExcel.php';
+//require THIRD_PARTY . 'PHPExcel.php';
 
 
 class OpenXML {
@@ -30,11 +35,11 @@ class OpenXML {
         $cacheSettings = array('memoryCacheSize' => '80MB');
 
         if (!PHPExcel_Settings::setCacheStorageMethod($cacheMethod, $cacheSettings)) {
-            throw new Hk_Exception_Runtime('Cache method unavailable.');
+            throw new RuntimeException('Cache method unavailable.');
         }
 
         // Set value binder
-        PHPExcel_Cell::setValueBinder(new PHPExcel_Cell_AdvancedValueBinder());
+        \PHPExcel_Cell::setValueBinder(new PHPExcel_Cell_AdvancedValueBinder());
 
         // Create new PHPExcel object
         $objPHPExcel = new PHPExcel();

@@ -1,4 +1,11 @@
 <?php
+
+namespace HHK;
+
+use HHK\SysConst\SalutationPurpose;
+use HHK\Admin\MemberSalutation\OrganizationSalutation;
+use HHK\Admin\MemberSalutation\IndividualSalutation;
+
 /**
  * MailList.php
  *
@@ -7,8 +14,6 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
-
-use SysConst\SalutationPurpose;
 
 class MailList {
 
@@ -45,7 +50,7 @@ class MailList {
         //--  Corporate reps at home or company
 
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             // salutation
             $salName = "";
@@ -53,10 +58,10 @@ class MailList {
 
             if (!$r["isCompany"] && $r["Donor_Company"] != "") {
 
-                $donor = new OrganizationSal($r["Donor_Company"]);
+                $donor = new OrganizationSalutation($r["Donor_Company"]);
 
                 if ($r["fm"] > 0 ) {
-                    $partner = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                    $partner = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                     $careof = $partner->getMarkup(SalutationPurpose::Envelope, $formalcy, NULL);
                 }
 
@@ -64,11 +69,11 @@ class MailList {
 
             } else {
 
-                $donor = new IndividualSal($r["Donor_Last"], $r["Donor_First"], $r["Donor_Middle"], $r["Donor_Nickname"], $r["Donor_Prefix"], $r["Donor_Suffix"], $r["Donor_Gender"]);
+                $donor = new IndividualSalutation($r["Donor_Last"], $r["Donor_First"], $r["Donor_Middle"], $r["Donor_Nickname"], $r["Donor_Prefix"], $r["Donor_Suffix"], $r["Donor_Gender"]);
 
                 // add partner name only if alive and still married to donor.
                 if ($r["sp"] > 0 && $r["adr_count"] > 1 ) {
-                    $partner = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                    $partner = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                 } else {
                     $partner = null;
                 }
@@ -187,3 +192,4 @@ where
     }
 
 }
+?>

@@ -1,4 +1,16 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\AlertControl\AlertMessage;
+use HHK\Config_Lite\Config_Lite;
+use HHK\OpenXML;
+use HHK\SysConst\GLTableNames;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\CreateMarkupFromDB;
+use HHK\SysConst\RelLinkType;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLSelector;
+
 /**
  * PSG_Report.php
  *
@@ -10,10 +22,10 @@
 
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'visitRS.php');
-require (DB_TABLES . 'nameRS.php');
-require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'OpenXML.php';
+// require (DB_TABLES . 'visitRS.php');
+// require (DB_TABLES . 'nameRS.php');
+// require CLASSES . 'CreateMarkupFromDB.php';
+// require CLASSES . 'OpenXML.php';
 
 try {
     $wInit = new webInit();
@@ -32,9 +44,9 @@ $uS = Session::getInstance();
 $menuMarkup = $wInit->generatePageMenu();
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -46,7 +58,7 @@ $labels = new Config_Lite(LABEL_FILE);
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, \Config_Lite $labels, $showDiagnosis, $showLocation) {
+function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, Config_Lite $labels, $showDiagnosis, $showLocation) {
     
     $uS = Session::getInstance();
     
@@ -204,14 +216,14 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
         
         
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $r['Association'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
+        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+            $r['Association'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
         }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
         }
         
-        if (count($uS->guestLookups[GL_TableNames::Hospital]) < 2) {
+        if (count($uS->guestLookups[GLTableNames::Hospital]) < 2) {
             unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
         }
         
@@ -300,8 +312,8 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
                 if (($key == 'Arrival' or $key == 'Departure' || $key == 'Birth Date') && $col != '') {
                     
                     $flds[$n++] = array('type' => "n",
-                        'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
+                        'value' => /PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
+                        'style' => /PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
                     
                 } else {
                     $flds[$n++] = array('type' => "s", 'value' => $col);
@@ -331,7 +343,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
     }
 }
 
-function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, \Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
+function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
     
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $locTitle = $labels->getString('hospital', 'location', 'Location');
@@ -506,8 +518,8 @@ order by ng.idPsg";
              
              if (($key == 'Arrival' || $key == 'Departure' || $key == 'Birth Date') && $col != '') {
                  $flds[$n++] = array('type' => "n",
-                     'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                     'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
+                     'value' => \PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
+                     'style' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
              } else {
                  
                  $flds[$n++] = array('type' => "s", 'value' => $col);
@@ -755,8 +767,8 @@ if ($uS->fy_diff_Months == 0) {
 
 // Hospital and association lists
 $hospList = array();
-if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+    $hospList = $uS->guestLookups[GLTableNames::Hospital];
 }
 
 $hList = array();
@@ -1108,7 +1120,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         switch ($rptSetting) {
 
         	case 'psg':
-                $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GL_TableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
+                $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GLTableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));

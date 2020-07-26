@@ -1,4 +1,14 @@
 <?php
+use HHK\sec\Session;
+use HHK\sec\Login;
+use HHK\Exception\InvalidArgumentException;
+use HHK\Exception\RuntimeException;
+use HHK\sec\ScriptAuthClass;
+use HHK\SysConst\Mode;
+use HHK\SysConst\CodeVersion;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\SecurityComponent;
+
 /**
  * Index.php
  *
@@ -8,7 +18,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 include ("homeIncludes.php");
-require(SEC . 'Login.php');
+//require(SEC . 'Login.php');
 
 // get session instance
 $uS = Session::getInstance();
@@ -34,7 +44,7 @@ try {
     $login = new Login();
     $config = $login->initHhkSession(ciCFG_FILE);
 
-} catch (Hk_Exception_InvalidArguement $pex) {
+} catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 
 } catch (Exception $ex) {
@@ -44,7 +54,7 @@ try {
 // Override user DB login credentials
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 

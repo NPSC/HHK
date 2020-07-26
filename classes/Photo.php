@@ -1,5 +1,7 @@
 <?php
 
+namespace HHK;
+
 /*
  * The MIT License
  *

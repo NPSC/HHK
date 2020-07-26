@@ -1,5 +1,6 @@
 <?php
 
+use HHK\MailList;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\{chkBoxCtrl, selCtrl};
 

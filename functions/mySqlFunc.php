@@ -9,6 +9,8 @@
  */
 
 
+use HHK\sec\Session;
+
 function openMysqli(\PDO $dbh, Session $uS) {
 
     $driver = $dbh->getAttribute(\PDO::ATTR_DRIVER_NAME);

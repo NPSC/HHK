@@ -2,14 +2,17 @@
 
 namespace HHK\Payment;
 
+use HHK\Config_Lite\Config_Lite;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
-use HHK\Purchase\Item;
+use HHK\Purchase\{Item, ValueAddedTax};
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\sec\Session;
 use HHK\SysConst\{InvoiceLineType, InvoiceStatus, ItemId, PaymentMethod, PaymentStatusCode, GLTableNames};
 use HHK\SysConst\MemBasis;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
+use HHK\House\Registration;
+use HHK\Member\AbstractMember;
 
 /**
  * Receipt.php
@@ -92,7 +95,7 @@ class Receipt {
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
-            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $payor = AbstractMember::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
         }
 
@@ -153,7 +156,7 @@ class Receipt {
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
-            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $payor = AbstractMember::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
         }
 
@@ -203,7 +206,7 @@ class Receipt {
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
-            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $payor = AbstractMember::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
         }
 
@@ -252,7 +255,7 @@ class Receipt {
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
-            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $payor = AbstractMember::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
         }
 
@@ -752,7 +755,7 @@ WHERE
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, AbstractPriceModel $priceModel, \Config_Lite $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, AbstractPriceModel $priceModel, Config_Lite $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
@@ -1087,7 +1090,7 @@ WHERE
 
     }
 
-    public static function makePaymentsTable($invoices, $invLines, $subsidyId, $returnId, &$totalAmt, $pmtDisclaimer, \Config_Lite $labels, $tdClass = '') {
+    public static function makePaymentsTable($invoices, $invLines, $subsidyId, $returnId, &$totalAmt, $pmtDisclaimer, Config_Lite $labels, $tdClass = '') {
 
         // Markup
         $tbl = new HTMLTable();
@@ -1277,7 +1280,7 @@ WHERE
         return $tbl;
     }
 
-    public static function makeThirdParyTable($invoices, $invLines,  \Config_Lite $labels, &$totAmt, $tdClass = '') {
+    public static function makeThirdParyTable($invoices, $invLines,  Config_Lite $labels, &$totAmt, $tdClass = '') {
 
         $tbl = new HTMLTable();
         $totalPment = 0.0;
@@ -1400,7 +1403,7 @@ WHERE
         $totalNights = 0;
 
         // Get labels & config
-        $labels = new \Config_Lite(LABEL_FILE);
+        $labels = new Config_Lite(LABEL_FILE);
 
         // Payments
         $query = "select lp.*, ifnull(n.Name_First, '') as `First`,
@@ -1528,7 +1531,7 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
         $totalNights = 0;
 
         // Get labels
-        $labels = new \Config_Lite(LABEL_FILE);
+        $labels = new Config_Lite(LABEL_FILE);
 
 
         // Visits and Rates

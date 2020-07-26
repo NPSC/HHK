@@ -1,5 +1,8 @@
 <?php
 
+use HHK\sec\{Session, Login, ScriptAuthClass, UserClass};
+use HHK\UpdateSite;
+
 /*
  * The MIT License
  *
@@ -49,7 +52,7 @@
  *
  */
 require ("AdminIncludes.php");
-
+/*
 require CLASSES . 'SiteLog.php';
 require CLASSES . 'TableLog.php';
 require CLASSES . 'HouseLog.php';
@@ -60,7 +63,7 @@ require CLASSES . 'UpdateSite.php';
 
 require SEC . 'Login.php';
 
-require DB_TABLES . 'GenLookupsRS.php';
+require DB_TABLES . 'GenLookupsRS.php'; */
 
 require (FUNCTIONS . 'mySqlFunc.php');
 

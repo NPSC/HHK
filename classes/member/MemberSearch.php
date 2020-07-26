@@ -1,5 +1,15 @@
 <?php
 
+namespace HHK\Member;
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\SysConst\MemDesignation;
+use HHK\SysConst\PhonePurpose;
+use HHK\SysConst\RelLinkType;
+use HHK\SysConst\VolMemberType;
+use HHK\Exception\RuntimeException;
+
 /**
  * memberSearch.php
  *
@@ -119,15 +129,15 @@ class MemberSearch {
 
                 $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(nw.Phone_Num, '') as `WorkPhone`, ifnull(nc.Phone_Num, '') as `CellPhone`, ifnull(ne.Email, '') as `Email`
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
-left join name_phone nw on n.idName = nw.idName and nw.Phone_Code = '" . Phone_Purpose::Work . "'
-left join name_phone nc on n.idName = nc.idName and nc.Phone_Code = '" . Phone_Purpose::Cell . "'
+left join name_phone nw on n.idName = nw.idName and nw.Phone_Code = '" . PhonePurpose::Work . "'
+left join name_phone nc on n.idName = nc.idName and nc.Phone_Code = '" . PhonePurpose::Cell . "'
 left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and (LOWER(n.Name_Last) like :ltrln
 $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
 
             $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
             $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First));
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
 
@@ -706,9 +716,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
      * Searches for a previous occurance of the supplied name.
      * Duplicate prevention.
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param array $post
-     * @throws Hk_Exception_Runtime
+     * @throws RuntimeException::
      */
     public static function searchName(\PDO $dbh, $memDesignation, $nameLast, $nameFirst = '', $email = '', $phone = '') {
 
@@ -770,7 +780,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             $query .= ") order by n.Member_Status, n.Company;";
         } else {
-            throw new Hk_Exception_Runtime('Bad member designation: ' . $memDesignation);
+            throw new RuntimeException('Bad member designation: ' . $memDesignation);
         }
 
         $stmt = $dbh->prepare($query);

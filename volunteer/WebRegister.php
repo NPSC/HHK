@@ -1,4 +1,14 @@
 <?php
+use HHK\sec\SysConfig;
+use HHK\sec\Login;
+use HHK\sec\Session;
+use HHK\Exception\RuntimeException;
+use HHK\sec\ScriptAuthClass;
+use HHK\AlertControl\AlertMessage;
+use Phelium\Component\reCAPTCHA;
+use HHK\fbUserClass;
+use HHK\sec\SecurityComponent;
+
 /**
  * WebRegister.php
  *
@@ -10,7 +20,7 @@
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 require('VolIncludes.php');
-require(SEC . 'Login.php');
+/* require(SEC . 'Login.php');
 require(CLASSES . 'fbUserClass.php');
 require(CLASSES . 'SiteConfig.php');
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
@@ -18,8 +28,7 @@ require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 
-require THIRD_PARTY .'reCAPTCHA.php';
-use Phelium\Component\reCAPTCHA;
+require THIRD_PARTY .'reCAPTCHA.php'; */
 
 function processGuest(\PDO $dbh, $username, fbUserClass $fbc) {
 
@@ -170,7 +179,7 @@ $logoLink = '';
 // define db connection obj
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 
@@ -185,9 +194,9 @@ try {
     exit("Error - Database problem accessing page.");
 }
 
-$donAlert = new alertMessage("donateResponseContainer");
+$donAlert = new AlertMessage("donateResponseContainer");
 $donAlert->set_DisplayAttr("none");
-$donAlert->set_Context(alertMessage::Alert);
+$donAlert->set_Context(AlertMessage::Alert);
 $donAlert->set_iconId("donateResponseIcon");
 $donAlert->set_styleId("donateResponse");
 $donAlert->set_txtSpanId("donResultMessage");

@@ -1,4 +1,11 @@
 <?php
+use HHK\sec\Session;
+use HHK\sec\Login;
+use HHK\Exception\RuntimeException;
+use HHK\sec\ScriptAuthClass;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\SecurityComponent;
+
 /**
  * index.php
  *
@@ -10,7 +17,7 @@
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 require ('VolIncludes.php');
-require(SEC . 'Login.php');
+//require(SEC . 'Login.php');
 
 
 // get session instance
@@ -47,7 +54,7 @@ try {
 // define db connection obj
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 

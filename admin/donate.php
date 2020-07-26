@@ -7,7 +7,8 @@ use HHK\Tables\Donate\DonationsRS;
 use HHK\Tables\Name\{NameAddressRS,NamePhoneRS,NameEmailRS};
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
-use HHK\Campaign;
+use HHK\Member\AbstractMember;
+use HHK\Donation\Campaign;
 
 /**
  * donate.php
@@ -224,7 +225,7 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
         $fundCode = filter_var($data["dselStudent"], FILTER_SANITIZE_NUMBER_INT);
     }
 
-    $name = Member::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
     if ($name->isNew()) {
         return array(
             "error" => "Bad Member Id: " . $id

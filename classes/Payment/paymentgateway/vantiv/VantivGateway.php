@@ -2,13 +2,18 @@
 
 namespace HHK\Payment\PaymentGateway\Vantiv;
 
+use HHK\Member\AbstractMember;
+use HHK\Member\Address\Address;
+use HHK\Member\Role\Guest;
 use HHK\Payment\{CreditToken, Receipt};
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\AbstractCreditPayments;
 use HHK\Payment\PaymentGateway\Vantiv\Helper\{MpVersion, AVSResult, CVVResult};
 use HHK\Payment\PaymentGateway\Vantiv\Request\{CreditReturnTokenRequest, CreditReversalTokenRequest, CreditSaleTokenRequest, CreditVoidReturnTokenRequest, CreditVoidSaleTokenRequest, InitCkOutRequest};
+use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
+use HHK\Payment\PaymentResult\{CofResult, PaymentResult, ReturnResult};
 use HHK\SysConst\{GLTableNames, MemBasis, MpFrequencyValues, MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
@@ -68,11 +73,11 @@ class VantivGateway extends AbstractPaymentGateway {
 
             try {
 
-                $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+                $guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 
             } catch (MemberException $ex) {
 
-                $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+                $guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
             }
 
             $address = new Address($dbh, $guest, $uS->nameLookups[GLTableNames::AddrPurpose]);

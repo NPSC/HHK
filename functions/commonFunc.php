@@ -1,9 +1,16 @@
 <?php
 
+use HHK\OpenXML;
 use HHK\Exception\RuntimeException;
 use HHK\sec\Session;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{WebRole};
 use HHK\Config_Lite\Config_Lite;
+use PHPMailer\PHPMailer\PHPMailer;
+use HHK\HTMLControls\{HTMLContainer, HTMLTable};
+use HHK\SysConst\PaymentMethod;
+use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
+use HHK\TableLog\HouseLog;
 
 /**
  * commonFunc.php
@@ -71,19 +78,19 @@ function initPDO($override = FALSE)
 }
 
 function creditIncludes($gatewayName) {
-
-    require (PMT . 'paymentgateway/CreditPayments.php');
+    
+/*     require (PMT . 'paymentgateway/CreditPayments.php');
 
     switch ($gatewayName) {
 
-        case PaymentGateway::INSTAMED:
+        case AbstractPaymentGateway::INSTAMED:
             require (PMT . 'paymentgateway/instamed/InstamedConnect.php');
             require (PMT . 'paymentgateway/instamed/InstamedResponse.php');
             require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
 
             break;
 
-        case PaymentGateway::VANTIV:
+        case AbstractPaymentGateway::VANTIV:
 
             require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
 
@@ -97,7 +104,7 @@ function creditIncludes($gatewayName) {
             require (PMT . 'paymentgateway/local/LocalGateway.php');
 
     }
-}
+ */}
 
 function syncTimeZone(\PDO $dbh)
 {
@@ -169,7 +176,7 @@ function prepareEmail()
     
     $uS = Session::getInstance();
 
-    $mail = new PHPMailer\PHPMailer\PHPMailer();
+    $mail = new PHPMailer(true);
 
     switch (strtolower($uS->EmailType)) {
 
@@ -304,7 +311,7 @@ function incCounter(\PDO $dbh, $counterName)
     }
 
     if ($rptId == 0) {
-        throw new Hk_Exception_Runtime("Increment counter not set up for $counterName.");
+        throw new RuntimeException("Increment counter not set up for $counterName.");
     }
 
     return $rptId;
@@ -466,7 +473,7 @@ function readGenLookups($con, $tbl, $orderBy = "Code")
     if (! is_a($con, 'mysqli')) {
         return readGenLookupsPDO($con, $tbl, $orderBy);
     } else {
-        throw new Hk_Exception_Runtime('Non-PDO access not supported.  ');
+        throw new RuntimeException('Non-PDO access not supported.  ');
     }
 }
 

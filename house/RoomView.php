@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\GLTableNames;
+use HHK\House\Report\RoomReport;
+use HHK\HTMLControls\HTMLSelector;
+
 /**
  * RoomView.php
  *
@@ -8,10 +14,10 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-require (HOUSE . 'RoomReport.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
+// require (HOUSE . 'RoomReport.php');
+// require (HOUSE . 'Room.php');
+// require (HOUSE . 'Resource.php');
+// require (HOUSE . 'ResourceView.php');
 
 exit("This page is out of service.  ");
 
@@ -64,8 +70,8 @@ if ($uS->fy_diff_Months == 0) {
 
 // Hospital and association lists
 $hospList = array();
-if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+    $hospList = $uS->guestLookups[GLTableNames::Hospital];
 }
 
 $hList[] = array(0=>'', 1=>'(All)');

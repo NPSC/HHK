@@ -1,4 +1,11 @@
 <?php
+
+use HHK\sec\{Login};
+use HHK\Exception\RuntimeException;
+use HHK\sec\SysConfig;
+use HHK\SysConst\CodeVersion;
+use HHK\sec\SecurityComponent;
+
 /**
  * index.php
  *
@@ -14,15 +21,17 @@ define('P_ROOT', dirname(__FILE__) . DS);
 define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
 date_default_timezone_set('America/Chicago');
 
-require ('classes' . DS . 'config' . DS . 'Lite.php');
+require ('vendor/autoload.php');
+
+/* require ('classes' . DS . 'config' . DS . 'Lite.php');
 require ('classes' . DS . 'sec' . DS . 'SecurityComponent.php');
 require ('classes' . DS . 'Exception_hk' . DS . 'Hk_Exception.php');
 require ('classes' . DS . 'SysConst.php');
-require ('classes' . DS . 'PDOdata.php');
+require ('classes' . DS . 'PDOdata.php'); */
 require ('functions' . DS . 'commonFunc.php');
-require ('classes' . DS . 'sec' . DS . 'sessionClass.php');
+/* require ('classes' . DS . 'sec' . DS . 'sessionClass.php');
 require ('classes' . DS . 'sec' . DS . 'webInit.php');
-require('classes' . DS . 'sec' . DS . 'Login.php');
+require('classes' . DS . 'sec' . DS . 'Login.php'); */
 
 
 $config = Login::initHhkSession(ciCFG_FILE);
@@ -30,7 +39,7 @@ $config = Login::initHhkSession(ciCFG_FILE);
 
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 

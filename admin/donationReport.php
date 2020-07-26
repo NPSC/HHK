@@ -3,7 +3,7 @@
 use HHK\sec\WebInit;
 use HHK\HTMLControls\{selCtrl, chkBoxCtrl};
 use HHK\SysConst\SalutationCodes;
-use HHK\Campaign;
+use HHK\Donation\Campaign;
 
 /**
  * donationReport.php

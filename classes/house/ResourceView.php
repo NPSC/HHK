@@ -1,4 +1,32 @@
 <?php
+
+namespace HHK\House;
+
+use HHK\House\Attribute\Attributes;
+use HHK\SysConst\AttributeTypes;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLInput;
+use HHK\CreateMarkupFromDB;
+use HHK\Config_Lite\Config_Lite;
+use HHK\SysConst\ResourceStatus;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\sec\Session;
+use HHK\Tables\House\ResourceUseRS;
+use HHK\Tables\EditRS;
+use HHK\SysConst\ReservationStatus;
+use HHK\House\Reservation\ReservationSvcs;
+use HHK\House\Room\Room;
+use HHK\House\Resource\AbstractResource;
+use HHK\House\Attribute\RoomAttribute;
+use HHK\House\Resource\ResourceTypes;
+use HHK\House\Attribute\ResourceAttribute;
+use HHK\Tables\House\RoomRS;
+use HHK\SysConst\VisitStatus;
+use HHK\SysConst\RoomState;
+use HHK\Notes;
+use HHK\DataTableServer\SSP;
+
 /**
  * ResourceView.php
  *
@@ -19,9 +47,9 @@ class ResourceView {
         $rooms = array();
 
         $attribute = new Attributes($dbh);
-        $attrs = $attribute->getAttributesByType(Attribute_Types::Resource);
+        $attrs = $attribute->getAttributesByType(AttributeTypes::Resource);
 
-        $rmAtrStmt = $dbh->query("Select idEntity, idAttribute from attribute_entity where `Type` = '" . Attribute_Types::Resource . "'");
+        $rmAtrStmt = $dbh->query("Select idEntity, idAttribute from attribute_entity where `Type` = '" . AttributeTypes::Resource . "'");
         $roomAttrs = $rmAtrStmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
@@ -115,9 +143,9 @@ order by r.Title;");
         $labels = new Config_Lite(LABEL_FILE);
 
         $attribute = new Attributes($dbh);
-        $attrs = $attribute->getAttributesByType(Attribute_Types::Room);
+        $attrs = $attribute->getAttributesByType(AttributeTypes::Room);
 
-        $rmAtrStmt = $dbh->query("Select idEntity, idAttribute from attribute_entity where `Type` = '" . Attribute_Types::Room . "'");
+        $rmAtrStmt = $dbh->query("Select idEntity, idAttribute from attribute_entity where `Type` = '" . AttributeTypes::Room . "'");
         $roomAttrs = $rmAtrStmt->fetchAll(\PDO::FETCH_ASSOC);
 
         $depositCol = '';
@@ -437,7 +465,7 @@ order by r.Title;");
             // Delete Resource
             if ($id > 0) {
 
-                $resc = Resource::getResourceObj($dbh, $id);
+                $resc = AbstractResource::getResourceObj($dbh, $id);
 
                 if ($resc->deleteResource($dbh, $user)) {
                     return array('success'=>'Resource Deleted.');
@@ -566,7 +594,7 @@ order by r.Title;");
             }
         }
 
-        $roomAttr = new RoomAttributes($dbh, $room->getIdRoom());
+        $roomAttr = new RoomAttribute($dbh, $room->getIdRoom());
         $roomAttr->saveAttributes($dbh, $capturedAttributes);
 
         return array("roomList"=>self::roomTable($dbh, $keyDeposit, $uS->PaymentGateway));
@@ -581,8 +609,8 @@ order by r.Title;");
             $rType = filter_var($post["selReType"], FILTER_SANITIZE_STRING);
         }
 
-        /* @var $resc \Resource */
-        $resc = Resource::getResourceObj($dbh, $idResc, $rType);
+        /* @var $resc AbstractResource */
+        $resc = AbstractResource::getResourceObj($dbh, $idResc, $rType);
 
         if (is_null($resc)) {
             return array("error"=>'Resource not found');
@@ -636,8 +664,8 @@ order by r.Title;");
             // set resource unavailable
             $ruRs = new ResourceUseRS();
 
-            $now = new DateTime();
-            $now->add(new DateInterval('P1Y'));
+            $now = new \DateTime();
+            $now->add(new \DateInterval('P1Y'));
 
             $ruRs->Start_Date->setNewVal('2010-01-01');
             $ruRs->End_Date->setNewVal($now->format('Y-m-d'));
@@ -664,7 +692,7 @@ order by r.Title;");
             }
         }
 
-        $rescAttr = new ResourceAttributes($dbh, $resc->getIdResource());
+        $rescAttr = new ResourceAttribute($dbh, $resc->getIdResource());
         $rescAttr->saveAttributes($dbh, $capturedAttributes);
 
 
@@ -685,7 +713,7 @@ order by r.Title;");
 
         $uS = Session::getInstance();
 
-        $roomRs = new RoomRs();
+        $roomRs = new RoomRS();
         $roomRs->idRoom->setStoredVal($idRoom);
 
         if ($idRoom > 0) {
@@ -734,7 +762,7 @@ order by r.Title;");
         if ($uS->PaymentGateway != '') {
 
             $gstmt = $dbh->query("Select idLocation, Title from location where ifnull(Merchant, '') != '';");
-            $ccGateways = $gstmt->fetchAll(PDO::FETCH_NUM);
+            $ccGateways = $gstmt->fetchAll(\PDO::FETCH_NUM);
 
             $opts = array();
 
@@ -748,7 +776,7 @@ order by r.Title;");
 
         }
 
-        $roomAttr = new RoomAttributes($dbh, $room->getIdRoom());
+        $roomAttr = new RoomAttribute($dbh, $room->getIdRoom());
         $rattribute = $roomAttr->getAttributes();
 
         foreach ($rattribute as $a) {
@@ -768,7 +796,7 @@ order by r.Title;");
 
     public static function resourceDialog(\PDO $dbh, $idResc, $resourceTypes, $hospitals) {
 
-        $resc = Resource::getResourceObj($dbh, $idResc, ResourceTypes::Room);
+        $resc = AbstractResource::getResourceObj($dbh, $idResc, ResourceTypes::Room);
 
         $cls = 'reDiag' . $resc->getIdResource();
 
@@ -817,7 +845,7 @@ order by r.Title;");
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Border_Color->getStoredVal(), array('id'=>'txtReBc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
                 . $partition . $stat;
 
-        $rescAttr = new ResourceAttributes($dbh, $resc->getIdResource());
+        $rescAttr = new ResourceAttribute($dbh, $resc->getIdResource());
         $rattribute = $rescAttr->getAttributes();
 
         foreach ($rattribute as $a) {
@@ -900,11 +928,11 @@ from
 
         $returnRows = array();
 
-        $beginDT = new DateTime();
-        $beginDT->sub(new DateInterval('P2D'));
+        $beginDT = new \DateTime();
+        $beginDT->sub(new \DateInterval('P2D'));
 
-        $endDT = new DateTime();
-        $endDT->add(new DateInterval('P2D'));
+        $endDT = new \DateTime();
+        $endDT->add(new \DateInterval('P2D'));
         
         $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 
@@ -1148,5 +1176,4 @@ where g3.Substitute > 0 and ru.idResource_use is null");
     }
 
 }
-
-
+?>

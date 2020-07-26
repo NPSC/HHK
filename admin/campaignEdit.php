@@ -1,6 +1,6 @@
 <?php
 
-use HHK\Campaign;
+use HHK\Donation\Campaign;
 use HHK\AlertControl\AlertMessage;
 use HHK\SysConst\CampaignType;
 use HHK\Tables\EditRS;

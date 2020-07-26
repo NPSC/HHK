@@ -1,4 +1,16 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\SysConst\WebRole;
+use HHK\Config_Lite\Config_Lite;
+use HHK\Tables\GenLookupsRS;
+use HHK\Tables\EditRS;
+use HHK\TableLog\HouseLog;
+
 /**
  * ResourceBuilder.php
  *
@@ -10,13 +22,13 @@
 require ("homeIncludes.php");
 
 
-require (DB_TABLES . 'GenLookupsRS.php');
+/* require (DB_TABLES . 'GenLookupsRS.php');
 require CLASSES . 'TableLog.php';
-require (CLASSES . 'HouseLog.php');
+require (CLASSES . 'HouseLog.php'); */
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }

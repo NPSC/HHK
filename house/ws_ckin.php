@@ -1,4 +1,22 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\SecurityComponent;
+use HHK\sec\Session;
+use HHK\House\Reservation\Reservation_1;
+use HHK\House\Reservation\ReservationSvcs;
+use HHK\House\HouseServices;
+use HHK\Payment\PaymentSvcs;
+use HHK\Payment\Invoice\Invoice;
+use HHK\House\Registration;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\Purchase\ValueAddedTax;
+use HHK\Purchase\PaymentChooser;
+use HHK\SysConst\GLTableNames;
+use HHK\Config_Lite\Config_Lite;
+use HHK\House\PSG;
+use HHK\House\Room\RoomChooser;
+
 /**
  * ws_ckin.php
  *
@@ -12,7 +30,7 @@
  */
 require ("homeIncludes.php");
 
-require(DB_TABLES . "visitRS.php");
+/* require(DB_TABLES . "visitRS.php");
 require(DB_TABLES . "registrationRS.php");
 require(DB_TABLES . "ReservationRS.php");
 
@@ -99,8 +117,8 @@ require (HOUSE . "visitViewer.php");
 
 require (HOUSE . 'VisitCharges.php');
 
-
-$wInit = new webInit(WebPageCode::Service);
+ */
+$wInit = new WebInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
@@ -652,8 +670,8 @@ try {
         $idPsg = 0;
         if (isset($_POST['psg'])) {
             $idPsg = intval(filter_var($_POST['psg'], FILTER_SANITIZE_NUMBER_INT), 10);
-            $psg = new Psg($dbh, $idPsg);
-            $events = array('markup'=>$psg->createEditMarkup($dbh, $uS->guestLookups[GL_TableNames::PatientRel], new Config_Lite(LABEL_FILE)));
+            $psg = new PSG($dbh, $idPsg);
+            $events = array('markup'=>$psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], new Config_Lite(LABEL_FILE)));
 
         } else {
             $events = array('error'=>'PSG ID is missing.');

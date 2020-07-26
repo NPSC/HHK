@@ -1,5 +1,12 @@
 <?php
 
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\Tables\EditRS;
+use HHK\Exception\RuntimeException;
+use HHK\Member\MemberSearch;
+use HHK\Tables\WebSec\FbxRS;
+
 /**
  * liveNameSearch.php
  *
@@ -89,11 +96,11 @@ switch ($c) {
 
     case 'srchName':
 
-        if (isset($_POSt['md'])) {
-            $md = filter_var($_POSt['md'], FILTER_SANITIZE_STRING);
-            $nameLast = (isset($_POSt['nl']) ? filter_var($_POSt['nl'], FILTER_SANITIZE_STRING) : '');
-            $nameFirst = (isset($_POSt['nf']) ? filter_var($_POSt['nf'], FILTER_SANITIZE_STRING) : '');
-            $email = (isset($_POSt['em']) ? filter_var($_POSt['em'], FILTER_SANITIZE_STRING) : '');
+        if (isset($_POST['md'])) {
+            $md = filter_var($_POST['md'], FILTER_SANITIZE_STRING);
+            $nameLast = (isset($_POST['nl']) ? filter_var($_POST['nl'], FILTER_SANITIZE_STRING) : '');
+            $nameFirst = (isset($_POST['nf']) ? filter_var($_POST['nf'], FILTER_SANITIZE_STRING) : '');
+            $email = (isset($_POST['em']) ? filter_var($_POST['em'], FILTER_SANITIZE_STRING) : '');
 
             // Check for duplicate member records
             $dups = MemberSearch::searchName($dbh, $md, $nameLast, $nameFirst, $email);
@@ -145,7 +152,7 @@ switch ($c) {
 
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage());
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $events = array("error" => "HouseKeeper Error: " . $ex->getMessage());
 }
 
@@ -180,3 +187,4 @@ function deleteFBRow(PDO $dbh, $fbid) {
 
     return $events;
 }
+?>

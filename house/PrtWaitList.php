@@ -1,4 +1,11 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\History;
+use HHK\CreateMarkupFromDB;
+use HHK\SysConst\ReservationStatus;
+
 /**
  * PrtWaitList.php
  *

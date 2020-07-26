@@ -1,4 +1,15 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\AlertControl\AlertControl;
+use HHK\Member\AbstractMember;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\GLTableNames;
+use HHK\Member\Address\Address;
+use HHK\Member\Address\Phones;
+use HHK\Member\Address\Emails;
+use HHK\Member\Address\Addresses;
+
 /**
  * VolNameEdit.php
  *
@@ -11,7 +22,7 @@
  */
 require ("VolIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
+/* require (DB_TABLES . 'nameRS.php');
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
@@ -24,9 +35,9 @@ require (CLASSES . 'Relation.php');
 require (CLASSES . 'CleanAddress.php');
 require (CLASSES . 'AuditLog.php');
 
-require (CLASSES . 'UserCategories.php');
+require (CLASSES . 'UserCategories.php'); */
 
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 $pageTitle = $wInit->pageTitle;
@@ -61,7 +72,7 @@ $resultMessage = "";
 // Instantiate the member object
 try {
 
-    $name = Member::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
 
 } catch (Exception $ex) {
 
@@ -73,9 +84,9 @@ try {
 // the rest
 try {
 
-    $address = new Address($dbh, $name, $uS->nameLookups[GL_TableNames::AddrPurpose]);
-    $phones = new Phones($dbh, $name, $uS->nameLookups[GL_TableNames::PhonePurpose]);
-    $emails = new Emails($dbh, $name, $uS->nameLookups[GL_TableNames::EmailPurpose]);
+    $address = new Address($dbh, $name, $uS->nameLookups[GLTableNames::AddrPurpose]);
+    $phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+    $emails = new Emails($dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
 
 } catch (Exception $ex) {
     exit("Error opening supporting objects: " . $ex->getMessage());

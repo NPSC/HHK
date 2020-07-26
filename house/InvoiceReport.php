@@ -1,6 +1,27 @@
 <?php
 
 
+use HHK\SysConst\WebPageCode;
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\AlertControl\AlertMessage;
+use HHK\Config_Lite\Config_Lite;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\SysConst\InvoiceStatus;
+use HHK\SysConst\ItemId;
+use HHK\HTMLControls\HTMLTable;
+use HHK\OpenXML;
+use HHK\Payment\PaymentSvcs;
+use HHK\Exception\RuntimeException;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\VolMemberType;
+use HHK\ColumnSelectors;
+use HHK\House\GLCodes\GLParameters;
+use HHK\House\GLCodes\GLCodes;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\House\GLCodes\GLTemplateRecord;
+use HHK\HTMLControls\HTMLInput;
+
 /**
  * InvoiceReport.php
  *
@@ -11,7 +32,7 @@
  */
 
 require ("homeIncludes.php");
-require (DB_TABLES . 'PaymentGwRS.php');
+/* require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 
 require (PMT . 'GatewayConnect.php');
@@ -37,11 +58,11 @@ require CLASSES . 'TableLog.php';
 require (CLASSES . 'FinAssistance.php');
 
 require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php';
+require CLASSES . 'OpenXML.php'; */
 
 
 try {
-    $wInit = new webInit(WebPageCode::Page, FALSE);
+    $wInit = new WebInit(WebPageCode::Page, FALSE);
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -58,9 +79,9 @@ creditIncludes($uS->PaymentGateway);
 $menuMarkup = $wInit->generatePageMenu();
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -158,7 +179,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     } else {
 
         $g['invoiceMkup'] = $r['Invoice_Number'];
-        $g['date'] = PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date']));
+        $g['date'] = \PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date']));
         $g['Status'] = $statusTxt;
         $g['billed'] = $billDateStr;
         $g['Patient'] = $r['Patient_Name'];
@@ -275,14 +296,14 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
 
 
 // Hospital and association lists
-$hospList = $uS->guestLookups[GL_TableNames::Hospital];
+$hospList = $uS->guestLookups[GLTableNames::Hospital];
 $hList = array();
 $aList = array();
 foreach ($hospList as $h) {
@@ -326,7 +347,7 @@ while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms, DT Type
 $cFields[] = array('Inv #', 'invoiceMkup', 'checked', '', 's', '', array('style'=>'text-align:center;'));
-$cFields[] = array("Date", 'date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Date", 'date', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 $cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
 $cFields[] = array("Payor", 'Payor', 'checked', '', 's', '', array());
 $cFields[] = array("Billed", 'billed', 'checked', '', 's', '', array());
@@ -690,11 +711,11 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
         // Hospital
         $hospital = '';
 
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
+        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] . ' / ';
         }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
         }
 
         $statusTxt = '';
@@ -779,7 +800,7 @@ if ($useGlReport) {
 	require (HOUSE.'GlCodes.php');
 	require (CLASSES.'SFTPConnection.php');
 	
-	$glParm = new GlParameters($dbh, 'Gl_Code');
+	$glParm = new GLParameters($dbh, 'Gl_Code');
 	$glPrefix = 'gl_';
 	
 	// Check for new parameters
@@ -813,7 +834,7 @@ if ($useGlReport) {
 			$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
 		}
 		
-		$glCodes = new GlCodes($dbh, $glMonth, $glyear, $glParm, new GlTemplateRecord());
+		$glCodes = new GLCodes($dbh, $glMonth, $glyear, $glParm, new GLTemplateRecord());
 
 		if (isset($_POST['btnGlTx'])) {
 			

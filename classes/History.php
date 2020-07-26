@@ -2,6 +2,7 @@
 
 namespace HHK;
 
+use HHK\Config_Lite\Config_Lite;
 use HHK\Purchase\RoomRate;
 use HHK\SysConst\{WebRole, ReservationStatus, ItemPriceCode, RoomRateCategories, GLTableNames, RoomState};
 use HHK\Tables\EditRS;
@@ -9,6 +10,7 @@ use HHK\Tables\House\Room_RateRS;
 use HHK\sec\{Session, SecurityComponent};
 use HHK\Exception\InvalidArgumentException;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
+use HHK\House\Reservation\Reservation_1;
 
 /**
  * History.php
@@ -179,7 +181,7 @@ class History {
 
         $uS = Session::getInstance();
         // Get labels
-        $labels = new \Config_Lite(LABEL_FILE);
+        $labels = new Config_Lite(LABEL_FILE);
         $returnRows = array();
 
         foreach ($this->resvEvents as $r) {

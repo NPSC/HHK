@@ -1,4 +1,37 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\sec\{Session, WebInit};
+use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
+use HHK\TableLog\HouseLog;
+use HHK\Config_Lite\Config_Lite;
+use HHK\SysConst\GLTypeCodes;
+use HHK\House\Reservation\Reservation_1;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput, HTMLSelector};
+use HHK\SysConst\WebRole;
+use HHK\sec\SysConfig;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\Tables\Item\ItemRS;
+use HHK\SysConst\ItemId;
+use HHK\SysConst\PayType;
+use HHK\Tables\House\Fa_CategoryRS;
+use HHK\Tables\Registration\HospitalRS;
+use HHK\SysConst\AttributeTypes;
+use HHK\House\Constraint\ConstraintsHospital;
+use HHK\Tables\Attribute\AttributeRS;
+use HHK\SysConst\ItemType;
+use HHK\Tables\DocumentRS;
+use HHK\House\ResourceView;
+use HHK\SysConst\ItemPriceCode;
+use HHK\Purchase\RoomRate;
+use HHK\Purchase\FinAssistance;
+use HHK\SysConst\ConstraintType;
+use HHK\House\Constraint\Constraints;
+use HHK\House\Attribute\Attributes;
+use HHK\Purchase\TaxedItem;
+use HHK\SysConst\RoomRateCategories;
+
 /**
  * ResourceBuilder.php
  *
@@ -9,7 +42,7 @@
  */
 require ("homeIncludes.php");
 
-require (CLASSES . 'History.php');
+/* require (CLASSES . 'History.php');
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (HOUSE . 'Reservation_1.php');
 
@@ -31,7 +64,7 @@ require (CLASSES . 'ValueAddedTax.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
+require (HOUSE . 'Constraint.php'); */
 
 const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
 
@@ -105,7 +138,7 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName)
                 HouseLog::logGenLookups($dbh, $tblName, $defaultCode, $logText, 'insert', $uS->username);
 
                 // Update Old
-                $glRs->Type->setNewVal(GlTypeCodes::Archive);
+                $glRs->Type->setNewVal(GLTypeCodes::Archive);
 
                 $ctr = EditRS::update($dbh, $glRs, array(
                     $glRs->Table_Name,
@@ -524,7 +557,7 @@ if (isset($_POST['btnkfSave'])) {
     $tabIndex = 2;
 
     // room pricing
-    $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+    $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
     $newDefault = $priceModel->saveEditMarkup($dbh, $_POST, $uS->username);
 
     if ($newDefault != '') {
@@ -709,7 +742,7 @@ if (isset($_POST['btnkfSave'])) {
         $faIb = filter_var_array($_POST['faIb'], FILTER_SANITIZE_NUMBER_INT);
         $faIc = filter_var_array($_POST['faIc'], FILTER_SANITIZE_NUMBER_INT);
 
-        $faRs = new Fa_CategoryRs();
+        $faRs = new Fa_CategoryRS();
         $faRows = EditRS::select($dbh, $faRs, array());
 
         foreach ($faRows as $r) {
@@ -744,7 +777,7 @@ if (isset($_POST['btnhSave'])) {
 
         $idHosp = intval($hid, 10);
 
-        $hospRs = new Hospital_RS();
+        $hospRs = new HospitalRS();
         $hospRs->idHospital->setStoredVal($idHosp);
 
         // Delete?
@@ -758,7 +791,7 @@ if (isset($_POST['btnhSave'])) {
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':id' => $idHosp,
-                ':tpe' => Attribute_Types::Hospital
+                ':tpe' => AttributeTypes::Hospital
             ));
             continue;
         }
@@ -1308,7 +1341,7 @@ $rescTable = ResourceView::resourceTable($dbh);
 $roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->PaymentGateway);
 
 // Room Pricing
-$priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+$priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 $fTbl = $priceModel->getEditMarkup($dbh, $uS->RoomRateDefault);
 
 // Static room rate
@@ -1592,13 +1625,13 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 }
 
 // Hospitals and associations
-$hospRs = new Hospital_RS();
+$hospRs = new HospitalRS();
 $hrows = EditRS::select($dbh, $hospRs, array());
 
 $hospTypes = readGenLookupsPDO($dbh, 'Hospital_Type');
 
 $constraints = new Constraints($dbh);
-$hospConstraints = $constraints->getConstraintsByType(Constraint_Type::Hospital);
+$hospConstraints = $constraints->getConstraintsByType(ConstraintType::Hospital);
 
 $hTbl = new HTMLTable();
 $hths = HTMLTable::makeTh('Id') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Type') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('Color') . HTMLTable::makeTh('Text Color');
@@ -1952,9 +1985,9 @@ $rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(remove
 ));
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -2002,7 +2035,7 @@ $resultMessage = $alertMsg->createMarkup();
         return !isNaN(parseFloat(n)) && isFinite(n);
     }
 
-    var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
+    var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
     var savedRow;
 
     function getRoomFees(cat) {

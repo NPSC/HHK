@@ -9,6 +9,7 @@ use HHK\SysConst\{InvoiceStatus, ItemId, GLTableNames, BillStatus, PaymentMethod
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{InvoiceRS, InvoiceLineRS};
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
+use HHK\House\Registration;
 use HHK\Exception\{RuntimeException, PaymentException};
 use HHK\sec\Session;
 

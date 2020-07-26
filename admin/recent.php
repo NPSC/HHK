@@ -1,4 +1,7 @@
 <?php
+
+use HHK\sec\{SecurityComponent, WebInit};
+
 /**
  * recent.php
  *

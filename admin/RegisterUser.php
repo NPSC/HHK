@@ -1,4 +1,9 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\sec\{Session, WebInit};
+use HHK\fbUserClass;
+
 /**
  * RegisterUser.php
  *
@@ -11,21 +16,21 @@
 
 require ("AdminIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'WebSecRS.php');
+// require (DB_TABLES . 'nameRS.php');
+// require (DB_TABLES . 'WebSecRS.php');
 require ('functions' . DS . 'RegUserManager.php');
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
 require (MEMBER . 'OrgMember.php');
 require (MEMBER . 'Addresses.php');
 
-require (CLASSES . "fbUserClass.php");
+/* require (CLASSES . "fbUserClass.php");
 
 require (CLASSES . "AuditLog.php");
 //require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php'); */
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -141,8 +146,8 @@ if (!is_null($res)) {
             if ($r["Status"] != "a") {
                 $toBeRegisteredRows[$r["Access_Code"]] .= "<td>" . $r2["User_Name"] . "</td></tr>";
             } else {
-                $alreadyAlert = new alertMessage("already" . $r2["Id"]);
-                $alreadyAlert->set_Context(alertMessage::Alert);
+                $alreadyAlert = new AlertMessage("already" . $r2["Id"]);
+                $alreadyAlert->set_Context(AlertMessage::Alert);
                 $toBeRegisteredRows[$r["Access_Code"]] .= "<td>" . $alreadyAlert->createMarkup("Registered") . "</td></tr>";
             }
         }

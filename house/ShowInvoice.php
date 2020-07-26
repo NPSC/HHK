@@ -1,4 +1,12 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\Payment\Invoice\Invoice;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLContainer;
+
 /**
  * ShowInvoice.php
  *
@@ -9,7 +17,7 @@
  */
 require ("homeIncludes.php");
 
-require(DB_TABLES . "visitRS.php");
+/* require(DB_TABLES . "visitRS.php");
 require(DB_TABLES . "registrationRS.php");
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
@@ -43,7 +51,7 @@ require (HOUSE . 'Room.php');
 require (HOUSE . 'Reservation_1.php');
 require (HOUSE . 'ReservationSvcs.php');
 require (HOUSE . 'Visit.php');
-require (HOUSE . 'VisitCharges.php');
+require (HOUSE . 'VisitCharges.php'); */
 
 
 $wInit = new webInit(WebPageCode::Page);

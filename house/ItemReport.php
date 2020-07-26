@@ -1,4 +1,18 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\Config_Lite\Config_Lite;
+use HHK\AlertControl\AlertMessage;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\SysConst\VolMemberType;
+use HHK\HTMLControls\HTMLTable;
+use HHK\OpenXML;
+use HHK\ColumnSelectors;
+use HHK\SysConst\ItemId;
+use HHK\Purchase\TaxedItem;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\HTMLControls\HTMLInput;
+
 /**
  * ItemReport.php
  *
@@ -9,14 +23,14 @@
  */
 
 require ("homeIncludes.php");
-require (PMT . 'Receipt.php');
+/* require (PMT . 'Receipt.php');
 require (CLASSES . 'ColumnSelectors.php');
 require_once CLASSES . 'ValueAddedTax.php';
-require_once CLASSES . 'OpenXML.php';
+require_once CLASSES . 'OpenXML.php'; */
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -34,9 +48,9 @@ $menuMarkup = $wInit->generatePageMenu();
 $labels = new Config_Lite(LABEL_FILE);
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -126,7 +140,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
 
     } else {
 
-        $g['Date'] = PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date']));
+        $g['Date'] = \PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date']));
 
         $n = 0;
 
@@ -181,7 +195,7 @@ $cFields[] = array('Visit Id', 'vid', 'checked', '', 's', '', array());
 $cFields[] = array("Organization", 'Company', 'checked', '', 's', '', array());
 $cFields[] = array('Last', 'Last', 'checked', '', 's', '', array());
 $cFields[] = array("First", 'First', 'checked', '', 's', '', array());
-$cFields[] = array("Date", 'Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Date", 'Date', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
 $cFields[] = array("Description", 'Description', 'checked', '', 's', '', array());
 

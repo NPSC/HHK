@@ -1,4 +1,7 @@
 <?php
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\SecurityComponent;
+
 $config = new Config_Lite(ciCFG_FILE);
 //only interfere on live and demo sites
 if ($config->getString('site', 'Mode', 'dev') != "dev") {
@@ -27,7 +30,6 @@ function fatal_handler($config) {
 }
 
 function formHandler($error, $config) {
-    $sec = new SecurityComponent;
 
     //if post data exists, send email
     if ($_POST && isset($_POST['name'], $_POST['email'], $_POST['message'])) {

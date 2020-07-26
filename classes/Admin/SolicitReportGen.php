@@ -2,6 +2,7 @@
 
 namespace HHK\Admin;
 
+use HHK\MailList;
 use HHK\SysConst\{MemStatus, SalutationCodes};
 
 /**

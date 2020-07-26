@@ -1,8 +1,16 @@
 <?php
 
-use HHK\sec\{Session, SecurityComponent, WebInit};
+use HHK\sec\Pages;
+use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
 use HHK\SysConst\WebPageCode;
+use HHK\Tables\EditRS;
+use HHK\Tables\WebSec\{Id_SecurityGroupRS, W_authRS, W_usersRS};
+use HHK\AuditLog\NameLog;
 use HHK\DataTableServer\SSP;
+use HHK\Exception\RuntimeException;
+use HHK\House\Report\GuestReport;
+use HHK\Member\WebUser;
+use HHK\Member\Relation\AbstractRelation;
 
 /**
  * ws_gen.php
@@ -61,7 +69,7 @@ try {
 
             try{
                 $events['success'] = number_format(GuestReport::calcZipDistance($dbh, $zipf, $zipt), 0);
-            } catch (Hk_Exception_Runtime $hex) {
+            } catch (RuntimeException $hex) {
                 $events['error'] = "Zip code not found.  ";
             }
 
@@ -270,7 +278,7 @@ try {
 } catch (PDOException $ex) {
 
     $events = array("error" => "Database Error" . $ex->getMessage());
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
 
     $events = array("error" => "HouseKeeper Error" . $ex->getMessage());
 }
@@ -333,13 +341,13 @@ function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
 
 function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
-    $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+    $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
     if (is_null($rel) === FALSE) {
         $uS = Session::getInstance();
         $msh = $rel->setCareOf($dbh, $rId, $flag, $uS->username);
 
-        $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+        $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
         return array('success' => $msh, 'rc' => $relCode, 'markup' => $rel->createMarkup());
     }
@@ -348,13 +356,13 @@ function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
 function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
-    $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+    $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
     if (is_null($rel) === FALSE) {
 
         $msh = $rel->removeRelationship($dbh, $rId);
 
-        $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+        $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
         return array('success' => $msh, 'rc' => $relCode, 'markup' => $rel->createMarkup());
     }
@@ -365,12 +373,12 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
     $uS = Session::getInstance();
 
-    $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+    $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
     if (is_null($rel) === FALSE) {
         $msh = $rel->addRelationship($dbh, $rId, $uS->username);
 
-        $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+        $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
         return array('success' => $msh, 'rc' => $relCode, 'markup' => $rel->createMarkup());
     }
 

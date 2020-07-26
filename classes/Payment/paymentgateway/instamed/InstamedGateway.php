@@ -3,6 +3,8 @@
 namespace HHK\Payment\PaymentGateway\Instamed;
 
 use HHK\Payment\{CreditToken, Transaction};
+use HHK\Payment\PaymentManager\PaymentManagerPayment;
+use HHK\Payment\PaymentResult\{CofResult, PaymentResult, ReturnResult};
 use HHK\Payment\Receipt;
 use HHK\Payment\GatewayResponse\{GatewayResponseInterface, StandInGwResponse};
 use HHK\Payment\Invoice\Invoice;

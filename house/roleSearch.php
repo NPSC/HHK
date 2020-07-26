@@ -1,4 +1,9 @@
 <?php
+
+use HHK\sec\{WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\Member\MemberSearch;
+
 /**
  * roleSearch.php
  *
@@ -9,7 +14,7 @@
  */
 
 require ("homeIncludes.php");
-require(MEMBER . 'MemberSearch.php');
+//require(MEMBER . 'MemberSearch.php');
 
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
@@ -111,4 +116,3 @@ switch ($c) {
 
 echo( json_encode($events) );
 exit();
-

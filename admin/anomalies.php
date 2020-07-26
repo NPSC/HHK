@@ -1,5 +1,6 @@
 <?php
 
+use HHK\OpenXML;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\chkBoxCtrl;
 use HHK\AlertControl\AlertMessage;
@@ -242,7 +243,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
         $sml = OpenXML::createExcel($uname, 'Address Exception Report');
 
         // create summary table
-        $myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
+        $myWorkSheet = new \PHPExcel_Worksheet($sml, 'Constraints');
         // Attach the â€œMy Dataâ€� worksheet as the first worksheet in the PHPExcel object
         $sml->addSheet($myWorkSheet, 1);
         $sml->setActiveSheetIndex(1);

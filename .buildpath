@@ -1,23 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <buildpath>
-	<buildpathentry kind="src" path="admin"/>
-	<buildpathentry kind="src" path="functions"/>
-	<buildpathentry kind="src" path="house"/>
-	<buildpathentry kind="src" path="install"/>
-	<buildpathentry kind="src" path="volunteer"/>
-	<buildpathentry external="true" kind="lib" path="C:/Site/vendor"/>
-	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
-	<buildpathentry kind="src" path="classes">
+	<buildpathentry kind="src" path="vendor/phpgangsta/googleauthenticator/PHPGangsta">
 		<attributes>
-			<attribute name="composer" value="source"/>
+			<attribute name="composer" value="vendor"/>
 		</attributes>
 	</buildpathentry>
+	<buildpathentry kind="src" path="vendor/phpmailer/phpmailer/src">
+		<attributes>
+			<attribute name="composer" value="vendor"/>
+		</attributes>
+	</buildpathentry>
+	<buildpathentry external="true" kind="lib" path="C:/Site/vendor"/>
+	<buildpathentry kind="src" path="house"/>
+	<buildpathentry kind="src" path="volunteer"/>
 	<buildpathentry kind="src" path="vendor/box/spout/src/Spout">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
 		</attributes>
 	</buildpathentry>
-	<buildpathentry kind="src" path="vendor/composer">
+	<buildpathentry kind="src" path="functions"/>
+	<buildpathentry kind="src" path="vendor/phelium/recaptcha/src">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
 		</attributes>
@@ -27,19 +29,22 @@
 			<attribute name="composer" value="vendor"/>
 		</attributes>
 	</buildpathentry>
-	<buildpathentry kind="src" path="vendor/phelium/recaptcha/src">
+	<buildpathentry kind="src" path="vendor/composer">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
 		</attributes>
 	</buildpathentry>
-	<buildpathentry kind="src" path="vendor/phpgangsta/googleauthenticator/PHPGangsta">
+	<buildpathentry kind="src" path="vendor/phpoffice/phpexcel/Classes">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
 		</attributes>
 	</buildpathentry>
-	<buildpathentry kind="src" path="vendor/phpmailer/phpmailer/src">
+	<buildpathentry kind="src" path="admin"/>
+	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
+	<buildpathentry kind="src" path="install"/>
+	<buildpathentry kind="src" path="classes">
 		<attributes>
-			<attribute name="composer" value="vendor"/>
+			<attribute name="composer" value="source"/>
 		</attributes>
 	</buildpathentry>
 </buildpath>

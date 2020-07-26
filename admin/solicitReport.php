@@ -1,4 +1,10 @@
 <?php
+
+use HHK\MailList;
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\selCtrl;
+use HHK\Donation\Campaign;
+
 /**
  * solicitReport.php
  *
@@ -9,10 +15,10 @@
  */
 require("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-require(CLASSES . "Campaign.php");
-require(CLASSES . "MailList.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
+// require(CLASSES . "Campaign.php");
+// require(CLASSES . "MailList.php");
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;

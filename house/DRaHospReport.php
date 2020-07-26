@@ -8,15 +8,29 @@
  * @link      https://github.com/NPSC/HHK
  */
 
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\AlertControl\AlertMessage;
+use HHK\sec\SecurityComponent;
+use HHK\Config_Lite\Config_Lite;
+use HHK\SysConst\VolMemberType;
+use HHK\SysConst\ReservationStatus;
+use HHK\HTMLControls\HTMLTable;
+use HHK\OpenXML;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\CreateMarkupFromDB;
+use HHK\SysConst\GLTableNames;
+use HHK\HTMLControls\HTMLSelector;
+
 require ("homeIncludes.php");
 
 
-require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'OpenXML.php';
+/* require CLASSES . 'CreateMarkupFromDB.php';
+require CLASSES . 'OpenXML.php'; */
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -33,9 +47,9 @@ $menuMarkup = $wInit->generatePageMenu();
 
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -287,8 +301,8 @@ if ($uS->Doctor) {
 
 // Hospital and association lists
 $hospList = array();
-if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+    $hospList = $uS->guestLookups[GLTableNames::Hospital];
 }
 
 $hList = array();

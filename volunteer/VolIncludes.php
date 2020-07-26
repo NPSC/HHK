@@ -15,8 +15,9 @@ define('MAX_IDLE_TIME', '1800');
 define('PUBLIC_CSS', "<link href='css/publicStyle.css' rel='stylesheet' type='text/css' />");
 
 require ('../functions/commonDefines.php');
+require (THIRD_PARTY . '/autoload.php');
 
-require (CLASSES . 'PDOdata.php');
+/* require (CLASSES . 'PDOdata.php');
 require (DB_TABLES . 'HouseRS.php');
 require (CLASSES . 'HTML_Controls.php');
 require (FUNCTIONS . 'commonFunc.php');
@@ -29,3 +30,4 @@ require (SEC . 'ScriptAuthClass.php');
 require (CLASSES . 'SysConst.php');
 require (SEC . 'webInit.php');
 require (SEC . 'UserClass.php');
+ */

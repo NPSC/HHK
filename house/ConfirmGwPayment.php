@@ -1,10 +1,14 @@
 <?php
+use HHK\sec\SecurityComponent;
+use HHK\sec\Session;
+use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
+
 // Confirm.php
 // Confirm gateway payment.
 
 require ("homeIncludes.php");
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
+//require (PMT . 'PaymentGateway.php');
+//require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
 
 
 $secure = new SecurityComponent();

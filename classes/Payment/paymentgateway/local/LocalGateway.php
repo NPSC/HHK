@@ -2,16 +2,21 @@
 
 namespace HHK\Payment\PaymentGateway\Local;
 
+use HHK\Member\Role\Guest;
+use HHK\Member\AbstractMember;
 use HHK\Payment\{CreditToken, Receipt, Transaction};
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentGateway\CreditPayments\{ReturnReply, SaleReply, VoidReply};
+use HHK\Payment\PaymentManager\PaymentManagerPayment;
+use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult};
 use HHK\SysConst\{MemBasis, MpTranType, PaymentMethod, PaymentStatusCode, TransMethod, TransType};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
 use HHK\sec\Session;
 use HHK\Exception\MemberException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\House\HouseServices;
 use HHK\Exception\PaymentException;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 
@@ -99,11 +104,11 @@ class LocalGateway extends AbstractPaymentGateway {
 		} else {
 			try {
 				
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 				
 			} catch (MemberException $ex) {
 				
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$pmp->setCardHolderName($guest->get_fullName());
@@ -189,9 +194,9 @@ class LocalGateway extends AbstractPaymentGateway {
 		if ($cardHolderName == '') {
 
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 			} catch (MemberException $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();
@@ -241,9 +246,9 @@ class LocalGateway extends AbstractPaymentGateway {
 		if ($cardHolderName == '') {
 			
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 			} catch (MemberException $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();
@@ -289,9 +294,9 @@ class LocalGateway extends AbstractPaymentGateway {
 		if ($cardHolderName == '') {
 			
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 			} catch (MemberException $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();
@@ -340,9 +345,9 @@ class LocalGateway extends AbstractPaymentGateway {
 		if ($cardHolderName == '') {
 			
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 			} catch (MemberException $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();
@@ -397,9 +402,9 @@ class LocalGateway extends AbstractPaymentGateway {
 		if ($cardHolderName == '') {
 			
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 			} catch (MemberException $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();

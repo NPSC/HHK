@@ -7,6 +7,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
 use HHK\Payment\PaymentGateway\Local\LocalGateway;
 use HHK\Payment\PaymentGateway\Vantiv\VantivGateway;
+use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\SysConst\PaymentStatusCode;
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};

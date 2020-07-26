@@ -1,4 +1,19 @@
 <?php
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
+use HHK\Payment\PaymentSvcs;
+use HHK\Exception\RuntimeException;
+use HHK\History;
+use HHK\SysConst\ReservationStatus;
+use HHK\House\Report\PaymentReport;
+use HHK\SysConst\ItemPriceCode;
+use HHK\SysConst\GLTableNames;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\House\Report\RoomReport;
+use HHK\SysConst\RoomRateCategories;
+
 /**
  * Register.php
  *
@@ -9,7 +24,7 @@
  */
 require ("homeIncludes.php");
 
-require (CLASSES . 'History.php');
+/* require (CLASSES . 'History.php');
 require (DB_TABLES . 'PaymentsRS.php');
 require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'PaymentGwRS.php');
@@ -52,7 +67,7 @@ require (HOUSE . 'RoomReport.php');
 
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (CLASSES . 'Notes.php');
-
+ */
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
@@ -100,7 +115,7 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
@@ -254,7 +269,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
 
     $payTypes = array();
 
-    foreach ($uS->nameLookups[GL_TableNames::PayType] as $p) {
+    foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
         if ($p[2] != '') {
             $payTypes[$p[2]] = array($p[2], $p[1]);
         }
@@ -311,7 +326,7 @@ if ($uS->UseWLnotes) {
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
         <style>
 .hhk-justify-r {
@@ -486,7 +501,7 @@ if ($uS->UseWLnotes) {
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
-        <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>' />
+        <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
         <input  type="hidden" id="resvPageName" value='<?php echo 'Reserve.php'; ?>' />
         <input  type="hidden" id="showCreatedDate" value='<?php echo $uS->ShowCreatedDate; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />

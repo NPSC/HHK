@@ -1,5 +1,7 @@
 <?php
 
+use HHK\CreateMarkupFromDB;
+use HHK\History;
 use HHK\sec\{Session, WebInit};
 use HHK\SysConst\{WebSiteCode};
 
