@@ -1139,7 +1139,7 @@ class HouseServices {
         }
 
         $reg = new Registration($dbh, 0, $visitRs->idRegistration->getStoredVal());
-        $psg = new Psg($dbh, $reg->getIdPsg());
+        $psg = new PSG($dbh, $reg->getIdPsg());
 
         //Decide what to send back
         if (isset($post[$prefix.'txtLastName'])) {

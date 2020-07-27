@@ -456,7 +456,7 @@ class Address extends AbstractContactPoint{
 
         $addrComplete = TRUE;
 
-        if (is_a($this->cleanAddress, 'CleanAddress') === FALSE) {
+        if ($this->cleanAddress instanceof CleanAddress === FALSE) {
             throw new RuntimeException("CleanAddress object is missing.  ");
         }
 

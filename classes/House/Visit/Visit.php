@@ -17,6 +17,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\House\Reservation\ReservationSvcs;
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\Resource\AbstractResource;
+use HHK\Tables\Fields\DB_Field;
 
 /**
  * Visit.php
@@ -614,7 +615,7 @@ class Visit {
 
         // set all new values for visit rs
         foreach ($this->visitRS as $p) {
-            if (is_a($p, "DB_Field")) {
+            if ($p instanceof DB_Field) {
                 $p->setNewVal($p->getStoredVal());
             }
         }
@@ -1739,8 +1740,8 @@ class Visit {
 
     public function getResource($dbh = null) {
 
-        if (is_null($this->resource) || is_a($this->resource, 'Resource') === FALSE) {
-            if ($this->visitRS->idResource->getStoredVal() > 0 && is_a($dbh, 'PDO')) {
+        if (is_null($this->resource) || $this->resource instanceof AbstractResource === FALSE) {
+            if ($this->visitRS->idResource->getStoredVal() > 0 && $dbh instanceof \PDO) {
                 $this->resource = AbstractResource::getResourceObj($dbh, $this->visitRS->idResource->getStoredVal());
                 return $this->resource;
             }

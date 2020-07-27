@@ -4,6 +4,7 @@ namespace HHK\House\Resource;
 
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\VisitStatus;
+use HHK\House\Room\Room;
 
 /**
  * PartitionResource.php
@@ -37,7 +38,7 @@ class PartitionResource extends AbstractResource {
 
         $room = reset($this->rooms);
 
-        if (is_a($room, 'Room') === FALSE) {
+        if ($room instanceof Room === FALSE) {
             return FALSE;
         }
 
@@ -59,7 +60,7 @@ class PartitionResource extends AbstractResource {
 
         $room = reset($this->rooms);
 
-        if (is_a($room, 'Room') === FALSE) {
+        if ($room instanceof Room === FALSE) {
             return NULL;
         }
 

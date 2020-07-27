@@ -285,7 +285,7 @@ if ($idPsg > 0) {
 
         foreach ($ngRss as $n) {
 
-            $gpsg = new Psg($dbh, $n->idPsg->getStoredVal());
+            $gpsg = new PSG($dbh, $n->idPsg->getStoredVal());
 
             $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $gpsg->getPatientName($dbh), array('href'=> 'GuestEdit.php?id='.$id.'&psg='.$gpsg->getIdPsg())))
@@ -303,7 +303,7 @@ if ($idPsg > 0) {
 }
 
 
-$psg = new Psg($dbh, $idPsg);
+$psg = new PSG($dbh, $idPsg);
 $registration = new Registration($dbh, $psg->getIdPsg());
 $emergContact = new EmergencyContact($dbh, $id);
 $idPatient = $psg->getIdPatient();

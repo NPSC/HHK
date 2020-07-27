@@ -27,7 +27,7 @@ class HospitalStay {
     
     function __construct(\PDO $dbh, $idPatient, $idHospitalStay = 0) {
         
-        $hstay = new Hospital_StayRs();
+        $hstay = new Hospital_StayRS();
         
         $idP = intval($idPatient);
         $idHs = intval($idHospitalStay);

@@ -9,6 +9,7 @@ use HHK\SysConst\{GLTableNames, RelLinkType, VolMemberType, VolRank, VolStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\{NameRS, NameVolunteerRS};
 use HHK\sec\Session;
+use HHK\Config_Lite\Config_Lite;
 
 /**
  * RoleMember.php
@@ -81,7 +82,7 @@ abstract class AbstractRoleMember extends IndivMember {
 
             if (is_string($labels)) {
                 $patTitle = $labels;
-            } else if (is_a($labels, 'Config_Lite')) {
+            } else if ($labels instanceof Config_Lite) {
                 $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
             }
 

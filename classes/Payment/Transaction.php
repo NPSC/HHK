@@ -5,6 +5,8 @@ namespace HHK\Payment;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\Tables\Payment\TransRS;
 use HHK\Tables\EditRS;
+use HHK\Payment\PaymentResponse\CheckResponse;
+use HHK\Payment\PaymentResponse\TransferResponse;
 
 /**
  * Transaction.php
@@ -38,7 +40,7 @@ class Transaction {
         $transRs->Trans_Type->setNewVal($transType);
         $transRs->Trans_Method->setNewVal($transMethod);
 
-        if (is_a($vr, 'CheckResponse') || is_a($vr, 'TransferResponse')) {
+        if ($vr instanceof CheckResponse || $vr instanceof TransferResponse) {
             $transRs->Check_Number->setNewVal($vr->getCheckNumber());
         }
 

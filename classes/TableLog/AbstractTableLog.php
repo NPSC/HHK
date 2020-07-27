@@ -2,6 +2,7 @@
 namespace HHK\TableLog;
 use HHK\Tables\{TableRSInterface, EditRS};
 use HHK\HTMLControls\HTMLTable;
+use HHK\Tables\Fields\DB_Field;
 
 /**
  * AbstractTableLog.php
@@ -24,7 +25,7 @@ abstract class AbstractTableLog {
         $logText = array();
 
         foreach ($rs as $dbF) {
-            if (is_a($dbF, "DB_Field")) {
+            if ($dbF instanceof DB_Field) {
 
                 if ($dbF->logMe() && !is_null($dbF->getNewVal()) && $dbF->getNewVal() != "") {
                     $logText[$dbF->getCol()] =  $dbF->getNewVal();
@@ -40,7 +41,7 @@ abstract class AbstractTableLog {
         $logText = array();
 
         foreach ($rs as $dbF) {
-            if (is_a($dbF, "DB_Field")) {
+            if ($dbF instanceof DB_Field) {
 
                 if ($dbF->logMe() && !is_null($dbF->getNewVal()) && $dbF->getNewVal() != $dbF->getStoredVal()) {
 

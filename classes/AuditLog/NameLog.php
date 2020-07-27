@@ -2,6 +2,7 @@
 namespace HHK\AuditLog;
 
 use HHK\Tables\TableRSInterface;
+use HHK\Tables\Fields\DB_Field;
 
 /**
  * AuditLog.php
@@ -35,7 +36,8 @@ class NameLog implements AuditLogInterface {
         }
 
         foreach ($rs as $dbF) {
-            if (is_a($dbF, "DB_Field")) {
+            //if (is_a($dbF, "DB_Field")) {
+            if($dbF instanceof DB_Field){
 
                 if ($dbF->logMe() && !is_null($dbF->getNewVal()) && $dbF->getNewVal() != "") {
                     $logText[] = $rs->getTableName() . '.' . $dbF->getCol() . $typeCode . ':  -> ' . $dbF->getNewVal();
@@ -62,7 +64,8 @@ class NameLog implements AuditLogInterface {
         }
 
         foreach ($rs as $dbF) {
-            if (is_a($dbF, "DB_Field")) {
+            //if (is_a($dbF, "DB_Field")) {
+            if($dbF instanceof DB_Field){
 
                 if ($dbF->logMe() && !is_null($dbF->getNewVal()) && $dbF->getNewVal() != $dbF->getStoredVal()) {
 

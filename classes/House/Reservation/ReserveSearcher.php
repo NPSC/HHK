@@ -93,7 +93,7 @@ class ReserveSearcher extends ActiveReservation {
         
         foreach ($ngRss as $n) {
             
-            $psg = new Psg($dbh, $n->idPsg->getStoredVal());
+            $psg = new PSG($dbh, $n->idPsg->getStoredVal());
             
             $patientStatus = $psg->getPatientStatus($dbh);
             

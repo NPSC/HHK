@@ -295,7 +295,7 @@ function newDateWithTz($strDate, $strTz)
 
 function setTimeZone($uS, $strDate)
 {
-    if (is_null($uS) || is_a($uS, 'Session') == FALSE) {
+    if (is_null($uS) || $uS instanceof Session == FALSE) {
         $uS = Session::getInstance();
     }
 

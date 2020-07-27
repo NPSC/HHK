@@ -1455,7 +1455,7 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
 
     public static function getExpectedDaysDT($startDT, $endDT) {
 
-        if (is_a($startDT, 'DateTime') && is_a($endDT, 'DateTime')){
+        if ($startDT instanceof \DateTime && $endDT instanceof \DateTime){
             $ad = new \DateTime($startDT->format('Y-m-d H:i:s'));
             $ad->setTime(11, 0, 0);
             $dd = new \DateTime($endDT->format('Y-m-d H:i:s'));

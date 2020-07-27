@@ -3,6 +3,7 @@
 namespace HHK\House\Resource;
 
 use HHK\Exception\RuntimeException;
+use HHK\House\Room\Room;
 
 /**
  * RoomResource.php
@@ -28,7 +29,7 @@ class RoomResource extends AbstractResource {
 
         $room = reset($this->rooms);
 
-        if (is_a($room, 'Room') === FALSE) {
+        if ($room instanceof Room === FALSE) {
             return FALSE;
         }
 
@@ -49,7 +50,7 @@ class RoomResource extends AbstractResource {
 
         $room = reset($this->rooms);
 
-        if (is_a($room, 'Room') === FALSE) {
+        if ($room instanceof Room === FALSE) {
             return NULL;
         }
 

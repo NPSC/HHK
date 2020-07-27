@@ -1,5 +1,5 @@
 <?php
-namespace HHK;
+namespace HHK\Update;
 
 use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
@@ -9,6 +9,7 @@ use HHK\TableLog\HouseLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\House\Desig_HolidaysRS;
 use HHK\sec\{Session, SysConfig};
+use HHK\US_Holidays;
 
 /**
  * SiteConfig.php

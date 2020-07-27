@@ -514,7 +514,7 @@ p.label {
             $rateAdj = $visit->getRateAdjust();
 
             // psg
-            $psg = new Psg($dbh, $reg->getIdPsg());
+            $psg = new PSG($dbh, $reg->getIdPsg());
 
             // Guests
             foreach ($stays as $s) {
@@ -556,7 +556,7 @@ p.label {
             $notes = $rows[0]['Checkin_Notes'];
 
             $reg = new Registration($dbh, 0, $rows[0]['idRegistration']);
-            $psg = new Psg($dbh, $reg->getIdPsg());
+            $psg = new PSG($dbh, $reg->getIdPsg());
 
             foreach ($rows as $r) {
 
