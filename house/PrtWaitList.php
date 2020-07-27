@@ -16,9 +16,9 @@ use HHK\SysConst\ReservationStatus;
  */
 require ("homeIncludes.php");
 
-require (CLASSES . 'History.php');
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (CLASSES . 'Purchase/RoomRate.php');
+//require (CLASSES . 'History.php');
+//require (CLASSES . 'CreateMarkupFromDB.php');
+//require (CLASSES . 'Purchase/RoomRate.php');
 
 
 

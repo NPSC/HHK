@@ -129,7 +129,7 @@ function doExcelDownLoad($rows, $fileName)
         return;
     }
 
-    require_once CLASSES . 'OpenXML.php';
+    //require_once CLASSES . 'OpenXML.php';
 
     $reportRows = 1;
     $sml = OpenXML::createExcel('', $fileName);

@@ -3,6 +3,8 @@
 namespace HHK;
 
 use HHK\Exception\RuntimeException;
+use PHPExcel_CachedObjectStorageFactory;
+use PHPExcel_Settings;
 
 /**
  * OpenXML.php
@@ -39,10 +41,10 @@ class OpenXML {
         }
 
         // Set value binder
-        \PHPExcel_Cell::setValueBinder(new PHPExcel_Cell_AdvancedValueBinder());
+        \PHPExcel_Cell::setValueBinder(new \PHPExcel_Cell_AdvancedValueBinder());
 
         // Create new PHPExcel object
-        $objPHPExcel = new PHPExcel();
+        $objPHPExcel = new \PHPExcel();
 
         // Set document properties
         $objPHPExcel->getProperties()->setCreator($user)
@@ -57,10 +59,10 @@ class OpenXML {
 
     /**
      *
-     * @param PHPExcel $objPHPExcel
+     * @param \PHPExcel $objPHPExcel
      */
-    public static function finalizeExcel(PHPExcel $objPHPExcel) {
-        $objWriter = PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
+    public static function finalizeExcel(\PHPExcel $objPHPExcel) {
+        $objWriter = \PHPExcel_IOFactory::createWriter($objPHPExcel, 'Excel2007');
         $objWriter->save('php://output');
         $objPHPExcel->disconnectWorksheets();
         unset($objPHPExcel);
@@ -68,15 +70,15 @@ class OpenXML {
 
     /**
      *
-     * @param PHPExcel $objPHPExcel
+     * @param \PHPExcel $objPHPExcel
      * @param int $col
      * @param int $row
      * @param mixed $data
-     * @param PHPExcel_Cell_DataType $dataType Defualt: TYPE_NUMERIC
-     * @param PHPExcel_Style_NumberFormat $format Default: FORMAT_GENERAL
+     * @param \PHPExcel_Cell_DataType $dataType Defualt: TYPE_NUMERIC
+     * @param \PHPExcel_Style_NumberFormat $format Default: FORMAT_GENERAL
      * @return \PHPExcel
      */
-    public static function writeAdvCell(PHPExcel $objPHPExcel, $col, $row, $data, $dataType = PHPExcel_Cell_DataType::TYPE_NUMERIC, $format = PHPExcel_Style_NumberFormat::FORMAT_GENERAL) {
+    public static function writeAdvCell(\PHPExcel $objPHPExcel, $col, $row, $data, $dataType = \PHPExcel_Cell_DataType::TYPE_NUMERIC, $format = \PHPExcel_Style_NumberFormat::FORMAT_GENERAL) {
 
         self::writeCell($objPHPExcel, $col, $row, $data, $dataType);
 
@@ -90,14 +92,14 @@ class OpenXML {
 
     /**
      *
-     * @param PHPExcel $objPHPExcel
+     * @param \PHPExcel $objPHPExcel
      * @param int $col
      * @param int $row
      * @param mixed $data
      * @param string $dataType  Defualt: TYPE_NUMERIC
      * @return \PHPExcel
      */
-    public static function writeCell(PHPExcel $objPHPExcel, $col, $row, $data, $dataType = PHPExcel_Cell_DataType::TYPE_NUMERIC) {
+    public static function writeCell(\PHPExcel $objPHPExcel, $col, $row, $data, $dataType = \PHPExcel_Cell_DataType::TYPE_NUMERIC) {
 
         $output = preg_replace_callback("/(&#[0-9]+;)/", function($m) { return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES"); }, $data);
 
@@ -110,12 +112,12 @@ class OpenXML {
 
     /**
      *
-     * @param PHPExcel $objPHPExcel
+     * @param \PHPExcel $objPHPExcel
      * @param array $rowData
      * @param int $rowIndex
      * @return int
      */
-    public static function writeNextRow(PHPExcel $objPHPExcel, array $rowData, $rowIndex) {
+    public static function writeNextRow(\PHPExcel $objPHPExcel, array $rowData, $rowIndex) {
 
         for ($c = 0; $c < count($rowData); $c++) {
 
@@ -134,27 +136,27 @@ class OpenXML {
 
     /**
      *
-     * @param PHPExcel $objPHPExcel
+     * @param \PHPExcel $objPHPExcel
      * @param array $rowData
      * @param int $rowIndex
      * @return int
      */
-    public static function writeHeaderRow(PHPExcel $objPHPExcel, array $rowData, $rowIndex = 1) {
+    public static function writeHeaderRow(\PHPExcel $objPHPExcel, array $rowData, $rowIndex = 1) {
 
         $styleArray = array(
             'font' => array(
                 'bold' => true,
             ),
             'alignment' => array(
-                'horizontal' => PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
+                'horizontal' => \PHPExcel_Style_Alignment::HORIZONTAL_CENTER,
             ),
             'borders' => array(
                 'top' => array(
-                    'style' => PHPExcel_Style_Border::BORDER_THIN,
+                    'style' => \PHPExcel_Style_Border::BORDER_THIN,
                 ),
             ),
             'fill' => array(
-                'type' => PHPExcel_Style_Fill::FILL_GRADIENT_LINEAR,
+                'type' => \PHPExcel_Style_Fill::FILL_GRADIENT_LINEAR,
                 'rotation' => 90,
                 'startcolor' => array(
                     'argb' => 'FFA0A0A0',
@@ -172,7 +174,7 @@ class OpenXML {
         }
 
         for ($c = 0; $c < count($rowData); $c++) {
-            self::writeCell($objPHPExcel, $c, $rowIndex, $rowData[$c], PHPExcel_Cell_DataType::TYPE_STRING);
+            self::writeCell($objPHPExcel, $c, $rowIndex, $rowData[$c], \PHPExcel_Cell_DataType::TYPE_STRING);
             $objPHPExcel->getActiveSheet()->getColumnDimensionByColumn($c)->setAutoSize(true);
             $objPHPExcel->getActiveSheet()->getStyleByColumnAndRow($c, $rowIndex)->applyFromArray($styleArray);
         }
@@ -182,4 +184,4 @@ class OpenXML {
     }
 
 }
-https://hangouts.google.com/hangouts/_/nonprofitsoftwarecorp.org/ecrane
+?>

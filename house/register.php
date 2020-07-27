@@ -145,7 +145,7 @@ if (isset($_POST['btnDlWlist'])) {
     doExcelDownLoad($rows, 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
-    require (HOUSE . 'PaymentReport.php');
+    //require (HOUSE . 'PaymentReport.php');
     PaymentReport::generateDayReport($dbh, $_POST);
 }
 

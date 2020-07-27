@@ -145,7 +145,7 @@ class PaymentReport {
         $stmt = $dbh->query($query);
         $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room'));
 
-        require_once CLASSES . 'OpenXML.php';
+        //require_once CLASSES . 'OpenXML.php';
 
         $reportRows = 1;
         $file = 'PaymentReport';

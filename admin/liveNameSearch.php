@@ -16,7 +16,7 @@ use HHK\Tables\WebSec\FbxRS;
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-require(MEMBER . 'MemberSearch.php');
+//require(MEMBER . 'MemberSearch.php');
 
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
@@ -136,8 +136,8 @@ switch ($c) {
             $fid = filter_var(urldecode($_GET["fid"]), FILTER_SANITIZE_STRING);
         }
 
-        require_once (CLASSES . 'PDOdata.php');
-        require_once (DB_TABLES . 'WebSecRS.php');
+        //require_once (CLASSES . 'PDOdata.php');
+        //require_once (DB_TABLES . 'WebSecRS.php');
 
         $fbRs = new FbxRS();
         $fbRs->fb_id->setStoredVal($fid);

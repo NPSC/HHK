@@ -33,8 +33,6 @@ require (CLASSES . 'member/WebUser.php');
 require(SEC . 'Pages.php'); */
 
 
-
-//
 $wInit = new webInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
@@ -387,7 +385,7 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 function changeLog(PDO $dbh, $id, $get) {
 
-    require(CLASSES . 'DataTableServer.php');
+    //require(CLASSES . 'DataTableServer.php');
 
     $view = 'vaudit_log';
 

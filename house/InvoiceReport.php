@@ -797,8 +797,8 @@ $bytesWritten = '';
 
 if ($useGlReport) {
 	
-	require (HOUSE.'GlCodes.php');
-	require (CLASSES.'SFTPConnection.php');
+	//require (HOUSE.'GlCodes.php');
+	//require (CLASSES.'SFTPConnection.php');
 	
 	$glParm = new GLParameters($dbh, 'Gl_Code');
 	$glPrefix = 'gl_';

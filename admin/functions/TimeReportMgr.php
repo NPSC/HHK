@@ -11,6 +11,12 @@
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
+use HHK\CreateMarkupFromDB;
+use HHK\OpenXML;
+use HHK\HTMLControls\selCtrl;
+use HHK\sec\Session;
+use HHK\SysConst\VolCalendarStatus;
+
 function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust) {
 
     $dlFlag = FALSE;
@@ -134,9 +140,9 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
             $sumaryRows["Report Type"] = $selRptType->get_label($rType);
 
             if ($rType == "l") {
-                $wClause .= " and c.E_Status = '" . Vol_Calendar_Status::Logged . "' ";
+                $wClause .= " and c.E_Status = '" . VolCalendarStatus::Logged . "' ";
             } else if ($rType == 'ul') {
-                $wClause .= " and c.E_Status = '" . Vol_Calendar_Status::Active . "' ";
+                $wClause .= " and c.E_Status = '" . VolCalendarStatus::Active . "' ";
             }
         }
 
@@ -265,7 +271,7 @@ function makeSQL($whereClause, $groupBy, $sumHours) {
     } else {
         $groupBy = "order by g.Description, vm.Name_Last";
         $showStartEnd = "c.E_Start as `Start Date`, c.E_End as `End Date`,
-            case when c.E_Status = '" . Vol_Calendar_Status::Logged . "' then 'Logged' else 'Open' end as `Status`,";
+            case when c.E_Status = '" . VolCalendarStatus::Logged . "' then 'Logged' else 'Open' end as `Status`,";
     }
 
     return "select
@@ -354,5 +360,4 @@ from
 where
         vm.MemberStatus = 'a' $whereClause $groupBy;";
 }
-
-
+?>

@@ -468,8 +468,7 @@ CREATE PROCEDURE `register_web_user`
     IN orgId varchar(3),
     IN roleId varchar(3),
     IN pw varchar(100),
-    IN groupcode varchar(5),
-    IN resetpw varchar(1)
+    IN groupcode varchar(5)
 )
 BEGIN
 

@@ -285,7 +285,7 @@ try {
         case 'vehsch':
 
             if (isset($_REQUEST['letters'])) {
-                require (HOUSE . 'Vehicle.php');
+                //require (HOUSE . 'Vehicle.php');
                 $tag = filter_var($_REQUEST['letters'], FILTER_SANITIZE_STRING);
                 $events = Vehicle::searchTag($dbh, $tag);
             }

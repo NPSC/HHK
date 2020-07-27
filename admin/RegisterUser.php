@@ -15,16 +15,18 @@ use HHK\fbUserClass;
 
 
 require ("AdminIncludes.php");
-
-// require (DB_TABLES . 'nameRS.php');
-// require (DB_TABLES . 'WebSecRS.php');
 require ('functions' . DS . 'RegUserManager.php');
+
+/*
+require (DB_TABLES . 'nameRS.php');
+require (DB_TABLES . 'WebSecRS.php');
+
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
 require (MEMBER . 'OrgMember.php');
 require (MEMBER . 'Addresses.php');
 
-/* require (CLASSES . "fbUserClass.php");
+require (CLASSES . "fbUserClass.php");
 
 require (CLASSES . "AuditLog.php");
 //require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');

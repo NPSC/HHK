@@ -22,7 +22,7 @@ require (DB_TABLES . 'visitRS.php');
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'PaymentsRS.php'); */
+require (DB_TABLES . 'PaymentsRS.php');
 
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
@@ -30,8 +30,8 @@ require (MEMBER . 'OrgMember.php');
 require (MEMBER . 'Addresses.php');
 
 
-/* require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php"); */
+require(CLASSES . "chkBoxCtrlClass.php");
+require(CLASSES . "selCtrl.php");
 
 require (HOUSE . 'psg.php');
 require (HOUSE . 'Role.php');
@@ -55,7 +55,7 @@ require (CLASSES . 'Notes.php');
 
 require (CLASSES . 'Duplicate.php');
 require (CLASSES . 'CreateMarkupFromDB.php');
-
+*/
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;

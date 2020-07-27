@@ -89,9 +89,9 @@ if (isset($_POST["btnDlSol"])) {
     $envNameCtrl->setReturnValues($_POST[$envNameCtrl->get_htmlNameBase()]);
     $salNameCtrl->setReturnValues($salNameCtrl->get_htmlNameBase());
 
-    require('classes'.DS . 'SolicitReportGen.php');
-    require('classes'.DS . 'Salutation.php');
-    require(CLASSES . "OpenXML.php");
+    //require('classes'.DS . 'SolicitReportGen.php');
+    //require('classes'.DS . 'Salutation.php');
+    //require(CLASSES . "OpenXML.php");
 
 
     $report = SolicitReportGen::createSqlSelect($dbh, $_POST);

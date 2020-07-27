@@ -16,6 +16,12 @@
  * @param string $type Relationship link type
  * @return array suitable for OpenXML
  */
+use HHK\MailList;
+use HHK\OpenXML;
+use HHK\HTMLControls\chkBoxCtrl;
+use HHK\HTMLControls\selCtrl;
+use HHK\SysConst\SalutationCodes;
+
 function DirCkExcludes($r, $type = '') {
     $street = "";
     $city = "";
@@ -80,7 +86,7 @@ function DirCkExcludes($r, $type = '') {
 }
 
 
-function dirReport(\PDO $dbh, chkBoxCtrlClass $cbBasisDir, chkBoxCtrlClass $cbRelationDir, selCtrl $selDirType, $guestBlackOutDays, $emailBlockSize = 200) {
+function dirReport(\PDO $dbh, chkBoxCtrl $cbBasisDir, chkBoxCtrl $cbRelationDir, selCtrl $selDirType, $guestBlackOutDays, $emailBlockSize = 200) {
 
     ini_set('memory_limit', "128M");
 

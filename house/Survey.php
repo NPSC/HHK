@@ -100,7 +100,7 @@ $endDT->sub(new DateInterval('P' . $uS->SolicitBuffer . 'D'));
 //
 if (isset($_POST['btnPsg']) || isset($_POST['btnGen'])) {
 
-    require(CLASSES . "OpenXML.php");
+    //require(CLASSES . "OpenXML.php");
 
     $excel = FALSE;
     if (isset($_POST['btnGen'])) {

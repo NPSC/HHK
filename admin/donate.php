@@ -28,10 +28,10 @@ require ("AdminIncludes.php");
  *
  * require (CLASSES . 'Campaign.php');
  */
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . 'Addresses.php');
+// require (MEMBER . 'Member.php');
+// require (MEMBER . 'IndivMember.php');
+// require (MEMBER . 'OrgMember.php');
+// require (MEMBER . 'Addresses.php');
 
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;

@@ -9,6 +9,10 @@
  * @license   GPL and MIT
  * @link      https://github.com/hhk
  */
+use HHK\OpenXML;
+use HHK\HTMLControls\selCtrl;
+use HHK\sec\Session;
+
 function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dormancyCtrl, selCtrl &$volStatusCtrl, $guestBlackOutDays = 61) { //, &$sortCtrl) {
     $volCat = new VolCats();
     $dlFlag = false;
@@ -222,9 +226,9 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
             OpenXML::writeHeaderRow($sml, $hdr);
             $reportRows++;
 
-            // Create a new worksheet called “My Data”
+            // Create a new worksheet called â€œMy Dataâ€�
             $myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
-            // Attach the “My Data” worksheet as the first worksheet in the PHPExcel object
+            // Attach the â€œMy Dataâ€� worksheet as the first worksheet in the PHPExcel object
             $sml->addSheet($myWorkSheet, 1);
             $sml->setActiveSheetIndex(1);
 
@@ -428,4 +432,4 @@ vm.Id AS Id,
 
     return $query;
 }
-
+?>

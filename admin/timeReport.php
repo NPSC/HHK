@@ -76,10 +76,10 @@ for ($y = $now["year"]; $y > ($now["year"] - 4); $y--) {
 if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"])) {
 
     require("functions" . DS . "TimeReportMgr.php");
-    require(CLASSES . "CreateMarkupFromDB.php");
-    require("classes" . DS . "VolCats.php");
-    require("classes" . DS . "Salutation.php");
-    require(CLASSES . "OpenXML.php");
+    //require(CLASSES . "CreateMarkupFromDB.php");
+    //require("classes" . DS . "VolCats.php");
+    //require("classes" . DS . "Salutation.php");
+    //require(CLASSES . "OpenXML.php");
 
     addslashesextended($_POST);
 

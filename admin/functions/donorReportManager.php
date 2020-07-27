@@ -9,6 +9,12 @@
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
+use HHK\OpenXML;
+use HHK\SysConst\CampaignType;
+use HHK\SysConst\MemStatus;
+use HHK\SysConst\SalutationPurpose;
+use HHK\sec\Session;
+
 function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSalutations, $letterSalutation, $envSalutation, $showAmounts = FALSE) {
 
     ini_set('memory_limit', "128M");

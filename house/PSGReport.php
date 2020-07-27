@@ -312,8 +312,8 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
                 if (($key == 'Arrival' or $key == 'Departure' || $key == 'Birth Date') && $col != '') {
                     
                     $flds[$n++] = array('type' => "n",
-                        'value' => /PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                        'style' => /PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
+                        'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
+                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
                     
                 } else {
                     $flds[$n++] = array('type' => "s", 'value' => $col);

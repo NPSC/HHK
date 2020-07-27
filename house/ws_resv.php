@@ -233,7 +233,7 @@ try {
             $idLink = intval(filter_input(INPUT_GET, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        require(CLASSES . 'DataTableServer.php');
+        //require(CLASSES . 'DataTableServer.php');
 
         $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET, $uS->ConcatVisitNotes);
 
@@ -394,7 +394,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 			}
         }
 
-        require(CLASSES . 'DataTableServer.php');
+        //require(CLASSES . 'DataTableServer.php');
 
         $events = ListReports::loadList($dbh, $guestId, $psgId, $_GET);
 
