@@ -16,6 +16,8 @@ require(CLASSES . 'Purchase/RoomRate.php');
 require(CLASSES . 'ValueAddedTax.php');
 require (CLASSES . 'GlStmt.php');
 require(CLASSES . 'CreateMarkupFromDB.php');
+require (HOUSE . 'GlCodes.php');
+require(HOUSE . 'Resource.php');
 
 
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
@@ -115,10 +117,8 @@ $glMonthSelr = '';
 $glYearSelr = '';
 $glMonth = 0;
 $glyear = date('Y');
-
+$glInvoices = '';
 $dataTable = '';
-
-$errorMessage = '';
 
 $glMonth = date('m');
 
@@ -155,9 +155,138 @@ if (isset($_POST['btnHere'])) {
     
     $tableAttrs = array('style'=>"float:left;margin-right:1em;");
     
-    $dataTable .= $glCodes->getGlMarkup($tableAttrs) . $glCodes->getBaMarkup($tableAttrs) . $glCodes->doReport($dbh, $tableAttrs);
+    $dataTable .= $glCodes->getGlMarkup($tableAttrs) . $glCodes->doReport($dbh, $monthArray, $tableAttrs);
 
 }
+
+// Output report
+if (isset($_POST['btnGlGo'])) {
+	
+	
+	if (isset($_POST['selGlMonth'])) {
+		$glMonth = filter_var($_POST['selGlMonth'], FILTER_SANITIZE_NUMBER_INT);
+	}
+	
+	if (isset($_POST['selGlYear'])) {
+		$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
+	}
+	
+	$glParm = new GlParameters($dbh, 'Gl_Code');
+	$glParm->setStartDay(1);
+
+	
+	$glCodes = new GlCodes($dbh, $glMonth, $glyear, $glParm, new GlTemplateRecord());
+	
+		$tbl = new HTMLTable();
+		
+		$invHdr = '';
+		foreach ($glCodes->invoiceHeader() as $h) {
+			$invHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
+		}
+		$tbl->addBodyTr($invHdr);
+		
+		$pmtHdr = '';
+		foreach ($glCodes->paymentHeader() as $h) {
+			$pmtHdr .= "<td style='color:blue;'>" . ($h == '' ? ' ' : $h) . "</td>";
+		}
+		$tbl->addBodyTr($pmtHdr);
+		
+		$lineHdr = '';
+		foreach ($glCodes->lineHeader() as $h) {
+			$lineHdr .= "<td style='color:green;'>" . ($h == '' ? ' ' : $h) . "</td>";
+		}
+		$tbl->addBodyTr($lineHdr);
+		
+		// Get payment methods (types) labels.
+		$pmstmt = $dbh->query("Select idPayment_method, Method_Name from payment_method;");
+		$pmRows = $pmstmt->fetchAll(\PDO::FETCH_NUM);
+		$pmtMethods = array();
+		foreach ($pmRows as $r) {
+			$pmtMethods[$r[0]] = $r[1];
+		}
+		
+		$recordCtr = 0;
+		
+		foreach ($glCodes->getInvoices() as $r) {
+			
+			if ($recordCtr++ > 16) {
+				$tbl->addBodyTr($invHdr);
+				$tbl->addBodyTr($pmtHdr);
+				$tbl->addBodyTr($lineHdr);
+				$recordCtr = 0;
+			}
+			
+			$mkupRow = '';
+			
+			foreach ($r['i'] as $k=> $col) {
+				
+				if ($k == 'iStatus' && $col == 'p') {
+					$col = 'paid';
+				}
+				
+				if ($col == 0) {
+					$col = '';
+				}
+				
+				$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+			}
+			$tbl->addBodyTr($mkupRow);
+			
+			if (isset($r['p'])) {
+				
+				foreach ($r['p'] as $p) {
+					$mkupRow = '<td> </td>';
+					foreach ($p as $k => $col) {
+						
+						if ($k == 'pTimestamp') {
+							$col = date('Y/m/d', strtotime($col));
+						} else if ($k == 'pMethod') {
+							$col = $pmtMethods[$col];
+						} else if ($k == 'pStatus' && $col == 's') {
+							$col = "sale";
+						} else if ($k == 'pStatus' && $col == 'r') {
+							$col = "return";
+						}
+						
+						$mkupRow .= "<td style='color:blue;'>" . ($col == '' ? ' ' : $col) . "</td>";
+						
+					}
+					$tbl->addBodyTr($mkupRow);
+					
+				}
+			}
+			
+			if (isset($r['l'])) {
+				foreach ($r['l'] as $h) {
+					$mkupRow = '<td> </td><td> </td>';
+					foreach ($h as $k => $col) {
+						
+						if ($k == 'il_Amount') {
+							$col = number_format($col, 2);
+						}
+						
+						$mkupRow .= "<td style='color:green;'>" . ($col == '' ? ' ' : $col) . "</td>";
+						
+					}
+					$tbl->addBodyTr($mkupRow);
+					
+				}
+			}
+		}
+		
+				
+		$glInvoices = "<p style='margin-top:20px;'>Total Credits = " . number_format($glCodes->getTotalCredit(), 2) . " Total Debits = " . number_format($glCodes->getTotalDebit(), 2) . "</p>" .$tbl->generateMarkup();
+		
+		if (count($glCodes->getErrors()) > 0) {
+			$etbl = new HTMLTable();
+			foreach ($glCodes->getErrors() as $e) {
+				$etbl->addBodyTr(HTMLTable::makeTd($e));
+			}
+			$glInvoices = $etbl->generateMarkup() . $glInvoices;
+		}
+
+}
+
 
 // Setups for the page.
 //Month and Year chooser
@@ -202,7 +331,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 <script type="text/javascript">
     $(document).ready(function() {
 
-        $('#btnHere, #btnSaveGlParms').button();
+        $('#btnHere, #btnGlGo, #btnSaveGlParms').button();
         $('div#printArea').css('display', 'block');
         $('#printButton').button().click(function() {
             $("div#printArea").printArea();
@@ -230,7 +359,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 
                     <table style="width:100%; clear:both;">
                         <tr>
-                            <td style="width:50%;"><span style="color:red;"><?php echo $errorMessage; ?></span></td>
+                            <td style="width:50%;"><input type="submit" name="btnGlGo" id="btnGlGo" value="Show Details" /></td>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
                             
                         </tr>
@@ -242,6 +371,9 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
             <div><input id="printButton" value="Print" type="button" style="margin:5px;font-size: .9em;"/></div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-member-detail hhk-tdbox  hhk-visitdialog" style="font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <?php echo $dataTable; ?>
+            <div id="rptGl" class="hhk-tdbox hhk-visitdialog" style="font-size:0.9em;">
+                 <?php echo $glInvoices; ?>
+             </div>
             </div>
         </div>
     </body>

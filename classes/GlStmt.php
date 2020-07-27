@@ -102,7 +102,7 @@ class GlStmt {
 		if ($p['pTimestamp'] != '') {
 			$this->paymentDate = new DateTime($p['pTimestamp']);
 		} else {
-			$this->recordError("Missing Payment Timestamp. Payment Id = ". $p['idPayment']);
+			$this->recordError("Missing Payment Date. Payment Id = ". $p['idPayment']);
 			return;
 		}
 		
@@ -140,11 +140,6 @@ class GlStmt {
 				return;
 			}
 			
-// 			// if return payment is in the same report as origional, then ignore.
-// 			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate && $this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
-// 				return;
-// 			}
-			
 			// Returned during this period?
 			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
 				// It is a return in this period.
@@ -157,10 +152,6 @@ class GlStmt {
 				$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $pUpDate);
 				
 				foreach($invLines as $l) {
-					
-					if ($l['Item_Gl_Code'] == '') {
-						continue;
-					}
 					
 					// map gl code
 					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate);
@@ -180,11 +171,7 @@ class GlStmt {
 				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate);
 				
 				foreach($invLines as $l) {
-					
-					if ($l['Item_Gl_Code'] == '') {
-						continue;
-					}
-					
+										
 					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
 				}
 			}
@@ -216,10 +203,6 @@ class GlStmt {
 				
 				foreach($invLines as $l) {
 					
-					if ($l['Item_Gl_Code'] == '') {
-						continue;
-					}
-					
 					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
 				}
 			}
@@ -235,10 +218,6 @@ class GlStmt {
 			$this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate);
 
 			foreach($invLines as $l) {
-
-				//if ($l['Item_Gl_Code'] == '') {
-				//	continue;
-				//}
 
 				// map gl code
 				$this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate);
@@ -321,6 +300,7 @@ class GlStmt {
     					'Delegated_Id'=>$p['Delegated_Id'],
     					'iStatus'=>$p['iStatus'],
     					'iAmount'=>$p['iAmount'],
+    					'iBalance'=>$p['iBalance'],
     					'iDeleted'=>$p['iDeleted'],
     					'Pledged'=>$p['Pledged_Rate'],
     					'Rate'=>$p['Rate'],
@@ -402,7 +382,7 @@ class GlStmt {
     	$this->records =  $invoices;
 	}
 	
-	public function doReport (\PDO $dbh, $tableAttrs) {
+	public function doReport (\PDO $dbh, $monthArray, $tableAttrs) {
 
 		$uS = Session::getInstance();
 
@@ -410,35 +390,6 @@ class GlStmt {
 		$end = $this->endDate->format('Y-m-d');
 
 		$guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
-
-		$ordersArray = array();
-		foreach ($this->getInvoices() as $r) {
-
-			if ($r['i']['Order_Number'] != '') {
-				$ordersArray[$r['i']['Order_Number']] = 'y';
-			}
-		}
-
-		$orderNumbers = '';
-
-		if (count($ordersArray) > 0) {
-
-			foreach ($ordersArray as $k => $i) {
-				
-				if ($k == '' || $k == 0) {
-					continue;
-				}
-					
-				if ($orderNumbers == '') {
-					$orderNumbers = $k;
-				} else {
-					$orderNumbers .= ','. $k;
-				}
-			}
-
-			$orderNumbers = " or v.idVisit in ($orderNumbers) ";
-		}
-
 
 		$query = "select
 	v.idVisit,
@@ -518,9 +469,7 @@ class GlStmt {
 	IFNULL(`p`.`Last_Updated`, '') AS `pUpdated`,
 	IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
 	IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
-	IFNULL(`pm`.`Gl_Code`, '') as `PayMethod_Gl_Code`,
-	IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
-	IFNULL(`nd`.`Gl_Code_Debit`, '') as `ba_Gl_Debit`
+	IFNULL(`nd`.`Gl_Code_Debit`, 'Guest') as `ba_Gl_Debit`
 from
 	visit v
 		left join
@@ -537,12 +486,8 @@ from
 	`payment_invoice` `pi` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
 		LEFT JOIN
 	`payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
-		left join
-	`payment_method` `pm` on `p`.`idPayment_Method` = `pm`.`idPayment_method`
 		LEFT JOIN
-	item it on it.idItem = il.Item_Id
-		LEFT JOIN
-	name_demog nd on p.idPayor = nd.idName
+	name_demog nd on i.Sold_To_Id = nd.idName
 						
 where
 	v.idVisit in
@@ -555,17 +500,23 @@ where
 					when now() > Expected_Departure then now()
 					else Expected_Departure
                 	end)) >= DATE('$start')
-		)
-	$orderNumbers
- order by v.idVisit, v.Span";
+		) " .
+	$this->getOrderNumbers() .
+ " order by v.idVisit, v.Span";
 
 		$categories = readGenLookupsPDO($dbh, 'Room_Category');
-
+		$categories[] = array(0=>'', 1=>'(default)');
+		
 		$totalCatNites[] = array();
 		foreach ($categories as $c) {
 			$totalCatNites[$c[0]] = 0;
 		}
-
+		$totalCatNites['All'] = 0;
+		
+		$baArray = array();
+		$baArray['']['paid'] = 0;
+		$baArray['']['pend'] = 0;
+		
 		$priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
 		$overPay = 0;
@@ -573,8 +524,6 @@ where
 		$intervalPay = 0;
 		$totalPayment = array();
 		
-		$overCharge = 0;
-		$preIntervalCharge = 0;
 		$intervalCharge = 0;
 		$fullInvervalCharge = 0;
 		
@@ -615,6 +564,9 @@ where
 						$preIntervalPay += $vIntervalPay;
 					}
 					
+					$intervalCharge += $vIntervalCharge;
+					
+					// Reset for next visit
 					$vIntervalCharge = 0;
 					$vPreIntervalCharge = 0;
 					$vFullIntervalCharge = 0;
@@ -626,6 +578,7 @@ where
 				$adjRatio = (1 + $r['Expected_Rate']/100);
 				
 				$totalCatNites[$r['Room_Category']] += $r['Actual_Interval_Nights'];
+				$totalCatNites['All'] += $r['Actual_Interval_Nights'];
 				
 				//  Add up any pre-interval charges
 				if ($r['Pre_Interval_Nights'] > 0) {
@@ -639,10 +592,11 @@ where
 				// Add up interval charges
 				if ($r['Actual_Interval_Nights'] > 0) {
 					
+					// Guest paying
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
 					$vIntervalCharge += $priceModel->amountCalculator($r['Actual_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['Actual_Guest_Nights']) * $adjRatio;
 					
-					
+					// Full charge
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
 					$vFullIntervalCharge += $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategorys::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
 					
@@ -657,7 +611,12 @@ where
 			$visitId = $r['idVisit'];
 			$record = $r;
 			
+			// Unpaid invoices
+			if ($r['Invoice_Status'] == InvoiceStatus::Unpaid) {
+				$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['pend'], $r['il_Amount']);
+			}
 			
+
 			// Add up payments
 			if ($r['pTimestamp'] != '') {
 				$paymentDate = new DateTime($r['pTimestamp']);
@@ -690,11 +649,13 @@ where
 						$vIntervalPay += $r['il_Amount'];
 					}
 					
+					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $r['il_Amount']);
 					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
 				}
 				
+			// Refunds
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
-				// Refund Amount
+
 				// Payment must be within the .
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 					
@@ -702,19 +663,15 @@ where
 						$vIntervalPay += $r['il_Amount'];
 					}
 				
+					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $r['il_Amount']);
 					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
 				}
 				
+			//Returns
 			} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
-				//Return earlier sale
-				
+
 				if (is_null($pUpDate)) {
-					$this->recordError("Missing Last Updated. Payment Id = ". $p['idPayment']);
-					continue;
-				}
-				
-				// if return payment is in the same report as origional, then ignore.
-				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate && $paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
+					$this->recordError("Missing Last Updated. Payment Id = ". $r['idPayment']);
 					continue;
 				}
 				
@@ -727,22 +684,25 @@ where
 						$vIntervalPay -= $r['il_Amount'];
 					}
 					
+					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], (0 - $r['il_Amount']));
 					$totalPayment[$r['Item_Id']] -= $r['il_Amount'];
 					
-				} else if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
-					// It is still a payment in this period.
+				}
+				
+				// Paid during this period?
+				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						$vIntervalPay += $r['il_Amount'];
 					}
 					
+					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $r['il_Amount']);
 					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
-					
+
 				}
-				
 			}
 		}
-		
+
 		if ($record != NULL) {
 						
 			if ($vIntervalPay >= ($vIntervalCharge + $vPreIntervalCharge)) {
@@ -756,6 +716,7 @@ where
 				$preIntervalPay += $vIntervalPay;
 			}
 
+			$intervalCharge += $vIntervalCharge;
 		}
 		
 		
@@ -763,13 +724,230 @@ where
 		
 		$tbl->addHeaderTr(HTMLTable::makeTh('Lodging Payment Distribution', array('colspan'=>'2')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Payments to earlier months', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($preIntervalPay, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Payments to this month', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Prepayments to future months', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($overPay, 2), array('style'=>'text-align:right;')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Total', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal]), 2), array('style'=>'text-align:right;')));
+
+		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
+		
+		$prepaidCharges = $this->getPrePay();
+		
+		$unpaidCharges = $intervalCharge - $intervalPay - $this->getPrePay();
+		
+		$tbl->addBodyTr(HTMLTable::makeTd('Total charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel')) . HTMLTable::makeTd('(TBD)', array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;')));
+				
+		return $this->createBAMarkup($baArray, $tableAttrs)
+			. $tbl->generateMarkup($tableAttrs)
+			. $this->statsPanel($dbh, $totalCatNites, $start, $end, $categories, 'Report_Category', $monthArray, $uS->guestLookups['Static_Room_Rate']['rb'][2]);
+	}
+	
+	protected function createBAMarkup($baTotals, $tableAttrs) {
+		
+		$totals = array('paid'=>0, 'pend'=>0);
+		$tbl = new HTMLTable();
+		$tbl->addHeaderTr(
+				HTMLTable::makeTh('3rd Parties')
+				.HTMLTable::makeTh('Paid')
+				.HTMLTable::makeTh('Pending')
+				
+				);
+		
+		foreach ($baTotals as $k => $t) {
+			
+			if ($k == '') {
+				Continue;
+			}
+			
+			if (isset($t['paid']) === FALSE) {
+				$t['paid'] = 0;
+			}
+			
+			if (isset($t['pend']) === FALSE) {
+				$t['pend'] = 0;
+			}
+			
+			$tbl->addBodyTr(
+					HTMLTable::makeTd($k, array('class'=>'tdlabel'))
+					. HTMLTable::makeTd(($t['paid'] == 0 ? '' : number_format($t['paid'], 2)), array('style'=>'text-align:right;'))
+					. HTMLTable::makeTd(($t['pend'] == 0 ? '' : number_format($t['pend'], 2)), array('style'=>'text-align:right;'))
+			);
+			
+			$totals['paid'] += $t['paid'];
+			$totals['pend'] += $t['pend'];
+			
+		}
+		
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Totals', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($totals['paid'], 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				. HTMLTable::makeTd(number_format($totals['pend'], 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				);
+		
 		
 		return $tbl->generateMarkup($tableAttrs);
 	}
+	
+	
+	protected function statsPanel(\PDO $dbh, $totalCatNites, $start, $end, $categories, $rescGroup, $monthArray, $roomRate) {
 		
+		$totalOOSNites = 0;
+		
+		$stDT = new DateTime($start . ' 00:00:00');
+		$enDT = new DateTime($end . ' 00:00:00');
+		$numNights = $enDT->diff($stDT, TRUE)->days;
+				
+		$qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, rm.Rate_Code, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
+        from resource r left join
+resource_use ru on r.idResource = ru.idResource and DATE(ru.Start_Date) < DATE('" . $enDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $stDT->format('Y-m-d') . "')
+left join resource_room rr on r.idResource = rr.idResource
+left join room rm on rr.idRoom = rm.idRoom
+where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "')
+order by r.idResource;";
+		
+		$rstmt = $dbh->query($qu);
+		
+		$rooms = array();
+		
+		// Get rooms and oos days
+		while ($r = $rstmt->fetch(PDO::FETCH_ASSOC)) {
+			
+			$nites = 0;
+			
+			if ($r['Start_Date'] != '' && $r['End_Date'] != '') {
+				$arriveDT = new DateTime($r['Start_Date']);
+				$arriveDT->setTime(0, 0, 0);
+				$departDT = new DateTime($r['End_Date']);
+				$departDT->setTime(0,0,0);
+				
+				// Only collect days within the time period.
+				if ($arriveDT < $stDT) {
+					$arriveDT = new \DateTime($stDT->format('Y-m-d H:i:s'));
+				}
+				
+				if ($departDT > $enDT) {
+					$departDT = new \DateTime($enDT->format('Y-m-d H:i:s'));
+				}
+				
+				// Collect 0-day events as one day
+				if ($arriveDT == $departDT) {
+					$nites = 0;
+				} else {
+					$nites = $departDT->diff($arriveDT, TRUE)->days;
+				}
+			}
+			
+			if (isset($rooms[$r['idResource']][$r[$rescGroup]][$r['RU_Status']]) === FALSE) {
+				$rooms[$r['idResource']][$r[$rescGroup]][$r['RU_Status']] = $nites;
+			} else {
+				$rooms[$r['idResource']][$r[$rescGroup]][$r['RU_Status']] += $nites;
+			}
+			
+		}
+		
+		// Filter out unavailalbe rooms and add up the nights
+		$availableRooms = 0;
+		$unavailableRooms = 0;
+		
+		foreach($rooms as $r) {
+			
+			foreach ($r as $c) {
+				
+				if (isset($c[ResourceStatus::Unavailable]) && $c[ResourceStatus::Unavailable] >= $numNights) {
+					$unavailableRooms++;
+					continue;
+				}
+				
+				$availableRooms++;
+				
+				foreach ($c as $k => $v) {
+					
+					if ($k != ResourceStatus::Available) {
+
+						$totalOOSNites += $v;
+					}
+				}
+			}
+		}
+		
+
+		$numRoomNights = $availableRooms * $numNights;
+		$numUsefulNights = $numRoomNights - $totalOOSNites;
+		
+		$sTbl = new HTMLTable();
+		$sTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All ' . $availableRooms . ' Rooms'));
+		
+		$sTbl->addBodyTr(HTMLTable::makeTd('Room-Nights in ' . $monthArray[$stDT->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd($numUsefulNights, array('style'=>'text-align:center;')));
+		
+		$sTbl->addBodyTr(HTMLTable::makeTd('Visit Nights in ' . $monthArray[$stDT->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd($totalCatNites['All'], array('style'=>'text-align:center;')));
+		
+		$sTbl->addBodyTr(HTMLTable::makeTd('Room Utilization', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(($numUsefulNights <= 0 ? '0' : number_format($totalCatNites['All'] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'text-align:center;')));
+		
+		$sTbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
+		
+		$sTbl->addBodyTr(HTMLTable::makeTd('Room Rate', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd('$'.number_format($roomRate, 2), array('style'=>'text-align:right;')));
+		$sTbl->addBodyTr(HTMLTable::makeTd('Maximum Charge', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd('$'.number_format($roomRate * $numRoomNights, 2), array('style'=>'text-align:right;')));
+		
+		return $sTbl->generateMarkup();
+		
+	}
+
+	protected function getPrePay() {
+		$prePaid = 0;
+		
+		return $prePaid;
+	}
+	
+	protected function getOrderNumbers() {
+		
+		$ordersArray = array();
+		foreach ($this->getInvoices() as $r) {
+			
+			if ($r['i']['Order_Number'] != '') {
+				$ordersArray[$r['i']['Order_Number']] = 'y';
+			}
+		}
+		
+		$orderNumbers = '';
+		
+		if (count($ordersArray) > 0) {
+			
+			foreach ($ordersArray as $k => $i) {
+				
+				if ($k == '' || $k == 0) {
+					continue;
+				}
+				
+				if ($orderNumbers == '') {
+					$orderNumbers = $k;
+				} else {
+					$orderNumbers .= ','. $k;
+				}
+			}
+			
+			$orderNumbers = " or v.idVisit in ($orderNumbers) ";
+		}
+		
+		return $orderNumbers;
+		
+	}
+
+	protected function arrayAdd(&$arrayMember, $amount) {
+		
+		if (isset($arrayMember)) {
+			$arrayMember += $amount;
+		} else {
+			$arrayMember = $amount;
+		}
+		
+	}
 	protected function recordError($error) {
 		$this->errors[] = $error;
 	}

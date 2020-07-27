@@ -263,7 +263,7 @@ class PayType {
     const Charge = 'cc';
     const Check = 'ck';
     const Invoice = 'in';
-    const ChargeAsCash = 'cx';
+   // const ChargeAsCash = 'cx';
     const Transfer = 'tf';
 }
 
@@ -280,7 +280,7 @@ class PaymentMethod {
     const Cash = 1;
     const Charge = 2;
     const Check = 3;
-    const ChgAsCash = 4;
+//    const ChgAsCash = 4;
     const Transfer = 5;
 }
 

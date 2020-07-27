@@ -85,6 +85,7 @@ BEGIN
 		`i`.`Order_Number`,
 		`i`.`Suborder_Number`,
         `i`.`Amount` AS `iAmount`,
+        `i`.`Balance` as `iBalance`,
         `i`.`Status` AS `iStatus`,
         `i`.`Carried_Amount` AS `icAmount`,
         `i`.`Invoice_Number` AS `iNumber`,
