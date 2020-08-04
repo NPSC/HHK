@@ -12,6 +12,7 @@
 use HHK\OpenXML;
 use HHK\HTMLControls\selCtrl;
 use HHK\sec\Session;
+use HHK\Admin\VolCats;
 
 function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dormancyCtrl, selCtrl &$volStatusCtrl, $guestBlackOutDays = 61) { //, &$sortCtrl) {
     $volCat = new VolCats();

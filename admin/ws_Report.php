@@ -25,9 +25,9 @@ function campaignList(PDO $dbh, $yr) {
 
 
     if ($yr != "" && strtolower($yr) != 'all') {
-        $query = "select * from vdump_campaigns where year(Start)= :yr or year(End) = :yr;";
+        $query = "select * from vdump_campaigns where year(Start)= :startyr or year(End) = :endyr;";
         $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':yr' => $yr));
+        $stmt->execute(array(':startyr' => $yr, ':endyr' => $yr));
         $headerYears = "$yr";
     } else {
         $query = "select * from vdump_campaigns;";

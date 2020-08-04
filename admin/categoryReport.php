@@ -72,7 +72,7 @@ if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"]) || isset($_POST["btnCSV
     ini_set('memory_limit', "128M");
 
 //     require(CLASSES . "OpenXML.php");
-//     require("functions" . DS . "CategoryReportMgr.php");
+     require("functions" . DS . "CategoryReportMgr.php");
 //     require ("classes" . DS . "VolCats.php");
 //     require("classes" . DS . "Salutation.php");
 

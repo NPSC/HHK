@@ -14,6 +14,9 @@ use HHK\SysConst\CampaignType;
 use HHK\SysConst\MemStatus;
 use HHK\SysConst\SalutationPurpose;
 use HHK\sec\Session;
+use HHK\Admin\VolCats;
+use HHK\Admin\MemberSalutation\IndividualSalutation;
+use HHK\Admin\MemberSalutation\OrganizationSalutation;
 
 function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSalutations, $letterSalutation, $envSalutation, $showAmounts = FALSE) {
 
@@ -504,10 +507,10 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         $careof = "";
         if ($r["isCompany"] && $r["Donor_Company"] != "") {
 
-            $donor = new OrganizationSal($r["Donor_Company"]);
+            $donor = new OrganizationSalutation($r["Donor_Company"]);
 
             if (($r["Assoc_Status"] != MemStatus::Deceased || $includeDeceased) && $r["Care_Of_Id"] > 0 && $r["Assoc_Company"] == $r["Donor_Company"]) {
-                $empl = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                $empl = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                 if ($overrideSalutations) {
                     $careof = $empl->getMarkup(SalutationPurpose::Envelope, $envSalutation, NULL);
                 } else {
@@ -519,11 +522,11 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
             if ($r["Donor_Status"] != MemStatus::Deceased || $includeDeceased) {
 
-                $donor = new IndividualSal($r["Donor_Last"], $r["Donor_First"], $r["Donor_Middle"], $r["Donor_Nickname"], $r["Donor_Prefix"], $r["Donor_Suffix"], $r["Donor_Gender"]);
+                $donor = new IndividualSalutation($r["Donor_Last"], $r["Donor_First"], $r["Donor_Middle"], $r["Donor_Nickname"], $r["Donor_Prefix"], $r["Donor_Suffix"], $r["Donor_Gender"]);
 
                 // add partner name only if alive and still married to donor.
                 if (($r["Assoc_Status"] != MemStatus::Deceased || $includeDeceased) && $r["Assoc_Id"] > 0 && ($r["Donor_Partner_Id"] == $r["Assoc_Id"])) {
-                    $partner = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                    $partner = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                 } else {
                     $partner = null;
                 }
@@ -531,7 +534,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             // Maybe the donor is dead and the partner is alive
             } else if (($r["Assoc_Status"] != MemStatus::Deceased || $includeDeceased) && $r["Assoc_Id"] > 0) {
                 // Use the partner as the donor
-                $donor = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                $donor = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                 // Replace the address with the partner's address
                 $r["Address_1"] = $r["Assoc_Address_1"];
                 $r["Address_2"] = $r["Assoc_Address_2"];

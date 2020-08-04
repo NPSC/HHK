@@ -49,6 +49,11 @@ $stmtMarkup = CreateMarkupFromDB::generateHTML_Table(ResourceView::roomsClean($d
         </style>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript">
+        	$(document).ready(function(){
+        		window.print();
+        	});
+        </script>
     </head>
     <body>
         <div id="contentDiv">

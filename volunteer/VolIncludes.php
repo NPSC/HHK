@@ -15,12 +15,12 @@ define('MAX_IDLE_TIME', '1800');
 define('PUBLIC_CSS', "<link href='css/publicStyle.css' rel='stylesheet' type='text/css' />");
 
 require ('../functions/commonDefines.php');
+require (FUNCTIONS . 'commonFunc.php');
 require (THIRD_PARTY . '/autoload.php');
 
 /* require (CLASSES . 'PDOdata.php');
 require (DB_TABLES . 'HouseRS.php');
 require (CLASSES . 'HTML_Controls.php');
-require (FUNCTIONS . 'commonFunc.php');
 require (CLASSES . 'config'. DS . 'Lite.php');
 require (SEC . 'sessionClass.php');
 require (CLASSES . 'alertMessage.php');
