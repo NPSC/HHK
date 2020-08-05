@@ -46,17 +46,17 @@ class VantivGateway extends PaymentGateway {
 
         } else {
 
-            try {
+//             try {
 
-                $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+//                 $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 
-            } catch (Hk_Exception_Member $ex) {
+//             } catch (Hk_Exception_Member $ex) {
 
-                $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
-            }
+//                 $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+//             }
 
-            $address = new Address($dbh, $guest, $uS->nameLookups[GL_TableNames::AddrPurpose]);
-            $addr = $address->get_data('');
+//             $address = new Address($dbh, $guest, $uS->nameLookups[GL_TableNames::AddrPurpose]);
+//             $addr = $address->get_data('');
 
             $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
 
@@ -68,11 +68,11 @@ class VantivGateway extends PaymentGateway {
                 $cpay->setPurchaseAmount($invoice->getAmountToPay())
                         ->setTaxAmount(0)
                         ->setCustomerCode($invoice->getSoldToId())
-                        ->setAddress($addr["Address_1"])
-                        ->setZip($addr["Postal_Code"])
+//                        ->setAddress($addr["Address_1"])
+//                        ->setZip($addr["Postal_Code"])
                         ->setToken($tokenRS->Token->getStoredVal())
                         ->setPartialAuth(FALSE)
-                        ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
+//                        ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
                         ->setFrequency(MpFrequencyValues::OneTime)
                         ->setInvoice($invoice->getInvoiceNumber())
                         ->setTokenId($tokenRS->idGuest_token->getStoredVal())
@@ -90,7 +90,7 @@ class VantivGateway extends PaymentGateway {
             	$this->manualKey = $pmp->getManualKeyEntry();
 
                 // Initialiaze hosted payment
-                $fwrder = $this->initHostedPayment($dbh, $invoice, $guest->get_fullName(), $addr, $postbackUrl);
+                $fwrder = $this->initHostedPayment($dbh, $invoice, $postbackUrl);
 
                 $payIds = array();
                 if (isset($uS->paymentIds)) {
@@ -376,7 +376,7 @@ class VantivGateway extends PaymentGateway {
         return $rtnResult;
     }
 
-    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $guestFullName, $addr, $postbackUrl) {
+    Protected function initHostedPayment(\PDO $dbh, Invoice $invoice, $postbackUrl) {
 
         $uS = Session::getInstance();
 
@@ -408,10 +408,10 @@ class VantivGateway extends PaymentGateway {
         }
 
 
-        $pay->setAVSZip($addr["Postal_Code"])
-                ->setAVSAddress($addr['Address_1'])
-                ->setCardHolderName($guestFullName)
-                ->setFrequency(MpFrequencyValues::OneTime)
+//        $pay->setAVSZip($addr["Postal_Code"])
+//                ->setAVSAddress($addr['Address_1'])
+//                ->setCardHolderName($guestFullName);
+         $pay->setFrequency(MpFrequencyValues::OneTime)
                 ->setInvoice($invoice->getInvoiceNumber())
                 ->setMemo(MpVersion::PosVersion)
                 ->setTaxAmount(0)
@@ -421,7 +421,7 @@ class VantivGateway extends PaymentGateway {
                 ->setTranType(MpTranType::Sale)
                 ->setLogoUrl($this->getPaymentPageLogoUrl())
                 ->setCVV($this->useCVV ? 'on' : '')
-                ->setAVSFields('both');
+                ->setAVSFields('Zip');
 
         $CreditCheckOut = HostedCheckout::sendToPortal($dbh, $this, $invoice->getSoldToId(), $invoice->getIdGroup(), $invoice->getInvoiceNumber(), $pay);
 
@@ -453,12 +453,12 @@ class VantivGateway extends PaymentGateway {
         $uS->ccgw = $this->getGatewayType();
         $uS->manualKey = $this->manualKey;
         
-        $guest = new Guest($dbh, '', $idGuest);
-        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
+//        $guest = new Guest($dbh, '', $idGuest);
+//        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
 
-        if ($cardHolderName == '') {
-            $cardHolderName = $guest->getRoleMember()->getMemberFullName();
-        }
+//        if ($cardHolderName == '') {
+//            $cardHolderName = $guest->getRoleMember()->getMemberFullName();
+//        }
 
         $pay = new InitCkOutRequest($uS->siteName, 'Custom');
 
@@ -472,10 +472,10 @@ class VantivGateway extends PaymentGateway {
         }
 
 
-        $pay->setAVSZip($addr["Postal_Code"])
-                ->setAVSAddress($addr['Address_1'])
-                ->setCardHolderName($cardHolderName)
-                ->setFrequency(MpFrequencyValues::OneTime)
+//        $pay->setAVSZip($addr["Postal_Code"])
+//                ->setAVSAddress($addr['Address_1'])
+//                ->setCardHolderName($cardHolderName);
+        $pay ->setFrequency(MpFrequencyValues::OneTime)
                 ->setInvoice('CardInfo')
                 ->setMemo(MpVersion::PosVersion)
                 ->setTaxAmount(0)
@@ -485,7 +485,7 @@ class VantivGateway extends PaymentGateway {
                 ->setTranType(MpTranType::ZeroAuth)
                 ->setLogoUrl($siteUrl . $logo)
                 ->setCVV($this->useCVV ? 'on' : '')
-                ->setAVSFields('both');
+                ->setAVSFields('Zip');
 
         return HostedCheckout::sendToPortal($dbh, $this, $idGuest, $idGroup, 'CardInfo', $pay);
 
