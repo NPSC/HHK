@@ -344,7 +344,7 @@ class Receipt {
 
         $uS = Session::getInstance();
 
-        $logoUrl = '../conf/' . $uS->receiptLogoFile;
+        $logoUrl = $uS->resourceURL . 'conf/' . $uS->receiptLogoFile;
         $rec = '';
 
         // Don't write img if logo URL not sepcified

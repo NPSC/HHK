@@ -21,6 +21,8 @@ use HHK\SysConst\MemBasis;
 use HHK\SysConst\GLTableNames;
 use HHK\Tables\Name\NameEmailRS;
 use HHK\AuditLog\NameLog;
+use HHK\sec\SysConfig;
+use HHK\SysConst\WebSiteCode;
 
 function manageRegistration(PDO $dbh, $n, $admin) {
 
@@ -79,6 +81,8 @@ function manageRegistration(PDO $dbh, $n, $admin) {
 
         if ($fbEmail != "") {
 
+            $returnAddress = SysConfig::getKeyValue($dbh, 'sys_config', 'ReturnAddress');
+            $regSubject = SysConfig::getKeyValue($dbh, 'sys_config', 'RegSubj');
             $mail = prepareEmail();
 
             $mail->From = $uS->ReturnAddress;
@@ -106,7 +110,8 @@ function manageRegistration(PDO $dbh, $n, $admin) {
 }
 
 function getRegConfBody($siteName, $fbRs, $uname) {
-
+    $uS = Session::getInstance();
+    
     return '<html><head>
     <style type="text/css">
     h4 {font-family: Arial, Helvetica, sans-serif;
@@ -119,7 +124,7 @@ function getRegConfBody($siteName, $fbRs, $uname) {
     </head>
     <body>
     <h4>Your ' . $siteName . ' Volunteer Web Registration is Complete</h4>
-        <p>' . $fbRs->fb_First_Name->getStoredVal() . ' ' . $fbRs->fb_Last_Name->getStoredVal() . ' is approved for the ' . $siteName . ' Volunteer Website at:  <a href="volunteer?u=' . $uname . '" >Volunteer Website</a>;  with user name: ' . $uname . '</p>
+        <p>' . $fbRs->fb_First_Name->getStoredVal() . ' ' . $fbRs->fb_Last_Name->getStoredVal() . ' is approved for the ' . $siteName . ' Volunteer Website at:  <a href="' . $uS->resourceURL . $uS->siteList[WebSiteCode::Volunteer]['Relative_Address'] . '?u=' . $uname . '" >Volunteer Website</a>;  with user name: ' . $uname . '</p>
     </body>
     </html>';
 

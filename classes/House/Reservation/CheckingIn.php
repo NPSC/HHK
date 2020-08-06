@@ -13,7 +13,7 @@ use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Payment\PaymentManager\PaymentManager;
-use HHK\Payment\PaymentResult;
+use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Purchase\{CheckinCharges, PaymentChooser, RateChooser};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, VisitStatus};

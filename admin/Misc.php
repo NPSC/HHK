@@ -1,6 +1,6 @@
 <?php
 
-use HHK\SiteLog;
+use HHK\Update\SiteLog;
 use HHK\AlertControl\AlertMessage;
 use HHK\AuditLog\NameLog;
 use HHK\sec\{Session, WebInit};
@@ -478,7 +478,7 @@ if (isset($_POST["btnDelDups"])) {
 
 
 
-$usernames = HTMLSelector::generateMarkup(HTMLSelector::getLookups($dbh, "select idName, User_Name from w_users", $users), array('name'=>'selUsers[]', 'multiple'=>'multiple', 'size'=>'5'));
+//$usernames = HTMLSelector::generateMarkup(HTMLSelector::getLookups($dbh, "select idName, User_Name from w_users", $users), array('name'=>'selUsers[]', 'multiple'=>'multiple', 'size'=>'5'));
 
 
 $webAlert = new alertMessage("webContainer");
@@ -537,23 +537,6 @@ $selLookups = getGenLookups($dbh);
                          "dom": '<"top"ilfp>rt<"bottom"p>'
                     });
                 }
-                $('#divMoveDon').dialog({
-                    autoOpen: false,
-                    width: 550,
-                    resizable: true,
-                    modal: true,
-                    buttons: {
-                        "Move Donations": function() {
-                            doMoveDon();
-
-                        },
-                        "Exit": function() {
-                            $( this ).dialog( "close" );
-                        }
-                    },
-                    close: function() {
-                    }
-                })
                 $( "input.autoCal" ).datepicker({
                     changeMonth: true,
                     changeYear: true,
@@ -857,9 +840,6 @@ $selLookups = getGenLookups($dbh);
                             <tr>
                                 <td><?php echo $delNamesMsg; ?></td>
                             </tr>
-                            <tr>
-                                <td><input type="button" id="btnMoveDon" value="Move Donations"/></td>
-                            </tr>
                         </table>
                     </div>
                     <div id="clean" class="ui-tabs-hide" >
@@ -876,16 +856,6 @@ $selLookups = getGenLookups($dbh);
                     </div>
                 </div>
             </form>
-            <div id="divMoveDon">
-                <h3>Move Donations to Active Members</h3>
-                <table>
-                    <tr>
-                        <th>To Be deleted</th><th>Move Donations To:</th>
-                    </tr>
-<?php echo $donMoveNames; ?>
-                    <tr><td colspan="2"> <?php echo $getWebReplyMessage; ?></td></tr>
-                </table>
-            </div>
         </div>
     </body>
 </html>

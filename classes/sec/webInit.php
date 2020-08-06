@@ -191,6 +191,7 @@ class WebInit {
         SysConfig::getCategory($this->dbh, $uS, "'f'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'fg'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'pr'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'v'", webInit::SYS_CONFIG);
 
         return $uS->nameLookups;
 

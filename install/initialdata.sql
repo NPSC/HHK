@@ -857,7 +857,7 @@ REPLACE INTO `web_sites`
 LOCK TABLES `page` WRITE;
 INSERT INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`,`Hide`,`Web_Site`,`Menu_Parent`,`Menu_Position`,`Type`) VALUES
 (1,'index.php',0,'Welcome','',0,'r','','','p'),(2,'index.php',0,'','',0,'a','','','p'),(3,'NameEdit.php',2,'Edit Members','',0,'a','','','p'),(4,'EventShells.php',2,'Repeat Events','',0,'a','35','f','p'),(5,'KeyStats.php',2,'Key Stats','',0,'a','67','g','p'),(6,'Misc.php',2,'Miscellaneous','',0,'a','34','a','p'),(7,'PageEdit.php',2,'Edit Pages','',0,'a','34','e','p'),(8,'RegisterUser.php',2,'Register Web Users','',0,'a','35','e','p'),(9,'CategoryEdit.php',2,'Edit Categories','',0,'a','34','d','p'),(10,'VolListing.php',2,'Web Users','',0,'a','35','c','p'),
-(11,'campaignEdit.php',2,'Edit Campaigns','',0,'a','34','c','p'),(12,'campaignReport.php',2,'Campaigns','',0,'a','32','d','p'),(13,'checkDateReport.php',2,'Check Date','',0,'a','32','j','p'),(14,'directory.php',2,'Directory','',0,'a','32','a','p'),(15,'donate.php',0,'','',0,'a','','','s'),(16,'donationReport.php',2,'Donations','',0,'a','32','b','p'),(18,'liveGetCamp.php',0,'','',0,'a','','','s'),(19,'liveNameSearch.php',0,'','',0,'a','','','s'),
+(11,'campaignEdit.php',2,'Edit Campaigns','',0,'a','34','c','p'),(12,'campaignReport.php',2,'Campaigns','',0,'a','32','d','p'),(14,'directory.php',2,'Directory','',0,'a','32','a','p'),(15,'donate.php',0,'','',0,'a','','','s'),(16,'donationReport.php',2,'Donations','',0,'a','32','b','p'),(18,'liveGetCamp.php',0,'','',0,'a','','','s'),(19,'liveNameSearch.php',0,'','',0,'a','','','s'),
 (20,'ws_Report.php',0,'','',0,'a','','','s'),(21,'ws_gen.php',0,'','',0,'a','','','s'),(22,'VolNameEdit.php',26,'My Volunteer Info','',0,'v','0','d','p'),(23,'forgotpw.php',26,'Forgot My Password','',0,'v','','','p'),(24,'gCalFeed.php',0,'','',0,'v','','','s'),(26,'index.php',0,'','',0,'v','','','p'),(27,'register_web.php',26,'Register','',0,'v','','','p'),(28,'WebRegister.php',0,'','',0,'v','','','s'),(29,'ws_vol.php',0,'','',0,'v','','','s'),
 (31,'index.php',0,'','',0,'h','','','p'),(32,'_directory.php',2,'Reports','',0,'a','0','e','p'),(33,'categoryReport.php',2,'Categories','',0,'a','32','f','p'),(34,'_Misc.php',2,'DB Maintenance','',0,'a','0','k','p'),(35,'_VolListing.php',2,'Web Users','',0,'a','0','j','p'),(36,'NameEdit_Donations',0,'','',0,'a','','','c'),(37,'NameEdit_Maint',0,'','',0,'a','','','c'),(39,'ws_gen_Maint',0,'','',0,'a','','','c'),
 (45,'VolNameSearch.php',0,'','',0,'v','','','s'),(46,'guestadmin',0,'','',0,'h','','','c'),(47,'guestaccess',0,'','',0,'v','','','c'),(49,'recent.php',2,'Recent Changes','',0,'a','67','r','p'),
@@ -877,9 +877,9 @@ UNLOCK TABLES;
 --
 LOCK TABLES `page_securitygroup` WRITE;
 INSERT INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES
-(1,'pub'),(2,'pub'),(3,'mm'),(4,'mm'),(5,'mm'),(6,'db'),(7,'db'),(8,'mm'),(9,'db'),(10,'mm'),(11,'db'),(12,'dm'),(13,'mm'),(14,'mm'),(15,'dm'),(16,'dm'),
+(1,'pub'),(2,'pub'),(3,'mm'),(4,'mm'),(5,'mm'),(6,'db'),(7,'db'),(8,'mm'),(9,'db'),(10,'mm'),(11,'db'),(12,'dm'),(14,'mm'),(15,'dm'),(16,'dm'),
 (18,'mm'),(19,'mm'),(20,'dm'),(21,'g'),(21,'ga'),(21,'mm'),(22,'v'),(23,'pub'),(24,'v'),(26,'pub'),(27,'pub'),(28,'pub'),(29,'v'),(31,'pub'),(32,'mm'),(33,'mm'),
-(34,'db'),(35,'mm'),(36,'dm'),(37,'db'),(39,'db'),(45,'v'),(46,'ga'),(47,'g'),(49,'mm'),(50,'mm'),(51,'dna'),(52,'dm'),(55,'v'),(56,'dna'),(57,'mm'),(59,'g'),(59,'ga'),(59, 'mm'),(59, 'gr'),
+(34,'db'),(35,'mm'),(36,'dm'),(37,'db'),(39,'db'),(45,'v'),(46,'ga'),(47,'g'),(49,'mm'),(50,'mm'),(51,'dna'),(52,'dm'),(55,'v'),(56,'dna'),(57,'mm'),(59,'g'),(59,'ga'),(59, 'mm'),(59, 'gr'), (59, 'v'),
 (60,'g'),(62,'g'),(62,'ga'),(65,'mm'),(66,'mm'),(67,'mm'),(68,'v'),(69,'pub'),(70,'pub'),(71,'pub'),(72,'g'),(72,'ga'),(74,'g'),(74,'ga'),(75,'g'),(75,'ga'),
 (76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
 (95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),

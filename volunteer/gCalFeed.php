@@ -4,6 +4,7 @@ use HHK\SysConst\WebPageCode;
 use HHK\sec\Session;
 use HHK\UserCategories;
 use HHK\Volunteer\VolCal;
+use HHK\Volunteer\cEventClass;
 
 /**
  * gCalFeed.php

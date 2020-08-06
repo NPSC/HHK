@@ -799,7 +799,7 @@ where `lp`.`idPayment` > 0
                     .HTMLTable::makeTd($voidContent)
                     .HTMLTable::makeTd($dateDT->format('c'))
                     .HTMLTable::makeTd($r['Invoice_Updated_By'])
-                    .($showExternlId ? HTMLTable::makeTd($p['Payment_External_Id']) : HTMLTable::makeTd(''))
+                    .($showExternlId ? HTMLTable::makeTd($p['Payment_External_Id']) : '')
                     .HTMLTable::makeTd('')
                 );
             }

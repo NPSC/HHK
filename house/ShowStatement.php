@@ -286,7 +286,7 @@ if (isset($_REQUEST['cmd'])) {
             $mail->From = $uS->FromAddress;
             $mail->FromName = $uS->siteName;
             $mail->addAddress($emAddr);     // Add a recipient
-            $mail->addReplyTo($uS->ReplyToAddr);
+            $mail->addReplyTo($uS->ReplyTo);
 
             $mail->isHTML(true);
 

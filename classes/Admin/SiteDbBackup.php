@@ -62,7 +62,7 @@ class SiteDbBackup {
         $dbname = $this->config->getString('db', 'Schema', '');
 
         if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '' || $this->filePath == '') {
-            $this->bkupMessage = 'Database Backup parameters are not set.  ';
+            $this->bkupMessage = 'Database Backup parameters are not set in site.cfg.  ';
             return FALSE;
         }
 

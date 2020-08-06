@@ -110,6 +110,8 @@ exit();
 
 function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
 
+    $uS = Session::getInstance();
+    
     $events = array();
 
     if ($vcc != "" && $subj != "" && $body != "") {
@@ -170,7 +172,11 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
                 $em->isHTML(true);
 
                 $em->Subject = $uS->RegSubj;
-
+                
+                if(!isset($uS->Admin_Address) || $uS->Admin_Address == ''){
+                    return array("error"=>"Admin_Address not set");
+                }
+                
                 $em->From = $uS->Admin_Address;
                 $em->addAddress($uS->Admin_Address);
                 $em->Subject = $cSubj;
