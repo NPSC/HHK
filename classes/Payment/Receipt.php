@@ -206,6 +206,8 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
+        self::makeInvoiceLineMarkup($dbh, $invoice, $tbl);
+        
         $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
@@ -1133,7 +1135,7 @@ WHERE
                 $addnl = '';
                 $numPayments++;
 
-                if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
+                if ($p['idPayment_Method'] == PaymentMethod::Charge) {
 
                     if (isset($p['auths'])) {
 

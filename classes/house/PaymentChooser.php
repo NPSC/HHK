@@ -47,7 +47,7 @@ class PaymentChooser {
 
         // Payment Date
         if (isset($post['paymentDate']) && $post['paymentDate'] != '') {
-            $pDT = setTimeZone($uS, filter_var($post['paymentDate'], FILTER_SANITIZE_STRING));
+            $pDT = new DateTime(filter_var($post['paymentDate'], FILTER_SANITIZE_STRING));
             $pmp->setPayDate($pDT->format('Y-m-d H:i:s'));
         } else {
             $pmp->setPayDate(date('Y-m-d H:i:s'));

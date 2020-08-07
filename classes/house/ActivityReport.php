@@ -490,7 +490,7 @@ class ActivityReport {
         // get payment methods
         $stmtp = $dbh->query("select * from payment_method");
         while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
-            if ($t[0] > 0) {
+            if ($t[0] > 0 && strtolower($t[1]) != 'chgascash') {
                 $payTypeTotals[$t[0]] = array('amount' => 0.00, 'count' => 0, 'title' => $t[1], 'active' => $active);
             }
         }

@@ -31,12 +31,17 @@ class GlCodes {
 			$this->recordError('County Payment is not set');
 		}
 		
-		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->glParm->getStartDay());
+		// End date is the beginning of the next fiscal month.
+		$this->endDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->glParm->getStartDay());
 
-		// End date is the beginning of the next month.
-		$this->endDate = $this->startDate->add(new DateInterval('P1M'));
+		// Start date one month prior.
+		$this->startDate = $this->endDate->sub(new DateInterval('P1M'));
 		
-		
+		// Special start date for 9-2020 only
+		if ($this->endDate->format('m-Y') == '09-2020') {
+			$this->startDate = $this->startDate->setDate(2020, 9, 1);
+		}
+
 		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $this->endDate->sub(new DateInterval('P1D'))->format('M j, Y'));
 
 		$this->fileId = 'GL_HHK_' . $this->startDate->format('Ymd') . '_' . getRandomString(3);
