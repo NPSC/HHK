@@ -1,7 +1,7 @@
 <?php
 use HHK\Config_Lite\Config_Lite;
 use HHK\sec\SecurityComponent;
-use HHK\SiteConfig;
+use HHK\Update\SiteConfig;
 use HHK\HTMLControls\HTMLContainer;
 
 /**

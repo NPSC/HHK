@@ -10,7 +10,6 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\InvoiceStatus;
 use HHK\SysConst\ItemId;
 use HHK\HTMLControls\HTMLTable;
-use HHK\OpenXML;
 use HHK\Payment\PaymentSvcs;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\GLTableNames;
@@ -21,6 +20,7 @@ use HHK\House\GLCodes\GLCodes;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\House\GLCodes\GLTemplateRecord;
 use HHK\HTMLControls\HTMLInput;
+use HHK\ExcelHelper;
 
 /**
  * InvoiceReport.php
@@ -90,7 +90,7 @@ $alertMsg->set_Text("help");
 $resultMessage = $alertMsg->createMarkup();
 $labels = new Config_Lite(LABEL_FILE);
 
-function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &$sml, &$reportRows, $subsidyId) {
+function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
 
     $g = array();
 
@@ -192,7 +192,8 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
         $flds = array();
 
         foreach ($fltrdFields as $f) {
-            $flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
+            //$flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
+            $flds[] = $g[$f[1]];
         }
 
 
@@ -238,8 +239,9 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
 //            )
 //        );
 
-        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
+        //$reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+        $row = ExcelHelper::convertStrings($hdr, $flds);
+        $writer->writeSheetRow("Sheet1", $row);
     }
 }
 
@@ -268,7 +270,7 @@ $useVisitDates = FALSE;
 $cFields = array();
 
 $useGlReport = FALSE;
-if (stristr($uS->siteName, 'gorecki') !== FALSE || strtolower($uS->mode) != 'live') {
+if (stristr($uS->siteName, 'gorecki') !== FALSE) { // || strtolower($uS->mode) != 'live'
 	$useGlReport = TRUE;
 }
 
@@ -668,6 +670,8 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
 
+    $hdr = array();
+    
     if ($local) {
         $tbl = new HTMLTable();
         $th = '';
@@ -682,18 +686,43 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
         $reportRows = 1;
-        $file = 'PaymentReport';
-        $sml = OpenXML::createExcel($uS->username, 'Payment Report');
+        $fileName = 'PaymentReport';
+        $writer = new \XLSXWriter();
+        $writer->setAuthor($uS->username);
+        $writer->setTitle("Payment Report");
+        
+        $types = [
+            's'=>'string',
+            'n'=>'integer',
+            'money'=>'money', // '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'
+            'date'=>'MM/DD/YYYY'
+        ];
+        
+        //$sml = OpenXML::createExcel($uS->username, 'Payment Report');
 
         // build header
-        $hdr = array();
+        $colWidths = array();
         $n = 0;
 
-        foreach ($fltrdTitles as $t) {
-            $hdr[$n++] = $t;
+        foreach($fltrdFields as $field){
+            if($field[5] != "" && $field[5] == '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'){ //if format is money
+                $hdr[$field[0]] = $types['s'];
+                $colWidths[] = 15;
+            }elseif(isset($field[7]) && $field[7] == "date"){ //if format is date
+                $hdr[$field[0]] = $types['date'];
+                $colWidths[] = 15;
+            }elseif($field[4] == 'n'){ //if format is integer
+                $hdr[$field[0]] = 'integer';
+                $colWidths[] = 10;
+            }else{ //otherwise set format as string
+                $hdr[$field[0]] = 'string';
+                $colWidths[] = 20;
+            }
         }
 
-        OpenXML::writeHeaderRow($sml, $hdr);
+        //OpenXML::writeHeaderRow($sml, $hdr);
+        $hdrStyle = ExcelHelper::getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
         $reportRows++;
     }
 
@@ -742,7 +771,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
             $totalAmount += $r['Amount'];
         }
 
-        doMarkupRow($fltrdFields, $r, $local, $hospital, $statusTxt, $tbl, $sml, $reportRows, $uS->subsidyId);
+        doMarkupRow($fltrdFields, $r, $local, $hospital, $statusTxt, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId);
 
     }
 
@@ -774,14 +803,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        ExcelHelper::download($writer, $fileName);
     }
 
 }

@@ -16,11 +16,11 @@ use HHK\Config_Lite\Config_Lite;
 use HHK\SysConst\VolMemberType;
 use HHK\SysConst\ReservationStatus;
 use HHK\HTMLControls\HTMLTable;
-use HHK\OpenXML;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\CreateMarkupFromDB;
 use HHK\SysConst\GLTableNames;
 use HHK\HTMLControls\HTMLSelector;
+use HHK\ExcelHelper;
 
 require ("homeIncludes.php");
 
@@ -86,22 +86,24 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
     } else {
 
-        $reportRows = 1;
-        $file = 'DoctorReport';
-        $sml = OpenXML::createExcel('Guest Tracker', $colNameTitle . ' Report');
-
+        $fileName = 'DoctorReport';
+        $sheetName = 'Sheet1';
+        $writer = new \XLSXWriter();
+        
         // build header
         $hdr = array();
-        $n = 0;
-
-        // HEader row
-        $hdr[$n++] =  'Id';
-        $hdr[$n++] =  $colNameTitle;
-        $hdr[$n++] =  $labels->getString('hospital', 'hospital', 'Hospital');
-        $hdr[$n++] =  $labels->getString('MemberType', 'patient', 'Patient');
-
-        OpenXML::writeHeaderRow($sml, $hdr);
-        $reportRows++;
+        $colWidths = array();
+        
+        // Header row
+        $colWidths = array(10, 20, 20, 15);
+        $hdr['Id'] = "string";
+        $hdr[$colNameTitle] = "string";
+        $hdr[$labels->getString('hospital', 'hospital', 'Hospital')] = "string";
+        $hdr[$labels->getString('MemberType', 'patient', 'Patient')] = "integer";
+        
+        $hdrStyle = ExcelHelper::getHdrStyle($colWidths);
+        
+        $writer->writeSheetHeader($sheetName, $hdr, $hdrStyle);
 
     }
 
@@ -180,14 +182,8 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
                 }
             }
 
-
-            $flds[0] = array('type' => "s", 'value' => $id);
-            $flds[1] = array('type' => "s", 'value' => $doc);
-            $flds[2] = array('type' => "s", 'value' => $hosp);
-            $flds[3] = array('type' => "n", 'value' => $r['Patients']);
-
-
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            $row = array($id, $doc, $hosp, $r['Patients']);
+            $writer->writeSheetRow($sheetName, ExcelHelper::convertStrings($hdr, $row));
         }
 
         $rowCounter++;
@@ -201,14 +197,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
 
     } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        ExcelHelper::download($writer, $fileName);
     }
 
 }

@@ -5,7 +5,7 @@ use HHK\SysConst\WebPageCode;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 use HHK\Photo;
-use HHK\SiteConfig;
+use HHK\Update\SiteConfig;
 use HHK\Document\ListDocuments;
 use HHK\Document\Document;
 use HHK\House\Vehicle;

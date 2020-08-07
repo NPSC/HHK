@@ -21,6 +21,7 @@ use HHK\Payment\PaymentSvcs;
 use HHK\Exception\RuntimeException;
 use HHK\House\Report\ReportFilter;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\ExcelHelper;
 
 
 /**
@@ -253,7 +254,7 @@ order by r.idResource;";
  * @param Boolean $visitFee  Flag to show/hide visit fees
 
  */
-function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departureDT, HTMLTable &$tbl, $local, &$sml, &$reportRows, $rateTitles, $uS, $visitFee = FALSE) {
+function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departureDT, HTMLTable &$tbl, $local, &$sml, $header, &$reportRows, $rateTitles, $uS, $visitFee = FALSE) {
 
     $arrivalDT = new DateTime($r['Arrival_Date']);
 
@@ -448,8 +449,8 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
                 $flds[$n++] = html_entity_decode(strval($r[$f[1]]), ENT_QUOTES, 'UTF-8');
             }
         }
-        
-        $sml->writeSheetRow('Sheet1',$flds);
+        $row = ExcelHelper::convertStrings($header, $flds);
+        $sml->writeSheetRow('Sheet1',$row);
 
     }
 }
@@ -667,7 +668,8 @@ where
 
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
-
+    $header = array();
+    
     if ($local) {
 
         $th = '';
@@ -694,33 +696,30 @@ where
         
         
         //build header
-        $hdrstyle = ['font-style'=>'bold', 'halign'=>'center', 'auto_filter'=>true, 'widths'=>[]];
+        $colWidths = array();
         
-        $header = array();
+        
         foreach($fltrdFields as $field){
               if($field[5] != "" && $field[5] == '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'){ //if format is money
                   $header[$field[0]] = $types['s'];
-                  $hdrstyle['widths'][] = 15;
+                  $colWidths[] = 15;
              }elseif(isset($field[7]) && $field[7] == "date"){ //if format is date
                  $header[$field[0]] = $types['date'];
-                 $hdrstyle['widths'][] = 15;
+                 $colWidths[] = 15;
              }elseif($field[4] == 'n'){ //if format is integer
                  $header[$field[0]] = 'integer';
-                 $hdrstyle['widths'][] = 10;
+                 $colWidths[] = 10;
              }else{ //otherwise set format as string
                 $header[$field[0]] = 'string';
-                $hdrstyle['widths'][] = 20;
+                $colWidths[] = 20;
              }
         }
         
         try{
-            $writer->writeSheetHeader('Sheet1', $header, $hdrstyle);
+            $hdrStyle = ExcelHelper::getHdrStyle($colWidths);
+            $writer->writeSheetHeader('Sheet1', $header, $hdrStyle);
         }catch(\Exception $e){
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $fileName . '.xlsx"');
-            header('Cache-Control: max-age=0');
-            $writer->writeToStdOut();
-            die();
+            ExcelHelper::download($writer, $fileName);
         }
         
         $reportRows++;
@@ -897,7 +896,7 @@ where
 
                 if (!$statsOnly) {
                     try{
-                        doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $reportRows, $rateTitles, $uS, $visitFee);
+                        doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
                     }catch(\Exception $e){
                         if(isset($writer)){
                             die();
@@ -1139,13 +1138,13 @@ where
         if (!$statsOnly) {
             if(!$local){
                 try{
-                    doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $reportRows, $rateTitles, $uS, $visitFee);
+                    doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
                 }catch(\Exception $e){
                     $writer->close();
                     die();
                 }
             }else{
-                doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $reportRows, $rateTitles, $uS, $visitFee);
+                doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $header, $reportRows, $rateTitles, $uS, $visitFee);
             }
         }
     }
@@ -1284,12 +1283,7 @@ where
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
     } else {
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $fileName . '.xlsx"');
-        header('Cache-Control: max-age=0');
-        
-        $writer->writeToStdOut();
-        exit();
+        ExcelHelper::download($writer, $fileName);
 
     }
 

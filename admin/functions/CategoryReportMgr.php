@@ -198,42 +198,55 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
 
 
         if ($dlFlag) {
-            $file = 'CategoryReport';
-            $sml = OpenXML::createExcel($uname, 'Category Report');
+            $fileName = 'CategoryReport';
+            //$sml = OpenXML::createExcel($uname, 'Category Report');
+            $writer = new XLSXWriter();
+            
             // build header
+            $hdrstyle = ['font-style'=>'bold', 'halign'=>'center', 'auto_filter'=>true, 'widths'=>[]];
             $hdr = array();
             $n = 0;
 
-            $hdr[$n++] = "Id";
-            $hdr[$n++] = "Last Name";
-            $hdr[$n++] = "First Name";
-            $hdr[$n++] = "Address";
-            $hdr[$n++] = "City";
-            $hdr[$n++] = "State";
-            $hdr[$n++] = "Zip";
-            $hdr[$n++] = "Phone";
-            $hdr[$n++] = "Email";
+            $hdr["Id"] = "string";
+            $hdr["Last Name"] = "string";
+            $hdr["First Name"] = "string";
+            $hdr["Address"] = "string";
+            $hdr["City"] = "string";
+            $hdr["State"] = "string";
+            $hdr["Zip"] = "string";
+            $hdr["Phone"] = "string";
+            $hdr["Email"] = "string";
 
             if ($showDetails) {
-                $hdr[$n++] = "Begin";
-                $hdr[$n++] = 'Retire';
-                $hdr[$n++] = "Status";
-                $hdr[$n++] = "Description";
-                $hdr[$n++] = "Role";
-                $hdr[$n++] = "Notes";
+                $hdr["Begin"] = "date";
+                $hdr['Retire'] = "date";
+                $hdr["Status"] = "string";
+                $hdr["Description"] = "string";
+                $hdr["Role"] = "string";
+                $hdr["Notes"] = "string";
             }
 
 
-            OpenXML::writeHeaderRow($sml, $hdr);
+            //OpenXML::writeHeaderRow($sml, $hdr);
+            
+            try{
+                $writer->writeSheetHeader('Constraints', $hdr, $hdrstyle);
+            }catch(\Exception $e){
+                header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                header('Content-Disposition: attachment;filename="' . $fileName . '.xlsx"');
+                header('Cache-Control: max-age=0');
+                $writer->writeToStdOut();
+                die();
+            }
             $reportRows++;
 
-            // Create a new worksheet called â€œMy Dataâ€�
-            $myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
-            // Attach the â€œMy Dataâ€� worksheet as the first worksheet in the PHPExcel object
-            $sml->addSheet($myWorkSheet, 1);
-            $sml->setActiveSheetIndex(1);
+            // Create a new worksheet called Constraints
+            //$myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
+            // Attach the Constraints worksheet as the first worksheet in the PHPExcel object
+            //$sml->addSheet($myWorkSheet, 1);
+            //$sml->setActiveSheetIndex(1);
 
-            $sRows = OpenXML::writeHeaderRow($sml, array(0 => 'Filter', 1 => 'Parameters'));
+            //$sRows = OpenXML::writeHeaderRow($sml, array(0 => 'Filter', 1 => 'Parameters'));
 
             // create summary table
             foreach ($sumaryRows as $key => $val) {

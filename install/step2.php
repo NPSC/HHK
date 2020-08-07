@@ -5,7 +5,7 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Patch;
 use HHK\SysConst\WebSiteCode;
-use HHK\SiteConfig;
+use HHK\Update\SiteConfig;
 use HHK\SiteLog;
 use HHK\SysConst\CodeVersion;
 
