@@ -1,7 +1,9 @@
 <?php
 namespace HHK\Tables;
 
+
 use HHK\Tables\Fields\DB_Field;
+
 
 /**
  * EditRS.php
@@ -37,6 +39,7 @@ class EditRS {
         $query = "select * from " . $rs->getTableName();
 
         foreach ($whereDbFieldArray as $key => $dbF) {
+
 
             if ($dbF instanceof DB_Field) {
                 // use for array containing DataField objects
@@ -102,6 +105,7 @@ class EditRS {
             foreach ($rs as $dbF) {
                 //if (is_a($dbF, "DB_Field")) {
                 if($dbF instanceof DB_Field){
+
                     if (isset($row[$dbF->getColUnticked()])) {
                         $dbF->setStoredVal($row[$dbF->getColUnticked()]);
                         $dbF->resetNewVal();
@@ -122,8 +126,9 @@ class EditRS {
 
         foreach ($rs as $dbF) {
 
-            //if (is_a($dbF, "DB_Field")) {
+
             if($dbF instanceof DB_Field){
+
                 if (is_null($dbF->getNewVal()) === FALSE) {
 
                     $dbF->setStoredVal($dbF->getNewVal());
@@ -154,8 +159,9 @@ class EditRS {
 
         // collect parameter values and sql query "set" fragment pairs
         foreach ($rs as $dbF) {
-            //if (is_a($dbF, "DB_Field")) {
+
             if($dbF instanceof DB_Field){
+
                 if (!is_null($dbF->getNewVal()) && $dbF->getNewVal() != $dbF->getStoredVal()) {
                     // make
                     if ($dbF->getDbType() == \PDO::PARAM_BOOL) {
@@ -233,8 +239,9 @@ class EditRS {
 
         // collect parameter values and sql query insert columns
         foreach ($rs as $dbF) {
-            //if (is_a($dbF, "DB_Field")) {
+
             if($dbF instanceof DB_Field){
+
                 if (!is_null($dbF->getNewVal())) {
                     // make
                     $colList .= "," . $dbF->getCol();
@@ -287,7 +294,9 @@ class EditRS {
 
         foreach ($whereDbFieldArray as $dbF) {
 
+
             if ($dbF instanceof DB_Field) {
+
                 // use for array containing DataField objects
                 if ($dbF->getDbType() == \PDO::PARAM_BOOL) {
                     $whClause .= " " . $combiner . " " . $dbF->getCol() . "=" . $dbF->getStoredVal();
@@ -303,7 +312,7 @@ class EditRS {
             $query .= " where " . $whClause;
 
             $stmt = $dbh->prepare($query);
-            
+
             if ($stmt->execute($paramList) === FALSE) {
                 return FALSE;
             } else {

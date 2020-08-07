@@ -2,12 +2,20 @@
 
 namespace HHK\House\TemplateForm;
 
-
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Reservation\Reservation_1;
 use HHK\Member\Role\Guest;
-
+<<<<<<< Updated upstream
+=======
+=======
+use HHK\HTMLControls\HTMLContainer;
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 use HHK\sec\Session;
 
 /**
@@ -30,9 +38,15 @@ class ConfirmationForm extends AbstractTemplateForm {
     public function makeReplacements(Reservation_1 $reserv, Guest $guest, $amount, $notes) {
 
 		$uS = Session::getInstance();
-
+<<<<<<< Updated upstream
 		$labels = new Config_Lite(LABEL_FILE);
-
+=======
+<<<<<<< Updated upstream
+		$labels = new Config_Lite(LABEL_FILE);
+=======
+		$labels = new \Config_Lite(LABEL_FILE);
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 		$visitFeeNotice = "";
 
 		//populate visitFeeNotice

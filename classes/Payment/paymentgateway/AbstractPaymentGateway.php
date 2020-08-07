@@ -7,7 +7,9 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\Instamed\InstamedGateway;
 use HHK\Payment\PaymentGateway\Local\LocalGateway;
 use HHK\Payment\PaymentGateway\Vantiv\VantivGateway;
+
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
+
 use HHK\SysConst\PaymentStatusCode;
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
@@ -38,7 +40,7 @@ abstract class AbstractPaymentGateway {
     protected $usePOS;
     protected $checkManualEntryCheckbox = FALSE;
 
-    
+
     public function __construct(\PDO $dbh, $gwType = '') {
 
         $this->gwType = $gwType;
@@ -62,7 +64,7 @@ abstract class AbstractPaymentGateway {
     public abstract function processHostedReply(\PDO $dbh, $post, $ssoToken, $idInv, $payNotes, $payDate);
 
     public abstract function selectPaymentMarkup(\PDO $dbh, &$payTable, $index = '');
-    
+
     public function hasVoidReturn() {
     	return TRUE;
     }
@@ -70,19 +72,19 @@ abstract class AbstractPaymentGateway {
     public function hasCofService() {
     	return TRUE;
     }
-    
+
     public function hasUndoReturnPmt() {
     	return FALSE;
     }
-    
+
     public function hasUndoReturnAmt() {
     	return FALSE;
     }
-    
+
     public function creditSale(\PDO $dbh, PaymentManagerPayment $pmp, Invoice $invoice, $postbackUrl) {
         return array('warning' => 'Credit Sale is not implemented. ');
     }
-    
+
     public function voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 
         if ($pAuthRs->Status_Code->getStoredVal() == PaymentStatusCode::Paid) {
@@ -124,7 +126,7 @@ abstract class AbstractPaymentGateway {
     public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
     	return array();
     }
-    
+
     public function processWebhook(\PDO $dbh, $post, $payNotes, $userName) {
         throw new PaymentException('Webhook not implemeneted');
     }
@@ -249,16 +251,16 @@ abstract class AbstractPaymentGateway {
     public function useAVS() {
         return FALSE;
     }
-    
+
     public function setCheckManualEntryCheckbox($v) {
-    	
+
     	if ($v) {
     		$this->checkManualEntryCheckbox = TRUE;
     	} else {
     		$this->checkManualEntryCheckbox = FALSE;
     	}
     }
-    
+
     protected function getInfoFromCardId(\PDO $dbh, $cardId) {
 
         $infoArray = array();
