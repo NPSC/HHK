@@ -59,10 +59,7 @@ $letterSalSelector->set_value(TRUE, SalutationCodes::FirstOnly);
 if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
 #--------------------------------------------------------------
     require_once("functions" . DS . "donorReportManager.php");
-//     require_once(CLASSES . "OpenXML.php");
-//     require_once("classes" . DS . "VolCats.php");
-//     require_once("classes" . DS . "Salutation.php");
-
+    
     //$selectedTab = "2";
     $makeTable = 2;
 

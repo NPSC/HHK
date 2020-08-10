@@ -686,7 +686,7 @@ where
         $reportRows = 1;
 
         $fileName = 'VisitReport';
-        $writer = new XLSXWriter();
+        $writer = new ExcelHelper($fileName);
         $types = [
             's'=>'string',
             'n'=>'integer',
@@ -716,10 +716,10 @@ where
         }
         
         try{
-            $hdrStyle = ExcelHelper::getHdrStyle($colWidths);
+            $hdrStyle = $writer->getHdrStyle($colWidths);
             $writer->writeSheetHeader('Sheet1', $header, $hdrStyle);
         }catch(\Exception $e){
-            ExcelHelper::download($writer, $fileName);
+            $writer->download();
         }
         
         $reportRows++;
@@ -1140,11 +1140,10 @@ where
                 try{
                     doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
                 }catch(\Exception $e){
-                    $writer->close();
                     die();
                 }
             }else{
-                doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $sml, $header, $reportRows, $rateTitles, $uS, $visitFee);
+                doMarkup($fltrdFields, $savedr, $visit, $dPaid, $unpaid, $departureDT, $tbl, $local, $writer, $header, $reportRows, $rateTitles, $uS, $visitFee);
             }
         }
     }
@@ -1283,7 +1282,7 @@ where
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
     } else {
-        ExcelHelper::download($writer, $fileName);
+        $writer->download();
 
     }
 

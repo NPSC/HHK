@@ -3,13 +3,13 @@
 use HHK\sec\{Session, WebInit};
 use HHK\AlertControl\AlertMessage;
 use HHK\Config_Lite\Config_Lite;
-use HHK\OpenXML;
 use HHK\SysConst\GLTableNames;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\CreateMarkupFromDB;
 use HHK\SysConst\RelLinkType;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLSelector;
+use HHK\ExcelHelper;
 
 /**
  * PSG_Report.php
@@ -25,7 +25,6 @@ require ("homeIncludes.php");
 // require (DB_TABLES . 'visitRS.php');
 // require (DB_TABLES . 'nameRS.php');
 // require CLASSES . 'CreateMarkupFromDB.php';
-// require CLASSES . 'OpenXML.php';
 
 try {
     $wInit = new webInit();
@@ -158,7 +157,8 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         
         $reportRows = 1;
         $file = 'PeopleReport';
-        $sml = OpenXML::createExcel('Guest Tracker', 'People Report');
+        $writer = new ExcelHelper($file);
+        $writer->setTitle("People Report");
     }
     
     $rows = array();
@@ -239,10 +239,11 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
                 
                 // build header
                 $hdr = array();
-                $n = 0;
+                $colWidths = array();
+                
                 $noReturn = '';
                 
-                // HEader row
+                // Header row
                 $keys = array_keys($r);
                 foreach ($keys as $k) {
                     
@@ -251,15 +252,28 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
                         continue;
                     }
                     
-                    $hdr[$n++] =  $k;
+                    
+                    
+                    if($k == 'Arrival' || $k == 'Departure' || $k == 'Birth Date'){
+                        $hdr[$k] = "MM/DD/YYYY";
+                    }else{
+                        $hdr[$k] = "string";
+                    }
+                    
+                    if($k == 'idPsg' || $k == "Id" || $k == "Resv ID" || $k == "Prefix" || $k == "Suffix" || $k == "State" || $k == "Zip" || $k == "Country"){
+                        $colWidths[] = "10";
+                    }else{
+                        $colWidths[] = "20";
+                    }
                 }
                 
                 if ($noReturn != '') {
-                    $hdr[$n++] =  $noReturn;
+                    $hdr[$noReturn] = "string";
                 }
                 
-                OpenXML::writeHeaderRow($sml, $hdr);
-                $reportRows++;
+                $hdrStyle = $writer->getHdrStyle($colWidths);
+                
+                $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
             }
         }
         
@@ -310,17 +324,14 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
             foreach ($r as $key => $col) {
                 
                 if (($key == 'Arrival' or $key == 'Departure' || $key == 'Birth Date') && $col != '') {
-                    
-                    $flds[$n++] = array('type' => "n",
-                        'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
-                    
+                    $flds[] = $col;
                 } else {
-                    $flds[$n++] = array('type' => "s", 'value' => $col);
+                    $flds[] = $col;
                 }
             }
             
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
         }
         
     }
@@ -332,14 +343,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         
         
     } else {
-        
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-        
-        OpenXML::finalizeExcel($sml);
-        exit();
-        
+        $writer->download();
     }
 }
 
@@ -389,7 +393,8 @@ order by ng.idPsg";
      
      $reportRows = 1;
      $file = $psgLabel . 'Report';
-     $sml = OpenXML::createExcel('GuestTracker', 'PSG Report');
+     $writer = new ExcelHelper($file);
+     $writer->setTitle("PSG Report");
      
  }
  
@@ -450,16 +455,27 @@ order by ng.idPsg";
              
              // build header
              $hdr = array();
-             $n = 0;
+             $colWidths = array();
              
-             // HEader row
+             // Header row
              $keys = array_keys($r);
              foreach ($keys as $k) {
-                 $hdr[$n++] =  $k;
+                 if($k == 'Arrival' || $k == 'Departure' || $k == 'Birth Date'){
+                     $hdr[$k] = "MM/DD/YYYY";
+                 }else{
+                    $hdr[$k] =  "string";
+                 }
+                 
+                 if($k == 'PSG Id' || $k == "Id" || $k == "State" || $k == "Country"){
+                     $colWidths[] = "10";
+                 }else{
+                     $colWidths[] = "20";
+                 }
              }
              
-             OpenXML::writeHeaderRow($sml, $hdr);
-             $reportRows++;
+             $hdrStyle = $writer->getHdrStyle($colWidths);
+             
+             $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
          }
      }
      
@@ -511,23 +527,14 @@ order by ng.idPsg";
          
      } else {
          
-         $n = 0;
          $flds = array();
          
          foreach ($r as $key => $col) {
-             
-             if (($key == 'Arrival' || $key == 'Departure' || $key == 'Birth Date') && $col != '') {
-                 $flds[$n++] = array('type' => "n",
-                     'value' => \PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                     'style' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
-             } else {
-                 
-                 $flds[$n++] = array('type' => "s", 'value' => $col);
-             }
+             $flds[] = $col;
          }
          
-         $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-         
+         $row = $writer->convertStrings($hdr, $flds);
+         $writer->writeSheetRow("Sheet1", $row);
      }
  }
  
@@ -540,12 +547,7 @@ order by ng.idPsg";
      
  } else {
      
-     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-     header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-     header('Cache-Control: max-age=0');
-     
-     OpenXML::finalizeExcel($sml);
-     exit();
+     $writer->download();
      
  }
  
@@ -573,7 +575,9 @@ function getNoReturn(\PDO $dbh, $local){
         
     }else{
         $file = 'NoReturnPeopleReport';
-        $sml = OpenXML::createExcel('Guest Tracker', 'People Report');
+        $writer = new ExcelHelper($file);
+        $writer->setTitle("No Return People");
+
         $firstRow = true;
         $reportRows = 1;
         
@@ -585,35 +589,28 @@ function getNoReturn(\PDO $dbh, $local){
                 
                 // build header
                 $hdr = array();
-                $n = 0;
+                $colWidths = array();
                 
                 // Header row
                 $keys = array_keys($row);
                 foreach ($keys as $k) {
-                    
-                    $hdr[$n++] =  $k;
+                    $hdr[$k] = "string";
                 }
                 
-                OpenXML::writeHeaderRow($sml, $hdr);
-                $reportRows++;
+                $colWidths = ["10", "20", "20", "20"];
+                
+                $hdrStyle = $writer->getHdrStyle($colWidths);
+                $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
             }
             
-            $n = 0;
-            $flds = array();
+            $flds = array_values($row);
+            $row = $writer->convertStrings($hdr, $flds);
             
-            foreach ($row as $key => $col) {
-                $flds[$n++] = array('type' => "s", 'value' => $col);
-            }
-            
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            $writer->writeSheetRow("Sheet1", $row);
         }
         
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
+        $writer->download();
         
-        OpenXML::finalizeExcel($sml);
-        exit();
     }
 }
 
@@ -685,9 +682,10 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 	}else{
 		
 		$file = 'Incidents_Report';
-		$sml = OpenXML::createExcel('Guest Tracker', 'People Report');
+		$writer = new ExcelHelper($file);
+		$writer->setTitle("Incidents Report");
+
 		$firstRow = true;
-		$reportRows = 1;
 		
 		foreach($nested as $key=>$row){
 			
@@ -697,35 +695,29 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 				
 				// build header
 				$hdr = array();
-				$n = 0;
+				$colWidths = array();
 				
 				// Header row
 				$keys = array_keys($row);
 				foreach ($keys as $k) {
-					
-					$hdr[$n++] =  $k;
+					$hdr[$k] =  "string";
 				}
 				
-				OpenXML::writeHeaderRow($sml, $hdr);
-				$reportRows++;
+				$colWidths = ["10", "20", "15", "20", "15", "15"];
+				
+				$hdrStyle = $writer->getHdrStyle($colWidths);
+				
+				$writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 			}
 			
-			$n = 0;
-			$flds = array();
+			$flds = array_values($row);
 			
-			foreach ($row as $col) {
-				$flds[$n++] = array('type' => "s", 'value' => $col);
-			}
+			$row = $writer->convertStrings($hdr, $flds);
 			
-			$reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+			$writer->writeSheetRow("Sheet1", $row);
 		}
 		
-		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-		header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-		header('Cache-Control: max-age=0');
-		
-		OpenXML::finalizeExcel($sml);
-		exit();
+		$writer->download();
 	}
 	
 }

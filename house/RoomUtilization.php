@@ -27,8 +27,7 @@ require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'RoomReport.php');
 
-require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php'; */
+require (CLASSES . 'ColumnSelectors.php'); */
 
 
 

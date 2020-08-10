@@ -57,8 +57,7 @@ require CLASSES . 'TableLog.php';
 
 require (CLASSES . 'FinAssistance.php');
 
-require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php'; */
+require (CLASSES . 'ColumnSelectors.php'); */
 
 
 try {
@@ -179,7 +178,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     } else {
 
         $g['invoiceMkup'] = $r['Invoice_Number'];
-        $g['date'] = \PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date']));
+        $g['date'] = $r['Invoice_Date'];
         $g['Status'] = $statusTxt;
         $g['billed'] = $billDateStr;
         $g['Patient'] = $r['Patient_Name'];
@@ -196,51 +195,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
             $flds[] = $g[$f[1]];
         }
 
-
-//            $n++ => array('type' => "s",
-//                'value' => $r['Invoice_Number']
-//            ),
-//            $n++ => array('type' => "n",
-//                'value' => PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date'])),
-//                'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $statusTxt
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $g['Payor']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $billDateStr
-//            ),
-//             $n++ => array('type' => "s",
-//                'value' => $r['Title']
-//            ),
-//           $n++ => array('type' => "s",
-//                'value' => $hospital
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['Patient_Name']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['County']
-//            ),
-//            $n++ => array('type' => "n",
-//                'value' => $r['Amount']
-//            ),
-//            $n++ => array('type'=>'n',
-//                'value' => $r['Amount'] - $r['Balance']
-//            ),
-//            $n++ => array('type' => "n",
-//                'value' => $r['Balance']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['Notes']
-//            )
-//        );
-
-        //$reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-        $row = ExcelHelper::convertStrings($hdr, $flds);
+        $row = $writer->convertStrings($hdr, $flds);
         $writer->writeSheetRow("Sheet1", $row);
     }
 }
@@ -347,30 +302,30 @@ while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
 
 // Report column-selector
-// array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms, DT Type
-$cFields[] = array('Inv #', 'invoiceMkup', 'checked', '', 's', '', array('style'=>'text-align:center;'));
-$cFields[] = array("Date", 'date', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
-$cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
-$cFields[] = array("Payor", 'Payor', 'checked', '', 's', '', array());
-$cFields[] = array("Billed", 'billed', 'checked', '', 's', '', array());
-$cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
+// array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms, DT Type
+$cFields[] = array('Inv #', 'invoiceMkup', 'checked', '', 'string', '20', array('style'=>'text-align:center;'));
+$cFields[] = array("Date", 'date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Status", 'Status', 'checked', '', 'string', '20', array());
+$cFields[] = array("Payor", 'Payor', 'checked', '', 'string', '20', array());
+$cFields[] = array("Billed", 'billed', 'checked', '', 'string', '20', array());
+$cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
 
 if ((count($hospList)) > 1) {
-    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospital', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospital', 'checked', '', 'string', '20', array());
 }
 
-$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'Patient', '', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'Patient', '', '', 'string', '20', array());
 
 if ($uS->county) {
-    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . ' County', 'County', '', '', 's', '', array());
+    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . ' County', 'County', '', '', 'string', '20', array());
 }
 
-//updated number format to fix $1 output on >1,000 as per https://stackoverflow.com/questions/5669941/phpexcel-accounting-formats
-$cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
-$cFields[] = array("Payments", 'payments', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
-$cFields[] = array("Balance", 'Balance', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+// Old number format - '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)'
+$cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
+$cFields[] = array("Payments", 'payments', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
+$cFields[] = array("Balance", 'Balance', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
 
-$cFields[] = array("Notes", 'Notes', 'checked', '', 's', '', array());
+$cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
@@ -686,42 +641,21 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
         $reportRows = 1;
-        $fileName = 'PaymentReport';
-        $writer = new \XLSXWriter();
+        $fileName = 'InvoiceReport';
+        $writer = new ExcelHelper($fileName);
         $writer->setAuthor($uS->username);
-        $writer->setTitle("Payment Report");
+        $writer->setTitle("Invoice Report");
         
-        $types = [
-            's'=>'string',
-            'n'=>'integer',
-            'money'=>'money', // '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'
-            'date'=>'MM/DD/YYYY'
-        ];
-        
-        //$sml = OpenXML::createExcel($uS->username, 'Payment Report');
-
         // build header
         $colWidths = array();
         $n = 0;
 
         foreach($fltrdFields as $field){
-            if($field[5] != "" && $field[5] == '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'){ //if format is money
-                $hdr[$field[0]] = $types['s'];
-                $colWidths[] = 15;
-            }elseif(isset($field[7]) && $field[7] == "date"){ //if format is date
-                $hdr[$field[0]] = $types['date'];
-                $colWidths[] = 15;
-            }elseif($field[4] == 'n'){ //if format is integer
-                $hdr[$field[0]] = 'integer';
-                $colWidths[] = 10;
-            }else{ //otherwise set format as string
-                $hdr[$field[0]] = 'string';
-                $colWidths[] = 20;
-            }
+            $hdr[$field[0]] = $field[4]; //set column header name and type;
+            $colWidths[] = $field[5]; //set column width
         }
 
-        //OpenXML::writeHeaderRow($sml, $hdr);
-        $hdrStyle = ExcelHelper::getHdrStyle($colWidths);
+        $hdrStyle = $writer->getHdrStyle($colWidths);
         $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
         $reportRows++;
     }
@@ -803,7 +737,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     } else {
-        ExcelHelper::download($writer, $fileName);
+        $writer->download();
     }
 
 }

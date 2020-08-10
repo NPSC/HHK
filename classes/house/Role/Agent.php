@@ -4,6 +4,7 @@ namespace HHK\House\Role;
 
 use HHK\SysConst\{MemBasis, MemDesignation};
 use HHK\Exception\RuntimeException;
+use HHK\Member\RoleMember\AgentMember;
 
 /**
  * Agent.php

@@ -9,6 +9,15 @@ use HHK\SysConst\RelLinkType;
 use HHK\SysConst\VisitStatus;
 use HHK\SysConst\VolMemberType;
 use HHK\sec\Session;
+use HHK\Member\RoleMember\AbstractRoleMember;
+use HHK\Member\Address\Address;
+use HHK\Member\Address\Phones;
+use HHK\Member\Address\Emails;
+use HHK\Member\EmergencyContact\EmergencyContact;
+use HHK\Member\Address\Addresses;
+use HHK\House\ReserveData\PSGMember\PSGMember;
+use HHK\Member\Address\CleanAddress;
+use HHK\SysConst\GLTableNames;
 
 /**
  * AbstractRole.php
@@ -28,10 +37,10 @@ abstract class AbstractRole {
 
     /**
      *
-     * @var RoleMember
+     * @var AbstractRoleMember
      */
     protected $roleMember;
-
+    
     /**
      *
      * @var Address
@@ -417,7 +426,7 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         if (is_null($this->addr)) {
             $dbh = initPDO();
             $uS = Session::getInstance();
-            $this->addr = new Address($dbh, $this->roleMember, $uS->nameLookups[GL_TableNames::AddrPurpose]);
+            $this->addr = new Address($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::AddrPurpose]);
         }
         return $this->addr;
     }
@@ -426,7 +435,7 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         if (is_null($this->phones)) {
             $dbh = initPDO();
             $uS = Session::getInstance();
-            $this->phones = new Phones($dbh, $this->roleMember, $uS->nameLookups[GL_TableNames::PhonePurpose]);
+            $this->phones = new Phones($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::PhonePurpose]);
         }
         return $this->phones;
     }
@@ -435,7 +444,7 @@ where r.idPsg = $idPsg and s.idName = " . $id;
         if (is_null($this->emails)) {
             $dbh = initPDO();
             $uS = Session::getInstance();
-            $this->emails = new Emails($dbh, $this->roleMember, $uS->nameLookups[GL_TableNames::EmailPurpose]);
+            $this->emails = new Emails($dbh, $this->roleMember, $uS->nameLookups[GLTableNames::EmailPurpose]);
         }
         return $this->emails;
     }

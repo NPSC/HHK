@@ -1,9 +1,9 @@
 <?php
 
-use HHK\OpenXML;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\chkBoxCtrl;
 use HHK\AlertControl\AlertMessage;
+use HHK\ExcelHelper;
 
 /**
  * anomalies.php
@@ -15,10 +15,6 @@ use HHK\AlertControl\AlertMessage;
  */
 
 require ("AdminIncludes.php");
-
-// require(CLASSES . "chkBoxCtrlClass.php");
-// require(CLASSES . "selCtrl.php");
-// require(CLASSES . "OpenXML.php");
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -239,8 +235,10 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
     $reportTitle = "Address Exception Report";
 
     if ($isExcel) {
-        $file = "AddrExceptions.xls";
-        $sml = OpenXML::createExcel($uname, 'Address Exception Report');
+        $file = "AddrExceptions";
+        $writer = new ExcelHelper($file);
+        $writer->setAuthor($uname);
+        $writer->setTitle("Address Exception Report");
 
         // create summary table
         $myWorkSheet = new \PHPExcel_Worksheet($sml, 'Constraints');

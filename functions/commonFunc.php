@@ -1,6 +1,5 @@
 <?php
 
-use HHK\OpenXML;
 use HHK\Exception\RuntimeException;
 use HHK\sec\Session;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -11,6 +10,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\SysConst\PaymentMethod;
 use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
 use HHK\TableLog\HouseLog;
+use HHK\ExcelHelper;
 
 /**
  * commonFunc.php
@@ -129,46 +129,32 @@ function doExcelDownLoad($rows, $fileName)
         return;
     }
 
-    //require_once CLASSES . 'OpenXML.php';
-
     $reportRows = 1;
-    $sml = OpenXML::createExcel('', $fileName);
+    $writer = new ExcelHelper($fileName);
 
     // build header
     $hdr = array();
-    $n = 0;
+    $colWidths = array();
 
     $keys = array_keys($rows[0]);
 
     foreach ($keys as $t) {
-        $hdr[$n ++] = $t;
+        $hdr[$t] = "string";
+        $colWidths[] = "20";
     }
 
-    OpenXML::writeHeaderRow($sml, $hdr);
-    $reportRows ++;
+    $hdrStyle = $writer->getHdrStyle($colWidths);
+    
+    $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
     foreach ($rows as $r) {
 
-        $n = 0;
-        $flds = array();
+        $flds = array_values($r);
 
-        foreach ($r as $col) {
-
-            $flds[$n ++] = array(
-                'type' => "s",
-                'value' => $col
-            );
-        }
-
-        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+        $row = $writer->convertStrings($hdr, $flds);
+        $writer->writeSheetRow("Sheet1", $row);
     }
-
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="' . $fileName . '.xlsx"');
-    header('Cache-Control: max-age=0');
-
-    OpenXML::finalizeExcel($sml);
-    exit();
+    $writer->download();
 }
 
 function prepareEmail()

@@ -2,10 +2,10 @@
 
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\{Session, WebInit};
-use HHK\OpenXML;
 use HHK\ColumnSelectors;
 use HHK\SysConst\GLTableNames;
 use HHK\Config_Lite\Config_Lite;
+use HHK\ExcelHelper;
 
 /**
  * NewGuest.php
@@ -18,8 +18,7 @@ use HHK\Config_Lite\Config_Lite;
 
 require ("homeIncludes.php");
 
-/* require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php'; */
+/* require (CLASSES . 'ColumnSelectors.php');*/
 
 
 
@@ -120,17 +119,21 @@ ORDER BY `First Stay`";
         $reportRows = 1;
 
         $file = 'NewGuests';
-        $sml = OpenXML::createExcel('', 'New Guests');
+        
+        $writer = new ExcelHelper($file);
+        
 
         // build header
         $hdr = array();
-        $n = 0;
-
-        foreach ($fltrdTitles as $t) {
-            $hdr[$n++] = $t;
+        $colWidths = array();
+        
+        foreach($fltrdFields as $field){
+            $hdr[$field[0]] = $field[4]; //set column header name and type;
+            $colWidths[] = $field[5]; //set column width
         }
-
-        OpenXML::writeHeaderRow($sml, $hdr);
+        
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
         $reportRows++;
 
     }
@@ -173,17 +176,18 @@ ORDER BY `First Stay`";
 
         } else {
 
-            $r['First Stay'] = \PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
+            $r['First Stay'] = $arrivalDT->format('Y-m-d');
 
 
-            $n = 0;
             $flds = array();
-
+            
             foreach ($fltrdFields as $f) {
-                $flds[$n++] = array('type' => $f[4], 'value' => $r[$f[1]], 'style'=>$f[5]);
+                //$flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
+                $flds[] = $r[$f[1]];
             }
-
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
 
         }
 
@@ -204,14 +208,7 @@ ORDER BY `First Stay`";
         return array('tbl'=>$dataTable, 'new'=>$numNewGuests, 'all'=>$rows[0][0]);
 
     } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        $writer->download();
     }
 }
 
@@ -269,14 +266,14 @@ foreach ($hospList as $h) {
 
 
 // Report column-selector
-// array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
-$cFields[] = array("Id", 'idName', 'checked', '', 's', '', array());
-$cFields[] = array("Prefix", 'Name_Prefix', 'checked', '', 's', '', array());
-$cFields[] = array("First", 'Name_First', 'checked', '', 's', '', array());
-$cFields[] = array("Middle", 'Name_Middle', 'checked', '', 's', '', array());
-$cFields[] = array("Last", 'Name_Last', 'checked', '', 's', '', array());
-$cFields[] = array("Suffix", 'Name_Suffix', 'checked', '', 's', '', array());
-$cFields[] = array("Primary Guest", 'Primary', 'checked', '', 's', '', array());
+// array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms
+$cFields[] = array("Id", 'idName', 'checked', '', 'string', '10', array());
+$cFields[] = array("Prefix", 'Name_Prefix', 'checked', '', 'string', '15', array());
+$cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20', array());
+$cFields[] = array("Middle", 'Name_Middle', 'checked', '', 'string', '20', array());
+$cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20', array());
+$cFields[] = array("Suffix", 'Name_Suffix', 'checked', '', 'string', '15', array());
+$cFields[] = array("Primary Guest", 'Primary', 'checked', '', 'string', '20', array());
 
     $pFields = array('Address', 'City');
     $pTitles = array('Address', 'City');
@@ -289,17 +286,17 @@ $cFields[] = array("Primary Guest", 'Primary', 'checked', '', 's', '', array());
     $pFields = array_merge($pFields, array('State_Province', 'Postal_Code', 'Country'));
     $pTitles = array_merge($pTitles, array('State', 'Zip', 'Country'));
 
-    $cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
+    $cFields[] = array($pTitles, $pFields, '', '', 'string', '20', array());
 
-$cFields[] = array("First Stay", 'First Stay', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("First Stay", 'First Stay', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 
-$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Relation", 'Relationship', 'checked', '', 's', '', array());
-$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Group Id", 'idPsg', 'checked', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Relation", 'Relationship', 'checked', '', 'string', '20', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Group Id", 'idPsg', 'checked', '', 'string', '15', array());
 
 if (count($aList) > 0) {
-    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital')." / Assoc", 'hospitalAssoc', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital')." / Assoc", 'hospitalAssoc', 'checked', '', 'string', '20', array());
 } else {
-    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospitalAssoc', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospitalAssoc', 'checked', '', 'string', '20', array());
 }
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');

@@ -4,6 +4,7 @@ namespace HHK\House\Role;
 
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\{MemBasis, MemDesignation};
+use HHK\Member\RoleMember\DoctorMember;
 
 /**
  * Doctor.php

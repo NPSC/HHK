@@ -3,7 +3,7 @@
 namespace HHK;
 
 /**
- * Excel.php
+ * ExcelHelper.php
  *
  * Helper class for mk-j\XLSXWriter
  *
@@ -13,23 +13,40 @@ namespace HHK;
  * @link      https://github.com/NPSC/HHK
  */
 
-class ExcelHelper {
+class ExcelHelper extends \XLSXWriter{
     
     CONST hdrStyle = ['font-style'=>'bold', 'halign'=>'center', 'auto_filter'=>true, 'widths'=>[]];
+    protected $filename = '';
     
-    public static function download(\XLSXWriter $writer, string $filename){
+    public function __construct(String $filename){
+        $this->filename = $filename;
+        parent::__construct();
+    }
+    
+    /**
+     * Sets download headers and sends document to stdOut
+     */
+    public function download(){
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '.xlsx"');
+        header('Content-Disposition: attachment;filename="' . $this->filename . '.xlsx"');
         header('Cache-Control: max-age=0');
-        $writer->writeToStdOut();
+        $this->writeToStdOut();
         die();
     }
     
-    public static function convertStrings(array $hdr, array $row){
+    /**
+     *
+     * Decodes all html entities on fields defined as string in the header
+     *
+     * @param array $header
+     * @param array $row
+     * @return array $row;
+     */
+    public static function convertStrings(array $header, array $row){
         $n = 0;
         
-        foreach($hdr as $val){
-            if($val = "string" && isset($row[$n])){
+        foreach($header as $val){
+            if($val == "string" && isset($row[$n])){
                 $row[$n] = html_entity_decode(strval($row[$n]), ENT_QUOTES, 'UTF-8');
             }
             $n++;
@@ -38,6 +55,12 @@ class ExcelHelper {
         return $row;
     }
     
+    /**
+     * Gets predefined header styles and adds column widths
+     *
+     * @param array $colWidths
+     * @return array $hdrStyle
+     */
     public static function getHdrStyle(array $colWidths){
         $hdrStyle = self::hdrStyle;
         
@@ -46,6 +69,10 @@ class ExcelHelper {
         }
         
         return $hdrStyle;
+    }
+    
+    public function setFilename(String $filename){
+        $this->filename = $filename;
     }
     
 }

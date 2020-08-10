@@ -6,12 +6,12 @@ use HHK\AlertControl\AlertMessage;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLTable;
-use HHK\OpenXML;
 use HHK\ColumnSelectors;
 use HHK\SysConst\ItemId;
 use HHK\Purchase\TaxedItem;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLInput;
+use HHK\ExcelHelper;
 
 /**
  * ItemReport.php
@@ -25,8 +25,7 @@ use HHK\HTMLControls\HTMLInput;
 require ("homeIncludes.php");
 /* require (PMT . 'Receipt.php');
 require (CLASSES . 'ColumnSelectors.php');
-require_once CLASSES . 'ValueAddedTax.php';
-require_once CLASSES . 'OpenXML.php'; */
+require_once CLASSES . 'ValueAddedTax.php'; */
 
 
 try {
@@ -58,7 +57,7 @@ $alertMsg->set_Text("help");
 
 $resultMessage = $alertMsg->createMarkup();
 
-function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, &$tbl, &$sml, &$reportRows, $subsidyId, $returnId) {
+function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId, $returnId) {
 
     $amt = $r['Amount'];
 
@@ -140,16 +139,15 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
 
     } else {
 
-        $g['Date'] = \PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date']));
-
-        $n = 0;
+        $g['Date'] = $r['Invoice_Date'];
 
         foreach ($fltrdFields as $f) {
-            $flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
+            $flds[] = $g[$f[1]];
         }
 
-        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
+        $row = $writer->convertStrings($hdr, $flds);
+        $writer->writeSheetRow("Sheet1", $row);
+        
     }
 
 }
@@ -190,27 +188,27 @@ $statusList = readGenLookupsPDO($dbh, 'Invoice_Status');
 
 
 // Report column-selector
-// array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
-$cFields[] = array('Visit Id', 'vid', 'checked', '', 's', '', array());
-$cFields[] = array("Organization", 'Company', 'checked', '', 's', '', array());
-$cFields[] = array('Last', 'Last', 'checked', '', 's', '', array());
-$cFields[] = array("First", 'First', 'checked', '', 's', '', array());
-$cFields[] = array("Date", 'Date', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
-$cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
-$cFields[] = array("Description", 'Description', 'checked', '', 's', '', array());
+// array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms
+$cFields[] = array('Visit Id', 'vid', 'checked', '', 'string', '15', array());
+$cFields[] = array("Organization", 'Company', 'checked', '', 'string', '20', array());
+$cFields[] = array('Last', 'Last', 'checked', '', 'string', '20', array());
+$cFields[] = array("First", 'First', 'checked', '', 'string', '20', array());
+$cFields[] = array("Date", 'Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '15', array());
+$cFields[] = array("Description", 'Description', 'checked', '', 'string', '20', array());
 
 $locations = readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
-    $cFields[] = array($labels->getString('statement', 'location', 'Location'), 'Location', '', '', 's', '', array());
+    $cFields[] = array($labels->getString('statement', 'location', 'Location'), 'Location', '', '', 'string', '20', array());
 }
 
 $diags = readGenLookupsPDO($dbh, 'Diagnosis');
 if (count($diags) > 0) {
-    $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 'string', '20', array());
 }
 
-$cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
-$cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+$cFields[] = array("Status", 'Status', 'checked', '', 'string', '15', array());
+$cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
 //$cFields[] = array("By", 'By', 'checked', '', 's', '', array());
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');
@@ -515,6 +513,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
     $sml = null;
     $reportRows = 0;
     $fltrdTitles = $colSelector->getFilteredTitles();
+    $fltrdFields = $colSelector->getFilteredFields();
 
 
     if ($local) {
@@ -532,17 +531,22 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
 
         $reportRows = 1;
         $file = 'ItemReport';
-        $sml = OpenXML::createExcel($uS->username, 'Item Report');
-
+        $writer = new ExcelHelper($file);
+        $writer->setAuthor($uS->username);
+        $writer->setTitle('Item Report');
+        
         // build header
         $hdr = array();
+        $colWidths = array();
         $n = 0;
 
-        foreach ($fltrdTitles as $t) {
-            $hdr[$n++] = $t;
+        foreach($fltrdFields as $field){
+            $hdr[$field[0]] = $field[4]; //set column header name and type;
+            $colWidths[] = $field[5]; //set column width
         }
-
-        OpenXML::writeHeaderRow($sml, $hdr);
+        
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
         $reportRows++;
     }
 
@@ -557,7 +561,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-        doMarkupRow($colSelector->getFilteredFields(), $r, $local, $statusList, $diags, $locations, $total, $tbl, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
+        doMarkupRow($colSelector->getFilteredFields(), $r, $local, $statusList, $diags, $locations, $total, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId, $uS->returnId);
 
     }
 
@@ -576,14 +580,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
         $headerTableMu = $headerTable->generateMarkup();
 
     } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        $writer->download();
     }
 
 }

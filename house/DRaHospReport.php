@@ -26,7 +26,6 @@ require ("homeIncludes.php");
 
 
 /* require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'OpenXML.php'; */
 
 
 try {
@@ -88,7 +87,6 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
         $fileName = 'DoctorReport';
         $sheetName = 'Sheet1';
-        $writer = new \XLSXWriter();
         
         // build header
         $hdr = array();
@@ -101,7 +99,9 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
         $hdr[$labels->getString('hospital', 'hospital', 'Hospital')] = "string";
         $hdr[$labels->getString('MemberType', 'patient', 'Patient')] = "integer";
         
-        $hdrStyle = ExcelHelper::getHdrStyle($colWidths);
+        $writer = new ExcelHelper($fileName);
+        
+        $hdrStyle = $writer->getHdrStyle($colWidths);
         
         $writer->writeSheetHeader($sheetName, $hdr, $hdrStyle);
 
@@ -183,7 +183,8 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
             }
 
             $row = array($id, $doc, $hosp, $r['Patients']);
-            $writer->writeSheetRow($sheetName, ExcelHelper::convertStrings($hdr, $row));
+            $row = $writer->convertStrings($hdr, $row);
+            $writer->writeSheetRow($sheetName, $row);
         }
 
         $rowCounter++;
@@ -197,7 +198,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
 
     } else {
-        ExcelHelper::download($writer, $fileName);
+        $writer->download();
     }
 
 }

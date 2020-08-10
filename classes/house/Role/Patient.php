@@ -6,6 +6,9 @@ use HHK\SysConst\{MemBasis, MemDesignation, MemStatus, RelLinkType};
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
+use HHK\Member\RoleMember\PatientMember;
+use HHK\House\PSG;
+use HHK\House\ReserveData\PSGMember\PSGMember;
 
 /**
  * Patient.php
@@ -44,7 +47,7 @@ class Patient extends AbstractRole {
     public function getPatientPsg(\PDO $dbh) {
 
         if (is_null($this->patientPsg)) {
-            $this->patientPsg = new Psg($dbh, 0, $this->getIdName());
+            $this->patientPsg = new PSG($dbh, 0, $this->getIdName());
         }
 
         return $this->patientPsg;

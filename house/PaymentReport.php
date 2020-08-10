@@ -7,9 +7,9 @@ use HHK\SysConst\GLTableNames;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector};
 use HHK\SysConst\PaymentStatusCode;
-use HHK\OpenXML;
 use HHK\Payment\Receipt;
 use HHK\House\Report\PaymentReport;
+use HHK\ExcelHelper;
 
 /**
  * PaymentReport.php
@@ -25,7 +25,6 @@ require ("homeIncludes.php");
 
 // require (PMT . 'Receipt.php');
 // require (CLASSES . 'ColumnSelectors.php');
-// require CLASSES . 'OpenXML.php';
 // require HOUSE . 'PaymentReport.php';
 
 try {
@@ -126,38 +125,38 @@ if (count($gwRows) > 1) {
 }
 
 // Report column-selector
-// array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms, DT Type
-$cFields[] = array('Payor Last', 'Last', 'checked', '', 's', '', array());
-$cFields[] = array("Payor First", 'First', 'checked', '', 's', '', array());
-$cFields[] = array("Date", 'Payment_Date', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
-$cFields[] = array("Time", 'Payment_Timestamp', 'checked', '', 'n', \PHPExcel_Style_NumberFormat::FORMAT_DATE_TIME3, array(), 'time');
-$cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 's', '', array());
-$cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
+// array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms, DT Type
+$cFields[] = array('Payor Last', 'Last', 'checked', '', 'string', '20', array());
+$cFields[] = array("Payor First", 'First', 'checked', '', 'string', '20', array());
+$cFields[] = array("Date", 'Payment_Date', 'checked', '', 'MM/DD/YYYY', '20', array(), 'date');
+$cFields[] = array("Time", 'Payment_Timestamp', 'checked', '', 'h:mm:ss AM/PM;@', '20', array(), 'time');
+$cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '10', array());
+$cFields[] = array("Room", 'Title', 'checked', '', 'string', '10', array('style'=>'text-align:center;'));
 
 if ((count($hospList)) > 1) {
-    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'idHospital', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'idHospital', 'checked', '', 'string', '15', array());
 }
 
-$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Last", 'Patient_Last', '', '', 's', '', array());
-$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." First", 'Patient_First', '', '', 's', '', array());
-$cFields[] = array("Pay Type", 'Pay_Type', 'checked', '', 's', '', array());
-$cFields[] = array("Detail", 'Detail', 'checked', '', 's', '', array());
-$cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
-$cFields[] = array("Original Amount", 'Orig_Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)' , array('style'=>'text-align:right;'));
-$cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Last", 'Patient_Last', '', '', 'string', '20', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." First", 'Patient_First', '', '', 'string', '20', array());
+$cFields[] = array("Pay Type", 'Pay_Type', 'checked', '', 'string', '15', array());
+$cFields[] = array("Detail", 'Detail', 'checked', '', 'string', '15', array());
+$cFields[] = array("Status", 'Status', 'checked', '', 'string', '15', array());
+$cFields[] = array("Original Amount", 'Orig_Amount', 'checked', '', 'dollar', '15' , array('style'=>'text-align:right;'));
+$cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
 
 // Show payment gateway
 if (count($gwList) > 1) {
-	$cFields[] = array('Location', 'Merchant', 'checked', '', 's', '', array());
+	$cFields[] = array('Location', 'Merchant', 'checked', '', 'string', '20', array());
 }
 
 // Show External Id (external payment record id)
 if ($config->getString('webServices', 'Service_Name', '') != '') {
-    $cFields[] = array('External Id', 'Payment_External_Id', '', '', 's', '', array());
+    $cFields[] = array('External Id', 'Payment_External_Id', '', '', 'string', '15', array());
 }
 
-$cFields[] = array("By", 'By', 'checked', '', 's', '', array());
-$cFields[] = array("Notes", 'Notes', 'checked', '', 's', '', array());
+$cFields[] = array("By", 'By', 'checked', '', 'string', '20', array());
+$cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
@@ -485,20 +484,26 @@ where lp.idPayment > 0
 
         $reportRows = 1;
         $file = 'PaymentReport';
-        $sml = OpenXML::createExcel($uS->username, 'Payment Report');
-
+        
+        $writer = new ExcelHelper($file);
+        $writer->setAuthor($uS->username);
+        $writer->setTitle("Payment Report");
+        
         // build header
         $hdr = array();
-        $n = 0;
+        $colWidths = array();
+        
 
-        $hdr[$n++] = 'Payor Id';
-        $hdr[$n++] = 'Company';
+        $hdr["Payor Id"] = "string";
+        $hdr["Company"] = 'string';
 
-        foreach ($fltrdTitles as $t) {
-            $hdr[$n++] = $t;
+        foreach ($fltrdFields as $field) {
+            $hdr[$field[0]] = $field[4]; //set column header name and type;
+            $colWidths[] = $field[5]; //set column width
         }
 
-        OpenXML::writeHeaderRow($sml, $hdr);
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
         $reportRows++;
     }
 
@@ -528,7 +533,7 @@ where lp.idPayment > 0
             }
 
 
-            PaymentReport::doMarkupRow($fltrdFields, $r, $p, $local, $hospital, $total, $tbl, $sml, $reportRows, $uS->subsidyId);
+            PaymentReport::doMarkupRow($fltrdFields, $r, $p, $local, $hospital, $total, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId);
 
         }
     }
@@ -546,14 +551,7 @@ where lp.idPayment > 0
                 . $headerTable->generateMarkup();
 
     } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        $writer->download();
     }
 
 }

@@ -28,20 +28,25 @@ class MailList {
 
         // header -
         $file = "MailList";
-        $sml = OpenXML::createExcel('', 'Mail List');
+        $writer = new ExcelHelper($file);
+        $writer->setTitle("Mail List");
 
-        $hdr = array();
-        $n = 0;
-        $hdr[$n++] = "Id";
-        $hdr[$n++] = "Last Name";
-        $hdr[$n++] = "Name";
-        $hdr[$n++] = "Care Of";
-        $hdr[$n++] = "Address";
-        $hdr[$n++] = "City";
-        $hdr[$n++] = "State";
-        $hdr[$n++] = "Zip";
+        $hdr = array(
+            "Id"=>"string",
+            "Last Name"=>"string",
+            "Name"=>"string",
+            "Care Of"=> "string",
+            "Address"=>"string",
+            "City"=>"String",
+            "State"=>"string",
+            "Zip"=>"string"
+        );
+        
+        $colWidths = array("10", "20", "20", "20", "20", "20", "10", "10");
 
-        $reportRows = OpenXML::writeHeaderRow($sml, $hdr);
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
 
         //-- Dump unwanted members
@@ -84,49 +89,24 @@ class MailList {
             }
 
 
-            $n = 0;
-            $flds = array($n++ => array('type' => "n",
-                    'value' => $r["id"]
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r["Donor_Last"]
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $salName
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $careof
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r['street']
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r["city"]
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r["state"]
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r["zip"],
-                    'style' => '00000'
-                )
+            $flds = array(
+                $r["id"],
+                $r["Donor_Last"],
+                $salName,
+                $careof,
+                $r['street'],
+                $r["city"],
+                $r["state"],
+                $r["zip"]
             );
 
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
         }
 
 
         // Finalize download.
-        $file = 'MailingList.xls';
-        // Redirect output to a client's web browser (Excel2007)
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        $writer->download();
     }
 
     public static function fillMailistTable(\PDO $dbh, $guestBlackOutDays) {

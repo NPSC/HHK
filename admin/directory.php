@@ -14,11 +14,6 @@ use HHK\HTMLControls\{chkBoxCtrl, selCtrl};
  */
 require ("AdminIncludes.php");
 require("functions" . DS . "directoryReport.php");
-// require(CLASSES . "chkBoxCtrlClass.php");
-// require(CLASSES . "selCtrl.php");
-// require(CLASSES . "OpenXML.php");
-// require(CLASSES . "MailList.php");
-// require("classes" . DS . "Salutation.php");
 
 $wInit = new webInit();
 

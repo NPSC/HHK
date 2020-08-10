@@ -2,11 +2,11 @@
 
 namespace HHK\House\Report;
 
-use HHK\OpenXML;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\Payment\Receipt;
 use HHK\SysConst\{PaymentMethod, PaymentStatusCode};
 use HHK\sec\Session;
+use HHK\ExcelHelper;
 
 /*
  * PaymentReport.php
@@ -145,33 +145,35 @@ class PaymentReport {
         $stmt = $dbh->query($query);
         $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room'));
 
-        //require_once CLASSES . 'OpenXML.php';
 
         $reportRows = 1;
         $file = 'PaymentReport';
-        $sml = OpenXML::createExcel($uS->username, 'Payment Report');
-
+        $writer = new ExcelHelper($file);
+        $writer->setAuthor($uS->username);
+        $writer->setTitle('Payment Report');
+        
         // build header
-        $hdr = array();
-        $n = 0;
+        $hdr = array(
+            "Id"=>"string",
+            "Third Party"=>"string",
+            "Last"=>"string",
+            "First"=>"string",
+            "Date"=>"MM/DD/YYYY",
+            "Invoice Number"=>"string",
+            "Room"=>"string",
+            "Pay Type"=>"string",
+            "Pay Detail"=>"string",
+            "Status"=>"string",
+            "Original Amount"=>"dollar",
+            "Amount"=>"dollar",
+            "Notes"=>"string"
+        );
 
-        $hdr[$n++] = "Id";
-        $hdr[$n++] = "Third Party";
-        $hdr[$n++] = "Last";
-        $hdr[$n++] = "First";
-        $hdr[$n++] = "Date";
-        $hdr[$n++] = "Invoice Number";
-        $hdr[$n++] = "Room";
-        $hdr[$n++] = "Pay Type";
-        $hdr[$n++] = "Pay Detail";
-        $hdr[$n++] = "Status";
-        $hdr[$n++] = "Original Amount";
-        $hdr[$n++] = "Amount";
-        $hdr[$n++] = "Notes";
-
-        OpenXML::writeHeaderRow($sml, $hdr);
-        $reportRows++;
-
+        $colWidths = array('10', '10', '20', '20', '15', '10', '10', '15', '20', '15', '15', '15', '20');
+        
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
         $name_lk = $uS->nameLookups;
         $name_lk['Pay_Status'] = readGenLookupsPDO($dbh, 'Pay_Status');
@@ -183,22 +185,14 @@ class PaymentReport {
             // Payments
             foreach ($r['p'] as $p) {
 
-                self::doDayMarkupRow($r, $p, $sml, $reportRows, $uS->subsidyId, $uS->returnId);
+                self::doDayMarkupRow($r, $p, $writer, $hdr, $reportRows, $uS->subsidyId, $uS->returnId);
 
             }
         }
-
-        // Finalize and print.
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-            header('Cache-Control: max-age=0');
-
-            OpenXML::finalizeExcel($sml);
-            exit();
-
+        $writer->download();
     }
 
-    protected static function doDayMarkupRow($r, $p, &$sml, &$reportRows, $subsidyId, $returnId) {
+    protected static function doDayMarkupRow($r, $p, &$writer, $hdr, &$reportRows, $subsidyId, $returnId) {
 
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
@@ -272,56 +266,28 @@ class PaymentReport {
             $payType = $r['i']['Invoice_Description'];
         }
 
-
-        $n = 0;
         $flds = array(
-            $n++ => array('type' => "n",
-                'value' => $r['i']['Sold_To_Id']
-            ),
-            $n++ => array('type' => "s",
-                'value' => ($r['i']['Bill_Agent'] == 'a' || $r['i']['Sold_To_Id'] == $returnId ? $r['i']['Company'] : '')
-            ),
-            $n++ => array('type' => "s",
-                'value' => $r['i']['Last']
-            ),
-            $n++ => array('type' => "s",
-                'value' => $r['i']['First']
-            ),
-            $n++ => array('type' => "n",
-                'value' => \PHPExcel_Shared_Date::PHPToExcel(strtotime($p['Payment_Date'])),
-                'style' => \PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX22
-            ),
-            $n++ => array('type' => "s",
-                'value' => $r['i']['Invoice_Number']
-            ),
-            $n++ => array('type' => "s",
-                'value' => $r['i']['Room']
-            ),
-            $n++ => array('type' => "s",
-                'value' => $payType
-            ),
-            $n++ => array('type' => "s",
-                'value' => $payDetail
-            ),
-            $n++ => array('type' => "s",
-                'value' => $payStatus
-            ),
-            $n++ => array('type' => "n",
-                'value' => $origAmt
-            ),
-            $n++ => array('type' => "n",
-                'value' => $amt
-            ),
-            $n++ => array('type' => "s",
-                'value' => $p['Payment_Note']
-            )
+            $r['i']['Sold_To_Id'],
+            ($r['i']['Bill_Agent'] == 'a' || $r['i']['Sold_To_Id'] == $returnId ? $r['i']['Company'] : ''),
+            $r['i']['Last'],
+            $r['i']['First'],
+            $p['Payment_Date'],
+            $r['i']['Invoice_Number'],
+            $r['i']['Room'],
+            $payType,
+            $payDetail,
+            $payStatus,
+            $origAmt,
+            $amt,
+            $p['Payment_Note']
         );
 
-        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
+        $row = $writer->convertStrings($hdr, $flds);
+        
+        $writer->writeSheetRow("Sheet1", $row);
     }
 
-    public static function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$sml, &$reportRows, $subsidyId) {
+    public static function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
 
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
@@ -480,29 +446,24 @@ class PaymentReport {
 
             $g['Last'] = $r['i']['Last'];
             $g['First'] = $r['i']['First'];
-            $g['Payment_Date'] = \PHPExcel_Shared_Date::PHPToExcel($dateDT);
-            $g['Payment_Timestamp'] = \PHPExcel_Shared_Date::PHPToExcel($timeDT);
+            $g['Payment_Date'] = $dateDT->format("Y-m-d");
+            $g['Payment_Timestamp'] = $timeDT->format('Y-m-d H:i:s');
             $g['Invoice_Number'] = $r['i']['Invoice_Number'];
             $g['Status'] = $payStatus;
             $g['Orig_Amount'] = $origAmt;
             $g['Amount'] = $amt;
 
-            $n = 0;
-
             $flds = array(
-                $n++ => array('type' => "n",
-                    'value' => $r['i']['Sold_To_Id']
-                ),
-                $n++ => array('type' => "s",
-                    'value' => ($r['i']['Bill_Agent'] == 'a' ? $r['i']['Company'] : '')
-                )
+                $r['i']['Sold_To_Id'],
+                ($r['i']['Bill_Agent'] == 'a' ? $r['i']['Company'] : '')
             );
-
+            
             foreach ($fltrdFields as $f) {
-                $flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
+                $flds[] = $g[$f[1]];
             }
-
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
 
         }
 

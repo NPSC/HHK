@@ -71,12 +71,9 @@ if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"]) || isset($_POST["btnCSV
 
     ini_set('memory_limit', "128M");
 
-//     require(CLASSES . "OpenXML.php");
-     require("functions" . DS . "CategoryReportMgr.php");
-//     require ("classes" . DS . "VolCats.php");
-//     require("classes" . DS . "Salutation.php");
+    require("functions" . DS . "CategoryReportMgr.php");
 
-        // Get the site configuration object
+    // Get the site configuration object
     try {
         $config = new Config_Lite(ciCFG_FILE);
         $guestBlackOutDays = $config->getString('house', 'Guest_Solicit_Buffer_Days', '61');
