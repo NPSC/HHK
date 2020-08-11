@@ -122,6 +122,9 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
 //            var listTable;
 //            var makeTable = <?php echo $makeTable; ?>;
             $(document).ready(function() {
+            	
+            	$("input[type=submit], input[type=button]").button();
+            
                 var listTable;
                 var makeTable = <?php echo $makeTable; ?>;
                 var now = new Date();

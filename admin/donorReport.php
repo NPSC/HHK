@@ -135,6 +135,9 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
         <script type="text/javascript">
             // Init j-query and the page blocker.
         $(document).ready(function() {
+        
+        	$("input[type=submit], input[type=button]").button();
+        
             var listTable;
             var makeTable = <?php echo $makeTable; ?>;
             if (listTable)

@@ -37,7 +37,7 @@ class MailList {
             "Name"=>"string",
             "Care Of"=> "string",
             "Address"=>"string",
-            "City"=>"String",
+            "City"=>"string",
             "State"=>"string",
             "Zip"=>"string"
         );

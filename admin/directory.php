@@ -86,11 +86,13 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
+        <?php echo JQ_DT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
@@ -132,6 +134,9 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
             }
             // Init j-query
             $(document).ready(function() {
+            
+            	$("input[type=submit], input[type=button]").button();
+            
                 $('#selDirType').change( function() {
                     dirType(this);
                 });
@@ -146,6 +151,17 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
                 $('input.hhk-dirBasis').change(function () {
                     basisType(this);
                 });
+                
+                try {
+                    $('#tblDirectory').dataTable({
+                        "displayLength": 50,
+                        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                        "dom": '<"top"ilf>rt<"bottom"p>',
+                        "order": [[1,'asc'], [2,'asc']]
+                    });
+                }
+                catch (err) {console.log(err)}
+                
             });
         </script>
     </head>

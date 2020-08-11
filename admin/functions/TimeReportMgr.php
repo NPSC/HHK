@@ -11,10 +11,12 @@
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
+
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\selCtrl;
 use HHK\sec\Session;
 use HHK\SysConst\VolCalendarStatus;
+use HHK\ExcelHelper;
 
 function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust) {
 
@@ -177,12 +179,20 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
 
             foreach ($r as $k => $col) {
                 if ($n == 0 && is_null($col)) {
-                    $r[$k] = "<strong>Report Total</strong>";
+                    if($dlFlag){
+                        $r[$k] = "Report Total";
+                    }else{
+                        $r[$k] = "<strong>Report Total</strong>";
+                    }
                     $isTotal = TRUE;
                 }
                 if ($n == 1 && is_null($col)) {
                     if ($isTotal === FALSE) {
-                        $r[$k] = "<strong>Subtotal</strong>";
+                        if($dlFlag){
+                            $r[$k] = "Subtotal";
+                        }else{
+                            $r[$k] = "<strong>Subtotal</strong>";
+                        }
                     }
                     $isTotal = TRUE;
                 }
@@ -197,58 +207,55 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
 
         if ($dlFlag && count($rws) > 0) {
             $file = "VolunteerTimeReport";
-            $sml = OpenXML::createExcel($uname, 'Donor Roll-up Report');
+            $writer = new ExcelHelper($file);
+            $writer->setAuthor($uname);
+            $writer->setTitle("Volunteer Time Report");
 
             // Header row
-            $n = 0;
             $hdr = array();
+            $colWidths = array();
+            
             foreach ($rows[0] as $k => $v) {
-                $hdr[$n++] = $k;
+                if($k == "Hours"){
+                    $hdr[$k] = "price";
+                    $colWidths[] = "10";
+                }else if ($k == "Email"){
+                    $hdr[$k] = "string";
+                    $colWidths[] = "35";
+                }else{
+                    $hdr[$k] = "string";
+                    $colWidths[] = "20";
+                }
             }
-            OpenXML::writeHeaderRow($sml, $hdr);
-            $reportRows = 2;
+            
+            $hdrStyle = $writer->getHdrStyle($colWidths);
+            $writer->writeSheetHeader("Worksheet", $hdr, $hdrStyle);
 
             // Summary sheet
-            $myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
-            $sml->addSheet($myWorkSheet, 1);
-            $sml->setActiveSheetIndex(1);
-
-            $sRows = OpenXML::writeHeaderRow($sml, array(0=>'Filter', 1=>'Parameters'));
+            $sHdr = array("Filter"=>"string", "Parameters"=>"string");
+            $sColWidths = array("50","50");
+            $sHdrStyle = $writer->getHdrStyle($sColWidths);
+            $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
 
             // create summary table
+            $sheet = array();
             foreach ($sumaryRows as $key => $val) {
                 if ($key != "" && $val != "") {
-                    $flds = array(0 => array('type' => "s",
-                            'value' => $key,
-                            'style' => "sRight"
-                        ),
-                        1 => array('type' => "s",
-                            'value' => $val
-                        )
-                    );
-                    $sRows = OpenXML::writeNextRow($sml, $flds, $sRows);
-
+                    $flds = array($key,$val);
+                    $sheet[] = $writer->convertStrings($sHdr, $flds);
                 }
             }
-            $sml->setActiveSheetIndex(0);
+            $writer->writeSheet($sheet, "Constraints");
 
             // Main report
-            foreach ($rows as $r) {
-                $n = 0;
+            foreach ($rws as $r) {
                 $flds = array();
                 foreach ($r as $v) {
-                    $flds[$n++] = array('type'=>'s', 'value'=>$v);
+                    $flds[] = $v;
                 }
-                $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+                $writer->writeSheetRow("Worksheet", $r);
             }
-
-            // Redirect output to a client's web browser (Excel2007)
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-            header('Cache-Control: max-age=0');
-            OpenXML::finalizeExcel($sml);
-            exit();
-
+            $writer->download();
         } else {
 
             $txtReport = CreateMarkupFromDB::generateHTMLSummary($sumaryRows, $reportTitle);

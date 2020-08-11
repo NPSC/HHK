@@ -15,10 +15,6 @@ use HHK\Donation\Campaign;
  */
 require ("AdminIncludes.php");
 
-/* require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-require(CLASSES . 'Campaign.php'); */
-
 $wInit = new WebInit();
 $dbh = $wInit->dbh;
 
@@ -147,6 +143,9 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                 return x1 + x2;
             }
             $(document).ready(function() {
+            
+            	$("input[type=submit], input[type=button]").button();
+            
                 var rollup = '<?php echo $rollup; ?>';
 
                 if (makeTable == 2) {

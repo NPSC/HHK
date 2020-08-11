@@ -18,6 +18,13 @@ class ExcelHelper extends \XLSXWriter{
     CONST hdrStyle = ['font-style'=>'bold', 'halign'=>'center', 'auto_filter'=>true, 'widths'=>[]];
     protected $filename = '';
     
+    /**
+     * Helper class for mk-j\XLSXWriter
+     *
+     * Extends mk-j\XLSXWriter
+     *
+     * @param String $filename
+     */
     public function __construct(String $filename){
         $this->filename = $filename;
         parent::__construct();
@@ -31,7 +38,7 @@ class ExcelHelper extends \XLSXWriter{
         header('Content-Disposition: attachment;filename="' . $this->filename . '.xlsx"');
         header('Cache-Control: max-age=0');
         $this->writeToStdOut();
-        die();
+        exit();
     }
     
     /**
@@ -61,7 +68,7 @@ class ExcelHelper extends \XLSXWriter{
      * @param array $colWidths
      * @return array $hdrStyle
      */
-    public static function getHdrStyle(array $colWidths){
+    public static function getHdrStyle(array $colWidths = []){
         $hdrStyle = self::hdrStyle;
         
         foreach($colWidths as $width){

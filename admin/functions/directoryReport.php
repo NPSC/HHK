@@ -14,13 +14,13 @@
  *
  * @param array $r vmember_directory record
  * @param string $type Relationship link type
- * @return array suitable for OpenXML
+ * @return array suitable for XLSXWriter
  */
 use HHK\MailList;
-use HHK\OpenXML;
 use HHK\HTMLControls\chkBoxCtrl;
 use HHK\HTMLControls\selCtrl;
 use HHK\SysConst\SalutationCodes;
+use HHK\ExcelHelper;
 
 function DirCkExcludes($r, $type = '') {
     $street = "";
@@ -50,37 +50,17 @@ function DirCkExcludes($r, $type = '') {
         $name = $r["Company"];
     }
 
-
-    $n = 0;
     $flds = array(
-        $n++ => array('type' => "n",
-            'value' => $r["Id"]
-        ),
-        $n++ => array('type' => "s",
-            'value' => $type
-        ),
-        $n++ => array('type' => "s",
-            'value' => $name
-        ),
-        $n++ => array('type' => "s",
-            'value' => $street
-        ),
-        $n++ => array('type' => "s",
-            'value' => $city
-        ),
-        $n++ => array('type' => "s",
-            'value' => $state
-        ),
-        $n++ => array('type' => "s",
-            'value' => $zip,
-            'style' => '00000'
-        ),
-        $n++ => array('type' => "s",
-            'value' => $r["Exclude_Phone"] == 1 ? 'x' : $r["Preferred_Phone"]
-        ),
-        $n++ => array('type' => "s",
-            'value' => $r["Exclude_Email"] == 1 ? 'x' : $r["Preferred_Email"]
-        ));
+        $r["Id"],
+        $type,
+        $name,
+        $street,
+        $city,
+        $state,
+        $zip,
+        $r["Exclude_Phone"] == 1 ? 'x' : $r["Preferred_Phone"],
+        $r["Exclude_Email"] == 1 ? 'x' : $r["Preferred_Email"]
+    );
 
     return $flds;
 }
@@ -155,100 +135,78 @@ function dirReport(\PDO $dbh, chkBoxCtrl $cbBasisDir, chkBoxCtrl $cbRelationDir,
 
         // Header
         if (!$dlFlag) {
-            $txtreport = "<tr><th colspan='2'>Member Directory   Date: " . date("m/d/Y") . "</th></tr>";
-//            $txtreport .= "<tr><td class='tdlabel'>Records Fetched: </td><td>" . count($rows) . "</td></tr>";
-            $txtreport .= "<tr><td class='tdlabel'>Member Basis: </td><td>" . $incBasis . "</td></tr>";
-//            $txtreport .= "<tr><td class='tdlabel'>Relationship Types:</td><td>$incRel</td></tr></table>";
-            $txtreport .= "<table style='margin-top:10px;'><tr><th style='width:40px'>Id</td><th></td><th>Name</td>";
-            $txtreport .= "<th>Address</td><th>City</td><th style='width:15px;'>State</td><th>Zip</td><th>Phone</td>";
-            $txtreport .= "<th>Email</td><th colspan='3'>Employer</td></tr>";
+            $txtreport .= "<table>";
+            $txtreport .= "<thead><tr><th colspan='2'>Member Directory   Date: " . date("m/d/Y") . "</th></tr></thead>";
+            $txtreport .= "<tbody><tr><td class='tdlabel'>Member Basis: </td><td>" . $incBasis . "</td></tr></tbody>";
+            $txtreport .="</table>";
+            $txtreport .= "<table style='margin-top:10px;' id='tblDirectory'><thead><tr><th style='width:40px'>Id</th><th></th><th>Name</th>";
+            $txtreport .= "<th>Address</th><th>City</th><th style='width:15px;'>State</th><th>Zip</th><th>Phone</th>";
+            $txtreport .= "<th>Email</th><th>Employer</th></tr></thead>";
         } else {
 
-            $file = 'House_Directory';
-            $sml = OpenXML::createExcel('', 'Member Directory');
-            $n = 0;
-            $hdr[$n++] = "Id";
-            $hdr[$n++] = "* ";
-            $hdr[$n++] = "Name";
-            $hdr[$n++] = "Address";
-            $hdr[$n++] = "City";
-            $hdr[$n++] = "State";
-            $hdr[$n++] = "Zip";
-            $hdr[$n++] = "Phone";
-            $hdr[$n++] = "Email";
-            OpenXML::writeHeaderRow($sml, $hdr);
-            $lineCtr++;
+            $file = 'HouseDirectory';
+            $writer = new ExcelHelper($file);
+            $writer->setTitle("House Directory");
+            
+            $hdr = array(
+            "Id"=>"string",
+            "*"=>"string",
+            "Name"=>"string",
+            "Address"=>"string",
+            "City"=>"string",
+            "State"=>"string",
+            "Zip"=>"string",
+            "Phone"=>"string",
+            "Email"=>"string"
+            );
+            $colWidths = array("10", "10", "20", "20", "20", "10", "10", "15", "35");
+            $hdrStyle = $writer->getHdrStyle($colWidths);
+            $writer->writeSheetHeader("Worksheet", $hdr, $hdrStyle);
         }
 
-        //$showEmployee = false;
-//        $previousSpouse = "";
-
-        //if (isset($_POST["cbEmployee"])) {
-            $showEmployee = true;
-        //}
-
+        $showEmployee = true;
+        $txtreport .= "<tbody>";
             while ( $rw = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
  //           foreach ($rows as $rw) {
              // Check for Company Here
             if ($rw["MemberRecord"] == 0) {
                 if ($dlFlag) {
-                    $lineCtr = OpenXML::writeNextRow($sml, DirCkExcludes($rw, 'O'), $lineCtr);
-                    //$xls .= formatDirRowFirst($rw, "O");
+                    $row = $writer->convertStrings($hdr, DirCkExcludes($rw, 'O'));
+                    $writer->writeSheetRow("Worksheet",$row);
                 } else {
                         $flds = DirCkExcludes($rw);
 
-    $mkup = "<tr><td style='width:40px; border-top: 1px solid; '><a href='NameEdit.php?id=" . $rw["Id"] . "'>" . $rw["Id"] . "</a></td>
-            <td style='font-size:0.5em; border-top: 1px solid; '><spantitle='Organization'>O</span></td>
-            <td style='border-right: 1px solid; border-top: 1px solid; padding-right:5px;'>" . $flds[2]['value'] . "</td>";
-    $mkup .= "<td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[3]['value'] . "</td>
-        <td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[4]['value'] . "</td>
-        <td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;' width='15px'>" . $flds[5]['value'] . "</td>
-        <td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[6]['value'] . "</td>
-        <td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[7]['value'] . "</td>";
-    $mkup .= "<td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[8]['value'] . "</td><td>" . $rw["Company"] . "</td></tr>";
+    $mkup = "<tr><td><a href='NameEdit.php?id=" . $rw["Id"] . "'>" . $rw["Id"] . "</a></td>
+            <td><span title='Organization'>O</span></td>
+            <td>" . $flds[2] . "</td>";
+    $mkup .= "<td>" . $flds[3] . "</td>
+        <td>" . $flds[4] . "</td>
+        <td>" . $flds[5] . "</td>
+        <td>" . $flds[6] . "</td>
+        <td>" . $flds[7] . "</td>";
+    $mkup .= "<td>" . $flds[8] . "</td><td>" . $rw["Company"] . "</td></tr>";
 
                     $txtreport .= $mkup;
                 }
 
-                //$lineCtr++;
-
-                if ($showEmployee) {
-//                    $query = "select * from vmember_directory where  Company_Id = " . $rw["Id"] . ";";
-
-//                    foreach ($rows as $rc) {
-//                        if ($rc['Company_Id'] == $rw['Id']) {
-//                            if ($dlFlag) {
-//                                $lineCtr = OpenXML::writeNextRow($sml, DirCkExcludes($rc, 'E'), $lineCtr);
-//                                //$xls .= formatDirRowEmpl($rw, "E");
-//                            } else {
-//                                $mkup = "<tr><td style='width:40px; border-top: 1px solid; '><a href='NameEdit.php?id=" . $rc["Id"] . "'>" . $rc["Id"] . "</a></td>
-//                                        <td style='font-size:0.5em; border-top: 1px solid; '><spantitle='Employee'>E</span></td>
-//                                        <td style='border-right: 1px solid; border-top: 1px solid; padding-right:5px;'>" . $rc['Fullname'] . "</td>";
-//                                $txtreport .= $mkup;
-//                                //$txtreport .= genDirectoryRowEmpl($rw, "E", "Employee");
-//                            }
-//
-//                            //$lineCtr++;
-//                        }
-//                    }
-                }
             } else {
                 // Individual member...
                 if ($dlFlag) {
-                    $lineCtr = OpenXML::writeNextRow($sml, DirCkExcludes($rw, ''), $lineCtr);
+                    $row = $writer->convertStrings($hdr, DirCkExcludes($rw, ''));
+                    $writer->writeSheetRow("Worksheet", $row);
                 } else {
                     $flds = DirCkExcludes($rw);
 
-    $mkup = "<tr><td style='width:40px; border-top: 1px solid; '><a href='NameEdit.php?id=" . $rw["Id"] . "'>" . $rw["Id"] . "</a></td>
-            <td style='font-size:0.5em; border-top: 1px solid; '><span></span></td>
-            <td style='border-right: 1px solid; border-top: 1px solid; padding-right:5px;'>" . $flds[2]['value'] . "</td>";
-    $mkup .= "<td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[3]['value'] . "</td>
-        <td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[4]['value'] . "</td>
-        <td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;' width='15px'>" . $flds[5]['value'] . "</td>
-        <td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[6]['value'] . "</td>
-        <td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[7]['value'] . "</td>";
-    $mkup .= "<td style='border-right: 1px solid; border-top: 1px solid; padding-right:7px;'>" . $flds[8]['value'] . "</td><td>" . $rw["Company"] . "</td></tr>";
+    $mkup = "<tr><td><a href='NameEdit.php?id=" . $rw["Id"] . "'>" . $rw["Id"] . "</a></td>
+            <td><span></span></td>
+            <td>" . $flds[2] . "</td>";
+    $mkup .= "<td>" . $flds[3] . "</td>
+        <td>" . $flds[4] . "</td>
+        <td>" . $flds[5] . "</td>
+        <td>" . $flds[6] . "</td>
+        <td>" . $flds[7] . "</td>";
+    $mkup .= "<td>" . $flds[8] . "</td><td>" . $rw["Company"] . "</td></tr>";
 
                     $txtreport .= $mkup;
                 }
@@ -256,17 +214,12 @@ function dirReport(\PDO $dbh, chkBoxCtrl $cbBasisDir, chkBoxCtrl $cbRelationDir,
             }  // company or individual
         }  // while data exists.
 
+        $txtreport .= "</tbody></table>";
+        
         if ($dlFlag) {
-            // Redirect output to a client's web browser (Excel2007)
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-            header('Cache-Control: max-age=0');
-
-            OpenXML::finalizeExcel($sml);
-            exit();
-
-         }
-        $dirmarkup = "<div class='ui-widget ui-widget-content'><table>". $txtreport . "</table></div>";
+            $writer->download();
+        }
+        $dirmarkup = "<div class='ui-widget ui-widget-content ui-corner-all hhk-member-detail'>". $txtreport . "</div>";
     }
 
     // Mail list
@@ -341,25 +294,22 @@ group by vm2.idName
             $reportRows = 1;
 
             $file = "Emaildirectory";
-            $sml = OpenXML::createExcel('', 'Email Directory');
+            $writer = new ExcelHelper($file);
+            $writer->setTitle('Email Directory');
 
+            $hdr = array("Email"=>"string", "Name"=>"String");
             // foreach ($rows as $rw) {
             while ($rw = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
                 $flds = array(
-                     0 => array('type' => "s", 'value' => $rw['Email']),
-                     1 => array('type' => "s", 'value' => $rw['Name']),
+                     $rw['Email'],
+                     $rw['Name']
                 );
-                $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+                $row = $writer->convertStrings($hdr, $flds);
+                $writer->writeSheetRow("Worksheet", $row);
             }
 
-            // Redirect output to a client's web browser (Excel2007)
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-            header('Cache-Control: max-age=0');
-
-            OpenXML::finalizeExcel($sml);
-            exit();
+            $writer->download();
 
          } else {
 
@@ -388,8 +338,5 @@ group by vm2.idName
         }
 
     }
-        return $dirmarkup;
-
+    return $dirmarkup;
 }
-
-

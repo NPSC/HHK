@@ -63,6 +63,9 @@ $selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
         <script type="text/javascript">
             // Init j-query
             $(document).ready(function() {
+            
+            	$("input[type=submit], input[type=button]").button();
+            
                 $('#btnCamp').click( function() {
                     var rb;
                     if ($('#rb_Cal_fy').prop('checked') ) {
