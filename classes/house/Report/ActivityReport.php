@@ -1,5 +1,4 @@
 <?php
-
 namespace HHK\House\Report;
 
 use HHK\Config_Lite\Config_Lite;
@@ -21,7 +20,7 @@ class ActivityReport {
 
     /**
      *
-     * @param \PDO $dbh
+     * @param PDO $dbh
      * @param string $startDate
      * @param string $endDate
      * @return string HTML table markup
@@ -320,21 +319,21 @@ class ActivityReport {
 
                 switch ($k) {
                     case 'idHospital':
-                        if (isset($uS->guestLookups[GLTableNames::Hospital][$log['old']])) {
-                            $log['old'] = $uS->guestLookups[GLTableNames::Hospital][$log['old']][1];
+                        if (isset($uS->guestLookups[GL_TableNames::Hospital][$log['old']])) {
+                            $log['old'] = $uS->guestLookups[GL_TableNames::Hospital][$log['old']][1];
                         }
-                        if (isset($uS->guestLookups[GLTableNames::Hospital][$log['new']])) {
-                            $log['new'] = $uS->guestLookups[GLTableNames::Hospital][$log['new']][1];
+                        if (isset($uS->guestLookups[GL_TableNames::Hospital][$log['new']])) {
+                            $log['new'] = $uS->guestLookups[GL_TableNames::Hospital][$log['new']][1];
                         }
 
                         break;
 
                     case 'idAssociation':
-                        if (isset($uS->guestLookups[GLTableNames::Hospital][$log['old']])) {
-                            $log['old'] = $uS->guestLookups[GLTableNames::Hospital][$log['old']][1] != '(None)' ? $uS->guestLookups[GLTableNames::Hospital][$log['old']][1] : '';
+                        if (isset($uS->guestLookups[GL_TableNames::Hospital][$log['old']])) {
+                            $log['old'] = $uS->guestLookups[GL_TableNames::Hospital][$log['old']][1] != '(None)' ? $uS->guestLookups[GL_TableNames::Hospital][$log['old']][1] : '';
                         }
-                        if (isset($uS->guestLookups[GLTableNames::Hospital][$log['new']])) {
-                            $log['new'] = $uS->guestLookups[GLTableNames::Hospital][$log['new']][1] != '(None)' ? $uS->guestLookups[GLTableNames::Hospital][$log['new']][1] : '';
+                        if (isset($uS->guestLookups[GL_TableNames::Hospital][$log['new']])) {
+                            $log['new'] = $uS->guestLookups[GL_TableNames::Hospital][$log['new']][1] != '(None)' ? $uS->guestLookups[GL_TableNames::Hospital][$log['new']][1] : '';
                         }
 
                         break;
@@ -405,7 +404,7 @@ class ActivityReport {
 
     /**
      *
-     * @param \PDO $dbh
+     * @param PDO $dbh
      * @param string $startDate
      * @param string $endDate
      * @return string HTML table markup
@@ -429,8 +428,8 @@ class ActivityReport {
         if($config->getString('webServices', 'Service_Name', '') != '') {
             $showExternlId = TRUE;
         }
-        
-        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
+
+        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
 
         // Dates
         if ($startDT != NULL) {
@@ -499,7 +498,7 @@ class ActivityReport {
         // get payment methods
         $stmtp = $dbh->query("select * from payment_method");
         while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
-            if ($t[0] > 0 && $t[0] != PaymentMethod::ChgAsCash) {
+            if ($t[0] > 0 && strtolower($t[1]) != 'chgascash') {
                 $payTypeTotals[$t[0]] = array('amount' => 0.00, 'count' => 0, 'title' => $t[1], 'active' => $active);
             }
         }
@@ -626,7 +625,7 @@ where `lp`.`idPayment` > 0
                 $attr['style'] = 'text-align:right;';
 
                 $amt = $p['Payment_Amount'];
-                $dateDT = new \DateTime($p['Payment_Date']);
+                $dateDT = new DateTime($p['Payment_Date']);
 
                 $voidContent = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer;float:right;', 'title' => 'View Payment Receipt'));
                 $actionButtonArray = array('type' => 'button', 'style'=>'font-size:.8em', 'id' => 'btnvr' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'data-amt' => $amt);
@@ -752,7 +751,7 @@ where `lp`.`idPayment` > 0
                             }
 
                             IF ($a['Auth_Last_Updated'] !== '') {
-                                $dateDT = new \DateTime($a['Auth_Last_Updated']);
+                                $dateDT = new DateTime($a['Auth_Last_Updated']);
                             }
                         }
                     }
@@ -799,7 +798,7 @@ where `lp`.`idPayment` > 0
                     .HTMLTable::makeTd($voidContent)
                     .HTMLTable::makeTd($dateDT->format('c'))
                     .HTMLTable::makeTd($r['Invoice_Updated_By'])
-                    .($showExternlId ? HTMLTable::makeTd($p['Payment_External_Id']) : '')
+                    .($showExternlId ? HTMLTable::makeTd($p['Payment_External_Id']) : HTMLTable::makeTd(''))
                     .HTMLTable::makeTd('')
                 );
             }
@@ -840,7 +839,7 @@ where `lp`.`idPayment` > 0
             $summary = HTMLContainer::generateMarkup('div', $summ->generateMarkup(), array('style' => 'float:left; margin-left:.8em;'));
             $summary .= HTMLContainer::generateMarkup('div', $pType->generateMarkup(), array('style' => 'float:left; margin-left:.8em;'));
         }
-        
+
         $refresh = HTMLInput::generateMarkup("Refresh", array('type'=>'button', 'id'=>'btnPayHistRef', 'style'=>'float:right; margin-right:0.8em;margin-top:1em;'));
 
         return HTMLContainer::generateMarkup('div', $header . $summary . $refresh . $listing, array('style' => 'min-width:900px;'));
@@ -913,12 +912,12 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
             // Hospital
             $hospital = '';
 
-            if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-                $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] . ' / ';
+            if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+                $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
             }
-            
-            if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
-                $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
+
+            if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
+                $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
             }
 
             $statusTxt = '';
@@ -969,7 +968,7 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
                         . HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-comment invAction', 'id' => 'vwpmt' . $r['idInvoice'], 'data-iid' => $r['idInvoice'], 'data-stat' => 'vpmt', 'style' => 'cursor:pointer;', 'title' => 'View Payments'));
             }
 
-            $dateDT = new \DateTime($r['Invoice_Date']);
+            $dateDT = new DateTime($r['Invoice_Date']);
 
             $billDate = ($r['BillDate'] == '' ? '' : date('c', strtotime($r['BillDate'])));
 
@@ -1012,4 +1011,3 @@ where i.Deleted = 0 and i.`Status` = '" . InvoiceStatus::Unpaid . "';";
     }
 
 }
-?>

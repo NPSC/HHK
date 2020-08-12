@@ -183,12 +183,12 @@ abstract class AbstractRole {
         if(isset($this->roleMember) && $this->roleMember->get_status() == MemStatus::Deceased){
             // Set for deceased
             $td = HTMLTable::makeTd('Deceased') . HTMLTable::makeTd('');
-            
+
         }else if ($this->getNoReturn() != '') {
-            
+
             // Set for no return
             $td = HTMLTable::makeTd('No Return', array('title'=>$this->getNoReturn() . ';  Id: ' . $this->getIdName())) . HTMLTable::makeTd('');
-            
+
         }else{
 
             $td = HTMLTable::makeTd($stay->getStayObj()->createStayButton($this->getRoleMember()->getIdPrefix())
