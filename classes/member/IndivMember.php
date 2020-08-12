@@ -320,16 +320,10 @@ class IndivMember extends AbstractMember {
             $langs = array();
 
             $stmt = $dbh->query("Select idLanguage, Title, ISO_639_1 from language where Display = 1");
-            $defaultLangId = '';
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
                 $langs[$r['idLanguage']] = array(0=>$r['idLanguage'], 1=>$r['Title'] . ' (' . $r['ISO_639_1'] . ')');
-
-                // Set English as default
-                if ($r['ISO_639_1'] == 'en') {
-                    $defaultLangId = $r['idLanguage'];
-                }
 
             }
 

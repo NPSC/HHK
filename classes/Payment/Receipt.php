@@ -769,7 +769,6 @@ WHERE
         $guestNites = 0;
         $visitFeeInvoiced = FALSE;
         $visitNights = 0;
-        $roomCharge = 0;
         $preTaxRmCharge = 0;
         $roomTaxPaid = array();
         $roomFeesPaid = 0;
@@ -870,7 +869,7 @@ WHERE
             }
 
             $rChg = $priceModel->tiersMarkup($r, $totalAmt, $tbl, $tiers, $startDT, $separator, $guestNites);
-            $roomCharge += $rChg;
+
             $preTaxRmCharge += $rChg;
             $separator = '';
 

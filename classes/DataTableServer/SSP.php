@@ -304,8 +304,6 @@ class SSP {
     {
         $bindings = array();
         $db = self::db( $conn );
-        $localWhereResult = array();
-        $localWhereAll = array();
         $whereAllSql = '';
         
         // Build the SQL query string from the request

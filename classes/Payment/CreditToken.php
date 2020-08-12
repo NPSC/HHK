@@ -78,7 +78,7 @@ class CreditToken {
         if ($gtRs->idGuest_token->getStoredVal() > 0) {
             // Update
         	$gtRs->Last_Updated->resetNewVal(date('Y-m-d'));
-        	$num = EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
+        	EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
             $idToken = $gtRs->idGuest_token->getStoredVal();
         } else {
             //Insert

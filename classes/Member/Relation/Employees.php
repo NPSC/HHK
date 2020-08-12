@@ -69,8 +69,6 @@ where c.Id = :id;";
 
         $table = new HTMLTable();
 
-        $htmlId = $this->idPrefex . $this->getHtmlId();
-
         $table->addHeaderTr(HTMLTable::makeTh('Employees', array('colspan'=>'3')));
 
         if (count($this->relNames) > 0) {

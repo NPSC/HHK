@@ -26,7 +26,6 @@ class VoidReturnReply extends AbstractCreditPayments {
         }
 
         $uS = Session::getInstance();
-        $vr = $pr->response;
 
         // Is a payment returned, or is this a stand-alone return?
         if ($payRs->Is_Refund->getStoredVal() == 1) {

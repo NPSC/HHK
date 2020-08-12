@@ -2,9 +2,6 @@
 
 namespace HHK\Payment\PaymentGateway\Vantiv;
 
-use HHK\Member\AbstractMember;
-use HHK\Member\Address\Address;
-use HHK\Member\Role\Guest;
 use HHK\Payment\{CreditToken, Receipt};
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -14,14 +11,13 @@ use HHK\Payment\PaymentGateway\Vantiv\Request\{CreditReturnTokenRequest, CreditR
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\Payment\PaymentResponse\AbstractCreditResponse;
 use HHK\Payment\PaymentResult\{CofResult, PaymentResult, ReturnResult};
-use HHK\SysConst\{GLTableNames, MemBasis, MpFrequencyValues, MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode};
+use HHK\SysConst\{MpFrequencyValues, MpStatusValues, MpTranType, PaymentMethod, PaymentStatusCode};
 use HHK\Tables\EditRS;
 use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
 use HHK\Tables\PaymentGW\CC_Hosted_GatewayRS;
 use HHK\sec\{SecurityComponent, Session, SysConfig};
-use HHK\Exception\{MemberException, PaymentException};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
-use HHK\Exception\RuntimeException;
+use HHK\Exception\{RuntimeException, PaymentException};
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 
 /**
@@ -952,8 +948,6 @@ class VantivGateway extends AbstractPaymentGateway {
             		);
         }
 
-        // New Merchant
-        // TODO
 
         if ($resultMessage != '') {
             $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));
