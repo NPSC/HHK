@@ -49,21 +49,20 @@ function testdb($ssn) {
 
     try {
 
-        switch ($ssn->dbms) {
-
-            case 'MS_SQL':
-                $dbh = initMS_SQL($ssn->databaseURL, $ssn->databaseName, $ssn->databaseUName, $ssn->databasePWord);
-                break;
-
-            case 'MYSQL':
-                $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $ssn->databaseUName, $ssn->databasePWord);
-                break;
-
-            default:
-                return "Bad Database Type: '" . $ssn->dbms . "'";
-
-        }
-
+    	$dbuName = $ssn->databaseUName;
+    	$dbPw = $ssn->databasePWord;
+    	$dbHost = $ssn->databaseURL;
+    	$dbName = $ssn->databaseName;
+    	
+    	$dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
+    	
+    	$options = [
+    			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    			PDO::ATTR_EMULATE_PREPARES   => false,
+    	];
+    	
+    	$dbh = new PDO($dsn, $dbuName, $dbPw, $options);
+    	
     } catch (PDOException $e) {
         return 'Database Error:  ' . $e;
     }
@@ -133,7 +132,7 @@ if (isset($_GET['r'])) {
     $result = filter_var($_GET['r'], FILTER_SANITIZE_STRING);
 }
 
-$pageTitle = $uS->siteName;
+$pageTitle = $ssn->siteName;
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 $copyYear = date('Y');
 

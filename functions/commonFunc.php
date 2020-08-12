@@ -11,6 +11,7 @@ use HHK\SysConst\PaymentMethod;
 use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
 use HHK\TableLog\HouseLog;
 use HHK\ExcelHelper;
+use HHK\sec\SecurityComponent;
 
 /**
  * commonFunc.php
@@ -69,8 +70,10 @@ function initPDO($override = FALSE)
         if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
             throw new RuntimeException("<br/>Database Error: " . $e->getMessage());
         }
+        
+        $sec = new SecurityComponent();
 
-        header('location:../reset.php?r=' . $e->getMessage());
+        header('location:' . $sec->getRootURL(). 'reset.php?r=' . $e->getMessage());
         die();
     }
 

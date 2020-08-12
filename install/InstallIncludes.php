@@ -34,7 +34,7 @@ date_default_timezone_set('America/Chicago');
 /*
  * includes
  */
-require (THIRD_PARTY . '/autoload.php');
+require (REL_BASE_SITE . 'vendor/autoload.php');
 //require (CLASSES . 'Exception_hk' . DS . 'Hk_Exception.php');
 
 require (FUNCTIONS . 'commonFunc.php');
