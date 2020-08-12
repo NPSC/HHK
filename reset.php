@@ -35,15 +35,7 @@ define('P_ROOT', dirname(__FILE__) . DS);
 define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
 
 require('vendor/autoload.php');
-
-//require 'classes' . DS . 'SiteConfig.php';
-//require ('classes' . DS .'PDOdata.php');
 require ('functions' . DS . 'commonFunc.php');
-//require ('classes' . DS. 'config'. DS . 'Lite.php');
-//require ('classes' . DS. 'sec' .DS . 'sessionClass.php');
-//require ('classes' . DS . 'SysConst.php');
-//require ('classes' . DS . 'HTML_Controls.php');
-//require ('classes' . DS. 'sec' . DS . 'SecurityComponent.php');
 
 function testdb($ssn) {
 
@@ -168,7 +160,7 @@ $tbl = SiteConfig::createCliteMarkup($config, new Config_Lite('conf' . DS . 'sit
                     <input type="submit" name="btnSave" id="btnSave" value="Save" style="margin-left:700px;margin-top:20px;"/>
                 </form>
                 <p style="color:red;margin:10px;"><?php echo $result; ?></p>
-                <div style="margin-top:20px;"><a href ="http://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
+                <div style="margin-top:20px;"><a href ="http://nonprofitsoftwarecorp.org" class="nplogo" ></a></div>
                 <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software</div>
 
                 </div>

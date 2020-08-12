@@ -927,7 +927,7 @@ $('.inputForChair').click(function () {
                                 <span id="listDateRange" style="margin-left:15px;"></span>
                              </div>
                         <div style="clear: both;"></div>
-                        <table class="display" cellpadding="0" cellspacing="0" border="0" width='100%' id="dataTbl"></table>
+                        <table class="display" border="0" id="dataTbl"></table>
                     </div>
                     <div id="calTab">
                         <div id="divnoPrt" style="margin-bottom:7px; padding:3px; border-bottom: solid 1px;">

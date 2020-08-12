@@ -3,9 +3,12 @@
 namespace HHK;
 
 use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode, RoomRateCategories};
+use HHK\SysConst\ResourceStatus;
 use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLTable};
+use HHK\House\Resource\ResourceTypes;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\Exception\RuntimeException;
 
 class GlStmt {
 
@@ -45,7 +48,7 @@ class GlStmt {
 
 	/**
 	 *
-	 * @return GlCodes
+	 * @return GlStmt
 	 */
 	public function mapRecords() {
 
@@ -112,7 +115,7 @@ class GlStmt {
 		}
 
 		if ($p['pUpdated'] != '') {
-			$pUpDate = new DateTime($p['pUpdated']);
+			$pUpDate = new \DateTime($p['pUpdated']);
 		} else {
 			$pUpDate = NULL;
 		}
@@ -522,7 +525,7 @@ where
 		$baArray['']['paid'] = 0;
 		$baArray['']['pend'] = 0;
 
-		$priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+		$priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
 		$overPay = 0;
 		$preIntervalPay = 0;
@@ -631,7 +634,7 @@ where
 			}
 
 			if ($r['pUpdated'] != '') {
-				$pUpDate = new DateTime($r['pUpdated']);
+				$pUpDate = new \DateTime($r['pUpdated']);
 			} else {
 				$pUpDate = NULL;
 			}
@@ -800,8 +803,8 @@ where
 
 		$totalOOSNites = 0;
 
-		$stDT = new DateTime($start . ' 00:00:00');
-		$enDT = new DateTime($end . ' 00:00:00');
+		$stDT = new \DateTime($start . ' 00:00:00');
+		$enDT = new \DateTime($end . ' 00:00:00');
 		$numNights = $enDT->diff($stDT, TRUE)->days;
 
 		$qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, rm.Rate_Code, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
@@ -817,14 +820,14 @@ order by r.idResource;";
 		$rooms = array();
 
 		// Get rooms and oos days
-		while ($r = $rstmt->fetch(PDO::FETCH_ASSOC)) {
+		while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
 
 			$nites = 0;
 
 			if ($r['Start_Date'] != '' && $r['End_Date'] != '') {
-				$arriveDT = new DateTime($r['Start_Date']);
+				$arriveDT = new \DateTime($r['Start_Date']);
 				$arriveDT->setTime(0, 0, 0);
-				$departDT = new DateTime($r['End_Date']);
+				$departDT = new \DateTime($r['End_Date']);
 				$departDT->setTime(0,0,0);
 
 				// Only collect days within the time period.
@@ -978,7 +981,7 @@ order by r.idResource;";
 		$sDay = '';
 
 		if ($iDay < 1 || $iDay > 28) {
-			throw new Hk_Exception_Runtime('The Start-Day is not viable: ' . $iDay);
+			throw new RuntimeException('The Start-Day is not viable: ' . $iDay);
 		}
 
 		// Format with leading 0's

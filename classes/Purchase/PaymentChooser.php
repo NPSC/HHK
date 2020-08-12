@@ -33,12 +33,9 @@ class PaymentChooser {
      * @param \PDO $dbh
      * @param array $post
      * @param string $rtnIndex
-     * @return \PaymentManagerPayment
+     * @return PaymentManagerPayment
      */
     public static function readPostedPayment(\PDO $dbh, $post, $rtnIndex = ReturnIndex::ReturnIndex) {
-
-        $uS = Session::getInstance();
-
 
         // Payment Type
         if (isset($post['PayTypeSel'])) {
@@ -59,7 +56,7 @@ class PaymentChooser {
 
         // Payment Date
         if (isset($post['paymentDate']) && $post['paymentDate'] != '') {
-            $pDT = new DateTime(filter_var($post['paymentDate'], FILTER_SANITIZE_STRING));
+            $pDT = new \DateTime(filter_var($post['paymentDate'], FILTER_SANITIZE_STRING));
             $pmp->setPayDate($pDT->format('Y-m-d H:i:s'));
         } else {
             $pmp->setPayDate(date('Y-m-d H:i:s'));
@@ -268,7 +265,7 @@ class PaymentChooser {
     }
 
 
-    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, PaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
+    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -329,7 +326,7 @@ class PaymentChooser {
                 $idGuest, $idRegistration, $prefTokenId);
 
 
-        if (isset($uS->nameLookups[GL_TableNames::PayType][PayType::Invoice])) {
+        if (isset($uS->nameLookups[GLTableNames::PayType][PayType::Invoice])) {
             $panelMkup .= self::invoiceBlock();
         }
 
@@ -342,7 +339,7 @@ class PaymentChooser {
         unset($payTypes[PayType::Invoice]);
         $rtninvoiceBlock = '';
 
-        if (isset($uS->nameLookups[GL_TableNames::PayType][PayType::Invoice])) {
+        if (isset($uS->nameLookups[GLTableNames::PayType][PayType::Invoice])) {
         	$rtninvoiceBlock = self::invoiceBlock('r');
         }
 
@@ -410,7 +407,7 @@ class PaymentChooser {
         return $trs;
     }
 
-    public static function createChangeRoomMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, PaymentGateway $paymentGateway, $prefTokenId = 0) {
+    public static function createChangeRoomMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -612,7 +609,7 @@ ORDER BY v.idVisit , v.Span;");
                         $dbh, $uS->DefaultPayType,
                         $payTypes,
                         $labels,
-                        PaymentGateway::factory($dbh, $uS->PaymentGateway, ''),
+                        AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, ''),
                         $id, 0, $prefTokenId, '');
 
                 $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
@@ -852,7 +849,7 @@ ORDER BY v.idVisit , v.Span;");
         return $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
     }
 
-    protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $labels, PaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
+    protected static function showPaySelection(\PDO $dbh, $defaultPayType, $payTypes, $labels, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId = 0) {
 
         $payTbl = new HTMLTable();
 
@@ -908,7 +905,7 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblPaySelect'));
     }
 
-    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, PaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId, $invBlock) {
+    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId, $invBlock) {
 
         $payTbl = new HTMLTable();
 
@@ -958,7 +955,7 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblRtnSelect'));
     }
 
-    public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, PaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;') {
+    public static function CreditBlock(\PDO $dbh, &$tbl, $tkRsArray, AbstractPaymentGateway $paymentGateway, $prefTokenId = 0, $index = '', $display = 'display:none;') {
 
         if (count($tkRsArray) < 1 && $index == ReturnIndex::ReturnIndex) {
             // Cannot return to a new card...

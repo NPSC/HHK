@@ -847,7 +847,7 @@ $uS->guestId = $id;
                         <?php echo $demogTab; ?>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table style="width:100%;" id="dataTbl" border-style: none></table>
+                      <table style="width:100%;" id="dataTbl"></table>
                     </div>
                     <div id="exclTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
                         <?php echo $ExcludeTab; ?>
@@ -926,7 +926,7 @@ $uS->guestId = $id;
                         </div>
                     </div>
                     <div id="vchangelog" class="ignrSave">
-                      <table style="width:100%;" id="dataTbl" border-style: none></table>
+                      <table style="width:100%;" id="dataTbl" ></table>
                     </div>
                     <div id="vfin"></div>
                     <div id="vVisits" class="ui-tabs-hide" style="min-width: 600px; display:none">

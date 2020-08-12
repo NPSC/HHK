@@ -2,10 +2,12 @@
 
 namespace HHK\House\GLCodes;
 
-use HHK\SysConst\InvoiceStatus;
-use HHK\SysConst\ItemId;
-use HHK\SysConst\PaymentStatusCode;
+use HHK\SysConst\{InvoiceStatus, VolMemberType, ItemId, PaymentStatusCode};
 use HHK\SFTPConnection;
+use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLTable;
+
 
 
 class GlCodes {
@@ -41,14 +43,14 @@ class GlCodes {
 		$this->endDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->glParm->getStartDay());
 
 		// Start date one month prior.
-		$this->startDate = $this->endDate->sub(new DateInterval('P1M'));
+		$this->startDate = $this->endDate->sub(new \DateInterval('P1M'));
 
 		// Special start date for 9-2020 only
 		if ($this->endDate->format('m-Y') == '09-2020') {
 			$this->startDate = $this->startDate->setDate(2020, 9, 1);
 		}
 
-		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $this->endDate->sub(new DateInterval('P1D'))->format('M j, Y'));
+		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $this->endDate->sub(new \DateInterval('P1D'))->format('M j, Y'));
 
 		$this->fileId = 'GL_HHK_' . $this->startDate->format('Ymd') . '_' . getRandomString(3);
 
@@ -132,14 +134,14 @@ class GlCodes {
 
 		// Check dates
 		if ($p['pTimestamp'] != '') {
-			$this->paymentDate = new DateTime($p['pTimestamp']);
+			$this->paymentDate = new \DateTime($p['pTimestamp']);
 		} else {
 			$this->recordError("Missing Payment Timestamp. Payment Id = ". $p['idPayment']);
 			return;
 		}
 
 		if ($p['pUpdated'] != '') {
-			$pUpDate = new DateTime($p['pUpdated']);
+			$pUpDate = new \DateTime($p['pUpdated']);
 		} else {
 			$pUpDate = NULL;
 		}
@@ -388,7 +390,7 @@ class GlCodes {
 		$query = "call gl_report('" . $this->startDate->format('Y-m-d') . "','" . $this->endDate->format('Y-m-d') . "')";
 
     	$stmt = $dbh->query($query);
-    	$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$stmt->nextRowset();
 
     	foreach ($rows as $p) {
@@ -510,7 +512,7 @@ class GlCodes {
 			$bytesWritten = $sftp->uploadFile($data, $this->glParm->getRemoteFilePath() . $this->fileId . '.csv');
 
 		}
-		catch (Exception $e)
+		catch (RuntimeException $e)
 		{
 			$this->recordError($e->getMessage());
 			return FALSE;
@@ -700,7 +702,7 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code
 		// Billing agent markup
 		$glTbl = new HTMLTable();
 
-		while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+		while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 			$entry = '';
 
 			if ($r['Name_First'] != '' || $r['Name_Last'] != '') {
@@ -779,7 +781,7 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code
 		$sDay = '';
 
 		if ($iDay < 1 || $iDay > 28) {
-			throw new Hk_Exception_Runtime('The Start-Day is not viable: ' . $iDay);
+			throw new RuntimeException('The Start-Day is not viable: ' . $iDay);
 		}
 
 		// Format with leading 0's
