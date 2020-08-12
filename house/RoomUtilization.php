@@ -1,4 +1,12 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\GLTableNames;
+use HHK\House\Report\RoomReport;
+use HHK\HTMLControls\HTMLSelector;
+
 /**
  * RoomUtilization.php
  *
@@ -8,7 +16,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
+/*
 require (CLASSES . 'History.php');
 require CLASSES . 'TableLog.php';
 
@@ -19,8 +27,7 @@ require (HOUSE . 'Resource.php');
 require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'RoomReport.php');
 
-require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php';
+require (CLASSES . 'ColumnSelectors.php'); */
 
 
 
@@ -41,9 +48,9 @@ $menuMarkup = $wInit->generatePageMenu();
 $labels = new Config_Lite(LABEL_FILE);
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -79,8 +86,8 @@ if ($uS->fy_diff_Months == 0) {
 
 // Hospital and association lists
 $hospList = array();
-if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+    $hospList = $uS->guestLookups[GLTableNames::Hospital];
 }
 
 $hList = array();

@@ -355,10 +355,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Role_Codes','100','Web User','','',0),
 ('Role_Codes','700','Guest','','',0),
 
-('Room_Category','dh','House','','u',10),
-('Room_Category','gada','Hospital','','u',20),
-('Room_Category','jph','Private Host','','u',30),
-('Room_Category','nm','Motel','','u',40),
+('Room_Category','dh','House','','',0),
+('Room_Category','gada','Hospital','','',0),
+('Room_Category','jph','Private Host','','',0),
+('Room_Category','nm','Motel','','',0),
 
 ('Room_Cleaning_Days', 'a', '7 Days', '7', 'ha',10),
 ('Room_Cleaning_Days', 'b', '14 Days', '14', 'ha',20),
@@ -368,8 +368,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Room_Group', 'Category', 'Room Category', 'Room_Category','',0),
 ('Room_Group', 'Report_Category', 'Report Category', 'Room_Rpt_Cat','',0),
 
-('Room_Rpt_Cat', '1', '1st Floor', '', 'h', 20),
-('Room_Rpt_Cat', '2', '2nd Floor', '', 'h', 30),
+('Room_Rpt_Cat', '1', '1st Floor', '', 'h', 0),
+('Room_Rpt_Cat', '2', '2nd Floor', '', 'h', 0),
 
 ('Room_Status', 'a', 'Clean', '','u',0),
 ('Room_Status', 'dty', 'Dirty', '','u',0),
@@ -611,7 +611,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descrip
 -- ;
 
 
-REPLACE INTO `template_tag` VALUES 
+REPLACE INTO `template_tag` VALUES
 (6,'c','Guest Name','${GuestName}',''),
 (7,'c','Expected Arrival','${ExpectedArrival}',''),
 (8,'c','Expected Departure','${ExpectedDeparture}',''),
@@ -689,6 +689,7 @@ REPLACE INTO `payment_method` (`idPayment_method`, `Method_Name`) VALUES
 ('1', 'Cash'),
 ('2', 'Charge'),
 ('3', 'Check'),
+('4', 'Charge'),
 ('5', 'Transfer');
 -- ;
 
@@ -856,7 +857,7 @@ REPLACE INTO `web_sites`
 LOCK TABLES `page` WRITE;
 INSERT INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`,`Hide`,`Web_Site`,`Menu_Parent`,`Menu_Position`,`Type`) VALUES
 (1,'index.php',0,'Welcome','',0,'r','','','p'),(2,'index.php',0,'','',0,'a','','','p'),(3,'NameEdit.php',2,'Edit Members','',0,'a','','','p'),(4,'EventShells.php',2,'Repeat Events','',0,'a','35','f','p'),(5,'KeyStats.php',2,'Key Stats','',0,'a','67','g','p'),(6,'Misc.php',2,'Miscellaneous','',0,'a','34','a','p'),(7,'PageEdit.php',2,'Edit Pages','',0,'a','34','e','p'),(8,'RegisterUser.php',2,'Register Web Users','',0,'a','35','e','p'),(9,'CategoryEdit.php',2,'Edit Categories','',0,'a','34','d','p'),(10,'VolListing.php',2,'Web Users','',0,'a','35','c','p'),
-(11,'campaignEdit.php',2,'Edit Campaigns','',0,'a','34','c','p'),(12,'campaignReport.php',2,'Campaigns','',0,'a','32','d','p'),(13,'checkDateReport.php',2,'Check Date','',0,'a','32','j','p'),(14,'directory.php',2,'Directory','',0,'a','32','a','p'),(15,'donate.php',0,'','',0,'a','','','s'),(16,'donationReport.php',2,'Donations','',0,'a','32','b','p'),(18,'liveGetCamp.php',0,'','',0,'a','','','s'),(19,'liveNameSearch.php',0,'','',0,'a','','','s'),
+(11,'campaignEdit.php',2,'Edit Campaigns','',0,'a','34','c','p'),(12,'campaignReport.php',2,'Campaigns','',0,'a','32','d','p'),(14,'directory.php',2,'Directory','',0,'a','32','a','p'),(15,'donate.php',0,'','',0,'a','','','s'),(16,'donationReport.php',2,'Donations','',0,'a','32','b','p'),(18,'liveGetCamp.php',0,'','',0,'a','','','s'),(19,'liveNameSearch.php',0,'','',0,'a','','','s'),
 (20,'ws_Report.php',0,'','',0,'a','','','s'),(21,'ws_gen.php',0,'','',0,'a','','','s'),(22,'VolNameEdit.php',26,'My Volunteer Info','',0,'v','0','d','p'),(23,'forgotpw.php',26,'Forgot My Password','',0,'v','','','p'),(24,'gCalFeed.php',0,'','',0,'v','','','s'),(26,'index.php',0,'','',0,'v','','','p'),(27,'register_web.php',26,'Register','',0,'v','','','p'),(28,'WebRegister.php',0,'','',0,'v','','','s'),(29,'ws_vol.php',0,'','',0,'v','','','s'),
 (31,'index.php',0,'','',0,'h','','','p'),(32,'_directory.php',2,'Reports','',0,'a','0','e','p'),(33,'categoryReport.php',2,'Categories','',0,'a','32','f','p'),(34,'_Misc.php',2,'DB Maintenance','',0,'a','0','k','p'),(35,'_VolListing.php',2,'Web Users','',0,'a','0','j','p'),(36,'NameEdit_Donations',0,'','',0,'a','','','c'),(37,'NameEdit_Maint',0,'','',0,'a','','','c'),(39,'ws_gen_Maint',0,'','',0,'a','','','c'),
 (45,'VolNameSearch.php',0,'','',0,'v','','','s'),(46,'guestadmin',0,'','',0,'h','','','c'),(47,'guestaccess',0,'','',0,'v','','','c'),(49,'recent.php',2,'Recent Changes','',0,'a','67','r','p'),
@@ -876,9 +877,9 @@ UNLOCK TABLES;
 --
 LOCK TABLES `page_securitygroup` WRITE;
 INSERT INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES
-(1,'pub'),(2,'pub'),(3,'mm'),(4,'mm'),(5,'mm'),(6,'db'),(7,'db'),(8,'mm'),(9,'db'),(10,'mm'),(11,'db'),(12,'dm'),(13,'mm'),(14,'mm'),(15,'dm'),(16,'dm'),
+(1,'pub'),(2,'pub'),(3,'mm'),(4,'mm'),(5,'mm'),(6,'db'),(7,'db'),(8,'mm'),(9,'db'),(10,'mm'),(11,'db'),(12,'dm'),(14,'mm'),(15,'dm'),(16,'dm'),
 (18,'mm'),(19,'mm'),(20,'dm'),(21,'g'),(21,'ga'),(21,'mm'),(22,'v'),(23,'pub'),(24,'v'),(26,'pub'),(27,'pub'),(28,'pub'),(29,'v'),(31,'pub'),(32,'mm'),(33,'mm'),
-(34,'db'),(35,'mm'),(36,'dm'),(37,'db'),(39,'db'),(45,'v'),(46,'ga'),(47,'g'),(49,'mm'),(50,'mm'),(51,'dna'),(52,'dm'),(55,'v'),(56,'dna'),(57,'mm'),(59,'g'),(59,'ga'),(59, 'mm'),(59, 'gr'),
+(34,'db'),(35,'mm'),(36,'dm'),(37,'db'),(39,'db'),(45,'v'),(46,'ga'),(47,'g'),(49,'mm'),(50,'mm'),(51,'dna'),(52,'dm'),(55,'v'),(56,'dna'),(57,'mm'),(59,'g'),(59,'ga'),(59, 'mm'),(59, 'gr'), (59, 'v'),
 (60,'g'),(62,'g'),(62,'ga'),(65,'mm'),(66,'mm'),(67,'mm'),(68,'v'),(69,'pub'),(70,'pub'),(71,'pub'),(72,'g'),(72,'ga'),(74,'g'),(74,'ga'),(75,'g'),(75,'ga'),
 (76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
 (95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),
@@ -928,7 +929,7 @@ REPLACE INTO `language` (`idLanguage`,`Title`,`ISO_639_1`,`Display`) VALUES
 --
 -- Dumping data for table `document`
 --
-INSERT INTO `document` VALUES 
+INSERT INTO `document` VALUES
 (1,'Registration Form','','form','html','','','en',NULL,'<p style=\"margin-bottom:10px;\">The (House Name) is a not-for-profit healthcare hospitality house. The Guest House is <span style=\"font-style: italic;\">strictly a lodging facility for referred patients that are actively receiving care at our partner institutions and their families/friends.</span></p>\r\n<ul style=\"list-style-type:disc;margin-left: 20px;\">\r\n    <li><span style=\"font-weight: bold;\">All guests must register at the Front Desk</span></li>\r\n    <li><span style=\"font-weight: bold;\">Smoking is strictly prohibited</span></li>\r\n    <li><span style=\"font-weight: bold;\">Staff must have access to room</span> to perform regular cleaning and maintenance. Rooms must be kept orderly to ensure that they are cleaned properly.</li>\r\n    <li><span style=\"font-weight: bold;\">In case of an emergency,</span> call ###.</li>\r\n    <li><span style=\"font-weight: bold;\">Pets are prohibited.</span> If a pet is found in a guest room, staff will ask that it be removed and may ask guest to leave the facility.</li>\r\n    <li>Do not burn candles, incense or any other flammable objects in the rooms.</li>\r\n    <li><span style=\"font-weight: bold;\">Food must be stored properly</span> in sealed containers or in the refrigerator. Dispose of food properly at time of check out.</li>\r\n    <li><span style=\"font-weight: bold;\">Do not remove anything from the rooms.</span>  Everything has been generously donated to us and is for the comfort of all our guests.  If you find an item missing, please contact our office so that we can replace it before the next guest.</li>\r\n    <li><span style=\"font-weight: bold;\">Do not try to make any repairs yourself.</span> Please contact the House Manager or Front Desk for any problems with appliances, electrical outlets, or plumbing.</li>\r\n    <li>The House strives to provide a supportive, welcoming community for its guests; <span style=\"font-weight: bold;\">please help us by being respectful of all staff, volunteers, fellow guests, and residents.</span></li>\r\n    <li><span style=\"font-weight: bold;\">Check out time is 10 AM.</span> Drop off your key(s) at the Front Desk.</li>\r\n</ul>\r\n<p style=\"margin-top:10px;\">Failure to follow any or all of these policies or to abuse the privilege of staying at the House in anyway can result in the forfeiture of the family&rsquo;s stay. Guests are responsible to communicate any issues or problems directly to (staff).</p>\r\n<p style=\"margin-top:10px;\"><span style=\"font-weight: bold;\">Disclaimer:</span>  I have executed this release willingly and understand that by signing this release. I give up any right I may have to sue or make any claim or demand on my behalf or on the behalf of any family member for any injuries incurred during the course of residency at the House.  I understand and intend that this release cover all injuries, even if such injuries are a result of the negligence of the (House) or any person associated with the House.  The authorization and release constitutes the entire agreement between the House and myself regarding the subjects addressed in this document.  The House reserves the right to inspect any room at any time.</p>\r\n<p style=\"font-weight: bold;margin-top:10px; font-style: italic;\">I/We have read, understand, and agree to all the conditions of this agreement that I/we received today. By signing this guest registration form I/WE agree to abide by the rules and regulations of the House and will communicate this to the other members of my party.</p>\r\n','a','2019-10-12 14:57:39','','patch','2019-10-12 19:57:39'),
 (2,'Reservation Confirmation','','form','html','','en','en',NULL,'<p>Dear ${GuestName}:</p><p>Thank you for your reservation. This is a confirmation for the following dates: ${ExpectedArrival} until ${ExpectedDeparture} for ${Nites} nights for an estimated $${Amount}.</p><p>${VisitFeeNotice}</p><p>Should your plans change, please let us know as soon as possible so that we can serve others in need accommodations.</p><h4>Please enter the facility at:</h4><blockquote><p>(address)</p><p>(City, State, Zip)</p></blockquote><p><b><br></b></p><p><b>Check-in:</b> 4pm-12am</p><p><b>Check-out:</b> Before 10am.</p><h4><br></h4><h4>Parking</h4><p>(Parking Instructions)</p><h4><br></h4><h4>Before You Arrive</h4><p>(Arrival Instructions)</p><p>Should you have any questions or comments or need to change your reservation, please call our office at (phone).</p><p>We look forward to seeing you,</p><p>Hospitality House Staff</p>${Notes}<br>','a','2019-10-12 14:57:39','','patch','2019-10-12 19:57:39');
 -- ;

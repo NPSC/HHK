@@ -1,4 +1,18 @@
 <?php
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\HTMLContainer;
+use HHK\Payment\PaymentSvcs;
+use HHK\Exception\RuntimeException;
+use HHK\House\Reservation\Reservation_1;
+use HHK\Member\Role\Guest;
+use HHK\House\TemplateForm\ConfirmationForm;
+use HHK\House\ReserveData\ReserveData;
+use HHK\Member\Role\AbstractRole;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\SysConst\RoomRateCategories;
+
 /**
  * Reserve.php
  *
@@ -9,7 +23,7 @@
  */
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
+/* require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'visitRS.php');
@@ -64,7 +78,7 @@ require (HOUSE . 'Constraint.php');
 require (HOUSE . 'Attributes.php');
 require (HOUSE . 'PaymentManager.php');
 require (HOUSE . 'PaymentChooser.php');
-
+ */
 
 try {
     $wInit = new webInit();
@@ -100,7 +114,7 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
@@ -124,8 +138,8 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
 
-    require(HOUSE . 'TemplateForm.php');
-    require(HOUSE . 'ConfirmationForm.php');
+    //require(HOUSE . 'TemplateForm.php');
+    //require(HOUSE . 'ConfirmationForm.php');
 
     try {
         $confirmForm = new ConfirmationForm($dbh, $docId);
@@ -177,7 +191,7 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 } else {
     // Guest Search markup
-    $gMk = Role::createSearchHeaderMkup("gst", "Guest or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ");
+    $gMk = AbstractRole::createSearchHeaderMkup("gst", "Guest or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ");
     $mk1 = $gMk['hdr'];
 
 }
@@ -261,7 +275,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 
     </head>
@@ -316,7 +330,7 @@ $resvObjEncoded = json_encode($resvAr);
         <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
             <form id="frmConfirm" action="Reserve.php" method="post"></form>
         </div>
-        <input type="hidden" value="<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>" id="fixedRate"/>
+        <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate"/>
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>

@@ -1,4 +1,16 @@
 <?php
+
+namespace HHK\House;
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
+use HHK\TableLog\VisitLog;
+use HHK\Tables\EditRS;
+use HHK\Tables\Registration\RegistrationRS;
+use HHK\sec\Session;
+use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+
 /**
  * Registration.php
  *
@@ -15,7 +27,7 @@ class Registration {
     protected $lodgingMOA;
     protected $rawRow;
 
-    public function __construct(PDO $dbh, $idPsg, $idRegistration = 0) {
+    public function __construct(\PDO $dbh, $idPsg, $idRegistration = 0) {
 
         $this->regRS = new RegistrationRs();
         $rows = array();
@@ -41,7 +53,7 @@ class Registration {
         }
     }
 
-    public static function loadDepositBalance(PDO $dbh, $idGroup) {
+    public static function loadDepositBalance(\PDO $dbh, $idGroup) {
 
         $depositBalance = 0.0;
         $idg = intval($idGroup, 10);
@@ -64,7 +76,7 @@ where
         and i.idGroup = " . $idg;
         $stmt = $dbh->query($query);
 
-        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (count($rows) == 1) {
             $depositBalance = floatval($rows[0][0]);
@@ -73,7 +85,7 @@ where
         return $depositBalance;
     }
 
-    public static function loadLodgingBalance(PDO $dbh, $idGroup) {
+    public static function loadLodgingBalance(\PDO $dbh, $idGroup) {
 
         $lodgingBalance = 0.0;
         $idg = intval($idGroup, 10);
@@ -101,7 +113,7 @@ where
         and i.idGroup = " . $idg;
         $stmt = $dbh->query($query);
 
-        $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (count($rows) == 1) {
             $lodgingBalance = floatval($rows[0][0]);
@@ -128,7 +140,7 @@ where
 
         if ($idRegistration > 0) {
             $stmt = $dbh->query("select Pref_Token_Id from registration where idRegistration = $idRegistration");
-            $rows = $stmt->fetchAll(PDO::FETCH_NUM);
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
             if (count($rows) == 1) {
                 $tokenId = $rows[0][0];
             }
@@ -261,7 +273,7 @@ where
         }
     }
 
-    public function saveRegistrationRs(PDO $dbh, $idPsg, $uname) {
+    public function saveRegistrationRs(\PDO $dbh, $idPsg, $uname) {
 
         $msg = "";
 
@@ -301,14 +313,14 @@ where
                 $msg .= 'Registration Updated.  ';
             }
         } else {
-            throw new Hk_Exception_Runtime('Registration missing a PSG Id.');
+            throw new RuntimeException('Registration missing a PSG Id.');
         }
 
         EditRS::updateStoredVals($this->regRS);
         return $msg;
     }
 
-    public function createRegMarkup(PDO $dbh, $adminKey) {
+    public function createRegMarkup(\PDO $dbh, $adminKey) {
 
         // get session instance
         $uS = Session::getInstance();

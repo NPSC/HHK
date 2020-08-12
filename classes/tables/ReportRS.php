@@ -1,6 +1,10 @@
 <?php
+namespace HHK\Tables;
+
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer, DbBlobSanitizer};
+
 /**
- * visitRS.php
+ * ReportRS.php
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2019 <nonprofitsoftwarecorp.org>
@@ -11,7 +15,7 @@
 /**
  *  ReportRS
  */
-class ReportRs extends TableRS {
+class ReportRS extends AbstractTableRS {
 
     public $idReport;   // int(11) NOT NULL AUTO_INCREMENT,
     public $Title;   // VARCHAR(240) NOT NULL ,
@@ -50,5 +54,5 @@ class ReportRs extends TableRS {
         $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         parent::__construct($TableName);
     }
-
 }
+?>

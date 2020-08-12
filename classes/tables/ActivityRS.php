@@ -1,4 +1,8 @@
 <?php
+namespace HHK\Tables;
+
+use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDecimalSanitizer, DbDateSanitizer};
+
 /**
  * ActivityRS.php
  *
@@ -12,7 +16,7 @@
  * Description of ActivityRS
  * @author Eric
  */
-class ActivityRS extends TableRS {
+class ActivityRS extends AbstractTableRS {
 
     public $idActivity;   // int(11) NOT NULL AUTO_INCREMENT,
     public $idName;   // int(11) NOT NULL,

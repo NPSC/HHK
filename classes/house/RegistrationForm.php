@@ -1,5 +1,18 @@
 <?php
 
+namespace HHK\House;
+
+use HHK\Member\Role\Guest;
+use HHK\sec\Session;
+use HHK\Member\AbstractMember;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\PhonePurpose;
+use HHK\Config_Lite\Config_Lite;
+use HHK\Member\Address\Address;
+use HHK\Member\Address\Phones;
+use HHK\HTMLControls\HTMLContainer;
+
 /**
  * RegistrationForm.php
  *
@@ -23,9 +36,9 @@ class RegistrationForm {
         $this->labels = new Config_Lite(LABEL_FILE);
         $fullNames = array();
 
-        $house = Member::GetDesignatedMember($dbh, $uS->sId, MemBasis::NonProfit);
-        $address = new Address($dbh, $house, $uS->nameLookups[GL_TableNames::AddrPurpose]);
-        $phones = new Phones($dbh, $house, $uS->nameLookups[GL_TableNames::PhonePurpose]);
+        $house = AbstractMember::GetDesignatedMember($dbh, $uS->sId, MemBasis::NonProfit);
+        $address = new Address($dbh, $house, $uS->nameLookups[GLTableNames::AddrPurpose]);
+        $phones = new Phones($dbh, $house, $uS->nameLookups[GLTableNames::PhonePurpose]);
 
         $doc = $this->makeHeader($logoUrl, $logoWidth, $uS->siteName, $house->get_webSite(), $address, $phones);
 
@@ -116,8 +129,8 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
     public function makeHeader($imgSrc, $imgWidth, $houseName, $houseWebSite, $houseAddrObj, $housePhoneObj) {
 
         $adrData = $houseAddrObj->get_Data();
-        $phoneData = $housePhoneObj->get_Data(Phone_Purpose::Office);
-        $faxData = $housePhoneObj->get_Data(Phone_Purpose::Fax);
+        $phoneData = $housePhoneObj->get_Data(PhonePurpose::Office);
+        $faxData = $housePhoneObj->get_Data(PhonePurpose::Fax);
 
 
         $mkup =  "<div  style='float:left;'>
@@ -202,7 +215,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
         return $mkup . '</table></div>';
     }
 
-    public function makePayor(\Guest $guest, $cardName, $cardType, $cardNumber, $expDate, $expectedPayType, $paymentMessage) {
+    public function makePayor(Guest $guest, $cardName, $cardType, $cardNumber, $expDate, $expectedPayType, $paymentMessage) {
 
         $addr = $guest->getAddrObj();
         $email = $guest->getEmailsObj();
@@ -241,8 +254,8 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
         $uS = Session::getInstance();
 
         $relat = '';
-        if (isset($uS->guestLookups[GL_TableNames::PatientRel][$relation])) {
-            $relat = $uS->guestLookups[GL_TableNames::PatientRel][$relation][1];
+        if (isset($uS->guestLookups[GLTableNames::PatientRel][$relation])) {
+            $relat = $uS->guestLookups[GLTableNames::PatientRel][$relation][1];
         }
 
         return '<div class="imdlist">2. Additional Guest (optional) <span style="text-decoration:underline;">OR</span> Emergency Contact Information if only ONE guest checking in </div>
@@ -263,7 +276,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     }
 
-    public function makeFirstAdditionalGuest(\Guest $guest) {
+    public function makeFirstAdditionalGuest(Guest $guest) {
 
         $name = $guest->getRoleMember();
 
@@ -271,14 +284,14 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     }
 
-    public function makeAdditionalGuest(\Guest $guest, $index) {
+    public function makeAdditionalGuest(Guest $guest, $index) {
 
         $name = $guest->getRoleMember();
         $uS = Session::getInstance();
 
         $relat = '';
-        if (isset($uS->guestLookups[GL_TableNames::PatientRel][$guest->getPatientRelationshipCode()])) {
-            $relat = $uS->guestLookups[GL_TableNames::PatientRel][$guest->getPatientRelationshipCode()][1];
+        if (isset($uS->guestLookups[GLTableNames::PatientRel][$guest->getPatientRelationshipCode()])) {
+            $relat = $uS->guestLookups[GLTableNames::PatientRel][$guest->getPatientRelationshipCode()][1];
         }
 
         return '<div class="imdlist">' . $index . '. Additional Guest (optional)</div>
@@ -309,7 +322,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
     </div>';
     }
 
-    public function makePrimaryGuest(\Guest $guest) {
+    public function makePrimaryGuest(Guest $guest) {
 
         $name = $guest->getRoleMember();
         $addr = $guest->getAddrObj();
@@ -317,7 +330,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
         $email = $guest->getEmailsObj();
 
         $adrData = $addr->get_Data();
-        $phoneData = $phone->get_Data(Phone_Purpose::Cell);
+        $phoneData = $phone->get_Data(PhonePurpose::Cell);
         $emailData = $email->get_Data();
 
         return '<div class="imdlist">1. Primary Guest Information (Required)</div>
@@ -342,3 +355,4 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
 
     }
 }
+?>

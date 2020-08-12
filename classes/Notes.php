@@ -1,4 +1,9 @@
 <?php
+
+namespace HHK;
+
+use HHK\HTMLControls\HTMLContainer;
+
 /**
  * Notes.php
  *

@@ -1,4 +1,9 @@
 <?php
+
+use HHK\MailList;
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{chkBoxCtrl, selCtrl};
+
 /**
  * directory.php
  *
@@ -9,11 +14,6 @@
  */
 require ("AdminIncludes.php");
 require("functions" . DS . "directoryReport.php");
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-require(CLASSES . "OpenXML.php");
-require(CLASSES . "MailList.php");
-require("classes" . DS . "Salutation.php");
 
 $wInit = new webInit();
 
@@ -30,10 +30,10 @@ $uS = Session::getInstance();
 addslashesextended($_POST);
 
 // Checkbox controls
-$cbBasisDir = new chkBoxCtrlClass($dbh, "Member_Basis", "Include", "cbDirBasis", true);
+$cbBasisDir = new chkBoxCtrl($dbh, "Member_Basis", "Include", "cbDirBasis", true);
 $cbBasisDir->set_class("hhk-dirBasis");
 
-$cbRelationDir = new chkBoxCtrlClass($dbh, "Rel_Type", "Show", "cbRelt", false, "Description");
+$cbRelationDir = new chkBoxCtrl($dbh, "Rel_Type", "Show", "cbRelt", false, "Description");
 $cbRelationDir->set_class("hhk-dirRel");
 // Set partner true
 $cbRelationDir->set_cbValueArray(true, "sp");
@@ -86,11 +86,13 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
+        <?php echo JQ_DT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
@@ -132,6 +134,9 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
             }
             // Init j-query
             $(document).ready(function() {
+            
+            	$("input[type=submit], input[type=button]").button();
+            
                 $('#selDirType').change( function() {
                     dirType(this);
                 });
@@ -146,6 +151,17 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
                 $('input.hhk-dirBasis').change(function () {
                     basisType(this);
                 });
+                
+                try {
+                    $('#tblDirectory').dataTable({
+                        "displayLength": 50,
+                        "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+                        "dom": '<"top"ilf>rt<"bottom"p>',
+                        "order": [[1,'asc'], [2,'asc']]
+                    });
+                }
+                catch (err) {console.log(err)}
+                
             });
         </script>
     </head>

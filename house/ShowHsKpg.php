@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\CreateMarkupFromDB;
+use HHK\House\ResourceView;
+
 /**
  * ShowHsKpg.php
  *
@@ -9,12 +15,12 @@
  */
 require ("homeIncludes.php");
 
-require (CLASSES . 'Notes.php');
+/* require (CLASSES . 'Notes.php');
 
 require (CLASSES . 'CreateMarkupFromDB.php');
 require (HOUSE . 'Resource.php');
 require (HOUSE . 'Room.php');
-require (HOUSE . 'ResourceView.php');
+require (HOUSE . 'ResourceView.php'); */
 
 $wInit = new webInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
@@ -43,6 +49,11 @@ $stmtMarkup = CreateMarkupFromDB::generateHTML_Table(ResourceView::roomsClean($d
         </style>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript">
+        	$(document).ready(function(){
+        		window.print();
+        	});
+        </script>
     </head>
     <body>
         <div id="contentDiv">

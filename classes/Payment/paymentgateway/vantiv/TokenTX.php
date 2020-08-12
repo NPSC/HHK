@@ -1,4 +1,21 @@
 <?php
+
+namespace HHK\Payment\PaymentGateway\Vantiv;
+
+use HHK\Payment\{CreditToken, Transaction};
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\CreditPayments\{ReturnReply, ReverseReply, SaleReply, VoidReply, VoidReturnReply};
+use HHK\SysConst\{Mode, MpStatusValues, PaymentStatusCode, TransMethod, TransType};
+use HHK\Tables\Payment\PaymentRS;
+use HHK\sec\Session;
+use HHK\Exception\PaymentException;
+use HHK\Payment\PaymentGateway\Vantiv\Request\CreditAdjustTokenRequest;
+use HHK\Payment\PaymentGateway\Vantiv\Request\CreditReturnTokenRequest;
+use HHK\Payment\PaymentGateway\Vantiv\Request\CreditReversalTokenRequest;
+use HHK\Payment\PaymentGateway\Vantiv\Request\CreditSaleTokenRequest;
+use HHK\Payment\PaymentGateway\Vantiv\Request\CreditVoidReturnTokenRequest;
+use HHK\Payment\PaymentGateway\Vantiv\Request\CreditVoidSaleTokenRequest;
+
 /**
  * TokenTX.php
  *
@@ -21,8 +38,8 @@ class TokenTX {
      * @param \PDO $dbh
      * @param int $idGuest
      * @param string $gwName
-     * @param \CreditSaleTokenRequest $cstReq
-     * @return \TokenResponse
+     * @param CreditSaleTokenRequest $cstReq
+     * @return TokenResponse
      */
     public static function CreditSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditSaleTokenRequest $cstReq, $payNotes, $payDate) {
 
@@ -49,7 +66,7 @@ class TokenTX {
         }
 
         // Save raw transaction in the db.
-        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($cstReq->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditSaleToken');
+        AbstractPaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($cstReq->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditSaleToken');
 
 
         // New Token?
@@ -76,13 +93,13 @@ class TokenTX {
     }
 
     public static function CreditAdjustToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditAdjustTokenRequest $cstReq) {
-        throw new Hk_Exception_Payment("Credit Adjust Sale Amount is not implememnted yet. ");
+        throw new PaymentException("Credit Adjust Sale Amount is not implememnted yet. ");
     }
 
     public static function creditVoidSaleToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidSaleTokenRequest $voidSale, PaymentRS $payRs, $payDate) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
-            throw new Hk_Exception_Payment('Payment Id not given.  ');
+            throw new PaymentException('Payment Id not given.  ');
         }
 
         $uS = Session::getInstance();
@@ -108,7 +125,7 @@ class TokenTX {
         }
 
         // Save raw transaction in the db.
-        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($voidSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidSaleToken');
+        AbstractPaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($voidSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidSaleToken');
 
 
         // New Token?
@@ -133,7 +150,7 @@ class TokenTX {
     public static function creditReverseToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReversalTokenRequest $reverseSale, PaymentRS $payRs, $payDate) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
-            throw new Hk_Exception_Payment('Payment Id not given.  ');
+            throw new PaymentException('Payment Id not given.  ');
         }
 
         $uS = Session::getInstance();
@@ -160,7 +177,7 @@ class TokenTX {
         }
 
         // Save raw transaction in the db.
-        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($reverseSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReverseToken');
+        AbstractPaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($reverseSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReverseToken');
 
 
         // New Token?
@@ -186,7 +203,7 @@ class TokenTX {
     public static function creditReturnToken(\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditReturnTokenRequest $returnSale, $payRs, $payDate) {
 
         if (is_null($payRs) === FALSE && $payRs->idPayment->getStoredVal() == 0) {
-            throw new Hk_Exception_Payment('Payment Id not given.  ');
+            throw new PaymentException('Payment Id not given.  ');
         }
 
         $uS = Session::getInstance();
@@ -212,7 +229,7 @@ class TokenTX {
         }
 
         // Save raw transaction in the db.
-        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReturnToken');
+        AbstractPaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnSale->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditReturnToken');
 
 
         // New Token?
@@ -238,7 +255,7 @@ class TokenTX {
     public static function creditVoidReturnToken (\PDO $dbh, $idGuest, $idReg, VantivGateway $gway, CreditVoidReturnTokenRequest $returnVoid, PaymentRS $payRs, $payDate) {
 
         if ($payRs->idPayment->getStoredVal() == 0) {
-            throw new Hk_Exception_Payment('DB Payment Id not given.  ');
+            throw new PaymentException('DB Payment Id not given.  ');
         }
 
         $uS = Session::getInstance();
@@ -262,7 +279,7 @@ class TokenTX {
         }
 
         // Save raw transaction in the db.
-        PaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnVoid->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidReturnToken');
+        AbstractPaymentGateway::logGwTx($dbh, $vr->response->getStatus(), json_encode($returnVoid->getFieldsArray()), json_encode($vr->response->getResultArray()), 'CreditVoidReturnToken');
 
         // New Token?
         if ($vr->response->getToken() != '') {
@@ -283,67 +300,4 @@ class TokenTX {
 
     }
 }
-
-
-class TokenResponse extends CreditResponse {
-
-
-    function __construct($creditTokenResponse, $idPayor, $idRegistration, $idToken, $paymentStatusCode = '') {
-
-        $this->response = $creditTokenResponse;
-        $this->idPayor = $idPayor;
-        $this->setIdToken($idToken);
-        $this->idRegistration = $idRegistration;
-        $this->invoiceNumber = $creditTokenResponse->getInvoiceNumber();
-        $this->amount = $creditTokenResponse->getAuthorizedAmount();
-        $this->setPaymentStatusCode($paymentStatusCode);
-
-    }
-
-    public function getPaymentMethod() {
-        return PaymentMethod::Charge;
-    }
-
-    public function getStatus() {
-
-        switch ($this->response->getStatus()) {
-
-            case MpStatusValues::Approved:
-                $pr = CreditPayments::STATUS_APPROVED;
-                break;
-
-            case MpStatusValues::Declined:
-                $pr = CreditPayments::STATUS_DECLINED;
-                break;
-
-            default:
-                $pr = CreditPayments::STATUS_DECLINED;
-        }
-
-        return $pr;
-    }
-
-    public function receiptMarkup(\PDO $dbh, &$tbl) {
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Credit Card:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($this->getAmount(), 2)));
-        $tbl->addBodyTr(HTMLTable::makeTd($this->response->getCardType() . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd("xxx...". $this->response->getMaskedAccount()));
-
-        if ($this->response->getCardHolderName() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Card Holder: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($this->response->getCardHolderName()));
-        }
-
-        if ($this->response->getAuthCode() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Authorization Code: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getAuthCode() . ' ('.ucfirst($this->response->getMerchant()). ')', array('style'=>'font-size:.8em;')));
-        }
-
-        if ($this->response->getResponseMessage() != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Response Message: ", array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd($this->response->getResponseMessage() . ($this->response->getResponseCode() == '' ? '' :  '  (Code: ' . $this->response->getResponseCode() . ")"), array('style'=>'font-size:.8em;')));
-        }
-
-
-        $tbl->addBodyTr(HTMLTable::makeTd("Sign: ", array('class'=>'tdlabel')) . HTMLTable::makeTd('', array('style'=>'height:35px; width:250px; border: solid 1px gray;')));
-
-    }
-
-}
-
+?>

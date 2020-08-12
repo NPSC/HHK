@@ -1,4 +1,7 @@
 <?php
+
+use HHK\sec\{WebInit};
+
 /**
  * nonReportables.php
  *
@@ -8,8 +11,8 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;

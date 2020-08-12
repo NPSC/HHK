@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable, HTMLSelector};
+use HHK\Tables\EditRS;
+use HHK\Tables\VolCalendar\ShellEventsRS;
+
 /**
  * EventShells.php
  *
@@ -9,7 +15,7 @@
  */
 
 require("AdminIncludes.php");
-require(DB_TABLES . 'volCalendarRS.php');
+//require(DB_TABLES . 'volCalendarRS.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;

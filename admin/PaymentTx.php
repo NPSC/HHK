@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
+use HHK\Tables\EditRS;
+use HHK\Tables\PaymentGW\Gateway_TransactionRS;
+
 /**
  * PaymentTx.php
  *
@@ -9,8 +15,8 @@
  */
 require ("AdminIncludes.php");
 
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
+/* require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'PaymentGwRS.php'); */
 
 
 $wInit = new webInit();

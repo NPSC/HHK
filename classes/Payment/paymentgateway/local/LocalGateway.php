@@ -1,5 +1,25 @@
 <?php
 
+namespace HHK\Payment\PaymentGateway\Local;
+
+use HHK\Member\Role\Guest;
+use HHK\Member\AbstractMember;
+use HHK\Payment\{CreditToken, Receipt, Transaction};
+use HHK\Payment\Invoice\Invoice;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentGateway\CreditPayments\{ReturnReply, SaleReply, VoidReply};
+use HHK\Payment\PaymentManager\PaymentManagerPayment;
+use HHK\Payment\PaymentResult\{PaymentResult, ReturnResult};
+use HHK\SysConst\{MemBasis, MpTranType, PaymentMethod, PaymentStatusCode, TransMethod, TransType};
+use HHK\Tables\EditRS;
+use HHK\Tables\Payment\{PaymentRS, Payment_AuthRS};
+use HHK\sec\Session;
+use HHK\Exception\MemberException;
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\House\HouseServices;
+use HHK\Exception\PaymentException;
+use HHK\Payment\GatewayResponse\GatewayResponseInterface;
+
 /*
  * The MIT License
  *
@@ -29,7 +49,8 @@
  *
  * @author ecran
  */
-class LocalGateway extends PaymentGateway {
+class LocalGateway extends AbstractPaymentGateway {
+    
 	public static function getPaymentMethod() {
 		return PaymentMethod::Charge;
 	}
@@ -83,18 +104,18 @@ class LocalGateway extends PaymentGateway {
 		} else {
 			try {
 				
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 				
-			} catch (Hk_Exception_Member $ex) {
+			} catch (MemberException $ex) {
 				
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$pmp->setCardHolderName($guest->get_fullName());
 			
 		}
 
-		$gwResp = new LocalGwResp ( $invoice->getAmountToPay (), $invoice->getInvoiceNumber (), $pmp->getChargeCard (), $pmp->getChargeAcct (), $pmp->getCardHolderName (), MpTranType::Sale, $uS->username );
+		$gwResp = new LocalGatewayResponse( $invoice->getAmountToPay (), $invoice->getInvoiceNumber (), $pmp->getChargeCard (), $pmp->getChargeAcct (), $pmp->getCardHolderName (), MpTranType::Sale, $uS->username );
 
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $pmp->getIdToken (), PaymentStatusCode::Paid );
 
@@ -142,13 +163,13 @@ class LocalGateway extends PaymentGateway {
 			$cardHolderName = $guest->getRoleMember()->getMemberFullName();
 		}
 
-		$gwResp = new LocalGwResp ( 0, '', $selChgType, $chgAcct, $cardHolderName, MpTranType::CardOnFile, $uS->username );
+		$gwResp = new LocalGatewayResponse( 0, '', $selChgType, $chgAcct, $cardHolderName, MpTranType::CardOnFile, $uS->username );
 		
 		$vr = new LocalResponse ( $gwResp, $idGuest, $idGroup, 0, PaymentStatusCode::Paid );
 		
 		try {
 			$vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
-		} catch(Exception $ex) {
+		} catch(\Exception $ex) {
 			return array('error'=> $ex->getMessage());
 		}
 		
@@ -173,16 +194,16 @@ class LocalGateway extends PaymentGateway {
 		if ($cardHolderName == '') {
 
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
-			} catch (Hk_Exception_Member $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (MemberException $ex) {
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();
 		}
 		
 		// create gw response
-		$gwResp = new LocalGwResp (
+		$gwResp = new LocalGatewayResponse(
 				$pAuthRs->Approved_Amount->getStoredVal (),
 				$invoice->getInvoiceNumber (),
 				$pAuthRs->Card_Type->getStoredVal (),
@@ -225,15 +246,15 @@ class LocalGateway extends PaymentGateway {
 		if ($cardHolderName == '') {
 			
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
-			} catch (Hk_Exception_Member $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (MemberException $ex) {
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();
 		}
 		
-		$gwResp = new LocalGwResp (
+		$gwResp = new LocalGatewayResponse(
 				$pAuthRs->Approved_Amount->getStoredVal (),
 				$invoice->getInvoiceNumber (),
 				$pAuthRs->Card_Type->getStoredVal (),
@@ -273,15 +294,15 @@ class LocalGateway extends PaymentGateway {
 		if ($cardHolderName == '') {
 			
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
-			} catch (Hk_Exception_Member $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (MemberException $ex) {
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();
 		}
 
-		$gwResp = new LocalGwResp (
+		$gwResp = new LocalGatewayResponse(
 				$amount,
 				$invoice->getInvoiceNumber (),
 				$tokenRS->CardType->getStoredVal (),
@@ -324,15 +345,15 @@ class LocalGateway extends PaymentGateway {
 		if ($cardHolderName == '') {
 			
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
-			} catch (Hk_Exception_Member $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (MemberException $ex) {
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();
 		}
 		
-		$gwResp = new LocalGwResp (
+		$gwResp = new LocalGatewayResponse(
 				$pAuthRs->Approved_Amount->getStoredVal (),
 				$invoice->getInvoiceNumber (),
 				$pAuthRs->Card_Type->getStoredVal (),
@@ -381,15 +402,15 @@ class LocalGateway extends PaymentGateway {
 		if ($cardHolderName == '') {
 			
 			try {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
-			} catch (Hk_Exception_Member $ex) {
-				$guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+			} catch (MemberException $ex) {
+				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
 			
 			$cardHolderName = $guest->get_fullName();
 		}
 		
-		$gwResp = new LocalGwResp (
+		$gwResp = new LocalGatewayResponse(
 				$pAuthRs->Approved_Amount->getStoredVal (),
 				$invoice->getInvoiceNumber (),
 				$pAuthRs->Card_Type->getStoredVal (),
@@ -424,12 +445,12 @@ class LocalGateway extends PaymentGateway {
 		return 'The House is using a separate un-integrated credit card gateway.';
 	}
 	public function processHostedReply(\PDO $dbh, $post, $ssoTtoken, $idInv, $payNotes, $payDate) {
-		throw new Hk_Exception_Payment ( 'Local gateway does not process gateway replys.  ' );
+		throw new PaymentException( 'Local gateway does not process gateway replys.  ' );
 	}
-	public function getPaymentResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
+	public function getPaymentResponseObj(GatewayResponseInterface $vcr, $idPayor, $idGroup, $invoiceNumber, $idToken = 0, $payNotes = '') {
 		return new LocalResponse ( $vcr, $idPayor, $idGroup, $idToken );
 	}
-	public function getCofResponseObj(iGatewayResponse $vcr, $idPayor, $idGroup) {
+	public function getCofResponseObj(GatewayResponseInterface $vcr, $idPayor, $idGroup) {
 		return new LocalResponse ( $vcr, $idPayor, $idGroup, 0 );
 	}
 	
@@ -443,7 +464,7 @@ class LocalGateway extends PaymentGateway {
 			$cardNames [$v[1]] = $v;
 		}
 
-		$tbl = new HTMLTable ();
+		$tbl = new HTMLTable();
 		$tbl->addBodyTr ( HTMLTable::makeTd ( 'New Card: ', array (
 				'class' => 'tdlabel'
 		) ) . HTMLTable::makeTd ( HTMLSelector::generateMarkup ( HTMLSelector::doOptionsMkup ( removeOptionGroups ( $cardNames ), '', TRUE ), array (
@@ -472,3 +493,4 @@ class LocalGateway extends PaymentGateway {
 		) );
 	}
 }
+?>

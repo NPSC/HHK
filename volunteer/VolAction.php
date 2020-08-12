@@ -1,4 +1,11 @@
 <?php
+use HHK\SysConst\VolRank;
+use HHK\sec\WebInit;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Session;
+use HHK\SysConst\WebRole;
+use HHK\AlertControl\AlertMessage;
+
 /**
  * VolAction.php
  *
@@ -12,7 +19,7 @@
 
 require_once ('VolIncludes.php');
 
-require_once (CLASSES . 'UserCategories.php');
+//require_once (CLASSES . 'UserCategories.php');
 
 
 function getVolUSerMarkup(\PDO $dbh, $id) {
@@ -292,9 +299,9 @@ if (count($rows) > 1) {
 $volPanelMkup = getVolUSerMarkup($dbh, $id);
 
 
-$calAlert = new alertMessage("calContainer");
+$calAlert = new AlertMessage("calContainer");
 $calAlert->set_DisplayAttr("none");
-$calAlert->set_Context(alertMessage::Success);
+$calAlert->set_Context(AlertMessage::Success);
 $calAlert->set_iconId("calIcon");
 $calAlert->set_styleId("calResponse");
 $calAlert->set_txtSpanId("calMessage");

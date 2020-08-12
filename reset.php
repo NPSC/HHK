@@ -1,5 +1,11 @@
 <?php
 
+use HHK\Update\SiteConfig;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Session;
+use HHK\sec\SecurityComponent;
+use HHK\SysConst\CodeVersion;
+
 //The MIT License
 //
 //Copyright 2017 Eric Crane <ecrane at nonprofitsoftwarecorp.org>.
@@ -28,14 +34,16 @@ define('DS', DIRECTORY_SEPARATOR);
 define('P_ROOT', dirname(__FILE__) . DS);
 define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
 
-require 'classes' . DS . 'SiteConfig.php';
-require ('classes' . DS .'PDOdata.php');
+require('vendor/autoload.php');
+
+//require 'classes' . DS . 'SiteConfig.php';
+//require ('classes' . DS .'PDOdata.php');
 require ('functions' . DS . 'commonFunc.php');
-require ('classes' . DS. 'config'. DS . 'Lite.php');
-require ('classes' . DS. 'sec' .DS . 'sessionClass.php');
-require ('classes' . DS . 'SysConst.php');
-require ('classes' . DS . 'HTML_Controls.php');
-require ('classes' . DS. 'sec' . DS . 'SecurityComponent.php');
+//require ('classes' . DS. 'config'. DS . 'Lite.php');
+//require ('classes' . DS. 'sec' .DS . 'sessionClass.php');
+//require ('classes' . DS . 'SysConst.php');
+//require ('classes' . DS . 'HTML_Controls.php');
+//require ('classes' . DS. 'sec' . DS . 'SecurityComponent.php');
 
 function testdb($ssn) {
 

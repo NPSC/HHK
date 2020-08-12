@@ -1,4 +1,11 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLInput};
+use HHK\SysConst\WebPageCode;
+use HHK\SysConst\ReservationStatus;
+use HHK\House\Reservation\ReservationSvcs;
+
 /**
  * PrtRegForm.php
  *
@@ -9,7 +16,7 @@
  */
 require ("homeIncludes.php");
 
-require(DB_TABLES . "visitRS.php");
+/* require(DB_TABLES . "visitRS.php");
 require(DB_TABLES . "ReservationRS.php");
 require(DB_TABLES . "registrationRS.php");
 require (DB_TABLES . 'nameRS.php');
@@ -44,7 +51,7 @@ require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
 
 require (HOUSE . 'Vehicle.php');
-
+ */
 $wInit = new webInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
 

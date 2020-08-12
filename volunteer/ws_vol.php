@@ -1,4 +1,10 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\Session;
+use HHK\sec\UserClass;
+use HHK\HTMLControls\HTMLTable;
+
 /**
  * ws_vol.php
  *
@@ -11,15 +17,15 @@
  */
 
 require("VolIncludes.php");
-require(SEC . 'UserClass.php');
+/* require(SEC . 'UserClass.php');
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
+ */
 
 
-
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 
@@ -104,6 +110,8 @@ exit();
 
 function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
 
+    $uS = Session::getInstance();
+    
     $events = array();
 
     if ($vcc != "" && $subj != "" && $body != "") {
@@ -164,7 +172,11 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
                 $em->isHTML(true);
 
                 $em->Subject = $uS->RegSubj;
-
+                
+                if(!isset($uS->Admin_Address) || $uS->Admin_Address == ''){
+                    return array("error"=>"Admin_Address not set");
+                }
+                
                 $em->From = $uS->Admin_Address;
                 $em->addAddress($uS->Admin_Address);
                 $em->Subject = $cSubj;
@@ -292,4 +304,4 @@ function listMembers(\PDO $dbh, $codes) {
 
     return array("error" => "invalid vol codes: " . $codes);
 }
-
+?>

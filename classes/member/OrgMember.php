@@ -1,4 +1,17 @@
 <?php
+
+namespace HHK\Member;
+
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\MemDesignation;
+use HHK\SysConst\RelLinkType;
+use HHK\sec\Session;
+use HHK\Exception\InvalidArgumentException;
+use HHK\Exception\RuntimeException;
+use HHK\Member\Relation\Employees;
+
 /**
  * OrgMember.php
  *
@@ -13,7 +26,7 @@
  * @package name
  * @author Eric
  */
-class OrgMember extends Member {
+class OrgMember extends AbstractMember {
 
     protected $employees = array();
 
@@ -37,7 +50,7 @@ class OrgMember extends Member {
 
     /**
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @return string
      */
     public function createMarkupTable() {
@@ -68,14 +81,14 @@ class OrgMember extends Member {
 
         // Status
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[GL_TableNames::MemberStatus]),
+                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[GLTableNames::MemberStatus]),
                         $this->nameRS->Member_Status, FALSE), array('name'=>$idPrefix.'selStatus')));
 
         // Basis
         $basis = array();
-        foreach ($uS->nameLookups[GL_TableNames::MemberBasis] as $b) {
-            if ($b[Member::SUBT] == $this->getMemberDesignation()) {
-                $basis[$b[Member::CODE]] = $b;
+        foreach ($uS->nameLookups[GLTableNames::MemberBasis] as $b) {
+            if ($b[AbstractMember::SUBT] == $this->getMemberDesignation()) {
+                $basis[$b[AbstractMember::CODE]] = $b;
             }
         }
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
@@ -140,7 +153,7 @@ class OrgMember extends Member {
     }
 
 
-    public function loadRealtionships(PDO $dbh) {
+    public function loadRealtionships(\PDO $dbh) {
 
        return array(
             RelLinkType::Employee => new Employees($dbh, $this->get_idName())
@@ -151,7 +164,7 @@ class OrgMember extends Member {
 
     /**
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param array $post
      */
     protected function processMember(\PDO $dbh, array $post) {
@@ -189,12 +202,12 @@ class OrgMember extends Member {
     //
     public function set_memberRcrd($v) {
         if ($v == 1 || $v == TRUE) {
-            throw new Hk_Exception_InvalidArguement("Organization Member Record cannot be set to Individual.");
+            throw new InvalidArgumentException("Organization Member Record cannot be set to Individual.");
         }
     }
 
     public function set_firstName($firstName) {
-        throw new Hk_Exception_Runtime("Not Supported.");
+        throw new RuntimeException("Not Supported.");
     }
 
     public function get_firstName() {
@@ -202,7 +215,7 @@ class OrgMember extends Member {
     }
 
     public function set_middleName($middleName) {
-        throw new Hk_Exception_Runtime("Not Supported.");
+        throw new RuntimeException("Not Supported.");
     }
 
     public function get_middleName() {
@@ -210,7 +223,7 @@ class OrgMember extends Member {
     }
 
     public function set_lastName($lastName) {
-        throw new Hk_Exception_Runtime("Not Supported.");
+        throw new RuntimeException("Not Supported.");
     }
 
     public function get_lastName() {
@@ -226,7 +239,7 @@ class OrgMember extends Member {
     }
 
     public function set_nickName($nickName) {
-        throw new Hk_Exception_Runtime("Not Supported.");
+        throw new RuntimeException("Not Supported.");
     }
 
     public function get_nickName() {
@@ -242,7 +255,7 @@ class OrgMember extends Member {
     }
 
     public function set_previousName($previousName) {
-        throw new Hk_Exception_Runtime("Not Supported.");
+        throw new RuntimeException("Not Supported.");
     }
 
     public function get_previousName() {
@@ -250,7 +263,7 @@ class OrgMember extends Member {
     }
 
     public function set_sex($sex) {
-        throw new Hk_Exception_Runtime("Not Supported.");
+        throw new RuntimeException("Not Supported.");
     }
 
     public function get_sex() {
@@ -258,7 +271,7 @@ class OrgMember extends Member {
     }
 
     public function set_suffix($suffix) {
-        throw new Hk_Exception_Runtime("Not Supported.");
+        throw new RuntimeException("Not Supported.");
     }
 
     public function get_suffix() {
@@ -266,7 +279,7 @@ class OrgMember extends Member {
     }
 
     public function set_prefix($prefix) {
-        throw new Hk_Exception_Runtime("Not Supported.");
+        throw new RuntimeException("Not Supported.");
     }
 
     public function get_prefix() {
@@ -274,7 +287,7 @@ class OrgMember extends Member {
     }
 
     public function set_companyId($companyId) {
-        throw new Hk_Exception_Runtime("Company_Id is Not Supported.");
+        throw new RuntimeException("Company_Id is Not Supported.");
     }
 
     public function get_companyId() {
@@ -282,7 +295,7 @@ class OrgMember extends Member {
     }
 
     public function set_companyCareOf($v) {
-        throw new Hk_Exception_Runtime("Company Care/Of is Not Supported.");
+        throw new RuntimeException("Company Care/Of is Not Supported.");
     }
 
     public function get_companyCareOf() {
@@ -290,5 +303,4 @@ class OrgMember extends Member {
     }
 
 }
-
 ?>

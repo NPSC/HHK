@@ -1,4 +1,11 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\History;
+use HHK\CreateMarkupFromDB;
+use HHK\SysConst\ReservationStatus;
+
 /**
  * PrtWaitList.php
  *
@@ -9,9 +16,9 @@
  */
 require ("homeIncludes.php");
 
-require (CLASSES . 'History.php');
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (CLASSES . 'Purchase/RoomRate.php');
+//require (CLASSES . 'History.php');
+//require (CLASSES . 'CreateMarkupFromDB.php');
+//require (CLASSES . 'Purchase/RoomRate.php');
 
 
 

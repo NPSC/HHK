@@ -1,4 +1,12 @@
 <?php
+
+namespace HHK\House;
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
+use HHK\Tables\EditRS;
+use HHK\Tables\Registration\VehicleRS;
+
 /**
  * Vehicle.php
  *
@@ -15,14 +23,14 @@
  */
 class Vehicle {
 
-    public static function getRecords(PDO $dbh, $idReg) {
+    public static function getRecords(\PDO $dbh, $idReg) {
 
         $rows = array();
 
         if ($idReg > 0) {
 
             $stmt = $dbh->query("select v.*, n.Name_Full from vehicle v left join name n on v.idName = n.idName where v.idRegistration = $idReg");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
          }
 
@@ -59,7 +67,7 @@ FROM
 WHERE
     v.License_Number LIKE '$tag' GROUP BY v.idVehicle");
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             foreach ($rows as $r) {
                 $namArray = $r;
@@ -78,7 +86,7 @@ WHERE
         return $events;
     }
 
-    public static function createVehicleMarkup(PDO $dbh, $idReg, $noVehicle = 0) {
+    public static function createVehicleMarkup(\PDO $dbh, $idReg, $noVehicle = 0) {
 
         // work on the state
         $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
@@ -182,7 +190,7 @@ WHERE
 
 
 
-    public static function saveVehicle(PDO $dbh, $pData, $idReg) {
+    public static function saveVehicle(\PDO $dbh, $pData, $idReg) {
         $rtnMsg = "";
 
         // Find any deletes

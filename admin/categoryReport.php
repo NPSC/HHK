@@ -1,4 +1,9 @@
 <?php
+
+use HHK\sec\{SecurityComponent, WebInit};
+use HHK\HTMLControls\selCtrl;
+use HHK\Config_Lite\Config_Lite;
+
 /**
  * categoryReport.php
  *
@@ -9,8 +14,8 @@
  */
 require("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 
@@ -66,12 +71,9 @@ if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"]) || isset($_POST["btnCSV
 
     ini_set('memory_limit', "128M");
 
-    require(CLASSES . "OpenXML.php");
     require("functions" . DS . "CategoryReportMgr.php");
-    require ("classes" . DS . "VolCats.php");
-    require("classes" . DS . "Salutation.php");
 
-        // Get the site configuration object
+    // Get the site configuration object
     try {
         $config = new Config_Lite(ciCFG_FILE);
         $guestBlackOutDays = $config->getString('house', 'Guest_Solicit_Buffer_Days', '61');
@@ -125,6 +127,8 @@ foreach ($catSelCtrls as $sel) {
         <script type="text/javascript">
             // Init j-query and the page blocker.
             $(document).ready(function() {
+            	$("input[type=submit], input[type=button]").button();
+            	
                 var listTable;
                 var makeTable = <?php echo $makeTable; ?>;
                 var now = new Date();

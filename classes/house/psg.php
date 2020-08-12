@@ -1,6 +1,21 @@
 <?php
+
+namespace HHK\House;
+
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\House\Hospital\{Hospital, HospitalStay};
+use HHK\Member\Role\Guest;
+use HHK\SysConst\{NameGuestStatus, RelLinkType, VisitStatus};
+use HHK\TableLog\VisitLog;
+use HHK\Tables\EditRS;
+use HHK\Tables\Visit\Visit_LogRS;
+use HHK\Tables\Name\{Name_GuestRS, NameRS};
+use HHK\Tables\Registration\PSG_RS;
+use HHK\sec\Session;
+use HHK\Exception\RuntimeException;
+
 /**
- * psg.php
+ * PSG.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
@@ -13,7 +28,7 @@
  * @author Eric Crane
  */
 
-class Psg {
+class PSG {
 
     public $psgRS;
     public $psgMembers = array();
@@ -290,7 +305,7 @@ class Psg {
             EditRS::loadRow($patRows[0], $psgRs);
 
             if ($this->psgRS->idPsg->getStoredVal() != 0 && $psgRs->idPsg->getStoredVal() != $this->psgRS->idPsg->getStoredVal()) {
-                throw new Hk_Exception_Runtime('Patient already has a PSG. ');
+                throw new RuntimeException('Patient already has a PSG. ');
             }
         }
     }
@@ -308,7 +323,7 @@ class Psg {
 
             if (($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self || $ngRS->Relationship_Code->getNewVal() == RelLinkType::Self) && $foundPatient) {
                 // Second patient defined.
-                throw new Hk_Exception_Runtime('PSG already has a patient.');
+                throw new RuntimeException('PSG already has a patient.');
             } else if (($ngRS->Relationship_Code->getStoredVal() == RelLinkType::Self || $ngRS->Relationship_Code->getNewVal() == RelLinkType::Self)
                     && ($this->getIdPatient() == $ngRS->idName->getStoredVal() || $this->getIdPatient() == $ngRS->idName->getNewVal())) {
                 $foundPatient = TRUE;
@@ -317,7 +332,7 @@ class Psg {
 
         // Check for at least one patient.
         if ($foundPatient === FALSE) {
-            throw new Hk_Exception_Runtime('A Patient is undefined for this PSG.');
+            throw new RuntimeException('A Patient is undefined for this PSG.');
         }
 
         // Save each member
@@ -521,4 +536,4 @@ class Psg {
         return $nameRS->Member_Status->getStoredVal();
     }
 }
-
+?>

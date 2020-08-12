@@ -1,4 +1,14 @@
 <?php
+use HHK\sec\Login;
+use HHK\Exception\InvalidArgumentException;
+use HHK\Exception\RuntimeException;
+use HHK\sec\UserClass;
+use HHK\House\GLCodes\GLParameters;
+use HHK\House\GLCodes\GLCodes;
+use HHK\sec\SysConfig;
+use HHK\HTMLControls\HTMLTable;
+use HHK\House\GLCodes\GLTemplateRecord;
+
 /**
  * GenLedger.php
  *
@@ -9,14 +19,14 @@
   */
 
 require 'homeIncludes.php';
-require(HOUSE . 'GlCodes.php');
+/* require(HOUSE . 'GlCodes.php');
 require(CLASSES . 'SFTPConnection.php');
 require(SEC . 'Login.php');
 
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php'); */
 
 // Access the login object, set session vars,
 try {
@@ -24,7 +34,7 @@ try {
 	$login = new Login();
 	$login->initHhkSession(ciCFG_FILE);
 	
-} catch (Hk_Exception_InvalidArguement $pex) {
+} catch (InvalidArgumentException $pex) {
 	exit ("Database Access Error.");
 	
 } catch (Exception $ex) {
@@ -34,7 +44,7 @@ try {
 // Override user DB login credentials
 try {
 	$dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
 	exit($hex->getMessage());
 }
 
@@ -53,8 +63,8 @@ $today = new DateTime();
 $today->sub(new DateInterval('P1M'));
 
 try {
-	$glParm = new GlParameters($dbh, 'Gl_Code');
-	$glCodes = new GlCodes($dbh, $today->format('m'), $today->format('Y'), $glParm, new GlTemplateRecord());
+	$glParm = new GLParameters($dbh, 'Gl_Code');
+	$glCodes = new GLCodes($dbh, $today->format('m'), $today->format('Y'), $glParm, new GLTemplateRecord());
 	$bytesWritten = $glCodes->mapRecords()->transferRecords();
 
 } catch (Exception $ex) {

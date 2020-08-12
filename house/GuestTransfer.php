@@ -1,4 +1,17 @@
 <?php
+use HHK\SysConst\WebPageCode;
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\AlertControl\AlertMessage;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\SecurityComponent;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\CreateMarkupFromDB;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Neon\TransferMembers;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\ExcelHelper;
+
 /**
  * GuestTransfer.php
  *
@@ -10,13 +23,12 @@
 
 require ("homeIncludes.php");
 
-require CLASSES . 'CreateMarkupFromDB.php';
+/* require CLASSES . 'CreateMarkupFromDB.php';
 require CLASSES . 'TransferMembers.php';
-require CLASSES . 'OpenXML.php';
 
 try {
     // Do not add CSP.
-    $wInit = new webInit(WebPageCode::Page, FALSE);
+    $wInit = new WebInit(WebPageCode::Page, FALSE);
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -32,9 +44,9 @@ $uS = Session::getInstance();
 $menuMarkup = $wInit->generatePageMenu();
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -122,13 +134,15 @@ where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DAT
     if (!$local) {
 
         $reportRows = 1;
-        $file = 'GuestTransfer';
-        $sml = OpenXML::createExcel('Guest Tracker', 'Guest Transfer');
+        $fileName = 'GuestTransfer';
+        $writer = new \XLSXWriter();
+        $writer->setTitle("Guest Transfer");
     }
 
     $rows = array();
     $firstRow = TRUE;
-
+    $hdr = array();
+    
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
 
@@ -145,21 +159,27 @@ where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DAT
             if ($local === FALSE) {
 
                 // build header
-                $hdr = array();
+                $colWidths = array();
                 $n = 0;
                 $noReturn = '';
 
-                // HEader row
-                $keys = array_keys($r);
-                foreach ($keys as $k) {
-                    $hdr[$n++] =  $k;
+                // Header row
+                foreach ($r as $k=>$v) {
+                    if ($k == 'Arrival' || $k == 'Departure' || $k == 'Birth Date') {
+                        $hdr[$k] = "date";
+                    }else{
+                        $hdr[$k] = "string";
+                    }
+                    $colWidths[] = 20;
                 }
 
                 if ($noReturn != '') {
-                    $hdr[$n++] =  $noReturn;
+                    $hdr[$noReturn] = "string";
+                    $colWidths[] = 20;
                 }
 
-                OpenXML::writeHeaderRow($sml, $hdr);
+                $hdrStyle = ExcelHelper::getHdrStyle($colWidths);
+                $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
                 $reportRows++;
             }
         }
@@ -191,19 +211,11 @@ where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DAT
 
 
             foreach ($r as $key => $col) {
-
-                if (($key == 'Arrival' or $key == 'Departure' || $key == 'Birth Date') && $col != '') {
-
-                    $flds[$n++] = array('type' => "n",
-                        'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
-
-                } else {
-                    $flds[$n++] = array('type' => "s", 'value' => $col);
-                }
+                $flds[] = $col;
             }
 
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            $row = ExcelHelper::convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
         }
 
     }
@@ -215,14 +227,7 @@ where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DAT
 
 
     } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        ExcelHelper::download($writer, $fileName);
     }
 }
 

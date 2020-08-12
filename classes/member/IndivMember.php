@@ -1,4 +1,19 @@
 <?php
+
+namespace HHK\Member;
+
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
+use HHK\Member\Relation\{Children, Company, Parents, Partner};
+use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, MemStatus, RelLinkType};
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\{Name_InsuranceRS, Name_LanguageRS};
+use HHK\sec\Session;
+use HHK\AuditLog\NameLog;
+use HHK\Exception\RuntimeException;
+use HHK\Exception\InvalidArgumentException;
+use HHK\Member\Relation\Siblings;
+use HHK\Member\Relation\Relatives;
+
 /**
  * IndivMember.php
  *
@@ -12,7 +27,7 @@
  * IndivMember
  * @author Eric
  */
-class IndivMember extends Member {
+class IndivMember extends AbstractMember {
 
     /**
      *
@@ -63,7 +78,7 @@ class IndivMember extends Member {
 
     /**
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param string $statusClass HTML Class attribute for status control
      * @param string $basisClass HTML class attribute for basis control
      * @param string $idPrefix
@@ -95,7 +110,7 @@ class IndivMember extends Member {
 
         // Prefix
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::NamePrefix],
+                HTMLSelector::doOptionsMkup($uS->nameLookups[GLTableNames::NamePrefix],
                         $this->nameRS->Name_Prefix->getstoredVal(), TRUE), array('name'=>$idPrefix.'selPrefix')));
 
         // First Name
@@ -110,7 +125,7 @@ class IndivMember extends Member {
 
         // Suffix
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup($uS->nameLookups[GL_TableNames::NameSuffix],
+                HTMLSelector::doOptionsMkup($uS->nameLookups[GLTableNames::NameSuffix],
                         $this->nameRS->Name_Suffix->getstoredVal(), TRUE), array('name'=>$idPrefix.'selSuffix')));
 
         // Nick Name
@@ -118,14 +133,14 @@ class IndivMember extends Member {
 
         // Status
         $tr .= HTMLContainer::generateMarkup('td', HTMLSelector::generateMarkup(
-                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[GL_TableNames::MemberStatus]),
+                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[GLTableNames::MemberStatus]),
                         $this->nameRS->Member_Status->getstoredVal(), FALSE), array('name'=>$idPrefix.'selStatus')));
 
         // Basis
         $basis = array();
-        foreach ($uS->nameLookups[GL_TableNames::MemberBasis] as $b) {
-            if ($b[Member::SUBT] == $this->getMemberDesignation()) {
-                $basis[$b[Member::CODE]] = $b;
+        foreach ($uS->nameLookups[GLTableNames::MemberBasis] as $b) {
+            if ($b[AbstractMember::SUBT] == $this->getMemberDesignation()) {
+                $basis[$b[AbstractMember::CODE]] = $b;
             }
         }
         $tr .= HTMLContainer::generateMarkup(
@@ -144,7 +159,7 @@ class IndivMember extends Member {
 
     /**
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param string $inputClass HTML class attribute for each control
      * @param bool $showOrientDate
      * @return string HTML UL with following DIV tab panels
@@ -546,9 +561,9 @@ ORDER BY `List_Order`");
 
     /**
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param array $post
-     * @throws Hk_Exception_Runtime
+     * @throws RuntimeException
      */
     protected function processMember(\PDO $dbh, array $post) {
 
@@ -590,7 +605,7 @@ ORDER BY `List_Order`");
 
         // Minimum requirements for saving a record.
         if ($n->Name_Last->getStoredVal() == '' && $n->Name_Last->getNewVal() == '') {
-            throw new Hk_Exception_Runtime("The Last Name cannot be blank.");
+            throw new RuntimeException("The Last Name cannot be blank.");
         }
 
         // Name Last-First
@@ -602,12 +617,12 @@ ORDER BY `List_Order`");
 
 
         // Name Full
-        if (isset($uS->nameLookups[GL_TableNames::NamePrefix][$prefix])) {
-            $prefix = $uS->nameLookups[GL_TableNames::NamePrefix][$prefix][Member::DESC];
+        if (isset($uS->nameLookups[GLTableNames::NamePrefix][$prefix])) {
+            $prefix = $uS->nameLookups[GLTableNames::NamePrefix][$prefix][AbstractMember::DESC];
         }
 
-        if (isset($uS->nameLookups[GL_TableNames::NameSuffix][$suffix])) {
-            $suffix = $uS->nameLookups[GL_TableNames::NameSuffix][$suffix][Member::DESC];
+        if (isset($uS->nameLookups[GLTableNames::NameSuffix][$suffix])) {
+            $suffix = $uS->nameLookups[GLTableNames::NameSuffix][$suffix][AbstractMember::DESC];
         }
 
         $nstring = '';
@@ -882,11 +897,11 @@ ORDER BY `List_Order`");
     /**
      *
      * @param mixed $v
-     * @throws Hk_Exception_InvalidArguement
+     * @throws InvalidArgumentException
      */
     public function set_companyRcrd($v) {
         if ($v == 1 || $v == TRUE) {
-            throw new Hk_Exception_InvalidArguement("Individual Member Record cannot be set to Organization.");
+            throw new InvalidArgumentException("Individual Member Record cannot be set to Organization.");
         }
     }
 
@@ -895,4 +910,4 @@ ORDER BY `List_Order`");
     }
 
 }
-
+?>

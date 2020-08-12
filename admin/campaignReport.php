@@ -1,4 +1,7 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\Config_Lite\Config_Lite;
 /**
  * campaignReport.php
  *
@@ -10,8 +13,8 @@
 
 require ("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 
@@ -60,6 +63,9 @@ $selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
         <script type="text/javascript">
             // Init j-query
             $(document).ready(function() {
+            
+            	$("input[type=submit], input[type=button]").button();
+            
                 $('#btnCamp').click( function() {
                     var rb;
                     if ($('#rb_Cal_fy').prop('checked') ) {

@@ -1,4 +1,11 @@
 <?php
+
+namespace HHK;
+
+use HHK\SysConst\SalutationPurpose;
+use HHK\Admin\MemberSalutation\OrganizationSalutation;
+use HHK\Admin\MemberSalutation\IndividualSalutation;
+
 /**
  * MailList.php
  *
@@ -21,20 +28,25 @@ class MailList {
 
         // header -
         $file = "MailList";
-        $sml = OpenXML::createExcel('', 'Mail List');
+        $writer = new ExcelHelper($file);
+        $writer->setTitle("Mail List");
 
-        $hdr = array();
-        $n = 0;
-        $hdr[$n++] = "Id";
-        $hdr[$n++] = "Last Name";
-        $hdr[$n++] = "Name";
-        $hdr[$n++] = "Care Of";
-        $hdr[$n++] = "Address";
-        $hdr[$n++] = "City";
-        $hdr[$n++] = "State";
-        $hdr[$n++] = "Zip";
+        $hdr = array(
+            "Id"=>"string",
+            "Last Name"=>"string",
+            "Name"=>"string",
+            "Care Of"=> "string",
+            "Address"=>"string",
+            "City"=>"string",
+            "State"=>"string",
+            "Zip"=>"string"
+        );
+        
+        $colWidths = array("10", "20", "20", "20", "20", "20", "10", "10");
 
-        $reportRows = OpenXML::writeHeaderRow($sml, $hdr);
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
 
         //-- Dump unwanted members
@@ -43,7 +55,7 @@ class MailList {
         //--  Corporate reps at home or company
 
 
-        while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             // salutation
             $salName = "";
@@ -51,10 +63,10 @@ class MailList {
 
             if (!$r["isCompany"] && $r["Donor_Company"] != "") {
 
-                $donor = new OrganizationSal($r["Donor_Company"]);
+                $donor = new OrganizationSalutation($r["Donor_Company"]);
 
                 if ($r["fm"] > 0 ) {
-                    $partner = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                    $partner = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                     $careof = $partner->getMarkup(SalutationPurpose::Envelope, $formalcy, NULL);
                 }
 
@@ -62,11 +74,11 @@ class MailList {
 
             } else {
 
-                $donor = new IndividualSal($r["Donor_Last"], $r["Donor_First"], $r["Donor_Middle"], $r["Donor_Nickname"], $r["Donor_Prefix"], $r["Donor_Suffix"], $r["Donor_Gender"]);
+                $donor = new IndividualSalutation($r["Donor_Last"], $r["Donor_First"], $r["Donor_Middle"], $r["Donor_Nickname"], $r["Donor_Prefix"], $r["Donor_Suffix"], $r["Donor_Gender"]);
 
                 // add partner name only if alive and still married to donor.
                 if ($r["sp"] > 0 && $r["adr_count"] > 1 ) {
-                    $partner = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                    $partner = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                 } else {
                     $partner = null;
                 }
@@ -77,49 +89,24 @@ class MailList {
             }
 
 
-            $n = 0;
-            $flds = array($n++ => array('type' => "n",
-                    'value' => $r["id"]
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r["Donor_Last"]
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $salName
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $careof
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r['street']
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r["city"]
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r["state"]
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $r["zip"],
-                    'style' => '00000'
-                )
+            $flds = array(
+                $r["id"],
+                $r["Donor_Last"],
+                $salName,
+                $careof,
+                $r['street'],
+                $r["city"],
+                $r["state"],
+                $r["zip"]
             );
 
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
         }
 
 
         // Finalize download.
-        $file = 'MailingList.xls';
-        // Redirect output to a client's web browser (Excel2007)
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        $writer->download();
     }
 
     public static function fillMailistTable(\PDO $dbh, $guestBlackOutDays) {
@@ -185,3 +172,4 @@ where
     }
 
 }
+?>

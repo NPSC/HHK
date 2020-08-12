@@ -10,6 +10,20 @@
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
+use HHK\sec\Session;
+use HHK\Tables\WebSec\FbxRS;
+use HHK\Tables\EditRS;
+use HHK\SysConst\WebRole;
+use HHK\Member\AbstractMember;
+use HHK\Member\Address\Emails;
+use HHK\SysConst\EmailPurpose;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\GLTableNames;
+use HHK\Tables\Name\NameEmailRS;
+use HHK\AuditLog\NameLog;
+use HHK\sec\SysConfig;
+use HHK\SysConst\WebSiteCode;
+
 function manageRegistration(PDO $dbh, $n, $admin) {
 
     $uS = Session::getInstance();
@@ -67,6 +81,8 @@ function manageRegistration(PDO $dbh, $n, $admin) {
 
         if ($fbEmail != "") {
 
+            $returnAddress = SysConfig::getKeyValue($dbh, 'sys_config', 'ReturnAddress');
+            $regSubject = SysConfig::getKeyValue($dbh, 'sys_config', 'RegSubj');
             $mail = prepareEmail();
 
             $mail->From = $uS->ReturnAddress;
@@ -94,7 +110,8 @@ function manageRegistration(PDO $dbh, $n, $admin) {
 }
 
 function getRegConfBody($siteName, $fbRs, $uname) {
-
+    $uS = Session::getInstance();
+    
     return '<html><head>
     <style type="text/css">
     h4 {font-family: Arial, Helvetica, sans-serif;
@@ -107,7 +124,7 @@ function getRegConfBody($siteName, $fbRs, $uname) {
     </head>
     <body>
     <h4>Your ' . $siteName . ' Volunteer Web Registration is Complete</h4>
-        <p>' . $fbRs->fb_First_Name->getStoredVal() . ' ' . $fbRs->fb_Last_Name->getStoredVal() . ' is approved for the ' . $siteName . ' Volunteer Website at:  <a href="volunteer?u=' . $uname . '" >Volunteer Website</a>;  with user name: ' . $uname . '</p>
+        <p>' . $fbRs->fb_First_Name->getStoredVal() . ' ' . $fbRs->fb_Last_Name->getStoredVal() . ' is approved for the ' . $siteName . ' Volunteer Website at:  <a href="' . $uS->resourceURL . $uS->siteList[WebSiteCode::Volunteer]['Relative_Address'] . '?u=' . $uname . '" >Volunteer Website</a>;  with user name: ' . $uname . '</p>
     </body>
     </html>';
 
@@ -119,8 +136,8 @@ function checkTheEmail(PDO $dbh, $id, $fbEmail) {
 
     $uS = Session::getInstance();
 
-    $name = Member::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
-    $emails = new Emails($dbh, $name, $uS->nameLookups[GL_TableNames::EmailPurpose]);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
+    $emails = new Emails($dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
 
 
     $desc = '';
@@ -144,13 +161,13 @@ function checkTheEmail(PDO $dbh, $id, $fbEmail) {
 
             if ($emails->isRecordSetDefined($code) === FALSE) {
                 $emCode = $code;
-                $desc = $val[Member::DESC];
+                $desc = $val[AbstractMember::DESC];
                 break;
             }
         }
     } else {
         // no email addressess defined yet.
-        $emCode = Email_Purpose::Home;
+        $emCode = EmailPurpose::Home;
     }
 
     if ($emCode == '') {

@@ -1,4 +1,11 @@
 <?php
+namespace HHK\sec;
+
+use HHK\Exception\RuntimeException;
+use HHK\SysConst\WebPageCode;
+use HHK\Tables\EditRS;
+use HHK\Tables\WebSec\{PageRS, Page_SecurityGroupRS, Web_SitesRS};
+use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
 
 /**
  * Pages.php
@@ -25,7 +32,7 @@ class Pages {
 
         // Get list of security groups
         $stmtg = $dbh->query("Select Group_Code, Title, '' as Substitute from w_groups");
-        while ($r = $stmtg->fetch(PDO::FETCH_NUM)) {
+        while ($r = $stmtg->fetch(\PDO::FETCH_NUM)) {
             $secGroups[$r[0]] = $r;
         }
 
@@ -36,7 +43,7 @@ class Pages {
         }
 
         if (isset($siteList[$website]) === FALSE) {
-            throw new Hk_Exception_Runtime("Web site code not found");
+            throw new RuntimeException("Web site code not found");
         }
 
         if (isset($post['hdnloginPageId'])) {
@@ -44,7 +51,7 @@ class Pages {
         }
 
         if ($loginPageId < 1) {
-            throw new Hk_Exception_Runtime("Login Page Id not found");
+            throw new RuntimeException("Login Page Id not found");
         }
 
         $pageTypes = readGenLookupsPDO($dbh, 'Page_Type');
@@ -65,7 +72,7 @@ class Pages {
                 $rows = EditRS::select($dbh, $pageRs, array($pageRs->idPage));
 
                 if (count($rows) != 1) {
-                    throw new Hk_Exception_Runtime("Page not found, id= ". $pageId);
+                    throw new RuntimeException("Page not found, id= ". $pageId);
                 }
 
                 EditRS::loadRow($rows[0], $pageRs);
@@ -192,7 +199,7 @@ class Pages {
         $siteList = $uS->siteList;
 
         if (isset($siteList[$site]) == FALSE) {
-            throw new Hk_Exception_Runtime("Web site code not found: " . $site);
+            throw new RuntimeException("Web site code not found: " . $site);
         }
 
         $query = "SELECT
@@ -252,7 +259,7 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
 
         // Get list of security groups
         $stmtg = $dbh->query("Select Group_Code, Title, '' as Substitute from w_groups");
-        while ($r = $stmtg->fetch(PDO::FETCH_NUM)) {
+        while ($r = $stmtg->fetch(\PDO::FETCH_NUM)) {
             $secGroups[$r[0]] = $r;
         }
 
@@ -413,3 +420,4 @@ from page p left join page_securitygroup s on p.idPage = s.idPage
     }
 
 }
+?>

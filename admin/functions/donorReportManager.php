@@ -9,6 +9,16 @@
  * @license   GPL and MIT
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
+
+use HHK\SysConst\CampaignType;
+use HHK\SysConst\MemStatus;
+use HHK\SysConst\SalutationPurpose;
+use HHK\sec\Session;
+use HHK\Admin\VolCats;
+use HHK\Admin\MemberSalutation\IndividualSalutation;
+use HHK\Admin\MemberSalutation\OrganizationSalutation;
+use HHK\ExcelHelper;
+
 function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSalutations, $letterSalutation, $envSalutation, $showAmounts = FALSE) {
 
     ini_set('memory_limit', "128M");
@@ -280,14 +290,32 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
 
     // set up some variables for the query and translation
-    $hdr = array();
+    $hdr = array(
+        "Id"=>"string",
+        "*"=>"string",
+        "Last Name"=>"string",
+        "Salutation Name"=>"string",
+        "Address Name"=>"string",
+        "Care-Of"=>"string",
+        "Address"=>"string",
+        "City"=>"string",
+        "State"=>"string",
+        "Zip"=>"string",
+        'Email'=>"string",
+    );
 
-    $n = 0;
-    $file = "";
-    $reportRows = 1;
-
+    $colWidths = array("10", "10", "20", "20", "20", "20", "20", "20", "10", "10", "35");
+    
+    $amountsHdr = array(
+        "Total"=>"dollar",
+        "Vendor Amount"=>"dollar",
+        "Free & Clear"=>"dollar"
+    );
+    $amountsColWidths = array("15", "15", "15");
+    
     // We use a different query string for roll-up and individual reports
     // set up the query, open the result set and create the header markup for each case
+    
     if ($rollup) {
         $sumaryRows['Report Type'] = "Rollup Report - Monetary Donations Only";
 
@@ -300,30 +328,22 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         // header - after opening the result set to the the number of records.
         if ($dlFlag) {
             $file = "DonorRollup";
-            $sml = OpenXML::createExcel($uname, 'Donor Roll-up Report');
+            $writer = new ExcelHelper($file);
+            $writer->setAuthor($uname);
+            $writer->setTitle("Donor Roll-up Report");
+            
             // build header
-
-            $hdr[$n++] = "Id";
-            $hdr[$n++] = "* ";
-            $hdr[$n++] = "Last Name";
-            $hdr[$n++] = "Salutation Name";
-            $hdr[$n++] = "Address Name";
-            $hdr[$n++] = "Care-Of";
-            $hdr[$n++] = "Address";
-            $hdr[$n++] = "City";
-            $hdr[$n++] = "State";
-            $hdr[$n++] = "Zip";
-            $hdr[$n++] = 'Email';
-            $hdr[$n++] = "#";
-
+            $hdr["#"] = "string";
+            
+            $colWidths[] = "10";
+            
             if ($showAmounts) {
-                $hdr[$n++] = "Total";
-                $hdr[$n++] = "Vendor Amount";
-                $hdr[$n++] = "Free & Clear";
+                $hdr = array_merge($hdr, $amountsHdr);
+                $colWidths = array_merge($colWidths, $amountsColWidths);
             }
 
-            OpenXML::writeHeaderRow($sml, $hdr);
-            $reportRows++;
+            $hdrStyle = $writer->getHdrStyle($colWidths);
+            $writer->writeSheetHeader("Worksheet", $hdr, $hdrStyle);
 
         } else {
 
@@ -335,9 +355,9 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 }
             }
             $txtIntro .= "<tr><td class='tdlabel'>Records Fetched: </td><td>" . count($rows) . "</td></tr>";
-            $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>First</th><th>Donations</th>";
+            $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>First</th>";
             if ($showAmounts) {
-                $txtheadr .= "<th>Total</th><th>Vendor Amount</th><th>Free & Clear</th>";
+                $txtheadr .= "<th>Donations</th><th>Total</th><th>Vendor Amount</th><th>Free & Clear</th>";
             }
             $txtheadr .= "</tr></thead>";
         }
@@ -371,32 +391,24 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         // header - after opening the result set to get number of rows.
         if ($dlFlag) {
             $file = 'IndividualDonationReport';
-            $sml = OpenXML::createExcel($uname, 'Individual Donation Report');
-
-            $hdr[$n++] = "Id";
-            $hdr[$n++] = "* ";
-            $hdr[$n++] = "Last Name";
-            $hdr[$n++] = "Salutation Name";
-            $hdr[$n++] = "Address Name";
-            $hdr[$n++] = "Care-Of";
-            $hdr[$n++] = "Address";
-            $hdr[$n++] = "City";
-            $hdr[$n++] = "State";
-            $hdr[$n++] = "Zip";
-            $hdr[$n++] = "Email";
-
+            $writer = new ExcelHelper($file);
+            $writer->setAuthor($uname);
+            $writer->setTitle("Individual Donation Report");
+            
             if ($showAmounts) {
-                $hdr[$n++] = "Total";
-                $hdr[$n++] = "Vendor Amount";
-                $hdr[$n++] = "Free & Clear";
+                $hdr = array_merge($hdr, $amountsHdr);
+                $colWidths = array_merge($colWidths, $amountsColWidths);
             }
-            $hdr[$n++] = "Campaign";
-            $hdr[$n++] = "Date";
-            $hdr[$n++] = "Merge Code";
-            $hdr[$n++] = "Notes";
-
-            OpenXML::writeHeaderRow($sml, $hdr);
-            $reportRows++;
+            $hdr["Campaign"] = "string";
+            $hdr["Date"] = "MM/DD/YYYY";
+            $hdr["Merge Code"] = "string";
+            $hdr["Notes"] = "string";
+            
+            $colWidths = array_merge($colWidths, array("20", "15", "15", "30"));
+            
+            $hdrStyle = $writer->getHdrStyle($colWidths);
+            $writer->writeSheetHeader("Worksheet", $hdr, $hdrStyle);
+            
         } else {
             $txtIntro .= "<tr><th colspan='2'>" . $reportTitle . "</th></tr>";
 
@@ -425,32 +437,22 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $deceased = 0;
 
     if ($dlFlag) {
-
-        // Create a new worksheet called â€œMy Dataâ€�
-        $myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
-        // Attach the â€œMy Dataâ€� worksheet as the first worksheet in the PHPExcel object
-        $sml->addSheet($myWorkSheet, 1);
-        $sml->setActiveSheetIndex(1);
-
-        $sRows = OpenXML::writeHeaderRow($sml, array(0=>'Filter', 1=>'Parameters'));
+        //New Sheet
+        $sHdr = array("Filter"=>"string", "Parameters"=>"string");
+        $sColWidths = array("50","50");
+        $sHdrStyle = $writer->getHdrStyle($sColWidths);
+        $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
 
         // create summary table
+        $sheet = array();
         foreach ($sumaryRows as $key => $val) {
             if ($key != "" && $val != "") {
-                $flds = array(0 => array('type' => "s",
-                        'value' => $key,
-                        'style' => "sRight"
-                    ),
-                    1 => array('type' => "s",
-                        'value' => $val
-                    )
-                );
-                $sRows = OpenXML::writeNextRow($sml, $flds, $sRows);
-
+                $flds = array($key, $val);
+                $sheet[] = $writer->convertStrings($sHdr, $flds);
             }
         }
 
-        $sml->setActiveSheetIndex(0);
+        $writer->writeSheet($sheet, "Constraints");
 
     }
 
@@ -498,10 +500,10 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         $careof = "";
         if ($r["isCompany"] && $r["Donor_Company"] != "") {
 
-            $donor = new OrganizationSal($r["Donor_Company"]);
+            $donor = new OrganizationSalutation($r["Donor_Company"]);
 
             if (($r["Assoc_Status"] != MemStatus::Deceased || $includeDeceased) && $r["Care_Of_Id"] > 0 && $r["Assoc_Company"] == $r["Donor_Company"]) {
-                $empl = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                $empl = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                 if ($overrideSalutations) {
                     $careof = $empl->getMarkup(SalutationPurpose::Envelope, $envSalutation, NULL);
                 } else {
@@ -513,11 +515,11 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
             if ($r["Donor_Status"] != MemStatus::Deceased || $includeDeceased) {
 
-                $donor = new IndividualSal($r["Donor_Last"], $r["Donor_First"], $r["Donor_Middle"], $r["Donor_Nickname"], $r["Donor_Prefix"], $r["Donor_Suffix"], $r["Donor_Gender"]);
+                $donor = new IndividualSalutation($r["Donor_Last"], $r["Donor_First"], $r["Donor_Middle"], $r["Donor_Nickname"], $r["Donor_Prefix"], $r["Donor_Suffix"], $r["Donor_Gender"]);
 
                 // add partner name only if alive and still married to donor.
                 if (($r["Assoc_Status"] != MemStatus::Deceased || $includeDeceased) && $r["Assoc_Id"] > 0 && ($r["Donor_Partner_Id"] == $r["Assoc_Id"])) {
-                    $partner = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                    $partner = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                 } else {
                     $partner = null;
                 }
@@ -525,7 +527,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             // Maybe the donor is dead and the partner is alive
             } else if (($r["Assoc_Status"] != MemStatus::Deceased || $includeDeceased) && $r["Assoc_Id"] > 0) {
                 // Use the partner as the donor
-                $donor = new IndividualSal($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
+                $donor = new IndividualSalutation($r["Assoc_Last"], $r["Assoc_First"], $r["Assoc_Middle"], $r["Assoc_Nickname"], $r["Assoc_Prefix"], $r["Assoc_Suffix"], $r["Assoc_Gender"]);
                 // Replace the address with the partner's address
                 $r["Address_1"] = $r["Assoc_Address_1"];
                 $r["Address_2"] = $r["Assoc_Address_2"];
@@ -567,148 +569,58 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
         if ($dlFlag) {
             if ($rollup) {
-                $n = 0;
                 $flds = array(
-                    $n++ => array('type' => "n",
-                        'value' => $r["id"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $majorDonorMark
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["Donor_Last"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $salName
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $envName
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $careof
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $combinedAddr
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["City"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["State"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["Zipcode"],
-                        'style' => '00000'
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["Email"]
-                    ),
-                    $n++ => array('type' => "n",
-                        'value' => $r["numDon"]
-                    ),
-
+                    $r["id"],
+                    $majorDonorMark,
+                    $r["Donor_Last"],
+                    $salName,
+                    $envName,
+                    $careof,
+                    $combinedAddr,
+                    $r["City"],
+                    $r["State"],
+                    $r["Zipcode"],
+                    $r["Email"],
+                    $r["numDon"]
                 );
 
                 if ($showAmounts) {
-
-                    $flds[$n++] = array('type' => "n",
-                        'value' => $amountMkup,
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
-
-                    $flds[$n++] = array('type' => "n",
-                        'value' => $vendorAmt,
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
-
-                    $flds[$n++] = array('type' => "n",
-                        'value' => $taxFreeMkup,
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1);
+                    $flds[] = $amountMkup;
+                    $flds[] = $vendorAmt;
+                    $flds[] = $taxFreeMkup;
                 }
 
-                $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+                $row = $writer->convertStrings($hdr, $flds);
+                $writer->writeSheetRow("Worksheet", $row);
 
             } else {
                 // Excel output individual donor report
-                $n = 0;
                 $flds = array(
-                    $n++ => array('type' => "n",
-                        'value' => $r["id"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $majorDonorMark
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["Donor_Last"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $salName
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $envName
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $careof
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $combinedAddr
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["City"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["State"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["Zipcode"],
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_TEXT
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $r["Email"]
-                    ),
+                    $r["id"],
+                    $majorDonorMark,
+                    $r["Donor_Last"],
+                    $salName,
+                    $envName,
+                    $careof,
+                    $combinedAddr,
+                    $r["City"],
+                    $r["State"],
+                    $r["Zipcode"],
+                    $r["Email"]
                 );
 
                 if ($showAmounts) {
-                    $flds[$n++] = array('type' => "n",
-                        'value' => $amountMkup,
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
-                    );
-                    $flds[$n++] = array('type' => "n",
-                        'value' => $vendorAmt,
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
-                    );
-                    $flds[$n++] = array('type' => "n",
-                        'value' => $taxFreeMkup,
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_NUMBER_COMMA_SEPARATED1
-                    );
-                    $flds[$n++] = array('type' => "s",
-                        'value' => $r["Campaign_Title"]
-                    );
-                    $flds[$n++] = array('type' => "s",
-                        'value' => date("m/d/Y", strtotime($r["Effective_Date"])),
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14
-                    );
-                    $flds[$n++] = array('type' => "s",
-                        'value' => $r["Mail_Merge_Code"]
-                    );
-                    $flds[$n++] = array('type' => "s",
-                        'value' => $r["Note"]
-                    );
-                } else {
-                    $flds[$n++] = array('type' => "s",
-                        'value' => $r["Campaign_Title"]
-                    );
-                    $flds[$n++] = array('type' => "s",
-                        'value' => date("m/d/Y", strtotime($r["Effective_Date"])),
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14
-                    );
-                    $flds[$n++] = array('type' => "s",
-                        'value' => $r["Mail_Merge_Code"]
-                    );
-                    $flds[$n++] = array('type' => "s",
-                        'value' => $r["Note"]
-                    );
+                    $flds[] = $amountMkup;
+                    $flds[] = $vendorAmt;
+                    $flds[] = $taxFreeMkup;
                 }
+                $flds[] = $r["Campaign_Title"];
+                $flds[] = $r["Effective_Date"];
+                $flds[] = $r["Mail_Merge_Code"];
+                $flds[] = $r["Note"];
 
-                $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+                $row = $writer->convertStrings($hdr, $flds);
+                $writer->writeSheetRow("Worksheet", $row);
             }
         } else {
             // not dlflag - local report
@@ -736,13 +648,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
     // Finalize download.
     if ($dlFlag) {
-        // Redirect output to a client's web browser (Excel2007)
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
+        $writer->download();
     }
 
     $voldCat->set_reportMarkup($txtheadr . $txtreport . "</tbody>");
@@ -757,4 +663,3 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $voldCat->reportHdrMarkup = $txtIntro;
     return $voldCat;
 }
-

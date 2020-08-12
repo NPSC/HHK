@@ -1,4 +1,11 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\Duplicate;
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
+use HHK\SysConst\GLTableNames;
+
 /**
  * Duplicates.php
  *
@@ -9,7 +16,7 @@
  */
 require ("AdminIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
+/* require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'visitRS.php');
 
 require (DB_TABLES . 'registrationRS.php');
@@ -48,7 +55,7 @@ require (CLASSES . 'Notes.php');
 
 require (CLASSES . 'Duplicate.php');
 require (CLASSES . 'CreateMarkupFromDB.php');
-
+*/
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -69,7 +76,7 @@ if (isset($_POST['cmd'])) {
 
         $fullName = filter_var($_POST['nf'], FILTER_SANITIZE_STRING);
 
-        $markup = Duplicate::expand($dbh, $fullName, $_POST, $uS->guestLookups[GL_TableNames::PatientRel]);
+        $markup = Duplicate::expand($dbh, $fullName, $_POST, $uS->guestLookups[GLTableNames::PatientRel]);
 
         $events = array('mk' => $markup);
 
@@ -123,9 +130,9 @@ $mtypes = array(
 $mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, '', TRUE), array('name' => 'selmtype'));
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");

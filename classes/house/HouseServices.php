@@ -1,5 +1,51 @@
 <?php
 
+namespace HHK\House;
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\House\Visit\VisitViewer;
+use HHK\SysConst\AddressPurpose;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\VisitStatus;
+use HHK\sec\Session;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\Purchase\VisitCharges;
+use HHK\House\Reservation\Reservation_1;
+use HHK\House\Room\RoomChooser;
+use HHK\House\Visit\Visit;
+use HHK\Note\LinkNote;
+use HHK\Note\Note;
+use HHK\Purchase\RateChooser;
+use HHK\Payment\CreditToken;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentManager\PaymentManager;
+use HHK\Purchase\PaymentChooser;
+use HHK\House\Resource\AbstractResource;
+use HHK\Payment\PaymentResult\PaymentResult;
+use HHK\SysConst\ExcessPay;
+use HHK\SysConst\ItemId;
+use HHK\Payment\Invoice\InvoiceLine\OneTimeInvoiceLine;
+use HHK\Purchase\Item;
+use HHK\Payment\Invoice\Invoice;
+use HHK\Purchase\ValueAddedTax;
+use HHK\Payment\Invoice\InvoiceLine\TaxInvoiceLine;
+use HHK\Payment\PaymentManager\PaymentManagerPayment;
+use HHK\SysConst\PayType;
+use HHK\SysConst\InvoiceStatus;
+use HHK\Tables\Visit\VisitRS;
+use HHK\Tables\EditRS;
+use HHK\Exception\RuntimeException;
+use HHK\TableLog\VisitLog;
+use HHK\SysConst\ReservationStatus;
+use HHK\SysConst\RoomState;
+use HHK\Member\Role\Guest;
+use HHK\Member\Relation\AbstractRelation;
+use HHK\Tables\Visit\StaysRS;
+use HHK\Exception\PaymentException;
+use HHK\sec\SecurityComponent;
+use HHK\Tables\Visit\Visit_LogRS;
+
 /**
  * HouseServices.php
  *
@@ -14,7 +60,7 @@ class HouseServices {
     /**
      * Show visit details
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param int $idGuest Supply either this or the next
      * @param int $idVisit
      * @param int $span span = 'max' means load last visit span, otherwise load int value
@@ -52,13 +98,13 @@ class HouseServices {
 
         // Hospital and association lists
         $r['Hospital'] = '';
-        if (isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-            $r['Hospital'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+        if (isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+            $r['Hospital'] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
         }
 
         $r['Association'] = '';
-        if (isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']])) {
-            $r['Association'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
+        if (isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']])) {
+            $r['Association'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
             if (trim($r['Association']) == '(None)') {
                 $r['Association'] = '';
             }
@@ -66,7 +112,7 @@ class HouseServices {
 
         if ($r['Span_End'] != '') {
             $vspanEndDT = new \DateTime($r['Span_End']);
-            $vspanEndDT->sub(new DateInterval('P1D'));
+            $vspanEndDT->sub(new \DateInterval('P1D'));
         } else {
             $vspanEndDT = new \DateTime();
         }
@@ -74,7 +120,7 @@ class HouseServices {
         $vspanEndDT->setTime(23, 59, 59);
         $vspanStartDT = new \DateTime($r['Span_Start']);
 
-        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+        $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         $visitCharge = new VisitCharges($r['idVisit']);
         $visitCharge->sumPayments($dbh);
@@ -99,7 +145,7 @@ class HouseServices {
 
         // Get main visit markup section
         $mkup .= HTMLContainer::generateMarkup('div',
-                VisitView::createActiveMarkup(
+                VisitViewer::createActiveMarkup(
                         $dbh,
                         $r,
                         $visitCharge,
@@ -133,16 +179,16 @@ class HouseServices {
         } else if ($action == 'pf') {
 
             $mkup .= HTMLContainer::generateMarkup('div',
-                    VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
+                    VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
 
         } else {
             $mkup = HTMLContainer::generateMarkup('div',
-                    VisitView::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coDate) . $mkup, array('id'=>'divksStays'));
+                    VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coDate) . $mkup, array('id'=>'divksStays'));
 
             // Show fees if not hf = hide fees.
             if ($action != 'hf') {
             	$mkup .= HTMLContainer::generateMarkup('div',
-                    VisitView::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
+                    VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
             }
         }
 
@@ -178,7 +224,7 @@ class HouseServices {
 
             foreach ($post['removeCb'] as $r => $v) {
                 $idStay = intval(filter_var($r, FILTER_SANITIZE_NUMBER_INT), 10);
-                $reply .= VisitView::removeStay($dbh, $idVisit, $span, $idStay, $uS->username);
+                $reply .= VisitViewer::removeStay($dbh, $idVisit, $span, $idStay, $uS->username);
             }
         }
 
@@ -333,7 +379,7 @@ class HouseServices {
 
                     if ($newRescId != 0 && $newRescId != $visit->getidResource()) {
 
-                        $resc = Resource::getResourceObj($dbh, $newRescId);
+                        $resc = AbstractResource::getResourceObj($dbh, $newRescId);
 
                         $now = new \DateTime();
 
@@ -426,7 +472,7 @@ class HouseServices {
                         }
 
                         $coDT = new \DateTime($coDate);
-                        $coDT->setTimezone(new DateTimeZone($uS->tz));
+                        $coDT->setTimezone(new \DateTimeZone($uS->tz));
 
                         $coDT->setTime($coHour, $coMin, 0);
 
@@ -694,7 +740,7 @@ class HouseServices {
 
         // Payments - setup
         if (is_null($visit) === FALSE) {
-            $paymentManager->pmp->setPriceModel(PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
+            $paymentManager->pmp->setPriceModel(AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
             $paymentManager->pmp->priceModel->setCreditDays($visit->getRateGlideCredit());
             $paymentManager->pmp->setVisitCharges(new VisitCharges($visit->getIdVisit()));
         }
@@ -790,7 +836,7 @@ class HouseServices {
         }
 
         // Get next visit
-        $nextVisitRs = new VisitRs();
+        $nextVisitRs = new VisitRS();
         $nextVisitRs->idVisit->setStoredVal($visit->getIdVisit());
         $nextVisitRs->Span->setStoredVal($visit->getSpan() + 1);
         $vRows = EditRS::select($dbh, $nextVisitRs, array($nextVisitRs->idVisit, $nextVisitRs->Span));
@@ -839,7 +885,7 @@ class HouseServices {
         }
 
         // Get new room cleaning status to copy to original room
-        $resc = Resource::getResourceObj($dbh, $nextVisitRs->idResource->getStoredVal());
+        $resc = AbstractResource::getResourceObj($dbh, $nextVisitRs->idResource->getStoredVal());
         $rooms = $resc->getRooms();
         $room = array_shift($rooms);
         $roomStatus = $room->getStatus();
@@ -853,7 +899,7 @@ class HouseServices {
         $updateCounter = $visit->updateVisitRecord($dbh, $uname);
 
         if ($updateCounter != 1) {
-            throw new Hk_Exception_Runtime('Visit table update failed. Checkout is not undone.');
+            throw new RuntimeException('Visit table update failed. Checkout is not undone.');
         }
 
         // update Reservation
@@ -926,7 +972,7 @@ class HouseServices {
         }
 
         // Update room cleaning status of this room
-        $resc2 = Resource::getResourceObj($dbh, $visit->getidResource());
+        $resc2 = AbstractResource::getResourceObj($dbh, $visit->getidResource());
         $rooms2 = $resc2->getRooms();
         $room2 = array_shift($rooms2);
         $room2->setStatus($roomStatus);
@@ -1003,7 +1049,7 @@ class HouseServices {
         $updateCounter = EditRS::update($dbh, $visit->visitRS, array($visit->visitRS->idVisit, $visit->visitRS->Span));
 
         if ($updateCounter != 1) {
-            throw new Hk_Exception_Runtime('Visit table update failed. Checkout is not undone.');
+            throw new RuntimeException('Visit table update failed. Checkout is not undone.');
         }
 
         $logText = VisitLog::getUpdateText($visit->visitRS);
@@ -1040,7 +1086,7 @@ class HouseServices {
 
 
         // Update room cleaning status of this room
-        $resc2 = Resource::getResourceObj($dbh, $visit->getidResource());
+        $resc2 = AbstractResource::getResourceObj($dbh, $visit->getidResource());
         $rooms2 = $resc2->getRooms();
         $room2 = array_shift($rooms2);
         $room2->setStatus(RoomState::Clean);
@@ -1093,7 +1139,7 @@ class HouseServices {
         }
 
         $reg = new Registration($dbh, 0, $visitRs->idRegistration->getStoredVal());
-        $psg = new Psg($dbh, $reg->getIdPsg());
+        $psg = new PSG($dbh, $reg->getIdPsg());
 
         //Decide what to send back
         if (isset($post[$prefix.'txtLastName'])) {
@@ -1114,7 +1160,7 @@ class HouseServices {
             // Get the resource
             $resource = null;
             if ($visitRs->idResource->getStoredVal() > 0) {
-                $resource = Resource::getResourceObj($dbh, $visitRs->idResource->getStoredVal());
+                $resource = AbstractResource::getResourceObj($dbh, $visitRs->idResource->getStoredVal());
             } else {
                 return array('error' => 'Room not found.  ');
             }
@@ -1226,7 +1272,7 @@ class HouseServices {
             $logText = VisitLog::getInsertText($stayRS);
             VisitLog::logStay($dbh, $idVisit, $visitSpan, $stayRS->idRoom->getNewVal(), $idStays, $guest->getIdName(), $visitRs->idRegistration->getStoredVal(), $logText, "insert", $uS->username);
 
-            $dataArray['stays'] = VisitView::createStaysMarkup($dbh, $idVisit, $visitSpan, $visitRs->idPrimaryGuest->getStoredVal(), FALSE, $guest->getIdName(), $labels);
+            $dataArray['stays'] = VisitViewer::createStaysMarkup($dbh, $idVisit, $visitSpan, $visitRs->idPrimaryGuest->getStoredVal(), FALSE, $guest->getIdName(), $labels);
 
         } else {
             // send back a guest dialog to collect name, address, etc.
@@ -1249,7 +1295,7 @@ class HouseServices {
 
         $guest = new Guest($dbh, '', $idName);
         $addrObj = $guest->getAddrObj();
-        $addr = $addrObj->get_Data(Address_Purpose::Home);
+        $addr = $addrObj->get_Data(AddressPurpose::Home);
 
         $adrArray = array(
             'adraddress1' => $addr['Address_1'],
@@ -1292,7 +1338,7 @@ class HouseServices {
         }
 
         // New card.
-        $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, PaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
+        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
         
         if ($gateway->hasCofService()) {
         	
@@ -1323,7 +1369,7 @@ class HouseServices {
     /**
      * Return from View Credit Table; delete any indicated cards and send out COF transaction to Gateway
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param integer $idGuest
      * @param integer $idGroup
      * @param array $post
@@ -1404,13 +1450,13 @@ class HouseServices {
             
             try {
 
-                $gateway = PaymentGateway::factory($dbh, $uS->PaymentGateway, $selGw);
+                $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $selGw);
                 
                 if ($gateway->hasCofService()) {
                 	$dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage, $cardType, $chargeAcct, $idx);
                 }
 
-            } catch (Hk_Exception_Payment $ex) {
+            } catch (PaymentException $ex) {
 
                 $dataArray['error'] = $ex->getMessage();
             }
@@ -1439,7 +1485,7 @@ class HouseServices {
 
     /** Move a visit temporally by so many days
      *
-     * @param PDO $dbh
+     * @param \PDO $dbh
      * @param int $idVisit
      * @param int $dayDelta
      * @return array
@@ -1458,7 +1504,7 @@ class HouseServices {
         }
 
         // save the visit info
-        $reply = VisitView::moveVisit($dbh, $idVisit, $span, $startDelta, $endDelta, $uS->username);
+        $reply = VisitViewer::moveVisit($dbh, $idVisit, $span, $startDelta, $endDelta, $uS->username);
 
         if ($reply === FALSE) {
 

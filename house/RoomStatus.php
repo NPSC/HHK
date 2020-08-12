@@ -1,4 +1,11 @@
 <?php
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\House\ResourceView;
+use HHK\SysConst\RoomState;
+use HHK\House\Room\Room;
+
 /**
  * RoomStatus.php
  *
@@ -9,7 +16,7 @@
  */
 require ("homeIncludes.php");
 
-
+/*
 require (DB_TABLES . 'nameRS.php');
 
 require (DB_TABLES . 'ReservationRS.php');
@@ -28,7 +35,7 @@ require (HOUSE . 'ResourceView.php');
 require (HOUSE . 'Reservation_1.php');
 require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
-
+ */
 
 
 try {

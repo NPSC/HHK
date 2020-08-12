@@ -1,4 +1,9 @@
 <?php
+
+namespace HHK;
+
+use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector, HTMLInput};
+
 /**
  * ColumnSelectors.php
  *
@@ -13,6 +18,7 @@
  * @package Hospitality HouseKeeper
  * @author Eric
  */
+
 class ColumnSelectors {
 
     /**

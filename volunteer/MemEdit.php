@@ -1,4 +1,17 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\AlertControl\AlertMessage;
+use HHK\SysConst\VolRank;
+use HHK\SysConst\MemBasis;
+use HHK\Member\AbstractMember;
+use HHK\Member\Address\Address;
+use HHK\SysConst\GLTableNames;
+use HHK\Member\Address\Emails;
+use HHK\Member\Address\Phones;
+use HHK\Volunteer\VolunteerCategory;
+use HHK\Member\Address\Addresses;
+
 /**
  * memEdit.php
  *
@@ -12,7 +25,7 @@
 
 require ("VolIncludes.php");
 
-
+/*
 require (MEMBER . 'Member.php');
 require (MEMBER . 'IndivMember.php');
 require (MEMBER . 'OrgMember.php');
@@ -27,8 +40,8 @@ require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 require (CLASSES . "volunteer.php");
-
-$wInit = new webInit();
+ */
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 
@@ -44,7 +57,7 @@ $resourceURL = $uS->resourceURL;
 
 
 // Instantiate the alert message control
-$emAlertMsg = new alertMessage("divAlert2");
+$emAlertMsg = new AlertMessage("divAlert2");
 $emAlertMsg->set_txtSpanId("alertMsg2");
 $emAlertMsg->set_DisplayAttr("none");
 $emResultAlert = $emAlertMsg->createMarkup("ignore");
@@ -155,7 +168,7 @@ $defBasis = MemBasis::Indivual;
 // Instantiate the member object
 try {
 
-    $name = Member::GetDesignatedMember($dbh, $id, $defBasis);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, $defBasis);
 
 } catch (Exception $ex) {
 
@@ -164,7 +177,7 @@ try {
     $resultMessage = $alertMsg->createMarkup();
 
     $id = 0;
-    $name = Member::GetDesignatedMember($dbh, $id, $defBasis);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, $defBasis);
 
 }
 
@@ -172,9 +185,9 @@ try {
 // the rest
 try {
 
-    $address = new Address($dbh, $name, $uS->nameLookups[GL_TableNames::AddrPurpose]);
-    $phones = new Phones($dbh, $name, $uS->nameLookups[GL_TableNames::PhonePurpose]);
-    $emails = new Emails($dbh, $name, $uS->nameLookups[GL_TableNames::EmailPurpose]);
+    $address = new Address($dbh, $name, $uS->nameLookups[GLTableNames::AddrPurpose]);
+    $phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+    $emails = new Emails($dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
 
 } catch (Exception $ex) {
     exit("Error opening supporting objects: " . $ex->getMessage());

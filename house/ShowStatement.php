@@ -1,4 +1,15 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\Member\Role\Guest;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\Payment\Receipt;
+use HHK\House\Visit\Visit;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+
 /**
  * ShowStatement.php
  *
@@ -10,7 +21,7 @@
 
 require ("homeIncludes.php");
 
-require(DB_TABLES . "visitRS.php");
+/* require(DB_TABLES . "visitRS.php");
 require(DB_TABLES . "registrationRS.php");
 require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
@@ -51,7 +62,7 @@ require (HOUSE . 'ReservationSvcs.php');
 require (HOUSE . 'Visit.php');
 require (HOUSE . 'RegisterForm.php');
 require (HOUSE . 'RegistrationForm.php');
-require (HOUSE . 'Vehicle.php');
+require (HOUSE . 'Vehicle.php'); */
 
 $wInit = new webInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
@@ -171,7 +182,7 @@ if ($idRegistration > 0) {
         $guest = new Guest($dbh, '', $spans[(count($spans) - 1)]['idPrimaryGuest']);
         $name = $guest->getRoleMember();
 
-        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+        $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
         $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName(), $priceModel, $includeLogo);
 
     } else {
@@ -275,7 +286,7 @@ if (isset($_REQUEST['cmd'])) {
             $mail->From = $uS->FromAddress;
             $mail->FromName = $uS->siteName;
             $mail->addAddress($emAddr);     // Add a recipient
-            $mail->addReplyTo($uS->ReplyToAddr);
+            $mail->addReplyTo($uS->ReplyTo);
 
             $mail->isHTML(true);
 

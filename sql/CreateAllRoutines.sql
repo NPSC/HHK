@@ -17,16 +17,16 @@ CREATE PROCEDURE `get_credit_gw`(
 BEGIN
 
     DECLARE myResc INT;
-    
+
     if (visitId > 0) then
 	Select ifnull(idResource, 0) into myResc from visit where idVisit = visitId and Span = spanId;
     ELSE
 	select ifnull(r.idResource, 0) into myResc from reservation r join registration rg on r.idRegistration = rg.idRegistration where rg. idRegistration = regId order by r.idReservation DESC limit 0, 1;
     END IF;
-    
+
     if (myResc > 0) THEN
 
-        SELECT 
+        SELECT
             ifnull(l.Merchant, '') as `Merchant`, l.idLocation
         FROM
             resource_room rr
@@ -39,7 +39,7 @@ BEGIN
 
     ELSE
 
-        SELECT 
+        SELECT
            DISTINCT ifnull(l.Merchant, '') as `Merchant`, l.idLocation
         FROM
             room rm
@@ -60,22 +60,22 @@ END -- ;
 DROP procedure IF EXISTS `gl_report`; -- ;
 
 CREATE PROCEDURE `gl_report` (
-	IN pmtStart VARCHAR(15), 
+	IN pmtStart VARCHAR(15),
     IN pmtEnd VARCHAR(15))
 BEGIN
 	create temporary table idinp (idInvoice int NOT NULL, PRIMARY KEY (idInvoice));
 	create temporary table idind (idInvoice int);
 
 	replace into idinp
-		select 
+		select
 			`pi`.`Invoice_Id`
 		FROM
 			`payment` `p`
 			JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
-		where 
+		where
             ((DATE(`p`.`Payment_Date`) >= DATE(pmtStart) && DATE(`p`.`Payment_Date`) < DATE(pmtEnd))
 			OR (DATE(`p`.`Last_Updated`) >= DATE(pmtStart) && DATE(`p`.`Last_Updated`) < DATE(pmtEnd)));
-        
+
 	insert into idind
 		select idInvoice from invoice where Delegated_Invoice_Id in (select idinvoice from idinp);
 
@@ -112,8 +112,8 @@ BEGIN
 		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
 		IFNULL(`nd`.`Gl_Code_Debit`, '') as `ba_Gl_Debit`,
         IFNULL(`nd`.`Gl_Code_Credit`, '') as `ba_Gl_Credit`
-	from 
-        `invoice` `i` 
+	from
+        `invoice` `i`
         Join idinp on i.idInvoice = idinp.idInvoice
         LEFT JOIN `payment_invoice` `pi` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
         LEFT JOIN `payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
@@ -152,8 +152,8 @@ select sum(
 	datediff(
              case when DATE(ifnull(Span_End, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(ifnull(Span_End, NOW())) end
             , case when  DATE(Span_Start) < DATE(startDate) then DATE(startDate) else  DATE(Span_Start) end)
-    ) 
-    as numNites 
+    )
+    as numNites
 from visit
 Where DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
 
@@ -182,8 +182,8 @@ BEGIN
 		datediff(
                     case when DATE(IFNULL(Span_End_Date, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(IFNULL(Span_End_Date, NOW())) end
                    , case when  DATE(Span_Start_Date) < DATE(startDate) then DATE(startDate) else  DATE(IFNULL(Span_Start_Date, NOW())) end)
-        ) 
-        as numNites 
+        )
+        as numNites
 	from stays
 	Where `On_Leave` = 0 and DATE(Span_Start_Date) < DATE(endDate) and DATE(IFNULL(Span_End_Date, NOW())) >= DATE(startDate);
 
@@ -211,7 +211,7 @@ BEGIN
 		join reservation r on hs.idHospital_stay = r.idHospital_stay
 	    left join constraint_entity ce3 on ce3.idEntity = r.idReservation and ce3.`Type` = 'rv'
 	where r.idReservation = resvId LIMIT 1;
-	
+
 	if (rId) > 0 THEN
 		-- find the rooms that have the attributes.
 		select idEntity, count(idEntity) as `num`
@@ -780,9 +780,9 @@ BEGIN
     update vehicle set
             idRegistration = goodReg
     where idRegistration = badReg;
-	
+
 	update psg_note set
-			Psg_Id = keepIdPsg 
+			Psg_Id = keepIdPsg
 	where Psg_Id = dupIdPsg;
 
     delete from registration where idRegistration = badReg;
@@ -922,24 +922,24 @@ BEGIN
         count_idPsg int
     );
 
-    insert into tble 
-		SELECT 
+    insert into tble
+		SELECT
 			Psg_Id, COUNT(Psg_Id)
 		FROM
 			report
-		WHERE 
+		WHERE
 			`Status` in (activ, resol, del)
 		GROUP BY Psg_Id;
 
-	
+
     select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, ifnull(r.Report_Date, '') as `Report_Date`, ifnull(r.Resolution_Date, '') as `Resolution_Date`, ifnull(g.Description, '') as `Status`
-    from 
+    from
 		tble t join report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, del)
 		left join hospital_stay hs on t.idPsg = hs.idPsg
         left join name n on hs.idPatient = n.idName
         left join gen_lookups g on g.Table_Name = 'Incident_Status' and g.Code = r.`Status`
 	order by t.count_idPsg DESC, r.Psg_Id;
-	
+
     drop table tble;
-    
+
 END -- ;

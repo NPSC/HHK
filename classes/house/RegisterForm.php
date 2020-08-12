@@ -1,4 +1,26 @@
 <?php
+
+namespace HHK\House;
+
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\ItemPriceCode;
+use HHK\SysConst\PhonePurpose;
+use HHK\SysConst\VisitStatus;
+use HHK\Member\Role\AbstractRole;
+use HHK\Tables\Registration\VehicleRS;
+use HHK\Tables\EditRS;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\Session;
+use HHK\Config_Lite\Config_Lite;
+use HHK\House\Visit\Visit;
+use HHK\Member\Role\Guest;
+use HHK\House\Constraint\ConstraintsVisit;
+use HHK\Member\Role\Patient;
+use HHK\Payment\CreditToken;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\Tables\Name\NameRS;
+
 /**
  * RegisterForm.php
  *
@@ -59,7 +81,7 @@ class RegisterForm {
         return $mkup;
     }
 
-    protected function patientBlock(\Role $patient, $hospital, $hospRoom) {
+    protected function patientBlock(AbstractRole $patient, $hospital, $hospRoom) {
 
         $bd = '';
         if ($patient->getRoleMember()->get_birthDate() != '') {
@@ -108,7 +130,7 @@ class RegisterForm {
                 <tr><td colspan='11' style='border:none;border-bottom:1.5pt solid #98C723;padding-left:0'><h2>Vehicle$s</h2></td></tr>";
 
             foreach ($vehs as $v) {
-                $veh = new VehicleRs();
+                $veh = new VehicleRS();
                 EditRS::loadRow($v, $veh);
 
                 $mkup .= "<tr>
@@ -231,7 +253,7 @@ class RegisterForm {
             <tr><td colspan='6' style='border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'><h2>Guests</h2></td></tr>";
 
         $uS = Session::getInstance();
-        $ecRels = $uS->nameLookups[GL_TableNames::RelTypes];
+        $ecRels = $uS->nameLookups[GLTableNames::RelTypes];
 
 
         // for each guest
@@ -241,7 +263,7 @@ class RegisterForm {
 
             $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
             //$phoneHome = $guest->phones->get_data(Phone_Purpose::Home);
-            $phoneCell = $guest->getPhonesObj()->get_data(Phone_Purpose::Cell);
+            $phoneCell = $guest->getPhonesObj()->get_data(PhonePurpose::Cell);
             if ($phoneCell["Phone_Num"] == '' || $guest->getHousePhone() == 1) {
                 $phoneCell["Phone_Num"] = 'House Phone';
             }
@@ -353,7 +375,7 @@ class RegisterForm {
 
     }
 
-    protected function generateDocument(\PDO $dbh, $title, Role $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes,
+    protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes,
             $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $creditRecord, $notes) {
 
         $uS = Session::getInstance();
@@ -429,7 +451,7 @@ p.label {
 </style>';
     }
 
-    public function prepareRegForm(PDO $dbh, $idVisit, $span, $idReservation, $agreement = '') {
+    public function prepareRegForm(\PDO $dbh, $idVisit, $span, $idReservation, $agreement = '') {
 
         $uS = Session::getInstance();
         $this->labels = new Config_Lite(LABEL_FILE);
@@ -452,11 +474,11 @@ p.label {
                     . "where idVisit = :reg and Visit_Span = :spn "
                     . " and DATEDIFF(ifnull(Span_End_Date, datedefaultnow(Expected_Co_Date)), Span_Start_Date) > 0"
                     . " order by `Status` desc";
-            $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
-            $stmt->bindValue(':reg', $idVisit, PDO::PARAM_INT);
-            $stmt->bindValue(':spn', $span, PDO::PARAM_INT);
+            $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+            $stmt->bindValue(':reg', $idVisit, \PDO::PARAM_INT);
+            $stmt->bindValue(':spn', $span, \PDO::PARAM_INT);
             $stmt->execute();
-            $rows = $stmt->fetchAll(PDO::FETCH_NAMED);
+            $rows = $stmt->fetchAll(\PDO::FETCH_NAMED);
 
             foreach ($rows as $s) {
                 $stays[$s['idName']] = $s;
@@ -492,7 +514,7 @@ p.label {
             $rateAdj = $visit->getRateAdjust();
 
             // psg
-            $psg = new Psg($dbh, $reg->getIdPsg());
+            $psg = new PSG($dbh, $reg->getIdPsg());
 
             // Guests
             foreach ($stays as $s) {
@@ -513,7 +535,7 @@ p.label {
         } else if ($idReservation > 0) {
 
             $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation where rg.idReservation = $idReservation");
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             $arrival = $rows[0]['Actual_Arrival'];
             if ($arrival == '') {
@@ -534,7 +556,7 @@ p.label {
             $notes = $rows[0]['Checkin_Notes'];
 
             $reg = new Registration($dbh, 0, $rows[0]['idRegistration']);
-            $psg = new Psg($dbh, $reg->getIdPsg());
+            $psg = new PSG($dbh, $reg->getIdPsg());
 
             foreach ($rows as $r) {
 
@@ -581,7 +603,7 @@ p.label {
 
         $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h where h.idPsg = " . intval($psg->getIdPsg());
         $stmt = $dbh->query($query);
-        $psgs = $stmt->fetchAll(PDO::FETCH_NUM);
+        $psgs = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         if (count($psgs) == 1) {
             $patient = new Patient($dbh, '', $psgs[0][0]);
@@ -595,8 +617,8 @@ p.label {
 
         // Hospital Name
         $hospList = array();
-        if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-            $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+        if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+            $hospList = $uS->guestLookups[GLTableNames::Hospital];
         }
 
         foreach ($hospList as $r) {
@@ -679,7 +701,7 @@ p.label {
             $agent = $userRS->Name_First->getStoredVal() . ' ' . substr($userRS->Name_Last->getStoredVal(), 0, 2);
         }
 
-        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+        $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         $rate = (1 + $rateAdj/100) * $priceModel->amountCalculator(1, $idRate, $rateCat, $pledgedRate);
 
@@ -712,7 +734,7 @@ p.label {
                 $houseAddr,
                 $hospital,
                 $hospRoom,
-                $uS->guestLookups[GL_TableNames::PatientRel],
+                $uS->guestLookups[GLTableNames::PatientRel],
                 $vehs,
                 $agent,
                 $rate,

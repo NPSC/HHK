@@ -1,4 +1,9 @@
 <?php
+
+namespace HHK;
+
+
+
 /**
  * CreateMarkupFromDB.php
  *

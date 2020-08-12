@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\chkBoxCtrl;
+use HHK\AlertControl\AlertMessage;
+use HHK\ExcelHelper;
+
 /**
  * anomalies.php
  *
@@ -10,10 +16,6 @@
 
 require ("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-require(CLASSES . "OpenXML.php");
-
 $wInit = new webInit();
 $dbh = $wInit->dbh;
 
@@ -24,11 +26,11 @@ $menuMarkup = $wInit->generatePageMenu();
 
 
 // Member Status Selection control
-$cbMemStatus = new chkBoxCtrlClass($dbh, "validMemStatus", "Include", "cbMemStatus", false);
+$cbMemStatus = new chkBoxCtrl($dbh, "validMemStatus", "Include", "cbMemStatus", false);
 $cbMemStatus->set_cbValueArray(true, "a");
 
 // Report type selection control - options defined by Table_Name = anomalyTypes in table gen_loookups
-$cbRptType = new chkBoxCtrlClass($dbh, "anomalyTypes", "Include", "cbRptType", true);
+$cbRptType = new chkBoxCtrl($dbh, "anomalyTypes", "Include", "cbRptType", true);
 
 // Instantiate the alert message control
 $alertMsg = new alertMessage("divAlert1");
@@ -121,7 +123,7 @@ if (isset($_POST["btnRunHere"]) || isset($_POST["btnDlExcel"])) {
 }
 
 
-function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRptType, $isExcel, $prefOnly, $includeBad) {
+function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $isExcel, $prefOnly, $includeBad) {
 
     $cbMemStatus->setReturnValues($_POST[$cbMemStatus->get_htmlNameBase()]);
     $cbRptType->setReturnValues($_POST[$cbRptType->get_htmlNameBase()]);
@@ -232,34 +234,16 @@ function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRp
     $reportRows = 1;
     $reportTitle = "Address Exception Report";
 
+    $txtIntro = '';
+    
     if ($isExcel) {
-        $file = "AddrExceptions.xls";
-        $sml = OpenXML::createExcel($uname, 'Address Exception Report');
-
-        // create summary table
-        $myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
-        // Attach the â€œMy Dataâ€� worksheet as the first worksheet in the PHPExcel object
-        $sml->addSheet($myWorkSheet, 1);
-        $sml->setActiveSheetIndex(1);
-        $sRows = OpenXML::writeHeaderRow($sml, array(0=>'Filter', 1=>'Parameters'));
-        // create summary table
-        foreach ($sumaryRows as $key => $val) {
-            if ($key != "" && $val != "") {
-                $flds = array(0 => array('type' => "s",
-                        'value' => $key,
-                        'style' => "sRight"
-                    ),
-                    1 => array('type' => "s",
-                        'value' => $val
-                    )
-                );
-                $sRows = OpenXML::writeNextRow($sml, $flds, $sRows);
-            }
-        }
-        $sml->setActiveSheetIndex(0);
-
+        $file = "AddrExceptions";
+        $writer = new ExcelHelper($file);
+        $writer->setAuthor($uname);
+        $writer->setTitle("Address Exception Report");
+        
     } else {
-        $txtIntro = "<table style='margin-bottom:5px;'><tr><th colspan='2'>" . $reportTitle . "</th></tr>";
+        $txtIntro .= "<table style='margin-bottom:5px;'><tr><th colspan='2'>" . $reportTitle . "</th></tr>";
         foreach ($sumaryRows as $key => $val) {
             if ($key != "" && $val != "") {
 
@@ -284,9 +268,11 @@ function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRp
         }
 
         if ($isExcel) {
-            OpenXML::writeHeaderRow($sml, $hdr);
-            $reportRows++;
-
+            $dHdr = array();
+            foreach($hdr as $col){
+                $dHdr[$col] = "string";
+            }
+            $writer->writeSheetHeader("Worksheet", $dHdr, $writer->getHdrStyle());
         } else {
             $markup .= "</tr></thead><tbody>";
         }
@@ -319,7 +305,7 @@ function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRp
 
             if ($pos === false) {
                 if ($isExcel) {
-                    $flds[$n++] = array('type' => "s", 'value' => $v);
+                    $flds[$n++] = $v;
                 } else {
                     $markup .= "<td>$v</td>";
                 }
@@ -328,7 +314,8 @@ function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRp
 
         // Process completed row
         if ($isExcel) {
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Worksheet", $row);
         } else {
             $markup .= "</tr>";
         }
@@ -336,13 +323,28 @@ function doReports(PDO $dbh, chkBoxCtrlClass $cbMemStatus, chkBoxCtrlClass $cbRp
 
 
     if ($isExcel) {
-        // Redirect output to a client's web browser (Excel2007)
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
+        
+        //Summary table
+        $sHdr = array(
+            "Filter"=>"string",
+            "Parameters"=>"string"
+        );
+        $sColWidths = array(
+            '50',
+            '50'
+        );
+        
+        $sHdrStyle = $writer->getHdrStyle($sColWidths);
+        
+        $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
+        
+        $flds = array();
+        foreach ($sumaryRows as $key=>$val){
+            $flds[] = array($key, $val);
+        }
+        $writer->writeSheet($flds, "Constraints");
+        
+        $writer->download();
 
     } else {
         $markup .= "</tbody>";

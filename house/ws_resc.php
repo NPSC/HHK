@@ -1,5 +1,29 @@
 <?php
 
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\SecurityComponent;
+use HHK\sec\Session;
+use HHK\Photo;
+use HHK\Update\SiteConfig;
+use HHK\Document\ListDocuments;
+use HHK\Document\Document;
+use HHK\House\Vehicle;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\House\Report\ActivityReport;
+use HHK\SysConst\GLTableNames;
+use HHK\House\ResourceView;
+use HHK\House\Constraint\Constraints;
+use HHK\History;
+use HHK\House\Report\RoomReport;
+use HHK\SysConst\ReservationStatus;
+use HHK\House\Room\Room;
+use HHK\SysConst\RoomState;
+use HHK\Payment\Invoice\Invoice;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Payment\Receipt;
+use HHK\Exception\PaymentException;
+
 /**
  * ws_resc.php
  *
@@ -13,7 +37,7 @@
  */
 require ("homeIncludes.php");
 
-require(DB_TABLES . "visitRS.php");
+/* require(DB_TABLES . "visitRS.php");
 require(DB_TABLES . "registrationRS.php");
 require(DB_TABLES . "ReservationRS.php");
 require (DB_TABLES . 'ActivityRS.php');
@@ -71,9 +95,9 @@ require (CLASSES . 'Photo.php');
 require (CLASSES . 'SiteConfig.php');
 require (CLASSES . 'Document.php');
 require (CLASSES . 'ListDocuments.php');
-require(CLASSES . 'DataTableServer.php');
+require(CLASSES . 'DataTableServer.php'); */
 
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
@@ -261,7 +285,7 @@ try {
         case 'vehsch':
 
             if (isset($_REQUEST['letters'])) {
-                require (HOUSE . 'Vehicle.php');
+                //require (HOUSE . 'Vehicle.php');
                 $tag = filter_var($_REQUEST['letters'], FILTER_SANITIZE_STRING);
                 $events = Vehicle::searchTag($dbh, $tag);
             }
@@ -382,11 +406,11 @@ try {
             if ($type == 'resc') {
 
                 $hospList = array();
-                if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-                    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+                if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+                    $hospList = $uS->guestLookups[GLTableNames::Hospital];
                 }
 
-                $events = ResourceView::resourceDialog($dbh, $id, $uS->guestLookups[GL_TableNames::RescType], $hospList);
+                $events = ResourceView::resourceDialog($dbh, $id, $uS->guestLookups[GLTableNames::RescType], $hospList);
             } else if ($type == 'room') {
 
                 $roomRates = array();
@@ -397,7 +421,7 @@ try {
                 $reportCategories = readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
 
 
-                $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GL_TableNames::RoomType], $uS->guestLookups[GL_TableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GL_TableNames::KeyDepositCode], $uS->KeyDeposit);
+                $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GLTableNames::RoomType], $uS->guestLookups[GLTableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GLTableNames::KeyDepositCode], $uS->KeyDeposit);
             } else if ($type == 'rs') {
                 // constraint
                 $constraints = new Constraints($dbh);
@@ -421,7 +445,7 @@ try {
                 $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_STRING);
             }
 
-            $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GL_TableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
+            $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
 
             break;
 
@@ -809,7 +833,7 @@ WHERE
         try {
             $invoice->deleteInvoice($dbh, $uS->username);
             return array('delete' => 'Invoice Number ' . $invoice->getInvoiceNumber() . ' is deleted.', 'eid' => $eid);
-        } catch (Hk_Exception_Payment $ex) {
+        } catch (PaymentException $ex) {
             return array('error' => $ex->getMessage());
         }
     } else if ($action == 'srch') {

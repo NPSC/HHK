@@ -1,4 +1,9 @@
 <?php
+
+use HHK\sec\WebInit;
+use HHK\HTMLControls\{selCtrl, chkBoxCtrl};
+use HHK\SysConst\{SalutationCodes};
+use HHK\Donation\Campaign;
 /**
  * donorReport.php
  *
@@ -10,9 +15,9 @@
 
 require ("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-require(CLASSES . 'Campaign.php');
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
+// require(CLASSES . 'Campaign.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -38,7 +43,7 @@ $anddChecked = "checked='checked'";
 $ordChecked = "";
 $exDeceasedChecked = "";
 $donSelMemberType = new selCtrl($dbh, "Vol_Type", false, "donMT", true);
-$cbBasisDonor = new chkBoxCtrlClass($dbh, "Member_Basis", "Include", "cbDonBasis", true);
+$cbBasisDonor = new chkBoxCtrl($dbh, "Member_Basis", "Include", "cbDonBasis", true);
 $cbBasisDonor->set_class("ui-widget");
 $SelectDonCamp = "";
 
@@ -56,9 +61,6 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
 #--------------------------------------------------------------
 
     require_once("functions" . DS . "donorReportManager.php");
-    require_once(CLASSES . "OpenXML.php");
-    require_once("classes" . DS . "VolCats.php");
-    require_once("classes" . DS . "Salutation.php");
 
     //$selectedTab = "2";
     $makeTable = 2;
@@ -133,6 +135,9 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
         <script type="text/javascript">
             // Init j-query and the page blocker.
         $(document).ready(function() {
+        
+        	$("input[type=submit], input[type=button]").button();
+        
             var listTable;
             var makeTable = <?php echo $makeTable; ?>;
             if (listTable)

@@ -1,4 +1,9 @@
 <?php
+
+namespace HHK;
+
+
+
 /**
  * fbUserClass.php
  *
@@ -283,7 +288,7 @@ class fbUserClass {
      *
      */
 
-    public function readFromDB(PDO $dbh, $whereStr) {
+    public function readFromDB(\PDO $dbh, $whereStr) {
         $evt = array();
 
         $r = $this->selectRow($dbh, $whereStr);
@@ -325,7 +330,7 @@ class fbUserClass {
      *  Param: mysqli object
      */
 
-    public function saveToDB(PDO $dbh, $whereStr) {
+    public function saveToDB(\PDO $dbh, $whereStr) {
         $evt = array();
 
         // Insert or update?
@@ -350,7 +355,7 @@ class fbUserClass {
      *  Internal function: update the row.
      */
 
-    function updateRow(PDO $dbh, $whereStr) {
+    function updateRow(\PDO $dbh, $whereStr) {
         $evt = array();
 
         // don't let the PIFH username be empty.
@@ -386,7 +391,7 @@ class fbUserClass {
         return $evt;
     }
 
-    public function selectRow(PDO $dbh, $whereStr) {
+    public function selectRow(\PDO $dbh, $whereStr) {
 
         $rows = $this->selectRows($dbh, $whereStr);
 
@@ -399,10 +404,10 @@ class fbUserClass {
         return null;
     }
 
-    public function selectRows(PDO $dbh, $whereStr) {
+    public function selectRows(\PDO $dbh, $whereStr) {
         $query = "select * from fbx where $whereStr;";
         $stmt = $dbh->query($query);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         return $rows;
     }
 

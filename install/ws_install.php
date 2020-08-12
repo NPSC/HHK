@@ -1,4 +1,7 @@
 <?php
+use HHK\Exception\RuntimeException;
+use HHK\sec\UserClass;
+
 /**
  * ws_install.php
  *
@@ -10,11 +13,11 @@
  */
 
 require_once ("InstallIncludes.php");
-require (CLASSES . 'PDOdata.php');
+/* require (CLASSES . 'PDOdata.php');
 require (DB_TABLES . 'WebSecRS.php');
 require (DB_TABLES . 'HouseRS.php');
 require (SEC . 'UserClass.php');
-
+ */
 
 addslashesextended($_POST);
 
@@ -39,7 +42,7 @@ if ($c == "testdb") {
 // define db connection obj
     try {
         $dbh = initPDO(TRUE);
-    } catch (Hk_Exception_Runtime $hex) {
+    } catch (RuntimeException $hex) {
         echo( json_encode(array('error'=>$hex->getMessage())));
         exit();
     }

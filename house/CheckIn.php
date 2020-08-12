@@ -1,4 +1,12 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\Config_Lite\Config_Lite;
+use HHK\Member\Role\AbstractRole;
+use HHK\House\Reservation\Reservation_1;
+use HHK\SysConst\ReservationStatus;
+use HHK\HTMLControls\HTMLContainer;
+
 /**
  * CheckIn.php
  *
@@ -9,23 +17,23 @@
  */
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'ReservationRS.php');
+// require (DB_TABLES . 'nameRS.php');
+// require (DB_TABLES . 'registrationRS.php');
+// require (DB_TABLES . 'ReservationRS.php');
 
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
+// require (MEMBER . 'Member.php');
+// require (MEMBER . 'IndivMember.php');
 
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
+// require (HOUSE . 'RoleMember.php');
+// require (HOUSE . 'Role.php');
+// require (HOUSE . 'Reservation_1.php');
+// require (HOUSE . 'Room.php');
+// require (HOUSE . 'Attributes.php');
+// require (HOUSE . 'Constraint.php');
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
@@ -41,7 +49,7 @@ $labels = new Config_Lite(LABEL_FILE);
 $wListMarkup = '';
 
 // Guest Search markup
-$gMk = Role::createSearchHeaderMkup('', 'Guest Search: ', TRUE);
+$gMk = AbstractRole::createSearchHeaderMkup('', 'Guest Search: ', TRUE);
 $mk1 = $gMk['hdr'];
 
 // Hide guest search?

@@ -1,4 +1,16 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\AlertControl\AlertMessage;
+use HHK\Config_Lite\Config_Lite;
+use HHK\SysConst\GLTableNames;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\CreateMarkupFromDB;
+use HHK\SysConst\RelLinkType;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\ExcelHelper;
+
 /**
  * PSG_Report.php
  *
@@ -10,10 +22,9 @@
 
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'visitRS.php');
-require (DB_TABLES . 'nameRS.php');
-require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'OpenXML.php';
+// require (DB_TABLES . 'visitRS.php');
+// require (DB_TABLES . 'nameRS.php');
+// require CLASSES . 'CreateMarkupFromDB.php';
 
 try {
     $wInit = new webInit();
@@ -32,9 +43,9 @@ $uS = Session::getInstance();
 $menuMarkup = $wInit->generatePageMenu();
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -46,7 +57,7 @@ $labels = new Config_Lite(LABEL_FILE);
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, \Config_Lite $labels, $showDiagnosis, $showLocation) {
+function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, Config_Lite $labels, $showDiagnosis, $showLocation) {
     
     $uS = Session::getInstance();
     
@@ -146,7 +157,8 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         
         $reportRows = 1;
         $file = 'PeopleReport';
-        $sml = OpenXML::createExcel('Guest Tracker', 'People Report');
+        $writer = new ExcelHelper($file);
+        $writer->setTitle("People Report");
     }
     
     $rows = array();
@@ -204,14 +216,14 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
         
         
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $r['Association'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
+        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+            $r['Association'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
         }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
         }
         
-        if (count($uS->guestLookups[GL_TableNames::Hospital]) < 2) {
+        if (count($uS->guestLookups[GLTableNames::Hospital]) < 2) {
             unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
         }
         
@@ -227,10 +239,11 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
                 
                 // build header
                 $hdr = array();
-                $n = 0;
+                $colWidths = array();
+                
                 $noReturn = '';
                 
-                // HEader row
+                // Header row
                 $keys = array_keys($r);
                 foreach ($keys as $k) {
                     
@@ -239,15 +252,28 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
                         continue;
                     }
                     
-                    $hdr[$n++] =  $k;
+                    
+                    
+                    if($k == 'Arrival' || $k == 'Departure' || $k == 'Birth Date'){
+                        $hdr[$k] = "MM/DD/YYYY";
+                    }else{
+                        $hdr[$k] = "string";
+                    }
+                    
+                    if($k == 'idPsg' || $k == "Id" || $k == "Resv ID" || $k == "Prefix" || $k == "Suffix" || $k == "State" || $k == "Zip" || $k == "Country"){
+                        $colWidths[] = "10";
+                    }else{
+                        $colWidths[] = "20";
+                    }
                 }
                 
                 if ($noReturn != '') {
-                    $hdr[$n++] =  $noReturn;
+                    $hdr[$noReturn] = "string";
                 }
                 
-                OpenXML::writeHeaderRow($sml, $hdr);
-                $reportRows++;
+                $hdrStyle = $writer->getHdrStyle($colWidths);
+                
+                $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
             }
         }
         
@@ -298,17 +324,14 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
             foreach ($r as $key => $col) {
                 
                 if (($key == 'Arrival' or $key == 'Departure' || $key == 'Birth Date') && $col != '') {
-                    
-                    $flds[$n++] = array('type' => "n",
-                        'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
-                    
+                    $flds[] = $col;
                 } else {
-                    $flds[$n++] = array('type' => "s", 'value' => $col);
+                    $flds[] = $col;
                 }
             }
             
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
         }
         
     }
@@ -320,18 +343,11 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         
         
     } else {
-        
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-        
-        OpenXML::finalizeExcel($sml);
-        exit();
-        
+        $writer->download();
     }
 }
 
-function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, \Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
+function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
     
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $locTitle = $labels->getString('hospital', 'location', 'Location');
@@ -377,7 +393,8 @@ order by ng.idPsg";
      
      $reportRows = 1;
      $file = $psgLabel . 'Report';
-     $sml = OpenXML::createExcel('GuestTracker', 'PSG Report');
+     $writer = new ExcelHelper($file);
+     $writer->setTitle("PSG Report");
      
  }
  
@@ -438,16 +455,27 @@ order by ng.idPsg";
              
              // build header
              $hdr = array();
-             $n = 0;
+             $colWidths = array();
              
-             // HEader row
+             // Header row
              $keys = array_keys($r);
              foreach ($keys as $k) {
-                 $hdr[$n++] =  $k;
+                 if($k == 'Arrival' || $k == 'Departure' || $k == 'Birth Date'){
+                     $hdr[$k] = "MM/DD/YYYY";
+                 }else{
+                    $hdr[$k] =  "string";
+                 }
+                 
+                 if($k == 'PSG Id' || $k == "Id" || $k == "State" || $k == "Country"){
+                     $colWidths[] = "10";
+                 }else{
+                     $colWidths[] = "20";
+                 }
              }
              
-             OpenXML::writeHeaderRow($sml, $hdr);
-             $reportRows++;
+             $hdrStyle = $writer->getHdrStyle($colWidths);
+             
+             $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
          }
      }
      
@@ -499,23 +527,14 @@ order by ng.idPsg";
          
      } else {
          
-         $n = 0;
          $flds = array();
          
          foreach ($r as $key => $col) {
-             
-             if (($key == 'Arrival' || $key == 'Departure' || $key == 'Birth Date') && $col != '') {
-                 $flds[$n++] = array('type' => "n",
-                     'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                     'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
-             } else {
-                 
-                 $flds[$n++] = array('type' => "s", 'value' => $col);
-             }
+             $flds[] = $col;
          }
          
-         $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-         
+         $row = $writer->convertStrings($hdr, $flds);
+         $writer->writeSheetRow("Sheet1", $row);
      }
  }
  
@@ -528,12 +547,7 @@ order by ng.idPsg";
      
  } else {
      
-     header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-     header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-     header('Cache-Control: max-age=0');
-     
-     OpenXML::finalizeExcel($sml);
-     exit();
+     $writer->download();
      
  }
  
@@ -561,7 +575,9 @@ function getNoReturn(\PDO $dbh, $local){
         
     }else{
         $file = 'NoReturnPeopleReport';
-        $sml = OpenXML::createExcel('Guest Tracker', 'People Report');
+        $writer = new ExcelHelper($file);
+        $writer->setTitle("No Return People");
+
         $firstRow = true;
         $reportRows = 1;
         
@@ -573,35 +589,28 @@ function getNoReturn(\PDO $dbh, $local){
                 
                 // build header
                 $hdr = array();
-                $n = 0;
+                $colWidths = array();
                 
                 // Header row
                 $keys = array_keys($row);
                 foreach ($keys as $k) {
-                    
-                    $hdr[$n++] =  $k;
+                    $hdr[$k] = "string";
                 }
                 
-                OpenXML::writeHeaderRow($sml, $hdr);
-                $reportRows++;
+                $colWidths = ["10", "20", "20", "20"];
+                
+                $hdrStyle = $writer->getHdrStyle($colWidths);
+                $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
             }
             
-            $n = 0;
-            $flds = array();
+            $flds = array_values($row);
+            $row = $writer->convertStrings($hdr, $flds);
             
-            foreach ($row as $key => $col) {
-                $flds[$n++] = array('type' => "s", 'value' => $col);
-            }
-            
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            $writer->writeSheetRow("Sheet1", $row);
         }
         
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
+        $writer->download();
         
-        OpenXML::finalizeExcel($sml);
-        exit();
     }
 }
 
@@ -673,9 +682,10 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 	}else{
 		
 		$file = 'Incidents_Report';
-		$sml = OpenXML::createExcel('Guest Tracker', 'People Report');
+		$writer = new ExcelHelper($file);
+		$writer->setTitle("Incidents Report");
+
 		$firstRow = true;
-		$reportRows = 1;
 		
 		foreach($nested as $key=>$row){
 			
@@ -685,35 +695,29 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 				
 				// build header
 				$hdr = array();
-				$n = 0;
+				$colWidths = array();
 				
 				// Header row
 				$keys = array_keys($row);
 				foreach ($keys as $k) {
-					
-					$hdr[$n++] =  $k;
+					$hdr[$k] =  "string";
 				}
 				
-				OpenXML::writeHeaderRow($sml, $hdr);
-				$reportRows++;
+				$colWidths = ["10", "20", "15", "20", "15", "15"];
+				
+				$hdrStyle = $writer->getHdrStyle($colWidths);
+				
+				$writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 			}
 			
-			$n = 0;
-			$flds = array();
+			$flds = array_values($row);
 			
-			foreach ($row as $col) {
-				$flds[$n++] = array('type' => "s", 'value' => $col);
-			}
+			$row = $writer->convertStrings($hdr, $flds);
 			
-			$reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+			$writer->writeSheetRow("Sheet1", $row);
 		}
 		
-		header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-		header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-		header('Cache-Control: max-age=0');
-		
-		OpenXML::finalizeExcel($sml);
-		exit();
+		$writer->download();
 	}
 	
 }
@@ -755,8 +759,8 @@ if ($uS->fy_diff_Months == 0) {
 
 // Hospital and association lists
 $hospList = array();
-if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+    $hospList = $uS->guestLookups[GLTableNames::Hospital];
 }
 
 $hList = array();
@@ -1108,7 +1112,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         switch ($rptSetting) {
 
         	case 'psg':
-                $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GL_TableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
+                $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GLTableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));

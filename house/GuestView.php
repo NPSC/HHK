@@ -1,4 +1,12 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Session;
+use HHK\CreateMarkupFromDB;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLTable;
+
 /**
  * GuestView.php
  *
@@ -9,15 +17,15 @@
  */
 require ("homeIncludes.php");
 
-require (CLASSES . 'CreateMarkupFromDB.php');
+/* require (CLASSES . 'CreateMarkupFromDB.php');
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php'); */
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }

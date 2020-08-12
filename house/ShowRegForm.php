@@ -1,4 +1,14 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\Payment\PaymentSvcs;
+use HHK\SysConst\WebPageCode;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\House\Registration;
+use HHK\House\Reservation\ReservationSvcs;
+use HHK\HTMLControls\HTMLInput;
+
+
 /**
  * ShowRegForm.php
  *
@@ -11,7 +21,7 @@
 require ("homeIncludes.php");
 
 
-require(DB_TABLES . "visitRS.php");
+/* require(DB_TABLES . "visitRS.php");
 require(DB_TABLES . "ReservationRS.php");
 require(DB_TABLES . "registrationRS.php");
 
@@ -63,7 +73,7 @@ require (HOUSE . 'RegisterForm.php');
 require (HOUSE . 'RegistrationForm.php');
 require (HOUSE . 'Attributes.php');
 require (HOUSE . 'Constraint.php');
-require (HOUSE . 'Vehicle.php');
+require (HOUSE . 'Vehicle.php'); */
 
 
 $wInit = new webInit(WebPageCode::Page);

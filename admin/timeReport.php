@@ -1,4 +1,8 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\selCtrl;
+
 /**
  * timeReport.php
  *
@@ -9,8 +13,8 @@
  */
 require("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 
@@ -72,10 +76,6 @@ for ($y = $now["year"]; $y > ($now["year"] - 4); $y--) {
 if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"])) {
 
     require("functions" . DS . "TimeReportMgr.php");
-    require(CLASSES . "CreateMarkupFromDB.php");
-    require("classes" . DS . "VolCats.php");
-    require("classes" . DS . "Salutation.php");
-    require(CLASSES . "OpenXML.php");
 
     addslashesextended($_POST);
 
@@ -122,6 +122,9 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
 //            var listTable;
 //            var makeTable = <?php echo $makeTable; ?>;
             $(document).ready(function() {
+            	
+            	$("input[type=submit], input[type=button]").button();
+            
                 var listTable;
                 var makeTable = <?php echo $makeTable; ?>;
                 var now = new Date();

@@ -1,4 +1,9 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\Config_Lite\Config_Lite;
+use HHK\HTMLControls\HTMLContainer;
+
 /**
  * DailyReport.php
  *
@@ -9,15 +14,15 @@
  */
 
 require ("homeIncludes.php");
-require (DB_TABLES . 'PaymentsRS.php');
+/* require (DB_TABLES . 'PaymentsRS.php');
 require (DB_TABLES . 'visitRS.php');
 require (HOUSE . 'VisitCharges.php');
 require (HOUSE . 'RoomReport.php');
-require (CLASSES . 'Purchase/Item.php');
+require (CLASSES . 'Purchase/Item.php'); */
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }

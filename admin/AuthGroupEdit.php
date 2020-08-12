@@ -1,4 +1,11 @@
 <?php
+
+use HHK\sec\{SecurityComponent, Session, UserClass, WebInit};
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\{HTMLInput, HTMLSelector, HTMLTable};
+use HHK\Tables\EditRS;
+use HHK\Tables\WebSec\{W_groupsRS, W_auth_ipRS};
+
 /**
  * AuthGroupEdit.php
  *
@@ -9,8 +16,8 @@
  */
 require ("AdminIncludes.php");
 
-require (DB_TABLES . 'WebSecRS.php');
-require (SEC . 'UserClass.php');
+// require (DB_TABLES . 'WebSecRS.php');
+// require (SEC . 'UserClass.php');
 
 
 $wInit = new webInit();

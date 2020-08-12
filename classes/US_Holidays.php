@@ -1,4 +1,9 @@
 <?php
+
+namespace HHK;
+
+use HHK\Exception\RuntimeException;
+
 /**
  * US_Holidays.php
  *
@@ -40,7 +45,7 @@ class US_Holidays {
         $hols = $stmt->fetchall(\PDO::FETCH_ASSOC);
 
         if (count($hols) == 0) {
-            throw new Hk_Exception_Runtime('Holidays are not defined.  ');
+            throw new RuntimeException('Holidays are not defined.  ');
         }
 
         $this->set_list();

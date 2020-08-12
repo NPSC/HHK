@@ -1,4 +1,15 @@
 <?php
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\Config_Lite\Config_Lite;
+use HHK\Payment\PaymentSvcs;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\Exception\RuntimeException;
+use HHK\House\ReserveData\ReserveData;
+use HHK\SysConst\VisitStatus;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\SysConst\RoomRateCategories;
+
 /**
  * CheckingIn.php
  *
@@ -9,7 +20,7 @@
  */
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
+/* require (DB_TABLES . 'nameRS.php');
 require (DB_TABLES . 'registrationRS.php');
 require (DB_TABLES . 'ActivityRS.php');
 require (DB_TABLES . 'visitRS.php');
@@ -63,10 +74,10 @@ require (HOUSE . 'Hospital.php');
 require (HOUSE . 'VisitLog.php');
 require (HOUSE . 'Constraint.php');
 require (HOUSE . 'Attributes.php');
-
+*/
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
@@ -103,7 +114,7 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
@@ -230,7 +241,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
 
     </head>
@@ -275,7 +286,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
                 </table>
             </div>
         </div>
-        <input type="hidden" value="<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>" id="fixedRate"/>
+        <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate"/>
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>

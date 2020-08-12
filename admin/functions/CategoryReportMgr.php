@@ -9,6 +9,12 @@
  * @license   GPL and MIT
  * @link      https://github.com/hhk
  */
+
+use HHK\HTMLControls\selCtrl;
+use HHK\sec\Session;
+use HHK\Admin\VolCats;
+use HHK\ExcelHelper;
+
 function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dormancyCtrl, selCtrl &$volStatusCtrl, $guestBlackOutDays = 61) { //, &$sortCtrl) {
     $volCat = new VolCats();
     $dlFlag = false;
@@ -193,59 +199,53 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
 
 
         if ($dlFlag) {
-            $file = 'CategoryReport';
-            $sml = OpenXML::createExcel($uname, 'Category Report');
+            $fileName = 'CategoryReport';
+            $writer = new ExcelHelper($fileName);
+            $writer->setAuthor($uname);
+            $writer->setTitle('Category Report');
+            
             // build header
             $hdr = array();
-            $n = 0;
 
-            $hdr[$n++] = "Id";
-            $hdr[$n++] = "Last Name";
-            $hdr[$n++] = "First Name";
-            $hdr[$n++] = "Address";
-            $hdr[$n++] = "City";
-            $hdr[$n++] = "State";
-            $hdr[$n++] = "Zip";
-            $hdr[$n++] = "Phone";
-            $hdr[$n++] = "Email";
+            $hdr["Id"] = "string";
+            $hdr["Last Name"] = "string";
+            $hdr["First Name"] = "string";
+            $hdr["Address"] = "string";
+            $hdr["City"] = "string";
+            $hdr["State"] = "string";
+            $hdr["Zip"] = "string";
+            $hdr["Phone"] = "string";
+            $hdr["Email"] = "string";
 
+            $colWidths = array("10", "20", "20", "20", "20", "10", "10", "15", "35");
+            
             if ($showDetails) {
-                $hdr[$n++] = "Begin";
-                $hdr[$n++] = 'Retire';
-                $hdr[$n++] = "Status";
-                $hdr[$n++] = "Description";
-                $hdr[$n++] = "Role";
-                $hdr[$n++] = "Notes";
+                $hdr["Begin"] = "date";
+                $hdr['Retire'] = "date";
+                $hdr["Status"] = "string";
+                $hdr["Description"] = "string";
+                $hdr["Role"] = "string";
+                $hdr["Notes"] = "string";
+                
+                $colWidths = array_merge($colWidths, array("15", "15", "15", "20", "20", "30"));
             }
-
-
-            OpenXML::writeHeaderRow($sml, $hdr);
-            $reportRows++;
-
-            // Create a new worksheet called “My Data”
-            $myWorkSheet = new PHPExcel_Worksheet($sml, 'Constraints');
-            // Attach the “My Data” worksheet as the first worksheet in the PHPExcel object
-            $sml->addSheet($myWorkSheet, 1);
-            $sml->setActiveSheetIndex(1);
-
-            $sRows = OpenXML::writeHeaderRow($sml, array(0 => 'Filter', 1 => 'Parameters'));
+            
+            $writer->writeSheetHeader('Worksheet', $hdr, $writer->getHdrStyle($colWidths));
 
             // create summary table
+            $sHdr = array("Filter"=>"string", "Parameters"=>"string");
+            $sColWidths = array("50", "50");
+            $sHdrStyle = $writer->getHdrStyle($sColWidths);
+            $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
+            
+            $flds = array();
             foreach ($sumaryRows as $key => $val) {
                 if ($key != "" && $val != "") {
-                    $flds = array(0 => array('type' => "s",
-                            'value' => $key,
-                            'style' => "sRight"
-                        ),
-                        1 => array('type' => "s",
-                            'value' => $val
-                        )
-                    );
-                    $sRows = OpenXML::writeNextRow($sml, $flds, $sRows);
+                    $flds[] = array($key, $val);
                 }
             }
 
-            $sml->setActiveSheetIndex(0);
+            $writer->writeSheet($flds, "Constraints");
         } else if ($csvFlag) {
             $headr .= "<tr><td colspan='5'>";
         } else {
@@ -272,48 +272,29 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
         foreach ($rows as $rw) {
 
             if ($dlFlag) {
-                $n = 0;
                 $flds = array(
-                    $n++ => array('type' => "n",
-                        'value' => $rw["Id"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $rw["Name_Last"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $rw["Name_First"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $rw["Address"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $rw["City"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $rw["StateProvince"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $rw["PostalCode"],
-                        'style' => '00000'
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $rw["PreferredPhone"]
-                    ),
-                    $n++ => array('type' => "s",
-                        'value' => $rw["PreferredEmail"]
-                    )
+                    $rw["Id"],
+                    $rw["Name_Last"],
+                    $rw["Name_First"],
+                    $rw["Address"],
+                    $rw["City"],
+                    $rw["StateProvince"],
+                    $rw["PostalCode"],
+                    $rw["PreferredPhone"],
+                    $rw["PreferredEmail"]
                 );
 
                 if ($showDetails) {
-                    $flds[$n++] = array('type' => "s", 'value' => ($rw["Vol_Begin"] == '' ? '' : date('m/d/Y', strtotime($rw["Vol_Begin"]))));
-                    $flds[$n++] = array('type' => "s", 'value' => ($rw["Vol_End"] == '' ? '' : date('m/d/Y', strtotime($rw["Vol_End"]))));
-                    $flds[$n++] = array('type' => "s", 'value' => $rw["Vol_Status_Title"]);
-                    $flds[$n++] = array('type' => "s", 'value' => $rw["Description"]);
-                    $flds[$n++] = array('type' => "s", 'value' => $rw["Vol_Rank_Title"]);
-                    $flds[$n++] = array('type' => "s", 'value' => $rw["Vol_Notes"]);
+                    $flds[] = $rw["Vol_Begin"];
+                    $flds[] = $rw["Vol_End"];
+                    $flds[] = $rw["Vol_Status_Title"];
+                    $flds[] = $rw["Description"];
+                    $flds[] = $rw["Vol_Rank_Title"];
+                    $flds[] = $rw["Vol_Notes"];
                 }
 
-                $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+                $row = $writer->convertStrings($hdr, $flds);
+                $writer->writeSheetRow("Worksheet", $row);
 
             } else if ($csvFlag) {
 
@@ -365,13 +346,7 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
         $txtHeader = "<tr><th colspan='2'>" . $reportTitle . " <input id='Print_Button' type='button' value='Print'/></th></tr>";
 
         if ($dlFlag) {
-            // Redirect output to a client's web browser (Excel2007)
-            header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-            header('Cache-Control: max-age=0');
-
-            OpenXML::finalizeExcel($sml);
-            exit();
+            $writer->download();
         } else if ($csvFlag) {
             $txtreport .= "</td></tr>";
         }
@@ -428,4 +403,4 @@ vm.Id AS Id,
 
     return $query;
 }
-
+?>

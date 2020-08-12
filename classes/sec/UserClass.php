@@ -1,4 +1,9 @@
 <?php
+namespace HHK\sec;
+
+use HHK\SysConst\WebRole;
+use HHK\Tables\WebSec\{W_auth_ipRS, W_user_answersRS};
+use HHK\Tables\EditRS;
 
 /**
  * UserClass.php
@@ -209,7 +214,7 @@ class UserClass
         $updateCount = 0;
 
         foreach ($questions as $question) {
-            $answerRS = new W_userAnswersRS();
+            $answerRS = new W_user_answersRS();
             // if question already exists, update
             if ($question['idAnswer']) {
                 $answerRS->idAnswer->setStoredVal($question['idAnswer']);
@@ -370,9 +375,9 @@ class UserClass
             $date = false;
             //use creation date if never logged in
             if($user['PW_Change_Date'] != ''){
-                $date = new DateTimeImmutable($user['PW_Change_Date']);
+                $date = new \DateTimeImmutable($user['PW_Change_Date']);
             }else{
-                $date = new DateTimeImmutable($user['Timestamp']);
+                $date = new \DateTimeImmutable($user['Timestamp']);
             }
             
             $passResetDays = SysConfig::getKeyValue($dbh, 'sys_config', 'passResetDays');
@@ -380,8 +385,8 @@ class UserClass
             if ($date && ($user['idName'] > 0) && $user['Status'] == 'a' && $passResetDays) {
                 
                 $date = $date->setTime(0, 0);
-                $deactivateDate = $date->add(new DateInterval('P' . $passResetDays . 'D')); // add resetdays
-                $now = new DateTime();
+                $deactivateDate = $date->add(new \DateInterval('P' . $passResetDays . 'D')); // add resetdays
+                $now = new \DateTime();
                 $today = $now->setTime(0, 0);
                 $lastChangeDays = $date->diff($today)->format('%a');
                 if ($lastChangeDays >= $passResetDays) {
@@ -500,20 +505,20 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
             $date = false;
             //use creation date if never logged in
             if($user['Last_Login'] != ''){
-                $date = new DateTimeImmutable($user['Last_Login']);
+                $date = new \DateTimeImmutable($user['Last_Login']);
             }else{
-                $date = new DateTimeImmutable($user['Timestamp']);
+                $date = new \DateTimeImmutable($user['Timestamp']);
             }
             
             $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
             
             if ($date && $user['idName'] > 0 && $user['Status'] == 'a' && $userInactiveDays) {
                 
-                $lastUpdated = new DateTimeImmutable($user['Last_Updated']);
+                $lastUpdated = new \DateTimeImmutable($user['Last_Updated']);
                 $lastUpdated = $lastUpdated->setTime(0, 0);
                 $date = $date->setTime(0, 0);
-                $deactivateDate = $date->add(new DateInterval('P' . $userInactiveDays . 'D')); // add inactivedays
-                $now = new DateTime();
+                $deactivateDate = $date->add(new \DateInterval('P' . $userInactiveDays . 'D')); // add inactivedays
+                $now = new \DateTime();
                 $today = $now->setTime(0, 0);
                 $lastLoginDays = $date->diff($today)->format('%a');
                 $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
@@ -663,3 +668,4 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
                                 return $dash_str;
     }
 }
+?>

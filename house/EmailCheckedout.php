@@ -1,4 +1,13 @@
 <?php
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Login;
+use HHK\Exception\RuntimeException;
+use HHK\sec\UserClass;
+use HHK\sec\Session;
+use HHK\SysConst\WebRole;
+use HHK\sec\SysConfig;
+use HHK\House\TemplateForm\SurveyForm;
+
 /**
  * EmailedCheckedout.php
  *
@@ -9,14 +18,14 @@
   */
 
 require 'homeIncludes.php';
-require(HOUSE . 'TemplateForm.php');
+/* require(HOUSE . 'TemplateForm.php');
 require(HOUSE . 'SurveyForm.php');
 require(SEC . 'Login.php');
 
 //require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
 require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
 require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
+require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php'); */
 
 try {
     $labels = new Config_Lite(LABEL_FILE);
@@ -30,7 +39,7 @@ try {
 	$login = new Login();
 	$login->initHhkSession(ciCFG_FILE);
 	
-} catch (Hk_Exception_InvalidArguement $pex) {
+} catch (InvalidArgumentException $pex) {
 	exit ("Database Access Error.");
 	
 } catch (Exception $ex) {
@@ -40,7 +49,7 @@ try {
 // Override user DB login credentials
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     exit( $hex->getMessage());
 }
 

@@ -1,3 +1,17 @@
+<?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\Session;
+use HHK\House\Reservation\Reservation;
+use HHK\House\Reservation\CheckingIn;
+use HHK\House\Reservation\ActiveReservation;
+use HHK\House\ReserveData\ReserveData;
+use HHK\Note\ListNotes;
+use HHK\Note\LinkNote;
+use HHK\Note\Note;
+use HHK\Incident\ListReports;
+use HHK\Incident\Report;
+?>
 
 <?php
 /**
@@ -13,7 +27,7 @@
  */
 require ("homeIncludes.php");
 
-require(DB_TABLES . "visitRS.php");
+/* require(DB_TABLES . "visitRS.php");
 require(DB_TABLES . "registrationRS.php");
 require(DB_TABLES . "ReservationRS.php");
 
@@ -103,10 +117,10 @@ require (HOUSE . "visitViewer.php");
 
 require (HOUSE . "CurrentAccount.php");
 
-require (HOUSE . 'VisitCharges.php');
+require (HOUSE . 'VisitCharges.php'); */
 
 
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
@@ -219,7 +233,7 @@ try {
             $idLink = intval(filter_input(INPUT_GET, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        require(CLASSES . 'DataTableServer.php');
+        //require(CLASSES . 'DataTableServer.php');
 
         $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET, $uS->ConcatVisitNotes);
 
@@ -380,7 +394,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 			}
         }
 
-        require(CLASSES . 'DataTableServer.php');
+        //require(CLASSES . 'DataTableServer.php');
 
         $events = ListReports::loadList($dbh, $guestId, $psgId, $_GET);
 
@@ -578,3 +592,4 @@ if (is_array($events)) {
 }
 
 exit();
+?>

@@ -1,5 +1,17 @@
 <?php
 
+use HHK\Exception\RuntimeException;
+use HHK\sec\Session;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\SysConst\{WebRole};
+use HHK\Config_Lite\Config_Lite;
+use PHPMailer\PHPMailer\PHPMailer;
+use HHK\HTMLControls\{HTMLContainer, HTMLTable};
+use HHK\SysConst\PaymentMethod;
+use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
+use HHK\TableLog\HouseLog;
+use HHK\ExcelHelper;
+
 /**
  * commonFunc.php
  *
@@ -14,7 +26,7 @@ function initPDO($override = FALSE)
     $roleCode = $ssn->rolecode;
 
     if (! isset($ssn->databaseURL)) {
-        throw new Hk_Exception_Runtime('<p>Missing Database URL (initPDO)</p>');
+        throw new RuntimeException('<p>Missing Database URL (initPDO)</p>');
     }
 
     $dbuName = $ssn->databaseUName;
@@ -28,7 +40,7 @@ function initPDO($override = FALSE)
             $config = new Config_Lite(ciCFG_FILE);
         } catch (Exception $ex) {
             $ssn->destroy();
-            throw new Hk_Exception_Runtime("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
+            throw new RuntimeException("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
         }
 
         $dbuName = $config->getString('db', 'ReadonlyUser', '');
@@ -55,7 +67,7 @@ function initPDO($override = FALSE)
         $ssn->destroy(TRUE);
 
         if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
-            throw new Hk_Exception_Runtime("<br/>Database Error: " . $e->getMessage());
+            throw new RuntimeException("<br/>Database Error: " . $e->getMessage());
         }
 
         header('location:../reset.php?r=' . $e->getMessage());
@@ -66,19 +78,19 @@ function initPDO($override = FALSE)
 }
 
 function creditIncludes($gatewayName) {
-
-    require (PMT . 'paymentgateway/CreditPayments.php');
+    
+/*     require (PMT . 'paymentgateway/CreditPayments.php');
 
     switch ($gatewayName) {
 
-        case PaymentGateway::INSTAMED:
+        case AbstractPaymentGateway::INSTAMED:
             require (PMT . 'paymentgateway/instamed/InstamedConnect.php');
             require (PMT . 'paymentgateway/instamed/InstamedResponse.php');
             require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
 
             break;
 
-        case PaymentGateway::VANTIV:
+        case AbstractPaymentGateway::VANTIV:
 
             require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
 
@@ -92,7 +104,7 @@ function creditIncludes($gatewayName) {
             require (PMT . 'paymentgateway/local/LocalGateway.php');
 
     }
-}
+ */}
 
 function syncTimeZone(\PDO $dbh)
 {
@@ -117,46 +129,32 @@ function doExcelDownLoad($rows, $fileName)
         return;
     }
 
-    require_once CLASSES . 'OpenXML.php';
-
     $reportRows = 1;
-    $sml = OpenXML::createExcel('', $fileName);
+    $writer = new ExcelHelper($fileName);
 
     // build header
     $hdr = array();
-    $n = 0;
+    $colWidths = array();
 
     $keys = array_keys($rows[0]);
 
     foreach ($keys as $t) {
-        $hdr[$n ++] = $t;
+        $hdr[$t] = "string";
+        $colWidths[] = "20";
     }
 
-    OpenXML::writeHeaderRow($sml, $hdr);
-    $reportRows ++;
+    $hdrStyle = $writer->getHdrStyle($colWidths);
+    
+    $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
     foreach ($rows as $r) {
 
-        $n = 0;
-        $flds = array();
+        $flds = array_values($r);
 
-        foreach ($r as $col) {
-
-            $flds[$n ++] = array(
-                'type' => "s",
-                'value' => $col
-            );
-        }
-
-        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+        $row = $writer->convertStrings($hdr, $flds);
+        $writer->writeSheetRow("Sheet1", $row);
     }
-
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="' . $fileName . '.xlsx"');
-    header('Cache-Control: max-age=0');
-
-    OpenXML::finalizeExcel($sml);
-    exit();
+    $writer->download();
 }
 
 function prepareEmail()
@@ -164,7 +162,7 @@ function prepareEmail()
     
     $uS = Session::getInstance();
 
-    $mail = new PHPMailer\PHPMailer\PHPMailer();
+    $mail = new PHPMailer(true);
 
     switch (strtolower($uS->EmailType)) {
 
@@ -283,7 +281,7 @@ function newDateWithTz($strDate, $strTz)
 
 function setTimeZone($uS, $strDate)
 {
-    if (is_null($uS) || is_a($uS, 'Session') == FALSE) {
+    if (is_null($uS) || $uS instanceof Session == FALSE) {
         $uS = Session::getInstance();
     }
 
@@ -299,7 +297,7 @@ function incCounter(\PDO $dbh, $counterName)
     }
 
     if ($rptId == 0) {
-        throw new Hk_Exception_Runtime("Increment counter not set up for $counterName.");
+        throw new RuntimeException("Increment counter not set up for $counterName.");
     }
 
     return $rptId;
@@ -461,7 +459,7 @@ function readGenLookups($con, $tbl, $orderBy = "Code")
     if (! is_a($con, 'mysqli')) {
         return readGenLookupsPDO($con, $tbl, $orderBy);
     } else {
-        throw new Hk_Exception_Runtime('Non-PDO access not supported.  ');
+        throw new RuntimeException('Non-PDO access not supported.  ');
     }
 }
 

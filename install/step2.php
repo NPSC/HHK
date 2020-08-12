@@ -1,4 +1,14 @@
 <?php
+use HHK\sec\Login;
+use HHK\sec\Session;
+use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\Patch;
+use HHK\SysConst\WebSiteCode;
+use HHK\Update\SiteConfig;
+use HHK\SiteLog;
+use HHK\SysConst\CodeVersion;
+
 /**
  * step2.php
  *
@@ -9,13 +19,13 @@
  */
 require_once ("InstallIncludes.php");
 
-require_once (SEC . 'UserClass.php');
+/* require_once (SEC . 'UserClass.php');
 require_once(SEC . 'Login.php');
 require CLASSES . 'SiteLog.php';
 require CLASSES . 'TableLog.php';
 require CLASSES . 'SiteConfig.php';
 
-require_once(CLASSES . 'Patch.php');
+require_once(CLASSES . 'Patch.php'); */
 require_once(FUNCTIONS . 'mySqlFunc.php');
 
 try {
@@ -35,7 +45,7 @@ $pageTitle = $ssn->siteName;
 // define db connection obj
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 

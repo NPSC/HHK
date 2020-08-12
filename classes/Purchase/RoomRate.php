@@ -1,4 +1,12 @@
 <?php
+
+namespace HHK\Purchase;
+
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\SysConst\RoomRateCategories;
+use HHK\Tables\EditRS;
+use HHK\Tables\House\Room_RateRS;
+
 /**
  * RoomRate.php
  *
@@ -15,7 +23,7 @@
  */
 class RoomRate {
 
-    public static function makeSelectorOptions(PriceModel $priceModel, $idRoomRate = 0) {
+    public static function makeSelectorOptions(AbstractPriceModel $priceModel, $idRoomRate = 0) {
         // Room Rate
         $rateCategories = array();
         $activeRates = $priceModel->getActiveModelRoomRates();
@@ -67,7 +75,7 @@ class RoomRate {
 
     protected static function titleAddAmount($title, $faCategory, $amt) {
 
-        if ($faCategory != RoomRateCategorys::Fixed_Rate_Category) {
+        if ($faCategory != RoomRateCategories::Fixed_Rate_Category) {
             return $title . ': $' .$amt;
         } else {
             return $title;

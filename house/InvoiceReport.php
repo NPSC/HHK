@@ -1,6 +1,27 @@
 <?php
 
 
+use HHK\SysConst\WebPageCode;
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\AlertControl\AlertMessage;
+use HHK\Config_Lite\Config_Lite;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\SysConst\InvoiceStatus;
+use HHK\SysConst\ItemId;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Payment\PaymentSvcs;
+use HHK\Exception\RuntimeException;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\VolMemberType;
+use HHK\ColumnSelectors;
+use HHK\House\GLCodes\GLParameters;
+use HHK\House\GLCodes\GLCodes;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\House\GLCodes\GLTemplateRecord;
+use HHK\HTMLControls\HTMLInput;
+use HHK\ExcelHelper;
+
 /**
  * InvoiceReport.php
  *
@@ -11,7 +32,7 @@
  */
 
 require ("homeIncludes.php");
-require (DB_TABLES . 'PaymentGwRS.php');
+/* require (DB_TABLES . 'PaymentGwRS.php');
 require (DB_TABLES . 'PaymentsRS.php');
 
 require (PMT . 'GatewayConnect.php');
@@ -36,12 +57,11 @@ require CLASSES . 'TableLog.php';
 
 require (CLASSES . 'FinAssistance.php');
 
-require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php';
+require (CLASSES . 'ColumnSelectors.php'); */
 
 
 try {
-    $wInit = new webInit(WebPageCode::Page, FALSE);
+    $wInit = new WebInit(WebPageCode::Page, FALSE);
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -58,9 +78,9 @@ creditIncludes($uS->PaymentGateway);
 $menuMarkup = $wInit->generatePageMenu();
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -69,7 +89,7 @@ $alertMsg->set_Text("help");
 $resultMessage = $alertMsg->createMarkup();
 $labels = new Config_Lite(LABEL_FILE);
 
-function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &$sml, &$reportRows, $subsidyId) {
+function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
 
     $g = array();
 
@@ -158,7 +178,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
     } else {
 
         $g['invoiceMkup'] = $r['Invoice_Number'];
-        $g['date'] = PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date']));
+        $g['date'] = $r['Invoice_Date'];
         $g['Status'] = $statusTxt;
         $g['billed'] = $billDateStr;
         $g['Patient'] = $r['Patient_Name'];
@@ -171,54 +191,12 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
         $flds = array();
 
         foreach ($fltrdFields as $f) {
-            $flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
+            //$flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
+            $flds[] = $g[$f[1]];
         }
 
-
-//            $n++ => array('type' => "s",
-//                'value' => $r['Invoice_Number']
-//            ),
-//            $n++ => array('type' => "n",
-//                'value' => PHPExcel_Shared_Date::PHPToExcel(strtotime($r['Invoice_Date'])),
-//                'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $statusTxt
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $g['Payor']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $billDateStr
-//            ),
-//             $n++ => array('type' => "s",
-//                'value' => $r['Title']
-//            ),
-//           $n++ => array('type' => "s",
-//                'value' => $hospital
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['Patient_Name']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['County']
-//            ),
-//            $n++ => array('type' => "n",
-//                'value' => $r['Amount']
-//            ),
-//            $n++ => array('type'=>'n',
-//                'value' => $r['Amount'] - $r['Balance']
-//            ),
-//            $n++ => array('type' => "n",
-//                'value' => $r['Balance']
-//            ),
-//            $n++ => array('type' => "s",
-//                'value' => $r['Notes']
-//            )
-//        );
-
-        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
+        $row = $writer->convertStrings($hdr, $flds);
+        $writer->writeSheetRow("Sheet1", $row);
     }
 }
 
@@ -247,7 +225,7 @@ $useVisitDates = FALSE;
 $cFields = array();
 
 $useGlReport = FALSE;
-if (stristr($uS->siteName, 'gorecki') !== FALSE || strtolower($uS->mode) != 'live') {
+if (stristr($uS->siteName, 'gorecki') !== FALSE) { // || strtolower($uS->mode) != 'live'
 	$useGlReport = TRUE;
 }
 
@@ -275,14 +253,14 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
 
 
 // Hospital and association lists
-$hospList = $uS->guestLookups[GL_TableNames::Hospital];
+$hospList = $uS->guestLookups[GLTableNames::Hospital];
 $hList = array();
 $aList = array();
 foreach ($hospList as $h) {
@@ -324,30 +302,30 @@ while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
 
 // Report column-selector
-// array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms, DT Type
-$cFields[] = array('Inv #', 'invoiceMkup', 'checked', '', 's', '', array('style'=>'text-align:center;'));
-$cFields[] = array("Date", 'date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
-$cFields[] = array("Status", 'Status', 'checked', '', 's', '', array());
-$cFields[] = array("Payor", 'Payor', 'checked', '', 's', '', array());
-$cFields[] = array("Billed", 'billed', 'checked', '', 's', '', array());
-$cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
+// array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms, DT Type
+$cFields[] = array('Inv #', 'invoiceMkup', 'checked', '', 'string', '20', array('style'=>'text-align:center;'));
+$cFields[] = array("Date", 'date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Status", 'Status', 'checked', '', 'string', '20', array());
+$cFields[] = array("Payor", 'Payor', 'checked', '', 'string', '20', array());
+$cFields[] = array("Billed", 'billed', 'checked', '', 'string', '20', array());
+$cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
 
 if ((count($hospList)) > 1) {
-    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospital', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'hospital', 'checked', '', 'string', '20', array());
 }
 
-$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'Patient', '', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'Patient', '', '', 'string', '20', array());
 
 if ($uS->county) {
-    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . ' County', 'County', '', '', 's', '', array());
+    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . ' County', 'County', '', '', 'string', '20', array());
 }
 
-//updated number format to fix $1 output on >1,000 as per https://stackoverflow.com/questions/5669941/phpexcel-accounting-formats
-$cFields[] = array("Amount", 'Amount', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
-$cFields[] = array("Payments", 'payments', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
-$cFields[] = array("Balance", 'Balance', 'checked', '', 'n', '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+// Old number format - '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)'
+$cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
+$cFields[] = array("Payments", 'payments', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
+$cFields[] = array("Balance", 'Balance', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
 
-$cFields[] = array("Notes", 'Notes', 'checked', '', 's', '', array());
+$cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
 
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
@@ -647,6 +625,8 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
 
+    $hdr = array();
+    
     if ($local) {
         $tbl = new HTMLTable();
         $th = '';
@@ -661,18 +641,22 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
         $reportRows = 1;
-        $file = 'PaymentReport';
-        $sml = OpenXML::createExcel($uS->username, 'Payment Report');
-
+        $fileName = 'InvoiceReport';
+        $writer = new ExcelHelper($fileName);
+        $writer->setAuthor($uS->username);
+        $writer->setTitle("Invoice Report");
+        
         // build header
-        $hdr = array();
+        $colWidths = array();
         $n = 0;
 
-        foreach ($fltrdTitles as $t) {
-            $hdr[$n++] = $t;
+        foreach($fltrdFields as $field){
+            $hdr[$field[0]] = $field[4]; //set column header name and type;
+            $colWidths[] = $field[5]; //set column width
         }
 
-        OpenXML::writeHeaderRow($sml, $hdr);
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
         $reportRows++;
     }
 
@@ -690,11 +674,11 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
         // Hospital
         $hospital = '';
 
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
+        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] . ' / ';
         }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
         }
 
         $statusTxt = '';
@@ -721,7 +705,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
             $totalAmount += $r['Amount'];
         }
 
-        doMarkupRow($fltrdFields, $r, $local, $hospital, $statusTxt, $tbl, $sml, $reportRows, $uS->subsidyId);
+        doMarkupRow($fltrdFields, $r, $local, $hospital, $statusTxt, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId);
 
     }
 
@@ -753,14 +737,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
 
 
     } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        $writer->download();
     }
 
 }
@@ -776,10 +753,10 @@ $bytesWritten = '';
 
 if ($useGlReport) {
 	
-	require (HOUSE.'GlCodes.php');
-	require (CLASSES.'SFTPConnection.php');
+	//require (HOUSE.'GlCodes.php');
+	//require (CLASSES.'SFTPConnection.php');
 	
-	$glParm = new GlParameters($dbh, 'Gl_Code');
+	$glParm = new GLParameters($dbh, 'Gl_Code');
 	$glPrefix = 'gl_';
 	
 	// Check for new parameters
@@ -813,7 +790,7 @@ if ($useGlReport) {
 			$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
 		}
 		
-		$glCodes = new GlCodes($dbh, $glMonth, $glyear, $glParm, new GlTemplateRecord());
+		$glCodes = new GLCodes($dbh, $glMonth, $glyear, $glParm, new GLTemplateRecord());
 
 		if (isset($_POST['btnGlTx'])) {
 			

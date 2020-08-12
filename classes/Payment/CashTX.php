@@ -1,4 +1,13 @@
 <?php
+
+namespace HHK\Payment;
+
+use HHK\Payment\PaymentResponse\CashResponse;
+use HHK\SysConst\{PaymentStatusCode, TransType, TransMethod};
+use HHK\Tables\EditRS;
+use HHK\Tables\Payment\PaymentRS;
+use HHK\Exception\PaymentException;
+
 /**
  * CashTX.php
  *
@@ -60,7 +69,7 @@ class CashTX {
      * @param CashResponse $pr
      * @param string $username
      * @param PaymentRS $payRs
-     * @throws Hk_Exception_Payment
+     * @throws PaymentException
      */
     public static function returnPayment(\PDO $dbh, CashResponse &$pr, $username, PaymentRS $payRs) {
 
@@ -69,7 +78,7 @@ class CashTX {
         $pr->setIdTrans($transRs->idTrans->getStoredVal());
 
         if ($payRs->idPayment->getStoredVal() == 0) {
-            throw new Hk_Exception_Payment('Payment Id not given.  ');
+            throw new PaymentException('Payment Id not given.  ');
         }
 
         // Payment record
@@ -323,3 +332,4 @@ class CashTX {
 //     }
 
 // }
+?>
