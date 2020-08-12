@@ -24,10 +24,6 @@ use HHK\ExcelHelper;
 
 require ("homeIncludes.php");
 
-
-/* require CLASSES . 'CreateMarkupFromDB.php';
-
-
 try {
     $wInit = new WebInit();
 } catch (Exception $exw) {

@@ -512,6 +512,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
     $tbl = null;
     $sml = null;
     $reportRows = 0;
+    $hdr = array();
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
 
@@ -566,17 +567,28 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
     }
 
 
-
     // Finalize and print.
     if ($local) {
-
-        $tbl->addFooterTr(HTMLTable::makeTd('', array('colspan'=> (count($fltrdTitles) - 2)))
-            .HTMLTable::makeTd('Total:', array('style'=>'text-align:right;font-weight:bold; border-top:2px solid black;'))
-            .HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'text-align:right;font-weight:bold; border-top:2px solid black;'))
-            );
+        if(in_array("Amount", $fltrdTitles)){
+            $footercolspan = count($fltrdTitles) - 2;
+            $footerspace = '';
+            if($footercolspan > 0){
+                $footerspace = HTMLTable::makeTd('', array('colspan'=> $footercolspan));
+            }
+            $tbl->addFooterTr($footerspace
+                .HTMLTable::makeTd('Total:', array('style'=>'text-align:right;font-weight:bold; border-top:2px solid black;'))
+                .HTMLTable::makeTd('$'.number_format($total,2), array('style'=>'text-align:right;font-weight:bold; border-top:2px solid black;'))
+                );
+        }else{
+            $tbl->addFooterTr(HTMLTable::makeTd('', array('colspan'=> (count($fltrdTitles)))));
+        }
 
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
         $mkTable = 1;
+        $sortCol = array_search("Last", $fltrdTitles);
+        if(!$sortCol){
+            $sortCol = 0;
+        }
         $headerTableMu = $headerTable->generateMarkup();
 
     } else {
@@ -679,6 +691,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+        var sortCol = '<?php echo (isset($sortCol) ? $sortCol: ""); ?>';
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
         $('#cbColClearAll').click(function () {
             $('#selFld option').each(function () {
@@ -720,6 +733,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 $('div#pudiv').remove();
             }
         });
+        
         if (makeTable === '1') {
             $('div#printArea').css('display', 'block');
             $('#tblrpt').dataTable({
@@ -732,7 +746,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
-                "order": [[ 2, 'asc' ]]
+                "order": [[ sortCol, 'asc' ]]
             });
 
             $('#printButton').button().click(function() {

@@ -21,11 +21,6 @@ use HHK\ExcelHelper;
  */
 
 require ("homeIncludes.php");
-// require (DB_TABLES . 'ItemRS.php');
-
-// require (PMT . 'Receipt.php');
-// require (CLASSES . 'ColumnSelectors.php');
-// require HOUSE . 'PaymentReport.php';
 
 try {
     $wInit = new webInit();
@@ -128,13 +123,13 @@ if (count($gwRows) > 1) {
 // array: title, ColumnName, checked, fixed, Excel Type, Excel colWidth, td parms, DT Type
 $cFields[] = array('Payor Last', 'Last', 'checked', '', 'string', '20', array());
 $cFields[] = array("Payor First", 'First', 'checked', '', 'string', '20', array());
-$cFields[] = array("Date", 'Payment_Date', 'checked', '', 'MM/DD/YYYY', '20', array(), 'date');
-$cFields[] = array("Time", 'Payment_Timestamp', 'checked', '', 'h:mm:ss AM/PM;@', '20', array(), 'time');
+$cFields[] = array("Date", 'Payment_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Time", 'Payment_Timestamp', 'checked', '', 'h:mm:ss AM/PM;@', '15', array(), 'time');
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '10', array());
-$cFields[] = array("Room", 'Title', 'checked', '', 'string', '10', array('style'=>'text-align:center;'));
+$cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
 
 if ((count($hospList)) > 1) {
-    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'idHospital', 'checked', '', 'string', '15', array());
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'idHospital', 'checked', '', 'string', '25', array());
 }
 
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Last", 'Patient_Last', '', '', 'string', '20', array());
@@ -465,6 +460,7 @@ where lp.idPayment > 0
     $tbl = null;
     $sml = null;
     $reportRows = 0;
+    $hdr = array();
 
 
     $fltrdTitles = $colSelector->getFilteredTitles();
@@ -496,6 +492,7 @@ where lp.idPayment > 0
 
         $hdr["Payor Id"] = "string";
         $hdr["Company"] = 'string';
+        $colWidths = array("10", "20");
 
         foreach ($fltrdFields as $field) {
             $hdr[$field[0]] = $field[4]; //set column header name and type;

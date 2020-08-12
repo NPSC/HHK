@@ -436,7 +436,7 @@ class History {
             if ($static) {
                 $fixedRows['Checked In'] = date('M j, Y H:i', strtotime($r['Checked-In']));
             } else {
-                $fixedRows['Checked In'] = date('c', strtotime($r['Checked-In']));
+                $fixedRows['Checked In'] = date('m/d/Y', strtotime($r['Checked-In']));
             }
 
             // Days
@@ -452,7 +452,7 @@ class History {
                 if ($static) {
                     $fixedRows['Expected Departure'] = date('M j, Y', strtotime($r['Expected Depart']));
                 } else {
-                    $fixedRows['Expected Departure'] = date('c', strtotime($r['Expected Depart']));
+                    $fixedRows['Expected Departure'] = date('m/d/Y', strtotime($r['Expected Depart']));
                 }
 
             } else {

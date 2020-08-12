@@ -43,7 +43,7 @@ class ExcelHelper extends \XLSXWriter{
     
     /**
      *
-     * Decodes all html entities on fields defined as string in the header
+     * Decodes all html entities and removes all html tags on fields defined as string in the header
      *
      * @param array $header
      * @param array $row
@@ -54,7 +54,8 @@ class ExcelHelper extends \XLSXWriter{
         
         foreach($header as $val){
             if($val == "string" && isset($row[$n])){
-                $row[$n] = html_entity_decode(strval($row[$n]), ENT_QUOTES, 'UTF-8');
+                $row[$n] = html_entity_decode(strval($row[$n]), ENT_QUOTES, 'UTF-8'); //decode html entities
+                $row[$n] = strip_tags($row[$n]); //remove html tags
             }
             $n++;
         }
