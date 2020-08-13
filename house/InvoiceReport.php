@@ -32,32 +32,6 @@ use HHK\ExcelHelper;
  */
 
 require ("homeIncludes.php");
-/* require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
-
-require (CLASSES . 'PaymentSvcs.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-require CLASSES . 'TableLog.php';
-
-require (CLASSES . 'FinAssistance.php');
-
-require (CLASSES . 'ColumnSelectors.php'); */
 
 
 try {
@@ -1312,7 +1286,7 @@ $(document).ready(function() {
                     <table style="width:100%; clear:both;">
                         <tr>
                             <td><?php echo $shoDeletedCb; ?></td>
-                            <td>Search: <input type="text" id="invNum" name="invNum" size="5"/></td>
+                            <td>Search Invoice #: <input type="text" id="invNum" name="invNum" size="5"/></td>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
                             <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
                         </tr>

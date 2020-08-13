@@ -438,7 +438,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
     if ($dlFlag) {
         //New Sheet
-        $sHdr = array("Filter"=>"string", "Parameters"=>"string");
+        /* $sHdr = array("Filter"=>"string", "Parameters"=>"string");
         $sColWidths = array("50","50");
         $sHdrStyle = $writer->getHdrStyle($sColWidths);
         $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
@@ -452,7 +452,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             }
         }
 
-        $writer->writeSheet($sheet, "Constraints");
+        $writer->writeSheet($sheet, "Constraints"); */
 
     }
 

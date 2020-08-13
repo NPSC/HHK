@@ -325,7 +325,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
     if ($isExcel) {
         
         //Summary table
-        $sHdr = array(
+        /* $sHdr = array(
             "Filter"=>"string",
             "Parameters"=>"string"
         );
@@ -342,7 +342,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
         foreach ($sumaryRows as $key=>$val){
             $flds[] = array($key, $val);
         }
-        $writer->writeSheet($flds, "Constraints");
+        $writer->writeSheet($flds, "Constraints"); */
         
         $writer->download();
 
@@ -366,6 +366,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
@@ -375,6 +376,9 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
         <script type="text/javascript">
             // Init j-query
             $(document).ready(function() {
+            
+            	$("input[type=submit], input[type=button]").button();
+            
                 var useTable = '<?php echo $divDisp; ?>';
                 if (useTable === 'block') {
                     try {
@@ -384,7 +388,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
                             "Dom": '<"top"ilfp>rt<"bottom"p>'
                         });
                     }
-                    catch (err) {}
+                    catch (err) { console.log(err)}
                 }
             });
         </script>

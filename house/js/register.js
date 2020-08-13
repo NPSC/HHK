@@ -626,6 +626,7 @@ $(document).ready(function () {
     });
 
     $('.ckdate').datepicker();
+    $('#regckindate').val(moment().format("MMM DD, YYYY"));
 
     $('#statEvents').dialog({
         autoOpen: false,

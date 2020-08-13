@@ -15,11 +15,6 @@ use HHK\Donation\Campaign;
  */
 require("AdminIncludes.php");
 
-// require(CLASSES . "chkBoxCtrlClass.php");
-// require(CLASSES . "selCtrl.php");
-// require(CLASSES . "Campaign.php");
-// require(CLASSES . "MailList.php");
-
 $wInit = new webInit();
 $dbh = $wInit->dbh;
 

@@ -232,7 +232,7 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
             $writer->writeSheetHeader("Worksheet", $hdr, $hdrStyle);
 
             // Summary sheet
-            $sHdr = array("Filter"=>"string", "Parameters"=>"string");
+            /* $sHdr = array("Filter"=>"string", "Parameters"=>"string");
             $sColWidths = array("50","50");
             $sHdrStyle = $writer->getHdrStyle($sColWidths);
             $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
@@ -245,7 +245,7 @@ function processTime(PDO $dbh, &$selCtrls, selCtrl &$selRptType, $fyMonthsAdjust
                     $sheet[] = $writer->convertStrings($sHdr, $flds);
                 }
             }
-            $writer->writeSheet($sheet, "Constraints");
+            $writer->writeSheet($sheet, "Constraints"); */
 
             // Main report
             foreach ($rws as $r) {

@@ -233,7 +233,7 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
             $writer->writeSheetHeader('Worksheet', $hdr, $writer->getHdrStyle($colWidths));
 
             // create summary table
-            $sHdr = array("Filter"=>"string", "Parameters"=>"string");
+            /* $sHdr = array("Filter"=>"string", "Parameters"=>"string");
             $sColWidths = array("50", "50");
             $sHdrStyle = $writer->getHdrStyle($sColWidths);
             $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
@@ -245,7 +245,7 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
                 }
             }
 
-            $writer->writeSheet($flds, "Constraints");
+            $writer->writeSheet($flds, "Constraints"); */
         } else if ($csvFlag) {
             $headr .= "<tr><td colspan='5'>";
         } else {
