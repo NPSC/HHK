@@ -469,7 +469,8 @@ CREATE PROCEDURE `register_web_user`
     IN orgId varchar(3),
     IN roleId varchar(3),
     IN pw varchar(100),
-    IN groupcode varchar(5)
+    IN groupcode varchar(5),
+    IN resetpw varchar(1)
 )
 BEGIN
 
@@ -508,8 +509,8 @@ BEGIN
 
     else
     -- insert new record
-        insert into w_users (idName, User_Name, Enc_PW, Status, Verify_Address, Updated_By, Last_Updated)
-            values ( id, uname, pw, 'a', 'y', appr, now() );
+        insert into w_users (idName, User_Name, Enc_PW, Chg_PW, Status, Verify_Address, Updated_By, Last_Updated)
+            values ( id, uname, pw, resetpw, 'a', 'y', appr, now() );
         Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
             values (Now(), 'audit', 'new', 'sp_Reg_Web_User', id, concat('w_users: -> status=a, uname=',uname));
 
