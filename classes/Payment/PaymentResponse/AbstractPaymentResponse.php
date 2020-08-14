@@ -61,8 +61,6 @@ abstract class AbstractPaymentResponse {
 
         $this->setIdPayment(EditRS::insert($dbh, $payRs));
         
-//        $payRs->idPayment->setNewVal($this->getIdPayment());
-//        EditRS::updateStoredVals($payRs);
     }
 
     // One of the PaymentStatusCodes

@@ -1325,7 +1325,7 @@ class HouseServices {
         foreach ($tkRsArray as $tkRs) {
 
             $merchant = ' (' . ucfirst($tkRs->Merchant->getStoredVal()) . ')';
-            if (strtolower($tkRs->Merchant->getStoredVal()) == 'local' || $tkRs->Merchant->getStoredVal() == '') {
+            if (strtolower($tkRs->Merchant->getStoredVal()) == 'local' || $tkRs->Merchant->getStoredVal() == '' || strtolower($tkRs->Merchant->getStoredVal()) == 'production') {
                 $merchant = '';
             }
 
