@@ -23,17 +23,6 @@ use HHK\Member\AbstractMember;
 
 require ("AdminIncludes.php");
 
-/* require (DB_TABLES . 'nameRS.php');
-require (CLASSES . 'AuditLog.php');
-//require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'SiteDbBackup.php';
-require CLASSES . 'SiteLog.php'; */
-
-
 try {
     $wInit = new webInit();
 } catch (Exception $exw) {
@@ -515,6 +504,9 @@ $selLookups = getGenLookups($dbh);
         <script type="text/javascript">
             var table, accordIndex;
             $(document).ready(function() {
+            
+            	$("input[type=submit], input[type=button]").button();
+            	
                 table = new Object();
                 accordIndex = <?php echo $accordIndex; ?>;
                 $.ajaxSetup ({
