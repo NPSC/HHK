@@ -521,7 +521,6 @@ class PSG {
     
     public function getPatientStatus(\PDO $dbh) {
 
-        $uS = Session::getInstance();
         $nameRS = new NameRS();
 
         if ($this->getIdPatient() > 0) {

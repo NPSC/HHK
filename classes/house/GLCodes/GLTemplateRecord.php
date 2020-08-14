@@ -2,7 +2,6 @@
 
 namespace HHK\House\GLCodes;
 
-
 class GLTemplateRecord {
     // CentraCare journal record (Gorecki)
     
@@ -89,9 +88,9 @@ class GLTemplateRecord {
             $codes[2]= '0';
         }
         
-        $this->fieldArray[self::COMPANY_CODE] = $codes[0];
-        $this->fieldArray[self::COST_CENTER] = $codes[1];
-        $this->fieldArray[self::ACCOUNT] = $codes[2];
+        $this->fieldArray[self::COMPANY_CODE] = trim($codes[0]);
+        $this->fieldArray[self::COST_CENTER] = trim($codes[1]);
+        $this->fieldArray[self::ACCOUNT] = trim($codes[2]);
         
     }
     

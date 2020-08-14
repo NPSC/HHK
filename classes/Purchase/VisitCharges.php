@@ -9,8 +9,6 @@ use HHK\SysConst\InvoiceStatus;
 use HHK\SysConst\ItemId;
 use HHK\SysConst\VisitStatus;
 use HHK\sec\Session;
-use HHK\SysConst\RoomRateCategories;
-
 /**
  * VisitCharges.php
  *

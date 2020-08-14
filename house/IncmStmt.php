@@ -8,6 +8,9 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\GlStmt;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
+use HHK\House\GLCodes\GLCodes;
+use HHK\House\GLCodes\GLParameters;
+use HHK\House\GLCodes\GLTemplateRecord;
 
 /**
  * IncmStmt.php
@@ -180,11 +183,11 @@ if (isset($_POST['btnGlGo'])) {
 		$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
 	}
 	
-	$glParm = new GlParameters($dbh, 'Gl_Code');
+	$glParm = new GLParameters($dbh, 'Gl_Code');
 	$glParm->setStartDay(1);
 
 	
-	$glCodes = new GlCodes($dbh, $glMonth, $glyear, $glParm, new GlTemplateRecord());
+	$glCodes = new GLCodes($dbh, $glMonth, $glyear, $glParm, new GLTemplateRecord());
 	
 		$tbl = new HTMLTable();
 		

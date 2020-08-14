@@ -2,10 +2,10 @@
 
 namespace HHK\House\GLCodes;
 
-use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+use HHK\Exception\RuntimeException;
 use HHK\SysConst\VolMemberType;
-
 
 class GLParameters {
     
@@ -17,6 +17,7 @@ class GLParameters {
     protected $startDay;
     protected $journalCat;
     protected $countyPayment;
+    protected $countyLiability;
     
     protected $glParms;
     protected $tableName;
@@ -30,6 +31,7 @@ class GLParameters {
      INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'RemoteFilePath', '');
      INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'StartDay', '01');
      INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyPayment', '50');
+     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyLiability', '');
      */
     
     public function __construct(\PDO $dbh, $tableName = 'Gl_Code') {
@@ -220,7 +222,20 @@ class GLParameters {
      * @return mixed
      */
     public function getStartDay() {
-        return $this->startDay;
+        $iDay = intval($this->startDay, 10);
+        $sDay = '';
+        
+        if ($iDay < 1 || $iDay > 28) {
+            throw new RuntimeException('The Start-Day is not viable: ' . $iDay);
+        }
+        
+        // Format with leading 0's
+        if ($iDay < 10) {
+            $sDay = '0' . $iDay;
+        } else {
+            $sDay = (string)$iDay;
+        }
+        return $sDay;
     }
     
     /**
@@ -236,6 +251,14 @@ class GLParameters {
     
     public function setCountyPayment($v) {
         $this->countyPayment = $v;
+    }
+    
+    public function getCountyLiability() {
+        return $this->countyLiability;
+    }
+    
+    public function setCountyLiability($v) {
+        $this->countyLiability = $v;
     }
     
     /**
@@ -277,7 +300,12 @@ class GLParameters {
      * @param mixed $startDay
      */
     public function setStartDay($startDay) {
-        $this->startDay = $startDay;
+        
+        if ($startDay > 0 && $startDay < 29) {
+            $this->startDay = $startDay;
+        } else {
+            $this->startDay = "Invalid";
+        }
     }
     
     /**
@@ -286,6 +314,5 @@ class GLParameters {
     public function setJournalCat($journalCat) {
         $this->journalCat = $journalCat;
     }
-    
 }
 ?>
