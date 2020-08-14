@@ -1451,7 +1451,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Build the statement
-        $logoUrl = '../conf/' . $uS->statementLogoFile;
+        $logoUrl = $uS->resourceURL . 'conf/' . $uS->statementLogoFile;
         $rec = '';
 
         // Don't write img if logo URL not sepcified
@@ -1560,7 +1560,7 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
 
         // Build the statement
-        $logoUrl = '../conf/' . $uS->statementLogoFile;
+        $logoUrl = $uS->resourceURL . 'conf/' . $uS->statementLogoFile;
         $rec = '';
 
         // Don't write img if logo URL not sepcified
