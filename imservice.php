@@ -1,4 +1,13 @@
 <?php
+use HHK\sec\Login;
+use HHK\Exception\RuntimeException;
+use HHK\sec\UserClass;
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\Session;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentSvcs;
+
 /**
  * imservice.php
  *
@@ -9,42 +18,8 @@
  */
 
 require ('functions/commonFunc.php');
-require ('classes/config/Lite.php');
 
-require ('classes/PDOdata.php');
-require ('classes/Exception_hk/Hk_Exception.php');
-require 'classes/SiteConfig.php';
-require ('classes/SysConst.php');
-
-require ('classes/tables/HouseRS.php');
-require ('classes/tables/PaymentGwRS.php');
-require ('classes/tables/PaymentsRS.php');
-
-require ('classes/sec/sessionClass.php');
-require ('classes/sec/UserClass.php');
-require ('classes/sec/Login.php');
-require ('classes/sec/SecurityComponent.php');
-require ('classes/sec/ScriptAuthClass.php');
-require ('classes/sec/webInit.php');
-
-require ('classes/Payment/GatewayConnect.php');
-require ('classes/Payment/PaymentGateway.php');
-require ('classes/Payment/PaymentResponse.php');
-require ('classes/Payment/Receipt.php');
-require ('classes/Payment/Invoice.php');
-require ('classes/Payment/InvoiceLine.php');
-require ('classes/Payment/CheckTX.php');
-require ('classes/Payment/CashTX.php');
-require ('classes/Payment/Transaction.php');
-
-require ('classes/Payment/CreditToken.php');
-require ('classes/Payment/paymentgateway/CreditPayments.php');
-
-require ('classes/Payment/paymentgateway/instamed/InstamedConnect.php');
-require ('classes/Payment/paymentgateway/instamed/InstamedResponse.php');
-require ('classes/Payment/paymentgateway/instamed/InstamedGateway.php');
-
-require ('classes/PaymentSvcs.php');
+require ('vendor/autoload.php');
 
 $sequence = getRandomString();
 
@@ -52,7 +27,7 @@ try {
     $login = new Login();
     $login->initHhkSession('conf/site.cfg');
 
-} catch (Exception $ex) {
+} catch (\Exception $ex) {
     session_unset();
     http_response_code(500);
     exit ();
@@ -60,7 +35,7 @@ try {
 
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     // Databasae not set up.  Nothing we can do.
     http_response_code(200);
     exit();
@@ -84,8 +59,8 @@ if ($u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
 $dbh = NULL;
 
 try {
-    $wInit = new webInit(WebPageCode::Service, FALSE);
-} catch (Exception $ex) {
+    $wInit = new WebInit(WebPageCode::Service, FALSE);
+} catch (\Exception $ex) {
 
     http_response_code(403);
     exit("Forbidden");
@@ -115,8 +90,8 @@ if (filter_has_var(INPUT_SERVER, 'HTTP_X_FORWARDED_FOR')) {
 
 // log the data
 try {
-    PaymentGateway::logGwTx($wInit->dbh, '', json_encode(array('user'=>addslashes($user), 'remote IP'=>$remoteIp, 'json Error'=> json_last_error_msg(), 'sequence'=>$sequence)), $inputJSON, 'Webhook');
-} catch(Exception $ex) {
+    AbstractPaymentGateway::logGwTx($wInit->dbh, '', json_encode(array('user'=>addslashes($user), 'remote IP'=>$remoteIp, 'json Error'=> json_last_error_msg(), 'sequence'=>$sequence)), $inputJSON, 'Webhook');
+} catch(\Exception $ex) {
     // Do Nothing
 }
 
@@ -126,11 +101,11 @@ try {
 
     $error = PaymentSvcs::processWebhook($wInit->dbh, $data);
 
-} catch (Exception $ex) {
+} catch (\Exception $ex) {
 
     try {
-        PaymentGateway::logGwTx($wInit->dbh, '', $ex->getMessage(), json_encode($ex->getTrace()), 'Webhook Error');
-    } catch(Exception $ex) {
+        AbstractPaymentGateway::logGwTx($wInit->dbh, '', $ex->getMessage(), json_encode($ex->getTrace()), 'Webhook Error');
+    } catch(\Exception $ex) {
         // Do Nothing
     }
 
@@ -147,3 +122,4 @@ if($error) {
 $uS->destroy(TRUE);
 
 exit();
+?>
