@@ -20,26 +20,6 @@ use HHK\Neon\TransferMembers;
   -- @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-
-/* require DB_TABLES . 'PaymentGwRS.php';
-require DB_TABLES . 'GenLookupsRS.php';
-
-require CLASSES . 'SiteLog.php';
-require CLASSES . 'TableLog.php';
-require CLASSES . 'HouseLog.php';
-require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'SiteConfig.php';
-require CLASSES . 'UpdateSite.php';
-require CLASSES . 'Patch.php';
-require CLASSES . 'US_Holidays.php';
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'CreditToken.php');
-
-require SEC . 'Login.php'; */
-
 require (FUNCTIONS . 'mySqlFunc.php');
 
 try {
@@ -50,12 +30,10 @@ try {
 
 // get session instance
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
 
 // Kick out 'Guest' Users
 if ($uS->rolecode > WebRole::WebUser) {
-    include("../errorPages/forbid.html");
-    exit();
+    exit("Not Authorized");
 }
 
 

@@ -497,13 +497,14 @@ class SiteConfig {
 
     public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL) {
 
+    	// site.cfg entries
         $tbl = self::createCliteMarkup($config, $titles);
 
         // add sys config table
         $sctbl = new HTMLTable();
         $cat = '';
 
-        $stmt = $dbh->query("select s.*, g.Description as `Cat` from sys_config s left join gen_lookups g on s.Category = g.Code and g.Table_Name = 'Sys_Config_Category' order by `Category`, `Key`");
+        $stmt = $dbh->query("select s.*, g.`Description` as `Cat` from sys_config s left join gen_lookups g on s.Category = g.Code and g.Table_Name = 'Sys_Config_Category' order by g.`Order`, s.`Key`");
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
