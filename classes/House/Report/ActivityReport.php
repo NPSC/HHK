@@ -785,7 +785,7 @@ where `lp`.`idPayment` > 0
 
             foreach ($i['h'] as $h) {
 
-                $voidContent = HTMLInput::generateMarkup('Delete', array('type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive', 'data-ilid' => $h['id'], 'data-iid' => $r['idInvoice']));
+                $voidContent = HTMLInput::generateMarkup('Delete', array('type' => 'button', 'id' => 'btndelwaive' . $h['id'], 'class' => 'hhk-deleteWaive','style' => 'font-size: 0.8em', 'data-ilid' => $h['id'], 'data-iid' => $r['idInvoice']));
 
                 $tbl->addBodyTr(
                     HTMLTable::makeTd($r['Room'])

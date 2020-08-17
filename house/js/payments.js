@@ -1448,6 +1448,8 @@ function paymentsTable(tableID, containerID, refreshPayments) {
         'lengthMenu': [[25, 50, -1], [25, 50, "All"]]
     });
     
+    $('#' + containerID).find('input[type=button]').button();
+    
     $('#btnPayHistRef').button().click(function() {
     	refreshPayments();
     });

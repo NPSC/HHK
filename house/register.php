@@ -24,50 +24,6 @@ use HHK\SysConst\RoomRateCategories;
  */
 require ("homeIncludes.php");
 
-/* require (CLASSES . 'History.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'visitRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
-
-require (CLASSES . 'PaymentSvcs.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-require CLASSES . 'TableLog.php';
-
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'RoomReport.php');
-
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (CLASSES . 'Notes.php');
- */
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
