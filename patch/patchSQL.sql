@@ -11,15 +11,15 @@ UPDATE `gen_lookups` SET `Type` = 'u' WHERE `Table_Name`='Room_Rpt_Cat';
 DELETE from `page_securitygroup` WHERE `idPage` in (SELECT DISTINCT `idPage` FROM `page` WHERE `File_Name` = 'checkDateReport.php');
 DELETE FROM `page` WHERE `File_Name` = 'checkDateReport.php';
 
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Default_Reg_Tab', '0', 'Calendar Tab');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Default_Reg_Tab', '1', 'Current Guests Tab');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'ha', 'House Email Addresses');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'p', 'Patient');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Reg_Colors', 'hospital', 'Hospital');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Reg_Colors', 'r', 'Room');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('HouseKpgSteps', '1', '1 Step');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('HouseKpgSteps', '2', '2 Steps');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('Sys_Config_Category', 'hf', 'House Features', 28);
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Default_Reg_Tab', '0', 'Calendar Tab');
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Default_Reg_Tab', '1', 'Current Guests Tab');
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'ha', 'House Email Addresses');
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'p', 'Patient');
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Reg_Colors', 'hospital', 'Hospital');
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Reg_Colors', 'r', 'Room');
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('HouseKpgSteps', '1', '1 Step');
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('HouseKpgSteps', '2', '2 Steps');
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('Sys_Config_Category', 'hf', 'House Features', 28);
 
 
 UPDATE `gen_lookups` SET `Order`='5' WHERE `Table_Name`='Sys_Config_Category' and`Code`='a';

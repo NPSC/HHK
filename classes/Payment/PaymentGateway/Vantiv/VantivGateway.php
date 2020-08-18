@@ -67,18 +67,6 @@ class VantivGateway extends AbstractPaymentGateway {
 
         } else {
 
-//             try {
-
-//                 $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
-
-//             } catch (Hk_Exception_Member $ex) {
-
-//                 $guest = Member::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
-//             }
-
-//             $address = new Address($dbh, $guest, $uS->nameLookups[GL_TableNames::AddrPurpose]);
-//             $addr = $address->get_data('');
-
             $tokenRS = CreditToken::getTokenRsFromId($dbh, $pmp->getIdToken());
 
             // Do we have a token?
@@ -89,11 +77,8 @@ class VantivGateway extends AbstractPaymentGateway {
                 $cpay->setPurchaseAmount($invoice->getAmountToPay())
                         ->setTaxAmount(0)
                         ->setCustomerCode($invoice->getSoldToId())
-//                        ->setAddress($addr["Address_1"])
-//                        ->setZip($addr["Postal_Code"])
                         ->setToken($tokenRS->Token->getStoredVal())
                         ->setPartialAuth(FALSE)
-//                        ->setCardHolderName($tokenRS->CardHolderName->getStoredVal())
                         ->setFrequency(MpFrequencyValues::OneTime)
                         ->setInvoice($invoice->getInvoiceNumber())
                         ->setTokenId($tokenRS->idGuest_token->getStoredVal())
@@ -419,28 +404,29 @@ class VantivGateway extends AbstractPaymentGateway {
 
         $pay = new InitCkOutRequest($uS->siteName, 'Custom');
 
+        // Payment Logo
+        if ($this->getPaymentPageLogoUrl() != '') {
+        	$pay->setLogoUrl($secure->getRootURL() . $this->getPaymentPageLogoUrl());
+        }
+        
         // Card reader?
         if ($this->usePOS && ! $this->manualKey) {
-            $pay->setDefaultSwipe('Swipe')
-                    ->setCardEntryMethod('Both')
-                    ->setPaymentPageCode('CheckoutPOS_Url');
+            $pay->setCardEntryMethod('swipe')
+            		->setPaymentPageCode('CheckoutPOS_Url');
         } else {
-            $pay->setPaymentPageCode('Checkout_Url');
+        	$pay->setPaymentPageCode('Checkout_Url');
         }
 
 
-//        $pay->setAVSZip($addr["Postal_Code"])
-//                ->setAVSAddress($addr['Address_1'])
-//                ->setCardHolderName($guestFullName);
          $pay->setFrequency(MpFrequencyValues::OneTime)
-                ->setInvoice($invoice->getInvoiceNumber())
+         		->setInvoice($invoice->getInvoiceNumber())
                 ->setMemo(MpVersion::PosVersion)
+                ->setPartialAuth(FALSE)
                 ->setTaxAmount(0)
                 ->setTotalAmount($invoice->getAmountToPay())
                 ->setCompleteURL($houseUrl . $postbackUrl)
                 ->setReturnURL($houseUrl . $postbackUrl)
                 ->setTranType(MpTranType::Sale)
-                ->setLogoUrl($this->getPaymentPageLogoUrl())
                 ->setCVV($this->useCVV ? 'on' : '')
                 ->setAVSFields('Zip');
 
@@ -456,7 +442,6 @@ class VantivGateway extends AbstractPaymentGateway {
 
         $houseUrl = $secure->getSiteURL();
         $siteUrl = $secure->getRootURL();
-        $logo = $uS->PmtPageLogoUrl;
 
         if ($houseUrl == '' || $siteUrl == '') {
             throw new RuntimeException("The site/house URL is missing.  ");
@@ -468,43 +453,38 @@ class VantivGateway extends AbstractPaymentGateway {
             return $dataArray;
         }
 
+        // This selects the correct merchant from the credentials
         $this->manualKey = $manualKey;
 
         // Set CC Gateway name
         $uS->ccgw = $this->getGatewayType();
         $uS->manualKey = $this->manualKey;
 
-//        $guest = new Guest($dbh, '', $idGuest);
-//        $addr = $guest->getAddrObj()->get_data($guest->getAddrObj()->get_preferredCode());
-
-//        if ($cardHolderName == '') {
-//            $cardHolderName = $guest->getRoleMember()->getMemberFullName();
-//        }
-
         $pay = new InitCkOutRequest($uS->siteName, 'Custom');
+        
+        // Payment Logo
+        if ($this->getPaymentPageLogoUrl() != '') {
+        	$pay->setLogoUrl($siteUrl . $this->getPaymentPageLogoUrl());
+        }
+        
 
         // Card reader?
         if ($this->usePOS && ! $this->manualKey) {
-        	$pay->setDefaultSwipe('Swipe')
-        	->setCardEntryMethod('Both')
-        	->setPaymentPageCode('CheckoutPOS_Url');
+        	$pay->setCardEntryMethod('Swipe')
+	        		->setPaymentPageCode('CheckoutPOS_Url');
         } else {
         	$pay->setPaymentPageCode('Checkout_Url');
         }
 
-
-//        $pay->setAVSZip($addr["Postal_Code"])
-//                ->setAVSAddress($addr['Address_1'])
-//                ->setCardHolderName($cardHolderName);
+        // The rest...
         $pay ->setFrequency(MpFrequencyValues::OneTime)
-                ->setInvoice('CardInfo')
+	        	->setInvoice('CardInfo')
                 ->setMemo(MpVersion::PosVersion)
-                ->setTaxAmount(0)
-                ->setTotalAmount(0)
+                ->setTaxAmount('0.00')
+                ->setTotalAmount('0.00')
                 ->setCompleteURL($houseUrl . $postbackUrl)
                 ->setReturnURL($houseUrl . $postbackUrl)
                 ->setTranType(MpTranType::ZeroAuth)
-                ->setLogoUrl($siteUrl . $logo)
                 ->setCVV($this->useCVV ? 'on' : '')
                 ->setAVSFields('Zip');
 
@@ -832,7 +812,7 @@ class VantivGateway extends AbstractPaymentGateway {
             		.HTMLTable::makeTd(HTMLSelector::generateMarkup($sel, $selArray)
             				. $keyCb
             				, array('colspan'=>'2'))
-                    , array('id'=>'trvdCHName'.$index)
+            		, array('id'=>'trvdCHName'.$index, 'class'=>'tblCredit'.$index)
             );
 
         } else {

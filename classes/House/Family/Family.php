@@ -98,6 +98,7 @@ class Family {
                 }
 
                 if ($ngrs->Relationship_Code->getStoredVal() == RelLinkType::Self) {
+
                     // patient
                     $this->roleObjs[$prefix] = new Patient($dbh, $prefix, $ngrs->idName->getStoredVal(), $rData->getPatLabel());
                     $this->roleObjs[$prefix]->setPatientRelationshipCode($ngrs->Relationship_Code->getStoredVal());

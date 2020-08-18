@@ -16,36 +16,36 @@ use HHK\sec\Session;
  */
 
 class ActiveReservation extends Reservation {
-    
+
     protected $gotoCheckingIn = '';
-    
+
     public function createMarkup(\PDO $dbh) {
-        
+
         // Checking In?
         if ($this->gotoCheckingIn === 'yes' && $this->reserveData->getIdResv() > 0) {
             return array('gotopage'=>'CheckingIn.php?rid=' . $this->reserveData->getIdResv());
         }
-        
+
         // Verify reserve status.
         if ($this->reservRs->Status->getStoredVal() == '') {
             $this->reservRs->Status->setStoredVal(ReservationStatus::Waitlist);
         }
-        
+
         // Get any previous settings and set primary guest if blank.
         $oldResvId = $this->copyOldReservation($dbh);
-        
+
         // Add the family, hospital, etc sections.
         $this->createDatesMarkup();
         $this->createHospitalMarkup($dbh);
         $this->createFamilyMarkup($dbh);
-        
+
         // Add the reservation section.
         $this->reserveData->setResvSection($this->createResvMarkup($dbh, $oldResvId));
-        
+
         return $this->reserveData->toArray();
-        
+
     }
-    
+
     public function save(\PDO $dbh, $post) {
         
         $this->saveResv($dbh, $post);
