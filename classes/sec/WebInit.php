@@ -217,9 +217,12 @@ class WebInit {
         $uS = Session::getInstance();
 
         SysConfig::getCategory($this->dbh, $uS, "'h'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'ha'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'hf'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'c'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'g'", webInit::SYS_CONFIG);
-
+        SysConfig::getCategory($this->dbh, $uS, "'p'", webInit::SYS_CONFIG);
+        
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
             UNION Select 'Hospitals' as `Table_Name`, `idHospital` as `Code`, `Title` as `Description`, `Type` as `Substitute` from hospital where `Status` ='a'
@@ -233,7 +236,6 @@ class WebInit {
         foreach ($rows as $r) {
             $nameLookups[$r['Table_Name']][$r['Code']] = array($r['Code'],$r['Description'],$r['Substitute']);
         }
-
 
         $uS->guestLookups = $nameLookups;
 
