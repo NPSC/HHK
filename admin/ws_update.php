@@ -1,7 +1,6 @@
 <?php
 
 use HHK\sec\{Session, Login, ScriptAuthClass, UserClass};
-use HHK\Update\UpdateSite;
 
 /*
  * The MIT License
@@ -37,10 +36,10 @@ use HHK\Update\UpdateSite;
  */
 
 /**
- * GET params:
+ * POST params:
  *  cd = string, site identifier
  *  un = string, user name
- *  so = string, MD5 encoded password
+ *  so = string, password
  *  ck = check password only, returns 'bubbly' if correct
  *
  * Returns:
@@ -66,17 +65,17 @@ $events = array('init'=>'Im here');
 
 
 // Check input
-if (isset($_GET['cd'])) {
-    $cd = filter_input(INPUT_GET, 'cd');
+if (isset($_POST['cd'])) {
+    $cd = filter_input(INPUT_POST, 'cd');
 }
-if (isset($_GET['so'])) {
-    $so = filter_input(INPUT_GET, 'so');
+if (isset($_POST['so'])) {
+    $so = filter_input(INPUT_POST, 'so');
 }
-if (isset($_GET['un'])) {
-    $un = filter_input(INPUT_GET, 'un');
+if (isset($_POST['un'])) {
+    $un = filter_input(INPUT_POST, 'un');
 }
-if (isset($_GET['ck'])) {
-    $ck = filter_input(INPUT_GET, 'ck');
+if (isset($_POST['ck'])) {
+    $ck = filter_input(INPUT_POST, 'ck');
 }
 
 if ($cd == '' || $so == '' || $un == '') {
@@ -114,10 +113,10 @@ if ($cd !== $config->getString('db', 'Schema', '')) {
 $user = new UserClass();
 
 // validate username and password
-$record = $user->getUserCredentials($dbh, $un);
+//$record = $user->getUserCredentials($dbh, $un);
 
-if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) {
-
+//if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) {
+if($user->_checkLogin($dbh, $un, $so)){
     if (strtolower($ck) == 'y') {
         // password check
         $events['resultMsg'] = 'bubbly';
@@ -146,7 +145,7 @@ if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) 
     }
 
 } else {
-    $events['error'] = 'Bad username or password.';
+    $events['error'] = $user->logMessage;
 }
 
 
