@@ -1129,12 +1129,16 @@ where r.idRegistration =" . $idReg);
 
         $tbl = new HTMLTable();
 
-        $r = $rows[0];
-
-            $gwRs = new InstamedGatewayRS();
-            EditRS::loadRow($r, $gwRs);
-
+        $gwRs = new InstamedGatewayRS();
+        if(isset($rows[0])){
+            EditRS::loadRow($rows[0], $gwRs);
             $indx = $gwRs->idcc_gateway->getStoredVal();
+        }else{
+            $indx = 0;
+        }
+            
+
+            
 
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Merchant', array('style' => 'border-top:2px solid black;', 'class' => 'tdlabel'))
@@ -1197,11 +1201,14 @@ where r.idRegistration =" . $idReg);
         $ccRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
-        $r = $rows[0];
-
-            EditRS::loadRow($r, $ccRs);
-
+        if(isset($rows[0])){
+            EditRS::loadRow($rows[0], $ccRs);
             $indx = $ccRs->idcc_gateway->getStoredVal();
+        }else{
+            $ccRs->Gateway_Name->setNewVal($gatewayName);
+            $indx = 0;
+        }
+            
 
             if (isset($post[$indx . '_txtmerch'])) {
             	$ccRs->cc_name->setNewVal(filter_var($post[$indx . '_txtmerch'], FILTER_SANITIZE_STRING));
@@ -1264,7 +1271,12 @@ where r.idRegistration =" . $idReg);
             $ccRs->Use_AVS_Flag->setNewVal(0);
 
             // Save record.
-            $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
+            if($indx == 0){
+                $num = EditRS::insert($dbh, $ccRs);
+            }else{
+                $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
+            }
+            
 
             if ($num > 0) {
                 $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");

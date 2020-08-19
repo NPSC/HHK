@@ -873,7 +873,7 @@ $uS->guestId = $id;
                                         <?php echo $emailMkup; ?>
                                     </div>
                             </div>
-                            <div id="addrsTabs" class="ui-tabs-hide hhk-member-detail" >
+                            <div id="addrsTabs" class="ui-tabs-hide hhk-member-detail ignrSave" >
                                 <?php echo $addrPanelMkup; ?>
                             </div>
                             <div id="emergTabs"  style="float:left;" class="ui-tabs-hide hhk-member-detail" >
