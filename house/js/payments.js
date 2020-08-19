@@ -1295,28 +1295,9 @@ function paymentRedirect (data, $xferForm) {
             $xferForm.submit();
 
         } else if (data.inctx) {
-
-            //$('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
             
-            $("#upCreditfs").append("<div id='instamedDialog' style='overflow:hidden'><div class='hhk-loading-spinner' style='width: 100%; height: 100%; margin-top: 100px; text-align: center'><img src='../images/ui-anim_basic_16x16.gif'><p>Loading...</p></div><iframe id='instamedIframe' src='" + data.inctx + "' style='border: none; height: 95%; width: 100%'></iframe></div>");
-            var dialog = $(document).find("#instamedDialog");
-            dialog.dialog({
-            	width: '500',
-            	height: '400',
-            	modal: true,
-            	title: "Add Card on File",
-            	close: function(event, ui){
-            		dialog.dialog("destroy").remove();
-            	}
-			})
-            
-            dialog.find("#instamedIframe").on("load", function(){
-            	dialog.find(".hhk-loading-spinner").remove();
-            });
-            
-            //InstaMed.launch(data.inctx);
-            //$('#instamed').css('visibility', 'visible').css('margin-top', '50px;');
-                        
+            openiframe(data.inctx, 600, 400, "Add New Card On File");
+                       
         }
     }
 }

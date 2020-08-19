@@ -84,6 +84,27 @@ function checkStrength(pwCtrl) {
 	return rtn;
 }
 
+function openiframe(src, width, height, title, buttons = []){
+	var $dialog = $('<div id="iframeDialog" style="overflow:hidden"><div class="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div><iframe id="hhk-iframe" src="' + src + '" style="border: none; height: 95%; width: 100%"></iframe></div>');
+    $("#contentDiv").append($dialog);
+    
+    $dialog.dialog({
+    	width: width,
+    	height: height,
+    	modal: true,
+    	title: title,
+    	buttons: buttons,
+    	close: function(event, ui){
+    		$dialog.dialog("destroy").remove();
+    	}
+	});
+            
+    $dialog.find("#hhk-iframe").on("load", function(){
+    	$dialog.find(".hhk-loading-spinner").hide();
+    });
+    
+}
+
 $(document).ready(
 				function() {
 					"use strict";
