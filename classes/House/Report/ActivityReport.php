@@ -627,7 +627,7 @@ where `lp`.`idPayment` > 0
                 $amt = $p['Payment_Amount'];
                 $dateDT = new \DateTime($p['Payment_Date']);
 
-                $voidContent = HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer;float:right;', 'title' => 'View Payment Receipt'));
+                $voidContent = '';
                 $actionButtonArray = array('type' => 'button', 'style'=>'font-size:.8em', 'id' => 'btnvr' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'data-amt' => $amt);
 
                 switch ($p['Payment_Status']) {
@@ -760,7 +760,10 @@ where `lp`.`idPayment` > 0
                     $payDetail = $p['Check_Number'];
                 }
 
-
+                //add receipt icon to action column
+                $voidContent .= HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer; margin-left: auto', 'title' => 'View Payment Receipt'));
+                $actionContent = HTMLContainer::generateMarkup('div', $voidContent, ['style'=>'display:flex; justify-content:space-between; flex-wrap:nowrap;']);
+                
                 $trow = HTMLTable::makeTd($r['Room']);
                 $trow .= HTMLTable::makeTd($nameTd);
                 $trow .= HTMLTable::makeTd($invoiceMkup);
@@ -768,7 +771,7 @@ where `lp`.`idPayment` > 0
                 $trow .= HTMLTable::makeTd($payDetail);
                 $trow .= HTMLTable::makeTd($stat);
                 $trow .= HTMLTable::makeTd(number_format($amt, 2), $attr);
-                $trow .= HTMLTable::makeTd($voidContent);
+                $trow .= HTMLTable::makeTd($actionContent);
                 $trow .= HTMLTable::makeTd(date('c', strtotime($p['Payment_Date'])));
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
                 if ($showExternlId) {
