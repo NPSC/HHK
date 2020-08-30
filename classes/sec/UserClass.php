@@ -85,6 +85,7 @@ class UserClass
             $this->defaultPage = $r['Default_Page'];
 
             return TRUE;
+            
         } else if ($match && $r['Status'] == 'd') { // is user disabled?
             $this->logMessage = "Account disabled, please contact your administrator. ";
         } else {
@@ -479,7 +480,7 @@ class UserClass
 
     public static function getUserCredentials(\PDO $dbh, $username)
     {
-        if (! is_string($username) || $username == '') {
+        if (! is_string($username) || trim($username) == '') {
             return NULL;
         }
 

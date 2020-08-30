@@ -119,9 +119,9 @@ $loginMkup = $login->loginForm();
 $cspURL = $page->getHostName();
 
 header('X-Frame-Options: SAMEORIGIN');
-header("Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-header("X-Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
-
+header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
+header('X-Frame-Options: DENY');
 if (SecurityComponent::isHTTPS()) {
     header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
 }

@@ -11,6 +11,11 @@ UPDATE `gen_lookups` SET `Type` = 'u' WHERE `Table_Name`='Room_Rpt_Cat';
 DELETE from `page_securitygroup` WHERE `idPage` in (SELECT DISTINCT `idPage` FROM `page` WHERE `File_Name` = 'checkDateReport.php');
 DELETE FROM `page` WHERE `File_Name` = 'checkDateReport.php';
 
+-- Delete attribute and constraint of hosptial.
+DELETE FROM `gen_lookups` WHERE `Table_Name`='Attribute_Type' and`Code`='2';
+DELETE FROM `gen_lookups` WHERE `Table_Name`='Constraint_Type' and`Code`='hos';
+
+
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Default_Reg_Tab', '0', 'Calendar Tab');
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Default_Reg_Tab', '1', 'Current Guests Tab');
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Sys_Config_Category', 'ha', 'House Email Addresses');

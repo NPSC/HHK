@@ -648,7 +648,7 @@ $(document).ready(function () {
         }
     });
 
-    $('#keysfees').mousedown(function (event) {
+    $(document).mousedown(function (event) {
         var target = $(event.target);
         if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
             $('div#pudiv').remove();

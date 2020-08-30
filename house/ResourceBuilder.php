@@ -42,35 +42,12 @@ use HHK\SysConst\RoomRateCategories;
  */
 require ("homeIncludes.php");
 
-/* require (CLASSES . 'History.php');
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (HOUSE . 'Reservation_1.php');
-
-require (DB_TABLES . 'GenLookupsRS.php');
-require (DB_TABLES . 'LookupsRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'ItemRS.php');
-
-require (CLASSES . 'TableLog.php');
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Room.php');
-require (CLASSES . 'HouseLog.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-require (CLASSES . 'FinAssistance.php');
-require (CLASSES . 'ValueAddedTax.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php'); */
-
 const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
 
 const LOCATION_TABLE_NAME = 'Location';
 
 const RESERV_STATUS_TABLE_NAME = 'lookups';
+
 try {
     $wInit = new webInit();
 } catch (Exception $exw) {
@@ -286,6 +263,7 @@ $rteMsg = '';
 $rateTableErrorMessage = '';
 $itemMessage = '';
 $formType = '';
+$demoMessage = '';
 
 // Get labels
 $labels = new Config_Lite(LABEL_FILE);
@@ -2548,8 +2526,8 @@ $resultMessage = $alertMsg->createMarkup();
 				style="font-size: .9em;">
                     <?php echo $roomTable; ?>
                 </div>
-			<div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
-				style="font-size: .9em;">
+			<div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+				<div><?php echo $demoMessage; ?></div>
 				<div style="float: left;">
 					<h3>Demographic Categories</h3>
 					<form id="formdemo">

@@ -59,8 +59,11 @@ class HospitalStay {
         $assocTxt = '';
         $hospitalnames[0] = array(0=>0, 1=>'');
         
-        if ($hospitalnames[$this->getAssociationId()][1] != '' && $hospitalnames[$this->getAssociationId()][1] != '(None)') {
-            $assocTxt = $hospitalnames[$this->getAssociationId()][1] . '/';
+        if (isset($hospitalnames[$this->getAssociationId()])) {
+        
+        	if ($hospitalnames[$this->getAssociationId()][1] != '' && $hospitalnames[$this->getAssociationId()][1] != '(None)') {
+            	$assocTxt = $hospitalnames[$this->getAssociationId()][1] . '/';
+        	}
         }
         
         return $assocTxt . (isset($hospitalnames[$this->getHospitalId()][1]) ? $hospitalnames[$this->getHospitalId()][1] : 'Undefined');

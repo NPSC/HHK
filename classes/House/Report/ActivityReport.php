@@ -433,11 +433,11 @@ class ActivityReport {
 
         // Dates
         if ($startDT != NULL) {
-            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $startDT->format('Y-m-d') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Last_Updated = '' THEN DATE(lp.Payment_Date) ELSE DATE(lp.Payment_Last_Updated) END) >= DATE('" . $startDT->format('Y-m-d') . "') ";
         }
 
         if ($endDT != NULL) {
-            $whDates .= " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) <= DATE('" . $endDT->format('Y-m-d') . "') ";
+            $whDates .= " and (CASE WHEN lp.Payment_Last_Updated = '' THEN DATE(lp.Payment_Date) ELSE DATE(lp.Payment_Last_Updated) END) <= DATE('" . $endDT->format('Y-m-d') . "') ";
         }
 
         // Set up status totals array
@@ -585,8 +585,9 @@ where `lp`.`idPayment` > 0
                 . HTMLTable::makeTh("Status")
                 . HTMLTable::makeTh($labels->getString('statement', 'paymentHeader', 'Payment'))
                 . HTMLTable::makeTh("Action")
-                . HTMLTable::makeTh("Date")
-                . HTMLTable::makeTh("By")
+        		. HTMLTable::makeTh("Date")
+        		. HTMLTable::makeTh("Updated")
+        		. HTMLTable::makeTh("By")
                 . ($showExternlId ? HTMLTable::makeTh("Ext. Id") : '')
                 . HTMLTable::makeTh('Notes'));
 
@@ -625,7 +626,8 @@ where `lp`.`idPayment` > 0
                 $attr['style'] = 'text-align:right;';
 
                 $amt = $p['Payment_Amount'];
-                $dateDT = new \DateTime($p['Payment_Date']);
+                
+                $lastUpdatedDT = new \DateTimeImmutable($p['Last_Updated']);
 
                 $voidContent = '';
                 $actionButtonArray = array('type' => 'button', 'style'=>'font-size:.8em', 'id' => 'btnvr' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'data-amt' => $amt);
@@ -751,7 +753,7 @@ where `lp`.`idPayment` > 0
                             }
 
                             IF ($a['Auth_Last_Updated'] !== '') {
-                                $dateDT = new \DateTime($a['Auth_Last_Updated']);
+                            	$lastUpdatedDT = new \DateTime($a['Auth_Last_Updated']);
                             }
                         }
                     }
@@ -773,6 +775,7 @@ where `lp`.`idPayment` > 0
                 $trow .= HTMLTable::makeTd(number_format($amt, 2), $attr);
                 $trow .= HTMLTable::makeTd($actionContent);
                 $trow .= HTMLTable::makeTd(date('c', strtotime($p['Payment_Date'])));
+                $trow .= HTMLTable::makeTd($lastUpdatedDT->format('c'));
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
                 if ($showExternlId) {
                     $trow .= HTMLTable::makeTd($p['Payment_External_Id']);
@@ -798,10 +801,11 @@ where `lp`.`idPayment` > 0
                     .HTMLTable::makeTd('')
                     .HTMLTable::makeTd('')
                     .HTMLTable::makeTd(number_format(abs($h['Amount']), 2), array('style'=>'text-align:right;color:gray;'))
-                    .HTMLTable::makeTd($voidContent)
-                    .HTMLTable::makeTd($dateDT->format('c'))
-                    .HTMLTable::makeTd($r['Invoice_Updated_By'])
-                    .($showExternlId ? HTMLTable::makeTd($p['Payment_External_Id']) : '')
+                    .HTMLTable::makeTd('')
+                		.HTMLTable::makeTd(date('c', strtotime($r['Invoice_Date'])))
+                		.HTMLTable::makeTd('')
+                		.HTMLTable::makeTd($r['Invoice_Updated_By'])
+                    .($showExternlId ? HTMLTable::makeTd('') : '')
                     .HTMLTable::makeTd('')
                 );
             }

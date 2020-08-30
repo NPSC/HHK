@@ -106,43 +106,37 @@ try {
 if ($cd !== $config->getString('db', 'Schema', '')) {
 
     $uS->destroy(true);
-    echo(json_encode(array('error'=>"Bad Site Identifier")));
+    echo(json_encode(array('error'=>"Bad Site Identifier: " . $cd)));
     exit();
 }
 
+
+// Log in
 $user = new UserClass();
 
-// validate username and password
-//$record = $user->getUserCredentials($dbh, $un);
-
-//if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) {
 if($user->_checkLogin($dbh, $un, $so)){
-    if (strtolower($ck) == 'y') {
-        // password check
-        $events['resultMsg'] = 'bubbly';
 
-    } else {
+	// Must be THE ADMIN
+	if ($page->is_TheAdmin()) {
 
-        //perform update
-        $uS->regenSessionId();
+	    if (strtolower($ck) == 'y') {
+	        // password check
+	        $events['resultMsg'] = 'bubbly';
 
-        // Record the login.
-        $user->setSession($dbh, $uS, $record);
+	    } else {
 
-        // Must be THE ADMIN
-        if ($page->is_TheAdmin()) {
+	        //perform update
+	        $update = new UpdateSite();
+	        $update->doUpdate($dbh);
 
-            $update = new UpdateSite();
+	        $events['errorMsg'] = $update->getErrorMsg();
+	        $events['resultMsg'] = $update->getResultAccumulator();
 
-            $update->doUpdate($dbh);
-
-            $events['errorMsg'] = $update->getErrorMsg();
-            $events['resultMsg'] = $update->getResultAccumulator();
-
-        } else {
-            $events['error'] = 'This user does not enjoy site update priviledges.';
-        }
-    }
+	    }
+	    
+	} else {
+		$events['error'] = 'This user does not enjoy site update priviledges.  username = ' . $un;
+	}
 
 } else {
     $events['error'] = $user->logMessage;

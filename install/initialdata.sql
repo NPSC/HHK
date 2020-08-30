@@ -524,7 +524,7 @@ INSERT INTO `sys_config` VALUES
 ('Guest_Register_Email','','ea','ha','','If present, a guest register is sent here once a day (also must edit the cron job)',''),
 ('Guest_Track_Address','','ea','ha','','If present, these addresess receive all notices of check-in, out, room change, etc.',''),
 ('GuestAddr','true','b','g','','Enable guest address',''),
-('GuestNameColor','','lu','c','','Enable Guest demographic to drive guest name background color','Demographics'),
+('GuestNameColor','','s','c','','Enable Guest demographic to drive guest name background color','Demographics'),
 ('HHK_Secret_Key','T3VqSDRZc3FrNlRHMDkxQXBMNzg4THRCTm4vOXlUOGkyeG9ZbHpWT2Y0K0F5elQvZDYyUXFTNWFTRWZyL2pQUg==','op','v','','Recapcha Secret Key (obfruscated)',''),
 ('HHK_Site_Key','6Lfc-U4UAAAAAEiXQX1-KCyGz4JAYLglQsj5g4Dh','s','v','','Recapcha Site Key',''),
 ('HouseKeepingEmail','','ea','ha','','This address receives all room turn-over notices',''),

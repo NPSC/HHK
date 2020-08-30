@@ -102,17 +102,20 @@ class LocalGateway extends AbstractPaymentGateway {
 			$pmp->setCardHolderName ( $tokenRS->CardHolderName->getStoredVal () );
 			
 		} else {
-			try {
+			
+			if (trim($pmp->getCardHolderName()) == '') {
 				
-				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+				try {
+					
+					$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
+					
+				} catch (MemberException $ex) {
+					
+					$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				}
 				
-			} catch (MemberException $ex) {
-				
-				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
+				$pmp->setCardHolderName($guest->get_fullName());
 			}
-			
-			$pmp->setCardHolderName($guest->get_fullName());
-			
 		}
 
 		$gwResp = new LocalGatewayResponse( $invoice->getAmountToPay (), $invoice->getInvoiceNumber (), $pmp->getChargeCard (), $pmp->getChargeAcct (), $pmp->getCardHolderName (), MpTranType::Sale, $uS->username );

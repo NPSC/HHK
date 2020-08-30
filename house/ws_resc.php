@@ -37,65 +37,6 @@ use HHK\Exception\PaymentException;
  */
 require ("homeIncludes.php");
 
-/* require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "registrationRS.php");
-require(DB_TABLES . "ReservationRS.php");
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-
-require CLASSES . 'AuditLog.php';
-require CLASSES . 'History.php';
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (CLASSES . 'Notes.php');
-require CLASSES . 'TableLog.php';
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'CreditToken.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-
-require(HOUSE . "psg.php");
-require(HOUSE . "visitViewer.php");
-require(HOUSE . "VisitLog.php");
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'RoomChooser.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-require (HOUSE . 'ActivityReport.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'RoomReport.php');
-require (HOUSE . 'VisitCharges.php');
-
-require (CLASSES . 'HouseLog.php');
-require (CLASSES . 'Purchase/Item.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-require (CLASSES . 'FinAssistance.php');
-require (CLASSES . 'US_Holidays.php');
-require (CLASSES . 'Photo.php');
-require (CLASSES . 'SiteConfig.php');
-require (CLASSES . 'Document.php');
-require (CLASSES . 'ListDocuments.php');
-require(CLASSES . 'DataTableServer.php'); */
 
 $wInit = new WebInit(WebPageCode::Service);
 
@@ -112,7 +53,6 @@ if (isset($_REQUEST["cmd"])) {
 
 $uS = Session::getInstance();
 
-creditIncludes($uS->PaymentGateway);
 
 $events = array();
 

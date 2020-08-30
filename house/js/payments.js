@@ -1437,8 +1437,12 @@ function paymentsTable(tableID, containerID, refreshPayments) {
     $('#' + tableID).dataTable({
         'columnDefs': [
             {'targets': 8,
-             'type': 'date',
-             'render': function ( data, type, row ) {return dateRender(data, type);}
+                'type': 'date',
+                'render': function ( data, type, row ) {return dateRender(data, type);}
+            },
+            {'targets': 9,
+                'type': 'date',
+                'render': function ( data, type, row ) {return dateRender(data, type);}
             }
          ],
         'dom': '<"top"if>rt<"bottom"lp><"clear">',

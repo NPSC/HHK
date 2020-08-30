@@ -58,10 +58,8 @@ class ResourceView {
     r.idResource as `Id`,
     r.Title,
     ifnull(g.Description,'') as `Type`,
-    ifnull(h.Title, '') as `Hospital`,
     ifnull(rm.Title, '') as `Room`,
     r.Util_Priority as `Priority`,
-
     r.Background_Color as `Bkgrd Color`,
     r.Text_Color as `Text Color`,
     r.Border_Color as `Border Color`
@@ -69,10 +67,6 @@ from
     resource r
         left join
     gen_lookups g ON g.Table_Name = 'Resource_Type' and g.`Code` = r.`Type`
-        left join
-    gen_lookups g2 ON g2.Table_Name = 'Utilization_Category' and g2.`Code` = r.`Utilization_Category`
-        left join
-    hospital h ON r.idSponsor = h.idHospital
         left join
     resource_room rr on r.idResource = rr.idResource
         left join
@@ -119,10 +113,8 @@ order by r.Title;");
             'Id' => '',
             'Title' => '',
             'Type' => '',
-            'Hospital' => '',
             'Room' => '',
             'Priority' => '',
-//            'Util Category' =>'',
             'Bkgrd Color' => '',
             'Text Color' => '',
             'Border Color' => '',
@@ -631,9 +623,6 @@ order by r.Title;");
         if (isset($post["txtRePriority"])) {
             $resc->resourceRS->Util_Priority->setNewVal(filter_var($post["txtRePriority"], FILTER_SANITIZE_STRING));
         }
-        if (isset($post['selUtilCat'])) {
-            $resc->setUtilizationCategory(filter_var($post['selUtilCat'], FILTER_SANITIZE_STRING));
-        }
         if (isset($post['txtReBgc'])) {
             $resc->resourceRS->Background_Color->setNewVal(filter_var($post['txtReBgc'], FILTER_SANITIZE_STRING));
         }
@@ -642,12 +631,6 @@ order by r.Title;");
         }
         if (isset($post['txtReTc'])) {
             $resc->resourceRS->Text_Color->setNewVal(filter_var($post['txtReTc'], FILTER_SANITIZE_STRING));
-        }
-        if (isset($post['txtPartSize']) && $rType == ResourceTypes::Partition) {
-            $resc->resourceRS->Partition_Size->setNewVal(intval(filter_var($post['txtPartSize'], FILTER_SANITIZE_NUMBER_INT), 10));
-        }
-        if (isset($post['selspons'])) {
-            $resc->resourceRS->idSponsor->setNewVal(intval(filter_var($post['selspons'], FILTER_SANITIZE_NUMBER_INT), 10));
         }
 
         $setUna = FALSE;
@@ -834,12 +817,8 @@ order by r.Title;");
         $tr = HTMLTable::makeTd($saveBtn) . HTMLTable::makeTd($resc->getIdResource())
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getTitle(), array('id'=>'txtReTitle', 'size'=>'10', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($resourceTypes), $resc->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
-                //. HTMLTable::makeTd('', array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                        HTMLSelector::doOptionsMkup(removeOptionGroups($hospitals), $resc->getIdSponsor(), TRUE), array('id'=>'selspons', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, $useRooms, TRUE), array('id'=>'selRooms', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getUtilPriority(), array('id'=>'txtRePriority', 'class'=>$cls, 'size'=>'7')), array('style'=>'padding-right:0;padding-left:0;'))
-                //. HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, 'Utilization_Category'), $resc->getUtilizationCategory(), TRUE), array('id'=>'selUtilCat', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Background_Color->getStoredVal(), array('id'=>'txtReBgc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Text_Color->getStoredVal(), array('id'=>'txtReTc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Border_Color->getStoredVal(), array('id'=>'txtReBc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
