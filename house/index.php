@@ -18,7 +18,6 @@ use HHK\sec\SecurityComponent;
  * @link      https://github.com/NPSC/HHK
  */
 include ("homeIncludes.php");
-//require(SEC . 'Login.php');
 
 // get session instance
 $uS = Session::getInstance();
@@ -118,10 +117,10 @@ $loginMkup = $login->loginForm();
 
 $cspURL = $page->getHostName();
 
-header('X-Frame-Options: SAMEORIGIN');
+header('X-Frame-Options: DENY');
 header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
 header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
-header('X-Frame-Options: DENY');
+
 if (SecurityComponent::isHTTPS()) {
     header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
 }

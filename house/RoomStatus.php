@@ -10,32 +10,11 @@ use HHK\House\Room\Room;
  * RoomStatus.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-/*
-require (DB_TABLES . 'nameRS.php');
-
-require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-
-require (CLASSES . 'Notes.php');
-require (CLASSES . 'TableLog.php');
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
- */
 
 
 try {
@@ -58,7 +37,6 @@ $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 // update room cleaning status for existing guest rooms.
 ResourceView::dirtyOccupiedRooms($dbh);
 
-$resultMessage = "";
 $currentTab = 2;
 
 if (isset($_POST['btnExcelAll'])) {
@@ -628,7 +606,6 @@ if ($checkingIn == '') {
             <div style="float:left; margin-right: 100px; margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>
             </div>
-            <?php echo $resultMessage ?>
             <div style="clear:both;"></div>
             <form action="RoomStatus.php" method="post"  id="form1" name="form1" >
                 <div id="mainTabs" style="font-size: .8em; display:none;" class="hhk-tdbox">

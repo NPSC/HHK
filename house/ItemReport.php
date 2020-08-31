@@ -23,9 +23,6 @@ use HHK\ExcelHelper;
  */
 
 require ("homeIncludes.php");
-/* require (PMT . 'Receipt.php');
-require (CLASSES . 'ColumnSelectors.php');
-require_once CLASSES . 'ValueAddedTax.php'; */
 
 
 try {
@@ -45,17 +42,6 @@ $menuMarkup = $wInit->generatePageMenu();
 
 
 $labels = new Config_Lite(LABEL_FILE);
-
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
 
 function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId, $returnId) {
 
@@ -763,7 +749,6 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         <h2><?php echo $wInit->pageHeading; ?></h2>
-        <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="ItemReport.php" method="post">
                     <table style="float: left;">

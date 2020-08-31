@@ -18,7 +18,7 @@ use HHK\SysConst\RoomRateCategories;
  * Register.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -30,8 +30,6 @@ $dbh = $wInit->dbh;
 
 // get session instance
 $uS = Session::getInstance();
-
-creditIncludes($uS->PaymentGateway);
 
 $totalRest = $uS->PreviousNights;
 

@@ -15,16 +15,13 @@ use HHK\ExcelHelper;
  * PSG_Report.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
 
-// require (DB_TABLES . 'visitRS.php');
-// require (DB_TABLES . 'nameRS.php');
-// require CLASSES . 'CreateMarkupFromDB.php';
 
 try {
     $wInit = new webInit();
@@ -41,17 +38,6 @@ $pageTitle = $wInit->pageTitle;
 $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
-
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
 
 $labels = new Config_Lite(LABEL_FILE);
 
@@ -1357,7 +1343,6 @@ if ($uS->UseIncidentReports) {
         	<div class="title" style="margin-bottom: 1em;">
             	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span style="margin-left: 1em;">Report shows people who stayed in the time frame selected below</span>
             </div>
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="PSGReport.php" method="post">
                     <fieldset class="hhk-panel" style="margin-bottom: 15px;"><legend style='font-weight:bold;'>Report Type</legend>

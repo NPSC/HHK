@@ -47,20 +47,7 @@ $pageTitle = $wInit->pageTitle;
 // get session instance
 $uS = Session::getInstance();
 
-creditIncludes($uS->PaymentGateway);
-
 $menuMarkup = $wInit->generatePageMenu();
-
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
 $labels = new Config_Lite(LABEL_FILE);
 
 function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
@@ -1211,7 +1198,6 @@ $(document).ready(function() {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
         <h2><?php echo $wInit->pageHeading; ?></h2>
-        <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
         <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
 
         <div id="mainTabs" style="font-size:.9em;display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog">

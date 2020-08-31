@@ -16,15 +16,12 @@ use HHK\ExcelHelper;
  * ReservReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
-
-/* require (CLASSES . 'ColumnSelectors.php');
-require(HOUSE . 'ReportFilter.php'); */
 
 
 try {
@@ -41,19 +38,6 @@ $pageTitle = $wInit->pageTitle;
 $uS = Session::getInstance();
 $labels = new Config_Lite(LABEL_FILE);
 $menuMarkup = $wInit->generatePageMenu();
-
-
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
-
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Reservation Report', array('style'=>'margin-top: .5em;'))
@@ -533,7 +517,6 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="ReservReport.php" method="post">

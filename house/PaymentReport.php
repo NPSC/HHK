@@ -39,17 +39,6 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $config = new Config_Lite(ciCFG_FILE);
 
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
-
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $hdrTbl = '';
 $dataTable = '';
@@ -688,7 +677,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="PaymentReport.php" method="post">

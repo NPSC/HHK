@@ -41,87 +41,11 @@ use HHK\House\Room\RoomChooser;
  * GuestEdit.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-/* require (DB_TABLES . 'visitRS.php');
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require (CLASSES . 'UserCategories.php');
-require (CLASSES . 'volunteer.php');
-require (CLASSES . 'selCtrl.php');
-require (CLASSES . 'Relation.php');
-require (CLASSES . 'History.php');
-require (CLASSES . 'AuditLog.php');
-require (CLASSES . 'CleanAddress.php');
-require (CLASSES . 'CreateMarkupFromDB.php');
-require CLASSES . 'TableLog.php';
-require (CLASSES . "ValueAddedTax.php");
-
-require (HOUSE . 'psg.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Agent.php');
-require (HOUSE . 'Doctor.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . "CurrentAccount.php");
-require (HOUSE . 'visitViewer.php');
-require (HOUSE . 'Visit.php');
-
-require (HOUSE . 'Vehicle.php');
-require (HOUSE . 'HouseServices.php');
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'RoomChooser.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Hospital.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-require (HOUSE . 'PaymentManager.php');
-require (HOUSE . 'PaymentChooser.php');
-require (HOUSE . 'VisitCharges.php');
-
-require (CLASSES . 'FinAssistance.php');
-require (CLASSES . 'Notes.php');
-
-require (CLASSES . 'PaymentSvcs.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php'); */
-
 
 $wInit = new WebInit();
 
@@ -131,7 +55,6 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
 
 $labels = new Config_Lite(LABEL_FILE);
 

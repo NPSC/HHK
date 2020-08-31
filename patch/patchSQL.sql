@@ -8,8 +8,13 @@ delete from payment_method where idPayment_method = 4;
 UPDATE `gen_lookups` SET `Type` = 'u' WHERE `Table_Name`='Room_Category';
 UPDATE `gen_lookups` SET `Type` = 'u' WHERE `Table_Name`='Room_Rpt_Cat';
 
+-- Delete ck date page
 DELETE from `page_securitygroup` WHERE `idPage` in (SELECT DISTINCT `idPage` FROM `page` WHERE `File_Name` = 'checkDateReport.php');
 DELETE FROM `page` WHERE `File_Name` = 'checkDateReport.php';
+
+-- Delete room view page
+DELETE from `page_securitygroup` WHERE `idPage` in (SELECT DISTINCT `idPage` FROM `page` WHERE `File_Name` = 'RoomView.php');
+DELETE FROM `page` WHERE `File_Name` = 'RoomView.php';
 
 -- Delete attribute and constraint of hosptial.
 DELETE FROM `gen_lookups` WHERE `Table_Name`='Attribute_Type' and`Code`='2';

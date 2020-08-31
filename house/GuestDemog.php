@@ -11,14 +11,11 @@ use HHK\AuditLog\NameLog;
  * GiestDemog.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require("homeIncludes.php");
-/* require(CLASSES . 'AuditLog.php');
-require(DB_TABLES . "nameRS.php");
-require(CLASSES . 'DataTableServer.php'); */
 
 $wInit = new WebInit();
 

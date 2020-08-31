@@ -11,26 +11,11 @@ use HHK\HTMLControls\HTMLContainer;
  * CheckIn.php
  *
 * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-// require (DB_TABLES . 'nameRS.php');
-// require (DB_TABLES . 'registrationRS.php');
-// require (DB_TABLES . 'ReservationRS.php');
-
-// require (MEMBER . 'Member.php');
-// require (MEMBER . 'IndivMember.php');
-
-// require (HOUSE . 'RoleMember.php');
-// require (HOUSE . 'Role.php');
-// require (HOUSE . 'Reservation_1.php');
-// require (HOUSE . 'Room.php');
-// require (HOUSE . 'Attributes.php');
-// require (HOUSE . 'Constraint.php');
-
 
 try {
     $wInit = new WebInit();

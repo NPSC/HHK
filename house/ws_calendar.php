@@ -8,7 +8,7 @@ use HHK\House\GuestRegister;
  * ws_calendar.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -16,11 +16,6 @@ use HHK\House\GuestRegister;
  *  includes and requries
  */
 require ("homeIncludes.php");
-
-/* require (DB_TABLES . 'nameRS.php');
-require (HOUSE . 'GuestRegister.php');
-require (CLASSES . 'US_Holidays.php');
-require (HOUSE . 'Reservation_1.php'); */
 
 
 try {

@@ -18,19 +18,6 @@ use HHK\Exception\RuntimeException;
  */
 
 require ("homeIncludes.php");
-/* require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-
-require (CLASSES . "TransferMembers.php");
-require (CLASSES . "SiteConfig.php");
-require CLASSES . 'TableLog.php';
-require CLASSES . 'HouseLog.php';
-require CLASSES . 'AuditLog.php';
-
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (MEMBER . 'MemberSearch.php'); */
-
-// Set page type for AdminPageCommon
 $wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;

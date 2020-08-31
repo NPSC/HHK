@@ -14,17 +14,16 @@ use HHK\ExcelHelper;
 
 /**
  * GuestTransfer.php
+ * List and transfer guests to NEON
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
 
-/* require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'TransferMembers.php';
 
 try {
     // Do not add CSP.
@@ -61,11 +60,11 @@ $webServices = $config->getString('webServices', 'ContactManager', '');
 if ($serviceName != '' && $webServices != '') {
     $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
 } else {
-    exit('<h2>HHK configuration error:  Web Services Configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h2>');
+    exit('<h4>HHK configuration error:  Web Services Configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h4>');
 }
 
 if (function_exists('curl_version') === FALSE) {
-    exit('<h2>PHP configuration error: cURL functions are missing. </h2>');
+    exit('<h4>PHP configuration error: cURL functions are missing. </h4>');
 }
 
 $resultMessage = $alertMsg->createMarkup();

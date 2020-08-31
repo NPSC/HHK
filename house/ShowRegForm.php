@@ -13,7 +13,7 @@ use HHK\HTMLControls\HTMLInput;
  * ShowRegForm.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -27,7 +27,7 @@ $pageTitle = $wInit->pageTitle;
 $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
+
 
 $idVisit = 0;
 $idResv = 0;

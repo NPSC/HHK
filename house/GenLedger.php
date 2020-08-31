@@ -13,20 +13,12 @@ use HHK\House\GLCodes\GLTemplateRecord;
  * GenLedger.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
   */
 
 require 'homeIncludes.php';
-/* require(HOUSE . 'GlCodes.php');
-require(CLASSES . 'SFTPConnection.php');
-require(SEC . 'Login.php');
-
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php'); */
 
 // Access the login object, set session vars,
 try {

@@ -17,7 +17,7 @@ use HHK\SysConst\RoomRateCategories;
  * Reserve.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -226,7 +226,7 @@ $resvObjEncoded = json_encode($resvAr);
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv" class="container-fluid" style="margin-left: auto;">
-            <h1><?php echo $title; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
+            <h1><?php echo $title; ?> <span id="spnStatus" style="margin-left:50px; display:inline;"></span></h1>
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
             </div>

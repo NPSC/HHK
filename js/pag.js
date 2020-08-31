@@ -57,7 +57,7 @@ function dateRender(data, type, format) {
 			format = 'MMM D, YYYY';
 		}
 
-		return moment(data).format(format);
+		return moment(data, 'YYYY-MM-DD HH:mm:ss Z').format(format);
 	}
 
 	// Otherwise the data type requested (`type`) is type detection or

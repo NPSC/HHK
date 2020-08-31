@@ -30,94 +30,6 @@ use HHK\House\Room\RoomChooser;
  */
 require ("homeIncludes.php");
 
-/* require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "registrationRS.php");
-require(DB_TABLES . "ReservationRS.php");
-
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'ItemRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-
-require CLASSES . 'CleanAddress.php';
-require CLASSES . 'AuditLog.php';
-require CLASSES . 'History.php';
-require (CLASSES . 'CreateMarkupFromDB.php');
-
-require (CLASSES . 'Notes.php');
-require (CLASSES . 'Note.php');
-require (CLASSES . 'LinkNote.php');
-require (CLASSES . 'US_Holidays.php');
-require (CLASSES . 'PaymentSvcs.php');
-require (CLASSES . 'FinAssistance.php');
-require (CLASSES . "ValueAddedTax.php");
-
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
-
-require (CLASSES . 'Purchase/Item.php');
-
-require(CLASSES . 'Purchase/RoomRate.php');
-require CLASSES . 'TableLog.php';
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'ActivityReport.php');
-require (HOUSE . 'Agent.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-require (HOUSE . 'Doctor.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Hospital.php');
-
-require (HOUSE . 'HouseServices.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'PaymentManager.php');
-require (HOUSE . 'PaymentChooser.php');
-require (HOUSE . "psg.php");
-require (HOUSE . 'RateChooser.php');
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'RoomChooser.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'RegisterForm.php');
-require (HOUSE . 'RegistrationForm.php');
-require (HOUSE . 'TemplateForm.php');
-require (HOUSE . 'ConfirmationForm.php');
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Vehicle.php');
-require (HOUSE . 'Visit.php');
-require (HOUSE . "CurrentAccount.php");
-require (HOUSE . "visitViewer.php");
-
-require (HOUSE . 'VisitCharges.php');
-
- */
 $wInit = new WebInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
@@ -125,7 +37,6 @@ $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
-creditIncludes($uS->PaymentGateway);
 
 $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 

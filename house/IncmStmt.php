@@ -157,7 +157,7 @@ if (isset($_POST['btnHere'])) {
 
 }
 
-// Output report
+// Output report Details
 if (isset($_POST['btnGlGo'])) {
 	
 	

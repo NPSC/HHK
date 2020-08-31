@@ -11,20 +11,13 @@ use HHK\sec\UserClass;
  * ws_admin.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
 
-
-/* require (DB_TABLES . 'nameRS.php');
-require (CLASSES . 'Relation.php');
-require (CLASSES . 'AuditLog.php');
-require(DB_TABLES . 'WebSecRS.php');
-
-require (MEMBER . 'MemberSearch.php'); */
 
 
 // Set page type for AdminPageCommon

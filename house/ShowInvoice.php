@@ -17,42 +17,6 @@ use HHK\HTMLControls\HTMLContainer;
  */
 require ("homeIncludes.php");
 
-/* require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "registrationRS.php");
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'ItemRS.php');
-
-require (CLASSES . 'Purchase/Item.php');
-require(CLASSES . 'Purchase/RoomRate.php');
-
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'CreditToken.php');
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-require(HOUSE . "psg.php");
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'Visit.php');
-require (HOUSE . 'VisitCharges.php'); */
-
 
 $wInit = new webInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;

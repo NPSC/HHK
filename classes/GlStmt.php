@@ -885,23 +885,26 @@ order by r.idResource;";
 		$numUsefulNights = $numRoomNights - $totalOOSNites;
 
 		$sTbl = new HTMLTable();
-		$sTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All ' . $availableRooms . ' Rooms'));
+		$sTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All ' . $availableRooms . ' Rooms') . HTMLTable::makeTh('Maximum Charge'));
 
 		$sTbl->addBodyTr(HTMLTable::makeTd('Room-Nights in ' . $monthArray[$stDT->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd($numUsefulNights, array('style'=>'text-align:center;')));
+				. HTMLTable::makeTd($numUsefulNights, array('style'=>'text-align:center;'))
+				. HTMLTable::makeTd('$'.number_format($roomRate * $numRoomNights, 2), array('style'=>'text-align:right;')));
 
 		$sTbl->addBodyTr(HTMLTable::makeTd('Visit Nights in ' . $monthArray[$stDT->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd($totalCatNites['All'], array('style'=>'text-align:center;')));
+				. HTMLTable::makeTd($totalCatNites['All'], array('style'=>'text-align:center;'))
+				. HTMLTable::makeTd('$'.number_format($roomRate * $totalCatNites['All'], 2), array('style'=>'text-align:right;')));
 
 		$sTbl->addBodyTr(HTMLTable::makeTd('Room Utilization', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(($numUsefulNights <= 0 ? '0' : number_format($totalCatNites['All'] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'text-align:center;')));
+				. HTMLTable::makeTd(($numUsefulNights <= 0 ? '0' : number_format($totalCatNites['All'] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'text-align:center;'))
+				. HTMLTable::makeTd(''));
 
 		$sTbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
 
 		$sTbl->addBodyTr(HTMLTable::makeTd('Room Rate', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd('$'.number_format($roomRate, 2), array('style'=>'text-align:right;')));
-		$sTbl->addBodyTr(HTMLTable::makeTd('Maximum Charge', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd('$'.number_format($roomRate * $numRoomNights, 2), array('style'=>'text-align:right;')));
+// 		$sTbl->addBodyTr(HTMLTable::makeTd('Maximum Charge', array('class'=>'tdlabel'))
+// 				. HTMLTable::makeTd('$'.number_format($roomRate * $numRoomNights, 2), array('style'=>'text-align:right;')));
 
 		return $sTbl->generateMarkup();
 

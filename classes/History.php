@@ -217,7 +217,7 @@ class History {
                 $bDay = new \DateTime($r['Timestamp']);
 
                 if ($static) {
-                    $fixedRows['Timestamp'] = $bDay->format('n/d/Y');
+                    $fixedRows['Timestamp'] = $bDay->format('Y-m-d');
                 } else {
                     $fixedRows['Timestamp'] = $bDay->format('c');
                 }
@@ -229,7 +229,7 @@ class History {
             $stDay->setTime(10, 0, 0);
 
             if ($static) {
-                $fixedRows['Expected Arrival'] = $stDay->format('n/d/Y');
+                $fixedRows['Expected Arrival'] = $stDay->format('Y-m-d');
             } else {
                 $fixedRows['Expected Arrival'] = $stDay->format('c');
             }
@@ -243,7 +243,7 @@ class History {
                 $fixedRows['Nights'] = $edDay->diff($stDay, TRUE)->days;
 
                 if ($static) {
-                    $fixedRows['Expected Departure'] = $edDay->format('n/d/Y');
+                    $fixedRows['Expected Departure'] = $edDay->format('Y-m-d');
                 } else {
                     $fixedRows['Expected Departure'] = $edDay->format('c');
                 }
@@ -436,7 +436,7 @@ class History {
             if ($static) {
                 $fixedRows['Checked In'] = date('M j, Y H:i', strtotime($r['Checked-In']));
             } else {
-                $fixedRows['Checked In'] = date('m/d/Y', strtotime($r['Checked-In']));
+                $fixedRows['Checked In'] = date('Y-m-d', strtotime($r['Checked-In']));
             }
 
             // Days
@@ -452,7 +452,7 @@ class History {
                 if ($static) {
                     $fixedRows['Expected Departure'] = date('M j, Y', strtotime($r['Expected Depart']));
                 } else {
-                    $fixedRows['Expected Departure'] = date('m/d/Y', strtotime($r['Expected Depart']));
+                    $fixedRows['Expected Departure'] = date('Y-m-d', strtotime($r['Expected Depart']));
                 }
 
             } else {

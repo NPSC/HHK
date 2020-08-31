@@ -11,23 +11,11 @@ use HHK\HTMLControls\HTMLSelector;
  * RoomUtilization.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-/*
-require (CLASSES . 'History.php');
-require CLASSES . 'TableLog.php';
-
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-require (HOUSE . 'RoomReport.php');
-
-require (CLASSES . 'ColumnSelectors.php'); */
 
 
 
@@ -46,17 +34,6 @@ $uS = Session::getInstance();
 $menuMarkup = $wInit->generatePageMenu();
 
 $labels = new Config_Lite(LABEL_FILE);
-
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
 
 $hospitalSelections = array();
 $assocSelections = array();
@@ -339,7 +316,6 @@ $(document).ready(function() {
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-member-detail hhk-visitdialog">
                 <form action="RoomUtilization.php" method="post"  id="form1" name="form1" >
                     <table style="float: left;">

@@ -725,11 +725,11 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
                 continue;
             }
 
+            $stDateDT = new \Datetime($r['Start_Date']);
+            $enDateDT = new \DateTime($r['End_Date']);
+            
             // Filter Unavailable events.
             if ($r['Status'] == ResourceStatus::Unavailable) {
-
-                $stDateDT = new \Datetime($r['Start_Date']);
-                $enDateDT = new \DateTime($r['End_Date']);
 
                 if (($stDateDT >= $beginDate && $stDateDT < $endDate) || ($enDateDT > $beginDate && $enDateDT <= $endDate)) {
                     // take it.
@@ -744,8 +744,8 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
                 'kind' => CalEventKind::OOS,
                 'resourceId' => $r["idResource"],
                 'reason' => $r['reasonTitle'],
-                'start' => $r['Start_Date'],
-                'end' => $r['End_Date'],
+            		'start' => $stDateDTT->format('Y-m-d\TH:i:00'),
+            		'end' => $enDateDTT->format('Y-m-d\TH:i:00'),
                 'title' => $r['StatusTitle'],
                 'allDay' => 1,
                 'backgroundColor' => 'gray',

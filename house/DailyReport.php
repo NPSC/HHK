@@ -8,18 +8,12 @@ use HHK\HTMLControls\HTMLContainer;
  * DailyReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
-/* require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'visitRS.php');
-require (HOUSE . 'VisitCharges.php');
-require (HOUSE . 'RoomReport.php');
-require (CLASSES . 'Purchase/Item.php'); */
-
 
 try {
     $wInit = new WebInit();

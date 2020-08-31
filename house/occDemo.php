@@ -10,13 +10,11 @@ use HHK\House\Report\GuestReport;
  * occDemo.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require('homeIncludes.php');
-/* require(HOUSE . 'ReportFilter.php');
-require(HOUSE . 'GuestReport.php'); */
 
 $wInit = new webInit();
 

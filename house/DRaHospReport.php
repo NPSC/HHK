@@ -3,7 +3,7 @@
  * DRaHospReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -39,18 +39,6 @@ $pageHeader = $wInit->pageHeading;
 $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
-
-
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
@@ -628,16 +616,15 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="DRaHospReport.php" method="post">
                     <fieldset class="hhk-panel" style="margin-bottom: 15px;"><legend style='font-weight:bold;'>Report Type</legend>
                      <table style="width:100%">
                         <tr>
                         <?php if ($uS->Doctor) { ?>
-                            <th><label for='rbd'>Doctors</label><input type="radio" id='rbd' name="rbReport" value="d" style='margin-left:.5em;' <?php if ($rptSetting == 'd') {echo 'checked="checked"';} ?>/></td>
+                            <th><label for='rbd'>Doctors</label><input type="radio" id='rbd' name="rbReport" value="d" style='margin-left:.5em;' <?php if ($rptSetting == 'd') {echo 'checked="checked"';} ?>/></th>
                         <?php } if ($uS->ReferralAgent) { ?>
-                            <th><label for='rbr'><?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?></label><input type="radio" id='rbr' name="rbReport" value="r" style='margin-left:.5em;' <?php if ($rptSetting == 'r') {echo 'checked="checked"';} ?>/></td>
+                            <th><label for='rbr'><?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?></label><input type="radio" id='rbr' name="rbReport" value="r" style='margin-left:.5em;' <?php if ($rptSetting == 'r') {echo 'checked="checked"';} ?>/></th>
                         <?php } ?>
                         </tr>
                     </table>
