@@ -52,7 +52,22 @@ $(document).ready(function() {
             render: function (data, type) {
                 return dateRender(data, type, 'MMM D, YYYY h:mm a');
             }
+        },
+        {
+            "targets": [4],
+            title: "Browser",
+            data: "Browser",
+            sortable: true,
+            searchable: true
+        },
+        {
+            "targets": [5],
+            title: "OS",
+            data: "OS",
+            sortable: true,
+            searchable: true
         }
+        
     ];
 	
 	var tableAttrs = {

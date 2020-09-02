@@ -712,7 +712,9 @@ function AccessLog(\PDO $dbh, $get) {
         array( 'db' => 'Username',   'dt' => 'Username' ),
         array( 'db' => 'IP',     'dt' => 'IP' ),
         array( 'db'  => 'Action', 'dt' => 'Action' ),
-        array( 'db' => 'Access_Date',   'dt' => 'Date' )
+        array( 'db' => 'Access_Date',   'dt' => 'Date' ),
+        array( 'db' => 'Browser', 'dt' => 'Browser' ),
+        array( 'db' => 'OS', 'dt' => 'OS' )
     );
     
     return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);

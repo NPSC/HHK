@@ -43,3 +43,8 @@ UPDATE `gen_lookups` SET `Order`='70' WHERE `Table_Name`='Sys_Config_Category' a
 UPDATE `gen_lookups` SET `Order`='40' WHERE `Table_Name`='Sys_Config_Category' and`Code`='v';
 UPDATE `gen_lookups` SET `Order`='32' WHERE `Table_Name`='Sys_Config_Category' and`Code`='ha';
 UPDATE `gen_lookups` SET `Order`='30' WHERE `Table_Name`='Sys_Config_Category' and`Code`='h';
+
+-- user agent info
+ALTER TABLE `w_user_log` 
+ADD COLUMN `Browser` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Action`,
+ADD COLUMN `OS` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Browser`;
