@@ -475,7 +475,13 @@ class UserClass
 
         $ssn = Session::getInstance();
         $remoteIp = self::getRemoteIp();
-        $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`) values ('" . $username . "', $timestamp , '$remoteIp', '$action')");
+        
+        //get user agent
+        $userAgentArray = get_browser(NULL, TRUE);
+        $browserName = $userAgentArray['parent'];
+        $osName = $userAgentArray['platform'];
+        
+        $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`, `Browser`, `OS`) values ('" . $username . "', $timestamp , '$remoteIp', '$action', '$browserName', '$osName')");
     }
 
     public static function getUserCredentials(\PDO $dbh, $username)

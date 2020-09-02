@@ -2212,7 +2212,9 @@ CREATE TABLE if not exists `w_user_log` (
   `IP` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Session_Id` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Page` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
-  `Action` VARCHAR(45) NOT NULL DEFAULT ''
+  `Action` VARCHAR(45) NOT NULL DEFAULT '',
+  `Browser` VARCHAR(45) NOT NULL DEFAULT '',
+  `OS` VARCHAR(45) NOT NULL DEFAULT ''
 ) ENGINE = MyISAM;
 
 -- -----------------------------------------------------

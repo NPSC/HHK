@@ -46,3 +46,8 @@ UPDATE `gen_lookups` SET `Order`='30' WHERE `Table_Name`='Sys_Config_Category' a
 
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('DefaultCalEventColor', '', 's', 'c', 'Default event ribbon color for the calendar');
+
+-- user agent info
+ALTER TABLE `w_user_log`
+ADD COLUMN `Browser` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Action`,
+ADD COLUMN `OS` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Browser`;
