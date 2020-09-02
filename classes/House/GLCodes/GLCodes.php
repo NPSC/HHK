@@ -5,6 +5,7 @@ namespace HHK\House\GLCodes;
 use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode};
 use HHK\SFTPConnection;
 use HHK\Exception\RuntimeException;
+use HHK\SysConst\ItemType;
 
 class GLCodes {
 
@@ -354,7 +355,7 @@ class GLCodes {
 			}
 
 			// Adjust the amounts after the waive.
-			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge) {
+			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge || $l['il_Type_Id'] == ItemType::Tax) {
 
 				if ($l['il_Amount'] >= $waiveAmt) {
 					$l['il_Amount'] -= $waiveAmt;

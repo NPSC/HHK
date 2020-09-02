@@ -188,7 +188,8 @@ class Address extends AbstractContactPoint{
             'id'=>$idPrefix.'adraddress1' . $addrIndex,
             'name'=>$idPrefix.'adr[' . $addrIndex . '][address1]',
             'class'=>$class,
-            'data-pref'=>$idPrefix
+            'data-pref'=>$idPrefix,
+        	'autocomplete'=>"off",
             );
 
         $table->addBodyTr(HTMLTable::makeTd('Street', array('class'=>'tdlabel', 'title'=>'Street Address'))

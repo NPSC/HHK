@@ -1,7 +1,7 @@
 <?php
 
 use HHK\sec\{Session, Login, ScriptAuthClass, UserClass};
-
+use HHK\Update\UpdateSite;
 /*
  * The MIT License
  *
