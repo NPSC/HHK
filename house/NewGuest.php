@@ -50,6 +50,8 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     IFNULL(na.State_Province, '') AS `State_Province`,
     IFNULL(na.Postal_Code, '') AS `Postal_Code`,
     IFNULL(na.Country_Code, '') AS `Country`,
+	IFNULL(np.Phone_Num, '') AS `Phone`,
+	IFNULL(ne.Email, '') AS `Email`,
     IFNULL(g3.Description, '') AS `Relationship`,
     IFNULL(ng.idPsg, 0) as `idPsg`,
     IFNULL(hs.idHospital, 0) AS `idHospital`,
@@ -64,6 +66,10 @@ FROM
         LEFT JOIN
     name_address na ON n.idName = na.idName
         AND n.Preferred_Mail_Address = na.Purpose
+        LEFT JOIN
+    name_phone np ON n.idName = np.idName AND n.Preferred_Phone = np.Phone_Code
+        LEFT JOIN
+    name_email ne ON n.idName = ne.idName AND n.Preferred_Email = ne.Purpose
         LEFT JOIN
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
         LEFT JOIN
@@ -285,7 +291,10 @@ $cFields[] = array("Primary Guest", 'Primary', 'checked', '', 'string', '20', ar
     $pTitles = array_merge($pTitles, array('State', 'Zip', 'Country'));
 
     $cFields[] = array($pTitles, $pFields, '', '', 'string', '20', array());
-
+    
+$cFields[] = array('Phone', 'Phone', 'checked', '', 'string', '20', array());
+$cFields[] = array('Email', 'Email', 'checked', '', 'string', '20', array());
+    
 $cFields[] = array("First Stay", 'First Stay', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Relation", 'Relationship', 'checked', '', 'string', '20', array());

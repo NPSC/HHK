@@ -225,7 +225,7 @@ class WebInit {
         
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
-            UNION Select 'Hospitals' as `Table_Name`, `idHospital` as `Code`, `Title` as `Description`, `Type` as `Substitute` from hospital where `Status` ='a'
+            UNION Select 'Hospitals' as `Table_Name`, `idHospital` as `Code`, `Title` as `Description`, `Type` as `Substitute` from hospital where `Status` in ('a','r')
             UNION select `Category` as `Table_Name`, `Code`, `Title` as `Description`, `Other` as `Substitute` from `lookups` where `Show` = 'y'
             order by `Table_Name`, `Description`;";
         $stmt = $this->dbh->query($query);

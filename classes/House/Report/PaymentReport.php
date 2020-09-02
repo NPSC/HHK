@@ -166,10 +166,11 @@ class PaymentReport {
             "Status"=>"string",
             "Original Amount"=>"dollar",
             "Amount"=>"dollar",
+        	"Updated"=>"MM/DD/YYYY",
             "Notes"=>"string"
         );
 
-        $colWidths = array('10', '10', '20', '20', '15', '10', '10', '15', '20', '15', '15', '15', '20');
+        $colWidths = array('10', '10', '20', '20', '15', '10', '10', '15', '20', '15', '15', '15', 15, '20');
         
         $hdrStyle = $writer->getHdrStyle($colWidths);
         
@@ -279,6 +280,7 @@ class PaymentReport {
             $payStatus,
             $origAmt,
             $amt,
+        		$p['Last_Updated'],
             $p['Payment_Note']
         );
 
@@ -295,6 +297,12 @@ class PaymentReport {
         $payGW = '';
         $payStatus = $p['Payment_Status_Title'];
         $dateDT = new \DateTime($p['Payment_Date']);
+        
+        $lastUpdatedStr = '';
+        if ($p['Last_Updated'] != '') {
+        	$lastUpdatedDT = new \DateTime($p['Last_Updated']);
+        	$lastUpdatedStr = $lastUpdatedDT->format('c');
+        }
 
         // Use timestamp for time of day.
         $timeDT = new \DateTime($p['Payment_Timestamp']);
@@ -320,7 +328,13 @@ class PaymentReport {
                 	}
                 	
                     if ($a['Auth_Last_Updated'] !== '') {
-                        $dateDT = new \DateTime($a['Auth_Last_Updated']);
+                    	
+                    	$lastUpdatedDT = new \DateTime($a['Auth_Last_Updated']);
+                    	
+                    	if ($lastUpdatedDT != $dateDT) {
+                    		$lastUpdatedStr = $lastUpdatedDT->format('c');
+                    	}
+
                     }
                 }
             }
@@ -345,8 +359,6 @@ class PaymentReport {
 
             case PaymentStatusCode::Retrn:  // Return payment
                 $statusAttr['style'] = 'color:#ea4848;';
-                $dateDT = new \DateTime($p['Last_Updated']);
-                $timeDT = new \DateTime($p['Last_Updated']);
                 break;
 
             case PaymentStatusCode::VoidReturn:
@@ -432,6 +444,7 @@ class PaymentReport {
             $g['Status'] = $statusMkup;
             $g['Orig_Amount'] = number_format($origAmt, 2);
             $g['Amount'] = number_format($amt, 2);
+            $g['Updated'] = $lastUpdatedStr;
 
             $tr = '';
             foreach ($fltrdFields as $f) {
@@ -452,7 +465,8 @@ class PaymentReport {
             $g['Status'] = $payStatus;
             $g['Orig_Amount'] = $origAmt;
             $g['Amount'] = $amt;
-
+            $g['Updated'] = $lastUpdatedStr;
+            
             $flds = array(
                 $r['i']['Sold_To_Id'],
                 ($r['i']['Bill_Agent'] == 'a' ? $r['i']['Company'] : '')

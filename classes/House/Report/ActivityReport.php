@@ -627,7 +627,13 @@ where `lp`.`idPayment` > 0
 
                 $amt = $p['Payment_Amount'];
                 
-                $lastUpdatedDT = new \DateTimeImmutable($p['Last_Updated']);
+                $dateDT = new \DateTime($p['Payment_Date']);
+                
+                $updatedDateString = '';
+                if ($p['Last_Updated'] !== '') {
+                	$lastUpdatedDT = new \DateTime($p['Last_Updated']);
+                	$updatedDateString = $lastUpdatedDT->format('c');
+                }
 
                 $voidContent = '';
                 $actionButtonArray = array('type' => 'button', 'style'=>'font-size:.8em', 'id' => 'btnvr' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'data-amt' => $amt);
@@ -754,6 +760,10 @@ where `lp`.`idPayment` > 0
 
                             IF ($a['Auth_Last_Updated'] !== '') {
                             	$lastUpdatedDT = new \DateTime($a['Auth_Last_Updated']);
+                            	
+                            	if ($lastUpdatedDT != $dateDT) {
+                            		$updatedDateString = $lastUpdatedDT->format('c');
+                            	}
                             }
                         }
                     }
@@ -774,9 +784,10 @@ where `lp`.`idPayment` > 0
                 $trow .= HTMLTable::makeTd($stat);
                 $trow .= HTMLTable::makeTd(number_format($amt, 2), $attr);
                 $trow .= HTMLTable::makeTd($actionContent);
-                $trow .= HTMLTable::makeTd(date('c', strtotime($p['Payment_Date'])));
-                $trow .= HTMLTable::makeTd($lastUpdatedDT->format('c'));
+                $trow .= HTMLTable::makeTd($dateDT->format('c'));
+                $trow .= HTMLTable::makeTd($updatedDateString);
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
+                
                 if ($showExternlId) {
                     $trow .= HTMLTable::makeTd($p['Payment_External_Id']);
                 }

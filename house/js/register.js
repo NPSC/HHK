@@ -394,6 +394,7 @@ var isGuestAdmin,
     patientLabel,
     challVar,
     defaultView,
+    defaultEventColor,
     calDateIncrement,
     dateFormat,
     fixedRate,
@@ -429,6 +430,7 @@ $(document).ready(function () {
     patientLabel = $('#patientLabel').val();
     challVar = $('#challVar').val();
     defaultView = $('#defaultView').val();
+    defaultEventColor = $('#defaultEventColor').val();
     calDateIncrement = $('#calDateIncrement').val();
     dateFormat = $('#dateFormat').val();
     fixedRate = $('#fixedRate').val();
@@ -732,7 +734,8 @@ $(document).ready(function () {
         dateIncrement: dateIncrementObj,
         nextDayThreshold: '13:00',
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
-
+        eventColor: defaultEventColor,
+        
         customButtons: {
             refresh: {
               text: 'Refresh',

@@ -638,7 +638,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             $filterGP = " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') ";
         }
 
-        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname,"
+        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
                 . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
                 . " ifnull(gr.Description, '') as `No_Return` "
             . " from `name` n "
@@ -681,6 +681,12 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                     },
                     $row2["Name_Nickname"]
             );
+            
+            $strBirthDate = '';
+            if ($row2['BirthDate'] != '') {
+            	$birthDate = new \DateTime($row2['BirthDate']);
+            	$strBirthDate = $birthDate->format ('m/d/Y');
+            }
 
             $phone = htmlspecialchars_decode($row2['Phone']);
 
@@ -693,8 +699,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . $lastName . ", " . $firstName
                 . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' )
                 . ($nickName != '' ? ' (' . $nickName . ')' : '' )
+                . ($strBirthDate != '' ? ' (' . $strBirthDate . ')' : '' )
                 . ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . ']' : '')
-                . ($row2['Phone'] != '' ? ' ' . $phone : '')
                 . ($row2['City'] != '' ? '; ' . $row2['City'] : '')
                 . ($row2['State'] != '' ? ', ' . $row2['State'] : '');
 

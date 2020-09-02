@@ -43,3 +43,6 @@ UPDATE `gen_lookups` SET `Order`='70' WHERE `Table_Name`='Sys_Config_Category' a
 UPDATE `gen_lookups` SET `Order`='40' WHERE `Table_Name`='Sys_Config_Category' and`Code`='v';
 UPDATE `gen_lookups` SET `Order`='32' WHERE `Table_Name`='Sys_Config_Category' and`Code`='ha';
 UPDATE `gen_lookups` SET `Order`='30' WHERE `Table_Name`='Sys_Config_Category' and`Code`='h';
+
+
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('DefaultCalEventColor', '', 's', 'c', 'Default event ribbon color for the calendar');

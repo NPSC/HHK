@@ -139,6 +139,7 @@ if ($config->getString('webServices', 'Service_Name', '') != '') {
     $cFields[] = array('External Id', 'Payment_External_Id', '', '', 'string', '15', array());
 }
 
+$cFields[] = array("Updated", 'Updated', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("By", 'By', 'checked', '', 'string', '20', array());
 $cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
 

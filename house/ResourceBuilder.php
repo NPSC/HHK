@@ -760,9 +760,13 @@ if (isset($_POST['btnhSave'])) {
 
         // Delete?
         if (isset($_POST['hdel'][$idHosp])) {
-            EditRS::delete($dbh, $hospRs, array(
-                $hospRs->idHospital
-            ));
+        	
+        	// Change status to "Retired"
+        	$hospRs->Status->setNewVal('r');
+        	EditRS::update($dbh, $hospRs, array($hospRs->idHospital));
+//             EditRS::delete($dbh, $hospRs, array(
+//                 $hospRs->idHospital
+//             ));
 
             // Delete any attribute entries
             $query = "delete from attribute_entity where idEntity = :id and Type = :tpe";
@@ -1604,7 +1608,7 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 
 // Hospitals and associations
 $hospRs = new HospitalRS();
-$hrows = EditRS::select($dbh, $hospRs, array());
+$hrows = EditRS::select($dbh, $hospRs, array(), '', array($hospRs->Status, $hospRs->Title));
 
 $hospTypes = readGenLookupsPDO($dbh, 'Hospital_Type');
 
@@ -1617,18 +1621,14 @@ foreach ($hospConstraints as $c) {
     $hths .= HTMLTable::makeTh($c->getTitle());
 }
 
-$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Delete');
+$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire');
 $hTbl->addHeaderTr($hths);
 
 foreach ($hrows as $h) {
-
-    $hattr = array(
-        'name' => 'hstat[' . $h['idHospital'] . ']',
-        'type' => 'checkbox'
-    );
-    if ($h['Status'] == 'a') {
-        $hattr['checked'] = 'checked';
-    }
+	
+	if ($h['Title'] == '(None)' && $h['Type'] == 'a') {
+		continue;
+	}
 
     $myConsts = new ConstraintsHospital($dbh, $h['idHospital']);
     $hConst = $myConsts->getConstraints();
@@ -1663,14 +1663,24 @@ foreach ($hrows as $h) {
         ));
     }
 
-    $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated']))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
-        'name' => 'hdel[' . $h['idHospital'] . ']',
-        'type' => 'checkbox'
-    )), array(
+    $hdelAtr = array(
+    		'name' => 'hdel[' . $h['idHospital'] . ']',
+    		'type' => 'checkbox'
+    );
+    
+    $rowAtr = array();
+    
+    if ($h['Status'] == 'r') {
+    	$hdelAtr['checked'] = 'checked';
+    	$rowAtr['style'] = 'background-color:lightgray;';
+    }
+    
+    $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated'])))
+    	. HTMLTable::makeTd(HTMLInput::generateMarkup('', $hdelAtr), array(
         'style' => 'text-align:center;'
     ));
 
-    $hTbl->addBodyTr($htds);
+    $hTbl->addBodyTr($htds, $rowAtr);
 }
 
 // new hospital

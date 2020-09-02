@@ -2,7 +2,7 @@
 
 use HHK\sec\{SecurityComponent, WebInit};
 use HHK\HTMLControls\selCtrl;
-use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Session;
 
 /**
  * categoryReport.php
@@ -20,6 +20,7 @@ require("AdminIncludes.php");
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
+$uS = Session::getInstance();
 
 $page = $wInit->page;
 
@@ -73,15 +74,7 @@ if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"]) || isset($_POST["btnCSV
 
     require("functions" . DS . "CategoryReportMgr.php");
 
-    // Get the site configuration object
-    try {
-        $config = new Config_Lite(ciCFG_FILE);
-        $guestBlackOutDays = $config->getString('house', 'Guest_Solicit_Buffer_Days', '61');
-    } catch (Exception $ex) {
-        return "Configurtion file is missing, path=".ciCFG_FILE;
-    }
-
-    $volCat = processCategory($dbh, $catSelCtrls, $catSelRoles, $catSelDormancy, $catVolStatus, $guestBlackOutDays);  //, $catSortSel);
+    $volCat = processCategory($dbh, $catSelCtrls, $catSelRoles, $catSelDormancy, $catVolStatus, $uS->SolicitBuffer);
 
     if ($volCat->get_andOr() == "and") {
         $andChecked = "checked='checked'";

@@ -506,6 +506,7 @@ INSERT INTO `sys_config` VALUES
 ('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true',''),
 ('CoTod','false','b','h','','Edit the time of day of a checkout',''),
 ('county','false','b','h','','Include the County for addresses',''),
+('DefaultCalEventColor', '', 's', 'c', '', 'Default event ribbon color for the calendar', ''),
 ('DefaultDays','21','i','h','','The Default number of following days for date range control',''),
 ('DefaultPayType','cc','s','f','','Use the Resource Builder',''),
 ('DefaultRegisterTab','0','lu','h','','Default active tab on register page','Default_Reg_Tab'),
