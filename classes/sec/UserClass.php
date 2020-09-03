@@ -476,12 +476,17 @@ class UserClass
         $ssn = Session::getInstance();
         $remoteIp = self::getRemoteIp();
         
+
         //get user agent
         $userAgentArray = get_browser(NULL, TRUE);
         $browserName = $userAgentArray['parent'];
         $osName = $userAgentArray['platform'];
-        
-        $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`, `Browser`, `OS`) values ('" . $username . "', $timestamp , '$remoteIp', '$action', '$browserName', '$osName')");
+        try{
+            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`, `Browser`, `OS`) values ('" . $username . "', $timestamp , '$remoteIp', '$action', '$browserName', '$osName')");
+        }catch (\Exception $e){
+            //Browser/OS fields not in DB - skip user agent
+            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`) values ('" . $username . "', $timestamp , '$remoteIp', '$action')");
+        }
     }
 
     public static function getUserCredentials(\PDO $dbh, $username)
