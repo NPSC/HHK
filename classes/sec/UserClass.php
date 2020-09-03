@@ -460,7 +460,7 @@ class UserClass
         return $remoteIp;
     }
 
-    public static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false)
+    public static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false, $fromHHK = false)
     {
         if (! $username) {
             $ssn = Session::getInstance();
@@ -481,6 +481,13 @@ class UserClass
         $userAgentArray = get_browser(NULL, TRUE);
         $browserName = $userAgentArray['parent'];
         $osName = $userAgentArray['platform'];
+        
+        if($fromHHK){
+            $remoteIp = '';
+            $browserName = "HHK";
+            $osName = "HHK";
+        }
+        
         try{
             $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`, `Browser`, `OS`) values ('" . $username . "', $timestamp , '$remoteIp', '$action', '$browserName', '$osName')");
         }catch (\Exception $e){
@@ -535,10 +542,10 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
                 $lastLoginDays = $date->diff($today)->format('%a');
                 $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
                 if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
-                    $stmt = "update w_users set `Status` = 'd', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
+                    $stmt = "update w_users set `Status` = 'd', `Updated_By` = 'HHK', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
                     if ($dbh->exec($stmt) > 0) {
                         $user['Status'] = 'd';
-                        self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
+                        self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"), TRUE);
                     }
                 }
             }
