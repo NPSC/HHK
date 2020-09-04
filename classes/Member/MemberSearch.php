@@ -699,6 +699,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . $lastName . ", " . $firstName
                 . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' )
                 . ($nickName != '' ? ' (' . $nickName . ')' : '' )
+                . ($phone != '' ? ' (' . $phone . ')' : '' )
                 . ($strBirthDate != '' ? ' (' . $strBirthDate . ')' : '' )
                 . ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . ']' : '')
                 . ($row2['City'] != '' ? '; ' . $row2['City'] : '')
