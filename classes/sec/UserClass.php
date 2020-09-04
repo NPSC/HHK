@@ -475,12 +475,18 @@ class UserClass
 
         $ssn = Session::getInstance();
         $remoteIp = self::getRemoteIp();
+        $browserName = '';
+        $osName = '';
         
 
         //get user agent
-        $userAgentArray = get_browser(NULL, TRUE);
-        $browserName = $userAgentArray['parent'];
-        $osName = $userAgentArray['platform'];
+        try {
+        	$userAgentArray = get_browser(NULL, TRUE);
+        	$browserName = $userAgentArray['parent'];
+        	$osName = $userAgentArray['platform'];
+        } catch (\Exception $d) {
+        	$browserName = "Missing Browscap";
+        }
         
         if($fromHHK){
             $remoteIp = '';

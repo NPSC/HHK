@@ -230,7 +230,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         	
         	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) <= $extendHours) {
         		$nowDT->sub(new \DateInterval('P1D'));
-        		$nowDT->setTime(23, 0);
+        		$nowDT->setTime(16, 0);
         		$this->reserveData->setArrivalDT($nowDT);
         	}
 
