@@ -74,7 +74,6 @@ class FinAssistance {
      */
     public function createRateCalcMarkup() {
 
-        $uS = Session::getInstance();
         $calcTbl = new HTMLTable();
 
         $calcTbl->addHeader(HTMLTable::makeTh('Estimated Monthly Household Income', array('colspan'=>'2')) . HTMLTable::makeTh('Household Size') .HTMLTable::makeTh('Rate'));
@@ -327,7 +326,7 @@ class FinAssistance {
             $hhSize = 8;;
         }
 
-        $query = "Select Income_A, Income_B, Income_C, Income_D from fa_category where HouseHoldSize = :size";
+        $query = "Select Income_A, Income_B, Income_C from fa_category where HouseHoldSize = :size";
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':size'=>$hhSize));
 

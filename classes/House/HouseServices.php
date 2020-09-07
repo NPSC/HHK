@@ -210,11 +210,6 @@ class HouseServices {
         $reply = '';
         $returnReserv = FALSE;
 
-        $payFailPage = 'register.php';
-        if (isset($post['payFailPage'])) {
-            $payFailPage = filter_var($post['payFailPage'], FILTER_SANITIZE_STRING);
-        }
-
         if ($idVisit == 0) {
             return array("error" => "Neither Guest or Visit was selected.");
         }

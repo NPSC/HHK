@@ -339,7 +339,7 @@ class PaymentManagerPayment {
         if ($this->payDate != '') {
             
             try {
-                $payDT = new \DateTime($this->payDate);
+            	$payDT = setTimeZone(NULL, $this->payDate);
                 $paymentDate = $payDT->format('Y-m-d H:i:s');
                 
                 $now = new \DateTime();

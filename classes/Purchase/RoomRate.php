@@ -28,7 +28,7 @@ class RoomRate {
         $rateCategories = array();
         $activeRates = $priceModel->getActiveModelRoomRates();
 
-        foreach ($priceModel->getActiveModelRoomRates() as $rc) {
+        foreach ($activeRates as $rc) {
 
             $decimals = 0;
             if (floor($rc->Reduced_Rate_1->getStoredVal()) != $rc->Reduced_Rate_1->getStoredVal()) {
@@ -56,6 +56,7 @@ class RoomRate {
                 2=>number_format($rateRs->Reduced_Rate_1->getStoredVal(), $decimals));
 
         }
+        
 
         return $rateCategories;
     }

@@ -249,8 +249,6 @@ abstract class AbstractPriceModel {
 
 
             case ItemPriceCode::PerGuestDaily:
-                //throw new Hk_Exception_Runtime('Guest Days temporarily disabled.  ');
-
                 $pm = new PriceGuestDay(self::getModelRoomRates($dbh, $modelCode));
                 $pm->priceModelCode = $modelCode;
                 return $pm;
@@ -339,28 +337,20 @@ abstract class AbstractPriceModel {
             }
 
             $cbRetire = '';
-            if ($r->FA_Category->getStoredVal() != RoomRateCategories::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategories::FlatRateCategory) {
+            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate) {  //RoomRateCategories::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategories::FlatRateCategory) {
 
                 $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
 
-                if ($r->FA_Category->getStoredVal() != RoomRateCategories::NewRate) {
+                if ($r->Status->getStoredVal() == RateStatus::Retired) {
+                    // show as inactive
+                    $attrs['disabled'] = 'disabled';
+                    $titleAttrs['readonly'] = 'readonly';
+                    $titleAttrs['style'] = 'background-color:#f0f0f0 ';
+                    $rr1Attrs['disabled'] = 'disabled';
 
-                    // Deal with Rate A, B, C, D
-
-                    if ($r->Status->getStoredVal() == RateStatus::Retired) {
-                        // show as inactive
-                        $attrs['disabled'] = 'disabled';
-                        $titleAttrs['readonly'] = 'readonly';
-                        $titleAttrs['style'] = 'background-color:#f0f0f0 ';
-                        $rr1Attrs['disabled'] = 'disabled';
-
-                        $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']', 'checked'=>'checked'));
-                    }
-
-                } else if ($r->Status->getStoredVal() != RateStatus::Active) {
-                    // Dont show retired new rates.
-                    continue;
+                    $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']', 'checked'=>'checked'));
                 }
+
             }
 
             $fTbl->addBodyTr(
@@ -435,7 +425,12 @@ abstract class AbstractPriceModel {
                     $rpRs->FA_Category->setNewVal($oldRs->FA_Category->getStoredVal());
 
                     // Retired?  Can't be the default rate.
-                    if (isset($retires[$idRoomRate]) && $defaultRate != $oldRs->FA_Category->getStoredVal()) {
+                    if (isset($retires[$idRoomRate]) && $defaultRate != $oldRs->FA_Category->getStoredVal()
+                    		&& $oldRs->FA_Category->getStoredVal() != 'a'
+                    		&& $oldRs->FA_Category->getStoredVal() != 'b'
+                    		&& $oldRs->FA_Category->getStoredVal() != 'c'
+                    		&& $oldRs->FA_Category->getStoredVal() != 'd') {
+                    			
                         // update
                         $oldRs->Status->setNewVal(RateStatus::Retired);
                         $oldRs->Updated_By->setNewVal($username);
@@ -616,36 +611,36 @@ abstract class AbstractPriceModel {
         return $this;
     }
 
-    public static function installRates(\PDO $dbh, $modelCode) {
+    public static function installRates(\PDO $dbh, $modelCode, $incomeRated) {
 
         switch ($modelCode) {
 
             case ItemPriceCode::Basic:
-                PriceBasic::InstallRate($dbh);
+            	PriceBasic::InstallRate($dbh, $incomeRated);
                 break;
 
             case ItemPriceCode::Dailey;
-                PriceDaily::installRate($dbh);
+            PriceDaily::installRate($dbh, $incomeRated);
                 break;
 
             case ItemPriceCode::PerGuestDaily;
-                PriceGuestDay::installRate($dbh);
+            PriceGuestDay::installRate($dbh, $incomeRated);
                 break;
 
             case ItemPriceCode::NdayBlock:
-                PriceNdayBlock::installRate($dbh);
+            	PriceNdayBlock::installRate($dbh, $incomeRated);
                 break;
 
             case ItemPriceCode::PerpetualStep:
-                PricePerpetualSteps::installRate($dbh);
+            	PricePerpetualSteps::installRate($dbh, $incomeRated);
                 break;
 
             case ItemPriceCode::Step3:
-                Price3Steps::InstallRate($dbh);
+            	Price3Steps::InstallRate($dbh, $incomeRated);
                 break;
 
             case ItemPriceCode::None:
-                PriceNone::InstallRate($dbh);
+            	PriceNone::InstallRate($dbh, $incomeRated);
                 break;
 
             default:

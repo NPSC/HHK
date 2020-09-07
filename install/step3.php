@@ -12,22 +12,11 @@ use HHK\HTMLControls\HTMLSelector;
  * step3.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("InstallIncludes.php");
-/* require (CLASSES . 'PDOdata.php');
-require (DB_TABLES . 'WebSecRS.php');
-require (DB_TABLES . 'HouseRS.php');
-require(SEC . 'Login.php');
-
-
-require (CLASSES . 'Purchase/PriceModel.php');
-require (CLASSES . 'TableLog.php');
-require (CLASSES . 'HouseLog.php');
-require CLASSES . 'AuditLog.php';
- */
 
 try {
 
@@ -56,6 +45,10 @@ SysConfig::getCategory($dbh, $ssn, "'r'", webInit::SYS_CONFIG);
 SysConfig::getCategory($dbh, $ssn, "'d'", webInit::SYS_CONFIG);
 SysConfig::getCategory($dbh, $ssn, "'h'", webInit::SYS_CONFIG);
 SysConfig::getCategory($dbh, $ssn, "'a'", WebInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, "'hf'", webInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, "'ha'", webInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, "'p'", webInit::SYS_CONFIG);
+SysConfig::getCategory($dbh, $ssn, "'g'", webInit::SYS_CONFIG);
 
 $pageTitle = $ssn->siteName;
 
@@ -112,12 +105,20 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
 
     if ($rateCode != '' && isset($rPrices[$rateCode])) {
 
-        SysConfig::saveKeyValue($dbh, 'sys_config', 'RoomPriceModel', $rateCode);
+    	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'RoomPriceModel', $rateCode);
+        
+        if (isset($_POST['cbFin'])) {
+        	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'IncomeRated', 'true');
+        } else {
+        	SysConfig::saveKeyValue($dbh, webInit::SYS_CONFIG, 'IncomeRated', 'false');
+        }
+        
         SysConfig::getCategory($dbh, $ssn, "'h'", webInit::SYS_CONFIG);
-
+        SysConfig::getCategory($dbh, $ssn, "'hf'", webInit::SYS_CONFIG);
+        
         $dbh->exec("delete from `room_rate`");
 
-        AbstractPriceModel::installRates($dbh, $rateCode);
+        AbstractPriceModel::installRates($dbh, $rateCode, $ssn->IncomeRated);
 
     }
 
@@ -145,11 +146,6 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
         $siteId = $dbh->lastInsertId();
         $ssn->sId = $siteId;
 
-        // log changes
-        if ($ssn->sId != $siteId && is_null($dbh) === FALSE) {
-            HouseLog::logSiteConfig($dbh, 'site' . ':' . 'Site_Id', $siteId, 'admin');
-        }
-
         SysConfig::saveKeyValue($dbh, 'sys_config', 'sId', $siteId);
 
     }
@@ -157,18 +153,13 @@ if (isset($_POST['btnRoom']) && count($rPrices) > 0) {
     if ($ssn->subsidyId == 0 && $siteId > 0) {
         $ssn->subsidyId = $siteId;
 
-        // log changes
-        if ($ssn->subsidyId != $siteId && is_null($dbh) === FALSE) {
-            HouseLog::logSiteConfig($dbh, 'financial' . ':' . 'RoomSubsidyId', $siteId, 'admin');
-        }
-
         SysConfig::saveKeyValue($dbh, 'sys_config', $siteId);
 
     }
 
 }
 
-$modelSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rPrices, '', TRUE), array('name'=>'selModel'));
+$modelSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rPrices, '', TRUE), array('name'=>'selModel', 'style'=>"margin-top:20px;margin-right:10px;"));
 
 ?>
 <!DOCTYPE HTML>
@@ -191,6 +182,7 @@ $modelSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rPrices, '
                         <legend>Create Rooms</legend>
                         How Many: <input type="text" name="txtRooms" size="5" style="margin-top:20px;margin-right:10px;"/>
                         Select Room Rate Plan: <?php echo $modelSel; ?>
+                        Use Financial Assistance:<input type="checkbox" name="cbFin"  style="margin-top:20px;"/>
                         <input type="submit" name="btnRoom" id="btnRoom" value="Install Rooms" style="margin-left:17px;margin-top:20px;"/>
                     </fieldset>
                     <input type="submit" name="btnNext" id="btnNext" value="3.  Done" style="margin-left:17px;margin-top:20px;"/>

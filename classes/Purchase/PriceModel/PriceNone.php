@@ -43,7 +43,7 @@ class PriceNone extends AbstractPriceModel {
         return FALSE;
     }
 
-    protected static function installRate(\PDO $dbh) {
+    protected static function installRate(\PDO $dbh, $incomeRated) {
 
         $modelCode = ItemPriceCode::None;
 

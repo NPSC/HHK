@@ -1052,8 +1052,8 @@ $(document).ready(function () {
         }
         var parms = {
             cmd: 'actrpt',
-            start: stDate.toJSON(),
-            end: edDate.toJSON()
+            start: stDate.toLocaleDateString(),
+            end: edDate.toLocaleDateString()
         };
         if ($('#cbVisits').prop('checked')) {
             parms.visit = 'on';
@@ -1126,8 +1126,8 @@ $(document).ready(function () {
 
         var parms = {
             cmd: 'actrpt',
-            start: stDate.toJSON(),
-            end: edDate.toJSON(),
+            start: stDate.toDateString(),
+            end: edDate.toDateString(),
             st: statuses,
             pt: ptypes
         };

@@ -189,10 +189,6 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
         $query .= "order by c2.Name_Last, c2.Name_First";
 
 
-        // get the data set.
-        $stmt = $dbh->query($query);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
 
 
         $reportRows = 1;
@@ -269,7 +265,12 @@ function processCategory(PDO $dbh, &$selCtrls, selCtrl &$rankCtrl, selCtrl &$dor
 
         $txtreport = "<tbody>";
 
-        foreach ($rows as $rw) {
+        // get the data set.
+        $stmt = $dbh->query($query);
+        //$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        //foreach ($rows as $rw) {
+        	
+        while ($rw = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
             if ($dlFlag) {
                 $flds = array(
@@ -399,7 +400,7 @@ vm.Id AS Id,
     c.VOl_Rank_Title AS Vol_Rank_Title $totalId
     from vmember_listing_blackout vm
     join vmember_categories c ON vm.Id = c.idName
-    where vm.MemberStatus = 'a' and case when vm.idVisit is not null then DATEDIFF(now(), vm.spanEnd) > $guestBlackOutDays else 1=1 end $whereClause $groupBy";
+    where vm.MemberStatus = 'a' and case when vm.idVisit > 0 then DATEDIFF(now(), vm.spanEnd) > $guestBlackOutDays else 1=1 end $whereClause $groupBy";
 
     return $query;
 }

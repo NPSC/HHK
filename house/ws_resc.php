@@ -236,14 +236,14 @@ try {
 
             if (isset($_REQUEST["start"]) && $_REQUEST["start"] != '') {
                 $startDate = filter_var($_REQUEST["start"], FILTER_SANITIZE_STRING);
-                $startDT = setTimeZone($uS, $startDate);
+                $startDT = new DateTime($startDate);
             } else {
                 $startDT = new DateTime();
             }
 
             if (isset($_REQUEST["end"]) && $_REQUEST["end"] != '') {
                 $endDate = filter_var($_REQUEST["end"], FILTER_SANITIZE_STRING);
-                $endDT = setTimeZone($uS, $endDate);
+                $endDT = new DateTime($endDate);
             } else {
                 $endDT = new DateTime();
             }

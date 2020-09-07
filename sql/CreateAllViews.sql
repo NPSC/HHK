@@ -65,11 +65,9 @@ where ((`n`.`idName` > 0) and (`n`.`Member_Status` in ('a','d','in')));
 -- View `vmember_listing_blackout`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vmember_listing_blackout` AS
-select vm.*, ifnull(v.idVisit,0) as idVisit, max(ifnull(v.Span_End, now())) as spanEnd
+select vm.*, ifnull(s.idVisit,0) as idVisit, max(ifnull(s.Span_End_Date, now())) as spanEnd
 from vmember_listing vm
-left join name_guest ng on vm.Id = ng.idName
-left join registration r on ng.idPsg = r.idPsg
-left join visit v on r.idRegistration = v.idRegistration and v.Status in ('co', 'a')
+left join stays s on vm.Id = s.idName and s.Status in ('co', 'a')
 group by vm.Id;
 
 

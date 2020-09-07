@@ -1,6 +1,11 @@
 
-Alter Table payment_method
-	Add Column `Gl_Code` VARCHAR(45) NOT NULL DEFAULT '' After Method_Name;
+ALTER TABLE payment_method
+	ADD Column `Gl_Code` VARCHAR(45) NOT NULL DEFAULT '' After Method_Name;
+
+-- user agent info
+ALTER TABLE `w_user_log`
+	ADD COLUMN `Browser` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Action`,
+	ADD COLUMN `OS` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Browser`;
 
 delete from payment_method where idPayment_method = 4;
 
@@ -47,7 +52,3 @@ UPDATE `gen_lookups` SET `Order`='30' WHERE `Table_Name`='Sys_Config_Category' a
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('DefaultCalEventColor', '', 's', 'c', 'Default event ribbon color for the calendar');
 
--- user agent info
-ALTER TABLE `w_user_log`
-ADD COLUMN `Browser` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Action`,
-ADD COLUMN `OS` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Browser`;

@@ -603,8 +603,12 @@ where ru.idResource_use is null
 
 
             if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
-                $h['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
-            } else {
+            	
+            	if (isset($hospitals[$r['idAssociation']])) {
+                	$h['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
+            	}
+            	
+            } else if (isset($hospitals[$r['idHospital']])) {
                 $h['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
             }
 
