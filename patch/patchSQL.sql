@@ -52,3 +52,9 @@ UPDATE `gen_lookups` SET `Order`='30' WHERE `Table_Name`='Sys_Config_Category' a
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('DefaultCalEventColor', '', 's', 'c', 'Default event ribbon color for the calendar');
 
+-- Update sys config categories and descriptions
+call update_sys_config();
+
+-- Exchange rates a,b,c,d with r's if not income rated.
+call fix_rates();
+

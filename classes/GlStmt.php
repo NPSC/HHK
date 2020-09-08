@@ -258,7 +258,7 @@ class GlStmt {
 
 		}
 
-		// reduce the waiveable items
+
 		foreach ($invLines as $l) {
 
 			// Don't return the waiving item
@@ -531,6 +531,7 @@ where
 		$preIntervalPay = 0;
 		$intervalPay = 0;
 		$totalPayment = array();
+		$forwardPay = 0;  // Payment from last month that pay stays in this month.
 
 		$intervalCharge = 0;
 		$fullInvervalCharge = 0;
@@ -539,6 +540,7 @@ where
 		$vPreIntervalCharge = 0;
 		$vFullIntervalCharge = 0;
 		$vIntervalPay = 0;
+		$vForwardPay = 0;
 
 		$istmt = $dbh->query("select idItem from item");
 		while( $i = $istmt->fetch(\PDO::FETCH_NUM)) {
@@ -571,14 +573,21 @@ where
 					} else {
 						$preIntervalPay += $vIntervalPay;
 					}
+					
+					// forward charges paid previously
+					if ($vForwardPay > $vPreIntervalCharge) {
+						$forwardPay += $vForwardPay - $vPreIntervalCharge;
+					}
 
 					$intervalCharge += $vIntervalCharge;
+					$fullInvervalCharge += $vFullIntervalCharge;
 
 					// Reset for next visit
 					$vIntervalCharge = 0;
 					$vPreIntervalCharge = 0;
 					$vFullIntervalCharge = 0;
 					$vIntervalPay = 0;
+					$vForwardPay = 0;
 
 					$visitId = $r['idVisit'];
 				}
@@ -659,6 +668,13 @@ where
 
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $r['il_Amount']);
 					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
+					
+				} else if ($paymentDate < $this->startDate) {
+					// Pre payment from before
+					
+					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
+						$vForwardPay += $r['il_Amount'];
+					}
 				}
 
 			// Refunds
@@ -673,6 +689,13 @@ where
 
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $r['il_Amount']);
 					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
+					
+				} else if ($paymentDate < $this->startDate) {
+					// Pre payment from before
+					
+					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
+						$vForwardPay += $r['il_Amount'];
+					}
 				}
 
 			//Returns
@@ -695,6 +718,12 @@ where
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], (0 - $r['il_Amount']));
 					$totalPayment[$r['Item_Id']] -= $r['il_Amount'];
 
+				} else if ($paymentDate < $this->startDate) {
+					// Pre payment from before
+					
+					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
+						$vForwardPay -= $r['il_Amount'];
+					}
 				}
 
 				// Paid during this period?
@@ -707,6 +736,12 @@ where
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $r['il_Amount']);
 					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
 
+				} else if ($paymentDate < $this->startDate) {
+					// Pre payment from before
+					
+					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
+						$vForwardPay += $r['il_Amount'];
+					}
 				}
 			}
 		}
@@ -724,7 +759,14 @@ where
 				$preIntervalPay += $vIntervalPay;
 			}
 
+			// forward charges paid previously
+			if ($vForwardPay > $vPreIntervalCharge) {
+				$forwardPay += $vForwardPay - $vPreIntervalCharge;
+			}
+			
 			$intervalCharge += $vIntervalCharge;
+			$fullInvervalCharge += $vFullIntervalCharge;
+			
 		}
 
 
@@ -743,13 +785,13 @@ where
 		$unpaidCharges = $intervalCharge - $intervalPay - $this->getPrePay();
 
 		$tbl->addBodyTr(HTMLTable::makeTd('Total charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel')) . HTMLTable::makeTd('(TBD)', array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($forwardPay, 2), array('style'=>'text-align:right;')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;')));
 
 		return $this->createBAMarkup($baArray, $tableAttrs)
 			. $tbl->generateMarkup($tableAttrs)
-			. $this->statsPanel($dbh, $totalCatNites, $start, $end, $categories, 'Report_Category', $monthArray, $uS->guestLookups['Static_Room_Rate']['rb'][2]);
+			. $this->statsPanel($dbh, $totalCatNites, $start, $end, $categories, 'Report_Category', $monthArray, $uS->guestLookups['Static_Room_Rate']['rb'][2], $fullInvervalCharge);
 	}
 
 	protected function createBAMarkup($baTotals, $tableAttrs) {
@@ -799,7 +841,7 @@ where
 	}
 
 
-	protected function statsPanel(\PDO $dbh, $totalCatNites, $start, $end, $categories, $rescGroup, $monthArray, $roomRate) {
+	protected function statsPanel(\PDO $dbh, $totalCatNites, $start, $end, $categories, $rescGroup, $monthArray, $roomRate, $fullIntervalCharge) {
 
 		$totalOOSNites = 0;
 
@@ -893,7 +935,7 @@ order by r.idResource;";
 
 		$sTbl->addBodyTr(HTMLTable::makeTd('Visit Nights in ' . $monthArray[$stDT->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd($totalCatNites['All'], array('style'=>'text-align:center;'))
-				. HTMLTable::makeTd('$'.number_format($roomRate * $totalCatNites['All'], 2), array('style'=>'text-align:right;')));
+				. HTMLTable::makeTd('$'.number_format($fullIntervalCharge, 2), array('style'=>'text-align:right;')));
 
 		$sTbl->addBodyTr(HTMLTable::makeTd('Room Utilization', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(($numUsefulNights <= 0 ? '0' : number_format($totalCatNites['All'] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'text-align:center;'))

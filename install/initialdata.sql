@@ -58,7 +58,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('dayIncrements', '365', '365 days', '','', '5'),
 
 ('Default_Reg_Tab', '0', 'Calendar Tab', '','', '0'),
-('Default_Reg_Tab', '1', 'Current Guests Tab'', '','', '0'),
+('Default_Reg_Tab', '1', 'Current Guests Tab', '','', '0'),
 
 ('Demographics', 'Age_Bracket', 'Age Bracket', 'y','m',5),
 ('Demographics', 'Ethnicity', 'Ethnicity', 'y','m',10),

@@ -6,6 +6,189 @@
 
 -- --------------------------------------------------------
 --
+-- Procedure `fix_rates`
+--
+DROP procedure IF EXISTS `fix_rates`; --;
+
+CREATE PROCEDURE `fix_rates` ()
+BEGIN
+
+	declare incomeRated varchar(15);
+	
+	select `Value` into incomeRated from sys_config where `Key` = 'IncomeRated';
+	
+	if (incomeRated = 'false') THEN
+	
+		-- Change all the abcd rate categories to new rate categories
+		update room_rate set FA_Category = 'r1' where FA_Category = 'a';
+		update room_rate set FA_Category = 'r2' where FA_Category = 'b';
+		update room_rate set FA_Category = 'r3' where FA_Category = 'c';
+		update room_rate set FA_Category = 'r4' where FA_Category = 'd';
+	    
+	    update visit set Rate_Category = 'r1' where Rate_Category = 'a';
+	    update visit set Rate_Category = 'r2' where Rate_Category = 'b';
+	    update visit set Rate_Category = 'r3' where Rate_Category = 'c';
+	    update visit set Rate_Category = 'r4' where Rate_Category = 'd';
+	    
+	    update reservation set Room_Rate_Category = 'r1' where Room_Rate_Category = 'a';
+	    update reservation set Room_Rate_Category = 'r2' where Room_Rate_Category = 'b';
+	    update reservation set Room_Rate_Category = 'r3' where Room_Rate_Category = 'c';
+	    update reservation set Room_Rate_Category = 'r4' where Room_Rate_Category = 'd';
+	
+	END if;
+	
+END --;
+
+
+-- --------------------------------------------------------
+--
+-- Procedure `update_sys_config`
+--
+DROP procedure IF EXISTS `update_sys_config`; --;
+
+CREATE PROCEDURE `update_sys_config`()
+BEGIN
+
+	CREATE TEMPORARY TABLE `new_config` (
+	  `Key` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL,
+	  `Value` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+	  `Type` varchar(15) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+	  `Category` varchar(5) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+	  `Header` varchar(5) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+	  `Description` varchar(1000) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+	  `GenLookup` varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+	  PRIMARY KEY (`Key`)
+	);
+
+	INSERT INTO `new_config` VALUES ('Admin_Address','','ea','v','','Volunteer administrator email address',''),
+	('Auto_Email_Address','','ea','ha','','Notified for each batch of automatic emails',''),
+	('BatchSettlementHour','03:00','s','fg','','Batch settlement time of day for auto-settlements',''),
+	('BccAddress','','ea','g','','Any email addresses listed here (comma delimited) will get a BCC of any receipts mailed to valid guest email accounts.',''),
+	('CalDateIncrement','1','i','c','','Number of weeks to increment Calendar view, auto = calViewWeeks',''),
+	('CalExpandResources','true','b','c','','Initially expand room categories on the calendar',''),
+	('CalRescColWidth','8%','s','c','','The width of the rooms column on the calendar page as percent of the overall width',''),
+	('CalResourceGroupBy','Type','lu','c','','Calendar resource grouping parameter','Room_Group'),
+	('CalViewWeeks','3','i','c','','Number of weeks showing in the calendar view',''),
+	('CheckInTime','16','i','h','','Normal House Check in time of day in 24-hour format, hh',''),
+	('CheckOutTime','10','i','h','','Normal House Checkout time of day in 24-hour format, hh',''),
+	('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true',''),
+	('CoTod','false','b','h','','Edit the time of day of a checkout',''),
+	('county','false','b','h','','Include the County for addresses',''),
+	('DefaultDays','21','i','h','','The Default number of following days for date range control',''),
+	('DefaultPayType','cc','s','f','','Use the Resource Builder',''),
+	('DefaultRegisterTab','0','lu','h','','Default active tab on register page','Default_Reg_Tab'),
+	('DefaultVisitFee','1','s','h','','Use the Resource Builder',''),
+	('Disclaimer','Welcome! Please remember that unauthorized use of the data made available to you as a House volunteer, including collecting user names and/or email addresses of other users for the purpose of sending unsolicited email or other unauthorized purposes, is prohibited. Thank you for all you do!','t','v','','Volunteer Site Disclaimer',''),
+	('Doctor','true','b','hf','','Track doctors',''),
+	('EmailBlockSize','200','i','v','','Number of email addresses per block',''),
+	('EmailType','','lu','es','','Email protocol','Email_Server'),
+	('EmergContactFill','false','b','h','','Insist on Filling in the emergency contact',''),
+	('EmptyExtendLimit','0','i','hf','','Extend visit (go on leave) limit - number of days',''),
+	('ExtendToday','0','i','h','','Extend the Check in day by this many hours into tomorrow',''),
+	('ForceNamePrefix','false','b','h','','Force  name prefixes to be entered',''),
+	('FromAddress','','ea','g','','House from address for guest emails',''),
+	('FutureLimit','1','i','v','','Max years in the future volunteers can reserve shifts',''),
+	('fy_diff_Months','0','i','f','','Fiscal year difference months (12 - fiscal year start month)',''),
+	('Guest_Register_Email','','ea','ha','','If present, a guest register is sent here once a day (also must edit the cron job)',''),
+	('Guest_Track_Address','','ea','ha','','If present, these addresess receive all notices of check-in, out, room change, etc.',''),
+	('GuestAddr','true','b','g','','Enable guest address',''),
+	('GuestNameColor','','s','c','','Enable Guest demographic to drive guest name background color','Demographics'),
+	('HHK_Secret_Key','T3VqSDRZc3FrNlRHMDkxQXBMNzg4THRCTm4vOXlUOGkyeG9ZbHpWT2Y0K0F5elQvZDYyUXFTNWFTRWZyL2pQUg==','op','v','','Recapcha Secret Key (obfruscated)',''),
+	('HHK_Site_Key','6Lfc-U4UAAAAAEiXQX1-KCyGz4JAYLglQsj5g4Dh','s','v','','Recapcha Site Key',''),
+	('HouseKeepingEmail','','ea','ha','','This address receives all room turn-over notices',''),
+	('HouseKeepingSteps','1','lu','hf','','Number of steps to cleaning/preparing rooms for new guests','HouseKpgSteps'),
+	('IncludeLastDay','false','b','h','','Include the departure day in room searches',''),
+	('IncomeRated','true','b','hf','','Enable guest income chooser rate assistance',''),
+	('InitResvStatus','a','lu','h','','Initial reservation status setting, confirmed or unconfirmed','Init_Reserv_Status'),
+	('InsistCkinDemog','false','b','h','','Insist that user fill in the demographics on the check in page',''),
+	('InsistCkinPayAmt','true','b','h','','Insist the user fills in the payment amount on checkin page',''),
+	('InsistPatBD','true','b','p','','Insist on user filling in the patients birthdate',''),
+	('InsuranceChooser','false','b','hf','','Enable insurance chooser',''),
+	('InvoiceTerm','30','i','f','','Invoice payment terms in days',''),
+	('KeyDeposit','true','b','hf','','Enable room or key deposit',''),
+	('LangChooser','false','b','hf','','Enable member language chooser',''),
+	('MajorDonation','500','i','d','','Major donator trigger amount',''),
+	('MaxAutoEmail','100','i','h','','Maximum number of automatic email messages to send per batch',''),
+	('MaxDonate','100000','i','d','','Maximum amount amount for a single donation',''),
+	('MaxExpected','260','i','h','','Maximum Expected days out for a visit',''),
+	('MaxRepeatEvent','53','i','v','','Maximum number of times to repeat a calendar event',''),
+	('MemberImageSizePx','75','i','h','','Guest image thumbnail size',''),
+	('NightsCounter','calYear','s','c','','Count nights by year (calYear) or by grand total',''),
+	('NoReplyAddr','','ea','ha','','No reply email address',''),
+	('NotificationAddress','','ea','f','','Gets financial data upload notifications',''),
+	('OpenCheckin','true','b','h','','Allow walk-ups to check in',''),
+	('passResetDays','365','lu','pr','','Number of days between automatic password resets','dayIncrements'),
+	('PatientAddr','true','b','p','','Enable the patient address.',''),
+	('PatientAsGuest','true','b','p','','House allows patients to stay as guests',''),
+	('PayAtCkin','true','b','h','','Allow/Disallow payments at check-in time',''),
+	('PaymentDisclaimer','The amount of your donation that is deductible for Federal tax purposes is limited to the excess of the amount of your donation over the value of the goods and services provided to you by (House Name).  Because the estimated value of the goods and services provided to you by (House Name) exceeds the value of your donation, no part of your donation is deductible for Federal tax purposes.','t','f','','Shows on receipts and statements',''),
+	('PaymentGateway','','lu','fg','','Credit Payment Gateway','Pay_Gateway_Name'),
+	('PayVFeeFirst','true','b','h','','Default check the visit fees payment checkbox',''),
+	('PreviousNights','0','i','c','','Previous (to HHK) nights to add to nights counter',''),
+	('PriorPasswords','0','i','pr','','Number of prior passwords user cannot reuse',''),
+	('RateChangeAuth','false','b','h','','True = only authorized users can change the defailt room rate',''),
+	('RateGlideExtend','0','i','hf','','(Deprecated) Number of days for the Room Rate Glide to time out after visit check-out',''),
+	('receiptLogoFile','../conf/receiptlogo.png','url','f','','Path to the receipt logo file',''),
+	('receiptLogoWidth','150','i','f','','in px',''),
+	('ReferralAgent','true','b','hf','','Track referral agents/social workers',''),
+	('RegColors','hospital','lu','c','','Calendar page ribbon colors based on hospital or room','Reg_Colors'),
+	('RegForm','1','i','h','',' Registration form style (1 or 2)',''),
+	('RegFormNoRm','false','b','h','','Do not show the room number on the registration form before check-in',''),
+	('RegSubj','Volunteer Registration','s','v','','Volunteer Registration email subject line',''),
+	('ReplyTo','','ea','g','','The reply to address for any email sent to guests.',''),
+	('ResvEarlyArrDays','2','i','h','','Number of days before reservation to show check-in button on reservation chooser',''),
+	('ReturnAddress','','ea','v','','Return address for automatic emails to volunteers',''),
+	('RoomPriceModel','d','lu','h','','Room rate price model - Do not change!','Price_Model'),
+	('RoomRateDefault','e','s','h','','Use the Resource Builder',''),
+	('RoomsPerPatient','2','i','h','','Number of simultaneous rooms per patient allowed',''),
+	('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, 0 = never log out',''),
+	('ShoStaysCtr','true','b','c','','Show the stays counter on the House Calendar page',''),
+	('ShowBirthDate','true','b','h','','Show birthdate for patients and guests',''),
+	('ShowCreatedDate','true','b','h','','Show the Created Date in Register page tabs lists',''),
+	('ShowDemographics','false','b','h','','Show demographics selectors on Check in and Reservation pages',''),
+	('ShowDiagTB','false','b','h','','Show the diagnosis textbox (in addition to the diagnosis selector)',''),
+	('ShowGuestPhoto','true','b','hf','','Enable guest photos',''),
+	('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines',''),
+	('ShowTxPayType','false','b','h','','Always Show the Transfer pay type',''),
+	('ShowUncfrmdStatusTab','false','b','h','','Show the Unconfirmed reservations tab on the House Register page',''),
+	('ShowZeroDayStays','false','b','h','','Include 0-day stays and visits in Reports and Pages',''),
+	('sId','11','i','a','','House organization Id',''),
+	('siteName','Hospitality HouseKeeper','s','a','','House or organization  name',''),
+	('SMTP_Auth_Required','true','b','es','','SMTP Authorization required',''),
+	('SMTP_Debug','0','i','es','','0 = off; 1; 2; 3;  4 = low level',''),
+	('SMTP_Host','','s','es','','SMTP Host',''),
+	('SMTP_Password','','op','es','','SMTP user password (Obfuscated)',''),
+	('SMTP_Port','587','i','es','','',''),
+	('SMTP_Secure','tls','s','es','','SMTP Security, normally tls',''),
+	('SMTP_Username','','s','es','','',''),
+	('SolicitBuffer','9','i','a','','Timeout in days after visit checkout before solicit report will show new guests',''),
+	('StartGuestFeesYr','16','i','g','','For by-guest pricing, anyone younger does not get charged.',''),
+	('StartYear','2010','i','a','','Start year for reports, etc.',''),
+	('statementLogoFile','../conf/registrationLogo.png','url','f','','',''),
+	('statementLogoWidth','220','i','f','','in px',''),
+	('subsidyId','11','i','f','','Member Id to use for House Discount payment source',''),
+	('TrackAuto','true','b','hf','','Track vehicles',''),
+	('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone'),
+	('UseDocumentUpload','true','b','hf','','Enable Document Uploads',''),
+	('UseHouseWaive','true','b','h','','Show the house waive checkbox on checkout',''),
+	('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature',''),
+	('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements'),
+	('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations',''),
+	('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry',''),
+	('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays'),
+	('VisitFee','false','b','hf','','Enable the visit fee (cleaning fee) feature',''),
+	('VisitFeeDelayDays','0','i','h','','Number of days before cleaning fee is charged',''),
+	('Volunteers','true','b','a','','Enable the HHK Volunteer Manager site',''),
+	('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','');
+
+	UPDATE sys_config s join new_config n on s.`Key` = n.`Key` set s.`Type` = n.`Type`, s.`Category` = n.`Category`, s.`Description` = n.`Description`, s.`GenLookup` = n.`GenLookup`;
+ 
+	DROP TABLE `new_config`;
+ 
+END --;
+
+-- --------------------------------------------------------
+--
 -- Procedure `get_credit_gw`
 --
 DROP procedure IF EXISTS `get_credit_gw`; -- ;
