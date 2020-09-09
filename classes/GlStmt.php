@@ -542,14 +542,14 @@ where
 		$vIntervalPay = 0;
 		$vForwardPay = 0;
 
+		$serialId = 0;
+		$visitId = 0;
+		$record = NULL;
+		
 		$istmt = $dbh->query("select idItem from item");
 		while( $i = $istmt->fetch(\PDO::FETCH_NUM)) {
 			$totalPayment[$i[0]] = 0;
 		}
-
-		$serialId = 0;
-		$visitId = 0;
-		$record = NULL;
 
 		$stmt = $dbh->query($query);
 
@@ -780,9 +780,7 @@ where
 
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
 
-		$prepaidCharges = $this->getPrePay();
-
-		$unpaidCharges = $intervalCharge - $intervalPay - $this->getPrePay();
+		$unpaidCharges = $intervalCharge - $intervalPay - $forwardPay;
 
 		$tbl->addBodyTr(HTMLTable::makeTd('Total charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;')));
 		$tbl->addBodyTr(HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($forwardPay, 2), array('style'=>'text-align:right;')));
@@ -950,12 +948,6 @@ order by r.idResource;";
 
 		return $sTbl->generateMarkup();
 
-	}
-
-	protected function getPrePay() {
-		$prePaid = 0;
-
-		return $prePaid;
 	}
 
 	protected function getOrderNumbers() {
