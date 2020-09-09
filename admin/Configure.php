@@ -83,7 +83,8 @@ if (isset($_POST["btnSiteCnf"])) {
 if (isset($_POST["btnLabelCnf"])) {
 
     $tabIndex = 5;
-    SiteConfig::saveConfig($dbh, $labl, $_POST, $uS->username);
+    // SiteConfig::saveConfig($dbh, $labl, $_POST);
+    SiteConfig::saveLabels($dbh, $_POST);
 }
 
 if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
@@ -353,7 +354,7 @@ $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'
 
 $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
 
-$labels = SiteConfig::createLabelsMarkup($labl)->generateMarkup();
+$labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
 $externals = '';
 if (is_null($wsConfig) === FALSE) {

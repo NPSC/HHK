@@ -58,7 +58,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('dayIncrements', '365', '365 days', '','', '5'),
 
 ('Default_Reg_Tab', '0', 'Calendar Tab', '','', '0'),
-('Default_Reg_Tab', '1', 'Current Guests Tab'', '','', '0'),
+('Default_Reg_Tab', '1', 'Current Guests Tab', '','', '0'),
 
 ('Demographics', 'Age_Bracket', 'Age Bracket', 'y','m',5),
 ('Demographics', 'Ethnicity', 'Ethnicity', 'y','m',10),
@@ -615,6 +615,72 @@ INSERT INTO `sys_config` VALUES
 ('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','');
 -- ;
 
+--
+-- insert Labels
+--
+INSERT INTO `labels` VALUES 
+('reservationTab','Confirmed Reservations','s','rg','','Default: Confirmed Reservations'),
+('unconfirmedTab','UnConfirmed Reservations','s','rg','','Default: UnConfirmed Reservations'),
+('recentPayTab','Recent Payments','s','rg','','Default: Recent Payments'),
+('rateTitle','Room Rate','s','rg','','Default: Room Rate'),
+
+('notesLabel','Reservation Notes','s','rf','','Default: Reservation Notes'),
+('waitlistNotesLabel','Waitlist Notes','s','rf','','Default: Waitlist Notes'),
+('statusLabel','Reservation Status','s','rf','','Default: Reservation Status'),
+('reservationChooserTitle','Reservation Chooser','s','rf','','Default: Reservation Chooser'),
+('newButtonLabel','New Reservation','s','rf','','Default: New Reservation'),
+('licensePlate','License Plate','s','rf','','Default: License Plate'),
+('agreementTitle','Agreement','s','rf','','Default: Agreement'),
+('Survey_Subject','Checkout Survey','s','rf','','Default: Checkout Survey'),
+('VisitFeeConfirmLabel','Cleaning Fee:','s','rf','','Default: Cleaning Fee:'),
+
+('referralAgent','Referral Agent','s','h','','Default: Referral Agent'),
+('diagnosis','Diagnosis','s','h','','Default: Diagnosis'),
+('location','Unit','s','h','','Default: Unit'),
+('hospital','Hospital','s','h','','Default: Hospital'),
+('treatmentStart','Treatment Start','s','h','','Default: Treatment Start'),
+('treatmentEnd','Treatment End','s','h','','Default: Treatment End'),
+('roomNumber','Room','s','h','','Default: Room'),
+
+('report','MMM D, YYYY','s','mf','','Default: MMM D, YYYY'),
+('reportDay','ddd, MMM D YYYY','s','mf','','Default: ddd, MMM D YYYY'),
+('dateTime','MMM D YYYY h:mm a','s','mf','','Default: MMM D YYYY h:mm a'),
+
+('guestInstructions','Type in the guest name to check in.','s','ck','','Default: Type in the guest name to check in.'),
+
+('amtTenderedPrompt','Amount Tendered','s','pc','','Default: Amount Tendered'),
+('housePays','House pays difference','s','pc','','Default: House pays difference'),
+('rtnTenderedPrompt','Return Amount','s','pc','','Default: Return Amount'),
+
+('patient','Patient','s','mt','','Default: Patient'),
+
+('reservationTab','Reservations','s','g','','Default: Reservations'),
+('reservationTitle','Reservation','s','g','','Default: Reservation'),
+('psgTab','Patient Support Group','s','g','','Default: Patient Support Group'),
+
+('hospitalsTab','Hospital','s','r','','Default: Hospital'),
+('keyDepositLabel','Deposit','s','r','','Default: Deposit'),
+
+('datesChargesCaption','Visit Dates & Room Pledges','s','s','','Default: Visit Dates & Room Pledges'),
+('rateHeader','Rate','s','s','','Default: Rate'),
+('chargeHeader','Pledge','s','s','','Default: Pledge'),
+('roomTotalLabel','Room Pledges Total','s','s','','Default: Room Pledges Total'),
+('TotalLabel','Total Pledges','s','s','','Default: Total Pledges'),
+('cleaningFeeLabel','Cleaning Fee','s','s','','Default: Cleaning Fee'),
+('paymentsCaption','Guest Payments','s','s','','Default: Guest Payments'),
+('paymentHeader','Payment','s','s','','Default: Payment'),
+('paymentTotalLabel','Payment Total (Thank You!)','s','s','','Default: Payment Total (Thank You!)'),
+('noPaymentsRecordedLabel','No Payments Recorded','s','s','','Default: No Payments Recorded'),
+('zeroBalanceLabel','Current Balance','s','s','','Default: Current Balance'),
+('balanceDueLabel','Current Balance Due','s','s','','Default: Current Balance Due'),
+('guestCreditLabel','Current Guest Credit','s','s','','Default: Current Guest Credit'),
+('psgLabel','Patient Support Group','s','s','','Default: Patient Support Group'),
+('psgAbrev','PSG','s','s','','Default: PSG'),
+('houseSubsidy','House Discount','s','s','','Default: House Discount'),
+('thirdParty','3rd Party','s','s','','Default: 3rd Party'),
+('roomFund','Over-Payments','s','s','','Default: Over-Payments'),
+('lodgingMOA','Lodging MOA','s','s','','Default: Lodging MOA');
+-- ;
 
 REPLACE INTO `template_tag` VALUES
 (6,'c','Guest Name','${GuestName}',''),

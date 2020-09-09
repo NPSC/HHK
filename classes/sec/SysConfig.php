@@ -26,9 +26,11 @@ class SysConfig {
      * @param Session $uS
      * @param string $category
      * @param string $tableName
+     * @param bool $returnArray
      * @throws RuntimeException
+     * @return void || array
      */
-    public static function getCategory(\PDO $dbh, Session $uS, $category, $tableName)
+    public static function getCategory(\PDO $dbh, Session $uS, $category, $tableName, $returnArray = false)
     {
 
         if ($tableName == '' || $category == '') {
@@ -38,16 +40,28 @@ class SysConfig {
         $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+        if($returnArray){
+            $array = [];
+        }
+        
         foreach ($rows as $r) {
 
             $val = self::getTypedVal($r['Type'], $r['Value']);
             $key = $r['Key'];
-            $uS->$key = $val;
+            if($returnArray){
+                $array[$key] = $val;
+            }else{
+                $uS->$key = $val;
+            }
         }
 
         unset($rows);
         $stmt = NULL;
 
+        if($returnArray){
+            return $array;
+        }
+        
     }
 
     public static function getKeyValue(\PDO $dbh, $tableName, $key) {
@@ -67,7 +81,7 @@ class SysConfig {
 
     }
 
-    public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value) {
+    public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value, $category = null) {
 
         if ($tableName == '' || $key == '') {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
@@ -95,7 +109,13 @@ class SysConfig {
 
             }
         } else {
-            throw new RuntimeException('System Configuration key not found: ' . $key);
+            if($category){
+                $query = "insert into `" . $tableName . "` values (:key, :val, 's', :category, '', '')";
+                $stmt = $dbh->prepare($query);
+                $stmt->execute([':key'=>$key, ':val'=>$value, ':category'=>$category]);
+            }else{
+                throw new RuntimeException('System Configuration key not found: ' . $key);
+            }
         }
     }
 
@@ -142,3 +162,4 @@ class SysConfig {
         return $val;
     }
 }
+?>

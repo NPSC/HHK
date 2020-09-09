@@ -445,47 +445,77 @@ class SiteConfig {
         return $tbl;
     }
 
-    public static function createLabelsMarkup(Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
+    public static function createLabelsMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
 
         $tbl = new HTMLTable();
         $inputSize = '40';
 
-        foreach ($config as $section => $name) {
+        try{
+            $stmt = $dbh->query("select l.*, g.`Description` as `Cat` from labels l left join gen_lookups g on l.Category = g.Code and g.Table_Name = 'labels_category' order by g.`Order`, l.`Key`");
+            $tableFound = true;
+        }catch (\PDOException $e){
+            $tableFound = false;
+        }
+        if($tableFound && $stmt->rowCount() > 0){
+            
+            // add labels table
+            $cat = '';
+        
+        
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            
+                // New Section?
+                if ($cat != $r['Cat']) {
+                    $tbl->addBodyTr(HTMLTable::makeTd($r['Cat'], array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+                    $cat = $r['Cat'];
+                }
+            
+                // text input
+                $inpt = HTMLInput::generateMarkup($r['Value'], array('name' => 'labels[' . $r['Category'] . '][' . $r['Key'] . ']', 'size'=>40));
+            
+                $tbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
+            
+            }
+        }else{
+            $stmt = $dbh->query("select `Code`, `Description` from `gen_lookups` where Table_Name = 'labels_category' order by `Order`");
+            $cats = [];
+            while($r = $stmt->fetch(\PDO::FETCH_ASSOC)){
+                $cats[strtolower($r['Description'])] = $r['Code'];
+            }
+            
+            foreach ($config as $section => $name) {
+                if (($onlySection == '' || $onlySection == $section)) {
 
-            if (($onlySection == '' || $onlySection == $section)) {
-
-                $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+                    $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
 
 
-                if (is_array($name)) {
+                    if (is_array($name)) {
 
-                    foreach ($name as $key => $val) {
+                        foreach ($name as $key => $val) {
 
-                        $attr = array(
-                            'name' => $section . '[' . $key . ']',
-                            'id' => $section . $key
-                        );
+                            $attr = array(
+                                'name' => 'labels[' . $cats[strtolower($section)] . '][' . $key . ']',
+                                'id' => $section . $key
+                            );
 
 
                             $attr['size'] = $inputSize;
                             //
                             $inpt = HTMLInput::generateMarkup($val, $attr);
 
+                            if (is_null($titles)) {
+                                $desc = '';
+                            } else {
+                                $desc = $titles->getString($section, $key, '');
+                            }
 
-
-
-                        if (is_null($titles)) {
-                            $desc = '';
-                        } else {
-                            $desc = $titles->getString($section, $key, '');
-                        }
-
-                        $tbl->addBodyTr(
+                            $tbl->addBodyTr(
                                 HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
                                 . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
-                        );
+                            );
 
-                        unset($attr);
+                            unset($attr);
+                        }
                     }
                 }
             }
@@ -618,6 +648,28 @@ class SiteConfig {
 
         return $mess;
 
+    }
+    
+    public static function saveLabels(\PDO $dbh, array $post) {
+        
+        $mess = '';
+        // save labels
+        foreach ($post['labels'] as $category=> $vals) {
+            foreach ($vals as $key=>$val){
+                $value = filter_var($val, FILTER_SANITIZE_STRING);
+                $key = filter_var($key, FILTER_SANITIZE_STRING);
+                
+                SysConfig::saveKeyValue($dbh, 'labels', $key, $value, $category);
+            }
+            
+        }
+        
+        if ($mess == '') {
+            $mess = 'Parameters saved.  ';
+        }
+        
+        return $mess;
+        
     }
 
     public static function createPaymentCredentialsMarkup(\PDO $dbh, $resultMessage) {

@@ -50,5 +50,17 @@ UPDATE `gen_lookups` SET `Order`='32' WHERE `Table_Name`='Sys_Config_Category' a
 UPDATE `gen_lookups` SET `Order`='30' WHERE `Table_Name`='Sys_Config_Category' and`Code`='h';
 
 
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('DefaultCalEventColor', '', 's', 'c', 'Default event ribbon color for the calendar');
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('DefaultCalEventColor', '', 's', 'c', 'Default event ribbon color for the calendar');
 
+-- label categories
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES
+('labels_category', 'rg', 'Register', '10'),
+('labels_category', 'rf', 'Referral', '20'),
+('labels_category', 'h', 'Hospital', '30'),
+('labels_category', 'mf', 'MomentFormats', '40'),
+('labels_category', 'ck', 'Checkin', '50'),
+('labels_category', 'pc', 'PaymentChooser', '60'),
+('labels_category', 'mt', 'MemberType', '70'),
+('labels_category', 'g', 'GuestEdit', '80'),
+('labels_category', 'r', 'ResourceBuilder', '90'),
+('labels_category', 's', 'Statement', '100');
