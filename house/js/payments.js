@@ -1296,7 +1296,11 @@ function paymentRedirect (data, $xferForm) {
 
         } else if (data.inctx) {
             
-            openiframe(data.inctx, 600, 400, "Add New Card On File");
+            $('#contentDiv').empty().append($('<p>Processing Credit Payment...</p>'));
+            InstaMed.launch(data.inctx);
+            $('#instamed').css('visibility', 'visible').css('margin-top', '50px;');
+
+            // openiframe(data.inctx, 600, 400, "Add New Card On File");
                        
         }
     }
