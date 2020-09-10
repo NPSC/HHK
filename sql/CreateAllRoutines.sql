@@ -896,12 +896,12 @@ DROP procedure IF EXISTS `delete_guest_photo`; -- ;
 CREATE PROCEDURE `delete_guest_photo`(IN guest_id varchar(45))
 BEGIN
 
-    DECLARE idPhoto int;
+    DECLARE photoId int;
 
-    select nd.Guest_Photo_Id into idPhoto from name_demog nd where nd.idName = guest_id;
+    select nd.`Guest_Photo_Id` into photoId from `name_demog` nd where nd.`idName` = guest_id;
 
-    delete from photo where idPhoto = idPhoto;
-    update name_demog set Guest_Photo_Id = 0 where idName = guest_id;
+    delete from `photo` where `idPhoto` = photoId;
+    update `name_demog` set `Guest_Photo_Id` = 0 where `idName` = guest_id;
 
 END -- ;
 
