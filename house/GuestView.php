@@ -6,6 +6,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
+use HHK\sec\Labels;
 
 /**
  * GuestView.php
@@ -33,7 +34,7 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 
 $resultMessage = "";

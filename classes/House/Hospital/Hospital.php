@@ -5,6 +5,7 @@ namespace HHK\House\Hospital;
 use HHK\Config_Lite\Config_Lite;
 use HHK\Member\Role\{Agent, Doctor};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose};
 use HHK\Tables\EditRS;
@@ -54,7 +55,7 @@ class Hospital {
         $uS = Session::getInstance();
 
         $hospList = $uS->guestLookups[GLTableNames::Hospital];
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
         $hList = array();
         $aList = array();
         $assocNoneId = 0;
@@ -138,7 +139,7 @@ class Hospital {
         $uS = Session::getInstance();
         $referralAgentMarkup = '';
         $doctorMarkup = '';
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
 
         $hospitalMkup = self::justHospitalMarkup($dbh, $hstay, $showExitDate);

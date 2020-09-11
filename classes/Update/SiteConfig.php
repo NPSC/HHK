@@ -445,7 +445,7 @@ class SiteConfig {
         return $tbl;
     }
 
-    public static function createLabelsMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
+    public static function createLabelsMarkup(\PDO $dbh, $config, Config_Lite $titles = NULL, $onlySection = '') {
 
         $tbl = new HTMLTable();
         $inputSize = '40';
@@ -476,7 +476,7 @@ class SiteConfig {
                 $tbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
             
             }
-        }else{
+        }elseif($config instanceof Config_Lite){
             $stmt = $dbh->query("select `Code`, `Description` from `gen_lookups` where Table_Name = 'labels_category' order by `Order`");
             $cats = [];
             while($r = $stmt->fetch(\PDO::FETCH_ASSOC)){
@@ -519,6 +519,8 @@ class SiteConfig {
                     }
                 }
             }
+        }else{
+            $tbl->addBodyTr(HTMLTable::makeTd("No Labels found", array('colspan' => '3', 'style'=>'border-top: solid 1px black;')));
         }
 
         //$tbl->addFooterTr(HTMLTable::makeTd('', array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));

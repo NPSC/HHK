@@ -5,6 +5,7 @@ use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\House\ResourceView;
 use HHK\SysConst\RoomState;
 use HHK\House\Room\Room;
+use HHK\sec\Labels;
 
 /**
  * RoomStatus.php
@@ -31,7 +32,7 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
 // update room cleaning status for existing guest rooms.

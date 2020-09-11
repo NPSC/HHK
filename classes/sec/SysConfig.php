@@ -30,7 +30,7 @@ class SysConfig {
      * @throws RuntimeException
      * @return void || array
      */
-    public static function getCategory(\PDO $dbh, Session $uS, $category, $tableName, $returnArray = false)
+    public static function getCategory(\PDO $dbh, Session $uS, $category, $tableName)
     {
 
         if ($tableName == '' || $category == '') {
@@ -39,28 +39,16 @@ class SysConfig {
 
         $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if($returnArray){
-            $array = [];
-        }
         
         foreach ($rows as $r) {
 
             $val = self::getTypedVal($r['Type'], $r['Value']);
             $key = $r['Key'];
-            if($returnArray){
-                $array[$key] = $val;
-            }else{
-                $uS->$key = $val;
-            }
+            $uS->$key = $val;
         }
 
         unset($rows);
         $stmt = NULL;
-
-        if($returnArray){
-            return $array;
-        }
         
     }
 
@@ -87,7 +75,12 @@ class SysConfig {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
         }
 
-        $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
+        if($category){
+            $query = "select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' and `Category` = '$category' ";
+        }else{
+            $query = "select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ";
+        }
+        $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 1) {
@@ -99,9 +92,16 @@ class SysConfig {
 
             if ($oldVal != $value) {
                 // Update table
-                $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key";
+                $parms = array(':val'=>$value, ':key'=>$key);
+                if($category){
+                    $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key and `Category` = :category";
+                    $parms[':category'] = $category;
+                }else{
+                    $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key";
+                }
+                
                 $stmt = $dbh->prepare($query);
-                $stmt->execute(array(':val'=>$value, ':key'=>$key));
+                $stmt->execute($parms);
 
                 $uS = Session::getInstance();
                 $logText = $key . ':' .$oldVal . '|_|' . $value;
@@ -110,7 +110,7 @@ class SysConfig {
             }
         } else {
             if($category){
-                $query = "insert into `" . $tableName . "` values (:key, :val, 's', :category, '', '')";
+                $query = "insert into `" . $tableName . "` (`Key`, `Value`, `Type`, `Category`) values (:key, :val, 's', :category)";
                 $stmt = $dbh->prepare($query);
                 $stmt->execute([':key'=>$key, ':val'=>$value, ':category'=>$category]);
             }else{

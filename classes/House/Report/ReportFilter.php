@@ -5,6 +5,7 @@ namespace HHK\House\Report;
 use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\SysConst\GLTableNames;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 
 /*
@@ -284,7 +285,7 @@ $ckdate";
     public function hospitalMarkup() {
 
         $assocs = '';
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
         // Setups for the page.
         if (count($this->aList) > 1) {
             $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->aList, $this->selectedAssocs, FALSE),

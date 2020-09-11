@@ -5,6 +5,7 @@ namespace HHK\Member\RoleMember;
 use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLTable;
 use HHK\SysConst\VolMemberType;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 
 /**
@@ -30,7 +31,7 @@ class PatientMember extends AbstractRoleMember {
     
     public function createThinMarkupRow($patientRelationship = '', $hideRelChooser = TRUE, $lockRelChooser = FALSE) {
         
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
         return parent::createThinMarkupRow() . HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient'), array('style'=>'text-align:center;'));
         
     }

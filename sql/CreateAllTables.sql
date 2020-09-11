@@ -789,13 +789,14 @@ CREATE TABLE if not exists `item_type_map`
 -- Table `labels`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `labels` (
+  `idLabel` int(11) NOT NULL AUTO_INCREMENT,
   `Key` varchar(25) NOT NULL,
   `Value` varchar(500) NOT NULL DEFAULT '',
   `Type` varchar(15) NOT NULL DEFAULT '',
   `Category` varchar(5) NOT NULL DEFAULT '',
   `Header` VARCHAR(5) NOT NULL DEFAULT '',
   `Description` varchar(1000) NOT NULL DEFAULT '',
-  PRIMARY KEY (`Key`)
+  PRIMARY KEY (`idLabel`)
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------

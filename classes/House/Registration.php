@@ -7,6 +7,7 @@ use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
@@ -324,7 +325,7 @@ where
 
         // get session instance
         $uS = Session::getInstance();
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
         $tbl = new HTMLTable();
 
         // Date Registered

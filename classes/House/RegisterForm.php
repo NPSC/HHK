@@ -20,6 +20,7 @@ use HHK\Payment\CreditToken;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Tables\Name\NameRS;
+use HHK\sec\Labels;
 
 /**
  * RegisterForm.php
@@ -454,7 +455,7 @@ p.label {
     public function prepareRegForm(\PDO $dbh, $idVisit, $span, $idReservation, $agreement = '') {
 
         $uS = Session::getInstance();
-        $this->labels = new Config_Lite(LABEL_FILE);
+        $this->labels = Labels::getLabels();
         $guests = array();
         $depDate = '';
         $reg = NULL;

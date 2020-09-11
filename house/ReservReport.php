@@ -11,6 +11,7 @@ use HHK\SysConst\RoomRateCategories;
 use HHK\SysConst\GLTableNames;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
+use HHK\sec\Labels;
 
 /**
  * ReservReport.php
@@ -36,7 +37,7 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $menuMarkup = $wInit->generatePageMenu();
 
 $mkTable = '';  // var handed to javascript to make the report table or not.

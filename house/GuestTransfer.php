@@ -11,6 +11,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\Neon\TransferMembers;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
+use HHK\sec\Labels;
 
 /**
  * GuestTransfer.php
@@ -71,7 +72,7 @@ $resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 function getPaymentReport(\PDO $dbh, $start, $end) {
 

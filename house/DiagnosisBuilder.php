@@ -10,6 +10,7 @@ use HHK\Config_Lite\Config_Lite;
 use HHK\Tables\GenLookupsRS;
 use HHK\Tables\EditRS;
 use HHK\TableLog\HouseLog;
+use HHK\sec\Labels;
 
 /**
  * ResourceBuilder.php
@@ -20,12 +21,6 @@ use HHK\TableLog\HouseLog;
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-
-/* require (DB_TABLES . 'GenLookupsRS.php');
-require CLASSES . 'TableLog.php';
-require (CLASSES . 'HouseLog.php'); */
-
 
 try {
     $wInit = new WebInit();
@@ -122,7 +117,7 @@ $rteFileSelection = '';
 $rteMsg = '';
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 // Add diags and locations buttons
 if (isset($_POST['btnAddDiags'])) {

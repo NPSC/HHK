@@ -11,6 +11,7 @@ use HHK\House\Registration;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
+use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Payment\PaymentManager\PaymentManager;
 use HHK\Payment\PaymentResult\PaymentResult;
@@ -119,7 +120,7 @@ FROM reservation r
     protected function createCheckinMarkup(\PDO $dbh) {
         
         $uS = Session::getInstance();
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
         
         $resv = new Reservation_1($this->reservRs);
         

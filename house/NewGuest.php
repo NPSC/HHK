@@ -6,6 +6,7 @@ use HHK\ColumnSelectors;
 use HHK\SysConst\GLTableNames;
 use HHK\Config_Lite\Config_Lite;
 use HHK\ExcelHelper;
+use HHK\sec\Labels;
 
 /**
  * NewGuest.php
@@ -224,7 +225,7 @@ $dataTable = '';
 $statsTable = '';
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 $hospitalSelections = array('');
 $assocSelections = array('');

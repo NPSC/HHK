@@ -10,6 +10,7 @@ use HHK\SysConst\RelLinkType;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
+use HHK\sec\Labels;
 
 /**
  * PSG_Report.php
@@ -39,11 +40,11 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, Config_Lite $labels, $showDiagnosis, $showLocation) {
+function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiagnosis, $showLocation) {
     
     $uS = Session::getInstance();
     
@@ -333,7 +334,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
     }
 }
 
-function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, Config_Lite $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
+function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
     
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $locTitle = $labels->getString('hospital', 'location', 'Location');

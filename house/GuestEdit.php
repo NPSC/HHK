@@ -36,6 +36,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\RoomRateCategories;
 use HHK\House\Room\RoomChooser;
+use HHK\sec\Labels;
 
 /**
  * GuestEdit.php
@@ -56,7 +57,7 @@ $pageTitle = $wInit->pageTitle;
 // get session instance
 $uS = Session::getInstance();
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 $resultMessage = "";
 $alertMessage = '';

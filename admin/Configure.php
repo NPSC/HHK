@@ -10,6 +10,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
 use HHK\Exception\UploadException;
 use HHK\Neon\TransferMembers;
+use HHK\sec\Labels;
 
 /**
  * Configure.php
@@ -52,7 +53,7 @@ $rteMsg = '';
 $confError = '';
 
 $config = new Config_Lite(ciCFG_FILE);
-$labl = new Config_Lite(LABEL_FILE);
+$labl = Labels::getLabels();
 $wsConfig = NULL;
 
 

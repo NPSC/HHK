@@ -22,6 +22,7 @@ use HHK\Exception\RuntimeException;
 use HHK\House\Report\ReportFilter;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\ExcelHelper;
+use HHK\sec\Labels;
 
 
 /**
@@ -1261,7 +1262,7 @@ where
 
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
 

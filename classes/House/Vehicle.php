@@ -6,6 +6,7 @@ use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\VehicleRS;
+use HHK\sec\Labels;
 
 /**
  * Vehicle.php
@@ -97,7 +98,7 @@ WHERE
 
         $tbl = new HTMLTable();
 
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
         foreach ($rows as $r) {
 

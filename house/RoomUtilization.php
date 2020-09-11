@@ -6,6 +6,7 @@ use HHK\sec\{Session, WebInit};
 use HHK\SysConst\GLTableNames;
 use HHK\House\Report\RoomReport;
 use HHK\HTMLControls\HTMLSelector;
+use HHK\sec\Labels;
 
 /**
  * RoomUtilization.php
@@ -33,7 +34,7 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 $hospitalSelections = array();
 $assocSelections = array();

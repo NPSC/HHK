@@ -8,6 +8,7 @@ use HHK\House\Visit\VisitViewer;
 use HHK\SysConst\AddressPurpose;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\VisitStatus;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Purchase\VisitCharges;
@@ -74,7 +75,7 @@ class HouseServices {
         $uS = Session::getInstance();
 
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
         $idVisit = intval($idV, 10);
         $span = intval($idSpan, 10);
@@ -1140,7 +1141,7 @@ class HouseServices {
         if (isset($post[$prefix.'txtLastName'])) {
 
             // Get labels
-            $labels = new Config_Lite(LABEL_FILE);
+            $labels = Labels::getLabels();
 
             // save the guest
             $guest->save($dbh, $post, $uS->username);

@@ -6,6 +6,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\Payment\Receipt;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{GLTableNames, InvoiceStatus, PaymentMethod, PaymentStatusCode, ReservationStatus, VisitStatus};
+use HHK\sec\Labels;
 use HHK\sec\Session;
 
 /**
@@ -227,7 +228,7 @@ class ActivityReport {
     public static function HospStayLog(\PDO $dbh, $startDate, $endDate, $idPsg = 0) {
 
         $uS = Session::getInstance();
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
         $idP = intval($idPsg, 10);
 
         if ($idP > 0) {
@@ -422,7 +423,7 @@ class ActivityReport {
         $payTypeText = '';
         $showExternlId = FALSE;
 
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
         $config = new Config_Lite(ciCFG_FILE);
 
         if($config->getString('webServices', 'Service_Name', '') != '') {
@@ -866,7 +867,7 @@ where `lp`.`idPayment` > 0
     public static function unpaidInvoiceLog(\PDO $dbh, $includeAction = TRUE) {
 
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
         $uS = Session::getInstance();
 
