@@ -10,6 +10,7 @@ use HHK\SysConst\PaymentStatusCode;
 use HHK\Payment\Receipt;
 use HHK\House\Report\PaymentReport;
 use HHK\ExcelHelper;
+use HHK\sec\Labels;
 
 /**
  * PaymentReport.php
@@ -34,7 +35,7 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $menuMarkup = $wInit->generatePageMenu();
 
 $config = new Config_Lite(ciCFG_FILE);

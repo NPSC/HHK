@@ -11,6 +11,7 @@ use HHK\Config_Lite\Config_Lite;
 use HHK\SysConst\ResourceStatus;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLSelector;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Tables\House\ResourceUseRS;
 use HHK\Tables\EditRS;
@@ -132,7 +133,7 @@ order by r.Title;");
 
         $rooms = array();
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
         $attribute = new Attributes($dbh);
         $attrs = $attribute->getAttributesByType(AttributeTypes::Room);

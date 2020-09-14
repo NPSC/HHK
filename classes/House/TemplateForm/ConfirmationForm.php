@@ -8,6 +8,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Reservation\Reservation_1;
 use HHK\Member\Role\Guest;
 
+use HHK\sec\Labels;
 use HHK\sec\Session;
 
 /**
@@ -31,7 +32,7 @@ class ConfirmationForm extends AbstractTemplateForm {
 
 		$uS = Session::getInstance();
 
-		$labels = new Config_Lite(LABEL_FILE);
+		$labels = Labels::getLabels();
 
 		$visitFeeNotice = "";
 

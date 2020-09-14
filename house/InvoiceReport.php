@@ -21,6 +21,7 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\House\GLCodes\GLTemplateRecord;
 use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
+use HHK\sec\Labels;
 
 /**
  * InvoiceReport.php
@@ -48,7 +49,7 @@ $pageTitle = $wInit->pageTitle;
 $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
 

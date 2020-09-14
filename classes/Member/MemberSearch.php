@@ -8,6 +8,7 @@ use HHK\SysConst\MemDesignation;
 use HHK\SysConst\PhonePurpose;
 use HHK\SysConst\RelLinkType;
 use HHK\SysConst\VolMemberType;
+use HHK\sec\Labels;
 use HHK\Exception\RuntimeException;
 
 /**
@@ -171,7 +172,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 );
             }
 
-            $labels = new Config_Lite(LABEL_FILE);
+            $labels = Labels::getLabels();
 
 
             // Add new entry option.

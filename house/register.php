@@ -13,6 +13,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\House\Report\RoomReport;
 use HHK\SysConst\RoomRateCategories;
+use HHK\sec\Labels;
 
 /**
  * Register.php
@@ -34,7 +35,7 @@ $uS = Session::getInstance();
 $totalRest = $uS->PreviousNights;
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 

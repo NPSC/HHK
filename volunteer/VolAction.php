@@ -5,6 +5,7 @@ use HHK\Config_Lite\Config_Lite;
 use HHK\sec\Session;
 use HHK\SysConst\WebRole;
 use HHK\AlertControl\AlertMessage;
+use HHK\sec\Labels;
 
 /**
  * VolAction.php
@@ -112,7 +113,7 @@ $wInit = new WebInit("p");
 
 $dbh = $wInit->dbh;
 $PageMenu = $wInit->generatePageMenu();
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 // Load the session with member - based lookups
 $wInit->sessionLoadGenLkUps();

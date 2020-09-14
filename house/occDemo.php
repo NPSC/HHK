@@ -5,6 +5,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\{Session, WebInit};
 use HHK\House\Report\ReportFilter;
 use HHK\House\Report\GuestReport;
+use HHK\sec\Labels;
 
 /**
  * occDemo.php
@@ -35,7 +36,7 @@ $headerTable = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M
 
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 $hospitalSelections = array('');
 $assocSelections = array('');

@@ -10,6 +10,7 @@ use HHK\Note\{LinkNote, Note};
 use HHK\Purchase\FinAssistance;
 use HHK\SysConst\{DefaultSettings, GLTableNames, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
+use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Tables\PaymentGW\Guest_TokenRS;
 use HHK\House\Room\RoomChooser;
@@ -814,7 +815,7 @@ class ReservationSvcs
     {
 
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
         $uS = Session::getInstance();
 
         if ($rid > 0) {

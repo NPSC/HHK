@@ -5,6 +5,7 @@ namespace HHK\House\ReserveData;
 use HHK\Config_Lite\Config_Lite;
 use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay};
 use HHK\SysConst\VolMemberType;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 
 /**
@@ -93,7 +94,7 @@ class ReserveData {
     function __construct($post, $reservationTitle = '') {
 
         $uS = Session::getInstance();
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
         $this->psgMembers = array();
 
         if (isset($post['rid'])) {

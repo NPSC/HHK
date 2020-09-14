@@ -12,6 +12,7 @@ use HHK\Config_Lite\Config_Lite;
 use HHK\Member\Address\Address;
 use HHK\Member\Address\Phones;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\Labels;
 
 /**
  * RegistrationForm.php
@@ -33,7 +34,7 @@ class RegistrationForm {
 //        $paymentInfoSection = '<div><span>The House asks that guests leave a card on file for security purposes. You will be charged for the nights stayed at the agreed upon rate after check-out or after x weeks. </div>';
 
         $uS = Session::getInstance();
-        $this->labels = new Config_Lite(LABEL_FILE);
+        $this->labels = Labels::getLabels();
         $fullNames = array();
 
         $house = AbstractMember::GetDesignatedMember($dbh, $uS->sId, MemBasis::NonProfit);

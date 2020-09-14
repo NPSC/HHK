@@ -3,6 +3,7 @@ use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\Labels;
 
 /**
  * DailyReport.php
@@ -24,7 +25,7 @@ try {
 // get session instance
 $uS = Session::getInstance();
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 // Daily Log
 $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'

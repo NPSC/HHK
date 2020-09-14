@@ -6,6 +6,7 @@ use HHK\Member\Role\AbstractRole;
 use HHK\House\Reservation\Reservation_1;
 use HHK\SysConst\ReservationStatus;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\Labels;
 
 /**
  * CheckIn.php
@@ -29,7 +30,7 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 $wListMarkup = '';
 

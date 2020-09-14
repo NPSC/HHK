@@ -7,6 +7,7 @@ use HHK\Purchase\RoomRate;
 use HHK\SysConst\{WebRole, ReservationStatus, ItemPriceCode, RoomRateCategories, GLTableNames, RoomState};
 use HHK\Tables\EditRS;
 use HHK\Tables\House\Room_RateRS;
+use HHK\sec\Labels;
 use HHK\sec\{Session, SecurityComponent};
 use HHK\Exception\InvalidArgumentException;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer};
@@ -181,7 +182,8 @@ class History {
 
         $uS = Session::getInstance();
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        
+        $labels = Labels::getLabels();
         $returnRows = array();
 
         foreach ($this->resvEvents as $r) {

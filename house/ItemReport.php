@@ -12,6 +12,7 @@ use HHK\Purchase\TaxedItem;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
+use HHK\sec\Labels;
 
 /**
  * ItemReport.php
@@ -41,7 +42,7 @@ $uS = Session::getInstance();
 $menuMarkup = $wInit->generatePageMenu();
 
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId, $returnId) {
 

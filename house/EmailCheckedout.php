@@ -7,6 +7,7 @@ use HHK\sec\Session;
 use HHK\SysConst\WebRole;
 use HHK\sec\SysConfig;
 use HHK\House\TemplateForm\SurveyForm;
+use HHK\sec\Labels;
 
 /**
  * EmailedCheckedout.php
@@ -20,7 +21,7 @@ use HHK\House\TemplateForm\SurveyForm;
 require 'homeIncludes.php';
 
 try {
-    $labels = new Config_Lite(LABEL_FILE);
+    $labels = Labels::getLabels();
 } catch (Exception $ex) {
     exit("Label file is missing, path=".LABEL_FILE);
 }

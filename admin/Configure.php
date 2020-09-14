@@ -10,6 +10,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
 use HHK\Exception\UploadException;
 use HHK\Neon\TransferMembers;
+use HHK\sec\Labels;
 
 /**
  * Configure.php
@@ -52,7 +53,7 @@ $rteMsg = '';
 $confError = '';
 
 $config = new Config_Lite(ciCFG_FILE);
-$labl = new Config_Lite(LABEL_FILE);
+$labl = Labels::getLabels();
 $wsConfig = NULL;
 
 
@@ -76,14 +77,15 @@ if (isset($_POST["btnSiteCnf"])) {
 
     addslashesextended($_POST);
 
-    $confError = SiteConfig::saveSysConfig($dbh, $_POST);
+    $notymsg = SiteConfig::saveSysConfig($dbh, $_POST);
 
 }
 
 if (isset($_POST["btnLabelCnf"])) {
 
     $tabIndex = 5;
-    SiteConfig::saveConfig($dbh, $labl, $_POST, $uS->username);
+    // SiteConfig::saveConfig($dbh, $labl, $_POST);
+    $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }
 
 if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
@@ -353,7 +355,7 @@ $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'
 
 $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
 
-$labels = SiteConfig::createLabelsMarkup($labl)->generateMarkup();
+$labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
 $externals = '';
 if (is_null($wsConfig) === FALSE) {
@@ -472,10 +474,12 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
 $(document).ready(function () {
     var tabIndex = '<?php echo $tabIndex; ?>';
+    var notyMsg = JSON.parse('<?php echo json_encode((isset($notymsg) ? $notymsg:"[]")); ?>');
+    
     var tbs;
     var logTable = [];
     var dateFormat = $('#dateFormat').val();
-
+	
     var dtCols = [
     {
         "targets": [ 0 ],
@@ -534,6 +538,15 @@ $(document).ready(function () {
         }
     }
 ];
+
+	//display noty
+	
+	if(notyMsg.type){
+		new Noty({
+			type : notyMsg.type,
+			text : notyMsg.text
+		}).show();
+	}
 
     tbs = $('#tabs').tabs({
 

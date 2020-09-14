@@ -9,6 +9,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\SysConst\{ExcessPay, GLTableNames, InvoiceStatus, ItemId, ItemPriceCode, PayType, ReturnIndex};
+use HHK\sec\Labels;
 use HHK\sec\Session;
 
 /**
@@ -281,7 +282,7 @@ class PaymentChooser {
         }
 
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
         // Get taxed items
         $vat = new ValueAddedTax($dbh);
@@ -419,7 +420,7 @@ class PaymentChooser {
         $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
         unset($payTypes[PayType::Invoice]);
 
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
         $mkup = HTMLContainer::generateMarkup(
             'div',
@@ -584,7 +585,7 @@ ORDER BY v.idVisit , v.Span;");
                     $name = $unpaidInvoices[0]['Name_Full'];
                 }
 
-                $labels = new Config_Lite(LABEL_FILE);
+                $labels = Labels::getLabels();
 
                 $mkup = HTMLContainer::generateMarkup('div',
                         self::createPaymentMarkup(

@@ -16,6 +16,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
 use HHK\Tables\Reservation\ReservationRS;
 use HHK\Tables\House\{ResourceRS, RoomRS};
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\US_Holidays;
@@ -788,7 +789,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         $uS = Session::getInstance();
 
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
         $rooms = array();
 

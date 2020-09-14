@@ -21,6 +21,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\SysConst\GLTableNames;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
+use HHK\sec\Labels;
 
 require ("homeIncludes.php");
 
@@ -42,7 +43,7 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 
 function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, $hospitals, $start, $end, $labels) {

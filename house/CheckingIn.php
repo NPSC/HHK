@@ -9,6 +9,7 @@ use HHK\House\ReserveData\ReserveData;
 use HHK\SysConst\VisitStatus;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\RoomRateCategories;
+use HHK\sec\Labels;
 
 /**
  * CheckingIn.php
@@ -34,7 +35,7 @@ $uS = Session::getInstance();
 $pageHdr = $wInit->pageHeading;
 $pageStyle = '';
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
 $payFailPage = $wInit->page->getFilename();

@@ -26,7 +26,9 @@ class SysConfig {
      * @param Session $uS
      * @param string $category
      * @param string $tableName
+     * @param bool $returnArray
      * @throws RuntimeException
+     * @return void || array
      */
     public static function getCategory(\PDO $dbh, Session $uS, $category, $tableName)
     {
@@ -37,7 +39,7 @@ class SysConfig {
 
         $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
+        
         foreach ($rows as $r) {
 
             $val = self::getTypedVal($r['Type'], $r['Value']);
@@ -47,7 +49,7 @@ class SysConfig {
 
         unset($rows);
         $stmt = NULL;
-
+        
     }
 
     public static function getKeyValue(\PDO $dbh, $tableName, $key) {
@@ -67,13 +69,18 @@ class SysConfig {
 
     }
 
-    public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value) {
+    public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value, $category = null) {
 
         if ($tableName == '' || $key == '') {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
         }
 
-        $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
+        if($category){
+            $query = "select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' and `Category` = '$category' ";
+        }else{
+            $query = "select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ";
+        }
+        $stmt = $dbh->query($query);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) == 1) {
@@ -85,9 +92,16 @@ class SysConfig {
 
             if ($oldVal != $value) {
                 // Update table
-                $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key";
+                $parms = array(':val'=>$value, ':key'=>$key);
+                if($category){
+                    $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key and `Category` = :category";
+                    $parms[':category'] = $category;
+                }else{
+                    $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key";
+                }
+                
                 $stmt = $dbh->prepare($query);
-                $stmt->execute(array(':val'=>$value, ':key'=>$key));
+                $stmt->execute($parms);
 
                 $uS = Session::getInstance();
                 $logText = $key . ':' .$oldVal . '|_|' . $value;
@@ -95,7 +109,13 @@ class SysConfig {
 
             }
         } else {
-            throw new RuntimeException('System Configuration key not found: ' . $key);
+            if($category){
+                $query = "insert into `" . $tableName . "` (`Key`, `Value`, `Type`, `Category`) values (:key, :val, 's', :category)";
+                $stmt = $dbh->prepare($query);
+                $stmt->execute([':key'=>$key, ':val'=>$value, ':category'=>$category]);
+            }else{
+                throw new RuntimeException('System Configuration key not found: ' . $key);
+            }
         }
     }
 
@@ -142,3 +162,4 @@ class SysConfig {
         return $val;
     }
 }
+?>

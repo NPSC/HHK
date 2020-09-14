@@ -12,6 +12,7 @@ use HHK\House\ReserveData\ReserveData;
 use HHK\Member\Role\AbstractRole;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\RoomRateCategories;
+use HHK\sec\Labels;
 
 /**
  * Reserve.php
@@ -37,7 +38,7 @@ $uS = Session::getInstance();
 
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
 $payFailPage = $wInit->page->getFilename();

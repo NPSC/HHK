@@ -17,6 +17,7 @@ use HHK\SysConst\DefaultSettings;
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
+use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Exception\RuntimeException;
 
@@ -342,7 +343,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         // decifer posts
         if (isset($post['dt1']) && isset($post['dt2']) && isset($post['mems'])) {
 
-            $labels = new Config_Lite(LABEL_FILE);
+            $labels = Labels::getLabels();
             $psgMembers = array();
             $idVisit = 0;
             $span = 0;
@@ -454,7 +455,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
     protected function createResvMarkup(\PDO $dbh, $oldResv, $prefix = '') {
 
         $uS = Session::getInstance();
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
         $resv = new Reservation_1($this->reservRs);
         $showPayWith = FALSE;
@@ -694,7 +695,7 @@ where rg.idReservation =" . $r['idReservation']);
         return $mrkup;
     }
 
-    public function createStatusChooser(Reservation_1 $resv, array $limResvStatuses, array $payTypes, Config_Lite $labels, $showPayWith, $moaBal) {
+    public function createStatusChooser(Reservation_1 $resv, array $limResvStatuses, array $payTypes, $labels, $showPayWith, $moaBal) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();

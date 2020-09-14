@@ -3,6 +3,7 @@
 namespace HHK\House\Visit;
 
 use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
 use HHK\HTMLControls\HTMLInput;
@@ -53,7 +54,7 @@ class VisitViewer {
         $table = new HTMLTable();
 
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
 
         // Notes
@@ -305,7 +306,7 @@ class VisitViewer {
      * @param string $action
      * @return string
      */
-    public static function createStaysMarkup(\PDO $dbh, $idResv, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, Config_Lite $labels, $action = '', $coDate = '') {
+    public static function createStaysMarkup(\PDO $dbh, $idResv, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, $labels, $action = '', $coDate = '') {
 
         $uS = Session::getInstance();
 
@@ -750,7 +751,7 @@ class VisitViewer {
         if ($curAccount->getVisitFeeCharged() > 0) {
 
             // Get labels
-            $labels = new Config_Lite(LABEL_FILE);
+            $labels = Labels::getLabels();
             $showSubTotal = TRUE;
 
             $tbl2->addBodyTr(
