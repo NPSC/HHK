@@ -773,23 +773,47 @@ where
 		$tbl = new HTMLTable();
 
 		$tbl->addHeaderTr(HTMLTable::makeTh('Lodging Payment Distribution', array('colspan'=>'2')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Payments to earlier months', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($preIntervalPay, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Prepayments to future months', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($overPay, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Total', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal]), 2), array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Back Payments to earlier months', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($preIntervalPay, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Prepayments to future months', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($overPay, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal]), 2), array('style'=>'text-align:right;'))
+				);
 
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
 
 		$unpaidCharges = $intervalCharge - $intervalPay - $forwardPay;
 
-		$tbl->addBodyTr(HTMLTable::makeTd('Total charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($forwardPay, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;')));
-		$tbl->addBodyTr(HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;')));
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Total charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($forwardPay, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;'))
+				);
 
 		return $this->createBAMarkup($baArray, $tableAttrs)
 			. $tbl->generateMarkup($tableAttrs)
-			. $this->statsPanel($dbh, $totalCatNites, $start, $end, $categories, 'Report_Category', $monthArray, $uS->guestLookups['Static_Room_Rate']['rb'][2], $fullInvervalCharge);
+			. $this->statsPanel($dbh, $totalCatNites, $start, $end, $categories, 'Report_Category', $monthArray, $fullInvervalCharge);
 	}
 
 	protected function createBAMarkup($baTotals, $tableAttrs) {
@@ -839,7 +863,7 @@ where
 	}
 
 
-	protected function statsPanel(\PDO $dbh, $totalCatNites, $start, $end, $categories, $rescGroup, $monthArray, $roomRate, $fullIntervalCharge) {
+	protected function statsPanel(\PDO $dbh, $totalCatNites, $start, $end, $categories, $rescGroup, $monthArray, $fullIntervalCharge) {
 
 		$totalOOSNites = 0;
 
@@ -847,17 +871,19 @@ where
 		$enDT = new \DateTime($end . ' 00:00:00');
 		$numNights = $enDT->diff($stDT, TRUE)->days;
 
-		$qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, rm.Rate_Code, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
+		$qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, rm.Rate_Code, g.Substitute as `Static_Rate`, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
         from resource r left join
 resource_use ru on r.idResource = ru.idResource and DATE(ru.Start_Date) < DATE('" . $enDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $stDT->format('Y-m-d') . "')
 left join resource_room rr on r.idResource = rr.idResource
 left join room rm on rr.idRoom = rm.idRoom
+left join gen_lookups g on g.`Table_Name` = 'Static_Room_Rate' and g.`Code` = rm.Rate_Code
 where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "')
 order by r.idResource;";
 
 		$rstmt = $dbh->query($qu);
 
 		$rooms = array();
+		$rates = array();
 
 		// Get rooms and oos days
 		while ($r = $rstmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -892,14 +918,17 @@ order by r.idResource;";
 			} else {
 				$rooms[$r['idResource']][$r[$rescGroup]][$r['RU_Status']] += $nites;
 			}
+			
+			$rates[$r['idResource']] = $r['Static_Rate'];
 
 		}
 
 		// Filter out unavailalbe rooms and add up the nights
 		$availableRooms = 0;
 		$unavailableRooms = 0;
+		$rateDayTotal = 0;
 
-		foreach($rooms as $r) {
+		foreach($rooms as $id => $r) {
 
 			foreach ($r as $c) {
 
@@ -909,6 +938,7 @@ order by r.idResource;";
 				}
 
 				$availableRooms++;
+				$rateDayTotal += $rates[$id];
 
 				foreach ($c as $k => $v) {
 
@@ -925,26 +955,19 @@ order by r.idResource;";
 		$numUsefulNights = $numRoomNights - $totalOOSNites;
 
 		$sTbl = new HTMLTable();
-		$sTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All ' . $availableRooms . ' Rooms') . HTMLTable::makeTh('Maximum Charge'));
+		$sTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All ' . $availableRooms . ' Rooms') . HTMLTable::makeTh('Flat Rate'));
 
 		$sTbl->addBodyTr(HTMLTable::makeTd('Room-Nights in ' . $monthArray[$stDT->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd($numUsefulNights, array('style'=>'text-align:center;'))
-				. HTMLTable::makeTd('$'.number_format($roomRate * $numRoomNights, 2), array('style'=>'text-align:right;')));
-
+				. HTMLTable::makeTd('$'.number_format($rateDayTotal * $numNights, 2), array('style'=>'text-align:right;')));
+		
 		$sTbl->addBodyTr(HTMLTable::makeTd('Visit Nights in ' . $monthArray[$stDT->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd($totalCatNites['All'], array('style'=>'text-align:center;'))
 				. HTMLTable::makeTd('$'.number_format($fullIntervalCharge, 2), array('style'=>'text-align:right;')));
-
+		
 		$sTbl->addBodyTr(HTMLTable::makeTd('Room Utilization', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(($numUsefulNights <= 0 ? '0' : number_format($totalCatNites['All'] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'text-align:center;'))
-				. HTMLTable::makeTd(''));
+				. HTMLTable::makeTd(($numUsefulNights <= 0 ? '0' : number_format($totalCatNites['All'] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'text-align:center;')));
 
-		$sTbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
-
-		$sTbl->addBodyTr(HTMLTable::makeTd('Room Rate', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd('$'.number_format($roomRate, 2), array('style'=>'text-align:right;')));
-// 		$sTbl->addBodyTr(HTMLTable::makeTd('Maximum Charge', array('class'=>'tdlabel'))
-// 				. HTMLTable::makeTd('$'.number_format($roomRate * $numRoomNights, 2), array('style'=>'text-align:right;')));
 
 		return $sTbl->generateMarkup();
 
