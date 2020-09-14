@@ -77,7 +77,7 @@ if (isset($_POST["btnSiteCnf"])) {
 
     addslashesextended($_POST);
 
-    $confError = SiteConfig::saveSysConfig($dbh, $_POST);
+    $notymsg = SiteConfig::saveSysConfig($dbh, $_POST);
 
 }
 
@@ -85,7 +85,7 @@ if (isset($_POST["btnLabelCnf"])) {
 
     $tabIndex = 5;
     // SiteConfig::saveConfig($dbh, $labl, $_POST);
-    SiteConfig::saveLabels($dbh, $_POST);
+    $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }
 
 if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
@@ -474,10 +474,12 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
 $(document).ready(function () {
     var tabIndex = '<?php echo $tabIndex; ?>';
+    var notyMsg = JSON.parse('<?php echo json_encode((isset($notymsg) ? $notymsg:"[]")); ?>');
+    
     var tbs;
     var logTable = [];
     var dateFormat = $('#dateFormat').val();
-
+	
     var dtCols = [
     {
         "targets": [ 0 ],
@@ -536,6 +538,15 @@ $(document).ready(function () {
         }
     }
 ];
+
+	//display noty
+	
+	if(notyMsg.type){
+		new Noty({
+			type : notyMsg.type,
+			text : notyMsg.text
+		}).show();
+	}
 
     tbs = $('#tabs').tabs({
 

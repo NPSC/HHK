@@ -73,7 +73,7 @@ class Labels {
         }elseif ($default){
             return $default;
         }else{
-            return "Label not found";
+            return "Label '" . $key . "' not found";
         }
     }
     

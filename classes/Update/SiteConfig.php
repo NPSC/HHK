@@ -451,7 +451,7 @@ class SiteConfig {
         $inputSize = '40';
 
         try{
-            $stmt = $dbh->query("select l.*, g.`Description` as `Cat` from labels l left join gen_lookups g on l.Category = g.Code and g.Table_Name = 'labels_category' order by g.`Order`, l.`Key`");
+            $stmt = $dbh->query("select l.*, g.`Description` as `Cat` from labels l left join gen_lookups g on l.Category = g.Code and g.Table_Name = 'labels_category' order by g.`Order`, l.`idLabel`");
             $tableFound = true;
         }catch (\PDOException $e){
             $tableFound = false;
@@ -483,41 +483,46 @@ class SiteConfig {
                 $cats[strtolower($r['Description'])] = $r['Code'];
             }
             
-            foreach ($config as $section => $name) {
-                if (($onlySection == '' || $onlySection == $section)) {
-
-                    $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
-
-
-                    if (is_array($name)) {
-
-                        foreach ($name as $key => $val) {
-
-                            $attr = array(
-                                'name' => 'labels[' . $cats[strtolower($section)] . '][' . $key . ']',
-                                'id' => $section . $key
-                            );
-
-
-                            $attr['size'] = $inputSize;
-                            //
-                            $inpt = HTMLInput::generateMarkup($val, $attr);
-
-                            if (is_null($titles)) {
-                                $desc = '';
-                            } else {
-                                $desc = $titles->getString($section, $key, '');
+            if(count($cats) > 0){
+                
+                foreach ($config as $section => $name) {
+                    if (($onlySection == '' || $onlySection == $section)) {
+    
+                        $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+    
+    
+                        if (is_array($name)) {
+    
+                            foreach ($name as $key => $val) {
+    
+                                $attr = array(
+                                    'name' => 'labels[' . $cats[strtolower($section)] . '][' . $key . ']',
+                                    'id' => $section . $key
+                                );
+    
+    
+                                $attr['size'] = $inputSize;
+                                //
+                                $inpt = HTMLInput::generateMarkup($val, $attr);
+    
+                                if (is_null($titles)) {
+                                    $desc = '';
+                                } else {
+                                    $desc = $titles->getString($section, $key, '');
+                                }
+    
+                                $tbl->addBodyTr(
+                                    HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
+                                    . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
+                                );
+    
+                                unset($attr);
                             }
-
-                            $tbl->addBodyTr(
-                                HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
-                                . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
-                            );
-
-                            unset($attr);
                         }
                     }
                 }
+            }else{
+                $tbl->addBodyTr(HTMLTable::makeTd("No Label Categories found", array('colspan' => '3', 'style'=>'border-top: solid 1px black;')));
             }
         }else{
             $tbl->addBodyTr(HTMLTable::makeTd("No Labels found", array('colspan' => '3', 'style'=>'border-top: solid 1px black;')));
@@ -629,7 +634,8 @@ class SiteConfig {
 
     public static function saveSysConfig(\PDO $dbh, array $post) {
 
-        $mess = '';
+        $mess = ['type'=>'', 'text'=>''];
+        
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
 
@@ -644,9 +650,8 @@ class SiteConfig {
 
         }
 
-        if ($mess == '') {
-            $mess = 'Parameters saved.  ';
-        }
+        $mess['type'] = 'success';
+        $mess['text'] = "Site Configuration saved successfully";
 
         return $mess;
 
@@ -654,20 +659,24 @@ class SiteConfig {
     
     public static function saveLabels(\PDO $dbh, array $post) {
         
-        $mess = '';
+        $mess = ['type'=>'', 'text'=>''];
         // save labels
-        foreach ($post['labels'] as $category=> $vals) {
-            foreach ($vals as $key=>$val){
-                $value = filter_var($val, FILTER_SANITIZE_STRING);
-                $key = filter_var($key, FILTER_SANITIZE_STRING);
+        try{
+            foreach ($post['labels'] as $category=> $vals) {
+                foreach ($vals as $key=>$val){
+                    $value = filter_var($val, FILTER_SANITIZE_STRING);
+                    $key = filter_var($key, FILTER_SANITIZE_STRING);
+                    
+                    SysConfig::saveKeyValue($dbh, 'labels', $key, $value, $category);
+                }
                 
-                SysConfig::saveKeyValue($dbh, 'labels', $key, $value, $category);
             }
             
-        }
-        
-        if ($mess == '') {
-            $mess = 'Parameters saved.  ';
+            $mess['type'] = 'success';
+            $mess['text'] = "Labels saved successfully";
+        }catch(\Exception $e){
+            $mess['type'] = 'error';
+            $mess['text'] = "Labels not saved: " . $e->getMessage();
         }
         
         return $mess;
