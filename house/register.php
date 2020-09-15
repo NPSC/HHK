@@ -451,6 +451,7 @@ if ($uS->UseWLnotes) {
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />
         <input  type="hidden" id="defaultEventColor" value='<?php echo $uS->DefaultCalEventColor; ?>' />
+        <input  type="hidden" id="defCalEventTextColor" value='<?php echo $uS->DefCalEventTextColor; ?>' />
         <input  type="hidden" id="resourceGroupBy" value='<?php echo $resourceGroupBy; ?>' />
         <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />

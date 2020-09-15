@@ -18,3 +18,5 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 ('labels_category', 'g', 'GuestEdit', '80'),
 ('labels_category', 'r', 'ResourceBuilder', '90'),
 ('labels_category', 's', 'Statement', '100');
+
+INSERT INTO `sys_config` (`Key`, `Type`, `Category`, `Description`) VALUES ('DefCalEventTextColor', 's', 'c', 'Default calendar event ribbon text color');

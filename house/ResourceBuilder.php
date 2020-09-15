@@ -955,13 +955,19 @@ if (isset($_POST['btnItemSave'])) {
         }
 
         if (isset($_POST['txtItem'][$idItem])) {
-
-            $desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_STRING);
-            $glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_STRING);
-
-            $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
+        	
+        	$desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_STRING);
+        	
+        	$dbh->exec("update `item` set `Description` = '$desc' where `idItem` = " . $idItem);
         }
-
+        
+        if (isset($_POST['txtGlCode'][$idItem])) {
+        	
+        	$glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_STRING);
+        	
+        	$dbh->exec("update `item` set `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
+        }
+        
         if (isset($_POST['cbtax'][$idItem])) {
             // Define tax items for each item.
             foreach ($_POST['cbtax'][$idItem] as $t) {

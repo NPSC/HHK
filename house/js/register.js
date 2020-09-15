@@ -395,6 +395,7 @@ var isGuestAdmin,
     challVar,
     defaultView,
     defaultEventColor,
+    defCalEventTextColor,
     calDateIncrement,
     dateFormat,
     fixedRate,
@@ -431,6 +432,7 @@ $(document).ready(function () {
     challVar = $('#challVar').val();
     defaultView = $('#defaultView').val();
     defaultEventColor = $('#defaultEventColor').val();
+    defCalEventTextColor = $('#defCalEventTextColor').val();
     calDateIncrement = $('#calDateIncrement').val();
     dateFormat = $('#dateFormat').val();
     fixedRate = $('#fixedRate').val();
@@ -735,6 +737,7 @@ $(document).ready(function () {
         nextDayThreshold: '13:00',
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
         eventColor: defaultEventColor,
+        eventTextColor: defCalEventTextColor,
         
         customButtons: {
             refresh: {
