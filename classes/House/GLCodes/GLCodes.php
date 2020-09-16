@@ -27,24 +27,36 @@ class GLCodes {
 	protected $stopAtInvoice;
 
 
-	public function __construct(\PDO $dbh, $month, $year, GLParameters $glParm, GLTemplateRecord $mapperTemplate) {
+	public function __construct(\PDO $dbh, $month, $year, $glParm, GLTemplateRecord $mapperTemplate, $startDay = 0) {
 
 		$this->errors = array();
 		$this->glParm = $glParm;
 
-		if ($this->glParm->getCountyPayment() < 1) {
-			$this->recordError('County Payment is not set');
-		}
-
-		// End date is the beginning of the next fiscal month.
-		$this->endDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->glParm->getStartDay());
-
-		// Start date one month prior.
-		$this->startDate = $this->endDate->sub(new \DateInterval('P1M'));
-
-		// Special start date for 9-2020 only
-		if ($this->endDate->format('m-Y') == '09-2020') {
-			$this->startDate = $this->startDate->setDate(2020, 9, 1);
+		// Two places tht instantiate this object determined by startDay.
+		if ($startDay == 0) {
+			
+			// End date is the beginning of the next fiscal month.
+			$this->endDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->glParm->getStartDay());
+	
+			// Start date one month prior.
+			$this->startDate = $this->endDate->sub(new \DateInterval('P1M'));
+	
+			// Special start date for 9-2020 only
+			if ($this->endDate->format('m-Y') == '09-2020') {
+				$this->startDate = $this->startDate->setDate(2020, 9, 1);
+			}
+			
+			if ($this->glParm->getCountyPayment() < 1) {
+				$this->recordError('County Payment is not set');
+			}
+			
+		} else {
+			// Instantiated from Income Statement page...
+			$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . intval($startDay));
+			
+			// End date is the beginning of the next month.
+			$this->endDate = $this->startDate->add(new \DateInterval('P1M'));
+			
 		}
 
 		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $this->endDate->sub(new \DateInterval('P1D'))->format('M j, Y'));
@@ -518,15 +530,15 @@ class GLCodes {
 		return $bytesWritten;
 	}
 
-	public function invoiceHeader() {
+	public static function invoiceHeader() {
 
 		return array('Inv #', 'Delegated', 'Status', 'Amt', 'Deleted', 'Pledged', 'Rate');
 	}
-	public function lineHeader() {
+	public static function lineHeader() {
 
 		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'Gl Code');
 	}
-	public function paymentHeader() {
+	public static function paymentHeader() {
 
 		return array(' ', 'id', 'Status', 'Amt', 'Method', 'Updated', 'Timestamp', 'Refund', 'Payor', 'Pm Gl', 'Ba Debit', 'Ba Cred');
 	}

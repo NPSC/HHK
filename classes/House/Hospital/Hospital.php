@@ -2,7 +2,7 @@
 
 namespace HHK\House\Hospital;
 
-use HHK\Config_Lite\Config_Lite;
+
 use HHK\Member\Role\{Agent, Doctor};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
 use HHK\sec\Labels;

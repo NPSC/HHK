@@ -134,17 +134,17 @@ if (isset($_POST['btnHere'])) {
     	$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
     }
     
-    $glCodes = new GlStmt($dbh, $glMonth, $glyear);
+    $glStmt = new GlStmt($dbh, $glMonth, $glyear);
     
-    $glCodes->mapRecords();
+    $glStmt->mapRecords();
     
     $dataTable = HTMLContainer::generateMarkup('h2', 'Report for the month of ' . $monthArray[$glMonth][1] . ', '. $glyear);
 
-    if (count($glCodes->getErrors()) > 0) {
+    if (count($glStmt->getErrors()) > 0) {
     	
     	$etbl = new HTMLTable();
     	
-    	foreach ($glCodes->getErrors() as $e) {
+    	foreach ($glStmt->getErrors() as $e) {
     		$etbl->addBodyTr(HTMLTable::makeTd($e));
     	}
     	
@@ -153,12 +153,12 @@ if (isset($_POST['btnHere'])) {
     
     $tableAttrs = array('style'=>"float:left;margin-right:1em;");
     
-    $dataTable .= $glCodes->getGlMarkup($tableAttrs) . $glCodes->doReport($dbh, $monthArray, $tableAttrs);
+    $dataTable .= $glStmt->getGlMarkup($tableAttrs) . $glStmt->doReport($dbh, $monthArray, $tableAttrs);
 
 }
 
 // Output report Details
-if (isset($_POST['btnGlGo'])) {
+if (isset($_POST['btnInv'])) {
 	
 	
 	if (isset($_POST['selGlMonth'])) {
@@ -169,11 +169,63 @@ if (isset($_POST['btnGlGo'])) {
 		$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
 	}
 	
-	$glParm = new GLParameters($dbh, 'Gl_Code');
-	$glParm->setStartDay(1);
+	$glStmt = new GlStmt($dbh, $glMonth, $glyear);
+	
+	$glStmt->mapRecords();
+	
+	$tbl = new HTMLTable();
+	
+	$credits = 0;
+	$debits = 0;
+	$glInvoices = '';
+	$equal = TRUE;
+	
+	foreach ($glStmt->lines as $l) {
+		$tbl->addBodyTr(
+				HTMLTable::makeTd($l['glcode'])
+				.HTMLTable::makeTd(number_format($l['debit']))
+				.HTMLTable::makeTd(number_format($l['credit'], 2))
+				.HTMLTable::makeTd($l['date'])
+				);
+		
+		$credits += $l['credit'];
+		$debits += $l['debit'];
+		
+// 		if ($equal && $credits != $debits) {
+// 			$tbl->addBodyTr(HTMLTable::makeTd('Credits != debits', array('colspan'=>'4')));
+// 			$equal = FALSE;
+// 		}
+	}
+	
+	if (count($glStmt->getErrors()) > 0) {
+		
+		$etbl = new HTMLTable();
+		
+		foreach ($glStmt->getErrors() as $e) {
+			$etbl->addBodyTr(HTMLTable::makeTd($e));
+		}
+		
+		$glInvoices .= $etbl->generateMarkup();
+	}
+	
+	$glInvoices .= "<p style='margin-top:20px;'>Total Credits = " . number_format($credits, 2) . " Total Debits = " . number_format($debits, 2) . "</p>";
+	$glInvoices .= $tbl->generateMarkup();
+	
+}
+
+if (isset($_POST['btnGlGo'])) {
+	
+	if (isset($_POST['selGlMonth'])) {
+		$glMonth = filter_var($_POST['selGlMonth'], FILTER_SANITIZE_NUMBER_INT);
+	}
+	
+	if (isset($_POST['selGlYear'])) {
+		$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
+	}
+	
 
 	
-	$glCodes = new GLCodes($dbh, $glMonth, $glyear, $glParm, new GLTemplateRecord());
+	$glCodes = new GLCodes($dbh, $glMonth, $glyear, NULL, new GLTemplateRecord(), 1);
 	
 		$tbl = new HTMLTable();
 		
@@ -329,7 +381,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 <script type="text/javascript">
     $(document).ready(function() {
 
-        $('#btnHere, #btnGlGo, #btnSaveGlParms').button();
+        $('#btnHere, #btnGlGo, #btnSaveGlParms, #btnInv').button();
         $('div#printArea').css('display', 'block');
         $('#printButton').button().click(function() {
             $("div#printArea").printArea();
@@ -357,7 +409,8 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 
                     <table style="width:100%; clear:both;">
                         <tr>
-                            <td style="width:50%;"><input type="submit" name="btnGlGo" id="btnGlGo" value="Show Details" /></td>
+                            <td style="width:50%;"><input type="submit" name="btnGlGo" id="btnGlGo" value="Show Invoice Details" />
+                            <input type="submit" name="btnInv" id="btnInv" value="Show Lines" /></td>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
                             
                         </tr>

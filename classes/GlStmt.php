@@ -16,6 +16,7 @@ class GlStmt {
 	protected $endDate;
 	protected $startDay;
 	protected $records;
+	public $lines;
 
 	protected $errors;
 	protected $paymentDate;
@@ -55,6 +56,8 @@ class GlStmt {
 		if (count($this->records) < 1) {
 			$this->recordError('No Payments Found. ');
 		}
+		
+		$this->lines = array();
 
 		// Filter payment records.
 		foreach ($this->records as $r) {
@@ -159,10 +162,25 @@ class GlStmt {
 
 				$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $pUpDate);
 
+				$pAmount =  abs($p['pAmount']);
+				
 				foreach($invLines as $l) {
 
+					$ilAmt = abs($l['il_Amount']);
+					
+					if ($pAmount >= $ilAmt) {
+						$pAmount -= $ilAmt;
+					} else {
+						$ilAmt = $pAmount;
+						$pAmount = 0;
+					}
+					
 					// map gl code
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $pUpDate);
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $pUpDate);
+				}
+				
+				if ($pAmount != 0) {
+					$this->recordError("Overpayment at payment Id = ". $p['idPayment']);
 				}
 
 			}
@@ -178,10 +196,25 @@ class GlStmt {
 
 				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate);
 
+				$pAmount =  $p['pAmount'];
+				
 				foreach($invLines as $l) {
 
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+					$ilAmt = $l['il_Amount'];
+					
+					if ($pAmount >= $ilAmt) {
+						$pAmount -= $ilAmt;
+					} else {
+						$ilAmt = $pAmount;
+						$pAmount = 0;
+					}
+					
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate);
 				}
+				if ($pAmount != 0) {
+					$this->recordError("Overpayment at payment Id = ". $p['idPayment']);
+				}
+				
 			}
 
 		} else if (($p['pStatus'] == PaymentStatusCode::Paid || $p['pStatus'] == PaymentStatusCode::VoidReturn)  && $p['Is_Refund'] == 0) {
@@ -189,14 +222,7 @@ class GlStmt {
 
 			// un-returned payments are dated on the update.
 			if (is_null($pUpDate) === FALSE) {
-
-				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
-
-					$this->paymentDate = $pUpDate;
-
-				} else {
-					return;
-				}
+				$this->paymentDate = $pUpDate;
 			}
 
 			// Payment is in this period?
@@ -208,11 +234,26 @@ class GlStmt {
 				}
 
 				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate);
+				
+				$pAmount =  $p['pAmount'];
 
 				foreach($invLines as $l) {
-
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+					
+					$ilAmt = $l['il_Amount'];
+					
+					if ($pAmount >= $ilAmt) {
+						$pAmount -= $ilAmt;
+					} else {
+						$ilAmt = $pAmount;
+						$pAmount = 0;
+					}
+					
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate);
 				}
+				if ($pAmount != 0) {
+					$this->recordError("Overpayment at payment Id = ". $p['idPayment']);
+				}
+				
 			}
 
 		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
@@ -223,14 +264,27 @@ class GlStmt {
 				$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $this->paymentDate);
 			}
 
-			$this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate);
+			$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate);
 
+			$pAmount =  abs($p['pAmount']);
+			
 			foreach($invLines as $l) {
 
+				$ilAmt = abs($l['il_Amount']);
+				
+				if ($pAmount >= $ilAmt) {
+					$pAmount -= $ilAmt;
+				} else {
+					$ilAmt = $pAmount;
+					$pAmount = 0;
+				}
 				// map gl code
-				$this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($l['il_Amount'])), $this->paymentDate);
+				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $this->paymentDate);
 			}
-
+			if ($pAmount != 0) {
+				$this->recordError("Overpayment at payment Id = ". $p['idPayment']);
+			}
+			
 		} else {
 			$this->recordError("Unanticipated Payment Status: ". $p['pStatus'] . '  Payment Id = '.$p['idPayment']);
 		}
@@ -862,7 +916,6 @@ where
 		return $tbl->generateMarkup($tableAttrs);
 	}
 
-
 	protected function statsPanel(\PDO $dbh, $totalCatNites, $start, $end, $categories, $rescGroup, $monthArray, $fullIntervalCharge) {
 
 		$totalOOSNites = 0;
@@ -1016,6 +1069,7 @@ order by r.idResource;";
 		}
 
 	}
+	
 	protected function recordError($error) {
 		$this->errors[] = $error;
 	}
@@ -1026,6 +1080,10 @@ order by r.idResource;";
 
 	public function getErrors() {
 		return $this->errors;
+	}
+	
+	public function getGlStmeTotalsObj() {
+		return $this->glLineMapper;
 	}
 
 	public function getGlMarkup($tableAttrs) {
@@ -1092,6 +1150,8 @@ class GlStmtTotals {
 
 		$this->totalCredit += $creditAmount;
 		$this->totalDebit += $debitAmount;
+		
+		return array('glcode'=>$glCode, 'debit'=>$debitAmount, 'credit'=>$creditAmount, 'date'=>$purchaseDate->format('Y-m-d'));
 	}
 
 	public function createMarkup($tableAttrs) {
