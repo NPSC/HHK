@@ -1,7 +1,6 @@
 <?php
 namespace HHK\sec;
 use HHK\Exception\RuntimeException;
-use HHK\TableLog\HouseLog;
 use HHK\Config_Lite\Config_Lite;
 
 /**

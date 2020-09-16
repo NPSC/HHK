@@ -238,7 +238,7 @@ class WebInit {
         }
         
         //get hospitals with status
-        $query = "select idHospital, IF(`status`='r', concat(`Title`, ' (Retired)'), `Title`) as `Title`, `Type`, `Status` from hospital where `Status` in ('a','r')";
+        $query = "select idHospital, IF(`status`='r', concat(`Title`, ' (Retired)'), `Title`) as `Title`, `Type`, `Status` from hospital where `Status` in ('a','r') order by `Status` asc";
         $stmt = $this->dbh->query($query);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
