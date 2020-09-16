@@ -2516,7 +2516,7 @@ $resultMessage = $alertMsg->createMarkup();
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-		<div style="float: left; margin-right: 100px; margin-top: 10px;">
+		<div style="float: left; margin-right: 20px; margin-top: 10px;">
 			<h1><?php echo $wInit->pageHeading; ?>&nbsp; (Any changes require everybody to log out and log back in!)</h1>
 		</div>
 <?php echo $resultMessage ?>
