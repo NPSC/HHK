@@ -226,7 +226,6 @@ class WebInit {
         
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
-            UNION Select 'Hospitals' as `Table_Name`, `idHospital` as `Code`, `Title` as `Description`, `Type` as `Substitute` from hospital where `Status` in ('a','r')
             UNION select `Category` as `Table_Name`, `Code`, `Title` as `Description`, `Other` as `Substitute` from `lookups` where `Show` = 'y'
             order by `Table_Name`, `Description`;";
         $stmt = $this->dbh->query($query);
@@ -237,7 +236,16 @@ class WebInit {
         foreach ($rows as $r) {
             $nameLookups[$r['Table_Name']][$r['Code']] = array($r['Code'],$r['Description'],$r['Substitute']);
         }
-
+        
+        //get hospitals with status
+        $query = "select idHospital, IF(`status`='r', concat(`Title`, ' (Retired)'), `Title`) as `Title`, `Type`, `Status` from hospital where `Status` in ('a','r') order by `Status` asc";
+        $stmt = $this->dbh->query($query);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        foreach ($rows as $r) {
+            $nameLookups["Hospitals"][$r['idHospital']] = array($r['idHospital'],$r['Title'],$r['Type'], $r['Status']);
+        }
+        
         $uS->guestLookups = $nameLookups;
 
         return $uS->guestLookups;

@@ -61,7 +61,7 @@ class Hospital {
         $assocNoneId = 0;
 
         foreach ($hospList as $h) {
-            if ($h[2] == 'h') {
+            if ($h[2] == 'h' && ($h[3] == 'a' || $h[0] == $hstay->getHospitalId())) {
                 $hList[] = array($h[0], $h[1]);
             } else if ($h[2] == 'a') {
 
