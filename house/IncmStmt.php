@@ -178,7 +178,6 @@ if (isset($_POST['btnInv'])) {
 	$credits = 0;
 	$debits = 0;
 	$glInvoices = '';
-	$equal = TRUE;
 	
 	foreach ($glStmt->lines as $l) {
 		$tbl->addBodyTr(
@@ -191,10 +190,6 @@ if (isset($_POST['btnInv'])) {
 		$credits += $l['credit'];
 		$debits += $l['debit'];
 		
-// 		if ($equal && $credits != $debits) {
-// 			$tbl->addBodyTr(HTMLTable::makeTd('Credits != debits', array('colspan'=>'4')));
-// 			$equal = FALSE;
-// 		}
 	}
 	
 	if (count($glStmt->getErrors()) > 0) {
@@ -231,19 +226,19 @@ if (isset($_POST['btnGlGo'])) {
 		
 		$invHdr = '';
 		foreach ($glCodes->invoiceHeader() as $h) {
-			$invHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
+			$invHdr .= "<th style='border-top-width: 2px;'>" . ($h == '' ? ' ' : $h) . "</th>";
 		}
 		$tbl->addBodyTr($invHdr);
 		
 		$pmtHdr = '';
 		foreach ($glCodes->paymentHeader() as $h) {
-			$pmtHdr .= "<td style='color:blue;'>" . ($h == '' ? ' ' : $h) . "</td>";
+			$pmtHdr .= "<th style='color:blue;'>" . ($h == '' ? ' ' : $h) . "</th>";
 		}
 		$tbl->addBodyTr($pmtHdr);
 		
 		$lineHdr = '';
 		foreach ($glCodes->lineHeader() as $h) {
-			$lineHdr .= "<td style='color:green;'>" . ($h == '' ? ' ' : $h) . "</td>";
+			$lineHdr .= "<th style='color:green;'>" . ($h == '' ? ' ' : $h) . "</th>";
 		}
 		$tbl->addBodyTr($lineHdr);
 		
@@ -272,13 +267,15 @@ if (isset($_POST['btnGlGo'])) {
 				
 				if ($k == 'iStatus' && $col == 'p') {
 					$col = 'paid';
+				} else if ($k == 'Rate') {
+					$col = number_format($col, 2);
 				}
 				
-				if ($col == 0) {
+				if ($col == '0.00') {
 					$col = '';
 				}
 				
-				$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
+				$mkupRow .= "<td style='border-top-width: 2px;'>" . ($col == '' ? ' ' : $col) . "</td>";
 			}
 			$tbl->addBodyTr($mkupRow);
 			

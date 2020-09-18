@@ -596,6 +596,8 @@ where
 		$vIntervalPay = 0;
 		$vForwardPay = 0;
 
+		$paymentAmounts = array();
+		
 		$serialId = 0;
 		$visitId = 0;
 		$record = NULL;
@@ -642,6 +644,9 @@ where
 					$vFullIntervalCharge = 0;
 					$vIntervalPay = 0;
 					$vForwardPay = 0;
+					
+					// Payment amounts
+					$paymentAmounts = array();
 
 					$visitId = $r['idVisit'];
 				}
@@ -701,55 +706,83 @@ where
 			} else {
 				$pUpDate = NULL;
 			}
-
+			
+			if (isset($paymentAmounts[$r['idPayment']]) === FALSE) {
+				$paymentAmounts[$r['idPayment']] = abs($r['pAmount']);
+			}
+			
+			$ilAmt = $r['il_Amount'];
+			
 			// Payments
 			if (($r['pStatus'] == PaymentStatusCode::Paid || $r['pStatus'] == PaymentStatusCode::VoidReturn) && $r['Is_Refund'] == 0) {
 				// Sale
 				// un-returned payments are dated on the update.
 				if (is_null($pUpDate) === FALSE) {
-
-					if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
-						$paymentDate = $pUpDate;
-					}
+					$paymentDate = $pUpDate;
 				}
 
+				
+				if ($paymentAmounts[$r['idPayment']] >= $ilAmt) {
+					$paymentAmounts[$r['idPayment']] -= $ilAmt;
+				} else {
+					$ilAmt = $paymentAmounts[$r['idPayment']];
+					$paymentAmounts[$r['idPayment']] = 0;
+				}
+				
 				// Payment is in this period?
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 
-					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vIntervalPay += $r['il_Amount'];
+					if ($r['Item_Id'] == ItemId::Lodging) {
+						$vIntervalPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
+						$vIntervalPay += $ilAmt;
 					}
 
-					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $r['il_Amount']);
-					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
+					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
+					$totalPayment[$r['Item_Id']] += $ilAmt;
 					
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
 					
-					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vForwardPay += $r['il_Amount'];
+					if ($r['Item_Id'] == ItemId::Lodging) {
+						$vForwardPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
+						$vForwardPay += $ilAmt;
 					}
 				}
 
 			// Refunds
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 
+				// payment is positive in this case.
+				if ($paymentAmounts[$r['idPayment']] >= abs($ilAmt)) {
+					$paymentAmounts[$r['idPayment']] += $ilAmt;
+				} else {
+					$ilAmt = (0 - $paymentAmounts[$r['idPayment']]);
+					$paymentAmounts[$r['idPayment']] = 0;
+				}
+				
 				// Payment must be within the .
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 
-					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vIntervalPay += $r['il_Amount'];
+					if ($r['Item_Id'] == ItemId::Lodging) {
+						$vIntervalPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
+						$vIntervalPay += $ilAmt;
 					}
-
-					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $r['il_Amount']);
-					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
+					
+					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], (0 - $ilAmt));
+					$totalPayment[$r['Item_Id']] -= $ilAmt;
 					
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
 					
-					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vForwardPay += $r['il_Amount'];
+					if ($r['Item_Id'] == ItemId::Lodging) {
+						$vForwardPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
+						$vForwardPay += $ilAmt;
 					}
+					
 				}
 
 			//Returns
@@ -760,41 +793,56 @@ where
 					continue;
 				}
 
+				if ($paymentAmounts[$r['idPayment']] >= $ilAmt) {
+					$paymentAmounts[$r['idPayment']] -= $ilAmt;
+				} else {
+					$ilAmt = $paymentAmounts[$r['idPayment']];
+					$paymentAmounts[$r['idPayment']] = 0;
+				}
+				
 				// Returned during this period?
 				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
 					// It is a return in this period.
 
 
-					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vIntervalPay -= $r['il_Amount'];
+					if ($r['Item_Id'] == ItemId::Lodging) {
+						$vIntervalPay -= $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
+						$vIntervalPay -= $ilAmt;
 					}
-
-					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], (0 - $r['il_Amount']));
-					$totalPayment[$r['Item_Id']] -= $r['il_Amount'];
+					
+					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], (0 - $ilAmt));
+					$totalPayment[$r['Item_Id']] -= $ilAmt;
 
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
 					
-					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vForwardPay -= $r['il_Amount'];
+					if ($r['Item_Id'] == ItemId::Lodging) {
+						$vForwardPay -= $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
+						$vForwardPay -= $ilAmt;
 					}
 				}
 
 				// Paid during this period?
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 
-					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vIntervalPay += $r['il_Amount'];
+					if ($r['Item_Id'] == ItemId::Lodging) {
+						$vIntervalPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
+						$vIntervalPay += $ilAmt;
 					}
-
-					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $r['il_Amount']);
-					$totalPayment[$r['Item_Id']] += $r['il_Amount'];
+					
+					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
+					$totalPayment[$r['Item_Id']] += $ilAmt;
 
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
 					
-					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vForwardPay += $r['il_Amount'];
+					if ($r['Item_Id'] == ItemId::Lodging) {
+						$vForwardPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
+						$vForwardPay += $ilAmt;
 					}
 				}
 			}
@@ -845,7 +893,8 @@ where
 				);
 
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
-
+		$tbl->addBodyTr(HTMLTable::makeTh('Lodging Charge Distribution', array('colspan'=>'2')));
+		
 		$unpaidCharges = $intervalCharge - $intervalPay - $forwardPay;
 
 		$tbl->addBodyTr(
@@ -1094,7 +1143,7 @@ order by r.idResource;";
 		return $this->baLineMapper->createMarkup($tableAttrs);
 	}
 
-	public function getStartDay() {
+	protected function getStartDay() {
 		$iDay = intval($this->startDay, 10);
 		$sDay = '';
 
@@ -1183,7 +1232,7 @@ class GlStmtTotals {
 		}
 
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('SubTotals', array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Payment Totals', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
 				);

@@ -23,14 +23,6 @@ use HHK\Member\Relation\AbstractRelation;
 require ("AdminIncludes.php");
 
 
-/* require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'WebSecRS.php');
-
-require (CLASSES . 'Relation.php');
-require (CLASSES . 'AuditLog.php');
-require (CLASSES . 'member/WebUser.php');
-
-require(SEC . 'Pages.php'); */
 
 
 $wInit = new webInit(WebPageCode::Service);
@@ -56,7 +48,6 @@ try {
     switch ($c) {
 
         case "zipd":
-            include(HOUSE . "GuestReport.php");
 
             if (isset($_POST["zipf"])) {
                 $zipf = filter_var($_POST["zipf"], FILTER_SANITIZE_NUMBER_INT);
