@@ -59,9 +59,6 @@ $wsConfig = NULL;
 
 if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
 
-//     require (CLASSES . 'neon.php');
-//     require (CLASSES . "TransferMembers.php");
-
     if (file_exists(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''))) {
         try {
             $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
@@ -84,7 +81,7 @@ if (isset($_POST["btnSiteCnf"])) {
 if (isset($_POST["btnLabelCnf"])) {
 
     $tabIndex = 5;
-    // SiteConfig::saveConfig($dbh, $labl, $_POST);
+
     $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }
 
@@ -640,7 +637,7 @@ $('#logsTabDiv').tabs("option", "active", 0);
                     <li><a href="#pay">Credit Card Processor</a></li>
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Codes</a></li>
-                    <li><a href="#labels">Labels & Prompts</a></li>
+                    <li><a href="#labels">Labels &#38; Prompts</a></li>
                     <li id="liLogs"><a href="#logs">System Logs</a></li>
                     <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>

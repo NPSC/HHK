@@ -170,7 +170,6 @@ class SiteConfig {
 
     public static function loadZipCodeFile(\PDO $dbh, $file) {
 
-        $resultMsg = '';
         $lines = explode("\n", self::readZipFile($file));
 
         // Remove the first line - headings
@@ -179,7 +178,6 @@ class SiteConfig {
         // Delete old table contents
         if (count($lines) > 30000) {
             $dbh->exec("delete from postal_codes;");
-            $resultMsg .= 'Old zip codes deleted.  ';
         }
 
 
@@ -189,17 +187,14 @@ class SiteConfig {
         $recordCounter = 0;
         $maxRecords = 10000;
 
-//"zip","type","primary_city","acceptable_cities","unacceptable_cities","state","county","timezone","area_codes","latitude","longitude","precise_lat, precise_long
-//   0    1         2               3                   4                   5       6       7           8           9           10          11              12          13
+        // 2020 download file structure.
+        // zip, type, decommissioned, primary_city, acceptable_cities, unacceptable_cities, state, county, timezone, area_codes, world_region, country, approximate_latitude, approximate_longitude,
+        //  0     1        2               3                 4                  5              6      7         8        8            10         11             12                    13
+        // polygon_offset_latitude, polygon_offset_longitude, internal_point_latitude, internal_point_longitude, latitude_min, latitude_max, longitude_min, longitude_max,
+        //          14                        15                        16                        17
+        // area_land, area_water, housing_count, population_count, irs_estimated_population_2015, white, black_or_african_american, american_indian_or_alaskan_native, asian, native_hawaiian_and_other_pacific_islander, other_race, two_or_more_races,total_male_population,total_female_population,pop_under_10,pop_10_to_19,pop_20_to_29,pop_30_to_39,pop_40_to_49,pop_50_to_59,pop_60_to_69,pop_70_to_79,pop_80_plus
 
-//"world_region","country","decommissioned","estimated_population","notes"
 
-        // New File as of 2/2018
-// zip	type	decommissioned	primary_city	acceptable_cities	unacceptable_cities	state	county	timezone	area_codes	world_region	country	approximate_latitude
-//  0     1            2             3                  4                       5                 6        7        8               9                10           11          12
-//
-// approximate_longitude	polygon_offset_latitude	polygon_offset_longitude	internal_point_latitude	internal_point_longitude	latitude_min	latitude_max	longitude_min	longitude_max	area_land	area_water	housing_count	population_count	irs_estimated_population_2015	white	black_or_african_american	american_indian_or_alaskan_native	asian	native_hawaiian_and_other_pacific_islander	other_race	two_or_more_races	total_male_population	total_female_population	pop_under_10	pop_10_to_19	pop_20_to_29	pop_30_to_39	pop_40_to_49	pop_50_to_59	pop_60_to_69	pop_70_to_79	pop_80_plus
-//        13                             14                      15                               16                        17                         18            19                20              21
         foreach ($lines as $line) {
 
             $fields = str_getcsv($line);
@@ -211,13 +206,13 @@ class SiteConfig {
                 $altCitys = filter_var(trim($fields[4]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
 
                 $query .= "('"
-                        . filter_var(trim($fields[0]), FILTER_SANITIZE_NUMBER_INT) . "','"    // Zip_Code
-                        . $city . "','"        // City
-                        . $county . "','"        // County
-                        . filter_var(trim($fields[6]), FILTER_SANITIZE_STRING) . "','"        // State
-                        . filter_var(trim($fields[18]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"
-                        . filter_var(trim($fields[20]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"
-                        . filter_var(trim(substr($fields[1], 0, 2)), FILTER_SANITIZE_STRING) . "','"
+                        . filter_var(trim($fields[0]), FILTER_SANITIZE_NUMBER_INT) . "','"    	// Zip_Code
+                        . $city . "','"        													// City
+                        . $county . "','"        												// County
+                        . filter_var(trim($fields[6]), FILTER_SANITIZE_STRING) . "','"        	// State
+                        . filter_var(trim($fields[16]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"   // Lat
+                        . filter_var(trim($fields[17]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"	// Long
+                        . filter_var(trim(substr($fields[1], 0, 2)), FILTER_SANITIZE_STRING) . "','"						//Type
                         . $altCitys
                         . "'),";
                 $indx++;
@@ -225,19 +220,19 @@ class SiteConfig {
             }
 
             if ($indx > $maxRecords) {
+            	
                 $indx = 0;
+                
                 if ($query != "") {
-
                     $dbh->exec("insert into postal_codes values " . substr($query, 0, -1));
                 }
+                
                 $query = '';
             }
         }
 
-
         // Insert the remaining records.
         if ($indx > 0 && $query != "") {
-
             $dbh->exec("insert into postal_codes values " . substr($query, 0, -1));
         }
 
@@ -381,7 +376,6 @@ class SiteConfig {
     public static function createCliteMarkup(Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
 
         $tbl = new HTMLTable();
-        $inputSize = '40';
 
         // Limit config file to remaining sections not copied to the DB
         $allowedSections = array('site'=>'y', 'db'=>'y', 'backup'=>'y', 'webServices'=>'y');
@@ -404,30 +398,19 @@ class SiteConfig {
 
                     foreach ($name as $key => $val) {
 
-                        $attr = array();
-//                            'name' => $section . '[' . $key . ']',
-//                            'id' => $section . $key
-//                        );
-
-                        if ($key == 'Disclaimer' || $key == 'PaymentDisclaimer') {
-
-                            $attr["rows"] = "3";
-                            $attr["cols"] = $inputSize;
-                            $inpt = HTMLCONTAINER::generateMarkup('span', $val, $attr);
-
+						if ($key == 'Password' || $key == 'sitePepper' || $key == 'ReadonlyPassword') {
+                        	
+                        	$inpt = '********';
+                        	
                         } else {
 
-                            $attr['size'] = $inputSize;
-                            //
-                            //$inpt = HTMLInput::generateMarkup($val, $attr);
-                            $inpt = HTMLCONTAINER::generateMarkup('span', $val, $attr);
+                        	$inpt = $val;
                         }
-
 
                         if (is_null($titles)) {
                             $desc = '';
                         } else {
-                            $desc = $titles->getString($section, $key, '');
+                        	$desc = $titles->getString($section, $key, '');
                         }
 
                         $tbl->addBodyTr(
@@ -435,7 +418,6 @@ class SiteConfig {
                                 . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
                         );
 
-                        unset($attr);
                     }
                 }
             }
