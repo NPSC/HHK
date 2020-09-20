@@ -20,6 +20,7 @@ use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
 use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Exception\RuntimeException;
+use HHK\Tables\Visit\VisitRS;
 
 /**
  * Description of Reservation
@@ -211,7 +212,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createDatesMarkup() {
+    protected function createDatesMarkup($lastVisitMU = '') {
 
         if ($this->reservRs->Expected_Arrival->getStoredVal() != '' && $this->reservRs->Expected_Departure->getStoredVal() != '') {
 
@@ -238,7 +239,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         // Resv Expected dates
-        $this->reserveData->setExpectedDatesSection($this->createExpDatesControl());
+        $this->reserveData->setExpectedDatesSection($this->createExpDatesControl(TRUE, FALSE, FALSE, $lastVisitMU));
 
     }
 
@@ -414,7 +415,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
     }
 
-    protected function createExpDatesControl($updateOnChange = TRUE, $startDate = FALSE, $endDate = FALSE) {
+    protected function createExpDatesControl($updateOnChange = TRUE, $startDate = FALSE, $endDate = FALSE, $lastVisitMU = '') {
 
         $uS = Session::getInstance();
         $nowDT = new \DateTime();
@@ -445,7 +446,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 .HTMLContainer::generateMarkup('span', 'Expected Days: '.
                     HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4'))
                     , array('style'=>'margin-left:.7em;'))
-
+        		.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'margin-left:1em; font-size:.8em;'))
                 , array('style'=>'font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
 
         return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays', 'updateOnChange'=>$updateOnChange, 'startDate'=>$startDate, 'endDate'=>$endDate);
@@ -1076,6 +1077,41 @@ WHERE
         }
 
         return $oldResvId;
+    }
+    
+    /*
+     *
+     */
+    protected function findLastVisit(\PDO $dbh, $class = '') {
+    	
+    	if ($this->reserveData->getIdPsg() < 1) {
+    		return '';
+    	}
+
+    	$stmt = $dbh->query("select vi.idVisit, vi.Span, vi.Span_Start, vi.Span_End, vi.`Status`, g.Description as `Status_Title`, vi.idPrimaryGuest, r.Title as `Room`
+	from visit vi left join resource r on vi.idResource = r.idResource
+    left join gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = vi.`Status`
+ where vi.Span_Start =
+	(SELECT  MAX(v.Span_Start)
+		FROM visit v LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
+	WHERE rg.idPsg = " . $this->reserveData->getIdPsg() .")");
+    	
+    	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    	$mkup = '';
+
+    	if (count($rows) > 0) {
+
+    		if ($rows[0]['Span_End'] == '') {
+    			$mkup = "(Current Visit in room " . $rows[0]['Room'] . ')';
+    		} else {
+    			$mkup = "(Last Visit Ended " . date('M d, Y', strtotime($rows[0]['Span_End'])) . " in room " . $rows[0]['Room'] . ')';
+    		}
+
+    	} else {
+    		$mkup = HTMLContainer::generateMarkup('span', 'First House Visit', array('class'=>'ui-state-active', 'style'=>'padding:2px;'));
+    	}
+
+    	return $mkup;
     }
 
     public function saveReservationGuests(\PDO $dbh) {

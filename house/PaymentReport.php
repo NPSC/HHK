@@ -11,6 +11,9 @@ use HHK\Payment\Receipt;
 use HHK\House\Report\PaymentReport;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\Purchase\PriceModel\PriceNone;
+use HHK\SysConst\ItemPriceCode;
+use HHK\Payment\CreditToken;
 
 /**
  * PaymentReport.php
@@ -59,6 +62,7 @@ $txtStart = '';
 $txtEnd = '';
 $start = '';
 $end = '';
+$tabReturn = 0;
 
 
 $monthArray = array(
@@ -147,6 +151,8 @@ $cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
 $colSelector = new ColumnSelectors($cFields, 'selFld');
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
+	
+	$tabReturn = 0;
 
     $headerTable = new HTMLTable();
     $headerTable->addBodyTr(HTMLTable::makeTd('Report Generated: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y')));
@@ -562,6 +568,9 @@ if (count($hList) > 5) {
     }
 }
 
+
+$cofList = CreditToken::getCardsOnFile($dbh);
+
 // Prepare controls
 
 $statusSelector = HTMLSelector::generateMarkup(
@@ -606,6 +615,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+        var tabReturn = '<?php echo $tabReturn; ?>';
 
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
         $('.ckdate').datepicker({
@@ -616,6 +626,9 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             numberOfMonths: 1,
             dateFormat: 'M d, yy'
         });
+        $('#mainTabs').tabs();
+        $('#mainTabs').tabs("option", "active", tabReturn);
+        
         $('#selCalendar').change(function () {
             if ($(this).val() && $(this).val() != '19') {
                 $('#selIntMonth').hide();
@@ -680,7 +693,14 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog">
+            <ul>
+                <li><a href="#payr">Payments</a></li>
+                <?php if ($uS->RoomPriceModel != ItemPriceCode::None) {?>
+                <li><a href="#cards">Credit Cards on File</a></li>
+                <?php }?>
+            </ul>
+            <div id="payr" >
                 <form id="fcat" action="PaymentReport.php" method="post">
                     <table style="float: left;">
                         <tr>
@@ -751,7 +771,6 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                         </tr>
                     </table>
                 </form>
-            </div>
             <div style="clear:both;"><p id="rptFeeLoading" class="ui-state-active" style="font-size: 1.1em; float:left; display:none; margin:20px; padding: 5px;">Loading Payment Report...</p></div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
                 <div><input id="printButton" value="Print" type="button"/></div>
@@ -760,6 +779,11 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                 </div>
                 <?php echo $dataTable; ?>
             </div>
-        </div>
+                 </div>
+                <div id='cards'>
+                	<?php echo($cofList); ?>
+                </div>
+            </div>
+       </div>
     </body>
 </html>

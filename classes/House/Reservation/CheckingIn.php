@@ -106,18 +106,20 @@ FROM reservation r
     
     public function createMarkup(\PDO $dbh) {
         
+    	$lastVisitMU = $this->findLastVisit($dbh);
+    	
         // Add the family, hospital, etc sections.
-        $this->createDatesMarkup();
+    	$this->createDatesMarkup($lastVisitMU);
         $this->createHospitalMarkup($dbh);
         $this->createFamilyMarkup($dbh);
         
-        $this->reserveData->setResvSection($this->createCheckinMarkup($dbh));
+        $this->reserveData->setResvSection($this->createCheckinMarkup($dbh, $lastVisitMU));
         
         return $this->reserveData->toArray();
         
     }
     
-    protected function createCheckinMarkup(\PDO $dbh) {
+    protected function createCheckinMarkup(\PDO $dbh, $lastVisitMU) {
         
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
@@ -215,6 +217,7 @@ FROM reservation r
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
             HTMLContainer::generateMarkup('span', 'Checking In')
+        	.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'margin-left:1em; font-size:.8em;'))
             , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
         
         

@@ -8,6 +8,8 @@ use HHK\Tables\PaymentGW\Guest_TokenRS;
 use HHK\Exception\RuntimeException;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
 
 /**
  * CreditToken.php
@@ -308,6 +310,46 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
         return FALSE;
     }
 
-
+    public static function getCardsOnFile(\PDO $dbh) {
+    	
+    	$tbl = new HTMLTable();
+    	
+    	$stmt = $dbh->query("select t.*, n.Name_Full
+from guest_token t JOIN `name` n on t.idGuest = n.idName
+order by n.Name_Last, n.Name_First, t.Merchant");
+    	
+    	while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+    		
+    		$gtRs = new Guest_TokenRS();
+    		EditRS::loadRow($r, $gtRs);
+    		
+    		if (self::hasToken($gtRs)) {
+    			$tbl->addBodyTr(
+    					HTMLTable::makeTd($r['Name_Full'])
+    					.HTMLTable::makeTd($r['CardHolderName'])
+    					.HTMLTable::makeTd($r['CardType'])
+    					.HTMLTable::makeTd($r['MaskedAccount'])
+    					.HTMLTable::makeTd(date('M d, Y', strtotime($r['Granted_Date'])))
+    					.HTMLTable::makeTd($r['Merchant'])
+    					.HTMLTable::makeTd($r['Running_Total'], array('style'=>'text-align:right;'))
+    					.HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbCCDel_'.$r['idGuest_token'], 'data-gtId'=>$r['idGuest_token'])), array('style'=>'text-align:center;'))
+    					);
+    		}
+    	}
+    	
+    	$tbl->addHeaderTr(
+    			HTMLTable::makeTh('Guest')
+    			.HTMLTable::makeTh('Card Holder')
+    			.HTMLTable::makeTh('Type')
+    			.HTMLTable::makeTh('Account')
+    			.HTMLTable::makeTh('Granted')
+    			.HTMLTable::makeTh('Merchant')
+    			.HTMLTable::makeTh('Running Total')
+    			.HTMLTable::makeTh('Delete'));
+    	
+    	return $tbl->generateMarkup();
+    	
+    }
+    
 }
 ?>
