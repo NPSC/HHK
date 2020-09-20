@@ -124,6 +124,7 @@ if (isset($_POST['btnSaveGlParms'])) {
 	saveBa($dbh, $_POST);
 }
 
+// Run summary report
 if (isset($_POST['btnHere'])) {
    
     if (isset($_POST['selGlMonth'])) {
@@ -157,7 +158,7 @@ if (isset($_POST['btnHere'])) {
 
 }
 
-// Output report Details
+// Output lines
 if (isset($_POST['btnInv'])) {
 	
 	
@@ -174,6 +175,7 @@ if (isset($_POST['btnInv'])) {
 	$glStmt->mapRecords();
 	
 	$tbl = new HTMLTable();
+	$tbl->addBodyTr(HTMLTable::makeTh('Gl Code') . HTMLTable::makeTh('Debit') . HTMLTable::makeTh('Credit') . HTMLTable::makeTh('Date'));
 	
 	$credits = 0;
 	$debits = 0;
@@ -208,6 +210,7 @@ if (isset($_POST['btnInv'])) {
 	
 }
 
+// Invoice detail
 if (isset($_POST['btnGlGo'])) {
 	
 	if (isset($_POST['selGlMonth'])) {
@@ -406,9 +409,9 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 
                     <table style="width:100%; clear:both;">
                         <tr>
-                            <td style="width:50%;"><input type="submit" name="btnGlGo" id="btnGlGo" value="Show Invoice Details" />
+                            <td style="width:70%;"><input type="submit" name="btnGlGo" id="btnGlGo" value="Show Invoice Details" />
                             <input type="submit" name="btnInv" id="btnInv" value="Show Lines" /></td>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
+                            <td style="text-align: right;"><input type="submit" name="btnHere" id="btnHere" value="Run Report"/></td>
                             
                         </tr>
                     </table>

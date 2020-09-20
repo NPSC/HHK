@@ -693,7 +693,7 @@ where
 			}
 
 
-			// Add up payments
+			// Payment dates
 			if ($r['pTimestamp'] != '') {
 				$paymentDate = new \DateTime($r['pTimestamp']);
 			} else {
@@ -707,8 +707,9 @@ where
 				$pUpDate = NULL;
 			}
 			
+			// Multiple invoice lines for one payment...
 			if (isset($paymentAmounts[$r['idPayment']]) === FALSE) {
-				$paymentAmounts[$r['idPayment']] = abs($r['pAmount']);
+				$paymentAmounts[$r['idPayment']] = $r['pAmount'];
 			}
 			
 			$ilAmt = $r['il_Amount'];
@@ -725,6 +726,7 @@ where
 				if ($paymentAmounts[$r['idPayment']] >= $ilAmt) {
 					$paymentAmounts[$r['idPayment']] -= $ilAmt;
 				} else {
+					// Short the item amount to what was actually paid
 					$ilAmt = $paymentAmounts[$r['idPayment']];
 					$paymentAmounts[$r['idPayment']] = 0;
 				}
@@ -749,6 +751,7 @@ where
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vForwardPay += $ilAmt;
 					}
+					
 				}
 
 			// Refunds
@@ -771,8 +774,8 @@ where
 						$vIntervalPay += $ilAmt;
 					}
 					
-					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], (0 - $ilAmt));
-					$totalPayment[$r['Item_Id']] -= $ilAmt;
+					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
+					$totalPayment[$r['Item_Id']] += $ilAmt;
 					
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
