@@ -35,16 +35,25 @@ class ColumnSelectors {
     protected $controlName;
 
     protected $columnDefs;
+    
+    /**
+     * Filter Sets array
+     *
+     * @var array
+     */
+    protected $filterSets;
 
     /**
      *
      * @param array $cols
      * @param string $contrlName
+     * @param array $filterSets - 0 = index, 1 = description, 2 = option group name.
      */
-    public function __construct(array $cols, $contrlName) {
+    public function __construct(array $cols, $contrlName, $filterSets = false) {
         $this->cols = $cols;
         $this->controlName = $contrlName;
         $this->columnDefs = array();
+        $this->filterSets = $filterSets;
     }
 
 
@@ -99,31 +108,57 @@ class ColumnSelectors {
         }
 
 
-        return HTMLSelector::generateMarkup($opts, array('name'=>$this->controlName . '[]', 'multiple'=>'multiple', 'size'=>$countr));
+        return HTMLSelector::generateMarkup($opts, array('name'=>$this->controlName . '[]', 'multiple'=>'multiple', 'size'=>$countr, 'style'=>'width: 100%'));
     }
 
-
+    public function makeFilterSetSelector(){
+        return HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->filterSets, "", TRUE)
+        , ['style'=>'width: 100%;']);
+    }
+    
+    public function makeFilterSetButtons(){
+        return HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("button", "Save Changes", ['id'=>"saveSet", 'style'=>'margin-top: 1em; display: none']) .
+            HTMLContainer::generateMarkup("button", "Save as new Set", ['id'=>"saveNewSet", 'style'=>'margin-top: 1em; display: none']) .
+            HTMLContainer::generateMarkup("button", "Save as global Set", ['id'=>"saveGlobalSet", 'style'=>'margin-top: 1em; display: none']) .
+            HTMLContainer::generateMarkup("button", "Delete Set", ['id'=>"delSet", 'style'=>'margin-top: 1em; display: none'])
+            ,['style'=>"display: flex; flex-flow: column", 'id'=>'filterSetBtns']);
+    }
 
     public function makeSelectorTable($includeSetClear = TRUE) {
 
         $tbl = new HTMLTable();
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('Include Fields'));
-
-        $tbl->addBodyTr(HTMLTable::makeTd($this->makeDropdown()));
-
-        if ($includeSetClear) {
-            $tbl->addBodyTr(HTMLTable::makeTd(
-                $this->getRanges()));
+        $tbl->addheaderTr(HTMLTable::makeTh('Include Fields', ['colspan'=>'2']));
+        
+        $bodyTr = '';
+        
+        //if using filterSets
+        if($this->filterSets){
+            $bodyTr .= HTMLTable::makeTd($this->makeFilterSetSelector() . $this->makeFilterSetButtons(), ['style'=>'vertical-align: top;', 'id'=>'filterSets']);
+            $tbl->addHeaderTr(HTMLTable::makeTh('Saved Sets') . HTMLTable::makeTh(HTMLContainer::generateMarkup('span', '', ['id'=>'filterSetTitle']) .  ' Fields')); //add 2nd header
         }
+        
+        $fieldsTdContent = $this->makeDropdown();
+        
+        if ($includeSetClear) {
+            $fieldsTdContent .= $this->getRanges();
+        }
+        
+        $bodyTr .= HTMLTable::makeTd($fieldsTdContent, ['id'=>'fields']);
+        
+        $tbl->addBodyTr($bodyTr);
 
         return $tbl;
     }
 
     public function getRanges() {
 
-        return HTMLInput::generateMarkup('Select All', array('type'=>'button', 'id'=>'cbColSelAll', 'style'=>'margin-right:10px;'))
-               . HTMLInput::generateMarkup('Clear All', array('type'=>'button', 'id'=>'cbColClearAll'));
+        return HTMLContainer::generateMarkup('div',
+            HTMLInput::generateMarkup('Select All', array('type'=>'button', 'id'=>'cbColSelAll', 'style'=>'margin-right:10px;'))
+          . HTMLInput::generateMarkup('Clear All', array('type'=>'button', 'id'=>'cbColClearAll'))
+        , ['style'=>'margin-top: 1em']);
     }
 
     public function getFilteredTitles() {
