@@ -310,7 +310,7 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
         return FALSE;
     }
 
-    public static function getCardsOnFile(\PDO $dbh) {
+    public static function getCardsOnFile(\PDO $dbh, $delClass = '') {
     	
     	$tbl = new HTMLTable();
     	
@@ -332,7 +332,7 @@ order by n.Name_Last, n.Name_First, t.Merchant");
     					.HTMLTable::makeTd(date('M d, Y', strtotime($r['Granted_Date'])))
     					.HTMLTable::makeTd($r['Merchant'])
     					.HTMLTable::makeTd($r['Running_Total'], array('style'=>'text-align:right;'))
-    					.HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbCCDel_'.$r['idGuest_token'], 'data-gtId'=>$r['idGuest_token'])), array('style'=>'text-align:center;'))
+    					.HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>$delClass, 'id'=>'cbCCDel_'.$r['idGuest_token'], 'data-gtId'=>$r['idGuest_token'])), array('style'=>'text-align:center;'))
     					);
     		}
     	}

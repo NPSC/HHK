@@ -63,7 +63,15 @@ $txtEnd = '';
 $start = '';
 $end = '';
 $tabReturn = 0;
+$delCofListClass = 'hhk-delcoflist';
 
+// COF listing return
+if (isset($_POST['cmd'])) {
+	
+	$dataArray = array('coflist'=>CreditToken::getCardsOnFile($dbh, $delCofListClass));
+	echo json_encode($dataArray);
+	exit();
+}
 
 $monthArray = array(
     1 => array(1, 'January'),
@@ -569,7 +577,6 @@ if (count($hList) > 5) {
 }
 
 
-$cofList = CreditToken::getCardsOnFile($dbh);
 
 // Prepare controls
 
@@ -611,11 +618,16 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
 <script type="text/javascript">
+	function delCofEntry(gtId) {
+
+	}
+
     $(document).ready(function() {
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var makeTable = '<?php echo $mkTable; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var tabReturn = '<?php echo $tabReturn; ?>';
+        var delCofClass = '<?php echo $delCofListClass; ?>';
 
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
         $('.ckdate').datepicker({
@@ -626,7 +638,41 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             numberOfMonths: 1,
             dateFormat: 'M d, yy'
         });
-        $('#mainTabs').tabs();
+        $('#mainTabs').tabs({
+        	beforeActivate: function (event, ui) {
+                if (ui.newTab.prop('id') === 'licof') {
+
+                    $.post('PaymentReport.php', {cmd: 'cof'},
+                        function (data) {
+                        
+                        if (data) {
+
+                            try {
+                                data = $.parseJSON(data);
+                            } catch (err) {
+                                alert("Parser error - " + err.message);
+                                return;
+                            }
+
+                            if (data.error) {
+
+                                if (data.gotopage) {
+                                    window.open(data.gotopage, '_self');
+                                }
+                                flagAlertMessage(data.error, 'error');
+
+                            } else if (data.coflist) {
+								$('#cofDiv').empty().append($(data.coflist));
+								$('.'+delCofClass).on('change', '.'+delCofClass, function (){
+									delCofEntry($(this).data('gtId));
+								});
+                            }
+                        }
+                    });
+                
+                }
+        	}
+        });
         $('#mainTabs').tabs("option", "active", tabReturn);
         
         $('#selCalendar').change(function () {
@@ -663,7 +709,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         });
         $('#btnHere').click(function () {
             $('#rptFeeLoading').show();
-        })
+        });
         if (makeTable === '1') {
             $('#rptFeeLoading').hide();
             $('div#printArea').css('display', 'block');
@@ -697,7 +743,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             <ul>
                 <li><a href="#payr">Payments</a></li>
                 <?php if ($uS->RoomPriceModel != ItemPriceCode::None) {?>
-                <li><a href="#cards">Credit Cards on File</a></li>
+                <li id='licof'><a href="#cards">Credit Cards on File</a></li>
                 <?php }?>
             </ul>
             <div id="payr" >
@@ -780,9 +826,9 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                 <?php echo $dataTable; ?>
             </div>
                  </div>
-                <div id='cards'>
-                	<?php echo($cofList); ?>
-                </div>
+            <div id='cards'>
+                <div id="cofDiv" class="hhk-visitdialog"></div>
+            </div>
             </div>
        </div>
     </body>
