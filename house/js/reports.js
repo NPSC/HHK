@@ -21,6 +21,28 @@ $(document).ready(function() {
 		if($this.val() != ""){
 			$("#delSet").show();
 			$("#filterSetTitle").text($this.find("option:selected").text());
+			
+			var formData = {cmd:"getFieldSet",idFieldSet:$this.val()}; 
+ 
+			$.ajax({
+    			url : "/house/ws_report.php",
+    			type: "POST",
+    			data : formData,
+    			dataType: "json",
+    			success: function(data, textStatus, jqXHR)
+    			{
+    				console.log(data);
+        			$("#fields select").val("").trigger("change");
+    			},
+    			error: function (jqXHR, textStatus, errorThrown)
+    			{
+ 					new Noty({
+						type : "error",
+						text : errorthrown
+					}).show();
+    			}
+			});
+			
 		}else{
 			$("#filterSetTitle").text("");
 		}
