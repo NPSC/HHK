@@ -44,7 +44,7 @@ class ReportFieldSet {
         $stmt = $dbh->prepare($query);
         $stmt->execute([":idFieldSet"=>$idFieldSet, ":createdBy"=>$uname]);
         
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
         
         if($row){
             $row["Fields"] = json_decode($row["Fields"], TRUE);
@@ -52,6 +52,29 @@ class ReportFieldSet {
             return $row;
         }else{
             return false;
+        }
+        
+    }
+    
+    public static function createFieldSet(\PDO $dbh, string $report, string $title, array $fields = [], string $global){
+        
+        $uS = Session::getInstance();
+        $uname = $uS->username;
+        
+        if (count($fields) ==  0) {
+            return array('error' => 'Empty fields.');
+        }
+        
+        $fieldsJSON = json_encode($fields);
+        
+        $query = "INSERT INTO report_field_sets (`Title`, `Report`, `Fields`, `Global`, `Created_by`) VALUES(:title, :report, :fields, :global, :createdBy);";
+        $stmt = $dbh->prepare($query);
+        $success = $stmt->execute([":title"=>$title, ":report"=>$report, ":fields"=>$fieldsJSON, ":global"=>$global, ":createdBy"=>$uname]);
+        
+        if($success){
+            return ['status'=>"success"];
+        }else{
+            return ['error'=>"Could not create field set"];
         }
         
     }

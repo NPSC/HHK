@@ -23,6 +23,7 @@ use HHK\House\Report\ReportFilter;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\House\Report\ReportFieldSet;
 
 
 /**
@@ -1434,7 +1435,14 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     $cFields[] = array("Contribution", 'donpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 }
 
-$colSelector = new ColumnSelectors($cFields, 'selFld', array(["ut","User Test Set","User Sets"], ["ht","House Test Set","House Sets"]));
+$fieldSets = ReportFieldSet::listFieldSets($dbh, 'visit');
+
+$fieldSetsArray = array();
+foreach($fieldSets as $fieldSet){
+    $fieldSetsArray[] = [$fieldSet['idFieldSet'], $fieldSet['Title']];
+}
+
+$colSelector = new ColumnSelectors($cFields, 'selFld', $fieldSetsArray);
 
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnStatsOnly'])) {

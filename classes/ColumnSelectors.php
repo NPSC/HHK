@@ -119,6 +119,10 @@ class ColumnSelectors {
     
     public function makeFilterSetButtons(){
         return HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("label", "Title:", ["for"=>"fieldsetName", "style"=>"margin-right: 5px;"]) .
+                HTMLInput::generateMarkup("", ['name'=>'fieldsetName'])
+            , ["id"=>"fieldSetName", "style"=>"display: none;"]) .
             HTMLContainer::generateMarkup("button", "Save Changes", ['id'=>"saveSet", 'style'=>'margin-top: 1em; display: none']) .
             HTMLContainer::generateMarkup("button", "Save as new Set", ['id'=>"saveNewSet", 'style'=>'margin-top: 1em; display: none']) .
             HTMLContainer::generateMarkup("button", "Save as global Set", ['id'=>"saveGlobalSet", 'style'=>'margin-top: 1em; display: none']) .
@@ -133,10 +137,12 @@ class ColumnSelectors {
         $tbl->addheaderTr(HTMLTable::makeTh('Include Fields', ['colspan'=>'2']));
         
         $bodyTr = '';
+        $filterActionTr = false;
         
         //if using filterSets
         if($this->filterSets){
-            $bodyTr .= HTMLTable::makeTd($this->makeFilterSetSelector() . $this->makeFilterSetButtons(), ['style'=>'vertical-align: top;', 'id'=>'filterSets']);
+            $bodyTr .= HTMLTable::makeTd($this->makeFilterSetSelector(), ['style'=>'vertical-align: top; border-bottom: 0;', 'id'=>'filterSets']);
+            $filterActionTr = HTMLTable::makeTd($this->makeFilterSetButtons(), ['style'=>'vertical-align: bottom; border-top: 0;']);
             $tbl->addHeaderTr(HTMLTable::makeTh('Saved Sets') . HTMLTable::makeTh(HTMLContainer::generateMarkup('span', '', ['id'=>'filterSetTitle']) .  ' Fields')); //add 2nd header
         }
         
@@ -146,10 +152,14 @@ class ColumnSelectors {
             $fieldsTdContent .= $this->getRanges();
         }
         
-        $bodyTr .= HTMLTable::makeTd($fieldsTdContent, ['id'=>'fields']);
+        $bodyTr .= HTMLTable::makeTd($fieldsTdContent, ['id'=>'fields', 'rowspan'=>'2']);
         
         $tbl->addBodyTr($bodyTr);
 
+        if($filterActionTr){
+            $tbl->addBodyTr($filterActionTr);
+        }
+        
         return $tbl;
     }
 

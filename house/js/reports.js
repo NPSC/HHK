@@ -14,10 +14,13 @@ $(document).ready(function() {
 
 	$("#vcategory button").button();
 	
+	var defaultFields = $("#fields").val();
+	console.log(defaultFields);
+	
 	$("#filterSets").on("change", "select", function(){
 		var $this = $(this);
 		console.log($this.val());
-		$("#filterSetBtns button").hide();
+		$("#filterSetBtns button, #filterSetBtns #fieldSetName").hide();
 		if($this.val() != ""){
 			$("#delSet").show();
 			$("#filterSetTitle").text($this.find("option:selected").text());
@@ -33,6 +36,8 @@ $(document).ready(function() {
     			{
     				console.log(data);
         			$("#fields select").val("").trigger("change");
+        			$("#fields select").val(data.fieldSet.Fields).trigger("change");
+        			$("#filterSetBtns input").val(data.fieldSet.Title);
     			},
     			error: function (jqXHR, textStatus, errorThrown)
     			{
@@ -45,20 +50,63 @@ $(document).ready(function() {
 			
 		}else{
 			$("#filterSetTitle").text("");
+			$("#fields select").val(defaultFields);
+			
 		}
 	});
 	
-	$("#fields").on("change", "select", function(){
-		var filterSet = $("#filterSets select").val();
+	$("#fields").on("change", "select", function(e){
+		if (e.originalEvent) {
+			var filterSet = $("#filterSets select").val();
 		
-		if(filterSet != ""){
-			$("#filterSetBtns button").show();
+			if(filterSet != ""){
+				$("#filterSetBtns button, #filterSetBtns #fieldSetName").show();
+			}
 		}
 	});
 	
 	$("#filterSetBtns").on("click", "button", function(e){
 		e.preventDefault();
-		console.log($(this).attr('id'));
+		var id = $(this).attr('id');
+		var formData = {};
+		switch(id){
+			case 'saveNewSet':
+			
+			formData = {
+				'cmd':'createFieldSet',
+				'report':'visit',
+				'title': $('input[name=fieldsetName]').val(),
+				'fields': $('select#selFld').val(),
+				'global':'false'
+			};
+		}
+		
+		$.ajax({
+    			url : "/house/ws_report.php",
+    			type: "POST",
+    			data : formData,
+    			dataType: "json",
+    			success: function(data, textStatus, jqXHR)
+    			{
+    				console.log(data);
+    				if(data.error){
+    					new Noty({
+							type : "error",
+							text : "Error: " + data.error
+						}).show();
+    				}else{
+    					new Noty({
+							type : "success",
+							text : "Success"
+						}).show();
+    				}
+    			},
+    			error: function (jqXHR, textStatus, errorThrown)
+    			{
+ 					
+    			}
+			});
+		
 	});
     
 });
