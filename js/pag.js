@@ -84,7 +84,7 @@ function checkStrength(pwCtrl) {
 	return rtn;
 }
 
-function openiframe(src, width, height, title, buttons = []){
+function openiframe(src, width, height, title, buttons){
 	var $dialog = $('<div id="iframeDialog" style="overflow:hidden"><div class="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div><iframe id="hhk-iframe" src="' + src + '" style="border: none; height: 95%; width: 100%"></iframe></div>');
     $("#contentDiv").append($dialog);
     
