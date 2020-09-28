@@ -589,10 +589,12 @@ where
 
 		$intervalCharge = 0;
 		$fullInvervalCharge = 0;
+		$discountCharge = 0;
 
 		$vIntervalCharge = 0;
 		$vPreIntervalCharge = 0;
 		$vFullIntervalCharge = 0;
+		$vDiscountCharge = 0;
 		$vIntervalPay = 0;
 		$vForwardPay = 0;
 
@@ -637,11 +639,13 @@ where
 
 					$intervalCharge += $vIntervalCharge;
 					$fullInvervalCharge += $vFullIntervalCharge;
+					$discountCharge += $vDiscountCharge;
 
 					// Reset for next visit
 					$vIntervalCharge = 0;
 					$vPreIntervalCharge = 0;
 					$vFullIntervalCharge = 0;
+					$vDiscountCharge = 0;
 					$vIntervalPay = 0;
 					$vForwardPay = 0;
 					
@@ -680,6 +684,12 @@ where
 						// Only adjust when the charge will be more.
 						$vFullIntervalCharge = $vFullIntervalCharge * $adjRatio;
 					}
+					
+					// discount charges are only for discounted rates.
+					if ($r['Rate_Category'] != RoomRateCategories::FlatRateCategory) {
+						$vDiscountCharge += ($vFullIntervalCharge - $vIntervalCharge);
+					}
+					
 				}
 			}
 
@@ -871,6 +881,7 @@ where
 			
 			$intervalCharge += $vIntervalCharge;
 			$fullInvervalCharge += $vFullIntervalCharge;
+			$discountCharge += $vDiscountCharge;
 			
 		}
 
@@ -898,10 +909,14 @@ where
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
 		$tbl->addBodyTr(HTMLTable::makeTh('Lodging Charge Distribution', array('colspan'=>'2')));
 		
-		$unpaidCharges = $intervalCharge - $intervalPay - $forwardPay;
+		$unpaidCharges = $fullInvervalCharge - ($intervalCharge + $intervalPay + $forwardPay + $discountCharge);
 
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Total charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($fullInvervalCharge, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Actual charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
@@ -911,6 +926,10 @@ where
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Discounts for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($discountCharge, 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))

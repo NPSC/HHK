@@ -12,7 +12,7 @@ class GLCodes {
 	// General GL codes
 	const ALL_GROSS_SALES = '200-1007582-500014';
 	const FOUNDATION_DON = '200-0000000-180100';
-	const COUNTY_LIABILITY = '200-0000000-140521';
+
 
 	protected $fileId;
 	protected $journalCat;
@@ -518,7 +518,7 @@ class GLCodes {
 		{
 			$sftp = new SFTPConnection($this->glParm->getHost(), $this->glParm->getPort());
 			$sftp->login($this->glParm->getUsername(), $this->glParm->getClearPassword());
-			$bytesWritten = $sftp->uploadFile($data, $this->glParm->getRemoteFilePath() . $this->fileId . '.csv');
+			$bytesWritten = $sftp->uploadFile($data, trim($this->glParm->getRemoteFilePath()) . trim($this->fileId) . '.csv');
 
 		}
 		catch (RuntimeException $e)

@@ -715,9 +715,6 @@ $bytesWritten = '';
 
 if ($useGlReport) {
 	
-	//require (HOUSE.'GlCodes.php');
-	//require (CLASSES.'SFTPConnection.php');
-	
 	$glParm = new GLParameters($dbh, 'Gl_Code');
 	$glPrefix = 'gl_';
 	
@@ -740,7 +737,7 @@ if ($useGlReport) {
 	
 	
 	// Output report
-	if (isset($_POST['btnGlGo']) || isset($_POST['btnGlTx'])) {
+	if (isset($_POST['btnGlGo']) || isset($_POST['btnGlTx']) || isset($_POST['btnGlcsv'])) {
 		
 		$tabReturn = 2;
 		
@@ -771,6 +768,17 @@ if ($useGlReport) {
 			
 			$glInvoices = $etbl->generateMarkup() . $glInvoices;
 					
+		} else if (isset($_POST['btnGlcsv'])) {
+			
+			// Comma delemeted file.
+			$glCodes->mapRecords(FALSE);
+				
+			foreach ($glCodes->getLines() as $l) {
+				
+				$glInvoices .= implode(',', $l) . "\r\n";
+				
+			}
+
 		} else {
 			
 			$tbl = new HTMLTable();
@@ -988,7 +996,7 @@ $(document).ready(function() {
     var rctMkup = '<?php echo $receiptMarkup; ?>';
     var tabReturn = '<?php echo $tabReturn; ?>';
 
-    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx').button();
+    $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
     $('.ckdate').datepicker({
         yearRange: '-05:+01',
         changeMonth: true,
@@ -1301,11 +1309,14 @@ $(document).ready(function() {
                 	<td><?php echo $glMonthSelr; ?></td>
                     <td style="vertical-align: top;"><?php echo $glYearSelr; ?></td>
                 	</tr><tr>
-                    <td colspan=2><input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/><input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer"/></td>
+                    <td colspan=2>
+                    <input type="submit" id="btnGlcsv" name="btnGlcsv" value="csv" style="margin-right:.5em;"/>
+                    <input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/>
+                    <input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer"/></td>
                     </tr>
                     </table>
                 </form>
-                 <div id="rptGl" class="hhk-visitdialog" style="font-size:0.9em;">
+                 <div id="rptGl" class="hhk-visitdialog" style="font-size:0.9em; clear:both;">
                      <?php echo $glInvoices; ?>
                  </div>
             </div>
