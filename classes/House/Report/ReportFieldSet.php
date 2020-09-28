@@ -56,7 +56,7 @@ class ReportFieldSet {
         
     }
     
-    public static function createFieldSet(\PDO $dbh, string $report, string $title, array $fields = [], string $global){
+    public static function createFieldSet(\PDO $dbh, string $report, string $title, array $fields = [], int $global){
         
         $uS = Session::getInstance();
         $uname = $uS->username;
@@ -75,6 +75,29 @@ class ReportFieldSet {
             return ['status'=>"success"];
         }else{
             return ['error'=>"Could not create field set"];
+        }
+        
+    }
+    
+    public static function updateFieldSet(\PDO $dbh, int $idFieldSet, string $report, string $title, array $fields = [], int $global){
+        
+        $uS = Session::getInstance();
+        $uname = $uS->username;
+        
+        if (count($fields) ==  0) {
+            return array('error' => 'Empty fields.');
+        }
+        
+        $fieldsJSON = json_encode($fields);
+        
+        $query = "UPDATE report_field_sets SET `Title` = :title, `report` = :report, `Fields` = :fields, `Global` = :global, `Updated_by = :updatedBy where idFieldSet = :idFieldSet;";
+        $stmt = $dbh->prepare($query);
+        $success = $stmt->execute([":title"=>$title, ":report"=>$report, ":fields"=>$fieldsJSON, ":global"=>$global, ":updatedBy"=>$uname]);
+        
+        if($success){
+            return ['status'=>"success"];
+        }else{
+            return ['error'=>"Could not update field set"];
         }
         
     }

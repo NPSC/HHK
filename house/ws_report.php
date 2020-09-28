@@ -96,13 +96,34 @@ try {
                 $title = filter_var(urldecode($_REQUEST["title"]), FILTER_SANITIZE_STRING);
             }
             if (isset($_REQUEST["global"])) {
-                $global = filter_var(urldecode($_REQUEST["global"]), FILTER_VALIDATE_BOOLEAN);
+                $global = filter_var(urldecode($_REQUEST["global"]), FILTER_SANITIZE_NUMBER_INT);
             }
             if (isset($_REQUEST["fields"])) {
                 $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_STRING);
             }
             
             $events = ReportFieldSet::createFieldSet($dbh, $report, $title, $fields, $global);
+            
+            break;
+            
+        case 'updateFieldSet':
+            if (isset($_REQUEST['idFieldSet'])){
+                $idFieldSet = filter_var($_REQUEST['idFieldSet'], FILTER_SANITIZE_NUMBER_INT);
+            }
+            if (isset($_REQUEST["report"])) {
+                $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_STRING);
+            }
+            if (isset($_REQUEST["title"])) {
+                $title = filter_var(urldecode($_REQUEST["title"]), FILTER_SANITIZE_STRING);
+            }
+            if (isset($_REQUEST["global"])) {
+                $global = filter_var(urldecode($_REQUEST["global"]), FILTER_SANITIZE_NUMBER_INT);
+            }
+            if (isset($_REQUEST["fields"])) {
+                $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_STRING);
+            }
+            
+            $events = ReportFieldSet::updateFieldSet($dbh, $idFieldSet, $report, $title, $fields, $global);
             
             break;
             
