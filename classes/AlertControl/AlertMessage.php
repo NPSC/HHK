@@ -52,7 +52,7 @@ namespace HHK\AlertControl;
         if ($this->get_Text() != "") {
             $resultMessage = "<div ".$this->get_ControlId()." class='ui-widget' " . $this->get_DisplayAttr() . ">
             <div ".$this->get_styleId()." class='" . $this->mState[$this->mContext] . " ui-corner-all' style='padding: .2em .7em;'>
-                    <p ><span ".$this->get_iconId()." class='ui-icon ".$this->imageIcons[$this->mContext]."' style='float: left; margin-right: .3em;'></span>".
+                    <p ><span ".$this->get_iconId()." class='ui-icon ".$this->imageIcons[$this->mContext]."' style='margin-right: .3em;'></span>".
                     "<span ".$this->get_txtSpanId()." >".$this->mPrefix[$this->mContext] .  $this->get_Text() . "</span></p>
             </div></div>";
         }
