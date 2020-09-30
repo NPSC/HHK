@@ -101,8 +101,11 @@ try {
             if (isset($_REQUEST["fields"])) {
                 $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_STRING);
             }
-            
-            $events = ReportFieldSet::createFieldSet($dbh, $report, $title, $fields, $global);
+            try{
+                $events = ReportFieldSet::createFieldSet($dbh, $report, $title, $fields, $global);
+            }catch(\Exception $e){
+                $events = ['error'=>$e->getMessage()];
+            }
             
             break;
             
@@ -130,10 +133,10 @@ try {
         default:
             $events = array("error" => "Bad Command: \"" . $c . "\"");
     }
-} catch (PDOException $ex) {
+} catch (\PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage());
     
-} catch (Exception $ex) {
+} catch (\Exception $ex) {
     $events = array("error" => "Programming Error: " . $ex->getMessage());
 }
 

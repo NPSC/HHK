@@ -1442,7 +1442,13 @@ foreach($fieldSets as $fieldSet){
     $fieldSetsArray[] = [$fieldSet['idFieldSet'], $fieldSet['Title']];
 }
 
-$colSelector = new ColumnSelectors($cFields, 'selFld', $fieldSetsArray);
+if(isset($_REQUEST['fieldset'])){
+    $filterSetSelection = $_REQUEST['fieldset'];
+}else{
+    $filterSetSelection = '';
+}
+
+$colSelector = new ColumnSelectors($cFields, 'selFld', $fieldSetsArray, $filterSetSelection);
 
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnStatsOnly'])) {

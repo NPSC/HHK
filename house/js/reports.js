@@ -14,7 +14,7 @@ $(document).ready(function() {
 
 	$("#vcategory button").button();
 	
-	var defaultFields = $("#fields").val();
+	var defaultFields = $("#fields select").val();
 	console.log(defaultFields);
 	
 	$("#filterSets").on("change", "select", function(){
@@ -61,6 +61,8 @@ $(document).ready(function() {
 		
 			if(filterSet != ""){
 				$("#filterSetBtns button, #filterSetBtns #fieldSetName").show();
+			}else{
+				$("#filterSetBtns button#saveNewSet, #filterSetBtns button#saveGlobalSet, #filterSetBtns #fieldSetName").show();
 			}
 		}
 	});

@@ -42,6 +42,7 @@ class ColumnSelectors {
      * @var array
      */
     protected $filterSets;
+    protected $filterSetSelection;
 
     /**
      *
@@ -49,11 +50,12 @@ class ColumnSelectors {
      * @param string $contrlName
      * @param array $filterSets - 0 = index, 1 = description, 2 = option group name.
      */
-    public function __construct(array $cols, $contrlName, $filterSets = false) {
+    public function __construct(array $cols, $contrlName, $filterSets = false, $filterSetSelection = false) {
         $this->cols = $cols;
         $this->controlName = $contrlName;
         $this->columnDefs = array();
         $this->filterSets = $filterSets;
+        $this->filterSetSelection = $filterSetSelection;
     }
 
 
@@ -113,8 +115,8 @@ class ColumnSelectors {
 
     public function makeFilterSetSelector(){
         return HTMLSelector::generateMarkup(
-            HTMLSelector::doOptionsMkup($this->filterSets, "", TRUE)
-        , ['style'=>'width: 100%;']);
+            HTMLSelector::doOptionsMkup($this->filterSets, $this->filterSetSelection, TRUE)
+        , ['style'=>'width: 100%;', 'name'=>'fieldset']);
     }
     
     public function makeFilterSetButtons(){
