@@ -76,8 +76,6 @@ class FamilyAddGuest extends Family {
         foreach ($this->roleObjs as $role) {
             
             $idPrefix = $role->getRoleMember()->getIdPrefix();
-            $demoMu = '';
-            
             
             if ($rData->getPsgMember($idPrefix)->isPrimaryGuest()) {
                 $familyName = $role->getRoleMember()->get_lastName();
@@ -133,10 +131,10 @@ class FamilyAddGuest extends Family {
         
         // Guest search
         $mk1 .= HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('span', 'Add people - Name search: ')
+            HTMLContainer::generateMarkup('span', 'Add people - LastName search: ')
             .HTMLInput::generateMarkup('', array('id'=>'txtPersonSearch', 'style'=>'margin-right:2em;', 'title'=>'Enter the first three characters of the person\'s last name'))
             
-            , array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
+        	, array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));
         
         
         // Header

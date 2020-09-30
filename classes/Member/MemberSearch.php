@@ -2,7 +2,6 @@
 
 namespace HHK\Member;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\SysConst\MemDesignation;
 use HHK\SysConst\PhonePurpose;
