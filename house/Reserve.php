@@ -221,7 +221,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

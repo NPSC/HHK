@@ -136,7 +136,7 @@ if (SecurityComponent::isHTTPS()) {
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
     </head>
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>

@@ -404,6 +404,10 @@ class ReserveData {
 
         return NULL;
     }
+    
+    public function getFullName() {
+    	return $this->fullName;
+    }
 
     public function findMemberById($val) {
 
