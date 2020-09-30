@@ -6,6 +6,7 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\SysConst\{CodeVersion, WebRole};
 use HHK\Config_Lite\Config_Lite;
+use HHK\AlertControl\AlertMessage;
 
 /**
  * Login.php
@@ -149,9 +150,31 @@ class Login {
 
     }
 
-
+    public function IEMsg(){
+        try {
+            $userAgentArray = get_browser(NULL, TRUE);
+            $browserName = $userAgentArray['parent'];
+        } catch (\Exception $d) {
+            $browserName = "Missing Browscap";
+        }
+        if($browserName == "IE 11.0 for Desktop"){
+            // Instantiate the alert message control
+            $alertMsg = new AlertMessage("IEAlert");
+            $alertMsg->set_DisplayAttr("block");
+            $alertMsg->set_Context(AlertMessage::Alert);
+            $alertMsg->set_iconId("alrIcon");
+            $alertMsg->set_styleId("alrResponse");
+            $alertMsg->set_txtSpanId("alrMessage");
+            $alertMsg->set_Text("Internet Explorer 11 detected<span style='margin-top: 0.5em; display: block'>HHK may not function as intended. For the best experience, consider using a supported browser such as Edge, Chrome or Firefox. If you are required to continue using IE 11, and are having trouble with HHK, please contact us.</span>");
+            
+            return HTMLContainer::generateMarkup('div', $alertMsg->createMarkup(), array('style'=>'margin-top: 1em;'));
+        }else{
+            return '';
+        }
+    }
+    
     public function loginForm($uname = '') {
-
+        
         if ($uname != '' && $this->userName == '') {
             $this->setUserName($uname);
         }

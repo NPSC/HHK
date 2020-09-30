@@ -150,7 +150,9 @@ if (SecurityComponent::isHTTPS()) {
                     <div style="clear:left; margin-bottom: 20px;"></div>
                 <div id="formlogin" style="float:left;" >
                     <div><?php echo $siteName; ?>
-                        <p style="margin-left:6px; width: 65%;"><?php echo $disclaimer ?></p>
+                        <div style="margin-left:6px; width: 65%;">
+                        	<?php echo $disclaimer . $login->IEMsg(); ?>
+                        </div>
                     </div>
                     <?php echo $loginMkup; ?>
                 </div>
