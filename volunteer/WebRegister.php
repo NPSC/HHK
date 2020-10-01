@@ -20,15 +20,6 @@ use HHK\sec\SecurityComponent;
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 require('VolIncludes.php');
-/* require(SEC . 'Login.php');
-require(CLASSES . 'fbUserClass.php');
-require(CLASSES . 'SiteConfig.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-require THIRD_PARTY .'reCAPTCHA.php'; */
 
 function processGuest(\PDO $dbh, $username, fbUserClass $fbc) {
 
@@ -302,7 +293,6 @@ if (SecurityComponent::isHTTPS()) {
         <?php echo $reCAPTCHA->getScript(); ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
 	<script type="text/javascript" src="js/webReg.js"></script>

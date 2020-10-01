@@ -17,13 +17,6 @@ use HHK\HTMLControls\HTMLTable;
  */
 
 require("VolIncludes.php");
-/* require(SEC . 'UserClass.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
- */
-
 
 $wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;

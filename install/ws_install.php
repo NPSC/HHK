@@ -13,11 +13,6 @@ use HHK\sec\UserClass;
  */
 
 require_once ("InstallIncludes.php");
-/* require (CLASSES . 'PDOdata.php');
-require (DB_TABLES . 'WebSecRS.php');
-require (DB_TABLES . 'HouseRS.php');
-require (SEC . 'UserClass.php');
- */
 
 addslashesextended($_POST);
 

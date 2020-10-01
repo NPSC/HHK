@@ -1563,7 +1563,6 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>

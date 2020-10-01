@@ -160,7 +160,7 @@ function resvManager(initData, options) {
             }
         }
 
-        function addGuest(item, data) {
+        function addGuest(item, data, term) {
 
             if (item.No_Return !== undefined && item.No_Return !== '') {
                 flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
@@ -183,7 +183,8 @@ function resvManager(initData, options) {
                 isCheckin: isCheckin,
                 gstDate: $('#gstDate').val(),
                 gstCoDate: $('#gstCoDate').val(),
-                cmd: 'addResvGuest'
+                cmd: 'addResvGuest',
+                schTerm: term
             };
 
             getReserve(resv);
@@ -816,7 +817,7 @@ function resvManager(initData, options) {
 
                 // Add people search
                 createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
-                    addGuest(item, data);
+                    addGuest(item, data, $('#txtPersonSearch').val());
                 });
 
                 // Emergency Contact search icon hook to emergency contact dialog box

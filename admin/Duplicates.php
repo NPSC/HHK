@@ -16,46 +16,6 @@ use HHK\SysConst\GLTableNames;
  */
 require ("AdminIncludes.php");
 
-/* require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'visitRS.php');
-
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . 'Addresses.php');
-
-
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-
-require (HOUSE . 'psg.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'visitViewer.php');
-require (HOUSE . 'Visit.php');
-
-require (HOUSE . 'Vehicle.php');
-require (HOUSE . 'HouseServices.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Hospital.php');
-
-require (CLASSES . 'FinAssistance.php');
-require (CLASSES . 'Notes.php');
-
-require (CLASSES . 'Duplicate.php');
-require (CLASSES . 'CreateMarkupFromDB.php');
-*/
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -156,7 +116,7 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         
         <script type="text/javascript">
 // Init j-query

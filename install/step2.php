@@ -19,13 +19,6 @@ use HHK\SysConst\CodeVersion;
  */
 require_once ("InstallIncludes.php");
 
-/* require_once (SEC . 'UserClass.php');
-require_once(SEC . 'Login.php');
-require CLASSES . 'SiteLog.php';
-require CLASSES . 'TableLog.php';
-require CLASSES . 'SiteConfig.php';
-
-require_once(CLASSES . 'Patch.php'); */
 require_once(FUNCTIONS . 'mySqlFunc.php');
 
 try {
@@ -139,7 +132,6 @@ if (isset($_POST['btnNext'])) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <script type="text/javascript" src="../<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="../<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="../js/install.js"></script>
         <script type="text/javascript">
             $(document).ready(function () {

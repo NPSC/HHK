@@ -986,7 +986,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
 <script type="text/javascript">
 $(document).ready(function() {
     var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';

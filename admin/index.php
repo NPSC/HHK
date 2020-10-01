@@ -128,7 +128,6 @@ if (SecurityComponent::isHTTPS()) {
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <style>
             .ui-state-error {
                 border: 1px solid #cd0a0a;

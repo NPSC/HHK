@@ -20,31 +20,6 @@ use HHK\Member\Address\{Address, Phones, Emails, Addresses};
 
 require ("AdminIncludes.php");
 
-
-/* require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'WebSecRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-
-require (CLASSES . 'Campaign.php');
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . 'Addresses.php');
-require (MEMBER . 'WebUser.php');
-
-require (CLASSES . 'UserCategories.php');
-require (CLASSES . 'volunteer.php');
-require (CLASSES . 'selCtrl.php');
-require (CLASSES . 'History.php');
-require (CLASSES . 'CleanAddress.php');
-require (CLASSES . 'Donate.php');
-require (CLASSES . 'AuditLog.php');
-require (CLASSES . 'Relation.php');
-
-require (CLASSES . 'Notes.php'); */
-
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
@@ -429,7 +404,7 @@ $alertMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
@@ -558,7 +533,7 @@ $alertMessage = $alertMsg->createMarkup();
                 </div>
             </div>
             <div id="zipSearch" class="hhk-tdbox-noborder"  style="display:none;">
-                <table width="100%">
+                <table style="width:100%;">
                     <tr>
                         <td class="tdlabel">Country: </td><td><select id="zipCtry" class="input-medium bfh-countries" data-country="US"></select></td>
                     </tr>

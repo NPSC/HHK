@@ -54,7 +54,7 @@ if(!$u->isCron()){
     
     if ($u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
         
-        header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
+//        header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
         header('HTTP/1.0 401 Unauthorized');
         exit("Not authorized");
         

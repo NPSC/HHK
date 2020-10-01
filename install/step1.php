@@ -13,7 +13,6 @@ use HHK\HTMLControls\HTMLContainer;
  * @link      https://github.com/NPSC/HHK
  */
 require ("InstallIncludes.php");
-//require CLASSES . 'SiteConfig.php';
 
 
 // Get the site configuration object

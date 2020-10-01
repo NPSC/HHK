@@ -213,7 +213,7 @@ $pwAlertJSON = json_encode(AlertControl::makeJsonPackage('pw'));
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript"><?php require("js/vNameEdit.js") ?></script>
     </head>
     <body>
@@ -248,25 +248,9 @@ $pwAlertJSON = json_encode(AlertControl::makeJsonPackage('pw'));
                             <div id="addrsTabs" class="hhk-member-detail">
 <?php echo $addrPanelMkup; ?>
                             </div>
-                            <div style="clear:both;"></div>
-                            <input type="button" id="chgPW" value="Change Your Password..." /><input type="submit"  style="float:right;" value="Save" id="btnSavePI" name="btnSavePI" /><input id="btnResetAddr" type="reset" style="float:right;" value="Reset" />
                         </form>
                     </div>  <!-- end name edit tab -->
 
-                <div id="dchgPw" style="display:none;">
-                    <table><tr>
-                            <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="txtUserName"><?php echo $uname; ?></span></td>
-                        </tr><tr>
-                            <td class="tdlabel">Enter Old Password:</td><td><input id="txtOldPw" type="password" value=""  /></td>
-                        </tr><tr>
-                            <td class="tdlabel">Enter New Password:</td><td><input id="txtNewPw1" type="password" value=""  /></td>
-                        </tr><tr>
-                            <td class="tdlabel">New Password Again:</td><td><input id="txtNewPw2" type="password" value=""  /></td>
-                        </tr><tr>
-                            <td colspan ="2"><span id="pwChangeErrMsg"></span></td>
-                        </tr>
-                    </table>
-                </div>
                 <div id="submit"></div>
             </div>
         </div>
