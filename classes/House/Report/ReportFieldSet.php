@@ -1,6 +1,7 @@
 <?php
 namespace HHK\House\Report;
 
+use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 
 /**
@@ -13,6 +14,38 @@ use HHK\sec\Session;
  */
 class ReportFieldSet {
     
+    /**
+     * Checks if current user can modify/delete field set
+     *
+     * @param \PDO $dbh
+     * @param int $idFieldSet
+     * @return boolean
+     */
+    private static function isAuthorized(\PDO $dbh, int $idFieldSet){
+        
+        $uS = Session::getInstance();
+        $uname = $uS->username;
+        $admin = SecurityComponent::is_Admin();
+        if($idFieldSet > 0){
+            //check if current user is authorized
+            $query = "SELECT COUNT(`idFieldSet`) as `count` FROM `report_field_sets` where `idFieldSet` = '" . $idFieldSet . "' and (`Created_by` = '" . $uname ."'";
+            if($admin){
+                $query .= " or `global` = TRUE";
+            }
+            $query .= ")";
+            $stmt = $dbh->query($query);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+            
+            if($row['count'] > 0){
+                return true;
+            }else{
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }
+    
     public static function listFieldSets(\PDO $dbh, string $report){
         $uS = Session::getInstance();
         $uname = $uS->username;
@@ -21,7 +54,7 @@ class ReportFieldSet {
             return array('error' => 'Empty report name.');
         }
         
-        $query = "SELECT `idFieldSet`, `Title`, `Global` FROM `report_field_sets` WHERE `Report` = :report AND (`Created_by` = :createdBy OR `Global` = TRUE)";
+        $query = "SELECT `idFieldSet`, `Title`, `Global`, IF(`Global`, 'House sets', 'Personal sets') as `optionGroup` FROM `report_field_sets` WHERE `Report` = :report AND (`Created_by` = :createdBy OR `Global` = TRUE)";
         $stmt = $dbh->prepare($query);
         $stmt->execute([":report"=>$report, ":createdBy"=>$uname]);
         
@@ -49,55 +82,91 @@ class ReportFieldSet {
         if($row){
             $row["Fields"] = json_decode($row["Fields"], TRUE);
             
-            return $row;
+            return ['fieldSet'=>$row, 'canEdit'=>self::isAuthorized($dbh, $idFieldSet)];
         }else{
             return false;
         }
         
     }
     
-    public static function createFieldSet(\PDO $dbh, string $report, string $title, array $fields = [], int $global){
+    public static function createFieldSet(\PDO $dbh, string $report, string $title, array $fields = [], $global){
         
         $uS = Session::getInstance();
         $uname = $uS->username;
+        $admin = SecurityComponent::is_Admin();
         
         if (count($fields) ==  0) {
             return array('error' => 'Empty fields.');
         }
         
+        if(!$title){
+            return array('error' => 'Title field is required.');
+        }
+        
         $fieldsJSON = json_encode($fields);
         
-        $query = "INSERT INTO report_field_sets (`Title`, `Report`, `Fields`, `Global`, `Created_by`) VALUES(:title, :report, :fields, :global, :createdBy);";
-        $stmt = $dbh->prepare($query);
-        $success = $stmt->execute([":title"=>$title, ":report"=>$report, ":fields"=>$fieldsJSON, ":global"=>$global, ":createdBy"=>$uname]);
+        if(($global && $admin) || !$global){ //only admin users can create global fieldsets
         
-        if($success){
-            return ['status'=>"success"];
+            try{
+                $query = "INSERT INTO report_field_sets (`Title`, `Report`, `Fields`, `Global`, `Created_by`) VALUES(:title, :report, :fields, :global, :createdBy);";
+                $stmt = $dbh->prepare($query);
+                $success = $stmt->execute([":title"=>$title, ":report"=>$report, ":fields"=>$fieldsJSON, ":global"=>$global, ":createdBy"=>$uname]);
+            }catch(\PDOException $e){
+                if($e->errorInfo[1] == '1062'){
+                    return ['error'=>"Field set '" . $title . "' already exists."];
+                }else{
+                    return ['error'=>$e->getMessage()];
+                }
+            }
+            
+            if($success){
+                return ['status'=>"success"];
+            }else{
+                return ['error'=>"Could not create field set"];
+            }
         }else{
-            return ['error'=>"Could not create field set"];
+            return ['error'=>"Not authorized to create field set"];
         }
         
     }
     
-    public static function updateFieldSet(\PDO $dbh, int $idFieldSet, string $report, string $title, array $fields = [], int $global){
-        
-        $uS = Session::getInstance();
-        $uname = $uS->username;
-        
-        if (count($fields) ==  0) {
-            return array('error' => 'Empty fields.');
-        }
-        
-        $fieldsJSON = json_encode($fields);
-        
-        $query = "UPDATE report_field_sets SET `Title` = :title, `report` = :report, `Fields` = :fields, `Global` = :global, `Updated_by = :updatedBy where idFieldSet = :idFieldSet;";
-        $stmt = $dbh->prepare($query);
-        $success = $stmt->execute([":title"=>$title, ":report"=>$report, ":fields"=>$fieldsJSON, ":global"=>$global, ":updatedBy"=>$uname]);
-        
-        if($success){
-            return ['status'=>"success"];
+    public static function updateFieldSet(\PDO $dbh, int $idFieldSet, string $title, array $fields = []){
+        if(self::isAuthorized($dbh, $idFieldSet)){ //authorized
+            $uS = Session::getInstance();
+            $uname = $uS->username;
+            
+            if (count($fields) ==  0) {
+                return array('error' => 'Empty fields.');
+            }
+            
+            $fieldsJSON = json_encode($fields);
+            
+            $query = "UPDATE `report_field_sets` SET `Title` = :title, `Fields` = :fields, `Updated_by` = :updatedBy where `idFieldSet` = :idFieldSet";
+            $stmt = $dbh->prepare($query);
+            $success = $stmt->execute([":title"=>$title, ":fields"=>$fieldsJSON, ":updatedBy"=>$uname, ":idFieldSet"=>$idFieldSet]);
+            
+            if($success){
+                return ['status'=>"success"];
+            }else{
+                return ['error'=>"Could not update field set"];
+            }
         }else{
-            return ['error'=>"Could not update field set"];
+            return ['error'=>"Not authorized to update field set"];
+        }
+    }
+    
+    public static function deleteFieldSet(\PDO $dbh, int $idFieldSet){
+        
+        if(self::isAuthorized($dbh, $idFieldSet)){ //authorized
+            $stmt  = $dbh->prepare("DELETE FROM `report_field_sets` where `idFieldSet` = :idFieldSet");
+            $success = $stmt->execute([":idFieldSet"=>$idFieldSet]);
+            if($success){
+                return ['success'=>'Field set deleted successfully'];
+            }else{
+                return ['error'=>'Could not delete field set'];
+            }
+        }else{
+            return ['error'=>"Not authorized to delete this field set"];
         }
         
     }

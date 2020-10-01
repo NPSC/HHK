@@ -15,14 +15,11 @@ $(document).ready(function() {
 	$("#vcategory button").button();
 	
 	var defaultFields = $("#fields select").val();
-	console.log(defaultFields);
 	
 	$("#filterSets").on("change", "select", function(){
 		var $this = $(this);
-		console.log($this.val());
 		$("#filterSetBtns button, #filterSetBtns #fieldSetName").hide();
 		if($this.val() != ""){
-			$("#delSet").show();
 			$("#filterSetTitle").text($this.find("option:selected").text());
 			
 			var formData = {cmd:"getFieldSet",idFieldSet:$this.val()}; 
@@ -34,24 +31,27 @@ $(document).ready(function() {
     			dataType: "json",
     			success: function(data, textStatus, jqXHR)
     			{
-    				console.log(data);
-        			$("#fields select").val("").trigger("change");
-        			$("#fields select").val(data.fieldSet.Fields).trigger("change");
-        			$("#filterSetBtns input").val(data.fieldSet.Title);
+    				if(data.success){
+        				$("#fields select").val("").trigger("change");
+        				$("#fields select").val(data.success.fieldSet.Fields).trigger("change");
+        				$("#filterSetBtns input").val(data.success.fieldSet.Title);
+        				
+        				if(data.success.canEdit){
+        					$("#filterSetBtns button#delSet").show();
+        				}
+        			}else if(data.error){
+        				new Noty({
+							type : "error",
+							text : data.error
+						}).show();
+        			}
     			},
-    			error: function (jqXHR, textStatus, errorThrown)
-    			{
- 					new Noty({
-						type : "error",
-						text : errorthrown
-					}).show();
-    			}
 			});
 			
 		}else{
 			$("#filterSetTitle").text("");
 			$("#fields select").val(defaultFields);
-			
+			$("#fieldsetName").val("");
 		}
 	});
 	
@@ -70,20 +70,54 @@ $(document).ready(function() {
 	$("#filterSetBtns").on("click", "button", function(e){
 		e.preventDefault();
 		var id = $(this).attr('id');
+		console.log(id);
 		var formData = {};
 		switch(id){
 			case 'saveNewSet':
-			
-			formData = {
-				'cmd':'createFieldSet',
-				'report':'visit',
-				'title': $('input[name=fieldsetName]').val(),
-				'fields': $('select#selFld').val(),
-				'global':'false'
-			};
+				formData = {
+					'cmd':'createFieldSet',
+					'report':'visit',
+					'title': $('input[name=fieldsetName]').val(),
+					'fields': $('select#selFld').val(),
+					'global':'false'
+				};
+				
+				break;
+				
+			case 'saveGlobalSet':
+				formData = {
+					'cmd':'createFieldSet',
+					'report':'visit',
+					'title': $('input[name=fieldsetName]').val(),
+					'fields': $('select#selFld').val(),
+					'global':'true'
+				};
+				
+				break;
+				
+			case 'saveSet':
+				formData = {
+					'cmd':'updateFieldSet',
+					'idFieldSet': $('select#fieldset').val(),
+					'title': $('input[name=fieldsetName]').val(),
+					'fields': $('select#selFld').val(),
+				};
+				
+				break;
+				
+			case 'delSet':
+				formData = {
+					'cmd': 'deleteFieldSet',
+					'idFieldSet': $('select#fieldset').val()
+				};
+				
+				break;
+			default:
+				formData = {};
 		}
-		
-		$.ajax({
+
+		if(!$.isEmptyObject(formData)){
+			$.ajax({
     			url : "/house/ws_report.php",
     			type: "POST",
     			data : formData,
@@ -108,6 +142,7 @@ $(document).ready(function() {
  					
     			}
 			});
+		};
 		
 	});
     

@@ -1439,7 +1439,7 @@ $fieldSets = ReportFieldSet::listFieldSets($dbh, 'visit');
 
 $fieldSetsArray = array();
 foreach($fieldSets as $fieldSet){
-    $fieldSetsArray[] = [$fieldSet['idFieldSet'], $fieldSet['Title']];
+    $fieldSetsArray[] = [$fieldSet['idFieldSet'], $fieldSet['Title'], $fieldSet['optionGroup']];
 }
 
 if(isset($_REQUEST['fieldset'])){

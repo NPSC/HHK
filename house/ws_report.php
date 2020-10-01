@@ -78,10 +78,10 @@ try {
                 $idFieldSet = filter_var(urldecode($_REQUEST["idFieldSet"]), FILTER_VALIDATE_INT);
             }
             
-            $row = ReportFieldSet::getFieldSet($dbh, $idFieldSet);
+            $response = ReportFieldSet::getFieldSet($dbh, $idFieldSet);
             
-            if($row){
-                $events = ["status"=>"success", "fieldSet"=>$row];
+            if($response){
+                $events = ["success"=>$response];
             }else{
                 $events = ["error"=>"Field set not found"];
             }
@@ -96,7 +96,7 @@ try {
                 $title = filter_var(urldecode($_REQUEST["title"]), FILTER_SANITIZE_STRING);
             }
             if (isset($_REQUEST["global"])) {
-                $global = filter_var(urldecode($_REQUEST["global"]), FILTER_SANITIZE_NUMBER_INT);
+                $global = intval(filter_var($_REQUEST["global"], FILTER_VALIDATE_BOOLEAN));
             }
             if (isset($_REQUEST["fields"])) {
                 $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_STRING);
@@ -113,23 +113,26 @@ try {
             if (isset($_REQUEST['idFieldSet'])){
                 $idFieldSet = filter_var($_REQUEST['idFieldSet'], FILTER_SANITIZE_NUMBER_INT);
             }
-            if (isset($_REQUEST["report"])) {
-                $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_STRING);
-            }
             if (isset($_REQUEST["title"])) {
                 $title = filter_var(urldecode($_REQUEST["title"]), FILTER_SANITIZE_STRING);
-            }
-            if (isset($_REQUEST["global"])) {
-                $global = filter_var(urldecode($_REQUEST["global"]), FILTER_SANITIZE_NUMBER_INT);
             }
             if (isset($_REQUEST["fields"])) {
                 $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_STRING);
             }
             
-            $events = ReportFieldSet::updateFieldSet($dbh, $idFieldSet, $report, $title, $fields, $global);
+            $events = ReportFieldSet::updateFieldSet($dbh, $idFieldSet, $title, $fields);
             
             break;
             
+        case 'deleteFieldSet':
+            $idFieldSet = 0;
+            if (isset($_REQUEST["idFieldSet"])){
+                $idFieldSet = filter_var($_REQUEST["idFieldSet"], FILTER_SANITIZE_NUMBER_INT);
+            }
+            
+            $events = ReportFieldSet::deleteFieldSet($dbh, $idFieldSet);
+            
+            break;
         default:
             $events = array("error" => "Bad Command: \"" . $c . "\"");
     }
