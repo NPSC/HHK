@@ -903,22 +903,14 @@ where
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal]), 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
-		$tbl->addBodyTr(HTMLTable::makeTh('Lodging Charge Distribution', array('colspan'=>'2')));
+		$tbl->addBodyTr(HTMLTable::makeTh('Payment Reconciliation', array('colspan'=>'2')));
 		
-		$unpaidCharges = $fullInvervalCharge - ($intervalCharge + $intervalPay + $forwardPay + $discountCharge);
-
-		$tbl->addBodyTr(
-				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($fullInvervalCharge, 2), array('style'=>'text-align:right;'))
-				);
-		$tbl->addBodyTr(
-				HTMLTable::makeTd('Actual charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;'))
-				);
+		$unpaidCharges = $intervalCharge - $intervalPay - $forwardPay;
+		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($forwardPay, 2), array('style'=>'text-align:right;'))
@@ -928,14 +920,31 @@ where
 				. HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Discounts for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($discountCharge, 2), array('style'=>'text-align:right;'))
-				);
-		$tbl->addBodyTr(
 				HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;'))
 				);
 
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Actual charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				);
+		
+		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
+		$tbl->addBodyTr(HTMLTable::makeTh('Lodging Charge Distribution', array('colspan'=>'2')));
+		
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($fullInvervalCharge, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Actual charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Discounts for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($discountCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				);
+		
 		return $this->createBAMarkup($baArray, $tableAttrs)
 			. $tbl->generateMarkup($tableAttrs)
 			. $this->statsPanel($dbh, $totalCatNites, $start, $end, $categories, 'Report_Category', $monthArray, $fullInvervalCharge);
@@ -1228,8 +1237,9 @@ class GlStmtTotals {
 	public function createMarkup($tableAttrs) {
 
 		$tbl = new HTMLTable();
-		$tbl->addHeaderTr(
-				HTMLTable::makeTh('Item')
+		$tbl->addHeaderTr(HTMLTable::makeTh('Payment Distribution', array('colspan'=>'3')));
+		$tbl->addBodyTr(
+				HTMLTable::makeTh('Type')
 				.HTMLTable::makeTh('Credit')
 				.HTMLTable::makeTh('Debit')
 				);
@@ -1255,17 +1265,29 @@ class GlStmtTotals {
 
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payment Totals', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right; background-color:#e7f4c1','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right; background-color:#e7f4c1','class'=>'hhk-tdTotals '))
 				);
 
+		// Items
+		$tbl->addBodyTr(HTMLTable::makeTd(''));
+		$tbl->addBodyTr(HTMLTable::makeTh('Item Distribution', array('colspan'=>'3')));
+		$tbl->addBodyTr(
+				HTMLTable::makeTh('Item')
+				.HTMLTable::makeTh('Credit')
+				.HTMLTable::makeTh('Debit')
+				);
+		
+		$itemCredit = 0;
+		$itemDebit = 0;
+		
 		foreach ($this->getTotals() as $k => $t) {
 
 			if (isset($this->pmCodes[$k]) === FALSE) {
 
-				$totCredit += $t['Credit'];
-				$totDebit += $t['Debit'];
-
+				$itemCredit += $t['Credit'];
+				$itemDebit += $t['Debit'];
+				
 				$tbl->addBodyTr(
 						HTMLTable::makeTd($k, array('class'=>'tdlabel'))
 						. HTMLTable::makeTd(($t['Credit'] == 0 ? '' : number_format($t['Credit'], 2)), array('style'=>'text-align:right;'))
@@ -1275,9 +1297,21 @@ class GlStmtTotals {
 		}
 
 		$tbl->addBodyTr(
+				HTMLTable::makeTd('Item Totals', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($itemCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				);
+		
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Payment Totals', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right; background-color:#e7f4c1'))
+				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right; background-color:#e7f4c1'))
+				);
+		
+		$tbl->addBodyTr(
 				HTMLTable::makeTd('Totals', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($totCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				. HTMLTable::makeTd(number_format($totDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				. HTMLTable::makeTd(number_format($totCredit + $itemCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($totDebit + $itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
 				);
 
 		return $tbl->generateMarkup($tableAttrs);
