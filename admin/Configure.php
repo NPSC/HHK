@@ -290,6 +290,7 @@ if (isset($_POST['btnLogs'])) {
 
 $logMarkup = '';
 $logSelRows = array(
+	1=>array(0=>'sl', 1=>'Site Log'),
     2=>array(0=>'ss', 1=>'Sys Config Log'),
     3=>array(0=>'rr', 1=>'Rooms Log'),
     4=>array(0=>'ll', 1=>'Lookups Log'),
@@ -608,7 +609,7 @@ $(document).ready(function () {
         }
     });
 
-$('#logsTabDiv').tabs("option", "active", 0);
+$('#logsTabDiv').tabs("option", "active", 1);
 
     $('#btnreset, #btnSiteCnf, #btnLogs, #btnSaveSQL, #btnUpdate, #btnlblreset, #btnLabelCnf, #btnPay, #btnZipGo, #zipfile').button();
     $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {

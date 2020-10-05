@@ -398,7 +398,7 @@ class SiteConfig {
 
                     foreach ($name as $key => $val) {
 
-						if ($key == 'Password' || $key == 'sitePepper' || $key == 'ReadonlyPassword') {
+                    	if ($key == 'Password' || $key == 'sitePepper' || $key == 'ReadonlyPassword' || $key == 'BackupPassword') {
                         	
                         	$inpt = '********';
                         	

@@ -38,7 +38,7 @@ class GlStmt {
 		$this->loadDbRecords($dbh);
 
 		$pmCodes = array();
-		$stmt = $dbh->query("Select Gl_Code from payment_method where idPayment_method in (1, 2, 3)");
+		$stmt = $dbh->query("Select Gl_Code from payment_method where idPayment_method in (1, 2, 3, 5)");
 		while ($p = $stmt->fetch(\PDO::FETCH_NUM)) {
 			$pmCodes[] = $p[0];
 		}
@@ -128,15 +128,15 @@ class GlStmt {
 
 			$invLines[] = $l;
 
-			if ($l['il_Item_Id'] == ItemId::Waive) {
-				$hasWaive = TRUE;
-			}
+// 			if ($l['il_Item_Id'] == ItemId::Waive) {
+// 				$hasWaive = TRUE;
+// 			}
 		}
 
 		// Special handling for waived payments.
-		if ($hasWaive) {
-			$invLines = $this->mapWaivePayments($invLines);
-		}
+// 		if ($hasWaive) {
+// 			$invLines = $this->mapWaivePayments($invLines);
+// 		}
 
 
 		$glCode = $p['pm_Gl_Code'];
@@ -307,8 +307,8 @@ class GlStmt {
 
 		if ($waiveAmt > 0) {
 
-			// debit the foundation donation
-			$this->glLineMapper->makeLine($waiveGlCode, $waiveAmt, 0, $this->paymentDate);
+			//
+			$this->glLineMapper->makeLine($waiveGlCode, $waiveAmt, (0 - $waiveAmt), $this->paymentDate);
 
 		}
 
@@ -451,121 +451,6 @@ class GlStmt {
 		$start = $this->startDate->format('Y-m-d');
 		$end = $this->endDate->format('Y-m-d');
 
-		$guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
-
-		$query = "select
-	v.idVisit,
-	v.Span,
-	v.Arrival_Date,
-	v.Expected_Departure,
-	ifnull(v.Actual_Departure, '') as Actual_Departure,
-	v.Span_Start,
-	ifnull(v.Span_End, '') as Span_End,
-	v.Pledged_Rate,
-	v.Expected_Rate,
-	v.Rate_Category,
-	v.idRoom_Rate,
-	v.`Status`,
-    v.Rate_Glide_Credit,
-	CASE
-		WHEN
-			DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
-		THEN 0
-		WHEN
-			DATE(v.Span_Start) >= DATE('$end')
-		THEN 0
-		ELSE
-			DATEDIFF(
-			CASE
-				WHEN
-					DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$end')
-				THEN
-					DATE('$end')
-				ELSE DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
-				END,
-			CASE
-				WHEN DATE(v.Span_Start) < DATE('$start') THEN DATE('$start')
-				ELSE DATE(v.Span_Start)
-				END
-			)
-	END AS `Actual_Interval_Nights`,
-	CASE
-		WHEN
-			DATE(v.Span_Start) >= DATE('$start')
-		THEN 0
-		WHEN
-			DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
-		THEN
-			DATEDIFF(DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))), DATE(v.Span_Start))
-		ELSE DATEDIFF(
-			CASE
-			WHEN
-			DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$start')
-			THEN
-			DATE('$start')
-			ELSE
-				DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
-			END,
-			DATE(v.Span_Start)
-			)
-	END AS `Pre_Interval_Nights`,
-	$guestNightsSql
-	ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
-	ifnull(rm.idRoom, '') as idRoom,
-	ifnull(rm.Category, '') as Room_Category,
-	ifnull(rm.`Type`, '') as Room_Type,
-	ifnull(rm.Report_Category, '') as Report_Category,
-	ifnull(rm.Rate_Code, '') as Rate_Code,
-	ifnull(il.Amount, 0) as il_Amount,
-	ifnull(il.Item_Id, 0) as Item_Id,
-	ifnull(il.Type_Id, 0) as Type_Id,
-	ifnull(il.Source_Item_Id, 0) as Source_Item_Id,
-	ifnull(i.idInvoice, 0) as idInvoice,
-	ifnull(i.Status, '') as `Invoice_Status`,
-	ifnull(i.Sold_To_Id, 0) as Sold_To_Id,
-	IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
-	IFNULL(`p`.`Amount`, 0) AS `pAmount`,
-	IFNULL(`p`.`idPayment_Method`, 0) AS `pMethod`,
-	IFNULL(`p`.`Status_Code`, '') AS `pStatus`,
-	IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
-	IFNULL(`p`.`Last_Updated`, '') AS `pUpdated`,
-	IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
-	IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
-	IFNULL(`nd`.`Gl_Code_Debit`, 'Guest') as `ba_Gl_Debit`
-from
-	visit v
-		left join
-	reservation rv ON v.idReservation = rv.idReservation
-		left join
-	resource_room rr ON v.idResource = rr.idResource
-		left join
-	room rm ON rr.idRoom = rm.idRoom
-		left join
-	invoice i on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span and i.Deleted = 0
-		left join
-	invoice_line il on il.Invoice_Id = i.idInvoice  and il.Deleted = 0
-		LEFT JOIN
-	`payment_invoice` `pi` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
-		LEFT JOIN
-	`payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
-		LEFT JOIN
-	name_demog nd on i.Sold_To_Id = nd.idName
-
-where
-	v.idVisit in
-		(select idVisit from visit
-        	where
-            	`Status` <> 'p'
-				and DATE(Arrival_Date) < DATE('$end')
-				and DATE(ifnull(Span_End,
-					case
-					when now() > Expected_Departure then now()
-					else Expected_Departure
-                	end)) >= DATE('$start')
-		) " .
-	$this->getOrderNumbers() .
- " order by v.idVisit, v.Span";
-
 		$categories = readGenLookupsPDO($dbh, 'Room_Category');
 		$categories[] = array(0=>'', 1=>'(default)');
 
@@ -609,7 +494,9 @@ where
 			$totalPayment[$i[0]] = 0;
 		}
 
-		$stmt = $dbh->query($query);
+		$guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
+		
+		$stmt = $dbh->query($this->makeQuery($start, $end, $guestNightsSql));
 
 		while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -620,8 +507,10 @@ where
 
 				If ($visitId != $r['idVisit'] && $visitId != 0) {
 					// Visit Change
+					
+					$totPay = $vIntervalPay + $vForwardPay;
 
-					if ($vIntervalPay > ($vIntervalCharge + $vPreIntervalCharge)) {
+					if ($vIntervalPay >= ($vIntervalCharge + $vPreIntervalCharge)) {
 						$overPay += $vIntervalPay - ($vIntervalCharge + $vPreIntervalCharge);
 						$intervalPay += $vIntervalCharge;
 						$preIntervalPay += $vPreIntervalCharge;
@@ -761,7 +650,7 @@ where
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vForwardPay += $ilAmt;
 					}
-					
+										
 				}
 
 			// Refunds
@@ -950,6 +839,124 @@ where
 			. $this->statsPanel($dbh, $totalCatNites, $start, $end, $categories, 'Report_Category', $monthArray, $fullInvervalCharge);
 	}
 
+	protected function makeQuery($start, $end, $guestNightsSql) {
+		
+		$query = "select
+	v.idVisit,
+	v.Span,
+	v.Arrival_Date,
+	v.Expected_Departure,
+	ifnull(v.Actual_Departure, '') as Actual_Departure,
+	v.Span_Start,
+	ifnull(v.Span_End, '') as Span_End,
+	v.Pledged_Rate,
+	v.Expected_Rate,
+	v.Rate_Category,
+	v.idRoom_Rate,
+	v.`Status`,
+    v.Rate_Glide_Credit,
+	CASE
+		WHEN
+			DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
+		THEN 0
+		WHEN
+			DATE(v.Span_Start) >= DATE('$end')
+		THEN 0
+		ELSE
+			DATEDIFF(
+			CASE
+				WHEN
+					DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$end')
+				THEN
+					DATE('$end')
+				ELSE DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
+				END,
+			CASE
+				WHEN DATE(v.Span_Start) < DATE('$start') THEN DATE('$start')
+				ELSE DATE(v.Span_Start)
+				END
+			)
+	END AS `Actual_Interval_Nights`,
+	CASE
+		WHEN
+			DATE(v.Span_Start) >= DATE('$start')
+		THEN 0
+		WHEN
+			DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
+		THEN
+			DATEDIFF(DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))), DATE(v.Span_Start))
+		ELSE DATEDIFF(
+			CASE
+			WHEN
+			DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$start')
+			THEN
+			DATE('$start')
+			ELSE
+				DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure)))
+			END,
+			DATE(v.Span_Start)
+			)
+	END AS `Pre_Interval_Nights`,
+	$guestNightsSql
+	ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
+	ifnull(rm.idRoom, '') as idRoom,
+	ifnull(rm.Category, '') as Room_Category,
+	ifnull(rm.`Type`, '') as Room_Type,
+	ifnull(rm.Report_Category, '') as Report_Category,
+	ifnull(rm.Rate_Code, '') as Rate_Code,
+	ifnull(il.Amount, 0) as il_Amount,
+	ifnull(il.Item_Id, 0) as Item_Id,
+	ifnull(il.Type_Id, 0) as Type_Id,
+	ifnull(il.Source_Item_Id, 0) as Source_Item_Id,
+	ifnull(i.idInvoice, 0) as idInvoice,
+	ifnull(i.Status, '') as `Invoice_Status`,
+	ifnull(i.Sold_To_Id, 0) as Sold_To_Id,
+	IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
+	IFNULL(`p`.`Amount`, 0) AS `pAmount`,
+	IFNULL(`p`.`idPayment_Method`, 0) AS `pMethod`,
+	IFNULL(`p`.`Status_Code`, '') AS `pStatus`,
+	IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
+	IFNULL(`p`.`Last_Updated`, '') AS `pUpdated`,
+	IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
+	IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
+	IFNULL(`nd`.`Gl_Code_Debit`, 'Guest') as `ba_Gl_Debit`
+from
+	visit v
+		left join
+	reservation rv ON v.idReservation = rv.idReservation
+		left join
+	resource_room rr ON v.idResource = rr.idResource
+		left join
+	room rm ON rr.idRoom = rm.idRoom
+		left join
+	invoice i on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span and i.Deleted = 0
+		left join
+	invoice_line il on il.Invoice_Id = i.idInvoice  and il.Deleted = 0
+		LEFT JOIN
+	`payment_invoice` `pi` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
+		LEFT JOIN
+	`payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
+		LEFT JOIN
+	name_demog nd on i.Sold_To_Id = nd.idName
+	
+where
+	v.idVisit in
+		(select idVisit from visit
+        	where
+            	`Status` <> 'p'
+				and DATE(Arrival_Date) < DATE('$end')
+				and DATE(ifnull(Span_End,
+					case
+					when now() > Expected_Departure then now()
+					else Expected_Departure
+                	end)) >= DATE('$start')
+		) " .
+		$this->getOrderNumbers() .
+		" order by v.idVisit, v.Span";
+		
+		return $query;
+	}
+	
 	protected function createBAMarkup($baTotals, $tableAttrs) {
 
 		$totals = array('paid'=>0, 'pend'=>0);
@@ -1265,8 +1272,8 @@ class GlStmtTotals {
 
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payment Totals', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right; background-color:#e7f4c1','class'=>'hhk-tdTotals'))
-				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right; background-color:#e7f4c1','class'=>'hhk-tdTotals '))
+				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right;', 'class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 
 		// Items
@@ -1299,19 +1306,19 @@ class GlStmtTotals {
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Item Totals', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($itemCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				. HTMLTable::makeTd(number_format($itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				. HTMLTable::makeTd(number_format($itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payment Totals', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right; background-color:#e7f4c1'))
-				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right; background-color:#e7f4c1'))
+				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Totals', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($totCredit + $itemCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				. HTMLTable::makeTd(number_format($totDebit + $itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
+				. HTMLTable::makeTd(number_format($totDebit + $itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 
 		return $tbl->generateMarkup($tableAttrs);
