@@ -12,6 +12,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\House\Report\ReportFieldSet;
 
 /**
  * ReservReport.php
@@ -115,9 +116,9 @@ $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
 $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', array(), 'date');
 
-$colSelector = new ColumnSelectors($cFields, 'selFld');
-
-
+$fieldSets = ReportFieldSet::listFieldSets($dbh, 'reserv', true);
+$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
+$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
 
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
@@ -446,7 +447,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 $statusSelector = HTMLSelector::generateMarkup(
         HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selResvStatus[]', 'size'=>'6', 'multiple'=>'multiple'));
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;margin-left:5px', 'id'=>'includeFields'));
 
 $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
@@ -472,6 +473,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
         <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
 
 <script type="text/javascript">
     $(document).ready(function() {
@@ -512,6 +514,8 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
                 $("div#printArea").printArea();
             });
         }
+        
+        $('#includeFields').fieldSets({'reportName': 'reserv'});
     });
  </script>
     </head>

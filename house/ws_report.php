@@ -81,7 +81,7 @@ try {
             $response = ReportFieldSet::getFieldSet($dbh, $idFieldSet);
             
             if($response){
-                $events = ["success"=>$response];
+                $events = $response;
             }else{
                 $events = ["error"=>"Field set not found"];
             }

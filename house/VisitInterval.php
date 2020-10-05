@@ -1435,20 +1435,10 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     $cFields[] = array("Contribution", 'donpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 }
 
-$fieldSets = ReportFieldSet::listFieldSets($dbh, 'visit');
+$fieldSets = ReportFieldSet::listFieldSets($dbh, 'visit', true);
+$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
 
-$fieldSetsArray = array();
-foreach($fieldSets as $fieldSet){
-    $fieldSetsArray[] = [$fieldSet['idFieldSet'], $fieldSet['Title'], $fieldSet['optionGroup']];
-}
-
-if(isset($_REQUEST['fieldset'])){
-    $filterSetSelection = $_REQUEST['fieldset'];
-}else{
-    $filterSetSelection = '';
-}
-
-$colSelector = new ColumnSelectors($cFields, 'selFld', $fieldSetsArray, $filterSetSelection);
+$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
 
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnStatsOnly'])) {
@@ -1548,7 +1538,7 @@ $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 $roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;margin-left:5px'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;margin-left:5px', 'id'=>'includeFields'));
 
 $dateFormat = $labels->getString("momentFormats", "report", "MMM D, YYYY");
 
@@ -1583,7 +1573,7 @@ if ($uS->CoTod) {
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo REPORT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
 <script type="text/javascript">
@@ -1687,6 +1677,8 @@ if ($uS->CoTod) {
             $('div#pudiv').remove();
         }
     });
+
+	$('#includeFields').fieldSets({'reportName': 'visit'});
 
     });
  </script>

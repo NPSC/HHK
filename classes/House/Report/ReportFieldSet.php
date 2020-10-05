@@ -46,7 +46,7 @@ class ReportFieldSet {
         }
     }
     
-    public static function listFieldSets(\PDO $dbh, string $report){
+    public static function listFieldSets(\PDO $dbh, string $report, bool $returnSelectorArray = false){
         $uS = Session::getInstance();
         $uname = $uS->username;
         
@@ -60,8 +60,16 @@ class ReportFieldSet {
         
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
-        
-        return $rows;
+        if($returnSelectorArray){
+            $selectorArray = [];
+            foreach($rows as $fieldSet){
+                $selectorArray[] = [$fieldSet['idFieldSet'], $fieldSet['Title'], $fieldSet['optionGroup']];
+            }
+            
+            return $selectorArray;
+        }else{
+            return $rows;
+        }
     }
     
     public static function getFieldSet(\PDO $dbh, int $idFieldSet){
@@ -82,7 +90,7 @@ class ReportFieldSet {
         if($row){
             $row["Fields"] = json_decode($row["Fields"], TRUE);
             
-            return ['fieldSet'=>$row, 'canEdit'=>self::isAuthorized($dbh, $idFieldSet)];
+            return ['success' => 'success', 'fieldSet'=>$row, 'canEdit'=>self::isAuthorized($dbh, $idFieldSet)];
         }else{
             return false;
         }
@@ -111,6 +119,7 @@ class ReportFieldSet {
                 $query = "INSERT INTO report_field_sets (`Title`, `Report`, `Fields`, `Global`, `Created_by`) VALUES(:title, :report, :fields, :global, :createdBy);";
                 $stmt = $dbh->prepare($query);
                 $success = $stmt->execute([":title"=>$title, ":report"=>$report, ":fields"=>$fieldsJSON, ":global"=>$global, ":createdBy"=>$uname]);
+                $idFieldSet = $dbh->lastInsertId();
             }catch(\PDOException $e){
                 if($e->errorInfo[1] == '1062'){
                     return ['error'=>"Field set '" . $title . "' already exists."];
@@ -120,7 +129,12 @@ class ReportFieldSet {
             }
             
             if($success){
-                return ['status'=>"success"];
+                if($global){
+                    $optGroup = "House sets";
+                }else{
+                    $optGroup = "Personal sets";
+                }
+                return ['success'=>"Field set created successfully", 'fieldSet'=>['idFieldSet'=>$idFieldSet, 'title'=>$title, 'Fields'=>$fields, 'global'=>$global, 'optGroup'=>$optGroup]];
             }else{
                 return ['error'=>"Could not create field set"];
             }
@@ -146,7 +160,7 @@ class ReportFieldSet {
             $success = $stmt->execute([":title"=>$title, ":fields"=>$fieldsJSON, ":updatedBy"=>$uname, ":idFieldSet"=>$idFieldSet]);
             
             if($success){
-                return ['status'=>"success"];
+                return ['success'=>"Field set updated successfully", 'fieldSet'=>['idFieldSet'=>$idFieldSet, 'title'=>$title]];
             }else{
                 return ['error'=>"Could not update field set"];
             }
@@ -161,7 +175,7 @@ class ReportFieldSet {
             $stmt  = $dbh->prepare("DELETE FROM `report_field_sets` where `idFieldSet` = :idFieldSet");
             $success = $stmt->execute([":idFieldSet"=>$idFieldSet]);
             if($success){
-                return ['success'=>'Field set deleted successfully'];
+                return ['success'=>'Field set deleted successfully', 'idFieldSet'=>$idFieldSet];
             }else{
                 return ['error'=>'Could not delete field set'];
             }
