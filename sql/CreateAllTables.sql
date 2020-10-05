@@ -1624,16 +1624,17 @@ CREATE TABLE IF NOT EXISTS `report` (
 -- Table `report_field_sets`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `report_field_sets` (
-  `idFieldSet` INT NOT NULL,
-  `Title` VARCHAR(45) NOT NULL DEFAULT '',
-  `Report` VARCHAR(45) NOT NULL DEFAULT '',
-  `Fields` LONGTEXT NULL,
-  `Global` TINYINT NULL DEFAULT 0,
-  `Updated_by` VARCHAR(45) NOT NULL DEFAULT '',
-  `Last_Updated` DATETIME NULL,
-  `Created_by` VARCHAR(45) NOT NULL DEFAULT '',
-  `Timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idFieldSet`)
+  `idFieldSet` int(11) NOT NULL AUTO_INCREMENT,
+  `Title` varchar(45) NOT NULL DEFAULT '',
+  `Report` varchar(45) NOT NULL DEFAULT '',
+  `Fields` longtext,
+  `Global` tinyint(4) DEFAULT '0',
+  `Updated_by` varchar(45) DEFAULT '',
+  `Last_Updated` datetime DEFAULT NULL,
+  `Created_by` varchar(45) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idFieldSet`),
+  UNIQUE KEY `UNIQUE_INDEX` (`Title`,`Report`,`Created_by`)
 ) ENGINE=InnoDB;
   
 
