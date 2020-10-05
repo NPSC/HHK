@@ -20,8 +20,6 @@ use HHK\sec\Labels;
 
 require_once ('VolIncludes.php');
 
-//require_once (CLASSES . 'UserCategories.php');
-
 
 function getVolUSerMarkup(\PDO $dbh, $id) {
 

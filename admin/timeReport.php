@@ -13,9 +13,6 @@ use HHK\HTMLControls\selCtrl;
  */
 require("AdminIncludes.php");
 
-// require(CLASSES . "chkBoxCtrlClass.php");
-// require(CLASSES . "selCtrl.php");
-
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
@@ -113,7 +110,7 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         

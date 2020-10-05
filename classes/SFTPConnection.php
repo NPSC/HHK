@@ -37,19 +37,22 @@ class SFTPConnection
 	public function uploadFile($data_to_send, $remote_file)
 	{
 		$sftp = $this->sftp;
-		$stream = fopen("ssh2.sftp://$sftp$remote_file", 'w');
 		
-		if (! $stream) {
-			throw new \Exception("Could not open file: $remote_file");
-		}
+		$sftp->put($remote_file, $data_to_send);
+		
+// 		$stream = fopen("ssh2.sftp://$sftp$remote_file", 'w');
+		
+// 		if (! $stream) {
+// 			throw new \Exception("Could not open file: $remote_file");
+// 		}
 				
-		if ($data_to_send === FALSE) {
-			throw new \Exception("No data to send.");
-		}
+// 		if ($data_to_send === FALSE) {
+// 			throw new \Exception("No data to send.");
+// 		}
 
-		$bytesWritten = $this->fwriteStream($stream, $data_to_send);
+// 		$bytesWritten = $this->fwriteStream($stream, $data_to_send);
 					
-		fclose($stream);
+// 		fclose($stream);
 		
 		return $bytesWritten;
 	}

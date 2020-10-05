@@ -17,23 +17,6 @@ use HHK\fbUserClass;
 require ("AdminIncludes.php");
 require ('functions' . DS . 'RegUserManager.php');
 
-/*
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'WebSecRS.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . 'Addresses.php');
-
-require (CLASSES . "fbUserClass.php");
-
-require (CLASSES . "AuditLog.php");
-//require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php'); */
-
 $wInit = new webInit();
 $dbh = $wInit->dbh;
 
@@ -182,7 +165,7 @@ if ($toBeRegisteredRows["web"] == "") {
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         

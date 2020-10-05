@@ -44,7 +44,7 @@ $u = new UserClass();
 
 if(!$u->isCron()){
 
-	header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
+//	header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
 	header('HTTP/1.0 401 Unauthorized');
 	exit("Not authorized");
 
@@ -52,10 +52,18 @@ if(!$u->isCron()){
 
 
 $today = new DateTime();
-$today->sub(new DateInterval('P1M'));
+
 
 try {
 	$glParm = new GLParameters($dbh, 'Gl_Code');
+	
+	$startDay = $glParm->getStartDay();
+	
+	// Exit if not start day.
+	if ($today->format('d') != $glParm->getStartDay()) {
+		exit();
+	}
+	
 	$glCodes = new GLCodes($dbh, $today->format('m'), $today->format('Y'), $glParm, new GLTemplateRecord());
 	$bytesWritten = $glCodes->mapRecords()->transferRecords();
 

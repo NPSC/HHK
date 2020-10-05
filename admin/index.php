@@ -128,7 +128,13 @@ if (SecurityComponent::isHTTPS()) {
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <style>
+            .ui-state-error {
+                border: 1px solid #cd0a0a;
+                background: #fef1ec url("images/ui-bg_glass_95_fef1ec_1x400.png") 50% 50% repeat-x;
+                color: #cd0a0a;
+            }
+        </style>
     </head>
     <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >
         <div id="page">
@@ -141,7 +147,9 @@ if (SecurityComponent::isHTTPS()) {
                 <div style="clear:left; margin-bottom: 20px;"></div>
                 <div id="formlogin" style="float:left;" >
                     <div><?php echo $siteName; ?>
-                        <p style="margin-left:6px; width: 65%;"><?php echo $disclaimer ?></p>
+                        <div style="margin-left:6px; width: 65%;">
+                        	<?php echo $disclaimer . $login->IEMsg(); ?>
+                        </div>
                     </div>
                     <?php echo $loginMkup . $linkMkup; ?></div>
                 </div>

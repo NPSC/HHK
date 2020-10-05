@@ -2,7 +2,6 @@
 
 namespace HHK\House\Reservation;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\Purchase\{FinAssistance, RateChooser};
 use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\House\Family\{Family, FamilyAddGuest, JoinNewFamily};
@@ -20,7 +19,7 @@ use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
 use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Exception\RuntimeException;
-use HHK\Tables\Visit\VisitRS;
+
 
 /**
  * Description of Reservation
@@ -81,15 +80,26 @@ class Reservation {
 
 
         // idResv = 0 ------------------------------
+        
+        $hasNameGuestRecord = FALSE;
 
+        // if we have a member id, is them in the name_guest table?
+        if ($rData->getId() > 0) {
+        	$stmt = $dbh->query("Select count(*) from name_guest where idName = " . $rData->getId());
+        	$rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+        	
+        	if ($rows[0][0] > 0) {
+        		$hasNameGuestRecord = TRUE;
+        	}
+        }
 
-        if ($rData->getIdPsg() > 0 || $rData->getId() > 0) {
-
+        // Guest has a name_guest record, which means they has one or more psg's
+        if ($rData->getIdPsg() > 0 || $hasNameGuestRecord) {
             return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
         }
 
 
-        // idPsg = 0; idResv = 0; idGuest = 0
+        // idPsg = 0; idResv = 0;
         return new Reservation($rData, new ReservationRS(), new Family($dbh, $rData));
 
     }

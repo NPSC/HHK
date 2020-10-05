@@ -68,7 +68,16 @@ $delCofListClass = 'hhk-delcoflist';
 // COF listing return
 if (isset($_POST['cmd'])) {
 	
-	$dataArray = array('coflist'=>CreditToken::getCardsOnFile($dbh, $delCofListClass));
+	$dataArray = array();
+	$cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_STRING);
+	
+	if ($cmd == 'cof') {
+		$dataArray['coflist'] = CreditToken::getCardsOnFile($dbh, $delCofListClass);
+		
+	} else if ($cmd == 'delcof') {
+		$dataArray['message'] = CreditToken::deleteToken($dbh, filter_input(INPUT_POST, 'gtId', FILTER_SANITIZE_NUMBER_INT));
+	}
+	
 	echo json_encode($dataArray);
 	exit();
 }
@@ -612,14 +621,40 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
 <script type="text/javascript">
-	function delCofEntry(gtId) {
+	var deleteThisTr;
 
+	function delCofEntry(gtId) {
+        $.post('PaymentReport.php', {cmd: 'delcof', 'gtId':gtId},
+            function (data) {
+                
+                if (data) {
+
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert("Parser error - " + err.message);
+                        return;
+                    }
+
+                    if (data.error) {
+
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, 'error');
+
+                    } else if (data.message && data.message == 'true') {
+						deleteThisTr.remove();
+						flagAlertMessage('The Card on file entry is deleted.', 'success');
+                    }
+                }
+            }
+        );
 	}
 
     $(document).ready(function() {
@@ -663,8 +698,11 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
                             } else if (data.coflist) {
 								$('#cofDiv').empty().append($(data.coflist));
-								$('.'+delCofClass).on('change', '.'+delCofClass, function (){
-									delCofEntry($(this).data('gtId));
+								
+								$('#cofDiv').on('change', '.'+delCofClass, function (){
+									var gid = $(this).val();
+									deleteThisTr = $(this).parents('tr');
+									delCofEntry(gid);
 								});
                             }
                         }

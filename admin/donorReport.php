@@ -15,9 +15,6 @@ use HHK\Donation\Campaign;
 
 require ("AdminIncludes.php");
 
-// require(CLASSES . "chkBoxCtrlClass.php");
-// require(CLASSES . "selCtrl.php");
-// require(CLASSES . 'Campaign.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -128,7 +125,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         

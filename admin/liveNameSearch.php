@@ -16,7 +16,6 @@ use HHK\Tables\WebSec\FbxRS;
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-//require(MEMBER . 'MemberSearch.php');
 
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;

@@ -18,16 +18,4 @@ define('DEFAULT_CSS', '<link href="css/default.css' . JSV . '" rel="stylesheet" 
  */
 require ('../functions/commonDefines.php');
 require (THIRD_PARTY . '/autoload.php');
-// require (CLASSES . 'PDOdata.php');
-// require (CLASSES . 'HTML_Controls.php');
-// require (DB_TABLES . 'HouseRS.php');
-// require (CLASSES . 'Exception_hk' . DS . 'Hk_Exception.php');
 require (FUNCTIONS . 'commonFunc.php');
-// require (SEC . 'sessionClass.php');
-// require (CLASSES . 'alertMessage.php');
-// require (CLASSES . 'config'. DS . 'Lite.php');
-// require (SEC . 'SecurityComponent.php');
-// require (SEC . 'ScriptAuthClass.php');
-// require (CLASSES . 'SysConst.php');
-// require (SEC . 'webInit.php');
-// require (SEC . 'UserClass.php');

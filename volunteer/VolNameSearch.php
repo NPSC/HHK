@@ -16,8 +16,6 @@ use HHK\Member\MemberSearch;
 
 require ("VolIncludes.php");
 
-//require(MEMBER . 'MemberSearch.php');
-
 $wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;

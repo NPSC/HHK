@@ -721,7 +721,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="../js/uppload.polyfills.js"></script>
-		<script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
 		<script type="text/javascript" src="<?php echo DOC_UPLOAD_JS; ?>"></script>
 
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>

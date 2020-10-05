@@ -2,7 +2,7 @@
 
 namespace HHK\House\Reservation;
 
-use HHK\Config_Lite\Config_Lite;
+
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector};
 use HHK\House\Report\ActivityReport;
 use HHK\Member\Role\Guest;

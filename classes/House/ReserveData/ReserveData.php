@@ -90,6 +90,7 @@ class ReserveData {
     protected $errors;
     protected $resvPrompt;
     protected $insistCkinDemog;
+    protected $searchTerm;
 
     function __construct($post, $reservationTitle = '') {
 
@@ -130,9 +131,13 @@ class ReserveData {
         }
 
         if (isset($post['gstCoDate'])) {
-            $this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
+        	$this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
         }
-
+        
+        if (isset($post['schTerm'])) {
+        	$this->setSearchTerm(filter_var($post['schTerm'], FILTER_SANITIZE_STRING));
+        }
+        
         if (isset($post['mem'])) {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
@@ -346,6 +351,10 @@ class ReserveData {
         return $this->wlNotesLabel;
     }
 
+    public function getSearchTerm($p) {
+    	 return $this->searchTerm;
+    }
+    
     public function getResvEarlyArrDays() {
         return $this->resvEarlyArrDays;
     }
@@ -403,6 +412,10 @@ class ReserveData {
         }
 
         return NULL;
+    }
+    
+    public function getFullName() {
+    	return $this->fullName;
     }
 
     public function findMemberById($val) {
@@ -570,10 +583,15 @@ class ReserveData {
     }
 
     public function setCheckinSection($p) {
-        $this->checkinSection = $p;
-        return $this;
+    	$this->checkinSection = $p;
+    	return $this;
     }
-
+    
+    public function setSearchTerm($p) {
+    	$this->searchTerm = $p;
+    	return $this;
+    }
+    
     public function setArrivalDT($arrivalDT) {
         $this->arrivalDT = $arrivalDT;
         return $this;

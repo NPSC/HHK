@@ -136,7 +136,7 @@ if (SecurityComponent::isHTTPS()) {
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
     </head>
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
@@ -150,7 +150,9 @@ if (SecurityComponent::isHTTPS()) {
                     <div style="clear:left; margin-bottom: 20px;"></div>
                 <div id="formlogin" style="float:left;" >
                     <div><?php echo $siteName; ?>
-                        <p style="margin-left:6px; width: 65%;"><?php echo $disclaimer ?></p>
+                        <div style="margin-left:6px; width: 65%;">
+                        	<?php echo $disclaimer . $login->IEMsg(); ?>
+                        </div>
                     </div>
                     <?php echo $loginMkup; ?>
                 </div>

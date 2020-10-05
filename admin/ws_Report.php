@@ -13,7 +13,6 @@ use HHK\SysConst\WebPageCode;
  * @link      https://github.com/NPSC/HHK
  */
 require("AdminIncludes.php");
-//require(CLASSES . "Campaign.php");
 
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
