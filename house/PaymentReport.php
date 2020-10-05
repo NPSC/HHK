@@ -14,6 +14,7 @@ use HHK\sec\Labels;
 use HHK\Purchase\PriceModel\PriceNone;
 use HHK\SysConst\ItemPriceCode;
 use HHK\Payment\CreditToken;
+use HHK\House\Report\ReportFieldSet;
 
 /**
  * PaymentReport.php
@@ -165,7 +166,9 @@ $cFields[] = array("Updated", 'Updated', 'checked', '', 'MM/DD/YYYY', '15', arra
 $cFields[] = array("By", 'By', 'checked', '', 'string', '20', array());
 $cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
 
-$colSelector = new ColumnSelectors($cFields, 'selFld');
+$fieldSets = ReportFieldSet::listFieldSets($dbh, 'payment', true);
+$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
+$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 	
@@ -602,7 +605,7 @@ $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($month
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;', 'id'=>'includeFields'));
 
 ?>
 <!DOCTYPE html>
@@ -625,6 +628,8 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
+
 <script type="text/javascript">
 	var deleteThisTr;
 
@@ -770,6 +775,8 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                 invoiceAction($(this).data('iid'), 'view', event.target.id, '', true);
             });
         }
+        
+        $('#includeFields').fieldSets({'reportName': 'payment'});
     });
  </script>
     </head>

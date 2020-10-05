@@ -13,6 +13,7 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\House\Report\ReportFieldSet;
 
 /**
  * ItemReport.php
@@ -198,7 +199,9 @@ $cFields[] = array("Status", 'Status', 'checked', '', 'string', '15', array());
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
 //$cFields[] = array("By", 'By', 'checked', '', 's', '', array());
 
-$colSelector = new ColumnSelectors($cFields, 'selFld');
+$fieldSets = ReportFieldSet::listFieldSets($dbh, 'item', true);
+$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
+$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
 
 
 // Items
@@ -616,7 +619,7 @@ if (count($diags) > 0) {
 }
 
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;', 'id'=>'includeFields'));
 
 ?>
 <!DOCTYPE html>
@@ -639,6 +642,8 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
+        
 <script type="text/javascript">
 function invoiceAction(idInvoice, action, eid, container, show) {
     $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action, 'sbt':show},
@@ -743,6 +748,9 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 invoiceAction($(this).data('iid'), 'view', event.target.id, '', true);
             });
         }
+        
+        $('#includeFields').fieldSets({'reportName': 'item'});
+        
     });
  </script>
     </head>
