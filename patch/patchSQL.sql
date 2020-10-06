@@ -1,10 +1,10 @@
 
 
 -- Update sys config categories and descriptions
-drop procedure IF EXISTS update_sys_config();
+drop procedure IF EXISTS update_sys_config;
 
 -- Exchange rates a,b,c,d with r's if not income rated.
-drop procedure IF EXISTS fix_rates();
+drop procedure IF EXISTS fix_rates;
 
 -- label categories
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES
@@ -20,3 +20,8 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 ('labels_category', 's', 'Statement', '100');
 
 INSERT INTO `sys_config` (`Key`, `Type`, `Category`, `Description`) VALUES ('DefCalEventTextColor', 's', 'c', 'Default calendar event ribbon text color');
+
+-- add report filter page
+CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', '', NULL, 'ga');
+CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', '', NULL, 'gr');
+

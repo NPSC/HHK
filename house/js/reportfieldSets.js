@@ -15,7 +15,7 @@
   $.fn.fieldSets = function (options) {
 
 	    var defaults = {    
-            serviceURL: 'ws_report.php',
+            serviceURL: 'ws_reportFilter.php',
             reportName: ''
         };
 

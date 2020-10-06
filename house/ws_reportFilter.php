@@ -1,32 +1,12 @@
 <?php
 
 use HHK\sec\WebInit;
-use HHK\SysConst\WebPageCode;
-use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
-use HHK\Photo;
-use HHK\Update\SiteConfig;
-use HHK\Document\ListDocuments;
-use HHK\Document\Document;
-use HHK\House\Vehicle;
-use HHK\HTMLControls\HTMLContainer;
-use HHK\House\Report\ActivityReport;
-use HHK\SysConst\GLTableNames;
-use HHK\House\ResourceView;
-use HHK\House\Constraint\Constraints;
-use HHK\History;
-use HHK\House\Report\RoomReport;
-use HHK\SysConst\ReservationStatus;
-use HHK\House\Room\Room;
-use HHK\SysConst\RoomState;
-use HHK\Payment\Invoice\Invoice;
-use HHK\HTMLControls\HTMLTable;
-use HHK\Payment\Receipt;
-use HHK\Exception\PaymentException;
+use HHK\SysConst\WebPageCode;
 use HHK\House\Report\ReportFieldSet;
 
 /**
- * ws_report.php
+ * ws_reportFilter.php
  *
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
  * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
@@ -43,7 +23,6 @@ $wInit = new WebInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
-$guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 addslashesextended($_REQUEST);
 $c = "";
 

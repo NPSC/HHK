@@ -355,4 +355,4 @@ switch ($c) {
 
 echo( json_encode($events) );
 exit();
-
+?>
