@@ -18,6 +18,7 @@ class GLParameters {
     protected $journalCat;
     protected $countyPayment;
     protected $countyLiability;
+    protected $foundation;
     
     protected $glParms;
     protected $tableName;
@@ -32,6 +33,7 @@ class GLParameters {
      INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'StartDay', '01');
      INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyPayment', '50');
      INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'CountyLiability', '');
+     INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Gl_Code', 'Foundation', '');
      */
     
     public function __construct(\PDO $dbh, $tableName = 'Gl_Code') {
@@ -53,6 +55,8 @@ class GLParameters {
         $this->setUsername($this->glParms['Username'][1]);
         $this->setPassword($this->glParms['Password'][1]);
         $this->setCountyPayment($this->glParms['CountyPayment'][1]);
+        $this->setCountyLiability($this->glParms['CountyLiability'][1]);
+        $this->setFoundation($this->glParms['Foundation'][1]);
         
     }
     
@@ -254,11 +258,19 @@ class GLParameters {
     }
     
     public function getCountyLiability() {
-        return $this->countyLiability;
+    	return $this->countyLiability;
     }
     
     public function setCountyLiability($v) {
-        $this->countyLiability = $v;
+    	$this->countyLiability = $v;
+    }
+    
+    public function getFoundation() {
+    	return $this->foundation;
+    }
+    
+    public function setFoundation($v) {
+    	$this->foundation = $v;
     }
     
     /**

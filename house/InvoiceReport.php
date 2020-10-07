@@ -723,18 +723,8 @@ if ($useGlReport) {
 		$glParm->saveParameters($dbh, $_POST, $glPrefix);
 		$tabReturn = 2;
 	}
-
-	$m = date('m');
-	if ($m > 1) {
-		$m--;
-		$glMonth = $m;
-	} else {
-		$m = 12;
-		$glyear--;
-	}
 	
-	$glMonth = $m;
-	
+	$glMonth = date('m');
 	
 	// Output report
 	if (isset($_POST['btnGlGo']) || isset($_POST['btnGlTx']) || isset($_POST['btnGlcsv'])) {

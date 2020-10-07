@@ -11,11 +11,10 @@ class GLCodes {
 
 	// General GL codes
 	const ALL_GROSS_SALES = '200-1007582-500014';
-	const FOUNDATION_DON = '200-0000000-180100';
+	//const FOUNDATION_DON = '200-0000000-180100';
 
 
 	protected $fileId;
-	protected $journalCat;
 	protected $startDate;
 	protected $endDate;
 	protected $glParm;
@@ -354,8 +353,8 @@ class GLCodes {
 			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $waiveGlCode, 0, $waiveAmt, $this->paymentDate, $this->glParm->getJournalCat());
 
 			// debit the foundation donation
-			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::FOUNDATION_DON, $waiveAmt, 0, $this->paymentDate, $this->glParm->getJournalCat());
-
+			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $this->glParm->getFoundation(), $waiveAmt, 0, $this->paymentDate, $this->glParm->getJournalCat());
+			
 		}
 
 		// reduce the waiveable items

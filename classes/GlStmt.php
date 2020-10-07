@@ -3,6 +3,7 @@
 namespace HHK;
 
 use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode, RoomRateCategories};
+use HHK\SysConst\ItemType;
 use HHK\SysConst\ResourceStatus;
 use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLTable};
@@ -128,15 +129,15 @@ class GlStmt {
 
 			$invLines[] = $l;
 
-// 			if ($l['il_Item_Id'] == ItemId::Waive) {
-// 				$hasWaive = TRUE;
-// 			}
+			if ($l['il_Item_Id'] == ItemId::Waive) {
+				$hasWaive = TRUE;
+			}
 		}
 
 		// Special handling for waived payments.
-// 		if ($hasWaive) {
-// 			$invLines = $this->mapWaivePayments($invLines);
-// 		}
+		if ($hasWaive) {
+			$invLines = $this->mapWaivePayments($invLines);
+		}
 
 
 		$glCode = $p['pm_Gl_Code'];
@@ -308,7 +309,7 @@ class GlStmt {
 		if ($waiveAmt > 0) {
 
 			//
-			$this->glLineMapper->makeLine($waiveGlCode, $waiveAmt, (0 - $waiveAmt), $this->paymentDate);
+			//$this->glLineMapper->makeLine($waiveGlCode, 0, (0 - $waiveAmt), $this->paymentDate);
 
 		}
 
@@ -320,6 +321,18 @@ class GlStmt {
 				continue;
 			}
 
+			// Adjust the amounts after the waive.
+			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge || $l['il_Type_Id'] == ItemType::Tax) {
+				
+				if ($l['il_Amount'] >= $waiveAmt) {
+					$l['il_Amount'] -= $waiveAmt;
+					$waiveAmt = 0;
+				} else {
+					$waiveAmt -= $l['il_Amount'];
+					$l['il_Amount'] = 0;
+				}
+			}
+			
 			$remainingItems[] = $l;
 		}
 
@@ -471,6 +484,7 @@ class GlStmt {
 		$intervalPay = 0;
 		$totalPayment = array();
 		$forwardPay = 0;  // Payment from last month that pay stays in this month.
+		$unpaidCharges = 0;
 
 		$intervalCharge = 0;
 		$fullInvervalCharge = 0;
@@ -508,23 +522,46 @@ class GlStmt {
 				If ($visitId != $r['idVisit'] && $visitId != 0) {
 					// Visit Change
 					
-					$totPay = $vIntervalPay + $vForwardPay;
-
-					if ($vIntervalPay >= ($vIntervalCharge + $vPreIntervalCharge)) {
-						$overPay += $vIntervalPay - ($vIntervalCharge + $vPreIntervalCharge);
-						$intervalPay += $vIntervalCharge;
-						$preIntervalPay += $vPreIntervalCharge;
-					} else if ($vIntervalPay > $vPreIntervalCharge) {
-						$preIntervalPay += $vPreIntervalCharge;
-						$intervalPay += ($vIntervalPay - $vPreIntervalCharge);
-					} else {
-						$preIntervalPay += $vIntervalPay;
+					// Payments from past
+					$pfp = 0;
+					if ($vForwardPay - $vPreIntervalCharge > 0) {
+						$pfp = $vForwardPay - $vPreIntervalCharge;
 					}
 					
-					// forward charges paid previously
-					if ($vForwardPay > $vPreIntervalCharge) {
-						$forwardPay += $vForwardPay - $vPreIntervalCharge;
+					$forwardPay += $pfp;
+					
+					// Payments to the past
+					$ptp = 0;
+					if (($vPreIntervalCharge - $vForwardPay) >= $vIntervalPay) {
+						$ptp = $vIntervalPay;
+					} else {
+						if(($vPreIntervalCharge - $vForwardPay) <= 0) {
+							$ptp = 0;
+						} else {
+							if (($vPreIntervalCharge - $vForwardPay) <= $vIntervalPay) {
+								$ptp = $vPreIntervalCharge - $vForwardPay;
+							}
+						}
 					}
+					
+					$preIntervalPay += $ptp;
+					
+					// Payments to Future
+					$ptf = 0;
+					if (($vIntervalPay + $vForwardPay) > ($vPreIntervalCharge + $vIntervalCharge)) {
+						$ptf = ($vIntervalPay + $vForwardPay) - ($vPreIntervalCharge + $vIntervalCharge);
+						$overPay += $ptf;
+					}
+					
+					// Payments to now
+					$ptn = 0;
+					if ($vIntervalPay > $ptp + $ptf) {
+						$ptn = $vIntervalPay - $ptp - $ptf;
+						$intervalPay += $ptn;
+					}
+					
+					// Unpaid Charges
+					$unpaidCharges += $vIntervalCharge - $pfp - $ptn;
 
 					$intervalCharge += $vIntervalCharge;
 					$fullInvervalCharge += $vFullIntervalCharge;
@@ -752,21 +789,47 @@ class GlStmt {
 
 		if ($record != NULL) {
 
-			if ($vIntervalPay >= ($vIntervalCharge + $vPreIntervalCharge)) {
-				$overPay += $vIntervalPay - ($vIntervalCharge + $vPreIntervalCharge);
-				$intervalPay += $vIntervalCharge;
-				$preIntervalPay += $vPreIntervalCharge;
-			} else if ($vIntervalPay >= $vPreIntervalCharge) {
-				$preIntervalPay += $vPreIntervalCharge;
-				$intervalPay += ($vIntervalPay - $vPreIntervalCharge);
+			// Payments from past
+			$pfp = 0;
+			if ($vForwardPay - $vPreIntervalCharge > 0) {
+				$pfp = $vForwardPay - $vPreIntervalCharge;
+			}
+			
+			$forwardPay += $pfp;
+			
+			// Payments to the past
+			$ptp = 0;
+			if (($vPreIntervalCharge - $vForwardPay) >= $vIntervalPay) {
+				$ptp = $vIntervalPay;
 			} else {
-				$preIntervalPay += $vIntervalPay;
+				if(($vPreIntervalCharge - $vForwardPay) <= 0) {
+					$ptp = 0;
+				} else {
+					if (($vPreIntervalCharge - $vForwardPay) <= $vIntervalPay) {
+						$ptp = $vPreIntervalCharge - $vForwardPay;
+					}
+				}
 			}
-
-			// forward charges paid previously
-			if ($vForwardPay > $vPreIntervalCharge) {
-				$forwardPay += $vForwardPay - $vPreIntervalCharge;
+			
+			$preIntervalPay += $ptp;
+			
+			// Payments to Future
+			$ptf = 0;
+			if (($vIntervalPay + $vForwardPay) > ($vPreIntervalCharge + $vIntervalCharge)) {
+				$ptf = ($vIntervalPay + $vForwardPay) - ($vPreIntervalCharge + $vIntervalCharge);
+				$overPay += $ptf;
 			}
+			
+			// Payments to now
+			$ptn = 0;
+			if ($vIntervalPay > $ptp + $ptf) {
+				$ptn = $vIntervalPay - $ptp - $ptf;
+				$intervalPay += $ptn;
+			}
+			
+			// Unpaid Charges
+			$unpaidCharges += $vIntervalCharge - $pfp - $ptn;
+			
 			
 			$intervalCharge += $vIntervalCharge;
 			$fullInvervalCharge += $vFullIntervalCharge;
@@ -774,6 +837,7 @@ class GlStmt {
 			
 		}
 
+		$unpaidCharges -= $totalPayment[ItemId::Waive];
 
 		$tbl = new HTMLTable();
 
@@ -797,9 +861,7 @@ class GlStmt {
 
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
 		$tbl->addBodyTr(HTMLTable::makeTh('Payment Reconciliation', array('colspan'=>'2')));
-		
-		$unpaidCharges = $intervalCharge - $intervalPay - $forwardPay;
-		
+				
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($forwardPay, 2), array('style'=>'text-align:right;'))
@@ -918,7 +980,7 @@ class GlStmt {
 	IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
 	IFNULL(`p`.`Last_Updated`, '') AS `pUpdated`,
 	IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
-	IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
+	IFNULL(`p`.`Payment_Date`, '') as `pTimestamp`,
 	IFNULL(`nd`.`Gl_Code_Debit`, 'Guest') as `ba_Gl_Debit`
 from
 	visit v
