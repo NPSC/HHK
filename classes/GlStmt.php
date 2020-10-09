@@ -108,7 +108,8 @@ class GlStmt {
 	protected function mapPayment($r, $p) {
 
 		$invLines = array();
-		$hasWaive = FALSE;
+		$waiveAmt = 0;
+		$moaAmt = 0;
 
 		// Check dates
 		if ($p['pTimestamp'] != '') {
@@ -124,22 +125,31 @@ class GlStmt {
 			$pUpDate = NULL;
 		}
 
-		// Copy invoice lines and Look for waived payments.
+		// Copy invoice lines and Look for waived and MOA refunds.
 		foreach ($r['l'] as $l) {
 
 			$invLines[] = $l;
 
 			if ($l['il_Item_Id'] == ItemId::Waive) {
-				$hasWaive = TRUE;
+				$waiveAmt += abs($l['il_Amount']);
+			}
+			
+			if ($l['il_Item_Id'] == ItemId::LodgingMOA && $l['il_Amount'] < 0) {
+				$moaAmt += abs($l['il_Amount']);
 			}
 		}
 
 		// Special handling for waived payments.
-		if ($hasWaive) {
-			$invLines = $this->mapWaivePayments($invLines);
+		if ($moaAmt > 0) {
+			$invLines = $this->mapMoaPayments($moaAmt, $invLines);
 		}
-
-
+		
+		// Special handling for waived payments.
+		if ($waiveAmt > 0) {
+			$invLines = $this->mapWaivePayments($waiveAmt, $invLines);
+		}
+		
+		// Set payment code
 		$glCode = $p['pm_Gl_Code'];
 
 
@@ -291,44 +301,29 @@ class GlStmt {
 		}
 	}
 
-	protected function mapWaivePayments(array $invLines) {
+	protected function mapMoaPayments($moaAmt, array $invLines) {
 
 		// add up waiveable items
-		$waiveAmt = 0;
-		$waiveGlCode = '';
 		$remainingItems = array();
 
 		foreach ($invLines as $l) {
 
-			if ($l['il_Item_Id'] == ItemId::Waive) {
-				$waiveAmt += abs($l['il_Amount']);
-				$waiveGlCode = $l['Item_Gl_Code'];
-			}
-		}
-
-		if ($waiveAmt > 0) {
-
-			//
-			//$this->glLineMapper->makeLine($waiveGlCode, 0, (0 - $waiveAmt), $this->paymentDate);
-
-		}
-
-
-		foreach ($invLines as $l) {
-
-			// Don't return the waiving item
-			if ($l['il_Item_Id'] == ItemId::Waive) {
+			// Don't return the MOA item
+			if ($l['il_Item_Id'] == ItemId::LodgingMOA && $l['il_Amount'] < 0) {
 				continue;
 			}
 
 			// Adjust the amounts after the waive.
-			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge || $l['il_Type_Id'] == ItemType::Tax) {
+			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge || $l['il_Type_Id'] == ItemType::Tax || $l['il_Item_Id'] == ItemId::LodgingDonate || $l['il_Item_Id'] == ItemId::VisitFee) {
 				
-				if ($l['il_Amount'] >= $waiveAmt) {
-					$l['il_Amount'] -= $waiveAmt;
-					$waiveAmt = 0;
-				} else {
-					$waiveAmt -= $l['il_Amount'];
+				if ($l['il_Amount'] >= $moaAmt) {
+					
+					$l['il_Amount'] -= $moaAmt;
+					$moaAmt = 0;
+					
+				} else if ($l['il_Amount'] > 0) {
+					
+					$moaAmt -= $l['il_Amount'];
 					$l['il_Amount'] = 0;
 				}
 			}
@@ -339,6 +334,38 @@ class GlStmt {
 		return $remainingItems;
 	}
 
+	protected function mapWaivePayments($waiveAmt, array $invLines) {
+		
+		$remainingItems = array();
+		
+		foreach ($invLines as $l) {
+			
+			// Don't return the waiving item
+			if ($l['il_Item_Id'] == ItemId::Waive) {
+				continue;
+			}
+			
+			// Adjust the amounts after the waive.
+			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge || $l['il_Type_Id'] == ItemType::Tax || $l['il_Item_Id'] == ItemId::VisitFee) {
+				
+				if ($l['il_Amount'] >= $waiveAmt) {
+					
+					$l['il_Amount'] -= $waiveAmt;
+					$waiveAmt = 0;
+					
+				} else  if ($l['il_Amount'] > 0) {
+					
+					$waiveAmt -= $l['il_Amount'];
+					$l['il_Amount'] = 0;
+				}
+			}
+			
+			$remainingItems[] = $l;
+		}
+		
+		return $remainingItems;
+	}
+	
 	protected function loadDbRecords(\PDO $dbh) {
 
 		$idInvoice = 0;
@@ -484,7 +511,9 @@ class GlStmt {
 		$intervalPay = 0;
 		$totalPayment = array();
 		$forwardPay = 0;  // Payment from last month that pay stays in this month.
-		$unpaidCharges = 0;
+		$unpaidCharges = 0;  // Unpaid charges for this month only.
+		$paymentsCarriedForward = 0;  // Payments from last month that are not used up in this month.
+
 
 		$intervalCharge = 0;
 		$fullInvervalCharge = 0;
@@ -522,47 +551,61 @@ class GlStmt {
 				If ($visitId != $r['idVisit'] && $visitId != 0) {
 					// Visit Change
 					
-					// Payments from past
+					// leftover Payments from past (C23)
 					$pfp = 0;
 					if ($vForwardPay - $vPreIntervalCharge > 0) {
 						$pfp = $vForwardPay - $vPreIntervalCharge;
 					}
 					
-					$forwardPay += $pfp;
+					// previous months leftover charge after previous payments (C22)
+					$cfp = 0;
+					if ($vPreIntervalCharge - $vForwardPay > 0) {
+						$cfp = $vPreIntervalCharge - $vForwardPay;
+					}
+					
 					
 					// Payments to the past
 					$ptp = 0;
-					if (($vPreIntervalCharge - $vForwardPay) >= $vIntervalPay) {
-						$ptp = $vIntervalPay;
-					} else {
-						if(($vPreIntervalCharge - $vForwardPay) <= 0) {
-							$ptp = 0;
+					if ($cfp > 0) {
+						if($vIntervalPay >= $cfp) {
+							$ptp = $cfp;
 						} else {
-							if (($vPreIntervalCharge - $vForwardPay) <= $vIntervalPay) {
-								$ptp = $vPreIntervalCharge - $vForwardPay;
-							}
+							$ptp = $vIntervalPay;
 						}
-					}
-					
-					$preIntervalPay += $ptp;
-					
-					// Payments to Future
-					$ptf = 0;
-					if (($vIntervalPay + $vForwardPay) > ($vPreIntervalCharge + $vIntervalCharge)) {
-						$ptf = ($vIntervalPay + $vForwardPay) - ($vPreIntervalCharge + $vIntervalCharge);
-						$overPay += $ptf;
 					}
 					
 					// Payments to now
 					$ptn = 0;
-					if ($vIntervalPay > $ptp + $ptf) {
-						$ptn = $vIntervalPay - $ptp - $ptf;
-						$intervalPay += $ptn;
+					if ($cfp <= $vIntervalPay) {
+						if ($vIntervalPay - $cfp > $vIntervalCharge) {
+							$ptn = $vIntervalCharge;
+						} else {
+							$ptn = $vIntervalPay - $cfp;
+						}
+					}
+					
+					// Payments to Future
+					$ptf = 0;
+					if ($ptp + $ptn < $vIntervalPay) {
+						$ptf = $vIntervalPay - $ptp - $ptn;
 					}
 					
 					// Unpaid Charges
-					$unpaidCharges += $vIntervalCharge - $pfp - $ptn;
-
+					if ($vIntervalCharge > $ptn) {
+						$unpaidCharges += ($vIntervalCharge - $ptn);
+					}
+					
+					// Payments Carried Forward
+					if (($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf > 0) {
+						$paymentsCarriedForward += ($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf;
+					}
+					
+					
+					$forwardPay += $pfp;
+					$preIntervalPay += $ptp;
+					$intervalPay += $ptn;
+					$overPay += $ptf;
+					
 					$intervalCharge += $vIntervalCharge;
 					$fullInvervalCharge += $vFullIntervalCharge;
 					$discountCharge += $vDiscountCharge;
@@ -789,55 +832,69 @@ class GlStmt {
 
 		if ($record != NULL) {
 
-			// Payments from past
+			// leftover Payments from past (C23)
 			$pfp = 0;
 			if ($vForwardPay - $vPreIntervalCharge > 0) {
 				$pfp = $vForwardPay - $vPreIntervalCharge;
 			}
 			
-			$forwardPay += $pfp;
+			// previous months leftover charge after previous payments (C22)
+			$cfp = 0;
+			if ($vPreIntervalCharge - $vForwardPay > 0) {
+				$cfp = $vPreIntervalCharge - $vForwardPay;
+			}
+			
 			
 			// Payments to the past
 			$ptp = 0;
-			if (($vPreIntervalCharge - $vForwardPay) >= $vIntervalPay) {
-				$ptp = $vIntervalPay;
-			} else {
-				if(($vPreIntervalCharge - $vForwardPay) <= 0) {
-					$ptp = 0;
+			if ($cfp > 0) {
+				if($vIntervalPay >= $cfp) {
+					$ptp = $cfp;
 				} else {
-					if (($vPreIntervalCharge - $vForwardPay) <= $vIntervalPay) {
-						$ptp = $vPreIntervalCharge - $vForwardPay;
-					}
+					$ptp = $vIntervalPay;
 				}
-			}
-			
-			$preIntervalPay += $ptp;
-			
-			// Payments to Future
-			$ptf = 0;
-			if (($vIntervalPay + $vForwardPay) > ($vPreIntervalCharge + $vIntervalCharge)) {
-				$ptf = ($vIntervalPay + $vForwardPay) - ($vPreIntervalCharge + $vIntervalCharge);
-				$overPay += $ptf;
 			}
 			
 			// Payments to now
 			$ptn = 0;
-			if ($vIntervalPay > $ptp + $ptf) {
-				$ptn = $vIntervalPay - $ptp - $ptf;
-				$intervalPay += $ptn;
+			if ($cfp <= $vIntervalPay) {
+				if ($vIntervalPay - $cfp > $vIntervalCharge) {
+					$ptn = $vIntervalCharge;
+				} else {
+					$ptn = $vIntervalPay - $cfp;
+				}
+			}
+			
+			// Payments to Future
+			$ptf = 0;
+			if ($ptp + $ptn < $vIntervalPay) {
+				$ptf = $vIntervalPay - $ptp - $ptn;
 			}
 			
 			// Unpaid Charges
-			$unpaidCharges += $vIntervalCharge - $pfp - $ptn;
+			if (($vPreIntervalCharge + $vIntervalCharge) > ($vForwardPay + $vIntervalPay)) {
+				$unpaidCharges += ($vPreIntervalCharge + $vIntervalCharge) - ($vForwardPay + $vIntervalPay);
+			}
 			
+			// Payments Carried Forward
+			if (($vForwardPay + $vIntervalPay) > ($vPreIntervalCharge + $vIntervalCharge)) {
+				$paymentsCarriedForward += ($vForwardPay + $vIntervalPay) - ($vPreIntervalCharge + $vIntervalCharge);
+			}
+			
+			
+			$forwardPay += $pfp;
+			$preIntervalPay += $ptp;
+			$intervalPay += $ptn;
+			$overPay += $ptf;
 			
 			$intervalCharge += $vIntervalCharge;
 			$fullInvervalCharge += $vFullIntervalCharge;
 			$discountCharge += $vDiscountCharge;
-			
+						
 		}
 
-		$unpaidCharges -= $totalPayment[ItemId::Waive];
+		$unpaidCharges += $totalPayment[ItemId::Waive];
+		$discountCharge += $totalPayment[ItemId::Waive];
 
 		$tbl = new HTMLTable();
 
@@ -874,7 +931,12 @@ class GlStmt {
 				HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;'))
 				);
-
+		
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Payments Carried Forward', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($paymentsCarriedForward, 2), array('style'=>'text-align:right;'))
+				);
+		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Actual charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
@@ -891,6 +953,11 @@ class GlStmt {
 				HTMLTable::makeTd('Actual charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;'))
 				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Waived Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;'))
+				);
+		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Discounts for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($discountCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))

@@ -403,7 +403,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'c', 'Calendar','','',10),
 ('Sys_Config_Category', 'ha', 'House Email Addresses','','',32),
 ('Sys_Config_Category', 'p', 'Patient','','',25),
- ('Sys_Config_Category', 'hf', 'House Features','','', 28),
+('Sys_Config_Category', 'hf', 'House Features','','', 28),
 
 ('Time_Zone', 'America/Chicago', 'Central','','',0),
 ('Time_Zone', 'America/New_York', 'Eastern','','',0),

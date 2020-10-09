@@ -71,7 +71,7 @@ class GuestRegister {
         
         foreach ($rescGroups as $g) {
         	if ($rescGroupBy = $g[0]) {
-        		$groupBy = $g[0] . ',';
+        		$groupBy = 'rm.'.$g[0] . ',';
         		break;
         	}
         }
