@@ -203,7 +203,7 @@ $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
 if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $resourceGroupBy = $uS->CalResourceGroupBy;
 } else {
-    $resourceGroupBy = reset($rescGroups)[0];
+    $resourceGroupBy = '';
 }
 
 $rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), array('id'=>'selRoomGroupScheme'));

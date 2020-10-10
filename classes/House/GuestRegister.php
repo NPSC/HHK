@@ -67,14 +67,19 @@ class GuestRegister {
         //Resource grouping controls
         $rescGroups = readGenLookupsPDO($dbh, 'Room_Group', 'Order');
         
-        $groupBy = '';
+        $orderBy = '';
+        $tableName = '';
         
         foreach ($rescGroups as $g) {
-        	if ($rescGroupBy = $g[0]) {
-        		$groupBy = 'rm.'.$g[0] . ',';
+        	
+        	if ($rescGroupBy === $g[0]) {
+        		$orderBy = 'rm.' . $rescGroupBy . ',';
+        		$tableName = $g[2];
         		break;
         	}
         }
+        
+        
         
         // Get list of resources
         $qu = "SELECT
@@ -83,51 +88,79 @@ class GuestRegister {
     r.Background_Color as `bgColor`,
     r.Text_Color as `textColor`,
     rm.Max_Occupants as `maxOcc`,
-    ifnull(gc.Description, '(Default)') AS `Category`,
-    ifnull(gr.Description, '(Default)') AS `Report_Category`,
-    ifnull(g.Description, '(Default)') AS `Type`,
-    ifnull(gs.Description, '(Unknown)') AS `roomStatus`,
-    rm.Floor as `Floor`
+    rm.`Type`,
+	rm.`Status`,
+	rm.`Category`,
+	rm.`Report_Category`,
+    rm.`Floor`
 from resource r
 	left join
 resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDT->format('Y-m-d') . "')
     left join resource_room rr on r.idResource = rr.idResource
     left join room rm on rr.idRoom = rm.idRoom
-    left join gen_lookups g on g.Table_Name = 'Room_Type' and g.Code = rm.Type
-    left join gen_lookups gs on gs.Table_Name = 'Room_Status' and gs.Code = rm.Status
-    left join gen_lookups gc on gc.Table_Name = 'Room_Category' and gc.Code = rm.Category
-    left join gen_lookups gr on gr.Table_Name = 'Room_Rpt_Cat' and gr.Code = rm.Report_Category
 where ru.idResource_use is null
- order by $groupBy r.Util_Priority;";
+ order by $orderBy r.Util_Priority;";
         $rstmt = $dbh->query($qu);
 
         $rawRescs = $rstmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        // Resource grouping types
+        
         $roomGroups = array();
 
-        // Count the room grouping types
-        foreach ($rawRescs as $r) {
+        if ($tableName != '') {
+        	
+        	$groups = readGenLookupsPDO($dbh, $tableName, 'Order');
+        
+        	// Count the room grouping types
+        	foreach ($rawRescs as $r) {
 
-            foreach ($rescGroups as $g) {
+        		$notFound = TRUE;
 
-                if (isset($roomGroups[$g[0]][$r[$g[0]]])) {
-                    $roomGroups[$g[0]][$r[$g[0]]]++;
-                } else {
-                    $roomGroups[$g[0]][$r[$g[0]]] = 1;
-                }
-            }
+        		foreach ($groups as $g) {
+
+        			if ($g[0] == $r[$rescGroupBy]) {
+
+        				$notFound = FALSE;
+
+        				if (isset($roomGroups[$g[0]])) {
+        					$roomGroups[$g[0]]['cnt']++;
+        				} else {
+        					$roomGroups[$g[0]]['cnt'] = 1;
+        					$roomGroups[$g[0]]['title'] = $g[1];
+        				}
+
+        				break;
+        			}
+        		}
+
+        		if ($notFound && $r[$rescGroupBy] == '') {
+	
+	        		if (isset($roomGroups[''])) {
+	        			$roomGroups['']['cnt']++;
+	        		} else {
+	        			$roomGroups['']['cnt'] = 1;
+	        			$roomGroups['']['title'] = 'not set';
+	        		}
+	        	}
+	        	
+	        	if ($notFound && $r[$rescGroupBy] != '') {
+	        		
+	        		if (isset($roomGroups[$r[$rescGroupBy]])) {
+	        			$roomGroups[$r[$rescGroupBy]]['cnt']++;
+	        		} else {
+	        			$roomGroups[$r[$rescGroupBy]]['cnt'] = 1;
+	        			$roomGroups[$r[$rescGroupBy]]['title'] = 'missing index: ' . $r[$rescGroupBy];
+	        		}
+	        	}
+	        	
+	        }
         }
 
         // Set the grouping totals in the group titles
         foreach ($rawRescs as $r) {
 
-            foreach ($rescGroups as $g) {
-
-                if (isset($r[$g[0]])) {
-                    $r[$g[0]] = htmlspecialchars_decode($r[$g[0]], ENT_QUOTES) . ' (' . $roomGroups[$g[0]][$r[$g[0]]] . ')';
-                }
-            }
+        	if (isset($r[$rescGroupBy]) && count($roomGroups) > 0 && isset($roomGroups[$r[$rescGroupBy]])) {
+        		$r[$rescGroupBy] = htmlspecialchars_decode($roomGroups[$r[$rescGroupBy]]['title'], ENT_QUOTES) . ' (' . $roomGroups[$r[$rescGroupBy]]['cnt'] . ')';
+        	}
 
             // Fix room title
             $r['title'] = htmlspecialchars_decode($r['title'], ENT_QUOTES);
@@ -135,12 +168,10 @@ where ru.idResource_use is null
             $rescs[] = $r;
         }
 
-
-
         // Add waitlist
         $rescs[] = array(
                 'id' => 0,
-                'title' => ' ',
+                'title' => 'Waitlist',
                 'bgColor' => '#333',
                 'textColor' => '#fff',
                 'maxOcc' => 0,
