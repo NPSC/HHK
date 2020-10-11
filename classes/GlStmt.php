@@ -303,7 +303,7 @@ class GlStmt {
 
 	protected function mapMoaPayments($moaAmt, array $invLines) {
 
-		// add up waiveable items
+		// add up MOA items
 		$remainingItems = array();
 
 		foreach ($invLines as $l) {
@@ -313,7 +313,7 @@ class GlStmt {
 				continue;
 			}
 
-			// Adjust the amounts after the waive.
+			// Adjust the amounts after the MOA.
 			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge || $l['il_Type_Id'] == ItemType::Tax || $l['il_Item_Id'] == ItemId::LodgingDonate || $l['il_Item_Id'] == ItemId::VisitFee) {
 				
 				if ($l['il_Amount'] >= $moaAmt) {
@@ -872,13 +872,13 @@ class GlStmt {
 			}
 			
 			// Unpaid Charges
-			if (($vPreIntervalCharge + $vIntervalCharge) > ($vForwardPay + $vIntervalPay)) {
-				$unpaidCharges += ($vPreIntervalCharge + $vIntervalCharge) - ($vForwardPay + $vIntervalPay);
+			if ($vIntervalCharge > $ptn) {
+				$unpaidCharges += ($vIntervalCharge - $ptn);
 			}
 			
 			// Payments Carried Forward
-			if (($vForwardPay + $vIntervalPay) > ($vPreIntervalCharge + $vIntervalCharge)) {
-				$paymentsCarriedForward += ($vForwardPay + $vIntervalPay) - ($vPreIntervalCharge + $vIntervalCharge);
+			if (($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf > 0) {
+				$paymentsCarriedForward += ($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf;
 			}
 			
 			
@@ -890,7 +890,7 @@ class GlStmt {
 			$intervalCharge += $vIntervalCharge;
 			$fullInvervalCharge += $vFullIntervalCharge;
 			$discountCharge += $vDiscountCharge;
-						
+			
 		}
 
 		$unpaidCharges += $totalPayment[ItemId::Waive];
@@ -1401,8 +1401,8 @@ class GlStmtTotals {
 
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payment Totals', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(($totCredit == 0 ? '' : number_format($totCredit, 2)), array('style'=>'text-align:right;', 'class'=>'hhk-tdTotals'))
-				. HTMLTable::makeTd(($totDebit == 0 ? '' : number_format($totDebit, 2)), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($totCredit, 2), array('style'=>'text-align:right;', 'class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($totDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 
 		// Items
