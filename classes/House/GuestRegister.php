@@ -167,11 +167,11 @@ where ru.idResource_use is null
 
             $rescs[] = $r;
         }
-
+        
         // Add waitlist
         $rescs[] = array(
                 'id' => 0,
-                'title' => 'Waitlist',
+        		'title' => ($tableName != '' ? ' ' : 'Waitlist'),
                 'bgColor' => '#333',
                 'textColor' => '#fff',
                 'maxOcc' => 0,
@@ -286,7 +286,7 @@ where ru.idResource_use is null
 
             // Check end date for cleaning holidays
             if ($extended === FALSE && $validHolidays === TRUE && $r['Visit_Status'] != VisitStatus::ChangeRate) {
-                $this->addVisitBlackouts($myHolidays, $dtendDate, $timezone, $r["idResource"], $nonClean);
+                $this->addVisitBlackouts($events, $myHolidays, $dtendDate, $timezone, $r["idResource"], $nonClean);
             }
 
             $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $uS->RegColors, $events);
@@ -653,7 +653,7 @@ where ru.idResource_use is null
         return $backgroundBorderColor;
     }
 
-    protected function addVisitBlackouts($myHolidays, $dtendDate, $timezone, $idResc, $nonClean) {
+    protected function addVisitBlackouts(&$events, $myHolidays, $dtendDate, $timezone, $idResc, $nonClean) {
 
         $p1d = new \DateInterval('P1D');
 
