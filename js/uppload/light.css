@@ -1,0 +1,135 @@
+/**
+ * Light theme (default)
+ */
+/**
+ * All variables
+ */
+.uppload-modal-bg {
+  background-color: rgba(125, 125, 125, 0.25);
+}
+
+.uppload-modal {
+  background-color: #fff;
+  color: #1b0000;
+  box-shadow: 0 5rem 10rem rgba(0, 0, 0, 0.3);
+}
+.uppload-modal .uppload-help {
+  background-color: #fff;
+  color: #1b0000;
+}
+.uppload-modal .need-help-link,
+.uppload-modal .uppload-help button {
+  background-color: #dfe6e9;
+  color: inherit;
+}
+.uppload-modal a {
+  color: inherit;
+}
+.uppload-modal aside {
+  background-color: #dfe6e9;
+  color: inherit;
+}
+.uppload-modal aside nav .uppload-service-name input[type=radio]:checked + label {
+  background-color: #fff;
+  color: inherit;
+}
+.uppload-modal aside nav .uppload-service-name input[type=radio]:checked + label:hover, .uppload-modal aside nav .uppload-service-name input[type=radio]:checked + label:focus {
+  background-color: #fff;
+}
+.uppload-modal aside nav .uppload-service-name input[type=radio]:focus + label {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.uppload-modal aside nav .uppload-service-name input[type=radio] + label:hover,
+.uppload-modal aside nav .uppload-service-name input[type=radio] + label:focus {
+  background-color: #d0dadf;
+}
+.uppload-modal .uppload-error {
+  background-color: #c33;
+  color: #fff;
+}
+.uppload-modal form input {
+  border-color: rgba(0, 0, 0, 0.1);
+}
+.uppload-modal form button,
+.uppload-modal .uppload-button {
+  background-color: #333;
+  color: #fff;
+}
+.uppload-modal .effects-continue button {
+  background-color: whitesmoke;
+  color: inherit;
+}
+.uppload-modal .effects-continue button:hover, .uppload-modal .effects-continue button:focus {
+  background-color: white;
+}
+.uppload-modal .effects-continue button.effects-continue--upload {
+  background-color: #3498db;
+  color: #fff;
+}
+.uppload-modal .effects-continue button.effects-continue--upload:hover, .uppload-modal .effects-continue button.effects-continue--upload:focus {
+  background-color: #217dbb;
+}
+.uppload-modal footer.effects-nav {
+  background-color: #dfe6e9;
+  color: inherit;
+}
+.uppload-modal footer.effects-nav label svg g,
+.uppload-modal footer.effects-nav label svg path {
+  fill: inherit;
+}
+.uppload-modal footer.effects-nav input[type=radio]:focus + label {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.uppload-modal footer.effects-nav label:hover,
+.uppload-modal footer.effects-nav label:focus {
+  background-color: #d0dadf;
+}
+.uppload-modal footer.effects-nav input[type=radio]:checked + label {
+  background-color: #fff;
+  color: inherit;
+}
+.uppload-modal .uppload-service--default .uppload-services button {
+  background-color: whitesmoke;
+  color: inherit;
+}
+.uppload-modal .uppload-service--default .uppload-services button:hover, .uppload-modal .uppload-service--default .uppload-services button:focus {
+  background-color: #dfe6e9;
+  color: inherit;
+}
+.uppload-modal .uppload-service--local .drop-area {
+  border: 3px dashed rgba(0, 0, 0, 0.1);
+  background-color: transparent;
+  color: inherit;
+}
+
+.uppload-modal .uppload-service--local .input {
+  font-size: 1.1rem;
+  margin: 2rem 2rem 0 2rem;
+  padding: 0.5rem;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 0.2rem;
+  background-color: transparent;
+  color: inherit;
+}
+.uppload-modal .uppload-service--local .drop-area.drop-area-active {
+  border: 3px dashed rgba(0, 0, 0, 0.25);
+  background-color: whitesmoke;
+  color: inherit;
+}
+.uppload-modal .uppload-loader > div {
+  background-color: #333;
+}
+.uppload-modal .uppload-effect--crop .uppload-actions input[type=radio]:focus + label {
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+.uppload-modal .uppload-actions label,
+.uppload-modal .settings button {
+  background-color: #dfe6e9;
+  color: inherit;
+}
+.uppload-modal .processing-loader {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.uppload-modal .processing-loader::after {
+  background-color: #fff;
+}

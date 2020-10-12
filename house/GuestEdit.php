@@ -720,7 +720,10 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        <script type="text/javascript" src="../js/uppload.polyfills.js"></script>
+       <!--  <script type="text/javascript" src="../js/uppload.polyfills.js"></script> -->
+        <script type="text/javascript" src="../js/uppload/uppload-3.2.1.min.js"></script>
+        <link rel="stylesheet" href="../js/uppload/uppload.css">
+        <link rel="stylesheet" href="../js/uppload/light.css">
 
 		<script type="text/javascript" src="<?php echo DOC_UPLOAD_JS; ?>"></script>
 

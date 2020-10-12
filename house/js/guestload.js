@@ -527,8 +527,11 @@ $(document).ready(function () {
 
     //GuestPhoto
 
-    new Uppload({
-        uploadFunction: function uploadFunction(file){
+    var GuestPhoto = new Upploader.Uppload({
+    	call: [".upload-guest-photo"],
+    	maxSize: [500, 500],
+    	lang: Upploader.en,
+        uploader: function uploadFunction(file){
             return new Promise(function (resolve, reject) {
                 var formData = new FormData();
                 formData.append('cmd', 'putguestphoto');
@@ -558,19 +561,16 @@ $(document).ready(function () {
                 });
             });
         },
-        services: [
-            "camera",
-            "upload"
-        ],
-        defaultService: "camera",
-        allowedTypes: "image",
-        crop: {
-            aspectRatio: 1/1
-        }
     });
-
-    $(".uppload-branding").hide(); //hide Get Uppload branding from upload box
-
+    
+    local = new Upploader.Local(
+    {
+        maxFileSize: 5000000,
+        mimeTypes: ["image/jpeg", "image/png"]
+    });
+            
+    GuestPhoto.use([local, new Upploader.Crop({aspectRatio: 1})]);
+    
 
     $(document).on("click", "#hhk-guest-photo", function(e){
         e.preventDefault();

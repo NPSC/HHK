@@ -142,7 +142,7 @@ try {
     $document->saveNew($dbh);
 
     if($document->linkNew($dbh, $guestId, $psgId) > 0){
-            $events = ["idDoc"=> $document->getIdDocument(), "length"=>strlen($docContents)];
+            $events = ["idDoc"=> $document->getIdDocument(), "length"=>$doc['size']];
     }else{
             $events = ["error" => "Unable to save document"];
     }
