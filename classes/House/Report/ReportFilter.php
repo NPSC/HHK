@@ -228,7 +228,7 @@ $ckdate";
             // selected dates.
             $startDT = new \DateTime($this->selectedStart);
             $endDT = new \DateTime($this->selectedEnd);
-            $endDT->add(new \DateInterval('P1D'));
+            //$endDT->add(new \DateInterval('P1D'));
 
             if ($startDT <= $endDT) {
                 $this->reportEnd = $endDT->format('Y-m-d');

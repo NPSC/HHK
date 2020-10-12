@@ -22,6 +22,7 @@ use HHK\House\GLCodes\GLTemplateRecord;
 use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\House\Report\ReportFieldSet;
 
 /**
  * InvoiceReport.php
@@ -289,7 +290,9 @@ $cFields[] = array("Balance", 'Balance', 'checked', '', 'dollar', '15', array('s
 
 $cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
 
-$colSelector = new ColumnSelectors($cFields, 'selFld');
+$fieldSets = ReportFieldSet::listFieldSets($dbh, 'invoice', true);
+$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
+$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
 
 
 $invNum = '';
@@ -950,7 +953,7 @@ if ($useVisitDates) {
 $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
         . HTMLContainer::generateMarkup('label', 'Use Visit Dates', array('for'=>'cbUseVisitDates'));
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
+        $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;', 'id'=>'includeFields'));
 
 
 ?>
@@ -976,6 +979,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
 
 <script type="text/javascript">
 $(document).ready(function() {
@@ -1190,6 +1194,8 @@ $(document).ready(function() {
     }
 
     $('#mainTabs').show();
+    
+    $('#includeFields').fieldSets({'reportName': 'invoice'});
 });
  </script>
     </head>

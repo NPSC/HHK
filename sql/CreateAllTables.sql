@@ -1619,6 +1619,25 @@ CREATE TABLE IF NOT EXISTS `report` (
   KEY `Index_Psg_Id` (`Psg_Id`)
 ) ENGINE=InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `report_field_sets`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `report_field_sets` (
+  `idFieldSet` int(11) NOT NULL AUTO_INCREMENT,
+  `Title` varchar(45) NOT NULL DEFAULT '',
+  `Report` varchar(45) NOT NULL DEFAULT '',
+  `Fields` longtext,
+  `Global` tinyint(4) DEFAULT '0',
+  `Updated_by` varchar(45) DEFAULT '',
+  `Last_Updated` datetime DEFAULT NULL,
+  `Created_by` varchar(45) NOT NULL DEFAULT '',
+  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idFieldSet`),
+  UNIQUE KEY `UNIQUE_INDEX` (`Title`,`Report`,`Created_by`)
+) ENGINE=InnoDB;
+  
+
 -- -----------------------------------------------------
 -- Table `reservation`
 -- -----------------------------------------------------
