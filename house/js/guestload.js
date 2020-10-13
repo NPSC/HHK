@@ -569,7 +569,7 @@ $(document).ready(function () {
         mimeTypes: ["image/jpeg", "image/png"]
     });
             
-    GuestPhoto.use([local, new Upploader.Crop({aspectRatio: 1})]);
+    GuestPhoto.use([local, new Upploader.Crop({aspectRatio: 1}), new Upploader.Camera()]);
     
 
     $(document).on("click", "#hhk-guest-photo", function(e){
