@@ -188,7 +188,7 @@ $useVisitDates = FALSE;
 $cFields = array();
 
 $useGlReport = FALSE;
-if (stristr($uS->siteName, 'gorecki') !== FALSE) { // || strtolower($uS->mode) != 'live'
+if (stristr($uS->siteName, 'gorecki') !== FALSE || strtolower($uS->mode) != 'live') { // || strtolower($uS->mode) != 'live'
 	$useGlReport = TRUE;
 }
 

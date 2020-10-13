@@ -22,6 +22,6 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 INSERT INTO `sys_config` (`Key`, `Type`, `Category`, `Description`) VALUES ('DefCalEventTextColor', 's', 'c', 'Default calendar event ribbon text color');
 
 -- add report filter page
-CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', '', NULL, 'ga');
-CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', '', NULL, 'gr');
+CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', 'admin', NOW(), 'ga');
+CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', 'admin', NOW(), 'gr');
 

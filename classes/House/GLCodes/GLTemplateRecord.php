@@ -65,8 +65,8 @@ class GLTemplateRecord {
         
         $fa[self::CURRENCY_CODE] = 'USD';
         $fa[self::ACTUAL_FLAG] = 'A';
-        $fa[self::PAYOR_ID] = '00';
-        $fa[self::INTERCOMPANY] = '000';
+//        $fa[self::PAYOR_ID] = '00';		added these to the individual gl codes.
+//        $fa[self::INTERCOMPANY] = '000';
         $fa[self::FUTURE_1] = '0000';
         $fa[self::FUTURE_2] = '00000';
         $fa[self::BATCH_ID] = 'HHK_Oracle_Category_Code_' . $fileId;
@@ -82,15 +82,20 @@ class GLTemplateRecord {
         
         $codes = explode('-', $v);
         
-        if (count($codes) != 3) {
-            $codes[0]= $v;
-            $codes[1]= '0';
-            $codes[2]= '0';
+        if (count($codes) != 5) {
+        	$this->fieldArray[self::COMPANY_CODE] = '000';
+        	$this->fieldArray[self::COST_CENTER] = '0000000';
+        	$this->fieldArray[self::ACCOUNT] = '000000';
+        	$this->fieldArray[self::PAYOR_ID] = '00';
+        	$this->fieldArray[self::INTERCOMPANY] = '000';
+        	
         }
         
         $this->fieldArray[self::COMPANY_CODE] = trim($codes[0]);
         $this->fieldArray[self::COST_CENTER] = trim($codes[1]);
         $this->fieldArray[self::ACCOUNT] = trim($codes[2]);
+        $this->fieldArray[self::PAYOR_ID] = trim($codes[3]);
+        $this->fieldArray[self::INTERCOMPANY] = trim($codes[4]);
         
     }
     
