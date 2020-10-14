@@ -342,11 +342,19 @@
 			                    } else {
 			                        if (data.error) {
 			                            reject(data.error);
+			                            new Noty({
+			                            	type: "error",
+			                            	text: "Error: " + data.error
+			                            }).show();
 			                        } else {
 			                            reject('An unknown error occurred.');
+			                            new Noty({
+			                            	type: "error",
+			                            	text: "Error: " + data.error
+			                            }).show();
 			                        }
 			                    }
-			                }
+			                },
 			            });
 		            });
 		        },
