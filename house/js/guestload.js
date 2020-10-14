@@ -571,6 +571,15 @@ $(document).ready(function () {
             
     GuestPhoto.use([local, new Upploader.Crop({aspectRatio: 1}), new Upploader.Camera()]);
     
+    GuestPhoto.on("open", function(){
+		//hide effects if only one
+        if(GuestPhoto.effects.length == 1) {
+        	$(GuestPhoto.container).find(".effects-tabs").hide();
+        }else{
+        	$(GuestPhoto.container).find(".effects-tabs").show();
+        }
+    });
+    
 
     $(document).on("click", "#hhk-guest-photo", function(e){
         e.preventDefault();

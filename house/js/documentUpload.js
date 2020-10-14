@@ -368,6 +368,13 @@
             	$(DocUppload.container).find(".uppload-service--local").prepend("<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>");
             	//add helptext
             	$(DocUppload.container).find(".drop-area").append('<p>Allowed filetypes: pdf, doc, docx, jpeg, png<br>Maximum File Size: 5MB</p>');
+            	
+            	//hide effects if only one
+            	if(DocUppload.effects.length == 1) {
+            		$(DocUppload.container).find(".effects-tabs").hide();
+            	}else{
+            		$(DocUppload.container).find(".effects-tabs").show();
+            	}
             });
             
             //get docTitle value
@@ -383,6 +390,8 @@
             });
             
             DocUppload.use([local, new Upploader.Crop({hideAspectRatioSettings: true})]);
+            
+            
             
         }
     }
