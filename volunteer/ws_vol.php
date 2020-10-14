@@ -121,7 +121,8 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
             $missingEmail = array();
             $emailAddrs = array();
             $em = prepareEmail();
-
+            $em->FromName = $uS->siteName;
+            
             // Collect members in one of two containers from above
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
@@ -129,6 +130,7 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
                     // Send email
                     if ($r['Id'] == $id) {
                         $em->addReplyTo($r['PreferredEmail']);
+                        $em->FromName = $r["Name"] . " - " . $uS->siteName;
                     }
 
                     $emailAddrs[] = array('Name'=>$r["Name"], 'Email'=>$r["PreferredEmail"]);
@@ -158,6 +160,7 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
 
                 $cBody = preg_replace_callback("/(&#[0-9]+;)/",
                         function($m) { return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES"); }, $body);
+                $cBody = nl2br($cBody, false);
 
                 $cSubj = preg_replace_callback("/(&#[0-9]+;)/",
                         function($m) { return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES"); }, $subj);
