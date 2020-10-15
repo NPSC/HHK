@@ -154,6 +154,7 @@ class LocalGateway extends AbstractPaymentGateway {
 
 		return $payResult;
 	}
+
 	public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
 		$uS = Session::getInstance ();
 		

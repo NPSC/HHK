@@ -5,7 +5,7 @@ use HHK\sec\Session;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
-use HHK\GlStmt;
+use HHK\GlStmt\GlStmt;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\House\GLCodes\GLCodes;
