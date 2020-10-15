@@ -202,7 +202,12 @@ $cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('sty
 $fieldSets = ReportFieldSet::listFieldSets($dbh, 'item', true);
 $fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
 $colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
-
+$defaultFields = array();
+foreach($cFields as $field){
+    if($field[2] == 'checked'){
+        $defaultFields[] = $field[1];
+    }
+}
 
 // Items
 $addnlCharges = readGenLookupsPDO($dbh, 'Addnl_Charge');
@@ -749,7 +754,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
             });
         }
         
-        $('#includeFields').fieldSets({'reportName': 'item'});
+        $('#includeFields').fieldSets({'reportName': 'item', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
         
     });
  </script>

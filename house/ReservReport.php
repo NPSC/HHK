@@ -119,7 +119,12 @@ $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', a
 $fieldSets = ReportFieldSet::listFieldSets($dbh, 'reserv', true);
 $fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
 $colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
-
+$defaultFields = array();
+foreach($cFields as $field){
+    if($field[2] == 'checked'){
+        $defaultFields[] = $field[1];
+    }
+}
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
@@ -515,7 +520,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
             });
         }
         
-        $('#includeFields').fieldSets({'reportName': 'reserv'});
+        $('#includeFields').fieldSets({'reportName': 'reserv', 'defaultFields': <?php echo json_encode($defaultFields) ?>});
     });
  </script>
     </head>

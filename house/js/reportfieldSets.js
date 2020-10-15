@@ -16,7 +16,8 @@
 
 	    var defaults = {    
             serviceURL: 'ws_reportFilter.php',
-            reportName: ''
+            reportName: '',
+            defaultFields: []
         };
 
         var settings = $.extend(true, {}, defaults, options);
@@ -25,17 +26,15 @@
 
 		$wrapper.find("button").button();
 	
-		var defaultFields = $wrapper.find("#fields select").val();
-	
 		var selectedSet = {};
 	
-		actions($wrapper, settings, defaultFields);
+		actions($wrapper, settings);
 		
 		return this;
 	}
 	
 	
-	function actions($wrapper, settings, defaultFields){
+	function actions($wrapper, settings){
 	
 		$wrapper.on("change", "#filterSets select", function(){
 			var $this = $(this);
@@ -75,7 +74,7 @@
 				
 			}else{
 				$wrapper.find("#filterSetTitle").text("");
-				$wrapper.find("#fields select").val(defaultFields);
+				$wrapper.find("#fields select").val(settings.defaultFields);
 				$wrapper.find("#fieldsetName").val("");
 				selectedSet = {};
 			}

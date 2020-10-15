@@ -169,6 +169,12 @@ $cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
 $fieldSets = ReportFieldSet::listFieldSets($dbh, 'payment', true);
 $fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
 $colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
+$defaultFields = array();
+foreach($cFields as $field){
+    if($field[2] == 'checked'){
+        $defaultFields[] = $field[1];
+    }
+}
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 	
@@ -776,7 +782,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             });
         }
         
-        $('#includeFields').fieldSets({'reportName': 'payment'});
+        $('#includeFields').fieldSets({'reportName': 'payment', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
     });
  </script>
     </head>

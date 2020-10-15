@@ -1438,6 +1438,14 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
 $fieldSets = ReportFieldSet::listFieldSets($dbh, 'visit', true);
 $fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
 
+$defaultFields = array();
+
+foreach($cFields as $field){
+    if($field[2] == 'checked'){
+        $defaultFields[] = $field[1];
+    }
+}
+
 $colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
 
 
@@ -1677,7 +1685,7 @@ if ($uS->CoTod) {
         }
     });
 
-	$('#includeFields').fieldSets({'reportName': 'visit'});
+	$('#includeFields').fieldSets({'reportName': 'visit', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
 
     });
  </script>

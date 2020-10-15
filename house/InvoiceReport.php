@@ -293,7 +293,12 @@ $cFields[] = array("Notes", 'Notes', 'checked', '', 'string', '20', array());
 $fieldSets = ReportFieldSet::listFieldSets($dbh, 'invoice', true);
 $fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
 $colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
-
+$defaultFields = array();
+foreach($cFields as $field){
+    if($field[2] == 'checked'){
+        $defaultFields[] = $field[1];
+    }
+}
 
 $invNum = '';
 if (isset($_REQUEST['invNum'])) {
@@ -1195,7 +1200,7 @@ $(document).ready(function() {
 
     $('#mainTabs').show();
     
-    $('#includeFields').fieldSets({'reportName': 'invoice'});
+    $('#includeFields').fieldSets({'reportName': 'invoice', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
 });
  </script>
     </head>
