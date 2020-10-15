@@ -354,7 +354,7 @@ class ScriptAuthClass extends SecurityComponent {
         //$markup .= "</div></div></header>
         //    <div id='version'>$disclaimer User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
         $markup .= "</div></div></header>
-            <div id='version'>$disclaimer Build:" . $uS->ver . "  <button id='userSettingsBtn' style='margin-left: .5em'>Hello, " . $uS->username . "</button></div>";
+            <div id='version'>$disclaimer Build:" . $uS->ver . "  <button id='userSettingsBtn' style='margin-left: .5em' class='ui-button ui-corner-all ui-widget'>Hello, " . $uS->username . "</button></div>";
         
         //add user settings modal
         if($dbh && isset($uS)){
