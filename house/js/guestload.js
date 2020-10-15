@@ -135,14 +135,16 @@ $(document).ready(function () {
         }
     });
     
-    //doc uploader
-    $('#vDocsContent').docUploader({
-        guestId: memData.id,
-        psgId: memData.idPsg,
-        alertMessage: function(text, type) {
-            flagAlertMessage(text, type);
-        }
-    });
+    if(useDocUpload){
+    	//doc uploader
+    	$('#vDocsContent').docUploader({
+        	guestId: memData.id,
+        	psgId: memData.idPsg,
+        	alertMessage: function(text, type) {
+            	flagAlertMessage(text, type);
+        	}
+		});
+	}
 
     // relationship dialog
     $("#submit").dialog({
@@ -525,10 +527,12 @@ $(document).ready(function () {
     // init dirrty
     $("#form1").dirrty();
 
-    //GuestPhoto
-
-    new Uppload({
-        uploadFunction: function uploadFunction(file){
+	if(showGuestPhoto){
+    var GuestPhoto = new Upploader.Uppload({
+    	call: [".upload-guest-photo"],
+    	maxSize: [500, 500],
+    	lang: Upploader.en,
+        uploader: function uploadFunction(file){
             return new Promise(function (resolve, reject) {
                 var formData = new FormData();
                 formData.append('cmd', 'putguestphoto');
@@ -558,19 +562,25 @@ $(document).ready(function () {
                 });
             });
         },
-        services: [
-            "camera",
-            "upload"
-        ],
-        defaultService: "camera",
-        allowedTypes: "image",
-        crop: {
-            aspectRatio: 1/1
+    });
+    
+    var local = new Upploader.Local(
+    {
+        maxFileSize: 5000000,
+        mimeTypes: ["image/jpeg", "image/png"]
+    });
+            
+    GuestPhoto.use([local, new Upploader.Crop({aspectRatio: 1}), new Upploader.Camera()]);
+    
+    GuestPhoto.on("open", function(){
+		//hide effects if only one
+        if(GuestPhoto.effects.length == 1) {
+        	$(GuestPhoto.container).find(".effects-tabs").hide();
+        }else{
+        	$(GuestPhoto.container).find(".effects-tabs").show();
         }
     });
-
-    $(".uppload-branding").hide(); //hide Get Uppload branding from upload box
-
+    
 
     $(document).on("click", "#hhk-guest-photo", function(e){
         e.preventDefault();
@@ -619,4 +629,5 @@ $(document).ready(function () {
             });
         }
     });
+    };
 });
