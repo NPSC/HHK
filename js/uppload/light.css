@@ -8,6 +8,10 @@
   background-color: rgba(125, 125, 125, 0.25);
 }
 
+.uppload-modal-bg .uppload-close {
+	background-color: #fff;
+}
+
 .uppload-modal {
   background-color: #fff;
   color: #1b0000;

@@ -135,14 +135,16 @@ $(document).ready(function () {
         }
     });
     
-    //doc uploader
-    $('#vDocsContent').docUploader({
-        guestId: memData.id,
-        psgId: memData.idPsg,
-        alertMessage: function(text, type) {
-            flagAlertMessage(text, type);
-        }
-    });
+    if(useDocUpload){
+    	//doc uploader
+    	$('#vDocsContent').docUploader({
+        	guestId: memData.id,
+        	psgId: memData.idPsg,
+        	alertMessage: function(text, type) {
+            	flagAlertMessage(text, type);
+        	}
+		});
+	}
 
     // relationship dialog
     $("#submit").dialog({
@@ -525,8 +527,7 @@ $(document).ready(function () {
     // init dirrty
     $("#form1").dirrty();
 
-    //GuestPhoto
-
+	if(showGuestPhoto){
     var GuestPhoto = new Upploader.Uppload({
     	call: [".upload-guest-photo"],
     	maxSize: [500, 500],
@@ -563,7 +564,7 @@ $(document).ready(function () {
         },
     });
     
-    local = new Upploader.Local(
+    var local = new Upploader.Local(
     {
         maxFileSize: 5000000,
         mimeTypes: ["image/jpeg", "image/png"]
@@ -628,4 +629,5 @@ $(document).ready(function () {
             });
         }
     });
+    };
 });

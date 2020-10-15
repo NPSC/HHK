@@ -651,7 +651,6 @@ $memberData['memStatus'] = $name->get_status();
 $memberData['idPsg'] = $psg->getIdPsg();
 $memberData['idReg'] = $registration->getIdRegistration();
 $memberData['psgOnly'] = $psgOnly;
-$memberData['guestPhoto'] = $uS->GuestPhoto;
 
 $idReg = $registration->getIdRegistration();
 
@@ -721,12 +720,11 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-       <!--  <script type="text/javascript" src="../js/uppload.polyfills.js"></script> -->
-        <script type="text/javascript" src="<?php echo UPPLOAD_JS; ?>"></script>
-
-		<script type="text/javascript" src="<?php echo DOC_UPLOAD_JS; ?>"></script>
-
-        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
+            echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script> <script type="text/javascript" src="' . DOC_UPLOAD_JS . '"></script>';
+        }
+        
+        if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -925,6 +923,8 @@ $uS->guestId = $id;
             var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
             var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
             var resultMessage = '<?php echo $resultMessage; ?>';
+            var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
+            var useDocUpload = '<?php echo $uS->UseDocumentUpload; ?>';
         </script>
         <script type="text/javascript" src="js/guestload-min.js?rt=36"></script>
     </body>
