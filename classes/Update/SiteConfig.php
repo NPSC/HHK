@@ -621,7 +621,7 @@ class SiteConfig {
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
 
-            $value = filter_var($val, FILTER_SANITIZE_STRING);
+            $value = filter_var($val, FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES);
             $key = filter_var($itemName, FILTER_SANITIZE_STRING);
 
             if($itemName == "PaymentDisclaimer"){

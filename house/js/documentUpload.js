@@ -305,16 +305,17 @@
             $(".dtBottom").addClass('ignrSave');
             
             var filename = '';
+            var docTitle = '';
             
-            newDocUppload = new Uppload({
-	            call: ["#docUploadBtn"],
-				maxFileSize: 5000000,
-		        uploadFunction: function uploadFunction(file){
-			        var docTitle = $(newDocUppload.modalElement).find("input#newDocTitle").val();
+            DocUppload = new Upploader.Uppload({
+            	maxSize: [1500, 1500],
+            	call: ["#docUploadBtn"],
+            	lang: Upploader.en,
+		        uploader: function uploadFunction(file){
 			        
 			        //set title if none specified
-			        if(docTitle == ""){
-			        	docTitle = filename;
+			        if(docTitle == "" || docTitle == undefined){
+			        	docTitle = file.name.substr(0, file.name.lastIndexOf('.')) || file.name;
 			        }
 			        
 		            return new Promise(function (resolve, reject) {
@@ -341,51 +342,57 @@
 			                    } else {
 			                        if (data.error) {
 			                            reject(data.error);
+			                            new Noty({
+			                            	type: "error",
+			                            	text: "Error: " + data.error
+			                            }).show();
 			                        } else {
 			                            reject('An unknown error occurred.');
+			                            new Noty({
+			                            	type: "error",
+			                            	text: "Error: " + data.error
+			                            }).show();
 			                        }
 			                    }
-			                }
+			                },
 			            });
 		            });
 		        },
-		        services: [
-		            "upload"
-		        ],
-		        defaultService: "upload",
-		        allowedTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpg", "image/png"],
-		        ignoreFontAwesome: true
-		    });
-		    
-            //set filename
-		    newDocUppload.on("fileSelected", function(file){
-			    filename = file.name.replace(/\.[^/.]+$/, ""); //trim off extension
-		    });
+
+            });
             
-		    //hide/show extra fields
-		    newDocUppload.on("pageChanged", function(page){
-			    if(page == "upload"){
-				    $("#newDocTitle").prop("type", "text");
-				    $("#fileTypeText").show();
-			    }else{
-				    $("#newDocTitle").prop("type", "hidden");
-				    $("#fileTypeText").hide();
-			   }
-		    });
-		    
-		    //add docTitle field
-		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; top: 1.5em; width: 100%"><input type="text" name="docTitle" id="newDocTitle" placeholder="Enter Document Title" style="margin: 0 auto"></div>');  
-		    		    
-		    //add fileType text
-		    $(newDocUppload.modalElement).find("section").append('<div style="display: block; position: absolute; bottom: 1.5em; width: 100%; text-align: center;" id="fileTypeText">Allowed filetypes: pdf, doc, docx, image<br>Maximum File Size: 5MB</div>');
-		    
-		    $wrapper.on("click", "#docUploadBtn", function(e){
-			    e.preventDefault();
-		    })
-		    newDocUppload.on("modalOpened", function(){
-			    $(newDocUppload.modalElement).find("input#newDocTitle").val();
-		    });
-    
+            //include docTitle and helptext
+            DocUppload.on("open", function(){
+				docTitle = '';
+            	//add docTitle
+            	$(DocUppload.container).find(".uppload-service--local").prepend("<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>");
+            	//add helptext
+            	$(DocUppload.container).find(".drop-area").append('<p>Allowed filetypes: pdf, doc, docx, jpeg, png<br>Maximum File Size: 5MB</p>');
+            	
+            	//hide effects if only one
+            	if(DocUppload.effects.length == 1) {
+            		$(DocUppload.container).find(".effects-tabs").hide();
+            	}else{
+            		$(DocUppload.container).find(".effects-tabs").show();
+            	}
+            });
+            
+            //get docTitle value
+            $(document).on("change", "input#docTitle", function(){
+            	docTitle = $("input#docTitle").val();
+            });
+            
+            
+            local = new Upploader.Local(
+            {
+            	maxFileSize: 5000000,
+            	mimeTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png"]
+            });
+            
+            DocUppload.use([local, new Upploader.Crop({hideAspectRatioSettings: true})]);
+            
+            
+            
         }
     }
 

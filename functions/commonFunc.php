@@ -764,7 +764,7 @@ function showGuestPicture ($idGuest, $widthPx) {
         HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-plusthick'))
-        , array("class"=>"ui-button ui-corner-all ui-widget", 'style'=>'padding: .3em; margin-right:0.3em;', 'data-uppload-button'=>'true')) . HTMLContainer::generateMarkup('div',
+        , array("class"=>"ui-button ui-corner-all ui-widget upload-guest-photo", 'style'=>'padding: .3em; margin-right:0.3em;')) . HTMLContainer::generateMarkup('div',
         htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
         , array("class"=>"ui-button ui-corner-all ui-widget delete-guest-photo", 'style'=>'padding: .3em'))
         , array('style'=>"position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;", 'id'=>'hhk-guest-photo-actions'))
