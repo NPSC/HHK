@@ -333,16 +333,19 @@ class PaymentManagerPayment {
     public function getPayType() {
         return $this->payType;
     }
-    
+
     public function getPayDate() {
         
         if ($this->payDate != '') {
             
             try {
-            	$payDT = setTimeZone(NULL, $this->payDate);
+            	$payDT = new \DateTime($this->payDate);  //setTimeZone(NULL, $this->payDate);
+            	
+            	$now = new \DateTime();
+            	$payDT->setTime($now->format('H'), $now->format('i'));
+            	
                 $paymentDate = $payDT->format('Y-m-d H:i:s');
                 
-                $now = new \DateTime();
                 $now->setTime(0, 0, 0);
                 $payDT->setTime(0, 0, 0);
                 

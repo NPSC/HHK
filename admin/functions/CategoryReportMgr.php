@@ -400,7 +400,7 @@ vm.Id AS Id,
     c.VOl_Rank_Title AS Vol_Rank_Title $totalId
     from vmember_listing_blackout vm
     join vmember_categories c ON vm.Id = c.idName
-    where vm.MemberStatus = 'a' and case when vm.idVisit > 0 then DATEDIFF(now(), vm.spanEnd) > $guestBlackOutDays else 1=1 end $whereClause $groupBy";
+    where vm.MemberStatus = 'a' and case when vm.idVisit > 0 then ABS(DATEDIFF(now(), vm.spanEnd)) > $guestBlackOutDays else 1=1 end $whereClause $groupBy";
 
     return $query;
 }

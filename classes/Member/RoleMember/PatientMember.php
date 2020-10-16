@@ -2,7 +2,7 @@
 
 namespace HHK\Member\RoleMember;
 
-use HHK\Config_Lite\Config_Lite;
+
 use HHK\HTMLControls\HTMLTable;
 use HHK\SysConst\VolMemberType;
 use HHK\sec\Labels;

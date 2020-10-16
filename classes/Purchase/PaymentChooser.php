@@ -57,7 +57,6 @@ class PaymentChooser {
 
         // Payment Date
         if (isset($post['paymentDate']) && $post['paymentDate'] != '') {
-            //$pDT = filter_var($post['paymentDate'], FILTER_SANITIZE_STRING);
             $pmp->setPayDate(filter_var($post['paymentDate'], FILTER_SANITIZE_STRING));
         } else {
             $pmp->setPayDate(date('Y-m-d H:i:s'));
@@ -336,7 +335,6 @@ class PaymentChooser {
         }
 
         // Collect panels for Returns
-        unset($payTypes[PayType::Check]);
         unset($payTypes[PayType::Invoice]);
         $rtninvoiceBlock = '';
 
