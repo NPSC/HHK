@@ -222,7 +222,22 @@ class EditRS {
         return $rowCount;
     }
 
-
+    public static function isChanged(TableRSInterface $rs){
+        $changesToUpdate = false;
+        foreach ($rs as $dbF) {
+            
+            if($dbF instanceof DB_Field){
+                
+                if (!is_null($dbF->getNewVal()) && $dbF->getNewVal() != $dbF->getStoredVal()) {
+                    
+                    if ($dbF->getUpdateOnChange()) {
+                        $changesToUpdate = TRUE;
+                    }
+                }
+            }
+        }
+        return $changesToUpdate;
+    }
 
     /**
      * Insert a record into a table

@@ -82,7 +82,7 @@ class HospitalStay {
         $this->hstayRs->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         
         
-        if ($this->hstayRs->idHospital_stay->getStoredVal() === 0) {
+        if ($this->hstayRs->idHospital_stay->getStoredVal() === 0 || EditRS::isChanged($this->hstayRs)) {
             
             // Insert
             $this->hstayRs->idPatient->setNewVal($psg->getIdPatient());
