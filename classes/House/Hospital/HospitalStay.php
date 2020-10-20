@@ -24,24 +24,22 @@ use HHK\House\PSG;
 class HospitalStay {
     
     protected $hstayRs;
+    protected $makeNew;
     
-    function __construct(\PDO $dbh, $idPatient, $idHospitalStay = 0) {
+    /**
+     * @param \PDO $dbh
+     * @param number $idPatient
+     * @param number $idHospitalStay
+     * @param boolean $makeNew - if true, create new record on update, if false, update existing
+     */
+    function __construct(\PDO $dbh, $idPatient, $idHospitalStay = 0, $makeNew = true) {
         
         $hstay = new Hospital_StayRS();
         
         $idP = intval($idPatient);
         $idHs = intval($idHospitalStay);
         
-        if ($idP > 0) {
-            
-            $stmt = $dbh->query("Select *, max(Arrival_Date) from hospital_stay where idPatient=$idP group by idHospital_Stay");
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            
-            if (count($rows) === 1) {
-                EditRS::loadRow($rows[0], $hstay);
-            }
-            
-        } else if ($idHospitalStay > 0) {
+        if ($idHospitalStay > 0) {
             
             $stmt = $dbh->query("Select * from hospital_stay where idHospital_stay=$idHs");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -49,9 +47,21 @@ class HospitalStay {
             if (count($rows) === 1) {
                 EditRS::loadRow($rows[0], $hstay);
             }
+        }else if ($idP > 0) {
+            
+            //$stmt = $dbh->query("Select *, max(Arrival_Date) from hospital_stay where idPatient=$idP group by idHospital_Stay");
+            //get hospital stay from most recent reservation
+            $stmt = $dbh->query("SELECT hs.*, r.idReservation, if(r.Actual_Arrival is NULL, r.Expected_Arrival, r.Actual_Arrival) as 'arrival', if(r.`Status` = 's', 1, 0) as 'staying' from hospital_stay hs inner JOIN reservation r on hs.idHospital_stay = r.idHospital_stay where hs.idPatient = $idP and r.Status NOT IN ('c', 'c1', 'c2', 'c3', 'c4', 'ns', 'td') order by staying desc, arrival desc limit 1");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            
+            if (count($rows) === 1) {
+                EditRS::loadRow($rows[0], $hstay);
+            }
+            
         }
         
         $this->hstayRs = $hstay;
+        $this->makeNew = $makeNew;
     }
     
     public function getAssocHospNames($hospitalnames) {
@@ -70,6 +80,12 @@ class HospitalStay {
         
     }
     
+    /**
+     * @param \PDO $dbh
+     * @param PSG $psg
+     * @param int $idAgent
+     * @param string $uname
+     */
     public function save(\PDO $dbh, PSG $psg, $idAgent, $uname) {
         
         if (is_null($psg) || $psg->getIdPsg() == 0) {
@@ -82,7 +98,7 @@ class HospitalStay {
         $this->hstayRs->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
         
         
-        if ($this->hstayRs->idHospital_stay->getStoredVal() === 0 || EditRS::isChanged($this->hstayRs)) {
+        if ($this->hstayRs->idHospital_stay->getStoredVal() === 0 || (EditRS::isChanged($this->hstayRs) && $this->makeNew)) {
             
             // Insert
             $this->hstayRs->idPatient->setNewVal($psg->getIdPatient());
@@ -166,6 +182,10 @@ class HospitalStay {
     
     public function getDoctorId() {
         return $this->hstayRs->idDoctor->getStoredVal();
+    }
+    
+    public function getReservationId(){
+        return $this->idReservation;
     }
     
     public function setDoctorId($id) {

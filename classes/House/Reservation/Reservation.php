@@ -130,7 +130,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $rData->setIdVisit($rows[0]['idVisit'])
             ->setSpanStatus($rows[0]['SpanStatus'])
             ->setSpanStartDT($rows[0]['SpanStart'])
-            ->setSpanEndDT($rows[0]['SpanEnd']);
+            ->setSpanEndDT($rows[0]['SpanEnd'])
+            ->setIdHospital_Stay($rows[0]['idHospital_Stay']);
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
@@ -256,7 +257,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
     protected function createHospitalMarkup(\PDO $dbh) {
 
         // Hospital
-        $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
+        //$hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
+        //get hospitalStay from reservation
+        $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId(), $this->reserveData->getIdHospital_Stay());
 
         $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay));
 

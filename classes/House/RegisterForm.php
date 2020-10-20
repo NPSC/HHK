@@ -248,7 +248,7 @@ class RegisterForm {
         return $mkup;
     }
 
-    protected function guestBlock(\PDO $dbh, array $guests, array $relationText) {
+    protected function guestBlock(\PDO $dbh, array $guests, array $relationText, int $primaryGuestId = 0) {
 
         $mkup = "<table style='border-collapse:collapse;border:none'>
             <tr><td colspan='6' style='border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'><h2>Guests</h2></td></tr>";
@@ -277,7 +277,7 @@ class RegisterForm {
   <p class=MsoNormal align=right style='margin-bottom:0; text-align:right;line-height:normal'>&nbsp;</p>
   </td>
   <td style='width:14%;border-top:solid windowtext 1.5pt; border-left:none;border-bottom:none;border-right:solid windowtext 1pt;'>
-  <p class='label'>Name</p>
+  <p class='label'>" . ($guest->getIdName() == $primaryGuestId ? "Primary Guest": "Name") . "</p>
   </td>
   <td colspan=2 style='width:30%;border-top:solid windowtext 1.5pt; border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1.5pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>". $name->get_fullName() ."</p>
@@ -377,7 +377,7 @@ class RegisterForm {
     }
 
     protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes,
-            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $creditRecord, $notes) {
+            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $creditRecord, $notes, $primaryGuestId = 0) {
 
         $uS = Session::getInstance();
 
@@ -389,7 +389,7 @@ class RegisterForm {
             $mkup .= self::notesBlock($notes);
         }
 
-        $mkup .= $this->guestBlock($dbh, $guests, $patientRelCodes);
+        $mkup .= $this->guestBlock($dbh, $guests, $patientRelCodes, $primaryGuestId);
 
         // Patient
         $mkup .= $this->patientBlock($patient, $hospital, $hospRoom);
@@ -471,10 +471,11 @@ p.label {
 
         if ($idVisit > 0) {
 
-            $query = "select idName, Span_Start_Date, Expected_Co_Date, Span_End_Date, `Status`  from stays "
-                    . "where idVisit = :reg and Visit_Span = :spn "
-                    . " and DATEDIFF(ifnull(Span_End_Date, datedefaultnow(Expected_Co_Date)), Span_Start_Date) > 0"
-                    . " order by `Status` desc";
+            $query = "select s.idName, s.Span_Start_Date, s.Expected_Co_Date, s.Span_End_Date, s.`Status`, if(s.idName = v.idPrimaryGuest, 1, 0) as `primaryGuest` from stays s "
+                    . "join visit v on s.idVisit = v.idVisit "
+                    . "where s.idVisit = :reg and s.Visit_Span = :spn "
+                    . " and DATEDIFF(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)), s.Span_Start_Date) > 0"
+                    . " order by `primaryGuest` desc, `Status` desc";
             $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
             $stmt->bindValue(':reg', $idVisit, \PDO::PARAM_INT);
             $stmt->bindValue(':spn', $span, \PDO::PARAM_INT);
@@ -522,7 +523,6 @@ p.label {
                 $gst = new Guest($dbh, '', $s['idName']);
                 $gst->setCheckinDate($s['Span_Start_Date']);
                 $gst->status = $s['Status'];
-
                 if ($s['Status'] != VisitStatus::CheckedIn) {
                     $gst->setExpectedCheckOut($s['Span_End_Date']);
                 } else {
@@ -533,9 +533,18 @@ p.label {
                 $guests[] = $gst;
             }
 
+            $hospRoom = '';
+            $idHospital = '';
+            $hospital = "";
+            $patient = null;
+            
+            $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h join visit v on h.idHospital_stay = v.idHospital_Stay where v.idVisit = " . intval($idVisit);
+            $stmt = $dbh->query($query);
+            $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
+            
         } else if ($idReservation > 0) {
 
-            $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation where rg.idReservation = $idReservation");
+            $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation where rg.idReservation = $idReservation order by rg.Primary_Guest desc");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             $arrival = $rows[0]['Actual_Arrival'];
@@ -573,6 +582,10 @@ p.label {
                 $guests[] = $gst;
 
             }
+            
+            $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h join reservation r on h.idHospital_stay = r.idHospital_Stay where r.idReservation = " . intval($idReservation);
+            $stmt = $dbh->query($query);
+            $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         } else {
             return 'No Data';
@@ -596,23 +609,12 @@ p.label {
             }
         }
 
-
-        $hospRoom = '';
-        $idHospital = '';
-        $hospital = "";
-        $patient = null;
-
-        $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h where h.idPsg = " . intval($psg->getIdPsg());
-        $stmt = $dbh->query($query);
-        $psgs = $stmt->fetchAll(\PDO::FETCH_NUM);
-
-        if (count($psgs) == 1) {
-            $patient = new Patient($dbh, '', $psgs[0][0]);
-            $hospRoom = $psgs[0][1];
-            $idHospital = $psgs[0][2];
+        if (count($hospitalStay) == 1) {
+            $patient = new Patient($dbh, '', $hospitalStay[0][0]);
+            $hospRoom = $hospitalStay[0][1];
+            $idHospital = $hospitalStay[0][2];
         }
-
-
+        
         // Title
         $title = $uS->siteName . " Registration Form for Overnight Guests";
 
@@ -744,7 +746,8 @@ p.label {
                 $expectedDeparturePrompt,
                 $agreement,
                 $creditReport,
-                $notes
+                $notes,
+                $primaryGuestId
             );
 
     }
