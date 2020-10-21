@@ -6,6 +6,8 @@ use HHK\TableLog\ReservationLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\Hospital_StayRS;
 use HHK\House\PSG;
+use HHK\Tables\Reservation\ReservationRS;
+use HHK\Tables\Visit\VisitRS;
 
 /**
  * HospitalStay.php
@@ -25,14 +27,18 @@ class HospitalStay {
     
     protected $hstayRs;
     protected $makeNew;
+    protected $makeLink;
+    protected $idReservation = 0;
+    protected $idVisit = 0;
     
     /**
      * @param \PDO $dbh
      * @param number $idPatient
      * @param number $idHospitalStay
      * @param boolean $makeNew - if true, create new record on update, if false, update existing
+     * @param boolean $makeLink - if true, set idHospitalStay in visit and reservation
      */
-    function __construct(\PDO $dbh, $idPatient, $idHospitalStay = 0, $makeNew = true) {
+    function __construct(\PDO $dbh, $idPatient, $idHospitalStay = 0, $makeNew = true, $makeLink = false) {
         
         $hstay = new Hospital_StayRS();
         
@@ -51,17 +57,20 @@ class HospitalStay {
             
             //$stmt = $dbh->query("Select *, max(Arrival_Date) from hospital_stay where idPatient=$idP group by idHospital_Stay");
             //get hospital stay from most recent reservation
-            $stmt = $dbh->query("SELECT hs.*, r.idReservation, if(r.Actual_Arrival is NULL, r.Expected_Arrival, r.Actual_Arrival) as 'arrival', if(r.`Status` = 's', 1, 0) as 'staying' from hospital_stay hs inner JOIN reservation r on hs.idHospital_stay = r.idHospital_stay where hs.idPatient = $idP and r.Status NOT IN ('c', 'c1', 'c2', 'c3', 'c4', 'ns', 'td') order by staying desc, arrival desc limit 1");
+            $stmt = $dbh->query("SELECT hs.*, r.idReservation, v.idVisit, if(r.Actual_Arrival is NULL, r.Expected_Arrival, r.Actual_Arrival) as 'arrival', if(r.`Status` = 's', 1, 0) as 'staying' from hospital_stay hs inner JOIN reservation r on hs.idHospital_stay = r.idHospital_stay left join visit v on r.idReservation = v.idReservation where hs.idPatient = $idP and r.Status NOT IN ('c', 'c1', 'c2', 'c3', 'c4', 'ns', 'td') order by staying desc, arrival desc limit 1");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
             if (count($rows) === 1) {
                 EditRS::loadRow($rows[0], $hstay);
+                $this->idReservation = $rows[0]['idReservation'];
+                $this->idVisit = $rows[0]['idVisit'];
             }
             
         }
         
         $this->hstayRs = $hstay;
         $this->makeNew = $makeNew;
+        $this->makeLink = $makeLink;
     }
     
     public function getAssocHospNames($hospitalnames) {
@@ -115,6 +124,10 @@ class HospitalStay {
                 $psg->getIdPsg(),
                 $logText, 'insert', $uname);
             
+            if($this->makeLink){
+                $this->saveLink($dbh, $idIns);
+            }
+            
         } else {
             
             //Update
@@ -133,6 +146,40 @@ class HospitalStay {
         
         EditRS::updateStoredVals($this->hstayRs);
         
+    }
+    
+    private function saveLink(\PDO $dbh, $idIns){
+        if($this->idReservation > 0 || $this->idVisit > 0){
+            if($this->idReservation > 0){
+                $reservRS = new ReservationRS();
+                $stmt = $dbh->query("select * from reservation where idReservation = $this->idReservation");
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                if(count($rows) == 1){
+                    EditRS::loadRow($rows[0], $reservRS);
+                    $reservRS->idHospital_Stay->setNewVal($idIns);
+                    $updt = EditRS::update($dbh, $reservRS, array($reservRS->idReservation));
+                    if($updt > 0){
+                        return true;
+                    }
+                }
+            }
+            
+            if($this->idVisit > 0){
+                $visitRS = new VisitRS();
+                $stmt = $dbh->query("select * from visit where idVisit = $this->idVisit");
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                if(count($rows) == 1){
+                    EditRS::loadRow($rows[0], $visitRS);
+                    $visitRS->idHospital_stay->setNewVal($idIns);
+                    $updt = EditRS::update($dbh, $visitRS, array($visitRS->idVisit));
+                    if($updt > 0){
+                        return true;
+                    }
+                }
+            }
+            
+        }
+        return false;
     }
     
     

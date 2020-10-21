@@ -231,7 +231,7 @@ $psg = new PSG($dbh, $idPsg);
 $registration = new Registration($dbh, $psg->getIdPsg());
 $emergContact = new EmergencyContact($dbh, $id);
 $idPatient = $psg->getIdPatient();
-$hospitalStay = new HospitalStay($dbh, $idPatient, 0, false);
+$hospitalStay = new HospitalStay($dbh, $idPatient, 0, true, true);
 
 
 /*
