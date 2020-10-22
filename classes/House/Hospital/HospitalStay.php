@@ -57,7 +57,19 @@ class HospitalStay {
             
             //$stmt = $dbh->query("Select *, max(Arrival_Date) from hospital_stay where idPatient=$idP group by idHospital_Stay");
             //get hospital stay from most recent reservation
-            $stmt = $dbh->query("SELECT hs.*, r.idReservation, v.idVisit, if(r.Actual_Arrival is NULL, r.Expected_Arrival, r.Actual_Arrival) as 'arrival', if(r.`Status` = 's', 1, 0) as 'staying' from hospital_stay hs inner JOIN reservation r on hs.idHospital_stay = r.idHospital_stay left join visit v on r.idReservation = v.idReservation where hs.idPatient = $idP and r.Status NOT IN ('c', 'c1', 'c2', 'c3', 'c4', 'ns', 'td') order by staying desc, arrival desc limit 1");
+            $stmt = $dbh->query("
+SELECT hs.*, r.`idReservation`, v.`idVisit`,
+	ifnull(r.`Actual_Arrival`, r.`Expected_Arrival`) as 'arrival',
+    (case
+		when r.`Status` = 's' then 10
+        when r.`Status` in ('c', 'c1', 'c2', 'c3', 'c4', 'ns', 'td') then 0
+        else 5
+    end) as 'order'
+from `hospital_stay` hs
+JOIN `reservation` r on hs.`idHospital_stay` = r.`idHospital_stay`
+left join `visit` v on r.`idReservation` = v.`idReservation`
+where hs.`idPatient` = $idP
+order by `order` desc, `arrival` desc limit 1");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             
             if (count($rows) === 1) {
