@@ -751,7 +751,7 @@ if ($useGlReport) {
 
 		if (isset($_POST['btnGlTx'])) {
 			
-			$bytesWritten = $glCodes->mapRecords()
+			$bytesWritten = $glCodes->mapRecords(FALSE)
 					->transferRecords();
 			
 			$etbl = new HTMLTable();
@@ -769,7 +769,7 @@ if ($useGlReport) {
 		} else if (isset($_POST['btnGlcsv'])) {
 			
 			// Comma delemeted file.
-			$glCodes->mapRecords(FALSE);
+			$glCodes->mapRecords(TRUE);
 				
 			foreach ($glCodes->getLines() as $l) {
 				
@@ -875,7 +875,7 @@ if ($useGlReport) {
 			$glInvoices = $tbl->generateMarkup();
 			
 			// Comma delemeted file.
-			$glCodes->mapRecords(FALSE);
+			$glCodes->mapRecords(TRUE);
 			
 			$tbl = new HTMLTable();
 			

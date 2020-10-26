@@ -119,7 +119,7 @@ class GLCodes {
 
 			if ($stopAtUnbalance) {
 
-				if ($this->glLineMapper->getTotalCredit() != $this->glLineMapper->getTotalDebit()) {
+				if (round($this->getTotalCredit(), 2) != round($this->getTotalDebit(), 2)) {
 					$this->stopAtInvoice = $r['i']['iNumber'];
 					break;
 				}
