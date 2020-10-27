@@ -139,6 +139,7 @@ class GLCodes {
 
 		$invLines = array();
 		$hasWaive = FALSE;
+		$hasMOA = FALSE;
 
 		// Check dates
 		if ($p['pTimestamp'] != '') {
@@ -162,13 +163,22 @@ class GLCodes {
 			if ($l['il_Item_Id'] == ItemId::Waive) {
 				$hasWaive = TRUE;
 			}
+			
+			if ($l['il_Item_Id'] == ItemId::LodgingMOA) {
+				$hasMOA = TRUE;
+			}
 		}
 
 		// Special handling for waived payments.
 		if ($hasWaive) {
 			$invLines = $this->mapWaivePayments($invLines);
 		}
-
+		
+		// Special handling for MOA.
+		if ($hasMOA) {
+			$invLines = $this->mapMoaPayments($invLines);
+		}
+		
 		// payment type sets glCode.
 		if ($p['ba_Gl_Debit'] != '') {
 			// 3rd party payment
@@ -332,6 +342,32 @@ class GLCodes {
 		}
 	}
 
+	protected function mapMoaPayments(array $invLines) {
+
+		$remainingItems = array();
+		
+		foreach ($invLines as $l) {
+			
+			if ($l['il_Item_Id'] == ItemId::LodgingMOA) {
+				
+				if ($l['il_Amount'] > 0) {
+					
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
+					
+				} else {
+					
+					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate, $this->glParm->getJournalCat());
+					
+				}
+				
+			} else {
+				$remainingItems[] = $l;
+			}
+		}
+		
+		return $remainingItems;
+	}
+	
 	protected function mapWaivePayments(array $invLines) {
 
 		// add up waiveable items

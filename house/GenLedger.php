@@ -25,19 +25,9 @@ try {
 	
 	$login = new Login();
 	$login->initHhkSession(ciCFG_FILE);
-	
-} catch (InvalidArgumentException $pex) {
-	exit ("Database Access Error.");
-	
+		
 } catch (Exception $ex) {
 	exit ($ex->getMessage());
-}
-
-// Override user DB login credentials
-try {
-	$dbh = initPDO(TRUE);
-} catch (RuntimeException $hex) {
-	exit($hex->getMessage());
 }
 
 $u = new UserClass();
@@ -50,24 +40,31 @@ if(!$u->isCron()){
 
 }
 
+// DB login
+try {
+	$dbh = initPDO(TRUE);
+} catch (RuntimeException $hex) {
+	exit($hex->getMessage());
+}
+
 
 $today = new DateTime();
-
+$errorMsg = '';
 
 try {
 	$glParm = new GLParameters($dbh, 'Gl_Code');
 	
-	$startDay = $glParm->getStartDay();
-	
 	// Exit if not start day.
 	if ($today->format('d') != $glParm->getStartDay()) {
-		exit();
+		exit('Not Today');
 	}
 	
 	$glCodes = new GLCodes($dbh, $today->format('m'), $today->format('Y'), $glParm, new GLTemplateRecord());
+	
 	$bytesWritten = $glCodes->mapRecords()->transferRecords();
 
 } catch (Exception $ex) {
+	//$errorMsg = $ex->getMessage() . '  \n';
 	exit($ex->getMessage());
 }
 
@@ -104,7 +101,7 @@ if ($notificationAddress != '') {
 		$etbl->addBodyTr(HTMLTable::makeTd("Bytes Written: ". number_format($bytesWritten)));
 	}
 	
-	$mail->msgHTML($etbl->generateMarkup());
+	$mail->msgHTML($errorMsg . $etbl->generateMarkup());
 	
 	if ($mail->send() === FALSE) {
 		echo $mail->ErrorInfo;
