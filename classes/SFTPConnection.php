@@ -36,9 +36,8 @@ class SFTPConnection
 	
 	public function uploadFile($data_to_send, $remote_file)
 	{
-		$sftp = $this->sftp;
 		
-		$sftp->put($remote_file, $data_to_send);
+		$this->sftp->put($remote_file, $data_to_send);
 		
 // 		$stream = fopen("ssh2.sftp://$sftp$remote_file", 'w');
 		
@@ -54,20 +53,20 @@ class SFTPConnection
 					
 // 		fclose($stream);
 		
-		return $bytesWritten;
+		return count($data_to_send);
 	}
 	
 	// Writing to a network stream may end before the whole string is written.
-	protected function fwriteStream($fp, $string) {
-		$fwrite = 0;
-		for ($written = 0; $written < strlen($string); $written += $fwrite) {
-			$fwrite = fwrite($fp, substr($string, $written));
-			if ($fwrite === false) {
-				return $written;
-			}
-		}
-		return $written;
-	}
+// 	protected function fwriteStream($fp, $string) {
+// 		$fwrite = 0;
+// 		for ($written = 0; $written < strlen($string); $written += $fwrite) {
+// 			$fwrite = fwrite($fp, substr($string, $written));
+// 			if ($fwrite === false) {
+// 				return $written;
+// 			}
+// 		}
+// 		return $written;
+// 	}
 
 }
 ?>

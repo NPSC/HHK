@@ -21,6 +21,36 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 
 INSERT INTO `sys_config` (`Key`, `Type`, `Category`, `Description`) VALUES ('DefCalEventTextColor', 's', 'c', 'Default calendar event ribbon text color');
 
+-- Make new guest category name_volunteer entries for patients that stayed.
+Insert into name_volunteer2
+SELECT DISTINCT
+    s.idName,
+    'Vol_Type',
+    'g',
+    'a',
+    '',
+    '',
+    now(),
+    NULL,
+    NULL,
+    '',
+    'admin',
+    NOW(),
+    'm',
+    NULL,
+    '',
+    '',
+    CURRENT_TIMESTAMP()
+FROM
+    stays s
+        LEFT JOIN
+    name_volunteer2 nv ON s.idName = nv.idName
+        AND nv.Vol_Category = 'Vol_Type'
+        AND nv.Vol_Code = 'g'
+WHERE
+    nv.idName IS NULL;
+
+
 -- add report filter page
 CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', 'admin', NOW(), 'ga');
 CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', 'admin', NOW(), 'gr');

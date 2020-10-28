@@ -222,7 +222,7 @@ abstract class AbstractRole {
      * @param array $post
      * @return string Message for end user.
      */
-    public function save(\PDO $dbh, array $post, $uname) {
+    public function save(\PDO $dbh, array $post, $uname, $isStaying = FALSE) {
 
         $message = "";
         $idPrefix = $this->getRoleMember()->getIdPrefix();
@@ -271,8 +271,16 @@ abstract class AbstractRole {
 
         // Also set patient member type if guest is the patient.
         if ($this->patientRelationshipCode == RelLinkType::Self) {
+        	
             $message .= $this->getRoleMember()->saveMemberType($dbh, $uname, VolMemberType::Patient);
+            
+            // Also set guest type if patient is staying
+            if ($isStaying) {
+            	$message .= $this->getRoleMember()->saveMemberType($dbh, $uname, VolMemberType::Guest);
+            }
+            
         }
+        
 
         // Phone
         $message .= $this->getPhonesObj()->savePost($dbh, $post, $uname, $idPrefix);

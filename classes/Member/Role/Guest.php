@@ -81,7 +81,7 @@ class Guest extends AbstractRole {
      * @param array $post
      * @return string Message for end user.
      */
-    public function save(\PDO $dbh, array $post, $uname) {
+    public function save(\PDO $dbh, array $post, $uname, $isStaying = FALSE) {
 
         $message = parent::save($dbh, $post, $uname);
 

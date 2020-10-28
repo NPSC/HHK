@@ -562,7 +562,9 @@ class Family {
 
                 //$role = new Patient($dbh, $m->getPrefix(), $m->getId());
                 $role = (isset($this->roleObjs[$m->getPrefix()]) ? $this->roleObjs[$m->getPrefix()] : new Patient($dbh, $m->getPrefix(), $m->getId()));
-                $role->save($dbh, $post, $userName);
+                
+                $role->save($dbh, $post, $userName, $m->isStaying());
+                
                 $this->roleObjs[$m->getPrefix()] = $role;
 
                 $m->setId($role->getIdName());

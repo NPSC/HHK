@@ -1415,6 +1415,7 @@ CREATE or replace VIEW `vindividual_donations` AS
             else ifnull( `vp`.`PostalCode`, '')
         end) AS `Assoc_Zipcode`,
         `d`.`Amount` AS `Amount`,
+        `g`.`Description` as `Pay Type`,
         (case
             when
                 (ifnull(`c`.`Campaign_Type`, '') = 'pct')
@@ -1444,13 +1445,15 @@ CREATE or replace VIEW `vindividual_donations` AS
         d.Fund_Code,
         d.Note
     from
-        ((((`donations` `d`
-        left join `campaign` `c` ON ((lcase(trim(`d`.`Campaign_Code`)) = lcase(trim(`c`.`Campaign_Code`)))))
-        left join `vmember_listing_noex` `vm` ON ((`vm`.`Id` = `d`.`Donor_Id`)))
-        left join `vmember_listing_noex` `vp` ON ((`vp`.`Id` = `d`.`Assoc_Id`)))
-        left join `vmember_listing_noex` `ve` ON ((`ve`.`Id` = `d`.`Care_Of_Id`)))
+        `donations` `d`
+        left join `campaign` `c` ON lcase(trim(`d`.`Campaign_Code`)) = lcase(trim(`c`.`Campaign_Code`))
+        left join `vmember_listing_noex` `vm` ON `vm`.`Id` = `d`.`Donor_Id`
+        left join `vmember_listing_noex` `vp` ON `vp`.`Id` = `d`.`Assoc_Id`
+        left join `vmember_listing_noex` `ve` ON `ve`.`Id` = `d`.`Care_Of_Id`
+        left join gen_lookups g on g.Table_Name = 'Pay_Type' and g.Code = `d`.`Pay_Type`
+        
     where
-        (`d`.`Status` = 'a');
+        `d`.`Status` = 'a';
 
 
 

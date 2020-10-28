@@ -39,7 +39,7 @@ class Agent extends AbstractRole{
 
     }
 
-    public function save(\PDO $dbh, array $post, $uname) {
+    public function save(\PDO $dbh, array $post, $uname, $isStaying = FALSE) {
 
         $message = "";
         $idPrefix = $this->getRoleMember()->getIdPrefix();

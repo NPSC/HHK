@@ -40,7 +40,7 @@ class Doctor extends AbstractRole{
     }
 
 
-    public function save(\PDO $dbh, array $post, $uname) {
+    public function save(\PDO $dbh, array $post, $uname, $isStaying = FALSE) {
 
         // Name
         $idPrefix = $this->getRoleMember()->getIdPrefix();

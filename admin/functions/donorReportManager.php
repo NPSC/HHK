@@ -306,12 +306,6 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
 
     $colWidths = array("10", "10", "20", "20", "20", "20", "20", "20", "10", "10", "35");
     
-    $amountsHdr = array(
-        "Total"=>"dollar",
-        "Vendor Amount"=>"dollar",
-        "Free & Clear"=>"dollar"
-    );
-    $amountsColWidths = array("15", "15", "15");
     
     // We use a different query string for roll-up and individual reports
     // set up the query, open the result set and create the header markup for each case
@@ -325,6 +319,13 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $reportTitle = "Donor Roll-up Report (Monetary Donations Only).   Date: " . date("m/d/Y");
 
+        $amountsHdr = array(
+        		"Total"=>"dollar",
+        		"Vendor Amount"=>"dollar",
+        		"Free & Clear"=>"dollar"
+        );
+        $amountsColWidths = array("15", "15", "15");
+        
         // header - after opening the result set to the the number of records.
         if ($dlFlag) {
             $file = "DonorRollup";
@@ -363,7 +364,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         }
 
     } else {
-    	
+    	// Not rollup
     	if ($roll == 'ft') {
     		
     		// First don report
@@ -395,6 +396,14 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             $writer->setAuthor($uname);
             $writer->setTitle("Individual Donation Report");
             
+            $amountsHdr = array(
+            		"Total"=>"dollar",
+            		"Vendor Amount"=>"dollar",
+            		"Free & Clear"=>"dollar",
+            		"Pay Type" => "string"
+            );
+            $amountsColWidths = array("15", "15", "15", "14");
+            
             if ($showAmounts) {
                 $hdr = array_merge($hdr, $amountsHdr);
                 $colWidths = array_merge($colWidths, $amountsColWidths);
@@ -423,7 +432,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>Envelope Salutation</th>";
 
             if ($showAmounts) {
-                $txtheadr .= "<th>Total</th><th>Vendor Amount</th><th>Free & Clear</th>";
+                $txtheadr .= "<th>Total</th><th>Vendor Amount</th><th>Free & Clear</th><th>Pay Type</th>";
             }
 
             $txtheadr .= "<th>Campaign</th><th>Date</th><th>Note</th></tr></thead>";
@@ -613,6 +622,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                     $flds[] = $amountMkup;
                     $flds[] = $vendorAmt;
                     $flds[] = $taxFreeMkup;
+                    $flds[] = $r['Pay Type'];
                 }
                 $flds[] = $r["Campaign_Title"];
                 $flds[] = $r["Effective_Date"];
@@ -638,7 +648,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 $txtreport .= "<tr><td style='width:40px;'><a href='NameEdit.php?id=" . $r["id"] . "'>" . $r["id"] . "</a></td>
                     <td>$majorDonorMark</td><td>" . $r["Donor_Last"] . "</td><td>" . $envName . "</td>";
                 if ($showAmounts) {
-                    $txtreport .= "<td style='text-align:right;'>" . $amountMkup . "</td><td style='text-align:right;'>" . $vendorAmt . "</td><td style='text-align:right;'>" . $taxFreeMkup . "</td>";
+                    $txtreport .= "<td style='text-align:right;'>" . $amountMkup . "</td><td style='text-align:right;'>" . $vendorAmt . "</td><td style='text-align:right;'>" . $taxFreeMkup . "</td><td>" . $r['Pay Type'] . "</td>";
                 }
                 $txtreport .= "<td>" . $r["Campaign_Title"] . "</td><td>" . date("Y/m/d", strtotime($r["Effective_Date"])) . "</td><td>" . $r["Note"] . "</td></tr>";
             }

@@ -26,12 +26,13 @@ try {
 	$login = new Login();
 	$login->initHhkSession(ciCFG_FILE);
 		
-} catch (Exception $ex) {
+} catch (\Exception $ex) {
 	exit ($ex->getMessage());
 }
 
 $u = new UserClass();
 
+// Only the cron job can run this.
 if(!$u->isCron()){
 
 //	header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
@@ -48,23 +49,24 @@ try {
 }
 
 
-$today = new DateTime();
-$errorMsg = '';
+
+
 
 try {
 	$glParm = new GLParameters($dbh, 'Gl_Code');
-	
+
 	// Exit if not start day.
 	if ($today->format('d') != $glParm->getStartDay()) {
-		exit('Not Today');
+		exit();
 	}
+
+	$today = new \DateTime();
 	
 	$glCodes = new GLCodes($dbh, $today->format('m'), $today->format('Y'), $glParm, new GLTemplateRecord());
-	
+
 	$bytesWritten = $glCodes->mapRecords()->transferRecords();
 
-} catch (Exception $ex) {
-	//$errorMsg = $ex->getMessage() . '  \n';
+} catch (\Exception $ex) {
 	exit($ex->getMessage());
 }
 
@@ -83,7 +85,7 @@ if ($notificationAddress != '') {
 	$mail->FromName = $siteName;
 
 	$mail->isHTML(true);
-	$mail->Subject = 'GL Transfer Report';
+	$mail->Subject = $siteName . ' GL Transfer Report';
 
 	$addrArry = $mail->parseAddresses($notificationAddress);
 
@@ -101,7 +103,7 @@ if ($notificationAddress != '') {
 		$etbl->addBodyTr(HTMLTable::makeTd("Bytes Written: ". number_format($bytesWritten)));
 	}
 	
-	$mail->msgHTML($errorMsg . $etbl->generateMarkup());
+	$mail->msgHTML($etbl->generateMarkup());
 	
 	if ($mail->send() === FALSE) {
 		echo $mail->ErrorInfo;
