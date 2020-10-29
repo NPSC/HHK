@@ -26,41 +26,27 @@ class GLCodes {
 	protected $stopAtInvoice;
 
 
-	public function __construct(\PDO $dbh, $month, $year, $glParm, GLTemplateRecord $mapperTemplate, $startDay = 0) {
+	public function __construct(\PDO $dbh, $month, $year, $glParm, GLTemplateRecord $mapperTemplate) {
 
 		$this->errors = array();
 		$this->glParm = $glParm;
 
-		// Two places tht instantiate this object determined by startDay.
-		if ($startDay == 0) {
-			
-			// End date is the beginning of the next fiscal month.
-			$this->endDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->glParm->getStartDay());
-	
-			// Start date one month prior.
-			$this->startDate = $this->endDate->sub(new \DateInterval('P1M'));
-	
-			// Special start date for 9-2020 only
-			if ($this->endDate->format('m-Y') == '09-2020') {
-				$this->startDate = $this->startDate->setDate(2020, 9, 1);
-			}
-			
-			if ($this->glParm->getCountyPayment() < 1) {
-				$this->recordError('County Payment is not set');
-			}
-			
-		} else {
-			// Instantiated from Income Statement page...
-			$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . intval($startDay));
-			
-			// End date is the beginning of the next month.
-			$this->endDate = $this->startDate->add(new \DateInterval('P1M'));
-			
+		if ($this->glParm->getCountyPayment() < 1) {
+			$this->recordError('County Payment is not set');
 		}
 
-		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $this->endDate->sub(new \DateInterval('P1D'))->format('M j, Y'));
+		// End date is the beginning of the next fiscal month.
+		$this->endDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->glParm->getStartDay());
 
-		$this->fileId = 'GL_HHK_' . $this->startDate->format('Ymd') . '_' . getRandomString(3);
+		// Start date one month prior.
+		$this->startDate = $this->endDate->sub(new \DateInterval('P1M'));
+
+		// Period end date is one less than endDate
+		$periodEndDate = $this->endDate->sub(new \DateInterval('P1D'));
+		
+		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $periodEndDate->format('M j, Y'));
+
+		$this->fileId = 'GL_HHK_' . $periodEndDate->format('Ymd') . '_' . getRandomString(3);
 
 		$this->stopAtInvoice = '';
 
@@ -68,6 +54,8 @@ class GLCodes {
 
 		$this->lines = array();
 
+		$mapperTemplate->setPeriodEndDate($periodEndDate);
+		
 		$this->glLineMapper = $mapperTemplate;
 	}
 

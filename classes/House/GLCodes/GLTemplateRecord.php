@@ -32,6 +32,7 @@ class GLTemplateRecord {
     protected $totalDebit;
     protected $totalCredit;
     protected $fieldArray;
+    protected $periodEndDate;
     
     public function __construct() {
         
@@ -112,7 +113,7 @@ class GLTemplateRecord {
     }
     
     protected function setPurchaseDate($v) {
-        $this->fieldArray[self::EFFECTIVE_DATE] = $v->format('Y/m/d');
+        $this->fieldArray[self::EFFECTIVE_DATE] = $this->periodEndDate->format('Y/m/d');
     }
     
     protected function setJournalCategory($v) {
@@ -125,6 +126,10 @@ class GLTemplateRecord {
     
     public function getTotalDebit() {
         return $this->totalDebit;
+    }
+    
+    public function setPeriodEndDate($d) {
+    	$this->periodEndDate = $d;
     }
 }
 ?>

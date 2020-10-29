@@ -36,37 +36,38 @@ class SFTPConnection
 	
 	public function uploadFile($data_to_send, $remote_file)
 	{
+		$sftp = $this->sftp;
 		
-		$this->sftp->put($remote_file, $data_to_send);
+		//$sftp->put($remote_file, $data_to_send);
 		
-// 		$stream = fopen("ssh2.sftp://$sftp$remote_file", 'w');
+ 		$stream = fopen("ssh2.sftp://$sftp$remote_file", 'w');
 		
-// 		if (! $stream) {
-// 			throw new \Exception("Could not open file: $remote_file");
-// 		}
+ 		if (! $stream) {
+ 			throw new \Exception("Could not open file: $remote_file");
+ 		}
 				
-// 		if ($data_to_send === FALSE) {
-// 			throw new \Exception("No data to send.");
-// 		}
+ 		if ($data_to_send === FALSE) {
+ 			throw new \Exception("No data to send.");
+ 		}
 
-// 		$bytesWritten = $this->fwriteStream($stream, $data_to_send);
+ 		$bytesWritten = $this->fwriteStream($stream, $data_to_send);
 					
-// 		fclose($stream);
+ 		fclose($stream);
 		
-		return count($data_to_send);
+ 		return $bytesWritten;
 	}
 	
 	// Writing to a network stream may end before the whole string is written.
-// 	protected function fwriteStream($fp, $string) {
-// 		$fwrite = 0;
-// 		for ($written = 0; $written < strlen($string); $written += $fwrite) {
-// 			$fwrite = fwrite($fp, substr($string, $written));
-// 			if ($fwrite === false) {
-// 				return $written;
-// 			}
-// 		}
-// 		return $written;
-// 	}
+	protected function fwriteStream($fp, $string) {
+		$fwrite = 0;
+		for ($written = 0; $written < strlen($string); $written += $fwrite) {
+			$fwrite = fwrite($fp, substr($string, $written));
+			if ($fwrite === false) {
+				return $written;
+			}
+		}
+		return $written;
+	}
 
 }
 ?>
