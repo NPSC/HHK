@@ -538,7 +538,7 @@ p.label {
             $hospital = "";
             $patient = null;
             
-            $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h join visit v on h.idHospital_stay = v.idHospital_Stay where v.idVisit = " . intval($idVisit);
+            $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h join visit v on h.idHospital_stay = v.idHospital_Stay where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
             $stmt = $dbh->query($query);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
             
@@ -583,7 +583,7 @@ p.label {
 
             }
             
-            $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h join reservation r on h.idHospital_stay = r.idHospital_Stay where r.idReservation = " . intval($idReservation);
+            $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h join reservation r on h.idHospital_stay = r.idHospital_Stay where r.idReservation = " . intval($idReservation) . " limit 1";
             $stmt = $dbh->query($query);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
 

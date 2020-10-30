@@ -306,92 +306,101 @@
             
             var filename = '';
             var docTitle = '';
-            
-            DocUppload = new Upploader.Uppload({
-            	maxSize: [1500, 1500],
-            	call: ["#docUploadBtn"],
-            	lang: Upploader.en,
-		        uploader: function uploadFunction(file){
+            var DocUppload = window.uploader;
+            $(document).on('click', '#docUploadBtn', function(){
+            	$(DocUppload.container).removeClass().addClass('uppload-container');
+            	DocUppload.updatePlugins(plugins => []);
+            	DocUppload.updateSettings({
+            		maxSize: [1500, 1500],
+            		customClass: 'docUploadContainer',
+            		uploader: function uploadFunction(file){
 			        
-			        //set title if none specified
-			        if(docTitle == "" || docTitle == undefined){
-			        	docTitle = file.name.substr(0, file.name.lastIndexOf('.')) || file.name;
-			        }
+			        	//set title if none specified
+			        	if(docTitle == "" || docTitle == undefined){
+			        		docTitle = file.name.substr(0, file.name.lastIndexOf('.')) || file.name;
+			        	}
 			        
-		            return new Promise(function (resolve, reject) {
-		                var formData = new FormData();
-		                formData.append('cmd', 'putdoc');
-		                formData.append('guestId', settings.guestId);
-		                formData.append('psgId', settings.psgId);
-		                formData.append('docTitle', docTitle);
-		                formData.append("mimetype", file.type);
-		                formData.append('file', file);
+		            	return new Promise(function (resolve, reject) {
+		                	var formData = new FormData();
+		                	formData.append('cmd', 'putdoc');
+		                	formData.append('guestId', settings.guestId);
+		                	formData.append('psgId', settings.psgId);
+		                	formData.append('docTitle', docTitle);
+		                	formData.append("mimetype", file.type);
+		                	formData.append('file', file);
 						
-						$.ajax({
-			                url: settings.serviceURL,
-			                dataType: 'JSON',
-			                type: 'post',
-			                data: formData,
-			                contentType: false,
-							processData: false,
-			                success: function (data) {
-			                    if (data.idDoc > 0) {
-			                        dtTable.ajax.reload();
-			                        clearform($wrapper);
-			                        resolve("success");
-			                    } else {
-			                        if (data.error) {
-			                            reject(data.error);
-			                            new Noty({
-			                            	type: "error",
-			                            	text: "Error: " + data.error
-			                            }).show();
-			                        } else {
-			                            reject('An unknown error occurred.');
-			                            new Noty({
-			                            	type: "error",
-			                            	text: "Error: " + data.error
-			                            }).show();
-			                        }
-			                    }
-			                },
-			            });
-		            });
-		        },
-
+							$.ajax({
+			                	url: settings.serviceURL,
+			                	dataType: 'JSON',
+			                	type: 'post',
+			                	data: formData,
+			                	contentType: false,
+								processData: false,
+			                	success: function (data) {
+			                    	if (data.idDoc > 0) {
+			                        	dtTable.ajax.reload();
+			                        	clearform($wrapper);
+			                        	resolve("success");
+			                    	} else {
+			                        	if (data.error) {
+			                            	reject(data.error);
+			                            	new Noty({
+			                            		type: "error",
+			                            		text: "Error: " + data.error
+			                            	}).show();
+			                        	} else {
+			                            	reject('An unknown error occurred.');
+			                            	new Noty({
+			                            		type: "error",
+			                            		text: "Error: " + data.error
+			                            	}).show();
+			                        	}
+			                    	}
+			                	},
+			            	});
+		            	});
+		        	},
+            		
+            	});
+            	
+            	
+            	
+            	//get docTitle value
+            	$(document).on("change", "input#docTitle", function(){
+            		docTitle = $("input#docTitle").val();
+            	});
+            
+            
+            	docuploadlocal = new Upploader.Local(
+            	{
+            		maxFileSize: 5000000,
+            		mimeTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png"]
+            	});
+            
+            	DocUppload.use([docuploadlocal, new Upploader.Crop({hideAspectRatioSettings: true})]);
+            	
+            	DocUppload.open();
+            	
+            	
             });
             
-            //include docTitle and helptext
-            DocUppload.on("open", function(){
-				docTitle = '';
-            	//add docTitle
-            	$(DocUppload.container).find(".uppload-service--local").prepend("<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>");
-            	//add helptext
-            	$(DocUppload.container).find(".drop-area").append('<p>Allowed filetypes: pdf, doc, docx, jpeg, png<br>Maximum File Size: 5MB</p>');
+            DocUppload.on('open', function(){
+            	if($(DocUppload.container).hasClass('docUploadContainer')){
+            		//include docTitle and helptext
+            		docTitle = '';
+            		//add docTitle
+            		$(DocUppload.container).find(".uppload-service--local").prepend("<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>");
+            		//add helptext
+            		$(DocUppload.container).find(".drop-area").append('<p>Allowed filetypes: pdf, doc, docx, jpeg, png<br>Maximum File Size: 5MB</p>');
             	
-            	//hide effects if only one
-            	if(DocUppload.effects.length == 1) {
-            		$(DocUppload.container).find(".effects-tabs").hide();
-            	}else{
-            		$(DocUppload.container).find(".effects-tabs").show();
+            		//hide effects if only one
+            		if(DocUppload.effects.length == 1) {
+            			$(DocUppload.container).find(".effects-tabs").hide();
+            		}else{
+            			$(DocUppload.container).find(".effects-tabs").show();
+            		}
             	}
             });
-            
-            //get docTitle value
-            $(document).on("change", "input#docTitle", function(){
-            	docTitle = $("input#docTitle").val();
-            });
-            
-            
-            local = new Upploader.Local(
-            {
-            	maxFileSize: 5000000,
-            	mimeTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png"]
-            });
-            
-            DocUppload.use([local, new Upploader.Crop({hideAspectRatioSettings: true})]);
-            
-            
             
         }
     }

@@ -527,60 +527,79 @@ $(document).ready(function () {
     // init dirrty
     $("#form1").dirrty();
 
-	if(showGuestPhoto){
-    var GuestPhoto = new Upploader.Uppload({
-    	call: [".upload-guest-photo"],
-    	maxSize: [500, 500],
-    	lang: Upploader.en,
-        uploader: function uploadFunction(file){
-            return new Promise(function (resolve, reject) {
-                var formData = new FormData();
-                formData.append('cmd', 'putguestphoto');
-                formData.append('guestId', memData.id);
-                formData.append('guestPhoto', file);
+	if(showGuestPhoto || useDocUpload){
+	var guestPhoto = window.uploader;
+	$(document).on('click', '.upload-guest-photo', function(){
+		$(guestPhoto.container).removeClass().addClass('uppload-container');
+		guestPhoto.updatePlugins(plugins => []);
+		guestPhoto.updateSettings({
+			maxSize: [500, 500],
+			customClass: 'guestPhotouploadContainer',
+			uploader: function uploadFunction(file){
+            	return new Promise(function (resolve, reject) {
+                	var formData = new FormData();
+                	formData.append('cmd', 'putguestphoto');
+                	formData.append('guestId', memData.id);
+                	formData.append('guestPhoto', file);
 
-                $.ajax({
-                    type: "POST",
-                    url: "ws_resc.php",
-                    dataType: "json",
-                    data: formData,
-                    //use contentType, processData for sure.
-                    contentType: false,
-                    processData: false,
-                    success: function(data) {
-                        if(data.error){
-                            reject(data.error);
-                        }else{
-                            resolve("success");
-                            $("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "r&x="+new Date().getTime());
-                            $(".delete-guest-photo").show();
-                        }
-                    },
-                    error: function(error) {
-                        reject(error);
-                    }
-                });
-            });
-        },
-    });
-    
-    var local = new Upploader.Local(
-    {
-        maxFileSize: 5000000,
-        mimeTypes: ["image/jpeg", "image/png"]
-    });
+                	$.ajax({
+                    	type: "POST",
+                   	 	url: "ws_resc.php",
+                   	 	dataType: "json",
+                    	data: formData,
+                    	//use contentType, processData for sure.
+                    	contentType: false,
+                    	processData: false,
+                    	success: function(data) {
+                        	if(data.error){
+                            	reject(data.error);
+                        	}else{
+                            	resolve("success");
+                            	$("#guestPhoto").prop("src", "ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "r&x="+new Date().getTime());
+                            	$(".delete-guest-photo").show();
+                        	}
+                        	guestPhoto.navigate('local');
+                    	},
+                    	error: function(error) {
+                        	reject(error);
+                    	}
+                	});
+            	});
+        	},
+		});
+		
+		
+		
+		var guestphotoLocal = new Upploader.Local(
+    	{
+        	maxFileSize: 5000000,
+        	mimeTypes: ["image/jpeg", "image/png"]
+    	});
+    	
+    	window.camera = new Upploader.Camera()
             
-    GuestPhoto.use([local, new Upploader.Crop({aspectRatio: 1}), new Upploader.Camera()]);
+    	guestPhoto.use([guestphotoLocal, new Upploader.Crop({aspectRatio: 1}), window.camera]);
+    	
+    	guestPhoto.open();
     
-    GuestPhoto.on("open", function(){
+    });
+    
+    guestPhoto.on("open", function(){
 		//hide effects if only one
-        if(GuestPhoto.effects.length == 1) {
-        	$(GuestPhoto.container).find(".effects-tabs").hide();
+        if(guestPhoto.effects.length == 1) {
+        	$(guestPhoto.container).find(".effects-tabs").hide();
         }else{
-        	$(GuestPhoto.container).find(".effects-tabs").show();
+        	$(guestPhoto.container).find(".effects-tabs").show();
         }
     });
     
+    guestPhoto.on('close', function(){
+    	guestPhoto.navigate('local'); //trigger camera to stop
+    	var camera = guestPhoto.services.filter(service => service.name == 'camera');
+    	if(camera.length == 1){
+    		camera[0].stop();
+    	}
+    });
 
     $(document).on("click", "#hhk-guest-photo", function(e){
         e.preventDefault();

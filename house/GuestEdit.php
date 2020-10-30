@@ -721,7 +721,15 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
-            echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script> <script type="text/javascript" src="' . DOC_UPLOAD_JS . '"></script>';
+            echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
+        ?>
+        	<script>
+        		$(document).ready(function(){
+        			window.uploader = new Upploader.Uppload({lang: Upploader.en});
+        		});
+        	</script>
+        <?php
+            echo '<script type="text/javascript" src="' . DOC_UPLOAD_JS . '"></script>';
         }
         
         if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
