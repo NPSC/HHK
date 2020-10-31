@@ -2,7 +2,6 @@
 
 namespace HHK\House;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\VehicleRS;
@@ -144,6 +143,7 @@ WHERE
         $x = 1;
 
         foreach ($idx as $i) {
+        	
             $tbl->addBodyTr(
                 //HTMLTable::makeTd(HTMLSelector::generateMarkup( , array('name'=>'selVehGuest['.$idPrefix.']')))
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
@@ -153,7 +153,7 @@ WHERE
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehLic[$i]", 'class'=>'hhk-vehicle', 'size'=>'8')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehNote[$i]", 'class'=>'hhk-vehicle')))
                 .HTMLTable::makeTd('')
-                , array('style'=>'display:none;', 'id'=>"trVeh$x"));
+                , array('style'=>($i == 'a' && count($rows) == 0 ? '' : 'display:none;'), 'id'=>"trVeh$x"));
 
             $x++;
         }

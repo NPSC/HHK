@@ -461,7 +461,7 @@ class Family {
 
         // Guest search
         $mk1 .= HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', 'Add people - LastName search: ')
+                HTMLContainer::generateMarkup('span', 'Add people - Last Name search: ')
                 .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>'txtPersonSearch', 'style'=>'margin-right:2em;', 'title'=>'Enter the first three characters of the person\'s last name'))
 
         		, array('id'=>'divPersonSearch', 'style'=>'margin-top:10px;'));

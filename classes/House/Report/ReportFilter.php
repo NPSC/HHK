@@ -2,7 +2,6 @@
 
 namespace HHK\House\Report;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\SysConst\GLTableNames;
 use HHK\sec\Labels;

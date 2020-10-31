@@ -229,7 +229,7 @@ class ReservationSvcs
             }
         } else if ($uS->RegForm == 2) {
 
-            // IMD and St. Mary's
+            // IMD
 
             $instructFileName = '';
             $roomTitle = '';

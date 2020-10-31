@@ -164,7 +164,7 @@ class Login {
             $alertMsg->set_iconId("alrIcon");
             $alertMsg->set_styleId("alrResponse");
             $alertMsg->set_txtSpanId("alrMessage");
-            $alertMsg->set_Text("Internet Explorer 11 detected<span style='margin-top: 0.5em; display: block'>HHK may not function as intended. For the best experience, consider using a supported browser such as Edge, Chrome or Firefox. If you are required to continue using IE 11, and are having trouble with HHK, please contact us.</span>");
+            $alertMsg->set_Text("Internet Explorer 11 detected<span style='margin-top: 0.5em; display: block'>HHK may not function as intended. For the best experience, consider using a supported browser such as Edge, Chrome or Firefox. If you are required to continue using IE 11, and are having trouble with HHK, please contact NPSC.</span>");
             
             return HTMLContainer::generateMarkup('div', $alertMsg->createMarkup(), array('style'=>'margin-top: 1em;'));
         }else{
