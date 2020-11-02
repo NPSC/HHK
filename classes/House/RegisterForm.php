@@ -36,7 +36,7 @@ use HHK\sec\Labels;
  * @package name
  * @author Eric
  *
- * This form is used by all Houses except IMD
+ * This form is used by all Houses except 1
  */
 class RegisterForm {
 
@@ -471,10 +471,11 @@ p.label {
 
         if ($idVisit > 0) {
 
-            $query = "select s.idName, s.Span_Start_Date, s.Expected_Co_Date, s.Span_End_Date, s.`Status`, if(s.idName = v.idPrimaryGuest, 1, 0) as `primaryGuest` from stays s "
-                    . "join visit v on s.idVisit = v.idVisit "
-                    . "where s.idVisit = :reg and s.Visit_Span = :spn "
-                    . " and DATEDIFF(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)), s.Span_Start_Date) > 0"
+            $query = "select s.idName, s.Span_Start_Date, s.Expected_Co_Date, s.Span_End_Date, s.`Status`, if(s.idName = v.idPrimaryGuest, 1, 0) as `primaryGuest`
+					from stays s "
+                    . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
+                    . " where s.idVisit = :reg and s.Visit_Span = :spn "
+                    . " and DATEDIFF(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)), s.Span_Start_Date) > 0 "
                     . " order by `primaryGuest` desc, `Status` desc";
             $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
             $stmt->bindValue(':reg', $idVisit, \PDO::PARAM_INT);
@@ -537,7 +538,8 @@ p.label {
             
         } else if ($idReservation > 0) {
 
-            $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation where rg.idReservation = $idReservation order by rg.Primary_Guest desc");
+            $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation
+				where rg.idReservation = $idReservation order by rg.Primary_Guest desc");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             $arrival = $rows[0]['Actual_Arrival'];
