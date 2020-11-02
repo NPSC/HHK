@@ -173,7 +173,7 @@ where ru.idResource_use is null
                 'id' => 0,
         		'title' => ($tableName != '' ? ' ' : 'Waitlist'),
                 'bgColor' => '#333',
-                'textColor' => '#fff',
+                //'textColor' => '#fff',
                 'maxOcc' => 0,
                 'Type' => 'Waitlist',
                 'Floor' => 'Waitlist',

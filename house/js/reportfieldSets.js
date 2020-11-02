@@ -212,29 +212,32 @@
 					break;
 					
 				case 'delSet':
-					formData = {
-						'cmd': 'deleteFieldSet',
-						'idFieldSet': $wrapper.find('select#fieldset').val()
-					};
-					
-					success = function(data, textStatus, jqXHR)
-	    			{
-	    				if(data.error){
-	    					new Noty({
-								type : "error",
-								text : "Error: " + data.error
-							}).show();
-	    				}else if(data.success){
-	    					new Noty({
-								type : "success",
-								text : data.success
-							}).show();
-							
-							$wrapper.find("#fieldset option[value=" + data.idFieldSet + "]").remove();
-							$wrapper.find("#fieldset").val("").trigger("change");
-							
-	    				}
-	    			}
+					if (confirm("Delete Field Set?")) {
+						
+						formData = {
+							'cmd': 'deleteFieldSet',
+							'idFieldSet': $wrapper.find('select#fieldset').val()
+						};
+						
+						success = function(data, textStatus, jqXHR)
+		    			{
+		    				if(data.error){
+		    					new Noty({
+									type : "error",
+									text : "Error: " + data.error
+								}).show();
+		    				}else if(data.success){
+		    					new Noty({
+									type : "success",
+									text : data.success
+								}).show();
+								
+								$wrapper.find("#fieldset option[value=" + data.idFieldSet + "]").remove();
+								$wrapper.find("#fieldset").val("").trigger("change");
+								
+		    				}
+		    			}
+					}
 					
 					break;
 				default:

@@ -36,7 +36,7 @@ use HHK\sec\Labels;
  * @package name
  * @author Eric
  *
- * This form is used by all Houses except IMD GH and St marys
+ * This form is used by all Houses except IMD
  */
 class RegisterForm {
 
@@ -466,8 +466,8 @@ p.label {
         $pledgedRate = 0.0;
         $rateAdj = 0.0;
         $notes = '';
-        $stays = array();
         $expectedDeparturePrompt = 'Expected Departure';
+        $hospital = '';
 
         if ($idVisit > 0) {
 
@@ -480,11 +480,7 @@ p.label {
             $stmt->bindValue(':reg', $idVisit, \PDO::PARAM_INT);
             $stmt->bindValue(':spn', $span, \PDO::PARAM_INT);
             $stmt->execute();
-            $rows = $stmt->fetchAll(\PDO::FETCH_NAMED);
-
-            foreach ($rows as $s) {
-                $stays[$s['idName']] = $s;
-            }
+            $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             // visit
             $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, '', $span);
@@ -532,13 +528,10 @@ p.label {
                 $gst->setPatientRelationshipCode($psg->psgMembers[$gst->getIdName()]->Relationship_Code->getStoredVal());
                 $guests[] = $gst;
             }
+          
+            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, '') from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
+				left join hospital h on hs.idHospital = h.idHospital  where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
 
-            $hospRoom = '';
-            $idHospital = '';
-            $hospital = "";
-            $patient = null;
-            
-            $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h join visit v on h.idHospital_stay = v.idHospital_Stay where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
             $stmt = $dbh->query($query);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
             
@@ -583,7 +576,9 @@ p.label {
 
             }
             
-            $query = "select h.idPatient, h.Room, h.idHospital from hospital_stay h join reservation r on h.idHospital_stay = r.idHospital_Stay where r.idReservation = " . intval($idReservation) . " limit 1";
+            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, '') from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
+				left join hospital h on hs.idHospital = h.idHospital where r.idReservation = " . intval($idReservation) . " limit 1";
+
             $stmt = $dbh->query($query);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
 
@@ -609,26 +604,15 @@ p.label {
             }
         }
 
+        // Patient and Hosptial
         if (count($hospitalStay) == 1) {
             $patient = new Patient($dbh, '', $hospitalStay[0][0]);
             $hospRoom = $hospitalStay[0][1];
-            $idHospital = $hospitalStay[0][2];
+            $hospital = $hospitalStay[0][2];
         }
         
         // Title
         $title = $uS->siteName . " Registration Form for Overnight Guests";
-
-        // Hospital Name
-        $hospList = array();
-        if (isset($uS->guestLookups[GLTableNames::Hospital])) {
-            $hospList = $uS->guestLookups[GLTableNames::Hospital];
-        }
-
-        foreach ($hospList as $r) {
-            if ($r[0] == $idHospital) {
-                $hospital = $r[1];
-            }
-        }
 
         // Vehicles
         if ($uS->TrackAuto) {
