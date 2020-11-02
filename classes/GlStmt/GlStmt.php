@@ -307,28 +307,17 @@ class GlStmt {
 		foreach ($invLines as $l) {
 			
 			// Special handling for the MOA item
-			if ($l['il_Item_Id'] == ItemId::LodgingMOA && $l['il_Amount'] < 0) {
+			if ($l['il_Item_Id'] == ItemId::LodgingMOA) {
 				
-				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate);
-				continue;
+				if ($l['il_Amount'] > 0) {
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+				} else {
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate);
+				}
+
+			} else {
+				$remainingItems[] = $l;
 			}
-			
-// 			// Adjust the amounts after the MOA.
-// 			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge || $l['il_Type_Id'] == ItemType::Tax || $l['il_Item_Id'] == ItemId::LodgingDonate || $l['il_Item_Id'] == ItemId::VisitFee) {
-				
-// 				if ($l['il_Amount'] >= $moaAmt) {
-					
-// 					$l['il_Amount'] -= $moaAmt;
-// 					$moaAmt = 0;
-					
-// 				} else if ($l['il_Amount'] > 0) {
-					
-// 					$moaAmt -= $l['il_Amount'];
-// 					$l['il_Amount'] = 0;
-// 				}
-// 			}
-			
-			$remainingItems[] = $l;
 		}
 		
 		return $remainingItems;
