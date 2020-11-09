@@ -11,19 +11,19 @@ use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Exception\RuntimeException;
 
 class GlStmt {
-	
+
 	protected $startDate;
 	protected $endDate;
 	protected $startDay;
 	protected $records;
 	public $lines;
-	
+
 	protected $errors;
 	protected $paymentDate;
 	protected $glLineMapper;
 	protected $baLineMapper;
-	
-	
+
+
 	public function __construct(\PDO $dbh, $month, $year, $day = '01') {
 		
 		$this->startDay = $day;
@@ -221,7 +221,7 @@ class GlStmt {
 					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate);
 				}
 				if ($pAmount != 0) {
-					$this->recordError("Overpayment at payment Id = ". $p['idPayment']);
+					$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
 				}
 				
 			}
@@ -260,7 +260,7 @@ class GlStmt {
 					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate);
 				}
 				if ($pAmount != 0) {
-					$this->recordError("Overpayment at payment Id = ". $p['idPayment']);
+					$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
 				}
 				
 			}
@@ -291,7 +291,7 @@ class GlStmt {
 				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $this->paymentDate);
 			}
 			if ($pAmount != 0) {
-				$this->recordError("Overpayment at payment Id = ". $p['idPayment']);
+				$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
 			}
 			
 		} else {
@@ -352,6 +352,10 @@ class GlStmt {
 			$remainingItems[] = $l;
 		}
 		
+		if ($waiveAmt != 0) {
+			$this->recordError("Waive amount (" .$waiveAmt . ") not retired.");
+		}
+		
 		return $remainingItems;
 	}
 	
@@ -391,10 +395,10 @@ class GlStmt {
 						'Delegated_Id'=>$p['Delegated_Id'],
 						'iStatus'=>$p['iStatus'],
 						'iAmount'=>$p['iAmount'],
-						'iBalance'=>$p['iBalance'],
 						'iDeleted'=>$p['iDeleted'],
 						'Pledged'=>$p['Pledged_Rate'],
 						'Rate'=>$p['Rate'],
+						'iBalance'=>$p['iBalance'],
 						'Order_Number' => $p['Order_Number'],
 						'Suborder_Number' => $p['Suborder_Number'],
 				);
@@ -1316,6 +1320,18 @@ order by r.idResource;";
 		return $sDay;
 	}
 	
+	public static function invoiceHeader() {
+		
+		return array('Inv #', 'Delegated', 'Status', 'Amt', 'Deleted', 'Pledged', 'Rate', 'Balance', 'Order Number', 'Sub Order');
+	}
+	public static function lineHeader() {
+		
+		return array(' ', ' ', 'id', 'Amt', 'Item', 'Type', 'Gl Code');
+	}
+	public static function paymentHeader() {
+		
+		return array(' ', 'id', 'Status', 'Amt', 'Method', 'Updated', 'Timestamp', 'Refund', 'Payor', 'Pm Gl', 'Ba Debit', 'Ba Cred');
+	}
 	
 }
 

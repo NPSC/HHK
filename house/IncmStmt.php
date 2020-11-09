@@ -8,9 +8,9 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\GlStmt\GlStmt;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
-use HHK\House\GLCodes\GLCodes;
-use HHK\House\GLCodes\GLParameters;
-use HHK\House\GLCodes\GLTemplateRecord;
+// use HHK\House\GLCodes\GLCodes;
+// use HHK\House\GLCodes\GLParameters;
+// use HHK\House\GLCodes\GLTemplateRecord;
 
 /**
  * IncmStmt.php
@@ -186,7 +186,7 @@ if (isset($_POST['btnInv'])) {
 	foreach ($glStmt->lines as $l) {
 		$tbl->addBodyTr(
 				HTMLTable::makeTd($l['glcode'])
-				.HTMLTable::makeTd(number_format($l['debit']))
+				.HTMLTable::makeTd(number_format($l['debit'], 2))
 				.HTMLTable::makeTd(number_format($l['credit'], 2))
 				.HTMLTable::makeTd($l['date'])
 				);
@@ -225,9 +225,10 @@ if (isset($_POST['btnGlGo'])) {
 	
 
 	
-	$glCodes = new GLCodes($dbh, $glMonth, $glyear, NULL, new GLTemplateRecord(), 1);
+	$glCodes = new GlStmt($dbh, $glMonth, $glyear);
 	
 		$tbl = new HTMLTable();
+		$glInvoices = '';
 		
 		$invHdr = '';
 		foreach ($glCodes->invoiceHeader() as $h) {
@@ -327,7 +328,8 @@ if (isset($_POST['btnGlGo'])) {
 		}
 		
 				
-		$glInvoices = "<p style='margin-top:20px;'>Total Credits = " . number_format($glCodes->getTotalCredit(), 2) . " Total Debits = " . number_format($glCodes->getTotalDebit(), 2) . "</p>" .$tbl->generateMarkup();
+		$glInvoices .= '';  //"<p style='margin-top:20px;'>Total Credits = " . number_format($glCodes->getTotalCredit(), 2) . " Total Debits = " . number_format($glCodes->getTotalDebit(), 2) . "</p>";
+		$glInvoices .= $tbl->generateMarkup();
 		
 		if (count($glCodes->getErrors()) > 0) {
 			$etbl = new HTMLTable();
