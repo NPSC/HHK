@@ -2,7 +2,6 @@
 
 namespace HHK\House\Visit;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
@@ -29,7 +28,7 @@ use HHK\Purchase\RateChooser;
  * visitViewer.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -683,7 +682,9 @@ class VisitViewer {
 
         $tbl2 = new HTMLTable();
         $showSubTotal = FALSE;
-
+        // Get labels
+        $labels = Labels::getLabels();
+        
         // Number of nights
         $tbl2->addBodyTr(
                 HTMLTable::makeTd('# of nights stayed:', array('class'=>'tdlabel'))
@@ -711,7 +712,7 @@ class VisitViewer {
         if ($curAccount->getShowRoomFees()) {
 
             $tbl2->addBodyTr(
-                HTMLTable::makeTd('Room fees pledged to-date:', array('class'=>'tdlabel'))
+            		HTMLTable::makeTd($labels->getString('PaymentChooser', 'RmFeesPledged', 'Room fees pledged to-date') . ':', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd('$' . number_format($curAccount->getRoomCharge(), 2), array('style'=>'text-align:right;'))
             );
 
@@ -750,8 +751,6 @@ class VisitViewer {
         // Visit fees charged
         if ($curAccount->getVisitFeeCharged() > 0) {
 
-            // Get labels
-            $labels = Labels::getLabels();
             $showSubTotal = TRUE;
 
             $tbl2->addBodyTr(

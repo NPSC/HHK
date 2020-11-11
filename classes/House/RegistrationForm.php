@@ -8,7 +8,6 @@ use HHK\Member\AbstractMember;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\MemBasis;
 use HHK\SysConst\PhonePurpose;
-use HHK\Config_Lite\Config_Lite;
 use HHK\Member\Address\Address;
 use HHK\Member\Address\Phones;
 use HHK\HTMLControls\HTMLContainer;

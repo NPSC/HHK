@@ -7,7 +7,6 @@ use HHK\SysConst\AttributeTypes;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\CreateMarkupFromDB;
-use HHK\Config_Lite\Config_Lite;
 use HHK\SysConst\ResourceStatus;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLSelector;

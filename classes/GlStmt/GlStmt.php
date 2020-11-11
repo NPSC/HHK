@@ -189,7 +189,7 @@ class GlStmt {
 				}
 				
 				if ($pAmount != 0) {
-					$this->recordError("Overpayment at payment Id = ". $p['idPayment']);
+					$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
 				}
 				
 			}
@@ -370,6 +370,7 @@ class GlStmt {
 		$payments = array();
 		$invoiceLines = array();
 		$delegatedInvoiceLines = array();
+		$delegatedPayments = array();
 		
 		$query = "call gl_report('" . $this->startDate->format('Y-m-d') . "','" . $this->endDate->format('Y-m-d') . "')";
 		
@@ -417,7 +418,7 @@ class GlStmt {
 					
 					$idPayment = $p['idPayment'];
 					
-					$payments[$idPayment] = array(
+					$payment = array(
 							'idPayment'=>$p['idPayment'],
 							'pStatus'=>$p['pStatus'],
 							'pAmount'=>$p['pAmount'],
@@ -430,6 +431,12 @@ class GlStmt {
 							'ba_Gl_Debit'=>$p['ba_Gl_Debit'],
 							'ba_Gl_Credit'=>$p['ba_Gl_Credit'],
 					);
+					
+					if ($p['Delegated_Id'] > 0) {
+						$delegatedPayments[$p['Delegated_Id']][$idPayment] = $payment;
+					} else {
+						$payments[$idPayment] = $payment;
+					}
 				}
 			}
 			
@@ -457,26 +464,35 @@ class GlStmt {
 				}
 			}
 		}
-		
+
 		unset($rows);
-		
+
 		if ($idInvoice > 0) {
 			// close last invoice
 			$invoices[$idInvoice] = array('i'=>$invoice, 'p'=>$payments, 'l'=>$invoiceLines);
 		}
-		
+
 		// Add the delegated items to their carried-by invoice.
 		foreach ($delegatedInvoiceLines as $k => $l) {
-			
+
 			foreach ($l as $line) {
-				
+
 				$invoices[$k]['l'][$line['il_Id']] = $line;
 			}
 		}
-		
+
+		// Add the delegated payments to their carried-by invoice.
+		foreach ($delegatedPayments as $k => $l) {
+
+			foreach ($l as $line) {
+
+				$invoices[$k]['p'][$line['idPayment']] = $line;
+			}
+		}
+
 		$this->records =  $invoices;
 	}
-	
+
 	public function doReport (\PDO $dbh, $monthArray, $tableAttrs) {
 		
 		$uS = Session::getInstance();

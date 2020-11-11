@@ -2,7 +2,6 @@
 
 namespace HHK;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\Purchase\RoomRate;
 use HHK\SysConst\{WebRole, ReservationStatus, ItemPriceCode, RoomRateCategories, GLTableNames, RoomState};
 use HHK\Tables\EditRS;

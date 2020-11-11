@@ -80,8 +80,9 @@ class Hospital {
         $table->addHeaderTr(
                 (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
-                .HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
-                .HTMLTable::makeTh($labels->getString('hospital', 'treatmentStart', 'Treatment Start'))
+        		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
+        		.HTMLTable::makeTh($labels->getString('hospital', 'MRN', 'MRN'))
+        		.HTMLTable::makeTh($labels->getString('hospital', 'treatmentStart', 'Treatment Start'))
                 .($showExitDate ? HTMLTable::makeTh($labels->getString('hospital', 'treatmentEnd', 'Treatment End')) : '')
             );
 
@@ -98,13 +99,19 @@ class Hospital {
                                 array('name'=>'selHospital', )
                                 )
                         )
-                . HTMLTable::makeTd(
-                        HTMLInput::generateMarkup(
-                                $hstay->getRoom(),
-                                array('name'=>'psgRoom', 'size'=>'8')
-                                )
-                        )
-                . HTMLTable::makeTd(
+        		. HTMLTable::makeTd(
+        				HTMLInput::generateMarkup(
+        						$hstay->getRoom(),
+        						array('name'=>'psgRoom', 'size'=>'8')
+        						)
+        				)
+        		. HTMLTable::makeTd(
+        				HTMLInput::generateMarkup(
+        						$hstay->getMrn(),
+        						array('name'=>'psgMrn', 'size'=>'14')
+        						)
+        				)
+        		. HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 ($hstay->getArrivalDate() != '' ? date("M j, Y", strtotime($hstay->getArrivalDate())) : ""),
                                 array('name'=>'txtEntryDate', 'class'=>'ckdate', 'readonly'=>'readonly'))
@@ -389,7 +396,10 @@ $(document).ready(function () {
         }
 
         if (isset($post['psgRoom'])) {
-            $hstay->setRoom(filter_var($post['psgRoom'], FILTER_SANITIZE_STRING));
+        	$hstay->setRoom(filter_var($post['psgRoom'], FILTER_SANITIZE_STRING));
+        }
+        if (isset($post['psgMrn'])) {
+        	$hstay->setMrn(filter_var($post['psgMrn'], FILTER_SANITIZE_STRING));
         }
         if (isset($post['txtEntryDate'])) {
             $dateStr = filter_var($post['txtEntryDate'], FILTER_SANITIZE_STRING);

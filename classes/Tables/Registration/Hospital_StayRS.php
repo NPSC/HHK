@@ -29,7 +29,7 @@ class Hospital_StayRS extends AbstractTableRS {
     public $Doctor;   // varchar(145) NOT NULL DEFAULT '',
     public $Room;   // VARCHAR(45) NOT NULL DEFAULT '' ,
     public $Private_Ins_Code;  // VARCHAR(5) NOT NULL DEFAULT ''
-    public $Nurse_Station;   // VARCHAR(45) NOT NULL DEFAULT '' ,
+    public $MRN;   // VARCHAR(45) NOT NULL DEFAULT '' ,
     public $Room_Phone;   // VARCHAR(15) NOT NULL DEFAULT '' ,
     public $Arrival_Date;   // DATETIME NULL ,
     public $Expected_Departure;   // DATETIME NULL ,
@@ -54,7 +54,7 @@ class Hospital_StayRS extends AbstractTableRS {
         $this->Doctor = new DB_Field("Doctor", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->Private_Ins_Code = new DB_Field("Private_Ins_Code", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Room = new DB_Field("Room", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Nurse_Station = new DB_Field("Nurse_Station", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->MRN = new DB_Field("MRN", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Room_Phone = new DB_Field("Room_Phone", "", new DbStrSanitizer(15), TRUE, TRUE);
         $this->Arrival_Date = new DB_Field("Arrival_Date", null, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Expected_Departure = new DB_Field("Expected_Departure", null, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);

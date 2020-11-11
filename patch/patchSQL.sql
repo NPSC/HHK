@@ -6,6 +6,9 @@ drop procedure IF EXISTS update_sys_config;
 -- Exchange rates a,b,c,d with r's if not income rated.
 drop procedure IF EXISTS fix_rates;
 
+ALTER TABLE `hospital_stay` 
+	CHANGE COLUMN `Nurse_Station` `MRN` VARCHAR(45) CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NOT NULL DEFAULT '' ;
+
 -- label categories
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES
 ('labels_category', 'rg', 'Register', '10'),
@@ -20,6 +23,11 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 ('labels_category', 's', 'Statement', '100');
 
 INSERT INTO `sys_config` (`Key`, `Type`, `Category`, `Description`) VALUES ('DefCalEventTextColor', 's', 'c', 'Default calendar event ribbon text color');
+
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('MRN', 'MRN', 's', 'h');
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('RmFeesPledged', 'Room fees pledged to-date', 's', 'pc');
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('PayRmFees', 'Pay Room Fees', 's', 'pc');
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('RoomCharges', 'Room Charges', 's', 'pc');
 
 -- Make new guest category name_volunteer entries for patients that stayed.
 Insert into name_volunteer2

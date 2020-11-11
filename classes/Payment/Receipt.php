@@ -2,7 +2,6 @@
 
 namespace HHK\Payment;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\Purchase\{Item, ValueAddedTax};

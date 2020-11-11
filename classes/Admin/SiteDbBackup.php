@@ -89,10 +89,10 @@ class SiteDbBackup {
         }
 
         // ignore tables
-        $igtables = '';
-        foreach ($ignoreTables as $t) {
-            $igtables .= " --ignore-table=$t";
-        }
+//         $igtables = '';
+//         foreach ($ignoreTables as $t) {
+//             $igtables .= " --ignore-table=$t";
+//         }
 
         $this->return_var = 0;
 

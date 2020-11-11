@@ -2586,7 +2586,8 @@ CREATE or replace VIEW `vspan_listing` AS
         `v`.`Rate_Category`,
         v.idRoom_Rate,
         v.Rate_Glide_Credit,
-        ifnull(n.Name_Full, '') as `Patient_Name`,
+        case when ifnull(hs.MRN, '') = '' then ifnull(n.Name_Full, '') else concat( ifnull(n.Name_Full, '') ,' (' , ifnull(hs.MRN, '') , ')') end
+         as `Patient_Name`,
 	ifnull(hs.idHospital, 0) as `idHospital`,
 	ifnull(hs.idAssociation, 0) as `idAssociation`
     from
@@ -2597,7 +2598,6 @@ CREATE or replace VIEW `vspan_listing` AS
         left join `name` n on hs.idPatient = n.idName
         left join `gen_lookups` `g2` ON `g2`.`Table_Name` = 'Visit_Status'
             and `g2`.`Code` = `v`.`Status`;
-
 
 
 -- -----------------------------------------------------

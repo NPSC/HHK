@@ -2,7 +2,7 @@
 
 namespace HHK\House;
 
-use HHK\Config_Lite\Config_Lite;
+
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\House\Visit\VisitViewer;
 use HHK\SysConst\AddressPurpose;
@@ -41,7 +41,6 @@ use HHK\TableLog\VisitLog;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\RoomState;
 use HHK\Member\Role\Guest;
-use HHK\Member\Relation\AbstractRelation;
 use HHK\Tables\Visit\StaysRS;
 use HHK\Exception\PaymentException;
 use HHK\sec\SecurityComponent;

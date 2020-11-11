@@ -53,9 +53,9 @@ class HospitalStay {
             if (count($rows) === 1) {
                 EditRS::loadRow($rows[0], $hstay);
             }
-        }else if ($idP > 0) {
             
-            //$stmt = $dbh->query("Select *, max(Arrival_Date) from hospital_stay where idPatient=$idP group by idHospital_Stay");
+        }else if ($idP > 0) {
+        	
             //get hospital stay from most recent reservation
             $stmt = $dbh->query("
 SELECT hs.*, r.`idReservation`, v.`idVisit`,
@@ -161,11 +161,15 @@ order by `order` desc, `arrival` desc limit 1");
     }
     
     private function saveLink(\PDO $dbh, $idIns){
+    	
         if($this->idReservation > 0 || $this->idVisit > 0){
+        	
             if($this->idReservation > 0){
+            	
                 $reservRS = new ReservationRS();
                 $stmt = $dbh->query("select * from reservation where idReservation = $this->idReservation");
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                
                 if(count($rows) == 1){
                     EditRS::loadRow($rows[0], $reservRS);
                     $reservRS->idHospital_Stay->setNewVal($idIns);
@@ -177,10 +181,13 @@ order by `order` desc, `arrival` desc limit 1");
             }
             
             if($this->idVisit > 0){
+            	
                 $visitRS = new VisitRS();
                 $stmt = $dbh->query("select * from visit where idVisit = $this->idVisit");
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                
                 if(count($rows) == 1){
+                	
                     EditRS::loadRow($rows[0], $visitRS);
                     $visitRS->idHospital_stay->setNewVal($idIns);
                     $updt = EditRS::update($dbh, $visitRS, array($visitRS->idVisit));
@@ -296,11 +303,18 @@ order by `order` desc, `arrival` desc limit 1");
     }
     
     public function getRoom() {
-        return $this->hstayRs->Room->getStoredVal();
+    	return $this->hstayRs->Room->getStoredVal();
     }
     
     public function setRoom($v) {
-        $this->hstayRs->Room->setNewVal($v);
+    	$this->hstayRs->Room->setNewVal($v);
+    }
+    public function getMrn() {
+    	return $this->hstayRs->MRN->getStoredVal();
+    }
+    
+    public function setMrn($v) {
+    	$this->hstayRs->MRN->setNewVal($v);
     }
 }
 ?>

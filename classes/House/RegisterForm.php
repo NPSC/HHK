@@ -11,7 +11,6 @@ use HHK\Tables\Registration\VehicleRS;
 use HHK\Tables\EditRS;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\Session;
-use HHK\Config_Lite\Config_Lite;
 use HHK\House\Visit\Visit;
 use HHK\Member\Role\Guest;
 use HHK\House\Constraint\ConstraintsVisit;

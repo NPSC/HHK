@@ -258,9 +258,9 @@ if (isset($_POST['btnGlGo'])) {
 		
 		$recordCtr = 0;
 		
-		foreach ($glCodes->getInvoices() as $r) {
+		foreach ($glCodes->getInvoices() as $id => $r) {
 			
-			if ($recordCtr++ > 16) {
+			if ($recordCtr++ > 12) {
 				$tbl->addBodyTr($invHdr);
 				$tbl->addBodyTr($pmtHdr);
 				$tbl->addBodyTr($lineHdr);
@@ -275,6 +275,8 @@ if (isset($_POST['btnGlGo'])) {
 					$col = 'paid';
 				} else if ($k == 'Rate') {
 					$col = number_format($col, 2);
+				} else if ($k == 'iNumber') {
+					$col .= ' ('. $id .')';
 				}
 				
 				if ($col == '0.00') {

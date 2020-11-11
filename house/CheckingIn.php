@@ -192,7 +192,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv" class="container-fluid" style="margin-left: auto;" <?php echo $pageStyle; ?>>
-            <h1><?php echo $pageHdr; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
+            <h1><?php echo $pageHdr; ?> <span id="spnStatus" style="margin-left:50px; display:inline;"></span></h1>
 
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>

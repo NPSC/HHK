@@ -1,7 +1,6 @@
 <?php
 namespace HHK\Purchase;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Registration;
 use HHK\Payment\CreditToken;
@@ -700,7 +699,7 @@ ORDER BY v.idVisit , v.Span;");
 
             // Any remaining room charges
             $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Room Charges:', array('colspan'=>'2', 'class'=>'tdlabel'))
+            		HTMLTable::makeTd($labels->getString('PaymentChooser', 'RoomCharges', 'Room Charges').':', array('colspan'=>'2', 'class'=>'tdlabel'))
                     .HTMLTable::makeTd(
                           HTMLInput::generateMarkup('',
                                   array(
@@ -772,7 +771,7 @@ ORDER BY v.idVisit , v.Span;");
 
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
 
-            $feesTbl->addBodyTr(HTMLTable::makeTd('Pay Room Fees:', array('class'=>'tdlabel'))
+        	$feesTbl->addBodyTr(HTMLTable::makeTd( $labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd('Days: ' . HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'1', 'data-vid'=>$idVisit)), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                 , array('class'=>'hhk-RoomFees'));

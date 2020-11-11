@@ -564,7 +564,7 @@ CREATE TABLE if not exists `hospital_stay` (
   `idPcDoctor` int(11) NOT NULL DEFAULT '0',
   `Doctor` varchar(145) NOT NULL DEFAULT '',
   `Room` varchar(45) NOT NULL DEFAULT '',
-  `Nurse_Station` varchar(45) NOT NULL DEFAULT '',
+  `MRN` varchar(45) NOT NULL DEFAULT '',
   `Private_Ins_Code` VARCHAR(5) NOT NULL DEFAULT '',
   `Room_Phone` varchar(15) NOT NULL DEFAULT '',
   `Arrival_Date` datetime DEFAULT NULL,

@@ -180,12 +180,12 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
             // Expand this selection
             $expansion = Duplicate::expandGuest($dbh, $fullName);
             $data = array();
-            $ids = array();
+
             $idPsgs = array();
 
             foreach ($expansion as $d) {
 
-                $ids[$d['Id']] = $d['Id'];
+
                 $id = $d['Id'];
 
                 $idPsgs[$d['idPsg']] = $d['idPsg'];

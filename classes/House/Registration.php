@@ -2,7 +2,6 @@
 
 namespace HHK\House;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\SysConst\{InvoiceStatus, ItemId, VisitStatus};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
