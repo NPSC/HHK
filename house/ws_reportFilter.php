@@ -35,12 +35,16 @@ $uS = Session::getInstance();
 
 
 $events = array();
+$report = '';
+$idFieldSet = 0;
+$title = '';
+$global = FALSE;
+$fields = '';
 
 try {
 
     switch ($c) {
         case 'listFieldSets':
-            $report = '';
             
             if (isset($_REQUEST["report"])) {
                 $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_STRING);
@@ -51,13 +55,12 @@ try {
             break;
         
         case 'getFieldSet':
-            $idFieldSet = '';
-            
+
             if (isset($_REQUEST["idFieldSet"])) {
-                $idFieldSet = filter_var(urldecode($_REQUEST["idFieldSet"]), FILTER_VALIDATE_INT);
+            	$idFieldSet = filter_var(urldecode($_REQUEST["idFieldSet"]), FILTER_SANITIZE_NUMBER_INT);
             }
             
-            $response = ReportFieldSet::getFieldSet($dbh, $idFieldSet);
+            $response = ReportFieldSet::getFieldSet($dbh, intval($idFieldSet));
             
             if($response){
                 $events = $response;
@@ -68,6 +71,7 @@ try {
             break;
             
         case 'createFieldSet':
+        	
             if (isset($_REQUEST["report"])) {
                 $report = filter_var(urldecode($_REQUEST["report"]), FILTER_SANITIZE_STRING);
             }
@@ -89,6 +93,7 @@ try {
             break;
             
         case 'updateFieldSet':
+        	
             if (isset($_REQUEST['idFieldSet'])){
                 $idFieldSet = filter_var($_REQUEST['idFieldSet'], FILTER_SANITIZE_NUMBER_INT);
             }
@@ -98,18 +103,18 @@ try {
             if (isset($_REQUEST["fields"])) {
                 $fields = filter_var_array($_REQUEST["fields"], FILTER_SANITIZE_STRING);
             }
-            
-            $events = ReportFieldSet::updateFieldSet($dbh, $idFieldSet, $title, $fields);
+
+            $events = ReportFieldSet::updateFieldSet($dbh, intval($idFieldSet), $title, $fields);
             
             break;
             
         case 'deleteFieldSet':
-            $idFieldSet = 0;
+
             if (isset($_REQUEST["idFieldSet"])){
                 $idFieldSet = filter_var($_REQUEST["idFieldSet"], FILTER_SANITIZE_NUMBER_INT);
             }
             
-            $events = ReportFieldSet::deleteFieldSet($dbh, $idFieldSet);
+            $events = ReportFieldSet::deleteFieldSet($dbh, intval($idFieldSet));
             
             break;
         default:

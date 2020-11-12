@@ -68,32 +68,37 @@ class GlStmt {
 				if ($r['i']['iStatus'] != InvoiceStatus::Carried) {
 					$this->recordError('No payment for Invoice ' . $r['i']['iNumber']);
 				}
-				
+
 				continue;
 			}
-			
+
 			$payments = array();
-			
+			$invLines = array();
+
 			foreach ($r['p'] as $p) {
-				
+
 				if ($p['pStatus'] == PaymentStatusCode::Reverse || $p['pStatus'] == PaymentStatusCode::VoidSale || $p['pStatus'] == PaymentStatusCode::Declined) {
 					continue;
 				}
-				
+
 				$payments[$p['idPayment']] = $p;
-				
+
 			}
-			
+
 			// any payments left?
 			if (count($payments) == 0) {
 				continue;
 			}
-			
-			
-			foreach ($payments as $pay) {
-				$this->mapPayment($r, $pay);
+
+			// Copy invoice lines
+			foreach ($r['l'] as $l) {
+				$invLines[] = $l;
 			}
-			
+
+			foreach ($payments as $pay) {
+				$this->mapPayment($invLines, $pay, $r['i']['iNumber']);
+			}
+
 		}
 		
 		if ($this->glLineMapper->getTotalCredit() != $this->glLineMapper->getTotalDebit()) {
@@ -103,7 +108,7 @@ class GlStmt {
 		return $this;
 	}
 	
-	protected function mapPayment($r, $p) {
+	protected function mapPayment(&$iLines, $p, $iNumber) {
 		
 		$invLines = array();
 		$waiveAmt = 0;
@@ -123,8 +128,8 @@ class GlStmt {
 			$pUpDate = NULL;
 		}
 		
-		// Copy invoice lines and Look for waived and MOA refunds.
-		foreach ($r['l'] as $l) {
+		// Copy invoice lines and Look for waived.
+		foreach ($iLines as $l) {
 			
 			$invLines[] = $l;
 			
@@ -132,15 +137,15 @@ class GlStmt {
 				$waiveAmt += abs($l['il_Amount']);
 			}
 			
-			if ($l['il_Item_Id'] == ItemId::LodgingMOA && $l['il_Amount'] < 0) {
-				$moaAmt += abs($l['il_Amount']);
-			}
+// 			if ($l['il_Item_Id'] == ItemId::LodgingMOA && $l['il_Amount'] < 0) {
+// 				$moaAmt += abs($l['il_Amount']);
+// 			}
 		}
 		
-		// Special handling for waived payments.
-		if ($moaAmt > 0) {
-			$invLines = $this->mapMoaPayments($moaAmt, $invLines);
-		}
+		// Special handling for MOA payments.
+// 		if ($moaAmt != 0) {
+// 			$invLines = $this->mapMoaPayments($moaAmt, $invLines, $iNumber);
+// 		}
 		
 		// Special handling for waived payments.
 		if ($waiveAmt > 0) {
@@ -166,10 +171,10 @@ class GlStmt {
 				
 				// 3rd party payments
 				if ($p['ba_Gl_Debit'] != '') {
-					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $this->paymentDate);
+					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $this->paymentDate, $iNumber);
 				}
 				
-				$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $pUpDate);
+				$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $iNumber);
 				
 				$pAmount =  abs($p['pAmount']);
 				
@@ -185,7 +190,7 @@ class GlStmt {
 					}
 					
 					// map gl code
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $pUpDate);
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $pUpDate, $iNumber);
 				}
 				
 				if ($pAmount != 0) {
@@ -200,10 +205,10 @@ class GlStmt {
 				
 				// 3rd party payments
 				if ($p['ba_Gl_Debit'] != '') {
-					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate);
+					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate, $iNumber);
 				}
 				
-				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate);
+				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate, $iNumber);
 				
 				$pAmount =  $p['pAmount'];
 				
@@ -218,7 +223,7 @@ class GlStmt {
 						$pAmount = 0;
 					}
 					
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate);
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate, $iNumber);
 				}
 				if ($pAmount != 0) {
 					$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
@@ -239,10 +244,10 @@ class GlStmt {
 				
 				// 3rd party payments
 				if ($p['ba_Gl_Debit'] != '') {
-					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate);
+					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate, $iNumber);
 				}
 				
-				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate);
+				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate, $iNumber);
 				
 				$pAmount =  $p['pAmount'];
 				
@@ -250,17 +255,19 @@ class GlStmt {
 					
 					$ilAmt = $l['il_Amount'];
 					
-					if ($pAmount >= $ilAmt) {
+					if ($p['pAmount'] == 0) {
+						$pAmount += $ilAmt;
+					} else if ($pAmount >= $ilAmt) {
 						$pAmount -= $ilAmt;
 					} else {
 						$ilAmt = $pAmount;
 						$pAmount = 0;
 					}
 					
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate);
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate, $iNumber);
 				}
 				if ($pAmount != 0) {
-					$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
+					$this->recordError("Overpayment ($" .$pAmount . ") at payment Id = ". $p['idPayment']);
 				}
 				
 			}
@@ -270,10 +277,10 @@ class GlStmt {
 			
 			// 3rd party payments
 			if ($p['ba_Gl_Debit'] != '') {
-				$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $this->paymentDate);
+				$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $this->paymentDate, $iNumber);
 			}
 			
-			$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate);
+			$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $iNumber);
 			
 			$pAmount =  abs($p['pAmount']);
 			
@@ -288,7 +295,7 @@ class GlStmt {
 					$pAmount = 0;
 				}
 				// map gl code
-				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $this->paymentDate);
+				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $this->paymentDate, $iNumber);
 			}
 			if ($pAmount != 0) {
 				$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
@@ -299,7 +306,7 @@ class GlStmt {
 		}
 	}
 	
-	protected function mapMoaPayments($moaAmt, array $invLines) {
+	protected function mapMoaPayments($moaAmt, array $invLines, $iNumber) {
 		
 		// add up MOA items
 		$remainingItems = array();
@@ -310,9 +317,9 @@ class GlStmt {
 			if ($l['il_Item_Id'] == ItemId::LodgingMOA) {
 				
 				if ($l['il_Amount'] > 0) {
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate);
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $iNumber);
 				} else {
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate);
+					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate, $iNumber);
 				}
 
 			} else {
@@ -375,10 +382,8 @@ class GlStmt {
 		$query = "call gl_report('" . $this->startDate->format('Y-m-d') . "','" . $this->endDate->format('Y-m-d') . "')";
 		
 		$stmt = $dbh->query($query);
-		$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-		$stmt->nextRowset();
 		
-		foreach ($rows as $p) {
+		while ($p = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 			
 			if ($p['idInvoice'] != $idInvoice) {
 				// Next Invoice
@@ -432,11 +437,13 @@ class GlStmt {
 							'ba_Gl_Credit'=>$p['ba_Gl_Credit'],
 					);
 					
-					if ($p['Delegated_Id'] > 0) {
-						$delegatedPayments[$p['Delegated_Id']][$idPayment] = $payment;
-					} else {
+					// Delegated invoice and there are actual payments to register.
+					 if ($p['Delegated_Id'] == 0) {
 						$payments[$idPayment] = $payment;
-					}
+					 } else if ($p['iAmount'] != $p['iBalance']) {
+					 	$delegatedPayments[$p['Delegated_Id']][$idPayment] = $payment;
+					 }
+					 	
 				}
 			}
 			
@@ -465,7 +472,7 @@ class GlStmt {
 			}
 		}
 
-		unset($rows);
+		$stmt->nextRowset();
 
 		if ($idInvoice > 0) {
 			// close last invoice

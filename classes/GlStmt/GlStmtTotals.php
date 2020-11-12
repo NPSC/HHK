@@ -26,7 +26,7 @@ class GlStmtTotals {
 		}
 	}
 	
-	public function makeLine($glCode, $debitAmount, $creditAmount, $purchaseDate) {
+	public function makeLine($glCode, $debitAmount, $creditAmount, $purchaseDate, $invoiceNumber) {
 		
 		if (isset($this->totals[$glCode]) === FALSE) {
 			$this->totals[$glCode]['Credit'] = $creditAmount;
@@ -40,7 +40,7 @@ class GlStmtTotals {
 		$this->totalCredit += $creditAmount;
 		$this->totalDebit += $debitAmount;
 		
-		return array('glcode'=>$glCode, 'debit'=>$debitAmount, 'credit'=>$creditAmount, 'date'=>$purchaseDate->format('Y-m-d'));
+		return array('glcode'=>$glCode, 'debit'=>$debitAmount, 'credit'=>$creditAmount, 'date'=>$purchaseDate->format('Y-m-d'), 'InvoiceNumber' => $invoiceNumber);
 	}
 	
 	public function createMarkup($tableAttrs) {

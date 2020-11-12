@@ -177,7 +177,7 @@ if (isset($_POST['btnInv'])) {
 	$glStmt->mapRecords();
 	
 	$tbl = new HTMLTable();
-	$tbl->addBodyTr(HTMLTable::makeTh('Gl Code') . HTMLTable::makeTh('Debit') . HTMLTable::makeTh('Credit') . HTMLTable::makeTh('Date'));
+	$tbl->addBodyTr(HTMLTable::makeTh('Gl Code') . HTMLTable::makeTh('Debit') . HTMLTable::makeTh('Credit') . HTMLTable::makeTh('Date') . HTMLTable::makeTh('Inv'));
 	
 	$credits = 0;
 	$debits = 0;
@@ -189,6 +189,7 @@ if (isset($_POST['btnInv'])) {
 				.HTMLTable::makeTd(number_format($l['debit'], 2))
 				.HTMLTable::makeTd(number_format($l['credit'], 2))
 				.HTMLTable::makeTd($l['date'])
+				.HTMLTable::makeTd($l['InvoiceNumber'])
 				);
 		
 		$credits += $l['credit'];
