@@ -225,10 +225,10 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
 
     $mail->clearAddresses();
     $mail->addAddress($copyEmail);
-    $mail->Subject = "Auto Email Results for guests leaving " . $deparatureDT->format('M j, Y');
+    $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'MemberType', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
 
     $messg = "<p>Today's date: " . date('M j, Y');
-    $messg .= "<p>For guests leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
+    $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
     $messg .= "<p>Subject Line: </p>" . $subjectLine;
     $messg .= "<p>Template Text: </p>" . $sForm->template . "<br/>";
     $messg .= "<p>Results:</p>" . $resultsRegister;
@@ -239,7 +239,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
 
 } else if (!$sendEmail) {
     echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
-    echo "<p>For guests leaving " . $deparatureDT->format('M j, Y');
+    echo "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y');
     echo "<br/> Subject Line: " . $subjectLine;
     echo "<br/>Body Template:<br/>" . $sForm->template;
 }

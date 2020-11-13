@@ -642,27 +642,33 @@ INSERT INTO `labels` VALUES
 ('treatmentStart','Treatment Start','s','h','','Default: Treatment Start'),
 ('treatmentEnd','Treatment End','s','h','','Default: Treatment End'),
 ('roomNumber','Room','s','h','','Default: Room'),
+('MRN', 'MRN', 's', 'h','',''),
 
 ('report','MMM D, YYYY','s','mf','','Default: MMM D, YYYY'),
 ('reportDay','ddd, MMM D YYYY','s','mf','','Default: ddd, MMM D YYYY'),
 ('dateTime','MMM D YYYY h:mm a','s','mf','','Default: MMM D YYYY h:mm a'),
 
-('guestInstructions','Type in the guest name to check in.','s','ck','','Default: Type in the guest name to check in.'),
+('guestInstructions','Type in the guest name to check in.','s','ck','',''),
 
-('amtTenderedPrompt','Amount Tendered','s','pc','','Default: Amount Tendered'),
-('housePays','House pays difference','s','pc','','Default: House pays difference'),
-('rtnTenderedPrompt','Return Amount','s','pc','','Default: Return Amount'),
+('amtTenderedPrompt','Amount Tendered','s','pc','',''),
+('housePays','House pays difference','s','pc','',''),
+('rtnTenderedPrompt','Return Amount','s','pc','',''),
+('RmFeesPledged', '	Donations to-date',	's', 'pc', '', ''),
+('PayRmFees', 'Pay Donation', 's', 'pc', '', ''),
+('RoomCharges',	'Room Charges',	's', 'pc', '', ''),
 
 ('patient','Patient','s','mt','','Default: Patient'),
+('guest','Guest','s','mt','','Default: Guest'),
+('visitor','Guest','s','mt','','Default: Guest'),
 
-('reservationTab','Reservations','s','g','','Default: Reservations'),
-('reservationTitle','Reservation','s','g','','Default: Reservation'),
-('psgTab','Patient Support Group','s','g','','Default: Patient Support Group'),
+('reservationTab','Reservations','s','g','',''),
+('reservationTitle','Reservation','s','g','',''),
+('psgTab','Patient Support Group','s','g','',''),
 
-('hospitalsTab','Hospital','s','r','','Default: Hospital'),
-('keyDepositLabel','Deposit','s','r','','Default: Deposit'),
+('hospitalsTab','Hospital','s','r','',''),
+('keyDepositLabel','Deposit','s','r','',''),
 
-('datesChargesCaption','Visit Dates & Room Pledges','s','s','','Default: Visit Dates & Room Pledges'),
+('datesChargesCaption','Visit Dates & Room Pledges','s','s','',''),
 ('rateHeader','Rate','s','s','','Default: Rate'),
 ('chargeHeader','Pledge','s','s','','Default: Pledge'),
 ('roomTotalLabel','Room Pledges Total','s','s','','Default: Room Pledges Total'),

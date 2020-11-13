@@ -91,7 +91,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         $payorFirst = $r['Name_First'];
         $payorLast = $r['Name_Last'];
     } else {
-        $payorLast = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['Sold_To_Id'], 'title'=>'Click to go to the Guest Edit page.'));
+    	$payorLast = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['Sold_To_Id'], 'title'=>'Click to go to the '.$labels->getString('MemberType', 'visitor', 'Guest'). ' Edit page.'));
         $payorFirst = $r['Name_First'];
         $company = '';
     }

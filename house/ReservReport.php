@@ -106,12 +106,12 @@ $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
 
 $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
-$cFields[] = array("Guest Phone", 'Phone_Num', '', '', 'string', '20');
+$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
 $cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
-$cFields[] = array('Guests', 'numGuests', 'checked', '', 'integer', '10');
+$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest').'s', 'numGuests', 'checked', '', 'integer', '10');
 $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
 $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', array(), 'date');

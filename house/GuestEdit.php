@@ -155,7 +155,7 @@ if ($id > 0) {
             }
 
         } else {
-            $alertMessage = 'This person is not a '.$labels->getString('MemberType', 'patient', 'Patient').' or guest.  ' . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
+        	$alertMessage = "This person is not a ".$labels->getString('MemberType', 'patient', 'Patient')." or ".$labels->getString('MemberType', 'guest', 'Guest') . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
             $showSearchOnly = TRUE;
         }
     }
@@ -194,7 +194,7 @@ if ($idPsg > 0) {
 
     // The psg is not attached to this guest.
     if ($foundIt === FALSE) {
-        $alertMessage = 'Guest is not a memeber of the PSG indicated on the URL (GET param).  ';
+        $alertMessage = $labels->getString('MemberType', 'guest', 'Guest').' is not a memeber of the PSG indicated on the URL (GET param).  ';
         $idPsg = 0;
     }
 
@@ -412,14 +412,14 @@ if (isset($_POST["btnSubmit"])) {
 // Heading member name text
 if ($name->isNew()) {
 
-    $niceName = "New Guest";
+    $niceName = "New ".$labels->getString('MemberType', 'guest', 'Guest');
 
 } else {
 
     if ($psg->getIdPatient() == $name->get_idName()) {
         $niceName = $labels->getString('MemberType', 'patient', 'Patient').": " . $name->getMemberName();
     } else {
-        $niceName = "Guest: " . $name->getMemberName();
+        $niceName = $labels->getString('MemberType', 'guest', 'Guest').": " . $name->getMemberName();
     }
 }
 
@@ -541,7 +541,7 @@ if ($psg->getIdPsg() > 0) {
             foreach ($stays as $s) {
 
                 if ($s['idVisit'] == $r['idVisit'] && $s['Visit_Span'] == $r['Span']) {
-                    $stayIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float: left; margin-left:.3em;', 'title'=>'Guest Stayed'));
+                    $stayIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float: left; margin-left:.3em;', 'title'=>$labels->getString('MemberType', 'guest', 'Guest').' Stayed'));
                     break;
                 }
 
@@ -658,7 +658,7 @@ $idReg = $registration->getIdRegistration();
 
 } else {
     // Show just the search message.
-    $guestName = "<h2 style='font-size:2em;'>Search for a Guest/" . $labels->getString('MemberType', 'patient', 'Patient') . ":</h2>";
+    $guestName = "<h2 style='font-size:2em;'>Search for a " .$labels->getString('MemberType', 'guest', 'Guest'). "/" . $labels->getString('MemberType', 'patient', 'Patient') . ":</h2>";
     $idReg = 0;
 }
 
@@ -768,7 +768,7 @@ $uS->guestId = $id;
                 <div id="divNametabs" class="hhk-tdbox hhk-member-detail" style="min-width: 850px;">
                     <ul>
                         <li><a href="#nameTab" title="Addresses, Phone Numbers, Email Addresses">Contact Info</a></li>
-                        <li><a href="#demoTab" title="Guest Demographics">Demographics</a></li>
+                        <li><a href="#demoTab" title="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?> Demographics">Demographics</a></li>
                         <li><a href="#exclTab" title="Exclude Addresses"><?php echo $ta['tabIcon']; ?> Exclude</a></li>
                         <?php if ($memberFlag) {  ?>
                         <li id="visitLog"><a href="#vvisitLog">Activity Log</a></li>
@@ -889,8 +889,8 @@ $uS->guestId = $id;
             <?php } ?>
             <div id="divFuncTabs" class="hhk-member-detail" style="display:none; margin-bottom: 50px;" >
                 <ul>
-                    <li><a href="#vckin">Current Guests</a></li>
-                    <li><a href="#vhistory">Recently Viewed Guests</a></li>
+                    <li><a href="#vckin">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
+                    <li><a href="#vhistory">Recently Viewed <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
                 </ul>
                 <div id="vhistory" class="hhk-tdbox ui-tabs-hide" style="background:#EFDBC2;">
                     <?php echo $recHistory; ?>

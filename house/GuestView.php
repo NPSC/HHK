@@ -132,7 +132,7 @@ order by l.Title, `Arrival`");
 
 }
 
-$title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Resident Guests for ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
+$title = HTMLContainer::generateMarkup('h3', $uS->siteName . " Resident ".$labels->getString('MemberType', 'visitor', 'Guest'). "s for " . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
 
 $guestMessage = '';
 $vehicleMessage = '';
@@ -206,14 +206,14 @@ if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
 
 // create send guest email table
 $emTbl = new HTMLTable();
-$emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup('Current Guests Report', array('name' => 'txtSubject', 'size' => '70'))));
+$emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup("Current ".$labels->getString('MemberType', 'visitor', 'Guest')."s Report", array('name' => 'txtSubject', 'size' => '70'))));
 $emTbl->addBodyTr(HTMLTable::makeTd(
         'Email: '
         . HTMLInput::generateMarkup('', array('name' => 'txtEmail', 'size' => '70'))));
 
 $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit')) . HTMLContainer::generateMarkup('span', $guestMessage, array('style'=>'color:red;margin-left:.5em;'))));
 
-$emtableMarkup = $emTbl->generateMarkup(array(), 'Email the Current Guest Report');
+$emtableMarkup = $emTbl->generateMarkup(array(), 'Email the Current ' .$labels->getString('MemberType', 'visitor', 'Guest') . ' Report');
 
 if ($uS->TrackAuto) {
     // create send guest email table
@@ -326,7 +326,7 @@ if ($uS->TrackAuto) {
             <div style="clear:both;"></div>
             <div id="mainTabs" style="display:none;font-size: .9em;">
                 <ul>
-                    <li><a href="#tabGuest">Resident Guests</a></li>
+                    <li><a href="#tabGuest">Resident <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
                     <?php if ($uS->TrackAuto) { ?>
                     <li><a href="#tabVeh">Vehicles</a></li>
                     <li><a href="#tabsrch"><?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?> Search</a></li>

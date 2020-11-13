@@ -35,7 +35,7 @@ $labels = Labels::getLabels();
 $wListMarkup = '';
 
 // Guest Search markup
-$gMk = AbstractRole::createSearchHeaderMkup('', 'Guest Search: ', TRUE);
+$gMk = AbstractRole::createSearchHeaderMkup('', $labels->getString('MemberType', 'guest', 'Guest').' Search: ', TRUE);
 $mk1 = $gMk['hdr'];
 
 // Hide guest search?
@@ -104,7 +104,7 @@ if ($stayingMarkup == '') {
             <div id="divResvList" style="font-size:.7em;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 <?php echo $committedMarkup; ?>
                 <?php echo $wListMarkup; ?>
-                <h3 id="hhk-chkedInHdr" style='padding:5px;background-color: #D3D3D3;' title="Click to show or hide the Checked-In Guests">Checked-In Guests
+                <h3 id="hhk-chkedInHdr" style='padding:5px;background-color: #D3D3D3;' title="Click to show or hide the Checked-In ".<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>>Checked-In <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>
                     <span class="ui-icon ui-icon-triangle-1-e" style="float:right;"></span></h3>
                 <?php echo $stayingMarkup; ?>
             </div>

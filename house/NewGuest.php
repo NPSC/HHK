@@ -36,6 +36,8 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
 
     // get session instance
     $uS = Session::getInstance();
+    
+    $pgTitle = 'Primary'.$labels->getString('MemberType', 'guest', 'Guest');
 
     $query = "SELECT
     s.idName,
@@ -44,7 +46,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     n.Name_Middle,
     n.Name_Last,
     IFNULL(g2.Description, '') AS `Name_Suffix`,
-    CASE when s.idName = v.idPrimaryGuest then 'Primary Guest' else '' end as `Primary`,
+    CASE when s.idName = v.idPrimaryGuest then '$pgTitle' else '' end as `Primary`,
     CASE when IFNULL(na.Address_2, '') = '' THEN IFNULL(na.Address_1, '') ELSE CONCAT(IFNULL(na.Address_1, ''), ' ', IFNULL(na.Address_2, '')) END AS `Address`,
     IFNULL(na.City, '') AS `City`,
     IFNULL(na.County, '') AS `County`,
@@ -219,7 +221,7 @@ ORDER BY `First Stay`";
 
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
-$headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' New Guests Report Details', array('style'=>'margin-top: .5em;'))
+$headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' New ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's Report Details', array('style'=>'margin-top: .5em;'))
         . HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
 $statsTable = '';
@@ -278,7 +280,7 @@ $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20', array()
 $cFields[] = array("Middle", 'Name_Middle', 'checked', '', 'string', '20', array());
 $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20', array());
 $cFields[] = array("Suffix", 'Name_Suffix', 'checked', '', 'string', '15', array());
-$cFields[] = array("Primary Guest", 'Primary', 'checked', '', 'string', '20', array());
+$cFields[] = array('Primary'.$labels->getString('MemberType', 'guest', 'Guest'), 'Primary', 'checked', '', 'string', '20', array());
 
     $pFields = array('Address', 'City');
     $pTitles = array('Address', 'City');
@@ -464,12 +466,12 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $sTbl = new HTMLTable();
         $sTbl->addHeader(HTMLTable::makeTh('') . HTMLTable::makeTh('Number') . HTMLTable::makeTh('Percent of Total'));
 
-        $sTbl->addBodyTr(HTMLTable::makeTd('New Guests:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numNewGuests) . HTMLTable::makeTd(number_format($newRatio) . '%'));
-        $sTbl->addBodyTr(HTMLTable::makeTd('Returning Guests:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numReturnGuests) . HTMLTable::makeTd(number_format(100 - $newRatio) . '%'));
-        $sTbl->addBodyTr(HTMLTable::makeTd('Total Guests:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numAllGuests));
+        $sTbl->addBodyTr(HTMLTable::makeTd('New ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numNewGuests) . HTMLTable::makeTd(number_format($newRatio) . '%'));
+        $sTbl->addBodyTr(HTMLTable::makeTd('Returning ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numReturnGuests) . HTMLTable::makeTd(number_format(100 - $newRatio) . '%'));
+        $sTbl->addBodyTr(HTMLTable::makeTd('Total ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numAllGuests));
 
 
-        $statsTable = HTMLContainer::generateMarkup('h3', $uS->siteName . 'New Guests Report Statistics')
+        $statsTable = HTMLContainer::generateMarkup('h3', $uS->siteName . 'New ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's Report Statistics')
                 . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
                 . $sTbl->generateMarkup();
 
@@ -607,7 +609,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="vnewguests" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
-                <p class="ui-state-active" style="max-width: 750px; margin:9px;padding:4px;">Shows the number of guests STARTING their stay during the selected period.  This may not be the same number as the total number of guests at the house.</p>
+                <p class="ui-state-active" style="max-width: 750px; margin:9px;padding:4px;">Shows the number of <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s STARTING their stay during the selected period.  This may not be the same number as the total number of <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s at the house.</p>
                 <form id="fcat" action="NewGuest.php" method="post">
                     <table style="float: left;">
                         <tr>

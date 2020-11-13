@@ -125,7 +125,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
 
 // Currently Checked In guests
-$currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current Guests' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        $currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divcurres'));
 
 // make registration form print button
@@ -323,7 +323,7 @@ if ($uS->UseWLnotes) {
             <div id="mainTabs" style="display:none; font-size:.9em;">
                 <ul>
                     <li id="liCal"><a href="#vcal">Calendar</a></li>
-                    <li><a href="#vstays">Current Guests (<span id="spnNumCurrent"></span>)</a></li>
+                    <li><a href="#vstays">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s (<span id="spnNumCurrent"></span>)</a></li>
                     <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?> (<span id="spnNumConfirmed"></span>)</a></li>
                     <?php if ($uS->ShowUncfrmdStatusTab) { ?>
                     <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>

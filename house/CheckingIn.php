@@ -87,7 +87,7 @@ if (isset($_GET['idPsg'])) {
 
 if (isset($_GET['vid'])) {
     $idVisit = intval(filter_var($_GET['vid'], FILTER_SANITIZE_NUMBER_INT), 10);
-    $resvObj->setSaveButtonLabel('Add Guest');
+    $resvObj->setSaveButtonLabel('Add '.$labels->getString('MemberType', 'guest', 'Guest'));
 
 }
 

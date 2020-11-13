@@ -118,7 +118,7 @@ if (isset($_POST['btnSmt'])) {
 
     $report = GuestReport::demogReport($dbh, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $whAssoc, $whichGuests, $zip);
 
-    $title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Guest Demographics compiled on ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
+    $title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' ' . $labels->getString('MemberType', 'visitor', 'Guest'). ' Demographics compiled on ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
 
 }
 
@@ -187,7 +187,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <h2>Guest Demography Report</h2>
+            <h2><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?> Demography Report</h2>
             <div id="vreport" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display:none; clear:left; min-width: 400px; padding:10px;">
                 <form action="occDemo.php" method="post">
                     <?php
@@ -210,8 +210,8 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
                     <table style="padding-top:20px; ">
                         <tr>
                             <td>
-                                <label for="rbnewG">First Time Guests Only </label><input type="radio" name="rbAllGuests" id="rbnewG" value="new" <?php echo $newGuestsChecked; ?> />
-                                <label for="rbAllG" style="margin-left:.5em;">All Guests </label><input type="radio" name="rbAllGuests" id="rbAllG" value="all" <?php echo $allGuestsChecked; ?> />
+                                <label for="rbnewG">First Time <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Only </label><input type="radio" name="rbAllGuests" id="rbnewG" value="new" <?php echo $newGuestsChecked; ?> />
+                                <label for="rbAllG" style="margin-left:.5em;">All <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s </label><input type="radio" name="rbAllGuests" id="rbAllG" value="all" <?php echo $allGuestsChecked; ?> />
                             </td>
                             <td>
                                 <input type="submit" id="btnSmt" name="btnSmt" value="Run Report" />
