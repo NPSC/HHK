@@ -31,7 +31,7 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
-
+$labels = Labels::getLabels();
 function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $labels) {
 
     // get session instance

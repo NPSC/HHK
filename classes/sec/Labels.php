@@ -35,7 +35,7 @@ class Labels {
             return $labels;
         }else{
             try{
-                $dbh = initPDO(FALSE);
+                $dbh = initPDO(TRUE);
                 $labels->initLabels($dbh);
                 return $labels;
             }catch(\Exception $e){

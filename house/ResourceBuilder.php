@@ -332,7 +332,7 @@ if (isset($_POST['table'])) {
             $aText = '';
 
             if ($tableName == 'Patient_Rel_Type') {
-                $aText = 'Guests';
+            	$aText = $labels->getString('MemberType', 'visitor', 'Guest').'s';
             }
 
             if (isset($_POST['txtDiagAmt'][0])) {
@@ -1140,7 +1140,7 @@ Upload new file: <input name="formfile" type="file" required />
             'style' => 'float: right;'
         ));
 
-        $tabContent .= HTMLContainer::generateMarkup('div', '<div class="mb-3">You may use the following codes in your document to personalize the document to each guest</div>' . $rTbl->generateMarkup(), array(
+        $tabContent .= HTMLContainer::generateMarkup('div', '<div class="mb-3">You may use the following codes in your document to personalize the document to each ' .$labels->getString('MemberType', 'guest', 'Guest').'</div>' . $rTbl->generateMarkup(), array(
             'id' => 'replacements'
         ));
     }
@@ -1378,7 +1378,7 @@ if ($priceModel->hasRateCalculator()) {
 
     $tbl = new HTMLTable();
 
-    $tbl->addHeaderTr(HTMLTable::makeTh('Room Rate') . HTMLTable::makeTh('Credit') . ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? HTMLTable::makeTh('Guest Nights') : HTMLTable::makeTh('Nights')) . HTMLTable::makeTh('Total'));
+    $tbl->addHeaderTr(HTMLTable::makeTh('Room Rate') . HTMLTable::makeTh('Credit') . ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? HTMLTable::makeTh($labels->getString('MemberType', 'guest', 'Guest').' Nights') : HTMLTable::makeTh('Nights')) . HTMLTable::makeTh('Total'));
 
     $attrFixed = array(
         'id' => 'spnRateTB',

@@ -1,6 +1,7 @@
 <?php
 use HHK\sec\Session;
 use HHK\sec\Login;
+use HHK\sec\Labels;
 use HHK\Exception\InvalidArgumentException;
 use HHK\Exception\RuntimeException;
 use HHK\sec\ScriptAuthClass;
@@ -74,6 +75,9 @@ if (isset($_POST['txtUname'])) {
     exit();
 }
 
+// Get labels
+$labels = Labels::getLabels();
+
 // disclamer
 $disclaimer = $uS->Disclaimer;
 
@@ -95,7 +99,7 @@ foreach ($uS->siteList as $r) {
     }
 }
 
-$siteName = HTMLContainer::generateMarkup('h3', 'Guest Tracking Site' . $icons[$page->get_Site_Code()]);
+$siteName = HTMLContainer::generateMarkup('h3', $labels->getString('MemberType', 'guest', 'Guest').' Tracking Site' . $icons[$page->get_Site_Code()]);
 
 $extLinkIcon = "<span class='ui-icon ui-icon-extlink' style='float: right; margin-right:.3em;margin-top:2px;'></span>";
 

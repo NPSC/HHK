@@ -72,6 +72,8 @@
             rid: 0,
             serviceURL: 'ws_resv.php',
             newLabel: 'New Incident',
+            guestLabel: 'Guest',
+            visitorLabel: 'Guest',
             tableAttrs: {
                 class: 'display compact',
                 width: '100%'
@@ -104,7 +106,7 @@
                 },
                 {
                     "targets": [2],
-                    title: "Guest",
+                    title: 'Guest',
                     searchable: true,
                     sortable: true,
                     data: "Guest"
@@ -404,7 +406,7 @@
                     }
                     var body = '<div id="incidentPrint">';
                     if (data.guest) {
-                        body += '<h3>Guest</h3>' +
+                        body += '<h3>'+guestLabel+'</h3>' +
                                 '<table cellpadding="10" style="margin-bottom: 2em;">' +
                                 '<thead>' +
                                 '<tr>' +

@@ -61,7 +61,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
             {data: 'titleSort', 'visible': false },
             {data: 'Title', title: 'Room', 'orderData': [0, 1], sortable: true, searchable:true},
             {data: 'Status', title: 'Status'},
-            {data: 'Guests', title: <?php echo $labels->getString('MemberType', 'visitor', 'Guest').'s'; ?>},
+            {data: 'Guests', title: '<?php echo $labels->getString("MemberType", "visitor", "Guest"); ?>'+'s'},
             {data: 'Patient_Name', title: patientLabel},
             {data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'},
             {data: 'Visit_Notes', title: 'Last Visit Note'},

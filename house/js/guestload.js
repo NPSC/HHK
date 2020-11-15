@@ -128,6 +128,8 @@ $(document).ready(function () {
 
     //incident reports
     $('#vIncidentContent').incidentViewer({
+		guestLabel: memData.guestLabel,
+		visitorLabel: memData.visitorLabel,
         guestId: memData.id,
         psgId: memData.idPsg,
         alertMessage: function(text, type) {
@@ -138,6 +140,7 @@ $(document).ready(function () {
     if(useDocUpload){
     	//doc uploader
     	$('#vDocsContent').docUploader({
+    		guestLabel: memData.guestLabel,
         	guestId: memData.id,
         	psgId: memData.idPsg,
         	alertMessage: function(text, type) {

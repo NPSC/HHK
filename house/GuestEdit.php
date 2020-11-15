@@ -651,6 +651,8 @@ $memberData['memStatus'] = $name->get_status();
 $memberData['idPsg'] = $psg->getIdPsg();
 $memberData['idReg'] = $registration->getIdRegistration();
 $memberData['psgOnly'] = $psgOnly;
+$memberData['guestLabel'] = $labels->getString('MemberType', 'guest', 'Guest');
+$memberData['visitorLabel'] = $labels->getString('MemberType', 'visitor', 'Guest');
 
 $idReg = $registration->getIdRegistration();
 

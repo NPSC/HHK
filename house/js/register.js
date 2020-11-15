@@ -392,6 +392,8 @@ var isGuestAdmin,
     resourceGroupBy,
     resourceColumnWidth,
     patientLabel,
+    guestLabel,
+    visitorLabel,
     challVar,
     defaultView,
     defaultEventColor,
@@ -429,6 +431,8 @@ $(document).ready(function () {
     resourceGroupBy = $('#resourceGroupBy').val();
     resourceColumnWidth = $('#resourceColumnWidth').val();
     patientLabel = $('#patientLabel').val();
+    visitorLabel = $('#visitorLabel').val();
+    guestLabel = $('#guestLabel').val();
     challVar = $('#challVar').val();
     defaultView = $('#defaultView').val();
     defaultEventColor = $('#defaultEventColor').val();
@@ -453,8 +457,8 @@ $(document).ready(function () {
     // Current Guests
     cgCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false},
-            {data: 'Guest First', title: 'Guest First'},
-            {data: 'Guest Last', title: 'Guest Last'},
+            {data: 'Guest First', title: guestLabel+' First'},
+            {data: 'Guest Last', title: guestLabel+' Last'},
             {data: 'Checked In', title: 'Checked In', render: function (data, type) {return dateRender(data, type, dateFormat);}},
             {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
             {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
@@ -475,8 +479,8 @@ $(document).ready(function () {
     // Reservations
     rvCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false},
-            {data: 'Guest First', title: 'Guest First'},
-            {data: 'Guest Last', title: 'Guest Last'},
+            {data: 'Guest First', title: guestLabel+' First'},
+            {data: 'Guest Last', title: guestLabel+' Last'},
             {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
             {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
             {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
@@ -504,8 +508,8 @@ $(document).ready(function () {
     //Waitlist
     wlCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false},
-            {data: 'Guest First', title: 'Guest First'},
-            {data: 'Guest Last', title: 'Guest Last'}];
+            {data: 'Guest First', title: guestLabel+' First'},
+            {data: 'Guest Last', title: guestLabel+' Last'}];
 
             if (showCreatedDate) {
                 wlCols.push({data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, "MMM D, YYYY H:mm")}});
@@ -538,7 +542,7 @@ $(document).ready(function () {
             {data: 'titleSort', 'visible': false },
             {data: 'Title', title: 'Room', 'orderData': [0, 1], className: 'hhk-justify-c'},
             {data: 'Status', title: 'Status', searchable:false},
-            {data: 'Guests', title: 'Guests'},
+            {data: 'Guests', title: visitorLabel+'s'},
             {data: 'Patient_Name', title: patientLabel}];
         
             if (showCharges) {
@@ -1000,7 +1004,7 @@ $(document).ready(function () {
                 // visits
                 } else if (event.idVisit !== undefined) {
                     
-                    element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', ' + event.guests + (event.guests > 1 ? ' guests': ' guest') + (shoHospitalName ? ', ' + hospTitle + ': ' + event.hospName : ''));
+                    element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', ' + event.guests + (event.guests > 1 ? ' '+visitorLabel+'s': ' '+visitorLabel) + (shoHospitalName ? ', ' + hospTitle + ': ' + event.hospName : ''));
                     
                     if (event.extended !== undefined && event.extended) {
                         element.find('div.fc-content')

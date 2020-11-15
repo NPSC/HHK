@@ -70,6 +70,8 @@ class ReserveData {
     protected $patBirthDateFlag;
     protected $showBirthDate;
     protected $patLabel;
+    protected $guestLabel;
+    protected $visitorLabel;
     protected $wlNotesLabel;
     protected $addrPurpose;
     protected $resvEarlyArrDays;
@@ -150,6 +152,8 @@ class ReserveData {
         $this->insistCkinDemog = FALSE;
         $this->fillEmergencyContact = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
+        $this->guestLabel = $labels->getString('MemberType', 'guest', 'Guest');
+        $this->visitorLabel = $labels->getString('MemberType', 'visitor', 'Guest');
         $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
         $this->wlNotesLabel = $labels->getString('referral', 'waitlistNotesLabel', 'Waitlist Notes');
         $this->addrPurpose = '1';

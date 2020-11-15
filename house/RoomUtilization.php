@@ -367,7 +367,7 @@ $(document).ready(function() {
                                 <input type="submit" name="btnByRoom" value="By Room" id="btnByRoom" />
                             </td>
                             <td colspan="2" style="text-align:right;">
-                                <input type="submit" name="btnByGuest" value="By Guest" id="btnByGuest" />
+                                <input type="submit" name="btnByGuest" value="By <?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>" id="btnByGuest" />
                             </td>
                         </tr>
                     </table>

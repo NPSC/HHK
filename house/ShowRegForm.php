@@ -177,7 +177,7 @@ $(document).ready(function() {
         popWd      : 950,
         popX       : 20,
         popY       : 20,
-        popTitle   : 'Guest Registration Form'};
+        popTitle   : <?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' Registration Form'};
 
     $('#mainTabs').tabs();
     

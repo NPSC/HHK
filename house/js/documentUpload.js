@@ -13,6 +13,7 @@
             rid: 0,
             serviceURL: 'ws_resc.php',
             newLabel: 'New Document',
+            guestLabel: 'Guest',
             tableAttrs: {
                 class: 'display compact',
                 width: '100%'

@@ -83,7 +83,7 @@ function createScript() {
         popWd      : $('#divStmt').width(),
         popX       : 20,
         popY       : 20,
-        popTitle   : 'Guest Statement'};
+        popTitle   : <?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' Statement'};
 
     $('#btnPrint').click(function() {
         $('div.PrintArea').printArea(opt);
@@ -186,7 +186,7 @@ if (isset($_POST['btnWord'])) {
 
 }
 
-$emSubject = $wInit->siteName . " Guest Statement";
+$emSubject = $wInit->siteName .' '. $labels->getString('MemberType', 'guest', 'Guest')." Statement";
 
 if (is_null($guest) === FALSE && $emAddr == '') {
     $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
@@ -204,7 +204,7 @@ $emTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', arr
 $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit))));
 
 $emtableMarkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('form',
-        $emTbl->generateMarkup(array(), 'Email Guest Statement'), array('id'=>'formEm'))
+		$emTbl->generateMarkup(array(), 'Email '.$labels->getString('MemberType', 'guest', 'Guest') . ' Statement'), array('id'=>'formEm'))
 
         .HTMLContainer::generateMarkup('form',
                 HTMLInput::generateMarkup('Print', array('id'=>'btnPrint', 'style'=>'margin-right:1em;'))
@@ -334,7 +334,7 @@ $(document).ready(function() {
         popWd      : $('#divStmt').width(),
         popX       : 20,
         popY       : 20,
-        popTitle   : 'Guest Statement'};
+        popTitle   : <?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>+' Statement'};
 
     $('#btnPrint').click(function() {
         $('div.PrintArea').printArea(opt);

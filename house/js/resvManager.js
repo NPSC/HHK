@@ -3,6 +3,8 @@ function resvManager(initData, options) {
     var t = this;
 
     var patLabel = initData.patLabel;
+    var visitorLabel = initData.visitorLabel;
+    var guestLabel = initData.guestLabel;
     var resvTitle = initData.resvTitle;
     var saveButtonLabel = initData.saveButtonLabel;
     var patBirthDate = initData.patBD;
@@ -1022,8 +1024,8 @@ function resvManager(initData, options) {
                }
 
             } else if (numPriGuests === 0) {
-                $pWarning.text('Set one guest as primary guest.').show();
-                flagAlertMessage('Set one guest as primary guest.', 'alert', $pWarning);
+                $pWarning.text('Set one ' + guestLabel + ' as primary ' + guestLabel + '.').show();
+                flagAlertMessage('Set one ' + guestLabel + ' as primary ' + guestLabel + '.', 'alert', $pWarning);
                 $("input.hhk-rbPri").parent().addClass('ui-state-error');
                 return false;
             }

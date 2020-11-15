@@ -281,13 +281,13 @@ if ($checkingIn == '') {
 	var inCols = [
                 {
                     'data': 'Primary Guest',
-                    'title': 'Primary Guest',
+                    'title': 'Primary <?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>',
                     'searchable': true,
                     'sortable': true
                 },
                 {
                     'data': 'Guests',
-                    'title': 'Guests',
+                    'title': '<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s',
                     'searchable': true,
                     'sortable': true
                 },
@@ -584,7 +584,7 @@ if ($checkingIn == '') {
                     popWd: 1200,
                     popX: 20,
                     popY: 20,
-                    popTitle: 'Guests Checking Out'};
+                    popTitle: '<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out'};
 
 				$('#prtCkIn').click(function () {
                     $('div#ckin').printArea(opt);
@@ -612,8 +612,8 @@ if ($checkingIn == '') {
                 <div id="mainTabs" style="font-size: .8em; display:none;" class="hhk-tdbox">
                     <ul>
                         <li><a href="#clnToday">Rooms Not Ready</a></li>
-                        <li><a href="#ckin">Guests Checking In</a></li>
-                        <li><a href="#ckout">Guests Checking Out</a></li>
+                        <li><a href="#ckin"><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In</a></li>
+                        <li><a href="#ckout"><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out</a></li>
                         <li><a href="#showAll">Show All Rooms</a></li>
                         <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
                     </ul>
