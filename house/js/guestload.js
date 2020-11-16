@@ -95,7 +95,6 @@ function manageRelation(id, rId, relCode, cmd) {
     $.post('ws_admin.php', {'id':id, 'rId':rId, 'rc':relCode, 'cmd':cmd}, relationReturn);
 }
 
-
 function paymentRefresh() {
 	var indx = $('#psgList').tabs('option','active');
 	$('#psgList').tabs('load', indx);
@@ -193,11 +192,16 @@ $(document).ready(function () {
         $('#paymentMessage').html(pmtMkup).show();
     }
 
-    $('.hhk-view-visit').click(function () {
+    $('.hhk-view-visit').click(function (event) {
         var vid = $(this).data('vid');
         var gid = $(this).data('gid');
         var span = $(this).data('span');
-
+        var target = $(event.target);
+        
+        if (target.hasClass('hhk-hospitalstay')) {
+        	return;
+        }
+        
         var buttons = {
             "Show Statement": function() {
                 window.open('ShowStatement.php?vid=' + vid, '_blank');
@@ -216,13 +220,14 @@ $(document).ready(function () {
          $('#divAlert1').hide();
     });
 
+    // Reservations
     $('#resvAccordion').accordion({
         heightStyle: "content",
         collapsible: true,
         active: false,
         icons: false
     });
-
+    
     // relationship events
     $('div.hhk-relations').each(function () {
         var schLinkCode = $(this).attr('name');
@@ -346,6 +351,12 @@ $(document).ready(function () {
 
     $psgList.tabs("enable", psgTabIndex);
     $psgList.tabs("option", "active", psgTabIndex);
+
+    // Hospital stay dialog
+    $('#psgList').on('click', '.hhk-hospitalstay', function (event){
+    	event.preventDefault();
+    	viewHospitalStay($(this).data('idhs'));
+    });
 
     $('#cbnoReturn').change(function () {
         if (this.checked) {

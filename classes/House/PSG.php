@@ -136,14 +136,14 @@ class PSG {
 
     public function createEditMarkup(\PDO $dbh, $relList, $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {
 
-        // Edit Div
-        $hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $this->getIdPatient()));
-        $table = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('fieldset',
-                    HTMLContainer::generateMarkup('legend',$labels->getString('hospital', 'hospital', 'Hospital') . " info for current or latest Visit/" . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('style'=>'font-weight:bold;'))
-                        . $hArray['div'],
-                        array('class'=>'hhk-panel')),
-                array('style'=>'float:left;', 'id'=>'hospitalSection'));
+// This block taken out of the PSG tab...
+//         $hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $this->getIdPatient()));
+//         $table = HTMLContainer::generateMarkup('div',
+//                 HTMLContainer::generateMarkup('fieldset',
+//                     HTMLContainer::generateMarkup('legend',$labels->getString('hospital', 'hospital', 'Hospital') . " info for current or latest Visit/" . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('style'=>'font-weight:bold;'))
+//                         . $hArray['div'],
+//                         array('class'=>'hhk-panel')),
+//                 array('style'=>'float:left;', 'id'=>'hospitalSection'));
 
         $pTable = '';
 
@@ -280,7 +280,7 @@ class PSG {
         }
 
         $editDiv = $pTable
-                .$table
+               // .$table
                 . $memMkup
                 . $lastConfirmed
                 . $notesContainer //$nTable->generateMarkup(array('style'=>'clear:left;width:700px;float:left;'))

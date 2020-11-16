@@ -124,6 +124,10 @@ function getIncomeDiag(idResv, idReg) {
         });
 }
 
+function viewHospitalStay(idHs, $hospitalTitleContainer) {
+	
+}
+
 function setupRates(ckIn) {
     "use strict";
     var $selRateCat = $('#selRateCategory');

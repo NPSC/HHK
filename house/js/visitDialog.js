@@ -67,6 +67,9 @@ function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
         });
 }
 
+function viewHospitalStay(idhs, $hospNameConatiner) {
+	
+}
 var isCheckedOut = false;
 
 /**
@@ -215,6 +218,12 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                 $('#rateChgCB').change();
             }
+            
+            // Hospital stay dialog
+            $('#tblActiveVisit').on('click', '.hhk-hospitalstay', function (event){
+            	event.preventDefault();
+            	viewHospitalStay($(this).data('idhs'), $('#hhk-HospitalTitle'));
+            });
 
             $('#spnExPay').hide();
             isCheckedOut = false;
