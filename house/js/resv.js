@@ -124,8 +124,9 @@ function getIncomeDiag(idResv, idReg) {
         });
 }
 
-function viewHospitalStay(idHs, $hospitalTitleContainer) {
-	
+function viewHospitalStay(idHs) {
+	//             <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
+
 }
 
 function setupRates(ckIn) {

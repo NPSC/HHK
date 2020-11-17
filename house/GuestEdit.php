@@ -533,7 +533,14 @@ if ($psg->getIdPsg() > 0) {
 
             $room = $r['Status_Title'] . ' to ' . $r['Title'];
             $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
-            $hospitalIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon hhk-hospitalstay', 'data-idhs'=>$r['idHospital_stay'], 'style'=>"float: right; margin-left:.3em; margin-right:.7em; margin-top:2px; background-image: url('../images/HospitalIcon.png');", 'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Viewoer'));
+            $hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
+            		, array(
+            				'type'=>'button',
+            				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
+            				'data-idhs'=>$r['idHospital_stay'],
+            				'style'=>"font-size:small;float: right; margin-left:.3em; margin-right:.7em; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
+            				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
+            		);
             
             $stayIcon = '';
 
@@ -569,7 +576,7 @@ if ($psg->getIdPsg() > 0) {
                     . (date('Y') == date('Y', strtotime($r['Span_Start'])) ? date('M j', strtotime($r['Span_Start'])) : date('M j, Y', strtotime($r['Span_Start'])))
                     . " to "
                     . ($r['Span_End'] == '' ? date('M j', strtotime($r['Expected_Departure'])) : date('M j', strtotime($r['Span_End'])))
-            		. ".  " . $room . $stIcon . $stayIcon . $hospitalIcon),
+            		. ".  " . $room . $stIcon . $stayIcon . $hospitalButton),
                     array('class'=>'ui-accordion-header ui-helper-reset ui-state-default ui-corner-all hhk-view-visit', 'data-vid'=>$r['idVisit'], 'data-span'=>$r['Span'], 'data-gid'=>$id, 'style'=>'min-height:20px; padding-top:5px;'));
 
             $visitList .= $hdr;
@@ -579,7 +586,8 @@ if ($psg->getIdPsg() > 0) {
     }
 
     // Reservation
-    $stmt = $dbh->query("select * from reservation where idRegistration = ". $registration->getIdRegistration() . " order by idReservation desc");
+    $stmt = $dbh->query("select r.*, hs.idHospital from reservation r left join hospital_stay hs on r.idHospital_Stay = hs.idHospital_stay
+ where idRegistration = ". $registration->getIdRegistration() . " order by idReservation desc");
     $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
 
@@ -609,13 +617,22 @@ if ($psg->getIdPsg() > 0) {
 
         $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
 
-        $hospitalIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon hhk-hospitalstay', 'data-idhs'=>$r['idHospital_Stay'], 'style'=>"float: right; margin-left:.3em; margin-right:.7em; margin-top:2px; background-image: url('../images/HospitalIcon.png');", 'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Viewoer'));
+        //$hospitalIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon hhk-hospitalstay', 'data-idhs'=>$r['idHospital_Stay'], 'style'=>"float: right; margin-left:.3em; margin-right:.7em; margin-top:2px; background-image: url('../images/HospitalIcon.png');", 'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Viewoer'));
+        $hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
+        		, array(
+        				'type'=>'button',
+        				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
+        				'data-idhs'=>$r['idHospital_Stay'],
+        				'style'=>"font-size:small;float: right; margin-left:.3em; margin-right:.7em; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
+        				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
+        		);
+        
         
         $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
                 $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '
                 . (date('Y') == date('Y', strtotime($reserv->getArrival())) ? date('M j', strtotime($reserv->getArrival())) : date('M j, Y', strtotime($reserv->getArrival())))
                 . " to " .(date('Y') == date('Y', strtotime($reserv->getDeparture())) ? date('M j', strtotime($reserv->getDeparture())) : date('M j, Y', strtotime($reserv->getDeparture())))
-        		. '.  ' . $reserv->getStatusIcon($dbh) . $hospitalIcon
+        		. '.  ' . $reserv->getStatusIcon($dbh) . $hospitalButton
                 , array('style'=>'margin-left:10px;')), array('style'=>'min-height:25px; padding-top:5px;'));
 
         $reservMarkup .= $hdr . HTMLContainer::generateMarkup('div', $rtbl->generateMarkup());
@@ -937,6 +954,6 @@ $uS->guestId = $id;
             var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
             var useDocUpload = '<?php echo $uS->UseDocumentUpload; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js?rw=4"></script>
+        <script type="text/javascript" src="js/guestload.js?rw=4"></script>
     </body>
 </html>

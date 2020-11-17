@@ -1,6 +1,6 @@
 <?php
 
-use HHK\sec\{Session, WebInit};
+use HHK\sec\{Session, WebInit, Labels};
 use HHK\Payment\PaymentSvcs;
 use HHK\SysConst\WebPageCode;
 use HHK\HTMLControls\HTMLContainer;
@@ -27,6 +27,7 @@ $pageTitle = $wInit->pageTitle;
 $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
+$labels = Labels::getLabels();
 
 
 $idVisit = 0;
@@ -177,7 +178,7 @@ $(document).ready(function() {
         popWd      : 950,
         popX       : 20,
         popY       : 20,
-        popTitle   : <?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' Registration Form'};
+        popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' + ' Registration Form'};
 
     $('#mainTabs').tabs();
     

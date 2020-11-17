@@ -222,7 +222,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             // Hospital stay dialog
             $('#tblActiveVisit').on('click', '.hhk-hospitalstay', function (event){
             	event.preventDefault();
-            	viewHospitalStay($(this).data('idhs'), $('#hhk-HospitalTitle'));
+            	viewHospitalStay($(this).data('idhs'));
             });
 
             $('#spnExPay').hide();

@@ -460,18 +460,30 @@ where
     }
 
     public function getNightsStayed() {
+    	if ($this->nightsStayed < 0) {
+    		return 0;
+    	}
         return $this->nightsStayed;
     }
 
     public function getGuestNightsStayed() {
+    	if ($this->guestNightsStayed < 0) {
+    		return 0;
+    	}
         return $this->guestNightsStayed;
     }
 
     public function getNightsPaid() {
+    	if ($this->nightsPaid < 0) {
+    		return 0;
+    	}
         return $this->nightsPaid;
     }
 
     public function getNightsToPay() {
+    	if ($this->nightsToPay < 0) {
+    		return 0;
+    	}
         return $this->nightsToPay;
     }
 

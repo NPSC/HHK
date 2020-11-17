@@ -352,7 +352,7 @@ $(document).ready(function () {
     $psgList.tabs("enable", psgTabIndex);
     $psgList.tabs("option", "active", psgTabIndex);
 
-    // Hospital stay dialog
+    // Hospital stay Buttons
     $('#psgList').on('click', '.hhk-hospitalstay', function (event){
     	event.preventDefault();
     	viewHospitalStay($(this).data('idhs'));

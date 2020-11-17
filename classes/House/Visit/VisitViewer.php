@@ -182,10 +182,18 @@ class VisitViewer {
             $hname = $r['Association'] . ' / ' . $hname;
         }
 
-        $hospitalIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon hhk-hospitalstay', 'data-idhs'=>$r['idHospital_stay'], 'style'=>"float: right; margin-left:.3em; margin-right:.7em; margin-top:2px; background-image: url('../images/HospitalIcon.png');", 'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Viewoer'));
+        //$hospitalIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon hhk-hospitalstay', 'data-idhs'=>$r['idHospital_stay'], 'style'=>"float: right; margin-left:.3em; margin-right:.7em; margin-top:2px; background-image: url('../images/HospitalIcon.png');", 'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Viewoer'));
+        $hospitalButton = HTMLInput::generateMarkup($hname
+        		, array(
+        				'type'=>'button',
+        				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
+        				'data-idhs'=>$r['idHospital_stay'],
+        				'style'=>"font-size:small; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
+        				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
+        		);
         
-        $th .= HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital').$hospitalIcon);
-        $tr .= HTMLTable::makeTd($hname, array('id'=>'hhk-HospitalTitle'));
+        $th .= HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'));
+        $tr .= HTMLTable::makeTd($hospitalButton, array('id'=>'hhk-HospitalTitle'));
 
         // Patient Name
         if ($r['Patient_Name'] != '') {

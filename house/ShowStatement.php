@@ -1,6 +1,6 @@
 <?php
 
-use HHK\sec\{Session, WebInit};
+use HHK\sec\{Session, WebInit, Labels};
 use HHK\SysConst\WebPageCode;
 use HHK\Member\Role\Guest;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
@@ -28,6 +28,7 @@ $pageTitle = $wInit->pageTitle;
 $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
+$labels = Labels::getLabels();
 
 $idVisit = 0;
 $idGuest = 0;
@@ -42,7 +43,7 @@ $emAddr = '';
 $includeLogo = TRUE;
 
 
-function createScript() {
+function createScript($guestLabel) {
     return "
     $('#btnPrint, #btnEmail, #btnWord').button();
     $('#btnEmail').click(function () {
@@ -83,7 +84,7 @@ function createScript() {
         popWd      : $('#divStmt').width(),
         popX       : 20,
         popY       : 20,
-        popTitle   : <?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' Statement'};
+        popTitle   : '$guestLabel Statement'};
 
     $('#btnPrint').click(function() {
         $('div.PrintArea').printArea(opt);
@@ -262,7 +263,7 @@ if (isset($_REQUEST['cmd'])) {
         echo (json_encode(array('msg'=>$msg)));
 
     } else {
-        echo "<script type='text/javascript'>" . createScript() . "</script>" . $emtableMarkup . $stmtMarkup;
+        echo "<script type='text/javascript'>" . createScript($labels->getString('Member', 'guest', 'Guest')) . "</script>" . $emtableMarkup . $stmtMarkup;
     }
 
     exit();
