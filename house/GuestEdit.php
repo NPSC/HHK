@@ -344,9 +344,6 @@ if (isset($_POST["btnSubmit"])) {
                 Vehicle::saveVehicle($dbh, $_POST, $registration->getIdRegistration());
             }
 
-            // Hospital info
-            Hospital::saveReferralMarkup($dbh, $psg, $hospitalStay, $_POST, $uname);
-
 
             if ($uS->IncomeRated) {
                 // Financial Assistance
@@ -533,14 +530,19 @@ if ($psg->getIdPsg() > 0) {
 
             $room = $r['Status_Title'] . ' to ' . $r['Title'];
             $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
-            $hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
-            		, array(
-            				'type'=>'button',
-            				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
-            				'data-idhs'=>$r['idHospital_stay'],
-            				'style'=>"font-size:small;float: right; margin-left:.3em; margin-right:.7em; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
-            				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
-            		);
+            $hospitalButton = '';
+            
+//             if (count($uS->guestLookups['Hospitals']) > 1) {
+            	
+//             	$hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
+//             		, array(
+//             				'type'=>'button',
+//             				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
+//             				'data-idhs'=>$r['idHospital_stay'],
+//             				'style'=>"font-size:small;float: right; margin-left:.3em; margin-right:.7em; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
+//             				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
+//             		);
+//             }
             
             $stayIcon = '';
 
@@ -617,16 +619,18 @@ if ($psg->getIdPsg() > 0) {
 
         $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
 
-        //$hospitalIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon hhk-hospitalstay', 'data-idhs'=>$r['idHospital_Stay'], 'style'=>"float: right; margin-left:.3em; margin-right:.7em; margin-top:2px; background-image: url('../images/HospitalIcon.png');", 'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Viewoer'));
-        $hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
-        		, array(
-        				'type'=>'button',
-        				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
-        				'data-idhs'=>$r['idHospital_Stay'],
-        				'style'=>"font-size:small;float: right; margin-left:.3em; margin-right:.7em; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
-        				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
-        		);
+        $hospitalButton = '';
         
+//         if (count($uS->guestLookups['Hospitals']) > 1) {
+//         	$hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
+//         		, array(
+//         				'type'=>'button',
+//         				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
+//         				'data-idhs'=>$r['idHospital_Stay'],
+//         				'style'=>"font-size:small;float: right; margin-left:.3em; margin-right:.7em; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
+//         				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
+//         		);
+//         }
         
         $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
                 $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '
@@ -930,6 +934,7 @@ $uS->guestId = $id;
             <div id="keysfees" style="font-size: .85em;"></div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
             <div id="regDialog" style="display:none;"></div>
+            <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="submit" style="display:none;">

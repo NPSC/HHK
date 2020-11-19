@@ -66,10 +66,54 @@ function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
             }
         });
 }
+function viewHospitalStay(idHs) {
 
-function viewHospitalStay(idhs, $hospNameConatiner) {
-	
+	$.post('ws_resv.php', {cmd: 'viewHS', 'idhs': idHs}, function (data) {
+        if (!data) {
+            alert('Bad Reply from Server');
+            return;
+        }
+        
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+        
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+        } else if (data.success) {
+            showHospitalStay(data.success, idHs);
+        }
+	})
 }
+function showHospitalStay(markup, idHs) {
+    "use strict";
+    $('#hsDialog').empty();
+    $('#hsDialog').append($(markup));
+    $('#hsDialog').dialog({
+        autoOpen: true,
+        width: 1000,
+        resizable: true,
+        modal: true,
+        title: 'Hospital Info',
+        buttons: {
+            "Cancel": function() {
+                $(this).dialog("close");
+            },
+            "Save": function() {
+            	
+            }
+        }
+    });
+
+}
+
 var isCheckedOut = false;
 
 /**

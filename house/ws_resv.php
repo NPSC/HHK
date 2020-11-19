@@ -11,6 +11,7 @@ use HHK\Note\LinkNote;
 use HHK\Note\Note;
 use HHK\Incident\ListReports;
 use HHK\Incident\Report;
+use HHK\House\Hospital\{Hospital, HospitalStay};
 ?>
 
 <?php
@@ -126,7 +127,34 @@ try {
 
         break;
 
+    case 'viewHS':
+    	
+    	$idHs = 0;
+    	if (isset($_POST['idhs'])) {
+    		$idHs = intval(filter_input(INPUT_POST, 'idhs', FILTER_SANITIZE_NUMBER_INT), 10);
+    	}
+    	
+    	$hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, 0, $idHs));
+    	
+    	$events = array('success'=>$hArray['div']);
+    	
+    	break;
+    	
+    case 'saveHs':
+    	
+    	$idHs = 0;
+    	if (isset($_POST['idhs'])) {
+    		$idHs = intval(filter_input(INPUT_POST, 'idhs', FILTER_SANITIZE_NUMBER_INT), 10);
+    	}
+    	
+    	$hstay = new HospitalStay($dbh, 0, $idHs);
 
+    	Hospital::saveReferralMarkup($dbh, new psg($dbh, 0, $hstay->getIdPatient()), $hstay, $_POST);
+    	
+    	$events = array('success'=>'Hospital Saved');
+    	
+    	break;
+    	
     case 'getNoteList':
 
         $linkType = '';

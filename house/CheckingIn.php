@@ -221,6 +221,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
+            <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="ecSearch" style="display:none;">
                 <table>
                     <tr>

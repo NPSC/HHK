@@ -352,11 +352,11 @@ $(document).ready(function () {
     $psgList.tabs("enable", psgTabIndex);
     $psgList.tabs("option", "active", psgTabIndex);
 
-    // Hospital stay Buttons
-    $('#psgList').on('click', '.hhk-hospitalstay', function (event){
-    	event.preventDefault();
-    	viewHospitalStay($(this).data('idhs'));
-    });
+//    // Hospital stay Buttons
+//    $('#psgList').on('click', '.hhk-hospitalstay', function (event){
+//    	event.preventDefault();
+//    	viewHospitalStay($(this).data('idhs'));
+//    });
 
     $('#cbnoReturn').change(function () {
         if (this.checked) {

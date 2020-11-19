@@ -124,11 +124,6 @@ function getIncomeDiag(idResv, idReg) {
         });
 }
 
-function viewHospitalStay(idHs) {
-	//             <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
-
-}
-
 function setupRates(ckIn) {
     "use strict";
     var $selRateCat = $('#selRateCategory');
