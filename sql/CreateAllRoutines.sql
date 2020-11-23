@@ -142,22 +142,41 @@ CREATE PROCEDURE `sum_visit_days`(
 )
 BEGIN
 
-Declare startDate varchar(12);
-Declare endDate varchar(12);
-
-Select concat_ws('-', (targetYear + 1), '01', '01') into endDate;
-Select concat_ws('-', (targetYear), '01', '01') into startDate;
-
-select sum(
-	datediff(
-             case when DATE(ifnull(Span_End, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(ifnull(Span_End, NOW())) end
-            , case when  DATE(Span_Start) < DATE(startDate) then DATE(startDate) else  DATE(Span_Start) end)
-    )
-    as numNites
-from visit
-Where DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
+	Declare startDate varchar(12);
+	Declare endDate varchar(12);
+	
+	Select concat_ws('-', (targetYear + 1), '01', '01') into endDate;
+	Select concat_ws('-', (targetYear), '01', '01') into startDate;
+	
+	select sum(
+		datediff(
+	             case when DATE(ifnull(Span_End, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(ifnull(Span_End, NOW())) end
+	            , case when  DATE(Span_Start) < DATE(startDate) then DATE(startDate) else  DATE(Span_Start) end)
+	    )
+	    as numNites
+	from visit
+	Where DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
 
 END -- ;
+
+
+-- --------------------------------------------------------
+--
+-- Procedure `updt_visit_hospstay`
+--
+DROP procedure IF EXISTS `updt_visit_hospstay`; -- ;
+
+CREATE PROCEDURE `updt_visit_hospstay` (
+	IN idV int, 
+	IN idHospitalStay int)
+BEGIN
+	update visit set `idHospital_stay` = idHospitalStay where `idVisit` = idV;
+    
+    update reservation r join visit v on r.idReservation = v.idReservation
+		set r.idHospital_Stay = idHospitalStay
+        where v.idVisit = idV and v.Span = 0;
+END -- ;
+
 
 
 

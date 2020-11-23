@@ -6,6 +6,7 @@ use HHK\House\Reservation\Reservation;
 use HHK\House\Reservation\CheckingIn;
 use HHK\House\Reservation\ActiveReservation;
 use HHK\House\ReserveData\ReserveData;
+use HHK\House\PSG;
 use HHK\Note\ListNotes;
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
@@ -140,18 +141,33 @@ try {
     	
     	break;
     	
-    case 'saveHs':
+    case 'saveHS':
     	
     	$idHs = 0;
     	if (isset($_POST['idhs'])) {
     		$idHs = intval(filter_input(INPUT_POST, 'idhs', FILTER_SANITIZE_NUMBER_INT), 10);
     	}
+    	$idVisit = 0;
+    	if (isset($_POST['idv'])) {
+    		$idVisit = intval(filter_input(INPUT_POST, 'idv', FILTER_SANITIZE_NUMBER_INT), 10);
+    	}
     	
-    	$hstay = new HospitalStay($dbh, 0, $idHs);
+    	if ($idHs > 0 && $idVisit > 0) {
 
-    	Hospital::saveReferralMarkup($dbh, new psg($dbh, 0, $hstay->getIdPatient()), $hstay, $_POST);
+    		$hstay = new HospitalStay($dbh, 0, $idHs, FALSE);
+
+    		$newHsId = Hospital::saveReferralMarkup($dbh, new PSG($dbh, 0, $hstay->getIdPatient()), $hstay, $_POST);
+    		
+    		if ($newHsId != $idHs) {
+    			// Update visit and reservation
+    			$dbh->exec("call updt_visit_hospstay($idVisit, $newHsId);");
+    		}
     	
-    	$events = array('success'=>'Hospital Saved');
+    		$events = array('success'=>'Hospital Saved');
+    		
+    	} else {
+    		$events = array('error'=>'Missing ids. ');
+    	}
     	
     	break;
     	

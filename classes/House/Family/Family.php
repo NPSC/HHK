@@ -595,8 +595,9 @@ class Family {
             if ($psg->getIdPsg() > 0 && $this->patientId > 0) {
 
                 // Save Hospital
-                $this->hospStay = new HospitalStay($dbh, $psg->getIdPatient());
+                $this->hospStay = new HospitalStay($dbh, $psg->getIdPatient(), $rData->getIdHospital_Stay());
                 Hospital::saveReferralMarkup($dbh, $psg, $this->hospStay, $post);
+                
                 $rData->setIdHospital_Stay($this->hospStay->getIdHospital_Stay());
 
             }

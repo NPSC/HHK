@@ -17,7 +17,7 @@ use HHK\House\PSG;
  * Hospital.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -28,28 +28,13 @@ use HHK\House\PSG;
  */
 class Hospital {
 
-
     public static function loadHospitals(\PDO $dbh) {
 
         $hospRs = new HospitalRS();
         return EditRS::select($dbh, $hospRs, array());
 
     }
-
-
-    public static function createHospitalMarkup(\PDO $dbh, HospitalStay $hstay, $showExitDate = FALSE) {
-
-        $uS = Session::getInstance();
-
-        if ($uS->OpenCheckin) {
-            $refrl = self::createReferralMarkup($dbh, $hstay);
-            return $refrl['div'];
-        } else {
-            return self::justHospitalMarkup($dbh, $hstay, $showExitDate);
-        }
-
-    }
-
+    
     public static function justHospitalMarkup(\PDO $dbh, HospitalStay $hstay, $showExitDate = FALSE) {
 
         $uS = Session::getInstance();
@@ -90,56 +75,42 @@ class Hospital {
                 (count($aList) > 0 ? HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup(removeOptionGroups($aList), ($hstay->getAssociationId() == 0 ? $assocNoneId : $hstay->getAssociationId()), FALSE),
-                                array('name'=>'selAssoc', 'class'=>'ignrSave')
+                                array('name'=>'selAssoc', 'class'=>'ignrSave hospital-stay')
                                 )
                         ) : '')
                 .HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup(removeOptionGroups($hList), ($hstay->getHospitalId() == 0 && count($hList) == 1 ? $hList[0][0] : $hstay->getHospitalId())),
-                                array('name'=>'selHospital', )
+                        		array('name'=>'selHospital', 'class'=>'ignrSave hospital-stay' )
                                 )
                         )
         		. HTMLTable::makeTd(
         				HTMLInput::generateMarkup(
         						$hstay->getRoom(),
-        						array('name'=>'psgRoom', 'size'=>'8')
+        						array('name'=>'psgRoom', 'size'=>'8', 'class'=>'ignrSave hospital-stay')
         						)
         				)
         		. HTMLTable::makeTd(
         				HTMLInput::generateMarkup(
         						$hstay->getMrn(),
-        						array('name'=>'psgMrn', 'size'=>'14')
+        						array('name'=>'psgMrn', 'size'=>'14', 'class'=>'ignrSave hospital-stay')
         						)
         				)
         		. HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 ($hstay->getArrivalDate() != '' ? date("M j, Y", strtotime($hstay->getArrivalDate())) : ""),
-                                array('name'=>'txtEntryDate', 'class'=>'ckdate', 'readonly'=>'readonly'))
+                                array('name'=>'txtEntryDate', 'class'=>'ckdate ignrSave hospital-stay', 'readonly'=>'readonly'))
                         )
                 . ($showExitDate ? HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 ($hstay->getExpectedDepartureDate() != '' ? date("M j, Y", strtotime($hstay->getExpectedDepartureDate())) : ''),
-                                array('name'=>'txtExitDate', 'class'=>'ckdate', 'readonly'=>'readonly'))
+                                array('name'=>'txtExitDate', 'class'=>'ckdate ignrSave hospital-stay', 'readonly'=>'readonly'))
                         ) : '')
                 );
 
         return $table->generateMarkup();
 
     }
-
-    /**
-     *
-     * @param \PDO $dbh
-     * @param PSG $psg
-     * @param HospitalStay $hstay
-     * @param array $post
-     *
-     */
-    public static function saveHospitalMarkup(\PDO $dbh, PSG $psg, HospitalStay $hstay, array $post) {
-
-        return self::saveReferralMarkup($dbh, $psg, $hstay, $post);
-    }
-
 
     public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $showExitDate = TRUE) {
 
@@ -189,7 +160,7 @@ class Hospital {
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ' .
                         HTMLInput::generateMarkup(
                                 $wPhone["Phone_Num"],
-                                array('id'=>'a_txtPhone'.PhonePurpose::Work, 'name'=>'a_txtPhone[' . PhonePurpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo'))
+                                array('id'=>'a_txtPhone'.PhonePurpose::Work, 'name'=>'a_txtPhone[' . PhonePurpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
                         , array('style'=>'text-align:right;')
                         )
                 );
@@ -198,24 +169,24 @@ class Hospital {
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $agent->getRoleMember()->get_firstName(),
-                                array('name'=>'a_txtFirstName', 'size'=>'17', 'class'=>'hhk-agentInfo'))
-                        .HTMLInput::generateMarkup($agent->getIdName(), array('name'=>'a_idName', 'type'=>'hidden'))
+                                array('name'=>'a_txtFirstName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay'))
+                        .HTMLInput::generateMarkup($agent->getIdName(), array('name'=>'a_idName', 'type'=>'hidden', 'class'=>'hospital-stay'))
                         )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $agent->getRoleMember()->get_lastName(),
-                                array('name'=>'a_txtLastName', 'size'=>'17', 'class'=>'hhk-agentInfo'))
+                                array('name'=>'a_txtLastName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay'))
                         )
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ' .
                         HTMLInput::generateMarkup(
                                 $cPhone["Phone_Num"],
-                                array('id'=>'a_txtPhone'.PhonePurpose::Cell, 'name'=>'a_txtPhone[' .PhonePurpose::Cell. ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo'))
+                                array('id'=>'a_txtPhone'.PhonePurpose::Cell, 'name'=>'a_txtPhone[' .PhonePurpose::Cell. ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
                         , array('style'=>'text-align:right;')
                         )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $email["Email"],
-                                array('id'=>'a_txtEmail1', 'name'=>'a_txtEmail[1]', 'size'=>'24', 'class'=>'hhk-emailInput hhk-agentInfo'))
+                                array('id'=>'a_txtEmail1', 'name'=>'a_txtEmail[1]', 'size'=>'24', 'class'=>'hhk-emailInput hhk-agentInfo hospital-stay'))
                         .HTMLContainer::generateMarkup('span', '', array('class'=>'hhk-send-email'))
                         )
             );
@@ -260,13 +231,13 @@ class Hospital {
                 HTMLTable::makeTd(($doc->getRoleMember()->get_lastName() == '' ? '' : 'Dr. ') .
                         HTMLInput::generateMarkup(
                                 $doc->getRoleMember()->get_firstName(),
-                                array('name'=>'d_txtFirstName', 'size'=>'17', 'class'=>'hhk-docInfo'))
-                        .HTMLInput::generateMarkup($doc->getIdName(), array('name'=>'d_idName', 'type'=>'hidden'))
+                                array('name'=>'d_txtFirstName', 'size'=>'17', 'class'=>'hhk-docInfo hospital-stay'))
+                        .HTMLInput::generateMarkup($doc->getIdName(), array('name'=>'d_idName', 'type'=>'hidden', 'class'=>'hospital-stay'))
                     )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $doc->getRoleMember()->get_lastName(),
-                                array('name'=>'d_txtLastName', 'size'=>'17', 'class'=>'hhk-docInfo'))
+                                array('name'=>'d_txtLastName', 'size'=>'17', 'class'=>'hhk-docInfo hospital-stay'))
                         )
              );
 
@@ -290,7 +261,7 @@ class Hospital {
                 if ($myDiagnosis == '' || ($myDiagnosis != '' && isset($diags[$myDiagnosis]) === FALSE)) {
 
                     $diagtbl->addBodyTr(
-                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis(), array('name'=>'txtDiagnosis'))));
+                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay'))));
 
                     $myDiagnosis = '';
                 }
@@ -300,7 +271,7 @@ class Hospital {
             $diagtbl->addBodyTr(HTMLTable::makeTd(
                 HTMLSelector::generateMarkup(
                     HTMLSelector::doOptionsMkup($diags, $myDiagnosis, TRUE),
-                    array('name'=>'selDiagnosis', ))
+                		array('name'=>'selDiagnosis', 'class'=>'hospital-stay'))
                 )
             );
 
@@ -324,7 +295,7 @@ class Hospital {
             $diagtbl->addBodyTr(HTMLTable::makeTd(
                 HTMLSelector::generateMarkup(
                     HTMLSelector::doOptionsMkup($locs, $hstay->getLocationCode(), TRUE),
-                    array('name'=>'selLocation', ))
+                		array('name'=>'selLocation', 'class'=>'hospital-stay'))
                 )
             );
 
@@ -382,7 +353,6 @@ $(document).ready(function () {
 
         return array('hdr'=>$hdr, 'div'=>$div);
     }
-
 
     public static function saveReferralMarkup(\PDO $dbh, Psg $psg, HospitalStay $hstay, array $post) {
 
@@ -467,7 +437,7 @@ $(document).ready(function () {
 
         }
 
-        $hstay->save($dbh, $psg, $hstay->getAgentId(), $uS->username);
+        return $hstay->save($dbh, $psg, $hstay->getAgentId(), $uS->username);
 
     }
 }

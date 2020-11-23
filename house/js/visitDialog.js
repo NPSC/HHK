@@ -66,7 +66,8 @@ function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
             }
         });
 }
-function viewHospitalStay(idHs) {
+
+function viewHospitalStay(idHs, $hsDialog) {
 
 	$.post('ws_resv.php', {cmd: 'viewHS', 'idhs': idHs}, function (data) {
         if (!data) {
@@ -87,31 +88,80 @@ function viewHospitalStay(idHs) {
             }
             flagAlertMessage(data.error, 'error');
             return;
+            
         } else if (data.success) {
-            showHospitalStay(data.success, idHs);
+        	
+        	$hsDialog.empty();
+        	$hsDialog.append($(data.success));
+        	$hsDialog.dialog({
+                autoOpen: true,
+                width: 1000,
+                resizable: true,
+                modal: true,
+                title: 'Hospital Details',
+                buttons: {
+                    "Cancel": function() {
+                        $(this).dialog("close");
+                    },
+                    "Save": function() {
+                    	saveHospitalStay(idHs, $hsDialog);
+                    	$(this).dialog("close");
+                    }
+                }
+            });
         }
 	})
 }
-function showHospitalStay(markup, idHs) {
-    "use strict";
-    $('#hsDialog').empty();
-    $('#hsDialog').append($(markup));
-    $('#hsDialog').dialog({
-        autoOpen: true,
-        width: 1000,
-        resizable: true,
-        modal: true,
-        title: 'Hospital Info',
-        buttons: {
-            "Cancel": function() {
-                $(this).dialog("close");
-            },
-            "Save": function() {
-            	
+
+function saveHospitalStay(idHs, idVisit, $hsDialog) {
+	var parms = {cmd: 'saveHS', 'idhs': idHs, 'idv': idVisit};
+	
+	$('.hospital-stay').each(function() {
+        if ($(this).attr('type') === 'checkbox') {
+            if (this.checked !== false) {
+                parms[$(this).attr('id')] = 'on';
             }
+        } else if ($(this).hasClass('ckdate')) {
+            var tdate = $(this).datepicker('getDate');
+            if (tdate) {
+                parms[$(this).attr('id')] = tdate.toJSON();
+            } else {
+                 parms[$(this).attr('id')] = '';
+            }
+        } else if ($(this).attr('type') === 'radio') {
+            if (this.checked !== false) {
+                parms[$(this).attr('id')] = this.value;
+            }
+        } else{
+            parms[$(this).attr('id')] = this.value;
         }
     });
-
+	
+	
+	$.post('ws_resv.php', parms, function (data) {
+        if (!data) {
+            alert('Bad Reply from Server');
+            return;
+        }
+        
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+        
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+            
+        } else if (data.success) {
+        	flagAlertMessage(data.success, 'success');
+        }
+	});
 }
 
 var isCheckedOut = false;
@@ -266,7 +316,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             // Hospital stay dialog
             $('#tblActiveVisit').on('click', '.hhk-hospitalstay', function (event){
             	event.preventDefault();
-            	viewHospitalStay($(this).data('idhs'));
+            	viewHospitalStay($(this).data('idhs'), $('#hsDialog'));
             });
 
             $('#spnExPay').hide();
@@ -764,10 +814,10 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
         } else if ($(this).attr('type') === 'radio') {
             if (this.checked !== false) {
-                parms[$(this).attr('id')] = this.value;
+                parms[$(this).attr('id')] = $(this).val();
             }
         } else{
-            parms[$(this).attr('id')] = this.value;
+            parms[$(this).attr('id')] = $(this).val();
         }
     });
 

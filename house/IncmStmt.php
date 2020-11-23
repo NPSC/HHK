@@ -227,28 +227,28 @@ if (isset($_POST['btnGlGo'])) {
 
 	
 	$glCodes = new GlStmt($dbh, $glMonth, $glyear);
-	
+
 		$tbl = new HTMLTable();
 		$glInvoices = '';
-		
+
 		$invHdr = '';
 		foreach ($glCodes->invoiceHeader() as $h) {
 			$invHdr .= "<th style='border-top-width: 2px;'>" . ($h == '' ? ' ' : $h) . "</th>";
 		}
 		$tbl->addBodyTr($invHdr);
-		
+
 		$pmtHdr = '';
 		foreach ($glCodes->paymentHeader() as $h) {
 			$pmtHdr .= "<th style='color:blue;'>" . ($h == '' ? ' ' : $h) . "</th>";
 		}
 		$tbl->addBodyTr($pmtHdr);
-		
+
 		$lineHdr = '';
 		foreach ($glCodes->lineHeader() as $h) {
 			$lineHdr .= "<th style='color:green;'>" . ($h == '' ? ' ' : $h) . "</th>";
 		}
 		$tbl->addBodyTr($lineHdr);
-		
+
 		// Get payment methods (types) labels.
 		$pmstmt = $dbh->query("Select idPayment_method, Method_Name from payment_method;");
 		$pmRows = $pmstmt->fetchAll(\PDO::FETCH_NUM);
@@ -256,11 +256,11 @@ if (isset($_POST['btnGlGo'])) {
 		foreach ($pmRows as $r) {
 			$pmtMethods[$r[0]] = $r[1];
 		}
-		
+
 		$recordCtr = 0;
-		
+
 		foreach ($glCodes->getInvoices() as $id => $r) {
-			
+
 			if ($recordCtr++ > 12) {
 				$tbl->addBodyTr($invHdr);
 				$tbl->addBodyTr($pmtHdr);

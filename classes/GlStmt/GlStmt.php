@@ -230,10 +230,10 @@ class GlStmt {
 				}
 				
 			}
-			
+
 		} else if (($p['pStatus'] == PaymentStatusCode::Paid || $p['pStatus'] == PaymentStatusCode::VoidReturn)  && $p['Is_Refund'] == 0) {
 			// Status = Sale
-			
+
 			// un-returned payments are dated on the update.
 			if (is_null($pUpDate) === FALSE) {
 				$this->paymentDate = $pUpDate;
@@ -749,7 +749,7 @@ class GlStmt {
 					
 				}
 				
-				// Refunds
+			// Refunds
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 				
 				// payment is positive in this case.
@@ -783,7 +783,7 @@ class GlStmt {
 					
 				}
 				
-				//Returns
+			//Returns
 			} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
 				
 				if (is_null($pUpDate)) {
@@ -1056,6 +1056,7 @@ class GlStmt {
 	ifnull(i.idInvoice, 0) as idInvoice,
 	ifnull(i.Status, '') as `Invoice_Status`,
 	ifnull(i.Sold_To_Id, 0) as Sold_To_Id,
+	ifnull(i.Invoice_Date, '') as `Invoice_Date`,
 	IFNULL(`p`.`idPayment`, 0) AS `idPayment`,
 	IFNULL(`p`.`Amount`, 0) AS `pAmount`,
 	IFNULL(`p`.`idPayment_Method`, 0) AS `pMethod`,
@@ -1083,7 +1084,7 @@ from
 	`payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
 		LEFT JOIN
 	name_demog nd on i.Sold_To_Id = nd.idName
-	
+
 where
 	v.idVisit in
 		(select idVisit from visit
