@@ -126,7 +126,6 @@ class GLParameters {
         }
         
         $glTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Value'));
-        $glTbl->generateMarkup(array('style'=>'float:left; margin-right:1em;'));
         
         $tbl = new HTMLTable();
         $tbl->addBodyTr(

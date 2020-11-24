@@ -465,16 +465,6 @@ $(document).ready(function () {
         });
     });
 
-    createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
-
-    if ($('#a_txtLastName').val() === '') {
-        $('.hhk-agentInfo').hide();
-    }
-
-    createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
-    if ($('#d_txtLastName').val() === '') {
-        $('.hhk-docInfo').hide();
-    }
 
     createAutoComplete($('#txtsearch'), 3, {cmd: 'role', mode: 'mo', gp:'1'},
         function (item) {
@@ -581,9 +571,8 @@ $(document).ready(function () {
             	});
         	},
 		});
-		
-		
-		
+
+
 		var guestphotoLocal = new Upploader.Local(
     	{
         	maxFileSize: 5000000,
