@@ -2,7 +2,6 @@
 
 namespace HHK\House\Reservation;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\House\Constraint\{ConstraintsReservation, ConstraintsVisit};
 use HHK\House\Hospital\HospitalStay;

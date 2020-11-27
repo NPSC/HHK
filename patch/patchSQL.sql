@@ -32,33 +32,33 @@ INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('guest','Guest
 INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('visitor','Guest','s','mt');
 
 -- Make new guest category name_volunteer entries for patients that stayed.
-Insert into name_volunteer2
-SELECT DISTINCT
-    s.idName,
-    'Vol_Type',
-    'g',
-    'a',
-    '',
-    '',
-    now(),
-    NULL,
-    NULL,
-    '',
-    'admin',
-    NOW(),
-    'm',
-    NULL,
-    '',
-    '',
-    CURRENT_TIMESTAMP()
-FROM
-    stays s
-        LEFT JOIN
-    name_volunteer2 nv ON s.idName = nv.idName
-        AND nv.Vol_Category = 'Vol_Type'
-        AND nv.Vol_Code = 'g'
-WHERE
-    nv.idName IS NULL;
+INSERT INTO name_volunteer2
+	SELECT DISTINCT
+	    s.idName,
+	    'Vol_Type',
+	    'g',
+	    'a',
+	    '',
+	    '',
+	    now(),
+	    NULL,
+	    NULL,
+	    '',
+	    'admin',
+	    NOW(),
+	    'm',
+	    NULL,
+	    '',
+	    '',
+	    CURRENT_TIMESTAMP()
+	FROM
+	    stays s
+	        LEFT JOIN
+	    name_volunteer2 nv ON s.idName = nv.idName
+	        AND nv.Vol_Category = 'Vol_Type'
+	        AND nv.Vol_Code = 'g'
+	WHERE
+	    nv.idName IS NULL;
 
 
 -- add report filter page

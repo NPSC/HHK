@@ -100,10 +100,10 @@ if (count($rows) > 0) {
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <h1 style="margin: 10px 5px;">View Non-Reporting Members, Bad Addresses & More.</h1>
+            <h1 style="margin: 10px 5px;">View Non-Reporting Members, Bad Addresses &#38; More.</h1>
             <p></p>
             <div style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
-                <table id="tblCategory" cellpadding="0" cellspacing="0" border="0" class="display">
+                <table id="tblCategory" class="display">
 <?php echo $markup; ?>
                 </table>
             </div>

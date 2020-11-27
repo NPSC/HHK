@@ -120,7 +120,7 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
                             <tr><td class="tdlabel">Include New Members</td><td><input type="checkbox" class="parm" id="incnew" checked="checked"/></td></tr>
                             <tr><td class="tdlabel">Include Updates to Existing Members</td><td><input type="checkbox" class="parm" id="incupd" checked="checked"/></td></tr>
 
-                            <tr><td class="tdlabel">Name, Type & Statuses</td><td><input type="checkbox" id="cbname" class="parm" checked="checked"/></td></tr>
+                            <tr><td class="tdlabel">Name, Type &#38; Statuses</td><td><input type="checkbox" id="cbname" class="parm" checked="checked"/></td></tr>
                             <tr><td class="tdlabel">Addresses</td><td><input type="checkbox" id="cbaddr" class="parm" checked="checked"/></td></tr>
                             <tr><td class="tdlabel">Phone</td><td><input type="checkbox" id="cbphone" class="parm" checked="checked"/></td></tr>
                             <tr><td class="tdlabel">Email</td><td><input type="checkbox" id="cbemail" class="parm" checked="checked"/></td></tr>

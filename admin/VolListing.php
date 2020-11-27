@@ -183,7 +183,7 @@ $volReport = $markup;
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="vollisting" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
                 <?php echo $noReport ?>
-                <table id="dataTbl" cellpadding="0" cellspacing="0" border="0" class="display">
+                <table id="dataTbl" class="display">
 <?php echo $volReport ?>
                 </table>
             </div>

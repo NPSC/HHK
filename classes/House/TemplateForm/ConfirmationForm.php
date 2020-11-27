@@ -2,8 +2,6 @@
 
 namespace HHK\House\TemplateForm;
 
-
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Reservation\Reservation_1;
 use HHK\Member\Role\Guest;

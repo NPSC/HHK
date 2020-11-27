@@ -218,7 +218,7 @@ $txSelector = HTMLSelector::generateMarkup(
                     </tr>
                 </table>
                 </form>
-            </div></div>
+            </div>
             <div class="ui-widget ui-widget-content" style='clear:left; float:left; font-size: .8em;'>
                 <?php echo $txData; ?>
             </div>

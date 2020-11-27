@@ -749,7 +749,7 @@ class VolCal {
     public static function CreateCalEvent(\PDO $dbh, cEventClass $evt, UserCategories $cats) {
 
         $events = array();
-        $alreadyTaken = array();
+        //$alreadyTaken = array();
         $rptId = 0;
         $removedEvents = 0;
         $alreadyMine = 0;
@@ -796,7 +796,7 @@ class VolCal {
 
                             } else {
                                 $removedEvents++;
-                                $alreadyTaken[] = $v;
+                                //$alreadyTaken[] = $v;
                             }
                         } else {
                             // already is my event
@@ -1145,7 +1145,7 @@ class VolCal {
         $logRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
         $logRS->Updated_By->setNewVal($cats->get_Username());
 
-        $temp = EditRS::insert($dbh, $logRS);
+        EditRS::insert($dbh, $logRS);
 
         return 'Logged ' . number_format($dur, 2) . ' hours.  ';
 

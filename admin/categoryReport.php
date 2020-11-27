@@ -226,7 +226,7 @@ foreach ($catSelCtrls as $sel) {
                 <table style="margin-top:40px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $catagoryHeadertable; ?>
                 </table>
-                <table id="tblCategory" cellpadding="0" cellspacing="0" border="0" class="display">
+                <table id="tblCategory" class="display">
                     <?php echo $catmarkup; ?>
                 </table>
             </div>

@@ -49,7 +49,7 @@ class GuestReport {
 
         $accum = array();
         $periods = array();
-        $totalPSGs = array();
+//        $totalPSGs = array();
 
         $firstPeriod = $thisPeriod = $stDT->format($periodFormat);
         $badZipCodes = array();
@@ -198,7 +198,7 @@ class GuestReport {
 
             }
 
-            $totalPSGs[$r['idPsg']] = 'y';
+            //$totalPSGs[$r['idPsg']] = 'y';
         }
 
         $trs = array();

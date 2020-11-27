@@ -422,7 +422,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
             <div style="clear: both;"></div>
             <div id="divTable" style="margin-top: 15px; display:<?php echo $divDisp; ?>;" class="ui-widget ui-widget-content ui-corner-all">
                 <?php echo $intro; ?>
-                <table id="tblCategory" cellpadding="0" cellspacing="0" border="0" class="display">
+                <table id="tblCategory" class="display">
                     <?php echo $markup; ?>
                 </table>
             </div>

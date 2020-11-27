@@ -738,8 +738,6 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
             for ($j = 0; $j < $numNights; $j++) {
 
                 $rmDate = $rmStartDate->format($dateFormat);
-                $rmDateTitle = $rmStartDate->format($dateTitle);
-
 
                 if (isset($days[$r['idResource']][$rmDate])) {
 

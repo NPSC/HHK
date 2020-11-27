@@ -33,11 +33,11 @@ try {
 $u = new UserClass();
 
 // Only the cron job can run this.
-// if(!$u->isCron()){
-// 	header('HTTP/1.0 401 Unauthorized');
-// 	exit("Not authorized");
+if(!$u->isCron()){
+	header('HTTP/1.0 401 Unauthorized');
+	exit("Not authorized");
 
-// }
+}
 
 // DB login
 try {
@@ -84,7 +84,7 @@ if ($notificationAddress != '') {
 	$mail->FromName = $siteName;
 
 	$mail->isHTML(true);
-	$mail->Subject = $siteName . ' GL Transfer Report' . (stristr($glParm->getRemoteFilePath(), 'test') == TRUE ? ' THIS IS A TEST' : '');
+	$mail->Subject = $siteName . ' GL Transfer Report' . (strtolower(stristr($glParm->getRemoteFilePath()), 'test') == TRUE ? ' THIS IS A TEST' : '');
 
 	$addrArry = $mail->parseAddresses($notificationAddress);
 
@@ -98,13 +98,10 @@ if ($notificationAddress != '') {
 		$etbl->addBodyTr(HTMLTable::makeTd($e));
 	}
 
-	if ($bytesWritten != '') {
-		$etbl->addBodyTr(HTMLTable::makeTd("Bytes Written: ". number_format($bytesWritten)));
-	}
-	
+	$etbl->addBodyTr(HTMLTable::makeTd("Bytes Written: ". number_format($bytesWritten)));
 	$etbl->addBodyTr(HTMLTable::makeTd('FTP Host:  ' . $glParm->getHost()));
 	$etbl->addBodyTr(HTMLTable::makeTd('File Path:  ' . $glParm->getRemoteFilePath()));
-	$etbl->addBodyTr(HTMLTable::makeTd('Sent at:  ' . $today->format('M j, Y H:i')));
+	$etbl->addBodyTr(HTMLTable::makeTd('Processed at:  ' . $today->format('M j, Y H:i')));
 	
 	$mail->msgHTML($etbl->generateMarkup());
 	

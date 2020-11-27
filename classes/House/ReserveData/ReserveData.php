@@ -2,7 +2,6 @@
 
 namespace HHK\House\ReserveData;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay};
 use HHK\SysConst\VolMemberType;
 use HHK\sec\Labels;

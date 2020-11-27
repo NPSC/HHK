@@ -120,7 +120,7 @@ if (SecurityComponent::isHTTPS()) {
     <body >
         <div id="page">
             <div id="content">
-            <a href="<?php echo $logoLink; ?>"><div id="logoLT"></div></a>
+            <a href="<?php echo $logoLink; ?>"><span id="logoLT"></span></a>
             <div style="clear:both;"></div>
             <div id="formlogin"  style="float:left;">
                     <div style="margin-top:10px;"><?php echo $siteName; ?>
@@ -138,7 +138,7 @@ if (SecurityComponent::isHTTPS()) {
                 <div style="clear:left;"></div>
                 <div style="margin-top: 50px;width:600px;">
                     <hr>
-                    <div><a href ="http://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
+                    <div><a href ="http://nonprofitsoftwarecorp.org" ><span class="nplogo"></span></a></div>
                     <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software Corporation</div>
                 </div>
             </div>

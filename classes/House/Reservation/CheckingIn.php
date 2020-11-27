@@ -2,7 +2,6 @@
 
 namespace HHK\House\Reservation;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Family\{Family, FamilyAddGuest};
@@ -373,6 +372,7 @@ FROM reservation r
     public function checkedinMarkup(\PDO $dbh) {
         
         $creditCheckOut = array();
+        $dataArray = array();
         
         if ($this->reserveData->hasError()) {
             return $this->createMarkup($dbh);

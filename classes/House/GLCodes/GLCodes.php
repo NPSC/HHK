@@ -544,7 +544,7 @@ class GLCodes {
 			$bytesWritten = $sftp->uploadFile($data, trim($this->glParm->getRemoteFilePath()) . trim($this->fileId) . '.csv');
 
 		}
-		catch (RuntimeException $e)
+		catch (\Exception $e)
 		{
 			$this->recordError($e->getMessage());
 			return FALSE;

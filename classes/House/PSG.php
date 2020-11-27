@@ -3,7 +3,6 @@
 namespace HHK\House;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
-use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\Member\Role\Guest;
 use HHK\SysConst\{NameGuestStatus, RelLinkType, VisitStatus};
 use HHK\TableLog\VisitLog;
