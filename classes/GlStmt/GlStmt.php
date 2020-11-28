@@ -19,7 +19,7 @@ class GlStmt {
 	public $lines;
 
 	protected $errors;
-	protected $paymentDate;
+
 	protected $glLineMapper;
 	protected $baLineMapper;
 
@@ -58,13 +58,13 @@ class GlStmt {
 		
 		$this->lines = array();
 		
-		// Filter payment records.
+		//
 		foreach ($this->records as $r) {
 			
 			// Any payments?
 			if (count($r['p']) < 1) {
 				
-				// Don't flag carried.
+				// Don't flag carried invoice.
 				if ($r['i']['iStatus'] != InvoiceStatus::Carried) {
 					$this->recordError('No payment for Invoice ' . $r['i']['iNumber']);
 				}
@@ -73,7 +73,6 @@ class GlStmt {
 			}
 
 			$payments = array();
-			$invLines = array();
 
 			foreach ($r['p'] as $p) {
 
@@ -89,16 +88,10 @@ class GlStmt {
 			if (count($payments) == 0) {
 				continue;
 			}
-
-			// Copy invoice lines
-			foreach ($r['l'] as $l) {
-				$invLines[] = $l;
-			}
-
-			foreach ($payments as $pay) {
-				$this->mapPayment($invLines, $pay, $r['i']['iNumber']);
-			}
-
+			
+			$cpay = $this->combinePayments($payments, $r['i']['iNumber']);
+			
+			$this->mapInvLines($r['l'], $cpay, $r['i']['iNumber']);
 		}
 		
 		if ($this->glLineMapper->getTotalCredit() != $this->glLineMapper->getTotalDebit()) {
@@ -108,181 +101,134 @@ class GlStmt {
 		return $this;
 	}
 	
-	protected function mapPayment(&$iLines, $p, $iNumber) {
+	protected function combinePayments($payments, $iNumber) {
 		
-		$invLines = array();
-		$waiveAmt = 0;
-		$moaAmt = 0;
+		$cpayment = new CombinedPayment();
 		
-		// Check dates
-		if ($p['pTimestamp'] != '') {
-			$this->paymentDate = new \DateTime($p['pTimestamp']);
-		} else {
-			$this->recordError("Missing Payment Date. Payment Id = ". $p['idPayment']);
-			return;
-		}
-		
-		if ($p['pUpdated'] != '') {
-			$pUpDate = new \DateTime($p['pUpdated']);
-		} else {
+		foreach ($payments as $p) {
+			
 			$pUpDate = NULL;
+			
+			// Check dates
+			if ($p['pTimestamp'] != '') {
+				$cpayment->setPaymentDate(new \DateTime($p['pTimestamp']));
+			} else {
+				$this->recordError("Missing Payment Date. Payment Id = ". $p['idPayment']);
+				continue;
+			}
+			
+			if ($p['pUpdated'] != '') {
+				$pUpDate = new \DateTime($p['pUpdated']);
+				$cpayment->setUpdatedDate($pUpDate);
+			}
+			
+			
+			if ($p['pStatus'] == PaymentStatusCode::Retrn) {
+				//Return earlier sale
+				
+				if (is_null($pUpDate)) {
+					$this->recordError("Missing Last Updated. Payment Id = ". $p['idPayment']);
+					continue;
+				}
+				
+				// Returned during this period?
+				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
+					// It is a return in this period.
+					
+					// 3rd party payments
+					if ($p['ba_Gl_Debit'] != '') {
+						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getUpdatedDate(), $iNumber);
+					}
+					
+					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], (0 - abs($p['pAmount'])), 0, $cpayment->getUpdatedDate(), $iNumber);
+					
+					$cpayment->returnAmount($p['pAmount']);
+
+				}
+				
+				if ($cpayment->getPaymentDate() >= $this->startDate && $cpayment->getPaymentDate() < $this->endDate) {
+					// It is still a payment in this period.
+
+					// 3rd party payments
+					if ($p['ba_Gl_Debit'] != '') {
+						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
+					}
+					
+					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
+					
+					$cpayment->payAmount($p['pAmount']);
+
+				}
+
+			} else if (($p['pStatus'] == PaymentStatusCode::Paid || $p['pStatus'] == PaymentStatusCode::VoidReturn)  && $p['Is_Refund'] == 0) {
+				// Status = Sale
+
+				// un-returned payments are dated on the update.
+				if (is_null($pUpDate) === FALSE) {
+					$cpayment->setPaymentDate($pUpDate);
+				}
+
+				// Payment is in this period?
+				if ($cpayment->getPaymentDate() >= $this->startDate && $cpayment->getPaymentDate() < $this->endDate) {
+
+					// 3rd party payments
+					if ($p['ba_Gl_Debit'] != '') {
+						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
+					}
+
+					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
+
+					$cpayment->payAmount($p['pAmount']);
+
+				}
+
+			} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
+				// Status = refund amount
+
+				// Payment is in this period?
+				if ($cpayment->getPaymentDate() >= $this->startDate && $cpayment->getPaymentDate() < $this->endDate) {
+					// 3rd party payments
+					if ($p['ba_Gl_Debit'] != '') {
+						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getPaymentDate(), $iNumber);
+					}
+
+					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], (0 - abs($p['pAmount'])), 0, $cpayment->getPaymentDate(), $iNumber);
+
+					$cpayment->refundAmount($p['pAmount']);
+				}
+
+			} else {
+				$this->recordError("Unanticipated Payment Status: ". $p['pStatus'] . '  Payment Id = '.$p['idPayment']);
+			}
 		}
+		
+		return $cpayment;
+	}
+	
+	protected function mapInvLines(array $iLines, CombinedPayment $cpay, $iNumber) {
+		
+		$waiveAmt = 0;
+		$invLines = array();
 		
 		// Copy invoice lines and Look for waived.
 		foreach ($iLines as $l) {
-			
-			$invLines[] = $l;
 			
 			if ($l['il_Item_Id'] == ItemId::Waive) {
 				$waiveAmt += abs($l['il_Amount']);
 			}
 			
-// 			if ($l['il_Item_Id'] == ItemId::LodgingMOA && $l['il_Amount'] < 0) {
-// 				$moaAmt += abs($l['il_Amount']);
-// 			}
+			$invLines[] = $l;
 		}
-		
-		// Special handling for MOA payments.
-// 		if ($moaAmt != 0) {
-// 			$invLines = $this->mapMoaPayments($moaAmt, $invLines, $iNumber);
-// 		}
-		
-		// Special handling for waived payments.
+
+		// Special handling for waived lines.
 		if ($waiveAmt > 0) {
-			$invLines = $this->mapWaivePayments($waiveAmt, $invLines);
+			$invLines = $this->mapWaiveLines($waiveAmt, $iLines);
 		}
 		
-		// Set payment code
-		$glCode = $p['pm_Gl_Code'];
-		
-		
-		// Payment Status
-		if ($p['pStatus'] == PaymentStatusCode::Retrn) {
-			//Return earlier sale
-			
-			if (is_null($pUpDate)) {
-				$this->recordError("Missing Last Updated. Payment Id = ". $p['idPayment']);
-				return;
-			}
-			
-			// Returned during this period?
-			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
-				// It is a return in this period.
-				
-				// 3rd party payments
-				if ($p['ba_Gl_Debit'] != '') {
-					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $this->paymentDate, $iNumber);
-				}
-				
-				$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $iNumber);
-				
-				$pAmount =  abs($p['pAmount']);
-				
-				foreach($invLines as $l) {
-					
-					$ilAmt = abs($l['il_Amount']);
-					
-					if ($pAmount >= $ilAmt) {
-						$pAmount -= $ilAmt;
-					} else {
-						$ilAmt = $pAmount;
-						$pAmount = 0;
-					}
-					
-					// map gl code
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $pUpDate, $iNumber);
-				}
-				
-				if ($pAmount != 0) {
-					$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
-				}
-				
-			}
-			
-			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
-				// It is still a payment in this period.
-				
-				
-				// 3rd party payments
-				if ($p['ba_Gl_Debit'] != '') {
-					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate, $iNumber);
-				}
-				
-				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate, $iNumber);
-				
-				$pAmount =  $p['pAmount'];
-				
-				foreach($invLines as $l) {
-					
-					$ilAmt = $l['il_Amount'];
-					
-					if ($pAmount >= $ilAmt) {
-						$pAmount -= $ilAmt;
-					} else {
-						$ilAmt = $pAmount;
-						$pAmount = 0;
-					}
-					
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate, $iNumber);
-				}
-				if ($pAmount != 0) {
-					$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
-				}
-				
-			}
 
-		} else if (($p['pStatus'] == PaymentStatusCode::Paid || $p['pStatus'] == PaymentStatusCode::VoidReturn)  && $p['Is_Refund'] == 0) {
-			// Status = Sale
-
-			// un-returned payments are dated on the update.
-			if (is_null($pUpDate) === FALSE) {
-				$this->paymentDate = $pUpDate;
-			}
-			
-			// Payment is in this period?
-			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
-				
-				// 3rd party payments
-				if ($p['ba_Gl_Debit'] != '') {
-					$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $this->paymentDate, $iNumber);
-				}
-				
-				$this->lines[] = $this->glLineMapper->makeLine($glCode, $p['pAmount'], 0, $this->paymentDate, $iNumber);
-				
-				$pAmount =  $p['pAmount'];
-				
-				foreach($invLines as $l) {
-					
-					$ilAmt = $l['il_Amount'];
-					
-					if ($p['pAmount'] == 0) {
-						$pAmount += $ilAmt;
-					} else if ($pAmount >= $ilAmt) {
-						$pAmount -= $ilAmt;
-					} else {
-						$ilAmt = $pAmount;
-						$pAmount = 0;
-					}
-					
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $ilAmt, $this->paymentDate, $iNumber);
-				}
-				if ($pAmount != 0) {
-					$this->recordError("Overpayment ($" .$pAmount . ") at payment Id = ". $p['idPayment']);
-				}
-				
-			}
-			
-		} else if ($p['pStatus'] == PaymentStatusCode::Paid && $p['Is_Refund'] > 0){
-			// Status = refund amount
-			
-			// 3rd party payments
-			if ($p['ba_Gl_Debit'] != '') {
-				$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $this->paymentDate, $iNumber);
-			}
-			
-			$this->lines[] = $this->glLineMapper->makeLine($glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $iNumber);
-			
-			$pAmount =  abs($p['pAmount']);
+		if ($cpay->getPayAmount() > 0) {
+			// sale
+			$pAmount = $cpay->getPayAmount();
 			
 			foreach($invLines as $l) {
 				
@@ -294,43 +240,55 @@ class GlStmt {
 					$ilAmt = $pAmount;
 					$pAmount = 0;
 				}
-				// map gl code
-				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $this->paymentDate, $iNumber);
-			}
-			if ($pAmount != 0) {
-				$this->recordError("Overpayment (" .$pAmount . ") at payment Id = ". $p['idPayment']);
-			}
-			
-		} else {
-			$this->recordError("Unanticipated Payment Status: ". $p['pStatus'] . '  Payment Id = '.$p['idPayment']);
-		}
-	}
-	
-	protected function mapMoaPayments($moaAmt, array $invLines, $iNumber) {
-		
-		// add up MOA items
-		$remainingItems = array();
-		
-		foreach ($invLines as $l) {
-			
-			// Special handling for the MOA item
-			if ($l['il_Item_Id'] == ItemId::LodgingMOA) {
 				
-				if ($l['il_Amount'] > 0) {
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $iNumber);
-				} else {
-					$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate, $iNumber);
-				}
-
-			} else {
-				$remainingItems[] = $l;
+				// map gl code
+				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, abs($ilAmt), $cpay->getPaymentDate(), $iNumber);
 			}
 		}
 		
-		return $remainingItems;
+		if ($cpay->getReturnAmount() > 0) {
+			// return
+			$pAmount = $cpay->getReturnAmount();
+			
+			foreach($invLines as $l) {
+				
+				$ilAmt = abs($l['il_Amount']);
+				
+				if ($pAmount >= $ilAmt) {
+					$pAmount -= $ilAmt;
+				} else {
+					$ilAmt = $pAmount;
+					$pAmount = 0;
+				}
+				
+				// map gl code
+				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $cpay->getUpdatedDate(), $iNumber);
+			}
+		}
+		
+		if ($cpay->getRefundAmount() > 0) {
+			// refund
+			$pAmount = $cpay->getRefundAmount();
+			
+			foreach($invLines as $l) {
+				
+				$ilAmt = abs($l['il_Amount']);
+				
+				if ($pAmount >= $ilAmt) {
+					$pAmount -= $ilAmt;
+				} else {
+					$ilAmt = $pAmount;
+					$pAmount = 0;
+				}
+				
+				// map gl code
+				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $cpay->getPaymentDate(), $iNumber);
+			}
+		}
+						
 	}
 	
-	protected function mapWaivePayments($waiveAmt, array $invLines) {
+	protected function mapWaiveLines($waiveAmt, array $invLines) {
 		
 		$remainingItems = array();
 		
