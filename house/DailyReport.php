@@ -30,7 +30,8 @@ $labels = Labels::getLabels();
 // Daily Log
 $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         , array('style' => 'background-color:#D3D3D3; padding:10px;'))
-        . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
+        . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>",
+        		array('id' => 'divdaily'));
 
 
 ?>

@@ -908,7 +908,6 @@ from
         $returnRows = array();
 
         $beginDT = new \DateTime();
-        $beginDT->sub(new \DateInterval('P2D'));
 
         $endDT = new \DateTime();
         $endDT->add(new \DateInterval('P2D'));
@@ -940,7 +939,7 @@ from
         left join
     gen_lookups g3 on g3.Table_Name = 'Room_Cleaning_Days' and g3.`Code` = r.Cleaning_Cycle_Code
         left join
-    resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $beginDT->format('Y-m-d') . "')
+    resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $beginDT->format('Y-m-d') . "')
 
 where g3.Substitute > 0 and ru.idResource_use is null");
 

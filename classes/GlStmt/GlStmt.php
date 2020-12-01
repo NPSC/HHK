@@ -9,6 +9,7 @@ use HHK\HTMLControls\{HTMLTable};
 use HHK\House\Resource\ResourceTypes;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\HTMLContainer;
 
 class GlStmt {
 
@@ -501,7 +502,6 @@ class GlStmt {
 		$vForwardPay = 0;
 		
 		$paymentAmounts = array();
-		
 		$serialId = 0;
 		$visitId = 0;
 		$record = NULL;
@@ -591,10 +591,7 @@ class GlStmt {
 					$vDiscountCharge = 0;
 					$vIntervalPay = 0;
 					$vForwardPay = 0;
-					
-					// Payment amounts
-					$paymentAmounts = array();
-					
+										
 					$visitId = $r['idVisit'];
 				}
 				
@@ -645,13 +642,15 @@ class GlStmt {
 				$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['pend'], $r['il_Amount']);
 			}
 			
+			if ($r['pStatus'] == PaymentStatusCode::Reverse || $r['pStatus'] == PaymentStatusCode::VoidSale || $r['pStatus'] == PaymentStatusCode::Declined) {
+				continue;
+			}
 			
 			// Payment dates
 			if ($r['pTimestamp'] != '') {
 				$paymentDate = new \DateTime($r['pTimestamp']);
 			} else {
-				// No payment
-				continue;
+				$paymentDate = NULL;
 			}
 			
 			if ($r['pUpdated'] != '') {
@@ -676,13 +675,13 @@ class GlStmt {
 				}
 				
 				
-				if ($paymentAmounts[$r['idPayment']] >= $ilAmt) {
-					$paymentAmounts[$r['idPayment']] -= $ilAmt;
-				} else {
-					// Short the item amount to what was actually paid
-					$ilAmt = $paymentAmounts[$r['idPayment']];
-					$paymentAmounts[$r['idPayment']] = 0;
-				}
+// 				if ($paymentAmounts[$r['idPayment']] >= $ilAmt) {
+ 					$paymentAmounts[$r['idPayment']] -= $ilAmt;
+// 				} else {
+// 					// Short the item amount to what was actually paid
+// 					$ilAmt = $paymentAmounts[$r['idPayment']];
+// 					$paymentAmounts[$r['idPayment']] = 0;
+// 				}
 				
 				// Payment is in this period?
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
@@ -711,12 +710,12 @@ class GlStmt {
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 				
 				// payment is positive in this case.
-				if ($paymentAmounts[$r['idPayment']] >= abs($ilAmt)) {
-					$paymentAmounts[$r['idPayment']] += $ilAmt;
-				} else {
-					$ilAmt = (0 - $paymentAmounts[$r['idPayment']]);
-					$paymentAmounts[$r['idPayment']] = 0;
-				}
+// 				if ($paymentAmounts[$r['idPayment']] >= abs($ilAmt)) {
+ 					$paymentAmounts[$r['idPayment']] += $ilAmt;
+// 				} else {
+// 					$ilAmt = (0 - $paymentAmounts[$r['idPayment']]);
+// 					$paymentAmounts[$r['idPayment']] = 0;
+// 				}
 				
 				// Payment must be within the .
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
@@ -749,12 +748,12 @@ class GlStmt {
 					continue;
 				}
 				
-				if ($paymentAmounts[$r['idPayment']] >= $ilAmt) {
-					$paymentAmounts[$r['idPayment']] -= $ilAmt;
-				} else {
-					$ilAmt = $paymentAmounts[$r['idPayment']];
-					$paymentAmounts[$r['idPayment']] = 0;
-				}
+// 				if ($paymentAmounts[$r['idPayment']] >= $ilAmt) {
+ 					$paymentAmounts[$r['idPayment']] -= $ilAmt;
+// 				} else {
+// 					$ilAmt = $paymentAmounts[$r['idPayment']];
+// 					$paymentAmounts[$r['idPayment']] = 0;
+// 				}
 				
 				// Returned during this period?
 				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
@@ -799,6 +798,17 @@ class GlStmt {
 						$vForwardPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vForwardPay += $ilAmt;
+					}
+				}
+
+			} else if ($r['idPayment'] == 0 && $r['Invoice_Status'] == InvoiceStatus::Paid) {
+
+				$paymentDate = new \DateTime($r['Invoice_Date']);
+
+				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
+					// Discounts
+					if ($r['Item_Id'] = ItemId::Discount) {
+						$totalPayment[$r['Item_Id']] += abs($ilAmt);
 					}
 				}
 			}
@@ -864,12 +874,12 @@ class GlStmt {
 			$intervalCharge += $vIntervalCharge;
 			$fullInvervalCharge += $vFullIntervalCharge;
 			$discountCharge += $vDiscountCharge;
-			
+
 		}
-		
-		$unpaidCharges += $totalPayment[ItemId::Waive];
-		$discountCharge += $totalPayment[ItemId::Waive];
-		
+
+//		$unpaidCharges += $totalPayment[ItemId::Waive];
+		$discountCharge += $totalPayment[ItemId::Discount];
+
 		$tbl = new HTMLTable();
 		
 		$tbl->addHeaderTr(HTMLTable::makeTh('Lodging Payment Distribution', array('colspan'=>'2')));
@@ -900,6 +910,10 @@ class GlStmt {
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Waived Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
@@ -937,9 +951,20 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format($discountCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
-		return $this->createBAMarkup($baArray, $tableAttrs)
-		. $tbl->generateMarkup($tableAttrs)
-		. $this->statsPanel($dbh, $totalCatNites, $start, $end, $categories, 'Report_Category', $monthArray, $fullInvervalCharge);
+		return $tbl->generateMarkup($tableAttrs)
+		. $this->statsPanel($dbh, $totalCatNites, $start, $end, $categories, 'Report_Category', $monthArray, $fullInvervalCharge)
+		. $this->createBAMarkup($baArray, $tableAttrs)
+		. HTMLContainer::generateMarkup('div', $this->showPaymentAmounts($paymentAmounts));
+	}
+	
+	protected function showPaymentAmounts($p) {
+		$tbl = new HTMLTable();
+		foreach ($p as $k=>$v) {
+			if ($v != 0) {
+			 	$tbl->addBodyTr(HTMLTable::makeTd($k).HTMLTable::makeTd($v));
+			}
+		}
+		return $tbl->generateMarkup();
 	}
 	
 	protected function makeQuery($start, $end, $guestNightsSql) {
@@ -1103,7 +1128,7 @@ where
 				. HTMLTable::makeTd(number_format($totals['pend'], 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals '))
 				);
 		
-		
+		$tableAttrs['style'] = "margin-top:9px;";
 		return $tbl->generateMarkup($tableAttrs);
 	}
 	

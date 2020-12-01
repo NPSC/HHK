@@ -212,7 +212,7 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
         }
 
         $query = "SELECT
-            r.Util_Priority,
+            rs.Util_Priority,
             r.idRoom,
             r.`Title`,
             r.`Status`,
@@ -231,15 +231,15 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
                 LEFT JOIN
             `name` n ON s.idName = n.idName
                 LEFT JOIN
-            visit v ON s.idVisit = v.idVisit
-                AND s.Visit_Span = v.Span
+            visit v ON s.idVisit = v.idVisit AND s.Visit_Span = v.Span
+				Left Join
+			resource rs on v.idResource = rs.idResource
                 LEFT JOIN
             hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
                 LEFT JOIN
             name np on hs.idPatient = np.idName
                 LEFT JOIN
-            gen_lookups g ON g.Table_Name = 'Room_Status'
-                AND g.Code = r.`Status`
+            gen_lookups g ON g.Table_Name = 'Room_Status' AND g.Code = r.`Status`
                 LEFT JOIN
             gen_lookups gc ON gc.Table_Name = 'Room_Cleaning_Days'
                 AND gc.Code = r.Cleaning_Cycle_Code
