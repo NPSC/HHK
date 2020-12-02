@@ -23,6 +23,7 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 ('labels_category', 's', 'Statement', '100');
 
 INSERT INTO `sys_config` (`Key`, `Type`, `Category`, `Description`) VALUES ('DefCalEventTextColor', 's', 'c', 'Default calendar event ribbon text color');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowRateDetail', 'false', 'b', 'f', 'Show Rate detail on statements');
 
 INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('MRN', 'MRN', 's', 'h');
 INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('RmFeesPledged', 'Room fees pledged to-date', 's', 'pc');

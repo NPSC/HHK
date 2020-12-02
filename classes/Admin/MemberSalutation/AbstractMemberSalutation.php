@@ -1,5 +1,4 @@
 <?php
-
 namespace HHK\Admin\MemberSalutation;
 
 use HHK\SysConst\SalutationCodes;

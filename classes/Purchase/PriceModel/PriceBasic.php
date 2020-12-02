@@ -53,7 +53,7 @@ class PriceBasic extends AbstractPriceModel {
     protected function newRateMarkup(&$fTbl) {
 
         // New rate
-        // Not new rates are possible
+        // No new rates are possible
         return;
     }
     

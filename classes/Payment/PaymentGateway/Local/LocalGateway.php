@@ -482,11 +482,11 @@ class LocalGateway extends AbstractPaymentGateway {
 				'class' => 'hhk-feeskeys' . $index
 		) ) ) );
 		$tbl->addBodyTr ( HTMLTable::makeTd ( HTMLInput::generateMarkup ( '', array (
-				'type' => 'textbox',
+				'type' => 'text',
 				'size' => '40',
 				'placeholder' => 'Cardholder Name',
 		        'name' => 'txtvdNewCardName' . $index,
-		        'class' => 'hhk-feeskeys' . $index
+		        'class' => 'hhk-feeskeys' . $index,
 		) ), array (
 				'colspan' => '4'
 		) ) );

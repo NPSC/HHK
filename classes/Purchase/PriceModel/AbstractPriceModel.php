@@ -191,6 +191,42 @@ abstract class AbstractPriceModel {
         return $roomCharge;
     }
 
+    public function tiersDetailMarkup($r, &$tbl, $tiers, $startDT, $separator, $totalGuestNites) {
+
+    	$sDate = new \DateTime($startDT->format('Y-m-d'));
+    	
+    	foreach ($tiers as $t) {
+    		
+    		$days = $t['days'];
+    		   		
+    		while ($days > 0) {
+	    		$tbl->addBodyTr(
+	    				HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
+	    				.HTMLTable::makeTd($r['title'], array('style'=>$separator))
+	    				.HTMLTable::makeTd($sDate->format('M j, Y'), array('style'=>$separator))
+	    				.HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
+	    				);
+
+	    		$separator = '';
+	    		$sDate->add(new \DateInterval('P1D'));
+	    		
+	    		$days--;
+    		}
+    	}
+
+    	return;
+    }
+
+    public function itemDetailMarkup($r, &$tbl) {
+    	
+    	$tbl->addBodyTr(
+    			HTMLTable::makeTd($r['orderNum'], array('style'=>'text-align:center;'))
+    			.HTMLTable::makeTd($r['desc'], array('style'=>'text-align:right;'))
+    			.HTMLTable::makeTd($r['date'])
+    			.HTMLTable::makeTd($r['amt'], array('style'=>'text-align:right;')));
+    	
+    }
+    
     public function itemMarkup($r, &$tbl) {
 
         $tbl->addBodyTr(
@@ -203,11 +239,26 @@ abstract class AbstractPriceModel {
     }
 
     public function rateHeaderMarkup(&$tbl, $labels) {
-        $tbl->addHeaderTr(HTMLTable::makeTh('Visit Id').HTMLTable::makeTh('Room').HTMLTable::makeTh('Start').HTMLTable::makeTh('End')
-            .HTMLTable::makeTh($labels->getString('statement', 'rateHeader', 'Rate')).HTMLTable::makeTh('Nights').HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
-
+    	$tbl->addHeaderTr(
+    			HTMLTable::makeTh('Visit Id')
+    			.HTMLTable::makeTh('Room')
+    			.HTMLTable::makeTh('Start')
+    			.HTMLTable::makeTh('End')
+    			.HTMLTable::makeTh($labels->getString('statement', 'rateHeader', 'Rate'))
+    			.HTMLTable::makeTh('Nights')
+    			.HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
+    	
     }
-
+    
+    public function rateDetailHeaderMarkup(&$tbl, $labels) {
+    	$tbl->addHeaderTr(
+    			HTMLTable::makeTh('Visit Id')
+    			.HTMLTable::makeTh('Room')
+    			.HTMLTable::makeTh('Start')
+    			.HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
+    	
+    }
+    
     public function rateTotalMarkup(&$tbl, $label, $numberNites, $totalAmt, $guestNites) {
 
         // Room Fee totals

@@ -1352,6 +1352,19 @@ function setupCOF($chgExpand, idx) {
 
             $('#btnvrKeyNumber'+idx).change();
         }
+        
+        if ($('#txtvdNewCardName'+idx).length > 0) {
+        	
+        	$('#txtvdNewCardName'+idx).keydown(function (e) {
+        		var key = e.which || e.keycode
+                if (     // numbers   
+                            key >= 48 && key <= 57 ||
+                        // Numeric keypad
+                            key >= 96 && key <= 105 )
+                            return false;
+        		return true;
+        	});
+        }
     }
 
 }

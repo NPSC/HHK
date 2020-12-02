@@ -757,13 +757,19 @@ WHERE
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, AbstractPriceModel $priceModel, $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, AbstractPriceModel $priceModel, $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem, $showDetails) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
-
+        $detailTbl = NULL;
+        
         $priceModel->rateHeaderMarkup($tbl, $labels);
-
+        
+        if ($showDetails) {
+        	$detailTbl = new HTMLTable();
+        	$priceModel->rateDetailHeaderMarkup($detailTbl, $labels);
+        }
+        
         $idVisitTracker = 0;
         $separator = '';
         $guestNites = 0;
@@ -814,9 +820,10 @@ WHERE
                             $totalAmt += $totalTax;
 
                             $tbl->addBodyTr(
-                                HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
-                                .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
-                            );
+                            		HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
+                            		.HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
+                            		);
+                            
                         }
                     }
                 }
@@ -868,8 +875,13 @@ WHERE
 
             }
 
+            // Write the record to the table
+            if ($showDetails) {
+            	$priceModel->tiersDetailMarkup($r, $detailTbl, $tiers, $startDT, $separator, $guestNites);
+            }
+            
             $rChg = $priceModel->tiersMarkup($r, $totalAmt, $tbl, $tiers, $startDT, $separator, $guestNites);
-
+            
             $preTaxRmCharge += $rChg;
             $separator = '';
 
@@ -885,7 +897,11 @@ WHERE
                         );
 
                 $priceModel->itemMarkup($item, $tbl);
-
+                
+                if ($showDetails) {
+                	$priceModel->itemDetailMarkup($item, $detailTbl);
+                }
+                
                 $totalAmt += $r['vfa'];
 
             }
@@ -917,6 +933,10 @@ WHERE
 
                         $priceModel->itemMarkup($item, $tbl);
 
+                        if ($showDetails) {
+                        	$priceModel->itemDetailMarkup($item, $detailTbl);
+                        }
+                        
                         $totalAmt += floatval($addChgAmt);
 
                     } else if ($l['Item_Id'] == ItemId::Discount || $l['Item_Id'] == ItemId::Waive) {
@@ -935,6 +955,10 @@ WHERE
 
                         $priceModel->itemMarkup($item, $tbl);
 
+                        if ($showDetails) {
+                        	$priceModel->itemDetailMarkup($item, $detailTbl);
+                        }
+                        
                     } else if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Amount'] < 0) {
 
                         $moaAmt = floatval($l['Amount']);
@@ -950,6 +974,10 @@ WHERE
 
                         $priceModel->itemMarkup($item, $tbl);
 
+                        if ($showDetails) {
+                        	$priceModel->itemDetailMarkup($item, $detailTbl);
+                        }
+                        
                     } else if ($l['Type_Id'] == InvoiceLineType::Tax && $l['Status'] != InvoiceStatus::Carried && ($l['Source_Item_Id'] == ItemId::Lodging || $l['Source_Item_Id'] == ItemId::LodgingReversal)) {
                         $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
                     } else if (($l['Item_Id'] == ItemId::Lodging || $l['Item_Id'] == ItemId::LodgingReversal) && ($l['Status'] == InvoiceStatus::Paid || $l['Status'] == InvoiceStatus::Unpaid)) {
@@ -1034,7 +1062,7 @@ WHERE
             $priceModel->rateTotalMarkup($tbl, $labels->getString('statement', 'TotalLabel', 'Total'), '', number_format($totalAmt, 2), '');
         }
 
-        return $tbl;
+        return array($tbl, $detailTbl);
     }
 
     protected static function makePaymentLine(array $payLines, &$tbl, $tdAttrs, array $descs, $i) {
@@ -1428,7 +1456,8 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbls = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate), FALSE);
+        $tbl = $tbls[0];
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1536,7 +1565,8 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbls = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate), $uS->ShowRateDetail);
+		$tbl = $tbls[0];
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1588,6 +1618,10 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
         $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'paymentsCaption', 'Payments'), array('style'=>'margin-top:15px;'));
         $rec .= HTMLContainer::generateMarkup('div', $ptbl->generateMarkup(), array('style'=>'margin-bottom:10px;', 'class'=>'hhk-tdbox'));
 
+        if ($uS->ShowRateDetail) {
+        	$rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'rateHeader', 'Rate').' Detail', array('style'=>'margin-top:15px;'));
+        	$rec .= HTMLContainer::generateMarkup('div', $tbls[1]->generateMarkup(), array('style'=>'margin-bottom:10px;', 'class'=>'hhk-tdbox'));
+        }
         return $rec;
 
     }

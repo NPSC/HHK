@@ -583,6 +583,7 @@ INSERT INTO `sys_config` VALUES
 ('ShowDiagTB','false','b','h','','Show the diagnosis textbox (in addition to the diagnosis selector)',''),
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos',''),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines',''),
+('ShowRateDetail','false','b','f','','Show Rate detail on statements',''),
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type',''),
 ('ShowUncfrmdStatusTab','false','b','h','','Show the Unconfirmed reservations tab on the House Register page',''),
 ('ShowZeroDayStays','false','b','h','','Include 0-day stays and visits in Reports and Pages',''),

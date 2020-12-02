@@ -225,7 +225,7 @@ class PriceNdayBlock extends AbstractPriceModel {
 
         return $roomCharge;
     }
-
+    
     protected static function installRate(\PDO $dbh, $incomeRated) {
 
         $modelCode = ItemPriceCode::NdayBlock;
