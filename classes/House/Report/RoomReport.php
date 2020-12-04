@@ -232,8 +232,10 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
             `name` n ON s.idName = n.idName
                 LEFT JOIN
             visit v ON s.idVisit = v.idVisit AND s.Visit_Span = v.Span
-				Left Join
-			resource rs on v.idResource = rs.idResource
+				LEFT JOIN
+            resource_room rr on r.idRoom = rr.idRoom
+                LEFT JOIN
+			resource rs on rr.idResource = rs.idResource
                 LEFT JOIN
             hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
                 LEFT JOIN

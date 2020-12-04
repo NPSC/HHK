@@ -608,7 +608,7 @@ $payTypeSelector = HTMLSelector::generateMarkup(
 $gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($gwList, $gwSelections), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($gwList) + 1)));
 
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
+$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $uS->StartYear, $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;', 'id'=>'includeFields'));

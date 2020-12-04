@@ -1192,7 +1192,7 @@ if ($hospSize < 5) {
 }
 
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>$hospSize,'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
+$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $uS->StartYear, $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>count($calOpts)));
 
 // Visit status
