@@ -28,7 +28,7 @@ $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
 $zip = $uS->Zip_Code;
-$startYear = '2010';
+
 
 $report = "";
 

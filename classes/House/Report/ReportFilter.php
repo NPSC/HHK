@@ -294,7 +294,7 @@ $ckdate";
         }
 
         $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->hList, $this->selectedHosptials, FALSE),
-                array('name'=>'selHospital[]', 'size'=>(count($this->hList)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
+        		array('name'=>'selHospital[]', 'size'=>(count($this->hList)>12 ? '12' : count($this->hList)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 
         $tbl = new HTMLTable();
         $tr = '';

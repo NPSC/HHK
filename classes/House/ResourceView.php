@@ -910,7 +910,7 @@ from
         $beginDT = new \DateTime();
 
         $endDT = new \DateTime();
-        $endDT->add(new \DateInterval('P2D'));
+        //$endDT->add(new \DateInterval('P2D'));
         
         $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 

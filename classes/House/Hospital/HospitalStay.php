@@ -101,7 +101,7 @@ order by `order` desc, `arrival` desc limit 1");
      * @param int $idAgent
      * @param string $uname
      */
-    public function save(\PDO $dbh, PSG $psg, $idAgent, $uname) {
+    public function save(\PDO $dbh, PSG $psg, $idAgent, $uname, $idResv = -1) {
 
         if (is_null($psg) || $psg->getIdPsg() == 0) {
             return;
@@ -115,6 +115,7 @@ order by `order` desc, `arrival` desc limit 1");
 
         $currentHsId = intval($this->hstayRs->idHospital_stay->getStoredVal(), 10);
         $numReservations = 0;
+        $triggerNumResv = ($idResv == 0 ? 0 : 1);
 
         // who else uses it
         if ($currentHsId > 0) {
@@ -123,7 +124,7 @@ order by `order` desc, `arrival` desc limit 1");
 	        $numReservations = $resvIds[0][0];
         }
 
-        if ($currentHsId === 0 || ($numReservations > 1 && EditRS::isChanged($this->hstayRs))) {
+        if ($currentHsId === 0 || ($numReservations > $triggerNumResv && EditRS::isChanged($this->hstayRs))) {
 
             // Insert
         	$currentHsId = EditRS::insert($dbh, $this->hstayRs);

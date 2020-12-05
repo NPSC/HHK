@@ -596,7 +596,7 @@ class Family {
 
                 // Save Hospital
                 $this->hospStay = new HospitalStay($dbh, $psg->getIdPatient(), $rData->getIdHospital_Stay());
-                Hospital::saveReferralMarkup($dbh, $psg, $this->hospStay, $post);
+                Hospital::saveReferralMarkup($dbh, $psg, $this->hospStay, $post, $rData->getIdResv());
                 
                 $rData->setIdHospital_Stay($this->hospStay->getIdHospital_Stay());
 

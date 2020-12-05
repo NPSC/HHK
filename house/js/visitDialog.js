@@ -110,6 +110,16 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                 }
             });
         	
+        	// add closer to visit dialog box
+        	$('#keysfees').on( "dialogclose", function( event, ui ) {
+        		
+        	    // Close hospital stay dialog
+        	    if ($hsDialog.dialog('isOpen')) {
+        	    	$hsDialog.dialog('close');
+        	    }
+
+        	} );
+        	
             createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
 
             if ($('#a_txtLastName').val() === '') {
@@ -674,7 +684,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         rtntbl: (rtnTbl === true ? '1' : '0'),
         pbp: postbackPage
     };
-
+    
     // Expected Checkout date
     $('input.hhk-expckout').each(function() {
         var parts = $(this).attr('id').split('_');

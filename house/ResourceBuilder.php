@@ -1306,9 +1306,13 @@ if (isset($_POST['txtformLang'])) {
         }
     }
 }
+
+
 //
 // Generate tab content
 //
+
+
 // hospital tab title
 $hospitalTabTitle = $labels->getString('hospital', 'hospital', 'Hospitals & Associations');
 
@@ -1327,6 +1331,7 @@ $pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::ge
     'style' => 'margin:7px;'
 ));
 
+// Room and Resourse lists
 $rescTable = ResourceView::resourceTable($dbh);
 $roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->PaymentGateway);
 
@@ -2413,6 +2418,7 @@ $resultMessage = $alertMsg->createMarkup();
         $('#tblroom, #tblresc').dataTable({
             "dom": '<"top"if>rt<"bottom"lp><"clear">',
             "displayLength": 50,
+            "order": [[1, 'asc']],
             "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
         });
         $('.hhk-selLookup').change(function () {

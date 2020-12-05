@@ -220,7 +220,7 @@ if (count($aList) > 0) {
                 array('name'=>'selAssoc[]', 'size'=>'3', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 }
 
-$numHosp = count($hList) + 1;
+$numHosp = count($hList) > 12 ? 12 : count($hList) + 1;
 
 $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections),
                 array('name'=>'selHospital[]', 'size'=>$numHosp, 'multiple'=>'multiple', 'style'=>'min-width:60px;'));

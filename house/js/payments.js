@@ -1356,12 +1356,15 @@ function setupCOF($chgExpand, idx) {
         if ($('#txtvdNewCardName'+idx).length > 0) {
         	
         	$('#txtvdNewCardName'+idx).keydown(function (e) {
-        		var key = e.which || e.keycode
-                if (     // numbers   
-                            key >= 48 && key <= 57 ||
-                        // Numeric keypad
-                            key >= 96 && key <= 105 )
-                            return false;
+        		
+        		var key = e.which || e.keycode;
+        		
+                if (key >= 48 && key <= 57 || key >= 96 && key <= 105 ) {  // both number keys and numpad number keys.
+                	$('#lhnameerror').show();
+                    return false;
+                }
+        		
+        		$('#lhnameerror').hide();
         		return true;
         	});
         }

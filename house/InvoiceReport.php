@@ -917,24 +917,14 @@ $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $asso
                 array('name'=>'selAssoc[]', 'size'=>'3', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 }
 $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections),
-                array('name'=>'selHospital[]', 'size'=>'5', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-
-$monSize = 5;
-if (count($hList) > 5) {
-
-    $monSize = count($hList);
-
-    if ($monSize > 12) {
-        $monSize = 12;
-    }
-}
+		array('name'=>'selHospital[]', 'size'=>(count($hList)>12 ? '12' : (count($hList)+1)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 
 $invStatusSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($invoiceStatuses, $invStatus), array('name' => 'selInvStatus[]', 'size' => '4', 'multiple' => 'multiple'));
 
 
 if (count($bagnts) > 0) {
 
-    $baSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($bagnts, $baSelections), array('name' => 'selbillagent[]', 'size' => '4', 'multiple' => 'multiple'));
+	$baSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($bagnts, $baSelections), array('name' => 'selbillagent[]', 'size' => (count($bagnts)>12 ? '12' : (count($bagnts)+1)), 'multiple' => 'multiple'));
 }
 
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));

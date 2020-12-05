@@ -126,6 +126,9 @@ class PSG {
                 VisitLog::logNameGuest($dbh, $this->getIdPsg(), $idGuest, $logText, "delete", $uname);
 
                 unset($this->psgMembers[$idGuest]);
+                
+                // Remove guest from 0-day stays
+                
                 return TRUE;
             }
         }

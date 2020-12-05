@@ -490,6 +490,13 @@ class LocalGateway extends AbstractPaymentGateway {
 		) ), array (
 				'colspan' => '4'
 		) ) );
+		
+		$tbl->addBodyTr ( HTMLTable::makeTd ('For security purposes, the Name field only allows letters', array('colspan' => '4'
+		)), array (
+				'style'=>'display:none;font-size:smaller;color:red;',
+				'id'=>'lhnameerror'
+		) );
+		
 		$payTbl->addBodyTr ( HTMLTable::makeTd ( $tbl->generateMarkup (), array (
 				'colspan' => '5'
 		) ), array (

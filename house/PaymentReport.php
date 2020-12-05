@@ -582,21 +582,8 @@ $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $asso
                 array('name'=>'selAssoc[]', 'size'=>'3', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 }
 $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections),
-                array('name'=>'selHospital[]', 'size'=>'5', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
+		array('name'=>'selHospital[]', 'size'=>(count($hList)>12 ? '12' : (count($hList)+1)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 
-$monSize = 5;
-if (count($hList) > 5) {
-
-    $monSize = count($hList);
-
-    if ($monSize > 12) {
-        $monSize = 12;
-    }
-}
-
-
-
-// Prepare controls
 
 $statusSelector = HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selPayStatus[]', 'size' => '7', 'multiple' => 'multiple'));

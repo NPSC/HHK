@@ -315,7 +315,7 @@ abstract class AbstractRole {
         return $idVisit;
     }
 
-    public static function checkPsgStays(\PDO $dbh, $idName, $PSG_Id) {
+    public static function checkPsgStays(\PDO $dbh, $idName, $PSG_Id, $ignoreZeroDayStays = FALSE) {
 
         $id = intval($idName, 10);
         $idPsg = intval($PSG_Id, 10);
@@ -326,6 +326,11 @@ abstract class AbstractRole {
 from stays s join visit v on s.idVisit = v.idVisit
 	left join registration r on v.idRegistration = r.idRegistration
 where r.idPsg = $idPsg and s.idName = " . $id;
+            
+            if ($ignoreZeroDayStays) {
+            	$query .= " and DATEDIFF(s.Span_End_Date, s.Span_Start_Date) > 0"
+            }
+            	
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 

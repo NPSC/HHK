@@ -334,7 +334,7 @@ $(document).ready(function () {
 
         $divClearStyle = HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
-        $div = HTMLContainer::generateMarkup('div', $hospitalMkup . $referralAgentMarkup . $doctorMarkup . $diagMarkup . $locMarkup . $hstayLog . $divClearStyle, array('style'=>'padding:5px;font-size:.9em;', 'class'=>'ui-corner-bottom hhk-tdbox'));
+        $div = HTMLContainer::generateMarkup('div', $hospitalMkup . $referralAgentMarkup . $doctorMarkup . $diagMarkup . $locMarkup . $hstayLog . $divClearStyle, array('style'=>'padding:5px;font-size:.8em;', 'class'=>'ui-corner-bottom hhk-tdbox'));
 
         // prepare hospital names
         $hospList = array();
@@ -354,7 +354,7 @@ $(document).ready(function () {
         return array('hdr'=>$hdr, 'div'=>$div);
     }
 
-    public static function saveReferralMarkup(\PDO $dbh, Psg $psg, HospitalStay $hstay, array $post) {
+    public static function saveReferralMarkup(\PDO $dbh, Psg $psg, HospitalStay $hstay, array $post, $idResv = -1) {
 
         $uS = Session::getInstance();
 
@@ -437,7 +437,7 @@ $(document).ready(function () {
 
         }
 
-        return $hstay->save($dbh, $psg, $hstay->getAgentId(), $uS->username);
+        return $hstay->save($dbh, $psg, $hstay->getAgentId(), $uS->username, $idResv);
 
     }
 }
