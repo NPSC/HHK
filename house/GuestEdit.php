@@ -959,6 +959,6 @@ $uS->guestId = $id;
             var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
             var useDocUpload = '<?php echo $uS->UseDocumentUpload; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js?rw=4"></script>
+        <script type="text/javascript" src="js/guestload-min.js?t=4"></script>
     </body>
 </html>
