@@ -30,8 +30,8 @@ namespace HHK\Config_Lite\Exception;
  * @link      https://github.com/pce/config_lite
  */
 
-class Config_Lite_Exception_UnexpectedValue
+class UnexpectedValue
               extends \UnexpectedValueException
-              implements Config_Lite_Exception
+              implements Exception
 {
 }

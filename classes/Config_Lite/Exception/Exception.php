@@ -30,6 +30,6 @@ namespace HHK\Config_Lite\Exception;
  * @link      https://github.com/pce/config_lite
  */
 
-interface Config_Lite_Exception
+interface Exception
 {
 }

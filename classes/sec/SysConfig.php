@@ -108,7 +108,10 @@ class SysConfig {
                 HouseLog::logSysConfig($dbh, $key, $value, $logText, $uS->username);
 
             }
-        } else {
+        } else if (count($rows) > 1){
+            throw new RuntimeException('Duplicate key: ' . $key);
+            
+        }else {
             if($category){
                 $query = "insert into `" . $tableName . "` (`Key`, `Value`, `Type`, `Category`) values (:key, :val, 's', :category)";
                 $stmt = $dbh->prepare($query);

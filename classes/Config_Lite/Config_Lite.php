@@ -1,8 +1,7 @@
 <?php
 namespace HHK\Config_Lite;
 
-use HHK\Config_Lite\Exception\Config_Lite_Exception_InvalidArgument;
-use HHK\Config_Lite\Exception\{Config_Lite_Exception_Runtime, Config_Lite_Exception, Config_Lite_Exception_UnexpectedValue};
+use HHK\Config_Lite\Exception\{Runtime, InvalidArgument, Exception, UnexpectedValue};
 
 /**
  * Config_Lite (Config/Lite.php)
@@ -86,9 +85,9 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param string $filename Filename
      *
      * @return void
-     * @throws Config_Lite_Exception_Runtime when file not found
-     * @throws Config_Lite_Exception_Runtime when file is not readable
-     * @throws Config_Lite_Exception_Runtime when parse ini file failed
+     * @throws Runtime when file not found
+     * @throws Runtime when file is not readable
+     * @throws Runtime when parse ini file failed
      */
     public function read($filename = null)
     {
@@ -98,17 +97,17 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
             $this->filename = $filename;
         }
         if (!file_exists($filename)) {
-            throw new Config_Lite_Exception_Runtime('file not found: ' . $filename);
+            throw new Runtime('file not found: ' . $filename);
         }
         if (!is_readable($filename)) {
-            throw new Config_Lite_Exception_Runtime('file not readable: '
+            throw new Runtime('file not readable: '
                 . $filename
             );
         }
 
         $this->sections = $this->parseConfig($filename, $this->processSections);
         if (false === $this->sections) {
-            throw new Config_Lite_Exception_Runtime(
+            throw new Runtime(
                 'failure: cannot parse the file: ' . $filename
             );
         }
@@ -137,13 +136,13 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * Ideal for testing.
      *
      * @return void
-     * @throws Config_Lite_Exception_Runtime when file is not set,
+     * @throws Runtime when file is not set,
      *         write or readable
      */
     public function sync()
     {
         if (!isset($this->filename)) {
-            throw new Config_Lite_Exception_Runtime('no filename set.');
+            throw new Runtime('no filename set.');
         }
         if (!is_array($this->sections)) {
             $this->sections = array();
@@ -200,14 +199,14 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param array  $sectionsarray array with sections
      *
      * @return bool
-     * @throws Config_Lite_Exception_Runtime when file is not writeable
-     * @throws Config_Lite_Exception_Runtime when write failed
+     * @throws Runtime when file is not writeable
+     * @throws Runtime when write failed
      */
     public function write($filename, $sectionsarray)
     {
         $content = $this->buildOutputString($sectionsarray);
         if (false === file_put_contents($filename, $content, LOCK_EX)) {
-            throw new Config_Lite_Exception_Runtime(
+            throw new Runtime(
                 sprintf(
                     'failed to write file `%s\' for writing.', $filename
                 )
@@ -268,7 +267,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param string $value  value
      *
      * @return string
-     * @throws Config_Lite_Exception_UnexpectedValue when format is unknown
+     * @throws UnexpectedValue when format is unknown
      */
     public function to($format, $value)
     {
@@ -282,7 +281,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
             break;
         default:
             // unknown format
-            throw new Config_Lite_Exception_UnexpectedValue(
+            throw new UnexpectedValue(
                 sprintf('no conversation made, unrecognized format: `%s\'', $format)
             );
             break;
@@ -297,15 +296,15 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param mixed  $default default return value
      *
      * @return string
-     * @throws Config_Lite_Exception_Runtime when config is empty
+     * @throws Runtime when config is empty
      *         and no default value is given
-     * @throws Config_Lite_Exception_UnexpectedValue key not found
+     * @throws UnexpectedValue key not found
      *         and no default value is given
      */
     public function getString($sec, $key, $default = null)
     {
         if ((null === $this->sections) && (null === $default)) {
-            throw new Config_Lite_Exception_Runtime(
+            throw new Runtime(
                 'configuration seems to be empty, no sections.'
             );
         }
@@ -320,7 +319,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
         if (null !== $default) {
             return $default;
         }
-        throw new Config_Lite_Exception_UnexpectedValue(
+        throw new UnexpectedValue(
             'key not found, no default value given.'
         );
     }
@@ -340,9 +339,9 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param mixed  $default return default value if is $key is not set
      *
      * @return mixed
-     * @throws Config_Lite_Exception when config is empty
+     * @throws Exception when config is empty
      *         and no default value is given
-     * @throws Config_Lite_Exception_UnexpectedValue key not found
+     * @throws UnexpectedValue key not found
      *         and no default value is given
      */
     public function get($sec = null, $key = null, $default = null)
@@ -365,7 +364,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
         if (null !== $default) {
             return $default;
         }
-        throw new Config_Lite_Exception_UnexpectedValue(
+        throw new UnexpectedValue(
             'key not found, no default value given.'
         );
     }
@@ -381,17 +380,17 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param bool   $default return default value if is $key is not set
      *
      * @return bool
-     * @throws Config_Lite_Exception_Runtime when the configuration is empty
+     * @throws Runtime when the configuration is empty
      *         and no default value is given
-     * @throws Config_Lite_Exception_InvalidArgument when is not a boolean
+     * @throws InvalidArgument when is not a boolean
      *         and no default array is given
-     * @throws Config_Lite_Exception_UnexpectedValue when key not found
+     * @throws UnexpectedValue when key not found
      *         and no default array is given
      */
     public function getBool($sec, $key, $default = null)
     {
         if ((null === $this->sections) && (null === $default)) {
-            throw new Config_Lite_Exception_Runtime(
+            throw new Runtime(
                 'configuration seems to be empty (no sections),'
                 . 'and no default value given.'
             );
@@ -403,7 +402,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
                 }
                 $value = strtolower($this->sections[$key]);
                 if (!in_array($value, $this->_booleans) && (null === $default)) {
-                    throw new Config_Lite_Exception_InvalidArgument(
+                    throw new InvalidArgument(
                         sprintf(
                             'Not a boolean: %s, and no default value given.',
                             $value
@@ -420,7 +419,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
             }
             $value = strtolower($this->sections[$sec][$key]);
             if (!in_array($value, $this->_booleans) && (null === $default)) {
-                throw new Config_Lite_Exception_InvalidArgument(
+                throw new InvalidArgument(
                     sprintf(
                         'Not a boolean: %s, and no default value given.',
                         $value
@@ -433,7 +432,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
         if (null !== $default) {
             return $default;
         }
-        throw new Config_Lite_Exception_UnexpectedValue(
+        throw new UnexpectedValue(
             'option not found, no default value given.'
         );
     }
@@ -445,15 +444,15 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param array  $default return default array if $sec is not set
      *
      * @return array
-     * @throws Config_Lite_Exception_Runtime when config is empty
+     * @throws Runtime when config is empty
      *         and no default array is given
-     * @throws Config_Lite_Exception_UnexpectedValue when key not found
+     * @throws UnexpectedValue when key not found
      *         and no default array is given
      */
     public function getSection($sec, $default = null)
     {
         if ((null === $this->sections) && (null === $default)) {
-            throw new Config_Lite_Exception_Runtime(
+            throw new Runtime(
                 'configuration seems to be empty, no sections.'
             );
         }
@@ -463,7 +462,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
         if ((null !== $default) && is_array($default)) {
             return $default;
         }
-        throw new Config_Lite_Exception_UnexpectedValue(
+        throw new UnexpectedValue(
             'section not found, no default array given.'
         );
     }
@@ -509,7 +508,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param string $key Key
      *
      * @return void
-     * @throws Config_Lite_Exception_UnexpectedValue when given Section not exists
+     * @throws UnexpectedValue when given Section not exists
      */
     public function remove($sec, $key=null)
     {
@@ -517,7 +516,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
             $this->removeSection($sec);
         }
         if (!isset($this->sections[$sec])) {
-            throw new Config_Lite_Exception_UnexpectedValue('No such Section.');
+            throw new UnexpectedValue('No such Section.');
         }
         unset($this->sections[$sec][$key]);
     }
@@ -528,12 +527,12 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param string $sec Section
      *
      * @return void
-     * @throws Config_Lite_Exception_UnexpectedValue when given Section not exists
+     * @throws UnexpectedValue when given Section not exists
      */
     public function removeSection($sec)
     {
         if (!isset($this->sections[$sec])) {
-            throw new Config_Lite_Exception_UnexpectedValue('No such Section.');
+            throw new UnexpectedValue('No such Section.');
         }
         unset($this->sections[$sec]);
     }
@@ -558,7 +557,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param mixed  $value Value
      *
      * @return $this
-     * @throws Config_Lite_Exception_InvalidArgument when given key is an array
+     * @throws InvalidArgument when given key is an array
      */
     public function setString($sec, $key, $value = null)
     {
@@ -579,7 +578,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param string $key   Key
      * @param mixed  $value Value
      *
-     * @throws Config_Lite_Exception when given key is an array
+     * @throws Exception when given key is an array
      * @return $this
      */
     public function set($sec, $key, $value = null)
@@ -588,7 +587,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
             $this->sections = array();
         }
         if (is_array($key) || is_array($sec)) {
-            throw new Config_Lite_Exception_InvalidArgument(
+            throw new InvalidArgument(
                 'string key expected, but array given.'
             );
         }
@@ -607,7 +606,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @param string $sec   Section
      * @param array  $pairs Keys and Values as Array ('key' => 'value')
      *
-     * @throws Config_Lite_Exception_InvalidArgument array $pairs expected
+     * @throws InvalidArgument array $pairs expected
      * @return $this
      */
     public function setSection($sec, $pairs)
@@ -616,7 +615,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
             $this->sections = array();
         }
         if (!is_array($pairs)) {
-            throw new Config_Lite_Exception_InvalidArgument('array expected.');
+            throw new InvalidArgument('array expected.');
         }
         $this->sections[$sec] = $pairs;
         return $this;
@@ -688,7 +687,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * since a empty config is valid,
      * it would return a empty string in that case.
      *
-     * @throws Config_Lite_Exception_Runtime
+     * @throws Runtime
      * @return string
      */
     public function __toString()
@@ -785,10 +784,10 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
             if (file_exists($filename)) {
                 $this->read($filename);
             } else {
-                throw new Config_Lite_Exception_Runtime('File does not exist:  ' . $filename);
+                throw new Runtime('File does not exist:  ' . $filename);
             }
         } else {
-            throw new Config_Lite_Exception_Runtime('File name is missing.');
+            throw new Runtime('File name is missing.');
         }
     }
 }?>

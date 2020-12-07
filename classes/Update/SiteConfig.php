@@ -10,6 +10,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\House\Desig_HolidaysRS;
 use HHK\sec\{Session, SysConfig};
 use HHK\US_Holidays;
+use HHK\sec\Labels;
 
 /**
  * SiteConfig.php
@@ -432,82 +433,52 @@ class SiteConfig {
         $tbl = new HTMLTable();
         $inputSize = '40';
 
-        try{
-            $stmt = $dbh->query("select l.*, g.`Description` as `Cat` from labels l left join gen_lookups g on l.Category = g.Code and g.Table_Name = 'labels_category' order by g.`Order`, l.`idLabel`");
-            $tableFound = true;
-        }catch (\PDOException $e){
-            $tableFound = false;
+        $stmt = $dbh->query("select `Code`, `Description` from `gen_lookups` where Table_Name = 'labels_category' order by `Order`");
+        $cats = [];
+        while($r = $stmt->fetch(\PDO::FETCH_ASSOC)){
+            $cats[strtolower($r['Description'])] = $r['Code'];
         }
-        if($tableFound && $stmt->rowCount() > 0){
-            
-            // add labels table
-            $cat = '';
         
-        
-            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            
-                // New Section?
-                if ($cat != $r['Cat']) {
-                    $tbl->addBodyTr(HTMLTable::makeTd($r['Cat'], array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
-                    $cat = $r['Cat'];
-                }
-            
-                // text input
-                $inpt = HTMLInput::generateMarkup($r['Value'], array('name' => 'labels[' . $r['Category'] . '][' . $r['Key'] . ']', 'size'=>40));
-            
-                $tbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
-            
-            }
-        }elseif($config instanceof Config_Lite){
-            $stmt = $dbh->query("select `Code`, `Description` from `gen_lookups` where Table_Name = 'labels_category' order by `Order`");
-            $cats = [];
-            while($r = $stmt->fetch(\PDO::FETCH_ASSOC)){
-                $cats[strtolower($r['Description'])] = $r['Code'];
-            }
-            
-            if(count($cats) > 0){
-                
-                foreach ($config as $section => $name) {
-                    if (($onlySection == '' || $onlySection == $section)) {
-    
-                        $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
-    
-    
-                        if (is_array($name)) {
-    
-                            foreach ($name as $key => $val) {
-    
-                                $attr = array(
-                                    'name' => 'labels[' . $cats[strtolower($section)] . '][' . $key . ']',
-                                    'id' => $section . $key
-                                );
-    
-    
-                                $attr['size'] = $inputSize;
-                                //
-                                $inpt = HTMLInput::generateMarkup($val, $attr);
-    
-                                if (is_null($titles)) {
-                                    $desc = '';
-                                } else {
-                                    $desc = $titles->getString($section, $key, '');
-                                }
-    
-                                $tbl->addBodyTr(
-                                    HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
-                                    . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
-                                );
-    
-                                unset($attr);
+        if(count($cats) > 0){
+            $uS = Session::getInstance();
+            foreach ($uS->labels as $section => $name) {
+                if (($onlySection == '' || $onlySection == $section)) {
+
+                    $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+
+
+                    if (is_array($name)) {
+
+                        foreach ($name as $key => $val) {
+
+                            $attr = array(
+                                'name' => 'labels[' . $cats[strtolower($section)] . '][' . $key . ']',
+                                'id' => $section . $key
+                            );
+
+
+                            $attr['size'] = $inputSize;
+                            //
+                            $inpt = HTMLInput::generateMarkup($val, $attr);
+
+                            if (is_null($titles)) {
+                                $desc = '';
+                            } else {
+                                $desc = $titles->getString($section, $key, '');
                             }
+
+                            $tbl->addBodyTr(
+                                HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
+                                . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
+                            );
+
+                            unset($attr);
                         }
                     }
                 }
-            }else{
-                $tbl->addBodyTr(HTMLTable::makeTd("No Label Categories found", array('colspan' => '3', 'style'=>'border-top: solid 1px black;')));
             }
         }else{
-            $tbl->addBodyTr(HTMLTable::makeTd("No Labels found", array('colspan' => '3', 'style'=>'border-top: solid 1px black;')));
+            $tbl->addBodyTr(HTMLTable::makeTd("No Label Categories found", array('colspan' => '3', 'style'=>'border-top: solid 1px black;')));
         }
 
         //$tbl->addFooterTr(HTMLTable::makeTd('', array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
@@ -644,6 +615,9 @@ class SiteConfig {
         $mess = ['type'=>'', 'text'=>''];
         // save labels
         try{
+            if(!isset($post['labels'])){
+                throw new RuntimeException("No Labels found.");
+            }
             foreach ($post['labels'] as $category=> $vals) {
                 foreach ($vals as $key=>$val){
                     $value = filter_var($val, FILTER_SANITIZE_STRING);
@@ -653,12 +627,14 @@ class SiteConfig {
                 }
                 
             }
+            //reload labels
+            Labels::initLabels($dbh);
             
             $mess['type'] = 'success';
             $mess['text'] = "Labels saved successfully";
         }catch(\Exception $e){
             $mess['type'] = 'error';
-            $mess['text'] = "Labels not saved: " . $e->getMessage();
+            $mess['text'] = "Labels not saved: " . htmlspecialchars($e->getMessage(), ENT_QUOTES);
         }
         
         return $mess;
