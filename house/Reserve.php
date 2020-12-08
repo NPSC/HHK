@@ -265,7 +265,7 @@ $resvObjEncoded = json_encode($resvAr);
 
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
             <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
-            <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
+            <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>

@@ -63,12 +63,12 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
                 . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Phone, vn.Email, "
-                    . "r.title as `Room`,"
-                        . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
-                            . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
-                                . "hs.idHospital, hs.idAssociation, "
-                                    . "  ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-                                    . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle`, ifnull(g2.Description,'') as `Status`";
+                . "r.title as `Room`,"
+                . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
+                . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
+                . "hs.idHospital, hs.idAssociation, "
+                . "  ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
+                . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle`, ifnull(g2.Description,'') as `Status`";
                                     
     } else if ($showAddr && !$showFullName) {
         
@@ -117,7 +117,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 		JOIN
 	name_guest `ng` on s.idName = ng.idName and ng.idPsg = rg.idPsg
 		JOIN
-    hospital_stay hs ON rg.idPsg = hs.idPsg
+    hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
 		LEFT JOIN
 	name_demog nd on s.idName = nd.idName
         LEFT JOIN

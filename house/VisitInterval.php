@@ -1733,8 +1733,8 @@ if ($uS->CoTod) {
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <div id="keysfees" style="font-size: .9em;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
-        <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
-        <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
+        <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
+        <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
         <form name="xform" id="xform" method="post"></form>
     </body>
 </html>
