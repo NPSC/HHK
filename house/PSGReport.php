@@ -609,6 +609,7 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 			0=>'',
 			1=>'',
 			2=>'',
+	        3=>'',
 	);
 
 	$ctr = 0;
@@ -618,7 +619,7 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 		$ctr++;
 	}
 
-	$stmt = $dbh->query("CALL incidents_report('" . $whStatus[0] . "','" . $whStatus[1] . "','" . $whStatus[2]. "')");
+	$stmt = $dbh->query("CALL incidents_report('" . $whStatus[0] . "','" . $whStatus[1] . "','" . $whStatus[2]. "','" . $whStatus[3]. "')");
 	$nested = $stmt->fetchAll(PDO::FETCH_ASSOC);
 	$stmt->nextRowset();
 

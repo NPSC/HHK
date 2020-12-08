@@ -934,6 +934,7 @@ DROP procedure IF EXISTS `incidents_report`; -- ;
 CREATE PROCEDURE `incidents_report`(
 	IN activ varchar(3),
 	IN resol varchar(3),
+    IN onHold varchar(3),
 	IN del varchar(3)
 	)
 BEGIN
@@ -954,10 +955,11 @@ BEGIN
 
     select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, ifnull(r.Report_Date, '') as `Report_Date`, ifnull(r.Resolution_Date, '') as `Resolution_Date`, ifnull(g.Description, '') as `Status`
     from
-		tble t join report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, del)
+		tble t join report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, onHold, del)
 		left join hospital_stay hs on t.idPsg = hs.idPsg
         left join name n on hs.idPatient = n.idName
         left join gen_lookups g on g.Table_Name = 'Incident_Status' and g.Code = r.`Status`
+	group by r.idReport
 	order by t.count_idPsg DESC, r.Psg_Id;
 
     drop table tble;
