@@ -34,32 +34,41 @@ class Labels {
         if(isset($uS->labels) && count($uS->labels) > 0){
             return $labels;
         }else{
-            try{
-                $dbh = initPDO(TRUE);
-                $labels->initLabels($dbh);
-                return $labels;
-            }catch(\Exception $e){
-                return new Config_Lite(LABEL_FILE);
-            }
+            $dbh = initPDO(TRUE);
+            $labels->initLabels($dbh);
+            return $labels;
         }
     }
     
     
     public static function initLabels(\PDO $dbh){
-        if(!$dbh->query("select count(*) from `labels`")->fetchColumn() > 0){
-            throw new RuntimeException("No Labels found");
-        }else{
+        $uS = Session::getInstance();
+        $labels = [];
+        try{
             // get labels form DB
-            $uS = Session::getInstance();
-            $labels = [];
             $rows = $dbh->query("select l.`Key`, l.`Value`, g.`Description` as `Cat` from `labels` l left join gen_lookups g on l.Category = g.Code and g.Table_Name = 'labels_category' order by g.`Order`, l.`Key`")->fetchAll(\PDO::FETCH_ASSOC);
             
             foreach($rows as $row){
                 $labels[$row['Cat']][$row['Key']] = $row['Value'];
             }
-            
-            $uS->labels = $labels;
+        }catch(\Exception $e){
+            //skip to Config_lite
         }
+            
+        try{
+            $cLiteLabels = new Config_Lite(LABEL_FILE);
+            foreach($cLiteLabels as $section=>$name){
+                foreach ($name as $key => $val) {
+                    if(!isset($labels[$section][$key])){
+                        $labels[ucfirst($section)][$key] = $val;
+                    }
+                }
+            }
+        }catch(\Exception $e){
+            
+        }
+        
+        $uS->labels = $labels;
     }
     
     public function getString($sec, $key, $default = null){

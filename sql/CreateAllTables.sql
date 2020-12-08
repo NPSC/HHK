@@ -2347,6 +2347,9 @@ ALTER TABLE `invoice`
 ALTER TABLE `invoice_line`
     ADD INDEX `ix_invoice_line_invoice_id` (`Invoice_Id` ASC);
 
+ALTER TABLE `demo`.`labels` 
+	ADD UNIQUE INDEX `Unique_Key_Categeory` (`Key` ASC, `Category` ASC);
+
 ALTER TABLE `name`
     ADD INDEX `Index_Name` (`Name_Last` ASC, `Name_First` ASC);
 

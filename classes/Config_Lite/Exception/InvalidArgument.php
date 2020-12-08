@@ -29,8 +29,8 @@ namespace HHK\Config_Lite\Exception;
  * @version   Release: @package_version@
  * @link      https://github.com/pce/config_lite
  */
-class Config_Lite_Exception_InvalidArgument
+class InvalidArgument
               extends \RuntimeException
-              implements Config_Lite_Exception
+              implements Exception
 {
 }

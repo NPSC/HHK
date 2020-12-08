@@ -417,3 +417,9 @@ li.hhk-myMenuTop {
 	margin: 0 0 0 -1px;
 	float: left;
 }*/
+
+
+/* Report Filter tables */
+.filters table td {
+	vertical-align:top;
+}

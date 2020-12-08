@@ -30,8 +30,8 @@ namespace HHK\Config_Lite\Exception;
  * @link      https://github.com/pce/config_lite
  */
 
-class Config_Lite_Exception_Runtime
+class Runtime
               extends \RuntimeException
-              implements Config_Lite_Exception
+              implements Exception
 {
 }
