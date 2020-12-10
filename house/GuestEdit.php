@@ -934,7 +934,7 @@ $uS->guestId = $id;
             <div id="keysfees" style="font-size: .85em;"></div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
             <div id="regDialog" style="display:none;"></div>
-            <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
+            <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="incidentDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="submit" style="display:none;">

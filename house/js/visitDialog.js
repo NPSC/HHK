@@ -104,39 +104,49 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                         $(this).dialog("close");
                     },
                     "Save": function() {
-                    	saveHospitalStay(idHs, idVisit, $hsDialog);
+                    	saveHospitalStay(idHs, idVisit);
                     	$(this).dialog("close");
                     }
                 }
             });
         	
         	// add closer to visit dialog box
-        	$('#keysfees').on( "dialogclose", function( event, ui ) {
-        		
-        	    // Close hospital stay dialog
-        	    if ($hsDialog.dialog('isOpen')) {
-        	    	$hsDialog.dialog('close');
-        	    }
-
-        	} );
+        	if ($('#keysfees').length > 0) {
+	        	$('#keysfees').on( "dialogclose", function( event, ui ) {
+	        		
+	        	    // Close hospital stay dialog
+	        	    if ($hsDialog.dialog('isOpen')) {
+	        	    	$hsDialog.dialog('close');
+	        	    }
+	
+	        	} );
+	        }
         	
-            createAutoComplete($('#txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
-
-            if ($('#a_txtLastName').val() === '') {
-                $('.hhk-agentInfo').hide();
+        	//Autocompletes for agent and doctor
+            createAutoComplete($('.hhk-hsdialog #txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
+            if ($('.hhk-hsdialog #a_txtLastName').val() === '') {
+                $('.hhk-hsdialog .hhk-agentInfo').hide();
             }
 
-            createAutoComplete($('#txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
-            if ($('#d_txtLastName').val() === '') {
-                $('.hhk-docInfo').hide();
+            createAutoComplete($('.hhk-hsdialog #txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
+            if ($('.hhk-hsdialog #d_txtLastName').val() === '') {
+                $('.hhk-hsdialog .hhk-docInfo').hide();
             }
 
+            // Calendars for treatment start and end dates
+            $('.ckhsdate').datepicker({
+                yearRange: '-01:+01',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                dateFormat: 'M d, yy'
+            });
 
         }
 	})
 }
 
-function saveHospitalStay(idHs, idVisit, $hsDialog) {
+function saveHospitalStay(idHs, idVisit) {
 	var parms = {cmd: 'saveHS', 'idhs': idHs, 'idv': idVisit};
 	
 	$('.hospital-stay').each(function() {
@@ -144,7 +154,7 @@ function saveHospitalStay(idHs, idVisit, $hsDialog) {
             if (this.checked !== false) {
                 parms[$(this).attr('id')] = 'on';
             }
-        } else if ($(this).hasClass('ckdate')) {
+        } else if ($(this).hasClass('ckhsdate')) {
             var tdate = $(this).datepicker('getDate');
             if (tdate) {
                 parms[$(this).attr('id')] = tdate.toJSON();

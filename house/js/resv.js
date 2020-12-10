@@ -72,7 +72,19 @@ function gotIncomeDiag(idResv, idReg, data) {
             }
         };
         $("#faDialog").children().remove().end().append($(data.incomeDiag)).dialog("option", "buttons", buttons).dialog('open');
-        $('.ckdate').datepicker();
+
+    	// add closer to visit dialog box
+    	if ($('#keysfees').length > 0) {
+        	$('#keysfees').on( "dialogclose", function( event, ui ) {
+        		
+        	    // Close hospital stay dialog
+        	    if ($("#faDialog").dialog('isOpen')) {
+        	    	$("#faDialog").dialog('close');
+        	    }
+
+        	} );
+        }
+
         $('#txtFaIncome, #txtFaSize').change(function () {
             var income = $('#txtFaIncome'),
                 size = $('#txtFaSize');

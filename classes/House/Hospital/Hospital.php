@@ -35,7 +35,7 @@ class Hospital {
 
     }
     
-    public static function justHospitalMarkup(\PDO $dbh, HospitalStay $hstay, $showExitDate = FALSE) {
+    protected static function justHospitalMarkup(HospitalStay $hstay, $showExitDate = FALSE) {
 
         $uS = Session::getInstance();
 
@@ -67,8 +67,6 @@ class Hospital {
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
         		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
         		.HTMLTable::makeTh($labels->getString('hospital', 'MRN', 'MRN'))
-        		.HTMLTable::makeTh($labels->getString('hospital', 'treatmentStart', 'Treatment Start'))
-                .($showExitDate ? HTMLTable::makeTh($labels->getString('hospital', 'treatmentEnd', 'Treatment End')) : '')
             );
 
         $table->addBodyTr(
@@ -96,19 +94,29 @@ class Hospital {
         						array('name'=>'psgMrn', 'size'=>'14', 'class'=>'ignrSave hospital-stay')
         						)
         				)
-        		. HTMLTable::makeTd(
-                        HTMLInput::generateMarkup(
-                                ($hstay->getArrivalDate() != '' ? date("M j, Y", strtotime($hstay->getArrivalDate())) : ""),
-                                array('name'=>'txtEntryDate', 'class'=>'ckdate ignrSave hospital-stay', 'readonly'=>'readonly'))
-                        )
-                . ($showExitDate ? HTMLTable::makeTd(
-                        HTMLInput::generateMarkup(
-                                ($hstay->getExpectedDepartureDate() != '' ? date("M j, Y", strtotime($hstay->getExpectedDepartureDate())) : ''),
-                                array('name'=>'txtExitDate', 'class'=>'ckdate ignrSave hospital-stay', 'readonly'=>'readonly'))
-                        ) : '')
-                );
-
-        return $table->generateMarkup();
+        );
+        
+        $table2 = new HTMLTable();
+        
+        $table2->addHeaderTr(
+        		HTMLTable::makeTh($labels->getString('hospital', 'treatmentStart', 'Treatment Start'))
+        		.($showExitDate ? HTMLTable::makeTh($labels->getString('hospital', 'treatmentEnd', 'Treatment End')) : '')
+        		);
+        
+        $table2->addBodyTr(
+        		HTMLTable::makeTd(
+        				HTMLInput::generateMarkup(
+        						($hstay->getArrivalDate() != '' ? date("M j, Y", strtotime($hstay->getArrivalDate())) : ""),
+        						array('name'=>'txtEntryDate', 'class'=>'ckhsdate ignrSave hospital-stay', 'readonly'=>'readonly'))
+        				)
+        		. ($showExitDate ? HTMLTable::makeTd(
+        				HTMLInput::generateMarkup(
+        						($hstay->getExpectedDepartureDate() != '' ? date("M j, Y", strtotime($hstay->getExpectedDepartureDate())) : ''),
+        						array('name'=>'txtExitDate', 'class'=>'ckhsdate ignrSave hospital-stay', 'readonly'=>'readonly'))
+        				) : '')
+       );
+        
+        return $table->generateMarkup(array('style'=>'float:left;')). $table2->generateMarkup(array('style'=>'float:left;'));
 
     }
 
@@ -119,8 +127,6 @@ class Hospital {
         $doctorMarkup = '';
         $labels = Labels::getLabels();
 
-
-        $hospitalMkup = self::justHospitalMarkup($dbh, $hstay, $showExitDate);
 
         if ($uS->ReferralAgent) {
 
@@ -191,7 +197,7 @@ class Hospital {
                         )
             );
 
-            $referralAgentMarkup = $raErrorMsg . $ratbl->generateMarkup(array('style'=>'margin-top:.3em;'));
+            $referralAgentMarkup = $raErrorMsg . $ratbl->generateMarkup(array('style'=>'margin-top:.3em; clear:both;'));
 
 
         }
@@ -334,7 +340,16 @@ $(document).ready(function () {
 
         $divClearStyle = HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
-        $div = HTMLContainer::generateMarkup('div', $hospitalMkup . $referralAgentMarkup . $doctorMarkup . $diagMarkup . $locMarkup . $hstayLog . $divClearStyle, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-tdbox'));
+        $div = HTMLContainer::generateMarkup('div',
+        		self::justHospitalMarkup($hstay, $showExitDate)
+        		. $referralAgentMarkup
+        		. $doctorMarkup
+        		. $diagMarkup
+        		. $locMarkup
+        		. $hstayLog
+        		. $divClearStyle
+        		, array('style'=>'padding:5px;', 'class'=>'ui-corner-bottom hhk-tdbox')
+        );
 
         // prepare hospital names
         $hospList = array();

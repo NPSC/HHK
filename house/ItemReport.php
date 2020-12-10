@@ -497,9 +497,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 from
     invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
     left join `name` n on i.Sold_To_Id = n.idName
-    left join registration rg on i.idGroup = rg.idRegistration
-    left join hospital_stay hs on hs.idPsg = rg.idPsg
-    left join name_guest ng on i.Sold_To_Id = ng.idName and rg.idPsg = ng.idPsg
+    left join visit v on i.Order_Number = v.idVisit and i.Suborder_Number = v.Span
+    left join hospital_stay hs on hs.idHospital_stay = v.idHospital_stay
     left join name_volunteer2 nv on nv.idName = n.idName and nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::BillingAgent . "'
 where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags order by i.idInvoice, il.idInvoice_Line";
 

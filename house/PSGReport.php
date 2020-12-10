@@ -356,176 +356,177 @@ function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hosp
     ifnull(hs.idHospital, '') as `" . $labels->getString('hospital', 'hospital', 'Hospital') . "`,
     ifnull(hs.idAssociation, '') as `Association`,
     ifnull(g.Description, hs.Diagnosis) as `$diagTitle`,
-    ifnull(g1.Description, '') as `$locTitle`
+    ifnull(g1.Description, '') as `$locTitle`,
+	case when ng.Relationship_Code = 'slf' then 0 else 1 end as `ispat`
 from
-    name_guest ng
+    visit v
+        join
+    hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
+		join
+	name_guest ng on hs.idPsg = ng.idPsg
         join
     `name` n ON ng.idName = n.idname
         left join
     name_address na on na.idName = n.idName and na.Purpose = n.Preferred_Mail_Address
-        join
-    hospital_stay hs ON ng.idPsg = hs.idPsg
         left join
     gen_lookups g on g.`Table_Name` = 'Diagnosis' and g.`Code` = hs.Diagnosis
         left join
     gen_lookups g1 on g1.`Table_Name` = 'Location' and g1.`Code` = hs.Location
-        join
-    visit v on hs.idHospital_stay = v.idHospital_stay and ifnull(v.Span_End, now()) > '$start' and v.Span_Start < '$end'
-        join
-    stays s on s.idName = ng.idName and s.idVisit = v.idVisit and s.Visit_Span = v.span
-where n.Member_Status != 'TBD'
+ 
+where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) > DATE('2020-10-01') and DATE(v.Span_Start) < DATE('2020-12-31')
  $whHosp
-order by ng.idPsg";
+order by ng.idPsg, ispat";
+
+	if (!$local) {
+	     
+	     $reportRows = 1;
+	     $file = $psgLabel . 'Report';
+	     $writer = new ExcelHelper($file);
+	     $writer->setTitle("PSG Report");
+	     
+	}
  
- 
- if (!$local) {
+	 $psgId = 0;
+	 $rows = array();
+	 $firstRow = TRUE;
+	 $separatorClassIndicator = '))+class';
+	 $numberPSGs = 0;
+	 
+	 $stmt = $dbh->query($query);
+	 $rowCount = $stmt->rowCount();
+	 
+	 while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
      
-     $reportRows = 1;
-     $file = $psgLabel . 'Report';
-     $writer = new ExcelHelper($file);
-     $writer->setTitle("PSG Report");
+	 	unset($r['ispat']);
+	 	
+	     $relCode = $r[$patRelTitle];
+	     if (isset($relCodes[$relCode])) {
+	         $r[$patRelTitle] = $relCodes[$relCode][1];
+	     } else {
+	         $r[$patRelTitle] = '';
+	     }
+	     
+	     // Hospital
+	     if (!$showAssoc) {
+	         unset($r['Association']);
+	     } else if ($showAssoc && $r['Association'] > 0 && isset($hospCodes[$r['Association']]) && $hospCodes[$r['Association']][1] != '(None)') {
+	         $r['Association'] = $hospCodes[$r['Association']][1];
+	     } else {
+	         $r['Association'] = '';
+	     }
+	     
+	     if ($r[$labels->getString('hospital', 'hospital', 'Hospital')] > 0 && isset($hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]])) {
+	         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]][1];
+	     } else {
+	         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
+	     }
+	     
+	     if (count($hospCodes) < 2) {
+	         unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
+	     }
+	     
+	     if ($showDiagnosis === FALSE) {
+	         unset($r[$diagTitle]);
+	     }
+	     
+	     if ($showLocation === FALSE) {
+	         unset($r[$locTitle]);
+	     }
      
- }
- 
- $psgId = 0;
- $rows = array();
- $firstRow = TRUE;
- $separatorClassIndicator = '))+class';
- $numberPSGs = 0;
- 
- $stmt = $dbh->query($query);
- $rowCount = $stmt->rowCount();
- 
- while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+	     if (!$patBirthDate) {
+	         unset($r['Birth Date']);
+	     }
+	     
+	     if ($firstRow) {
+	         
+	         $firstRow = FALSE;
+	         
+	         if ($local === FALSE) {
+	             
+	             // build header
+	             $hdr = array();
+	             $colWidths = array();
+	             
+	             // Header row
+	             $keys = array_keys($r);
+	             foreach ($keys as $k) {
+	                 if($k == 'Arrival' || $k == 'Departure' || $k == 'Birth Date'){
+	                     $hdr[$k] = "MM/DD/YYYY";
+	                 }else{
+	                    $hdr[$k] =  "string";
+	                 }
+	                 
+	                 if($k == 'PSG Id' || $k == "Id" || $k == "State" || $k == "Country"){
+	                     $colWidths[] = "10";
+	                 }else{
+	                     $colWidths[] = "20";
+	                 }
+	             }
+	             
+	             $hdrStyle = $writer->getHdrStyle($colWidths);
+	             
+	             $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
+	         }
+	     }
      
-     $relCode = $r[$patRelTitle];
-     if (isset($relCodes[$relCode])) {
-         $r[$patRelTitle] = $relCodes[$relCode][1];
-     } else {
-         $r[$patRelTitle] = '';
-     }
-     
-     // Hospital
-     if (!$showAssoc) {
-         unset($r['Association']);
-     } else if ($showAssoc && $r['Association'] > 0 && isset($hospCodes[$r['Association']]) && $hospCodes[$r['Association']][1] != '(None)') {
-         $r['Association'] = $hospCodes[$r['Association']][1];
-     } else {
-         $r['Association'] = '';
-     }
-     
-     if ($r[$labels->getString('hospital', 'hospital', 'Hospital')] > 0 && isset($hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]])) {
-         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]][1];
-     } else {
-         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
-     }
-     
-     if (count($hospCodes) < 2) {
-         unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
-     }
-     
-     if ($showDiagnosis === FALSE) {
-         unset($r[$diagTitle]);
-     }
-     
-     if ($showLocation === FALSE) {
-         unset($r[$locTitle]);
-     }
-     
-     if (!$patBirthDate) {
-         unset($r['Birth Date']);
-     }
-     
-     if ($firstRow) {
-         
-         $firstRow = FALSE;
-         
-         if ($local === FALSE) {
-             
-             // build header
-             $hdr = array();
-             $colWidths = array();
-             
-             // Header row
-             $keys = array_keys($r);
-             foreach ($keys as $k) {
-                 if($k == 'Arrival' || $k == 'Departure' || $k == 'Birth Date'){
-                     $hdr[$k] = "MM/DD/YYYY";
-                 }else{
-                    $hdr[$k] =  "string";
-                 }
-                 
-                 if($k == 'PSG Id' || $k == "Id" || $k == "State" || $k == "Country"){
-                     $colWidths[] = "10";
-                 }else{
-                     $colWidths[] = "20";
-                 }
-             }
-             
-             $hdrStyle = $writer->getHdrStyle($colWidths);
-             
-             $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
-         }
-     }
-     
-     if ($psgId != $r[$psgLabel]) {
-         $firstTd = $r[$psgLabel];
-         $psgId = $r[$psgLabel];
-         $numberPSGs++;
-     } else {
-         $firstTd = '';
-     }
-     
-     
-     if ($local) {
-         
-         $r[$psgLabel] = $firstTd;
-         
-         if (isset($r['Birth Date'])) {
-             $r['Birth Date'] = $r['Birth Date'] == '' ? '' : date('M j, Y', strtotime($r['Birth Date']));
-         }
-         $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r[$psgLabel]));
-         
-         if ($firstTd != '') {
-             $r[$separatorClassIndicator] = 'hhk-rowseparater';
-         }
-         
-         if ($relCode == RelLinkType::Self) {
-             
-             $r[$patRelTitle] = HTMLContainer::generateMarkup('span', $r[$patRelTitle], array('style'=>'font-weight:bold;'));
-             
-         } else if ($patAsGuest) {
-             // Not a patient
-             if (isset($r[$diagTitle])) {
-                 $r[$diagTitle] = '';
-             }
-             if (isset($r[$locTitle])) {
-                 $r[$locTitle] = '';
-             }
-             
-             if (isset($r[$labels->getString('hospital', 'hospital', 'Hospital')])) {
-                 $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
-             }
-             
-             if (isset($r['Association'])) {
-                 $r['Association'] = '';
-             }
-         }
-         
-         $rows[] = $r;
-         
-     } else {
-         
-         $flds = array();
-         
-         foreach ($r as $key => $col) {
-             $flds[] = $col;
-         }
-         
-         $row = $writer->convertStrings($hdr, $flds);
-         $writer->writeSheetRow("Sheet1", $row);
-     }
- }
+	     if ($psgId != $r[$psgLabel]) {
+	         $firstTd = $r[$psgLabel];
+	         $psgId = $r[$psgLabel];
+	         $numberPSGs++;
+	     } else {
+	         $firstTd = '';
+	     }
+	     
+	     
+	     if ($local) {
+	         
+	         $r[$psgLabel] = $firstTd;
+	         
+	         if (isset($r['Birth Date'])) {
+	             $r['Birth Date'] = $r['Birth Date'] == '' ? '' : date('M j, Y', strtotime($r['Birth Date']));
+	         }
+	         $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r[$psgLabel]));
+	         
+	         if ($firstTd != '') {
+	             $r[$separatorClassIndicator] = 'hhk-rowseparater';
+	         }
+	         
+	         if ($relCode == RelLinkType::Self) {
+	             
+	             $r[$patRelTitle] = HTMLContainer::generateMarkup('span', $r[$patRelTitle], array('style'=>'font-weight:bold;'));
+	             
+	         } else if ($patAsGuest) {
+	             // Not a patient
+	             if (isset($r[$diagTitle])) {
+	                 $r[$diagTitle] = '';
+	             }
+	             if (isset($r[$locTitle])) {
+	                 $r[$locTitle] = '';
+	             }
+	             
+	             if (isset($r[$labels->getString('hospital', 'hospital', 'Hospital')])) {
+	                 $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
+	             }
+	             
+	             if (isset($r['Association'])) {
+	                 $r['Association'] = '';
+	             }
+	         }
+	         
+	         $rows[] = $r;
+	         
+	     } else {
+	         
+	         $flds = array();
+	         
+	         foreach ($r as $key => $col) {
+	             $flds[] = $col;
+	         }
+	         
+	         $row = $writer->convertStrings($hdr, $flds);
+	         $writer->writeSheetRow("Sheet1", $row);
+	     }
+ 	}
  
  if ($local) {
      
