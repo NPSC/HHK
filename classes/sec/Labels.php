@@ -1,6 +1,5 @@
 <?php
 namespace HHK\sec;
-use HHK\Exception\RuntimeException;
 use HHK\Config_Lite\Config_Lite;
 
 /**
@@ -22,9 +21,9 @@ class Labels {
     
     /**
      *
-     * Use this function in place of the Labels constructor. If labels exist in the DB, a Labels object is constructed, otherwise, a Config_Lite object is returned.
+     * Use this function in place of the Labels constructor.
      *
-     * @return \HHK\Config_Lite\Config_Lite|\HHK\sec\Labels
+     * @return \HHK\sec\Labels
      */
     
     public static function getLabels(){
@@ -32,12 +31,13 @@ class Labels {
         $labels = new Labels();
         
         if(isset($uS->labels) && count($uS->labels) > 0){
-            return $labels;
+            //continue
         }else{
             $dbh = initPDO(TRUE);
             $labels->initLabels($dbh);
-            return $labels;
         }
+        
+        return $labels;
     }
     
     
