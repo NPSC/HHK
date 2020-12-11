@@ -227,7 +227,7 @@ $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $
 
 
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $uS->StartYear, $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
+$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
 
 $roomGrouping = HTMLSelector::generateMarkup(
         HTMLSelector::doOptionsMkup(removeOptionGroups($roomGroups), $groupingSelection, FALSE), array('name' => 'selGroup', 'size'=>'4'));

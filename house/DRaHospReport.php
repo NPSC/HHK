@@ -524,7 +524,7 @@ if (count($hList) > 5) {
 }
 
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>$monSize, 'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, $uS->StartYear, $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
+$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>$monSize));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
 
@@ -630,41 +630,43 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         </tr>
                     </table>
                     </fieldset>
-                   <table id="tblTimePeriod" style="clear:left;float: left;">
-                        <tr>
-                            <th colspan="3">Time Period</th>
-                        </tr>
-                        <tr>
-                            <th>Interval</th>
-                            <th style="min-width:100px; ">Month</th>
-                            <th>Year</th>
-                        </tr>
-                        <tr>
-                            <td><?php echo $calSelector; ?></td>
-                            <td><?php echo $monthSelector; ?></td>
-                            <td><?php echo $yearSelector; ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">
-                                <span class="dates" style="margin-right:.3em;">Start:</span>
-                                <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
-                                <span class="dates" style="margin-right:.3em;">End:</span>
-                                <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
-                        </tr>
-                    </table>
-                    <table style="float: left;">
-                        <tr>
-                            <th colspan="2"><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
-                        </tr>
-                        <?php if (count($aList) > 0) { ?><tr>
-                            <th>Associations</th>
-                            <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
-                        </tr><?php } ?>
-                        <tr>
-                            <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>
-                            <td><?php echo $hospitals; ?></td>
-                        </tr>
-                    </table>
+                    <div class="filters">
+                       <table id="tblTimePeriod" style="clear:left;float: left;">
+                            <tr>
+                                <th colspan="3">Time Period</th>
+                            </tr>
+                            <tr>
+                                <th>Interval</th>
+                                <th style="min-width:100px; ">Month</th>
+                                <th>Year</th>
+                            </tr>
+                            <tr>
+                                <td><?php echo $calSelector; ?></td>
+                                <td><?php echo $monthSelector; ?></td>
+                                <td><?php echo $yearSelector; ?></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3">
+                                    <span class="dates" style="margin-right:.3em;">Start:</span>
+                                    <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
+                                    <span class="dates" style="margin-right:.3em;">End:</span>
+                                    <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
+                            </tr>
+                        </table>
+                        <table style="float: left;">
+                            <tr>
+                                <th colspan="2"><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
+                            </tr>
+                            <?php if (count($aList) > 0) { ?><tr>
+                                <th>Associations</th>
+                                <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
+                            </tr><?php } ?>
+                            <tr>
+                                <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>
+                                <td><?php echo $hospitals; ?></td>
+                            </tr>
+                        </table>
+                    </div>
                     <table style="clear:left; margin-top: 15px;">
                         <tr>
                             <td><input type="checkbox" name="cbBlanksOnly" id="cbBlanksOnly" <?php echo $cbBlank; ?>/><label for="cbBlanksOnly"> Only Show <?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>s without an assignment </label></td>

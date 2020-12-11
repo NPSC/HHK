@@ -111,7 +111,7 @@ class ReportFilter {
         $uS = Session::getInstance();
         
         $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-        $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($this->selectedYear, $uS->StartYear, $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
+        $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
         $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
         $tbl = new HTMLTable();
