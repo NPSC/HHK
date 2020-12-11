@@ -949,7 +949,7 @@ BEGIN
 		FROM
 			report
 		WHERE
-			`Status` in (activ, resol, del)
+			`Status` in (activ, resol, onHold, del)
 		GROUP BY Psg_Id;
 
 

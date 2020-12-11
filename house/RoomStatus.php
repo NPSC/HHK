@@ -436,7 +436,7 @@ if ($checkingIn == '') {
                     "order": [[0, 'asc']]
                 });
 
-                $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnExcelAll, #btnSubmitTable, #prtCkOut, #prtCkIn').button();
+                $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnExcelAll, #btnSubmitTable, #prtCkOut, #prtCkIn, #prtClnToday').button();
 
                 $('#mainTabs').tabs({
                     beforeActivate: function (event, ui) {
@@ -586,6 +586,10 @@ if ($checkingIn == '') {
                     popY: 20,
                     popTitle: '<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out'};
 
+				$('#prtClnToday').click(function () {
+                    $('div#clnToday #dirtyTable_wrapper').printArea(opt);
+                });
+                
 				$('#prtCkIn').click(function () {
                     $('div#ckin').printArea(opt);
                 });
@@ -618,6 +622,9 @@ if ($checkingIn == '') {
                         <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
                     </ul>
                     <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
+                    	<div class="row">
+                    		<input type="button" value="Print" id="prtClnToday">
+                    	</div>
                         <table id='dirtyTable' class=' order-column display ' style='width:100%;'></table>
                         <div class="ui-corner-all submitButtons">
                             <input type="reset" name="btnReset1" value="Reset" id="btnReset1" />
