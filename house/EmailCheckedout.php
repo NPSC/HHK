@@ -20,12 +20,6 @@ use HHK\sec\Labels;
 
 require 'homeIncludes.php';
 
-try {
-    $labels = Labels::getLabels();
-} catch (Exception $ex) {
-    exit("Label file is missing, path=".LABEL_FILE);
-}
-
 
 try {
 	
@@ -44,6 +38,12 @@ try {
     $dbh = initPDO(TRUE);
 } catch (RuntimeException $hex) {
     exit( $hex->getMessage());
+}
+
+try {
+    $labels = Labels::getLabels();
+} catch (Exception $ex) {
+    exit("Labels Error: " . $ex->getMessage());
 }
 
 $u = new UserClass();

@@ -20,6 +20,7 @@ abstract class AbstractTemplateForm {
 
     public $docId;
     public $template;
+    public $replacedTemplate;
        
    /**
     * @param \PDO $dbh
@@ -38,10 +39,12 @@ abstract class AbstractTemplateForm {
        }else{
            $this->template = "";
        }
+       
    }
     
     public function createForm($replacements) {
 
+        $this->replacedTemplate = $this->template;
         $vars = $this->getVariables();
 
         foreach ($vars as $v) {
@@ -51,12 +54,12 @@ abstract class AbstractTemplateForm {
             }
         }
 
-        return str_replace('  ', ' ', $this->template);
+        return str_replace('  ', ' ', $this->replacedTemplate);
     }
 
     protected function setValue($search, $replace) {
 
-        $this->template = str_replace(self::ensureMacroCompleted($search), $replace, $this->template);
+        $this->replacedTemplate = str_replace(self::ensureMacroCompleted($search), $replace, $this->replacedTemplate);
 
     }
 
