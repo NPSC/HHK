@@ -52,9 +52,9 @@ if(!$u->isCron()){
     $user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
     $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
     
-    if ($u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
+    if (($user == '' && $pass == '') || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
         
-//        header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
+        header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
         header('HTTP/1.0 401 Unauthorized');
         exit("Not authorized");
         
@@ -212,7 +212,7 @@ foreach ($recipients as $r) {
         $resultsRegister .= "<p>Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . "</p>";
 
     } else {
-        echo "===========================<br/>(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>" . $subjectLine . "<br/>" . $form;
+        echo "===========================<br/>(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>" . $subjectLine . "<br/>" . $form . "<br/>";
     }
 
     // Log in Visit Log?
@@ -238,7 +238,7 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
     $mail->send();
 
 } else if (!$sendEmail) {
-    echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
+    echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages would be sent. Bad: ".$badAddresses;
     echo "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y');
     echo "<br/> Subject Line: " . $subjectLine;
     echo "<br/>Body Template:<br/>" . $sForm->template;
