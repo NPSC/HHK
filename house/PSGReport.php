@@ -336,12 +336,13 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
     }
 }
 
-function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hospCodes, $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true) {
+function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $hospCodes, $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true, $showCounty = FALSE) {
     
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $locTitle = $labels->getString('hospital', 'location', 'Location');
     $psgLabel = $labels->getString('statement', 'psgAbrev', 'PSG') . ' Id';
     $patRelTitle = $labels->getString('MemberType', 'patient', 'Patient') . " Relationship";
+    $hospTitle = $labels->getString('hospital', 'hospital', 'Hospital');
     
     $query = "Select DISTINCT
     ng.idPsg as `$psgLabel`,
@@ -353,7 +354,7 @@ function getPsgReport(\PDO $dbh, $local, $whHosp, $start, $end, $relCodes, $hosp
     ifnull(na.Country_Code, '') as `Country`,
     ifnull(ng.Relationship_Code,'') as `$patRelTitle`,
     ifnull(n.BirthDate, '') as `Birth Date`,
-    ifnull(hs.idHospital, '') as `" . $labels->getString('hospital', 'hospital', 'Hospital') . "`,
+    ifnull(hs.idHospital, '') as `$hospTitle`,
     ifnull(hs.idAssociation, '') as `Association`,
     ifnull(g.Description, hs.Diagnosis) as `$diagTitle`,
     ifnull(g1.Description, '') as `$locTitle`,
@@ -373,9 +374,9 @@ from
         left join
     gen_lookups g1 on g1.`Table_Name` = 'Location' and g1.`Code` = hs.Location
  
-where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) > DATE('2020-10-01') and DATE(v.Span_Start) < DATE('2020-12-31')
- $whHosp
-order by ng.idPsg, ispat";
+where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) > DATE('$start') and DATE(v.Span_Start) < DATE('$end')
+ $whFields
+order by ng.idPsg, `ispat`, `Id`";
 
 	if (!$local) {
 	     
@@ -391,6 +392,7 @@ order by ng.idPsg, ispat";
 	 $firstRow = TRUE;
 	 $separatorClassIndicator = '))+class';
 	 $numberPSGs = 0;
+	 $guestId = 0;
 	 
 	 $stmt = $dbh->query($query);
 	 $rowCount = $stmt->rowCount();
@@ -400,12 +402,19 @@ order by ng.idPsg, ispat";
 	 	unset($r['ispat']);
 	 	
 	     $relCode = $r[$patRelTitle];
+	     
+	     if ($relCode != RelLinkType::Self && $guestId == $r['Id']) {
+	     	continue;
+	     }
+	     
+	     $guestId = $r['Id'];
+	     
 	     if (isset($relCodes[$relCode])) {
 	         $r[$patRelTitle] = $relCodes[$relCode][1];
 	     } else {
 	         $r[$patRelTitle] = '';
 	     }
-	     
+
 	     // Hospital
 	     if (!$showAssoc) {
 	         unset($r['Association']);
@@ -415,14 +424,17 @@ order by ng.idPsg, ispat";
 	         $r['Association'] = '';
 	     }
 	     
-	     if ($r[$labels->getString('hospital', 'hospital', 'Hospital')] > 0 && isset($hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]])) {
-	         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]][1];
+	     if ($r[$hospTitle] > 0 && isset($hospCodes[$r[$hospTitle]])) {
+	     	$r[$hospTitle] = $hospCodes[$r[$labels->getString('hospital', 'hospital', 'Hospital')]][1];
 	     } else {
-	         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
+	     	$r[$hospTitle] = '';
 	     }
 	     
+	     if ($showCounty === FALSE) {
+	     	unset($r['County']);
+	     }
 	     if (count($hospCodes) < 2) {
-	         unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
+	     	unset($r[$hospTitle]);
 	     }
 	     
 	     if ($showDiagnosis === FALSE) {
@@ -504,8 +516,8 @@ order by ng.idPsg, ispat";
 	                 $r[$locTitle] = '';
 	             }
 	             
-	             if (isset($r[$labels->getString('hospital', 'hospital', 'Hospital')])) {
-	                 $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
+	             if (isset($r[$hospTitle])) {
+	             	$r[$hospTitle] = '';
 	             }
 	             
 	             if (isset($r['Association'])) {
@@ -1103,7 +1115,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         switch ($rptSetting) {
 
         	case 'psg':
-                $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, readGenLookupsPDO($dbh, 'Patient_Rel_Type'), $uS->guestLookups[GLTableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest);
+        		$rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, $uS->guestLookups['Patient_Rel_Type'], $uS->guestLookups[GLTableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest, $uS->county);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));

@@ -24,6 +24,7 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 
 INSERT INTO `sys_config` (`Key`, `Type`, `Category`, `Description`) VALUES ('DefCalEventTextColor', 's', 'c', 'Default calendar event ribbon text color');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowRateDetail', 'false', 'b', 'f', 'Show Rate detail on statements');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('StartYear', '2013', 'i', 'a', 'Start Year for reports, etc.');
 
 INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('MRN', 'MRN', 's', 'h');
 INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('RmFeesPledged', 'Room fees pledged to-date', 's', 'pc');
@@ -31,6 +32,11 @@ INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('PayRmFees', '
 INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('RoomCharges', 'Room Charges', 's', 'pc');
 INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('guest','Guest','s','mt');
 INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('visitor','Guest','s','mt');
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('treatmentStart','Treatment Start','s','h');
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('treatmentEnd','Treatment End','s','h');
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('roomNumber','Room No.','s','h');
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('dateTime','MMM D, YYYY h:mm a','s','mf');
+
 
 -- Make new guest category name_volunteer entries for patients that stayed.
 INSERT INTO name_volunteer2

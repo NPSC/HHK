@@ -664,8 +664,13 @@ where `lp`.`idPayment` > 0
                             $voidContent .= HTMLInput::generateMarkup('Void-Return', $actionButtonArray);
                         } else if ($p['idPayment_Method'] != PaymentMethod::Charge || $gateway->hasUndoReturnPmt()) {
                         	// Clawback
-                        	$actionButtonArray['class'] = 'hhk-undoReturnPmt';
-                            $voidContent .= HTMLInput::generateMarkup('Undo Return', $actionButtonArray);
+                        	// Check the invoice status
+                        	if ($r['Invoice_Status'] == InvoiceStatus::Unpaid) {
+                        		$actionButtonArray['class'] = 'hhk-undoReturnPmt';
+                            	$voidContent .= HTMLInput::generateMarkup('Undo Return', $actionButtonArray);
+                        	} else {
+                        		$voidContent .= HTMLContainer::generateMarkup('span', 'Can\'t Undo', array('style'=>'font-size:.8em;color:#333;'));
+                        	}
                         }
 
                         break;

@@ -263,10 +263,6 @@ function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
                 alert("Parser error - " + err.message);
                 return;
             }
-//            if (data.bid) {
-//                // clear button control
-//                $('#' + data.bid).remove();
-//            }
             if (data.error) {
                 if (data.gotopage) {
                     window.location.assign(data.gotopage);
@@ -276,16 +272,18 @@ function sendVoidReturn(btnid, vorr, idPayment, amt, refresh) {
             }
             if (data.reversal && data.reversal !== '') {
                 revMessage = data.reversal;
+                refresh();
             }
             if (data.warning) {
                 flagAlertMessage(revMessage + data.warning, 'warning');
+                refresh();
                 return;
             }
             if (data.success) {
                  flagAlertMessage(revMessage + data.success, 'success');
                  refresh();
             }
-            
+
             if (data.receipt) {
                 showReceipt('#pmtRcpt', data.receipt, 'Receipt');
             }

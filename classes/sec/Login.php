@@ -1,7 +1,7 @@
 <?php
 namespace HHK\sec;
 
-use HHK\Config_Lite\Exception\Config_Lite_Exception;
+
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\SysConst\{CodeVersion, WebRole};
@@ -85,7 +85,7 @@ class Login {
 
         try {
             $dbConfig = $config->getSection('db');
-        } catch (Config_Lite_Exception $e) {
+        } catch (\Exception $e) {
             $ssn->destroy();
             throw new RuntimeException("Database configuration parameters are missing.", 1, $e);
         }

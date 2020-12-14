@@ -346,8 +346,7 @@ class PaymentSvcs {
         // Get the invoice record
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, 0, $idPayment);
-
-
+        
         switch ($payRs->idPayment_Method->getStoredVal()) {
 
             case PaymentMethod::Charge:
@@ -520,6 +519,11 @@ class PaymentSvcs {
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, 0, $idPayment);
 
+        // Check the invoice status
+        if ($invoice->getStatus() != InvoiceStatus::Unpaid) {
+        	return array('warning' => 'The invoice is already paid, Undo Return failed. ', 'bid' => $bid);
+        }
+        
         // Record transaction
 
         switch ($payRs->idPayment_Method->getStoredVal()) {
