@@ -1,6 +1,8 @@
 <?php
 namespace HHK\sec;
 
+use HHK\Config_Lite\Config_Lite;
+
 /**
  * session.php
  *
@@ -60,6 +62,7 @@ class Session
         if ( $this->sessionState == self::SESSION_NOT_STARTED )
         {
             ini_set( 'session.cookie_httponly', 1 );
+            session_name($this->getSessionName());
             $this->sessionState = session_start();
         }
 
@@ -144,6 +147,16 @@ class Session
                 $params["path"], $params["domain"],
                 $params["secure"], $params["httponly"]
             );
+        }
+    }
+    
+    private function getSessionName()
+    {
+        try{
+            $config = new Config_Lite(ciCFG_FILE);
+            return strtoupper($config->getString('db', 'Schema', '')) . 'HHKSESSION';
+        }catch(\Exception $ex){
+            return 'HHKSESSION';
         }
     }
 

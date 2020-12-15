@@ -511,7 +511,7 @@ INSERT INTO `sys_config` VALUES
 ('DefaultPayType','cc','s','f','','Use the Resource Builder',''),
 ('DefaultRegisterTab','0','lu','h','','Default active tab on register page','Default_Reg_Tab'),
 ('DefaultVisitFee','1','s','h','','Use the Resource Builder',''),
-('DefCalEventTextColor', 's', 'c', '', 'Default calendar event ribbon text color', ''),
+('DefCalEventTextColor', 'black', 's', 'c', '', 'Default calendar event ribbon text color', ''),
 ('Disclaimer','Welcome! Please remember that unauthorized use of the data made available to you as a House volunteer, including collecting user names and/or email addresses of other users for the purpose of sending unsolicited email or other unauthorized purposes, is prohibited. Thank you for all you do!','t','v','','Volunteer Site Disclaimer',''),
 ('Doctor','true','b','hf','','Track doctors',''),
 ('EmailBlockSize','200','i','v','','Number of email addresses per block',''),
@@ -620,7 +620,7 @@ INSERT INTO `sys_config` VALUES
 --
 -- insert Labels
 --
-INSERT INTO `labels` VALUES 
+INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES 
 ('reservationTab','Confirmed Reservations','s','rg','','Default: Confirmed Reservations'),
 ('unconfirmedTab','UnConfirmed Reservations','s','rg','','Default: UnConfirmed Reservations'),
 ('recentPayTab','Recent Payments','s','rg','','Default: Recent Payments'),
