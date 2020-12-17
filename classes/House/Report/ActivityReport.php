@@ -687,7 +687,8 @@ where `lp`.`idPayment` > 0
 
 
                             if ($p['idPayment_Method'] == PaymentMethod::Charge && date('Y-m-d', strtotime($p['Payment_Date'])) == date('Y-m-d') && $gateway->hasVoidReturn()) {
-                                $voidContent .= HTMLInput::generateMarkup('Void Refund', array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
+                            	$actionButtonArray['class'] = 'hhk-voidRefundPmt';
+                            	$voidContent .= HTMLInput::generateMarkup('Void Refund', $actionButtonArray);  //array('type' => 'button', 'id' => 'btnvr' . $p['idPayment'], 'class' => 'hhk-voidRefundPmt', 'data-pid' => $p['idPayment'], 'data-amt' => $amt));
                             } else if ($p['idPayment_Method'] != PaymentMethod::Charge || $gateway->hasUndoReturnAmt()) {
                                 $actionButtonArray['class'] = 'hhk-undoReturnPmt';
                                 $voidContent .= HTMLInput::generateMarkup('Undo Refund', $actionButtonArray);
