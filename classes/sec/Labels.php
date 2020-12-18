@@ -59,7 +59,7 @@ class Labels {
             $cLiteLabels = new Config_Lite(LABEL_FILE);
             foreach($cLiteLabels as $section=>$name){
                 foreach ($name as $key => $val) {
-                    if(!isset($labels[$section][$key])){
+                    if(!isset($labels[ucfirst($section)][$key])){
                         $labels[ucfirst($section)][$key] = $val;
                     }
                 }
