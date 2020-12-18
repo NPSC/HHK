@@ -436,7 +436,7 @@ if ($checkingIn == '') {
                     "order": [[0, 'asc']]
                 });
 
-                $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnExcelAll, #btnSubmitTable, #prtCkOut, #prtCkIn, #prtClnToday').button();
+                $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrintAll, #btnExcelAll, #btnSubmitTable, #prtCkOut, #prtCkIn, #prtClnToday').button();
 
                 $('#mainTabs').tabs({
                     beforeActivate: function (event, ui) {
@@ -574,8 +574,8 @@ if ($checkingIn == '') {
                     ]
                 });
 
-                $('#btnPrint').click(function () {
-                    window.open('ShowHsKpg.php', '_blank');
+                $('#btnPrintAll').click(function () {
+                    window.open('ShowHsKpg.php?tbl=all', '_blank');
                 });
 
                 var opt = {mode: 'popup',
@@ -587,7 +587,7 @@ if ($checkingIn == '') {
                     popTitle: '<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out'};
 
 				$('#prtClnToday').click(function () {
-                    $('div#clnToday #dirtyTable_wrapper').printArea(opt);
+                    window.open('ShowHsKpg.php?tbl=notReady', '_blank');
                 });
                 
 				$('#prtCkIn').click(function () {
@@ -622,11 +622,9 @@ if ($checkingIn == '') {
                         <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
                     </ul>
                     <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
-                    	<div class="row">
-                    		<input type="button" value="Print" id="prtClnToday">
-                    	</div>
                         <table id='dirtyTable' class=' order-column display ' style='width:100%;'></table>
                         <div class="ui-corner-all submitButtons">
+                        	<input type="button" value="Print" id="prtClnToday">
                             <input type="reset" name="btnReset1" value="Reset" id="btnReset1" />
                             <input type="submit" name="btnSubmitClean" value="Save" id="btnSubmitClean" />
                         </div>
@@ -667,7 +665,7 @@ if ($checkingIn == '') {
                     <div id="showAll">
                         <table id='roomTable' class=' order-column display ' style='width:100%;'></table>
                         <div class="ui-corner-all submitButtons">
-                            <input type="button" value="Print" name="btnPrint" id="btnPrint" />
+                            <input type="button" value="Print" name="btnPrintAll" id="btnPrintAll" />
                             <input type="submit" value="Download to Excel" id="btnExcelAll" name="btnExcelAll" />
                             <input type="reset" name="btnReset2" value="Reset" id="btnReset2" />
                             <input type="submit" name="btnSubmitTable" value="Save" id="btnSubmitTable" />
