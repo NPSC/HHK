@@ -46,7 +46,7 @@ define('CJSV', '?eG=90');
 define('JQ_UI_CSS', '<link href="css/jqui/jquery-ui.min.css" rel="stylesheet" type="text/css" />');
 define('JQ_DT_CSS', '<link href="css/datatables.min.css" rel="stylesheet" type="text/css" />');
 define('MULTISELECT_CSS', '<link href="css/jquery.multiselect.css" rel="stylesheet" type="text/css" />');
-define('FAVICON', '<link rel="icon" type="image/png" href="../images/hhkIcon.png" />');
+define('FAVICON', '<link rel="icon" type="image/svg+xml" href="../favicon.svg" />');
 define('DR_PICKER_CSS', '<link rel="stylesheet" href="css/daterangepicker.min.css">');
 define('FULLC_CSS', '<link href="css/fullcalendar.css" rel="stylesheet" type="text/css" />');
 define('SELECT2_CSS', '<link href="css/select2.min.css" rel="stylesheet" type="text/css" />');

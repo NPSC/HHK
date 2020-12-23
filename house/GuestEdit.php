@@ -714,7 +714,7 @@ $uS->guestId = $id;
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
-
+		<meta name="viewport" content="width=device-width, initial-scale=1"/>
         <?php echo JQ_UI_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
@@ -744,6 +744,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
+        
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
         ?>
