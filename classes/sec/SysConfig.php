@@ -105,7 +105,7 @@ class SysConfig {
 
                 $uS = Session::getInstance();
                 $logText = $key . ':' .$oldVal . '|_|' . $value;
-                HouseLog::logSysConfig($dbh, $key, $value, $logText, $uS->username);
+                HouseLog::logSysConfig($dbh, $key, $value, $logText, $uS->username, $tableName);
 
             }
         } else if (count($rows) > 1){

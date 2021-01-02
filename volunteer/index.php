@@ -43,7 +43,7 @@ if (isset($_GET['u'])) {
 try {
 
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(ciCFG_FILE);
 } catch (PDOException $pex) {
     exit("<h3>Database Error.  </h3>");
 } catch (Exception $ex) {
@@ -52,11 +52,11 @@ try {
 
 
 // define db connection obj
-try {
-    $dbh = initPDO(TRUE);
-} catch (RuntimeException $hex) {
-    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
-}
+// try {
+//     $dbh = initPDO(TRUE);
+// } catch (RuntimeException $hex) {
+//     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
+// }
 
 
 // Load the page information

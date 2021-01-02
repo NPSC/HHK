@@ -4,6 +4,7 @@ use HHK\sec\{Session, Login, ScriptAuthClass, SecurityComponent};
 use HHK\Exception\{InvalidArgumentException, RuntimeException};
 use HHK\SysConst\{Mode, CodeVersion};
 use HHK\HTMLControls\{HTMLContainer};
+use HHK\sec\SysConfig;
 
 /**
  * index.php  (admin)
@@ -15,7 +16,6 @@ use HHK\HTMLControls\{HTMLContainer};
  */
 require ("AdminIncludes.php");
 
-//require(SEC . 'Login.php');
 
 // get session instance
 $uS = Session::getInstance();
@@ -35,21 +35,13 @@ if (isset($_GET["log"])) {
 try {
 
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(ciCFG_FILE);
 
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 
 } catch (Exception $ex) {
     echo ("<h3>Server Error</h3>" . $ex->getMessage());
-}
-
-
-// define db connection obj
-try {
-    $dbh = initPDO(TRUE);
-} catch (RuntimeException $hex) {
-    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 
 
@@ -75,8 +67,8 @@ if ($uS->mode != Mode::Live) {
     $disclaimer = '';
 }
 
-$tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
-$trainingSiteURL = $config->getString('site', 'Training_URL', '');
+$tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
+$trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
 $icons = array();

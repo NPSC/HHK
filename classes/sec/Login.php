@@ -43,16 +43,28 @@ class Login {
             throw new RuntimeException("Configurtion file is missing, path=".$configFileName, 999, $ex);
         }
 
-        // Check site maintenance
-        if ($config->getBool('site', 'Site_Maintenance', FALSE)) {
-            exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
+        $ssn->sitePepper = $config->getString('site', 'sitePepper', false);
+        
+        try {
+        	self::dbParmsToSession($config);
+        	$dbh = initPDO(TRUE);
+        } catch (RuntimeException $hex) {
+        	exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
         }
+        
+         // Check site maintenance
+        $ssn->Site_Maintenance = SysConfig::getKeyValue($dbh, 'sys_config', 'Site_Maintenance');
+        
+        if ($ssn->Site_Maintenance === TRUE) {
+             exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
+        }
+         
 
-        // Check SsL
-        $ssl = $config->getBool('site', 'SSL', TRUE);
+		// Check SsL
+        $ssn->ssl = SysConfig::getKeyValue($dbh, 'sys_config', 'SSL');
         $secureComp = new SecurityComponent();
 
-        if ($ssl === TRUE) {
+        if ($ssn->ssl === TRUE) {
 
             // Must access pages through SSL
             if ($secureComp->isHTTPS() === FALSE) {
@@ -60,22 +72,18 @@ class Login {
             }
         }
 
-        $ssn->ssl = $ssl;
+        
+        $ssn->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'Mode'));
+        $ssn->testVersion = SysConfig::getKeyValue($dbh, 'sys_config', 'Run_As_Test');
         $ssn->resourceURL = $secureComp->getRootURL();
-        $ssn->mode = strtolower($config->getString('site', 'Mode', 'live'));
-        $ssn->testVersion = $config->getBool('site', 'Run_As_Test', true);
         $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
-        $ssn->sitePepper = $config->getString('site', 'sitePepper', false);
 
         // Initialize role code
         if (isset($ssn->rolecode) === FALSE) {
         	$ssn->rolecode = WebRole::Guest;
         }
 
-        // Set Timezone
-        self::dbParmsToSession($config);
-
-        return $config;
+        return $dbh;
     }
 
     public static function dbParmsToSession(Config_Lite $config) {

@@ -24,14 +24,14 @@ date_default_timezone_set('America/Chicago');
 require ('vendor/autoload.php');
 require ('functions' . DS . 'commonFunc.php');
 
-$config = Login::initHhkSession(ciCFG_FILE);
+$dbh = Login::initHhkSession(ciCFG_FILE);
 
 
-try {
-    $dbh = initPDO(TRUE);
-} catch (RuntimeException $hex) {
-    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
-}
+// try {
+//     $dbh = initPDO(TRUE);
+// } catch (RuntimeException $hex) {
+//     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
+// }
 
 
 $pageTitle = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');

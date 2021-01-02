@@ -9,6 +9,7 @@ use HHK\SysConst\Mode;
 use HHK\SysConst\CodeVersion;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\SecurityComponent;
+use HHK\sec\SysConfig;
 
 /**
  * Index.php
@@ -42,20 +43,13 @@ if (isset($_GET["log"])) {
 try {
 
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(ciCFG_FILE);
 
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 
 } catch (Exception $ex) {
     exit ("<h3>" . $ex->getMessage());
-}
-
-// Override user DB login credentials
-try {
-    $dbh = initPDO(TRUE);
-} catch (RuntimeException $hex) {
-    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 
 
@@ -86,8 +80,8 @@ if ($uS->mode != Mode::Live) {
 }
 
 
-$tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
-$trainingSiteURL = $config->getString('site', 'Training_URL', '');
+$tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
+$trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
 $icons = array();

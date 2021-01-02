@@ -216,11 +216,11 @@ if (isset($_FILES['zipfile'])) {
 
         $resultMsg .= SiteConfig::loadZipCodeFile($dbh, $_FILES['zipfile']['tmp_name']);
 
-        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
+        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
 
     } catch (Exception $hex) {
         $resultMsg .= $hex->getMessage();
-        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
+        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
     }
 }
 
@@ -256,7 +256,7 @@ if (isset($_POST['btnSaveSQL'])) {
 
     // Log update.
     $logText = "Save SQL.  " . $resultAccumulator;
-    SiteLog::writeLog($dbh, 'DB', $logText, $config->getString('code', 'GIT_Id', ''));
+    SiteLog::writeLog($dbh, 'DB', $logText, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
 }
 
 // Payment credentials
