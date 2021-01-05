@@ -22,6 +22,19 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 ('labels_category', 'r', 'ResourceBuilder', '90'),
 ('labels_category', 's', 'Statement', '100');
 
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES
+('Web_User_Actions', 'L', 'Login'),
+('Web_User_Actions', 'PS', 'Set Password'),
+('Web_User_Actions', 'PC', 'Password Change'),
+('Web_User_Actions', 'PL', 'Locked Out'),
+('Web_User_Actions', 'E', 'Password Expired');
+
+
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Site_Mode', 'dev', 'Development');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Site_Mode', 'demo', 'Demonstration');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Site_Mode', 'live', 'Production');
+
+
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('DefCalEventTextColor', '', 's', 'c', 'Default calendar event ribbon text color');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ShowRateDetail', 'false', 'b', 'f', 'Show Rate detail on statements');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('StartYear', '2013', 'i', 'a', 'Start Year for reports, etc.');

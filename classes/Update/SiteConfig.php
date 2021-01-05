@@ -487,10 +487,7 @@ class SiteConfig {
 
     public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL) {
 
-    	// site.cfg entries
-        $tbl = self::createCliteMarkup($config, $titles);
-
-        // add sys config table
+        // sys config table
         $sctbl = new HTMLTable();
         $cat = '';
 
@@ -551,7 +548,10 @@ class SiteConfig {
 
         }
 
-        return $tbl->generateMarkup() . $sctbl->generateMarkup();
+        // site.cfg entries
+        $tbl = self::createCliteMarkup($config, $titles);
+        
+        return $sctbl->generateMarkup() . $tbl->generateMarkup();
     }
 
     public static function saveConfig($dbh, Config_Lite $config, array $post, $userName = '') {

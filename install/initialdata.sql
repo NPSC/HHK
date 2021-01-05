@@ -380,10 +380,14 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Room_Type','r','Room','','',10),
 ('Room_Type','s','Suite','','',20),
 
-('Salutation','fln','First &Last','','',0),
+('Salutation','fln','First & Last','','',0),
 ('Salutation','fno','First Name','','',0),
 ('Salutation','for','Formal','','',0),
 ('Salutation','mm','Retro-Mr. & Mrs.','','',0),
+
+('Site_Mode', 'dev', 'Development','','',0),
+('Site_Mode', 'demo', 'Demonstration','','',0),
+('Site_Mode', 'live', 'Production','','',0),
 
 ('Special_Needs','c','Cancer','','d',0),
 ('Special_Needs','f','Dev. Challenged','','d',0),
@@ -460,11 +464,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Web_User_Status','w','Waiting','','',0),
 ('Web_User_Status','x','Prohibited','','',0),
 
-("Web_User_Actions", "L", "Login", '', '', '0'),
-("Web_User_Actions", "PS", "Set Password", '', '', '0'),
-("Web_User_Actions", "PC", "Password Change", '', '', '0'),
-("Web_User_Actions", "PL", "Locked Out", '', '', '0'),
-("Web_User_Actions", "E", "Password Expired", '', '', '0');
+('Web_User_Actions', 'L', 'Login', '', '', '0'),
+('Web_User_Actions', 'PS', 'Set Password', '', '', '0'),
+('Web_User_Actions', 'PC', 'Password Change', '', '', '0'),
+('Web_User_Actions', 'PL', 'Locked Out', '', '', '0'),
+('Web_User_Actions', 'E', 'Password Expired', '', '', '0');
 -- ;
 
 
@@ -549,7 +553,7 @@ INSERT INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`
 ('MaxExpected','260','i','h','','Maximum Expected days out for a visit',''),
 ('MaxRepeatEvent','53','i','v','','Maximum number of times to repeat a calendar event',''),
 ('MemberImageSizePx','75','i','h','','Guest image thumbnail size',''),
-('Mode', 'demo', 's', 'a', '', 'Site Operational Mode', ''),
+('Mode', 'demo', 'lu', 'a', '', 'Site Operational Mode', 'Site_Mode'),
 ('NightsCounter','calYear','s','c','','Count nights by year (calYear) or by grand total',''),
 ('NoReplyAddr','','ea','ha','','No reply email address',''),
 ('NotificationAddress','','ea','f','','Gets financial data upload notifications',''),
