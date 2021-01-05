@@ -136,7 +136,7 @@ class ReportFilter {
                 . HTMLContainer::generateMarkup('span', 'End:', array('class'=>'dates', 'style'=>'margin-right:.3em;display:none;'))
                 . HTMLInput::generateMarkup($this->selectedEnd, array('name'=>"enDate", 'class'=>"ckdate dates", 'style'=>"margin-right:.3em;display:none;"))
                 , array('colspan'=>'3')
-                ));
+                ), array('class'=>'dates'));
         }
 
         return $tbl;
@@ -290,11 +290,11 @@ $ckdate";
         // Setups for the page.
         if (count($this->aList) > 1) {
             $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->aList, $this->selectedAssocs, FALSE),
-                    array('name'=>'selAssoc[]', 'size'=>(count($this->aList)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
+                    array('name'=>'selAssoc[]', 'size'=>(count($this->aList)), 'multiple'=>'multiple', 'style'=>'min-width:60px; width:100%;'));
         }
 
         $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($this->hList, $this->selectedHosptials, FALSE),
-        		array('name'=>'selHospital[]', 'size'=>(count($this->hList)>12 ? '12' : count($this->hList)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
+        		array('name'=>'selHospital[]', 'size'=>(count($this->hList)>12 ? '12' : count($this->hList)), 'multiple'=>'multiple', 'style'=>'min-width:60px; width: 100%'));
 
         $tbl = new HTMLTable();
         $tr = '';
