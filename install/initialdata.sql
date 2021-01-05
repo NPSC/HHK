@@ -194,6 +194,17 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Key_Deposit_Code','k0','None','0','',0),
 ('Key_Deposit_Code','k1','House','20','',0),
 
+('labels_category', 'rg', 'Register', '', '', 10),
+('labels_category', 'rf', 'Referral', '', '', 20),
+('labels_category', 'h', 'Hospital', '', '', 30),
+('labels_category', 'mf', 'MomentFormats', '', '', 40),
+('labels_category', 'ck', 'Checkin', '', '', 50),
+('labels_category', 'pc', 'PaymentChooser', '', '', 60),
+('labels_category', 'mt', 'MemberType', '', '', 70),
+('labels_category', 'g', 'GuestEdit', '', '', 80),
+('labels_category', 'r', 'ResourceBuilder', '', '', 90),
+('labels_category', 's', 'Statement', '', '', 100),
+
 ('Language_Proficiency', '5', 'Native','', '',0),
 ('Language_Proficiency', '3', 'Professional','', '',0),
 ('Language_Proficiency', '2', 'Limited','', '',0),
