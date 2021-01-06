@@ -23,6 +23,7 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFieldSet;
+use HHK\House\Report\ReportFilter;
 
 /**
  * InvoiceReport.php
@@ -51,6 +52,10 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 $labels = Labels::getLabels();
+
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+$filter->createHospitals();
 
 function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
 
@@ -192,17 +197,17 @@ if (stristr($uS->siteName, 'gorecki') !== FALSE || strtolower($uS->mode) != 'liv
 	$useGlReport = TRUE;
 }
 
-$monthArray = array(
-    1 => array(1, 'January'),
-    2 => array(2, 'February'),
-    3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
+// $monthArray = array(
+//     1 => array(1, 'January'),
+//     2 => array(2, 'February'),
+//     3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
+//     7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
 
-if ($uS->fy_diff_Months == 0) {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
-} else {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
-}
+// if ($uS->fy_diff_Months == 0) {
+//     $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
+// } else {
+//     $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
+// }
 
 // Hosted payment return
 try {
@@ -223,16 +228,8 @@ try {
 
 
 // Hospital and association lists
-$hospList = $uS->guestLookups[GLTableNames::Hospital];
-$hList = array();
-$aList = array();
-foreach ($hospList as $h) {
-    if ($h[2] == 'h') {
-        $hList[$h[0]] = array(0=>$h[0], 1=>$h[1]);
-    } else if ($h[2] == 'a' && $h[1] != '(None)') {
-        $aList[$h[0]] = array(0=>$h[0], 1=>$h[1]);
-    }
-}
+$hospList = $filter->getHList();
+$aList = $filter->getAList();
 
 // Invoices
 $invoiceStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
@@ -328,39 +325,39 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
         $useVisitDates = TRUE;
     }
 
-    if (isset($_POST['selIntMonth'])) {
-        $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
-    }
+//     if (isset($_POST['selIntMonth'])) {
+//         $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
+//     }
 
-    if (isset($_POST['selCalendar'])) {
-        $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
+//     if (isset($_POST['selCalendar'])) {
+//         $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
+//     }
 
-    if (isset($_POST['selIntYear'])) {
-        $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
+//     if (isset($_POST['selIntYear'])) {
+//         $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
+//     }
 
-    if (isset($_POST['stDate'])) {
-        $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
-    }
+//     if (isset($_POST['stDate'])) {
+//         $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
+//     }
 
-    if (isset($_POST['enDate'])) {
-        $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
-    }
+//     if (isset($_POST['enDate'])) {
+//         $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
+//     }
 
-    if (isset($_POST['selAssoc'])) {
-        $reqs = $_POST['selAssoc'];
-        if (is_array($reqs)) {
-            $assocSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-        }
-    }
+//     if (isset($_POST['selAssoc'])) {
+//         $reqs = $_POST['selAssoc'];
+//         if (is_array($reqs)) {
+//             $assocSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+//         }
+//     }
 
-    if (isset($_POST['selHospital'])) {
-        $reqs = $_POST['selHospital'];
-        if (is_array($reqs)) {
-            $hospitalSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-        }
-    }
+//     if (isset($_POST['selHospital'])) {
+//         $reqs = $_POST['selHospital'];
+//         if (is_array($reqs)) {
+//             $hospitalSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
+//         }
+//     }
 
     if (isset($_POST['selInvStatus'])) {
         $reqs = $_POST['selInvStatus'];
@@ -378,59 +375,59 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
 
 
     // Determine time span
-    if ($calSelection == 20) {
-        // fiscal year
-        $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
-        $startDT = new DateTime($year . '-01-01');
+//     if ($calSelection == 20) {
+//         // fiscal year
+//         $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
+//         $startDT = new DateTime($year . '-01-01');
 
-        $start = $startDT->sub($adjustPeriod)->format('Y-m-d');
+//         $start = $startDT->sub($adjustPeriod)->format('Y-m-d');
 
-        $endDT = new DateTime(($year + 1) . '-01-01');
-        $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
+//         $endDT = new DateTime(($year + 1) . '-01-01');
+//         $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
 
-    } else if ($calSelection == 21) {
-        // Calendar year
-        $startDT = new DateTime($year . '-01-01');
-        $start = $startDT->format('Y-m-d');
+//     } else if ($calSelection == 21) {
+//         // Calendar year
+//         $startDT = new DateTime($year . '-01-01');
+//         $start = $startDT->format('Y-m-d');
 
-        $end = ($year + 1) . '-01-01';
+//         $end = ($year + 1) . '-01-01';
 
-    } else if ($calSelection == 18) {
-        // Dates
-        if ($txtStart != '') {
-            $startDT = new DateTime($txtStart);
-        } else {
-            $startDT = new DateTime();
-        }
+//     } else if ($calSelection == 18) {
+//         // Dates
+//         if ($txtStart != '') {
+//             $startDT = new DateTime($txtStart);
+//         } else {
+//             $startDT = new DateTime();
+//         }
 
-        if ($txtEnd != '') {
-            $endDT = new DateTime($txtEnd);
-        } else {
-            $endDT = new DateTime();
-        }
+//         if ($txtEnd != '') {
+//             $endDT = new DateTime($txtEnd);
+//         } else {
+//             $endDT = new DateTime();
+//         }
 
-        $start = $startDT->format('Y-m-d');
-        $end = $endDT->format('Y-m-d');
+//         $start = $startDT->format('Y-m-d');
+//         $end = $endDT->format('Y-m-d');
 
-    } else if ($calSelection == 22) {
-        // Year to date
-        $start = date('Y') . '-01-01';
+//     } else if ($calSelection == 22) {
+//         // Year to date
+//         $start = date('Y') . '-01-01';
 
-        $endDT = new DateTime();
+//         $endDT = new DateTime();
 
-        $end = $endDT->add(new DateInterval('P1D'))->format('Y-m-d ');
+//         $end = $endDT->add(new DateInterval('P1D'))->format('Y-m-d ');
 
-    } else {
-        // Months
-        $interval = 'P' . count($months) . 'M';
-        $month = $months[0];
-        $start = $year . '-' . $month . '-01';
+//     } else {
+//         // Months
+//         $interval = 'P' . count($months) . 'M';
+//         $month = $months[0];
+//         $start = $year . '-' . $month . '-01';
 
-        $endDate = new DateTime($start);
-        $endDate->add(new DateInterval($interval));
+//         $endDate = new DateTime($start);
+//         $endDate->add(new DateInterval($interval));
 
-        $end = $endDate->format('Y-m-d');
-    }
+//         $end = $endDate->format('Y-m-d');
+//     }
 
     $whHosp = '';
     $whAssoc = '';
@@ -438,13 +435,18 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
     $whBillAgent = '';
     $whDeleted = '';
 
+    $filter->loadSelectedTimePeriod();
+    $filter->loadSelectedHospitals();
+    $start = $filter->getReportStart();
+    $end = $filter->getReportEnd();
+    
     if ($invNum != '') {
 
         $whDates = " i.Invoice_Number = '$invNum' ";
         $headerTable->addBodyTr(HTMLTable::makeTd('For Invoice Number: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($invNum));
 
     } else {
-
+        
         $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start)) . ' thru ' . date('M j, Y', strtotime($end))));
 
         if ($useVisitDates) {
@@ -455,28 +457,22 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
 
 
         // Hospitals
-        $hdrHosps = 'All';
-        foreach ($hospitalSelections as $a) {
+        foreach ($filter->getSelectedHosptials() as $a) {
             if ($a != '') {
                 if ($whHosp == '') {
                     $whHosp .= $a;
-                    $hdrHosps = $hList[$a][1];
                 } else {
                     $whHosp .= ",". $a;
-                    $hdrHosps .= ", ". $hList[$a][1];
                 }
             }
         }
 
-        $hdrAssocs = 'All';
-        foreach ($assocSelections as $a) {
+        foreach ($filter->getSelectedAssocs() as $a) {
             if ($a != '') {
                 if ($whAssoc == '') {
                     $whAssoc .= $a;
-                    $hdrAssocs = $aList[$a][1];
                 } else {
                     $whAssoc .= ",". $a;
-                    $hdrAssocs .= ", ". $aList[$a][1];
                 }
             }
         }
@@ -487,6 +483,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
         if ($whAssoc != '') {
             $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
         }
+        
+        $hdrHosps = $filter->getSelectedHospitalsString();
+        $hdrAssocs = $filter->getSelectedAssocString();
 
         $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
 
@@ -906,18 +905,21 @@ if ($useGlReport) {
 	$glChooser = $glParm->getChooserMarkup($dbh, $glPrefix);
 	
 	//Month and Year chooser
-	$glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
+	$glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($filter->getMonths(), $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
 	$glYearSelr = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), 0, FALSE), array('name' => 'selGlYear', 'size'=>'12'));
 	
 }
 
 // Setups for the page.
-if (count($aList) > 0) {
-$assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections),
-                array('name'=>'selAssoc[]', 'size'=>'3', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-}
-$hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections),
-		array('name'=>'selHospital[]', 'size'=>(count($hList)>12 ? '12' : (count($hList)+1)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'display: inline-block; vertical-align: top;'));
+
+// if (count($aList) > 0) {
+// $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections),
+//                 array('name'=>'selAssoc[]', 'size'=>'3', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
+// }
+// $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections),
+// 		array('name'=>'selHospital[]', 'size'=>(count($hList)>12 ? '12' : (count($hList)+1)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
 
 $invStatusSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($invoiceStatuses, $invStatus), array('name' => 'selInvStatus[]', 'size' => '4', 'multiple' => 'multiple'));
 
@@ -927,9 +929,9 @@ if (count($bagnts) > 0) {
 	$baSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($bagnts, $baSelections), array('name' => 'selbillagent[]', 'size' => (count($bagnts)>12 ? '12' : (count($bagnts)+1)), 'multiple' => 'multiple'));
 }
 
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
-$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
+// $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
+// $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
+// $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
 $dAttrs = array('name'=>'cbShoDel', 'id'=>'cbShoDel', 'type'=>'checkbox', 'style'=>'margin-right:.3em;');
 
@@ -948,7 +950,7 @@ if ($useVisitDates) {
 $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
         . HTMLContainer::generateMarkup('label', 'Use Visit Dates', array('for'=>'cbUseVisitDates'));
 
-        $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;', 'id'=>'includeFields'));
+        $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'display: inline-block;', 'id'=>'includeFields'));
 
 
 ?>
@@ -1210,45 +1212,16 @@ $(document).ready(function() {
             </ul>
             <div id="invr" >
                 <form id="fcat" action="InvoiceReport.php" method="post">
-                    <table style="float: left;">
-                        <tr>
-                            <th colspan="3">Time Period</th>
-                        </tr>
-                        <tr>
-                            <th>Interval</th>
-                            <th style="min-width:100px; ">Month</th>
-                            <th>Year</th>
-                        </tr>
-                        <tr>
-                            <td style="vertical-align: top;"><?php echo $calSelector; ?></td>
-                            <td><?php echo $monthSelector; ?></td>
-                            <td style="vertical-align: top;"><?php echo $yearSelector; ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">
-                                <span class="dates" style="margin-right:.3em;">Start:</span>
-                                <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
-                                <span class="dates" style="margin-right:.3em;">End:</span>
-                                <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3"><?php echo $useVisitDatesCb; ?></td>
-                        </tr>
-                    </table>
-                    <table style="float: left;">
-                        <tr>
-                            <th colspan="2"><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Filter</th>
-                        </tr>
-                        <?php if (count($aList) > 0) { ?><tr>
-                            <th>Associations</th>
-                            <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
-                        </tr><?php } ?>
-                        <tr>
-                            <?php if (count($aList) > 0) { ?><td style="vertical-align: top;"><?php echo $assocs; ?></td><?php } ?>
-                            <td><?php echo $hospitals; ?></td>
-                        </tr>
-                    </table>
-                    <table style="float: left;">
+                	<div style="display: inline-block; vertical-align: top;">
+                    	<?php echo $timePeriodMarkup; ?>
+                    	<table style="width: 100%;">
+                    		<tr>
+                    			<td style="border-top: 0px;"><?php echo $useVisitDatesCb; ?></td>
+                    		</tr>
+                    	</table>
+                    </div>
+                    <?php echo $hospitalMarkup; ?>
+                    <table style="display: inline-block; vertical-align: top;">
                         <tr>
                             <th>Status</th>
                         </tr>
@@ -1258,7 +1231,7 @@ $(document).ready(function() {
                         </tr>
                     </table>
                     <?php if ($baSelector != '') { ?>
-                    <table style="float: left;">
+                    <table style="display: inline-block;">
                         <tr>
                             <th>Billing Agent</th>
                         </tr>
@@ -1269,7 +1242,7 @@ $(document).ready(function() {
                     </table>
                     <?php } ?>
                     <?php echo $columSelector; ?>
-                    <table style="width:100%; clear:both;">
+                    <table style="width:100%; margin: 10px 0px;">
                         <tr>
                             <td><?php echo $shoDeletedCb; ?></td>
                             <td>Search Invoice #: <input type="text" id="invNum" name="invNum" size="5"/></td>

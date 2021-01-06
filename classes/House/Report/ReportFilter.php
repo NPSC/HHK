@@ -359,6 +359,38 @@ $ckdate";
 
         return $tbl;
     }
+    
+    public function getSelectedHospitalsString(){
+        $hospList = $this->getHospitals();
+        $hospitalTitles = "";
+        foreach ($this->getSelectedHosptials() as $h) {
+            if (isset($hospList[$h])) {
+                $hospitalTitles .= $hospList[$h][1] . ', ';
+            }
+        }
+        if ($hospitalTitles != '') {
+            $h = trim($hospitalTitles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
+    }
+    
+    public function getSelectedAssocString(){
+        $assocList = $this->getHospitals();
+        $assocTitles = "";
+        foreach ($this->getSelectedAssocs() as $h) {
+            if (isset($assocList[$h])) {
+                $assocTitles .= $assocList[$h][1] . ', ';
+            }
+        }
+        if ($assocTitles != '') {
+            $h = trim($assocTitles);
+            return substr($h, 0, strlen($h) - 1);
+        }else{
+            return "All";
+        }
+    }
 
     public function getSelectedResourceGroups() {
         return $this->selectedResourceGroups;

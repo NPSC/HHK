@@ -351,35 +351,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $filter->getHList(), $start, $end, $labels);
         }
 
-        $hospitalTitles = '';
-        $assocTitles = '';
-        $hospList = $filter->getHospitals();
+        $hospitalTitles = $filter->getSelectedHospitalsString();
+        $assocTitles = $filter->getSelectedAssocString();
         
-        foreach ($filter->getSelectedAssocs() as $h) {
-            if (isset($hospList[$h])) {
-                $assocTitles .= $hospList[$h][1] . ', ';
-            }
-        }
-        foreach ($filter->getSelectedHosptials() as $h) {
-            if (isset($hospList[$h])) {
-                $hospitalTitles .= $hospList[$h][1] . ', ';
-            }
-        }
-        
-        if ($hospitalTitles != '') {
-            $h = trim($hospitalTitles);
-            $hospitalTitles = substr($h, 0, strlen($h) - 1);
-        }
-        
-        if ($assocTitles != '') {
-            $a = trim($assocTitles);
-            $assocTitles = substr($a, 0, strlen($a) - 1);
-        }
-        
-        if($hospitalTitles == '' && $assocTitles == ''){
-            $hospitalTitles = 'All';
-            $assocTitles = 'All';
-        }
 
         $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
         $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospitalTitles) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($assocTitles));
@@ -390,8 +364,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 }
 
 // Setups for the page.
-$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'display: inline-block; vertical-align: top;'));
-$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'display: inline-block; vertical-align: top; margin-left:5px;'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'display: inline-block; vertical-align: top; margin-right:5px;'));
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'display: inline-block; vertical-align: top;'));
 
 ?>
 <!DOCTYPE html>
@@ -513,9 +487,8 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'disp
                 </form>
             </div>
             <div style="clear:both;"></div>
-            
+            <div id="divPrintButton" style="display:none; margin-bottom: 10px;"><input id="printButton" value="Print" type="button" /></div>
             <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
-            	<div id="divPrintButton" style="display:none; margin-bottom: 5px;"><input id="printButton" value="Print" type="button" /></div>
                 <div style="margin-bottom:.5em;"><?php echo $settingstable; ?></div>
                 <?php echo $dataTable; ?>
             </div>
