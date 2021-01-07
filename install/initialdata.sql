@@ -564,7 +564,7 @@ INSERT INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`
 ('MaxExpected','260','i','h','','Maximum Expected days out for a visit',''),
 ('MaxRepeatEvent','53','i','v','','Maximum number of times to repeat a calendar event',''),
 ('MemberImageSizePx','75','i','h','','Guest image thumbnail size',''),
-('Mode', 'demo', 'lu', 'a', '', 'Site Operational Mode', 'Site_Mode'),
+('mode', 'demo', 'lu', 'a', '', 'Site Operational Mode', 'Site_Mode'),
 ('NightsCounter','calYear','s','c','','Count nights by year (calYear) or by grand total',''),
 ('NoReplyAddr','','ea','ha','','No reply email address',''),
 ('NotificationAddress','','ea','f','','Gets financial data upload notifications',''),

@@ -44,7 +44,7 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VAL
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('HUF_URL', 'https://forum.hospitalityhousekeeper.net/', 's', 'a', 'HHK Users Form');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('Error_Report_Email', 'support@nonprofitsoftwarecorp.org', 's', 'a', 'Email for reporting server errors');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('Run_As_Test', 'false', 'b', 'a', 'Run As Test flag');
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('Mode', 'live', 's', 'a', 'Site Operational Mode');
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`) VALUES ('mode', 'live', 'lu', 'a', 'Site Operational Mode', 'Site_Mode');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('Site_Maintenance', 'false', 'b', 'a', 'Flag to temporarily deny access to the site');
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('SSL', 'true', 'b', 'a', 'Use SSL flag');
 

@@ -1,5 +1,4 @@
 <?php
-
 namespace HHK\House\GLCodes;
 
 use HHK\HTMLControls\HTMLTable;

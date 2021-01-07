@@ -73,7 +73,7 @@ class Login {
         }
 
         
-        $ssn->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'Mode'));
+        $ssn->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'mode'));
         $ssn->testVersion = SysConfig::getKeyValue($dbh, 'sys_config', 'Run_As_Test');
         $ssn->resourceURL = $secureComp->getRootURL();
         $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
