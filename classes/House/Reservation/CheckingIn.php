@@ -135,7 +135,7 @@ FROM reservation r
         $rateChooser = new RateChooser($dbh);
         
         // Create rate chooser markup?
-        if ($uS->RoomPriceModel != ItemPriceCode::None) {
+        if ($uS->RoomPriceModel != ItemPriceCode::None || $uS->VisitFee || $uS->KeyDeposit) {
             
             $resc = $roomChooser->getSelectedResource();
             

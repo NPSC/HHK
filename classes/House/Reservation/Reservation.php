@@ -492,7 +492,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $dataArray['rooms'] = $roomChooser->makeRoomsArray();
 
             // Rate Chooser
-            if ($uS->RoomPriceModel != ItemPriceCode::None) {
+            if ($uS->RoomPriceModel != ItemPriceCode::None || $uS->KeyDeposit || $uS->VisitFee) {
 
                 $showPayWith = TRUE;
 
