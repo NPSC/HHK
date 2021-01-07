@@ -197,18 +197,6 @@ if (stristr($uS->siteName, 'gorecki') !== FALSE || strtolower($uS->mode) != 'liv
 	$useGlReport = TRUE;
 }
 
-// $monthArray = array(
-//     1 => array(1, 'January'),
-//     2 => array(2, 'February'),
-//     3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-//     7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
-
-// if ($uS->fy_diff_Months == 0) {
-//     $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
-// } else {
-//     $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
-// }
-
 // Hosted payment return
 try {
 
@@ -325,40 +313,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
         $useVisitDates = TRUE;
     }
 
-//     if (isset($_POST['selIntMonth'])) {
-//         $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
-//     }
-
-//     if (isset($_POST['selCalendar'])) {
-//         $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
-//     }
-
-//     if (isset($_POST['selIntYear'])) {
-//         $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-//     }
-
-//     if (isset($_POST['stDate'])) {
-//         $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
-//     }
-
-//     if (isset($_POST['enDate'])) {
-//         $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
-//     }
-
-//     if (isset($_POST['selAssoc'])) {
-//         $reqs = $_POST['selAssoc'];
-//         if (is_array($reqs)) {
-//             $assocSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-//         }
-//     }
-
-//     if (isset($_POST['selHospital'])) {
-//         $reqs = $_POST['selHospital'];
-//         if (is_array($reqs)) {
-//             $hospitalSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-//         }
-//     }
-
     if (isset($_POST['selInvStatus'])) {
         $reqs = $_POST['selInvStatus'];
         if (is_array($reqs)) {
@@ -372,62 +326,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
             $baSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
         }
     }
-
-
-    // Determine time span
-//     if ($calSelection == 20) {
-//         // fiscal year
-//         $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
-//         $startDT = new DateTime($year . '-01-01');
-
-//         $start = $startDT->sub($adjustPeriod)->format('Y-m-d');
-
-//         $endDT = new DateTime(($year + 1) . '-01-01');
-//         $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
-
-//     } else if ($calSelection == 21) {
-//         // Calendar year
-//         $startDT = new DateTime($year . '-01-01');
-//         $start = $startDT->format('Y-m-d');
-
-//         $end = ($year + 1) . '-01-01';
-
-//     } else if ($calSelection == 18) {
-//         // Dates
-//         if ($txtStart != '') {
-//             $startDT = new DateTime($txtStart);
-//         } else {
-//             $startDT = new DateTime();
-//         }
-
-//         if ($txtEnd != '') {
-//             $endDT = new DateTime($txtEnd);
-//         } else {
-//             $endDT = new DateTime();
-//         }
-
-//         $start = $startDT->format('Y-m-d');
-//         $end = $endDT->format('Y-m-d');
-
-//     } else if ($calSelection == 22) {
-//         // Year to date
-//         $start = date('Y') . '-01-01';
-
-//         $endDT = new DateTime();
-
-//         $end = $endDT->add(new DateInterval('P1D'))->format('Y-m-d ');
-
-//     } else {
-//         // Months
-//         $interval = 'P' . count($months) . 'M';
-//         $month = $months[0];
-//         $start = $year . '-' . $month . '-01';
-
-//         $endDate = new DateTime($start);
-//         $endDate->add(new DateInterval($interval));
-
-//         $end = $endDate->format('Y-m-d');
-//     }
 
     $whHosp = '';
     $whAssoc = '';
@@ -914,13 +812,6 @@ if ($useGlReport) {
 $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'display: inline-block; vertical-align: top;'));
 
-// if (count($aList) > 0) {
-// $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections),
-//                 array('name'=>'selAssoc[]', 'size'=>'3', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-// }
-// $hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections),
-// 		array('name'=>'selHospital[]', 'size'=>(count($hList)>12 ? '12' : (count($hList)+1)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-
 $invStatusSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($invoiceStatuses, $invStatus), array('name' => 'selInvStatus[]', 'size' => '4', 'multiple' => 'multiple'));
 
 
@@ -928,10 +819,6 @@ if (count($bagnts) > 0) {
 
 	$baSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($bagnts, $baSelections), array('name' => 'selbillagent[]', 'size' => (count($bagnts)>12 ? '12' : (count($bagnts)+1)), 'multiple' => 'multiple'));
 }
-
-// $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-// $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
-// $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
 
 $dAttrs = array('name'=>'cbShoDel', 'id'=>'cbShoDel', 'type'=>'checkbox', 'style'=>'margin-right:.3em;');
 
