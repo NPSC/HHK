@@ -122,32 +122,32 @@ class RoomChooser {
         return $this->selectedResource;
     }
 
-    public function createConstraintsChooser(\PDO $dbh, $idReservation, $numGuests, $constraintsDisabled = FALSE, $roomTitle = '') {
+//     public function createConstraintsChooser(\PDO $dbh, $idReservation, $numGuests, $constraintsDisabled = FALSE, $roomTitle = '') {
 
-        $constraintMkup = self::createResvConstMkup($dbh, $idReservation, $constraintsDisabled, '', $this->oldResvId);
+//         $constraintMkup = self::createResvConstMkup($dbh, $idReservation, $constraintsDisabled, '', $this->oldResvId);
 
-        if ($constraintMkup == '') {
-            return '';
-        }
+//         if ($constraintMkup == '') {
+//             return '';
+//         }
 
-        $tbl = new HTMLTable();
+//         $tbl = new HTMLTable();
 
-        $tbl->addBodyTr(HTMLTable::makeTh("Total Guests:", array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $numGuests, array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
-                );
+//         $tbl->addBodyTr(HTMLTable::makeTh("Total Guests:", array('class'=>'tdlabel'))
+//                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $numGuests, array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
+//                 );
 
-        if ($roomTitle != '') {
-            $tbl->addBodyTr(HTMLTable::makeTh("Room:", array('class'=>'tdlabel'))
-                .HTMLTable::makeTd($roomTitle)
-                );
-        }
+//         if ($roomTitle != '') {
+//             $tbl->addBodyTr(HTMLTable::makeTh("Room:", array('class'=>'tdlabel'))
+//                 .HTMLTable::makeTd($roomTitle)
+//                 );
+//         }
 
-        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Constraints Chooser', array('style'=>'font-weight:bold;'))
-                . $tbl->generateMarkup() . $constraintMkup, array('class'=>'hhk-panel')),
-                array('style'=>'float:left;'));
+//         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+//                 HTMLContainer::generateMarkup('legend', 'Constraints Chooser', array('style'=>'font-weight:bold;'))
+//                 . $tbl->generateMarkup() . $constraintMkup, array('class'=>'hhk-panel')),
+//                 array('style'=>'float:left;'));
 
-    }
+//     }
 
 
     public function createCheckinMarkup(\PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $omitSelf = TRUE, $overrideMaxOcc = 0) {

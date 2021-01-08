@@ -65,20 +65,23 @@ class GuestRegister {
         }
 
         //Resource grouping controls
-        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group', 'Order');
+        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
         
-        $orderBy = '';
-        $tableName = '';
+
+        $genJoin = '';
+        $genTableName = '';
+        $orderBy = 'r.Util_Priority';
         
         foreach ($rescGroups as $g) {
         	
         	if ($rescGroupBy === $g[0]) {
-        		$orderBy = 'rm.' . $rescGroupBy . ',';
-        		$tableName = $g[2];
+
+        		$genJoin = " left join `gen_lookups` g on g.`Table_Name` = '" . $g[2] . "' and g.`Code` = rm." . $g[0] . " ";
+        		$orderBy = "g.`Order`, " . $orderBy;
+        		$genTableName = $g[2];
         		break;
         	}
         }
-        
         
         
         // Get list of resources
@@ -98,62 +101,61 @@ from resource r
 resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDT->format('Y-m-d') . "')
     left join resource_room rr on r.idResource = rr.idResource
     left join room rm on rr.idRoom = rm.idRoom
+	$genJoin
 where ru.idResource_use is null
- order by $orderBy r.Util_Priority;";
+ order by $orderBy;";
+        
         $rstmt = $dbh->query($qu);
-
         $rawRescs = $rstmt->fetchAll(\PDO::FETCH_ASSOC);
         
         $roomGroups = array();
 
-        if ($tableName != '') {
-        	
-        	$groups = readGenLookupsPDO($dbh, $tableName, 'Order');
+        $groups = readGenLookupsPDO($dbh, $genTableName, 'Order');
         
-        	// Count the room grouping types
-        	foreach ($rawRescs as $r) {
+        // Count the room grouping types
+        foreach ($rawRescs as $r) {
 
-        		$notFound = TRUE;
+        	$notFound = TRUE;
 
-        		foreach ($groups as $g) {
+        	foreach ($groups as $g) {
 
-        			if ($g[0] == $r[$rescGroupBy]) {
+        		if ($g[0] == $r[$rescGroupBy]) {
 
-        				$notFound = FALSE;
+        			$notFound = FALSE;
 
-        				if (isset($roomGroups[$g[0]])) {
-        					$roomGroups[$g[0]]['cnt']++;
-        				} else {
-        					$roomGroups[$g[0]]['cnt'] = 1;
-        					$roomGroups[$g[0]]['title'] = $g[1];
-        				}
-
-        				break;
+        			if (isset($roomGroups[$g[0]])) {
+        				$roomGroups[$g[0]]['cnt']++;
+        			} else {
+        				$roomGroups[$g[0]]['cnt'] = 1;
+        				$roomGroups[$g[0]]['title'] = $g[1];
         			}
-        		}
 
-        		if ($notFound && $r[$rescGroupBy] == '') {
+        			break;
+        		}
+        	}
+
+       		if ($notFound && $r[$rescGroupBy] == '') {
 	
-	        		if (isset($roomGroups[''])) {
-	        			$roomGroups['']['cnt']++;
-	        		} else {
-	        			$roomGroups['']['cnt'] = 1;
-	        			$roomGroups['']['title'] = 'not set';
-	        		}
-	        	}
+	       		if (isset($roomGroups[''])) {
+	       			$roomGroups['']['cnt']++;
+	       		} else {
+	       			$roomGroups['']['cnt'] = 1;
+	       			$roomGroups['']['title'] = 'not set';
+	       		}
+	       	}
 	        	
-	        	if ($notFound && $r[$rescGroupBy] != '') {
+	       	if ($notFound && $r[$rescGroupBy] != '') {
 	        		
-	        		if (isset($roomGroups[$r[$rescGroupBy]])) {
-	        			$roomGroups[$r[$rescGroupBy]]['cnt']++;
-	        		} else {
-	        			$roomGroups[$r[$rescGroupBy]]['cnt'] = 1;
-	        			$roomGroups[$r[$rescGroupBy]]['title'] = 'missing index: ' . $r[$rescGroupBy];
-	        		}
+	        	if (isset($roomGroups[$r[$rescGroupBy]])) {
+	        		$roomGroups[$r[$rescGroupBy]]['cnt']++;
+	        	} else {
+	        		$roomGroups[$r[$rescGroupBy]]['cnt'] = 1;
+	        		$roomGroups[$r[$rescGroupBy]]['title'] = 'missing index: ' . $r[$rescGroupBy];
 	        	}
-	        	
 	        }
-        }
+	        	
+	    }
+
 
         // Set the grouping totals in the group titles
         foreach ($rawRescs as $r) {
@@ -167,11 +169,11 @@ where ru.idResource_use is null
 
             $rescs[] = $r;
         }
-        
+
         // Add waitlist
         $rescs[] = array(
                 'id' => 0,
-        		'title' => ($tableName != '' ? ' ' : 'Waitlist'),
+        		'title' => ($genTableName != '' ? ' ' : 'Waitlist'),
                 'bgColor' => '#333',
                 //'textColor' => '#fff',
                 'maxOcc' => 0,

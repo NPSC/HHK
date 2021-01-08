@@ -536,7 +536,7 @@ class SiteConfig {
 
                 $opts = readGenLookupsPDO($dbh, $r['GenLookup'], 'order');
 
-                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($opts), $r['Value'], TRUE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
+                $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($opts), $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
 
             } else {
 
