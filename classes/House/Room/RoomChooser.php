@@ -373,10 +373,11 @@ class RoomChooser {
         $errorMessage = $this->getRoomSelectionError($dbh, $resOptions);
 
         $resvConstraints = $this->resv->getConstraints($dbh);
+        $visitConstraints = $this->resv->getVisitConstraints($dbh);
         $constraintMkup = '';
         $guestsRoom = '';
 
-        if (count($resvConstraints->getConstraints()) > 0) {
+        if (count($resvConstraints->getConstraints()) + count($visitConstraints->getConstraints()) > 0) {
 
             $constraintMkup = self::createResvConstMkup($dbh, $this->resv->getIdReservation(), $constraintsDisabled, $classId, $this->oldResvId);
 
@@ -537,22 +538,16 @@ class RoomChooser {
     public static function createResvConstMkup(\PDO $dbh, $resvId, $disableCtrl = FALSE, $classId = '', $oldResvId = 0) {
 
         $tbl = new HTMLTable();
-        $hasCtrls = FALSE;
+        $mkup = '';
 
         $rhasCtrls = self::makeConstraintsCheckboxes(new ConstraintsReservation($dbh, $resvId, $oldResvId), $tbl, $disableCtrl, $classId . ' hhk-constraintsCB');
         $vhasCtrls = self::makeConstraintsCheckboxes(new ConstraintsVisit($dbh, $resvId, $oldResvId), $tbl, $disableCtrl, $classId);
 
         if ($rhasCtrls || $vhasCtrls) {
-            $hasCtrls = TRUE;
+        	$mkup = $tbl->generateMarkup(array('id'=>'hhk-constraintsTbl'));
         }
 
-        if ($hasCtrls) {
-            $rtn = $tbl->generateMarkup(array('id'=>'hhk-constraintsTbl'));
-        } else {
-            $rtn = '';
-        }
-
-        return $rtn;
+        return $mkup;
     }
 
     protected static function makeConstraintsCheckboxes($constraints, &$tbl, $disableCtrl, $classId) {

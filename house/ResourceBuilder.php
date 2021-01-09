@@ -766,9 +766,6 @@ if (isset($_POST['btnhSave'])) {
         	// Change status to "Retired"
         	$hospRs->Status->setNewVal('r');
         	EditRS::update($dbh, $hospRs, array($hospRs->idHospital));
-//             EditRS::delete($dbh, $hospRs, array(
-//                 $hospRs->idHospital
-//             ));
 
             // Delete any attribute entries
             $query = "delete from attribute_entity where idEntity = :id and Type = :tpe";
