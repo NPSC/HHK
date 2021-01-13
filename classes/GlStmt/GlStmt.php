@@ -24,8 +24,16 @@ class GlStmt {
 	protected $glLineMapper;
 	protected $baLineMapper;
 
-
-	public function __construct(\PDO $dbh, $month, $year, $day = '01') {
+	/**
+	 * New Gl Statement object that assumes (Year, $month, $day) is the start date of this statement.
+	 * This statement loads data for every day of the month indicated.
+	 *
+	 * @param \PDO $dbh
+	 * @param mixed $year
+	 * @param mixed $month
+	 * @param string $day
+	 */
+	public function __construct(\PDO $dbh, $year, $month, $day = '01') {
 		
 		$this->startDay = $day;
 		$this->startDate = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-' . $this->getStartDay());
@@ -57,7 +65,7 @@ class GlStmt {
 			$this->recordError('No Payments Found. ');
 		}
 		
-		$this->lines = array();
+		$this->lines = [];
 		
 		//
 		foreach ($this->records as $r) {
@@ -73,7 +81,7 @@ class GlStmt {
 				continue;
 			}
 
-			$payments = array();
+			$payments = [];
 
 			foreach ($r['p'] as $p) {
 
@@ -128,7 +136,7 @@ class GlStmt {
 				//Return earlier sale
 				
 				if (is_null($pUpDate)) {
-					$this->recordError("Missing Last Updated. Payment Id = ". $p['idPayment']);
+					$this->recordError("Retrn missing its Last Updated. Payment Id = ". $p['idPayment']);
 					continue;
 				}
 				
@@ -878,7 +886,7 @@ class GlStmt {
 		}
 
 //		$unpaidCharges += $totalPayment[ItemId::Waive];
-		$discountCharge += $totalPayment[ItemId::Discount];
+//		$discountCharge += $totalPayment[ItemId::Discount];
 
 		$tbl = new HTMLTable();
 		

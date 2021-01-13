@@ -2,7 +2,7 @@
 
 use HHK\AlertControl\AlertMessage;
 use HHK\sec\{SecurityComponent, Session, WebInit};
-use HHK\SysConst\WebRole;
+use HHK\SysConst\{WebRole, CodeVersion};
 use HHK\Config_Lite\Config_Lite;
 use HHK\Config_Lite\Exception\Config_Lite_Exception_Runtime;
 use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
@@ -290,7 +290,7 @@ if (isset($_POST['btnLogs'])) {
 
 $logMarkup = '';
 $logSelRows = array(
-	1=>array(0=>'sl', 1=>'Site Log'),
+	1=>array(0=>'sl', 1=>'Combined Log'),
     2=>array(0=>'ss', 1=>'Sys Config Log'),
     3=>array(0=>'rr', 1=>'Rooms Log'),
     4=>array(0=>'ll', 1=>'Lookups Log'),
@@ -639,7 +639,7 @@ $('#logsTabDiv').tabs("option", "active", 1);
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels &#38; Prompts</a></li>
-                    <li id="liLogs"><a href="#logs">System Logs</a></li>
+                    <li id="liLogs"><a href="#logs">Site Logs</a></li>
                     <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
@@ -697,7 +697,7 @@ $('#logsTabDiv').tabs("option", "active", 1);
                         <?php echo $patchMarkup; ?>
                         <div style="clear:both"></div>
                         <form method="post" action="" name="form1">
-                            <input type="submit" name="btnLogs" id="btnLogs" value="View Site Log" style="margin-left:100px;margin-top:20px;"/>
+                            <input type="submit" name="btnLogs" id="btnLogs" value="View Patch Log" style="margin-left:100px;margin-top:20px;"/>
                             <input type="submit" name="btnSaveSQL" id="btnSaveSQL" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
                             <input type="submit" name="btnUpdate" id="btnUpdate" value="Update Config" style="margin-left:20px;margin-top:20px;"/>
                         </form>

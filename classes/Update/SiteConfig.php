@@ -205,14 +205,24 @@ class SiteConfig {
                 $county = filter_var(trim($fields[7]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
                 $city = filter_var(trim($fields[3]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
                 $altCitys = filter_var(trim($fields[4]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
+                
+                // Use precision coordinates if available
+                $lat = filter_var(trim($fields[16]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                $long = filter_var(trim($fields[17]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                
+                if ($lat == '' || $long == '') {
+                	// use approximate coordinates
+                	$lat = filter_var(trim($fields[12]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                	$long = filter_var(trim($fields[13]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
+                }
 
                 $query .= "('"
                         . filter_var(trim($fields[0]), FILTER_SANITIZE_NUMBER_INT) . "','"    	// Zip_Code
                         . $city . "','"        													// City
                         . $county . "','"        												// County
                         . filter_var(trim($fields[6]), FILTER_SANITIZE_STRING) . "','"        	// State
-                        . filter_var(trim($fields[16]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"   // Lat
-                        . filter_var(trim($fields[17]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION) . "','"	// Long
+                        . $lat . "','"   // Lat
+                        . $long . "','"	// Long
                         . filter_var(trim(substr($fields[1], 0, 2)), FILTER_SANITIZE_STRING) . "','"						//Type
                         . $altCitys
                         . "'),";

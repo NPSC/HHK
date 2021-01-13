@@ -423,3 +423,15 @@ li.hhk-myMenuTop {
 .filters table td {
 	vertical-align:top;
 }
+
+@media screen {
+	.hhk-printmedia {
+		display: none;
+	}
+}
+
+@media print {
+	.hhk-printmedia {
+		display: inline;
+	}
+}
