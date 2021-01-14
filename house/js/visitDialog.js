@@ -446,6 +446,8 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('#DepRefundAmount').val('');
                             $('.hhk-refundDeposit').hide('fade');
                         }
+                        
+                        $('#cbDepRefundApply').trigger('change');
 
 
                         if (roomChgBal < 0) {
@@ -482,14 +484,15 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                         isCheckedOut = false;
                         $('.hhk-finalPayment').hide('fade');
-                        $('.hhk-GuestCredit').hide();
-                        $('.hhk-RoomCharge').hide();
+                        $('.hhk-GuestCredit').hide('fade');
+                        $('.hhk-RoomCharge').hide('fade');
                         $('#feesCharges').val('');
                         $('#guestCredit').val('');
                         $('.hhk-refundDeposit').hide('fade');
                         $('#DepRefundAmount').val('');
                         $('input#cbFinalPayment').prop('checked', false);
                         $('input#cbFinalPayment').change();
+                        $('#cbDepRefundApply').trigger('change');
                     }
                 });
 
@@ -529,6 +532,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 } else {
                      $('#DepRefundAmount').val((0 - kdamt).toFixed(2).toString());
                     $('.hhk-refundDeposit').show('fade');
+                    $('#cbDepRefundApply').attr('checked').trigger('change');
                 }
 
                 if (roomChgBal < 0) {
