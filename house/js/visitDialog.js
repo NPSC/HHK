@@ -359,7 +359,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             var vFeeChgBal = 0.00;
 
             if ($('#spnCfBalDue').length > 0) {
-                roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
+                roomChgBal = parseFloat($('#spnCfBalDue').data('totbal'));
                 vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
 
                 roomChgBal -= vFeeChgBal;
