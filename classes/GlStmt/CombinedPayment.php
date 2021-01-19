@@ -1,7 +1,10 @@
 <?php
 namespace HHK\GlStmt;
 
-class CombinedPayment {
+/**
+ * Object to collect all payments for one invoice.
+ *
+ */class CombinedPayment {
 	
 	/**
 	 *

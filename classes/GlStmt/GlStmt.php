@@ -24,6 +24,7 @@ class GlStmt {
 	protected $glLineMapper;
 	protected $baLineMapper;
 
+
 	/**
 	 * New Gl Statement object that assumes (Year, $month, $day) is the start date of this statement.
 	 * This statement loads data for every day of the month indicated.
@@ -46,13 +47,21 @@ class GlStmt {
 		
 		$this->loadDbRecords($dbh);
 		
+		// Get payment gl codes
 		$pmCodes = array();
 		$stmt = $dbh->query("Select Gl_Code from payment_method where idPayment_method in (1, 2, 3, 5)");
 		while ($p = $stmt->fetch(\PDO::FETCH_NUM)) {
 			$pmCodes[] = $p[0];
 		}
 		
-		$this->glLineMapper = new GlStmtTotals($pmCodes);
+		// Get item glcodes
+		$itemCodes = [];
+		$stmti = $dbh->query("Select idItem, Gl_Code from item");
+		while ($i = $stmti->fetch(\PDO::FETCH_NUM)) {
+			$itemCodes[$i[0]] = $i[1];
+		}
+		
+		$this->glLineMapper = new GlStmtTotals($pmCodes, $itemCodes);
 		$this->baLineMapper = new BaStmtTotals();
 	}
 	
@@ -110,6 +119,13 @@ class GlStmt {
 		return $this;
 	}
 	
+	/**
+	 * returns a new CombinedPayment loaded with all payment amounts for an invoice.
+	 *
+	 * @param array $payments
+	 * @param int $iNumber
+	 * @return \HHK\GlStmt\CombinedPayment
+	 */
 	protected function combinePayments($payments, $iNumber) {
 		
 		$cpayment = new CombinedPayment();
@@ -667,12 +683,14 @@ class GlStmt {
 				$pUpDate = NULL;
 			}
 			
+			// Normalize amount
+			$ilAmt = round($r['il_Amount'], 2);
+			
 			// Multiple invoice lines for one payment...
 			if (isset($paymentAmounts[$r['idPayment']]) === FALSE) {
 				$paymentAmounts[$r['idPayment']] = $r['pAmount'];
 			}
 			
-			$ilAmt = $r['il_Amount'];
 			
 			// Payments
 			if (($r['pStatus'] == PaymentStatusCode::Paid || $r['pStatus'] == PaymentStatusCode::VoidReturn) && $r['Is_Refund'] == 0) {
@@ -968,7 +986,7 @@ class GlStmt {
 	protected function showPaymentAmounts($p) {
 		$tbl = new HTMLTable();
 		foreach ($p as $k=>$v) {
-			if ($v != 0) {
+			if (round($v, 2) != 0) {
 			 	$tbl->addBodyTr(HTMLTable::makeTd($k).HTMLTable::makeTd($v));
 			}
 		}

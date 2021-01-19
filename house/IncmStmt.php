@@ -154,6 +154,7 @@ if (isset($_POST['btnHere'])) {
     	$dataTable .= $etbl->generateMarkup();
     }
     
+    
     $tableAttrs = array('style'=>"float:left;margin-right:1em;");
     
     $dataTable .= $glStmt->getGlMarkup($tableAttrs) . $glStmt->doReport($dbh, $monthArray, $tableAttrs);
