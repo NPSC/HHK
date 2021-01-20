@@ -532,7 +532,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 } else {
                      $('#DepRefundAmount').val((0 - kdamt).toFixed(2).toString());
                     $('.hhk-refundDeposit').show('fade');
-                    $('#cbDepRefundApply').attr('checked').trigger('change');
+                    $('#cbDepRefundApply').trigger('change');
                 }
 
                 if (roomChgBal < 0) {
