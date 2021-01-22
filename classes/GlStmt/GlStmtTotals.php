@@ -48,17 +48,22 @@ class GlStmtTotals {
 	public function createMarkup($tableAttrs) {
 		
 		$tbl = new HTMLTable();
-		$tbl->addHeaderTr(HTMLTable::makeTh('Payment Distribution', array('colspan'=>'3')));
+		
+		$totCredit = 0;
+		$totDebit = 0;
+		
+		// Item Payments
+		$itemAmounts = $this->getItemDistribution($tbl);
+		
+		// Payment Methods only
+		$tbl->addBodyTr(HTMLTable::makeTd(''));
+		$tbl->addBodyTr(HTMLTable::makeTh('Payment Distribution', array('colspan'=>'3')));
 		$tbl->addBodyTr(
 				HTMLTable::makeTh('Type')
 				.HTMLTable::makeTh('Credit')
 				.HTMLTable::makeTh('Debit')
 				);
 		
-		$totCredit = 0;
-		$totDebit = 0;
-		
-		// Payment Methods only
 		foreach ($this->getTotals() as $k => $t) {
 			
 			if (isset($this->pmCodes[$k])) {
@@ -80,44 +85,12 @@ class GlStmtTotals {
 				. HTMLTable::makeTd(number_format($totDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
-		// Items
-		$this->getItemDistribution($tbl, $totCredit, $totDebit);
-	
-// 		$tbl->addBodyTr(HTMLTable::makeTd(''));
-// 		$tbl->addBodyTr(HTMLTable::makeTh('Item Distribution', array('colspan'=>'3')));
-// 		$tbl->addBodyTr(
-// 				HTMLTable::makeTh('Item')
-// 				.HTMLTable::makeTh('Credit')
-// 				.HTMLTable::makeTh('Debit')
-// 				);
-		
-// 		$itemCredit = 0;
-// 		$itemDebit = 0;
-		
-// 		foreach ($this->getItemTotals() as $k => $t) {
-			
-// 			$itemCredit += $t['Credit'];
-// 			$itemDebit += $t['Debit'];
-				
-// 			$tbl->addBodyTr(
-// 					HTMLTable::makeTd($k, array('class'=>'tdlabel'))
-// 					. HTMLTable::makeTd(($t['Credit'] == 0 ? '' : number_format($t['Credit'], 2)), array('style'=>'text-align:right;'))
-// 					. HTMLTable::makeTd(($t['Debit'] == 0 ? '' : number_format($t['Debit'], 2)), array('style'=>'text-align:right;'))
-// 			);
-
-// 		}
-		
-// 		$tbl->addBodyTr(
-// 				HTMLTable::makeTd('Item Totals', array('class'=>'tdlabel'))
-// 				. HTMLTable::makeTd(number_format($itemCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-// 				. HTMLTable::makeTd(number_format($itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-// 				);
-		
-// 		$tbl->addBodyTr(
-// 				HTMLTable::makeTd('Totals', array('class'=>'tdlabel'))
-// 				. HTMLTable::makeTd(number_format($totCredit + $itemCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-// 				. HTMLTable::makeTd(number_format($totDebit + $itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-// 				);
+		// Final total line (should balance)
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Totals', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($totCredit + $itemAmounts['credit'], 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($totDebit + $itemAmounts['debit'], 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				);
 		
 		return $tbl->generateMarkup($tableAttrs);
 	}
@@ -126,9 +99,8 @@ class GlStmtTotals {
 		return $this->totals;
 	}
 	
-	public function getItemDistribution(&$tbl, $totCredit, $totDebit) {
+	public function getItemDistribution(&$tbl) {
 		
-		$tbl->addBodyTr(HTMLTable::makeTd(''));
 		$tbl->addBodyTr(HTMLTable::makeTh('Item Distribution', array('colspan'=>'3')));
 		$tbl->addBodyTr(
 				HTMLTable::makeTh('Item')
@@ -138,26 +110,48 @@ class GlStmtTotals {
 		
 		$itemCredit = 0;
 		$itemDebit = 0;
+		
+		$lodgCredit = 0;
+		$lodgDebit = 0;
 
 		//lodging
 		if (isset($this->totals[$this->itemCodes[1]])) {
+			
 			$this->makeItemLine(1, $tbl, $itemCredit, $itemDebit);
+			$lodgCredit = $this->totals[$this->itemCodes[1]]['Credit'];
+			$lodgDebit = $this->totals[$this->itemCodes[1]]['Debit'];
+			
+		} else {
+			
+			$tbl->addBodyTr(
+					HTMLTable::makeTd($this->itemCodes[1], array('class'=>'tdlabel'))
+					. HTMLTable::makeTd('', array('style'=>'text-align:right;'))
+					. HTMLTable::makeTd('', array('style'=>'text-align:right;'))
+					);
 		}
+		
 		//lodging Reversal
 		if (isset($this->totals[$this->itemCodes[7]])) {
-			$this->makeItemLine(7, $tbl, $itemCredit, $itemDebit);
 			
-			if ($this->totals[$this->itemCodes[1]]['Credit'] > 0 || $this->totals[$this->itemCodes[1]]['Debit'] > 0) {
-				
-				$credit = $this->totals[$this->itemCodes[1]]['Credit'] + $this->totals[$this->itemCodes[7]]['Credit'];
-				$debit = $this->totals[$this->itemCodes[1]]['Debit'] + $this->totals[$this->itemCodes[7]]['Debit'];
-				$tbl->addBodyTr(
-						HTMLTable::makeTd('Lodging Total', array('class'=>'tdlabel'))
-						. HTMLTable::makeTd(($credit > 0 ? number_format($credit,2) : ''), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-						. HTMLTable::makeTd(($debit > 0 ? number_format($debit, 2) : ''), array('style'=>'text-align:right;', 'class'=>'hhk-tdTotals'))
-						);
-			}
+			$this->makeItemLine(7, $tbl, $itemCredit, $itemDebit);
+			$lodgCredit += $this->totals[$this->itemCodes[7]]['Credit'];
+			$lodgDebit += $this->totals[$this->itemCodes[7]]['Debit'];
+			
+		} else {
+			
+			$tbl->addBodyTr(
+					HTMLTable::makeTd($this->itemCodes[7], array('class'=>'tdlabel'))
+					. HTMLTable::makeTd('', array('style'=>'text-align:right;'))
+					. HTMLTable::makeTd('', array('style'=>'text-align:right;'))
+					);
 		}
+		
+		// Insert sub total for lodging
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Lodging Total', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(($lodgCredit > 0 ? number_format($lodgCredit,2) : ''), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(($lodgDebit > 0 ? number_format($lodgDebit, 2) : ''), array('style'=>'text-align:right;', 'class'=>'hhk-tdTotals'))
+				);
 		
 		//Waive
 		if (isset($this->totals[$this->itemCodes[11]])) {
@@ -202,11 +196,7 @@ class GlStmtTotals {
 				. HTMLTable::makeTd(number_format($itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
-		$tbl->addBodyTr(
-				HTMLTable::makeTd('Totals', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($totCredit + $itemCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				. HTMLTable::makeTd(number_format($totDebit + $itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				);
+		return array('credit'=>$itemCredit, 'debit'=>$itemDebit);
 	}
 	
 	protected function makeItemLine($itemCode, &$tbl, &$itemCredit, &$itemDebit) {

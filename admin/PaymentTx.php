@@ -41,9 +41,9 @@ function makeParmtable($parms) {
     if (is_array($parms)) {
 
         foreach ($parms as $key => $v) {
-//            if ($key == 'MerchantID' && $v != '') {
-//                $v = '******';
-//            }
+           if ($key == 'MerchantID' && $v != '') {
+               $v = 'xxxx.' . substr($v, -4);
+           }
 
             $reqTbl->addBodyTr(HTMLTable::makeTd($key . ':', array('class' => 'tdlabel')) . HTMLTable::makeTd($v));
         }

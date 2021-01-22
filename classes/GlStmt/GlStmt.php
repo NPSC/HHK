@@ -516,12 +516,12 @@ class GlStmt {
 		
 		$intervalCharge = 0;
 		$fullInvervalCharge = 0;
-		$discountCharge = 0;
+		$subsidyCharge = 0;
 		
 		$vIntervalCharge = 0;
 		$vPreIntervalCharge = 0;
 		$vFullIntervalCharge = 0;
-		$vDiscountCharge = 0;
+		$vSubsidyCharge = 0;
 		$vIntervalPay = 0;
 		$vForwardPay = 0;
 		
@@ -606,13 +606,13 @@ class GlStmt {
 					
 					$intervalCharge += $vIntervalCharge;
 					$fullInvervalCharge += $vFullIntervalCharge;
-					$discountCharge += $vDiscountCharge;
+					$subsidyCharge += $vSubsidyCharge;
 					
 					// Reset for next visit
 					$vIntervalCharge = 0;
 					$vPreIntervalCharge = 0;
 					$vFullIntervalCharge = 0;
-					$vDiscountCharge = 0;
+					$vSubsidyCharge = 0;
 					$vIntervalPay = 0;
 					$vForwardPay = 0;
 										
@@ -651,7 +651,7 @@ class GlStmt {
 					
 					// discount charges are only for discounted rates.
 					if ($r['Rate_Category'] != RoomRateCategories::FlatRateCategory) {
-						$vDiscountCharge += ($vFullIntervalCharge - $vIntervalCharge);
+						$vSubsidyCharge += ($vFullIntervalCharge - $vIntervalCharge);
 					}
 					
 				}
@@ -899,12 +899,12 @@ class GlStmt {
 			
 			$intervalCharge += $vIntervalCharge;
 			$fullInvervalCharge += $vFullIntervalCharge;
-			$discountCharge += $vDiscountCharge;
+			$subsidyCharge += $vSubsidyCharge;
 
 		}
 
 //		$unpaidCharges += $totalPayment[ItemId::Waive];
-//		$discountCharge += $totalPayment[ItemId::Discount];
+//		$subsidyCharge += $totalPayment[ItemId::Discount];
 
 		$tbl = new HTMLTable();
 		
@@ -937,10 +937,10 @@ class GlStmt {
 				HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;'))
 				);
-		$tbl->addBodyTr(
-				HTMLTable::makeTd('Waived Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;'))
-				);
+// 		$tbl->addBodyTr(
+// 				HTMLTable::makeTd('Waived Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+// 				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;'))
+// 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;'))
@@ -964,17 +964,23 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format($fullInvervalCharge, 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Actual charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;'))
+				HTMLTable::makeTd('Itemized Discounts ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Discount]), 2), array('style'=>'text-align:right;'))
 				);
+		
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Waived Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Waived Chargess for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Discounts for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($discountCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				HTMLTable::makeTd('Subsidy for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($subsidyCharge, 2), array('style'=>'text-align:right;'))
+				);
+
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Remaining charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
 		return $tbl->generateMarkup($tableAttrs)
