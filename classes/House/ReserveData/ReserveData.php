@@ -232,6 +232,7 @@ class ReserveData {
             'vid' => $this->getIdVisit(),
             'span'=> $this->getSpan(),
             'patLabel' => $this->getPatLabel(),
+            'guestLabel' => $this->guestLabel,
             'resvTitle' => $this->getResvTitle(),
             'saveButtonLabel' => $this->saveButtonLabel,
         	'insistCkinDemog' => $this->insistCkinDemog,
