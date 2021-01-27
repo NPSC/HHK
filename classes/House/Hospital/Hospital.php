@@ -35,7 +35,7 @@ class Hospital {
 
     }
     
-    protected static function justHospitalMarkup(HospitalStay $hstay, $showExitDate = FALSE) {
+    protected static function justHospitalMarkup(HospitalStay $hstay) {
 
         $uS = Session::getInstance();
 
@@ -62,11 +62,13 @@ class Hospital {
 
         $table = new HTMLTable();
 
+        $mrn = $labels->getString('hospital', 'MRN', '');
+        
         $table->addHeaderTr(
                 (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
         		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
-        		.HTMLTable::makeTh($labels->getString('hospital', 'MRN', 'MRN'))
+        		.($mrn == '' ? '' : HTMLTable::makeTh($mrn))
             );
 
         $table->addBodyTr(
@@ -88,39 +90,49 @@ class Hospital {
         						array('name'=>'psgRoom', 'size'=>'8', 'class'=>'ignrSave hospital-stay')
         						)
         				)
-        		. HTMLTable::makeTd(
+        		. ($mrn == '' ? '' : HTMLTable::makeTd(
         				HTMLInput::generateMarkup(
         						$hstay->getMrn(),
         						array('name'=>'psgMrn', 'size'=>'14', 'class'=>'ignrSave hospital-stay')
         						)
-        				)
+        				))
         );
+
+
+        $trtSt = $labels->getString('hospital', 'treatmentStart', '');
+        $trtEnd = $labels->getString('hospital', 'treatmentEnd', '');
+        $hospDates = '';
+
+        if ($trtSt !== '' || $trtEnd !== '') {
+        	
+	        $table2 = new HTMLTable();
+	        
+	        $table2->addHeaderTr(
+	        		($trtSt == '' ? '' : HTMLTable::makeTh($trtSt))
+	        		.($trtEnd !== '' ? HTMLTable::makeTh($trtEnd) : '')
+	        		);
+
+	        $table2->addBodyTr(
+	        		($trtSt == '' ? '' : HTMLTable::makeTd(
+	        				HTMLInput::generateMarkup(
+	        						($hstay->getArrivalDate() != '' ? date("M j, Y", strtotime($hstay->getArrivalDate())) : ""),
+	        						array('name'=>'txtEntryDate', 'class'=>'ckhsdate ignrSave hospital-stay', 'readonly'=>'readonly'))
+	        				))
+	        		. ($trtEnd !== '' ? HTMLTable::makeTd(
+	        				HTMLInput::generateMarkup(
+	        						($hstay->getExpectedDepartureDate() != '' ? date("M j, Y", strtotime($hstay->getExpectedDepartureDate())) : ''),
+	        						array('name'=>'txtExitDate', 'class'=>'ckhsdate ignrSave hospital-stay', 'readonly'=>'readonly'))
+	        				) : '')
+	       );
+	        
+	        $hospDates = $table2->generateMarkup(array('style'=>'float:left;'));
+        }
         
-        $table2 = new HTMLTable();
-        
-        $table2->addHeaderTr(
-        		HTMLTable::makeTh($labels->getString('hospital', 'treatmentStart', 'Treatment Start'))
-        		.($showExitDate ? HTMLTable::makeTh($labels->getString('hospital', 'treatmentEnd', 'Treatment End')) : '')
-        		);
-        
-        $table2->addBodyTr(
-        		HTMLTable::makeTd(
-        				HTMLInput::generateMarkup(
-        						($hstay->getArrivalDate() != '' ? date("M j, Y", strtotime($hstay->getArrivalDate())) : ""),
-        						array('name'=>'txtEntryDate', 'class'=>'ckhsdate ignrSave hospital-stay', 'readonly'=>'readonly'))
-        				)
-        		. ($showExitDate ? HTMLTable::makeTd(
-        				HTMLInput::generateMarkup(
-        						($hstay->getExpectedDepartureDate() != '' ? date("M j, Y", strtotime($hstay->getExpectedDepartureDate())) : ''),
-        						array('name'=>'txtExitDate', 'class'=>'ckhsdate ignrSave hospital-stay', 'readonly'=>'readonly'))
-        				) : '')
-       );
-        
-        return $table->generateMarkup(array('style'=>'float:left;')). $table2->generateMarkup(array('style'=>'float:left;'));
+        return $table->generateMarkup(array('style'=>'float:left;')). $hospDates;
 
     }
 
-    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $showExitDate = TRUE) {
+    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay) {
 
         $uS = Session::getInstance();
         $referralAgentMarkup = '';
@@ -341,7 +353,7 @@ $(document).ready(function () {
         $divClearStyle = HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
         $div = HTMLContainer::generateMarkup('div',
-        		self::justHospitalMarkup($hstay, $showExitDate)
+        		self::justHospitalMarkup($hstay)
         		. $referralAgentMarkup
         		. $doctorMarkup
         		. $diagMarkup

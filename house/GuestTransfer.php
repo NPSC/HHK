@@ -18,7 +18,7 @@ use HHK\sec\Labels;
  * List and transfer guests to NEON
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2021 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -43,16 +43,6 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-
 $config = new Config_Lite(ciCFG_FILE);
 
 $serviceName = $config->getString('webServices', 'Service_Name', '');
@@ -67,8 +57,6 @@ if ($serviceName != '' && $webServices != '') {
 if (function_exists('curl_version') === FALSE) {
     exit('<h4>PHP configuration error: cURL functions are missing. </h4>');
 }
-
-$resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
@@ -110,7 +98,7 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
 }
 
-function getPeopleReport(\PDO $dbh, $local, $start, $end, $extIdFlag = FALSE) {
+function getPeopleReport(\PDO $dbh, $start, $end, $extIdFlag = FALSE) {
 
     $whExt = '';
     if ($extIdFlag) {
@@ -120,24 +108,50 @@ function getPeopleReport(\PDO $dbh, $local, $start, $end, $extIdFlag = FALSE) {
     $uS = Session::getInstance();
     $transferIds = [];
 
-    $query = "select vg.External_Id, vg.Id, CASE WHEN vg.Relationship_Code = 'slf' THEN 'p' ELSE '' END as `Patient`, concat(vg.Prefix, ' ', vg.First, ' ', vg.Last, ' ', vg.Suffix) as `Name`, ifnull(vg.BirthDate, '') as `Birth Date`, "
-        . " concat(vg.Address, ', ', vg.City, ', ', vg.County, ' ', vg.State, ' ', vg.Zip) as `Address`,  vg.Phone, vg.Email, vg.idPsg,"
-        . " max(ifnull(s.Span_Start_Date, '')) as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure` "
-        . " from stays s
-        join
-    vguest_listing vg on vg.Id = s.idName
-where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') "
-            . " GROUP BY vg.Id";
+    $query = "SELECT
+    vg.External_Id,
+    vg.Id,
+    CASE
+        WHEN vg.Relationship_Code = 'slf' THEN 'p'
+        ELSE ''
+    END AS `Patient`,
+    CASE
+		WHEN v.idPrimaryGuest = s.idName THEN 'Yes'
+        ELSE ''
+	END AS `Primary Guest`,
+    CONCAT(vg.Prefix,
+            ' ',
+            vg.First,
+            ' ',
+            vg.Last,
+            ' ',
+            vg.Suffix) AS `Name`,
+    IFNULL(vg.BirthDate, '') AS `Birth Date`,
+    CONCAT(vg.Address,
+            ', ',
+            vg.City,
+            ', ',
+            vg.County,
+            ' ',
+            vg.State,
+            ' ',
+            vg.Zip) AS `Address`,
+    vg.Phone,
+    vg.Email,
+    vg.idPsg,
+    MAX(IFNULL(s.Span_Start_Date, '')) AS `Arrival`,
+    IFNULL(s.Span_End_Date, '') AS `Departure`
+FROM
+    stays s
+        JOIN
+    vguest_listing vg ON vg.Id = s.idName
+        JOIN
+    visit v ON s.idVisit = v.idVisit
+        AND s.Visit_Span = v.Span
+where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) >= DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end')
+GROUP BY vg.Id";
 
     $stmt = $dbh->query($query);
-
-    if (!$local) {
-
-        $reportRows = 1;
-        $fileName = 'GuestTransfer';
-        $writer = new \XLSXWriter();
-        $writer->setTitle("Guest Transfer");
-    }
 
     $rows = array();
     $firstRow = TRUE;
@@ -145,90 +159,39 @@ where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DAT
     
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-
         if ($uS->county === FALSE) {
             unset($r['County']);
         }
 
         $transferIds[] = $r['Id'];
 
-        if ($firstRow) {
+        $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
-            $firstRow = FALSE;
-
-            if ($local === FALSE) {
-
-                // build header
-                $colWidths = array();
-                $n = 0;
-                $noReturn = '';
-
-                // Header row
-                foreach ($r as $k=>$v) {
-                    if ($k == 'Arrival' || $k == 'Departure' || $k == 'Birth Date') {
-                        $hdr[$k] = "date";
-                    }else{
-                        $hdr[$k] = "string";
-                    }
-                    $colWidths[] = 20;
-                }
-
-                if ($noReturn != '') {
-                    $hdr[$noReturn] = "string";
-                    $colWidths[] = 20;
-                }
-
-                $hdrStyle = ExcelHelper::getHdrStyle($colWidths);
-                $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
-                $reportRows++;
-            }
+        if (isset($r['Birth Date']) && trim($r['Birth Date']) != '') {
+            $r['Birth Date'] = date('c', strtotime($r['Birth Date']));
+        }
+        if ($r['Arrival'] != '') {
+            $r['Arrival'] = date('c', strtotime($r['Arrival']));
+        }
+        if ($r['Departure'] != '') {
+            $r['Departure'] = date('c', strtotime($r['Departure']));
         }
 
-        if ($local) {
-
-            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
-
-            if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
-                $r['Birth Date'] = date('c', strtotime($r['Birth Date']));
-            }
-            if ($r['Arrival'] != '') {
-                $r['Arrival'] = date('c', strtotime($r['Arrival']));
-            }
-            if ($r['Departure'] != '') {
-                $r['Departure'] = date('c', strtotime($r['Departure']));
-            }
-
-            if ($r['Patient'] != '') {
-                $r['Patient'] = '&#x2714;';
-            }
-
-            $rows[] = $r;
-
-        } else {
-
-            $n = 0;
-            $flds = array();
-
-
-            foreach ($r as $key => $col) {
-                $flds[] = $col;
-            }
-
-            $row = ExcelHelper::convertStrings($hdr, $flds);
-            $writer->writeSheetRow("Sheet1", $row);
+        if ($r['Patient'] != '') {
+        	$r['Patient'] = '&#x2714;';
         }
+            
+        if ($r['Address'] == ', ,   ') {
+        	$r['Address'] = '';
+        }
+            
+        $rows[] = $r;
 
     }
 
-    if ($local) {
+    $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
+    return array('mkup' =>$dataTable, 'xfer'=>$transferIds);
 
-        $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-        return array('mkup' =>$dataTable, 'xfer'=>$transferIds);
-
-
-    } else {
-        ExcelHelper::download($writer, $fileName);
-    }
 }
 
 
@@ -262,11 +225,6 @@ if ($uS->fy_diff_Months == 0) {
 
 // Process report.
 if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
-
-    $local = TRUE;
-    if (isset($_POST['btnExcel'])) {
-        $local = FALSE;
-    }
 
     // gather input
 
@@ -343,7 +301,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
     if (isset($_POST['btnHere'])) {
 
         // Get HHK records result table.
-        $results = getPeopleReport($dbh, $local, $start, $end, FALSE);
+        $results = getPeopleReport($dbh, $start, $end, FALSE);
         $dataTable = $results['mkup'];
         $transferIds = $results['xfer'];
 
@@ -764,7 +722,7 @@ $(document).ready(function() {
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?>  <span style="font-size: .7em;"><a href="SetupNeonCRM.htm" target="_blank">(Instructions)</a></span></h2>
             <a id='aLoginLink' href="<?php echo $wsLink; ?>" style="float:left;margin-top:15px;margin-left:5px;margin-right:5px;padding-left:5px;padding-right:5px;" title="Click to log in."><span style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></span></a>
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
+
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
                    <table style="clear:left;float: left;">
