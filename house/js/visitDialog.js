@@ -458,7 +458,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('.hhk-GuestCredit').show();
                             // force pay cleaning fee if unpaid...
                             if ($('#visitFeeCb').length > 0 && Math.abs(roomChgBal) >= vFeeChgBal) {
-                                $('#visitFeeCb').prop('checked', true).prop('disabled', true);
+                                $('#visitFeeCb').prop('checked', true).prop('disabled', true).trigger('change');
                             }
 
                         } else {
@@ -493,6 +493,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                         $('input#cbFinalPayment').prop('checked', false);
                         $('input#cbFinalPayment').change();
                         $('#cbDepRefundApply').trigger('change');
+                        $('#visitFeeCb').prop('checked', false).prop('disabled', false).trigger('change');
                     }
                 });
 
