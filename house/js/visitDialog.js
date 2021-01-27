@@ -357,12 +357,14 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             var roomChgBal = 0.00;
             var vFeeChgBal = 0.00;
+            var totChgBal = 0.00;
 
             if ($('#spnCfBalDue').length > 0) {
                 roomChgBal = parseFloat($('#spnCfBalDue').data('rmbal'));
                 vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
+                totChgBal = parseFloat($('#spnCfBalDue').data('totbal'));
 
-                roomChgBal -= vFeeChgBal;
+                //roomChgBal -= vFeeChgBal;
             }
 
 
@@ -450,16 +452,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                         $('#cbDepRefundApply').trigger('change');
 
 
-                        if (roomChgBal < 0) {
+                        if (totChgBal < 0) {
 
                             $('#guestCredit').val(roomChgBal.toFixed(2).toString());
                             $('#feesCharges').val('');
                             $('.hhk-RoomCharge').hide();
                             $('.hhk-GuestCredit').show();
-                            // force pay cleaning fee if unpaid...
-                            if ($('#visitFeeCb').length > 0 && Math.abs(roomChgBal) >= vFeeChgBal) {
-                                $('#visitFeeCb').prop('checked', true).prop('disabled', true).trigger('change');
-                            }
+                            
 
                         } else {
 
@@ -467,6 +466,10 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('#guestCredit').val('');
                             $('.hhk-GuestCredit').hide();
                             $('.hhk-RoomCharge').show();
+                            // force pay cleaning fee if unpaid...
+                            if ($('#visitFeeCb').length > 0 && Math.abs(totChgBal) >= vFeeChgBal) {
+                                $('#visitFeeCb').prop('checked', true).prop('disabled', true).trigger('change');
+                            }
                         }
 
                         $('input#cbFinalPayment').change();
