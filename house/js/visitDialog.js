@@ -521,7 +521,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                 $('input.hhk-ckoutCB').change();
 
-            } else if ($('#cbFinalPayment').length > 0) {
+            } else {  // if ($('#cbFinalPayment').length > 0)
 
                 isCheckedOut = true;
 
