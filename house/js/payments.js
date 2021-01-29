@@ -663,7 +663,7 @@ function amtPaid() {
                     $('#txtRtnAmount').val(overPayAmt.toFixed(2).toString());
                 }
 
-                totPay = vfee + invAmt + feePay;
+                totPay = vfee + invAmt + feePay - overPayAmt;
 
             } else {
                 $('#txtRtnAmount').val('');
