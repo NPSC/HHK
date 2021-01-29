@@ -699,16 +699,9 @@ class GlStmt {
 				if (is_null($pUpDate) === FALSE) {
 					$paymentDate = $pUpDate;
 				}
-				
-				
-// 				if ($paymentAmounts[$r['idPayment']] >= $ilAmt) {
- 					$paymentAmounts[$r['idPayment']] -= $ilAmt;
-// 				} else {
-// 					// Short the item amount to what was actually paid
-// 					$ilAmt = $paymentAmounts[$r['idPayment']];
-// 					$paymentAmounts[$r['idPayment']] = 0;
-// 				}
-				
+
+ 				$paymentAmounts[$r['idPayment']] -= $ilAmt;
+
 				// Payment is in this period?
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 					
@@ -716,6 +709,9 @@ class GlStmt {
 						$vIntervalPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vIntervalPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::Discount && $ilAmt < 0) {
+						// Discounts lower lodging charges
+						$vIntervalCharge += $ilAmt;
 					}
 					
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
@@ -736,12 +732,7 @@ class GlStmt {
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 				
 				// payment is positive in this case.
-// 				if ($paymentAmounts[$r['idPayment']] >= abs($ilAmt)) {
- 					$paymentAmounts[$r['idPayment']] += $ilAmt;
-// 				} else {
-// 					$ilAmt = (0 - $paymentAmounts[$r['idPayment']]);
-// 					$paymentAmounts[$r['idPayment']] = 0;
-// 				}
+ 				$paymentAmounts[$r['idPayment']] += $ilAmt;
 				
 				// Payment must be within the .
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
@@ -774,12 +765,7 @@ class GlStmt {
 					continue;
 				}
 				
-// 				if ($paymentAmounts[$r['idPayment']] >= $ilAmt) {
- 					$paymentAmounts[$r['idPayment']] -= $ilAmt;
-// 				} else {
-// 					$ilAmt = $paymentAmounts[$r['idPayment']];
-// 					$paymentAmounts[$r['idPayment']] = 0;
-// 				}
+ 				$paymentAmounts[$r['idPayment']] -= $ilAmt;
 				
 				// Returned during this period?
 				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
@@ -812,6 +798,9 @@ class GlStmt {
 						$vIntervalPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vIntervalPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::Discount && $ilAmt < 0) {
+						// Discounts lower lodging charges
+						$vIntervalCharge += $ilAmt;
 					}
 					
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
@@ -835,6 +824,9 @@ class GlStmt {
 					// Discounts
 					if ($r['Item_Id'] = ItemId::Discount) {
 						$totalPayment[$r['Item_Id']] += abs($ilAmt);
+						
+						// Reduces the charges.
+						$vIntervalCharge += $ilAmt;
 					}
 				}
 			}
@@ -903,9 +895,11 @@ class GlStmt {
 
 		}
 
-//		$unpaidCharges += $totalPayment[ItemId::Waive];
-//		$subsidyCharge += $totalPayment[ItemId::Discount];
 
+		// Remove waived payments from intervalPay
+		$intervalPay += $totalPayment[ItemId::Waive];
+		$intervalCharge += $totalPayment[ItemId::Waive];
+		
 		$tbl = new HTMLTable();
 		
 		$tbl->addHeaderTr(HTMLTable::makeTh('Lodging Payment Distribution', array('colspan'=>'2')));
@@ -923,7 +917,7 @@ class GlStmt {
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal] + $totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
@@ -934,53 +928,49 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format($forwardPay, 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Payments from ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;'))
 				);
-// 		$tbl->addBodyTr(
-// 				HTMLTable::makeTd('Waived Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-// 				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;'))
-// 				);
-		$tbl->addBodyTr(
-				HTMLTable::makeTd('Unpaid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;'))
-				);
-		
+ 		$tbl->addBodyTr(
+ 				HTMLTable::makeTd('Total Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+ 				. HTMLTable::makeTd(number_format($intervalPay + $forwardPay, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+ 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payments Carried Forward', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($paymentsCarriedForward, 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($paymentsCarriedForward, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
-		$tbl->addBodyTr(
-				HTMLTable::makeTd('Actual charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				);
-		
+
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
 		$tbl->addBodyTr(HTMLTable::makeTh('Lodging Charge Distribution', array('colspan'=>'2')));
 		
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($fullInvervalCharge, 2), array('style'=>'text-align:right;'))
+				HTMLTable::makeTd('Paid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format(abs($intervalCharge), 2), array('style'=>'text-align:right;'))
 				);
+		
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Unpaid Charges from ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;'))
+				);
+		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Itemized Discounts ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Discount]), 2), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Waived Chargess for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Waived Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Subsidy for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Rate Subsidy for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($subsidyCharge, 2), array('style'=>'text-align:right;'))
 				);
-
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Remaining charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($intervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($fullInvervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
 		return $tbl->generateMarkup($tableAttrs)

@@ -10,6 +10,7 @@ use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Neon\TransferMembers;
 use HHK\HTMLControls\HTMLSelector;
+use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
 
@@ -109,10 +110,10 @@ function getPeopleReport(\PDO $dbh, $start, $end, $extIdFlag = FALSE) {
     $transferIds = [];
 
     $query = "SELECT
-    vg.External_Id,
+    vg.External_Id as `External Id`,
     vg.Id,
     CASE
-        WHEN vg.Relationship_Code = 'slf' THEN 'p'
+        WHEN vg.Relationship_Code = 'slf' THEN '&#x2714;'
         ELSE ''
     END AS `Patient`,
     CASE
@@ -149,7 +150,7 @@ FROM
     visit v ON s.idVisit = v.idVisit
         AND s.Visit_Span = v.Span
 where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) >= DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end')
-GROUP BY vg.Id";
+GROUP BY vg.Id ORDER BY vg.idPsg";
 
     $stmt = $dbh->query($query);
 
@@ -157,34 +158,27 @@ GROUP BY vg.Id";
     $firstRow = TRUE;
     $hdr = array();
     
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-        if ($uS->county === FALSE) {
-            unset($r['County']);
-        }
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
         $transferIds[] = $r['Id'];
 
-        $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
 
-        if (isset($r['Birth Date']) && trim($r['Birth Date']) != '') {
-            $r['Birth Date'] = date('c', strtotime($r['Birth Date']));
-        }
-        if ($r['Arrival'] != '') {
-            $r['Arrival'] = date('c', strtotime($r['Arrival']));
-        }
-        if ($r['Departure'] != '') {
-            $r['Departure'] = date('c', strtotime($r['Departure']));
-        }
-
-        if ($r['Patient'] != '') {
-        	$r['Patient'] = '&#x2714;';
-        }
-            
         if ($r['Address'] == ', ,   ') {
         	$r['Address'] = '';
         }
+        
+        // Transfer opt-out
+        if ($r['External Id'] == '') {
+        	
+       		if ($r['Email'] !== '' || $r['Address'] !== '') {
+       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'type'=>'checkbox', 'checked'=>'checked'));
+       		} else {
+       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'type'=>'checkbox'));
+        	}
+        }
             
+        $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
+        
         $rows[] = $r;
 
     }
@@ -374,348 +368,6 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
-<script type="text/javascript">
-function updateLocal(id) {
-    var postUpdate = $.post('ws_tran.php', {cmd:'rmvAcctId', id:id});
-
-    postUpdate.done(function(incmg) {
-        $('div#retrieve').empty();
-
-        if (!incmg) {
-            alert('Bad Reply from Server');
-            return;
-        }
-
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.result) {
-            flagAlertMessage(incmg.result, false);
-
-        }
-    });
-}
-
-function updateRemote(id, accountId) {
-
-    var postUpdate = $.post('ws_tran.php', {cmd:'update', accountId:accountId, id:id});
-
-    postUpdate.done(function(incmg) {
-        $('#btnUpdate').val('Update Remote');
-        if (!incmg) {
-            alert('Bad Reply from Server');
-            return;
-        }
-
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.warning) {
-
-            var updteLocal = $('<input type="button" id="btnLocal" value="" />');
-            $('#btnUpdate').hide();
-
-            flagAlertMessage(incmg.warning, true);
-
-            updteLocal.val('Remove Remote Account Id from Local Record');
-
-            updteLocal.button().click(function () {
-                $("#divAlert1").hide();
-                if ($(this).val() === 'Working...') {
-                    return;
-                }
-                $(this).val('Working...');
-
-                updateLocal(id);
-            });
-
-            $('div#retrieve').prepend(updteLocal);
-
-        } else if (incmg.result) {
-            flagAlertMessage(incmg.result, false);
-        }
-    });
-}
-
-function transferRemote(transferIds) {
-    var parms = {
-        cmd: 'xfer',
-        ids: transferIds
-    };
-
-    var posting = $.post('ws_tran.php', parms);
-    posting.done(function(incmg) {
-        $('#TxButton').val('Transfer').hide();
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.data) {
-            $('div#retrieve').empty();
-            $('#divTable').empty().append($(incmg.data));
-        }
-    });
-
-}
-
-function transferPayments($btn, start, end) {
-
-    var parms = {
-        cmd: 'payments',
-        st: start,
-        en: end
-    };
-
-    var posting = $.post('ws_tran.php', parms);
-
-    posting.done(function(incmg) {
-        $btn.val('Transfer Payments');
-
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        $('div#retrieve').empty();
-
-        if (incmg.data) {
-            $('#divTable').empty().append($(incmg.data)).show();
-        }
-
-        if (incmg.members) {
-            $('#divMembers').empty().append($(incmg.members)).show();
-        }
-
-    });
-}
-
-function getRemote(item, source) {
-    $('div#printArea').hide();
-    $('#divPrintButton').hide();
-
-    var posting = $.post('ws_tran.php', {cmd:'getAcct', src:source, accountId:item.id});
-    posting.done(function(incmg) {
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-        incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.data) {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').html(incmg.data);
-
-            if (source === 'remote') {
-                $('div#retrieve').prepend($('<h3>Remote Data</h3>'));
-                $('#txtRSearch').val('');
-
-            } else {
-
-                var updteRemote = $('<input type="button" id="btnUpdate" value="" />');
-
-                if (incmg.accountId === '') {
-                    updteRemote.val('Transfer to Remote');
-                    updteRemote.button().click(function () {
-                        $("#divAlert1").hide();
-                        if ($(this).val() === 'Working...') {
-                            return;
-                        }
-                        $(this).val('Working...');
-
-                        transferRemote([item.id]);
-                    });
-                } else if (incmg.accountId) {
-                    updteRemote.val('Update Remote');
-                    updteRemote.button().click(function () {
-                        $("#divAlert1").hide();
-                        if ($(this).val() === 'Working...') {
-                            return;
-                        }
-                        $(this).val('Working...');
-                        updateRemote(item.id, incmg.accountId);
-                    });
-                } else {
-                    updteRemote = '';
-                }
-
-                $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote));
-                $('#txtSearch').val('');
-            }
-        }
-    });
-}
-
-$(document).ready(function() {
-    var makeTable = '<?php echo $mkTable; ?>';
-    var transferIds = <?php echo json_encode($transferIds); ?>;
-    var start = '<?php echo $start; ?>';
-    var end = '<?php echo $end; ?>';
-    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-
-    $('#btnHere, #btnCustFields, #btnGetPayments').button();
-
-    $('#printButton').button().click(function() {
-        $("div#printArea").printArea();
-    });
-
-    if (makeTable === '1') {
-        $('div#printArea').show();
-        $('#divPrintButton').show();
-        $('#btnPay').hide();
-        $('#divMembers').empty();
-
-        $('#tblrpt').dataTable({
-           'columnDefs': [
-                {'targets': [4, 9, 10],
-                 'type': 'date',
-                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                }
-            ],
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        });
-
-        $('#TxButton').button().show().click(function () {
-            $("#divAlert1").hide();
-            if ($('#TxButton').val() === 'Working...') {
-                return;
-            }
-            $('#TxButton').val('Working...');
-            transferRemote(transferIds);
-        });
-
-    } else if (makeTable === '2') {
-
-        $('div#printArea').show();
-        $('#divPrintButton').show();
-        $('#TxButton').hide();
-        $('#divMembers').empty();
-
-        $('#tblrpt').dataTable({
-            'columnDefs': [
-                {'targets': [4],
-                 'type': 'date',
-                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                }
-            ],
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        });
-
-        $('#btnPay').button().show().click(function () {
-            $("#divAlert1").hide();
-            if ($(this).val() === 'Transferring ...') {
-                return;
-            }
-            $(this).val('Transferring ...');
-
-            transferPayments($(this), start, end);
-        });
-    }
-
-
-    $('.ckdate').datepicker({
-        yearRange: '-07:+01',
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        numberOfMonths: 1,
-        dateFormat: 'M d, yy'
-    });
-
-    $('#selCalendar').change(function () {
-        if ($(this).val() && $(this).val() != '19') {
-            $('#selIntMonth').hide();
-        } else {
-            $('#selIntMonth').show();
-        }
-        if ($(this).val() && $(this).val() != '18') {
-            $('.dates').hide();
-        } else {
-            $('.dates').show();
-        }
-    });
-
-    $('#selCalendar').change();
-
-    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item, 'remote');}, false, '../house/ws_tran.php');
-    createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {getRemote(item, 'hhk');}, false);
-});
- </script>
     </head>
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
@@ -781,5 +433,13 @@ $(document).ready(function() {
                 <div id="divMembers"></div>
             </div>
         </div>
+        <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
+        <input id='htransferIds' type="hidden" value='<?php echo json_encode($transferIds); ?>'/>
+        <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
+        <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
+        <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
+        
+        <script type="text/javascript" src="js/GuestTransfer.js"></script>
+        
     </body>
 </html>

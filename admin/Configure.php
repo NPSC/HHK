@@ -428,7 +428,31 @@ if (is_null($wsConfig) === FALSE) {
 
             $externals .= $nTbl->generateMarkup(array('style'=>'margin-top:5px;'), $list['List_Name']);
         }
+        
+        // Custom fields
+        $results = $transfer->listCustomFields();
+        $cfTbl = new HTMLTable();
+        
+        foreach ($results as $v) {
+        	if ($wsConfig->has('custom_fields', $v['fieldName'])) {
+        		$cfTbl->addBodyTr(HTMLTable::makeTd($v['fieldName']) . HTMLTable::makeTd($v['fieldId']));
+        	}
+        }
+        
+        $externals .= $cfTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Custom Fields');
+        
+        // Sources
+        $results = $transfer->listSources();
+        $sTbl = new HTMLTable();
+        
+        foreach ($results as $v) {
+        	
+        	$sTbl->addBodyTr(HTMLTable::makeTd($v['id']) . HTMLTable::makeTd($v['name']));
 
+        }
+        
+        $externals .= $sTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Sources');
+        
       } catch (Exception $pe) {
           $externalErrMsg = "Transfer Error: " .$pe->getMessage();
       }
