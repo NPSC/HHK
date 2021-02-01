@@ -772,7 +772,7 @@ ORDER BY v.idVisit , v.Span;");
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
 
         	$feesTbl->addBodyTr(HTMLTable::makeTd( $labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd('Days: ' . HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'1', 'data-vid'=>$idVisit)), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                 , array('class'=>'hhk-RoomFees'));
 
