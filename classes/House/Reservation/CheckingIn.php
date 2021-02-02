@@ -179,7 +179,7 @@ FROM reservation r
                 
                 $dataArray['pay'] = HTMLContainer::generateMarkup('div',
                     PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())
-                    , array('style'=>'clear:left; float:left;'));
+                    , array('style'=>'flex-basis: 100%'));
                 
             }
             
