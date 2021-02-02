@@ -6,7 +6,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\Update\Patch;
 use HHK\SysConst\WebSiteCode;
 use HHK\Update\SiteConfig;
-use HHK\SiteLog;
+use HHK\Update\SiteLog;
 use HHK\SysConst\CodeVersion;
 
 /**
