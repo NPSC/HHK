@@ -480,18 +480,18 @@ class UserClass
         
 
         //get user agent
-        try {
-        	$userAgentArray = get_browser(NULL, TRUE);
-        	$browserName = $userAgentArray['parent'];
-        	$osName = $userAgentArray['platform'];
-        } catch (\Exception $d) {
-        	$browserName = "Missing Browscap";
-        }
-        
         if($fromHHK){
             $remoteIp = '';
             $browserName = "HHK";
             $osName = "HHK";
+        }else{
+            try {
+            	$userAgentArray = get_browser(NULL, TRUE);
+            	$browserName = $userAgentArray['parent'];
+            	$osName = $userAgentArray['platform'];
+            } catch (\Exception $d) {
+            	$browserName = "Missing Browscap";
+            }
         }
         
         try{
