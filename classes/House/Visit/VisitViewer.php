@@ -608,10 +608,15 @@ class VisitViewer {
         $uS = Session::getInstance();
 
         $includeKeyDep = FALSE;
-        if ($uS->KeyDeposit && $r['Status'] == VisitStatus::CheckedIn && ($action == '' || $action == 'pf' || $action == 'ref') && $visitCharge->getDepositCharged() > 0 && ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) < $visitCharge->getDepositCharged()) {
+        $unpaidKeyDep = FALSE;
+        
+        if ($uS->KeyDeposit && $r['Status'] == VisitStatus::CheckedIn && ($action == '' || $action == 'pf' || $action == 'ref')) {
             $includeKeyDep = TRUE;
+            if($visitCharge->getDepositCharged() > 0 && ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) < $visitCharge->getDepositCharged()){
+                $unpaidKeyDep = TRUE;
+            }
         }
-
+        
         $includeVisitFee = FALSE;
         if ($uS->VisitFee && ($action == '' || $action == 'pf' || $action == 'ref') && $visitCharge->getVisitFeeCharged() > 0) {
             $includeVisitFee = TRUE;
@@ -665,7 +670,7 @@ class VisitViewer {
                     $visitCharge,
                     $paymentGateway,
                     $uS->DefaultPayType,
-                    $includeKeyDep,
+                    $unpaidKeyDep,
                     $showFinalPayment,
                     FALSE,
                     $r['Pref_Token_Id']
