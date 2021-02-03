@@ -28,7 +28,6 @@ define('THIRD_PARTY', $dirxx . DS);
 
 // Configuration filename and paths
 define('ciCFG_FILE', REL_BASE_DIR . 'conf' . DS . 'site.cfg' );
-define('LABEL_FILE', REL_BASE_DIR . 'conf' . DS . 'labels.cfg' );
 
 // Common Directory Names
 define('ADMIN_DIR', REL_BASE_DIR . 'admin' . DS);

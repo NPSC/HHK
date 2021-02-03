@@ -84,7 +84,7 @@ function createScript($guestLabel) {
         popWd      : $('#divStmt').width(),
         popX       : 20,
         popY       : 20,
-        popTitle   : '$guestLabel Statement'};
+        popTitle   : '$guestLabel' +' Statement'};
 
     $('#btnPrint').click(function() {
         $('div.PrintArea').printArea(opt);
@@ -335,7 +335,7 @@ $(document).ready(function() {
         popWd      : $('#divStmt').width(),
         popX       : 20,
         popY       : 20,
-        popTitle   : <?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>+' Statement'};
+        popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>'+' Statement'};
 
     $('#btnPrint').click(function() {
         $('div.PrintArea').printArea(opt);

@@ -1,7 +1,10 @@
 <?php
 namespace HHK\GlStmt;
 
-class CombinedPayment {
+/**
+ * Object to collect all payments for one invoice.
+ *
+ */class CombinedPayment {
 	
 	/**
 	 *
@@ -19,6 +22,9 @@ class CombinedPayment {
 	 */
 	protected $refundAmount;
 	
+	protected $numberPayments = 0;
+	protected $numberReturns = 0;
+	protected $numberRefunds = 0;
 	/**
 	 *
 	 * @var \DateTime
@@ -32,6 +38,27 @@ class CombinedPayment {
 	protected $updatedDate;
 	
 	
+	/**
+	 * @return number
+	 */
+	public function getNumberPayments() {
+		return $this->numberPayments;
+	}
+
+	/**
+	 * @return number
+	 */
+	public function getNumberReturns() {
+		return $this->numberReturns;
+	}
+
+	/**
+	 * @return number
+	 */
+	public function getNumberRefunds() {
+		return $this->numberRefunds;
+	}
+
 	public function __construct() {
 		
 		$this->payAmount = 0;
@@ -42,19 +69,20 @@ class CombinedPayment {
 	
 	public function returnAmount($a) {
 		$this->returnAmount += abs($a);
+		$this->numberReturns++;
 	}
 	
 	public function refundAmount($a) {
 		$this->refundAmount += abs($a);
+		$this->numberRefunds++;
 		
 	}
 	
 	public function payAmount($a) {
 		$this->payAmount += abs($a);
+		$this->numberPayments++;
 		
 	}
-	
-
 	
 	/**
 	 * @return float
@@ -76,6 +104,7 @@ class CombinedPayment {
 	public function getRefundAmount() {
 		return $this->refundAmount;
 	}
+
 
 	/**
 	 * @return \DateTime

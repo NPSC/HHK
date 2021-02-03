@@ -41,6 +41,7 @@ class CreateMarkupFromDB {
         }
 
 
+        // Body Rows
         foreach ($rows as $r) {
 
             $mkupRow = "";
@@ -65,7 +66,7 @@ class CreateMarkupFromDB {
             $tableId = " id='$tableId' ";
         }
 
-        return "<table $tableId cellpadding='0' cellspacing='0' border='0' class='display'>" . $thead . $tbody . "</table>";
+        return "<table $tableId class='display'>" . $thead . $tbody . "</table>";
 
     }
 

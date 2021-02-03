@@ -260,6 +260,11 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         $r['meanRate'] = number_format(($visit['chg'] / $visit['nit']), 2);
     }
 
+    $r['meanGstRate'] = 0;
+    if ($visit['gnit'] > 0) {
+    	$r['meanGstRate'] = number_format(($visit['chg'] / $visit['gnit']), 2);
+    }
+    
 
     // Hospital
     $hospital = '';

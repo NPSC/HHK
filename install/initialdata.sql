@@ -51,6 +51,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '3', 'Discover','DCVR', '',0),
 ('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
 
+('dayIncrements', '', 'Never', '','', '6'),
 ('dayIncrements', '30', '30 days', '','', '1'),
 ('dayIncrements', '60', '60 days', '','', '2'),
 ('dayIncrements', '90', '90 days', '','', '3'),
@@ -106,6 +107,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Email_Purpose','2','Work','i','',20),
 ('Email_Purpose','4','Office','o','',40),
 
+('Email_Server', '', '(None)','','',0),
 ('Email_Server', 'SMTP', 'SMTP','','',0),
 ('Email_Server', 'Mail', 'Mail','','',0),
 
@@ -340,6 +342,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Rate_Period', '3', 'Reduced Rate 3', '19999','',0),
 
 ('Reg_Agreement', 'en', 'English', '1','',0),
+
+('Reg_Colors', 'r', 'Room','','',0),
+('Reg_Colors', 'hospital', 'Hospital','','',0),
+('Reg_Colors', '', 'Default','','',0),
 
 ('registration', 'Sig_Card', 'Signature', 'y', 'm', 10),
 ('registration', 'Pamphlet', 'Pamphlet', 'y', 'm', 20),

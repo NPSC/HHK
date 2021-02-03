@@ -87,7 +87,6 @@ class WebInit {
 
         $this->sessionLoadGenLkUps();
         $this->sessionLoadGuestLkUps();
-        $this->sessionLoadLabels();
 
         // set timezone
         date_default_timezone_set($uS->tz);
@@ -288,18 +287,6 @@ class WebInit {
 
     }
     
-    public function sessionLoadLabels(){
-        $uS = Session::getInstance();
-        
-        if(!isset($uS->labels)){
-            try{
-                Labels::initLabels($this->dbh);
-            }catch(\Exception $e){
-                
-            }
-        }
-    }
-
 }
 
 ?>

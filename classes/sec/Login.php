@@ -31,7 +31,7 @@ class Login {
     public static function initHhkSession($configFileName) {
 
         // get session instance
-        $ssn = Session::getInstance();
+    	$ssn = Session::getInstance($configFileName);
         // Preset the timezone to suppress errors on hte subject.
         date_default_timezone_set('America/Chicago');
 

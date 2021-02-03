@@ -37,6 +37,7 @@ class Reservation_1 {
 
     protected $reservRs;
     protected $reservConstraints;
+    protected $visitConstraints;
     protected $boDays;
     protected $startHolidays;
     protected $endHolidays;
@@ -749,14 +750,23 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
 
     public function getConstraints(\PDO $dbh, $refresh = FALSE) {
-
-        if (is_null($this->reservConstraints) || $refresh) {
-            $this->reservConstraints = new ConstraintsReservation($dbh, $this->getIdReservation());
-        }
-
-        return $this->reservConstraints;
+    	
+    	if (is_null($this->reservConstraints) || $refresh) {
+    		$this->reservConstraints = new ConstraintsReservation($dbh, $this->getIdReservation());
+    	}
+    	
+    	return $this->reservConstraints;
     }
-
+    
+    public function getVisitConstraints(\PDO $dbh, $refresh = FALSE) {
+    	
+    	if (is_null($this->visitConstraints) || $refresh) {
+    		$this->visitConstraints = new ConstraintsVisit($dbh, $this->getIdReservation());
+    	}
+    	
+    	return $this->visitConstraints;
+    }
+    
     public static function showListByStatus(\PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
 
         $dateAhead = new \DateTime();

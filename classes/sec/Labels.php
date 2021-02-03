@@ -27,63 +27,44 @@ class Labels {
      */
     
     public static function getLabels(){
-        $uS = Session::getInstance();
-        $labels = new Labels();
         
-        if(isset($uS->labels) && count($uS->labels) > 0){
-            //continue
-        }else{
-            $dbh = initPDO(TRUE);
-            $labels->initLabels($dbh);
-        }
-        
-        return $labels;
+         return new Labels();
     }
-    
+
     
     public static function initLabels(\PDO $dbh){
-        $uS = Session::getInstance();
+
         $labels = [];
-        try{
-            // get labels form DB
-            $rows = $dbh->query("select l.`Key`, l.`Value`, g.`Description` as `Cat` from `labels` l left join gen_lookups g on l.Category = g.Code and g.Table_Name = 'labels_category' order by g.`Order`, l.`Key`")->fetchAll(\PDO::FETCH_ASSOC);
-            
-            foreach($rows as $row){
-                $labels[$row['Cat']][$row['Key']] = $row['Value'];
-            }
-        }catch(\Exception $e){
-            //skip to Config_lite
-        }
-            
-        try{
-            $cLiteLabels = new Config_Lite(LABEL_FILE);
-            foreach($cLiteLabels as $section=>$name){
-                foreach ($name as $key => $val) {
-                    if(!isset($labels[ucfirst($section)][$key])){
-                        $labels[ucfirst($section)][$key] = $val;
-                    }
-                }
-            }
-        }catch(\Exception $e){
-            
-        }
+        // get labels form DB
+        $rows = $dbh->query("select l.`Key`, l.`Value`, g.`Description` as `Cat` from `labels` l left join gen_lookups g on l.Category = g.Code and g.Table_Name = 'labels_category' order by g.`Order`, l.`Key`")->fetchAll(\PDO::FETCH_ASSOC);
         
-        $uS->labels = $labels;
+        foreach($rows as $row){
+            $labels[$row['Cat']][$row['Key']] = $row['Value'];
+        }
+
+        return $labels;
+
     }
-    
-    public function getString($sec, $key, $default = null){
+
+    public static function getString($sec, $key, $default = null){
         
         $uS = Session::getInstance();
+        
+        if(isset($uS->labels) === FALSE || count($uS->labels) < 1){
+        	$dbh = initPDO(TRUE);
+        	$uS->labels = Labels::initLabels($dbh);
+        }
+
         $sec = ucfirst($sec);
         
         if(isset($uS->labels[$sec][$key])){
             return $uS->labels[$sec][$key];
-        }elseif ($default){
+        }elseif (is_null($default) === FALSE){
             return $default;
         }else{
             return "Label '" . $key . "' not found";
         }
     }
-    
+
 }
 ?>

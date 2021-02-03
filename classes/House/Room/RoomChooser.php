@@ -122,32 +122,32 @@ class RoomChooser {
         return $this->selectedResource;
     }
 
-    public function createConstraintsChooser(\PDO $dbh, $idReservation, $numGuests, $constraintsDisabled = FALSE, $roomTitle = '') {
+//     public function createConstraintsChooser(\PDO $dbh, $idReservation, $numGuests, $constraintsDisabled = FALSE, $roomTitle = '') {
 
-        $constraintMkup = self::createResvConstMkup($dbh, $idReservation, $constraintsDisabled, '', $this->oldResvId);
+//         $constraintMkup = self::createResvConstMkup($dbh, $idReservation, $constraintsDisabled, '', $this->oldResvId);
 
-        if ($constraintMkup == '') {
-            return '';
-        }
+//         if ($constraintMkup == '') {
+//             return '';
+//         }
 
-        $tbl = new HTMLTable();
+//         $tbl = new HTMLTable();
 
-        $tbl->addBodyTr(HTMLTable::makeTh("Total Guests:", array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $numGuests, array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
-                );
+//         $tbl->addBodyTr(HTMLTable::makeTh("Total Guests:", array('class'=>'tdlabel'))
+//                 .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $numGuests, array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))
+//                 );
 
-        if ($roomTitle != '') {
-            $tbl->addBodyTr(HTMLTable::makeTh("Room:", array('class'=>'tdlabel'))
-                .HTMLTable::makeTd($roomTitle)
-                );
-        }
+//         if ($roomTitle != '') {
+//             $tbl->addBodyTr(HTMLTable::makeTh("Room:", array('class'=>'tdlabel'))
+//                 .HTMLTable::makeTd($roomTitle)
+//                 );
+//         }
 
-        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Constraints Chooser', array('style'=>'font-weight:bold;'))
-                . $tbl->generateMarkup() . $constraintMkup, array('class'=>'hhk-panel')),
-                array('style'=>'float:left;'));
+//         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+//                 HTMLContainer::generateMarkup('legend', 'Constraints Chooser', array('style'=>'font-weight:bold;'))
+//                 . $tbl->generateMarkup() . $constraintMkup, array('class'=>'hhk-panel')),
+//                 array('style'=>'float:left;'));
 
-    }
+//     }
 
 
     public function createCheckinMarkup(\PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $omitSelf = TRUE, $overrideMaxOcc = 0) {
@@ -373,10 +373,11 @@ class RoomChooser {
         $errorMessage = $this->getRoomSelectionError($dbh, $resOptions);
 
         $resvConstraints = $this->resv->getConstraints($dbh);
+        $visitConstraints = $this->resv->getVisitConstraints($dbh);
         $constraintMkup = '';
         $guestsRoom = '';
 
-        if (count($resvConstraints->getConstraints()) > 0) {
+        if (count($resvConstraints->getConstraints()) + count($visitConstraints->getConstraints()) > 0) {
 
             $constraintMkup = self::createResvConstMkup($dbh, $this->resv->getIdReservation(), $constraintsDisabled, $classId, $this->oldResvId);
 
@@ -537,22 +538,16 @@ class RoomChooser {
     public static function createResvConstMkup(\PDO $dbh, $resvId, $disableCtrl = FALSE, $classId = '', $oldResvId = 0) {
 
         $tbl = new HTMLTable();
-        $hasCtrls = FALSE;
+        $mkup = '';
 
         $rhasCtrls = self::makeConstraintsCheckboxes(new ConstraintsReservation($dbh, $resvId, $oldResvId), $tbl, $disableCtrl, $classId . ' hhk-constraintsCB');
         $vhasCtrls = self::makeConstraintsCheckboxes(new ConstraintsVisit($dbh, $resvId, $oldResvId), $tbl, $disableCtrl, $classId);
 
         if ($rhasCtrls || $vhasCtrls) {
-            $hasCtrls = TRUE;
+        	$mkup = $tbl->generateMarkup(array('id'=>'hhk-constraintsTbl'));
         }
 
-        if ($hasCtrls) {
-            $rtn = $tbl->generateMarkup(array('id'=>'hhk-constraintsTbl'));
-        } else {
-            $rtn = '';
-        }
-
-        return $rtn;
+        return $mkup;
     }
 
     protected static function makeConstraintsCheckboxes($constraints, &$tbl, $disableCtrl, $classId) {

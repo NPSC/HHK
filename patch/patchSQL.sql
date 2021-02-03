@@ -29,7 +29,12 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES
 ('Web_User_Actions', 'PL', 'Locked Out'),
 ('Web_User_Actions', 'E', 'Password Expired');
 
+-- Sys Config lookups - add blanks where needed
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Reg_Colors', '', 'Default');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Email_Server', '', '(None)');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('dayIncrements', '', 'Never', '6'),
 
+-- new site mode lookups.
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Site_Mode', 'dev', 'Development');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Site_Mode', 'demo', 'Demonstration');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Site_Mode', 'live', 'Production');

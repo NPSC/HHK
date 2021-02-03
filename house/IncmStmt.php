@@ -137,7 +137,7 @@ if (isset($_POST['btnHere'])) {
     	$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
     }
     
-    $glStmt = new GlStmt($dbh, $glMonth, $glyear);
+    $glStmt = new GlStmt($dbh, $glyear, $glMonth);
     
     $glStmt->mapRecords();
     
@@ -153,6 +153,7 @@ if (isset($_POST['btnHere'])) {
     	
     	$dataTable .= $etbl->generateMarkup();
     }
+    
     
     $tableAttrs = array('style'=>"float:left;margin-right:1em;");
     
@@ -172,7 +173,7 @@ if (isset($_POST['btnInv'])) {
 		$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
 	}
 	
-	$glStmt = new GlStmt($dbh, $glMonth, $glyear);
+	$glStmt = new GlStmt($dbh, $glyear, $glMonth);
 	
 	$glStmt->mapRecords();
 	
@@ -226,7 +227,7 @@ if (isset($_POST['btnGlGo'])) {
 	
 
 	
-	$glCodes = new GlStmt($dbh, $glMonth, $glyear);
+	$glCodes = new GlStmt($dbh, $glyear, $glMonth);
 
 		$tbl = new HTMLTable();
 		$glInvoices = '';
