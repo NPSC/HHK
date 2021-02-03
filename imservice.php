@@ -17,6 +17,9 @@ use HHK\Payment\PaymentSvcs;
  * @link      https://github.com/NPSC/HHK
  */
 
+// Configuration filename and paths
+define('ciCFG_FILE', 'conf/site.cfg' );
+
 require ('functions/commonFunc.php');
 
 require ('vendor/autoload.php');

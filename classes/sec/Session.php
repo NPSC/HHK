@@ -38,14 +38,14 @@ class Session
     *
     *    @return    object
     **/
-    public static function getInstance()
+    public static function getInstance($configFileName = '')
     {
         if (!isset(self::$instance))
         {
             self::$instance = new self;
         }
 
-        self::$instance->startSession();
+        self::$instance->startSession($configFileName);
 
         return self::$instance;
     }
@@ -57,12 +57,12 @@ class Session
     *    @return    bool    TRUE if the session has been initialized, else FALSE.
     **/
 
-    public function startSession()
+    public function startSession($configFileName = '')
     {
         if ( $this->sessionState == self::SESSION_NOT_STARTED )
         {
             ini_set( 'session.cookie_httponly', 1 );
-            session_name($this->getSessionName());
+            session_name($this->getSessionName($configFileName));
             $this->sessionState = session_start();
         }
 
@@ -150,11 +150,15 @@ class Session
         }
     }
     
-    private function getSessionName()
+    private function getSessionName($configFileName = '')
     {
         try{
-            $config = new Config_Lite(ciCFG_FILE);
-            return strtoupper($config->getString('db', 'Schema', '')) . 'HHKSESSION';
+        	if ($configFileName != '') {
+        		$config = new Config_Lite($configFileName);
+            	return strtoupper($config->getString('db', 'Schema', '')) . 'HHKSESSION';
+        	} else {
+        		return 'HHKSESSION';
+        	}
         }catch(\Exception $ex){
             return 'HHKSESSION';
         }

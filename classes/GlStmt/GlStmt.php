@@ -251,63 +251,63 @@ class GlStmt {
 		}
 		
 
-		if ($cpay->getPayAmount() > 0) {
+		if ($cpay->getNumberPayments() > 0) {
 			// sale
-			$pAmount = $cpay->getPayAmount();
+			//$pAmount = $cpay->getPayAmount();
 			
 			foreach($invLines as $l) {
 				
-				$ilAmt = abs($l['il_Amount']);
+				//$ilAmt = abs($l['il_Amount']);
 				
-				if ($pAmount >= $ilAmt) {
-					$pAmount -= $ilAmt;
-				} else {
-					$ilAmt = $pAmount;
-					$pAmount = 0;
-				}
+// 				if ($pAmount >= $ilAmt) {
+// 					$pAmount -= $ilAmt;
+// 				} else {
+// 					$ilAmt = $pAmount;
+// 					$pAmount = 0;
+// 				}
 				
 				// map gl code
-				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, abs($ilAmt), $cpay->getPaymentDate(), $iNumber);
+				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $cpay->getPaymentDate(), $iNumber);
 			}
 		}
 		
-		if ($cpay->getReturnAmount() > 0) {
+		if ($cpay->getNumberReturns() > 0) {
 			// return
-			$pAmount = $cpay->getReturnAmount();
+			//$pAmount = $cpay->getReturnAmount();
 			
 			foreach($invLines as $l) {
 				
 				$ilAmt = abs($l['il_Amount']);
 				
-				if ($pAmount >= $ilAmt) {
-					$pAmount -= $ilAmt;
-				} else {
-					$ilAmt = $pAmount;
-					$pAmount = 0;
-				}
+// 				if ($pAmount >= $ilAmt) {
+// 					$pAmount -= $ilAmt;
+// 				} else {
+// 					$ilAmt = $pAmount;
+// 					$pAmount = 0;
+// 				}
 				
 				// map gl code
-				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $cpay->getUpdatedDate(), $iNumber);
+				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - $ilAmt), $cpay->getUpdatedDate(), $iNumber);
 			}
 		}
 		
-		if ($cpay->getRefundAmount() > 0) {
+		if ($cpay->getNumberRefunds() > 0) {
 			// refund
-			$pAmount = $cpay->getRefundAmount();
+			//$pAmount = $cpay->getRefundAmount();
 			
 			foreach($invLines as $l) {
 				
 				$ilAmt = abs($l['il_Amount']);
 				
-				if ($pAmount >= $ilAmt) {
-					$pAmount -= $ilAmt;
-				} else {
-					$ilAmt = $pAmount;
-					$pAmount = 0;
-				}
+// 				if ($pAmount >= $ilAmt) {
+// 					$pAmount -= $ilAmt;
+// 				} else {
+// 					$ilAmt = $pAmount;
+// 					$pAmount = 0;
+// 				}
 				
 				// map gl code
-				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - abs($ilAmt)), $cpay->getPaymentDate(), $iNumber);
+				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - $ilAmt), $cpay->getPaymentDate(), $iNumber);
 			}
 		}
 						
@@ -649,7 +649,7 @@ class GlStmt {
 						$vFullIntervalCharge = $vFullIntervalCharge * $adjRatio;
 					}
 					
-					// discount charges are only for discounted rates.
+					// subsidy charges are only for discounted rates.
 					if ($r['Rate_Category'] != RoomRateCategories::FlatRateCategory) {
 						$vSubsidyCharge += ($vFullIntervalCharge - $vIntervalCharge);
 					}
@@ -709,8 +709,8 @@ class GlStmt {
 						$vIntervalPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vIntervalPay += $ilAmt;
-					} else if ($r['Item_Id'] == ItemId::Discount && $ilAmt < 0) {
-						// Discounts lower lodging charges
+					} else if ($r['Item_Id'] == ItemId::Waive) {
+						// Reduce charge by waive amount.
 						$vIntervalCharge += $ilAmt;
 					}
 					
@@ -724,6 +724,9 @@ class GlStmt {
 						$vForwardPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vForwardPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::Waive) {
+						// Reduce charge by waive amount.
+						$vPreIntervalCharge += $ilAmt;
 					}
 					
 				}
@@ -776,6 +779,9 @@ class GlStmt {
 						$vIntervalPay -= $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vIntervalPay -= $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::Waive) {
+						// Reduce charge by waive amount.
+						$vIntervalCharge -= $ilAmt;
 					}
 					
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], (0 - $ilAmt));
@@ -788,6 +794,9 @@ class GlStmt {
 						$vForwardPay -= $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vForwardPay -= $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::Waive) {
+						// Reduce charge by waive amount.
+						$vPreIntervalCharge -= $ilAmt;
 					}
 				}
 				
@@ -798,8 +807,8 @@ class GlStmt {
 						$vIntervalPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vIntervalPay += $ilAmt;
-					} else if ($r['Item_Id'] == ItemId::Discount && $ilAmt < 0) {
-						// Discounts lower lodging charges
+					} else if ($r['Item_Id'] == ItemId::Waive) {
+						// Reduce charge by waive amount.
 						$vIntervalCharge += $ilAmt;
 					}
 					
@@ -813,6 +822,9 @@ class GlStmt {
 						$vForwardPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vForwardPay += $ilAmt;
+					} else if ($r['Item_Id'] == ItemId::Waive) {
+						// Reduce charge by waive amount.
+						$vPreIntervalCharge += $ilAmt;
 					}
 				}
 
@@ -856,7 +868,7 @@ class GlStmt {
 					$ptp = $vIntervalPay;
 				}
 			}
-			
+
 			// Payments to now
 			$ptn = 0;
 			if ($cfp <= $vIntervalPay) {
@@ -866,24 +878,24 @@ class GlStmt {
 					$ptn = $vIntervalPay - $cfp;
 				}
 			}
-			
+
 			// Payments to Future
 			$ptf = 0;
 			if ($ptp + $ptn < $vIntervalPay) {
 				$ptf = $vIntervalPay - $ptp - $ptn;
 			}
-			
+
 			// Unpaid Charges
 			if ($vIntervalCharge > $ptn) {
 				$unpaidCharges += ($vIntervalCharge - $ptn);
 			}
-			
+
 			// Payments Carried Forward
 			if (($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf > 0) {
 				$paymentsCarriedForward += ($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf;
 			}
-			
-			
+
+
 			$forwardPay += $pfp;
 			$preIntervalPay += $ptp;
 			$intervalPay += $ptn;
@@ -895,10 +907,6 @@ class GlStmt {
 
 		}
 
-
-		// Remove waived payments from intervalPay
-		$intervalPay += $totalPayment[ItemId::Waive];
-		$intervalCharge += $totalPayment[ItemId::Waive];
 		
 		$tbl = new HTMLTable();
 		
@@ -936,7 +944,7 @@ class GlStmt {
  				. HTMLTable::makeTd(number_format($intervalPay + $forwardPay, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
  				);
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Payments Carried Forward', array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Unallocated Payments', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($paymentsCarriedForward, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
@@ -946,7 +954,7 @@ class GlStmt {
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Paid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format(abs($intervalCharge), 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($intervalPay + $forwardPay, 2), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(

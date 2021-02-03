@@ -622,7 +622,8 @@ class SiteConfig {
     
     public static function saveLabels(\PDO $dbh, array $post) {
         
-        $mess = ['type'=>'', 'text'=>''];
+    	$uS = Session::getInstance();
+    	$mess = ['type'=>'', 'text'=>''];
         // save labels
         try{
             if(!isset($post['labels'])){
@@ -638,7 +639,7 @@ class SiteConfig {
                 
             }
             //reload labels
-            Labels::initLabels($dbh);
+            $uS->labels = Labels::initLabels($dbh);
             
             $mess['type'] = 'success';
             $mess['text'] = "Labels saved successfully";
