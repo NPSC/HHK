@@ -117,6 +117,7 @@ function transferRemote(transferIds) {
 
         if (incmg.data) {
             $('div#retrieve').empty();
+            $('#printArea').show();
             $('#divTable').empty().append($(incmg.data));
         }
     });
@@ -276,7 +277,14 @@ $(document).ready(function() {
                 return;
             }
             $('#TxButton').val('Working...');
-            transferRemote(transferIds);
+            
+            txIds = {};
+            $('.hhk-txCbox').each(function () {
+            	if ($(this).prop('checked')) {
+            		txIds[$(this).data('txid')] = $(this).data('txid');
+            	}
+            });
+            transferRemote(txIds);
         });
 
     } else if (makeTable === '2') {

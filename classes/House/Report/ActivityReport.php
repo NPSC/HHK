@@ -184,14 +184,14 @@ class ActivityReport {
             if ($r['idReservation'] != $reservId) {
                 $reservId = $r['idReservation'];
                 $tbl->addBodyTr(HTMLTable::makeTd(
-                                HTMLContainer::generateMarkup('span', 'Reservation Id: ' . $reservId . $reservIcon, array('class' => 'hhk-viewvisit', 'data-reservid' => $r['idName'])), array('colspan' => '7', 'style' => 'background-color: lightgrey;')));
+                		HTMLContainer::generateMarkup('span', 'Reservation Id: ' . $reservId . $reservIcon, array('class' => 'hhk-viewvisit', 'data-reservid' => $r['idReservation'])), array('colspan' => '7', 'style' => 'background-color: lightgrey;')));
             }
 
             $trow = HTMLTable::makeTd($r['Title']);
 
             if (isset($logData['Status']) && $r['Sub_Type'] == 'update') {
 
-                $trow .= HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_First'] . " " . $r['Name_Last'], array('href' =>'Referral.php' . '?id=' . $r['idName'])));
+                $trow .= HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_First'] . " " . $r['Name_Last'], array('href' =>'Reserve.php' . '?id=' . $r['idName'])));
 
                 if (isset($uS->guestLookups['ReservStatus'][$logData['Status']['new']])) {
                     $statTitle = $uS->guestLookups['ReservStatus'][$logData['Status']['new']][1];

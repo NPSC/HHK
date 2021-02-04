@@ -10,6 +10,7 @@ use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLContainer;
 
 /**
  * CreditToken.php
@@ -323,7 +324,7 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
     	return FALSE;
     }
     
-    public static function getCardsOnFile(\PDO $dbh, $delClass = '') {
+    public static function getCardsOnFile(\PDO $dbh, $page) {
     	
     	$tbl = new HTMLTable();
     	
@@ -338,14 +339,13 @@ order by n.Name_Last, n.Name_First, t.Merchant");
     		
     		if (self::hasToken($gtRs)) {
     			$tbl->addBodyTr(
-    					HTMLTable::makeTd($r['Name_Full'])
+    					HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_Full'], array('href'=>$page.$r['idGuest'])))
     					.HTMLTable::makeTd($r['CardHolderName'])
     					.HTMLTable::makeTd($r['CardType'])
     					.HTMLTable::makeTd($r['MaskedAccount'])
     					.HTMLTable::makeTd(date('M d, Y', strtotime($r['Granted_Date'])))
     					.HTMLTable::makeTd($r['Merchant'])
     					.HTMLTable::makeTd($r['Running_Total'], array('style'=>'text-align:right;'))
-    					.HTMLTable::makeTd(HTMLInput::generateMarkup($r['idGuest_token'], array('type'=>'checkbox', 'class'=>$delClass, 'id'=>'cbCCDel_'.$r['idGuest_token'])), array('style'=>'text-align:center;'))
     					);
     		}
     	}
@@ -357,8 +357,7 @@ order by n.Name_Last, n.Name_First, t.Merchant");
     			.HTMLTable::makeTh('Account')
     			.HTMLTable::makeTh('Granted')
     			.HTMLTable::makeTh('Merchant')
-    			.HTMLTable::makeTh('Running Total')
-    			.HTMLTable::makeTh('Delete'));
+    			.HTMLTable::makeTh('Running Total'));
     	
     	return $tbl->generateMarkup();
     	

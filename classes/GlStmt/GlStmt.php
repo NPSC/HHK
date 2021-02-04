@@ -928,6 +928,7 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal] + $totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
+		
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
 		$tbl->addBodyTr(HTMLTable::makeTh('Payment Reconciliation', array('colspan'=>'2')));
 		

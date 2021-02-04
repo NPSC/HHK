@@ -68,17 +68,14 @@ $delCofListClass = 'hhk-delcoflist';
 
 // COF listing return
 if (isset($_POST['cmd'])) {
-	
+
 	$dataArray = array();
 	$cmd = filter_input(INPUT_POST, 'cmd', FILTER_SANITIZE_STRING);
-	
+
 	if ($cmd == 'cof') {
-		$dataArray['coflist'] = CreditToken::getCardsOnFile($dbh, $delCofListClass);
-		
-	} else if ($cmd == 'delcof') {
-		$dataArray['message'] = CreditToken::deleteToken($dbh, filter_input(INPUT_POST, 'gtId', FILTER_SANITIZE_NUMBER_INT));
+		$dataArray['coflist'] = CreditToken::getCardsOnFile($dbh, 'GuestEdit.php?id=');
 	}
-	
+
 	echo json_encode($dataArray);
 	exit();
 }

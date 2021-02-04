@@ -59,6 +59,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     IFNULL(ng.idPsg, 0) as `idPsg`,
     IFNULL(hs.idHospital, 0) AS `idHospital`,
     IFNULL(hs.idAssociation, 0) AS `idAssociation`,
+	IFNULL(v.Actual_Departure, '') AS `Visit End`,
     MIN(s.Checkin_Date) AS `First Stay`
 FROM
     stays s
@@ -299,6 +300,7 @@ $cFields[] = array('Phone', 'Phone', 'checked', '', 'string', '20', array());
 $cFields[] = array('Email', 'Email', 'checked', '', 'string', '20', array());
     
 $cFields[] = array("First Stay", 'First Stay', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Visit End", 'Visit End', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Relation", 'Relationship', 'checked', '', 'string', '20', array());
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Group Id", 'idPsg', 'checked', '', 'string', '15', array());

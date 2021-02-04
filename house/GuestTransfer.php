@@ -171,9 +171,9 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
         if ($r['External Id'] == '') {
         	
        		if ($r['Email'] !== '' || $r['Address'] !== '') {
-       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'type'=>'checkbox', 'checked'=>'checked'));
+       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['Id'], 'type'=>'checkbox', 'checked'=>'checked'));
        		} else {
-       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'type'=>'checkbox'));
+       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['Id'], 'type'=>'checkbox'));
         	}
         }
             
