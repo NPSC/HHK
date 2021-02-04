@@ -14,6 +14,7 @@ use HHK\Payment\PaymentSvcs;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\VolMemberType;
+use HHK\SysConst\ItemPriceCode;
 use HHK\ColumnSelectors;
 use HHK\House\GLCodes\GLParameters;
 use HHK\House\GLCodes\GLCodes;
@@ -193,7 +194,7 @@ $useVisitDates = FALSE;
 $cFields = array();
 
 $useGlReport = FALSE;
-if (stristr($uS->siteName, 'gorecki') !== FALSE || strtolower($uS->mode) != 'live') {
+if (stristr($uS->siteName, 'gorecki') !== FALSE || (strtolower($uS->mode) != 'live' && $uS->RoomPriceModel != ItemPriceCode::None)) {
 	$useGlReport = TRUE;
 }
 
