@@ -1,26 +1,22 @@
 <?php
-use HHK\Config_Lite\Config_Lite;
-use HHK\sec\SecurityComponent;
+define("errorReportEmail", "support@nonprofitsoftwarecorp.org");
+define("errorReportFromAddress", "BugReporter<noreply@nonprofitsoftwarecorp.org>");
 
-$config = new Config_Lite(ciCFG_FILE);
-//only interfere on live and demo sites
-if ($config->getString('site', 'Mode', 'dev') != "dev") {
-    register_shutdown_function("fatal_handler", $config);
-}
+register_shutdown_function("fatal_handler");
 
-function fatal_handler($config) {
-
+function fatal_handler() {
+    
     //get error
     $error = error_get_last();
 
     //split error object into vars
-    if ($error !== NULL && $config->getString('site', 'Error_Report_Email', 'support@nonprofitsoftwarecorp.org')) {
+    if ($error !== NULL) {
 
-        formHandler($error, $config);
+        formHandler($error);
 
         //check if ajax request
         if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == "XMLHttpRequest") {
-            returnJSON($error, $config);
+            returnJSON($error);
         } else {
             buildPage($error);
         }
@@ -29,7 +25,7 @@ function fatal_handler($config) {
     }
 }
 
-function formHandler($error, $config) {
+function formHandler($error) {
 
     //if post data exists, send email
     if ($_POST && isset($_POST['name'], $_POST['email'], $_POST['message'])) {
@@ -45,7 +41,7 @@ function formHandler($error, $config) {
 
 
         // send email and redirect
-        sendMail($message, $config);
+        sendMail($message);
         buildPage("", true);
         exit;
     }
@@ -64,18 +60,17 @@ function getSiteName(){
     }
 }
 
-function sendMail($message, $config) {
+function sendMail($message) {
     if ($message) {
         //get report email address
-        $to = $config->getString('site', 'Error_Report_Email', 'support@nonprofitsoftwarecorp.org');
         $subject = "New bug report received from " . getSiteName();
-        $headers = "From: BugReporter<noreply@nonprofitsoftwarecorp.org>" . "\r\n";
+        $headers = "From: " . errorReportFromAddress . "\r\n";
 
-        mail($to, $subject, $message, $headers);
+        mail(errorReportEmail, $subject, $message, $headers);
     }
 }
 
-function returnJSON($error, $config) {
+function returnJSON($error) {
 
 
     $message = "New bug report received from " . getSiteName() . "\r\n\r\n";
@@ -83,13 +78,12 @@ function returnJSON($error, $config) {
     $message .= "File: " . $error["file"] . " line " . $error["line"] . "\r\n\r\n";
     $message .= "Error: " . $error["message"];
 
-    sendMail($message, $config);
+    sendMail($message);
 
     echo json_encode(["status" => "error", "message" => "An error Occurred."]);
 }
 
 function buildPage($error, $success = false) {
-    $sec = new SecurityComponent;
     ?>
     <!DOCTYPE html>
     <html lang="en">
@@ -167,7 +161,7 @@ function buildPage($error, $success = false) {
                 <h1>Uh oh, something's not right!</h1>
                 <div class="container">
                     <div class="col-6" style="text-align: center;">
-                        <img src="<?php echo $sec->getRootURL(); ?>images/hhkLogo.png">
+                        <img src="/training/images/hhkLogo.png">
                         <div class="logo-text">
                             <p>Sometimes errors happen, help us stop them in their digital tracks by submitting a bug report.</p>
                         </div>

@@ -28,8 +28,8 @@ define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' typ
  * Includes
  */
 require ('../functions/commonDefines.php');
+require(FUNCTIONS . 'errorHandler.php');
 require (THIRD_PARTY . '/autoload.php');
 require (FUNCTIONS . 'commonFunc.php');
 
-//Fatal Error Handler
-require(FUNCTIONS . 'errorHandler.php');
+

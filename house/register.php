@@ -212,7 +212,7 @@ $showCharges = TRUE;
 $addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
 
 // decide to show payments and invoices
-if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->VisitFee == false) {
+if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->VisitFee == FALSE && $uS->KeyDeposit == FALSE) {
     $showCharges = FALSE;
 
 } else {
