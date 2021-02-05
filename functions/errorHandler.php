@@ -2,7 +2,9 @@
 define("errorReportEmail", "support@nonprofitsoftwarecorp.org");
 define("errorReportFromAddress", "BugReporter<noreply@nonprofitsoftwarecorp.org>");
 
-register_shutdown_function("fatal_handler");
+if(ini_get('display_errors') == FALSE){ //use errorHandler if errors are off (production environment)
+    register_shutdown_function("fatal_handler");
+}
 
 function fatal_handler() {
     
