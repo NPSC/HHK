@@ -216,6 +216,7 @@ function saveResource(idresc, type, clas) {
                 $('#tblroom').dataTable({
                     "dom": '<"top"if>rt<"bottom"lp><"clear">',
                     "displayLength": 50,
+                    "order": [[1, 'asc']],
                     "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
                 });
             } else if (data.rescList) {
@@ -223,6 +224,7 @@ function saveResource(idresc, type, clas) {
                 $('#tblresc').dataTable({
                     "dom": '<"top"if>rt<"bottom"lp><"clear">',
                     "displayLength": 50,
+                    "order": [[1, 'asc']],
                     "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
                 });
             } else if (data.constList) {
