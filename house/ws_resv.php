@@ -367,6 +367,8 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 	            $stmt = $dbh->query("SELECT * from `vguest_listing` where id = $idGuest limit 1");
 	            $guestAr = $stmt->fetch(PDO::FETCH_ASSOC);
 	            $reportAr = $reportAr + ["guest"=>$guestAr];
+	            $reportAr['description'] = nl2br($reportAr['description']);
+	            $reportAr['resolution'] = nl2br($reportAr['resolution']);
             }
             
             $events = $reportAr;

@@ -608,10 +608,15 @@ class VisitViewer {
         $uS = Session::getInstance();
 
         $includeKeyDep = FALSE;
-        if ($uS->KeyDeposit && $r['Status'] == VisitStatus::CheckedIn && ($action == '' || $action == 'pf' || $action == 'ref') && $visitCharge->getDepositCharged() > 0 && ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) < $visitCharge->getDepositCharged()) {
+        $unpaidKeyDep = FALSE;
+        
+        if ($uS->KeyDeposit && $r['Status'] == VisitStatus::CheckedIn && ($action == '' || $action == 'pf' || $action == 'ref')) {
             $includeKeyDep = TRUE;
+            if($visitCharge->getDepositCharged() > 0 && ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) < $visitCharge->getDepositCharged()){
+                $unpaidKeyDep = TRUE;
+            }
         }
-
+        
         $includeVisitFee = FALSE;
         if ($uS->VisitFee && ($action == '' || $action == 'pf' || $action == 'ref') && $visitCharge->getVisitFeeCharged() > 0) {
             $includeVisitFee = TRUE;
@@ -665,7 +670,7 @@ class VisitViewer {
                     $visitCharge,
                     $paymentGateway,
                     $uS->DefaultPayType,
-                    $includeKeyDep,
+                    $unpaidKeyDep,
                     $showFinalPayment,
                     FALSE,
                     $r['Pref_Token_Id']
@@ -724,17 +729,7 @@ class VisitViewer {
             		HTMLTable::makeTd($labels->getString('PaymentChooser', 'RmFeesPledged', 'Room fees pledged to-date') . ':', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd('$' . number_format($curAccount->getRoomCharge(), 2), array('style'=>'text-align:right;'))
             );
-
-            // Discounts
-            if ($curAccount->getTotalDiscounts() != 0) {
-
-                $showSubTotal = TRUE;
-
-                $tbl2->addBodyTr(
-                    HTMLTable::makeTd('Discounts & Waives:', array('class'=>'tdlabel'))
-                    . HTMLTable::makeTd('$' . number_format($curAccount->getTotalDiscounts(), 2), array('style'=>'text-align:right;'))
-                );
-            }
+        }
 
             // Lodging Taxes
             if (count($curAccount->getCurentTaxItems(ItemId::Lodging)) > 0) {
@@ -755,7 +750,8 @@ class VisitViewer {
                     );
                 }
             }
-        }
+            
+            //}
 
         // Visit fees charged
         if ($curAccount->getVisitFeeCharged() > 0) {
@@ -790,6 +786,17 @@ class VisitViewer {
                     );
                 }
             }
+        }
+        
+        // Discounts
+        if ($curAccount->getTotalDiscounts() != 0) {
+            
+            $showSubTotal = TRUE;
+            
+            $tbl2->addBodyTr(
+                HTMLTable::makeTd('Discounts & Waives:', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd('$' . number_format($curAccount->getTotalDiscounts(), 2), array('style'=>'text-align:right;'))
+                );
         }
 
         // Unpaid MOA

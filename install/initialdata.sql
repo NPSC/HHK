@@ -79,11 +79,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Dir_Type_Selector_Code','e','Email Addresses','','',0),
 ('Dir_Type_Selector_Code','m','Mailing List','','',0),
 
-('Distance_Range','50','Up to 50 miles','2','ca',10),
-('Distance_Range','100','51 to 100 miles','3','ca',20),
-('Distance_Range','150','101 to 150 miles','4','ca',30),
-('Distance_Range','200','151 to 200 miles','5','ca',40),
-('Distance_Range','30000','More Than 200 miles','7','ca',50),
+('Distance_Range','50','Up to 50 miles','2','',10),
+('Distance_Range','100','51 to 100 miles','3','',20),
+('Distance_Range','150','101 to 150 miles','4','',30),
+('Distance_Range','200','151 to 200 miles','5','',40),
+('Distance_Range','30000','More Than 200 miles','7','',50),
 
 ('Document_Category', 'form', 'Form','','',0),
 ('Document_Category', 'stat', 'Static','','',0),

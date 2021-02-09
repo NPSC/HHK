@@ -699,7 +699,7 @@ $addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
 $discs = readGenLookupsPDO($dbh, 'House_Discount');
 
 // decide to show payments and invoices
-if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($discs) == 0) {
+if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && count($discs) == 0 && $uS->VisitFee === false && $uS->KeyDeposit === false) {
     $showCharges = FALSE;
 }
 

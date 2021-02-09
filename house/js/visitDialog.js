@@ -357,12 +357,14 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             var roomChgBal = 0.00;
             var vFeeChgBal = 0.00;
+            var totChgBal = 0.00;
 
             if ($('#spnCfBalDue').length > 0) {
-                roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
+                roomChgBal = parseFloat($('#spnCfBalDue').data('rmbal'));
                 vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
+                totChgBal = parseFloat($('#spnCfBalDue').data('totbal'));
 
-                roomChgBal -= vFeeChgBal;
+                //roomChgBal -= vFeeChgBal;
             }
 
 
@@ -446,18 +448,17 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('#DepRefundAmount').val('');
                             $('.hhk-refundDeposit').hide('fade');
                         }
+                        
+                        $('#cbDepRefundApply').trigger('change');
 
 
-                        if (roomChgBal < 0) {
+                        if (totChgBal < 0) {
 
                             $('#guestCredit').val(roomChgBal.toFixed(2).toString());
                             $('#feesCharges').val('');
                             $('.hhk-RoomCharge').hide();
                             $('.hhk-GuestCredit').show();
-                            // force pay cleaning fee if unpaid...
-                            if ($('#visitFeeCb').length > 0 && Math.abs(roomChgBal) >= vFeeChgBal) {
-                                $('#visitFeeCb').prop('checked', true).prop('disabled', true);
-                            }
+                            
 
                         } else {
 
@@ -465,6 +466,10 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('#guestCredit').val('');
                             $('.hhk-GuestCredit').hide();
                             $('.hhk-RoomCharge').show();
+                            // force pay cleaning fee if unpaid...
+                            if ($('#visitFeeCb').length > 0 && Math.abs(totChgBal) >= vFeeChgBal) {
+                                $('#visitFeeCb').prop('checked', true).prop('disabled', true).trigger('change');
+                            }
                         }
 
                         $('input#cbFinalPayment').change();
@@ -482,14 +487,16 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                         isCheckedOut = false;
                         $('.hhk-finalPayment').hide('fade');
-                        $('.hhk-GuestCredit').hide();
-                        $('.hhk-RoomCharge').hide();
+                        $('.hhk-GuestCredit').hide('fade');
+                        $('.hhk-RoomCharge').hide('fade');
                         $('#feesCharges').val('');
                         $('#guestCredit').val('');
                         $('.hhk-refundDeposit').hide('fade');
                         $('#DepRefundAmount').val('');
                         $('input#cbFinalPayment').prop('checked', false);
                         $('input#cbFinalPayment').change();
+                        $('#cbDepRefundApply').trigger('change');
+                        $('#visitFeeCb').prop('checked', false).prop('disabled', false).trigger('change');
                     }
                 });
 
@@ -514,7 +521,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                 $('input.hhk-ckoutCB').change();
 
-            } else if ($('#cbFinalPayment').length > 0) {
+            } else {  // if ($('#cbFinalPayment').length > 0)
 
                 isCheckedOut = true;
 
@@ -529,6 +536,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 } else {
                      $('#DepRefundAmount').val((0 - kdamt).toFixed(2).toString());
                     $('.hhk-refundDeposit').show('fade');
+                    $('#cbDepRefundApply').trigger('change');
                 }
 
                 if (roomChgBal < 0) {

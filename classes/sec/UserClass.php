@@ -480,18 +480,18 @@ class UserClass
         
 
         //get user agent
-        try {
-        	$userAgentArray = get_browser(NULL, TRUE);
-        	$browserName = $userAgentArray['parent'];
-        	$osName = $userAgentArray['platform'];
-        } catch (\Exception $d) {
-        	$browserName = "Missing Browscap";
-        }
-        
         if($fromHHK){
             $remoteIp = '';
             $browserName = "HHK";
             $osName = "HHK";
+        }else{
+            try {
+            	$userAgentArray = get_browser(NULL, TRUE);
+            	$browserName = $userAgentArray['parent'];
+            	$osName = $userAgentArray['platform'];
+            } catch (\Exception $d) {
+            	$browserName = "Missing Browscap";
+            }
         }
         
         try{
@@ -513,7 +513,7 @@ class UserClass
         $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
-WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'");
+WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = '$uname'");
 
         if ($stmt->rowCount() === 1) {
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);

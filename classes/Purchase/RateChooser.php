@@ -11,6 +11,7 @@ use HHK\sec\{SecurityComponent, Session};
 use HHK\TableLog\VisitLog;
 use HHK\Tables\EditRS;
 use HHK\Tables\Visit\{StaysRS, VisitRS};
+use HHK\SysConst\ItemPriceCode;
 
 /**
  * RateChooser.php
@@ -565,8 +566,12 @@ class RateChooser {
         //
 
         $attrFixed = array('class'=>'hhk-fxFixed');
-        $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'text-align:center;');
-
+        if($uS->RoomPriceModel == ItemPriceCode::None){
+            $attrAdj = array('style'=>'display:none;');
+        }else{
+            $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'text-align:center;');
+        }
+        
         // Fixed rate?
         if ($roomRateCategory == DefaultSettings::Fixed_Rate_Category) {
 
@@ -578,13 +583,17 @@ class RateChooser {
             $attrFixed['style'] = 'display:none;';
             $fixedRate = '';
         }
+        
+        if($uS->RoomPriceModel == ItemPriceCode::None){
+            $attrAdj['style'] .= 'display:none;';
+        }
 
         $vFeeMkup = '';
 
         if ($this->payVisitFee) {
             $vFeeMkup = $this->makeVisitFeeSelector($this->makeVisitFeeArray($dbh), $resv->getVisitFee());
         }
-
+        
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $resv->getIdRoomRate());
         $rateSelectorAttrs = array('name'=>'selRateCategory', 'style'=>'display:table;');
 
@@ -601,8 +610,8 @@ class RateChooser {
 
         $tbl->addHeaderTr(
             ($this->payVisitFee ? HTMLTable::MakeTh($visitFeeTitle) : '')
-            .HTMLTable::makeTh('Room Rate')
-            .HTMLTable::makeTh('Adjustment', $attrAdj)
+            .($uS->RoomPriceModel != ItemPriceCode::None ? HTMLTable::makeTh('Room Rate')
+                .HTMLTable::makeTh('Adjustment', $attrAdj) : '')
             .HTMLTable::makeTh('Nights')
             .($this->payVisitFee || $tax > 0 ? HTMLTable::makeTh('Estimated Lodging') : '')
             .($tax > 0 ? HTMLTable::makeTh('Tax (' . TaxedItem::suppressTrailingZeros($tax*100).')') : '')
@@ -614,7 +623,7 @@ class RateChooser {
 
         $tbl->addBodyTr(
                 ($this->payVisitFee ? HTMLTable::makeTd($vFeeMkup, array('style'=>'text-align:center;')) : '')
-                .HTMLTable::makeTd($rateSel)
+            .HTMLTable::makeTd($rateSel, array('style'=>($uS->RoomPriceModel == ItemPriceCode::None ? 'display:none;':'')))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup(($resv->getRateAdjust() == 0 ? '' : number_format($resv->getRateAdjust(), 0)), array('name'=>'txtadjAmount', 'size'=>'2')) . '%'), $attrAdj)
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $nites, array('name'=>'spnNites')), array('style'=>'text-align:center;'))
                 . ($this->payVisitFee || $tax > 0 ? HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnLodging')), array('style'=>'text-align:center;')) : '')

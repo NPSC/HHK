@@ -13,8 +13,8 @@ define('JSV', '');
 define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
-define('PAYMENT_JS', "js/payments-min.js" . JSV);
-define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
+define('PAYMENT_JS', "js/payments.js" . JSV);
+define('VISIT_DIALOG_JS', "js/visitDialog.js" . JSV);
 define('INCIDENT_REP_JS', 'js/incidentReports.min.js' . JSV);
 define('DOC_UPLOAD_JS', 'js/documentUpload.min.js' . JSV);
 define('RESV_JS', "js/resv.js" . JSV);
@@ -28,8 +28,8 @@ define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' typ
  * Includes
  */
 require ('../functions/commonDefines.php');
+require(FUNCTIONS . 'errorHandler.php');
 require (THIRD_PARTY . '/autoload.php');
 require (FUNCTIONS . 'commonFunc.php');
 
-//Fatal Error Handler
-require(FUNCTIONS . 'errorHandler.php');
+

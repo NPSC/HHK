@@ -53,7 +53,7 @@ class Login {
         }
         
          // Check site maintenance
-        $ssn->Site_Maintenance = SysConfig::getKeyValue($dbh, 'sys_config', 'Site_Maintenance');
+        $ssn->Site_Maintenance = SysConfig::getKeyValue($dbh, 'sys_config', 'Site_Maintenance', false);
         
         if ($ssn->Site_Maintenance === TRUE) {
              exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
@@ -61,7 +61,7 @@ class Login {
          
 
 		// Check SsL
-        $ssn->ssl = SysConfig::getKeyValue($dbh, 'sys_config', 'SSL');
+        $ssn->ssl = SysConfig::getKeyValue($dbh, 'sys_config', 'SSL', false);
         $secureComp = new SecurityComponent();
 
         if ($ssn->ssl === TRUE) {
@@ -73,8 +73,8 @@ class Login {
         }
 
         
-        $ssn->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'mode'));
-        $ssn->testVersion = SysConfig::getKeyValue($dbh, 'sys_config', 'Run_As_Test');
+        $ssn->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'mode', 'demo'));
+        $ssn->testVersion = SysConfig::getKeyValue($dbh, 'sys_config', 'Run_As_Test', false);
         $ssn->resourceURL = $secureComp->getRootURL();
         $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 

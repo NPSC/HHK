@@ -52,18 +52,24 @@ class SysConfig {
         
     }
 
-    public static function getKeyValue(\PDO $dbh, $tableName, $key) {
+    public static function getKeyValue(\PDO $dbh, $tableName, $key, $default = null) {
 
         if ($tableName == '' || $key == '') {
             throw new RuntimeException('System Configuration database table name or key not specified.  ');
         }
 
-        $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
+        try{
+            $stmt = $dbh->query("select `Value`,`Type` from `" . $tableName . "` where `Key` = '$key' ");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\Exception $e){
+            $rows = array();
+        }
+        
         if (count($rows) == 1) {
             return self::getTypedVal($rows[0]['Type'], $rows[0]['Value']);
-        } else {
+        } else if($default !== null){
+            return $default;
+        }else{
             throw new RuntimeException('System Configuration key not found: ' . $key);
         }
 

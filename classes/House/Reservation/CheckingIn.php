@@ -135,7 +135,7 @@ FROM reservation r
         $rateChooser = new RateChooser($dbh);
         
         // Create rate chooser markup?
-        if ($uS->RoomPriceModel != ItemPriceCode::None) {
+        if ($uS->RoomPriceModel != ItemPriceCode::None || $uS->VisitFee || $uS->KeyDeposit) {
             
             $resc = $roomChooser->getSelectedResource();
             
@@ -179,7 +179,7 @@ FROM reservation r
                 
                 $dataArray['pay'] = HTMLContainer::generateMarkup('div',
                     PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())
-                    , array('style'=>'clear:left; float:left;'));
+                    , array('style'=>'flex-basis: 100%'));
                 
             }
             
