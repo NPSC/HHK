@@ -38,7 +38,7 @@ class Session
     *
     *    @return    object
     **/
-    public static function getInstance($configFileName = '')
+    public static function getInstance($configFileName = ciCFG_FILE)
     {
         if (!isset(self::$instance))
         {
