@@ -67,6 +67,7 @@ class ReserveData {
     protected $fillEmergencyContact;
     protected $patAsGuestFlag;
     protected $patBirthDateFlag;
+    protected $guestBirthDateFlag;
     protected $showBirthDate;
     protected $patLabel;
     protected $guestLabel;
@@ -147,6 +148,7 @@ class ReserveData {
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
         $this->patBirthDateFlag = $uS->InsistPatBD;
+        $this->guestBirthDateFlag = $uS->InsistGuestBD;
         $this->showBirthDate = $uS->ShowBirthDate;
         $this->insistCkinDemog = FALSE;
         $this->fillEmergencyContact = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
@@ -341,6 +343,10 @@ class ReserveData {
 
     public function getPatBirthDateFlag() {
         return $this->patBirthDateFlag;
+    }
+    
+    public function getGuestBirthDateFlag() {
+        return $this->guestBirthDateFlag;
     }
 
     public function getShowBirthDate() {

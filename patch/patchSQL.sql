@@ -32,7 +32,7 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES
 -- Sys Config lookups - add blanks where needed
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Reg_Colors', '', 'Default');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Email_Server', '', '(None)');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('dayIncrements', '', 'Never', '6'),
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES ('dayIncrements', '', 'Never', '6');
 
 -- new site mode lookups.
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Site_Mode', 'dev', 'Development');
@@ -99,3 +99,4 @@ INSERT INTO name_volunteer2
 CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', 'admin', NOW(), 'ga');
 CALL `new_webpage`('ws_reportFilter.php', 0, '', 0, 'h', '', '', 's', '', 'admin', NOW(), 'gr');
 
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('InsistGuestBD', 'false', 'b', 'g', 'Insist on usre filling in guest birthdates');

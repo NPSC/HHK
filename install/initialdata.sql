@@ -559,6 +559,7 @@ INSERT INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`
 ('InitResvStatus','a','lu','h','','Initial reservation status setting, confirmed or unconfirmed','Init_Reserv_Status'),
 ('InsistCkinDemog','false','b','h','','Insist that user fill in the demographics on the check in page',''),
 ('InsistCkinPayAmt','true','b','h','','Insist the user fills in the payment amount on checkin page',''),
+('InsistGuestBD', 'false', 'b', 'g', '', 'Insist on user filling in guest birthdates', ''),
 ('InsistPatBD','true','b','p','','Insist on user filling in the patients birthdate',''),
 ('InsuranceChooser','false','b','hf','','Enable insurance chooser',''),
 ('InvoiceTerm','30','i','f','','Invoice payment terms in days',''),

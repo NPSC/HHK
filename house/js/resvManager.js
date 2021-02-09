@@ -8,6 +8,7 @@ function resvManager(initData, options) {
     var resvTitle = initData.resvTitle;
     var saveButtonLabel = initData.saveButtonLabel;
     var patBirthDate = initData.patBD;
+    var gstBirthDate = initData.gstBD;
     var patAddrRequired = initData.patAddr;
     var gstAddrRequired = initData.gstAddr;
     var patAsGuest = initData.patAsGuest;
@@ -1107,6 +1108,16 @@ function resvManager(initData, options) {
 
                 // Guests
                 } else {
+
+					// Check guest birthdate
+                    if (gstBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
+                        $('#' + p + 'txtBirthDate').addClass('ui-state-error');
+                        flagAlertMessage(guestLabel + ' is missing the Birth Date.', 'alert', $pWarning);
+                        openSection(true);
+                        return false;
+                    } else {
+                        $('#' + p + 'txtBirthDate').removeClass('ui-state-error');
+                    }
 
                     // Check Guest address
                     if (gstAddrRequired) {
