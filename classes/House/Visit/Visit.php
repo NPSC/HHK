@@ -797,6 +797,8 @@ class Visit {
         if ($depDate < $stDate) {
             return "Checkout Failed: The checkout date was before the span start date.  ";
         }
+        
+        // Check all stays for too early checkout of visit.
 
 
         // Check out
@@ -894,8 +896,9 @@ class Visit {
         $msg = '';
         $uS = Session::getInstance();
 
+        $allStays = $this->loadStays($dbh);
         // Check each stay status
-        foreach ($this->stays as $stayRS) {
+        foreach ($allStays as $stayRS) {
 
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
                 return;
