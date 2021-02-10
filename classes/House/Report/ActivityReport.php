@@ -113,7 +113,7 @@ class ActivityReport {
                     }
                 } else if ($logData['Status']['new'] == VisitStatus::CheckedOut) {
                     // Checking out
-                    $trow .= HTMLTable::makeTd('Check Out') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($logData['Checkout_Date']['new'])));
+                    $trow .= HTMLTable::makeTd('Check Out') . HTMLTable::makeTd(date('M j, Y H:i:s', strtotime($logData['Span_End_Date']['new'])));
                 }
             } else {
                 // something other than status changed
