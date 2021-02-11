@@ -328,7 +328,7 @@ from stays s join visit v on s.idVisit = v.idVisit
 where r.idPsg = $idPsg and s.idName = " . $id;
             
             if ($ignoreZeroDayStays) {
-            	$query .= " and DATEDIFF(s.Span_End_Date, s.Span_Start_Date) > 0";
+            	$query .= " and (s.Span_End_Date is NULL or DATEDIFF(s.Span_End_Date, s.Span_Start_Date) > 0)";
             }
             	
             $stmt = $dbh->query($query);

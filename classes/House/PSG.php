@@ -117,7 +117,7 @@ class PSG {
 
         $ngRs = $this->psgMembers[$idGuest];
 
-        if ($ngRs->Relationship_Code->getStoredVal() != RelLinkType::Self && Guest::checkPsgStays($dbh, $idGuest, $this->getIdPsg()) === FALSE) {
+        if ($ngRs->Relationship_Code->getStoredVal() != RelLinkType::Self && Guest::checkPsgStays($dbh, $idGuest, $this->getIdPsg(), TRUE) === FALSE) {
 
             $count = EditRS::delete($dbh, $ngRs, array($ngRs->idName, $ngRs->idPsg));
 
@@ -128,6 +128,26 @@ class PSG {
                 unset($this->psgMembers[$idGuest]);
                 
                 // Remove guest from 0-day stays
+                //get stays
+                $query = "select s.idStays, s.idVisit, s.Visit_Span, (select count(*) from stays where stays.idVisit = s.idVisit and stays.Visit_Span = s.Visit_Span) as 'VisitStayCount'
+from stays s join visit v on s.idVisit = v.idVisit
+	left join registration r on v.idRegistration = r.idRegistration
+where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.Span_Start_Date) = 0";
+                
+                $stmt = $dbh->prepare($query);
+                $stmt->execute(array(':idPsg'=>$this->getIdPsg(), ':idGuest'=>$idGuest));
+                $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                
+                foreach($stays as $stay){
+                    if($stay['VisitStayCount'] == 1){
+                        $query = "delete from visit v where idVisit = :idVisit and Visit_Span = :visitSpan";
+                        $stmt = $dbh->prepare($query);
+                        $stmt->execute(array(':idVisit'=>$stay['idVisit'], ':visitSpan'=>$stay['Visit_Span']));
+                    }
+                    $query = "delete from stays where idStays = :idStays";
+                    $stmt = $dbh->prepare($query);
+                    $stmt->execute(array(':idStays'=>$stay['idStays']));
+                }
                 
                 return TRUE;
             }
