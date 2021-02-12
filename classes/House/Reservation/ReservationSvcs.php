@@ -165,7 +165,7 @@ class ReservationSvcs
 
                 $mail->isHTML(true);
 
-                $mail->Subject = htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation';
+                $mail->Subject = Labels::getString('referral', 'Res_Confirmation_Subject', htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation');
                 $mail->msgHTML($docs[$docCode]['doc']);
 
                 if ($mail->send()) {
