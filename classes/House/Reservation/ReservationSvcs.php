@@ -138,7 +138,7 @@ class ReservationSvcs
         }
         
         $ul = HTMLContainer::generateMarkup('ul', $li, array());
-        $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'confirmTabDiv'));
+        $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'confirmTabDiv', 'class'=>'user-agent-spacing'));
 
         if ($emailAddr == '') {
             $emAddr = $guest->getEmailsObj()->get_data($guest->getEmailsObj()

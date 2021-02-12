@@ -1117,7 +1117,7 @@ if (isset($_POST['ldfm'])) {
         )), array('class'=>'hhk-sortable', 'data-code'=>$r['Code']));
 
         $tabContent .= HTMLContainer::generateMarkup('div',  $help .($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
-            'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3')): '') .
+            'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3 user-agent-spacing')): '') .
             '<div class="row"><div class="col-10 uploadFormDiv ui-widget-content" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="d-inline-block" style="padding: 5px 7px;">
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/><input type="hidden" name="filefrmtype" value="' . $formType . '"/>
 Upload new file: <input name="formfile" type="file" required />

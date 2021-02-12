@@ -435,3 +435,8 @@ li.hhk-myMenuTop {
 		display: inline;
 	}
 }
+
+.user-agent-spacing * {
+	padding: revert;
+	margin: revert;
+}
