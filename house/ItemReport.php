@@ -14,6 +14,7 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFieldSet;
+use HHK\House\Report\ReportFilter;
 
 /**
  * ItemReport.php
@@ -145,6 +146,9 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
 
 }
 
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTableMu = '';
 $dataTable = '';
@@ -162,19 +166,6 @@ $txtStart = '';
 $txtEnd = '';
 $start = '';
 $end = '';
-
-
-$monthArray = array(
-    1 => array(1, 'January'),
-    2 => array(2, 'February'),
-    3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
-
-if ($uS->fy_diff_Months == 0) {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
-} else {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
-}
 
 $statusList = readGenLookupsPDO($dbh, 'Invoice_Status');
 
@@ -277,6 +268,10 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     // set the column selectors
     $colSelector->setColumnSelectors($_POST);
 
+    $filter->loadSelectedTimePeriod();
+    $start = $filter->getReportStart();
+    $end = $filter->getReportEnd();
+    
     $local = TRUE;
     if (isset($_POST['btnExcel'])) {
         $local = FALSE;
@@ -295,27 +290,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         }
     }
 
-
-    if (isset($_POST['selIntMonth'])) {
-        $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
-    }
-
-    if (isset($_POST['selCalendar'])) {
-        $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-
-    if (isset($_POST['selIntYear'])) {
-        $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-
-    if (isset($_POST['stDate'])) {
-        $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
-    }
-
-    if (isset($_POST['enDate'])) {
-        $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
-    }
-
     if (isset($_POST['selPayStatus'])) {
         $reqs = $_POST['selPayStatus'];
         if (is_array($reqs)) {
@@ -329,65 +303,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             $itemSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
         }
     }
-
-
-    // Determine time span
-    if ($calSelection == 20) {
-        // fiscal year
-        $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
-        $startDT = new DateTime($year . '-01-01');
-
-        $start = $startDT->sub($adjustPeriod)->format('Y-m-d 00:00:00');
-
-        $endDT = new DateTime(($year + 1) . '-01-01');
-        $end = $endDT->sub($adjustPeriod)->format('Y-m-d 00:00:00');
-
-    } else if ($calSelection == 21) {
-        // Calendar year
-        $startDT = new DateTime($year . '-01-01');
-        $start = $startDT->format('Y-m-d 00:00:00');
-
-        $end = ($year + 1) . '-01-01 00:00:00';
-
-    } else if ($calSelection == 18) {
-        // Dates
-        if ($txtStart != '') {
-            $startDT = new DateTime($txtStart);
-        } else {
-            $startDT = new DateTime();
-        }
-
-        if ($txtEnd != '') {
-            $endDT = new DateTime($txtEnd);
-        } else {
-            $endDT = new DateTime();
-        }
-
-        $start = $startDT->format('Y-m-d');
-        $end = $endDT->format('Y-m-d');
-
-    } else if ($calSelection == 22) {
-        // Year to date
-        $start = date('Y') . '-01-01';
-
-        $endDT = new DateTime();
-
-        $end = $endDT->add(new DateInterval('P1D'))->format('Y-m-d 00:00:00');
-
-
-    } else {
-        // Months
-        $interval = 'P' . count($months) . 'M';
-        $month = $months[0];
-        $start = $year . '-' . $month . '-01 00:00:00';
-
-        $endDate = new DateTime($start);
-        $endDate->add(new DateInterval($interval));
-
-        $end = $endDate->format('Y-m-d 00:00:00');
-    }
-
-
 
     $whDates = " and DATE(i.Invoice_Date) < DATE('$end') and DATE(i.Invoice_Date) >= DATE('$start') ";
 
@@ -635,9 +550,7 @@ if ($showDeleted) {
 $shoDeletedCb = HTMLInput::generateMarkup('', $dAttrs)
         . HTMLContainer::generateMarkup('label', 'Show Deleted Invoices', array('for'=>'cbShoDel'));
 
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
-$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 
 $selDiag = '';
 if (count($diags) > 0) {
@@ -647,7 +560,7 @@ if (count($diags) > 0) {
 }
 
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;', 'id'=>'includeFields'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'display: inline-block; vertical-align: top;', 'id'=>'includeFields'));
 
 ?>
 <!DOCTYPE html>
@@ -788,29 +701,10 @@ function invoiceAction(idInvoice, action, eid, container, show) {
         <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="ItemReport.php" method="post">
-                    <table style="float: left;">
-                        <tr>
-                            <th colspan="3">Time Period</th>
-                        </tr>
-                        <tr>
-                            <th>Interval</th>
-                            <th style="min-width:100px; ">Month</th>
-                            <th>Year</th>
-                        </tr>
-                        <tr>
-                            <td style="vertical-align: top;"><?php echo $calSelector; ?></td>
-                            <td><?php echo $monthSelector; ?></td>
-                            <td style="vertical-align: top;"><?php echo $yearSelector; ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">
-                                <span class="dates" style="margin-right:.3em;">Start:</span>
-                                <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
-                                <span class="dates" style="margin-right:.3em;">End:</span>
-                                <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
-                        </tr>
-                    </table>
-                    <table style="float: left;">
+                	<div style="display: inline-block; vertical-align: top;">
+                    	<?php echo $timePeriodMarkup; ?>
+                    </div>
+                    <table style="display: inline-block; vertical-align: top;">
                         <tr>
                             <th>Invoice Status</th>
                         </tr>
@@ -818,7 +712,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                            <td><?php echo $statusSelector; ?></td>
                         </tr>
                     </table>
-                    <table style="float: left;">
+                    <table style="display: inline-block; vertical-align: top;">
                         <tr>
                             <th>Item Filter</th>
                         </tr>
@@ -827,7 +721,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                         </tr>
                     </table>
                     <?php if (count($diags) > 0) { ?>
-                    <table style="float:left;">
+                    <table style="display: inline-block; vertical-align: top;">
                         <tr>
                             <th><?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?></th>
                         </tr>

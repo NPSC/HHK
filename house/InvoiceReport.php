@@ -1,6 +1,4 @@
 <?php
-
-
 use HHK\SysConst\WebPageCode;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
@@ -838,7 +836,7 @@ if ($useVisitDates) {
 $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
         . HTMLContainer::generateMarkup('label', 'Use Visit Dates', array('for'=>'cbUseVisitDates'));
 
-        $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'display: inline-block;', 'id'=>'includeFields'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'display: inline-block;', 'id'=>'includeFields'));
 
 
 ?>
