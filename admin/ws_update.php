@@ -87,10 +87,7 @@ if ($cd == '' || $so == '' || $un == '') {
 try {
 
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
-
-    // define db connection obj
-    $dbh = initPDO(TRUE);
+    $dbh = $login->initHhkSession(ciCFG_FILE);
 
     // Load the page information
     $page = new ScriptAuthClass($dbh);
@@ -103,7 +100,7 @@ try {
 }
 
 // Check site identifier
-if ($cd !== $config->getString('db', 'Schema', '')) {
+if ($cd !== $uS->databaseName) {
 
     $uS->destroy(true);
     echo(json_encode(array('error'=>"Bad Site Identifier: " . $cd)));
