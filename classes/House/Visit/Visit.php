@@ -896,9 +896,9 @@ class Visit {
         $msg = '';
         $uS = Session::getInstance();
 
-        $allStays = $this->loadStays($dbh);
+        $this->loadStays($dbh, '');
         // Check each stay status
-        foreach ($allStays as $stayRS) {
+        foreach ($this->stays as $stayRS) {
 
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
                 return;
