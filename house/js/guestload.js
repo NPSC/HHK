@@ -452,6 +452,17 @@ $(document).ready(function () {
             $('#disp_deceased').hide();
         }
     });
+    
+    // Date of background check
+    $('#cbbackgroundcheck').change(function () {
+        if ($(this).prop('checked')) {
+        	$('#txtBackgroundCheckDate').datepicker('setDate', '+0');
+            $('#disp_backgroundcheck').show();
+        } else {
+        	$('#txtBackgroundCheckDate').val('');
+            $('#disp_backgroundcheck').hide();
+        }
+    });
 
     $('select.hhk-multisel').each( function () {
         $(this).multiselect({

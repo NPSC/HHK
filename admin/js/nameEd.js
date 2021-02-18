@@ -504,12 +504,24 @@ $(document).ready(function () {
     $("#selStatus").change(function () {
         changeMemberStatus($(this), memData, savePressed);
     });
-        // Date of death
+        
+    // Date of death
     $('#cbdeceased').change(function () {
         if ($(this).prop('checked')) {
             $('#disp_deceased').show('blind');
         } else {
             $('#disp_deceased').hide('blind');
+        }
+    });
+    
+    // Date of background check
+    $('#cbbackgroundcheck').change(function () {
+        if ($(this).prop('checked')) {
+        	$('#txtBackgroundCheckDate').datepicker('setDate', '+0');
+            $('#disp_backgroundcheck').show();
+        } else {
+        	$('#txtBackgroundCheckDate').val('');
+            $('#disp_backgroundcheck').hide();
         }
     });
 
