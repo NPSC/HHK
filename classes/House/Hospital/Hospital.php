@@ -178,7 +178,7 @@ class Hospital {
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ' .
                         HTMLInput::generateMarkup(
                                 $wPhone["Phone_Num"],
-                                array('id'=>'a_txtPhone'.PhonePurpose::Work, 'name'=>'a_txtPhone[' . PhonePurpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
+                                array('id'=>'a_txtPhone['.PhonePurpose::Work . ']', 'name'=>'a_txtPhone[' . PhonePurpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
                         , array('style'=>'text-align:right;')
                         )
                 );
@@ -198,13 +198,13 @@ class Hospital {
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ' .
                         HTMLInput::generateMarkup(
                                 $cPhone["Phone_Num"],
-                                array('id'=>'a_txtPhone'.PhonePurpose::Cell, 'name'=>'a_txtPhone[' .PhonePurpose::Cell. ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
+                                array('id'=>'a_txtPhone['.PhonePurpose::Cell . ']', 'name'=>'a_txtPhone[' .PhonePurpose::Cell. ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
                         , array('style'=>'text-align:right;')
                         )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $email["Email"],
-                                array('id'=>'a_txtEmail1', 'name'=>'a_txtEmail[1]', 'size'=>'24', 'class'=>'hhk-emailInput hhk-agentInfo hospital-stay'))
+                                array('id'=>'a_txtEmail[1]', 'name'=>'a_txtEmail[1]', 'size'=>'24', 'class'=>'hhk-emailInput hhk-agentInfo hospital-stay'))
                         .HTMLContainer::generateMarkup('span', '', array('class'=>'hhk-send-email'))
                         )
             );
