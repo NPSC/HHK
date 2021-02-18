@@ -2,6 +2,7 @@
 
 namespace HHK\Purchase;
 
+use HHK\House\Visit\Visit;
 use HHK\Payment\Receipt;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\SysConst\InvoiceLineType;
@@ -43,6 +44,7 @@ class VisitCharges {
     protected $glideCredit = 0;
     protected $idVisit;
     protected $span;
+    protected $finalVisitCoDate;
 
     /**
      *
@@ -63,17 +65,35 @@ class VisitCharges {
 
     public function sumDatedRoomCharge(\PDO $dbh, AbstractPriceModel $priceModel, $coDate, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
 
-        // Get current nights .
-        $spans = $priceModel->loadVisitNights($dbh, $this->idVisit, $coDate);
+        // Get spans with current nights calculated.
+        $spans = $priceModel->loadVisitNights($dbh, $this->idVisit);
 
         // Access the last span
         $span = $spans[(count($spans) - 1)];
 
         $arrDT = new \DateTime($span['Span_Start']);
         $arrDT->setTime(0, 0, 0);
+        
         $depDT = new \DateTime($coDate);
+        
+        // Check stays for last checkout date;
+        $allStays = Visit::loadStaysStatic($dbh, $this->idVisit, $this->span, '');
+        foreach ($allStays as $stayRS) {
+        	
+        	// Get the latest checkout date
+        	if ($stayRS->Span_End_Date->getStoredVal() != '') {
+        		
+        		$dt = new \DateTime($stayRS->Span_End_Date->getStoredVal());
+        		
+        		if ($dt > $depDT) {
+        			$depDT = $dt;
+        		}
+        	}
+        }
+
 
         $span['Expected_Departure'] = $depDT->format('Y-m-d H:i:s');
+        $this->finalVisitCoDate = $depDT;
 
         $depDT->setTime(0, 0, 0);
 
@@ -518,6 +538,9 @@ where
     }
     public function getSpan() {
         return $this->span;
+    }
+    public function getFinalVisitCoDate() {
+    	return $this->finalVisitCoDate;
     }
 
 }

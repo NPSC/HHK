@@ -868,7 +868,7 @@ class GlStmt {
 					$ptp = $vIntervalPay;
 				}
 			}
-
+			
 			// Payments to now
 			$ptn = 0;
 			if ($cfp <= $vIntervalPay) {
@@ -878,24 +878,24 @@ class GlStmt {
 					$ptn = $vIntervalPay - $cfp;
 				}
 			}
-
+			
 			// Payments to Future
 			$ptf = 0;
 			if ($ptp + $ptn < $vIntervalPay) {
 				$ptf = $vIntervalPay - $ptp - $ptn;
 			}
-
+			
 			// Unpaid Charges
 			if ($vIntervalCharge > $ptn) {
 				$unpaidCharges += ($vIntervalCharge - $ptn);
 			}
-
+			
 			// Payments Carried Forward
 			if (($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf > 0) {
 				$paymentsCarriedForward += ($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf;
 			}
-
-
+			
+			
 			$forwardPay += $pfp;
 			$preIntervalPay += $ptp;
 			$intervalPay += $ptn;
@@ -904,7 +904,8 @@ class GlStmt {
 			$intervalCharge += $vIntervalCharge;
 			$fullInvervalCharge += $vFullIntervalCharge;
 			$subsidyCharge += $vSubsidyCharge;
-
+			
+			
 		}
 
 		

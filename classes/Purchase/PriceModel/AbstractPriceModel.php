@@ -47,7 +47,7 @@ abstract class AbstractPriceModel {
         }
     }
 
-    public function loadVisitNights(\PDO $dbh, $idVisit, $end_Date = '') {
+    public function loadVisitNights(\PDO $dbh, $idVisit) {
 
         // Get current nights .
         $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idVisit` = $idVisit and `Status` != 'p' order by `Span`");

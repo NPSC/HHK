@@ -798,9 +798,6 @@ class Visit {
             return "Checkout Failed: The checkout date was before the span start date.  ";
         }
         
-        // Check all stays for too early checkout of visit.
-
-
         // Check out
         $stayRS->Status->setNewVal(VisitStatus::CheckedOut);
         $stayRS->Checkout_Date->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
@@ -896,9 +893,12 @@ class Visit {
         $msg = '';
         $uS = Session::getInstance();
 
-        $this->loadStays($dbh, '');
+        //$this->loadStays($dbh, '');
+        
+        $allStays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), '');
+        
         // Check each stay status
-        foreach ($this->stays as $stayRS) {
+        foreach ($allStays as $stayRS) {
 
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
                 return;

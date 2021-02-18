@@ -125,9 +125,11 @@ class HouseServices {
         $visitCharge = new VisitCharges($r['idVisit']);
         $visitCharge->sumPayments($dbh);
 
-        if ($action == 'ref') {
+        if ($action == 'ref' && $coDate != '') {
             // Visit is checking out to a different date than "today"
             $visitCharge->sumDatedRoomCharge($dbh, $priceModel, $coDate, 0, TRUE);
+            // if a previous stay checked out later than the checked in stay.
+            $coDate = $visitCharge->getFinalVisitCoDate()->format('Y-m-d H:i:s');
         } else {
             $visitCharge->sumCurrentRoomCharge($dbh, $priceModel, 0, TRUE);
         }
