@@ -31,6 +31,7 @@ class NameDemogRS extends AbstractTableRS {
     public $Media_Source;  // varchar(5) NOT NULL DEFAULT '',
     public $Special_Needs;  // varchar(5) NOT NULL DEFAULT '',
     public $Gl_Code;  // VARCHAR(25) NOT NULL DEFAULT ''
+    public $Background_Check_Date;
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Updated_By;  // varchar(45) NOT NULL DEFAULT '',
     public $Timestamp;  // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -54,6 +55,7 @@ class NameDemogRS extends AbstractTableRS {
         $this->Media_Source = new DB_Field('Media_Source', '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Special_Needs = new DB_Field('Special_Needs', '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Gl_Code = new DB_Field('Gl_Code', '', new DbStrSanitizer(25), TRUE, TRUE);
+        $this->Background_Check_Date = new DB_Field('Background_Check_Date', NULL, new DbDateSanitizer("Y-m-d"), TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);
         $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

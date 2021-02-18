@@ -656,6 +656,24 @@ abstract class AbstractMember {
         }
 
 
+        // Background Check checkbox
+        if (isset($post[$idPrefix.'cbMarker_background_check'])) {
+            
+            if (isset($post[$idPrefix.'cbbackgroundcheck'])) {
+                // Member background check completed
+                if (isset($post[$idPrefix.'txtBackgroundCheckDate']) && $post[$idPrefix.'txtBackgroundCheckDate'] != '' && $this->demogRS->Background_Check_Date->getStoredVal() != $post[$idPrefix.'txtBackgroundCheckDate']) {
+                    $dbc = filter_var($post[$idPrefix.'txtBackgroundCheckDate'], FILTER_SANITIZE_STRING);
+                    $this->demogRS->Background_Check_Date->setNewVal($dbc);
+                }
+                
+            } else {
+                
+                if ($this->demogRS->Background_Check_Date->getStoredVal() != NULL) {
+                    $this->demogRS->Background_Check_Date->setNewVal('');
+                }
+            }
+        }
+        
 
         //  Excludes
         // Excludes section includes a hidden input that we check to see if the excludes are included on the page.
@@ -1073,6 +1091,10 @@ abstract class AbstractMember {
 
     public function get_DateDeceased() {
         return $this->nameRS->Date_Deceased->getStoredVal();
+    }
+    
+    public function get_DateBackgroundCheck() {
+        return $this->demogRS->Background_Check_Date->getStoredVal();
     }
 
     public function set_sex($sex) {

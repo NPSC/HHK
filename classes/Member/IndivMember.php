@@ -359,13 +359,29 @@ class IndivMember extends AbstractMember {
         . HTMLTable::makeTd(
                 HTMLInput::generateMarkup(
                         $this->nameRS->Name_Previous,
-                        array('name'=>$idPrefix.'txtPreviousName', 'size'=>'9')
+                        array('name'=>$idPrefix.'txtPreviousName', 'style'=>'width: 122px')
                         )
                 , array('style'=>'display:table-cell;')
                 )
         );
 
-
+        //Background Check Date
+        $bcAttr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbbackgroundcheck', 'title'=>'Check if background check completed.');
+        $bcdateAttr = array('style'=>'display:none;', 'id'=>'disp_backgroundcheck');
+        
+        if ($this->get_DateBackgroundCheck() != NULL) {
+            $bcAttr['checked'] = 'checked';
+            $bcdateAttr['style'] = 'display:table-cell;';
+        }
+        
+        $tbl2->addBodyTr(
+            HTMLTable::makeTd('Background Check: ' . HTMLInput::generateMarkup('', $bcAttr)
+                . HTMLInput::generateMarkup('0', array('type'=>'hidden','name'=>'cbMarker_background_check'))
+                , array('class'=>'tdlabel', 'title'=>'Check if background check completed.'))
+            . HTMLTable::makeTd(HTMLContainer::generateMarkup('div',
+                'Date: ' . HTMLInput::generateMarkup(($this->get_DateBackgroundCheck() == '' ? '' : date('M j, Y', strtotime($this->get_DateBackgroundCheck()))), array('name'=>$idPrefix.'txtBackgroundCheckDate', 'class'=>'ckbdate')), $bcdateAttr))
+            );
+        
         return $table->generateMarkup(array('style'=>'float:left; margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'float:left;'));
 
     }
