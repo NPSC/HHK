@@ -40,6 +40,8 @@ class Visit {
     private $newVisit = FALSE;
     public $stays = array();
     protected $overrideMaxOccupants = FALSE;
+    protected $infoMessage = '';
+    protected $errorMessage = '';
 
     /**
      *
@@ -764,6 +766,7 @@ class Visit {
         }
 
         if (is_null($stayRS) || $stayRS->idStays->getStoredVal() == 0) {
+        	$this->setErrorMessage("Checkout Failed: The guest was not checked-in.  ");
             return "Checkout Failed: The guest was not checked-in.  ";
         }
 
@@ -787,7 +790,8 @@ class Visit {
         $today->setTime(0, 0, 0);
 
         if ($depDate > $today) {
-            return "Checkout failed:  Cannot checkout in the future.";
+        	$this->setErrorMessage("Checkout failed:  Cannot checkout in the future.  ");
+            return "Checkout failed:  Cannot checkout in the future.  ";
         }
 
         // Earliser than span start date (see mod below to remove this)
@@ -795,6 +799,7 @@ class Visit {
         $stDate->setTime(0, 0, 0);
 
         if ($depDate < $stDate) {
+        	$this->setErrorMessage("Checkout Failed: The checkout date was before the span start date.  ");
             return "Checkout Failed: The checkout date was before the span start date.  ";
         }
         
@@ -812,85 +817,88 @@ class Visit {
 
         EditRS::updateStoredVals($stayRS);
 
-        $msg = $this->checkStaysEndVisit($dbh, $uS->username, $dateDepartedDT, $sendEmail);
-
         // Get guest names
         $stmt = $dbh->query("Select Name_Full from `name` where idName = $idGuest;");
         $gsts = $stmt->fetchAll(\PDO::FETCH_NUM);
         $guestName = '';
-
+        
         if (count($gsts) > 0) {
-            $guestName = $gsts[0][0];
+        	$guestName = $gsts[0][0];
         }
+        
+        $this->setInfoMessage($guestName . " checked out on " . $dateDepartedDT->format('M j, Y') . ".  ");
+        
+        
+        // Last Guest?
+        if ($this->checkStaysEndVisit($dbh, $uS->username, $dateDepartedDT, $sendEmail) === FALSE) {
 
-        // prepare email message if needed
-        try {
-            if ($sendEmail && $this->getVisitStatus() != VisitStatus::CheckedOut && $uS->Guest_Track_Address != ''  && $uS->NoReplyAddr != '') {
-
-                // Get room name
-                $roomTitle = 'Unknown';
-                if (is_null($this->getResource($dbh)) === FALSE) {
-                    $roomTitle = $this->resource->getTitle();
-                }
-
-
-
-                $gMarkup = '<html><body><h3>Guest Checkout</h3><p>Departure Date: ' . date('g:ia D M jS, Y', strtotime($stayRS->Checkout_Date->getStoredVal())) . ';  from ' . $roomTitle . '</p>';
-
-                if (count($gsts) > 0) {
-                    $tbl = new HTMLTable();
-                    $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Guest Name') . HTMLTable::makeTh('Checked-In') . HTMLTable::makeTh('Checked-Out'));
-
-                    foreach ($gsts as $g) {
-                        $tbl->addBodyTr(HTMLTable::makeTd($idGuest) . HTMLTable::makeTd($guestName)
-                                . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkin_Date->getStoredVal())))
-                                . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkout_Date->getStoredVal()))));
-                    }
-
-                    $tbl->addBodyTr(HTMLTable::makeTd('Return Date') . HTMLTable::makeTd($this->getReturnDate() == '' ? '' : date('D M jS, Y', strtotime($this->getReturnDate())), array('colspan' => '3')));
-                    $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h4', 'Notes') . nl2br($notes)), array('colspan' => '4')));
-                    $gMarkup .= $tbl->generateMarkup();
-                }
-
-                // Finalize body
-                $gMarkup .= '</body></html>';
-
-                $subj = "Check-Out from " . $roomTitle . " by " . $uS->username . ".";
-
-                // Get the site configuration object
-
-                // Send email
-                $mail = prepareEmail();
-
-                $mail->From = $uS->NoReplyAddr;
-                $mail->FromName = $uS->siteName;
-                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
-
-                $tos = explode(',', $uS->Guest_Track_Address);
-                foreach ($tos as $t) {
-                    $to = filter_var($t, FILTER_SANITIZE_EMAIL);
-                    if ($to !== FALSE && $to != '') {
-                        $mail->addAddress($to);
-                    }
-                }
-
-                $mail->isHTML(true);
-
-                $mail->Subject = $subj;
-                $mail->msgHTML($gMarkup);
-                $mail->send();
-            }
-        } catch (\Exception $ex) {
-            // Do nothing.
-            $msg .= $ex->getMessage();
+	        // prepare email message if needed
+	        try {
+	            if ($this->getVisitStatus() != VisitStatus::CheckedOut && $uS->Guest_Track_Address != ''  && $uS->NoReplyAddr != '') {
+	
+	                // Get room name
+	                $roomTitle = 'Unknown';
+	                if (is_null($this->getResource($dbh)) === FALSE) {
+	                    $roomTitle = $this->resource->getTitle();
+	                }
+	
+	
+	
+	                $gMarkup = '<html><body><h3>Guest Checkout</h3><p>Departure Date: ' . date('g:ia D M jS, Y', strtotime($stayRS->Checkout_Date->getStoredVal())) . ';  from ' . $roomTitle . '</p>';
+	
+	                if (count($gsts) > 0) {
+	                    $tbl = new HTMLTable();
+	                    $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Guest Name') . HTMLTable::makeTh('Checked-In') . HTMLTable::makeTh('Checked-Out'));
+	
+	                    foreach ($gsts as $g) {
+	                        $tbl->addBodyTr(HTMLTable::makeTd($idGuest) . HTMLTable::makeTd($guestName)
+	                                . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkin_Date->getStoredVal())))
+	                                . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkout_Date->getStoredVal()))));
+	                    }
+	
+	                    $tbl->addBodyTr(HTMLTable::makeTd('Return Date') . HTMLTable::makeTd($this->getReturnDate() == '' ? '' : date('D M jS, Y', strtotime($this->getReturnDate())), array('colspan' => '3')));
+	                    $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h4', 'Notes') . nl2br($notes)), array('colspan' => '4')));
+	                    $gMarkup .= $tbl->generateMarkup();
+	                }
+	
+	                // Finalize body
+	                $gMarkup .= '</body></html>';
+	
+	                $subj = "Check-Out from " . $roomTitle . " by " . $uS->username . ".";
+	
+	                // Send email
+	                $mail = prepareEmail();
+	
+	                $mail->From = $uS->NoReplyAddr;
+	                $mail->FromName = $uS->siteName;
+	                $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
+	
+	                $tos = explode(',', $uS->Guest_Track_Address);
+	                foreach ($tos as $t) {
+	                    $to = filter_var($t, FILTER_SANITIZE_EMAIL);
+	                    if ($to !== FALSE && $to != '') {
+	                        $mail->addAddress($to);
+	                    }
+	                }
+	
+	                $mail->isHTML(true);
+	
+	                $mail->Subject = $subj;
+	                $mail->msgHTML($gMarkup);
+	                $mail->send();
+	            }
+	        } catch (\Exception $ex) {
+	            // Do nothing.
+	            $msg .= $ex->getMessage();
+	            $this->setErrorMessage($msg);
+	        }
         }
-
-        return $guestName . " checked out on " . $dateDepartedDT->format('M j, Y') . ".  " . $msg;
+        
+        return $guestName . " checked out on " . $dateDepartedDT->format('M j, Y');
     }
 
-    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, &$sendEmail) {
+    protected function checkStaysEndVisit(\PDO $dbh, $username, \DateTime $dateDeparted, $sendEmail) {
 
-        $msg = '';
         $uS = Session::getInstance();
 
         //$this->loadStays($dbh, '');
@@ -901,7 +909,7 @@ class Visit {
         foreach ($allStays as $stayRS) {
 
             if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                return;
+                return FALSE;
             }
 
             // Get the latest checkout date
@@ -951,17 +959,13 @@ class Visit {
             try {
                 $reserv->checkOut($dbh, $dateDeparted->format("Y-m-d H:i:s"), $username);
             } catch (RuntimeException $hex) {
-                $msg .= $hex->getMessage();
+            	$this->setErrorMessage($hex->getMessage());
             }
         }
 
 
-
         try {
             if ($sendEmail && $uS->NoReplyAddr != '' && ($uS->Guest_Track_Address != '' || $uS->HouseKeepingEmail != '')) {
-
-                // Don't send out individual checkout messages.
-                $sendEmail = FALSE;
 
                 // Get room name
                 $roomTitle = 'Unknown';
@@ -1024,16 +1028,15 @@ class Visit {
                 $mail->send();
             }
         } catch (\Exception $ex) {
-            // Do nothing.
-            $msg .= $ex->getMessage();
+        	$this->setErrorMessage($ex->getMessage());
         }
 
-        $msg .= "Visit Ended.  ";
+        $this->setInfoMessage("Visit Ended.  ");
 
-        return $msg;
+        return TRUE;
     }
 
-    public function checkOutVisit(\PDO $dbh, $dateDeparted = "", $sendEmail = TRUE) {
+    protected function checkOutVisit(\PDO $dbh, $dateDeparted = "", $sendEmail = TRUE) {
         $msg = "";
 
         // Check out date
@@ -1839,8 +1842,22 @@ class Visit {
         return '';
     }
 
-
-
+    public function getInfoMessage() {
+    	return $this->infoMessage;
+    }
+    
+    public function getErrorMessage() {
+    	return $this->errorMessage;
+    }
+    
+    protected function setInfoMessage($v) {
+    	$this->infoMessage .= $v;
+    }
+    
+    protected function setErrorMessage($v) {
+    	$this->errorMessage .= $v;
+    }
+    
     public function setNotes($notes, $username, $roomTitle = '') {
         $oldNotes = $this->getNotes();
         $this->visitRS->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', visit ' . $this->getIdVisit() . '-' . $this->getSpan() . ', room ' . $roomTitle . ', ' . $username . ' - ' . $notes);

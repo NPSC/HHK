@@ -388,9 +388,10 @@ try {
             $s = filter_var($_POST['action'], FILTER_SANITIZE_STRING);
         }
 
-        $cod = '';
+        $cod = [];
         if (isset($_POST['ckoutdt'])) {
-            $cod = filter_var($_POST['ckoutdt'], FILTER_SANITIZE_STRING);
+        	
+        	$cod = filter_var_array($_POST['ckoutdt'], FILTER_SANITIZE_STRING);
         }
 
         $span = 0;

@@ -314,7 +314,7 @@ class VisitViewer {
      * @param string $action
      * @return string
      */
-    public static function createStaysMarkup(\PDO $dbh, $idResv, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, $labels, $action = '', $coDate = '') {
+    public static function createStaysMarkup(\PDO $dbh, $idResv, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, $labels, $action = '', $coDate = []) {
 
         $uS = Session::getInstance();
 
@@ -402,8 +402,8 @@ class VisitViewer {
 
                     $someoneCheckedIn = TRUE;
 
-                    if ($action == 'ref' && $coDate != '') {
-                        $edDay = new \DateTime($coDate);
+                    if ($action == 'ref' && isset($coDate[$r['idName']])) {
+                    	$edDay = new \DateTime($coDate[$r['idName']]);
                     } else {
                         $edDay = new \DateTime(date('Y-m-d'));
                     }
@@ -411,7 +411,7 @@ class VisitViewer {
                     $edDay->setTime(0, 0, 0);
                     $days = $edDay->diff($stDayDT, TRUE)->days;
 
-                    $getCkOutDate = HTMLInput::generateMarkup($edDay->format('M j, Y'), array('id' => 'stayCkOutDate_' . $r['idName'], 'name' =>'[stayCkOutDate][' . $r['idName'] . ']', 'class' => 'ckdate hhk-ckoutDate', 'readonly'=>'readonly'));
+                    $getCkOutDate = HTMLInput::generateMarkup($edDay->format('M j, Y'), array('id' => 'stayCkOutDate_' . $r['idName'], 'name' =>'[stayCkOutDate][' . $r['idName'] . ']', 'class' => 'ckdate hhk-ckoutDate', 'readonly'=>'readonly', 'data-gid'=>$r['idName']));
 
                     if ($uS->CoTod) {
                         $getCkOutDate .= HTMLInput::generateMarkup(date('H'), array('id' => 'stayCkOutHour_' . $r['idName'], 'name' =>'[stayCkOutHour][' . $r['idName'] . ']', 'size'=>'3'));

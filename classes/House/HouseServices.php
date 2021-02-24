@@ -69,7 +69,7 @@ class HouseServices {
      *
      * @return array
      */
-    public static function getVisitFees(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin, $action = '', $coDate = '') {
+    public static function getVisitFees(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin, $action = '', $coStayDates = []) {
 
         $uS = Session::getInstance();
 
@@ -125,11 +125,29 @@ class HouseServices {
         $visitCharge = new VisitCharges($r['idVisit']);
         $visitCharge->sumPayments($dbh);
 
-        if ($action == 'ref' && $coDate != '') {
+        $coDate = '';
+        
+        if ($action == 'ref' && count($coStayDates) > 0) {
             // Visit is checking out to a different date than "today"
+            
+        	$coDateDT = new \DateTime('1900-01-01');
+        	// find latest co date
+        	foreach ($coStayDates as $c) {
+        		
+        		$cDT= new \DateTime($c);
+        		
+        		if ($cDT > $coDateDT) {
+        			$coDateDT = $cDT;
+        		}
+        	}
+        	
+        	$coDate = $coDateDT->format('Y-m-d');
+        	
             $visitCharge->sumDatedRoomCharge($dbh, $priceModel, $coDate, 0, TRUE);
+            
             // if a previous stay checked out later than the checked in stay.
-            //$coDate = $visitCharge->getFinalVisitCoDate()->format('Y-m-d H:i:s');
+            $coDate = $visitCharge->getFinalVisitCoDate()->format('Y-m-d H:i:s');
+            
         } else {
             $visitCharge->sumCurrentRoomCharge($dbh, $priceModel, 0, TRUE);
         }
@@ -156,7 +174,7 @@ class HouseServices {
                         $isAdmin,
                         $uS->EmptyExtendLimit,
                         $action,
-                        $coDate,
+                		$coDate,
                         $showAdjust)
                 , array('style' => 'clear:left;margin-top:10px;'));
 
@@ -185,7 +203,7 @@ class HouseServices {
 
         } else {
             $mkup = HTMLContainer::generateMarkup('div',
-                    VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coDate) . $mkup, array('id'=>'divksStays'));
+            		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates) . $mkup, array('id'=>'divksStays'));
 
             // Show fees if not hf = hide fees.
             if ($action != 'hf') {
@@ -210,6 +228,7 @@ class HouseServices {
         $dataArray = array();
         $creditCheckOut = array();
         $reply = '';
+        $warning = '';
         $returnReserv = FALSE;
 
         if ($idVisit == 0) {
@@ -473,7 +492,11 @@ class HouseServices {
 
                         $coDT->setTime($coHour, $coMin, 0);
 
-                        $reply .= $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), '', TRUE);
+                        $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), '', TRUE);
+                        
+                        $reply .= $visit->getInfoMessage();
+                        $warning .= $visit->getErrorMessage();
+                        
                         $returnCkdIn = TRUE;
 
                     }
@@ -536,6 +559,7 @@ class HouseServices {
 
 
         $dataArray['success'] = $reply;
+        $dataArray['warning'] = $warning;
 
         return $dataArray;
     }

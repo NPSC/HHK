@@ -210,7 +210,7 @@ var isCheckedOut = false;
  * @param {string} ckoutDt
  * @returns {undefined}
  */
-function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt) {
+function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDates) {
     "use strict";
     $.post('ws_ckin.php',
         {
@@ -219,7 +219,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             idGuest: idGuest,
             action: action,
             span: visitSpan,
-            ckoutdt: ckoutDt
+            ckoutdt: ckoutDates
         },
     function(data) {
         "use strict";
@@ -364,7 +364,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
                 totChgBal = parseFloat($('#spnCfBalDue').data('totbal'));
 
-                //roomChgBal -= vFeeChgBal;
             }
 
 
@@ -372,11 +371,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             if ($('input.hhk-ckoutCB').length > 0) {
                 // still checked in...
 
+            	// Checkout checkbox change function
                 $('#tblStays').on('change', 'input.hhk-ckoutCB', function() {
 
                     var ckout = true,
                         coTime = 1,
-                        today = new Date();
+                        today = new Date(),
+                    	coStayDates = {};
 
                     if (this.checked === false) {
                         $(this).next().val('');  // clear the checkout date field
@@ -384,17 +385,18 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                         $(this).next().val($.datepicker.formatDate('M d, yy', new Date()));  // set the checkout date field
                     }
 
-                    // Are we checking out?
+                    // Is the visit ending?
                     // Scan all checkout checkboxes
                     $('input.hhk-ckoutCB').each(function () {
 
                         if (this.checked === false) {
 
-                            ckout = false;
+                            ckout = false;	// not checking out.
 
                         } else if ($(this).next().val() != '') {
 
                             var d = new Date($(this).next().val());
+                            coStayDates[$(this).next().data('gid')] = d.toDateString();
 
                             if (d.getTime() > today.getTime()) {
                                 $(this).next().val('');
@@ -408,6 +410,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
 
                     if (ckout === true) {
+                    	// Visit is ending
 
                         isCheckedOut = true;
                         // check to update the final amount...
@@ -420,13 +423,14 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             return false;
                         }
 
+                        // Check for early visit checkout (co before today)
                         if (todayStr !== coDateStr && action !== 'ref') {
-                            // update dialog with new co date.
+                            // update dialog with new co date.  Sets the room fee amounts accordingly.
                             $diagbox.children().remove();
                             $diagbox.dialog('option', 'buttons', {});
                             $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>')
                                     .append($('<div class="ui-autocomplete-loading" style="width:5em;">Loading</div>')));
-                            viewVisit(idGuest, idVisit, buttons, title, 'ref', visitSpan, coDate.toDateString());
+                            viewVisit(idGuest, idVisit, buttons, title, 'ref', visitSpan, coStayDates);
                             return;
                         }
 
@@ -476,6 +480,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                     } else if (action === 'ref') {
 
+                    	// return back to normal visit viewer.
                         $diagbox.children().remove();
                         $diagbox.dialog('option', 'buttons', {});
                         $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>')
@@ -500,6 +505,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                     }
                 });
 
+                
                 $('#tblStays').on('change', 'input.hhk-ckoutDate', function() {
 
                     if ($(this).val() != '') {
@@ -521,7 +527,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                 $('input.hhk-ckoutCB').change();
 
-            } else {  // if ($('#cbFinalPayment').length > 0)
+            } else {
 
                 isCheckedOut = true;
 
@@ -864,10 +870,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     $('#keysfees').css('background-color', 'white');
 
-    // Unlock Put Neo Card On file. 
-    //$('#cbNewCard').prop('disabled', false);
-    
-    //working
+    // show working icon
     $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
     $.post('ws_ckin.php', parms,
@@ -907,6 +910,10 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 if ($('#calendar').length > 0) {
                     $('#calendar').fullCalendar('refetchEvents');
                 }
+            }
+
+            if (data.warning && data.warning !== '') {
+                flagAlertMessage(data.warning, 'error');
             }
 
             if (data.receipt && data.receipt !== '') {
