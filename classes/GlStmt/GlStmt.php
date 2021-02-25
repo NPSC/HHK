@@ -513,8 +513,6 @@ class GlStmt {
 		$unpaidCharges = 0;  // Unpaid charges for this month only.
 		$paymentsCarriedForward = 0;  // Payments from last month that are not used up in this month.
 		
-		
-		$intervalCharge = 0;
 		$fullInvervalCharge = 0;
 		$subsidyCharge = 0;
 		
@@ -524,6 +522,8 @@ class GlStmt {
 		$vSubsidyCharge = 0;
 		$vIntervalPay = 0;
 		$vForwardPay = 0;
+		$vIntervalWaiveAmt = 0;
+		$vPreIntervalWaiveAmt = 0;
 		
 		$paymentAmounts = array();
 		$serialId = 0;
@@ -548,6 +548,17 @@ class GlStmt {
 				
 				If ($visitId != $r['idVisit'] && $visitId != 0) {
 					// Visit Change
+					
+					// Deal with waive amounts
+					if ($vPreIntervalWaiveAmt <= $vPreIntervalCharge) {
+						$vPreIntervalCharge += $vPreIntervalWaiveAmt;
+						$vForwardPay += $vPreIntervalWaiveAmt;
+					}
+					
+					if ($vIntervalWaiveAmt <= $vIntervalCharge) {
+						$vIntervalCharge += $vIntervalWaiveAmt;
+						$vIntervalPay += $vIntervalWaiveAmt;
+					}
 					
 					// leftover Payments from past (C23)
 					$pfp = 0;
@@ -603,8 +614,7 @@ class GlStmt {
 					$preIntervalPay += $ptp;
 					$intervalPay += $ptn;
 					$overPay += $ptf;
-					
-					$intervalCharge += $vIntervalCharge;
+
 					$fullInvervalCharge += $vFullIntervalCharge;
 					$subsidyCharge += $vSubsidyCharge;
 					
@@ -615,6 +625,8 @@ class GlStmt {
 					$vSubsidyCharge = 0;
 					$vIntervalPay = 0;
 					$vForwardPay = 0;
+					$vIntervalWaiveAmt = 0;
+					$vPreIntervalWaiveAmt = 0;
 										
 					$visitId = $r['idVisit'];
 				}
@@ -711,7 +723,7 @@ class GlStmt {
 						$vIntervalPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
-						$vIntervalCharge += $ilAmt;
+						$vIntervalWaiveAmt += $ilAmt;
 					}
 					
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
@@ -726,7 +738,7 @@ class GlStmt {
 						$vForwardPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
-						$vPreIntervalCharge += $ilAmt;
+						$vPreIntervalWaiveAmt += $ilAmt;
 					}
 					
 				}
@@ -781,14 +793,14 @@ class GlStmt {
 						$vIntervalPay -= $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
-						$vIntervalCharge -= $ilAmt;
+						$vIntervalWaiveAmt -= $ilAmt;
 					}
 					
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], (0 - $ilAmt));
 					$totalPayment[$r['Item_Id']] -= $ilAmt;
 					
-				} else if ($paymentDate < $this->startDate) {
-					// Pre payment from before
+				} else if ($pUpDate < $this->startDate) {
+					// Pre return from before
 					
 					if ($r['Item_Id'] == ItemId::Lodging) {
 						$vForwardPay -= $ilAmt;
@@ -796,7 +808,7 @@ class GlStmt {
 						$vForwardPay -= $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
-						$vPreIntervalCharge -= $ilAmt;
+						$vPreIntervalWaiveAmt -= $ilAmt;
 					}
 				}
 				
@@ -809,7 +821,7 @@ class GlStmt {
 						$vIntervalPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
-						$vIntervalCharge += $ilAmt;
+						$vIntervalWaiveAmt += $ilAmt;
 					}
 					
 					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
@@ -824,12 +836,13 @@ class GlStmt {
 						$vForwardPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
-						$vPreIntervalCharge += $ilAmt;
+						$vPreIntervalWaiveAmt += $ilAmt;
 					}
 				}
 
 			} else if ($r['idPayment'] == 0 && $r['Invoice_Status'] == InvoiceStatus::Paid) {
-
+				// Deal with discounts
+				
 				$paymentDate = new \DateTime($r['Invoice_Date']);
 
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
@@ -840,11 +853,28 @@ class GlStmt {
 						// Reduces the charges.
 						$vIntervalCharge += $ilAmt;
 					}
+					
+				} else if ($paymentDate < $this->startDate) {
+
+					if ($r['Item_Id'] = ItemId::Discount) {
+						$vPreIntervalCharge += $ilAmt;
+					}
 				}
 			}
 		}
 		
 		if ($record != NULL) {
+			
+			// Deal with waive amounts
+			if ($vPreIntervalWaiveAmt <= $vPreIntervalCharge) {
+				$vPreIntervalCharge += $vPreIntervalWaiveAmt;
+				$vForwardPay += $vPreIntervalWaiveAmt;
+			}
+			
+			if ($vIntervalWaiveAmt <= $vIntervalCharge) {
+				$vIntervalCharge += $vIntervalWaiveAmt;
+				$vIntervalPay += $vIntervalWaiveAmt;
+			}
 			
 			// leftover Payments from past (C23)
 			$pfp = 0;
@@ -900,8 +930,7 @@ class GlStmt {
 			$preIntervalPay += $ptp;
 			$intervalPay += $ptn;
 			$overPay += $ptf;
-			
-			$intervalCharge += $vIntervalCharge;
+
 			$fullInvervalCharge += $vFullIntervalCharge;
 			$subsidyCharge += $vSubsidyCharge;
 			

@@ -81,7 +81,7 @@ class GlStmtTotals {
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payment Totals', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($totCredit, 2), array('style'=>'text-align:right;', 'class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(($totCredit != 0 ? number_format($totCredit, 2) : ''), array('style'=>'text-align:right;', 'class'=>'hhk-tdTotals'))
 				. HTMLTable::makeTd(number_format($totDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
@@ -145,11 +145,11 @@ class GlStmtTotals {
 					. HTMLTable::makeTd('', array('style'=>'text-align:right;'))
 					);
 		}
-		
+
 		// Insert sub total for lodging
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Lodging Total', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(($lodgCredit > 0 ? number_format($lodgCredit,2) : ''), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($lodgCredit,2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				. HTMLTable::makeTd(($lodgDebit > 0 ? number_format($lodgDebit, 2) : ''), array('style'=>'text-align:right;', 'class'=>'hhk-tdTotals'))
 				);
 		
@@ -193,7 +193,7 @@ class GlStmtTotals {
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Item Totals', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($itemCredit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				. HTMLTable::makeTd(number_format($itemDebit, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(($itemDebit != 0 ?number_format($itemDebit, 2) : ''), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
 		return array('credit'=>$itemCredit, 'debit'=>$itemDebit);
