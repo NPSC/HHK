@@ -147,29 +147,8 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
 }
 
 function saveHospitalStay(idHs, idVisit) {
-	var parms = {cmd: 'saveHS', 'idhs': idHs, 'idv': idVisit};
-	
-	$('.hospital-stay').each(function() {
-        if ($(this).attr('type') === 'checkbox') {
-            if (this.checked !== false) {
-                parms[$(this).attr('id')] = 'on';
-            }
-        } else if ($(this).hasClass('ckhsdate')) {
-            var tdate = $(this).datepicker('getDate');
-            if (tdate) {
-                parms[$(this).attr('id')] = tdate.toJSON();
-            } else {
-                 parms[$(this).attr('id')] = '';
-            }
-        } else if ($(this).attr('type') === 'radio') {
-            if (this.checked !== false) {
-                parms[$(this).attr('id')] = this.value;
-            }
-        } else{
-            parms[$(this).attr('id')] = this.value;
-        }
-    });
-	
+	var parms = [{'name':'cmd', 'value': 'saveHS'},{'name': 'idhs', 'value': idHs}, {'name': 'idv', 'value': idVisit}];
+	var parms = parms.concat($('.hospital-stay').serializeArray());
 	
 	$.post('ws_resv.php', parms, function (data) {
         if (!data) {
