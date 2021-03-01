@@ -127,11 +127,36 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
             if ($('.hhk-hsdialog #a_txtLastName').val() === '') {
                 $('.hhk-hsdialog .hhk-agentInfo').hide();
             }
+            
+            $(document).on('click', '#a_delete', function(){
+            	$('.hhk-hsdialog #a_idName').val('');
+            	$('.hhk-hsdialog input.hhk-agentInfo').val('');
+            	$('.hhk-hsdialog .hhk-agentInfo').hide();
+            });
+            
+            
+            if ($('.hhk-hsdialog #a_idName').val() !== '') {
+            	$('.hhk-hsdialog input.hhk-agentInfo.name').attr('readonly', 'readonly');
+            }else{
+            	$('.hhk-hsdialog input.hhk-agentInfo.name').removeAttr('readonly');
+            }
 
             createAutoComplete($('.hhk-hsdialog #txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
             if ($('.hhk-hsdialog #d_txtLastName').val() === '') {
                 $('.hhk-hsdialog .hhk-docInfo').hide();
             }
+            
+            if ($('.hhk-hsdialog #d_idName').val() !== '') {
+            	$('.hhk-hsdialog input.hhk-docInfo.name').attr('readonly', 'readonly');
+            }else{
+            	$('.hhk-hsdialog input.hhk-docInfo.name').removeAttr('readonly');
+            }
+            
+            $(document).on('click', '#d_delete', function(){
+            	$('.hhk-hsdialog #d_idName').val('');
+            	$('.hhk-hsdialog input.hhk-docInfo').val('');
+            	$('.hhk-hsdialog .hhk-docInfo').hide();
+            });
 
             // Calendars for treatment start and end dates
             $('.ckhsdate').datepicker({

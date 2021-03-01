@@ -1587,6 +1587,19 @@ function resvManager(initData, options) {
                 if ($('#a_txtLastName').val() === '') {
                     $('.hhk-agentInfo').hide();
                 }
+                
+                $(document).on('click', '#a_delete', function(){
+	            	$('#a_idName').val('');
+	            	$('input.hhk-agentInfo').val('');
+	            	$('.hhk-agentInfo').hide();
+	            });
+	            
+	            
+	            if ($('#a_idName').val() !== '') {
+	            	$('input.hhk-agentInfo.name').attr('readonly', 'readonly');
+	            }else{
+	            	$('input.hhk-agentInfo.name').removeAttr('readonly');
+	            }
             }
 
             if ($('#txtDocSch').length > 0) {
@@ -1594,6 +1607,18 @@ function resvManager(initData, options) {
                 if ($('#d_txtLastName').val() === '') {
                     $('.hhk-docInfo').hide();
                 }
+                
+                if ($('#d_idName').val() !== '') {
+	            	$('input.hhk-docInfo.name').attr('readonly', 'readonly');
+	            }else{
+	            	$('input.hhk-docInfo.name').removeAttr('readonly');
+	            }
+	            
+	            $(document).on('click', '#d_delete', function(){
+	            	$('#d_idName').val('');
+	            	$('input.hhk-docInfo').val('');
+	            	$('.hhk-docInfo').hide();
+	            });
             }
 
             verifyAddrs('#divhospDetail');

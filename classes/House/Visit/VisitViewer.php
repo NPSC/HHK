@@ -186,9 +186,9 @@ class VisitViewer {
         $hospitalButton = HTMLInput::generateMarkup($hname
         		, array(
         				'type'=>'button',
-        				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
+        				'class'=>'hhk-hospitalstay ui-corner-all hhk-hospTitleBtn ui-button ignrSave',
         				'data-idhs'=>$r['idHospital_stay'],
-        				'style'=>"font-size:small; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
+        		    'style'=>"color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; " . ($uS->guestLookups['Hospitals'][$r['idHospital']][4] ? "background:".$uS->guestLookups['Hospitals'][$r['idHospital']][4] . ";border: 1px solid black" : '').";",
         				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
         		);
         

@@ -440,3 +440,17 @@ li.hhk-myMenuTop {
 	padding: revert;
 	margin: revert;
 }
+
+
+/* hospital dialog */
+
+.hhk-hsdialog input.name:read-only, .hhk-hsdialog input.name:read-only {
+	pointer-events: none;
+	border: 0;
+}
+
+
+.hhk-hospTitleBtn {
+	font-size: small !important;
+	padding: 1px 0.8em !important;
+}

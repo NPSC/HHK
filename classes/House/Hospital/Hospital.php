@@ -170,11 +170,12 @@ class Hospital {
                 HTMLTable::makeTh(HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'referralAgent', 'Referral Agent')).
                         HTMLContainer::generateMarkup('span', '', array('name'=>'agentSearch', 'class'=>'hhk-agentSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'margin-left:1.3em;'))
                         . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'txtAgentSch', 'class'=>'ignrSave', 'size'=>'16', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'margin-left:0.3em;'))
-                        , array('colspan'=>2))
+                        , array('colspan'=>'3', 'id'=>'a_titleTh'))
                 .HTMLTable::makeTh('Phone', array('class'=>'hhk-agentInfo'))
                 .HTMLTable::makeTh('Email', array('rowspan'=>'2', 'style'=>'vertical-align:bottom;', 'class'=>'hhk-agentInfo')));
 
             $ratbl->addBodyTr(
+                HTMLTable::makeTh("x", array('class'=>'a_actions')) .
                 HTMLTable::makeTh('First')
                 .HTMLTable::makeTh('Last')
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ' .
@@ -186,16 +187,17 @@ class Hospital {
                 , array('class'=>'hhk-agentInfo'));
 
             $ratbl->addBodyTr(
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash')), array('class'=>'ui-corner-all ui-state-default ui-button ui-widget', 'style'=>'padding: 0.2em 0.4em;', 'id'=>'a_delete', 'type'=>'button')), array('class'=>'a_actions')) .
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $agent->getRoleMember()->get_firstName(),
-                                array('name'=>'a_txtFirstName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay'))
+                                array('name'=>'a_txtFirstName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay name'))
                         .HTMLInput::generateMarkup($agent->getIdName(), array('name'=>'a_idName', 'type'=>'hidden', 'class'=>'hospital-stay'))
                         )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $agent->getRoleMember()->get_lastName(),
-                                array('name'=>'a_txtLastName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay'))
+                                array('name'=>'a_txtLastName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay name'))
                         )
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ' .
                         HTMLInput::generateMarkup(
@@ -227,10 +229,10 @@ class Hospital {
                     .HTMLContainer::generateMarkup('span', '', array('name'=>'doctorSearch', 'class'=>'hhk-docSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'margin-left:1.3em;'))
                     .HTMLContainer::generateMarkup('span',
                         HTMLInput::generateMarkup('', array('id'=>'txtDocSch', 'class'=>'ignrSave', 'size'=>'16', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'margin-left:0.3em;'))
-                        , array('colspan'=>'2'))
+                        , array('colspan'=>'3'))
             );
 
-            $dtbl->addBodyTr(HTMLTable::makeTh('First').HTMLTable::makeTh('Last'), array('class'=>'hhk-docInfo'));
+            $dtbl->addBodyTr(HTMLTable::makeTh("x", array('class'=>'d_actions')) . HTMLTable::makeTh('First').HTMLTable::makeTh('Last'), array('class'=>'hhk-docInfo'));
 
             try {
 
@@ -248,16 +250,17 @@ class Hospital {
 
 
             $dtbl->addBodyTr(
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash')), array('class'=>'ui-corner-all ui-state-default ui-button ui-widget', 'style'=>'padding: 0.2em 0.4em;', 'id'=>'d_delete', 'type'=>'button')), array('class'=>'d_actions')) .
                 HTMLTable::makeTd(($doc->getRoleMember()->get_lastName() == '' ? '' : 'Dr. ') .
                         HTMLInput::generateMarkup(
                                 $doc->getRoleMember()->get_firstName(),
-                                array('name'=>'d_txtFirstName', 'size'=>'17', 'class'=>'hhk-docInfo hospital-stay'))
+                                array('name'=>'d_txtFirstName', 'size'=>'17', 'class'=>'hhk-docInfo hospital-stay name'))
                         .HTMLInput::generateMarkup($doc->getIdName(), array('name'=>'d_idName', 'type'=>'hidden', 'class'=>'hospital-stay'))
                     )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $doc->getRoleMember()->get_lastName(),
-                                array('name'=>'d_txtLastName', 'size'=>'17', 'class'=>'hhk-docInfo hospital-stay'))
+                                array('name'=>'d_txtLastName', 'size'=>'17', 'class'=>'hhk-docInfo hospital-stay name'))
                         )
                 , array('class'=>'hhk-docInfo'));
 
