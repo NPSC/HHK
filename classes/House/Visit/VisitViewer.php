@@ -188,7 +188,7 @@ class VisitViewer {
         				'type'=>'button',
         				'class'=>'hhk-hospitalstay ui-corner-all hhk-hospTitleBtn ui-button ignrSave',
         				'data-idhs'=>$r['idHospital_stay'],
-        		    'style'=>"color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; " . ($uS->guestLookups['Hospitals'][$r['idHospital']][4] ? "background:".$uS->guestLookups['Hospitals'][$r['idHospital']][4] . ";border: 1px solid black" : '').";",
+        		    'style'=>($uS->guestLookups['Hospitals'][$r['idHospital']][5] ? "color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; border: 1px solid black;": '') . ($uS->guestLookups['Hospitals'][$r['idHospital']][4] ? "background:".$uS->guestLookups['Hospitals'][$r['idHospital']][4] . ";" : '').";",
         				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
         		);
         

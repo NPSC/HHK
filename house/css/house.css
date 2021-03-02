@@ -135,6 +135,16 @@ table.hhk-badAddress {
     opacity: 80%;
 }
 
+.spnHosp {
+    padding: 0 .4em;
+    border:solid 1px black;
+    margin-left:.3em;
+    margin-bottom:.2em;
+}
+.spnHosp:hover {
+    cursor: pointer;
+}
+
 div#hideCalendar, div#hideLog {
     float:left;
     cursor:pointer;
