@@ -836,7 +836,7 @@ if ($useVisitDates) {
 $useVisitDatesCb = HTMLInput::generateMarkup('', $vAttrs)
         . HTMLContainer::generateMarkup('label', 'Use Visit Dates', array('for'=>'cbUseVisitDates'));
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'display: inline-block;', 'id'=>'includeFields'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'display: inline-block; vertical-align:top;', 'id'=>'includeFields'));
 
 
 ?>
@@ -1117,7 +1117,7 @@ $(document).ready(function() {
                         </tr>
                     </table>
                     <?php if ($baSelector != '') { ?>
-                    <table style="display: inline-block;">
+                    <table style="display: inline-block; vertical-align:top;">
                         <tr>
                             <th>Billing Agent</th>
                         </tr>
