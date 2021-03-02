@@ -149,7 +149,7 @@ class GlStmtTotals {
 		// Insert sub total for lodging
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Lodging Total', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($lodgCredit,2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($lodgCredit,2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
 				. HTMLTable::makeTd(($lodgDebit > 0 ? number_format($lodgDebit, 2) : ''), array('style'=>'text-align:right;', 'class'=>'hhk-tdTotals'))
 				);
 		

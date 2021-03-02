@@ -395,6 +395,13 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
             $("div#printArea").printArea();
         });
 
+        $('.hhk-matchlgt').hover(function() {
+			$('.hhk-matchlgt').toggleClass('ui-state-highlight');
+        });
+        $('.hhk-matchinc').hover(function() {
+			$('.hhk-matchinc').toggleClass('ui-state-highlight');
+        });
+        
     });
  </script>
     </head>

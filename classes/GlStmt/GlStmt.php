@@ -955,7 +955,7 @@ class GlStmt {
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal] + $totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal] + $totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
 				);
 		
 		
@@ -1009,7 +1009,7 @@ class GlStmt {
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($fullInvervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($fullInvervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchinc'))
 				);
 		
 		return $tbl->generateMarkup($tableAttrs)
@@ -1293,7 +1293,7 @@ order by r.idResource;";
 		
 		$sTbl->addBodyTr(HTMLTable::makeTd('Visit Nights in ' . $monthArray[$stDT->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd($totalCatNites['All'], array('style'=>'text-align:center;'))
-				. HTMLTable::makeTd('$'.number_format($fullIntervalCharge, 2), array('style'=>'text-align:right;')));
+				. HTMLTable::makeTd('$'.number_format($fullIntervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-matchinc')));
 		
 		$sTbl->addBodyTr(HTMLTable::makeTd('Room Utilization', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(($numUsefulNights <= 0 ? '0' : number_format($totalCatNites['All'] * 100 / $numUsefulNights, 1)) . '%', array('style'=>'text-align:center;')));
