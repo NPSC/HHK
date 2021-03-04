@@ -1120,7 +1120,7 @@ if (isset($_POST['ldfm'])) {
             'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3 user-agent-spacing')): '') .
             '<div class="row"><div class="col-10 uploadFormDiv ui-widget-content" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="d-inline-block" style="padding: 5px 7px;">
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/><input type="hidden" name="filefrmtype" value="' . $formType . '"/>
-Upload new file: <input name="formfile" type="file" required />
+Upload new HTML file: <input name="formfile" type="file" required accept="text/html" />
 <input type="submit" name="docUpload" value="Save Form" />
 </form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><input type="hidden" name="docfrmtype" value="' . $formType . '"/><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
             'id' => $r['Code']
@@ -1167,7 +1167,7 @@ if (isset($_POST['docUpload'])) {
     	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
     }
     
-    if (! empty($_FILES['formfile']['tmp_name'])) {
+    if (! empty($_FILES['formfile']['tmp_name']) && mime_content_type($_FILES['formfile']['tmp_name']) == "text/html") {
 
         $docId = - 1;
         if (isset($_POST['docId'])) {
