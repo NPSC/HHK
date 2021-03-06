@@ -516,6 +516,7 @@ class GlStmt {
 		$fullInvervalCharge = 0;
 		$subsidyCharge = 0;
 		
+		// Visit subtotals
 		$vIntervalCharge = 0;
 		$vPreIntervalCharge = 0;
 		$vFullIntervalCharge = 0;
@@ -722,7 +723,7 @@ class GlStmt {
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vIntervalPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
-						// Reduce charge by waive amount.
+						// waive amount.
 						$vIntervalWaiveAmt += $ilAmt;
 					}
 					
@@ -737,7 +738,7 @@ class GlStmt {
 					} else if ($r['Item_Id'] == ItemId::LodgingReversal) {
 						$vForwardPay += $ilAmt;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
-						// Reduce charge by waive amount.
+						// waive amount.
 						$vPreIntervalWaiveAmt += $ilAmt;
 					}
 					
@@ -842,7 +843,7 @@ class GlStmt {
 
 			} else if ($r['idPayment'] == 0 && $r['Invoice_Status'] == InvoiceStatus::Paid) {
 				// Deal with discounts
-				
+
 				$paymentDate = new \DateTime($r['Invoice_Date']);
 
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
@@ -862,33 +863,34 @@ class GlStmt {
 				}
 			}
 		}
-		
+
 		if ($record != NULL) {
-			
+
 			// Deal with waive amounts
 			if ($vPreIntervalWaiveAmt <= $vPreIntervalCharge) {
 				$vPreIntervalCharge += $vPreIntervalWaiveAmt;
 				$vForwardPay += $vPreIntervalWaiveAmt;
+			} else if ($vPreIntervalWaiveAmt > $vPreIntervalCharge) {
+				// Waive bleed over to this month
 			}
-			
+
 			if ($vIntervalWaiveAmt <= $vIntervalCharge) {
 				$vIntervalCharge += $vIntervalWaiveAmt;
 				$vIntervalPay += $vIntervalWaiveAmt;
 			}
-			
+
 			// leftover Payments from past (C23)
 			$pfp = 0;
 			if ($vForwardPay - $vPreIntervalCharge > 0) {
 				$pfp = $vForwardPay - $vPreIntervalCharge;
 			}
-			
+
 			// previous months leftover charge after previous payments (C22)
 			$cfp = 0;
 			if ($vPreIntervalCharge - $vForwardPay > 0) {
 				$cfp = $vPreIntervalCharge - $vForwardPay;
 			}
-			
-			
+
 			// Payments to the past
 			$ptp = 0;
 			if ($cfp > 0) {
@@ -898,7 +900,7 @@ class GlStmt {
 					$ptp = $vIntervalPay;
 				}
 			}
-			
+
 			// Payments to now
 			$ptn = 0;
 			if ($cfp <= $vIntervalPay) {
@@ -908,24 +910,23 @@ class GlStmt {
 					$ptn = $vIntervalPay - $cfp;
 				}
 			}
-			
+
 			// Payments to Future
 			$ptf = 0;
 			if ($ptp + $ptn < $vIntervalPay) {
 				$ptf = $vIntervalPay - $ptp - $ptn;
 			}
-			
+
 			// Unpaid Charges
 			if ($vIntervalCharge > $ptn) {
 				$unpaidCharges += ($vIntervalCharge - $ptn);
 			}
-			
+
 			// Payments Carried Forward
 			if (($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf > 0) {
 				$paymentsCarriedForward += ($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf;
 			}
-			
-			
+
 			$forwardPay += $pfp;
 			$preIntervalPay += $ptp;
 			$intervalPay += $ptn;
@@ -933,8 +934,7 @@ class GlStmt {
 
 			$fullInvervalCharge += $vFullIntervalCharge;
 			$subsidyCharge += $vSubsidyCharge;
-			
-			
+
 		}
 
 		
@@ -1201,11 +1201,12 @@ where
 		$enDT = new \DateTime($end . ' 00:00:00');
 		$numNights = $enDT->diff($stDT, TRUE)->days;
 		
-		$qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, rm.Rate_Code, g.Substitute as `Static_Rate`, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
+		$qu = "select r.idResource, rm.Category, rm.Type, rm.Report_Category, rm.Rate_Code, IFNULL(rate.Reduced_Rate_1, 0.0) as 'Flat_Rate', ifnull(g.Substitute, '0') as `Static_Rate`, ifnull(ru.Start_Date,'') as `Start_Date`, ifnull(ru.End_Date, '') as `End_Date`, ifnull(ru.Status, 'a') as `RU_Status`
         from resource r left join
 resource_use ru on r.idResource = ru.idResource and DATE(ru.Start_Date) < DATE('" . $enDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $stDT->format('Y-m-d') . "')
 left join resource_room rr on r.idResource = rr.idResource
 left join room rm on rr.idRoom = rm.idRoom
+left join room_rate rate on rate.FA_Category = 'e' and rate.Status = 'a'
 left join gen_lookups g on g.`Table_Name` = 'Static_Room_Rate' and g.`Code` = rm.Rate_Code
 where r.`Type` in ('" . ResourceTypes::Room . "','" . ResourceTypes::RmtRoom . "')
 order by r.idResource;";
@@ -1228,11 +1229,11 @@ order by r.idResource;";
 				
 				// Only collect days within the time period.
 				if ($arriveDT < $stDT) {
-					$arriveDT = new \DateTime($stDT->format('Y-m-d H:i:s'));
+					$arriveDT = new \DateTime($stDT->format('Y-m-d 00:00:00'));
 				}
 				
 				if ($departDT > $enDT) {
-					$departDT = new \DateTime($enDT->format('Y-m-d H:i:s'));
+					$departDT = new \DateTime($enDT->format('Y-m-d 00:00:00'));
 				}
 				
 				// Collect 0-day events as one day
@@ -1249,7 +1250,7 @@ order by r.idResource;";
 				$rooms[$r['idResource']][$r[$rescGroup]][$r['RU_Status']] += $nites;
 			}
 			
-			$rates[$r['idResource']] = $r['Static_Rate'];
+			$rates[$r['idResource']] = $r['Flat_Rate'];
 			
 		}
 		
@@ -1281,8 +1282,7 @@ order by r.idResource;";
 		}
 		
 		
-		$numRoomNights = $availableRooms * $numNights;
-		$numUsefulNights = $numRoomNights - $totalOOSNites;
+		$numUsefulNights = ($availableRooms * $numNights) - $totalOOSNites;
 		
 		$sTbl = new HTMLTable();
 		$sTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('All ' . $availableRooms . ' Rooms') . HTMLTable::makeTh('Flat Rate'));
@@ -1304,39 +1304,39 @@ order by r.idResource;";
 	}
 	
 	protected function getOrderNumbers() {
-		
+
+		$orderNumbers = '';
 		$ordersArray = array();
+
 		foreach ($this->getInvoices() as $r) {
-			
+
 			if ($r['i']['Order_Number'] != '') {
-				$ordersArray[$r['i']['Order_Number']] = 'y';
+				$ordersArray[] = $r['i']['Order_Number'];
 			}
 		}
-		
-		$orderNumbers = '';
-		
+
 		if (count($ordersArray) > 0) {
-			
-			foreach ($ordersArray as $k => $i) {
-				
-				if ($k == '' || $k == 0) {
+
+			foreach ($ordersArray as $k) {
+
+				if ($k < 1) {
 					continue;
 				}
-				
+
 				if ($orderNumbers == '') {
 					$orderNumbers = $k;
 				} else {
 					$orderNumbers .= ','. $k;
 				}
 			}
-			
+
 			$orderNumbers = " or v.idVisit in ($orderNumbers) ";
 		}
-		
+
 		return $orderNumbers;
-		
+
 	}
-	
+
 	protected function arrayAdd(&$arrayMember, $amount) {
 		
 		if (isset($arrayMember)) {

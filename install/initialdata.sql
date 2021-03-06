@@ -36,7 +36,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Campaign_Type','as','Normal','','',0),
 ('Campaign_Type','pct','Percent Cut Out','','',0),
 ('Campaign_Type','ink','In Kind','','',0),
-('Campaign_Type', 'sch', 'Scholarship', '','',0),
 
 ('Constraint_Type', 'hos', 'Hospital', '','',0),
 ('Constraint_Type', 'rv', 'Reservation','','',0),
