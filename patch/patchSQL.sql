@@ -104,3 +104,6 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Desc
 
 ALTER TABLE `name_demog` 
 ADD COLUMN `Background_Check_Date` DATE NULL DEFAULT NULL AFTER `Gl_Code_Credit`;
+
+-- remove scholarship campaign type
+delete from gen_lookups where `Table_Name` = 'Campaign_Type' and `Code` = 'sch';
