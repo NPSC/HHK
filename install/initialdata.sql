@@ -683,8 +683,8 @@ INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description
 ('amtTenderedPrompt','Amount Tendered','s','pc','',''),
 ('housePays','House pays difference','s','pc','',''),
 ('rtnTenderedPrompt','Return Amount','s','pc','',''),
-('RmFeesPledged', '	Donations to-date',	's', 'pc', '', ''),
-('PayRmFees', 'Pay Donation', 's', 'pc', '', ''),
+('RmFeesPledged', '	Room fees pledged to-date',	's', 'pc', '', ''),
+('PayRmFees', 'Pay room fees', 's', 'pc', '', ''),
 ('RoomCharges',	'Room Charges',	's', 'pc', '', ''),
 
 ('patient','Patient','s','mt','','Default: Patient'),
