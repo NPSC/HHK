@@ -525,7 +525,7 @@ INSERT INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`
 ('CheckOutTime','10','i','h','','Normal House Checkout time of day in 24-hour format, hh',''),
 ('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true',''),
 ('CoTod','false','b','h','','Edit the time of day of a checkout',''),
-('county','false','b','h','','Include the County for addresses',''),
+('county','true','b','h','','Include the County for addresses',''),
 ('DefaultCalEventColor', '', 's', 'c', '', 'Default event ribbon color for the calendar', ''),
 ('DefaultDays','21','i','h','','The Default number of following days for date range control',''),
 ('DefaultPayType','cc','s','f','','Use the Resource Builder',''),
