@@ -1254,6 +1254,8 @@ CREATE OR REPLACE VIEW `vguest_view` AS
             ELSE `s`.`Expected_Co_Date`
         END) AS `Expected Departure`,
         `s`.`On_Leave` AS `On_Leave`,
+        TO_DAYS(CURRENT_TIMESTAMP()) - TO_DAYS(`s`.`Checkin_Date`) AS `Nights`,
+        `hosp`.`Title` AS `Hospital`,
         IFNULL(`v`.`Make`, '') AS `Make`,
         IFNULL(`v`.`Model`, '') AS `Model`,
         IFNULL(`v`.`Color`, '') AS `Color`,
@@ -1267,6 +1269,8 @@ CREATE OR REPLACE VIEW `vguest_view` AS
             AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`))))
         LEFT JOIN `visit` `vs` ON (((`s`.`idVisit` = `vs`.`idVisit`)
             AND (`s`.`Visit_Span` = `vs`.`Span`))))
+		LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`))
         LEFT JOIN `vehicle` `v` ON ((`vs`.`idRegistration` = `v`.`idRegistration`)))
         LEFT JOIN `room` `rm` ON ((`s`.`idRoom` = `rm`.`idRoom`)))
         LEFT JOIN `gen_lookups` `g` ON (((`g`.`Table_Name` = 'Name_Suffix')

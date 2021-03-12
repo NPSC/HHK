@@ -16,6 +16,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\Config_Lite\Config_Lite;
 use HHK\House\PSG;
 use HHK\House\Room\RoomChooser;
+use HHK\sec\Labels;
 
 /**
  * ws_ckin.php
@@ -583,7 +584,7 @@ try {
         if (isset($_POST['psg'])) {
             $idPsg = intval(filter_var($_POST['psg'], FILTER_SANITIZE_NUMBER_INT), 10);
             $psg = new PSG($dbh, $idPsg);
-            $events = array('markup'=>$psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], new Config_Lite(LABEL_FILE)));
+            $events = array('markup'=>$psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], new Labels()));
 
         } else {
             $events = array('error'=>'PSG ID is missing.');
