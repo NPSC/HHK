@@ -77,7 +77,37 @@ foreach($cFields as $field){
     }
 }
 
-$guests = array();
+$guestTable = false;
+
+if (isset($_POST['btnHere'])){
+    $guests = array();
+    $colSelector->setColumnSelectors($_POST);
+    $fltrdTitles = $colSelector->getFilteredTitles();
+    $fltrdFields = $colSelector->getFilteredFields();
+    
+    $stmt = $dbh->query("select * from vguest_view");
+    
+    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    
+        $g = array();
+        foreach ($fltrdFields as $f) {
+            if(isset($f[7]) && $f[7] == "date"){
+                $g[$f[0]] = date('c', strtotime($r[$f[1]]));
+            }else{
+                $g[$f[0]] = $r[$f[1]];
+            }
+        }
+        $guests[] = $g;
+    }
+    
+    if (count($guests) > 0) {
+        $guestTable = CreateMarkupFromDB::generateHTML_Table($guests, 'tblList');
+    } else {
+        $guestTable = HTMLContainer::generateMarkup('h2', 'House is Empty.');
+    }
+}
+
+/* $guests = array();
 $stmt = $dbh->query("select * from vguest_view");
 
 while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -119,7 +149,7 @@ if (count($guests) > 0) {
     $guestTable = CreateMarkupFromDB::generateHTML_Table($guests, 'tblList');
 } else {
     $guestTable = HTMLContainer::generateMarkup('h2', 'House is Empty.');
-}
+} */
 
 $vehicleTable = '';
 
@@ -314,8 +344,21 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
         
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var tabReturn = '<?php echo $tab; ?>';
+        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+        
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
-        $('#tblList, #tblListv').dataTable({
+        $('#tblList').dataTable({
+            "displayLength": 50,
+            "dom": '<"top"if>rt<"bottom"lp><"clear">',
+            "order": [[0, 'asc']],
+            'columnDefs': [
+                {'targets': columnDefs,
+                 'type': 'date',
+                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+                }
+             ]
+        });
+        $('#tblListv').dataTable({
             "displayLength": 50,
             "dom": '<"top"if>rt<"bottom"lp><"clear">',
             "order": [[0, 'asc']],
@@ -392,15 +435,16 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
                     <?php } ?>
                 </ul>
                 <div id="tabGuest" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
-                	<div id="guestFilters">
+                	<div id="guestFilters" style="margin-bottom: 0.5em">
                 		<form method="post" action="GuestView.php" style="display: inline-block;">
                 			<?php echo $columnSelector; ?>
                 			<div id="actions" style="text-align: right;">
-                				<input type="button" id="btnHere" value="Run Here">
+                				<input type="submit" name="btnHere" id="btnHere" value="Run Here">
                 			</div>
                 		</form>
                 	</div>
-                	<div class="guestRptContent" style="display: none;">
+                	<?php if($guestTable !== false) { ?>
+                	<div class="guestRptContent">
                         <form name="formEm" method="Post" action="GuestView.php">
                             <?php echo $emtableMarkup; ?>
                         </form>
@@ -409,6 +453,7 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
                             <?php echo $title . $guestTable; ?>
                         </div>
                     </div>
+                    <?php } ?>
                 </div>
                 <div id="tabVeh" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     <form name="formEmv" method="Post" action="GuestView.php">
