@@ -10,7 +10,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Visit\Visit_LogRS;
 use HHK\Tables\Name\{Name_GuestRS, NameRS};
 use HHK\Tables\Registration\PSG_RS;
-use HHK\sec\Session;
+use HHK\sec\{Session, Labels};
 use HHK\Exception\RuntimeException;
 
 /**
@@ -156,19 +156,9 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         return FALSE;
     }
 
-    public function createEditMarkup(\PDO $dbh, $relList, $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {
-
-// This block taken out of the PSG tab...
-//         $hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, $this->getIdPatient()));
-//         $table = HTMLContainer::generateMarkup('div',
-//                 HTMLContainer::generateMarkup('fieldset',
-//                     HTMLContainer::generateMarkup('legend',$labels->getString('hospital', 'hospital', 'Hospital') . " info for current or latest Visit/" . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('style'=>'font-weight:bold;'))
-//                         . $hArray['div'],
-//                         array('class'=>'hhk-panel')),
-//                 array('style'=>'float:left;', 'id'=>'hospitalSection'));
+    public function createEditMarkup(\PDO $dbh, $relList, Labels $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {
 
         $pTable = '';
-
 
         // Notes section
         $notesContainer = HTMLContainer::generateMarkup('fieldset',

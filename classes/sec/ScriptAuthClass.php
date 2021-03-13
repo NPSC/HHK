@@ -370,10 +370,11 @@ class ScriptAuthClass extends SecurityComponent {
         $mu = "<ul id='ulIcons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix hhk-ui-icons'>";
         $siteCount = 0;
         $siteMu = '';
+        $uS = Session::getInstance();
 
-        $config = new Config_Lite(ciCFG_FILE);
-        $tutorialURL = $config->getString('site', 'Tutorial_URL', '');
-        $hufURL = $config->getString('site', 'HUF_URL', '');
+        // $config = new Config_Lite(ciCFG_FILE);
+        $tutorialURL = $uS->Tutorial_URL;  //$config->getString('site', 'Tutorial_URL', '');
+        $hufURL = $uS->HUF_URL;  //$config->getString('site', 'HUF_URL', '');
 
         foreach ($siteList as $r) {
 
