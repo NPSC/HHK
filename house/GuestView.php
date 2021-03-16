@@ -79,7 +79,7 @@ foreach($cFields as $field){
 
 $guestTable = false;
 
-if (isset($_POST['btnHere'])){
+if (isset($_POST['btnHere']) || isset($_POST['btnEmail'])){
     $guests = array();
     $colSelector->setColumnSelectors($_POST);
     $fltrdTitles = $colSelector->getFilteredTitles();
@@ -435,25 +435,27 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
                     <?php } ?>
                 </ul>
                 <div id="tabGuest" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
-                	<div id="guestFilters" style="margin-bottom: 0.5em">
-                		<form method="post" action="GuestView.php" style="display: inline-block;">
-                			<?php echo $columnSelector; ?>
-                			<div id="actions" style="text-align: right;">
-                				<input type="submit" name="btnHere" id="btnHere" value="Run Here">
+                	<form method="post" action="GuestView.php">
+                		<div id="guestFilters" style="margin-bottom: 0.5em">
+                			<div style="display: inline-block;">
+                				<?php echo $columnSelector; ?>
+                				<div id="actions" style="text-align: right;">
+                					<input type="submit" name="btnHere" id="btnHere" value="Run Here">
+                				</div>
                 			</div>
-                		</form>
-                	</div>
-                	<?php if($guestTable !== false) { ?>
-                	<div class="guestRptContent">
-                        <form name="formEm" method="Post" action="GuestView.php">
-                            <?php echo $emtableMarkup; ?>
-                        </form>
-                        <input type="button" value="Print" id='btnPrint' name='btnPrint' style="margin-right:.3em;"/>
-                        <div class="PrintArea">
-                            <?php echo $title . $guestTable; ?>
+                		</div>
+                    	<?php if($guestTable !== false) { ?>
+                    	<div class="guestRptContent">
+                            <div id="formEm">
+                                <?php echo $emtableMarkup; ?>
+                            </div>
+                            <input type="button" value="Print" id='btnPrint' name='btnPrint' style="margin-right:.3em;"/>
+                            <div class="PrintArea">
+                                <?php echo $title . $guestTable; ?>
+                            </div>
                         </div>
-                    </div>
-                    <?php } ?>
+                        <?php } ?>
+                    </form>
                 </div>
                 <div id="tabVeh" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     <form name="formEmv" method="Post" action="GuestView.php">
