@@ -1025,8 +1025,8 @@ function resvManager(initData, options) {
                }
 
             } else if (numPriGuests === 0) {
-                $pWarning.text('Set one ' + guestLabel + ' as primary ' + guestLabel + '.').show();
-                flagAlertMessage('Set one ' + guestLabel + ' as primary ' + guestLabel + '.', 'alert', $pWarning);
+                $pWarning.text('Set one ' + visitorLabel + ' as primary ' + guestLabel + '.').show();
+                flagAlertMessage('Set one ' + visitorLabel + ' as primary ' + guestLabel + '.', 'alert', $pWarning);
                 $("input.hhk-rbPri").parent().addClass('ui-state-error');
                 return false;
             }
@@ -1112,7 +1112,7 @@ function resvManager(initData, options) {
 					// Check guest birthdate
                     if (gstBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage(guestLabel + ' is missing the Birth Date.', 'alert', $pWarning);
+                        flagAlertMessage(visitorLabel + ' is missing the Birth Date.', 'alert', $pWarning);
                         openSection(true);
                         return false;
                     } else {

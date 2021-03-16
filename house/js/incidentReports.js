@@ -406,7 +406,7 @@
                     }
                     var body = '<div id="incidentPrint">';
                     if (data.guest) {
-                        body += '<h3>'+settings.guestLabel+'</h3>' +
+                        body += '<h3>'+settings.visitorLabel+'</h3>' +
                                 '<table cellpadding="10" style="margin-bottom: 2em;">' +
                                 '<thead>' +
                                 '<tr>' +
