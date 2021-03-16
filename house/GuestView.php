@@ -7,6 +7,8 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLTable;
 use HHK\sec\Labels;
+use HHK\House\Report\{ReportFilter, ReportFieldSet};
+use HHK\ColumnSelectors;
 
 /**
  * GuestView.php
@@ -39,9 +41,73 @@ $labels = Labels::getLabels();
 
 $resultMessage = "";
 
+$filter = new ReportFilter();
 
 // Guest listing
-$guests = array();
+
+// Report column selector
+// array: title, ColumnName, checked, fixed, Excel Type, Excel Style
+$cFields[] = array('Last Name', 'Last Name', 'checked', '', 'string', '20');
+$cFields[] = array("First Name", 'First Name', 'checked', '', 'string', '20');
+$cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
+$cFields[] = array("Phone", 'Phone', 'checked', '', 'string', '15');
+$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Expected Departure", 'Expected Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+if ($uS->EmptyExtendLimit > 0) {
+    $cFields[] = array("On Leave", 'On_Leave', 'checked', '', 'string', '15');
+}
+$cFields[] = array("Nights", 'Nights', '', '', 'integer', '10');
+$cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', '', '', 'string', '20');
+if ($uS->TrackAuto) {
+    $cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');
+    $cFields[] = array('Model', 'Model', 'checked', '', 'string', '20');
+    $cFields[] = array('Color', 'Color', 'checked', '', 'string', '20');
+    $cFields[] = array('State Reg.', 'State Reg.', 'checked', '', 'string', '20');
+    $cFields[] = array($labels->getString('referral', 'licensePlate', 'License Plate'), 'License Plate', 'checked', '', 'string', '20');
+    $cFields[] = array('Notes', 'Note', 'checked', '', 'string', '20');
+}
+
+$fieldSets = ReportFieldSet::listFieldSets($dbh, 'GuestView', true);
+$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
+$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
+$defaultFields = array();
+foreach($cFields as $field){
+    if($field[2] == 'checked'){
+        $defaultFields[] = $field[1];
+    }
+}
+
+$guestTable = false;
+
+if (isset($_POST['btnHere']) || isset($_POST['btnEmail'])){
+    $guests = array();
+    $colSelector->setColumnSelectors($_POST);
+    $fltrdTitles = $colSelector->getFilteredTitles();
+    $fltrdFields = $colSelector->getFilteredFields();
+    
+    $stmt = $dbh->query("select * from vguest_view");
+    
+    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    
+        $g = array();
+        foreach ($fltrdFields as $f) {
+            if(isset($f[7]) && $f[7] == "date"){
+                $g[$f[0]] = date('c', strtotime($r[$f[1]]));
+            }else{
+                $g[$f[0]] = $r[$f[1]];
+            }
+        }
+        $guests[] = $g;
+    }
+    
+    if (count($guests) > 0) {
+        $guestTable = CreateMarkupFromDB::generateHTML_Table($guests, 'tblList');
+    } else {
+        $guestTable = HTMLContainer::generateMarkup('h2', 'House is Empty.');
+    }
+}
+
+/* $guests = array();
 $stmt = $dbh->query("select * from vguest_view");
 
 while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -62,6 +128,9 @@ while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $g['On Leave'] = '';
         }
     }
+    
+    $g['Nights'] = $r['Nights'];
+    $g['Hospital'] = $r['Hospital'];
 
     if ($uS->TrackAuto) {
         $g['Make'] = $r['Make'];
@@ -80,7 +149,7 @@ if (count($guests) > 0) {
     $guestTable = CreateMarkupFromDB::generateHTML_Table($guests, 'tblList');
 } else {
     $guestTable = HTMLContainer::generateMarkup('h2', 'House is Empty.');
-}
+} */
 
 $vehicleTable = '';
 
@@ -206,6 +275,7 @@ if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
 
 // create send guest email table
 $emTbl = new HTMLTable();
+$emTbl->addHeaderTr(HTMLTable::makeTh('Email the Current ' .$labels->getString('MemberType', 'visitor', 'Guest') . ' Report'));
 $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup("Current ".$labels->getString('MemberType', 'visitor', 'Guest')."s Report", array('name' => 'txtSubject', 'size' => '70'))));
 $emTbl->addBodyTr(HTMLTable::makeTd(
         'Email: '
@@ -213,7 +283,7 @@ $emTbl->addBodyTr(HTMLTable::makeTd(
 
 $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit')) . HTMLContainer::generateMarkup('span', $guestMessage, array('style'=>'color:red;margin-left:.5em;'))));
 
-$emtableMarkup = $emTbl->generateMarkup(array(), 'Email the Current ' .$labels->getString('MemberType', 'visitor', 'Guest') . ' Report');
+$emtableMarkup = $emTbl->generateMarkup(array('style'=>'margin-bottom: 0.5em;'));
 
 if ($uS->TrackAuto) {
     // create send guest email table
@@ -227,6 +297,8 @@ if ($uS->TrackAuto) {
 
     $emtableMarkupv = $emTblv->generateMarkup(array(), 'Email the Vehicle Report');
 }
+
+$columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'margin-bottom:0.5em', 'id'=>'includeFields'));
 
 ?>
 <!DOCTYPE html>
@@ -248,15 +320,45 @@ if ($uS->TrackAuto) {
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript">
     $(document).ready(function () {
         "use strict";
+        $('#includeFields').fieldSets({'reportName': 'GuestView', 'defaultFields': <?php echo json_encode($defaultFields) ?>});
+        
+        $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
+        
+        $('#cbColClearAll').click(function () {
+            $('#selFld option').each(function () {
+                $(this).prop('selected', false);
+            });
+        });
+
+        $('#cbColSelAll').click(function () {
+            $('#selFld option').each(function () {
+                $(this).prop('selected', true);
+            });
+        });
+        
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var tabReturn = '<?php echo $tab; ?>';
+        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+        
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
-        $('#tblList, #tblListv').dataTable({
+        $('#tblList').dataTable({
+            "displayLength": 50,
+            "dom": '<"top"if>rt<"bottom"lp><"clear">',
+            "order": [[0, 'asc']],
+            'columnDefs': [
+                {'targets': columnDefs,
+                 'type': 'date',
+                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+                }
+             ]
+        });
+        $('#tblListv').dataTable({
             "displayLength": 50,
             "dom": '<"top"if>rt<"bottom"lp><"clear">',
             "order": [[0, 'asc']],
@@ -332,14 +434,28 @@ if ($uS->TrackAuto) {
                     <li><a href="#tabsrch"><?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?> Search</a></li>
                     <?php } ?>
                 </ul>
-                <div id="tabGuest" class="hhk-tdbox" style=" padding-bottom: 1.5em; display:none;">
-                    <form name="formEm" method="Post" action="GuestView.php">
-                        <?php echo $emtableMarkup; ?>
+                <div id="tabGuest" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
+                	<form method="post" action="GuestView.php">
+                		<div id="guestFilters" style="margin-bottom: 0.5em">
+                			<div style="display: inline-block;">
+                				<?php echo $columnSelector; ?>
+                				<div id="actions" style="text-align: right;">
+                					<input type="submit" name="btnHere" id="btnHere" value="Run Here">
+                				</div>
+                			</div>
+                		</div>
+                    	<?php if($guestTable !== false) { ?>
+                    	<div class="guestRptContent">
+                            <div id="formEm">
+                                <?php echo $emtableMarkup; ?>
+                            </div>
+                            <input type="button" value="Print" id='btnPrint' name='btnPrint' style="margin-right:.3em;"/>
+                            <div class="PrintArea">
+                                <?php echo $title . $guestTable; ?>
+                            </div>
+                        </div>
+                        <?php } ?>
                     </form>
-                    <input type="button" value="Print" id='btnPrint' name='btnPrint' style="margin-right:.3em;"/>
-                    <div class="PrintArea">
-                        <?php echo $title . $guestTable; ?>
-                    </div>
                 </div>
                 <div id="tabVeh" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     <form name="formEmv" method="Post" action="GuestView.php">
