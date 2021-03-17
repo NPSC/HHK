@@ -62,7 +62,7 @@ SELECT hs.*, r.`idReservation`,
         else 5
     end) as 'order'
 from `hospital_stay` hs
-JOIN `reservation` r on hs.`idHospital_stay` = r.`idHospital_stay`
+LEFT JOIN `reservation` r on hs.`idHospital_stay` = r.`idHospital_stay`
 
 where hs.`idPatient` = $idP
 order by `order` desc, `arrival` desc limit 1");
