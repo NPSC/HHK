@@ -451,7 +451,7 @@ li.hhk-myMenuTop {
 }
 
 
-.hhk-hospTitleBtn {
+.hhk-hospTitleBtn, .hhk-smallBtn {
 	font-size: small !important;
 	padding: 1px 0.8em !important;
 }

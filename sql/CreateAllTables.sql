@@ -1070,6 +1070,7 @@ CREATE TABLE if not exists `name_demog` (
   `Special_Needs` varchar(5) NOT NULL DEFAULT '',
   `Gl_Code_Debit` VARCHAR(25) NOT NULL DEFAULT '' ,
   `Gl_Code_Credit` VARCHAR(25) NOT NULL DEFAULT '',
+  `tax_exempt` TINYINT NOT NULL DEFAULT 0,
   `Background_Check_Date` DATE DEFAULT NULL,
   `Last_Updated` datetime DEFAULT NULL,
   `Updated_By` varchar(45) NOT NULL DEFAULT '',

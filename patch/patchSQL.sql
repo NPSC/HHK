@@ -107,3 +107,8 @@ ADD COLUMN `Background_Check_Date` DATE NULL DEFAULT NULL AFTER `Gl_Code_Credit`
 
 -- remove scholarship campaign type
 delete from gen_lookups where `Table_Name` = 'Campaign_Type' and `Code` = 'sch';
+
+-- add tax exempt member flag
+ALTER TABLE `name_demog` 
+ADD COLUMN `tax_exempt` TINYINT NOT NULL DEFAULT 0 AFTER `Gl_Code_Credit`;
+

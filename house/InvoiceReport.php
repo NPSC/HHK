@@ -874,6 +874,11 @@ $(document).ready(function() {
     var tabReturn = '<?php echo $tabReturn; ?>';
 
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
+    
+    $( "form[name=glform] input[type=checkbox]" ).checkboxradio({
+      icon: false
+    });
+    
     $('.ckdate').datepicker({
         yearRange: '-05:+01',
         changeMonth: true,

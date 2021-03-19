@@ -5,6 +5,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\VolMemberType;
+use HHK\HTMLControls\HTMLContainer;
 
 class GLParameters {
     
@@ -78,32 +79,26 @@ class GLParameters {
             }
         }
         
-        foreach ($post as $k => $v) {
+        foreach ($post['bagl'] as $idName => $baAr) {
+                
+            $idName = intval($idName);
             
-            if (stristr($k, 'bagld')) {
+            if (isset($baAr['debit'])) {
+                $gl = filter_var($baAr['debit'], FILTER_SANITIZE_STRING);
                 
-                $parts = explode('_', $k);
-                
-                if (isset($parts[1]) && $parts[1] > 0) {
-                    
-                    $id = intval($parts[1]);
-                    $gl = filter_var($v, FILTER_SANITIZE_STRING);
-                    
-                    $dbh->exec("Update name_demog set Gl_Code_Debit = '$gl' where idName = $id");
-                }
+                $dbh->exec("Update name_demog set Gl_Code_Debit = '$gl' where idName = $idName");
             }
-            
-            if (stristr($k, 'baglc')) {
                 
-                $parts = explode('_', $k);
+            if (isset($baAr['credit'])) {
+                $gl = filter_var($baAr['credit'], FILTER_SANITIZE_STRING);
                 
-                if (isset($parts[1]) && $parts[1] > 0) {
-                    
-                    $id = intval($parts[1]);
-                    $gl = filter_var($v, FILTER_SANITIZE_STRING);
-                    
-                    $dbh->exec("Update name_demog set Gl_Code_Credit = '$gl' where idName = $id");
-                }
+                $dbh->exec("Update name_demog set Gl_Code_Credit = '$gl' where idName = $idName");
+            }
+                
+            if (isset($baAr['taxExempt'])) {
+                $dbh->exec("Update name_demog set tax_exempt = '1' where idName = $idName");
+            }else{
+                $dbh->exec("Update name_demog set tax_exempt = '0' where idName = $idName");
             }
             
         }
@@ -141,7 +136,7 @@ class GLParameters {
     
     protected function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
         
-        $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company, nd.Gl_Code_Debit, nd.Gl_Code_Credit " .
+        $stmt = $dbh->query("SELECT n.idName, n.Name_First, n.Name_Last, n.Company, nd.Gl_Code_Debit, nd.Gl_Code_Credit, nd.tax_exempt " .
             " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
             " JOIN name_demog nd on n.idName = nd.idName  ".
             " where n.Member_Status='a' and n.Record_Member = 1 order by n.Company");
@@ -164,14 +159,20 @@ class GLParameters {
                 $entry = $r['Company'];
             }
             
+            $taxExemptCbAttrs = array('name'=>$prefix. '['.$r['idName'] . '][taxExempt]', 'type'=>'checkbox');
+            if($r['tax_exempt']){
+                $taxExemptCbAttrs['checked'] = 'checked';
+            }
+            
             $glTbl->addBodyTr(
                 HTMLTable::makeTh($entry, array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Debit'], array('name'=>$prefix.'d_'.$r['idName'], 'size'=>'25')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Credit'], array('name'=>$prefix.'c_'.$r['idName'], 'size'=>'25')))
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Tax exempt", array('for'=>$prefix. '['.$r['idName'] . '][taxExempt]', 'class'=>'hhk-smallBtn')) . HTMLInput::generateMarkup('', $taxExemptCbAttrs))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Debit'], array('name'=>$prefix.'['.$r['idName'] . '][debit]', 'size'=>'25')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Credit'], array('name'=>$prefix.'['.$r['idName'] . '][credit]', 'size'=>'25')))
                 );
         }
         
-        $glTbl->addHeaderTr(HTMLTable::makeTh('Billing Agent') . HTMLTable::makeTh('GL Debit') . HTMLTable::makeTh('GL Credit'));
+        $glTbl->addHeaderTr(HTMLTable::makeTh('Billing Agent') . HTMLTable::makeTh('Tax Exempt') . HTMLTable::makeTh('GL Debit') . HTMLTable::makeTh('GL Credit'));
         
         return $glTbl->generateMarkup();
         
