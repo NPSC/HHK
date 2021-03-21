@@ -11,15 +11,16 @@ class FinancialInterval {
 	
 	protected $startDate;
 	protected $endDate;
-	protected $totalCatNites;
-	protected $totalItemPayment;
-	
-	protected $preIntervalCharge;
-	protected $preIntervalPayment;
-	protected $intervalCharge;
-	protected $intervalPayment;
 
-	public function __construct(\DateTime $startDate, \DateTime $endDate) {
+	protected $totalItemPayment;
+	protected $totalCatNites;
+	protected $categories;
+	protected $payAmounts;
+	
+	protected $baArray;
+	
+
+	public function __construct(\DateTimeImmutable $startDate, \DateTimeImmutable $endDate) {
 		$this->startDate = $startDate;
 		$this->endDate = $endDate;
 	}
@@ -27,15 +28,16 @@ class FinancialInterval {
 	public function collectData (\PDO $dbh, AbstractPriceModel $priceModel, $extraVisitsSQL) {
 	
 		$uS = Session::getInstance();
+
 		$this->totalCatNites = [];
 		$this->totalItemPayment = [];
-		$baArray = [];
+		$this->baArray = [];
 		
 		// Category Nights Counter
-		$categories = readGenLookupsPDO($dbh, 'Room_Category');
-		$categories[] = array(0=>'', 1=>'(default)');
+		$this->categories = readGenLookupsPDO($dbh, 'Room_Category');
+		$this->categories[] = array(0=>'', 1=>'(default)');
 		
-		foreach ($categories as $c) {
+		foreach ($this->categories as $c) {
 			$this->totalCatNites[$c[0]] = 0;
 		}
 		
@@ -48,31 +50,13 @@ class FinancialInterval {
 		}
 		
 		// Third party
-		$baArray['']['paid'] = 0;
-		$baArray['']['pend'] = 0;
+		$this->baArray['']['paid'] = 0;
+		$this->baArray['']['pend'] = 0;
 		
-		
-		$overPay = 0;
-		$this->preIntervalPayment = 0;
-		$intervalPay = 0;
-		$forwardPay = 0;  // Payment from last month that pay stays in this month.
-		$unpaidCharges = 0;  // Unpaid charges for this month only.
-		$paymentsCarriedForward = 0;  // Payments from last month that are not used up in this month.
-		
-		$fullInvervalCharge = 0;
-		$subsidyCharge = 0;
-		
-		// Visit subtotals
-		$vIntervalCharge = 0;
-		$vPreIntervalCharge = 0;
-		$vFullIntervalCharge = 0;
-		$vSubsidyCharge = 0;
-		$vIntervalPay = 0;
-		$vForwardPay = 0;
-		$vIntervalWaiveAmt = 0;
-		$vPreIntervalWaiveAmt = 0;
-		
-		$paymentAmounts = array();
+				
+		$stmtCalc = new StmtCalc();
+		$visitCalc = new VisitIntervalCalculator();
+		$this->payAmounts = array();
 		$serialId = 0;
 		$visitId = 0;
 		$record = NULL;
@@ -89,89 +73,10 @@ class FinancialInterval {
 				If ($visitId != $r['idVisit'] && $visitId != 0) {
 					// Visit Change
 					
-					// Deal with waive amounts
-					if (abs($vPreIntervalWaiveAmt) <= $vPreIntervalCharge) {
-						$vPreIntervalCharge += $vPreIntervalWaiveAmt;
-						$vForwardPay += $vPreIntervalWaiveAmt;
-					} else {
-						// Waive bleed over to this month
-					}
-					
-					if (abs($vIntervalWaiveAmt) <= $vIntervalCharge) {
-						$vIntervalCharge += $vIntervalWaiveAmt;
-						$vIntervalPay += $vIntervalWaiveAmt;
-					} else {
-						
-					}
-					
-					// leftover Payments from past (C23)
-					$pfp = 0;
-					if ($vForwardPay - $vPreIntervalCharge > 0) {
-						$pfp = $vForwardPay - $vPreIntervalCharge;
-					}
-					
-					// previous months leftover charge after previous payments (C22)
-					$cfp = 0;
-					if ($vPreIntervalCharge - $vForwardPay > 0) {
-						$cfp = $vPreIntervalCharge - $vForwardPay;
-					}
-					
-					
-					// Payments to the past
-					$ptp = 0;
-					if ($cfp > 0) {
-						if($vIntervalPay >= $cfp) {
-							$ptp = $cfp;
-						} else {
-							$ptp = $vIntervalPay;
-						}
-					}
-					
-					// Payments to now
-					$ptn = 0;
-					if ($cfp <= $vIntervalPay) {
-						if ($vIntervalPay - $cfp > $vIntervalCharge) {
-							$ptn = $vIntervalCharge;
-						} else {
-							$ptn = $vIntervalPay - $cfp;
-						}
-					}
-					
-					// Payments to Future
-					$ptf = 0;
-					if ($ptp + $ptn < $vIntervalPay) {
-						$ptf = $vIntervalPay - $ptp - $ptn;
-					}
-					
-					// Unpaid Charges
-					if ($vIntervalCharge > $ptn) {
-						$unpaidCharges += ($vIntervalCharge - $ptn);
-					}
-					
-					// Payments Carried Forward
-					if (($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf > 0) {
-						$paymentsCarriedForward += ($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf;
-					}
-					
-					
-					$forwardPay += $pfp;
-					$this->preIntervalPayment += $ptp;
-					$intervalPay += $ptn;
-					$overPay += $ptf;
-					
-					$fullInvervalCharge += $vFullIntervalCharge;
-					$subsidyCharge += $vSubsidyCharge;
+					$stmtCalc->addVisit($visitCalc->closeInterval());
 					
 					// Reset for next visit
-					$vIntervalCharge = 0;
-					$vPreIntervalCharge = 0;
-					$vFullIntervalCharge = 0;
-					$vSubsidyCharge = 0;
-					$vIntervalPay = 0;
-					$vForwardPay = 0;
-					$vIntervalWaiveAmt = 0;
-					$vPreIntervalWaiveAmt = 0;
-					
+					$visitCalc = new VisitIntervalCalculator();
 					$visitId = $r['idVisit'];
 				}
 				
@@ -185,30 +90,23 @@ class FinancialInterval {
 					
 					// collect all pre-charges
 					$priceModel->setCreditDays(0);
-					$vPreIntervalCharge += $priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['PI_Guest_Nights']) * $adjRatio;
+					$c = $priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['PI_Guest_Nights']);
+					$visitCalc->updatePreIntervalCharge($c * $adjRatio);
 					
 				}
 				
 				// Add up interval charges
 				if ($r['Actual_Interval_Nights'] > 0) {
 					
-					// Guest paying
+					// Guest Charges
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
-					$vIntervalCharge += $priceModel->amountCalculator($r['Actual_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['Actual_Guest_Nights']) * $adjRatio;
+					$charge = $priceModel->amountCalculator($r['Actual_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['Actual_Guest_Nights']) * $adjRatio;
 					
 					// Full charge
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
-					$vFullIntervalCharge += $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
+					$fullCharge = $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
 					
-					if ($adjRatio > 0) {
-						// Only adjust when the charge will be more.
-						$vFullIntervalCharge = $vFullIntervalCharge * $adjRatio;
-					}
-					
-					// subsidy charges are only for discounted rates.
-					if ($r['Rate_Category'] != RoomRateCategories::FlatRateCategory) {
-						$vSubsidyCharge += ($vFullIntervalCharge - $vIntervalCharge);
-					}
+					$visitCalc->updateIntervalCharge($charge, $fullCharge, $adjRatio, $r['Rate_Category']);
 					
 				}
 			}
@@ -219,7 +117,7 @@ class FinancialInterval {
 			
 			// Unpaid invoices
 			if ($r['Invoice_Status'] == InvoiceStatus::Unpaid) {
-				$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['pend'], $r['il_Amount']);
+				$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['pend'], $r['il_Amount']);
 			}
 			
 			if ($r['pStatus'] == PaymentStatusCode::Reverse || $r['pStatus'] == PaymentStatusCode::VoidSale || $r['pStatus'] == PaymentStatusCode::Declined) {
@@ -243,12 +141,10 @@ class FinancialInterval {
 			$ilAmt = round($r['il_Amount'], 2);
 			
 			// Multiple invoice lines for one payment...
-			if (isset($paymentAmounts[$r['idPayment']]) === FALSE) {
-				$paymentAmounts[$r['idPayment']] = $r['pAmount'];
+			if (isset($this->payAmounts[$r['idPayment']]) === FALSE) {
+				$this->payAmounts[$r['idPayment']] = $r['pAmount'];
 			}
 			
-			//
-			// Payment types
 			
 			// Sale
 			if (($r['pStatus'] == PaymentStatusCode::Paid || $r['pStatus'] == PaymentStatusCode::VoidReturn) && $r['Is_Refund'] == 0) {
@@ -258,30 +154,30 @@ class FinancialInterval {
 					$paymentDate = $pUpDate;
 				}
 				
-				$paymentAmounts[$r['idPayment']] -= $ilAmt;
+				$this->payAmounts[$r['idPayment']] -= $ilAmt;
 				
 				// Payment is in this period?
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
 						// Lodging Amount
-						$vIntervalPay += $ilAmt;
+						$visitCalc->updateIntervalPay($ilAmt);
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// waive amount.
-						$vIntervalWaiveAmt += $ilAmt;
+						$visitCalc->updateIntervalWaiveAmt($ilAmt);
 					}
 					
-					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
+					$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
 					$this->totalItemPayment[$r['Item_Id']] += $ilAmt;
 					
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vForwardPay += $ilAmt;
+						$visitCalc->updatePreIntervalPay($ilAmt);
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// waive amount.
-						$vPreIntervalWaiveAmt += $ilAmt;
+						$visitCalc->updatePreIntervalWaiveAmt($ilAmt);
 					}
 					
 				}
@@ -290,36 +186,37 @@ class FinancialInterval {
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 				
 				// payment is positive in this case.
-				$paymentAmounts[$r['idPayment']] += $ilAmt;
+				$this->payAmounts[$r['idPayment']] += $ilAmt;
 				
 				// Payment must be within the .
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vIntervalPay += $ilAmt;
+						$visitCalc->updateIntervalPay($ilAmt);
 					}
 					
-					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
+					$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
 					$this->totalItemPayment[$r['Item_Id']] += $ilAmt;
 					
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vForwardPay += $ilAmt;
+						$visitCalc->updatePreIntervalPay($ilAmt);
 					}
 					
 				}
 				
 				//Returns
 			} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
+				// The invoice line amount (ilAmt) is positive.
 				
 				if (is_null($pUpDate)) {
 					$this->recordError("Missing Last Updated. Payment Id = ". $r['idPayment']);
 					continue;
 				}
 				
-				$paymentAmounts[$r['idPayment']] -= $ilAmt;
+				$this->payAmounts[$r['idPayment']] -= $ilAmt;
 				
 				// Returned during this period?
 				if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
@@ -327,23 +224,23 @@ class FinancialInterval {
 					
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vIntervalPay -= $ilAmt;
+						$visitCalc->updateIntervalPay(0 - $ilAmt);
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
-						$vIntervalWaiveAmt -= $ilAmt;
+						$visitCalc->updateIntervalWaiveAmt(0 - $ilAmt);
 					}
 					
-					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], (0 - $ilAmt));
+					$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['paid'], (0 - $ilAmt));
 					$this->totalItemPayment[$r['Item_Id']] -= $ilAmt;
 					
 				} else if ($pUpDate < $this->startDate) {
 					// Pre return from before
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vForwardPay -= $ilAmt;
+						$visitCalc->updatePreIntervalPay(0 - $ilAmt);
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
-						$vPreIntervalWaiveAmt -= $ilAmt;
+						$visitCalc->updatePreIntervalWaiveAmt(0 - $ilAmt);
 					}
 				}
 				
@@ -351,23 +248,23 @@ class FinancialInterval {
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vIntervalPay += $ilAmt;
+						$visitCalc->updateIntervalPay($ilAmt);
 					} else if ($r['Item_Id'] == ItemId::Waive) {
-						// Reduce charge by waive amount.
-						$vIntervalWaiveAmt += $ilAmt;
+						// waive amount.
+						$visitCalc->updateIntervalWaiveAmt($ilAmt);
 					}
 					
-					$this->arrayAdd($baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
+					$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['paid'], $ilAmt);
 					$this->totalItemPayment[$r['Item_Id']] += $ilAmt;
 					
 				} else if ($paymentDate < $this->startDate) {
 					// Pre payment from before
 					
 					if ($r['Item_Id'] == ItemId::Lodging || $r['Item_Id'] == ItemId::LodgingReversal) {
-						$vForwardPay += $ilAmt;
+						$visitCalc->updatePreIntervalPay($ilAmt);;
 					} else if ($r['Item_Id'] == ItemId::Waive) {
 						// Reduce charge by waive amount.
-						$vPreIntervalWaiveAmt += $ilAmt;
+						$visitCalc->updatePreIntervalWaiveAmt($ilAmt);
 					}
 				}
 				
@@ -382,94 +279,23 @@ class FinancialInterval {
 						$this->totalItemPayment[$r['Item_Id']] += abs($ilAmt);
 						
 						// Reduces the charges.
-						$vIntervalCharge += $ilAmt;
+						$visitCalc->updateIntervalDiscount($ilAmt);
 					}
 					
 				} else if ($paymentDate < $this->startDate) {
 					
 					if ($r['Item_Id'] = ItemId::Discount) {
-						$vPreIntervalCharge += $ilAmt;
+						$visitCalc->updatePreIntervalDiscount($ilAmt);
 					}
 				}
 			}
 		}
 		
 		if ($record != NULL) {
-			
-			// Deal with waive amounts
-			if (abs($vPreIntervalWaiveAmt) <= $vPreIntervalCharge) {
-				$vPreIntervalCharge += $vPreIntervalWaiveAmt;
-				$vForwardPay += $vPreIntervalWaiveAmt;
-			} else {
-				// Waive bleed over to this month
-			}
-			
-			if (abs($vIntervalWaiveAmt) <= $vIntervalCharge) {
-				$vIntervalCharge += $vIntervalWaiveAmt;
-				$vIntervalPay += $vIntervalWaiveAmt;
-			} else {
-				
-			}
-			
-			// leftover Payments from past (C23)
-			$pfp = 0;
-			if ($vForwardPay - $vPreIntervalCharge > 0) {
-				$pfp = $vForwardPay - $vPreIntervalCharge;
-			}
-			
-			// previous months leftover charge after previous payments (C22)
-			$cfp = 0;
-			if ($vPreIntervalCharge - $vForwardPay > 0) {
-				$cfp = $vPreIntervalCharge - $vForwardPay;
-			}
-			
-			// Payments to the past
-			$ptp = 0;
-			if ($cfp > 0) {
-				if($vIntervalPay >= $cfp) {
-					$ptp = $cfp;
-				} else {
-					$ptp = $vIntervalPay;
-				}
-			}
-			
-			// Payments to now
-			$ptn = 0;
-			if ($cfp <= $vIntervalPay) {
-				if ($vIntervalPay - $cfp > $vIntervalCharge) {
-					$ptn = $vIntervalCharge;
-				} else {
-					$ptn = $vIntervalPay - $cfp;
-				}
-			}
-			
-			// Payments to Future ongoing visits
-			$ptf = 0;
-			if ($ptp + $ptn < $vIntervalPay) {
-				$ptf = $vIntervalPay - $ptp - $ptn;
-			}
-			
-			// Unpaid Charges
-			if ($vIntervalCharge > $ptn) {
-				$unpaidCharges += ($vIntervalCharge - $ptn);
-			}
-			
-			// Payments Carried Forward - unallocated payments
-			if (($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf > 0) {
-				$paymentsCarriedForward += ($vForwardPay + $vIntervalPay) - $vPreIntervalCharge - $vIntervalCharge - $ptf;
-			}
-			
-			$forwardPay += $pfp;
-			$this->preIntervalPayment += $ptp;
-			$intervalPay += $ptn;
-			$overPay += $ptf;
-			
-			$fullInvervalCharge += $vFullIntervalCharge;
-			$subsidyCharge += $vSubsidyCharge;
-			
+			$stmtCalc->addVisit($visitCalc->closeInterval());
 		}
 		
-		
+		return $stmtCalc;
 	}
 
 	protected function makeQuery($extraVisitsSQL) {
@@ -627,4 +453,19 @@ where
 		
 	}
 	
+	public function getRoomCategories() {
+		return $this->categories;
+	}
+	
+	public function getPayAmounts() {
+		return $this->payAmounts;
+	}
+	
+	public function getBaArray() {
+		return $this->baArray;
+	}
+	
+	public function getTotalCatNites() {
+		return $this->totalCatNites;
+	}
 }
