@@ -468,4 +468,8 @@ where
 	public function getTotalCatNites() {
 		return $this->totalCatNites;
 	}
+	
+	public function getTotalItemPayment() {
+		return $this->totalItemPayment;
+	}
 }

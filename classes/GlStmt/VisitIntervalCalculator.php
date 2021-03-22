@@ -114,7 +114,6 @@ class VisitIntervalCalculator {
 			$overDiscount = $this->intervalDiscount + $this->intervalCharge;
 			$this->intervalDiscount = 0 - $this->intervalCharge;
 			$this->intervalCharge = 0;
-			
 		}
 		
 		// Interval Waive amounts
@@ -122,11 +121,25 @@ class VisitIntervalCalculator {
 			$this->intervalCharge += $this->intervalWaiveAmt;
 			$this->intervalPay += $this->intervalWaiveAmt;
 		} else {
-			$this->intervalCharge = 0;
-			$this->intervalWaiveAmt = 0 - $this->intervalCharge;
 			
-			// There may be extra payments beyond the waive.
-			if ($this->intervalPay >= abs($this->intervalWaiveAmt)) {
+			// More waives than charges.  Waives meant for the past?
+			$unpaidCharges = $this->preIntervalCharge - $this->preIntervalPay;
+			
+			if ($unpaidCharges > 0 && $unpaidCharges >= abs($this->intervalWaiveAmt)) {
+				// All interval waives goes to preinterval.
+				$this->preIntervalCharge += $this->intervalWaiveAmt;
+				$this->intervalPay += $this->intervalWaiveAmt;
+				$this->intervalWaiveAmt = 0;
+				
+			} else if ($unpaidCharges > 0) {
+				// interval waive amount split between pre and now interval.
+				$this->intervalWaiveAmt += $unpaidCharges;
+				$this->preIntervalCharge -= $unpaidCharges;
+				$this->intervalPay  += $this->intervalWaiveAmt;
+				$this->intervalCharge += $this->intervalWaiveAmt;
+				
+			} else if ($this->intervalPay >= abs($this->intervalWaiveAmt)) {
+				// There may be extra payments beyond the waive.
 				$this->intervalPay += $this->intervalWaiveAmt;  // Reduce payment by waive amount
 			} else {
 				// This is an error!
@@ -140,11 +153,12 @@ class VisitIntervalCalculator {
 			$pfp = $this->preIntervalPay - $this->preIntervalCharge;
 		}
 		
-		// previous months leftover charge after previous payments (C22)
+		// leftover charge after previous payments (C22)
 		$cfp = 0;
 		if ($this->preIntervalCharge - $this->preIntervalPay > 0) {
 			$cfp = $this->preIntervalCharge - $this->preIntervalPay;
 		}
+		
 		
 		// Payments to the past
 		$ptp = 0;
@@ -177,7 +191,7 @@ class VisitIntervalCalculator {
 		if (($this->preIntervalPay + $this->intervalPay) - $this->preIntervalCharge - $this->intervalCharge - $ptf > 0) {
 			$this->unallocatedPayments = ($this->preIntervalPay + $this->intervalPay) - $this->preIntervalCharge - $this->intervalCharge - $ptf;
 		} else {
-			$this->unpaidCharges = abs(($this->preIntervalPay + $this->intervalPay) - $this->preIntervalCharge - $this->intervalCharge - $ptf);
+			$this->unpaidCharges = ($this->preIntervalPay + $this->intervalPay) - $this->preIntervalCharge - $this->intervalCharge - $ptf;
 		}
 		
 		$this->paymentFromPast = $pfp;
