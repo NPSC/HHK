@@ -876,8 +876,10 @@ $(document).ready(function() {
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
     
     $( "form[name=glform] input[type=checkbox]" ).checkboxradio({
-      icon: false
+      icon: true
     });
+    
+    $("form[name=glform] .ui-checkboxradio-icon").removeClass('ui-state-hover');
     
     $('.ckdate').datepicker({
         yearRange: '-05:+01',

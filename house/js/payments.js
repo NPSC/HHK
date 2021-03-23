@@ -218,12 +218,24 @@ function getInvoicee(item, orderNum, index) {
     if (isNaN(cid) === false && cid > 0) {
         $('#txtInvName'+index).val(item.value);
         $('#txtInvId'+index).val(cid);
+        setTaxExempt(item.taxExempt);
     } else {
         $('#txtInvName'+index).val('');
         $('#txtInvId'+index).val('');
+        setTaxExempt(false);
     }
     $('#txtOrderNum').val(orderNum);
     $('#txtInvSearch'+index).val('');
+}
+
+function setTaxExempt(taxExempt){
+	if(taxExempt == '1'){
+	 	$('.hhk-TaxingItem').removeClass('hhk-applyTax').val('0.00').parent('tr').hide();
+	 	
+    }else{
+		$('.hhk-TaxingItem').addClass('hhk-applyTax').parent('tr').show();
+    }
+    amtPaid();
 }
 
 /**
@@ -354,7 +366,7 @@ function amtPaid() {
         isChdOut = isCheckedOut,
         roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal')),
 //        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal')),
-        $taxingItems = $('.hhk-TaxingItem');
+        $taxingItems = $('.hhk-TaxingItem.hhk-applyTax');
 
     if (isNaN(roomBalDue)) {
         roomBalDue = 0;
@@ -819,6 +831,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             $('.hhk-cashTndrd').hide();
             $('.hhk-cknum').hide();
             $('#tblInvoice').hide();
+            getInvoicee('', idVisit, '');
             $('.hhk-transfer').hide();
             $('.hhk-tfnum').hide();
             chg.hide();
@@ -1062,6 +1075,7 @@ function createInvChooser(idVisit, index) {
                             data.value = data.error;
                         }
                         getInvoicee(data, idVisit, index);
+                        
                     });
 
                 }

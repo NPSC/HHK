@@ -49,7 +49,7 @@ class ValueAddedTax {
         $this->allTaxedItems = array();
 
         foreach ($this->loadTaxedItemList($dbh) as $i) {
-                $this->allTaxedItems[] = new TaxedItem($i['idItem'], $i['taxIdItem'], $i['Max_Days'], $i['Percentage'], $i['Description'], $i['Gl_Code'], $i['First_Order_Id'], $i['Last_Order_Id']);
+            $this->allTaxedItems[] = new TaxedItem($i['idItem'], $i['taxIdItem'], $i['Max_Days'], $i['Percentage'], $i['Description'], $i['Gl_Code'], $i['First_Order_Id'], $i['Last_Order_Id']);
         }
     }
 

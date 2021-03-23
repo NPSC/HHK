@@ -782,7 +782,7 @@ ORDER BY v.idVisit , v.Span;");
                 foreach ($taxedItems as $t) {
                     // show tax line
                     $feesTbl->addBodyTr(HTMLTable::makeTd($t->getTaxingItemDesc() . ' ('. $t->getTextPercentTax().' ):', array('class'=>'tdlabel', 'colspan'=>'2'))
-                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax'.$t->getIdTaxingItem(), 'data-taxrate'=>$t->getDecimalTax(), 'size'=>'6', 'class'=>'hhk-feeskeys  hhk-TaxingItem', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                        .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesTax'.$t->getIdTaxingItem(), 'data-taxrate'=>$t->getDecimalTax(), 'size'=>'6', 'class'=>'hhk-feeskeys  hhk-TaxingItem hhk-applyTax', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                         , array('class'=>'hhk-RoomFees'));
                 }
             }

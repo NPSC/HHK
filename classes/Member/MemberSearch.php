@@ -186,14 +186,16 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             if ($baId > 0) {
                 // search on id
-                $stmt = $dbh->query("SELECT n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company  " .
+                $stmt = $dbh->query("SELECT n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company, nd.tax_exempt  " .
                         " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'" .
+                        " join name_demog nd on n.idName = nd.idName" .
                         " where n.Member_Status='a' and n.Record_Member = 1 and n.idName = $baId");
 
             } else {
 
-                $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company
+                $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, n.Company, nd.tax_exempt
 FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '$basis'
+ join name_demog nd on n.idName = nd.idName
 where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and ((LOWER(n.Name_Last) like :ltrln or LOWER(n.Company) like :ltrco)
 $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Company, n.Name_Last, n.Name_First;";
 
@@ -226,7 +228,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 );
                 $events[] = array(
                     'id' => $r["idName"],
-                    'value' => ($lastName != '' ? $lastName . ", " . $firstName . " - " . $company : $company)
+                    'taxExempt' => $r["tax_exempt"],
+                    'value' => ($lastName != '' ? $lastName . ", " . $firstName . " - " . $company : $company) . ($r["tax_exempt"] ? " - Tax Exempt" : '')
                 );
             }
 

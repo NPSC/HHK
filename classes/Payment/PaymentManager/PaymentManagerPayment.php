@@ -47,6 +47,7 @@ class PaymentManagerPayment {
     protected $idToken = 0;
     protected $rtnIdToken = 0;
     protected $idInvoicePayor;
+    protected $invoicePayorTaxExempt;
     protected $checkNumber = '';
     protected $rtnCheckNumber = '';
     protected $transferAcct = '';
@@ -94,6 +95,7 @@ class PaymentManagerPayment {
         $this->payInvoices = array();
         $this->payInvoicesAmt = 0;
         $this->idInvoicePayor = 0;
+        $this->invoicePayorTaxExempt = false;
         $this->setPayType($payType);
         $this->newCardOnFile = FALSE;
         $this->finalPaymentFlag = FALSE;
@@ -168,6 +170,15 @@ class PaymentManagerPayment {
     
     public function setIdInvoicePayor($idInvoicePayor) {
         $this->idInvoicePayor = $idInvoicePayor;
+        return $this;
+    }
+    
+    public function getInvoicePayorTaxExempt() {
+        return $this->invoicePayorTaxExempt;
+    }
+    
+    public function setInvoicePayorTaxExempt($invoicePayorTaxExempt) {
+        $this->invoicePayorTaxExempt = $invoicePayorTaxExempt;
         return $this;
     }
     

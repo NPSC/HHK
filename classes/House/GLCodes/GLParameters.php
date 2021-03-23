@@ -166,7 +166,7 @@ class GLParameters {
             
             $glTbl->addBodyTr(
                 HTMLTable::makeTh($entry, array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "Tax exempt", array('for'=>$prefix. '['.$r['idName'] . '][taxExempt]', 'class'=>'hhk-smallBtn')) . HTMLInput::generateMarkup('', $taxExemptCbAttrs))
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "", array('for'=>$prefix. '['.$r['idName'] . '][taxExempt]', 'class'=>'')) . HTMLInput::generateMarkup('', $taxExemptCbAttrs), array('style'=>'text-align: center;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Debit'], array('name'=>$prefix.'['.$r['idName'] . '][debit]', 'size'=>'25')))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Credit'], array('name'=>$prefix.'['.$r['idName'] . '][credit]', 'size'=>'25')))
                 );

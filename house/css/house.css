@@ -455,3 +455,11 @@ li.hhk-myMenuTop {
 	font-size: small !important;
 	padding: 1px 0.8em !important;
 }
+
+/*
+.ui-checkboxradio-icon.ui-icon-background.ui-icon-blank{
+	background-color: initial !important;
+}
+*/
+.ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}
+.ui-state-active .ui-icon-background {background-color: #fbec88; border: 1px solid #fad42e;}
