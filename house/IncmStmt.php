@@ -157,7 +157,14 @@ if (isset($_POST['btnHere'])) {
     
     $tableAttrs = array('style'=>"float:left;margin-right:1em;");
     
-    $dataTable .= $glStmt->getGlMarkup($tableAttrs) . $glStmt->doReport($dbh, $monthArray, $tableAttrs);
+    // Scans all interval payments to generate an item detial list.
+    $dataTable .= $glStmt->getGlMarkup($tableAttrs);
+    
+    /*
+     *
+     * Scans all visits during any one month to generate an Income Statement based upon room utilization and other determinents such as
+    */
+    $dataTable .= $glStmt->doReport($dbh, $monthArray, $tableAttrs);
 
 }
 
