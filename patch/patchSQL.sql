@@ -112,3 +112,5 @@ delete from gen_lookups where `Table_Name` = 'Campaign_Type' and `Code` = 'sch';
 ALTER TABLE `name_demog` 
 ADD COLUMN `tax_exempt` TINYINT NOT NULL DEFAULT 0 AFTER `Gl_Code_Credit`;
 
+-- add merchant receipt to sys_config
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('merchantReceipt', 'false', 'b', 'f', 'Print customer and merchant receipt on single page');

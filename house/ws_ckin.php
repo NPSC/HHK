@@ -719,6 +719,14 @@ try {
         $events = array("error" => "Bad Command: \"" . $c . "\"");
 }
 
+//make receipt copy
+if(isset($events['receipt']) && $uS->merchantReceipt == true){
+    $events['receipt'] = HTMLContainer::generateMarkup('div',
+        HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Customer Copy', array('style'=>'text-align:center;')), array('style'=>'margin-right: 15px; width: 100%;'))
+        . HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style'=> 'text-align: center')), array('style'=>'margin-left: 15px; width: 100%;'))
+        , array('style'=>'display: flex; min-width: 100%;', 'data-merchCopy'=>'1'));
+}
+
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Exception $ex) {

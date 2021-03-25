@@ -177,7 +177,7 @@ class Receipt {
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
@@ -228,7 +228,7 @@ class Receipt {
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
@@ -279,7 +279,7 @@ class Receipt {
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
@@ -336,7 +336,7 @@ class Receipt {
         }
 
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;background-color:pink;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;background-color:pink;'));
         $rec .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
@@ -776,6 +776,7 @@ WHERE
         $visitFeeInvoiced = FALSE;
         $visitNights = 0;
         $preTaxRmCharge = 0;
+        $taxExemptRmFees = 0;
         $roomTaxPaid = array();
         $roomFeesPaid = 0;
 
@@ -800,12 +801,14 @@ WHERE
 
                 if ($idVisitTracker > 0) {
                     // Close up last visit
-
+                    
                     // Add tax info
                     foreach ($vat->getCurrentTaxedItems($r['vid'], $visitNights) as $t) {
 
                         if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
-
+                            
+                            $taxableRmFees = $preTaxRmCharge - $taxExemptRmFees;
+                            
                             $roomBal = $preTaxRmCharge - $roomFeesPaid;
 
                             if ($roomBal >= 0) {
@@ -820,7 +823,7 @@ WHERE
                             $totalAmt += $totalTax;
 
                             $tbl->addBodyTr(
-                            		HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
+                            		HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ' of ' . number_format($taxableRmFees, 2) . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
                             		.HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                             		);
                             
@@ -834,6 +837,7 @@ WHERE
 
                 $visitNights = 0;
                 $preTaxRmCharge = 0;
+                $taxExemptRmFees = 0;
                 $roomFeesPaid = 0;
                 $idVisitTracker = $r['vid'];
 
@@ -982,6 +986,9 @@ WHERE
                         $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
                     } else if (($l['Item_Id'] == ItemId::Lodging || $l['Item_Id'] == ItemId::LodgingReversal) && ($l['Status'] == InvoiceStatus::Paid || $l['Status'] == InvoiceStatus::Unpaid)) {
                         $roomFeesPaid += floatval($l['Amount']);
+                        if($l['Taxed'] == 0){
+                            $taxExemptRmFees += floatval($l['Amount']);
+                        }
                     }
 
                 }
@@ -995,6 +1002,7 @@ WHERE
 
             if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
+                $taxableRmFees = $preTaxRmCharge - $taxExemptRmFees;
                 //$totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
 
                 $roomBal = $preTaxRmCharge - $roomFeesPaid;
@@ -1011,7 +1019,7 @@ WHERE
                 $totalAmt += $totalTax;
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
+                    HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ' of $' . number_format($taxableRmFees, 2) . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
                     .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                 );
             }
@@ -1447,7 +1455,7 @@ from vlist_inv_pments lp
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, (select count(*) from invoice_line where invoice_line.Invoice_Id = il.Invoice_Id and invoice_line.Type_Id = 2 and invoice_line.Source_Item_Id = il.Type_Id) as Taxed, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, ilt.Order_Position");
@@ -1550,7 +1558,7 @@ from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // Items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, (select count(*) from invoice_line where invoice_line.Invoice_Id = il.Invoice_Id and invoice_line.Type_Id = 2 and invoice_line.Source_Item_Id = il.Type_Id) as Taxed, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice and il.Deleted = 0
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Order_Position");

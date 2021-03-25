@@ -1218,7 +1218,11 @@ function showReceipt(dialogId, markup, title, width) {
         popTitle   : title};
 
     if (width === undefined || !width) {
-        width = 550;
+    	if($(markup).data('merchcopy') == '1'){
+    		width = 900;
+    	}else{
+        	width = 550;
+        }
     }
 
     pRecpt.children().remove();
