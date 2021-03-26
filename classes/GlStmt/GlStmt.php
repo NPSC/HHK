@@ -491,26 +491,26 @@ class GlStmt {
 		
 		$finInterval = new FinancialInterval($this->startDate, $this->endDate);
 		
-		$finInterval->collectData($dbh, $priceModel, $this->getOrderNumbers());
+		$stmtCalc = $finInterval->collectData($dbh, $priceModel, $this->getOrderNumbers());
 		
 		$tbl = new HTMLTable();
 		
 		$tbl->addHeaderTr(HTMLTable::makeTh('Lodging Payment Distribution', array('colspan'=>'2')));
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Back Payments to earlier months', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($preIntervalPay, 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToPast(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Prepayments to future months', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($overPay, 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToFuture(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format(($totalPayment[ItemId::Lodging] + $totalPayment[ItemId::LodgingReversal] + $totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
+				. HTMLTable::makeTd(number_format(($finInterval->getTotalItemPayment()[ItemId::Lodging] + $finInterval->getTotalItemPayment()[ItemId::LodgingReversal] + $finInterval->getTotalItemPayment()[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
 				);
 		
 		
@@ -519,58 +519,59 @@ class GlStmt {
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($forwardPay, 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Payments from ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($intervalPay, 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow(), 2), array('style'=>'text-align:right;'))
 				);
- 		$tbl->addBodyTr(
- 				HTMLTable::makeTd('Total Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
- 				. HTMLTable::makeTd(number_format($intervalPay + $forwardPay, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
- 				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd('Total Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow() + $stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Unallocated Payments', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($paymentsCarriedForward, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getUnallocatedPayments(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
-
+		
 		$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
 		$tbl->addBodyTr(HTMLTable::makeTh('Lodging Charge Distribution', array('colspan'=>'2')));
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Paid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($intervalPay + $forwardPay, 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow() + $stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Unpaid Charges from ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($unpaidCharges, 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getUnpaidCharges(), 2), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Itemized Discounts ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Discount]), 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format(abs($stmtCalc->getDiscount()), 2), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Waived Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format(abs($totalPayment[ItemId::Waive]), 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format(abs($stmtCalc->getWaiveAmt()), 2), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Rate Subsidy for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($subsidyCharge, 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getSubsidyCharge(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($fullInvervalCharge, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchinc'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getFullIntervalCharge(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchinc'))
 				);
 		
 		return $tbl->generateMarkup($tableAttrs)
-		. $this->statsPanel($dbh, $totalCatNites, $this->startDate->format('Y-m-d'), $this->endDate->format('Y-m-d'), $categories, 'Report_Category', $monthArray, $fullInvervalCharge)
-		. $this->createBAMarkup($baArray, $tableAttrs)
-		. HTMLContainer::generateMarkup('div', $this->showPaymentAmounts($paymentAmounts));
+		. $this->statsPanel($dbh, $finInterval->getTotalCatNites(), $this->startDate->format('Y-m-d'), $this->endDate->format('Y-m-d'), $finInterval->getRoomCategories(), 'Report_Category', $monthArray, $stmtCalc->getFullIntervalCharge())
+		. $this->createBAMarkup($finInterval->getBaArray(), $tableAttrs)
+		. HTMLContainer::generateMarkup('div', $this->showPaymentAmounts($finInterval->getPayAmounts()));
+		
 	}
 	
 	protected function showPaymentAmounts($p) {
