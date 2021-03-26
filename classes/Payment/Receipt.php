@@ -817,7 +817,7 @@ WHERE
                                     + (isset($roomTaxPaid[$t->getIdTaxingItem()]) ? $roomTaxPaid[$t->getIdTaxingItem()] : 0);
                             } else {
                                 // Fees paid greater than fees charged.
-                                $totalTax = round($preTaxRmCharge * $t->getDecimalTax(), 2);
+                                $totalTax = round(($preTaxRmCharge - $taxExemptRmFees) * $t->getDecimalTax(), 2);
                             }
 
                             $totalAmt += $totalTax;
@@ -1013,13 +1013,13 @@ WHERE
                         + (isset($roomTaxPaid[$t->getIdTaxingItem()]) ? $roomTaxPaid[$t->getIdTaxingItem()] : 0);
                 } else {
                     // Fees paid greater than fees charged.
-                    $totalTax = round($preTaxRmCharge * $t->getDecimalTax(), 2);
+                    $totalTax = round(($preTaxRmCharge - $taxExemptRmFees) * $t->getDecimalTax(), 2);
                 }
 
                 $totalAmt += $totalTax;
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ' of $' . number_format($taxableRmFees, 2) . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
+                    HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ' of ' . number_format($taxableRmFees, 2) . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
                     .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                 );
             }
