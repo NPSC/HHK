@@ -236,7 +236,7 @@ class RoomChooser {
             HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', array('id'=>'rmChgMsg', 'style'=>'color:red;display:none')), array('colspan'=>'2')));
 
         // Key Deposit
-        if ($uS->KeyDeposit) {
+/*         if ($uS->KeyDeposit) {
 
             $keyDepAmount = $visitCharge->getKeyFeesPaid();
 
@@ -245,9 +245,9 @@ class RoomChooser {
 
                 $paymentMarkup = PaymentChooser::createChangeRoomMarkup($dbh, $idGuest, $this->resv->getIdRegistration(), $visitCharge, $gateway);
             }
-        }
+        } */
 
-        return $table->generateMarkup(array('id' => 'moveTable', 'style' => 'float:left; margin-right:.5em; margin-top:.3em; max-width:350px;')) . $paymentMarkup;
+        return $table->generateMarkup(array('id' => 'moveTable', 'style' => 'margin-right:.5em; margin-top:.3em; max-width:350px;')) . $paymentMarkup;
     }
 
     public function createChangeRoomsSelector(\PDO $dbh, $isAuthorized) {

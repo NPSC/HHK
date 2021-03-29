@@ -297,15 +297,78 @@ function saveStatusEvent(idResc, type) {
     });
 }
 function cgRoom(gname, id, idVisit, span) {
+	var action = 'cr';
+	var title = 'Change Rooms for ' + gname;
     var buttons = {
         "Change Rooms": function() {
             saveFees(id, idVisit, span, true, 'register.php');
+            $(this).dialog( "close" );
+            
+            //load visit dialog
+            var buttons = {
+            "Show Statement": function() {
+                window.open('ShowStatement.php?vid=' + vid, '_blank');
+            },
+            "Show Registration Form": function() {
+                window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
+            },
+            "Save": function() {
+                saveFees(gid, vid, span, false, 'GuestEdit.php?id=' + gid + '&psg=' + memData.idPsg);
+            },
+            "Cancel": function() {
+                $(this).dialog("close");
+            }
+        };
+         viewVisit(id, idVisit, buttons, 'Edit Visit #' + idVisit + '-' + span, '', span);
         },
         "Cancel": function() {
             $(this).dialog("close");
         }
     };
-    viewVisit(id, idVisit, buttons, 'Change Rooms for ' + gname, 'cr', span);
+    //viewVisit(id, idVisit, buttons, 'Change Rooms for ' + gname, 'cr', span);
+    
+    
+    $.post('ws_ckin.php',
+        {
+            cmd: 'visitFees',
+            idVisit: idVisit,
+            //idGuest: idGuest,
+            action: action,
+            span: span,
+            //ckoutdt: ckoutDates
+        },
+    function(data) {
+        "use strict";
+        if (data) {
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                alert("Parser error - " + err.message);
+                return;
+            }
+            if (data.error) {
+                if (data.gotopage) {
+                    window.location.assign(data.gotopage);
+                    return;
+                }
+                flagAlertMessage(data.error, 'error');
+                return;
+
+            }
+
+            var $diagbox = $('#pmtRcpt');
+
+            $diagbox.children().remove();
+            $diagbox.append($('<div class="hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
+            
+            $diagbox.dialog('option', 'title', title);
+            $diagbox.dialog('option', 'width', '400px');
+            $diagbox.dialog('option', 'buttons', buttons);
+            $diagbox.dialog('open');
+            
+        }
+    }
+    );       
 }
 function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta) {
     $.post('ws_ckin.php',
