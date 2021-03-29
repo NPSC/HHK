@@ -31,7 +31,8 @@ class NameDemogRS extends AbstractTableRS {
     public $Ethnicity;  // varchar(5) NOT NULL DEFAULT '',
     public $Media_Source;  // varchar(5) NOT NULL DEFAULT '',
     public $Special_Needs;  // varchar(5) NOT NULL DEFAULT '',
-    public $Gl_Code;  // VARCHAR(25) NOT NULL DEFAULT ''
+    public $Gl_Code_Debit;  // VARCHAR(25) NOT NULL DEFAULT ''
+    public $Gl_Code_Credit;  // VARCHAR(25) NOT NULL DEFAULT ''
     public $Tax_Exempt; // TINYINT(1) NOT NULL DEFAULT 0
     public $Background_Check_Date;
     public $Last_Updated;  // datetime DEFAULT NULL,
@@ -56,7 +57,8 @@ class NameDemogRS extends AbstractTableRS {
         $this->Ethnicity = new DB_Field('Ethnicity', '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Media_Source = new DB_Field('Media_Source', '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Special_Needs = new DB_Field('Special_Needs', '', new DbStrSanitizer(5), TRUE, TRUE);
-        $this->Gl_Code = new DB_Field('Gl_Code', '', new DbStrSanitizer(25), TRUE, TRUE);
+        $this->Gl_Code_Debit = new DB_Field('Gl_Code_Debit', '', new DbStrSanitizer(25), TRUE, TRUE);
+        $this->Gl_Code_Credit = new DB_Field('Gl_Code_Credit', '', new DbStrSanitizer(25), TRUE, TRUE);
         $this->Tax_Exempt = new DB_Field('tax_exempt', 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->Background_Check_Date = new DB_Field('Background_Check_Date', NULL, new DbDateSanitizer("Y-m-d"), TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);

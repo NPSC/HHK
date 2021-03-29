@@ -6,6 +6,8 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\NameDemogRS;
 
 class GLParameters {
     
@@ -83,22 +85,32 @@ class GLParameters {
                 
             $idName = intval($idName);
             
-            if (isset($baAr['debit'])) {
-                $gl = filter_var($baAr['debit'], FILTER_SANITIZE_STRING);
-                
-                $dbh->exec("Update name_demog set Gl_Code_Debit = '$gl' where idName = $idName");
-            }
-                
-            if (isset($baAr['credit'])) {
-                $gl = filter_var($baAr['credit'], FILTER_SANITIZE_STRING);
-                
-                $dbh->exec("Update name_demog set Gl_Code_Credit = '$gl' where idName = $idName");
-            }
-                
-            if (isset($baAr['taxExempt'])) {
-                $dbh->exec("Update name_demog set tax_exempt = '1' where idName = $idName");
-            }else{
-                $dbh->exec("Update name_demog set tax_exempt = '0' where idName = $idName");
+            $nameDemogRS = new NameDemogRS();
+            $nameDemogRS->idName->setStoredVal($idName);
+            $rows = EditRS::select($dbh, $nameDemogRS, array($nameDemogRS->idName));
+            
+            if(count($rows) == 1){
+                EditRS::loadRow($rows[0], $nameDemogRS);
+
+                if (isset($baAr['debit'])) {
+                    $gl = filter_var($baAr['debit'], FILTER_SANITIZE_STRING);
+                    
+                    $nameDemogRS->Gl_Code_Debit->setNewVal($gl);
+                }
+                    
+                if (isset($baAr['credit'])) {
+                    $gl = filter_var($baAr['credit'], FILTER_SANITIZE_STRING);
+                    
+                    $nameDemogRS->Gl_Code_Credit->setNewVal($gl);
+                }
+                    
+                if (isset($baAr['taxExempt'])) {
+                    $nameDemogRS->Tax_Exempt->setNewVal(1);
+                }else{
+                    $nameDemogRS->Tax_Exempt->setNewVal(0);
+                }
+            
+                EditRS::update($dbh, $nameDemogRS, [$nameDemogRS->idName]);
             }
             
         }
