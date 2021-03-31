@@ -1,7 +1,7 @@
 <?php
 namespace HHK\GlStmt;
 
-use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode, RoomRateCategories};
+use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode};
 use HHK\SysConst\ItemType;
 use HHK\SysConst\ResourceStatus;
 use HHK\sec\Session;
@@ -509,6 +509,10 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToFuture(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
+				HTMLTable::makeTd('Unallocated Payments', array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getUnallocatedPayments(), 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format(($finInterval->getTotalItemPayment()[ItemId::Lodging] + $finInterval->getTotalItemPayment()[ItemId::LodgingReversal] + $finInterval->getTotalItemPayment()[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
 				);
@@ -528,10 +532,6 @@ class GlStmt {
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow() + $stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
-				);
-		$tbl->addBodyTr(
-				HTMLTable::makeTd('Unallocated Payments', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($stmtCalc->getUnallocatedPayments(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
 		
