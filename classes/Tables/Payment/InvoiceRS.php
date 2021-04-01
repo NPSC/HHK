@@ -3,6 +3,7 @@ namespace HHK\ Tables\Payment;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbDecimalSanitizer, DbStrSanitizer, DbDateSanitizer};
+use HHK\Tables\Fields\DbBitSanitizer;
 
 /**
  * InvoiceRS.php
@@ -33,6 +34,7 @@ class InvoiceRS extends AbstractTableRS {
     public $BillDate;  // DATE NULL,
     public $Description;  // varchar(45) DEFAULT NULL,
     public $Notes;  // varchar(450) DEFAULT NULL,
+    public $tax_exempt; // tinyint default 0,
     public $Updated_By;  // varchar(45) DEFAULT NULL,
     public $Last_Updated;  // datetime DEFAULT NULL,
     public $Timestamp;  // timestamp NULL DEFAULT NULL,
@@ -55,6 +57,7 @@ class InvoiceRS extends AbstractTableRS {
         $this->Suborder_Number = new DB_Field('Suborder_Number', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Description = new DB_Field("Description", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Notes = new DB_Field("Notes", "", new DbStrSanitizer(450), TRUE, TRUE);
+        $this->tax_exempt = new DB_Field('tax_exempt', 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->BillStatus = new DB_Field('BillStatus', "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->BillDate = new DB_Field("BillDate", '',  new DbDateSanitizer("Y-m-d"), TRUE, TRUE);
         

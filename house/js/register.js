@@ -302,31 +302,11 @@ function cgRoom(gname, id, idVisit, span) {
     var buttons = {
         "Change Rooms": function() {
             saveFees(id, idVisit, span, true, 'register.php');
-            $(this).dialog( "close" );
-            
-            //load visit dialog
-            var buttons = {
-            "Show Statement": function() {
-                window.open('ShowStatement.php?vid=' + vid, '_blank');
-            },
-            "Show Registration Form": function() {
-                window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
-            },
-            "Save": function() {
-                saveFees(gid, vid, span, false, 'GuestEdit.php?id=' + gid + '&psg=' + memData.idPsg);
-            },
-            "Cancel": function() {
-                $(this).dialog("close");
-            }
-        };
-         viewVisit(id, idVisit, buttons, 'Edit Visit #' + idVisit + '-' + span, '', span);
         },
         "Cancel": function() {
             $(this).dialog("close");
         }
     };
-    //viewVisit(id, idVisit, buttons, 'Change Rooms for ' + gname, 'cr', span);
-    
     
     $.post('ws_ckin.php',
         {
@@ -360,6 +340,37 @@ function cgRoom(gname, id, idVisit, span) {
 
             $diagbox.children().remove();
             $diagbox.append($('<div class="hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
+            
+            $diagbox.find('.ckdate').datepicker({
+                yearRange: '-07:+01',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                numberOfMonths: 1,
+                maxDate: 0,
+                dateFormat: 'M d, yy',
+                onSelect: function() {
+                    this.lastShown = new Date().getTime();
+                },
+                beforeShow: function() {
+                    var time = new Date().getTime();
+                    return this.lastShown === undefined || time - this.lastShown > 500;
+                },
+                onClose: function () {
+                	$('#rbReplaceRoomnew').attr('checked','checked');
+                    $(this).change();
+                }
+            });
+            
+            $diagbox.on('change','#selResource', function(){
+            	var selResource = $(this).val();
+            	
+            	if(data.deposit == 0 && data.resc[selResource].key > 0){
+            		$diagbox.find('#rmDepMessage').text('Deposit required').show();
+            	}else{
+            		$diagbox.find('#rmDepMessage').empty().hide();
+            	}
+            });
             
             $diagbox.dialog('option', 'title', title);
             $diagbox.dialog('option', 'width', '400px');

@@ -205,18 +205,13 @@ class RoomChooser {
         $paymentMarkup = '';
 
         $table = new HTMLTable();
-        $table->addHeaderTr(HTMLTable::makeTh('Change Rooms', array('colspan' => '2')));
+        $table->addHeaderTr(HTMLTable::makeTh('Change Rooms from ' . $this->selectedResource->getTitle(), array('colspan' => '2')));
 
         // Send along a room selector
-        $table->addBodyTr(
-                HTMLTable::makeTd('From room:', array('class' => 'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($this->selectedResource->getTitle(), array('id'=>'myRescId', 'style'=>'border:none;', 'data-pmdl'=>$uS->RoomPriceModel, 'data-idresc'=>$this->resv->getIdResource(), 'readonly'=>'readonly')))
-                );
-
-        $table->addBodyTr(
-                HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
-                . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
-                        . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'color:red;display:none'))));
+        //$table->addBodyTr(
+        //        HTMLTable::makeTd('From room:', array('class' => 'tdlabel'))
+        //        .HTMLTable::makeTd(HTMLInput::generateMarkup($this->selectedResource->getTitle(), array('id'=>'myRescId', 'style'=>'border:none;', 'data-pmdl'=>$uS->RoomPriceModel, 'data-idresc'=>$this->resv->getIdResource(), 'readonly'=>'readonly')))
+        //        );
 
         $table->addBodyTr(
             HTMLTable::makeTd('As of:', array('class' => 'tdlabel', 'rowspan'=>'2'))
@@ -229,23 +224,16 @@ class RoomChooser {
             HTMLTable::makeTd(
                 HTMLInput::generateMarkup('new', array('name'=>'rbReplaceRoom', 'id'=>'rbReplaceRoomnew', 'type'=>'radio', 'class'=>'hhk-feeskeys'))
                 .HTMLContainer::generateMarkup('label', 'Date', array('style'=>'margin-left:.3em; margin-right:.3em;', 'for'=>'rbReplaceRoomnew'))
-                .HTMLInput::generateMarkup('', array('name'=>'resvChangeDate', 'class'=>'hhk-feeskeys ckdate', 'readonly'=>'readonly'))
+                .HTMLInput::generateMarkup('', array('name'=>'resvChangeDate', 'class'=>'hhk-feeskeys ckdate'))
             ));
 
         $table->addBodyTr(
-            HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', array('id'=>'rmChgMsg', 'style'=>'color:red;display:none')), array('colspan'=>'2')));
-
-        // Key Deposit
-/*         if ($uS->KeyDeposit) {
-
-            $keyDepAmount = $visitCharge->getKeyFeesPaid();
-
-            if ($keyDepAmount == 0) {
-                $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, $visitCharge->getIdVisit(), $visitCharge->getSpan()));
-
-                $paymentMarkup = PaymentChooser::createChangeRoomMarkup($dbh, $idGuest, $this->resv->getIdRegistration(), $visitCharge, $gateway);
-            }
-        } */
+            HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
+            . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
+                . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'margin-left: 0.8em; display:none'))));
+        
+        $table->addBodyTr(
+            HTMLTable::makeTd('', array('colspan'=>'2', 'id'=>'rmChgMsg', 'style'=>'color:red;display:none')));
 
         return $table->generateMarkup(array('id' => 'moveTable', 'style' => 'margin-right:.5em; margin-top:.3em; max-width:350px;')) . $paymentMarkup;
     }

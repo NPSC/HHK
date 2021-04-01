@@ -675,6 +675,7 @@ CREATE TABLE if not exists `invoice` (
   `Overdue_Step` INTEGER NOT NULL DEFAULT '0',
   `Description` varchar(45) NOT NULL DEFAULT '',
   `Notes` varchar(450) NOT NULL DEFAULT '',
+  `tax_exempt` tinyint NOT NULL DEFAULT 0,
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
