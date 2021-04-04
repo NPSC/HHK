@@ -186,7 +186,7 @@ class VisitIntervalCalculator {
 		if ($this->intervalCharge - $ptn - $pfp > 0) {
 			$this->unpaidCharges = $this->intervalCharge - $ptn - $pfp;
 		}
-		
+
 
 		$this->paymentFromPast = $pfp;
 		$this->paymentToPast = $ptp;
@@ -195,9 +195,9 @@ class VisitIntervalCalculator {
 
 		return $this;
 	}
-	
-	
-	
+
+
+
 	/**
 	 * @return number
 	 */

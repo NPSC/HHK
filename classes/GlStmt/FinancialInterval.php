@@ -116,7 +116,9 @@ class FinancialInterval {
 			$record = $r;
 			
 			// Unpaid invoices
-			if ($r['Invoice_Status'] == InvoiceStatus::Unpaid) {
+			$invDate = new \DateTime($r['Invoice_Date']);
+			if ($r['Invoice_Status'] == InvoiceStatus::Unpaid
+					&& $invDate >= $this->startDate && $invDate < $this->endDate) {
 				$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['pend'], $r['il_Amount']);
 			}
 			
@@ -182,7 +184,7 @@ class FinancialInterval {
 					
 				}
 				
-				// Refunds
+			// Refunds
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 				
 				// payment is positive in this case.
@@ -207,7 +209,7 @@ class FinancialInterval {
 					
 				}
 				
-				//Returns
+			//Returns
 			} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
 				// The invoice line amount (ilAmt) is positive.
 				
@@ -267,9 +269,10 @@ class FinancialInterval {
 						$visitCalc->updatePreIntervalWaiveAmt($ilAmt);
 					}
 				}
-				
-			} else if ($r['idPayment'] == 0 && $r['Invoice_Status'] == InvoiceStatus::Paid && $r['Item_Id'] = ItemId::Discount) {
-				// Deal with discounts
+			
+			// Discounts
+			} else if ($r['idPayment'] == 0 && $r['Invoice_Status'] == InvoiceStatus::Paid
+					&& $r['Item_Id'] = ItemId::Discount) {
 				
 				$paymentDate = new \DateTime($r['Invoice_Date']);
 				

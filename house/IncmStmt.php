@@ -8,9 +8,6 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\GlStmt\GlStmt;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
-// use HHK\House\GLCodes\GLCodes;
-// use HHK\House\GLCodes\GLParameters;
-// use HHK\House\GLCodes\GLTemplateRecord;
 
 /**
  * IncmStmt.php
@@ -407,6 +404,9 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         });
         $('.hhk-matchinc').hover(function() {
 			$('.hhk-matchinc').toggleClass('ui-state-highlight');
+        });
+        $('.hhk-itempmt').hover(function() {
+			$('.hhk-itempmt').toggleClass('ui-state-highlight');
         });
         
     });

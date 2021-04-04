@@ -22,7 +22,6 @@ class GlStmt {
 	protected $errors;
 
 	protected $glLineMapper;
-	protected $baLineMapper;
 
 
 	/**
@@ -62,7 +61,6 @@ class GlStmt {
 		}
 		
 		$this->glLineMapper = new GlStmtTotals($pmCodes, $itemCodes);
-		$this->baLineMapper = new BaStmtTotals();
 	}
 	
 	/**
@@ -113,7 +111,7 @@ class GlStmt {
 		}
 		
 		if ($this->glLineMapper->getTotalCredit() != $this->glLineMapper->getTotalDebit()) {
-			$this->recordError('Credits not equal debits.');
+			$this->recordError('Credits not equal debits: ' .$this->glLineMapper->getTotalCredit() .'  '.$this->glLineMapper->getTotalDebit());
 		}
 		
 		return $this;
@@ -162,7 +160,7 @@ class GlStmt {
 					
 					// 3rd party payments
 					if ($p['ba_Gl_Debit'] != '') {
-						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getUpdatedDate(), $iNumber);
+						$this->glLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getUpdatedDate(), $iNumber);
 					}
 					
 					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], (0 - abs($p['pAmount'])), 0, $cpayment->getUpdatedDate(), $iNumber);
@@ -176,7 +174,7 @@ class GlStmt {
 
 					// 3rd party payments
 					if ($p['ba_Gl_Debit'] != '') {
-						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
+						$this->glLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
 					}
 					
 					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
@@ -198,7 +196,7 @@ class GlStmt {
 
 					// 3rd party payments
 					if ($p['ba_Gl_Debit'] != '') {
-						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
+						$this->glLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
 					}
 
 					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
@@ -214,7 +212,7 @@ class GlStmt {
 				if ($cpayment->getPaymentDate() >= $this->startDate && $cpayment->getPaymentDate() < $this->endDate) {
 					// 3rd party payments
 					if ($p['ba_Gl_Debit'] != '') {
-						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getPaymentDate(), $iNumber);
+						$this->glLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getPaymentDate(), $iNumber);
 					}
 
 					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], (0 - abs($p['pAmount'])), 0, $cpayment->getPaymentDate(), $iNumber);
@@ -253,19 +251,8 @@ class GlStmt {
 
 		if ($cpay->getNumberPayments() > 0) {
 			// sale
-			//$pAmount = $cpay->getPayAmount();
 			
 			foreach($invLines as $l) {
-				
-				//$ilAmt = abs($l['il_Amount']);
-				
-// 				if ($pAmount >= $ilAmt) {
-// 					$pAmount -= $ilAmt;
-// 				} else {
-// 					$ilAmt = $pAmount;
-// 					$pAmount = 0;
-// 				}
-				
 				// map gl code
 				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, $l['il_Amount'], $cpay->getPaymentDate(), $iNumber);
 			}
@@ -273,18 +260,10 @@ class GlStmt {
 		
 		if ($cpay->getNumberReturns() > 0) {
 			// return
-			//$pAmount = $cpay->getReturnAmount();
 			
 			foreach($invLines as $l) {
 				
 				$ilAmt = abs($l['il_Amount']);
-				
-// 				if ($pAmount >= $ilAmt) {
-// 					$pAmount -= $ilAmt;
-// 				} else {
-// 					$ilAmt = $pAmount;
-// 					$pAmount = 0;
-// 				}
 				
 				// map gl code
 				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - $ilAmt), $cpay->getUpdatedDate(), $iNumber);
@@ -293,18 +272,10 @@ class GlStmt {
 		
 		if ($cpay->getNumberRefunds() > 0) {
 			// refund
-			//$pAmount = $cpay->getRefundAmount();
 			
 			foreach($invLines as $l) {
 				
 				$ilAmt = abs($l['il_Amount']);
-				
-// 				if ($pAmount >= $ilAmt) {
-// 					$pAmount -= $ilAmt;
-// 				} else {
-// 					$ilAmt = $pAmount;
-// 					$pAmount = 0;
-// 				}
 				
 				// map gl code
 				$this->lines[] = $this->glLineMapper->makeLine($l['Item_Gl_Code'], 0, (0 - $ilAmt), $cpay->getPaymentDate(), $iNumber);
@@ -512,9 +483,12 @@ class GlStmt {
 				HTMLTable::makeTd('Unallocated Payments', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getUnallocatedPayments(), 2), array('style'=>'text-align:right;'))
 				);
+		
+		$lodg = $stmtCalc->getPaymentToPast() + $stmtCalc->getPaymentToNow() + $stmtCalc->getPaymentToFuture() + $stmtCalc->getUnallocatedPayments();
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format(($finInterval->getTotalItemPayment()[ItemId::Lodging] + $finInterval->getTotalItemPayment()[ItemId::LodgingReversal] + $finInterval->getTotalItemPayment()[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
+				. HTMLTable::makeTd(number_format($lodg, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
+//				. HTMLTable::makeTd(number_format(($finInterval->getTotalItemPayment()[ItemId::Lodging] + $finInterval->getTotalItemPayment()[ItemId::LodgingReversal] + $finInterval->getTotalItemPayment()[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
 				);
 		
 		
@@ -526,7 +500,7 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Payments from ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
@@ -562,9 +536,13 @@ class GlStmt {
 				HTMLTable::makeTd('Rate Subsidy for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getSubsidyCharge(), 2), array('style'=>'text-align:right;'))
 				);
+		
+		$income = $stmtCalc->getPaymentToNow() + $stmtCalc->getPaymentFromPast() + $stmtCalc->getUnpaidCharges() + abs($stmtCalc->getDiscount())
+		+ abs($stmtCalc->getWaiveAmt()) + $stmtCalc->getSubsidyCharge();
+		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($stmtCalc->getFullIntervalCharge(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchinc'))
+				. HTMLTable::makeTd(number_format($income, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchinc'))
 				);
 		
 		return $tbl->generateMarkup($tableAttrs)
@@ -793,10 +771,6 @@ order by r.idResource;";
 	
 	public function getGlMarkup($tableAttrs) {
 		return $this->glLineMapper->createMarkup($tableAttrs);
-	}
-	
-	public function getBaMarkup($tableAttrs) {
-		return $this->baLineMapper->createMarkup($tableAttrs);
 	}
 	
 	protected function getStartDay() {
