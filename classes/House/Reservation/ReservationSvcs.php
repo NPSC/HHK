@@ -776,7 +776,8 @@ class ReservationSvcs
         $dataArray['ctrl'] = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array(
             'name' => 'selResource'
         ));
-        $dataArray['container'] = HTMLContainer::generateMarkup('div', HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array(
+        $dataArray['container'] = HTMLContainer::generateMarkup('div',
+        		HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resources, $idResourceChosen), array(
             'id' => 'selRoom',
             'size' => $selSize
         )), array(

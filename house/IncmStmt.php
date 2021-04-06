@@ -408,7 +408,38 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         $('.hhk-itempmt').hover(function() {
 			$('.hhk-itempmt').toggleClass('ui-state-highlight');
         });
-        
+        $('#unallocVisits').click(function() {
+            
+			var vids = $(this).data('vids');
+			var select = $("<select></select>");
+            var contr = $('<div id="unVids" style="font-size:0.9em;position: absolute; z-index: 1; display: block;" />');
+
+            select.append('<option value = 0>Visits Affected</option>');
+            
+			$.each(vids, function (ii, vv) {
+				select.append('<option value=' + ii + '>' + vv + '</option>');
+			});
+
+			contr.append(select);
+            contr.addClass('ui-widget ui-widget-content ui-helper-clearfix ui-corner-all');
+            
+            $('body').append(contr);
+            contr.position({
+                my: 'top',
+                at: 'bottom',
+                of: '#unallocVisits'
+            });
+		
+			
+        });
+
+        $(document).mousedown(function (event) {
+            var target = $(event.target);
+            if ( target[0].id !== 'unVids' && target.parents("#" + 'unVids').length === 0) {
+                $('div#unVids').remove();
+            }
+        });
+            
     });
  </script>
     </head>

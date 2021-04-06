@@ -144,6 +144,9 @@ table.hhk-badAddress {
 .spnHosp:hover {
     cursor: pointer;
 }
+#unallocVisits:hover {
+	cursor: pointer;
+}
 
 div#hideCalendar, div#hideLog {
     float:left;

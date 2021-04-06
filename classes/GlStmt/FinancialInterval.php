@@ -73,7 +73,7 @@ class FinancialInterval {
 				If ($visitId != $r['idVisit'] && $visitId != 0) {
 					// Visit Change
 					
-					$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']));
+					$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $record['idVisit']);
 					
 					// Reset for next visit
 					$visitCalc = new VisitIntervalCalculator();
@@ -291,7 +291,7 @@ class FinancialInterval {
 		}
 		
 		if ($record != NULL) {
-			$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']));
+			$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $record['idVisit']);
 		}
 		
 		return $stmtCalc;
@@ -359,7 +359,7 @@ class FinancialInterval {
 			)
 	END AS `Pre_Interval_Nights`,
 	CASE
-		WHEN DATE(IFNULL(v.Span_End, v.Expected_Departure)) > DATE('$end')
+		WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$end')
 		THEN 1
 		ELSE 0
 	END AS `Has_Future_Nights`, ".

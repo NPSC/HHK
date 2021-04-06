@@ -479,12 +479,17 @@ class GlStmt {
 				HTMLTable::makeTd('Prepayments to future months', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToFuture(), 2), array('style'=>'text-align:right;'))
 				);
+		
+		$vids = $stmtCalc->getOverpaidVisitIds();
+		$vid = json_encode($vids);
+
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Unallocated Payments', array('class'=>'tdlabel'))
+				HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'unallocVisits', 'data-vids'=>$vid, 'class'=>'ui-icon ui-icon-info', 'title'=>'List visits with unallocated payments.', 'style'=>'margin-right:1em;')).'Unallocated Payments' , array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getUnallocatedPayments(), 2), array('style'=>'text-align:right;'))
 				);
 		
 		$lodg = $stmtCalc->getPaymentToPast() + $stmtCalc->getPaymentToNow() + $stmtCalc->getPaymentToFuture() + $stmtCalc->getUnallocatedPayments();
+		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($lodg, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))

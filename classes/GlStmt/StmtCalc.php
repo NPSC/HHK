@@ -13,7 +13,8 @@ class StmtCalc {
 	protected $subsidyCharge = 0;
 	protected $waiveAmt = 0;
 	protected $discount = 0;
-	
+	protected $overPaidVisitIds = [];
+	private $vCounter = 0;
 	
 	/**
 	 * @return number
@@ -84,8 +85,15 @@ class StmtCalc {
 	public function getDiscount() {
 		return $this->discount;
 	}
-
-	public function addVisit(VisitIntervalCalculator $visitCalc) {
+	
+	/**
+	 * @return array
+	 */
+	public function getOverpaidVisitIds() {
+		return $this->overPaidVisitIds;
+	}
+	
+	public function addVisit(VisitIntervalCalculator $visitCalc, $idVisit) {
 		
 		$this->paymentFromPast += $visitCalc->getPaymentFromPast();
 		$this->paymentToFuture += $visitCalc->getPaymentToFuture();
@@ -100,6 +108,11 @@ class StmtCalc {
 		
 		$this->waiveAmt += $visitCalc->getIntervalWaiveAmt();
 		$this->discount += $visitCalc->getIntervalDiscount();
+		
+		if ($visitCalc->getUnallocatedPayments() > 0) {
+			$this->overPaidVisitIds[] = $idVisit;  // .' $'. number_format($visitCalc->getUnallocatedPayments(), 2);
+			
+		}
 		
 	}
 
