@@ -22,7 +22,7 @@ class GlStmt {
 	protected $errors;
 
 	protected $glLineMapper;
-
+	protected $baLineMapper;
 
 	/**
 	 * New Gl Statement object that assumes (Year, $month, $day) is the start date of this statement.
@@ -61,6 +61,7 @@ class GlStmt {
 		}
 		
 		$this->glLineMapper = new GlStmtTotals($pmCodes, $itemCodes);
+		$this->baLineMapper = new BaStmtTotals();
 	}
 	
 	/**
@@ -160,7 +161,7 @@ class GlStmt {
 					
 					// 3rd party payments
 					if ($p['ba_Gl_Debit'] != '') {
-						$this->glLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getUpdatedDate(), $iNumber);
+						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getUpdatedDate(), $iNumber);
 					}
 					
 					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], (0 - abs($p['pAmount'])), 0, $cpayment->getUpdatedDate(), $iNumber);
@@ -174,7 +175,7 @@ class GlStmt {
 
 					// 3rd party payments
 					if ($p['ba_Gl_Debit'] != '') {
-						$this->glLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
+						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
 					}
 					
 					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
@@ -196,7 +197,7 @@ class GlStmt {
 
 					// 3rd party payments
 					if ($p['ba_Gl_Debit'] != '') {
-						$this->glLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
+						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
 					}
 
 					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], $p['pAmount'], 0, $cpayment->getPaymentDate(), $iNumber);
@@ -212,7 +213,7 @@ class GlStmt {
 				if ($cpayment->getPaymentDate() >= $this->startDate && $cpayment->getPaymentDate() < $this->endDate) {
 					// 3rd party payments
 					if ($p['ba_Gl_Debit'] != '') {
-						$this->glLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getPaymentDate(), $iNumber);
+						$this->baLineMapper->makeLine($p['ba_Gl_Debit'], (0 - abs($p['pAmount'])), 0, $cpayment->getPaymentDate(), $iNumber);
 					}
 
 					$this->lines[] = $this->glLineMapper->makeLine($p['pm_Gl_Code'], (0 - abs($p['pAmount'])), 0, $cpayment->getPaymentDate(), $iNumber);

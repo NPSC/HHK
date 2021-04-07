@@ -104,7 +104,7 @@ class CheckTX {
         $pr->setPaymentDate(date('Y-m-d H:i:s'));
     }
 
-    public static function undoReturnAmount(\PDO $dbh, CashResponse &$pr, $idPayment) {
+    public static function undoReturnAmount(\PDO $dbh, CheckResponse &$pr, $idPayment) {
 
         // Record transaction
         $transRs = Transaction::recordTransaction($dbh, $pr, '', TransType::undoRetrn, TransMethod::Check);
