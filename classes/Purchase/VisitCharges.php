@@ -262,6 +262,8 @@ class VisitCharges {
 
         $this->itemSums = array();
         $this->taxItemIds = array();
+        $vat = new ValueAddedTax($dbh);
+        $taxitems = $vat->getAllTaxedItems($this->idVisit);
 
         $items = Item::loadItems($dbh);
         $invStatuses = readGenLookupsPDO($dbh, 'Invoice_Status');
@@ -275,6 +277,7 @@ class VisitCharges {
 
             $this->itemSums[$i['idItem']][self::THIRD_PARTY] = 0;
             $this->itemSums[$i['idItem']][self::TAX_PAID] = 0;
+            $this->itemSums[$i['idItem']]['tax_exempt'] = 0;
         }
 
         // predefine taxes
@@ -324,6 +327,15 @@ class VisitCharges {
 
                 if ($l['Type_Id'] == InvoiceLineType::Tax) {
                     $this->itemSums[self::TAX_PAID][self::THIRD_PARTY] += $l['Amount'];
+                }
+            }
+            
+            //Tax exempt
+            if($l['tax_exempt'] == 1){
+                foreach($taxitems as $taxitem){
+                    if($taxitem->getIdTaxedItem() == $l['Item_Id']){
+                        $this->itemSums[$l['Item_Id']]['tax_exempt'] += $l['Amount'];
+                    }
                 }
             }
 
@@ -381,6 +393,7 @@ class VisitCharges {
     il.Period_End,
     il.Type_Id,
     il.Source_Item_Id,
+    i.tax_exempt,
     ifnull(nv.idName, 0) as Billing_Agent
 from
     invoice_line il join invoice i ON il.Invoice_Id = i.idInvoice
@@ -400,6 +413,10 @@ where
 
     public function get3pRoomFeesPending() {
         return $this->get3rdPartyPending(ItemId::Lodging) + $this->get3rdPartyPending(ItemId::LodgingReversal);
+    }
+    
+    public function getTaxExemptRoomFees() {
+        return $this->getTaxExempt(ItemId::Lodging) + $this->getTaxExempt(ItemId::LodgingReversal);
     }
 
     public function getVisitFeesPending() {
@@ -450,6 +467,13 @@ where
     public function getTaxInvoices($idItem) {
         if (isset($this->itemSums[$idItem][self::TAX_PAID])) {
             return $this->itemSums[$idItem][self::TAX_PAID];
+        }
+        return 0;
+    }
+    
+    public function getTaxExempt($idItem) {
+        if (isset($this->itemSums[$idItem]['tax_exempt'])) {
+            return $this->itemSums[$idItem]['tax_exempt'];
         }
         return 0;
     }

@@ -729,7 +729,7 @@ where
 
 		EditRS::updateStoredVals ( $this->invRs );
 	}
-	public function newInvoice(\PDO $dbh, $amount, $soldToId, $idGroup, $orderNumber, $suborderNumber, $notes, $invoiceDate, $username, $description = '', $tax_exempt) {
+	public function newInvoice(\PDO $dbh, $amount, $soldToId, $idGroup, $orderNumber, $suborderNumber, $notes, $invoiceDate, $username, $description = '', $tax_exempt = 0) {
 		$invRs = new InvoiceRs ();
 		$invRs->Amount->setNewVal ( $amount );
 		$invRs->Balance->setNewVal ( $amount );

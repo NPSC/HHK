@@ -737,9 +737,14 @@ class VisitViewer {
                 $showSubTotal = TRUE;
 
                 foreach ($curAccount->getCurentTaxItems(ItemId::Lodging) as $t) {
-
+                    $taxedRoomFees = $curAccount->getRoomCharge() + $curAccount->getTotalDiscounts() - $curAccount->getTaxExemptRoomFees();
+                    
                     if ($curAccount->getRoomFeeBalance() < 0) {
-                        $taxAmt = $t->getTaxAmount($curAccount->getRoomCharge() + $curAccount->getTotalDiscounts());
+                        if($taxedRoomFees > 0){
+                            $taxAmt = $t->getTaxAmount($taxedRoomFees);
+                        }else{
+                            $taxAmt = 0;
+                        }
                     } else {
                         $taxAmt = $curAccount->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($curAccount->getRoomFeeBalance());
                     }

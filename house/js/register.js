@@ -381,6 +381,92 @@ function cgRoom(gname, id, idVisit, span) {
     }
     );       
 }
+
+function updateRescChooser() {
+
+        var t = this;
+        var cbRS = {};
+
+        t.omitSelf = true;
+        t.numberGuests = 0;
+        t.idReservation = 0;
+        t.go = go;
+
+        function go(arrivalDate, departureDate) {
+
+            var idResc, $selResource = $('#selResource');
+
+            if ($selResource.length === 0) {
+                return;
+            }
+
+            idResc = $selResource.find('option:selected').val();
+
+            $selResource.prop('disabled', true);
+            $('#hhk-roomChsrtitle').addClass('hhk-loading');
+            $('#hhkroomMsg').text('').hide();
+
+            cbRS = {};
+
+            $('input.hhk-constraintsCB:checked').each(function () {
+                cbRS[$(this).data('cnid')] = 'ON';
+            });
+
+            $.post('ws_ckin.php',
+                {  //parameters
+                    cmd: 'newConstraint',
+                    rid: t.idReservation,
+                    numguests: t.numberGuests,
+                    expArr: arrivalDate,
+                    expDep: departureDate,
+                    idr: idResc,
+                    cbRS:cbRS,
+                    omsf: t.omitSelf
+                },
+                function(data) {
+                    var newSel;
+
+                    $selResource.prop('disabled', false);
+                    $('#hhk-roomChsrtitle').removeClass('hhk-loading');
+
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert("Parser error - " + err.message);
+                        return;
+                    }
+
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.location.assign(data.gotopage);
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        return;
+                    }
+
+
+                    if (data.rooms) {
+                        setRooms(data.rooms);
+                    }
+
+                    if (data.selectr) {
+
+                        newSel = $(data.selectr);
+                        $selResource.children().remove();
+
+                        newSel.children().appendTo($selResource);
+                        $selResource.val(data.idResource).change();
+
+                        if (data.msg && data.msg !== '') {
+                            $('#hhkroomMsg').text(data.msg).show();
+                        }
+                    }
+
+
+            });
+        }
+}
+
 function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta) {
     $.post('ws_ckin.php',
             {

@@ -50,12 +50,14 @@ class CurrentAccount {
     protected $additionalCharge = 0;
     protected $unpaidMOA = 0;
     protected $curentTaxItems = array();
-
+    protected $taxExemptRoomFees = 0;
+    
     // Visit Fee Balance
     protected $vfeeBal = 0;
 
     // Room fee balance
     protected $roomFeeBalance = 0;
+    protected $totroomFeeBalance = 0;
 
     // Payments
     protected $totalPaid = 0;
@@ -99,6 +101,7 @@ class CurrentAccount {
 
         $this->setAdditionalChargeTax($visitCharge->getTaxInvoices(ItemId::AddnlCharge));
 
+        $this->taxExemptRoomFees = $visitCharge->getTaxExemptRoomFees();
 
         // Visit Fee Balance
         if ($this->showVisitFee) {
@@ -112,6 +115,9 @@ class CurrentAccount {
         $pending = $visitCharge->getRoomFeesPaid() + $visitCharge->getRoomFeesPending();
         $this->setRoomFeeBalance($fees - $pending);
 
+        // Room fee balance with tax
+        $this->totroomFeeBalance = $this->getItemTaxAmt(ItemId::Lodging, $this->roomFeeBalance);
+        
         // Lodging tax already paid
         foreach ($visitCharge->getTaxItemIds() as $tid =>$v) {
                 $this->setLodgingTaxPd($tid, $visitCharge->getItemTaxItemAmount(ItemId::Lodging, $tid));
@@ -199,6 +205,10 @@ class CurrentAccount {
     public function getShowRoomFees() {
         return $this->showRoomFees;
     }
+    
+    public function getTaxExemptRoomFees() {
+        return $this->taxExemptRoomFees;
+    }
 
     public function getShowVisitFee() {
         return $this->showVisitFee;
@@ -253,7 +263,7 @@ class CurrentAccount {
         foreach ($this->getCurentTaxItems($idTaxedItem) as $t) {
 
             if ($this->getRoomFeeBalance() < 0) {
-                $amt += $t->getTaxAmount($this->getRoomCharge());
+                $amt += $t->getTaxAmount(($this->getRoomCharge() - $this->taxExemptRoomFees > 0 ? $this->getRoomCharge() - $this->taxExemptRoomFees: 0));
             } else {
                 $amt += $this->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($balanceAmt);
             }
