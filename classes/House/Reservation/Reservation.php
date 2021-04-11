@@ -1033,7 +1033,7 @@ WHERE
         $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
 
         // Does the resource fit the requirements?
-        if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted)
+        if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted || $resv->getStatus() == ReservationStatus::Waitlist)
                 && isset($resources[$idRescPosted]) === FALSE) {
 
             //  No.

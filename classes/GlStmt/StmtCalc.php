@@ -5,6 +5,7 @@ class StmtCalc {
 	
 	protected $paymentFromPast = 0;
 	protected $paymentToPast = 0;
+	protected $pastPaymentsToNow = 0;
 	protected $paymentToNow = 0;
 	protected $paymentToFuture = 0;
 	protected $unallocatedPayments = 0;
@@ -29,8 +30,15 @@ class StmtCalc {
 	public function getPaymentToPast() {
 		return $this->paymentToPast;
 	}
+	
+		/**
+	 * @return number
+	 */
+	public function getPastPaymentsToNow() {
+		return $this->pastPaymentsToNow;
+	}
 
-	/**
+/**
 	 * @return number
 	 */
 	public function getPaymentToNow() {
@@ -99,6 +107,7 @@ class StmtCalc {
 		$this->paymentToFuture += $visitCalc->getPaymentToFuture();
 		$this->paymentToNow += $visitCalc->getPaymentToNow();
 		$this->paymentToPast += $visitCalc->getPaymentToPast();
+		$this->pastPaymentsToNow += $visitCalc->getPastPaymentsToNow();
 		
 		$this->unallocatedPayments += $visitCalc->getUnallocatedPayments();
 		$this->unpaidCharges += $visitCalc->getUnpaidCharges();

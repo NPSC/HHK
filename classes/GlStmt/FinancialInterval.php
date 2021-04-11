@@ -53,9 +53,11 @@ class FinancialInterval {
 		$this->baArray['']['paid'] = 0;
 		$this->baArray['']['pend'] = 0;
 		
-				
+		
 		$stmtCalc = new StmtCalc();
 		$visitCalc = new VisitIntervalCalculator();
+		
+		
 		$this->payAmounts = array();
 		$serialId = 0;
 		$visitId = 0;

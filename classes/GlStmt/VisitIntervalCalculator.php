@@ -20,6 +20,7 @@ class VisitIntervalCalculator {
 	protected $intervalDiscount = 0;
 	
 	protected $paymentFromPast = 0;
+	protected $pastPaymentsToNow = 0;
 	protected $paymentToPast = 0;
 	protected $paymentToNow = 0;
 	protected $paymentToFuture = 0;
@@ -141,8 +142,15 @@ class VisitIntervalCalculator {
 
 		// leftover Payments from past (C23)
 		$pfp = 0;
+		$pptn = 0;
 		if ($this->preIntervalPay - $this->preIntervalCharge > 0) {
 			$pfp = $this->preIntervalPay - $this->preIntervalCharge;
+			
+			if ($pfp > $this->intervalCharge) {
+				$pptn = $this->intervalCharge;
+			} else {
+				$pptn = $pfp;
+			}
 		}
 
 		// leftover charge after previous payments (C22)
@@ -187,7 +195,7 @@ class VisitIntervalCalculator {
 			$this->unpaidCharges = $this->intervalCharge - $ptn - $pfp;
 		}
 
-
+		$this->pastPaymentsToNow = $pptn;
 		$this->paymentFromPast = $pfp;
 		$this->paymentToPast = $ptp;
 		$this->paymentToNow = $ptn;
@@ -201,11 +209,18 @@ class VisitIntervalCalculator {
 	/**
 	 * @return number
 	 */
+	public function getPastPaymentsToNow() {
+		return $this->pastPaymentsToNow;
+	}
+	
+		/**
+	 * @return number
+	 */
 	public function getIntervalCharge() {
 		return $this->intervalCharge;
 	}
 
-	/**
+/**
 	 * @return number
 	 */
 	public function getPreIntervalCharge() {

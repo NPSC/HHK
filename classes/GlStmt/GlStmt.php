@@ -502,16 +502,20 @@ class GlStmt {
 		$tbl->addBodyTr(HTMLTable::makeTh('Payment Reconciliation', array('colspan'=>'2')));
 		
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Prepayments from earlier months', array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Total Prepayments from earlier months', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Prepayments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPastPaymentsToNow(), 2), array('style'=>'text-align:right;'))
+				);
+		$tbl->addBodyTr(
+				HTMLTable::makeTd($monthArray[$this->startDate->format('n')][1] . ' Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total Payments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow() + $stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow() + $stmtCalc->getPastPaymentsToNow(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals'))
 				);
 		
 		
@@ -520,7 +524,7 @@ class GlStmt {
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Paid Charges for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow() + $stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToNow() + $stmtCalc->getPastPaymentsToNow(), 2), array('style'=>'text-align:right;'))
 				);
 		
 		$tbl->addBodyTr(
@@ -543,7 +547,7 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format($stmtCalc->getSubsidyCharge(), 2), array('style'=>'text-align:right;'))
 				);
 		
-		$income = $stmtCalc->getPaymentToNow() + $stmtCalc->getPaymentFromPast() + $stmtCalc->getUnpaidCharges() + abs($stmtCalc->getDiscount())
+		$income = $stmtCalc->getPaymentToNow() + $stmtCalc->getPastPaymentsToNow() + $stmtCalc->getUnpaidCharges() + abs($stmtCalc->getDiscount())
 		+ abs($stmtCalc->getWaiveAmt()) + $stmtCalc->getSubsidyCharge();
 		
 		$tbl->addBodyTr(
