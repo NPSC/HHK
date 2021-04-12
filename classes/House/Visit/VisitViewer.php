@@ -877,6 +877,7 @@ class VisitViewer {
                         , array(
                             'id'=>'spnCfBalDue',
                         		'data-rmbal'=> number_format($curAccount->getRoomFeeBalance(), 2, '.', ''),
+                                'data-taxedrmbal'=> number_format($curAccount->getTaxedRoomFeeBalance()),
                             'data-vfee'=>number_format($curAccount->getVfeeBal(), 2, '.', ''),
                             'data-totbal'=>number_format($curAccount->getDueToday(), 2, '.', '')))
                         , $balAttr)

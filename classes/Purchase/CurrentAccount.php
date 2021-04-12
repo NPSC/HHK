@@ -57,7 +57,7 @@ class CurrentAccount {
 
     // Room fee balance
     protected $roomFeeBalance = 0;
-    protected $totroomFeeBalance = 0;
+    protected $taxedroomFeeBalance = 0;
 
     // Payments
     protected $totalPaid = 0;
@@ -115,8 +115,10 @@ class CurrentAccount {
         $pending = $visitCharge->getRoomFeesPaid() + $visitCharge->getRoomFeesPending();
         $this->setRoomFeeBalance($fees - $pending);
 
-        // Room fee balance with tax
-        $this->totroomFeeBalance = $this->getItemTaxAmt(ItemId::Lodging, $this->roomFeeBalance);
+        // taxed Room fee balance
+        if($fees - $this->taxExemptRoomFees > $this->getRoomFeeBalance()) {
+            $this->taxedroomFeeBalance = $this->getRoomFeeBalance() - ($fees - $this->taxExemptRoomFees);
+        }
         
         // Lodging tax already paid
         foreach ($visitCharge->getTaxItemIds() as $tid =>$v) {
@@ -174,7 +176,10 @@ class CurrentAccount {
     }
 
     public function getTotalCharged() {
-
+        
+        $roomCharge = $this->getRoomCharge();
+        $roomFeeBalance = $this->getRoomFeeBalance();
+        
         return $this->getRoomCharge() + $this->getItemTaxAmt(ItemId::Lodging, $this->getRoomFeeBalance())
                 + $this->getAdditionalCharge() + $this->getAdditionalChargeTax()
                 + $this->getUnpaidMOA()
@@ -221,6 +226,10 @@ class CurrentAccount {
     public function getRoomFeeBalance() {
         return $this->roomFeeBalance;
     }
+    
+    public function getTaxedRoomFeeBalance(){
+        return $this->taxedroomFeeBalance;
+    }
 
     public function getDueToday() {
         return $this->dueToday;
@@ -263,7 +272,7 @@ class CurrentAccount {
         foreach ($this->getCurentTaxItems($idTaxedItem) as $t) {
 
             if ($this->getRoomFeeBalance() < 0) {
-                $amt += $t->getTaxAmount(($this->getRoomCharge() - $this->taxExemptRoomFees > 0 ? $this->getRoomCharge() - $this->taxExemptRoomFees: 0));
+                $amt += $t->getTaxAmount(($this->getRoomCharge() - $this->taxExemptRoomFees + $this->getTotalDiscounts() > 0 ? $this->getRoomCharge() - $this->taxExemptRoomFees + $this->getTotalDiscounts():0));
             } else {
                 $amt += $this->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($balanceAmt);
             }
