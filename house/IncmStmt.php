@@ -136,7 +136,7 @@ if (isset($_POST['btnHere'])) {
     
     $glStmt = new GlStmt($dbh, $glyear, $glMonth);
     
-    $glStmt->mapRecords();
+    $glStmt->mapRecords($dbh);
     
     $dataTable = HTMLContainer::generateMarkup('h2', 'Report for the month of ' . $monthArray[$glMonth][1] . ', '. $glyear);
 
@@ -179,7 +179,7 @@ if (isset($_POST['btnInv'])) {
 	
 	$glStmt = new GlStmt($dbh, $glyear, $glMonth);
 	
-	$glStmt->mapRecords();
+	$glStmt->mapRecords($dbh);
 	
 	$tbl = new HTMLTable();
 	$tbl->addBodyTr(HTMLTable::makeTh('Gl Code') . HTMLTable::makeTh('Debit') . HTMLTable::makeTh('Credit') . HTMLTable::makeTh('Date') . HTMLTable::makeTh('Inv'));
@@ -462,7 +462,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 
                     <table style="width:100%; clear:both;">
                         <tr>
-                            <td style="width:70%;"><input type="submit" name="btnGlGo" id="btnGlGo" value="Show Invoice Details" />
+                            <td style="width:70%;">
                             <input type="submit" name="btnInv" id="btnInv" value="Show Lines" /></td>
                             <td style="text-align: right;"><input type="submit" name="btnHere" id="btnHere" value="Run Report"/></td>
                             

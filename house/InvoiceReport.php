@@ -191,10 +191,7 @@ $showDeleted = FALSE;
 $useVisitDates = FALSE;
 $cFields = array();
 
-$useGlReport = FALSE;
-if (stristr($uS->siteName, 'gorecki') !== FALSE || (strtolower($uS->mode) != 'live' && $uS->RoomPriceModel != ItemPriceCode::None)) {
-	$useGlReport = TRUE;
-}
+$useGlReport = stristr($uS->siteName, 'gorecki');
 
 // Hosted payment return
 try {
