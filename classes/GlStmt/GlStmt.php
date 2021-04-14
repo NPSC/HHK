@@ -18,8 +18,8 @@ class GlStmt {
 	protected $startDay;
 	protected $records;
 	public $lines;
-	protected $waiveAmt;
-	protected $payAmounts;
+	protected $payAmounts = [];
+	protected $itemPayments = [];
 	protected $orderIds = [];
 
 	protected $errors;
@@ -59,6 +59,7 @@ class GlStmt {
 		$stmti = $dbh->query("Select idItem, Gl_Code from item");
 		while ($i = $stmti->fetch(\PDO::FETCH_NUM)) {
 			$itemCodes[$i[0]] = $i[1];
+			$this->itemPayments[$i[0]] = 0;
 		}
 		
 		$this->glLineMapper = new GlStmtTotals($pmCodes, $itemCodes);
@@ -100,6 +101,11 @@ class GlStmt {
 
 			if ($r['pStatus'] == PaymentStatusCode::Reverse || $r['pStatus'] == PaymentStatusCode::VoidSale || $r['pStatus'] == PaymentStatusCode::Declined) {
 				continue;
+			}
+			
+			// Multiple invoice lines for one payment...
+			if (isset($this->payAmounts[$r['idPayment']]) === FALSE) {
+				$this->payAmounts[$r['idPayment']] = $r['pAmount'];
 			}
 			
 			$this->recordInvLine($r);
@@ -212,11 +218,7 @@ class GlStmt {
 	}
 	
 	protected function recordInvLine($r) {
-		
-		if ($r['pStatus'] == PaymentStatusCode::Reverse || $r['pStatus'] == PaymentStatusCode::VoidSale || $r['pStatus'] == PaymentStatusCode::Declined) {
-			return;
-		}
-		
+				
 		// Payment dates
 		if ($r['pTimestamp'] != '') {
 			$paymentDate = new \DateTime($r['pTimestamp']);
@@ -241,37 +243,31 @@ class GlStmt {
 				$paymentDate = $pUpDate;
 			}
 			
-			//$this->payAmounts[$r['idPayment']] -= $ilAmt;
+			$this->payAmounts[$r['idPayment']] -= $ilAmt;
 			
 			// Payment is in this period?
 			if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 				
-				if ($r['il_Item_Id'] == ItemId::Lodging || $r['il_Item_Id'] == ItemId::LodgingReversal) {
-					// Lodging Amount
-					$this->lines[] = $this->glLineMapper->makeLine($r['Item_Gl_Code'], 0, $r['il_Amount'], $paymentDate, $r['iNumber']);
-				} else if ($r['il_Item_Id'] == ItemId::Waive) {
-					// waive amount.
-					$this->waiveAmt += ($ilAmt);
-				}
+				$this->lines[] = $this->glLineMapper->makeLine($r['Item_Gl_Code'], 0, $ilAmt, $paymentDate, $r['iNumber']);
+				
+				$this->itemPayments[$r['il_Item_Id']] += $ilAmt;
 								
 			}
 			
-			// Refunds
+		// Refunds
 		} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 			
 			// payment is positive in this case.
-			//$this->payAmounts[$r['idPayment']] += $ilAmt;
+			$this->payAmounts[$r['idPayment']] += $ilAmt;
 			
 			// Payment must be within the .
 			if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 				
-				if ($r['il_Item_Id'] == ItemId::Lodging || $r['il_Item_Id'] == ItemId::LodgingReversal) {
-					$this->lines[] = $this->glLineMapper->makeLine($r['Item_Gl_Code'], 0, $r['il_Amount'], $paymentDate, $r['iNumber']);
-				}
-				
+				$this->lines[] = $this->glLineMapper->makeLine($r['Item_Gl_Code'], 0, $ilAmt, $paymentDate, $r['iNumber']);
+				$this->itemPayments[$r['il_Item_Id']] += $ilAmt;
 			}
 			
-			//Returns
+		//Returns
 		} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
 			// The invoice line amount (ilAmt) is positive.
 			
@@ -280,42 +276,33 @@ class GlStmt {
 				return;
 			}
 			
-			//$this->payAmounts[$r['idPayment']] -= $ilAmt;
+			$this->payAmounts[$r['idPayment']] -= $ilAmt;
 			
 			// Returned during this period?
 			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
 				// It is a return in this period.
 				
+				$this->lines[] = $this->glLineMapper->makeLine($r['Item_Gl_Code'], 0, (0 - $ilAmt), $paymentDate, $r['iNumber']);
 				
-				if ($r['il_Item_Id'] == ItemId::Lodging || $r['il_Item_Id'] == ItemId::LodgingReversal) {
-					$this->lines[] = $this->glLineMapper->makeLine($r['Item_Gl_Code'], 0, (0 - $r['il_Amount']), $paymentDate, $r['iNumber']);
-				} else if ($r['il_Item_Id'] == ItemId::Waive) {
-					// Reduce charge by waive amount.
-					$this->waiveAmt += (0 - $ilAmt);
-				}
+				$this->itemPayments[$r['il_Item_Id']] += (0 - $ilAmt);
 								
 			}
 			
 			// Paid during this period?
 			if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
 				
-				if ($r['il_Item_Id'] == ItemId::Lodging || $r['il_Item_Id'] == ItemId::LodgingReversal) {
-					$this->lines[] = $this->glLineMapper->makeLine($r['Item_Gl_Code'], 0, $r['il_Amount'], $paymentDate, $r['iNumber']);
-				} else if ($r['il_Item_Id'] == ItemId::Waive) {
-					// waive amount.
-					$this->waiveAmt += $ilAmt;
-				}
+				$this->lines[] = $this->glLineMapper->makeLine($r['Item_Gl_Code'], 0, $ilAmt, $paymentDate, $r['iNumber']);
+				
+				$this->itemPayments[$r['il_Item_Id']] += $ilAmt;
 			}
-			
 		}
-	
 	}
 	
 	
 	public function doReport (\PDO $dbh, $monthArray, $tableAttrs) {
 		
 		$uS = Session::getInstance();
-				
+
 		$priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 		
 		$finInterval = new FinancialInterval($this->startDate, $this->endDate);
@@ -351,7 +338,6 @@ class GlStmt {
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total', array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($lodg, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
-//				. HTMLTable::makeTd(number_format(($finInterval->getTotalItemPayment()[ItemId::Lodging] + $finInterval->getTotalItemPayment()[ItemId::LodgingReversal] + $finInterval->getTotalItemPayment()[ItemId::Waive]), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchlgt'))
 				);
 		
 		
@@ -360,7 +346,8 @@ class GlStmt {
 		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Total Prepayments from earlier months', array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right;'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentFromPast(), 2), array('style'=>'text-align:right; border: 2px solid teal;'
+						, 'title'=>'May include payments slated for future months. '))
 				);
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Prepayments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
