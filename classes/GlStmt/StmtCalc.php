@@ -5,6 +5,7 @@ class StmtCalc {
 	
 	protected $paymentFromPast = 0;
 	protected $paymentToPast = 0;
+	protected $pastPaymentsToNow = 0;
 	protected $paymentToNow = 0;
 	protected $paymentToFuture = 0;
 	protected $unallocatedPayments = 0;
@@ -13,7 +14,8 @@ class StmtCalc {
 	protected $subsidyCharge = 0;
 	protected $waiveAmt = 0;
 	protected $discount = 0;
-	
+	protected $overPaidVisitIds = [];
+	private $vCounter = 0;
 	
 	/**
 	 * @return number
@@ -28,8 +30,15 @@ class StmtCalc {
 	public function getPaymentToPast() {
 		return $this->paymentToPast;
 	}
+	
+		/**
+	 * @return number
+	 */
+	public function getPastPaymentsToNow() {
+		return $this->pastPaymentsToNow;
+	}
 
-	/**
+/**
 	 * @return number
 	 */
 	public function getPaymentToNow() {
@@ -84,13 +93,21 @@ class StmtCalc {
 	public function getDiscount() {
 		return $this->discount;
 	}
-
-	public function addVisit(VisitIntervalCalculator $visitCalc) {
+	
+	/**
+	 * @return array
+	 */
+	public function getOverpaidVisitIds() {
+		return $this->overPaidVisitIds;
+	}
+	
+	public function addVisit(VisitIntervalCalculator $visitCalc, $idVisit) {
 		
 		$this->paymentFromPast += $visitCalc->getPaymentFromPast();
 		$this->paymentToFuture += $visitCalc->getPaymentToFuture();
 		$this->paymentToNow += $visitCalc->getPaymentToNow();
 		$this->paymentToPast += $visitCalc->getPaymentToPast();
+		$this->pastPaymentsToNow += $visitCalc->getPastPaymentsToNow();
 		
 		$this->unallocatedPayments += $visitCalc->getUnallocatedPayments();
 		$this->unpaidCharges += $visitCalc->getUnpaidCharges();
@@ -100,6 +117,11 @@ class StmtCalc {
 		
 		$this->waiveAmt += $visitCalc->getIntervalWaiveAmt();
 		$this->discount += $visitCalc->getIntervalDiscount();
+		
+		if ($visitCalc->getUnallocatedPayments() > 0) {
+			$this->overPaidVisitIds[] = $idVisit;  // .' $'. number_format($visitCalc->getUnallocatedPayments(), 2);
+			
+		}
 		
 	}
 

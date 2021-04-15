@@ -20,6 +20,7 @@ class VisitIntervalCalculator {
 	protected $intervalDiscount = 0;
 	
 	protected $paymentFromPast = 0;
+	protected $pastPaymentsToNow = 0;
 	protected $paymentToPast = 0;
 	protected $paymentToNow = 0;
 	protected $paymentToFuture = 0;
@@ -69,7 +70,7 @@ class VisitIntervalCalculator {
 		return $this->unpaidCharges;
 	}
 
-	public function closeInterval() {
+	public function closeInterval($hasFutureNights) {
 		
 		$overWaive = 0;
 		$overDiscount = 0;
@@ -91,16 +92,12 @@ class VisitIntervalCalculator {
 		} else {
 			// Waive bleed over to this month
 			$overWaive = $this->preIntervalWaiveAmt + $this->preIntervalCharge;  // Waive forwarded to next month
+			
+			$this->preIntervalPay += $this->preIntervalWaiveAmt;  // remove "fake" payment
+			
 			$this->preIntervalWaiveAmt = 0 - $this->preIntervalCharge;
 			$this->preIntervalCharge = 0;
 			
-			// There may be extra payments beyond the waive.
-			if ($this->preIntervalPay >= abs($this->preIntervalWaiveAmt)) {
-				$this->preIntervalPay += $this->preIntervalWaiveAmt;  // Reduce payment by waive amount
-			} else {
-				// This is an error!
-				throw new \Exception('Pre-interval waive not matched by pre-interval payments.  ');
-			}
 		}
 		
 		// The interval charge is reduced by any overage from pre-interval
@@ -122,6 +119,9 @@ class VisitIntervalCalculator {
 			$this->intervalCharge += $this->intervalWaiveAmt;
 			$this->intervalPay += $this->intervalWaiveAmt;
 		} else {
+			
+			// Remove all waive payments
+			$this->intervalPay += $this->intervalWaiveAmt;
 
 			// More waives than charges.  Waives meant for the past?
 			$unpaidCharges = $this->preIntervalCharge - $this->preIntervalPay;
@@ -129,29 +129,28 @@ class VisitIntervalCalculator {
 			if ($unpaidCharges > 0 && $unpaidCharges >= abs($this->intervalWaiveAmt)) {
 				// All interval waives goes to preinterval.
 				$this->preIntervalCharge += $this->intervalWaiveAmt;
-				$this->PreIntervalPay += $this->intervalWaiveAmt;
 				$this->intervalWaiveAmt = 0;
 
 			} else if ($unpaidCharges > 0) {
-				// interval waive amount split between pre and now interval.
-				$this->intervalPay += $this->intervalWaiveAmt;
+				// interval waive amount split between pre and now interval charges.
+				
 				$this->intervalWaiveAmt += $unpaidCharges;
 				$this->preIntervalCharge -= $unpaidCharges;
 				$this->intervalCharge += $this->intervalWaiveAmt;
-
-			} else if ($this->intervalPay >= abs($this->intervalWaiveAmt)) {
-				// There may be extra payments beyond the waive.
-				$this->intervalPay += $this->intervalWaiveAmt;  // Reduce payment by waive amount
-			} else {
-				// This is an error!
-				throw new \Exception('Interval waive not matched by interval payments.  ');
 			}
 		}
 
 		// leftover Payments from past (C23)
 		$pfp = 0;
+		$pptn = 0;
 		if ($this->preIntervalPay - $this->preIntervalCharge > 0) {
 			$pfp = $this->preIntervalPay - $this->preIntervalCharge;
+			
+			if ($pfp > $this->intervalCharge) {
+				$pptn = $this->intervalCharge;
+			} else {
+				$pptn = $pfp;
+			}
 		}
 
 		// leftover charge after previous payments (C22)
@@ -181,20 +180,22 @@ class VisitIntervalCalculator {
 			}
 		}
 
-		// PrePayments to Future ongoing visits
+		// PrePayments to Future
 		$ptf = 0;
-		if ($ptp + $ptn < $this->intervalPay) {
+		if ($ptp + $ptn < $this->intervalPay && $hasFutureNights) {
+			// Payment to ongoing visit
 			$ptf = $this->intervalPay - $ptp - $ptn;
+		} else if ($ptp + $ptn < $this->intervalPay) {
+			// Payments to nowhere.
+			$this->unallocatedPayments = $this->intervalPay - $ptp - $ptn;
 		}
 
-
-		// Payments Carried Forward - unallocated payments
-		if (($this->preIntervalPay + $this->intervalPay) - $this->preIntervalCharge - $this->intervalCharge - $ptf > 0) {
-			$this->unallocatedPayments = ($this->preIntervalPay + $this->intervalPay) - $this->preIntervalCharge - $this->intervalCharge - $ptf;
-		} else {
-			$this->unpaidCharges = abs(($this->preIntervalPay + $this->intervalPay) - $this->preIntervalCharge - $this->intervalCharge - $ptf);
+		// Unpaid charges this month
+		if ($this->intervalCharge - $ptn - $pfp > 0) {
+			$this->unpaidCharges = $this->intervalCharge - $ptn - $pfp;
 		}
 
+		$this->pastPaymentsToNow = $pptn;
 		$this->paymentFromPast = $pfp;
 		$this->paymentToPast = $ptp;
 		$this->paymentToNow = $ptn;
@@ -202,17 +203,24 @@ class VisitIntervalCalculator {
 
 		return $this;
 	}
-	
-	
-	
+
+
+
 	/**
+	 * @return number
+	 */
+	public function getPastPaymentsToNow() {
+		return $this->pastPaymentsToNow;
+	}
+	
+		/**
 	 * @return number
 	 */
 	public function getIntervalCharge() {
 		return $this->intervalCharge;
 	}
 
-	/**
+/**
 	 * @return number
 	 */
 	public function getPreIntervalCharge() {
@@ -324,7 +332,7 @@ class VisitIntervalCalculator {
 	}
 	
 	public function updatePreIntervalDiscount($v) {
-		$this->preintervalDiscount += $v;
+		$this->preIntervalDiscount += $v;
 	}
 	
 	

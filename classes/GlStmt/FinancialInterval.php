@@ -53,9 +53,11 @@ class FinancialInterval {
 		$this->baArray['']['paid'] = 0;
 		$this->baArray['']['pend'] = 0;
 		
-				
+		
 		$stmtCalc = new StmtCalc();
 		$visitCalc = new VisitIntervalCalculator();
+		
+		
 		$this->payAmounts = array();
 		$serialId = 0;
 		$visitId = 0;
@@ -73,7 +75,7 @@ class FinancialInterval {
 				If ($visitId != $r['idVisit'] && $visitId != 0) {
 					// Visit Change
 					
-					$stmtCalc->addVisit($visitCalc->closeInterval());
+					$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $record['idVisit']);
 					
 					// Reset for next visit
 					$visitCalc = new VisitIntervalCalculator();
@@ -116,7 +118,9 @@ class FinancialInterval {
 			$record = $r;
 			
 			// Unpaid invoices
-			if ($r['Invoice_Status'] == InvoiceStatus::Unpaid) {
+			$invDate = new \DateTime($r['Invoice_Date']);
+			if ($r['Invoice_Status'] == InvoiceStatus::Unpaid
+					&& $invDate >= $this->startDate && $invDate < $this->endDate) {
 				$this->arrayAdd($this->baArray[$r['ba_Gl_Debit']]['pend'], $r['il_Amount']);
 			}
 			
@@ -182,7 +186,7 @@ class FinancialInterval {
 					
 				}
 				
-				// Refunds
+			// Refunds
 			} else if ($r['pStatus'] == PaymentStatusCode::Paid && $r['Is_Refund'] == 1) {
 				
 				// payment is positive in this case.
@@ -207,7 +211,7 @@ class FinancialInterval {
 					
 				}
 				
-				//Returns
+			//Returns
 			} else if ($r['pStatus'] == PaymentStatusCode::Retrn) {
 				// The invoice line amount (ilAmt) is positive.
 				
@@ -267,32 +271,29 @@ class FinancialInterval {
 						$visitCalc->updatePreIntervalWaiveAmt($ilAmt);
 					}
 				}
-				
-			} else if ($r['idPayment'] == 0 && $r['Invoice_Status'] == InvoiceStatus::Paid) {
-				// Deal with discounts
+			
+			// Discounts
+			} else if ($r['idPayment'] == 0 && $r['Invoice_Status'] == InvoiceStatus::Paid
+					&& $r['Item_Id'] = ItemId::Discount) {
 				
 				$paymentDate = new \DateTime($r['Invoice_Date']);
 				
 				if ($paymentDate >= $this->startDate && $paymentDate < $this->endDate) {
+					
 					// Discounts
-					if ($r['Item_Id'] = ItemId::Discount) {
-						$this->totalItemPayment[$r['Item_Id']] += abs($ilAmt);
+					$this->totalItemPayment[$r['Item_Id']] += abs($ilAmt);
 						
-						// Reduces the charges.
-						$visitCalc->updateIntervalDiscount($ilAmt);
-					}
+					// Reduces the charges.
+					$visitCalc->updateIntervalDiscount($ilAmt);
 					
 				} else if ($paymentDate < $this->startDate) {
-					
-					if ($r['Item_Id'] = ItemId::Discount) {
-						$visitCalc->updatePreIntervalDiscount($ilAmt);
-					}
+					$visitCalc->updatePreIntervalDiscount($ilAmt);
 				}
 			}
 		}
 		
 		if ($record != NULL) {
-			$stmtCalc->addVisit($visitCalc->closeInterval());
+			$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $record['idVisit']);
 		}
 		
 		return $stmtCalc;
@@ -308,9 +309,9 @@ class FinancialInterval {
 	v.Span,
 	v.Arrival_Date,
 	v.Expected_Departure,
-	ifnull(v.Actual_Departure, '') as Actual_Departure,
+	ifnull(v.Actual_Departure, '') as `Actual_Departure`,
 	v.Span_Start,
-	ifnull(v.Span_End, '') as Span_End,
+	ifnull(v.Span_End, '') as `Span_End`,
 	v.Pledged_Rate,
 	v.Expected_Rate,
 	v.Rate_Category,
@@ -358,7 +359,13 @@ class FinancialInterval {
 			END,
 			DATE(v.Span_Start)
 			)
-	END AS `Pre_Interval_Nights`, " . $this->getGuestNightsSQL($start, $end) . "
+	END AS `Pre_Interval_Nights`,
+	CASE
+		WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) > DATE('$end')
+		THEN 1
+		ELSE 0
+	END AS `Has_Future_Nights`, ".
+	$this->getGuestNightsSQL($start, $end) ."
 	ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
 	ifnull(rm.idRoom, '') as idRoom,
 	ifnull(rm.Category, '') as Room_Category,
@@ -439,7 +446,7 @@ where
         FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";;
 		}
 		
-		return "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
+		return " 0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`, ";
 		
 	}
 	

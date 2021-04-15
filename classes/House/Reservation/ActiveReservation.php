@@ -214,7 +214,7 @@ class ActiveReservation extends Reservation {
             
             $this->setRoomChoice($dbh, $resv, $idResc);
             
-            if ($this->reserveData->getErrors() != '') {
+            if ($this->reserveData->hasError()) {
                 $dataArray[ReserveData::WARNING] = $this->reserveData->getErrors();
             } else {
                 $dataArray['msg'] = 'Reservation Changed Rooms.';

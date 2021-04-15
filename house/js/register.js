@@ -25,18 +25,18 @@ function setRoomTo(idResv, idResc) {
             data = $.parseJSON(data);
         } catch (err) {
             alert("Parser error - " + err.message);
-            return;
+            return false;
         }
         if (data.error) {
             if (data.gotopage) {
                 window.location.assign(data.gotopage);
             }
             flagAlertMessage(data.error, 'error');
-            return;
+            return false;
         }
         if (data.warning && data.warning !== '') {
             flagAlertMessage(data.warning, 'alert');
-            return;
+            return false;
         }
         if (data.msg && data.msg !== '') {
             flagAlertMessage(data.msg, 'info');
@@ -1059,9 +1059,9 @@ $(document).ready(function () {
             if (event.idReservation > 0) {
                 
                 // move both?
-                if (delta.asDays() > 0 && event.resourceId !== event.idResc) {
-                    
-                }
+//                if (delta.asDays() > 0 && event.resourceId !== event.idResc) {
+//                    
+//                }
                 
                 // move by date?
                 if (delta.asDays() !== 0) {
@@ -1073,9 +1073,17 @@ $(document).ready(function () {
                 
                 // Change rooms?
                 if (event.resourceId !== event.idResc) {
-                    if (confirm('Move Reservation to a new room?')) {
-                        setRoomTo(event.idReservation, event.resourceId);
-                        return;
+                	
+                	var mssg = 'Move Reservation to a new room?';
+                	
+                	if (event.resourceId == 0) {
+                		mssg = 'Move Reservation to the waitlist?'
+                	}
+                	
+                    if (confirm(mssg)) {
+                        if (setRoomTo(event.idReservation, event.resourceId)) {
+                        	return;
+                        }
                     }
                 }
             }
