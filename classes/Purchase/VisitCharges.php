@@ -335,6 +335,7 @@ class VisitCharges {
                 foreach($taxitems as $taxitem){
                     if($taxitem->getIdTaxedItem() == $l['Item_Id']){
                         $this->itemSums[$l['Item_Id']]['tax_exempt'] += $l['Amount'];
+                        break;
                     }
                 }
             }

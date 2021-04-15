@@ -432,7 +432,7 @@ where
 		) );
 
 		$billTbl = new HTMLTable ();
-		$billTbl->addBodyTr ( HTMLTable::makeTd ( 'Bill To' ) );
+		$billTbl->addBodyTr ( HTMLTable::makeTd ( HTMLContainer::generateMarkup('h4', 'Bill To')));
 		$billTbl->addBodyTr ( HTMLTable::makeTd ( $this->getBillToAddress ( $dbh, $this->getSoldToId () )->generateMarkup () ) );
 		$rec .= $billTbl->generateMarkup ( array (
 				'style' => 'float:right; margin-right:40px;'
