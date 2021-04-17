@@ -85,11 +85,11 @@ class GlStmt {
 			if ($serialId != $serial) {
 				// Payment Change
 
-				if ($r['idInvoice'] != $idInvoice && $idInvoice != 0) {
+				if ($r['idInvoice'] != $idInvoice) {
 					//Invoice Change
 					
 					$idInvoice = $r['idInvoice'];
-					$this->orderIds[] = $r['idInvoice'];
+					$this->orderIds[] = $r['Order_Number'];
 				}
 				
 				// Record new payment lines
@@ -593,7 +593,7 @@ order by r.idResource;";
 
 			$orderNumbers = " or v.idVisit in ($orderNumbers) ";
 		}
-
+var_dump($orderNumbers);
 		return $orderNumbers;
 
 	}

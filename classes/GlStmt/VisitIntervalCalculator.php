@@ -28,48 +28,6 @@ class VisitIntervalCalculator {
 	protected $unpaidCharges = 0;
 
 	
-	/**
-	 * @return number
-	 */
-	public function getPaymentFromPast() {
-		return $this->paymentFromPast;
-	}
-
-	/**
-	 * @return number
-	 */
-	public function getPaymentToPast() {
-		return $this->paymentToPast;
-	}
-
-	/**
-	 * @return number
-	 */
-	public function getPaymentToNow() {
-		return $this->paymentToNow;
-	}
-
-	/**
-	 * @return number
-	 */
-	public function getPaymentToFuture() {
-		return $this->paymentToFuture;
-	}
-
-	/**
-	 * @return number
-	 */
-	public function getUnallocatedPayments() {
-		return $this->unallocatedPayments;
-	}
-
-	/**
-	 * @return number
-	 */
-	public function getUnpaidCharges() {
-		return $this->unpaidCharges;
-	}
-
 	public function closeInterval($hasFutureNights) {
 		
 		$overWaive = 0;
@@ -113,7 +71,7 @@ class VisitIntervalCalculator {
 			$this->intervalDiscount = 0 - $this->intervalCharge;
 			$this->intervalCharge = 0;
 		}
-
+		
 		// Interval Waive amounts
 		if ($this->intervalCharge >= abs($this->intervalWaiveAmt)) {
 			$this->intervalCharge += $this->intervalWaiveAmt;
@@ -122,15 +80,15 @@ class VisitIntervalCalculator {
 			
 			// Remove all waive payments
 			$this->intervalPay += $this->intervalWaiveAmt;
-
+			
 			// More waives than charges.  Waives meant for the past?
 			$unpaidCharges = $this->preIntervalCharge - $this->preIntervalPay;
-
+			
 			if ($unpaidCharges > 0 && $unpaidCharges >= abs($this->intervalWaiveAmt)) {
 				// All interval waives goes to preinterval.
 				$this->preIntervalCharge += $this->intervalWaiveAmt;
 				$this->intervalWaiveAmt = 0;
-
+				
 			} else if ($unpaidCharges > 0) {
 				// interval waive amount split between pre and now interval charges.
 				
@@ -159,7 +117,6 @@ class VisitIntervalCalculator {
 			$cfp = $this->preIntervalCharge - $this->preIntervalPay;
 		}
 
-
 		// Payments to the past
 		$ptp = 0;
 		if ($cfp > 0) {
@@ -168,6 +125,9 @@ class VisitIntervalCalculator {
 			} else {
 				$ptp = $this->intervalPay;
 			}
+		} else if ($cfp == 0 && $this->intervalCharge == 0) {
+			// Unallocated payment to the past.
+			$ptp -= $pfp;
 		}
 
 		// Payments to now
@@ -191,8 +151,8 @@ class VisitIntervalCalculator {
 		}
 
 		// Unpaid charges this month
-		if ($this->intervalCharge - $ptn - $pfp > 0) {
-			$this->unpaidCharges = $this->intervalCharge - $ptn - $pfp;
+		if ($this->intervalCharge - $ptn - $pptn > 0) {
+			$this->unpaidCharges = $this->intervalCharge - $ptn - $pptn;  // pfp?
 		}
 
 		$this->pastPaymentsToNow = $pptn;
@@ -200,11 +160,53 @@ class VisitIntervalCalculator {
 		$this->paymentToPast = $ptp;
 		$this->paymentToNow = $ptn;
 		$this->paymentToFuture = $ptf;
-
+		
 		return $this;
 	}
+	
+	
+	
+	/**
+	 * @return number
+	 */
+	public function getPaymentFromPast() {
+		return $this->paymentFromPast;
+	}
 
+	/**
+	 * @return number
+	 */
+	public function getPaymentToPast() {
+		return $this->paymentToPast;
+	}
 
+	/**
+	 * @return number
+	 */
+	public function getPaymentToNow() {
+		return $this->paymentToNow;
+	}
+
+	/**
+	 * @return number
+	 */
+	public function getPaymentToFuture() {
+		return $this->paymentToFuture;
+	}
+
+	/**
+	 * @return number
+	 */
+	public function getUnallocatedPayments() {
+		return $this->unallocatedPayments;
+	}
+
+	/**
+	 * @return number
+	 */
+	public function getUnpaidCharges() {
+		return $this->unpaidCharges;
+	}
 
 	/**
 	 * @return number
