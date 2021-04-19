@@ -1,7 +1,7 @@
 <?php
 namespace HHK\GlStmt;
 
-use HHK\SysConst\{ItemId, PaymentStatusCode};
+use HHK\SysConst\{PaymentStatusCode};
 
 use HHK\SysConst\ResourceStatus;
 use HHK\sec\Session;
@@ -325,11 +325,16 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format($stmtCalc->getPaymentToFuture(), 2), array('style'=>'text-align:right;'))
 				);
 		
-		$vids = $stmtCalc->getOverpaidVisitIds();
-		$vid = json_encode($vids);
-
+		// Unallocated payments active control
+		$uS->unallocVids = $stmtCalc->getOverpaidVisitIds();
+		$ctrl = '';
+		
+		if(count($uS->unallocVids) > 0) {
+			$ctrl = HTMLContainer::generateMarkup('span', '', array('id'=>'unallocVisits', 'class'=>'ui-icon ui-icon-info', 'title'=>'List visits with unallocated payments.', 'style'=>'margin-right:1em;'));
+		}
+		
 		$tbl->addBodyTr(
-				HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'unallocVisits', 'data-vids'=>$vid, 'class'=>'ui-icon ui-icon-info', 'title'=>'List visits with unallocated payments.', 'style'=>'margin-right:1em;')).'Unallocated Payments' , array('class'=>'tdlabel'))
+				HTMLTable::makeTd($ctrl . 'Unallocated Payments' , array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getUnallocatedPayments(), 2), array('style'=>'text-align:right;'))
 				);
 		
@@ -593,7 +598,7 @@ order by r.idResource;";
 
 			$orderNumbers = " or v.idVisit in ($orderNumbers) ";
 		}
-var_dump($orderNumbers);
+
 		return $orderNumbers;
 
 	}

@@ -30,6 +30,9 @@
 .hhk-logerrmsg {
     color:red;
 }
+#unallocVids {
+	cursor:pointer;
+}
 .hhk-view-visit:hover {
     background-color: #d0e5f5;
     background-image: url("jqui/images/ui-bg_glass_75_d0e5f5_1x400.png");

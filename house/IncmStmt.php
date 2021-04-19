@@ -8,6 +8,11 @@ use HHK\HTMLControls\HTMLInput;
 use HHK\GlStmt\GlStmt;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
+use HHK\Payment\PaymentSvcs;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\sec\Labels;
+use HHK\SysConst\RoomRateCategories;
+
 
 /**
  * IncmStmt.php
@@ -27,6 +32,10 @@ try {
 }
 
 $dbh = $wInit->dbh;
+$uS = Session::getInstance();
+// Get labels
+$labels = Labels::getLabels();
+
 
 function getBaMarkup(\PDO $dbh, $prefix = 'bagl') {
 	
@@ -99,6 +108,36 @@ function saveBa(\PDO $dbh, $post) {
 
 }
 
+
+
+// Catch ajax from page to fill in unallocated visit ids
+if (isset($_POST['cmd'])) {
+	
+	if (isset($uS->unallocVids)) {
+		echo json_encode(array('vids'=>$uS->unallocVids));
+	}
+	exit();
+	
+}
+
+$receiptMarkup = '';
+$paymentMarkup = '';
+
+// Hosted payment return
+try {
+	
+	if (is_null($payResult = PaymentSvcs::processSiteReturn($dbh, $_REQUEST)) === FALSE) {
+		
+		$receiptMarkup = $payResult->getReceiptMarkup();
+		
+		if ($payResult->getDisplayMessage() != '') {
+			$paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+		}
+	}
+	
+} catch (RuntimeException $ex) {
+	$paymentMarkup = $ex->getMessage();
+}
 
 
 $monthArray = array(
@@ -365,7 +404,6 @@ $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Save 3rd Party Paye
 
 $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -380,19 +418,82 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTES_VIEWER_JS; ?>"></script>
+        
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
 <script type="text/javascript">
+function displayVids(vids) {
+
+	var select = $("<select size='3'></select>");
+    var contr = $('<div id="unVids" style="font-size:0.9em;position: absolute; z-index: 1; display: block;" />');
+    contr.addClass('ui-widget ui-widget-content ui-helper-clearfix ui-corner-all');
+    
+	$.each(vids, function (ii, vv) {
+		var vid = parseInt((ii / 100), 10);
+		select.append('<option value=' + ii + '>' + 'Visit Id: ' + vid + ' ' + vv + '</option>');
+	});
+
+	contr.append(select);
+    $('body').append(contr);
+
+    select.change(function() {
+		if (select.val() != '') {
+			var vid = parseInt((select.val() / 100), 10);
+			var span = select.val() % 100;
+		    var buttons = {
+		            "Show Statement": function() {
+		                window.open('ShowStatement.php?vid=' + vid, '_blank');
+		            },
+		            "Show Registration Form": function() {
+		                window.open('ShowRegForm.php?vid=' + vid + '&span=' + span, '_blank');
+		            },
+		            "Save": function() {
+		                saveFees(0, vid, span, true, 'IncmStmt.php');
+		            },
+		            "Cancel": function() {
+		                $(this).dialog("close");
+		            }
+		        };
+		        viewVisit(0, vid, buttons, 'Edit Visit #' + vid + '-' + span, '', span);
+		}
+    });
+    
+    contr.position({
+        my: 'top',
+        at: 'bottom',
+        of: '#unallocVisits'
+    });
+}
+
+var pmtMkup,
+	rctMkup,
+	dateFormat,
+	fixedRate;
+
     $(document).ready(function() {
 
+        pmtMkup = $('#pmtMkup').val();
+        rctMkup = $('#rctMkup').val();
+        dateFormat = $('#dateFormat').val();
+        fixedRate = $('#fixedRate').val();
+            
+        if (pmtMkup !== '') {
+            $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
+        }
+        
         $('#btnHere, #btnGlGo, #btnSaveGlParms, #btnInv').button();
         $('div#printArea').css('display', 'block');
         $('#printButton').button().click(function() {
@@ -410,27 +511,38 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
         });
         $('#unallocVisits').click(function() {
             
-			var vids = $(this).data('vids');
-			var select = $("<select></select>");
-            var contr = $('<div id="unVids" style="font-size:0.9em;position: absolute; z-index: 1; display: block;" />');
-
-            select.append('<option value = 0>Visits Affected</option>');
-            
-			$.each(vids, function (ii, vv) {
-				select.append('<option value=' + ii + '>' + vv + '</option>');
-			});
-
-			contr.append(select);
-            contr.addClass('ui-widget ui-widget-content ui-helper-clearfix ui-corner-all');
-            
-            $('body').append(contr);
-            contr.position({
-                my: 'top',
-                at: 'bottom',
-                of: '#unallocVisits'
+            $.post('IncmStmt.php', {cmd: 'unallocVisits'}, function(data) {
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return false;
+                }
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.location.assign(data.gotopage);
+                    }
+                    flagAlertMessage(data.error, 'error');
+                    return false;
+                }
+                if (data.vids && data.vids !== '') {
+                    displayVids(data.vids);
+                }
             });
-		
-			
+        });
+
+        $('#keysfees').dialog({
+            autoOpen: false,
+            resizable: true,
+            modal: true
+        });
+
+        $('#pmtRcpt').dialog({
+            autoOpen: false,
+            resizable: true,
+            width: 530,
+            modal: true,
+            title: 'Payment Receipt'
         });
 
         $(document).mousedown(function (event) {
@@ -449,6 +561,7 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
             <h2><?php echo $wInit->pageHeading; ?></h2>
 
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
                 <form id="fcat" action="IncmStmt.php" method="post">
                 
                 	<table style="float:left;">
@@ -479,6 +592,14 @@ $glBa = $tbl->generateMarkup(array('style'=>'float:left;margin-right:1.5em;'));
                  <?php echo $glInvoices; ?>
              </div>
             </div>
+        	<div id="keysfees" style="font-size: .9em;"></div>
         </div>
+        <form name="xform" id="xform" method="post"></form>
+        <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+		<input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
+		<input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
+        <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
+        <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
+        
     </body>
 </html>
