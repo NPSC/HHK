@@ -52,15 +52,13 @@ class VisitIntervalCalculator {
 			$overWaive = $this->preIntervalWaiveAmt + $this->preIntervalCharge;  // Waive forwarded to next month
 			
 			$this->preIntervalPay += $this->preIntervalWaiveAmt;  // remove "fake" payment
-			
-			$this->preIntervalWaiveAmt = 0 - $this->preIntervalCharge;
-			$this->preIntervalCharge = 0;
-			
+			$this->preIntervalCharge = 0;  // Reduce Charge to guest
 		}
 		
 		// The interval charge is reduced by any overage from pre-interval
 		$this->intervalCharge += ($overDiscount + $overWaive);
 		$this->intervalPay += $overWaive;
+		
 		
 		// Remove discounts from charges
 		if ($this->intervalCharge >= abs($this->intervalDiscount)) {
@@ -91,17 +89,20 @@ class VisitIntervalCalculator {
 				
 			} else if ($unpaidCharges > 0) {
 				// interval waive amount split between pre and now interval charges.
-				
 				$this->intervalWaiveAmt += $unpaidCharges;
 				$this->preIntervalCharge -= $unpaidCharges;
+				$this->intervalCharge += $this->intervalWaiveAmt;
+			} else {
 				$this->intervalCharge += $this->intervalWaiveAmt;
 			}
 		}
 
-		// leftover Payments from past (C23)
+		// Payments and charges from the past.
 		$pfp = 0;
 		$pptn = 0;
-		if ($this->preIntervalPay - $this->preIntervalCharge > 0) {
+		$cfp = 0;
+		if ($this->preIntervalPay - $this->preIntervalCharge >= 0) {
+			// leftover Payments from past (C23)
 			$pfp = $this->preIntervalPay - $this->preIntervalCharge;
 			
 			if ($pfp > $this->intervalCharge) {
@@ -109,11 +110,8 @@ class VisitIntervalCalculator {
 			} else {
 				$pptn = $pfp;
 			}
-		}
-
-		// leftover charge after previous payments (C22)
-		$cfp = 0;
-		if ($this->preIntervalCharge - $this->preIntervalPay > 0) {
+		} else {
+			// leftover charge after previous payments (C22)
 			$cfp = $this->preIntervalCharge - $this->preIntervalPay;
 		}
 
@@ -134,7 +132,7 @@ class VisitIntervalCalculator {
 		$ptn = 0;
 		if ($cfp <= $this->intervalPay) {
 			if ($this->intervalPay - $cfp > $this->intervalCharge) {
-				$ptn = $this->intervalCharge;
+				$ptn = $this->intervalCharge - $pptn;
 			} else {
 				$ptn = $this->intervalPay - $cfp;
 			}
@@ -264,19 +262,6 @@ class VisitIntervalCalculator {
 		return $this->intervalWaiveAmt;
 	}
 
-	/**
-	 * @return number
-	 */
-	public function getPreIntervalWaiveAmt() {
-		return $this->preIntervalWaiveAmt;
-	}
-
-	/**
-	 * @return number
-	 */
-	public function getPreIntervalDiscount() {
-		return $this->preIntervalDiscount;
-	}
 
 	/**
 	 * @return number

@@ -5,3 +5,4 @@ vendor
 .buildpath
 composer.lock
 composer.phar
+.settings/org.eclipse.php.debug.core.Debug_Process_Preferences.prefs
