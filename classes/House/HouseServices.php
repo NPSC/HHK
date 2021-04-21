@@ -432,7 +432,7 @@ class HouseServices {
                         }
 
                         //if deposit needs to be paid
-                        if($visit->getKeyDeposit() == 0 && $resc->getKeyDeposit() > 0){
+                        if($visit->getKeyDeposit() == 0 && $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]) > 0){
                             $returntoVisit = TRUE;
                         }
                         

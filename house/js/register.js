@@ -350,11 +350,6 @@ function saveStatusEvent(idResc, type) {
                         return;
                     }
 
-
-                    if (data.rooms) {
-                        console.log(data.rooms);
-                    }
-
                     if (data.selectr) {
 
                         newSel = $(data.selectr);
@@ -367,8 +362,12 @@ function saveStatusEvent(idResc, type) {
                             $('#hhkroomMsg').text(data.msg).show();
                         }
                     }
-
-
+                    
+                    if (data.rooms) {
+                        rooms = data.rooms;
+                    }else{
+                    	rooms = {};
+                    }
             });
         }
 
@@ -377,12 +376,18 @@ function cgRoom(gname, id, idVisit, span) {
 	var title = 'Change Rooms for ' + gname;
     var buttons = {
         "Change Rooms": function() {
-            saveFees(id, idVisit, span, true, 'register.php');
+        	if($('#selResource').val() > 0){
+            	saveFees(id, idVisit, span, true, 'register.php');
+            }else{
+            	$('#rmDepMessage').text('Choose a room').show();
+            }
         },
         "Cancel": function() {
             $(this).dialog("close");
         }
     };
+    
+    this.rooms = {};
     
     $.post('ws_ckin.php',
         {
@@ -398,7 +403,6 @@ function cgRoom(gname, id, idVisit, span) {
         if (data) {
             try {
                 data = $.parseJSON(data);
-                console.log(data);
             } catch (err) {
                 alert("Parser error - " + err.message);
                 return;
@@ -439,21 +443,25 @@ function cgRoom(gname, id, idVisit, span) {
                 }
             });
             
+            //init room chooser
+            updateRescChooser(data.idReservation, data.numGuests, data.cbRs, data.visitStart, data.end);
+            
             $diagbox.on('change', 'input[name=rbReplaceRoom], input[name=resvChangeDate]', function(){
-            	console.log($(this).val());
             	var startdate = '';
             	if($(this).val() == 'rpl'){
             		startdate = data.visitStart;
-            	}else{
+            	}else if($(this).val() && $(this).val() != 'new'){
             		startdate = $(this).val();
             	}
-            	updateRescChooser(data.idReservation, data.numGuests, data.cbRs, startdate, data.end);
+            	
+            	if(startdate){
+            		updateRescChooser(data.idReservation, data.numGuests, data.cbRs, startdate, data.end);
+            	}
             });
             
             $diagbox.on('change','#selResource', function(){
             	var selResource = $(this).val();
-            	
-            	if(data.deposit == 0 && data.resc[selResource].key > 0){
+            	if(data.deposit == 0 && rooms[selResource] && rooms[selResource].key > 0){
             		$diagbox.find('#rmDepMessage').text('Deposit required').show();
             	}else{
             		$diagbox.find('#rmDepMessage').empty().hide();
