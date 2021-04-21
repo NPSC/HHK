@@ -2016,6 +2016,7 @@ $resultMessage = $alertMsg->createMarkup();
 	<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 	<script type="text/javascript" src="js/rescBuilder.js"></script>
+	<script type="text/javascript" src="../js/form-builder.min.js"></script>
 </head>
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
@@ -2037,6 +2038,7 @@ $resultMessage = $alertMsg->createMarkup();
 				<li><a href="#itemTable">Items</a></li>
 				<li><a href="#taxTable">Taxes</a></li>
 				<li><a href="#formUpload">Forms Upload</a></li>
+				<li><a href="#formBuilder">Form Builder</a></li>
 				<li><a href="#attrTable">Attributes</a></li>
 				<li><a href="#constr">Constraints</a></li>
 			</ul>
@@ -2173,6 +2175,9 @@ $resultMessage = $alertMsg->createMarkup();
 				<p id="rteMsg" style="float: left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
 				<div id="divUploadForm" style="margin-top: 1em;"></div>
 			</div>
+			<div id="formBuilder" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+			
+			</div>
 			<div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
 				<form method="POST" action="ResourceBuilder.php" name="formitem">
 <?php echo $itemTable; ?>
@@ -2224,5 +2229,15 @@ $resultMessage = $alertMsg->createMarkup();
 			style="font-size: .9em;"></div>
 	</div>
 	<!-- div id="contentDiv"-->
+	<script type="text/javascript">
+	
+	$(document).ready(function(){
+	
+		$('#formBuilder').formBuilder();
+	
+	});
+	</script>
+	
+	</script>
 </body>
 </html>
