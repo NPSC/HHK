@@ -290,37 +290,42 @@ DROP procedure IF EXISTS `delete_names_u_tbd`; -- ;
 CREATE PROCEDURE `delete_names_u_tbd`()
 
 BEGIN
-delete na from name_address na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_crypto na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_demog na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_email na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_phone na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_insurance na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_language na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_guest na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_volunteer2 na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from volunteer_hours na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-update donations d left join name n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-update donations d left join name n on d.Assoc_Id = n.idName set d.Assoc_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from relationship na left join name n on (na.idName = n.idName or na.Target_Id = n.idName) where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from w_auth na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from w_users na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from id_securitygroup na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from mcalendar na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from mail_listing na left join name n on na.id = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from fbx na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from member_history na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from reservation_guest na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from reservation na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from hospital_stay na left join name n on na.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from hospital_stay na left join name n on na.idDoctor = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from hospital_stay na left join name n on na.idPcDoctor = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from hospital_stay na left join name n on na.idReferralAgent = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from psg na left join name n on na.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from fin_application na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from guest_token na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-update name n join name n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='' where  n1.Member_Status = 'u' or n1.Member_Status = 'TBD';
-delete from name where name.Member_Status = 'u' or name.Member_Status = 'TBD';
+	delete p from photo p where p.idPhoto = (select Guest_Photo_Id from name_demog nd left join name n on nd.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD')); 
+	delete na from volunteer_hours na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	update donations d left join name n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	update donations d left join name n on d.Assoc_Id = n.idName set d.Assoc_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from relationship na left join name n on (na.idName = n.idName or na.Target_Id = n.idName) where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from w_auth na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from w_users na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from w_user_passwords na left join name n on na.idUser = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from id_securitygroup na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from mcalendar na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from mail_listing na left join name n on na.id = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from fbx na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from member_history na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from reservation_guest na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from reservation na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from hospital_stay na left join name n on na.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	update hospital_stay na left join name n on na.idDoctor = n.idName set na.idDoctor = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	update hospital_stay na left join name n on na.idPcDoctor = n.idName set na.idPcDoctor = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	update hospital_stay na left join name n on na.idReferralAgent = n.idName set na.idReferralAgent = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from fin_application na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from guest_token na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	update name n join name n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='' where  n1.Member_Status = 'u' or n1.Member_Status = 'TBD';
+	delete na from name_guest na where na.idPsg = (select idPsg from psg p left join name n on p.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD')); 
+	delete p from psg p left join name n on p.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	
+	delete na from name_address na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from name_crypto na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from name_demog na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from name_email na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from name_phone na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from name_insurance na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from name_language na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from name_guest na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete na from name_volunteer2 na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	delete from name where name.Member_Status = 'u' or name.Member_Status = 'TBD';
+
 END -- ;
 
 

@@ -119,7 +119,7 @@ class StmtCalc {
 		$this->discount += $visitCalc->getIntervalDiscount();
 		
 		if ($visitCalc->getUnallocatedPayments() > 0) {
-			$this->overPaidVisitIds[] = $idVisit;  // .' $'. number_format($visitCalc->getUnallocatedPayments(), 2);
+			$this->overPaidVisitIds[$idVisit] = 'Amount: $'. number_format($visitCalc->getUnallocatedPayments(), 2);
 			
 		}
 		

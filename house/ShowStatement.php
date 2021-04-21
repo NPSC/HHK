@@ -170,7 +170,7 @@ if (isset($_POST['btnWord'])) {
     $form = "<!DOCTYPE html>"
             . "<html>"
                 . "<head>"
-                    . "<style type='text/css'>" . file_get_contents('css/redmond/jquery-ui.min.css') . "</style>"
+                    . "<style type='text/css'>" . file_get_contents('css/jqui/jquery-ui.min.css') . "</style>"
                     . "<style type='text/css'>" . file_get_contents('css/house.css') . "</style>"
                 . "</head>"
                 . "<body><div class='ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'

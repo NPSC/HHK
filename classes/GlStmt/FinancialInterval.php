@@ -75,7 +75,7 @@ class FinancialInterval {
 				If ($visitId != $r['idVisit'] && $visitId != 0) {
 					// Visit Change
 					
-					$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $record['idVisit']);
+					$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $serialId);
 					
 					// Reset for next visit
 					$visitCalc = new VisitIntervalCalculator();
@@ -293,7 +293,7 @@ class FinancialInterval {
 		}
 		
 		if ($record != NULL) {
-			$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $record['idVisit']);
+			$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $serialId);
 		}
 		
 		return $stmtCalc;
