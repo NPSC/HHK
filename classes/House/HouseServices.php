@@ -205,6 +205,10 @@ class HouseServices {
                 'merchant' => $curResc->getMerchant(),
             );
             $dataArray['deposit'] = $visit->getKeyDeposit();
+            $dataArray['idReservation'] = $r['idReservation'];
+            $dataArray['cbRs'] = $reserv->getConstraints($dbh);
+            $dataArray['numGuests'] = $reserv->getNumberGuests();
+            $dataArray['visitStart'] = $visit->getArrivalDate();
 
         // Pay fees
         } else if ($action == 'pf') {
