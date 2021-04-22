@@ -461,7 +461,7 @@ function cgRoom(gname, id, idVisit, span) {
             
             $diagbox.on('change','#selResource', function(){
             	var selResource = $(this).val();
-            	if(data.deposit == 0 && rooms[selResource] && rooms[selResource].key > 0){
+            	if(rooms[selResource] && data.deposit < rooms[selResource].key){
             		$diagbox.find('#rmDepMessage').text('Deposit required').show();
             	}else{
             		$diagbox.find('#rmDepMessage').empty().hide();
