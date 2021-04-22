@@ -14,6 +14,7 @@ use HHK\Tables\Name\Name_GuestRS;
 use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\House\PSG;
 use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay};
+use HHK\sec\Labels;
 
 /**
  * Description of Family
@@ -503,7 +504,7 @@ class Family {
         $ec = $role->getEmergContactObj($dbh);
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Emergency Contact for Guest' . $ecSearch, array('style'=>'font-weight:bold;'))
+                HTMLContainer::generateMarkup('legend', 'Emergency Contact for ' . Labels::getString('MemberType', 'visitor', 'Guest') . $ecSearch, array('style'=>'font-weight:bold;'))
                 . $ec->createMarkup($uS->guestLookups[GLTableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact()), array('class'=>'hhk-panel')),
                 array('style'=>'float:left; margin-right:3px;'));
 

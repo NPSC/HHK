@@ -602,7 +602,9 @@ function resvManager(initData, options) {
 
                 //call incident report jQuery				
                 iDiv.incidentViewer({
-                    psgId: idPsg
+                    psgId: idPsg,
+                    guestLabel: $('#guestLabel').val(),
+                    visitorLabel: $('#visitorLabel').val()
                 });
 
                 //incident section toggler

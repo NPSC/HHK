@@ -35,7 +35,7 @@ $labels = Labels::getLabels();
 $wListMarkup = '';
 
 // Guest Search markup
-$gMk = AbstractRole::createSearchHeaderMkup('', $labels->getString('MemberType', 'guest', 'Guest').' Search: ', TRUE);
+$gMk = AbstractRole::createSearchHeaderMkup('', $labels->getString('MemberType', 'guest', 'Guest').' or ' . $labels->getString('MemberType', 'patient', 'Patient') . ' Search: ', TRUE);
 $mk1 = $gMk['hdr'];
 
 // Hide guest search?

@@ -12,6 +12,7 @@ use HHK\HTMLControls\{HTMLTable, HTMLContainer};
 use HHK\House\Registration;
 use HHK\Exception\{RuntimeException, PaymentException};
 use HHK\sec\Session;
+use HHK\sec\Labels;
 
 /**
  * Invoice.php
@@ -446,7 +447,7 @@ where
 			) );
 		}
 
-		$rec .= HTMLContainer::generateMarkup ( 'h4', 'Guest', array (
+		$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('memberType', 'visitor', 'Guest'), array (
 				'style' => 'margin-top:10px;'
 		) );
 		$rec .= $this->getGuestAddress ( $dbh, $idGuest );

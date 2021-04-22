@@ -839,7 +839,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                     ($checkinPage == '' ? '' : HTMLTable::makeTh(''))
                     .HTMLTable::makeTh('Primary Guest')
                     .HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'))
-                    .HTMLTable::makeTh('Guests')
+                    .HTMLTable::makeTh($labels->getString('MemberType', 'visitor', 'Guest') . 's')
                     .HTMLTable::makeTh('Arrival Date')
                     .HTMLTable::makeTh('Expected Departure')
                     .HTMLTable::makeTh('Room')

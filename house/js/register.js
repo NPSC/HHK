@@ -457,8 +457,8 @@ $(document).ready(function () {
     // Current Guests
     cgCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false},
-            {data: 'Guest First', title: visitorLabel+' First'},
-            {data: 'Guest Last', title: visitorLabel+' Last'},
+            {data: visitorLabel+' First', title: visitorLabel+' First'},
+            {data: visitorLabel+' Last', title: visitorLabel+' Last'},
             {data: 'Checked In', title: 'Checked In', render: function (data, type) {return dateRender(data, type, dateFormat);}},
             {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
             {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},
@@ -479,8 +479,8 @@ $(document).ready(function () {
     // Reservations
     rvCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false},
-            {data: 'Guest First', title: visitorLabel+' First'},
-            {data: 'Guest Last', title: visitorLabel+' Last'},
+            {data: visitorLabel+' First', title: visitorLabel+' First'},
+            {data: visitorLabel+' Last', title: visitorLabel+' Last'},
             {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
             {data: 'Nights', title: 'Nights', className: 'hhk-justify-c'},
             {data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}},

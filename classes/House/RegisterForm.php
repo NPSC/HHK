@@ -250,7 +250,7 @@ class RegisterForm {
     protected function guestBlock(\PDO $dbh, array $guests, array $relationText, int $primaryGuestId = 0) {
 
         $mkup = "<table style='border-collapse:collapse;border:none'>
-            <tr><td colspan='6' style='border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'><h2>Guests</h2></td></tr>";
+            <tr><td colspan='6' style='border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'><h2>" . Labels::getString('memberType', 'visitor', 'Guest') . "s</h2></td></tr>";
 
         $uS = Session::getInstance();
         $ecRels = $uS->nameLookups[GLTableNames::RelTypes];
@@ -316,7 +316,7 @@ class RegisterForm {
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>". $addr["City"] . ($addr["City"] == "" ? "" : ", ") . $addr["State_Province"] . "  ". $addr["Postal_Code"]. "</p>
   </td>
   <td style='border-top:none;border-left:none; border-bottom:solid windowtext 1.5pt;border-right:none;'>
-  <p class='label'>Relationship to Guest</p>
+  <p class='label'>Relationship to " . Labels::getString('memberType', 'visitor', "Guest") . "</p>
   </td>
   <td style='border-top:none;border-left: none;border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.5pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" . (isset($ecRels[$emrg->getEcRelationship()]) ? $ecRels[$emrg->getEcRelationship()][1] : '') . "</p>
@@ -613,7 +613,7 @@ p.label {
         }
         
         // Title
-        $title = $uS->siteName . " Registration Form for Overnight Guests";
+        $title = $uS->siteName . " Registration Form for Overnight " . $this->labels->getString('MemberType', 'visitor', 'Guest') . "s";
 
         // Vehicles
         if ($uS->TrackAuto) {
