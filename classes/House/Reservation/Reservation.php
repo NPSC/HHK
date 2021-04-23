@@ -642,7 +642,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $expArrDT->setTime(0, 0, 0);
 
             if ($resvRs->Status->getStoredVal() == ReservationStatus::Staying) {
-                $checkinNow = HTMLInput::generateMarkup('Add Guest', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
+                $checkinNow = HTMLInput::generateMarkup('Add ' . Labels::getString('MemberType', 'visitor', 'Guest'), array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
             } else if ($expArrDT->diff($today, TRUE)->days == 0) {
                 $checkinNow .= HTMLInput::generateMarkup('Check-in Now', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
             } else if ($expArrDT->diff($today, TRUE)->days <= $this->reserveData->getResvEarlyArrDays()) {
@@ -667,7 +667,7 @@ where rg.idReservation =" . $r['idReservation']);
                     $name = ', ' . $g['Name_Full'];
                 }
                 if ($g['Primary_Guest'] == 1) {
-                    $names .= HTMLContainer::generateMarkup('span', $name, array('style'=>'font-weight:bold;', 'title'=>'Primary Guest'));
+                    $names .= HTMLContainer::generateMarkup('span', $name, array('style'=>'font-weight:bold;', 'title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')));
                 } else {
                     $names .= HTMLContainer::generateMarkup('span', $name);
                 }

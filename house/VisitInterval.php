@@ -1315,7 +1315,7 @@ $filter->createResoourceGroups($rescGroups, $uS->CalResourceGroupBy);
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
 $cFields[] = array('Visit Id', 'idVisit', 'checked', 'f', 'n', '', array('style'=>'text-align:center;'));
-$cFields[] = array("Primary ".$labels->getString('MemberType', 'guest', 'Guest'), 'idPrimaryGuest', 'checked', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'idPrimaryGuest', 'checked', '', 's', '', array());
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'idPatient', 'checked', '', 's', '', array());
 
 // Patient address.

@@ -442,12 +442,12 @@ where
 
 		// Patient and guest
 		if ($idPatient != $idGuest && $patientName != '') {
-			$rec .= HTMLContainer::generateMarkup ( 'h4', 'Patient:  ' . $patientName, array (
+			$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('memberType', 'patient', 'Patient')  . ':  ' . $patientName, array (
 					'style' => 'margin-top:10px;'
 			) );
 		}
 
-		$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('memberType', 'visitor', 'Guest'), array (
+		$rec .= HTMLContainer::generateMarkup ( 'h4', Labels::getString('memberType', 'primaryGuest', 'Primary Guest'), array (
 				'style' => 'margin-top:10px;'
 		) );
 		$rec .= $this->getGuestAddress ( $dbh, $idGuest );

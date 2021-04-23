@@ -276,7 +276,7 @@ class RegisterForm {
   <p class=MsoNormal align=right style='margin-bottom:0; text-align:right;line-height:normal'>&nbsp;</p>
   </td>
   <td style='width:14%;border-top:solid windowtext 1.5pt; border-left:none;border-bottom:none;border-right:solid windowtext 1pt;'>
-  <p class='label'>" . ($guest->getIdName() == $primaryGuestId ? "Primary Guest": "Name") . "</p>
+  <p class='label'>" . ($guest->getIdName() == $primaryGuestId ? Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'): "Name") . "</p>
   </td>
   <td colspan=2 style='width:30%;border-top:solid windowtext 1.5pt; border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1.5pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>". $name->get_fullName() ."</p>

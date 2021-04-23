@@ -5,6 +5,7 @@ namespace HHK\House\ReserveData\PSGMember;
 use HHK\HTMLControls\HTMLInput;
 use HHK\House\ReserveData\ReserveData;
 use HHK\SysConst\VolMemberType;
+use HHK\sec\Labels;
 
 /**
  * PSGMember.php
@@ -51,7 +52,7 @@ class PSGMember {
             'name'=>'rbPriGuest',
             'id'=>$prefix .'rbPri',
             'data-prefix'=>$prefix,
-            'title'=>'Click to set this person as Primary Guest.',
+            'title'=>'Click to set this person as ' . Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . '.',
             'style'=>'margin-left:5px;',
             'class'=>'hhk-rbPri'
         );

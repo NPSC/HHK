@@ -805,7 +805,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         $noCleaning = '';
 
         // Check-in button text
-        $buttonText = 'Add Guest';
+        $buttonText = 'Add ' . $labels->getString('MemberType', 'visitor', 'Guest');
         if ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate || $reservStatus == ReservationStatus::Waitlist) {
             $buttonText = 'Check In';
         }
@@ -837,7 +837,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
             $tbl->addHeaderTr(
                     ($checkinPage == '' ? '' : HTMLTable::makeTh(''))
-                    .HTMLTable::makeTh('Primary Guest')
+                    .HTMLTable::makeTh($labels->getString('MemberType', 'primaryGuest', 'Primary Guest'))
                     .HTMLTable::makeTh($labels->getString('MemberType', 'patient', 'Patient'))
                     .HTMLTable::makeTh($labels->getString('MemberType', 'visitor', 'Guest') . 's')
                     .HTMLTable::makeTh('Arrival Date')

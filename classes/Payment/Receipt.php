@@ -86,7 +86,7 @@ class Receipt {
 
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+            $tbl->addBodyTr(HTMLTable::makeTd( Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
         $idPriGuest = 0;
@@ -147,7 +147,7 @@ class Receipt {
         $info = self::getVisitInfo($dbh, $invoice);
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
         $idPriGuest = 0;
@@ -197,7 +197,7 @@ class Receipt {
         $info = self::getVisitInfo($dbh, $invoice);
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
         $idPriGuest = 0;
@@ -248,7 +248,7 @@ class Receipt {
         $info = self::getVisitInfo($dbh, $invoice);
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
         $idPriGuest = 0;

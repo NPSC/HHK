@@ -107,3 +107,7 @@ ADD COLUMN `Background_Check_Date` DATE NULL DEFAULT NULL AFTER `Gl_Code_Credit`
 
 -- remove scholarship campaign type
 delete from gen_lookups where `Table_Name` = 'Campaign_Type' and `Code` = 'sch';
+
+-- add primary guest label
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('primaryGuest', 'Primary Guest', 's', 'mt', 'Default: Primary Guest');
+

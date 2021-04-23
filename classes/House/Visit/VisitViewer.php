@@ -378,7 +378,7 @@ class VisitViewer {
             $hdrPgRb = '';
             if ($r["Visit_Status"] == VisitStatus::CheckedIn && count($rows) > 1) {
 
-                $pgAttrs = array('name'=>'rbPriGuest', 'type'=>'radio', 'class'=>'hhk-feeskeys', 'title'=>'Make the Primary Guest');
+                $pgAttrs = array('name'=>'rbPriGuest', 'type'=>'radio', 'class'=>'hhk-feeskeys', 'title'=>'Make the ' . Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'));
 
                 // Only set the first instance of any guest.
                 if ($r['idName'] == $idPrimaryGuest && isset($priGuests[$idPrimaryGuest]) === FALSE) {
@@ -387,7 +387,7 @@ class VisitViewer {
                 }
 
                 $pgRb = HTMLInput::generateMarkup($r['idName'], $pgAttrs);
-                $hdrPgRb = HTMLTable::makeTh('Pri', array('title'=>'Primary Guest'));
+                $hdrPgRb = HTMLTable::makeTh('Pri', array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')));
             }
 
             $stDayDT = new \DateTime($r['Span_Start_Date']);
@@ -559,7 +559,7 @@ class VisitViewer {
             $th .= HTMLTable::makeTh($ckOutTitle) . HTMLTable::makeTh('Nights');
 
             // Make add guest button
-            $guestAddButton = HTMLInput::generateMarkup('Add Guest...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-rid'=>$idResv, 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
+            $guestAddButton = HTMLInput::generateMarkup('Add ' . $labels->getString('MemberType', 'visitor', 'Guest') . '...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-rid'=>$idResv, 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
 
         }
 
@@ -585,7 +585,7 @@ class VisitViewer {
         $dvTable = HTMLContainer::generateMarkup('div', $sTable->generateMarkup(array('id' => 'tblStays', 'style'=>'width:99%')), array('style'=>'max-height:150px;overflow:auto'));
 
 
-        $titleMkup = HTMLContainer::generateMarkup('span', 'Guests', array('style'=>'float:left;'));
+        $titleMkup = HTMLContainer::generateMarkup('span', $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('style'=>'float:left;'));
 
 
 

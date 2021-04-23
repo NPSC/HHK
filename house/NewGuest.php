@@ -38,7 +38,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     // get session instance
     $uS = Session::getInstance();
     
-    $pgTitle = 'Primary'.$labels->getString('MemberType', 'guest', 'Guest');
+    $pgTitle = $labels->getString('MemberType', 'primaryGuest', 'Primary Guest');
 
     $query = "SELECT
     s.idName,
@@ -244,7 +244,7 @@ $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20', array()
 $cFields[] = array("Middle", 'Name_Middle', 'checked', '', 'string', '20', array());
 $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20', array());
 $cFields[] = array("Suffix", 'Name_Suffix', 'checked', '', 'string', '15', array());
-$cFields[] = array('Primary '.$labels->getString('MemberType', 'guest', 'Guest'), 'Primary', 'checked', '', 'string', '20', array());
+$cFields[] = array($labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'Primary', 'checked', '', 'string', '20', array());
 
     $pFields = array('Address', 'City');
     $pTitles = array('Address', 'City');
@@ -266,7 +266,7 @@ $cFields[] = array("First Stay", 'First Stay', 'checked', '', 'MM/DD/YYYY', '15'
 $cFields[] = array("Visit End", 'Visit End', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Relation", 'Relationship', 'checked', '', 'string', '20', array());
-$cFields[] = array($labels->getString('MemberType', 'patient', 'Patient')." Group Id", 'idPsg', 'checked', '', 'string', '15', array());
+$cFields[] = array($labels->getString('GuestEdit', 'psgTab', 'Patient Support Group')."  Id", 'idPsg', 'checked', '', 'string', '15', array());
 
 if (count($filter->getAList()) > 0) {
     $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital')." / Assoc", 'hospitalAssoc', 'checked', '', 'string', '20', array());

@@ -364,7 +364,7 @@ class Family {
         // Name Header
         $th = HTMLContainer::generateMarkup('tr',
                 HTMLTable::makeTh('Staying')
-                . HTMLTable::makeTh('PG', array('title'=>'Primary Guest'))
+                . HTMLTable::makeTh('PG', array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')))
                 . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
                 . HTMLTable::makeTh('Phone')
                 . HTMLTable::makeTh($AdrCopyDownIcon));

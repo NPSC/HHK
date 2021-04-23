@@ -217,7 +217,7 @@ if ($idPsg > 0) {
 
         }
 
-        $psgmkup = HTMLContainer::generateMarkup('h3', 'Choose ' . $labels->getString('MemberType', 'patient', 'Patient') . ' Support Group') .$tbl->generateMarkup();
+        $psgmkup = HTMLContainer::generateMarkup('h3', 'Choose ' . $labels->getString('GuestEdit', 'psgTab', 'Patient Support Group')) .$tbl->generateMarkup();
         $guestTabIndex = 1;
 
     } else if (count($ngRss) == 1) {
