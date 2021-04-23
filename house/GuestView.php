@@ -362,7 +362,7 @@ if ($uS->TrackAuto) {
                                     <th>Model</th>
                                     <th>Color</th>
                                     <th>Registered</th>
-                                    <th>Patient</th>
+                                    <th><?php echo $labels->getString('memberType', 'patient', 'Patient'); ?></th>
                                     <th>Room</th>
                                 </tr>
                             </thead>

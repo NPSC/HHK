@@ -349,7 +349,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $sTbl->addBodyTr(HTMLTable::makeTd('Total ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numAllGuests));
 
 
-        $statsTable = HTMLContainer::generateMarkup('h3', $uS->siteName . 'New ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's Report Statistics')
+        $statsTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' New ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's Report Statistics')
                 . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
                 . $sTbl->generateMarkup();
 
