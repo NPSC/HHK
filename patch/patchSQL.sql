@@ -110,4 +110,4 @@ delete from gen_lookups where `Table_Name` = 'Campaign_Type' and `Code` = 'sch';
 
 -- add primary guest label
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('primaryGuest', 'Primary Guest', 's', 'mt', 'Default: Primary Guest');
-
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('primaryGuestAbrev', 'PG', 's', 'mt', 'Default: PG');

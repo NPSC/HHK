@@ -33,7 +33,7 @@ class FamilyAddGuest extends Family {
         // Name Header
         $th = HTMLContainer::generateMarkup('tr',
             HTMLTable::makeTh('Staying')
-            . HTMLTable::makeTh('PG', array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')))
+            . HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuestAbrev', 'PG'), array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')))
             . AbstractRoleMember::createThinMarkupHdr($rData->getPatLabel(), FALSE, $rData->getShowBirthDate())
             . HTMLTable::makeTh('Phone')
             . HTMLTable::makeTh($AdrCopyDownIcon));
