@@ -207,7 +207,7 @@ if ($cmd){
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
-        <script type="text/javascript" src="js/missingDemog.js"></script>
+        <script type="text/javascript" src="<?php echo MISSINGDEMOG_JS; ?>"></script>
         <script type="text/javascript">
     $(document).ready(function() {
         "use strict";

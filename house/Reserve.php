@@ -285,6 +285,6 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
-        <script type="text/javascript" src="js/reserve.js"></script>
+        <script type="text/javascript" src="<?php echo RESERVE_JS; ?>"></script>
     </body>
 </html>

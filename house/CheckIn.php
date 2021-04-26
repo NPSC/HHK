@@ -118,6 +118,6 @@ if ($stayingMarkup == '') {
             
             <input type="hidden" id="dateFormat" value ="<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM D YYYY"); ?>" />
         </div>  <!-- div id="contentDiv"-->
-        <script type="text/javascript" src="js/checkin.js"></script>
+        <script type="text/javascript" src="<?php echo CHECKIN_JS; ?>"></script>
     </body>
 </html>

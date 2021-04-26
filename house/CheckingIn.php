@@ -238,7 +238,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
 
-        <script type="text/javascript" src='js/checkingIn.js'></script>
+        <script type="text/javascript" src='<?php echo CHECKINGIN_JS; ?>'></script>
 
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
     </body>
