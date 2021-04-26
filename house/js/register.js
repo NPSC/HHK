@@ -296,17 +296,190 @@ function saveStatusEvent(idResc, type) {
         $('#statEvents').dialog('close');
     });
 }
+
+        function updateRescChooser(idReservation, numberGuests, cbRs, arrivalDate, departureDate) {
+
+            var idResc, $selResource = $('#selResource');
+			var omitSelf = true;
+			
+            if ($selResource.length === 0) {
+                return;
+            }
+
+            idResc = $selResource.find('option:selected').val();
+
+            $selResource.prop('disabled', true);
+            $('#hhk-roomChsrtitle').addClass('hhk-loading');
+            $('#hhkroomMsg').text('').hide();
+
+            cbRS = {};
+
+            $('input.hhk-constraintsCB:checked').each(function () {
+                cbRS[$(this).data('cnid')] = 'ON';
+            });
+
+            $.post('ws_ckin.php',
+                {  //parameters
+                    cmd: 'newConstraint',
+                    rid: idReservation,
+                    numguests: numberGuests,
+                    expArr: arrivalDate,
+                    expDep: departureDate,
+                    idr: idResc,
+                    cbRS:cbRS,
+                    omsf: omitSelf
+                },
+                function(data) {
+                    var newSel;
+
+                    $selResource.prop('disabled', false);
+                    $('#hhk-roomChsrtitle').removeClass('hhk-loading');
+
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert("Parser error - " + err.message);
+                        return;
+                    }
+
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.location.assign(data.gotopage);
+                        }
+                        flagAlertMessage(data.error, 'error');
+                        return;
+                    }
+
+                    if (data.selectr) {
+
+                        newSel = $(data.selectr);
+                        $selResource.children().remove();
+
+                        newSel.children().appendTo($selResource);
+                        $selResource.val(data.idResource).change();
+
+                        if (data.msg && data.msg !== '') {
+                            $('#hhkroomMsg').text(data.msg).show();
+                        }
+                    }
+                    
+                    if (data.rooms) {
+                        rooms = data.rooms;
+                    }else{
+                    	rooms = {};
+                    }
+            });
+        }
+
 function cgRoom(gname, id, idVisit, span) {
+	var action = 'cr';
+	var title = 'Change Rooms for ' + gname;
     var buttons = {
         "Change Rooms": function() {
-            saveFees(id, idVisit, span, true, 'register.php');
+        	if($('#selResource').val() > 0){
+            	saveFees(id, idVisit, span, true, 'register.php');
+            }else{
+            	$('#rmDepMessage').text('Choose a room').show();
+            }
         },
         "Cancel": function() {
             $(this).dialog("close");
         }
     };
-    viewVisit(id, idVisit, buttons, 'Change Rooms for ' + gname, 'cr', span);
+    
+    this.rooms = {};
+    
+    $.post('ws_ckin.php',
+        {
+            cmd: 'visitFees',
+            idVisit: idVisit,
+            //idGuest: idGuest,
+            action: action,
+            span: span,
+            //ckoutdt: ckoutDates
+        },
+    function(data) {
+        "use strict";
+        if (data) {
+            try {
+                data = $.parseJSON(data);
+            } catch (err) {
+                alert("Parser error - " + err.message);
+                return;
+            }
+            if (data.error) {
+                if (data.gotopage) {
+                    window.location.assign(data.gotopage);
+                    return;
+                }
+                flagAlertMessage(data.error, 'error');
+                return;
+
+            }
+
+            var $diagbox = $('#pmtRcpt');
+
+            $diagbox.children().remove();
+            $diagbox.append($('<div class="hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
+            
+            $diagbox.find('.ckdate').datepicker({
+                yearRange: '-07:+01',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                numberOfMonths: 1,
+                maxDate: 0,
+                dateFormat: 'M d, yy',
+                onSelect: function() {
+                    this.lastShown = new Date().getTime();
+                },
+                beforeShow: function() {
+                    var time = new Date().getTime();
+                    return this.lastShown === undefined || time - this.lastShown > 500;
+                },
+                onClose: function () {
+                	$('#rbReplaceRoomnew').attr('checked','checked');
+                    $(this).change();
+                }
+            });
+            
+            //init room chooser
+            updateRescChooser(data.idReservation, data.numGuests, data.cbRs, data.visitStart, data.end);
+            
+            $diagbox.on('change', 'input[name=rbReplaceRoom], input[name=resvChangeDate]', function(){
+            	var startdate = '';
+            	if($(this).val() == 'rpl'){
+            		startdate = data.visitStart;
+            	}else if($(this).val() && $(this).val() != 'new'){
+            		startdate = $(this).val();
+            	}
+            	
+            	if(startdate){
+            		updateRescChooser(data.idReservation, data.numGuests, data.cbRs, startdate, data.end);
+            	}
+            });
+            
+            $diagbox.on('change','#selResource', function(){
+            	var selResource = $(this).val();
+            	if(rooms[selResource] && data.deposit < rooms[selResource].key){
+            		$diagbox.find('#rmDepMessage').text('Deposit required').show();
+            	}else{
+            		$diagbox.find('#rmDepMessage').empty().hide();
+            	}
+            });
+            
+            $diagbox.dialog('option', 'title', title);
+            $diagbox.dialog('option', 'width', '400px');
+            $diagbox.dialog('option', 'buttons', buttons);
+            $diagbox.dialog('open');
+            
+        }
+    }
+    );       
 }
+
+
+
 function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta) {
     $.post('ws_ckin.php',
             {

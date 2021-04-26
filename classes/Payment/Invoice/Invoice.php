@@ -35,6 +35,7 @@ class Invoice {
 	protected $amountToPay;
 	protected $delegatedInvoiceNumber;
 	protected $delegatedStatus;
+	protected $tax_exempt;
 	function __construct(\PDO $dbh, $invoiceNumber = '') {
 		$this->invRs = new InvoiceRS ();
 		$this->idInvoice = 0;
@@ -42,6 +43,7 @@ class Invoice {
 		$this->invoiceNum = '';
 		$this->delegatedStatus = '';
 		$this->delegatedInvoiceNumber = '';
+		$this->tax_exempt = 0;
 
 		if ($invoiceNumber != '') {
 
@@ -148,6 +150,7 @@ WHERE
 		$this->idInvoice = $this->invRs->idInvoice->getStoredVal ();
 		$this->delegatedStatus = $row ['Delegated_Invoice_Status'];
 		$this->delegatedInvoiceNumber = $row ['Delegated_Invoice_Number'];
+		$this->tax_exempt = $this->invRs->tax_exempt->getStoredVal();
 	}
 	public static function getLineCount(\PDO $dbh, $idInvoice) {
 		$count = 0;
@@ -430,7 +433,7 @@ where
 		) );
 
 		$billTbl = new HTMLTable ();
-		$billTbl->addBodyTr ( HTMLTable::makeTd ( 'Bill To' ) );
+		$billTbl->addBodyTr ( HTMLTable::makeTd ( HTMLContainer::generateMarkup('h4', 'Bill To')));
 		$billTbl->addBodyTr ( HTMLTable::makeTd ( $this->getBillToAddress ( $dbh, $this->getSoldToId () )->generateMarkup () ) );
 		$rec .= $billTbl->generateMarkup ( array (
 				'style' => 'float:right; margin-right:40px;'
@@ -727,7 +730,7 @@ where
 
 		EditRS::updateStoredVals ( $this->invRs );
 	}
-	public function newInvoice(\PDO $dbh, $amount, $soldToId, $idGroup, $orderNumber, $suborderNumber, $notes, $invoiceDate, $username, $description = '') {
+	public function newInvoice(\PDO $dbh, $amount, $soldToId, $idGroup, $orderNumber, $suborderNumber, $notes, $invoiceDate, $username, $description = '', $tax_exempt = 0) {
 		$invRs = new InvoiceRs ();
 		$invRs->Amount->setNewVal ( $amount );
 		$invRs->Balance->setNewVal ( $amount );
@@ -740,7 +743,8 @@ where
 		$invRs->Invoice_Date->setNewVal ( $invoiceDate );
 		$invRs->Status->setNewVal ( InvoiceStatus::Unpaid );
 		$invRs->Description->setNewVal ( $description );
-
+        $invRs->tax_exempt->setNewVal($tax_exempt);
+		
 		$invRs->Updated_By->setNewVal ( $username );
 		$invRs->Last_Updated->setNewVal ( date ( 'Y-m-d H:i:s' ) );
 

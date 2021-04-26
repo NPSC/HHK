@@ -3,11 +3,13 @@ namespace HHK\House\GLCodes;
 
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
+use HHK\AuditLog\NameLog;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\VolMemberType;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameDemogRS;
+use HHK\sec\Session;
 
 class GLParameters {
     
@@ -64,6 +66,8 @@ class GLParameters {
     
     public function saveParameters(\PDO $dbh, $post, $prefix = 'gl_') {
         
+        $uS = Session::getInstance();
+        
         foreach ($this->glParms as $g) {
             
             if (isset($post[$prefix . $g[0]])) {
@@ -110,7 +114,11 @@ class GLParameters {
                     $nameDemogRS->Tax_Exempt->setNewVal(0);
                 }
             
-                EditRS::update($dbh, $nameDemogRS, [$nameDemogRS->idName]);
+                $affectedRows = EditRS::update($dbh, $nameDemogRS, [$nameDemogRS->idName]);
+                
+                if ($affectedRows > 0) {
+                    NameLog::writeUpdate($dbh, $nameDemogRS, $nameDemogRS->idName->getStoredVal(), $uS->username);
+                }
             }
             
         }

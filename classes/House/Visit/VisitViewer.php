@@ -740,15 +740,20 @@ class VisitViewer {
                 $showSubTotal = TRUE;
 
                 foreach ($curAccount->getCurentTaxItems(ItemId::Lodging) as $t) {
-
+                    $taxedRoomFees = $curAccount->getRoomCharge() + $curAccount->getTotalDiscounts() - $curAccount->getTaxExemptRoomFees();
+                    
                     if ($curAccount->getRoomFeeBalance() < 0) {
-                        $taxAmt = $t->getTaxAmount($curAccount->getRoomCharge() + $curAccount->getTotalDiscounts());
+                        if($taxedRoomFees > 0){
+                            $taxAmt = $t->getTaxAmount($taxedRoomFees);
+                        }else{
+                            $taxAmt = 0;
+                        }
                     } else {
                         $taxAmt = $curAccount->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($curAccount->getRoomFeeBalance());
                     }
 
                     $tbl2->addBodyTr(
-                        HTMLTable::makeTd($t->getTaxingItemDesc() .  ' (' . $t->getTextPercentTax() . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                        HTMLTable::makeTd($t->getTaxingItemDesc() .  ' (' . $t->getTextPercentTax() . ' of $' . number_format($taxedRoomFees, 2) . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
                         . HTMLTable::makeTd('$' . number_format($taxAmt, 2), array('style'=>'text-align:right;font-size:small;'))
                     );
                 }
@@ -875,6 +880,7 @@ class VisitViewer {
                         , array(
                             'id'=>'spnCfBalDue',
                         		'data-rmbal'=> number_format($curAccount->getRoomFeeBalance(), 2, '.', ''),
+                                'data-taxedrmbal'=> number_format($curAccount->getTaxedRoomFeeBalance(), 2, '.', ''),
                             'data-vfee'=>number_format($curAccount->getVfeeBal(), 2, '.', ''),
                             'data-totbal'=>number_format($curAccount->getDueToday(), 2, '.', '')))
                         , $balAttr)

@@ -1,5 +1,5 @@
 <?php
-namespace HHK\ Tables\Visit;
+namespace HHK\Tables\Visit;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer, DbDecimalSanitizer};

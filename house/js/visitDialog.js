@@ -567,7 +567,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
             setupPayments($('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
 
-            if ($('table#moveTable').length > 0) {
+            /* if ($('table#moveTable').length > 0) {
 
                 // Change Rooms control - only used for visit editor
                 $('table#moveTable').on('change', 'select', function() {
@@ -644,7 +644,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                     }
                 });
             }
-    
+    		*/
     
             // Financial Application
             var $btnFapp = $('#btnFapp');
@@ -895,8 +895,30 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 return;
             }
 
-            $('#keysfees').dialog("close");
-
+			if(data.success && data.openvisitviewer){
+				$('#pmtRcpt').dialog("close");
+				//load visit dialog
+            	var buttons = {
+            		"Show Statement": function() {
+                		window.open('ShowStatement.php?vid=' + idVisit, '_blank');
+            		},
+            		"Show Registration Form": function() {
+                		window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + visitSpan, '_blank');
+            		},
+            		"Save": function() {
+                		saveFees(idGuest, idVisit, visitSpan, false, 'register.php');
+            		},
+            		"Cancel": function() {
+                		$(this).dialog("close");
+            		}
+        		};
+         		
+         		viewVisit(idGuest, idVisit, buttons, 'Edit Visit #' + idVisit + '-' + visitSpan, '', visitSpan);
+			}else{
+            	$('#keysfees').dialog("close");
+            	$('#pmtRcpt').dialog("close");
+			}
+			
             paymentRedirect(data, $('#xform'));
 
             if (typeof refreshdTables !== 'undefined') {

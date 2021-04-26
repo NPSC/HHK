@@ -344,9 +344,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
         $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start)) . ' thru ' . date('M j, Y', strtotime($end))));
 
         if ($useVisitDates) {
-            $whDates = " and DATE(v.Arrival_Date) < DATE('$end') and ifnull(DATE(v.Actual_Departure), DATE(v.Expected_Departure)) >= DATE('$start') ";
+            $whDates = " and DATE(v.Arrival_Date) <= DATE('$end') and ifnull(DATE(v.Actual_Departure), DATE(v.Expected_Departure)) >= DATE('$start') ";
         } else {
-            $whDates = " and DATE(`i`.`Invoice_Date`) < DATE('$end') and DATE(`i`.`Invoice_Date`) >= DATE('$start') ";
+            $whDates = " and DATE(`i`.`Invoice_Date`) <= DATE('$end') and DATE(`i`.`Invoice_Date`) >= DATE('$start') ";
         }
 
 

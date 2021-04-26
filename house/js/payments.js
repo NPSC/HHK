@@ -365,7 +365,8 @@ function amtPaid() {
         totReturnPreTax = 0,
         isChdOut = isCheckedOut,
         roomBalDue = parseFloat($('#spnCfBalDue').data('rmbal')),
-//        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal')),
+        taxedRoomBalDue = parseFloat($('#spnCfBalDue').data('taxedrmbal')),
+        totalBalDue = parseFloat($('#spnCfBalDue').data('totbal')),
         $taxingItems = $('.hhk-TaxingItem.hhk-applyTax');
 
     if (isNaN(roomBalDue)) {
@@ -374,7 +375,11 @@ function amtPaid() {
 
         $taxingItems.each(function () {
             var rate = parseFloat($(this).data('taxrate'));
-            roomBalTaxDue += roundTo(roomBalDue * rate, 2);
+            if(roomBalDue < 0){ // if room bal is credit
+            	roomBalTaxDue += roundTo(taxedRoomBalDue * rate, 2, 'ceil');
+            }else{
+            	roomBalTaxDue += roundTo(roomBalDue * rate, 2);
+            }
         });
     }
 
@@ -557,6 +562,7 @@ function amtPaid() {
             $('.hhk-GuestCredit').hide();
             $('.hhk-RoomCharge').show();
         } else {
+        	//totRmBalDue = totalBalDue;
             p.guestCredit.val(totRmBalDue.toFixed(2).toString());
             $('.hhk-RoomCharge').hide();
             $('.hhk-GuestCredit').show();
