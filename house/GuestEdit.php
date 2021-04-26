@@ -217,7 +217,7 @@ if ($idPsg > 0) {
 
         }
 
-        $psgmkup = HTMLContainer::generateMarkup('h3', 'Choose ' . $labels->getString('MemberType', 'patient', 'Patient') . ' Support Group') .$tbl->generateMarkup();
+        $psgmkup = HTMLContainer::generateMarkup('h3', 'Choose ' . $labels->getString('GuestEdit', 'psgTab', 'Patient Support Group')) .$tbl->generateMarkup();
         $guestTabIndex = 1;
 
     } else if (count($ngRss) == 1) {
@@ -960,6 +960,6 @@ $uS->guestId = $id;
             var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
             var useDocUpload = '<?php echo $uS->UseDocumentUpload; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js?t=6"></script>
+        <script type="text/javascript" src="js/guestload.js?t=6"></script>
     </body>
 </html>

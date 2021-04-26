@@ -281,7 +281,7 @@ if ($checkingIn == '') {
 	var inCols = [
                 {
                     'data': 'Primary Guest',
-                    'title': 'Primary <?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>',
+                    'title': '<?php echo $labels->getString('MemberType', 'primaryGuest', 'Primary Guest'); ?>',
                     'searchable': true,
                     'sortable': true
                 },

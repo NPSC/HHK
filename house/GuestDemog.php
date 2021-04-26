@@ -6,6 +6,7 @@ use HHK\Tables\Name\NameRS;
 use HHK\Tables\Name\NameDemogRS;
 use HHK\Tables\EditRS;
 use HHK\AuditLog\NameLog;
+use HHK\sec\Labels;
 
 /**
  * GiestDemog.php
@@ -33,7 +34,7 @@ $whDemos = '';
 $columns = array(
             array("db"=>'idName', "dt"=>"id"),
             array("db"=>'Name_Full', "dt"=>"Name"),
-            array("db"=>'Patient_Name', "dt"=>"Patient Name")
+            array("db"=>'Patient_Name', "dt"=>Labels::getString('memberType', 'patient', 'Patient') . " Name")
            );
 
 foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {

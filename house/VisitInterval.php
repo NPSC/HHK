@@ -1315,7 +1315,7 @@ $filter->createResoourceGroups($rescGroups, $uS->CalResourceGroupBy);
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
 $cFields[] = array('Visit Id', 'idVisit', 'checked', 'f', 'n', '', array('style'=>'text-align:center;'));
-$cFields[] = array("Primary ".$labels->getString('MemberType', 'guest', 'Guest'), 'idPrimaryGuest', 'checked', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'idPrimaryGuest', 'checked', '', 's', '', array());
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'idPatient', 'checked', '', 's', '', array());
 
 // Patient address.
@@ -1417,7 +1417,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
         $cFields[] = array('Tax Charged', 'taxcgd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
 
-    $cFields[] = array($labels->getString('MemberType', 'guest', 'Guest')." Paid", 'gpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+    $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Paid", 'gpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     $cFields[] = array("3rd Party Paid", 'thdpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     $cFields[] = array("House Paid", 'hpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     $cFields[] = array("Lodging Paid", 'totpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));

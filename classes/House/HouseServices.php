@@ -453,7 +453,7 @@ class HouseServices {
                         $resv->setIdGuest($newPg);
                         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
-                        $reply .= 'Primary Guest Id updated.  ';
+                        $reply .= Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Id updated.  ';
                     }
                 }
 

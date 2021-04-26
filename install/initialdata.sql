@@ -691,6 +691,7 @@ INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description
 ('patient','Patient','s','mt','','Default: Patient'),
 ('guest','Guest','s','mt','','Default: Guest'),
 ('visitor','Guest','s','mt','','Default: Guest'),
+('primaryGuest', 'Primary Guest', 's', 'mt', 'Default: Primary Guest'),
 
 ('reservationTab','Reservations','s','g','',''),
 ('reservationTitle','Reservation','s','g','',''),
