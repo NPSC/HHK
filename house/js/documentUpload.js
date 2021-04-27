@@ -13,14 +13,17 @@
             rid: 0,
             serviceURL: 'ws_resc.php',
             newLabel: 'New Document',
-            guestLabel: 'Guest',
+            visitorLabel: 'Guest',
             tableAttrs: {
                 class: 'display compact',
                 width: '100%'
             },
             alertMessage: function (text, type) {},
+        };
 
-            dtCols: [
+        var settings = $.extend(true, {}, defaults, options);
+
+		settings.dtCols =  [
                 {
                     "targets": [0],
                     title: "Actions",
@@ -41,7 +44,7 @@
                 },
                 {
                     "targets": [2],
-                    title: "Guest",
+                    title: settings.visitorLabel,
                     searchable: true,
                     sortable: true,
                     data: "Guest"
@@ -72,10 +75,7 @@
                         return createDownload(data, row);
                     }
                 },
-            ]
-        };
-
-        var settings = $.extend(true, {}, defaults, options);
+            ];
 
         var $wrapper = $(this);
         $wrapper.uploader = uploader;

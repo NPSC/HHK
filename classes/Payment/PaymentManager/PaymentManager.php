@@ -461,7 +461,8 @@ class PaymentManager {
                     $notes,
                     $payDate,
                     $username,
-                    $desc
+                    $desc,
+                    $this->pmp->getInvoicePayorTaxExempt()
             );
         }
 

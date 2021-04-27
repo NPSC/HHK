@@ -1,5 +1,5 @@
 <?php
-namespace HHK\ Tables\Registration;
+namespace HHK\Tables\Registration;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer, DbDecimalSanitizer};

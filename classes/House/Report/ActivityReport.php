@@ -39,7 +39,7 @@ class ActivityReport {
         $visitIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open Visit Viewer'></span>";
 
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh("Room") . HTMLTable::makeTh("Guest") . HTMLTable::makeTh("Action") . HTMLTable::makeTh("Date") . HTMLTable::makeTh("By"));
+        $tbl->addHeaderTr(HTMLTable::makeTh("Room") . HTMLTable::makeTh(Labels::getString('MemberType', 'visitor', 'Guest')) . HTMLTable::makeTh("Action") . HTMLTable::makeTh("Date") . HTMLTable::makeTh("By"));
 
 
         foreach ($rows as $r) {
@@ -153,7 +153,7 @@ class ActivityReport {
         $reservId = 0;
         $reservIcon = "<span class='ui-icon ui-icon-folder-open' style='float: left; margin-right: .3em;' title='Open Reservtion Viewer'></span>";
         $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh("Room") . HTMLTable::makeTh("Guest") . HTMLTable::makeTh("Action") . HTMLTable::makeTh("Date") . HTMLTable::makeTh("By"));
+        $tbl->addHeaderTr(HTMLTable::makeTh("Room") . HTMLTable::makeTh(Labels::getString('MemberType', 'visitor', 'Guest')) . HTMLTable::makeTh("Action") . HTMLTable::makeTh("Date") . HTMLTable::makeTh("By"));
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $logData = array();

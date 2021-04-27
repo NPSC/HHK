@@ -11,6 +11,7 @@ use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
 use HHK\Tables\EditRS;
 use HHK\Tables\Visit\{StaysRS, VisitRS};
+use HHK\sec\Labels;
 
 /**
  * Description of CheckedoutReservation
@@ -68,7 +69,7 @@ class CheckedoutReservation extends CheckingIn {
         // Room Chooser
         $roomChooser = new RoomChooser($dbh, $resv, 0, $this->reserveData->getSpanStartDT(), $this->reserveData->getSpanEndDT());
         
-        $resvSectionHeaderPrompt = 'Add Guests; ';
+        $resvSectionHeaderPrompt = 'Add ' . Labels::getString('MemberType', 'visitor', 'Guest') . 's; ';
         
         // Calculate room occupation
         $occs = 0;

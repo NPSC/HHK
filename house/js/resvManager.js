@@ -5,6 +5,7 @@ function resvManager(initData, options) {
     var patLabel = initData.patLabel;
     var visitorLabel = initData.visitorLabel;
     var guestLabel = initData.guestLabel;
+    var primaryGuestLabel = initData.primaryGuestLabel;
     var resvTitle = initData.resvTitle;
     var saveButtonLabel = initData.saveButtonLabel;
     var patBirthDate = initData.patBD;
@@ -602,7 +603,9 @@ function resvManager(initData, options) {
 
                 //call incident report jQuery				
                 iDiv.incidentViewer({
-                    psgId: idPsg
+                    psgId: idPsg,
+                    guestLabel: $('#guestLabel').val(),
+                    visitorLabel: $('#visitorLabel').val()
                 });
 
                 //incident section toggler
@@ -1025,8 +1028,8 @@ function resvManager(initData, options) {
                }
 
             } else if (numPriGuests === 0) {
-                $pWarning.text('Set one ' + guestLabel + ' as primary ' + guestLabel + '.').show();
-                flagAlertMessage('Set one ' + guestLabel + ' as primary ' + guestLabel + '.', 'alert', $pWarning);
+                $pWarning.text('Set one ' + visitorLabel + ' as ' + primaryGuestLabel + '.').show();
+                flagAlertMessage('Set one ' + visitorLabel + ' as ' + primaryGuestLabel + '.', 'alert', $pWarning);
                 $("input.hhk-rbPri").parent().addClass('ui-state-error');
                 return false;
             }
@@ -1112,7 +1115,7 @@ function resvManager(initData, options) {
 					// Check guest birthdate
                     if (gstBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
                         $('#' + p + 'txtBirthDate').addClass('ui-state-error');
-                        flagAlertMessage(guestLabel + ' is missing the Birth Date.', 'alert', $pWarning);
+                        flagAlertMessage(visitorLabel + ' is missing the Birth Date.', 'alert', $pWarning);
                         openSection(true);
                         return false;
                     } else {

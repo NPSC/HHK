@@ -139,7 +139,7 @@ $(document).ready(function () {
     if(useDocUpload){
     	//doc uploader
     	$('#vDocsContent').docUploader({
-    		guestLabel: memData.guestLabel,
+    		visitorLabel: memData.visitorLabel,
         	guestId: memData.id,
         	psgId: memData.idPsg,
         	alertMessage: function(text, type) {

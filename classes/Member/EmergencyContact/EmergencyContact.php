@@ -6,6 +6,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\SysConst\RelLinkType;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\EmergContactRS;
+use HHK\sec\Labels;
 
 /**
  * EmergencyContact.php
@@ -123,7 +124,7 @@ class EmergencyContact implements EmergencyContactInterface {
         $markup->addBodyTr(HTMLTable::makeTd('Last Name', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEcNameLast(), array('name'=>$idPrefix.'txtEmrgLast', 'size'=>'14'))));
         $markup->addBodyTr(HTMLTable::makeTd('Phone', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEcPhone(), array('name'=>$idPrefix.'txtEmrgPhn', 'class'=>'hhk-phoneInput', 'size'=>'14'))));
         $markup->addBodyTr(HTMLTable::makeTd('Alternate', array('class'=>'tdlabel')) . HTMLTable::makeTd(HTMLInput::generateMarkup($this->getEcAltPhone(), array('name'=>$idPrefix.'txtEmrgAlt', 'class'=>'hhk-phoneInput', 'size'=>'14'))));
-        $markup->addBodyTr(HTMLTable::makeTd('Relationship to Guest', array('class'=>'tdlabel')) . HTMLTable::makeTd(
+        $markup->addBodyTr(HTMLTable::makeTd('Relationship to ' . Labels::getString('MemberType', 'visitor', 'Guest'), array('class'=>'tdlabel')) . HTMLTable::makeTd(
                 HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($relOptions), $this->getEcRelationship()), array('name'=>$idPrefix."selEmrgRel"))));
 
         $attr = array('type'=>'checkbox', 'name'=>$idPrefix.'cbEmrgLater', 'data-prefix'=>$idPrefix, 'class'=>'hhk-EmergCb');

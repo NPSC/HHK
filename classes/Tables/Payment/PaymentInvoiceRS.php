@@ -1,5 +1,5 @@
 <?php
-namespace HHK\ Tables\Payment;
+namespace HHK\Tables\Payment;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbDecimalSanitizer, DbDateSanitizer};

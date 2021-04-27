@@ -45,6 +45,7 @@ use HHK\Tables\Visit\StaysRS;
 use HHK\Exception\PaymentException;
 use HHK\sec\SecurityComponent;
 use HHK\Tables\Visit\Visit_LogRS;
+use HHK\House\Resource\RoomResource;
 
 /**
  * HouseServices.php
@@ -191,9 +192,23 @@ class HouseServices {
             }
 
             $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation'], $idVisit);
+            $visit = new Visit($dbh, $reserv->getIdRegistration(), $idVisit);
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT);
+            $curResc = $roomChooser->getSelectedResource();
             $mkup .= $roomChooser->createChangeRoomsMarkup($dbh, $visitCharge, $idGuest, $isAdmin);
             $dataArray['resc'] = $roomChooser->makeRoomsArray();
+            $dataArray['curResc'] = array(
+                "maxOcc" => $curResc->getMaxOccupants(),
+                "title" => $curResc->getTitle(),
+                'key' => $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]),
+                'status' => 'a',
+                'merchant' => $curResc->getMerchant(),
+            );
+            $dataArray['deposit'] = $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]);
+            $dataArray['idReservation'] = $r['idReservation'];
+            $dataArray['cbRs'] = $reserv->getConstraints($dbh);
+            $dataArray['numGuests'] = $reserv->getNumberGuests();
+            $dataArray['visitStart'] = $visit->getArrivalDate();
 
         // Pay fees
         } else if ($action == 'pf') {
@@ -230,6 +245,7 @@ class HouseServices {
         $reply = '';
         $warning = '';
         $returnReserv = FALSE;
+        $returntoVisit = FALSE;
 
         if ($idVisit == 0) {
             return array("error" => "Neither Guest or Visit was selected.");
@@ -415,6 +431,13 @@ class HouseServices {
                             }
                         }
 
+                        //if deposit needs to be paid
+                        $curRescId = $visit->getidResource();
+                        $curResc = AbstractResource::getResourceObj($dbh, $curRescId);
+                        if($curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]) < $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode])){
+                            $returntoVisit = TRUE;
+                        }
+                        
                         $departDT = new \DateTime($visit->getExpectedDeparture());
                         $departDT->setTime($uS->CheckOutTime, 0, 0);
                         $now2 = new \DateTime();
@@ -453,7 +476,7 @@ class HouseServices {
                         $resv->setIdGuest($newPg);
                         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
-                        $reply .= 'Primary Guest Id updated.  ';
+                        $reply .= Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Id updated.  ';
                     }
                 }
 
@@ -555,6 +578,10 @@ class HouseServices {
             if ($uS->ShowUncfrmdStatusTab) {
                 $dataArray['unreserv'] = 'y';
             }
+        }
+        
+        if($returntoVisit){
+            $dataArray['openvisitviewer'] = 'y';
         }
 
 

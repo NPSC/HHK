@@ -1,5 +1,5 @@
 <?php
-namespace HHK\ Tables\WebSec;
+namespace HHK\Tables\WebSec;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbDateSanitizer, DbStrSanitizer};

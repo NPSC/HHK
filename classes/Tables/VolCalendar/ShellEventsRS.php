@@ -1,5 +1,5 @@
 <?php
-namespace HHK\ Tables\VolCalendar;
+namespace HHK\Tables\VolCalendar;
 
 use HHK\Tables\AbstractTableRS;
 use HHK\Tables\Fields\{DB_Field, DbStrSanitizer, DbIntSanitizer, DbDateSanitizer, DbBitSanitizer};

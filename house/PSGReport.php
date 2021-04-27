@@ -54,8 +54,8 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $locTitle = $labels->getString('hospital', 'location', 'Location');
     $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
     
-    $guestFirst = $labels->getString('MemberType', 'guest', 'Guest') . ' First';
-    $guestLast = $labels->getString('MemberType', 'guest', 'Guest') . ' Last';
+    $guestFirst = $labels->getString('MemberType', 'visitor', 'Guest') . ' First';
+    $guestLast = $labels->getString('MemberType', 'visitor', 'Guest') . ' Last';
     
     if ($showAddr && $showFullName) {
         
@@ -677,7 +677,7 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 	
 		}
 		
-		$tbl->addHeaderTr(HTMLTable::makeTh('Psg Id'). HTMLTable::makeTh('Patient Name'). HTMLTable::makeTh('Status'). HTMLTable::makeTh('Title'). HTMLTable::makeTh('Report Date'). HTMLTable::makeTh('Resolution Date'));
+		$tbl->addHeaderTr(HTMLTable::makeTh('Psg Id'). HTMLTable::makeTh(Labels::getString('memberType', 'patient', 'Patient') . ' Name'). HTMLTable::makeTh('Status'). HTMLTable::makeTh('Title'). HTMLTable::makeTh('Report Date'). HTMLTable::makeTh('Resolution Date'));
 		
 		$dataTable = $tbl->generateMarkup(array('id'=>'tblrpt'));
 		return $dataTable;

@@ -381,7 +381,7 @@ class VisitViewer {
             $hdrPgRb = '';
             if ($r["Visit_Status"] == VisitStatus::CheckedIn && count($rows) > 1) {
 
-                $pgAttrs = array('name'=>'rbPriGuest', 'type'=>'radio', 'class'=>'hhk-feeskeys', 'title'=>'Make the Primary Guest');
+                $pgAttrs = array('name'=>'rbPriGuest', 'type'=>'radio', 'class'=>'hhk-feeskeys', 'title'=>'Make the ' . Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'));
 
                 // Only set the first instance of any guest.
                 if ($r['idName'] == $idPrimaryGuest && isset($priGuests[$idPrimaryGuest]) === FALSE) {
@@ -390,7 +390,7 @@ class VisitViewer {
                 }
 
                 $pgRb = HTMLInput::generateMarkup($r['idName'], $pgAttrs);
-                $hdrPgRb = HTMLTable::makeTh('Pri', array('title'=>'Primary Guest'));
+                $hdrPgRb = HTMLTable::makeTh('Pri', array('title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')));
             }
 
             $stDayDT = new \DateTime($r['Span_Start_Date']);
@@ -562,7 +562,7 @@ class VisitViewer {
             $th .= HTMLTable::makeTh($ckOutTitle) . HTMLTable::makeTh('Nights');
 
             // Make add guest button
-            $guestAddButton = HTMLInput::generateMarkup('Add Guest...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-rid'=>$idResv, 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
+            $guestAddButton = HTMLInput::generateMarkup('Add ' . $labels->getString('MemberType', 'visitor', 'Guest') . '...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-rid'=>$idResv, 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
 
         }
 
@@ -588,7 +588,7 @@ class VisitViewer {
         $dvTable = HTMLContainer::generateMarkup('div', $sTable->generateMarkup(array('id' => 'tblStays', 'style'=>'width:99%')), array('style'=>'max-height:150px;overflow:auto'));
 
 
-        $titleMkup = HTMLContainer::generateMarkup('span', 'Guests', array('style'=>'float:left;'));
+        $titleMkup = HTMLContainer::generateMarkup('span', $labels->getString('MemberType', 'visitor', 'Guest') . 's', array('style'=>'float:left;'));
 
 
 
@@ -740,15 +740,20 @@ class VisitViewer {
                 $showSubTotal = TRUE;
 
                 foreach ($curAccount->getCurentTaxItems(ItemId::Lodging) as $t) {
-
+                    $taxedRoomFees = $curAccount->getRoomCharge() + $curAccount->getTotalDiscounts() - $curAccount->getTaxExemptRoomFees();
+                    
                     if ($curAccount->getRoomFeeBalance() < 0) {
-                        $taxAmt = $t->getTaxAmount($curAccount->getRoomCharge() + $curAccount->getTotalDiscounts());
+                        if($taxedRoomFees > 0){
+                            $taxAmt = $t->getTaxAmount($taxedRoomFees);
+                        }else{
+                            $taxAmt = 0;
+                        }
                     } else {
                         $taxAmt = $curAccount->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($curAccount->getRoomFeeBalance());
                     }
 
                     $tbl2->addBodyTr(
-                        HTMLTable::makeTd($t->getTaxingItemDesc() .  ' (' . $t->getTextPercentTax() . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                        HTMLTable::makeTd($t->getTaxingItemDesc() .  ' (' . $t->getTextPercentTax() . ' of $' . number_format($taxedRoomFees, 2) . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
                         . HTMLTable::makeTd('$' . number_format($taxAmt, 2), array('style'=>'text-align:right;font-size:small;'))
                     );
                 }
@@ -875,6 +880,7 @@ class VisitViewer {
                         , array(
                             'id'=>'spnCfBalDue',
                         		'data-rmbal'=> number_format($curAccount->getRoomFeeBalance(), 2, '.', ''),
+                                'data-taxedrmbal'=> number_format($curAccount->getTaxedRoomFeeBalance(), 2, '.', ''),
                             'data-vfee'=>number_format($curAccount->getVfeeBal(), 2, '.', ''),
                             'data-totbal'=>number_format($curAccount->getDueToday(), 2, '.', '')))
                         , $balAttr)
