@@ -25,7 +25,6 @@ INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('roomNumber','
 INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('dateTime','MMM D, YYYY h:mm a','s','mf');
 
 
-
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('InsistGuestBD', 'false', 'b', 'g', 'Insist on user filling in guest birthdates');
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('Res_Confirmation_Subject', 'Reservation Confirmation', 's', 'rf', '', 'Default: Reservation Confirmation');
 
@@ -41,3 +40,7 @@ ADD COLUMN `tax_exempt` TINYINT NOT NULL DEFAULT 0 AFTER `Gl_Code_Credit`;
 
 -- add merchant receipt to sys_config
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('merchantReceipt', 'false', 'b', 'f', 'Print customer and merchant receipt on single page');
+
+-- Reset some categories.
+update `sys_config` set Category = 'hf' where Key = 'UseHouseWaive';
+update `sys_config` set Category = 'hf' where Key = 'VisitFeeDelayDays';

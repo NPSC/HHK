@@ -100,7 +100,7 @@ class FinancialInterval {
 				// Add up interval charges
 				if ($r['Actual_Interval_Nights'] > 0) {
 					
-					// Guest Charges
+					// Reated Charges
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
 					$charge = $priceModel->amountCalculator($r['Actual_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['Actual_Guest_Nights']) * $adjRatio;
 					

@@ -39,7 +39,6 @@ class VisitIntervalCalculator {
 		} else {
 			// more discounts than charges.
 			$overDiscount = $this->preIntervalDiscount + $this->preIntervalCharge;
-			$this->preIntervalDiscount = 0 - $this->preIntervalCharge;
 			$this->preIntervalCharge = 0;
 		}
 		
@@ -54,43 +53,44 @@ class VisitIntervalCalculator {
 			$this->preIntervalPay += $this->preIntervalWaiveAmt;  // remove "fake" payment
 			$this->preIntervalCharge = 0;  // Reduce Charge to guest
 		}
-		
+
 		// The interval charge is reduced by any overage from pre-interval
 		$this->intervalCharge += ($overDiscount + $overWaive);
-		$this->intervalPay += $overWaive;
-		
-		
+		//$this->intervalPay += $overWaive;
+
+
 		// Remove discounts from charges
 		if ($this->intervalCharge >= abs($this->intervalDiscount)) {
-			$this->intervalCharge += $this->intervalDiscount;
+			$this->intervalCharge += ($this->intervalDiscount);
 		} else {
 			// more discounts than charges.
-			$overDiscount = $this->intervalDiscount + $this->intervalCharge;
-			$this->intervalDiscount = 0 - $this->intervalCharge;
+
+			$this->intervalDiscount += $this->intervalCharge;
 			$this->intervalCharge = 0;
 		}
-		
+
 		// Interval Waive amounts
 		if ($this->intervalCharge >= abs($this->intervalWaiveAmt)) {
 			$this->intervalCharge += $this->intervalWaiveAmt;
 			$this->intervalPay += $this->intervalWaiveAmt;
 		} else {
-			
-			// Remove all waive payments
+			// More waives than charges.
+
+			// Remove waive payments
 			$this->intervalPay += $this->intervalWaiveAmt;
-			
-			// More waives than charges.  Waives meant for the past?
-			$unpaidCharges = $this->preIntervalCharge - $this->preIntervalPay;
-			
-			if ($unpaidCharges > 0 && $unpaidCharges >= abs($this->intervalWaiveAmt)) {
+
+			// Waives meant for the past?
+			$unpaidPreCharges = $this->preIntervalCharge - $this->preIntervalPay;
+
+			if ($unpaidPreCharges > 0 && $unpaidPreCharges >= abs($this->intervalWaiveAmt)) {
 				// All interval waives goes to preinterval.
 				$this->preIntervalCharge += $this->intervalWaiveAmt;
 				$this->intervalWaiveAmt = 0;
-				
-			} else if ($unpaidCharges > 0) {
+
+			} else if ($unpaidPreCharges > 0) {
 				// interval waive amount split between pre and now interval charges.
-				$this->intervalWaiveAmt += $unpaidCharges;
-				$this->preIntervalCharge -= $unpaidCharges;
+				$this->intervalWaiveAmt += $unpaidPreCharges;
+				$this->preIntervalCharge -= $unpaidPreCharges;
 				$this->intervalCharge += $this->intervalWaiveAmt;
 			} else {
 				$this->intervalCharge += $this->intervalWaiveAmt;
@@ -104,7 +104,7 @@ class VisitIntervalCalculator {
 		if ($this->preIntervalPay - $this->preIntervalCharge >= 0) {
 			// leftover Payments from past (C23)
 			$pfp = $this->preIntervalPay - $this->preIntervalCharge;
-			
+
 			if ($pfp > $this->intervalCharge) {
 				$pptn = $this->intervalCharge;
 			} else {
@@ -161,8 +161,8 @@ class VisitIntervalCalculator {
 		
 		return $this;
 	}
-	
-	
+
+
 	
 	/**
 	 * @return number

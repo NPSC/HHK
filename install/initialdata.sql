@@ -635,14 +635,14 @@ INSERT INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`
 ('Tutorial_URL', 'https://www.youtube.com/channel/UC_Sp1kHz_c0Zet0LrO91SbQ/videos/', 's', 'a', '', 'Tutorial YouTube page', ''),
 ('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone'),
 ('UseDocumentUpload','true','b','hf','','Enable Document Uploads',''),
-('UseHouseWaive','true','b','h','','Show the house waive checkbox on checkout',''),
+('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout',''),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature',''),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements'),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations',''),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry',''),
 ('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays'),
 ('VisitFee','false','b','hf','','Enable the visit fee (cleaning fee) feature',''),
-('VisitFeeDelayDays','0','i','h','','Number of days before cleaning fee is charged',''),
+('VisitFeeDelayDays','0','i','hf','','Number of days before cleaning fee is charged',''),
 ('Volunteers','true','b','a','','Enable the HHK Volunteer Manager site',''),
 ('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','');
 -- ;

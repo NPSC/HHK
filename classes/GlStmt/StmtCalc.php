@@ -15,7 +15,7 @@ class StmtCalc {
 	protected $waiveAmt = 0;
 	protected $discount = 0;
 	protected $overPaidVisitIds = [];
-	private $vCounter = 0;
+
 	
 	/**
 	 * @return number
