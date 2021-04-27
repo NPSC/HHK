@@ -444,7 +444,7 @@ function cgRoom(gname, id, idVisit, span) {
             });
             
             //init room chooser
-            updateRescChooser(data.idReservation, data.numGuests, data.cbRs, data.visitStart, data.end);
+            updateRescChooser(data.idReservation, data.numGuests, data.cbRs, data.visitStart, data.expDep);
             
             $diagbox.on('change', 'input[name=rbReplaceRoom], input[name=resvChangeDate]', function(){
             	var startdate = '';
@@ -455,7 +455,7 @@ function cgRoom(gname, id, idVisit, span) {
             	}
             	
             	if(startdate){
-            		updateRescChooser(data.idReservation, data.numGuests, data.cbRs, startdate, data.end);
+            		updateRescChooser(data.idReservation, data.numGuests, data.cbRs, startdate, data.expDep);
             	}
             });
             

@@ -209,6 +209,7 @@ class HouseServices {
             $dataArray['cbRs'] = $reserv->getConstraints($dbh);
             $dataArray['numGuests'] = $reserv->getNumberGuests();
             $dataArray['visitStart'] = $visit->getArrivalDate();
+            $dataArray['expDep'] = $expDepDT->format('c');
 
         // Pay fees
         } else if ($action == 'pf') {
