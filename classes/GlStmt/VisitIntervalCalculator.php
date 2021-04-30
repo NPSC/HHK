@@ -54,9 +54,9 @@ class VisitIntervalCalculator {
 			$this->preIntervalCharge = 0;  // Reduce Charge to guest
 		}
 
+		
 		// The interval charge is reduced by any overage from pre-interval
 		$this->intervalCharge += ($overDiscount + $overWaive);
-		//$this->intervalPay += $overWaive;
 
 
 		// Remove discounts from charges

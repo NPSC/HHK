@@ -122,7 +122,7 @@ abstract class AbstractPriceModel {
 
     public function getCategoryRateRs($idRoomRate = 0, $category = '') {
 
-        if (isset($this->roomRates[$idRoomRate])) {
+    	if ($idRoomRate > 0 && isset($this->roomRates[$idRoomRate])) {
 
             return $this->roomRates[$idRoomRate];
 
