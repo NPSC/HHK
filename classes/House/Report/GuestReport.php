@@ -90,8 +90,10 @@ class GuestReport {
             $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt'] = 0;
             if ($whichGuests == 'new') {
                 $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'New ' . Labels::getString('memberType', 'visitor', 'Guest') . 's';
-            } else {
+            } else if($whichGuests == 'allStarted'){
                 $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's starting in month';
+            } else if($whichGuests == 'allStayed'){
+                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in month';
             }
 
             // Demographics
@@ -121,7 +123,7 @@ class GuestReport {
 
         if ($whichGuests == 'new') {
             $query = "SELECT s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
-        } else {
+        } else if ($whichGuests == 'allStarted' || $whichGuests == 'allStayed'){
             $query = "SELECT s.idName, DATE(s.Span_Start_Date) as `minDate`,";
         }
 
@@ -149,8 +151,10 @@ class GuestReport {
 
         if ($whichGuests == 'new') {
             $query .= " GROUP BY s.idName HAVING DATE(`minDate`) >= DATE('" . $stDT->format('Y-m-01') . "')";
-        } else {
+        } else if($whichGuests == 'allStarted'){
             $query .= " AND DATE(s.Span_Start_Date) >= DATE('" . $stDT->format('Y-m-01') . "')";
+        } else if($whichGuests == 'allStayed'){
+            $query .= " AND DATE(s.Span_End_Date) <= DATE('" . $endDT->format('Y-m-d') . "')";
         }
 
         $currId = 0;
