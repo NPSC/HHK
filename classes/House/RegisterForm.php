@@ -253,7 +253,7 @@ class RegisterForm {
             <tr><td colspan='6' style='border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'><h2>" . Labels::getString('memberType', 'visitor', 'Guest') . "s</h2></td></tr>";
 
         $uS = Session::getInstance();
-        $ecRels = $uS->nameLookups[GLTableNames::RelTypes];
+        $ecRels = $uS->guestLookups[GLTableNames::PatientRel];
 
 
         // for each guest
