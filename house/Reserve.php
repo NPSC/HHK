@@ -142,7 +142,7 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 $resvAr = $resvObj->toArray();
 $resvAr['patBD'] = $resvObj->getPatBirthDateFlag();
-$resvAr['gstBD'] = $resvObj->getGuestBirthDateFlag();
+$resvAr['gstBD'] = false; //disable guest bd check on reservation
 $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
