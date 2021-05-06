@@ -59,23 +59,33 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $guestLast = $labels->getString('MemberType', 'visitor', 'Guest') . ' Last';
     
     if($showUnique){
-        $spanDates = " MIN(s.Span_Start_Date) as `First Arrival`, MAX(s.Span_End_Date) as `Last Departure`, ";
+        $spanDates = " MIN(s.Span_Start_Date) as `First Arrival`, CASE WHEN count(s.Span_End_Date)=sum(1) then max(s.Span_End_Date) else null end as `Last Departure`, ";
+        $docSql = " group_concat(DISTINCT n.Name_Full SEPARATOR ', ') as `Doctor`, ";
+        $hospAssocSql = "group_concat(DISTINCT h.Title SEPARATOR ', ') as `Hospital`, group_concat(DISTINCT a.Title SEPARATOR ', ') as `Association`, ";
+        $agentSql = "group_concat(DISTINCT nr.Name_Full SEPARATOR', ') as `$agentTitle` ";
+        $locSql = "group_concat(DISTINCT gl.Description SEPARATOR ', ') as `$locTitle`, ";
+        $diagSql = " group_concat(DISTINCT ifnull(g.Description, hs.Diagnosis)) as `$diagTitle`, ";
     }else{
         $spanDates = " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, ";
+        $docSql = " ifnull(n.Name_Full, '') as `Doctor`, ";
+        $hospAssocSql = "h.Title as `Hospital`, a.Title as `Association`, ";
+        $agentSql = "ifnull(nr.Name_Full, '') as `$agentTitle` ";
+        $locSql = "ifnull(gl.Description, '') as `$locTitle`, ";
+        $diagSql = " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ";
     }
     
     if ($showAddr && $showFullName) {
         
-        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, v.idReservation as `Resv ID`, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, " . ($showUnique ? "" : "v.idReservation as `Resv ID`, ")
             . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
                 . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Phone, vn.Email, "
                 . ($showUnique ? "" : "r.title as `Room`,")
                 . $spanDates
                 . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
-                . "hs.idHospital, hs.idAssociation, "
-                . "  ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-                . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle`, ifnull(g2.Description,'') as `Status`";
+                . $hospAssocSql
+                . $diagSql . $locSql
+                . $docSql . $agentSql . ($showUnique ? "" : ", ifnull(g2.Description,'') as `Status`");
                                     
     } else if ($showAddr && !$showFullName) {
         
@@ -84,10 +94,9 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, "
                 . "r.title as `Room`," )
                     . $spanDates
-                        . "hs.idHospital, hs.idAssociation, "
-                            . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
-                            ." ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-                            . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
+                    . $hospAssocSql
+                    . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
+                    . $diagSql . $locSql . $docSql . $agentSql;
                             
     } else if (!$showAddr && $showFullName) {
         
@@ -95,19 +104,15 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, "
                 . "r.title as `Room`," )
                     . $spanDates
-                        . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
-                        . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-                        . "hs.idHospital, hs.idAssociation,
-          ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
+                    . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
+                    . $diagSql . $locSql . $hospAssocSql . $docSql . $agentSql;
                         
     } else {
         
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
             . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, r.title as `Room`, ") . $spanDates
                 . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
-                . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-                . "hs.idHospital, hs.idAssociation, "
-                    . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
+                . $diagSql . $locSql . $hospAssocSql . $docSql . $agentSql;
     }
     
     if ($showNoReturn) {
@@ -125,6 +130,10 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 	name_guest `ng` on s.idName = ng.idName and ng.idPsg = rg.idPsg
 		JOIN
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
+        LEFT JOIN
+    hospital h ON hs.idHospital = h.idHospital and h.Type = 'h'
+        LEFT JOIN
+    hospital a ON hs.idAssociation = h.idHospital and h.Type = 'a'
 		LEFT JOIN
 	name_demog nd on s.idName = nd.idName
         LEFT JOIN
@@ -148,7 +157,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
     
     if ($showUnique) {
-        $query .= " GROUP BY s.idName";
+        $query .= " GROUP BY hs.idPsg, s.idName";
     }
     
     $stmt = $dbh->query($query);
@@ -206,29 +215,29 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
             unset($r[$agentTitle]);
         }
         
-        if ($showAssoc === FALSE) {
-            $r['idAssociation'] = 0;
-        } else {
-            $r['Association'] = '';
-        }
+//         if ($showAssoc === FALSE) {
+//             $r['idAssociation'] = 0;
+//         } else {
+//             $r['Association'] = '';
+//         }
         
-        // Hospital
-        $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
+//         // Hospital
+//         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
         
         
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $r['Association'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
-        }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
-            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
-        }
+//         if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+//             $r['Association'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
+//         }
+//         if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+//             $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
+//         }
         
-        if (count($uS->guestLookups[GLTableNames::Hospital]) < 2) {
-            unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
-        }
+//         if (count($uS->guestLookups[GLTableNames::Hospital]) < 2) {
+//             unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
+//         }
         
-        unset($r['idHospital']);
-        unset($r['idAssociation']);
+//         unset($r['idHospital']);
+//         unset($r['idAssociation']);
         
         
         if ($firstRow) {
@@ -745,7 +754,7 @@ function getIncidentsReport(\PDO $dbh, $local, $irSelection) {
 $assocSelections = array();
 $hospitalSelections = array();
 $stateSelection = '';
-$countrySelection = 'US';
+$countrySelection = '';
 $countySelection = '';
 $diagSelections = array();
 $locSelections = array();
@@ -1139,7 +1148,7 @@ $countyAttr['data-country'] = 'adrcountry';
 $countyAttr['data-state'] = 'adrstate';
 $countyAttr['data-county'] = $countySelection;
 
-$selCounty = HTMLSelector::generateMarkup('', $countyAttr);
+$selCounty = HTMLSelector::generateMarkup('<option></option>', $countyAttr);
 
 
 // incidents report

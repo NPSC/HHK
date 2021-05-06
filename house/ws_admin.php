@@ -156,6 +156,14 @@ switch ($c) {
             $events = searchZip($dbh, $zip);
         }
         break;
+        
+    case 'getcounties':
+        
+        if(isset($_GET['state'])) {
+            $state = filter_var($_GET['state'], FILTER_SANITIZE_STRING);
+            $events = getCounties($dbh, $state);
+        }
+        break;
 
     case "chgpw":
 
@@ -247,6 +255,17 @@ function searchZip(PDO $dbh, $zip) {
         $events[] = $ent;
     }
 
+    return $events;
+}
+
+function getCounties(PDO $dbh, $state) {
+    $query = "select `County`, `State` from `postal_codes` where `State` = :state and  `County` != '' group by `County`";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute(array(':state'=>strtoupper($state)));
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $events = $rows;
+    
     return $events;
 }
 
