@@ -264,7 +264,7 @@ function getCounties(PDO $dbh, $state) {
     $stmt->execute(array(':state'=>strtoupper($state)));
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    $events = $rows;
+    $events = ['success'=>$rows];
     
     return $events;
 }

@@ -8,10 +8,18 @@ var BFHStatesList={AF:{1:{code:"BAL",name:"Balkh"},2:{code:"BAM",name:"Bamian"},
 
 $(document).ready(function(){
 
-	$(document).on('change', '#adrstate.bfh-states', function(){
+	$(document).on('change', '#adrstate', function(){
 	    
 		var state = $('#adrstate.bfh-states').val();
-		$("#adrCounty").html("<option value='' selected='selected'></option>");
+		var county = $('#adrcounty.bfh-county').val();
+		if (!state){
+			state = $('#adrstate.bfh-states').data('state');
+		}
+		if(county == ''){
+			county = $('#adrcounty.bfh-county').data('county');
+		}
+		
+		$("#adrcounty").html("<option value='' selected='selected'></option>");
 		if(state){
 			$.ajax({
 				url: "ws_admin.php",
@@ -21,14 +29,21 @@ $(document).ready(function(){
 					'state': state
 				},
 				dataType: "json",
-				success: function(result){
-    				$.each(result, function(i, county){
-    					$("#adrCounty").append("<option value='" + county.County + "'>" + county.County + "</option>");
-    				});
+				success: function(data){
+					if(data.success){
+    					$.each(data.success, function(i, countyAr){
+    						if(county == countyAr.County){
+    							$("#adrcounty").append("<option value='" + countyAr.County + "' selected='selected'>" + countyAr.County + "</option>");
+    						}else{
+    							$("#adrcounty").append("<option value='" + countyAr.County + "'>" + countyAr.County + "</option>");
+    						}
+    					});
+    				}else if(data.error && data.gotopage){
+    					flagAlertMessage(data.error + ' - <a href="' + data.gotopage + '">Login again</a>', true);
+    				}
   				}
   			});
 		}
-	
 	});
 
 });

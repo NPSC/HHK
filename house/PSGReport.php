@@ -814,6 +814,10 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $stateSelection = filter_Var($_POST['adrstate'], FILTER_SANITIZE_STRING);
     }
     
+    if (isset($_POST['adrCounty'])) {
+        $countySelection = filter_Var($_POST['adrCounty'], FILTER_SANITIZE_STRING);
+    }
+    
     if (isset($_POST['adrcountry'])) {
         $countrySelection = filter_Var($_POST['adrcountry'], FILTER_SANITIZE_STRING);
     }
@@ -924,6 +928,13 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     
     $whCountry = '';
     $tdState = $stateSelection;
+    $tdCounty = $countySelection;
+    
+    if ($countySelection != '') {
+        $whCountry .= " and vn.County = '$countySelection' ";
+    }else{
+        $tdCounty = 'All';
+    }
     
     if ($stateSelection != '') {
         $whCountry .= " and vn.State = '$stateSelection' ";
@@ -1054,6 +1065,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'location', 'Locations'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdLocs, array('colspan'=>'3')));
                 }
                 $sTbl->addBodyTr(HTMLTable::makeTd('State/Province', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdState) . HTMLTable::makeTd('Country', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdCountry));
+                if($uS->county){
+                    $sTbl->addBodyTr(HTMLTable::makeTd('County', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdCounty, array('colspan'=>'3')));
+                }
                 $sTbl->addBodyTr(HTMLTable::makeTd('Visit Status', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdStatus, array('colspan'=>'3')));
                 $settingstable = $sTbl->generateMarkup();
                 break;
@@ -1140,8 +1154,8 @@ $selCountry = HTMLSelector::generateMarkup('', $coAttr);
 
 //county
 $countyAttr = array();
-$countyAttr['id'] = 'adrCounty';
-$countyAttr['name'] = 'adrcounty';
+$countyAttr['id'] = 'adrcounty';
+$countyAttr['name'] = 'adrCounty';
 $countyAttr['title'] = 'Select County';
 $countyAttr["class"] = "input-medium bfh-county psgsel";
 $countyAttr['data-country'] = 'adrcountry';
@@ -1247,6 +1261,7 @@ if ($uS->UseIncidentReports) {
         }
         });
         $('input[name="rbReport"]').change();
+        $('#adrstate').change();
     });
  </script>
     </head>
