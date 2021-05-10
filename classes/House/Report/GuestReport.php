@@ -154,7 +154,7 @@ class GuestReport {
         } else if($whichGuests == 'allStarted'){
             $query .= " AND DATE(s.Span_Start_Date) >= DATE('" . $stDT->format('Y-m-01') . "')";
         } else if($whichGuests == 'allStayed'){
-            $query .= " AND DATE(s.Span_End_Date) <= DATE('" . $endDT->format('Y-m-d') . "')";
+            $query .= " AND DATE(ifnull(s.Span_End_Date, now())) > DATE('" . $stDT->format('Y-m-01') . "')";
         }
 
         $currId = 0;
