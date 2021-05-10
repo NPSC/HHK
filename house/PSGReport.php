@@ -59,7 +59,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $guestLast = $labels->getString('MemberType', 'visitor', 'Guest') . ' Last';
     
     if($showUnique){
-        $spanDates = " MIN(s.Span_Start_Date) as `First Arrival`, CASE WHEN count(s.Span_End_Date)=sum(1) then max(s.Span_End_Date) else null end as `Last Departure`, ";
+        $spanDates = ""; //" MIN(s.Span_Start_Date) as `First Arrival`, CASE WHEN count(s.Span_End_Date)=sum(1) then max(s.Span_End_Date) else null end as `Last Departure`, ";
         $docSql = " group_concat(DISTINCT n.Name_Full SEPARATOR ', ') as `Doctor`, ";
         $hospAssocSql = "group_concat(DISTINCT h.Title SEPARATOR ', ') as `Hospital`, group_concat(DISTINCT a.Title SEPARATOR ', ') as `Association`, ";
         $agentSql = "group_concat(DISTINCT nr.Name_Full SEPARATOR', ') as `$agentTitle` ";
@@ -80,12 +80,13 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
                 . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Phone, vn.Email, "
+                . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, ")
                 . ($showUnique ? "" : "r.title as `Room`,")
                 . $spanDates
-                . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
+                //. " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
                 . $hospAssocSql
                 . $diagSql . $locSql
-                . $docSql . $agentSql . ($showUnique ? "" : ", ifnull(g2.Description,'') as `Status`");
+                . $docSql . $agentSql;
                                     
     } else if ($showAddr && !$showFullName) {
         
@@ -808,18 +809,16 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
     }
     
+    if (isset($_POST['adrcountry'])) {
+        $countrySelection = filter_Var($_POST['adrcountry'], FILTER_SANITIZE_STRING);
+    }
     
-    
-    if (isset($_POST['adrstate'])) {
+    if (isset($_POST['adrstate']) && $countrySelection) {
         $stateSelection = filter_Var($_POST['adrstate'], FILTER_SANITIZE_STRING);
     }
     
-    if (isset($_POST['adrCounty'])) {
+    if (isset($_POST['adrCounty']) && $stateSelection) {
         $countySelection = filter_Var($_POST['adrCounty'], FILTER_SANITIZE_STRING);
-    }
-    
-    if (isset($_POST['adrcountry'])) {
-        $countrySelection = filter_Var($_POST['adrcountry'], FILTER_SANITIZE_STRING);
     }
     
     if (isset($_POST['selDiag'])) {
@@ -1262,6 +1261,17 @@ if ($uS->UseIncidentReports) {
         });
         $('input[name="rbReport"]').change();
         $('#adrstate').change();
+        
+        $(document).on('change', '#cbUnique', function(){
+        	if($('#cbUnique').prop('checked')){
+        		$('#visitStatusFilter select').val('');
+        		$('#visitStatusFilter').hide();
+        	}else{
+        		$('#visitStatusFilter').show();
+        	}
+        });
+        
+        $('#cbUnique').change();
     });
  </script>
     </head>
@@ -1319,7 +1329,7 @@ if ($uS->UseIncidentReports) {
                         </tr>
                     </table>
                     <?php } ?>
-                    <table style="margin-left: 5px;" class="psgsel">
+                    <table style="margin-left: 5px;" class="psgsel" id="visitStatusFilter">
                         <tr>
                             <th>Visit Status</th>
                         </tr>
