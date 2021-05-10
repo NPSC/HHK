@@ -108,7 +108,7 @@ class FinancialInterval {
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
 					$fullCharge = $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
 					
-					$visitCalc->updateIntervalCharge($charge, $fullCharge, $adjRatio, $r['Rate_Category']);
+					$visitCalc->updateIntervalCharge($charge, $fullCharge, $r['Rate_Category']);
 					
 				}
 			}

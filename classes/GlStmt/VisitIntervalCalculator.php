@@ -30,15 +30,12 @@ class VisitIntervalCalculator {
 	
 	public function closeInterval($hasFutureNights) {
 		
-		$overWaive = 0;
-		$overDiscount = 0;
-		
 		// pre-Discounts diminish pre-lodging charge amounts, already paid by house.
 		if ($this->preIntervalCharge >= abs($this->preIntervalDiscount)) {
 			$this->preIntervalCharge += $this->preIntervalDiscount;
 		} else {
 			// more discounts than charges.
-			$overDiscount = $this->preIntervalDiscount + $this->preIntervalCharge;
+			$this->intervalCharge += $this->preIntervalDiscount + $this->preIntervalCharge;
 			$this->preIntervalCharge = 0;
 		}
 		
@@ -48,15 +45,11 @@ class VisitIntervalCalculator {
 			$this->preIntervalPay += $this->preIntervalWaiveAmt;  // remove "fake" payment
 		} else {
 			// Waive bleed over to this month
-			$overWaive = $this->preIntervalWaiveAmt + $this->preIntervalCharge;  // Waive forwarded to next month
+			$this->intervalCharge += $this->preIntervalWaiveAmt + $this->preIntervalCharge;  // Waive forwarded to next month
 			
 			$this->preIntervalPay += $this->preIntervalWaiveAmt;  // remove "fake" payment
 			$this->preIntervalCharge = 0;  // Reduce Charge to guest
 		}
-
-		
-		// The interval charge is reduced by any overage from pre-interval
-		$this->intervalCharge += ($overDiscount + $overWaive);
 
 
 		// Remove discounts from charges
@@ -277,17 +270,12 @@ class VisitIntervalCalculator {
 	 * @param number $adjRatio
 	 * @param string $rateCategory
 	 */
-	public function updateIntervalCharge($charge, $fullCharge, $adjRatio, $rateCategory) {
+	public function updateIntervalCharge($charge, $fullCharge, $rateCategory) {
 		
 		$this->intervalCharge += $charge;
 		
-		// Adjust ratio
-		if ($adjRatio > 0) {
-			$this->fullIntervalCharge += ($fullCharge * $adjRatio);
-		} else {
-			$this->fullIntervalCharge += $fullCharge;
-		}
-		
+		$this->fullIntervalCharge += $fullCharge;
+
 		// Subsidy
 		if ($rateCategory != RoomRateCategories::FlatRateCategory) {
 			$this->subsidyCharge += $fullCharge - $charge;

@@ -68,6 +68,7 @@ class ReserveData {
     protected $patAsGuestFlag;
     protected $patBirthDateFlag;
     protected $guestBirthDateFlag;
+    protected $useRepeatingResv;
     protected $showBirthDate;
     protected $patLabel;
     protected $primaryGuestLabel;
@@ -151,6 +152,7 @@ class ReserveData {
         $this->patBirthDateFlag = $uS->InsistPatBD;
         $this->guestBirthDateFlag = $uS->InsistGuestBD;
         $this->showBirthDate = $uS->ShowBirthDate;
+        $this->useRepeatingResv = $uS->UseRepeatResv;
         $this->insistCkinDemog = FALSE;
         $this->fillEmergencyContact = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');

@@ -436,6 +436,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $days = '';
         $prefix = '';
+        $repetr = '';
 
         $cidAttr = array('name'=>$prefix.'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
 
@@ -450,6 +451,18 @@ WHERE r.idReservation = " . $rData->getIdResv());
             }
         }
 
+        if ($uS->UseRepeatResv) {
+
+        	$contents = HTMLContainer::generateMarkup('option', 'Week', array('value'=>'w'))
+        			.HTMLContainer::generateMarkup('option', '2 Weeks', array('value'=>'2w'))
+        			.HTMLContainer::generateMarkup('option', 'Month', array('value'=>'m'));
+
+        	$repetr = HTMLContainer::generateMarkup('span', 'Repeat each '
+        			. HTMLSelector::generateMarkup($contents, array('id'=>$prefix.'resvRepeatIndex', 'style'=>'display:inline;')) . ' for '
+        			. HTMLInput::generateMarkup('', array('id'=>$prefix.'resvRepeatCycles', 'size'=>'4')) . ' cycles'
+        			, array('style'=>'margin-left:1em;font-size:.9em;', 'id'=>$prefix.'resvRepeater'));
+        }
+
         $mkup = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', 'Arrival: '.
                     HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr))
@@ -460,7 +473,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4'))
                     , array('style'=>'margin-left:.7em;'))
         		.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'margin-left:1em; font-size:.8em;'))
-                , array('style'=>'font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
+        		, array('style'=>'font-size:.9em;', 'id'=>$prefix.'spnRangePicker'))
+        		.$repetr;
 
         return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays', 'updateOnChange'=>$updateOnChange, 'startDate'=>$startDate, 'endDate'=>$endDate);
 

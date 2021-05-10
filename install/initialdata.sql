@@ -638,6 +638,7 @@ INSERT INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`
 ('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout',''),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature',''),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements'),
+('UseRepeatResv', 'false', 'b', 'h', 'Allow repeating reservations',''),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations',''),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry',''),
 ('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays'),
