@@ -11,6 +11,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\House\Report\ReportFilter;
 
 /**
  * PSG_Report.php
@@ -44,7 +45,7 @@ $labels = Labels::getLabels();
 
 
 
-function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiagnosis, $showLocation) {
+function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start, $end, $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiagnosis, $showLocation) {
     
     $uS = Session::getInstance();
     
@@ -57,50 +58,62 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $guestFirst = $labels->getString('MemberType', 'visitor', 'Guest') . ' First';
     $guestLast = $labels->getString('MemberType', 'visitor', 'Guest') . ' Last';
     
+    if($showUnique){
+        $spanDates = ""; //" MIN(s.Span_Start_Date) as `First Arrival`, CASE WHEN count(s.Span_End_Date)=sum(1) then max(s.Span_End_Date) else null end as `Last Departure`, ";
+        $docSql = " group_concat(DISTINCT n.Name_Full SEPARATOR ', ') as `Doctor`, ";
+        $hospAssocSql = "group_concat(DISTINCT h.Title SEPARATOR ', ') as `Hospital`, group_concat(DISTINCT a.Title SEPARATOR ', ') as `Association`, ";
+        $agentSql = "group_concat(DISTINCT nr.Name_Full SEPARATOR', ') as `$agentTitle` ";
+        $locSql = "group_concat(DISTINCT gl.Description SEPARATOR ', ') as `$locTitle`, ";
+        $diagSql = " group_concat(DISTINCT ifnull(g.Description, hs.Diagnosis)) as `$diagTitle`, ";
+    }else{
+        $spanDates = " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, ";
+        $docSql = " ifnull(n.Name_Full, '') as `Doctor`, ";
+        $hospAssocSql = "h.Title as `Hospital`, a.Title as `Association`, ";
+        $agentSql = "ifnull(nr.Name_Full, '') as `$agentTitle` ";
+        $locSql = "ifnull(gl.Description, '') as `$locTitle`, ";
+        $diagSql = " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ";
+    }
+    
     if ($showAddr && $showFullName) {
         
-        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, v.idReservation as `Resv ID`, "
+        $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, " . ($showUnique ? "" : "v.idReservation as `Resv ID`, ")
             . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
                 . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Phone, vn.Email, "
-                . "r.title as `Room`,"
-                . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
-                . " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
-                . "hs.idHospital, hs.idAssociation, "
-                . "  ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-                . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle`, ifnull(g2.Description,'') as `Status`";
+                . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, ")
+                . ($showUnique ? "" : "r.title as `Room`,")
+                . $spanDates
+                //. " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
+                . $hospAssocSql
+                . $diagSql . $locSql
+                . $docSql . $agentSql;
                                     
     } else if ($showAddr && !$showFullName) {
         
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code,
             vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, `nd`.`No_Return`, "
-            . "ifnull(g2.Description,'') as `Status`, "
-                . "r.title as `Room`,"
-                    . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
-                        . "hs.idHospital, hs.idAssociation, "
-                            . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
-                            ." ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-                            . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
+            . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, "
+                . "r.title as `Room`," )
+                    . $spanDates
+                    . $hospAssocSql
+                    . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
+                    . $diagSql . $locSql . $docSql . $agentSql;
                             
     } else if (!$showAddr && $showFullName) {
         
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Prefix, vn.First as `$guestFirst`, vn.Middle, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
-            . "ifnull(g2.Description,'') as `Status`, "
-                . "r.title as `Room`,"
-                    . " ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
-                        . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
-                        . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-                        . "hs.idHospital, hs.idAssociation,
-          ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
+            . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, "
+                . "r.title as `Room`," )
+                    . $spanDates
+                    . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
+                    . $diagSql . $locSql . $hospAssocSql . $docSql . $agentSql;
                         
     } else {
         
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
-            . "ifnull(g2.Description,'') as `Status`, r.title as `Room`, ifnull(s.Span_Start_Date, '') as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure`, "
+            . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, r.title as `Room`, ") . $spanDates
                 . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
-                . " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(gl.Description, '') as `$locTitle`, "
-                . "hs.idHospital, hs.idAssociation, "
-                    . " ifnull(n.Name_Full, '') as `Doctor`, ifnull(nr.Name_Full, '') as `$agentTitle` ";
+                . $diagSql . $locSql . $hospAssocSql . $docSql . $agentSql;
     }
     
     if ($showNoReturn) {
@@ -118,6 +131,10 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 	name_guest `ng` on s.idName = ng.idName and ng.idPsg = rg.idPsg
 		JOIN
     hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
+        LEFT JOIN
+    hospital h ON hs.idHospital = h.idHospital and h.Type = 'h'
+        LEFT JOIN
+    hospital a ON hs.idAssociation = h.idHospital and h.Type = 'a'
 		LEFT JOIN
 	name_demog nd on s.idName = nd.idName
         LEFT JOIN
@@ -139,6 +156,10 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     	JOIN
     room r on s.idRoom = r.idRoom
 where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
+    
+    if ($showUnique) {
+        $query .= " GROUP BY hs.idPsg, s.idName";
+    }
     
     $stmt = $dbh->query($query);
     
@@ -195,29 +216,29 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
             unset($r[$agentTitle]);
         }
         
-        if ($showAssoc === FALSE) {
-            $r['idAssociation'] = 0;
-        } else {
-            $r['Association'] = '';
-        }
+//         if ($showAssoc === FALSE) {
+//             $r['idAssociation'] = 0;
+//         } else {
+//             $r['Association'] = '';
+//         }
         
-        // Hospital
-        $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
+//         // Hospital
+//         $r[$labels->getString('hospital', 'hospital', 'Hospital')] = '';
         
         
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $r['Association'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
-        }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
-            $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
-        }
+//         if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+//             $r['Association'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
+//         }
+//         if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+//             $r[$labels->getString('hospital', 'hospital', 'Hospital')] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
+//         }
         
-        if (count($uS->guestLookups[GLTableNames::Hospital]) < 2) {
-            unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
-        }
+//         if (count($uS->guestLookups[GLTableNames::Hospital]) < 2) {
+//             unset($r[$labels->getString('hospital', 'hospital', 'Hospital')]);
+//         }
         
-        unset($r['idHospital']);
-        unset($r['idAssociation']);
+//         unset($r['idHospital']);
+//         unset($r['idAssociation']);
         
         
         if ($firstRow) {
@@ -243,7 +264,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
                     
                     
                     
-                    if($k == 'Arrival' || $k == 'Departure' || $k == 'Birth Date'){
+                    if($k == 'Arrival' || $k == 'Departure' || $k == 'First Arrival' || $k == 'Last Departure'|| $k == 'Birth Date'){
                         $hdr[$k] = "MM/DD/YYYY";
                     }else{
                         $hdr[$k] = "string";
@@ -273,11 +294,17 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
             if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
                 $r['Birth Date'] = date('n/d/Y', strtotime($r['Birth Date']));
             }
-            if ($r['Arrival'] != '') {
+            if (isset($r['Arrival']) && $r['Arrival'] != '') {
                 $r['Arrival'] = date('n/d/Y', strtotime($r['Arrival']));
             }
-            if ($r['Departure'] != '') {
+            if (isset($r['Departure']) && $r['Departure'] != '') {
                 $r['Departure'] = date('n/d/Y', strtotime($r['Departure']));
+            }
+            if (isset($r['First Arrival']) && $r['First Arrival'] != '') {
+                $r['First Arrival'] = date('n/d/Y', strtotime($r['First Arrival']));
+            }
+            if (isset($r['Last Departure']) && $r['Last Departure'] != '') {
+                $r['Last Departure'] = date('n/d/Y', strtotime($r['Last Departure']));
             }
             unset($r['idPsg']);
             
@@ -729,12 +756,14 @@ $assocSelections = array();
 $hospitalSelections = array();
 $stateSelection = '';
 $countrySelection = '';
+$countySelection = '';
 $diagSelections = array();
 $locSelections = array();
 $statusSelections = array();
 $showAddressSelection = '';
 $showFullNameSelection = '';
 $showNoReturnSelection = '';
+$showUniqueSelection = '';
 $mkTable = '';
 $dataTable = '';
 $settingstable = '';
@@ -748,39 +777,14 @@ $end = '';
 $calSelection = '19';
 $irSelection = array('0'=>'a', '1'=>'r', '2'=>'h');
 
-
-$monthArray = array(
-    1 => array(1, 'January'), 2 => array(2, 'February'),
-    3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
-
-if ($uS->fy_diff_Months == 0) {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
-} else {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
-}
-
-// Hospital and association lists
-$hospList = array();
-if (isset($uS->guestLookups[GLTableNames::Hospital])) {
-    $hospList = $uS->guestLookups[GLTableNames::Hospital];
-}
-
-$hList = array();
-$aList = array();
-foreach ($hospList as $h) {
-    if ($h[2] == 'h') {
-        $hList[] = array(0=>$h[0], 1=>$h[1]);
-    } else if ($h[2] == 'a' && $h[1] != '(None)') {
-        $aList[] = array(0=>$h[0], 1=>$h[1]);
-    }
-}
-
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+$filter->createHospitals();
 
 $incidentStatuses = readGenLookupsPDO($dbh, 'Incident_Status', 'Order');
 
 
-// Diagnozis
+// Diagnosis
 $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
 $locs = readGenLookupsPDO($dbh, 'Location', 'Description');
 
@@ -805,45 +809,16 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
     }
     
-    if (isset($_POST['selCalendar'])) {
-        $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
+    if (isset($_POST['adrcountry'])) {
+        $countrySelection = filter_Var($_POST['adrcountry'], FILTER_SANITIZE_STRING);
     }
     
-    if (isset($_POST['selIntMonth'])) {
-        $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
-    }
-    
-    if (isset($_POST['selIntYear'])) {
-        $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-    
-    if (isset($_POST['stDate'])) {
-        $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
-    }
-    
-    if (isset($_POST['enDate'])) {
-        $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
-    }
-    if (isset($_POST['selAssoc'])) {
-        $reqs = $_POST['selAssoc'];
-        if (is_array($reqs)) {
-            $assocSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-        }
-    }
-    
-    if (isset($_POST['selHospital'])) {
-        $reqs = $_POST['selHospital'];
-        if (is_array($reqs)) {
-            $hospitalSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-        }
-    }
-    
-    if (isset($_POST['adrstate'])) {
+    if (isset($_POST['adrstate']) && $countrySelection) {
         $stateSelection = filter_Var($_POST['adrstate'], FILTER_SANITIZE_STRING);
     }
     
-    if (isset($_POST['adrcountry'])) {
-        $countrySelection = filter_Var($_POST['adrcountry'], FILTER_SANITIZE_STRING);
+    if (isset($_POST['adrCounty']) && $stateSelection) {
+        $countySelection = filter_Var($_POST['adrCounty'], FILTER_SANITIZE_STRING);
     }
     
     if (isset($_POST['selDiag'])) {
@@ -864,116 +839,47 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         }
     }
     
-    if ($calSelection == 20) {
-        // fiscal year
-        $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
-        $startDT = new DateTime($year . '-01-01');
-        $startDT->sub($adjustPeriod);
-        $start = $startDT->format('Y-m-d');
-        
-        $endDT = new DateTime(($year + 1) . '-01-01');
-        $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
-        
-    } else if ($calSelection == 21) {
-        // Calendar year
-        $startDT = new DateTime($year . '-01-01');
-        $start = $startDT->format('Y-m-d');
-        
-        $end = ($year + 1) . '-01-01';
-        
-    } else if ($calSelection == 18) {
-        // Dates
-        if ($txtStart != '') {
-            $startDT = new DateTime($txtStart);
-        } else {
-            $startDT = new DateTime();
-        }
-        
-        if ($txtEnd != '') {
-            $endDT = new DateTime($txtEnd);
-        } else {
-            $endDT = new DateTime();
-        }
-        
-        $start = $startDT->format('Y-m-d');
-        $end = $endDT->format('Y-m-d');
-        
-    } else if ($calSelection == 22) {
-        // Year to date
-        $start = date('Y') . '-01-01';
-        
-        $endDT = new DateTime();
-        $endDT->add(new DateInterval('P1D'));
-        $end = $endDT->format('Y-m-d');
-        
-    } else {
-        // Months
-        $interval = 'P' . count($months) . 'M';
-        $month = $months[0];
-        $start = $year . '-' . $month . '-01';
-        
-        $endDate = new DateTime($start);
-        $endDate->add(new DateInterval($interval));
-        
-        $end = $endDate->format('Y-m-d');
-    }
+    $filter->loadSelectedTimePeriod();
+    $filter->loadSelectedHospitals();
+    $filter->loadSelectedResourceGroups();
     
-    
+    $start = $filter->getReportStart();
+    $end = $filter->getReportEnd();
     
     // Hospitals
     $whHosp = '';
-    $tdHosp = '';
-    
-    foreach ($hospitalSelections as $a) {
+    $tdHosp = $filter->getSelectedHospitalsString();
+    foreach ($filter->getSelectedHosptials() as $a) {
         if ($a != '') {
             if ($whHosp == '') {
                 $whHosp .= $a;
-                $tdHosp .= $hospList[$a][1];
             } else {
                 $whHosp .= ",". $a;
-                $tdHosp .= ', '. $hospList[$a][1];
             }
         }
     }
     
-    if ($tdHosp == '') {
-        $tdHosp = 'All';
-    }
-    
-    
-    // Associations.
     $whAssoc = '';
-    $tdAssoc = '';
-    
-    // Only if there are any.
-    if (count($aList) > 0) {
+    $tdAssoc = $filter->getSelectedAssocString();
+    foreach ($filter->getSelectedAssocs() as $a) {
         
-        foreach ($assocSelections as $a) {
-            if ($a != '') {
-                if ($whAssoc == '') {
-                    $whAssoc .= $a;
-                    $tdAssoc .= $hospList[$a][1];
-                } else {
-                    $whAssoc .= ",". $a;
-                    $tdAssoc .= ', '. $hospList[$a][1];
-                }
+        if ($a != '') {
+            
+            if ($whAssoc == '') {
+                $whAssoc .= $a;
+            } else {
+                $whAssoc .= ",". $a;
             }
         }
         
-        if ($tdAssoc == '') {
-            $tdAssoc = 'All';
-        }
-        
-        $tdAssoc = HTMLTable::makeTd($tdAssoc);
     }
-    
     
     if ($whHosp != '') {
         $whHosp = " and hs.idHospital in (".$whHosp.") ";
     }
     
     if ($whAssoc != '') {
-        $whHosp .= " and hs.idAssociation in (".$whAssoc.") ";
+        $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
     
     $whDiags = '';
@@ -1021,6 +927,13 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     
     $whCountry = '';
     $tdState = $stateSelection;
+    $tdCounty = $countySelection;
+    
+    if ($countySelection != '') {
+        $whCountry .= " and vn.County = '$countySelection' ";
+    }else{
+        $tdCounty = 'All';
+    }
     
     if ($stateSelection != '') {
         $whCountry .= " and vn.State = '$stateSelection' ";
@@ -1071,6 +984,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $showNoReturn = FALSE;
         $showDiag = TRUE;
         $showLocation = FALSE;
+        $showUnique = FALSE;
         
         if (count($diags) == 0) {
             $showDiag = FALSE;
@@ -1094,10 +1008,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             $showNoReturnSelection = 'checked="checked"';
         }
         
+        if (isset($_POST['cbUnique'])) {
+            $showUnique = TRUE;
+            $showUniqueSelection = 'checked="checked"';
+        }
+        
         
         // Create settings markup
         $sTbl = new HTMLTable();
-        
         
         
         $whPeople = $whHosp . $whCountry . $whDiags . $whStatus;
@@ -1105,7 +1023,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $rptSetting = filter_var($_POST['rbReport'], FILTER_SANITIZE_STRING);
         
         $showAssoc = FALSE;
-        if (count($aList) > 0) {
+        if (count($filter->getAList()) > 0) {
             $showAssoc = TRUE;
         }
         
@@ -1119,7 +1037,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
+                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdAssoc) : ''));
                 if ($showDiag) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnoses'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdDiags, array('colspan'=>'3')));
                 }
@@ -1135,10 +1053,10 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 
                 
             case 'p':
-                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and s.idName = hs.idPatient ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
+                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and s.idName = hs.idPatient ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just '.$patTitle, array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
+                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdAssoc) : ''));
                 if ($showDiag) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnoses'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdDiags, array('colspan'=>'3')));
                 }
@@ -1146,15 +1064,18 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'location', 'Locations'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdLocs, array('colspan'=>'3')));
                 }
                 $sTbl->addBodyTr(HTMLTable::makeTd('State/Province', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdState) . HTMLTable::makeTd('Country', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdCountry));
+                if($uS->county){
+                    $sTbl->addBodyTr(HTMLTable::makeTd('County', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdCounty, array('colspan'=>'3')));
+                }
                 $sTbl->addBodyTr(HTMLTable::makeTd('Visit Status', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdStatus, array('colspan'=>'3')));
                 $settingstable = $sTbl->generateMarkup();
                 break;
                 
             case 'g':
-                $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showAssoc, $labels, $showDiag, $showLocation);
+                $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $patTitle.' & '.$labels->getString('MemberType', 'guest', 'Guest').'s', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . $tdAssoc : ''));
+                $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdAssoc) : ''));
                 if ($showDiag) {
                     $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'diagnosis', 'Diagnoses'), array('class'=>'tdlabel')) . HTMLTable::makeTd($tdDiags, array('colspan'=>'3')));
                 }
@@ -1188,26 +1109,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 }
 
 // Setups for the page.
-$assocs = '';
-if (count($aList) > 0) {
-    $assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections, TRUE),
-        array('name'=>'selAssoc[]', 'size'=>min(count($aList)+1, 5), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-}
-
-
-
-$hospSize = min(count($hList)+1, 12);
-
-$hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections, TRUE),
-    array('name'=>'selHospital[]', 'size'=>$hospSize, 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-
-if ($hospSize < 5) {
-    $hospSize = 5;
-}
-
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>$hospSize,'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>$hospSize));
-$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>count($calOpts)));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 // Visit status
 $statusList = removeOptionGroups($uS->guestLookups['Visit_Status']);
@@ -1218,14 +1121,14 @@ $selDiag = '';
 if (count($diags) > 0) {
     
     $selDiag = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($diags, $diagSelections, TRUE),
-        array('name'=>'selDiag[]', 'multiple'=>'multiple', 'size'=>min(count($diags)+1, $hospSize)));
+        array('name'=>'selDiag[]', 'multiple'=>'multiple', 'size'=>min(count($diags)+1, (count($filter->getHList())>12 ? '12' : count($filter->getHList())))));
 }
 
 $selLoc = '';
 if (count($locs) > 0) {
     
     $selLoc = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($locs, $locSelections, TRUE),
-        array('name'=>'selLoc[]', 'multiple'=>'multiple', 'size'=>min(count($locs)+1, $hospSize)));
+        array('name'=>'selLoc[]', 'multiple'=>'multiple', 'size'=>min(count($locs)+1, (count($filter->getHList())>12 ? '12' : count($filter->getHList())))));
 }
 
 // State
@@ -1247,6 +1150,19 @@ $coAttr['class'] = 'input-medium bfh-countries psgsel';
 $coAttr['data-country'] = $countrySelection;
 
 $selCountry = HTMLSelector::generateMarkup('', $coAttr);
+
+//county
+$countyAttr = array();
+$countyAttr['id'] = 'adrcounty';
+$countyAttr['name'] = 'adrCounty';
+$countyAttr['title'] = 'Select County';
+$countyAttr["class"] = "input-medium bfh-county psgsel";
+$countyAttr['data-country'] = 'adrcountry';
+$countyAttr['data-state'] = 'adrstate';
+$countyAttr['data-county'] = $countySelection;
+
+$selCounty = HTMLSelector::generateMarkup('<option></option>', $countyAttr);
+
 
 // incidents report
 $selirStat = '';
@@ -1317,40 +1233,45 @@ if ($uS->UseIncidentReports) {
             numberOfMonths: 1,
             dateFormat: 'M d, yy'
         });
-        $('#selCalendar').change(function () {
-            if ($(this).val() && $(this).val() != '19') {
-                $('#selIntMonth').hide();
-            } else {
-                $('#selIntMonth').show();
-            }
-            if ($(this).val() && $(this).val() != '18') {
-                $('.dates').hide();
-            } else {
-                $('.dates').show();
-            }
-        });
-        $('#selCalendar').change();
+        
+        <?php echo $filter->getTimePeriodScript(); ?>;
 
         $('input[name="rbReport"]').change(function () {
         	$('.hhk-IncdtRpt').hide();
             if ($('#rbpsg').prop('checked')) {
                 $('.psgsel').hide();
                 $('.filters').show();
-                $('.checkboxesShow').show();
+                $('.checkboxesShow').hide();
+                $('.showStateCountry').hide();
             } else if($('#nrp').prop('checked')) {
                 $('.filters').hide();
                 $('.checkboxesShow').hide();
+                $('.showStateCountry').hide();
             } else if($('#incdt').prop('checked')) {
                 $('.filters').hide();
                 $('.hhk-IncdtRpt').show();
                 $('.checkboxesShow').hide();
+                $('.showStateCountry').hide();
             } else {
                 $('.filters').show();
                 $('.psgsel').show();
                 $('.checkboxesShow').show();
+                $('.showStateCountry').show();
         }
         });
         $('input[name="rbReport"]').change();
+        $('#adrstate').change();
+        
+        $(document).on('change', '#cbUnique', function(){
+        	if($('#cbUnique').prop('checked')){
+        		$('#visitStatusFilter select').val('');
+        		$('#visitStatusFilter').hide();
+        	}else{
+        		$('#visitStatusFilter').show();
+        	}
+        });
+        
+        $('#cbUnique').change();
     });
  </script>
     </head>
@@ -1360,7 +1281,7 @@ if ($uS->UseIncidentReports) {
         	<div class="title" style="margin-bottom: 1em;">
             	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span style="margin-left: 1em;">Report shows people who stayed in the time frame selected below</span>
             </div>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="min-width: 900px; padding:10px;">
                 <form id="fcat" action="PSGReport.php" method="post">
                     <fieldset class="hhk-panel" style="margin-bottom: 15px;"><legend style='font-weight:bold;'>Report Type</legend>
                      <table style="width:100%">
@@ -1381,46 +1302,16 @@ if ($uS->UseIncidentReports) {
                         	<td><?php echo $selirStat; ?></td>
                         </tr>
                     </table>
-                    <div class="filters" style="display:none;">
-                    <table style="clear:left;float: left;">
-                        <tr>
-                            <th colspan="3">Time Period</th>
-                        </tr>
-                        <tr>
-                            <th>Interval</th>
-                            <th style="min-width:100px; ">Month</th>
-                            <th>Year</th>
-                        </tr>
-                        <tr>
-                            <td><?php echo $calSelector; ?></td>
-                            <td><?php echo $monthSelector; ?></td>
-                            <td><?php echo $yearSelector; ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">
-                                <span class="dates" style="margin-right:.3em;">Start:</span>
-                                <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
-                                <span class="dates" style="margin-right:.3em;">End:</span>
-                                <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
-                        </tr>
-                    </table>
-                    <?php if (count($hList) > 1) { ?>
-                    <table style="float: left;">
-                        <tr>
-                            <th colspan="2"><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
-                        </tr>
-                        <?php if (count($aList) > 0) { ?><tr>
-                            <th>Associations</th>
-                            <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
-                        </tr><?php } ?>
-                        <tr>
-                            <?php if (count($aList) > 0) { ?><td><?php echo $assocs; ?></td><?php } ?>
-                            <td><?php echo $hospitals; ?></td>
-                        </tr>
-                    </table>
-                    <?php } ?>
+                    <div class="filters" style="display: flex;">
+                    <?php
+                        echo $timePeriodMarkup;
+
+                        if (count($filter->getHospitals()) > 1) {
+                            echo $hospitalMarkup;
+                        }
+                    ?>
                     <?php if ($selDiag != '') { ?>
-                    <table style="float: left;">
+                    <table style="margin-left:5px;">
                         <tr>
                             <th><?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis') ?></th>
                         </tr>
@@ -1429,7 +1320,7 @@ if ($uS->UseIncidentReports) {
                         </tr>
                     </table>
                     <?php } if ($selLoc != '') { ?>
-                    <table style="float: left;">
+                    <table style="margin-left: 5px;">
                         <tr>
                             <th><?php echo $labels->getString('hospital', 'location', 'Location') ?></th>
                         </tr>
@@ -1438,7 +1329,7 @@ if ($uS->UseIncidentReports) {
                         </tr>
                     </table>
                     <?php } ?>
-                    <table style="float: left;" class="psgsel">
+                    <table style="margin-left: 5px;" class="psgsel" id="visitStatusFilter">
                         <tr>
                             <th>Visit Status</th>
                         </tr>
@@ -1446,15 +1337,26 @@ if ($uS->UseIncidentReports) {
                             <td><?php echo $statusSelector; ?></td>
                         </tr>
                     </table>
-
-                    <table style="clear:left;">
+                    </div>
+					<div style="display: flex">
+                    <table style="display:none; margin-top: 10px;" class="showStateCountry">
                         <tr>
-                            <th>State</th>
                             <th>Country</th>
+                            <th>State</th>
+                            <?php
+                                if($uS->county) {
+                                    echo "<th>County</th>";
+                                }
+                            ?>
                         </tr>
                         <tr>
-                            <td><?php echo $selState; ?></td>
                             <td><?php echo $selCountry; ?></td>
+                            <td><?php echo $selState; ?></td>
+                            <?php
+                                if($uS->county) {
+                                    echo "<td>" . $selCounty . "</td>";
+                                }
+                            ?>
                         </tr>
                     </table>
                     </div>
@@ -1463,15 +1365,16 @@ if ($uS->UseIncidentReports) {
                             <td class="checkboxesShow"><input type="checkbox" name="cbAddr" class="psgsel" id="cbAddr" <?php echo $showAddressSelection; ?>/><label for="cbAddr" class="psgsel"> Show Address</label></td>
                             <td class="checkboxesShow"><input type="checkbox" name="cbFullName" class="psgsel" id="cbFullName" <?php echo $showFullNameSelection; ?>/><label for="cbFullName" class="psgsel"> Show Full Name</label></td>
                             <td class="checkboxesShow" id="cbNoRtntd"><input type="checkbox" name="cbNoReturn" class="psgsel" id="cbNoReturn" <?php echo $showNoReturnSelection; ?>/><label for="cbNoReturn" class="psgsel"> Show No Return Only</label></td>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
-                            <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
+                            <td class="checkboxesShow"><input type="checkbox" name="cbUnique" class="psgsel" id="cbUnique" <?php echo $showUniqueSelection; ?>/><label for="cbUnique" class="psgsel"> Show Unique People</label></td>
+                            <td style="text-align: right;"><input type="submit" name="btnHere" id="btnHere" value="Run Here"/>
+                                <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
                         </tr>
                     </table>
                 </form>
             </div>
             <div style="clear:both;"></div>
-            <div id="divPrintButton" style="display:none;"><input id="printButton" value="Print" type="button" /></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+            <div id="divPrintButton" style="display:none; margin: 10px 0;"><input id="printButton" value="Print" type="button" /></div>
+            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog ui-corner-all" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div style="margin-bottom:.5em;"><?php echo $settingstable; ?></div>
                 <?php echo $dataTable; ?>
             </div>
