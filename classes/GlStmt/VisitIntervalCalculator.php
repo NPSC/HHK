@@ -90,33 +90,35 @@ class VisitIntervalCalculator {
 			}
 		}
 
-		// Payments and charges from the past.
-		$pfp = 0;
-		$pptn = 0;
-		$cfp = 0;
+		// Past payments and charges.
+		$pfp = 0;	// payment From Past
+		$pptn = 0;	// prepayment to now
+		$cfp = 0;	// charge from past
+		$ptp = 0;	// Paymemt to past
+		
 		if ($this->preIntervalPay - $this->preIntervalCharge >= 0) {
-			// leftover Payments from past (C23)
+			// leftover Payments from past
 			$pfp = $this->preIntervalPay - $this->preIntervalCharge;
 
 			if ($pfp > $this->intervalCharge) {
 				$pptn = $this->intervalCharge;
+				$ptp = $this->intervalCharge - $pfp;
+				$pfp += $ptp;
 			} else {
 				$pptn = $pfp;
 			}
 		} else {
-			// leftover charge after previous payments (C22)
+			// leftover charge after previous payments
 			$cfp = $this->preIntervalCharge - $this->preIntervalPay;
-		}
-
-		// Payments to the past
-		$ptp = 0;
-		if ($cfp > 0) {
+			
 			if($this->intervalPay >= $cfp) {
 				$ptp = $cfp;
 			} else {
 				$ptp = $this->intervalPay;
 			}
-		} else if ($cfp == 0 && $this->intervalCharge == 0) {
+		}
+
+		if ($cfp == 0 && $this->intervalCharge == 0) {
 			// Unallocated payment to the past.
 			$ptp -= $pfp;
 		}
