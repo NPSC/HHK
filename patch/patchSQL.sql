@@ -47,8 +47,8 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 
 -- Reset some categories.
-update `sys_config` set Category = 'hf' where Key = 'UseHouseWaive';
-update `sys_config` set Category = 'hf' where Key = 'VisitFeeDelayDays';
+update `sys_config` set Category = 'hf' where `Key` = 'UseHouseWaive';
+update `sys_config` set Category = 'hf' where `Key` = 'VisitFeeDelayDays';
 
 -- add primary guest label
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('primaryGuest', 'Primary Guest', 's', 'mt', 'Default: Primary Guest');
