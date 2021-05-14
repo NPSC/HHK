@@ -54,12 +54,28 @@ class VisitIntervalCalculator {
 
 		// Remove discounts from charges
 		if ($this->intervalCharge >= abs($this->intervalDiscount)) {
-			$this->intervalCharge += ($this->intervalDiscount);
+			$this->intervalCharge += $this->intervalDiscount;
 		} else {
 			// more discounts than charges.
 
-			$this->intervalDiscount += $this->intervalCharge;
-			$this->intervalCharge = 0;
+			// Discounts meant for the past?
+			$unpaidPreCharges = $this->preIntervalCharge - $this->preIntervalPay;
+			
+			if ($unpaidPreCharges > 0 && $unpaidPreCharges >= abs($this->intervalDiscount)) {
+				// All interval waives goes to preinterval.
+				$this->preIntervalCharge += $this->intervalDiscount;
+				$this->intervalDiscount = 0;
+				
+			} else if ($unpaidPreCharges > 0) {
+				// interval waive amount split between pre and now interval charges.
+				$this->intervalDiscount += $unpaidPreCharges;
+				$this->preIntervalCharge -= $unpaidPreCharges;
+				$this->intervalCharge += $this->intervalDiscount;
+			} else {
+				$this->intervalCharge += $this->intervalDiscount;
+			}
+			//			$this->intervalDiscount += $this->intervalCharge;
+//			$this->intervalCharge = 0;
 		}
 
 		// Interval Waive amounts
