@@ -101,6 +101,12 @@ class StmtCalc {
 		return $this->overPaidVisitIds;
 	}
 	
+	public function getIncome() {
+		return $this->getPaymentToNow() + $this->getPastPaymentsToNow() + $this->getUnpaidCharges() + abs($this->getDiscount())
+			+ abs($this->getWaiveAmt()) + $this->getSubsidyCharge();
+		
+	}
+	
 	public function addVisit(VisitIntervalCalculator $visitCalc, $idVisit) {
 		
 		$this->paymentFromPast += $visitCalc->getPaymentFromPast();

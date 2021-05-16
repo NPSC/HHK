@@ -77,6 +77,12 @@ class FinancialInterval {
 					
 					$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $serialId);
 					
+					// Testing only
+					if ($stmtCalc->getIncome() != $stmtCalc->getFullIntervalCharge()) {
+						throw new \Exception('Visit ' . $visitId . ' breaks the balance. Sold to '. $record['Sold_To_Id'] . '.  Income = '.$stmtCalc->getIncome()
+								. ' Full Charge = '.$stmtCalc->getFullIntervalCharge());
+					}
+					
 					// Reset for next visit
 					$visitCalc = new VisitIntervalCalculator();
 					$visitId = $r['idVisit'];
@@ -443,7 +449,7 @@ where
     	FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)ELSE (SELECT SUM(DATEDIFF(CASE
       	WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start') THEN DATE('$start')
       	ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END, DATE(s.Span_Start_Date)))
-        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";;
+        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";
 		}
 		
 		return " 0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`, ";

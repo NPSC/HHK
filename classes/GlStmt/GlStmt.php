@@ -307,7 +307,11 @@ class GlStmt {
 		
 		$finInterval = new FinancialInterval($this->startDate, $this->endDate);
 		
-		$stmtCalc = $finInterval->collectData($dbh, $priceModel, $this->getOrderNumbers());
+		try {
+			$stmtCalc = $finInterval->collectData($dbh, $priceModel, $this->getOrderNumbers());
+		} catch (\Exception $ex) {
+			exit($ex->getMessage());
+		}
 		
 		$tbl = new HTMLTable();
 		
@@ -396,12 +400,9 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format($stmtCalc->getSubsidyCharge(), 2), array('style'=>'text-align:right;'))
 				);
 		
-		$income = $stmtCalc->getPaymentToNow() + $stmtCalc->getPastPaymentsToNow() + $stmtCalc->getUnpaidCharges() + abs($stmtCalc->getDiscount())
-		+ abs($stmtCalc->getWaiveAmt()) + $stmtCalc->getSubsidyCharge();
-		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($income, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchinc'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getIncome(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchinc'))
 				);
 		
 		return $tbl->generateMarkup($tableAttrs)

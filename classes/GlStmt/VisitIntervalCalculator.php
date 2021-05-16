@@ -74,8 +74,7 @@ class VisitIntervalCalculator {
 			} else {
 				$this->intervalCharge += $this->intervalDiscount;
 			}
-			//			$this->intervalDiscount += $this->intervalCharge;
-//			$this->intervalCharge = 0;
+
 		}
 
 		// Interval Waive amounts
@@ -142,7 +141,8 @@ class VisitIntervalCalculator {
 		// Payments to now
 		$ptn = 0;
 		if ($cfp <= $this->intervalPay) {
-			if ($this->intervalPay - $cfp > $this->intervalCharge) {
+			
+			if ($this->intervalPay - $cfp >= $this->intervalCharge - $pptn) {	// fix the $130
 				$ptn = $this->intervalCharge - $pptn;
 			} else {
 				$ptn = $this->intervalPay - $cfp;
