@@ -178,6 +178,17 @@ if (isset($_POST['btnHere'])) {
     $glStmt->mapRecords($dbh);
     
     $dataTable = HTMLContainer::generateMarkup('h2', 'Report for the month of ' . $monthArray[$glMonth][1] . ', '. $glyear);
+    
+    $tableAttrs = array('style'=>"float:left;margin-right:1em;");
+    
+    // Scans all interval payments and items to generate an item detial list.
+    $dtable = $glStmt->getGlMarkup($tableAttrs);
+    
+    /*
+     *
+     * Scans all visits during any one month to generate an Income Statement based upon room utilization and other determinents such as
+    */
+    $dtable .= $glStmt->doReport($dbh, $monthArray, $tableAttrs);
 
     if (count($glStmt->getErrors()) > 0) {
     	
@@ -190,18 +201,7 @@ if (isset($_POST['btnHere'])) {
     	$dataTable .= $etbl->generateMarkup();
     }
     
-    
-    $tableAttrs = array('style'=>"float:left;margin-right:1em;");
-    
-    // Scans all interval payments to generate an item detial list.
-    $dataTable .= $glStmt->getGlMarkup($tableAttrs);
-    
-    /*
-     *
-     * Scans all visits during any one month to generate an Income Statement based upon room utilization and other determinents such as
-    */
-    $dataTable .= $glStmt->doReport($dbh, $monthArray, $tableAttrs);
-
+    $dataTable .= $dtable;
 }
 
 // Output lines

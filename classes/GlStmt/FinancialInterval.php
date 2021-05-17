@@ -18,6 +18,7 @@ class FinancialInterval {
 	protected $payAmounts;
 	
 	protected $baArray;
+	protected $errorMsg;
 	
 
 	public function __construct(\DateTimeImmutable $startDate, \DateTimeImmutable $endDate) {
@@ -29,6 +30,7 @@ class FinancialInterval {
 	
 		$uS = Session::getInstance();
 
+		$this->errorMsg = [];
 		$this->totalCatNites = [];
 		$this->totalItemPayment = [];
 		$this->baArray = [];
@@ -79,8 +81,8 @@ class FinancialInterval {
 					
 					// Testing only
 					if ($stmtCalc->getIncome() != $stmtCalc->getFullIntervalCharge()) {
-						throw new \Exception('Visit ' . $visitId . ' breaks the balance. Sold to '. $record['Sold_To_Id'] . '.  Income = '.$stmtCalc->getIncome()
-								. ' Full Charge = '.$stmtCalc->getFullIntervalCharge());
+						$this->errorMsg[] = 'Visit ' . $visitId . ' breaks the balance. Sold to '. $record['Sold_To_Id'] . '.  Income = '.$stmtCalc->getIncome()
+								. ' Full Charge = '.$stmtCalc->getFullIntervalCharge();
 					}
 					
 					// Reset for next visit
@@ -484,5 +486,8 @@ where
 	
 	public function getTotalItemPayment() {
 		return $this->totalItemPayment;
+	}
+	public function getErrorArray() {
+		return $this->errorMsg;
 	}
 }
