@@ -32,6 +32,7 @@ use HHK\House\Attribute\Attributes;
 use HHK\Purchase\TaxedItem;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
+use HHK\Document\FormTemplate;
 
 /**
  * ResourceBuilder.php
@@ -1108,7 +1109,7 @@ if (isset($_POST['ldfm'])) {
     $tabContent = '';
 
     //set help text
-    $help = '<p style="margin: .5em 0 .5em 0;">(NOTE: To set the form order, drag and drop the tabs above.)</p>';
+    $help = '';
     
     foreach ($docRows as $r) {
 
@@ -1982,6 +1983,18 @@ $rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(remove
     'name' => 'selFormUpload'
 ));
 
+// Form Builder
+$forms = FormTemplate::listTemplates($dbh);
+$formTbl = new HTMLTable();
+$formTbl->addHeaderTr(HTMLTable::makeTh('Referral Forms', array('colspan'=>'4')));
+$formTbl->addHeaderTr(HTMLTable::makeTh('Actions') . HTMLTable::makeTh('ID') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Status'));
+if(count($forms) > 0){
+    foreach($forms as $form){
+        $formTbl->addBodyTr(HTMLTable::makeTd('<button class="editForm hhk-btn" data-docId="' . $form['idDocument'] . '">Edit</button>') . HTMLTable::makeTd($form['idDocument']) . HTMLTable::makeTd($form['Title']) . HTMLTable::makeTd($form['Status']));
+    }
+}
+
+
 // Instantiate the alert message control
 $alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -2016,7 +2029,8 @@ $resultMessage = $alertMsg->createMarkup();
 	<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 	<script type="text/javascript" src="js/rescBuilder.js"></script>
-	<script type="text/javascript" src="../js/form-builder.min.js"></script>
+	<script type="text/javascript" src="../js/formBuilder/form-builder.min.js"></script>
+	<script type="text/javascript" src="js/formBuilder.js"></script>
 </head>
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
@@ -2176,7 +2190,11 @@ $resultMessage = $alertMsg->createMarkup();
 				<div id="divUploadForm" style="margin-top: 1em;"></div>
 			</div>
 			<div id="formBuilder" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-			
+				<div id="formList">
+					<?php echo $formTbl->generateMarkup(); ?>
+				</div>
+				<button id="newReferral" class="hhk-btn">New Referral Form</button>
+				<div id="formBuilderContent" style="margin-top: 1em;"></div>
 			</div>
 			<div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
 				<form method="POST" action="ResourceBuilder.php" name="formitem">
@@ -2231,13 +2249,10 @@ $resultMessage = $alertMsg->createMarkup();
 	<!-- div id="contentDiv"-->
 	<script type="text/javascript">
 	
-	$(document).ready(function(){
-	
-		$('#formBuilder').formBuilder();
-	
-	});
-	</script>
-	
+		$(document).ready(function(){
+			$('#formBuilder').hhkFormBuilder();
+		});
+
 	</script>
 </body>
 </html>

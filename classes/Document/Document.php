@@ -52,6 +52,7 @@ class Document {
     protected $language = '';
     protected $abstract = '';
     protected $doc = '';
+    protected $style = '';
     protected $status = '';
     protected $createdBy = '';
     protected $lastUpdated = null;
@@ -97,10 +98,11 @@ class Document {
                 $this->setLanguage($documentRS->Language->getStoredVal());
                 $this->setAbstract($documentRS->Abstract->getStoredVal());
                 $this->setDoc($documentRS->Doc->getStoredVal());
+                $this->setStyle($documentRS->Style->getStoredVal());
                 $this->setCreatedBy($documentRS->Created_By->getStoredVal());
                 $this->setUpdatedBy($documentRS->Updated_By->getstoredVal());
                 $this->setLastUpdated($documentRS->Last_Updated->getStoredVal());
-
+                
                 $this->documentRS = $documentRS;
             } else {
                 $response = FALSE;
@@ -149,7 +151,9 @@ class Document {
         $documentRS->Title->setNewVal($this->getTitle());
         $documentRS->Mime_Type->setNewVal($this->getMimeType());
         $documentRS->Doc->setNewVal($this->getDoc());
+        $documentRS->Style->setNewVal($this->getStyle());
         $documentRS->Type->setNewVal($this->getType());
+        $documentRS->Category->setNewVal($this->getCategory());
         $documentRS->Status->setNewVal($this->getStatus());
         $documentRS->Created_By->setNewVal($this->getCreatedBy());
         $documentRS->Last_Updated->setNewVal($this->getLastUpdated());
@@ -196,6 +200,33 @@ class Document {
             EditRS::updateStoredVals($this->documentRS);
         }
 
+        return $counter;
+    }
+    
+    /**
+     *
+     * @param \PDO $dbh
+     * @param string $title
+     * @param string $doc
+     * @param string $style
+     * @param string $username
+     * @return int the number of records updated.
+     */
+    public function save(\PDO $dbh, $title, $doc, $style, $username) {
+        
+        $counter = 0;
+        
+        if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
+            
+            $this->documentRS->Title->setNewVal($title);
+            $this->documentRS->Doc->setNewVal($doc);
+            $this->documentRS->Style->setNewVal($style);
+            $this->documentRS->Updated_By->setNewVal($username);
+            
+            $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+            EditRS::updateStoredVals($this->documentRS);
+        }
+        
         return $counter;
     }
 
@@ -289,6 +320,10 @@ class Document {
     public function getDoc() {
         return $this->doc;
     }
+    
+    public function getStyle() {
+        return $this->style;
+    }
 
     public function getStatus() {
         return $this->status;
@@ -340,6 +375,10 @@ class Document {
 
     public function setDoc($doc) {
         $this->doc = $doc;
+    }
+    
+    public function setStyle($style) {
+        $this->style = $style;
     }
 
     public function setStatus($status) {

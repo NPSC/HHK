@@ -45,3 +45,8 @@ ADD COLUMN `tax_exempt` TINYINT NULL DEFAULT 0 AFTER `Notes`;
 
 -- add merchant receipt to sys_config
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('merchantReceipt', 'false', 'b', 'f', 'Print customer and merchant receipt on single page');
+
+
+-- add Style to document
+ALTER TABLE `document` 
+ADD COLUMN `Style` MEDIUMTEXT NULL AFTER `Doc`;

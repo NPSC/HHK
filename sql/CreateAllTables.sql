@@ -260,6 +260,7 @@ CREATE TABLE if not exists `document` (
   `Language` varchar(5) NOT NULL DEFAULT '',
   `Abstract` text,
   `Doc` mediumblob,
+  `Style` MEDIUMTEXT NULL,
   `Status` varchar(5) NOT NULL,
   `Last_Updated` datetime DEFAULT NULL,
   `Created_By` varchar(45) NOT NULL DEFAULT '',

@@ -23,6 +23,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\Receipt;
 use HHK\Exception\PaymentException;
+use HHK\Document\FormTemplate;
 
 /**
  * ws_resc.php
@@ -608,7 +609,63 @@ try {
 
             $events = ResourceView::CleanLog($dbh, $idRoom, $_POST);
             break;
+            
+        case "getforms" :
+            $events = array('forms'=>FormTemplate::listTemplates($dbh));
+            break;
+            
+        case "loadform" :
+            $idDocument = 0;
+            if(isset($_REQUEST['idDocument'])) {
+                $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
+                $formTemplate = new FormTemplate();
+                if($formTemplate->loadTemplate($dbh, $idDocument)){
+                    $events = array(
+                        'status'=>'success',
+                        'formTitle'=>$formTemplate->getTitle(),
+                        'formTemplate'=>$formTemplate->getTemplate(),
+                        'formStyle'=>$formTemplate->getStyle(),
+                        'formURL'=>$uS->resourceURL . 'house/showReferral.php?form=' . $idDocument
+                    );
+                }else{
+                    $events = array("error"=>"Form not found");
+                }
+            }
+            break;
 
+        case "saveform" :
+            $idDocument = 0;
+            if(isset($_REQUEST['idDocument'])) {
+                $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
+            }
+            
+            $title = '';
+            if(isset($_REQUEST['title'])) {
+                $title = filter_var($_REQUEST['title'], FILTER_SANITIZE_STRING);
+            }
+            
+            $doc = '';
+            if(isset($_REQUEST['doc'])) {
+                try{
+                    json_decode(stripslashes($_REQUEST['doc']));
+                    $doc = stripslashes($_REQUEST['doc']);
+                }catch(\Exception $e){
+                    
+                }
+            }
+            
+            $style = '';
+            if(isset($_REQUEST['style'])) {
+                $csstidy = new \csstidy();
+                $csstidy->parse($_REQUEST['style']);
+                $style = $csstidy->print->plain();
+            }
+            
+            $formTemplate = new FormTemplate();
+            $formTemplate->loadTemplate($dbh, $idDocument);
+            $events = $formTemplate->save($dbh, $title, $doc, $style, $uS->username);
+            
+            break;
         default:
             $events = array("error" => "Bad Command: \"" . $c . "\"");
     }
