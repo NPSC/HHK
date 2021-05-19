@@ -30,7 +30,7 @@ class GuestMember extends AbstractRoleMember {
         
         if ($hideRelChooser === FALSE) {
             
-            $parray = $uS->guestLookups[GLTableNames::PatientRel]; // removeOptionGroups($uS->guestLookups[GL_TableNames::PatientRel]);
+        	$parray = $this->translatePatRelTypes($uS->guestLookups[GLTableNames::PatientRel]);  //$uS->guestLookups[GLTableNames::PatientRel];
             
             // freeze control if patient is self.
             if ($lockRelChooser) {
