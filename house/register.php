@@ -247,6 +247,12 @@ if ($uS->UseWLnotes) {
     $showWlNotes = FALSE;
 }
 
+$referralStatuses = "";
+if($uS->useOnlineReferral){
+    $referralStatuses = json_encode(readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
+}
+
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -279,6 +285,7 @@ if ($uS->UseWLnotes) {
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REFERRAL_VIEWER_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
@@ -329,6 +336,9 @@ if ($uS->UseWLnotes) {
                     <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>
                     <?php } ?>
                     <li><a href="#vwls">Wait List (<span id="spnNumWaitlist"></span>)</a></li>
+                    <?php if($uS->useOnlineReferral){ ?>
+                    <li><a href="#vreferrals"><?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?></a></li>
+                    <?php } ?>
                     <?php if ($isGuestAdmin) { ?>
                         <li><a href="#vactivity">Recent Activity</a></li>
                         <?php if ($showCharges) { ?>
@@ -371,6 +381,11 @@ if ($uS->UseWLnotes) {
                 <div id="vwls" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                     <?php echo $waitlist; ?>
                 </div>
+                <?php if($uS->useOnlineReferral){ ?>
+                <div id="vreferrals" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
+                
+                </div>
+                <?php } ?>
                 <?php if ($isGuestAdmin) { ?>
                 <div id="vactivity" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                     <table><tr>
@@ -475,6 +490,7 @@ if ($uS->UseWLnotes) {
         <input  type="hidden" id="showWlNotes" value='<?php echo $showWlNotes ?>' />
         <input  type="hidden" id="wlTitle" value='<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>' />
         <input  type="hidden" id="showCharges" value='<?php echo $showCharges ?>' />
+        <input  type="hidden" id="referralStatuses" value='<?php echo $referralStatuses; ?>' />
 
 		<script type="text/javascript" src="js/resvManager.js"></script>
         <script type="text/javascript" src="js/register.js"></script>

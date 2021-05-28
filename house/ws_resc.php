@@ -24,6 +24,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\Receipt;
 use HHK\Exception\PaymentException;
 use HHK\Document\FormTemplate;
+use HHK\Document\FormDocument;
 
 /**
  * ws_resc.php
@@ -610,11 +611,11 @@ try {
             $events = ResourceView::CleanLog($dbh, $idRoom, $_POST);
             break;
             
-        case "getforms" :
+        case "getformtemplates" :
             $events = array('forms'=>FormTemplate::listTemplates($dbh));
             break;
             
-        case "loadform" :
+        case "loadformtemplate" :
             $idDocument = 0;
             if(isset($_REQUEST['idDocument'])) {
                 $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
@@ -633,7 +634,7 @@ try {
             }
             break;
 
-        case "saveform" :
+        case "saveformtemplate" :
             $idDocument = 0;
             if(isset($_REQUEST['idDocument'])) {
                 $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
@@ -664,6 +665,21 @@ try {
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             $events = $formTemplate->save($dbh, $title, $doc, $style, $uS->username);
+            
+            break;
+            
+        case "listforms" :
+            $status = '';
+            if(isset($_REQUEST['status'])){
+                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+            }
+            
+            $totalsOnly = false;
+            if(isset($_REQUEST['totalsonly'])){
+                $totalsOnly = filter_var($_REQUEST['totalsonly'], FILTER_VALIDATE_BOOLEAN);
+            }
+            
+            $events = FormDocument::listForms($dbh, $status, $_GET, $totalsOnly);
             
             break;
         default:

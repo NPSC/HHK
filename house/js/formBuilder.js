@@ -22,6 +22,13 @@
       			label: "Source",
       			type: "text",
       			subtype: "text"
+    		},
+    		{
+    			label: "Submit",
+    			type: "button",
+    			subtype: "submit",
+    			className: "submit-btn"
+    			
     		}
   			],
             inputSets: [
@@ -34,52 +41,35 @@
 					"type": "text",
     				"label": "Patient First Name",
     				"placeholder": "First Name",
-    				"className": "form-control col-md-4",
+    				"className": "form-control",
     				"name": "patientFirstName",
+    				"width": "col-md-4"
   				},
   				{
   					"type": "text",
     				"label": "Patient Last Name",
     				"placeholder": "Last Name",
-    				"className": "form-control col-md-4",
+    				"className": "form-control",
     				"name": "patientLastName",
+    				"width": "col-md-4"
   				},
   				{
     				"type": "date",
     				"label": "Patient Birthdate",
     				"placeholder": "Patient Birthdate",
-    				"className": "form-control col-md-2",
+    				"className": "form-control",
     				"name": "patientBirthdate",
+    				"width": "col-md-2"
   				},
   				{
     				"type": "select",
     				"label": "Patient Sex",
     				"placeholder": "Patient Sex",
-    				"className": "form-control col-md-2",
+    				"className": "form-control",
     				"name": "patientSex",
+    				"width": "col-md-2",
     				"multiple": false,
-    				"values": [
-      				{
-        				"label": "Male",
-        				"value": "m",
-        				"selected": true
-      				},
-      				{
-        				"label": "Female",
-        				"value": "f",
-        				"selected": false
-      				},
-      				{
-        				"label": "Other",
-        				"value": "o",
-        				"selected": false
-      				},
-      				{
-        				"label": "Prefer not to say",
-        				"value": "u",
-        				"selected": false
-      				}
-    				]
+    				"values": []
   				},
   				{
 					"type": "header",
@@ -93,52 +83,59 @@
 					"type": "text",
     				"label": "Street",
     				"placeholder": "Street",
-    				"className": "form-control col-md-12",
-    				"name": "adrStreet"
+    				"className": "form-control",
+    				"name": "adrStreet",
+    				"width": "col-md-12"
   				},
   				{
   					"type": "text",
     				"label": "City",
     				"placeholder": "City",
-    				"className": "form-control col-md-5",
-    				"name": "adrCity"
+    				"className": "form-control",
+    				"name": "adrCity",
+    				"width": "col-md-5"
   				},
   				{
     				"type": "text",
     				"label": "State",
     				"placeholder": "State",
-    				"className": "form-control col-md-2",
-    				"name": "adrState"
+    				"className": "form-control",
+    				"name": "adrState",
+    				"width": "col-md-2"
   				},
   				{
     				"type": "text",
     				"label": "Zip Code",
     				"placeholder": "Zip Code",
-    				"className": "form-control col-md-2",
-    				"name": "adrZip"
+    				"className": "form-control",
+    				"name": "adrZip",
+    				"width": "col-md-2"
     			},
     			{
     				"type": "text",
     				"label": "Country",
     				"placeholder": "Country",
-    				"className": "form-control col-md-3",
-    				"name": "adrCountry"
+    				"className": "form-control",
+    				"name": "adrCountry",
+    				"width": "col-md-3"
     			},
     			{
     				"type": "text",
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control col-md-6",
-    				"name": "phone"
+    				"className": "form-control",
+    				"name": "phone",
+    				"width": "col-md-6"
     			},
     			{
     				"type": "text",
     				"subtype": "email",
     				"label": "Email",
     				"placeholder": "Email",
-    				"className": "form-control col-md-6",
-    				"name": "email"
+    				"className": "form-control",
+    				"name": "email",
+    				"width": "col-md-6"
     			}
   				]
   			},
@@ -151,52 +148,59 @@
 					"type": "text",
     				"label": "Street",
     				"placeholder": "Street",
-    				"className": "form-control col-md-12",
-    				"name": "adrStreet"
+    				"className": "form-control",
+    				"name": "adrStreet",
+    				"width": "col-md-12"
   				},
   				{
   					"type": "text",
     				"label": "City",
     				"placeholder": "City",
-    				"className": "form-control col-md-5",
-    				"name": "adrCity"
+    				"className": "form-control",
+    				"name": "adrCity",
+    				"width": "col-md-5"
   				},
   				{
     				"type": "text",
     				"label": "State",
     				"placeholder": "State",
-    				"className": "form-control col-md-2",
-    				"name": "adrState"
+    				"className": "form-control",
+    				"name": "adrState",
+    				"width": "col-md-2"
   				},
   				{
     				"type": "text",
     				"label": "Zip Code",
     				"placeholder": "Zip Code",
-    				"className": "form-control col-md-2",
-    				"name": "adrZip"
+    				"className": "form-control",
+    				"name": "adrZip",
+    				"width": "col-md-2"
     			},
     			{
     				"type": "text",
     				"label": "Country",
     				"placeholder": "Country",
-    				"className": "form-control col-md-3",
-    				"name": "adrCountry"
+    				"className": "form-control",
+    				"name": "adrCountry",
+    				"width": "col-md-3"
     			},
     			{
     				"type": "text",
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control col-md-6",
-    				"name": "phone"
+    				"className": "form-control",
+    				"name": "phone",
+    				"width": "col-md-6"
     			},
     			{
     				"type": "text",
     				"subtype": "email",
     				"label": "Email",
     				"placeholder": "Email",
-    				"className": "form-control col-md-6",
-    				"name": "email"
+    				"className": "form-control",
+    				"name": "email",
+    				"width": "col-md-6"
     			}
     			]
   			},
@@ -208,14 +212,16 @@
 				{
 					"type": "date",
     				"label": "Checkin Date",
-    				"className": "form-control col-md-6",
-    				"name": "checkindate"
+    				"className": "form-control",
+    				"name": "checkindate",
+    				"width": "col-md-6"
   				},
   				{
 					"type": "date",
     				"label": "Checkout Date",
-    				"className": "form-control col-md-6",
-    				"name": "checkoutdate"
+    				"className": "form-control",
+    				"name": "checkoutdate",
+    				"width": "col-md-6"
   				}
   				]
   			},
@@ -228,30 +234,34 @@
 					"type": "text",
     				"label": "First Name",
     				"placeholder": "First Name",
-    				"className": "form-control col-md-3",
-    				"name": "familyFirstName[]",
+    				"className": "form-control",
+    				"name": "guests[0][firstName]",
+    				"width": "col-md-3"
   				},
   				{
   					"type": "text",
     				"label": "Last Name",
     				"placeholder": "Last Name",
-    				"className": "form-control col-md-3",
-    				"name": "familyLastName[]",
+    				"className": "form-control",
+    				"name": "guests[0][lastName]",
+    				"width": "col-md-3"
   				},
   				{
     				"type": "text",
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control col-md-3",
-    				"name": "familyphone[]"
+    				"className": "form-control",
+    				"name": "guests[0][phone]",
+    				"width": "col-md-3"
     			},
     			{
   					"type": "select",
     				"label": "Relationship to Patient",
     				"placeholder": "Relationship to Patient",
-    				"className": "form-control col-md-3",
-    				"name": "familyRelationship[]",
+    				"className": "form-control",
+    				"name": "guests[0][relationship]",
+    				"width": "col-md-3",
     				"multiple": false,
     				"values": [
       				{
@@ -265,30 +275,34 @@
 					"type": "text",
     				"label": "First Name",
     				"placeholder": "First Name",
-    				"className": "form-control col-md-3",
-    				"name": "familyFirstName[]",
+    				"className": "form-control",
+    				"name": "guests[1][firstName]",
+    				"width": "col-md-3"
   				},
   				{
   					"type": "text",
     				"label": "Last Name",
     				"placeholder": "Last Name",
-    				"className": "form-control col-md-3",
-    				"name": "familyLastName[]",
+    				"className": "form-control",
+    				"name": "guests[1][lastName]",
+    				"width": "col-md-3"
   				},
   				{
     				"type": "text",
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control col-md-3",
-    				"name": "familyphone[]"
+    				"className": "form-control",
+    				"name": "guests[1][phone]",
+    				"width": "col-md-3"
     			},
     			{
   					"type": "select",
     				"label": "Relationship to Patient",
     				"placeholder": "Relationship to Patient",
-    				"className": "form-control col-md-3",
-    				"name": "familyRelationship[]",
+    				"className": "form-control",
+    				"name": "guests[1][relationship]",
+    				"width": "col-md-3",
     				"multiple": false,
     				"values": [
       				{
@@ -302,30 +316,34 @@
 					"type": "text",
     				"label": "First Name",
     				"placeholder": "First Name",
-    				"className": "form-control col-md-3",
-    				"name": "familyFirstName[]",
+    				"className": "form-control",
+    				"name": "guests[2][firstName]",
+    				"width": "col-md-3"
   				},
   				{
   					"type": "text",
     				"label": "Last Name",
     				"placeholder": "Last Name",
-    				"className": "form-control col-md-3",
-    				"name": "familyLastName[]",
+    				"className": "form-control",
+    				"name": "guests[2][lastName]",
+    				"width": "col-md-3"
   				},
   				{
     				"type": "text",
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control col-md-3",
-    				"name": "familyphone[]"
+    				"className": "form-control",
+    				"name": "guests[2][phone]",
+    				"width": "col-md-3"
     			},
     			{
   					"type": "select",
     				"label": "Relationship to Patient",
     				"placeholder": "Relationship to Patient",
-    				"className": "form-control col-md-3",
-    				"name": "familyRelationship[]",
+    				"className": "form-control",
+    				"name": "guests[2][relationship]",
+    				"width": "col-md-3",
     				"multiple": false,
     				"values": [
       				{
@@ -335,6 +353,45 @@
       				}
     				]
   				},
+  				]
+  			},
+  			{
+        		label: 'Hospital Info',
+        		name: 'hospital-info',
+        		showHeader: true,
+        		fields: [
+				{
+					"type": "text",
+    				"label": "Hospital",
+    				"placeholder": "Hospital Name",
+    				"className": "form-control",
+    				"name": "hospital[name]",
+    				"width": "col-md-3",
+  				},
+  				{
+					"type": "text",
+    				"label": "Doctor",
+    				"placeholder": "Doctor",
+    				"className": "form-control",
+    				"name": "hospital[doctor]",
+    				"width": "col-md-3",
+  				},
+  				{
+					"type": "date",
+    				"label": "Treatment Start Date",
+    				"placeholder": "Treatment Start",
+    				"className": "form-control",
+    				"name": "hospital[treatmentStart]",
+    				"width": "col-md-3",
+  				},
+  				{
+					"type": "date",
+    				"label": "Treatment End Date",
+    				"placeholder": "Treatment End",
+    				"className": "form-control",
+    				"name": "hospital[treatmentEnd]",
+    				"width": "col-md-3",
+  				}
   				]
   			}
   			],
@@ -599,7 +656,7 @@
 	    	url : settings.serviceURL,
 	   		type: "GET",
 	    	data : {
-	    		"cmd":"getforms"
+	    		"cmd":"getformtemplates"
 	    	},
 	    	dataType: "json",
 	    	success: function(data, textStatus, jqXHR)
@@ -641,7 +698,7 @@
 	    			url : settings.serviceURL,
 	   				type: "GET",
 	    			data : {
-	    				"cmd":"loadform",
+	    				"cmd":"loadformtemplate",
 	    				"idDocument": idDocument
 	    			},
 	    			dataType: "json",
@@ -691,7 +748,7 @@
 	    			url : settings.serviceURL,
 	   				type: "POST",
 	    			data : {
-	    				"cmd":"saveform",
+	    				"cmd":"saveformtemplate",
 	    				"idDocument": idDocument,
 	    				"title": title,
 	    				"doc": JSON.stringify(formData),

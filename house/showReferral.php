@@ -10,6 +10,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\Document\FormTemplate;
+use HHK\Document\FormDocument;
 use HHK\sec\Login;
 use HHK\sec\ScriptAuthClass;
 use HHK\sec\SecurityComponent;
@@ -60,8 +61,8 @@ $formData = '';
 $style = '';
 $error = '';
 
-if(isset($_GET['form'])){
-    $id = filter_var($_GET["form"], FILTER_SANITIZE_NUMBER_INT);
+if(isset($_GET['template'])){
+    $id = filter_var($_GET["template"], FILTER_SANITIZE_NUMBER_INT);
     if($id > 0){
         $formTemplate = new FormTemplate();
         if($formTemplate->loadTemplate($dbh, $id)){
@@ -72,6 +73,24 @@ if(isset($_GET['form'])){
         }
     }else{
         $error = "No Referral form found";
+    }
+    
+}else if(isset($_GET['form'])){
+    if(!$uS->logged){
+        $error = "Unauthorized for page: Please login";
+    }else{
+        $id = filter_var($_GET["form"], FILTER_SANITIZE_NUMBER_INT);
+        if($id > 0){
+            $formDocument = new FormDocument();
+            if($formDocument->loadDocument($dbh, $id)){
+                $formData = $formDocument->getDoc();
+                $style = "";
+            }else{
+                $error = "Document not found";
+            }
+        }else{
+            $error = "No Referral form found";
+        }
     }
     
 }else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style'])){
@@ -106,10 +125,11 @@ $(document).ready(function() {
 
 	const formData = `<?php echo $formData; ?>`;
 
-    $('#formContent').formRender({
+    const formRender = $('#formContent').formRender({
     	formData,
     	layoutTemplates: {
   			default: function(field, label, help, data) {
+  				help = $('<div/>').addClass('validationText').attr("data-field", data.id);
     			return $('<div/>').addClass(data.width + " form-group").append(label, field, help);
   			}
 		},
@@ -118,15 +138,53 @@ $(document).ready(function() {
 		}
 	});
 	$(document).find('.rendered-form').addClass('row');
+	$('.ckdate').datepicker();
 	
 	var genders = <?php echo json_encode($genders); ?>;
 	var patientRels = <?php echo json_encode($patientRels); ?>;
+	var genderLabel = $(document).find('.rendered-form label[for=patientSex]').text();
+	$(document).find('.rendered-form #patientSex').html('<option disabled selected>' + genderLabel + '</option>');
 	for(i in genders){
 		$(document).find('.rendered-form #patientSex').append('<option value="' + genders[i].Code + '">' + genders[i].Description + '</option>');
 	}
 	for(i in patientRels){
 		$(document).find('.rendered-form #familyRelationship').append('<option value="' + patientRels[i].Code + '">' + patientRels[i].Description + '</option>');
 	}
+	
+	$(document).on('submit', 'form', function(e){
+		e.preventDefault();
+		var formRenderData = formRender.userData;
+		
+		
+		$.ajax({
+	    	url : "ws_forms.php",
+	   		type: "POST",
+	    	data : {
+	    		cmd: "submitform",
+	    		formRenderData: JSON.stringify(formRenderData)
+	    	},
+	    	dataType: "json",
+	    	success: function(data, textStatus, jqXHR)
+	    	{
+	    	    console.log(data);
+	    	    $('input, select').removeClass('is-invalid');
+	    	    $('.validationText').empty().removeClass('invalid-feedback');
+	    	    
+	    	    if(data.errors){
+	    	    	$.each(data.errors, function(key, error){
+	    	    	console.log(error);
+	    	    		$('input[name="' + error.field + '"]').addClass('is-invalid');
+	    	    		$('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
+	    	    	});
+	    	    }
+	    	    if(data.status == "success") {
+	    	    	$('.rendered-form').hide();
+	    	    	$('.msg').show();
+	    	    	$('html, body', window.parent.document).animate({scrollTop:0}, 'slow');
+	    	    }
+	    	}
+	    });
+	});
 	
 });
 </script>
@@ -137,10 +195,29 @@ $(document).ready(function() {
 
     </head>
     <body>
+    
+    		<div class="alert alert-success msg" role="alert" style="display: none">
+    			<h4 class="alert-heading">Referral Form Submitted</h4>
+    			<p>We've received your referral form and will be in touch shortly.</p>
+    			<p>
+    				Thank you,<br>
+    				Nora's Home
+    			</p>
+    		</div>
+    	<?php if(isset($_GET['form'])){ ?>
+    	<fieldset disabled="disabled">
+    	<?php }else{ ?>
+    	<form action="#" method="POST" novalidate>
+    	<?php } ?>
         <div id="formContent" class="container-fluid">
 			<div style="text-align: center">
 				<?php echo $error; ?>
 			</div>
         </div>
+        <?php if(isset($_GET['form'])){ ?>
+        </fieldset>
+        <?php }else{ ?>
+        </form>
+        <?php } ?>
     </body>
 </html>

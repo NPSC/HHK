@@ -2190,11 +2190,6 @@ $resultMessage = $alertMsg->createMarkup();
 				<div id="divUploadForm" style="margin-top: 1em;"></div>
 			</div>
 			<div id="formBuilder" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
-				<div id="formList">
-					<?php echo $formTbl->generateMarkup(); ?>
-				</div>
-				<button id="newReferral" class="hhk-btn">New Referral Form</button>
-				<div id="formBuilderContent" style="margin-top: 1em;"></div>
 			</div>
 			<div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
 				<form method="POST" action="ResourceBuilder.php" name="formitem">

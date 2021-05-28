@@ -2,8 +2,6 @@
 
 namespace HHK\Document;
 
-use HHK\sec\Session;
-
 /**
  * FormTemplate.php
  *

@@ -340,6 +340,12 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Rate_Period', '2', 'Reduced Rate 2', '14','',0),
 ('Rate_Period', '3', 'Reduced Rate 3', '19999','',0),
 
+('Referral_Form_Status', 'n', 'New','','',10),
+('Referral_form_Status', 'ip', 'In-Process','','',20),
+('Referral_Form_Status', 'ac', 'Accepted','','',30),
+('Referral_Form_Status', 'ar', 'Archived','','',40),
+('Referral_Form_Status', 'd', 'Deleted','','',50),
+
 ('Reg_Agreement', 'en', 'English', '1','',0),
 
 ('Reg_Colors', 'r', 'Room','','',0),
@@ -637,6 +643,7 @@ INSERT INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`
 ('UseDocumentUpload','true','b','hf','','Enable Document Uploads',''),
 ('UseHouseWaive','true','b','h','','Show the house waive checkbox on checkout',''),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature',''),
+('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals'),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements'),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations',''),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry',''),
@@ -655,6 +662,7 @@ INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description
 ('unconfirmedTab','UnConfirmed Reservations','s','rg','','Default: UnConfirmed Reservations'),
 ('recentPayTab','Recent Payments','s','rg','','Default: Recent Payments'),
 ('rateTitle','Room Rate','s','rg','','Default: Room Rate'),
+('onlineReferralTab', 'Referrals', 's', 'rg', 'Default: Referrals'),
 
 ('notesLabel','Reservation Notes','s','rf','','Default: Reservation Notes'),
 ('waitlistNotesLabel','Waitlist Notes','s','rf','','Default: Waitlist Notes'),

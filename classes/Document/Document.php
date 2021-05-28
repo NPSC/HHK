@@ -151,6 +151,7 @@ class Document {
         $documentRS->Title->setNewVal($this->getTitle());
         $documentRS->Mime_Type->setNewVal($this->getMimeType());
         $documentRS->Doc->setNewVal($this->getDoc());
+        $documentRS->Abstract->setNewVal($this->getAbstract());
         $documentRS->Style->setNewVal($this->getStyle());
         $documentRS->Type->setNewVal($this->getType());
         $documentRS->Category->setNewVal($this->getCategory());
@@ -314,7 +315,7 @@ class Document {
     }
 
     public function getAbstract() {
-        return $this->abstrac;
+        return $this->abstract;
     }
 
     public function getDoc() {

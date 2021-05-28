@@ -1523,6 +1523,11 @@ $(document).ready(function () {
     });
 
 
+	var referralStatuses = JSON.parse($('#referralStatuses').val());
+	$('#vreferrals').referralViewer({
+		statuses: referralStatuses
+	});
+
 
     $('#curres').DataTable({
        ajax: {

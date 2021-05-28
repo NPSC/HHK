@@ -50,3 +50,21 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 -- add Style to document
 ALTER TABLE `document` 
 ADD COLUMN `Style` MEDIUMTEXT NULL AFTER `Doc`;
+
+-- add referral form status
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) VALUES 
+('Referral_Form_Status', 'n', 'New', '10'),
+('Referral_Form_Status', 'ip', 'In-Process', '20'),
+('Referral_Form_Status', 'ac', 'Accepted', '30'),
+('Referral_Form_Status', 'ar', 'Archived', '40'),
+('Referral_Form_Status', 'd', 'Deleted', '50');
+
+-- add referral tab label
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('onlineReferralTab', 'Referrals', 's', 'rg', 'Default: Referrals');
+
+-- add referral sys_config
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('useOnlineReferral', 'false', 'b', 'hf', 'Enable public online referrals');
+
+ALTER TABLE `document` 
+CHANGE COLUMN `Abstract` `Abstract` MEDIUMTEXT NULL DEFAULT NULL ;
+
