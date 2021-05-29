@@ -206,7 +206,6 @@ if (count($diags) > 0) {
 
 $cFields[] = array("Status", 'Status', 'checked', '', 'string', '15', array());
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
-//$cFields[] = array("By", 'By', 'checked', '', 's', '', array());
 
 $fieldSets = ReportFieldSet::listFieldSets($dbh, 'item', true);
 $fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');

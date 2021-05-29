@@ -67,7 +67,7 @@ abstract class AbstractPriceModel {
 
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
-        // Short circuit for fixed rate x
+        // Short circuit for fixed rate f
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category) {
             if ($pledgedRate > 0) {
 

@@ -12,12 +12,10 @@ use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay, PSGMemVisit, PSGMemR
 use HHK\House\Room\RoomChooser;
 use HHK\House\Vehicle;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
-use HHK\SysConst\DefaultSettings;
-use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus};
+use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus, DefaultSettings};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
-use HHK\sec\Labels;
-use HHK\sec\{SecurityComponent, Session};
+use HHK\sec\{Labels, SecurityComponent, Session};
 use HHK\Exception\RuntimeException;
 
 
@@ -824,7 +822,8 @@ FROM
     registration r ON v.idRegistration = r.idRegistration
 WHERE
     DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
-    and DATE(ifnull(s.Span_End_Date, DATE_ADD(DATE(datedefaultnow(s.Expected_Co_Date)), INTERVAL 1 Day))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
+  --  and DATE(ifnull(s.Span_End_Date, DATE_ADD(DATE(datedefaultnow(s.Expected_Co_Date)), INTERVAL 1 Day))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
+    and DATE(ifnull(s.Span_End_Date, DATE(datedefaultnow(s.Expected_Co_Date)))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
     and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
     and s.idName in (" . substr($whStays, 1) . ") "
                     . " order by s.idVisit, s.Visit_Span");
