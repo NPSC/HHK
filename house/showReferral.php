@@ -178,9 +178,10 @@ $(document).ready(function() {
 	    	    	});
 	    	    }
 	    	    if(data.status == "success") {
-	    	    	$('.rendered-form').hide();
+	    	    	$('.rendered-form button[type=submit]').attr("disabled", "disabled").hide();
+	    	    	$('.rendered-form input, .rendered-form select').attr('disabled', 'disabled');
 	    	    	$('.msg').show();
-	    	    	$('html, body', window.parent.document).animate({scrollTop:0}, 'slow');
+	    	    	$('html, body').animate({scrollTop:$(document).height()}, 'slow');
 	    	    }
 	    	}
 	    });
@@ -196,14 +197,7 @@ $(document).ready(function() {
     </head>
     <body>
     
-    		<div class="alert alert-success msg" role="alert" style="display: none">
-    			<h4 class="alert-heading">Referral Form Submitted</h4>
-    			<p>We've received your referral form and will be in touch shortly.</p>
-    			<p>
-    				Thank you,<br>
-    				Nora's Home
-    			</p>
-    		</div>
+    		
     	<?php if(isset($_GET['form'])){ ?>
     	<fieldset disabled="disabled">
     	<?php }else{ ?>
@@ -214,6 +208,14 @@ $(document).ready(function() {
 				<?php echo $error; ?>
 			</div>
         </div>
+        <div class="alert alert-success msg" role="alert" style="display: none">
+    		<h4 class="alert-heading">Referral Form Submitted</h4>
+    		<p>We've received your referral form and will be in touch shortly.</p>
+    		<p>
+    			Thank you,<br>
+    			Nora's Home
+    		</p>
+    	</div>
         <?php if(isset($_GET['form'])){ ?>
         </fieldset>
         <?php }else{ ?>

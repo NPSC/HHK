@@ -153,7 +153,7 @@ class Document {
         $documentRS->Title->setNewVal($this->getTitle());
         $documentRS->Mime_Type->setNewVal($this->getMimeType());
         $documentRS->Doc->setNewVal($this->getDoc());
-        $documentRS->UserData->resetNewVal($this->getUserData());
+        $documentRS->UserData->setNewVal($this->getUserData());
         $documentRS->Abstract->setNewVal($this->getAbstract());
         $documentRS->Style->setNewVal($this->getStyle());
         $documentRS->Type->setNewVal($this->getType());
@@ -204,6 +204,21 @@ class Document {
             EditRS::updateStoredVals($this->documentRS);
         }
 
+        return $counter;
+    }
+    
+    public function updateStatus(\PDO $dbh, $status) {
+        
+        $counter = 0;
+        
+        if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
+            
+            $this->documentRS->Status->setNewVal($status);
+            
+            $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+            EditRS::updateStoredVals($this->documentRS);
+        }
+        
         return $counter;
     }
     

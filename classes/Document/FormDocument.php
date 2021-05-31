@@ -99,6 +99,10 @@ class FormDocument {
         }
     }
     
+    public function updateStatus(\PDO $dbh, $status){
+        return $this->doc->updateStatus($dbh, $status);
+    }
+    
     public function validateFields($doc){
         $response = ["fields"=>[], "errors"=>[]];
         

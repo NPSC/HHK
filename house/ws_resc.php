@@ -682,6 +682,24 @@ try {
             $events = FormDocument::listForms($dbh, $status, $_GET, $totalsOnly);
             
             break;
+            
+        case "updateFormStatus" :
+            $idDocument = 0;
+            if(isset($_REQUEST['idDocument'])) {
+                $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
+            }
+            
+            $status = '';
+            if(isset($_REQUEST['status'])){
+                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+            }
+            
+            $formDocument = new FormDocument();
+            $formDocument->loadDocument($dbh, $idDocument);
+            $formDocument->updateStatus($dbh, $status);
+            
+            break;
+            
         default:
             $events = array("error" => "Bad Command: \"" . $c . "\"");
     }

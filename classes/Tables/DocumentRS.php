@@ -44,7 +44,7 @@ class DocumentRS extends AbstractTableRS {
         $this->Type = new DB_Field("Type", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Abstract = new DB_Field("Abstract", "", new DbStrSanitizer(1000), TRUE, TRUE);
         $this->Doc = new DB_Field("Doc", "", new DbBlobSanitizer(), TRUE, TRUE);
-        $this->UserData = new DB_Field("userData", "", DbBlobSanitizer(), TRUE, TRUE);
+        $this->UserData = new DB_Field("userData", "", new DbBlobSanitizer(), TRUE, TRUE);
         $this->Style = new DB_Field("Style", "", new DbBlobSanitizer(), TRUE, TRUE);
         $this->Mime_Type = new DB_Field("Mime_Type", "", new DbStrSanitizer(85), TRUE, TRUE);
 

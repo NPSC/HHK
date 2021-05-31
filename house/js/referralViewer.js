@@ -185,7 +185,7 @@
 	}
 	
 	function createActions(idDocument, row){
-		return '<button type="button" class="formDetails" data-id="' + idDocument + '">Open</button>';
+		return '<button type="button" class="formDetails" data-id="' + idDocument + '" style="margin-right: 0.5em">Open</button><button type="button" class="formDelete" data-id="' + idDocument + '"><span class="ui-icon ui-icon-trash"></span></button>';
 	}
 	
 	function actions($wrapper, settings, formDetailsDialog){
@@ -193,8 +193,38 @@
 		$wrapper.on('click', '.formDetails', function(e){
 			var idDocument = $(e.target).data('id');
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
+			$.ajax({
+				url: settings.serviceURL,
+				dataType: 'JSON',
+				type: 'get',
+				data: {
+					cmd: 'updateFormStatus',
+					idDocument: idDocument,
+					status: 'ip'
+				},
+				success: function( data ){
+					settings.dtTable.ajax.reload();
+				}
+			});
 			formDetailsDialog.dialog('open');
 		
+		}); 
+		
+		$wrapper.on('click', '.formDelete', function(e){
+			var idDocument = $(e.target).data('id');
+			$.ajax({
+				url: settings.serviceURL,
+				dataType: 'JSON',
+				type: 'get',
+				data: {
+					cmd: 'updateFormStatus',
+					idDocument: idDocument,
+					status: 'd'
+				},
+				success: function( data ){
+					settings.dtTable.ajax.reload();
+				}
+			});
 		}); 
 		
 	}
