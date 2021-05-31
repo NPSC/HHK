@@ -33,7 +33,7 @@ class FormDocument {
     public static function listForms(\PDO $dbh, $status, $params, $totalsOnly = false){
         
         if($totalsOnly){
-            $query = 'SELECT `Status`, count(*) as "count" from `v_form_listing` group by `Status`';
+            $query = 'SELECT `Status`, count(*) as "count" from `vform_listing` group by `Status`';
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             return array('totals'=>$rows);
@@ -56,7 +56,7 @@ class FormDocument {
                 $whereClause = '`Status ID` IN ("' . $status . '")';
             }
             
-            return SSP::complex($params, $dbh, 'v_form_listing', 'idDocument', $columns, null, $whereClause);
+            return SSP::complex($params, $dbh, 'vform_listing', 'idDocument', $columns, null, $whereClause);
         }
     }
     
@@ -86,7 +86,7 @@ class FormDocument {
         $this->doc = new Document();
         $this->doc->setType(self::JsonType);
         $this->doc->setCategory(self::formCat);
-        $this->doc->setAbstract($validatedFields);
+        $this->doc->setUserData($validatedFields);
         $this->doc->setDoc($json);
         $this->doc->setStatus('n');
         
@@ -106,26 +106,26 @@ class FormDocument {
         
         foreach($json as $field){
             if(isset($field->name) && isset($field->required)){ //filter out non input fields
-                if($field->required && $field->userData[0] == ''){
+                if($field->required && $field->userData[0] == ''){ //if field is required but user didn't fill field
                     $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' is required.'];
                     continue;
-                }elseif($field->type == "date" && $field->userData[0] != ''){
+                }elseif($field->type == "date" && $field->userData[0] != ''){ //if date field and not empty
                     try{
                         $date = new \DateTime($field->userData[0]);
                     }catch(\Exception $e){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid date.'];
                     }
-                }elseif($field->type == "text" && $field->subtype == "email" && $field->userData[0] != ''){
+                }elseif($field->type == "text" && $field->subtype == "email" && $field->userData[0] != ''){ //if email field and not empty
                     if(!filter_var($field->userData[0], FILTER_VALIDATE_EMAIL)){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid Email address.'];
                     }
-                }elseif($field->type == "text" && $field->subtype == "tel" && $field->userData[0] != ''){
+                }elseif($field->type == "text" && $field->subtype == "tel" && $field->userData[0] != ''){ //if phone field and not empty
                     if(!filter_var($field->userData[0], FILTER_VALIDATE_INT)){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid phone number.'];
                     }
                 }
                 
-                if(isset($field->userData[0])){
+                if(isset($field->userData[0])){ //fill fields array
                     $response['fields'][$field->name] = $field->userData[0];
                 }
             }
@@ -136,6 +136,14 @@ class FormDocument {
     
     public function getDoc(){
         return $this->doc->getDoc();
+    }
+    
+    public function getUserData(){
+        try{
+            return json_decode($this->doc->getUserData());
+        }catch(\Exception $e){
+            return NULL;
+        }
     }
 
 }

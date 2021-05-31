@@ -66,5 +66,6 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('useOnlineReferral', 'false', 'b', 'hf', 'Enable public online referrals');
 
 ALTER TABLE `document` 
-CHANGE COLUMN `Abstract` `Abstract` MEDIUMTEXT NULL DEFAULT NULL ;
+ADD COLUMN `userData` MEDIUMTEXT NULL AFTER `Doc`;
+
 

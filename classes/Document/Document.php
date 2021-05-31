@@ -52,6 +52,7 @@ class Document {
     protected $language = '';
     protected $abstract = '';
     protected $doc = '';
+    protected $userData = '';
     protected $style = '';
     protected $status = '';
     protected $createdBy = '';
@@ -98,6 +99,7 @@ class Document {
                 $this->setLanguage($documentRS->Language->getStoredVal());
                 $this->setAbstract($documentRS->Abstract->getStoredVal());
                 $this->setDoc($documentRS->Doc->getStoredVal());
+                $this->setUserData($documentRS->UserData->getStoredVal());
                 $this->setStyle($documentRS->Style->getStoredVal());
                 $this->setCreatedBy($documentRS->Created_By->getStoredVal());
                 $this->setUpdatedBy($documentRS->Updated_By->getstoredVal());
@@ -151,6 +153,7 @@ class Document {
         $documentRS->Title->setNewVal($this->getTitle());
         $documentRS->Mime_Type->setNewVal($this->getMimeType());
         $documentRS->Doc->setNewVal($this->getDoc());
+        $documentRS->UserData->resetNewVal($this->getUserData());
         $documentRS->Abstract->setNewVal($this->getAbstract());
         $documentRS->Style->setNewVal($this->getStyle());
         $documentRS->Type->setNewVal($this->getType());
@@ -322,6 +325,10 @@ class Document {
         return $this->doc;
     }
     
+    public function getUserData() {
+        return $this->userData;
+    }
+    
     public function getStyle() {
         return $this->style;
     }
@@ -376,6 +383,10 @@ class Document {
 
     public function setDoc($doc) {
         $this->doc = $doc;
+    }
+    
+    public function setUserData($userData) {
+        $this->userData = $userData;
     }
     
     public function setStyle($style) {

@@ -793,6 +793,27 @@ CREATE or replace VIEW `vemail_directory` AS
             and (`ne`.`Email` <> ''));
 
 
+-- -----------------------------------------------------
+-- View `vform_listing`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vform_listing` AS
+    SELECT 
+        `d`.`idDocument` AS `idDocument`,
+        JSON_VALUE(`d`.`userData`, '$.patientFirstName') AS `patientFirstName`,
+        JSON_VALUE(`d`.`userData`, '$.patientLastName') AS `patientLastName`,
+        JSON_VALUE(`d`.`userData`, '$.checkindate') AS `ExpectedCheckin`,
+        JSON_VALUE(`d`.`userData`, '$.checkoutdate') AS `ExpectedCheckout`,
+        JSON_VALUE(`d`.`userData`, '$."hospital[name]"') AS `hospitalName`,
+        `d`.`Status` AS `status ID`,
+        `g`.`Description` AS `status`,
+        `d`.`Timestamp` AS `Timestamp`
+    FROM
+        (`document` `d`
+        LEFT JOIN `gen_lookups` `g` ON (`d`.`Status` = `g`.`Code`
+            AND `g`.`Table_Name` = 'Referral_Form_Status'))
+    WHERE
+        `d`.`Type` = 'json'
+            AND `d`.`Category` = 'form';
 
 -- -----------------------------------------------------
 -- View `vgetIncidentlisting`
