@@ -486,11 +486,12 @@ class UserClass
             $osName = "HHK";
         }else{
             try {
-            	$userAgentArray = get_browser(NULL, TRUE);
-            	$browserName = $userAgentArray['parent'];
-            	$osName = $userAgentArray['platform'];
+            	if ($userAgentArray = get_browser(NULL, TRUE)) {
+            		$browserName = $userAgentArray['parent'];
+            		$osName = $userAgentArray['platform'];
+            	}
             } catch (\Exception $d) {
-            	$browserName = "Missing Browscap";
+            	$browserName = "Missing Browscap?";
             }
         }
         
