@@ -33,10 +33,19 @@ class FormDocument {
     public static function listForms(\PDO $dbh, $status, $params, $totalsOnly = false){
         
         if($totalsOnly){
-            $query = 'SELECT `Status`, count(*) as "count" from `vform_listing` group by `Status`';
+            $query = 'select g.Code as "idStatus", g.Description as "Status", count(v.idDocument) as "count" from `gen_lookups` g
+left join `vform_listing` v on g.Code = v.`status ID`
+where g.Table_Name = "Referral_Form_Status"
+group by g.Code order by g.Order';
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            return array('totals'=>$rows);
+            $totals = [];
+            
+            foreach($rows as $row){
+                $totals[$row['idStatus']] = $row;
+            }
+            
+            return array('totals'=>$totals);
         }else{
             $columns = array(
                 array( 'db' => 'idDocument', 'dt' => 'idDocument'),

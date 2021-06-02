@@ -16,7 +16,6 @@
 	    var defaults = {    
             serviceURL: 'ws_resc.php',
             detailURL: 'showReferral.php',
-            statuses: [],
             dtTable: "",
             dtData: {'cmd': 'listforms', 'status':'inbox'},
             dtCols: [
@@ -90,29 +89,37 @@
                             return dateRender(data, type, dateFormat);
                         }
                 },
-            ]
-            
+            ],
+            formDetailsDialogBtns: 
+            {
+      			"Create Reservation": function(){
+      			
+      			},
+        		Close: function(){
+        			formDetailsDialog.dialog( "close" );
+        		}
+        	}
 			
         };
 
         var settings = $.extend(true, {}, defaults, options);
+        
+        console.log(getStatuses(settings));
 
         var $wrapper = $(this);
         
         createMarkup($wrapper, settings);
 
 		$wrapper.find("button").button();
+		
+		console.log(settings.statuses);
     	
     	var formDetailsDialog = $wrapper.find('#formDetailsDialog').dialog({
       		autoOpen: false,
       		height: "auto",
       		width: "auto",
       		modal: true,
-      		buttons: {
-        		Close: function(){
-        			formDetailsDialog.dialog( "close" );
-        		}
-      		}
+      		buttons: settings.formDetailsDialogBtns
     	});
 	
 		actions($wrapper, settings, formDetailsDialog);
@@ -135,10 +142,12 @@
 			</div>
 		`
 		);
-		$wrapper.find('#referralTabs ul').append('<li data-status="inbox"><a href="#referralTabContent">Inbox</a></li>');
+		console.log(settings.statuses['n']);
+		
+		$wrapper.find('#referralTabs ul').append('<li data-status="inbox"><a href="#referralTabContent">Inbox (' + settings.statuses['n'].count + ')</a></li>');
 		$.each(settings.statuses, function(key,value){
-			if(value.Code != 'n' && value.Code != 'ip'){
-				$wrapper.find('#referralTabs ul').append('<li data-status="' + value.Code + '"><a href="#referralTabContent">' + value.Description + '</a></li>');
+			if(value.idStatus != 'n' && value.idStatus != 'ip'){
+				$wrapper.find('#referralTabs ul').append('<li data-status="' + value.idStatus + '"><a href="#referralTabContent">' + value.Status + '</a></li>');
 			}
 		});
 		
@@ -180,7 +189,6 @@
 			}
 		}).addClass( "ui-tabs-vertical ui-helper-clearfix" );
 		$wrapper.find('#referralTabs li').removeClass( "ui-corner-top" ).addClass( "ui-corner-left" );
-		//$wrapper.find("#referralTabs").tabs( "option", "active", "0" );
 		
 	}
 	
@@ -193,6 +201,13 @@
 		$wrapper.on('click', '.formDetails', function(e){
 			var idDocument = $(e.target).data('id');
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
+			
+			settings.formDetailsDialogBtns["Create Reservation"] = function(){
+				window.location.href = "Reserve.php?docid=" + idDocument;
+			};
+			
+			formDetailsDialog.dialog('option', 'buttons', settings.formDetailsDialogBtns);
+			
 			$.ajax({
 				url: settings.serviceURL,
 				dataType: 'JSON',
@@ -228,31 +243,11 @@
 		}); 
 		
 	}
-	
-	function getTotals(settings){
-		$.ajax({
-            url: settings.serviceURL,
-            dataType: 'JSON',
-            type: 'get',
-            data: {
-                cmd: 'listforms',
-                totalsonly: 'true'
-            },
-            success: function( data ){
-                if(data.totals){
-                	$.each(settings.statuses, function(key,status){
-                    	$.each(data.totals, function(totalkey,total){
-                    		if(total.status = status.Code){
-                    			status.Total = total.count;
-                    		}else{
-                    			status.Total = 0;
-                    		}
-                    	});
-                    });
-                }else{
-                    return [];
-                }
-            }
-        });
+	var response = [];
+	function getStatuses(settings){
+		
+		
+        console.log(response);
+
 	}
 }(jQuery));

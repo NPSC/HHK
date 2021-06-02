@@ -1524,9 +1524,21 @@ $(document).ready(function () {
 
 
 	var referralStatuses = JSON.parse($('#referralStatuses').val());
-	$('#vreferrals').referralViewer({
-		statuses: referralStatuses
-	});
+	$.ajax({
+            url: 'ws_resc.php',
+            dataType: 'JSON',
+            type: 'get',
+            data: {
+                cmd: 'listforms',
+                totalsonly: 'true'
+            },
+            success: function( data ){
+                if(data.totals){
+                    $('#vreferrals').referralViewer({statuses: data.totals});
+                }
+            }
+        });
+	
 
 
     $('#curres').DataTable({
