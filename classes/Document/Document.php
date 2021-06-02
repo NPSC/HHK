@@ -228,10 +228,11 @@ class Document {
      * @param string $title
      * @param string $doc
      * @param string $style
+     * @param string $abstract
      * @param string $username
      * @return int the number of records updated.
      */
-    public function save(\PDO $dbh, $title, $doc, $style, $username) {
+    public function save(\PDO $dbh, $title, $doc, $style, $abstract, $username) {
         
         $counter = 0;
         
@@ -240,6 +241,7 @@ class Document {
             $this->documentRS->Title->setNewVal($title);
             $this->documentRS->Doc->setNewVal($doc);
             $this->documentRS->Style->setNewVal($style);
+            $this->documentRS->Abstract->setNewVal($abstract);
             $this->documentRS->Updated_By->setNewVal($username);
             
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));

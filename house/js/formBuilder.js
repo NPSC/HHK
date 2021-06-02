@@ -428,6 +428,17 @@
   				}
   			},
   			{
+    			id: 'editSuccessAction',
+    			className: 'btn btn-default',
+    			label: 'Edit Success Message',
+    			type: 'button',
+    			events: {
+    				click: function() {
+      					editSuccessDialog.dialog('open');
+    				}
+  				}
+  			},
+  			{
     			id: 'previewAction',
     			className: 'btn btn-default',
     			label: 'Preview',
@@ -594,6 +605,22 @@
       		}
     	});
     	
+    	var editSuccessDialog = $wrapper.find('#formSuccessDialog').dialog({
+      		autoOpen: false,
+      		height: 400,
+      		width: 600,
+      		modal: true,
+      		buttons: {
+        		"Revert Changes": function() {
+        			editSuccessDialog.find('textarea').val(editSuccessDialog.find('textarea').data('oldval'));
+          			editSuccessDialog.dialog( "close" );
+        		},
+        		Continue: function(){
+        			editSuccessDialog.dialog( "close" );
+        		}
+      		}
+    	});
+    	
     	var formPreviewDialog = $wrapper.find('#formPreviewDialog').dialog({
       		autoOpen: false,
       		height: "auto",
@@ -606,7 +633,7 @@
       		}
     	});
 	
-		actions($wrapper, settings, editStyleDialog, formPreviewDialog);
+		actions($wrapper, settings, editStyleDialog, formPreviewDialog, editSuccessDialog);
 		
 		return this;
 	}
@@ -645,6 +672,17 @@
 					</div>
 				</div>
 			</div>
+			<div id="formSuccessDialog" title="Edit Success Message">
+				<div class="row">
+					<div class="col-12">
+						<p style="margin-bottom: 1em;">Add a custom message displayed on a successful form submission</p>
+						<label for="formSuccessTitle" style="display:block">Sucess Title</label>
+						<input type="text" id="formSuccessTitle" name="formSuccessTitle" placeholder="Success Title" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
+						<label for="formSuccessContent" style="display:block">Success Content</label>
+						<textarea name="formSuccessContent" placeholder="Success Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
+					</div>
+				</div>
+			</div>
 			<div id="formPreviewDialog" title="Preview">
 				<iframe id="formPreviewIframe" name="formPreviewIframe" width="1024" height="768" style="border: 0"></iframe>
 			</div>
@@ -671,7 +709,7 @@
 		
 	}
 	
-	function actions($wrapper, settings, editStyleDialog, formPreviewDialog){
+	function actions($wrapper, settings, editStyleDialog, formPreviewDialog, editSuccessDialog){
 	
 		$wrapper.on('click', '#newReferral', function(){
 			$wrapper.find('#selectform').val("").change();
@@ -752,7 +790,7 @@
 	    				"idDocument": idDocument,
 	    				"title": title,
 	    				"doc": JSON.stringify(formData),
-	    				"style": style
+	    				"style": style,
 	    			},
 	    			dataType: "json",
 	    			success: function(data, textStatus, jqXHR)

@@ -662,9 +662,19 @@ try {
                 $style = $csstidy->print->plain();
             }
             
+            $successTitle = '';
+            if(isset($_REQUEST['successTitle'])) {
+                $successTitle = filter_var($_REQUEST['successTitle'], FILTER_SANITIZE_STRING);
+            }
+            
+            $successContent = '';
+            if(isset($_REQUEST['successContent'])) {
+                $successContent = filter_var($_REQUEST['successContent'], FILTER_SANITIZE_STRING);
+            }
+            
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
-            $events = $formTemplate->save($dbh, $title, $doc, $style, $uS->username);
+            $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $uS->username);
             
             break;
             

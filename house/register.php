@@ -337,7 +337,7 @@ if($uS->useOnlineReferral){
                     <?php } ?>
                     <li><a href="#vwls">Wait List (<span id="spnNumWaitlist"></span>)</a></li>
                     <?php if($uS->useOnlineReferral){ ?>
-                    <li><a href="#vreferrals"><?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?></a></li>
+                    <li><a href="#vreferrals"><?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?> (<span id="spnNumReferral"></span>)</a></li>
                     <?php } ?>
                     <?php if ($isGuestAdmin) { ?>
                         <li><a href="#vactivity">Recent Activity</a></li>
@@ -490,7 +490,6 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="showWlNotes" value='<?php echo $showWlNotes ?>' />
         <input  type="hidden" id="wlTitle" value='<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>' />
         <input  type="hidden" id="showCharges" value='<?php echo $showCharges ?>' />
-        <input  type="hidden" id="referralStatuses" value='<?php echo $referralStatuses; ?>' />
 
 		<script type="text/javascript" src="js/resvManager.js"></script>
         <script type="text/javascript" src="js/register.js"></script>

@@ -1523,7 +1523,7 @@ $(document).ready(function () {
     });
 
 
-	var referralStatuses = JSON.parse($('#referralStatuses').val());
+	//referralViewer
 	$.ajax({
             url: 'ws_resc.php',
             dataType: 'JSON',
@@ -1535,6 +1535,8 @@ $(document).ready(function () {
             success: function( data ){
                 if(data.totals){
                     $('#vreferrals').referralViewer({statuses: data.totals});
+                    $("#spnNumReferral").text(data.totals.n.count);
+                    
                 }
             }
         });

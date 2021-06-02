@@ -151,10 +151,11 @@ $(document).ready(function() {
 		$(document).find('.rendered-form #familyRelationship').append('<option value="' + patientRels[i].Code + '">' + patientRels[i].Description + '</option>');
 	}
 	
+
+	
 	$(document).on('submit', 'form', function(e){
 		e.preventDefault();
 		var formRenderData = formRender.userData;
-		
 		
 		$.ajax({
 	    	url : "ws_forms.php",
@@ -166,13 +167,11 @@ $(document).ready(function() {
 	    	dataType: "json",
 	    	success: function(data, textStatus, jqXHR)
 	    	{
-	    	    console.log(data);
 	    	    $('input, select').removeClass('is-invalid');
 	    	    $('.validationText').empty().removeClass('invalid-feedback');
 	    	    
 	    	    if(data.errors){
 	    	    	$.each(data.errors, function(key, error){
-	    	    	console.log(error);
 	    	    		$('input[name="' + error.field + '"]').addClass('is-invalid');
 	    	    		$('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
 	    	    	});
@@ -221,5 +220,6 @@ $(document).ready(function() {
         <?php }else{ ?>
         </form>
         <?php } ?>
+        
     </body>
 </html>

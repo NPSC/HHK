@@ -147,7 +147,7 @@
 		$wrapper.find('#referralTabs ul').append('<li data-status="inbox"><a href="#referralTabContent">Inbox (' + settings.statuses['n'].count + ')</a></li>');
 		$.each(settings.statuses, function(key,value){
 			if(value.idStatus != 'n' && value.idStatus != 'ip'){
-				$wrapper.find('#referralTabs ul').append('<li data-status="' + value.idStatus + '"><a href="#referralTabContent">' + value.Status + '</a></li>');
+				$wrapper.find('#referralTabs ul').append('<li data-status="' + value.idStatus + '"><a href="#referralTabContent">' + value.Status + ' (' + settings.statuses[value.idStatus].count + ')</a></li>');
 			}
 		});
 		

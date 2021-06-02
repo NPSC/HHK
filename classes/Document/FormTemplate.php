@@ -57,7 +57,7 @@ class FormTemplate {
         $this->doc->setCreatedBy($username);
     }
     
-    public function save(\PDO $dbh, $title, $doc, $style, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $username){
         
         $validationErrors = array();
         
@@ -69,7 +69,9 @@ class FormTemplate {
         
         
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $count = $this->doc->save($dbh, $title, $doc, $style, $username);
+            $successJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent]);
+            
+            $count = $this->doc->save($dbh, $title, $doc, $style, $successJson, $username);
             if($count == 1){
                 return array('status'=>'success', 'msg'=>"Form updated successfully");
             }else{
