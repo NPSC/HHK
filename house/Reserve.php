@@ -45,6 +45,7 @@ $payFailPage = $wInit->page->getFilename();
 $idGuest = -1;
 $idReserv = 0;
 $idPsg = 0;
+$idDoc = 0;
 
 // Hosted payment return
 try {
@@ -81,9 +82,6 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
     if (isset($_POST['tbCfmNotes'])) {
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
-
-    //require(HOUSE . 'TemplateForm.php');
-    //require(HOUSE . 'ConfirmationForm.php');
 
     try {
         $confirmForm = new ConfirmationForm($dbh, $docId);
@@ -126,6 +124,11 @@ if (isset($_GET['idPsg'])) {
     $idPsg = intval(filter_var($_GET['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
+// Referral form
+if (isset($_GET['docid'])) {
+	$idDoc = intval(filter_input(INPUT_GET, 'docid', FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
 if ($idReserv > 0 || $idGuest >= 0) {
 
     $mk1 = "<h2>Loading...</h2>";
@@ -133,7 +136,36 @@ if ($idReserv > 0 || $idGuest >= 0) {
     $resvObj->setId($idGuest);
     $resvObj->setIdPsg($idPsg);
 
+} else if ($idDoc > 0) {
+	
+	//Referral Form
+	$formDocument = new FormDocument();
+	$formDocument->loadDocument($dbh, $idDoc);
+	$userData = $formDocument->getUserData();
+	
+	// Patient
+	if (isset($userData['patientFirstName']) && isset($userData['patientLastName'])) {
+		
+		$memberSearch = new MemberSearch($letters);
+		$patients = $memberSearch->roleSearch($dbh, $mode, $gp);
+		
+		
+		// Guests
+		$memberSearch->prepareLetters($letters);
+		$events = $memberSearch->roleSearch($dbh, $mode, $gp);
+		
+		// hospital & doctor search results
+		
+		
+		
+		// When resv is created and saved:
+		$formDocument->updateStatus($dbh, ReferralFormStatus::Accepted);
+	}else {
+		$paymentMarkup .= "The Patient Name is not set. ";
+	}
+	
 } else {
+	
     // Guest Search markup
 	$gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ");
     $mk1 = $gMk['hdr'];
