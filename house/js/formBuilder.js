@@ -722,10 +722,7 @@
 				actionButtons: settings.actionButtons,
 				typeUserAttrs: settings.typeUserAttrs,
 				layoutTemplates: settings.layoutTemplates,
-				onSave: onSave,
-				"i18n":{
-					"location":"../js/formBuilder"
-				}
+				onSave: onSave
 			});
 		});
 		
@@ -753,10 +750,7 @@
 								actionButtons: settings.actionButtons,
 								typeUserAttrs: settings.typeUserAttrs,
 								layoutTemplates: settings.layoutTemplates,
-								onSave: onSave,
-								"i18n":{
-									"location":"../js/formBuilder"
-								}
+								onSave: onSave
 							});
 							
 							$wrapper.find('#formiframe').empty().append('<strong>Embed Code: </strong>').append($('<code/>').text('<iframe src="' + data.formURL + '" width="100%" height="1000"></iframe>'));

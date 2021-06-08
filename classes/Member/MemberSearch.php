@@ -34,33 +34,39 @@ class MemberSearch {
 
     public function __construct($letters) {
 
-        $parts = explode(' ', strtolower(trim($letters)));
-
-        if (count($parts) > 1) {
-
-            // first or last name?
-            if (stristr($parts[0], ',') === FALSE) {
-                //first name first
-                $this->Name_First = $parts[0] . '%';
-                $this->Name_Last = $parts[1] . '%';
-            } else {
-                // last name first
-                $this->Name_First = $parts[1] . '%';
-                $this->Name_Last = str_replace(',', '', $parts[0]) . '%';
-            }
-
-            $this->twoParts = TRUE;
-            $this->Company = strtolower(trim($letters)) . '%';
-
-        } else {
-
-            $this->Name_First = $parts[0] . '%';
-            $this->Name_Last = $parts[0] . '%';
-            $this->Company = $parts[0] . '%';
-            $this->twoParts = FALSE;
-        }
+    	$this->prepareLetters($letters);
     }
 
+    public function prepareLetters($letters) {
+    	
+    	$parts = explode(' ', strtolower(trim($letters)));
+    	
+    	if (count($parts) > 1) {
+    		
+    		// first or last name?
+    		if (stristr($parts[0], ',') === FALSE) {
+    			//first name first
+    			$this->Name_First = $parts[0] . '%';
+    			$this->Name_Last = $parts[1] . '%';
+    		} else {
+    			// last name first
+    			$this->Name_First = $parts[1] . '%';
+    			$this->Name_Last = str_replace(',', '', $parts[0]) . '%';
+    		}
+    		
+    		$this->twoParts = TRUE;
+    		$this->Company = strtolower(trim($letters)) . '%';
+    		
+    	} else {
+    		
+    		$this->Name_First = $parts[0] . '%';
+    		$this->Name_Last = $parts[0] . '%';
+    		$this->Company = $parts[0] . '%';
+    		$this->twoParts = FALSE;
+    	}
+    	
+    }
+    
     public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '') {
         $events = array();
 
