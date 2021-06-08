@@ -7,7 +7,7 @@ class ProgressiveSearch {
 	protected $nameFirst;
 	protected $nameMiddle;
 	protected $nameLast;
-	
+
 	protected $email;
 	protected $phone;
 	protected $addressStreet;
@@ -16,8 +16,7 @@ class ProgressiveSearch {
 	protected $addressZip;
 	protected $addressCountry;
 	
-	
-	
+
 	
 	/**
 	 * @param string $nameFirst

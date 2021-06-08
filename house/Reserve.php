@@ -13,6 +13,7 @@ use HHK\Member\Role\AbstractRole;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
+use HHK\House\ReferralForm;
 
 /**
  * Reserve.php
@@ -138,31 +139,8 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 } else if ($idDoc > 0) {
 	
-	//Referral Form
-	$formDocument = new FormDocument();
-	$formDocument->loadDocument($dbh, $idDoc);
-	$userData = $formDocument->getUserData();
-	
-	// Patient
-	if (isset($userData['patientFirstName']) && isset($userData['patientLastName'])) {
-		
-		$memberSearch = new MemberSearch($letters);
-		$patients = $memberSearch->roleSearch($dbh, $mode, $gp);
-		
-		
-		// Guests
-		$memberSearch->prepareLetters($letters);
-		$events = $memberSearch->roleSearch($dbh, $mode, $gp);
-		
-		// hospital & doctor search results
-		
-		
-		
-		// When resv is created and saved:
-		$formDocument->updateStatus($dbh, ReferralFormStatus::Accepted);
-	}else {
-		$paymentMarkup .= "The Patient Name is not set. ";
-	}
+	$refForm = new ReferralForm($idDoc);
+	$mk1 = $refForm->createMarkup();
 	
 } else {
 	
