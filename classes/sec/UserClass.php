@@ -35,7 +35,7 @@ class UserClass
         $ssn = Session::getInstance();
 
         if ($this->testTries() === FALSE) {
-            $this->logMessage = "To many log-in attempts.  ";
+            $this->logMessage = "Too many log-in attempts.  ";
             return FALSE;
         }
 
