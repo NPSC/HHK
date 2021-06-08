@@ -674,7 +674,11 @@ try {
             
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
-            $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $uS->username);
+            if($idDocument > 0) {
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $uS->username);
+            }else{
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $uS->username);
+            }
             
             break;
             

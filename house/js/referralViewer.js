@@ -103,16 +103,12 @@
         };
 
         var settings = $.extend(true, {}, defaults, options);
-        
-        console.log(getStatuses(settings));
 
         var $wrapper = $(this);
         
         createMarkup($wrapper, settings);
 
 		$wrapper.find("button").button();
-		
-		console.log(settings.statuses);
     	
     	var formDetailsDialog = $wrapper.find('#formDetailsDialog').dialog({
       		autoOpen: false,
@@ -142,8 +138,8 @@
 			</div>
 		`
 		);
-		console.log(settings.statuses['n']);
 		
+		//build status tabs
 		$wrapper.find('#referralTabs ul').append('<li data-status="inbox"><a href="#referralTabContent">Inbox (' + settings.statuses['n'].count + ')</a></li>');
 		$.each(settings.statuses, function(key,value){
 			if(value.idStatus != 'n' && value.idStatus != 'ip'){
@@ -169,7 +165,7 @@
 			    },
 			},
 			"drawCallback": function(settings){
-				$wrapper.find('.actionBtns button').button();
+				$wrapper.find('.hhk-ui-icons li').button();
 			},
 			"createdRow": function( row, data, dataIndex){
 				if( data["idStatus"] ==  "n"){
@@ -193,13 +189,19 @@
 	}
 	
 	function createActions(idDocument, row){
-		return '<button type="button" class="formDetails" data-id="' + idDocument + '" style="margin-right: 0.5em">Open</button><button type="button" class="formDelete" data-id="' + idDocument + '"><span class="ui-icon ui-icon-trash"></span></button>';
+		return `
+			<ul class="hhk-ui-icons">
+				<li class="formDetails" data-docid="` + idDocument + `"><span class="ui-icon ui-icon-extlink"></span></li>
+				<li class="formDelete" data-docid="` + idDocument + `"><span class="ui-icon ui-icon-trash"></span></li>
+			</ul>
+		`;
+		//return '<button type="button" class="formDetails" data-id="' + idDocument + '" style="margin-right: 0.5em">Open</button><button type="button" class="formDelete" data-id="' + idDocument + '"><span class="ui-icon ui-icon-trash"></span></button>';
 	}
 	
 	function actions($wrapper, settings, formDetailsDialog){
 		
 		$wrapper.on('click', '.formDetails', function(e){
-			var idDocument = $(e.target).data('id');
+			var idDocument = $(e.currentTarget).data('docid');
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
 			
 			settings.formDetailsDialogBtns["Create Reservation"] = function(){
@@ -226,7 +228,7 @@
 		}); 
 		
 		$wrapper.on('click', '.formDelete', function(e){
-			var idDocument = $(e.target).data('id');
+			var idDocument = $(e.currentTarget).data('id');
 			$.ajax({
 				url: settings.serviceURL,
 				dataType: 'JSON',
@@ -242,12 +244,5 @@
 			});
 		}); 
 		
-	}
-	var response = [];
-	function getStatuses(settings){
-		
-		
-        console.log(response);
-
 	}
 }(jQuery));
