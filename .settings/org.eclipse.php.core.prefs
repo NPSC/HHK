@@ -1,5 +1,5 @@
 eclipse.preferences.version=1
-include_path=0;/HHK/house\u00050;/HHK\u00050;/HHK/functions\u00050;/HHK/install\u00050;/HHK/patch\u00050;/HHK/classes\u00050;/HHK/admin\u00050;/HHK/volunteer
+include_path=0;/HHK
 phpVersion=php7.4
 useShortTags=true
 use_asp_tags_as_php=false
