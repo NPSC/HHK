@@ -228,20 +228,22 @@
 		}); 
 		
 		$wrapper.on('click', '.formDelete', function(e){
-			var idDocument = $(e.currentTarget).data('id');
-			$.ajax({
-				url: settings.serviceURL,
-				dataType: 'JSON',
-				type: 'get',
-				data: {
-					cmd: 'updateFormStatus',
-					idDocument: idDocument,
-					status: 'd'
-				},
-				success: function( data ){
-					settings.dtTable.ajax.reload();
-				}
-			});
+			var idDocument = $(e.currentTarget).data('docid');
+			if(idDocument){
+				$.ajax({
+					url: settings.serviceURL,
+					dataType: 'JSON',
+					type: 'get',
+					data: {
+						cmd: 'updateFormStatus',
+						idDocument: idDocument,
+						status: 'd'
+					},
+					success: function( data ){
+						settings.dtTable.ajax.reload();
+					}
+				});
+			}
 		}); 
 		
 	}

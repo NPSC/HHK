@@ -7,6 +7,7 @@ use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\SysConst\{CodeVersion, WebRole};
 use HHK\Config_Lite\Config_Lite;
 use HHK\AlertControl\AlertMessage;
+use HHK\Exception\CsrfException;
 
 /**
  * Login.php
@@ -83,6 +84,8 @@ class Login {
         	$ssn->rolecode = WebRole::Guest;
         }
 
+        Login::generateCSRF();
+        
         return $dbh;
     }
 
@@ -212,6 +215,23 @@ class Login {
 
         return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls'));
 
+    }
+    
+    public static function generateCSRF(){
+        $uS = Session::getInstance();
+        if(empty($uS->CSRFtoken)){
+            $uS->CSRFtoken = bin2hex(openssl_random_pseudo_bytes(32));
+        }
+        return $uS->CSRFtoken;
+    }
+    
+    public static function verifyCSRF($token = false){
+        $uS = Session::getInstance();
+        if($token && !empty($uS->CSRFtoken) && $token == $uS->CSRFtoken){
+            return true;
+        }else{
+            throw new CsrfException("CSRF verification failed");
+        }
     }
 
     public function getUserName() {

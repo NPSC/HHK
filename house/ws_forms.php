@@ -25,6 +25,7 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\Receipt;
 use HHK\Exception\PaymentException;
+use HHK\Exception\CsrfException;
 use HHK\Document\FormTemplate;
 use HHK\Document\FormDocument;
 
@@ -46,10 +47,17 @@ try {
     
     $login = new Login();
     $dbh = $login->initHhkSession(ciCFG_FILE);
+	
+	$csrfToken = '';
+	if(isset($_POST['csrfToken'])){
+		$csrfToken = filter_var($_POST['csrfToken'], FILTER_SANITIZE_STRING);
+	}
+	$login->verifyCSRF($csrfToken);
     
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
-    
+} catch (CsrfException $e) {
+	exit ("<h3>" . $e->getMessage() . "</h3>");
 } catch (Exception $ex) {
     exit ("<h3>" . $ex->getMessage());
 }

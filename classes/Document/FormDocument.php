@@ -115,9 +115,9 @@ group by g.Code order by g.Order';
     public function validateFields($doc){
         $response = ["fields"=>[], "errors"=>[]];
         
-        $json = json_decode($doc);
+        $fields = json_decode($doc);
         
-        foreach($json as $field){
+        foreach($fields as $field){
             if(isset($field->name) && isset($field->required)){ //filter out non input fields
                 if($field->required && $field->userData[0] == ''){ //if field is required but user didn't fill field
                     $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' is required.'];
@@ -128,6 +128,12 @@ group by g.Code order by g.Order';
                     }catch(\Exception $e){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid date.'];
                     }
+                    
+                    $today = new \DateTime();
+                    if($date->format('Y-m-d') < $today->format('Y-m-d')){ //if date is in the past
+                        $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be in the future.'];
+                    }
+                    
                 }elseif($field->type == "text" && $field->subtype == "email" && $field->userData[0] != ''){ //if email field and not empty
                     if(!filter_var($field->userData[0], FILTER_VALIDATE_EMAIL)){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid Email address.'];
@@ -141,6 +147,21 @@ group by g.Code order by g.Order';
                 if(isset($field->userData[0])){ //fill fields array
                     $response['fields'][$field->name] = $field->userData[0];
                 }
+                
+                //Check checkin/checkout dates
+                if(isset($response['fields']['checkindate']) && isset($response['fields']['checkoutdate'])){
+                    try{
+                        $checkin = new \DateTime($response['fields']['checkindate']);
+                        $checkout = new \DateTime($response['fields']['checkoutdate']);
+                        
+                        if($checkin->format('Y-m-d') >= $checkout->format('Y-m-d')){
+                            $response["errors"][] = ['field'=>'checkoutdate', 'error'=>'Checkout Date must be after Checkin Date'];
+                        }
+                    }catch(\Exception $e){
+                        
+                    }
+                }
+                
             }
         }
         

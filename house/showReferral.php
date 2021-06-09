@@ -152,6 +152,7 @@ $(document).ready(function() {
 	}
 	
 
+	var csrfToken = '<?php echo $login->generateCSRF(); ?>';
 	
 	$(document).on('submit', 'form', function(e){
 		e.preventDefault();
@@ -162,7 +163,8 @@ $(document).ready(function() {
 	   		type: "POST",
 	    	data : {
 	    		cmd: "submitform",
-	    		formRenderData: JSON.stringify(formRenderData)
+	    		formRenderData: JSON.stringify(formRenderData),
+	    		csrfToken: csrfToken
 	    	},
 	    	dataType: "json",
 	    	success: function(data, textStatus, jqXHR)
