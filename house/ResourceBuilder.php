@@ -1167,7 +1167,9 @@ if (isset($_POST['docUpload'])) {
     	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
     }
     
-    if (! empty($_FILES['formfile']['tmp_name']) && mime_content_type($_FILES['formfile']['tmp_name']) == "text/html") {
+    $mimetype = mime_content_type($_FILES['formfile']['tmp_name']);
+    
+    if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
 
         $docId = - 1;
         if (isset($_POST['docId'])) {
