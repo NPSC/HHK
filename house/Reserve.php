@@ -139,7 +139,8 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 } else if ($idDoc > 0) {
 	
-	$refForm = new ReferralForm($idDoc);
+	$refForm = new ReferralForm($dbh, $idDoc);
+	
 	$mk1 = $refForm->createMarkup();
 	
 } else {
