@@ -48,6 +48,7 @@ try {
     $login = new Login();
     $dbh = $login->initHhkSession(ciCFG_FILE);
 	
+	$secret = decryptMessage(SysConfig::getKeyValue($dbh, 'sys_config', 'HHK_Secret_Key'));
 	$csrfToken = '';
 	if(isset($_POST['csrfToken'])){
 		$csrfToken = filter_var($_POST['csrfToken'], FILTER_SANITIZE_STRING);
@@ -57,7 +58,7 @@ try {
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 } catch (CsrfException $e) {
-	exit ("<h3>" . $e->getMessage() . "</h3>");
+		exit(json_encode(['status'=>'error', 'errors'=>['server'=>$e->getMessage()]]));
 } catch (Exception $ex) {
     exit ("<h3>" . $ex->getMessage());
 }
@@ -89,6 +90,14 @@ try {
     switch ($c) {
             
          case "submitform" :
+		 
+			$recaptchaToken = '';
+			if(isset($_POST['recaptchaToken'])){
+				$recaptchaToken = filter_var($_POST['recaptchaToken'], FILTER_SANITIZE_STRING);
+			}
+			
+			$events = verifyRecaptcha($recaptchaToken);
+			
             $formRenderData = '';
             if(isset($_POST['formRenderData'])){
                 try{
@@ -98,9 +107,9 @@ try {
                     
                 }
             }
-            
-            $formDocument = new FormDocument();
-            $events = $formDocument->saveNew($dbh, $formRenderData);
+			
+            //$formDocument = new FormDocument();
+            //$events = $formDocument->saveNew($dbh, $formRenderData);
             break;
 			
         default:
@@ -122,4 +131,47 @@ if (is_array($events)) {
     echo $events;
 }
 
+function verifyRecaptcha($token){
+	
+	$apiKey = "AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc";
+	$projectID = "helical-clock-316420";
+	$siteKey = "6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO";
+	
+	
+	$ch = curl_init();
+	
+	$data = [
+		"event"=>[
+			"token"=>$token,
+			"siteKey"=>$siteKey,
+			"expectedAction"=>"submit"
+		]
+	];
+
+	curl_setopt($ch, CURLOPT_URL,"https://recaptchaenterprise.googleapis.com/v1beta1/projects/" . $projectID . "/assessments?key=" . $apiKey);
+	curl_setopt($ch, CURLOPT_POST, 1);
+	curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+	curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type:application/json'));
+	
+	// Receive server response ...
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+	$server_output = curl_exec($ch);
+
+	curl_close ($ch);
+	
+	try{
+		$response = json_decode($server_output);
+		
+		return $response;
+		
+		//if($response->tokenProperties->valid && $response->tokenProperties->action == 'submit' && $response->score > 0.6){
+		//	return true;
+		//}else{
+		//	return false;
+		//}
+	}catch(\Exception $e){
+		
+	}
+}
 exit();

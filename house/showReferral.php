@@ -15,6 +15,7 @@ use HHK\sec\Login;
 use HHK\sec\ScriptAuthClass;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Pages;
+use HHK\sec\SysConfig;
 
 /**
  * ShowStatement.php
@@ -51,6 +52,8 @@ try {
 
 $uS = Session::getInstance();
 $labels = Labels::getLabels();
+$siteKey = SysConfig::getKeyValue($dbh, 'sys_config', 'HHK_Site_Key');
+
 
 $genders = readGenLookupsPDO($dbh, 'gender', 'Order');
 unset($genders['z']);
@@ -120,6 +123,7 @@ if(isset($_GET['template'])){
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
+        <script src="https://www.google.com/recaptcha/api.js?render=<?php echo $siteKey; ?>"></script>
         <script type='text/javascript'>
 $(document).ready(function() {
 
@@ -137,6 +141,7 @@ $(document).ready(function() {
 			"location":"../js/formBuilder"
 		}
 	});
+	
 	$(document).find('.rendered-form').addClass('row');
 	$('.ckdate').datepicker();
 	
@@ -156,36 +161,46 @@ $(document).ready(function() {
 	
 	$(document).on('submit', 'form', function(e){
 		e.preventDefault();
-		var formRenderData = formRender.userData;
-		
-		$.ajax({
-	    	url : "ws_forms.php",
-	   		type: "POST",
-	    	data : {
-	    		cmd: "submitform",
-	    		formRenderData: JSON.stringify(formRenderData),
-	    		csrfToken: csrfToken
-	    	},
-	    	dataType: "json",
-	    	success: function(data, textStatus, jqXHR)
-	    	{
-	    	    $('input, select').removeClass('is-invalid');
-	    	    $('.validationText').empty().removeClass('invalid-feedback');
-	    	    
-	    	    if(data.errors){
-	    	    	$.each(data.errors, function(key, error){
-	    	    		$('input[name="' + error.field + '"]').addClass('is-invalid');
-	    	    		$('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
-	    	    	});
-	    	    }
-	    	    if(data.status == "success") {
-	    	    	$('.rendered-form button[type=submit]').attr("disabled", "disabled").hide();
-	    	    	$('.rendered-form input, .rendered-form select').attr('disabled', 'disabled');
-	    	    	$('.msg').show();
-	    	    	$('html, body').animate({scrollTop:$(document).height()}, 'slow');
-	    	    }
-	    	}
-	    });
+		grecaptcha.ready(function() {
+          grecaptcha.execute('<?php echo $siteKey; ?>', {action: 'submit'}).then(function(token) {
+    		var formRenderData = formRender.userData;
+    		
+    		$.ajax({
+    	    	url : "ws_forms.php",
+    	   		type: "POST",
+    	    	data : {
+    	    		cmd: "submitform",
+    	    		formRenderData: JSON.stringify(formRenderData),
+    	    		csrfToken: csrfToken,
+    	    		recaptchaToken: token
+    	    	},
+    	    	dataType: "json",
+    	    	success: function(data, textStatus, jqXHR)
+    	    	{
+    	    	    $('input, select').removeClass('is-invalid');
+    	    	    $('.validationText').empty().removeClass('invalid-feedback');
+    	    	    
+    	    	    if(data.errors){
+    	    	    	$.each(data.errors, function(key, error){
+    	    	    		if(key == 'server'){
+    	    	    			$('#errorcontent').text(error);
+    	    	    			$('.errmsg').show();
+    	    	    		}else{
+    	    	    			$('input[name="' + error.field + '"]').addClass('is-invalid');
+    	    	    			$('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
+    	    	    		}
+    	    	    	});
+    	    	    }
+    	    	    if(data.status == "success") {
+    	    	    	$('.rendered-form button[type=submit]').attr("disabled", "disabled").hide();
+    	    	    	$('.rendered-form input, .rendered-form select').attr('disabled', 'disabled');
+    	    	    	$('.msg').show();
+    	    	    	$('.errmsg').hide();
+    	    	    	$('html, body').animate({scrollTop:$(document).height()}, 'slow');
+    	    	    }
+    	    	}
+    	    });
+    	  });
 	});
 	
 });
@@ -216,6 +231,10 @@ $(document).ready(function() {
     			Thank you,<br>
     			Nora's Home
     		</p>
+    	</div>
+    	<div class="alert alert-danger errmsg" role="alert" style="display: none">
+    		<h4 class="alert-heading">Server Error</h4>
+    		<p id="errorcontent"></p>
     	</div>
         <?php if(isset($_GET['form'])){ ?>
         </fieldset>

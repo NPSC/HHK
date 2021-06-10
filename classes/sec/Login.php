@@ -83,8 +83,6 @@ class Login {
         if (isset($ssn->rolecode) === FALSE) {
         	$ssn->rolecode = WebRole::Guest;
         }
-
-        Login::generateCSRF();
         
         return $dbh;
     }
@@ -217,7 +215,7 @@ class Login {
 
     }
     
-    public static function generateCSRF(){
+    public function generateCSRF(){
         $uS = Session::getInstance();
         if(empty($uS->CSRFtoken)){
             $uS->CSRFtoken = bin2hex(openssl_random_pseudo_bytes(32));
@@ -230,7 +228,7 @@ class Login {
         if($token && !empty($uS->CSRFtoken) && $token == $uS->CSRFtoken){
             return true;
         }else{
-            throw new CsrfException("CSRF verification failed");
+            throw new CsrfException("CSRF verification failed. Token:" . $uS->CSRFtoken . " Supplied Token: " . $token);
         }
     }
 
