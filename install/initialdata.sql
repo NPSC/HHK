@@ -430,6 +430,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'ha', 'House Email Addresses','','',32),
 ('Sys_Config_Category', 'p', 'Patient','','',25),
 ('Sys_Config_Category', 'hf', 'House Features','','', 28),
+('Sys_Config_Category', 'ga', 'Google APIs', '', '', '80');
 
 ('Time_Zone', 'America/Chicago', 'Central','','',0),
 ('Time_Zone', 'America/New_York', 'Eastern','','',0),
@@ -651,7 +652,10 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('VisitFee','false','b','hf','','Enable the visit fee (cleaning fee) feature',''),
 ('VisitFeeDelayDays','0','i','h','','Number of days before cleaning fee is charged',''),
 ('Volunteers','true','b','a','','Enable the HHK Volunteer Manager site',''),
-('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','');
+('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations',''),
+('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', ''),
+('recaptchaApiKey', 'AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc', 's', 'ga', '', 'Google API Key for Recaptcha', ''),
+('recaptchaSiteKey', '6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO', 's', 'ga', '', 'Google API Site Key for Recaptcha', '');
 -- ;
 
 --
@@ -932,9 +936,9 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 --
 -- Hospitals
 --
-REPLACE INTO `hospital` (`Title`,`Type`,`Status`) values
-('County Hospital', 'h', 'a'),
-('City Hospital', 'h', 'a');
+REPLACE INTO `hospital` (`idHospital`,`Title`,`Type`,`Status`) values
+('1','County Hospital', 'h', 'a'),
+('2','City Hospital', 'h', 'a');
 -- ;
 
 

@@ -16,6 +16,7 @@ use HHK\sec\ScriptAuthClass;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Pages;
 use HHK\sec\SysConfig;
+use HHK\sec\Recaptcha;
 
 /**
  * ShowStatement.php
@@ -52,7 +53,7 @@ try {
 
 $uS = Session::getInstance();
 $labels = Labels::getLabels();
-$siteKey = SysConfig::getKeyValue($dbh, 'sys_config', 'HHK_Site_Key');
+$recaptcha = new Recaptcha();
 
 
 $genders = readGenLookupsPDO($dbh, 'gender', 'Order');
@@ -123,7 +124,11 @@ if(isset($_GET['template'])){
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
-        <script src="https://www.google.com/recaptcha/api.js?render=<?php echo $siteKey; ?>"></script>
+        <?php
+        if($uS->mode == 'demo' || $uS->mode == 'prod'){
+            echo $recaptcha->getScriptTag();
+        }
+        ?>
         <script type='text/javascript'>
 $(document).ready(function() {
 
@@ -158,49 +163,61 @@ $(document).ready(function() {
 	
 
 	var csrfToken = '<?php echo $login->generateCSRF(); ?>';
+	var siteKey = '<?php echo $recaptcha->getSiteKey(); ?>';
+	var recaptchaEnabled = <?php echo ($uS->mode == 'demo' || $uS->mode == 'live' ? 'true':'false');?>;
+	
+	function submitForm(token = ''){
+		var formRenderData = formRender.userData;
+		
+		$.ajax({
+	    	url : "ws_forms.php",
+	   		type: "POST",
+	    	data : {
+	    		cmd: "submitform",
+	    		formRenderData: JSON.stringify(formRenderData),
+	    		csrfToken: csrfToken,
+	    		recaptchaToken: token
+	    	},
+	    	dataType: "json",
+	    	success: function(data, textStatus, jqXHR)
+	    	{
+	    	    $('input, select').removeClass('is-invalid');
+	    	    $('.validationText').empty().removeClass('invalid-feedback');
+	    	    
+	    	    if(data.errors){
+	    	    	$.each(data.errors, function(key, error){
+	    	    		if(key == 'server'){
+	    	    			$('#errorcontent').text(error);
+	    	    			$('.errmsg').show();
+	    	    		}else{
+	    	    			$('input[name="' + error.field + '"]').addClass('is-invalid');
+	    	    			$('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
+	    	    		}
+	    	    	});
+	    	    }
+	    	    if(data.status == "success") {
+	    	    	$('.rendered-form button[type=submit]').attr("disabled", "disabled").hide();
+	    	    	$('.rendered-form input, .rendered-form select').attr('disabled', 'disabled');
+	    	    	$('.msg').show();
+	    	    	if(data.recaptchaScore){
+	    	    		$('.msg #recaptchascore').text(data.recaptchaScore);
+	    	    	}else{
+	    	    		$('.msg #recaptchascore').empty();
+	    	    	}
+	    	    	$('.errmsg').hide();
+	    	    	$('html, body').animate({scrollTop:$(document).height()}, 'slow');
+	    	    }
+	    	}
+	    });
+    }
 	
 	$(document).on('submit', 'form', function(e){
 		e.preventDefault();
-		grecaptcha.ready(function() {
-          grecaptcha.execute('<?php echo $siteKey; ?>', {action: 'submit'}).then(function(token) {
-    		var formRenderData = formRender.userData;
-    		
-    		$.ajax({
-    	    	url : "ws_forms.php",
-    	   		type: "POST",
-    	    	data : {
-    	    		cmd: "submitform",
-    	    		formRenderData: JSON.stringify(formRenderData),
-    	    		csrfToken: csrfToken,
-    	    		recaptchaToken: token
-    	    	},
-    	    	dataType: "json",
-    	    	success: function(data, textStatus, jqXHR)
-    	    	{
-    	    	    $('input, select').removeClass('is-invalid');
-    	    	    $('.validationText').empty().removeClass('invalid-feedback');
-    	    	    
-    	    	    if(data.errors){
-    	    	    	$.each(data.errors, function(key, error){
-    	    	    		if(key == 'server'){
-    	    	    			$('#errorcontent').text(error);
-    	    	    			$('.errmsg').show();
-    	    	    		}else{
-    	    	    			$('input[name="' + error.field + '"]').addClass('is-invalid');
-    	    	    			$('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
-    	    	    		}
-    	    	    	});
-    	    	    }
-    	    	    if(data.status == "success") {
-    	    	    	$('.rendered-form button[type=submit]').attr("disabled", "disabled").hide();
-    	    	    	$('.rendered-form input, .rendered-form select').attr('disabled', 'disabled');
-    	    	    	$('.msg').show();
-    	    	    	$('.errmsg').hide();
-    	    	    	$('html, body').animate({scrollTop:$(document).height()}, 'slow');
-    	    	    }
-    	    	}
-    	    });
-    	  });
+		if(recaptchaEnabled){
+		    grecaptcha.execute(siteKey, {action: 'submit'}).then(submitForm(token));
+		}else{
+			submitForm();
+		}
 	});
 	
 });
@@ -228,9 +245,9 @@ $(document).ready(function() {
     		<h4 class="alert-heading">Referral Form Submitted</h4>
     		<p>We've received your referral form and will be in touch shortly.</p>
     		<p>
-    			Thank you,<br>
-    			Nora's Home
+    			Thank you
     		</p>
+    		<p>Recaptcha Score: <span id="recaptchascore"></span></p>
     	</div>
     	<div class="alert alert-danger errmsg" role="alert" style="display: none">
     		<h4 class="alert-heading">Server Error</h4>

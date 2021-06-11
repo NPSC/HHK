@@ -627,7 +627,7 @@ try {
                         'formTitle'=>$formTemplate->getTitle(),
                         'formTemplate'=>$formTemplate->getTemplate(),
                         'formStyle'=>$formTemplate->getStyle(),
-                        'formURL'=>$uS->resourceURL . 'house/showReferral.php?form=' . $idDocument
+                        'formURL'=>$uS->resourceURL . 'house/showReferral.php?template=' . $idDocument
                     );
                 }else{
                     $events = array("error"=>"Form not found");

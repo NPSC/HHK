@@ -68,4 +68,14 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 ALTER TABLE `document` 
 ADD COLUMN `userData` MEDIUMTEXT NULL AFTER `Doc`;
 
+-- add Google API category
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) values
+('Sys_Config_Category', 'ga', 'Google APIs', '', '', '80');
+
+-- Add Google API sys config values
+REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`) values
+('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', ''),
+('recaptchaApiKey', 'AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc', 's', 'ga', '', 'Google API Key for Recaptcha', ''),
+('recaptchaSiteKey', '6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO', 's', 'ga', '', 'Google API Site Key for Recaptcha', '');
+
 

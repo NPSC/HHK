@@ -228,7 +228,7 @@ class Login {
         if($token && !empty($uS->CSRFtoken) && $token == $uS->CSRFtoken){
             return true;
         }else{
-            throw new CsrfException("CSRF verification failed. Token:" . $uS->CSRFtoken . " Supplied Token: " . $token);
+            throw new CsrfException("CSRF verification failed.");
         }
     }
 

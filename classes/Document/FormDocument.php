@@ -174,7 +174,7 @@ group by g.Code order by g.Order';
     
     public function getUserData(){
         try{
-            return json_decode($this->doc->getUserData());
+            return json_decode($this->doc->getUserData(), true);
         }catch(\Exception $e){
             return NULL;
         }
