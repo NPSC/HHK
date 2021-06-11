@@ -26,44 +26,8 @@ class ProgressiveSearch {
 	}
 	
 	public function doSearch(\PDO $dbh) {
-
-	    $selectClause = "SELECT DISTINCT
-    n.idName as `Id`,
-    n.Name_Last as `Last`,
-    n.Name_First as `First`,
-    IFNULL(g.Description, '') AS Suffix,
-    n.Name_Nickname as `Nickname`,
-    IFNULL(n.BirthDate, '') as `Birth Date`,
-    n.Member_Status as `Member Status`,
-    IFNULL(np.Phone_Num, '') AS `Phone`,
-    IFNULL(case when na.Address_2 = '' then na.Address_1 else concat_ws(na.Address_1, na.Address_2) end, '') as `Street Address`,
-    IFNULL(na.City, '') AS `City`,
-    IFNULL(na.State_Province, '') AS `State`,
-    IFNULL(na.Postal_Code, '') AS `Zip Code`,
-    IFNULL(gr.Description, '') AS `No_Return`
-FROM
-    name n
-        LEFT JOIN
-    name_phone np ON n.idName = np.idName
-        AND n.Preferred_Phone = np.Phone_Code
-        LEFT JOIN
-    name_email ne ON n.idName = ne.idName
-        AND n.Preferred_Email = ne.Purpose
-        LEFT JOIN
-    name_address na ON n.idName = na.idName
-        AND n.Preferred_Email = na.Purpose
-        LEFT JOIN
-    name_demog nd ON n.idName = nd.idName
-        LEFT JOIN
-    gen_lookups g ON g.Table_Name = 'Name_Suffix'
-        AND g.Code = n.Name_Suffix
-        LEFT JOIN
-    gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
-        AND gr.Code = nd.No_Return";
 	    
-	    $this->whereClause = " WHERE n.idName > 0 and n.Name_Last = '" . $this->nameLast . "' AND n.Name_First = '" . $this->nameFirst . "' and n.Record_Member = 1 " . $this->whereClause;
-	    
-	    $stmt = $dbh->query($selectClause . $this->whereClause);
+	    $stmt = $dbh->query($this->getQuery());
 	    
 	    $nameArray = [];
 	    
@@ -199,6 +163,46 @@ FROM
 	public function setAddressCountry($addressCountry) {
 		$this->addressCountry = $addressCountry;
 		return $this;
+	}
+	
+	protected function getQuery() {
+	    
+	    return "SELECT DISTINCT
+    n.idName as `Id`,
+    n.Name_Last as `Last`,
+    n.Name_First as `First`,
+    IFNULL(g.Description, '') AS Suffix,
+    n.Name_Nickname as `Nickname`,
+    IFNULL(n.BirthDate, '') as `Birth Date`,
+    n.Member_Status as `Member Status`,
+    IFNULL(np.Phone_Num, '') AS `Phone`,
+    IFNULL(case when na.Address_2 = '' then na.Address_1 else concat_ws(na.Address_1, na.Address_2) end, '') as `Street Address`,
+    IFNULL(na.City, '') AS `City`,
+    IFNULL(na.State_Province, '') AS `State`,
+    IFNULL(na.Postal_Code, '') AS `Zip Code`,
+    IFNULL(gr.Description, '') AS `No_Return`
+FROM
+    name n
+        LEFT JOIN
+    name_phone np ON n.idName = np.idName
+        AND n.Preferred_Phone = np.Phone_Code
+        LEFT JOIN
+    name_email ne ON n.idName = ne.idName
+        AND n.Preferred_Email = ne.Purpose
+        LEFT JOIN
+    name_address na ON n.idName = na.idName
+        AND n.Preferred_Email = na.Purpose
+        LEFT JOIN
+    name_demog nd ON n.idName = nd.idName
+        LEFT JOIN
+    gen_lookups g ON g.Table_Name = 'Name_Suffix'
+        AND g.Code = n.Name_Suffix
+        LEFT JOIN
+    gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
+        AND gr.Code = nd.No_Return
+WHERE n.idName > 0 and n.Name_Last = '" . $this->nameLast . "' AND n.Name_First = '" . $this->nameFirst . "' and n.Record_Member = 1 "
+    .  $this->whereClause;
+	    
 	}
 
 	

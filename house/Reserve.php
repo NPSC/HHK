@@ -139,9 +139,14 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 } else if ($idDoc > 0) {
 	
-	$refForm = new ReferralForm($dbh, $idDoc);
+    try {
+    	$refForm = new ReferralForm($dbh, $idDoc);
+    	    	
+    	$mk1 = $refForm->createMarkup();
 	
-	$mk1 = $refForm->createMarkup();
+    } catch (\Exception $ex) {
+        $mk1 = 'Referral form Error: ' . $ex->getMessage();
+    }
 	
 } else {
 	
