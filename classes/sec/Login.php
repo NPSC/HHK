@@ -84,6 +84,9 @@ class Login {
         	$ssn->rolecode = WebRole::Guest;
         }
         
+        //get google API keys
+        SysConfig::getCategory($dbh, $ssn, "'ga'", WebInit::SYS_CONFIG);
+        
         return $dbh;
     }
 

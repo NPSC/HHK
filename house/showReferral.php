@@ -214,7 +214,9 @@ $(document).ready(function() {
 	$(document).on('submit', 'form', function(e){
 		e.preventDefault();
 		if(recaptchaEnabled){
-		    grecaptcha.execute(siteKey, {action: 'submit'}).then(submitForm(token));
+		    grecaptcha.execute(siteKey, {action: 'submit'}).then(function(token){
+		    	submitForm(token);
+		    });
 		}else{
 			submitForm();
 		}
