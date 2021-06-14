@@ -179,5 +179,9 @@ group by g.Code order by g.Order';
             return NULL;
         }
     }
+    
+    public function linkNew(\PDO $dbh, $guestId = null, $psgId = null){
+        return $this->doc->linkNew($dbh, $guestId, $psgId);
+    }
 
 }

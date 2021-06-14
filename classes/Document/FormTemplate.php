@@ -47,6 +47,15 @@ class FormTemplate {
     }
     
     public function saveNew(\PDO $dbh, $title, $doc, $style, $username){
+        
+        $validationErrors = array();
+        
+        //validate CSS
+        $cssValidation = $this->validateCSS($style);
+        if($cssValidation['valid'] == "false"){
+            $validationErrors['css'] = $cssValidation;
+        }
+        
         $this->doc = new Document();
         $this->doc->setTitle($title);
         $this->doc->setType(self::JsonType);
@@ -55,6 +64,14 @@ class FormTemplate {
         $this->doc->setStyle($style);
         $this->doc->setStatus('a');
         $this->doc->setCreatedBy($username);
+        
+        $this->doc->saveNew($dbh);
+        
+        if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
+            return array('status'=>'success', 'msg'=>"Form saved successfully", 'doc'=>array('idDocument'=>$this->doc->getIdDocument(), 'title'=>$this->doc->getTitle()));
+        }else{
+            return array('status'=>'error', 'msg'=>'Unable to create new form', 'errors'=>$validationErrors);
+        }
     }
     
     public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $username){

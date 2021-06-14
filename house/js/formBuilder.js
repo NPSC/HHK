@@ -31,6 +31,13 @@
     			
     		}
   			],
+  			requiredFields:[
+  				'patientFirstName',
+  				'patientLastName',
+  				'checkindate',
+  				'checkoutdate',
+  				'hospital[name]'
+  			],
             inputSets: [
       		{
         		label: 'Patient Details',
@@ -782,40 +789,59 @@
 			var formData = settings.formBuilder.actions.getData();
 			
 			if(idDocument, title, style, formData){
-				$.ajax({
-	    			url : settings.serviceURL,
-	   				type: "POST",
-	    			data : {
-	    				"cmd":"saveformtemplate",
-	    				"idDocument": idDocument,
-	    				"title": title,
-	    				"doc": JSON.stringify(formData),
-	    				"style": style,
-	    			},
-	    			dataType: "json",
-	    			success: function(data, textStatus, jqXHR)
-	    			{
-	    				if(data.status == "success"){
-	    					flagAlertMessage(data.msg, false);
-	    					$wrapper.find('#selectform').val(idDocument).change();
-	    				}else if(data.status == "error" && data.errors){
-	    					var errors  = "<ul>";
-	    					for(i in data.errors){
-	    						console.log(data.errors[i]);
-	    						if(data.errors[i].errors){
-	    							for(k in data.errors[i].errors){
-	    								errors += "<li>Styles: Line:" + data.errors[i].errors[k].line[0] + ":" + data.errors[i].errors[k].message[0] + "</li>";
-	    							}
-	    						}
-	    					}
-	    					errors += "</ul>";
-	    					
-	    					flagAlertMessage("The following erros were found" + errors, true);
-	    				}else if(data.status == "error"){
-	    					flagAlertMessage(data.msg, true);
-	    				}
-	    			}
-	    		});
+				//check required fields
+				var missingFields = [];
+				settings.requiredFields.forEach(function(field){
+					var filtered = formData.filter(x=> x.name === field && x.required === true);
+					if(filtered.length == 0){
+						missingFields.push(field);
+					}
+				});
+				
+				if(missingFields.length == 0){
+					$.ajax({
+		    			url : settings.serviceURL,
+		   				type: "POST",
+		    			data : {
+		    				"cmd":"saveformtemplate",
+		    				"idDocument": idDocument,
+		    				"title": title,
+		    				"doc": JSON.stringify(formData),
+		    				"style": style,
+		    			},
+		    			dataType: "json",
+		    			success: function(data, textStatus, jqXHR)
+		    			{
+		    				if(data.status == "success"){
+		    					flagAlertMessage(data.msg, false);
+		    					
+		    					if(data.doc){
+		    						$wrapper.find('#selectform').append('<option value="' + data.doc.idDocument + '">' + data.doc.title + '</option>');
+		    						idDocument = data.doc.idDocument;
+		    					}
+		    					
+		    					$wrapper.find('#selectform').val(idDocument).change();
+		    				}else if(data.status == "error" && data.errors){
+		    					var errors  = "<ul>";
+		    					for(i in data.errors){
+		    						console.log(data.errors[i]);
+		    						if(data.errors[i].errors){
+		    							for(k in data.errors[i].errors){
+		    								errors += "<li>Styles: Line:" + data.errors[i].errors[k].line[0] + ":" + data.errors[i].errors[k].message[0] + "</li>";
+		    							}
+		    						}
+		    					}
+		    					errors += "</ul>";
+		    					
+		    					flagAlertMessage("The following erros were found" + errors, true);
+		    				}else if(data.status == "error"){
+		    					flagAlertMessage(data.msg, true);
+		    				}
+		    			}
+		    		});
+	    		}else{
+	    			flagAlertMessage("<strong>Error: </strong>The following fields must be included and set as required: " + missingFields.join(', '), true);
+	    		}
 			}
 			
 		}
