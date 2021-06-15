@@ -442,24 +442,13 @@
   				}
   			},
     		{
-    			id: 'editStyleAction',
+    			id: 'editSettingsAction',
     			className: 'btn btn-default',
-    			label: 'Edit Styles',
+    			label: 'Form Settings',
     			type: 'button',
     			events: {
     				click: function() {
       					settingsDialog.dialog('open');
-    				}
-  				}
-  			},
-  			{
-    			id: 'editSuccessAction',
-    			className: 'btn btn-default',
-    			label: 'Edit Success Message',
-    			type: 'button',
-    			events: {
-    				click: function() {
-      					editSuccessDialog.dialog('open');
     				}
   				}
   			},
@@ -623,7 +612,7 @@
 
 		$wrapper.find("button").button();
 		
-		var settingsDialog = $wrapper.find('#formStyleDialog').dialog({
+		var settingsDialog = $wrapper.find('#settingsDialog').dialog({
       		autoOpen: false,
       		height: 800,
       		width: 800,
@@ -636,24 +625,12 @@
         		Continue: function(){
         			settingsDialog.dialog( "close" );
         		}
+      		},
+      		create: function (event, ui) {
+      			$(event.target).find('#formSettingsTabs').tabs();
       		}
     	});
     	
-    	var editSuccessDialog = $wrapper.find('#formSuccessDialog').dialog({
-      		autoOpen: false,
-      		height: 400,
-      		width: 600,
-      		modal: true,
-      		buttons: {
-        		"Revert Changes": function() {
-        			editSuccessDialog.find('textarea').val(editSuccessDialog.find('textarea').data('oldval'));
-          			editSuccessDialog.dialog( "close" );
-        		},
-        		Continue: function(){
-        			editSuccessDialog.dialog( "close" );
-        		}
-      		}
-    	});
     	
     	var formPreviewDialog = $wrapper.find('#formPreviewDialog').dialog({
       		autoOpen: false,
@@ -667,7 +644,7 @@
       		}
     	});
 	
-		actions($wrapper, settings, settingsDialog, formPreviewDialog, editSuccessDialog);
+		actions($wrapper, settings, settingsDialog, formPreviewDialog);
 		
 		return this;
 	}
@@ -685,58 +662,55 @@
 					<label for="formTitle">Form Title: </label>
 					<input typle="text" id="formTitle" placeholder="Form Title" style="padding:0.4em 0.5em;">
 				</span>
-				<span id="formiframe" style="margin-left: 0.5em;"></span>
+				<button id="formiframebtn" style="margin-left: 0.5em; display: none;">Copy Form Embed Code</button>
 			</div>
 			<div id="formBuilderContent" style="margin-top: 1em;"></div>
-			<div id="settingsDialog" title="Edit Form Styles">
+			<div id="settingsDialog" title="Form Settings">
 			
 				<div id="formSettingsTabs">
     				<ul>
         				<li><a href="#tabs-1">Success Message</a></li>
-        				<li><a href="#tabs-2"></a></li>
-        				<li><a href="#tabs-3">tab 3</a></li>
+        				<li><a href="#tabs-2">Form Styles</a></li>
+        				<li><a href="#tabs-3">Miscellaneous</a></li>
     				</ul>
     
-    <div id="tabs-1">
-        test 1
-    </div>
+				    <div id="tabs-1">
+				        <div class="row">
+							<div class="col-12">
+								<p style="margin-bottom: 1em;">Add a custom message displayed on a successful form submission</p>
+								<label for="formSuccessTitle" style="display:block">Sucess Title</label>
+								<input type="text" id="formSuccessTitle" name="formSuccessTitle" placeholder="Success Title" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
+								<label for="formSuccessContent" style="display:block">Success Content</label>
+								<textarea name="formSuccessContent" placeholder="Success Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
+							</div>
+						</div>
+				    </div>
+				    
+				    <div id="tabs-2">
+				        <div class="row">
+							<div class="col-9">
+								<h3>Edit Form Style</h3>
+								<textarea id="formStyle" name="formStyle" style="width: 100%; height: 600px;" data-oldstyles=""></textarea>
+							</div>
+							<div class="col-3">
+								<h3>Available Styles</h3>
+								<ul style="list-style:none;">
+									<li>h1</li>
+									<li>h2</li>
+									<li>h3</li>
+									<li>label</li>
+									<li>.submit-btn</li>
+								</ul>
+							</div>
+						</div>
+				    </div>
+				    
+				    <div id="tabs-3">
+				        test 3
+				    </div>
     
-    <div id="tabs-2">
-        test 2
-    </div>
-    
-    <div id="tabs-3">
-        test 3
-    </div>
-    
-</div>
-				<div class="row">
-					<div class="col-9">
-						<h3>Edit Form Style</h3>
-						<textarea id="formStyle" name="formStyle" style="width: 100%; height: 600px;" data-oldstyles=""></textarea>
-					</div>
-					<div class="col-3">
-						<h3>Available Styles</h3>
-						<ul style="list-style:none;">
-							<li>h1</li>
-							<li>h2</li>
-							<li>h3</li>
-							<li>label</li>
-							<li>.submit-btn</li>
-						</ul>
-					</div>
 				</div>
-			</div>
-			<div id="formSuccessDialog" title="Edit Success Message">
-				<div class="row">
-					<div class="col-12">
-						<p style="margin-bottom: 1em;">Add a custom message displayed on a successful form submission</p>
-						<label for="formSuccessTitle" style="display:block">Sucess Title</label>
-						<input type="text" id="formSuccessTitle" name="formSuccessTitle" placeholder="Success Title" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
-						<label for="formSuccessContent" style="display:block">Success Content</label>
-						<textarea name="formSuccessContent" placeholder="Success Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
-					</div>
-				</div>
+				
 			</div>
 			<div id="formPreviewDialog" title="Preview">
 				<iframe id="formPreviewIframe" name="formPreviewIframe" width="1024" height="768" style="border: 0"></iframe>
@@ -764,7 +738,7 @@
 		
 	}
 	
-	function actions($wrapper, settings, settingsDialog, formPreviewDialog, editSuccessDialog){
+	function actions($wrapper, settings, settingsDialog, formPreviewDialog){
 	
 		$wrapper.on('click', '#newReferral', function(){
 			$wrapper.find('#selectform').val("").change();
@@ -814,7 +788,7 @@
 								}
 							});
 							
-							$wrapper.find('#formiframe').empty().append('<strong>Embed Code: </strong>').append($('<code/>').text('<iframe src="' + data.formURL + '" width="100%" height="1000"></iframe>'));
+							$wrapper.find('#formiframebtn').data('code', '<iframe src="' + data.formURL + '" width="100%" height="1000"></iframe>').show();
 	    					settingsDialog.find('textarea').val(data.formStyle).data('oldstyles', data.formStyle);
 	    					$wrapper.find('#formTitle').val(data.formTitle);
 	    				}
@@ -822,11 +796,18 @@
 	    		});
 			}else{
 				$wrapper.find('#formBuilderContent').empty();
-				$wrapper.find('#formiframe').empty();
+				$wrapper.find('#formiframebtn').data('code', '').hide();
 				$wrapper.find('#formTitle').val("");
 				settingsDialog.find('textarea').val('').data('oldstyles', '');
 			}
 			
+		});
+		
+		$wrapper.on('click', '#formiframebtn', function(){
+			var code = $(this).data('code');
+			navigator.clipboard.writeText(code)
+				.then(() => { alert(`Embed Code Copied!`) })
+				.catch((error) => { alert(`Copy failed! ${error}`) })
 		});
 		
 		var onSave = function(event, formData){
