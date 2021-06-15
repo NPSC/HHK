@@ -1,7 +1,6 @@
 /**
  * formBuilder.js
  *
- *
  * @category  house
  * @package   Hospitality HouseKeeper
  * @author    Will Ireland <wireland@nonprofitsoftwarecorp.org>
@@ -31,7 +30,7 @@
     			
     		}
   			],
-  			requiredFields:[
+  			requiredFields:[ //fields that every referral form must include and set as required
   				'patientFirstName',
   				'patientLastName',
   				'checkindate',
@@ -46,6 +45,7 @@
         		fields: [
 				{
 					"type": "text",
+					"required": true,
     				"label": "Patient First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
@@ -54,6 +54,7 @@
   				},
   				{
   					"type": "text",
+  					"required": true,
     				"label": "Patient Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
@@ -75,6 +76,7 @@
     				"className": "form-select",
     				"name": "patientSex",
     				"width": "col-md-2",
+    				"dataSource":"gender",
     				"multiple": false,
     				"values": []
   				},
@@ -103,12 +105,13 @@
     				"width": "col-md-5"
   				},
   				{
-    				"type": "text",
+    				"type": "select",
     				"label": "State",
     				"placeholder": "State",
-    				"className": "form-control",
+    				"className": "form-select bfh-states",
     				"name": "adrState",
-    				"width": "col-md-2"
+    				"width": "col-md-2",
+    				"values": []
   				},
   				{
     				"type": "text",
@@ -119,12 +122,19 @@
     				"width": "col-md-2"
     			},
     			{
-    				"type": "text",
+    				"type": "select",
     				"label": "Country",
     				"placeholder": "Country",
-    				"className": "form-control",
+    				"className": "form-select bfh-countries",
     				"name": "adrCountry",
-    				"width": "col-md-3"
+    				"width": "col-md-3",
+    				"values": [
+    					{
+    						"label":"United States",
+    						"value":"US",
+    						"selected":true
+    					}
+    				]
     			},
     			{
     				"type": "text",
@@ -168,28 +178,30 @@
     				"width": "col-md-5"
   				},
   				{
-    				"type": "text",
+    				"type": "select",
     				"label": "State",
     				"placeholder": "State",
-    				"className": "form-control",
+    				"className": "form-select bfh-states",
     				"name": "adrState",
-    				"width": "col-md-2"
+    				"width": "col-md-2",
+    				"values":[]
   				},
   				{
     				"type": "text",
     				"label": "Zip Code",
     				"placeholder": "Zip Code",
-    				"className": "form-control",
+    				"className": "form-control ckzip hhk-zipsearch ui-autocomplete-input",
     				"name": "adrZip",
     				"width": "col-md-2"
     			},
     			{
-    				"type": "text",
+    				"type": "select",
     				"label": "Country",
     				"placeholder": "Country",
-    				"className": "form-control",
+    				"className": "form-select bfh-countries",
     				"name": "adrCountry",
-    				"width": "col-md-3"
+    				"width": "col-md-3",
+    				"values":[]
     			},
     			{
     				"type": "text",
@@ -218,6 +230,7 @@
         		fields: [
 				{
 					"type": "date",
+					"required": true,
     				"label": "Checkin Date",
     				"className": "form-control",
     				"name": "checkindate",
@@ -225,6 +238,7 @@
   				},
   				{
 					"type": "date",
+					"required": true,
     				"label": "Checkout Date",
     				"className": "form-control",
     				"name": "checkoutdate",
@@ -269,6 +283,7 @@
     				"className": "form-select",
     				"name": "guests[0][relationship]",
     				"width": "col-md-3",
+    				"dataSource":"patientRelation",
     				"multiple": false,
     				"values": [
       				{
@@ -310,6 +325,7 @@
     				"className": "form-select",
     				"name": "guests[1][relationship]",
     				"width": "col-md-3",
+    				"dataSource": "patientRelation",
     				"multiple": false,
     				"values": [
       				{
@@ -351,6 +367,7 @@
     				"className": "form-select",
     				"name": "guests[2][relationship]",
     				"width": "col-md-3",
+    				"dataSource": "patientRelation",
     				"multiple": false,
     				"values": [
       				{
@@ -369,6 +386,7 @@
         		fields: [
 				{
 					"type": "text",
+					"required": true,
     				"label": "Hospital",
     				"placeholder": "Hospital Name",
     				"className": "form-control",
@@ -430,7 +448,7 @@
     			type: 'button',
     			events: {
     				click: function() {
-      					editStyleDialog.dialog('open');
+      					settingsDialog.dialog('open');
     				}
   				}
   			},
@@ -461,7 +479,7 @@
     					
     					f.append('<input type="hidden" name="cmd" value="preview">');
     					f.append('<input type="hidden" name="formData" value="' + encodeURI(JSON.stringify(formData)) + '">');
-    					f.append('<input type="hidden" name="style" value="' + editStyleDialog.find("textarea").val() + '">');
+    					f.append('<input type="hidden" name="style" value="' + settingsDialog.find("textarea").val() + '">');
     					console.log(f);
     					f.submit();
     					f.remove();
@@ -514,6 +532,15 @@
         					'col-md-1': '1 Column',
       					},
       					value: 'col-md-12'
+    				},
+    				dataSource: {
+    					label: 'Data Source',
+    					multiple: false,
+    					options: {
+    						'':'',
+    						'gender': 'Gender',
+    						'patientRelation': 'Patient Relationsip'
+    					}
     				}
   				},
   				date: {
@@ -596,18 +623,18 @@
 
 		$wrapper.find("button").button();
 		
-		var editStyleDialog = $wrapper.find('#formStyleDialog').dialog({
+		var settingsDialog = $wrapper.find('#formStyleDialog').dialog({
       		autoOpen: false,
       		height: 800,
       		width: 800,
       		modal: true,
       		buttons: {
         		"Revert Changes": function() {
-        			editStyleDialog.find('textarea').val(editStyleDialog.find('textarea').data('oldstyles'));
-          			editStyleDialog.dialog( "close" );
+        			settingsDialog.find('textarea').val(settingsDialog.find('textarea').data('oldstyles'));
+          			settingsDialog.dialog( "close" );
         		},
         		Continue: function(){
-        			editStyleDialog.dialog( "close" );
+        			settingsDialog.dialog( "close" );
         		}
       		}
     	});
@@ -640,7 +667,7 @@
       		}
     	});
 	
-		actions($wrapper, settings, editStyleDialog, formPreviewDialog, editSuccessDialog);
+		actions($wrapper, settings, settingsDialog, formPreviewDialog, editSuccessDialog);
 		
 		return this;
 	}
@@ -661,7 +688,28 @@
 				<span id="formiframe" style="margin-left: 0.5em;"></span>
 			</div>
 			<div id="formBuilderContent" style="margin-top: 1em;"></div>
-			<div id="formStyleDialog" title="Edit Form Styles">
+			<div id="settingsDialog" title="Edit Form Styles">
+			
+				<div id="formSettingsTabs">
+    				<ul>
+        				<li><a href="#tabs-1">Success Message</a></li>
+        				<li><a href="#tabs-2"></a></li>
+        				<li><a href="#tabs-3">tab 3</a></li>
+    				</ul>
+    
+    <div id="tabs-1">
+        test 1
+    </div>
+    
+    <div id="tabs-2">
+        test 2
+    </div>
+    
+    <div id="tabs-3">
+        test 3
+    </div>
+    
+</div>
 				<div class="row">
 					<div class="col-9">
 						<h3>Edit Form Style</h3>
@@ -716,7 +764,7 @@
 		
 	}
 	
-	function actions($wrapper, settings, editStyleDialog, formPreviewDialog, editSuccessDialog){
+	function actions($wrapper, settings, settingsDialog, formPreviewDialog, editSuccessDialog){
 	
 		$wrapper.on('click', '#newReferral', function(){
 			$wrapper.find('#selectform').val("").change();
@@ -767,7 +815,7 @@
 							});
 							
 							$wrapper.find('#formiframe').empty().append('<strong>Embed Code: </strong>').append($('<code/>').text('<iframe src="' + data.formURL + '" width="100%" height="1000"></iframe>'));
-	    					editStyleDialog.find('textarea').val(data.formStyle).data('oldstyles', data.formStyle);
+	    					settingsDialog.find('textarea').val(data.formStyle).data('oldstyles', data.formStyle);
 	    					$wrapper.find('#formTitle').val(data.formTitle);
 	    				}
 	    			}
@@ -776,7 +824,7 @@
 				$wrapper.find('#formBuilderContent').empty();
 				$wrapper.find('#formiframe').empty();
 				$wrapper.find('#formTitle').val("");
-				editStyleDialog.find('textarea').val('').data('oldstyles', '');
+				settingsDialog.find('textarea').val('').data('oldstyles', '');
 			}
 			
 		});
@@ -785,7 +833,7 @@
 			
 			var idDocument = $wrapper.find('#selectform').val();
 			var title = $wrapper.find('#formTitle').val();
-			var style = editStyleDialog.find('textarea').val();
+			var style = settingsDialog.find('textarea').val();
 			var formData = settings.formBuilder.actions.getData();
 			
 			if(idDocument, title, style, formData){

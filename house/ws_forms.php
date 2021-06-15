@@ -50,8 +50,8 @@ try {
     $dbh = $login->initHhkSession(ciCFG_FILE);
 
 	$csrfToken = '';
-	if(isset($_POST['csrfToken'])){
-		$csrfToken = filter_var($_POST['csrfToken'], FILTER_SANITIZE_STRING);
+	if(isset($_REQUEST['csrfToken'])){
+		$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_STRING);
 	}
 	$login->verifyCSRF($csrfToken);
     
@@ -89,6 +89,14 @@ try {
 
     switch ($c) {
             
+        case 'schzip':
+            
+            if (isset($_GET['zip'])) {
+                $zip = filter_var($_GET['zip'], FILTER_SANITIZE_NUMBER_INT);
+                $events = searchZip($dbh, $zip);
+            }
+            break;
+        
          case "submitform" :
 		 
 			$recaptchaToken = '';
@@ -139,5 +147,28 @@ if (is_array($events)) {
     echo (json_encode($events));
 } else {
     echo $events;
+}
+
+function searchZip(\PDO $dbh, $zip) {
+    
+    $query = "select * from postal_codes where Zip_Code like :zip LIMIT 10";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute(array(':zip'=>$zip . "%"));
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $events = array();
+    foreach ($rows as $r) {
+        $ent = array();
+        
+        $ent['value'] = $r['Zip_Code'];
+        $ent['label'] = $r['City'] . ', ' . $r['State'] . ', ' . $r['Zip_Code'];
+        $ent['City'] = $r['City'];
+        $ent['County'] = $r['County'];
+        $ent['State'] = $r['State'];
+        
+        $events[] = $ent;
+    }
+    
+    return $events;
 }
 exit();

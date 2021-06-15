@@ -768,9 +768,9 @@ $uS->guestId = $id;
             </div>
             <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px; float: left;">
                 <span>Name Search </span>
-                <input type="text" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                <input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" autocomplete="search" />
                 <span>Phone Search </span>
-                <input type="text" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
+                <input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" autocomplete="search" />
             </div>
             <div style="clear:both;"></div>
             <?php if ($alertMessage != '') { ?>
