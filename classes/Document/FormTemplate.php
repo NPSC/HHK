@@ -142,5 +142,15 @@ class FormTemplate {
     public function getTitle() {
         return $this->doc->getTitle();
     }
+    
+    public function getSettings(){
+        $abstract = json_decode($this->doc->getAbstract());
+        
+        return [
+            'formStyle'=>$this->getStyle(),
+            'successTitle'=>$abstract->successTitle,
+            'successContent'=>$abstract->successContent
+        ];
+    }
 
 }

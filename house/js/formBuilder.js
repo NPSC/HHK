@@ -619,7 +619,11 @@
       		modal: true,
       		buttons: {
         		"Revert Changes": function() {
-        			settingsDialog.find('textarea').val(settingsDialog.find('textarea').data('oldstyles'));
+        			settingsDialog.find('textarea, input').each(
+        				function(i,element){
+        					$(this).val($(this).data('oldVal'));
+        				}
+        			);
           			settingsDialog.dialog( "close" );
         		},
         		Continue: function(){
@@ -662,7 +666,7 @@
 					<label for="formTitle">Form Title: </label>
 					<input typle="text" id="formTitle" placeholder="Form Title" style="padding:0.4em 0.5em;">
 				</span>
-				<button id="formiframebtn" style="margin-left: 0.5em; display: none;">Copy Form Embed Code</button>
+				<button id="formiframebtn" style="margin-left: 0.5em; display: none;" title="Embed Code Copied">Copy Form Embed Code</button>
 			</div>
 			<div id="formBuilderContent" style="margin-top: 1em;"></div>
 			<div id="settingsDialog" title="Form Settings">
@@ -681,7 +685,7 @@
 								<label for="formSuccessTitle" style="display:block">Sucess Title</label>
 								<input type="text" id="formSuccessTitle" name="formSuccessTitle" placeholder="Success Title" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
 								<label for="formSuccessContent" style="display:block">Success Content</label>
-								<textarea name="formSuccessContent" placeholder="Success Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
+								<textarea id="formSuccessContent" name="formSuccessContent" placeholder="Success Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
 							</div>
 						</div>
 				    </div>
@@ -690,7 +694,7 @@
 				        <div class="row">
 							<div class="col-9">
 								<h3>Edit Form Style</h3>
-								<textarea id="formStyle" name="formStyle" style="width: 100%; height: 600px;" data-oldstyles=""></textarea>
+								<textarea id="formStyle" name="formStyle" style="width: 100%; height: 600px;"></textarea>
 							</div>
 							<div class="col-3">
 								<h3>Available Styles</h3>
@@ -789,7 +793,9 @@
 							});
 							
 							$wrapper.find('#formiframebtn').data('code', '<iframe src="' + data.formURL + '" width="100%" height="1000"></iframe>').show();
-	    					settingsDialog.find('textarea').val(data.formStyle).data('oldstyles', data.formStyle);
+							settingsDialog.find('input#formSuccessTitle').val(data.formSettings.successTitle).data('oldVal',data.formSettings.successTitle);
+							settingsDialog.find('textarea#formSuccessContent').val(data.formSettings.successContent).data('oldVal',data.formSettings.successContent);
+	    					settingsDialog.find('textarea#formStyle').val(data.formSettings.formStyle).data('oldVal', data.formSettings.formStyle);
 	    					$wrapper.find('#formTitle').val(data.formTitle);
 	    				}
 	    			}
@@ -806,18 +812,20 @@
 		$wrapper.on('click', '#formiframebtn', function(){
 			var code = $(this).data('code');
 			navigator.clipboard.writeText(code)
-				.then(() => { alert(`Embed Code Copied!`) })
-				.catch((error) => { alert(`Copy failed! ${error}`) })
+				.then(() => { $(this).attr('title','Embed Code Copied').tooltip(); })
+				.catch((error) => { $(this).attr('title',`Copy failed! ${error}`).tooltip() })
 		});
 		
 		var onSave = function(event, formData){
 			
 			var idDocument = $wrapper.find('#selectform').val();
 			var title = $wrapper.find('#formTitle').val();
-			var style = settingsDialog.find('textarea').val();
+			var style = settingsDialog.find('textarea#formStyle').val();
+			var successTitle = settingsDialog.find('input#formSuccessTitle').val();
+			var successContent = settingsDialog.find('textarea#formSuccessContent').val();
 			var formData = settings.formBuilder.actions.getData();
 			
-			if(idDocument, title, style, formData){
+			if(idDocument, title, style, formData, successTitle, successContent){
 				//check required fields
 				var missingFields = [];
 				settings.requiredFields.forEach(function(field){
@@ -837,6 +845,8 @@
 		    				"title": title,
 		    				"doc": JSON.stringify(formData),
 		    				"style": style,
+		    				"successTitle": successTitle,
+		    				"successContent": successContent
 		    			},
 		    			dataType: "json",
 		    			success: function(data, textStatus, jqXHR)

@@ -626,7 +626,7 @@ try {
                         'status'=>'success',
                         'formTitle'=>$formTemplate->getTitle(),
                         'formTemplate'=>$formTemplate->getTemplate(),
-                        'formStyle'=>$formTemplate->getStyle(),
+                        'formSettings'=>$formTemplate->getSettings(),
                         'formURL'=>$uS->resourceURL . 'house/showReferral.php?template=' . $idDocument
                     );
                 }else{
