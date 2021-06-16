@@ -431,19 +431,8 @@
     		],
     		actionButtons: [
     		{
-    			id: 'saveAction',
-    			className: 'btn btn-default',
-    			label: 'Save and Publish',
-    			type: 'button',
-    			events: {
-    				click: function() {
-    					settings.formBuilder.actions.save();
-    				}
-  				}
-  			},
-    		{
     			id: 'editSettingsAction',
-    			className: 'btn btn-default',
+    			className: 'ui-button ui-corner-left',
     			label: 'Form Settings',
     			type: 'button',
     			events: {
@@ -454,7 +443,7 @@
   			},
   			{
     			id: 'previewAction',
-    			className: 'btn btn-default',
+    			className: 'ui-button',
     			label: 'Preview',
     			type: 'button',
     			events: {
@@ -474,6 +463,17 @@
     					f.remove();
 	    				
       					formPreviewDialog.dialog('open');
+    				}
+  				}
+  			},
+  			{
+    			id: 'saveAction',
+    			className: 'ui-button ui-corner-right',
+    			label: 'Save and Publish',
+    			type: 'button',
+    			events: {
+    				click: function() {
+    					settings.formBuilder.actions.save();
     				}
   				}
   			}
