@@ -8,7 +8,7 @@ class SearchNameData {
     protected $nameLast;
     protected $nickname;
     protected $birthDate;
-    
+    protected $relationship;
     protected $email;
     protected $phone;
     protected $addressStreet;
@@ -64,6 +64,14 @@ class SearchNameData {
             $this->birthDate = '';
         }
         
+        return $this;
+    }
+    
+    /**
+     * @param string $relationship
+     */
+    public function setRelationship($rel) {
+        $this->relationship = trim($rel);
         return $this;
     }
     
@@ -149,6 +157,14 @@ class SearchNameData {
         return $this->nameLast;
     }
     
+        /**
+     * @return string
+     */
+    public function getNickname()
+    {
+        return $this->nickname;
+    }
+    
     /**
      * @return string
      */
@@ -157,7 +173,15 @@ class SearchNameData {
         return $this->birthDate;
     }
     
-    /**
+        /**
+     * @return string
+     */
+    public function getRelationship()
+    {
+        return $this->relationship;
+    }
+    
+/**
      * @return string
      */
     public function getEmail()

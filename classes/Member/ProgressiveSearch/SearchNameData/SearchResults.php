@@ -5,7 +5,62 @@ class SearchResults extends SearchNameData
 {
     
     protected $noReturn;
+    protected $id;
+    protected $psgId;
+
     
+    
+    /**
+     * @return mixed
+     */
+    public function getNoReturn()
+    {
+        return $this->noReturn;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getPsgId()
+    {
+        return $this->psgId;
+    }
+
+    /**
+     * @param mixed $noReturn
+     */
+    public function setNoReturn($noReturn)
+    {
+        $this->noReturn = $noReturn;
+        return $this;
+    }
+
+    /**
+     * @param mixed $id
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
+
+    /**
+     * @param mixed $psgId
+     */
+    public function setPsgId($psgId)
+    {
+        $this->psgId = $psgId;
+        return $this;
+    }
+
     public function setNameFirst($nameFirst) {
         $this->nameFirst = preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {
@@ -55,13 +110,6 @@ class SearchResults extends SearchNameData
         return $this;
     }
     
-    /**
-     * @param string $nickname
-     */
-    public function setNoReturn($noReturn) {
-        $this->noReturn = $noReturn;
-        return $this;
-    }
     
     
 }

@@ -2,7 +2,6 @@
 
 namespace HHK\Member\ProgressiveSearch;
 
-use HHK\Member\ProgressiveSearch\SearchNameData;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchFor;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchResults;
 
@@ -28,20 +27,22 @@ class ProgressiveSearch {
 	        
 	        $searchResults = new SearchResults();
 	                
-	        $searchResults->setNameFirst($r["First"])
+	        $searchResults->setId($r['Id'])
+	           ->setPsgId($r['idPsg'])
+	           ->setNameFirst($r["First"])
 	           ->setNameLast($r["Last"])
 	           ->setNickname($r["Nickname"])
 	           ->setNameMiddle($r["Middle"])
 	           ->setPhone($r['Phone'])
 	           ->setEmail($r['Email'])
-	           ->setAddress($r['Street Address'])
-	           ->setCity($r['City'])
-	           ->setState($r['State'])
-	           ->setZipCode($r['Zip Code'])
-	           ->setCountry($r['Country'])
+	           ->setAddressStreet($r['Street Address'])
+	           ->setAddressCity($r['City'])
+	           ->setAddressState($r['State'])
+	           ->setAddressZip($r['Zip Code'])
+	           ->setAddressCountry($r['Country'])
 	           ->setNoReturn($r['No_Return']);
 	        
-	        $results[$r['Id']] = $searchResults;
+	        $results[] = $searchResults;
 	    }
 	    
 	    return $results;
@@ -55,6 +56,7 @@ class ProgressiveSearch {
 	    
 	    return "SELECT DISTINCT
     n.idName as `Id`,
+    IFNULL(ng.idPsg, 0) as `idPsg`,
     n.Name_Last as `Last`,
     n.Name_First as `First`,
     n.Name_Middle as `Middle`,
@@ -73,6 +75,8 @@ class ProgressiveSearch {
 FROM
     name n
         LEFT JOIN
+    name_guest ng on n.idName = ng.idName and ng.Relationship_Code = 'slf'
+        LEFT JOIN
     name_phone np ON n.idName = np.idName
         AND n.Preferred_Phone = np.Phone_Code
         LEFT JOIN
@@ -89,7 +93,7 @@ FROM
         LEFT JOIN
     gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
         AND gr.Code = nd.No_Return
-WHERE n.idName > 0 and n.Name_Last = '" . $searchFor->getNameLast() . "' AND n.Name_First = '" . $searchFor->getNameFirst() . "' and n.Record_Member = 1 "
+WHERE n.idName > 0 and n.Record_Member = 1 and n.Name_Last = '" . $searchFor->getNameLast() . "' AND n.Name_First = '" . $searchFor->getNameFirst() . "' "
     .  $searchFor->getWhereClause();
 	    
 	}
