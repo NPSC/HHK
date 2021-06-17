@@ -99,31 +99,29 @@ class ReferralForm {
 	public function searchGuests(\PDO $dbh) {
 	    
 	    $this->gstResults = [];
-	    var_dump($this->formUserData);
-	    exit();
-	    
-	    foreach ($this->formUserData['guests'] as $g) {
+
+	    //for ($indx = 0; $indx < 3; $indx++) {
 	        
-	        if (isset($g['firstName']) && isset($g['lastName'])) {
+	        if (isset($this->formUserData['guests[0][firstName]']) && isset($this->formUserData['guests[0][lastName]'])) {
 	            
 	            $searchFor = new SearchFor();
 	            
 	            // First, last name
-	            $searchFor->setNameFirst($g['firstName'])
-	               ->setNameLast($g['lastName']);
+	            $searchFor->setNameFirst($this->formUserData['guests[0][firstName]'])
+	            ->setNameLast($this->formUserData['guests[0][lastName]']);
 	                
 	            // Phone
-	            if (isset($g['phone']) && $g['phone'] != '') {
-	                $searchFor->setPhone($g['phone']);
+	            if (isset($this->formUserData['guests[0][phone]']) && $this->formUserData['guests[0][phone]'] != '') {
+	                $searchFor->setPhone($this->formUserData['guests[0][phone]']);
 	            }
 	            
 	            $this->gstSearchFor[] = $searchFor;
 	            
 	            $progSearch = new ProgressiveSearch();
-	            $this->gstResults[] = $progSearch->doSearch($dbh, $this->patSearchFor);
+	            $this->gstResults[] = $progSearch->doSearch($dbh, $searchFor);
 	        }
 	            
-	    }
+	    //}
 	    
 	    return $this->gstResults;
 	    
@@ -204,13 +202,16 @@ class ReferralForm {
 	    
 	    for ($indx = 0; $indx < 3; $indx++) {
 	        
-	        $markup .= $this->createGuestMarkup($this->formUserData['guests'][$indx], $this->gstResults[$indx]);
+	        if (isset($this->gstResults[$indx])) {
+	        
+	            $markup .= $this->createGuestMarkup($indx, $this->gstResults[$indx]);
+	        }
 	    }
 	    
 	    return $markup;
 	}
 	
-	public function createGuestMarkup($guest, SearchResults $guestResult) {
+	public function createGuestMarkup($indx, array $guestResults) {
 	    
 	    $tbl = new HTMLTable();
 	    
@@ -233,16 +234,16 @@ class ReferralForm {
 	    
 	    // Original data
 	    $tbl->addBodyTr(
-    	       HTMLTable::makeTd('')
-    	       .HTMLTable::makeTd($guest['firstName'])
-    	        .HTMLTable::makeTd('')
-    	        .HTMLTable::makeTd($guest['lastName'])
-    	        .HTMLTable::makeTd('')
-    	        .HTMLTable::makeTd($guest['relationship'])
-    	        .HTMLTable::makeTd($guest['phone'])
-    	        .HTMLTable::makeTd('')
-    	        .HTMLTable::makeTd('')
-    	        .HTMLTable::makeTd('')
+    	    HTMLTable::makeTd('')
+	        .HTMLTable::makeTd($this->formUserData['guests[' . $indx . '][firstName]'])
+    	    .HTMLTable::makeTd('')
+	        .HTMLTable::makeTd($this->formUserData['guests[' . $indx . '][lastName]'])
+    	    .HTMLTable::makeTd('')
+	        .HTMLTable::makeTd($this->formUserData['guests[' . $indx . '][relationship]'])
+	        .HTMLTable::makeTd($this->formUserData['guests[' . $indx . '][phone]'])
+    	    .HTMLTable::makeTd('')
+    	    .HTMLTable::makeTd('')
+    	    .HTMLTable::makeTd('')
     	        .HTMLTable::makeTd('')
     	        .HTMLTable::makeTd('')
     	        .HTMLTable::makeTd('')
@@ -251,9 +252,9 @@ class ReferralForm {
 
 	        
 	   // Searched data
-	    foreach ($guestResult as $id => $r) {
+	    foreach ($guestResults as $r) {
 	       $tbl->addBodyTr(
-	           HTMLTable::makeTd($id)
+	           HTMLTable::makeTd($r->getId())
 	           .HTMLTable::makeTd($r->getNameFirst())
 	           .HTMLTable::makeTd($r->getNameMiddle())
 	           .HTMLTable::makeTd($r->getNameLast())

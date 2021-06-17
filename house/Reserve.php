@@ -141,10 +141,12 @@ if ($idReserv > 0 || $idGuest >= 0) {
 	
     try {
     	$refForm = new ReferralForm($dbh, $idDoc);
+    	
     	$refForm->searchPatient($dbh);
-    	$refForm->searchGuests($dbh);
     	$mk1 = $refForm->createPatientMarkup();
-    	$mk1 .= $refForm->guestsMarkup();
+    	
+     	$refForm->searchGuests($dbh);
+     	$mk1 .= $refForm->guestsMarkup();
 	
     } catch (\Exception $ex) {
         $mk1 = 'Referral form Error: ' . $ex->getMessage();
