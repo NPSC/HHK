@@ -116,6 +116,7 @@ group by g.Code order by g.Order';
         $response = ["fields"=>[], "errors"=>[]];
         
         $fields = json_decode($doc);
+        $fieldData = [];
         
         foreach($fields as $field){
             if(isset($field->name) && isset($field->required)){ //filter out non input fields
@@ -145,14 +146,16 @@ group by g.Code order by g.Order';
                 }
                 
                 if(isset($field->userData[0])){ //fill fields array
-                    $response['fields'][$field->name] = $field->userData[0];
+                    $fieldPathAr = [];
+                    $this->assignArrayByPath($fieldPathAr, $field->name, $field->userData[0]);
+                    $fieldData = array_merge_recursive($fieldData, $fieldPathAr);
                 }
                 
                 //Check checkin/checkout dates
-                if(isset($response['fields']['checkindate']) && isset($response['fields']['checkoutdate'])){
+                if(isset($fieldData['checkindate']) && isset($fieldData['checkoutdate'])){
                     try{
-                        $checkin = new \DateTime($response['fields']['checkindate']);
-                        $checkout = new \DateTime($response['fields']['checkoutdate']);
+                        $checkin = new \DateTime($fieldData['checkindate']);
+                        $checkout = new \DateTime($fieldData['checkoutdate']);
                         
                         if($checkin->format('Y-m-d') >= $checkout->format('Y-m-d')){
                             $response["errors"][] = ['field'=>'checkoutdate', 'error'=>'Checkout Date must be after Checkin Date'];
@@ -164,7 +167,7 @@ group by g.Code order by g.Order';
                 
             }
         }
-        
+        $response['fields'] = $fieldData;
         return $response;
     }
     
@@ -182,6 +185,16 @@ group by g.Code order by g.Order';
     
     public function linkNew(\PDO $dbh, $guestId = null, $psgId = null){
         return $this->doc->linkNew($dbh, $guestId, $psgId);
+    }
+    
+    public function assignArrayByPath(&$arr, $path, $value, $separator='.') {
+        $keys = explode($separator, $path);
+        
+        foreach ($keys as $key) {
+            $arr = &$arr[$key];
+        }
+        
+        $arr = $value;
     }
 
 }

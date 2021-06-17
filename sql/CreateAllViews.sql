@@ -799,11 +799,11 @@ CREATE or replace VIEW `vemail_directory` AS
 CREATE OR REPLACE VIEW `vform_listing` AS
     SELECT 
         `d`.`idDocument` AS `idDocument`,
-        JSON_VALUE(`d`.`userData`, '$.patientFirstName') AS `patientFirstName`,
-        JSON_VALUE(`d`.`userData`, '$.patientLastName') AS `patientLastName`,
+        JSON_VALUE(`d`.`userData`, '$.patient.firstName') AS `patientFirstName`,
+        JSON_VALUE(`d`.`userData`, '$.patient.lastName') AS `patientLastName`,
         JSON_VALUE(`d`.`userData`, '$.checkindate') AS `ExpectedCheckin`,
         JSON_VALUE(`d`.`userData`, '$.checkoutdate') AS `ExpectedCheckout`,
-        JSON_VALUE(`d`.`userData`, '$."hospital[name]"') AS `hospitalName`,
+        JSON_VALUE(`d`.`userData`, '$.hospital.name') AS `hospitalName`,
         `d`.`Status` AS `status ID`,
         `g`.`Description` AS `status`,
         `d`.`Timestamp` AS `Timestamp`

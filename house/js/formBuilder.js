@@ -31,11 +31,11 @@
     		}
   			],
   			requiredFields:[ //fields that every referral form must include and set as required
-  				'patientFirstName',
-  				'patientLastName',
+  				'patient.firstName',
+  				'patient.lastName',
   				'checkindate',
   				'checkoutdate',
-  				'hospital[name]'
+  				'hospital.name'
   			],
             inputSets: [
       		{
@@ -49,7 +49,7 @@
     				"label": "Patient First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "patientFirstName",
+    				"name": "patient.firstName",
     				"width": "col-md-4"
   				},
   				{
@@ -58,7 +58,7 @@
     				"label": "Patient Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "patientLastName",
+    				"name": "patient.lastName",
     				"width": "col-md-4"
   				},
   				{
@@ -66,7 +66,7 @@
     				"label": "Patient Birthdate",
     				"placeholder": "Patient Birthdate",
     				"className": "form-control",
-    				"name": "patientBirthdate",
+    				"name": "patient.birthdate",
     				"width": "col-md-2"
   				},
   				{
@@ -74,7 +74,7 @@
     				"label": "Patient Sex",
     				"placeholder": "Patient Sex",
     				"className": "form-select",
-    				"name": "patientSex",
+    				"name": "patient.sex",
     				"width": "col-md-2",
     				"dataSource":"gender",
     				"multiple": false,
@@ -93,7 +93,7 @@
     				"label": "Street",
     				"placeholder": "Street",
     				"className": "form-control",
-    				"name": "adrStreet",
+    				"name": "adrstreet",
     				"width": "col-md-12"
   				},
   				{
@@ -101,7 +101,7 @@
     				"label": "City",
     				"placeholder": "City",
     				"className": "form-control",
-    				"name": "adrCity",
+    				"name": "adrcity",
     				"width": "col-md-5"
   				},
   				{
@@ -109,7 +109,7 @@
     				"label": "State",
     				"placeholder": "State",
     				"className": "form-select bfh-states",
-    				"name": "adrState",
+    				"name": "adrstate",
     				"width": "col-md-2",
     				"values": []
   				},
@@ -118,7 +118,7 @@
     				"label": "Zip Code",
     				"placeholder": "Zip Code",
     				"className": "form-control",
-    				"name": "adrZip",
+    				"name": "adrzip",
     				"width": "col-md-2"
     			},
     			{
@@ -126,7 +126,7 @@
     				"label": "Country",
     				"placeholder": "Country",
     				"className": "form-select bfh-countries",
-    				"name": "adrCountry",
+    				"name": "adrcountry",
     				"width": "col-md-3",
     				"values": [
     					{
@@ -166,7 +166,7 @@
     				"label": "Street",
     				"placeholder": "Street",
     				"className": "form-control",
-    				"name": "adrStreet",
+    				"name": "adrstreet",
     				"width": "col-md-12"
   				},
   				{
@@ -174,7 +174,7 @@
     				"label": "City",
     				"placeholder": "City",
     				"className": "form-control",
-    				"name": "adrCity",
+    				"name": "adrcity",
     				"width": "col-md-5"
   				},
   				{
@@ -182,7 +182,7 @@
     				"label": "State",
     				"placeholder": "State",
     				"className": "form-select bfh-states",
-    				"name": "adrState",
+    				"name": "adrstate",
     				"width": "col-md-2",
     				"values":[]
   				},
@@ -191,7 +191,7 @@
     				"label": "Zip Code",
     				"placeholder": "Zip Code",
     				"className": "form-control ckzip hhk-zipsearch ui-autocomplete-input",
-    				"name": "adrZip",
+    				"name": "adrzip",
     				"width": "col-md-2"
     			},
     			{
@@ -199,7 +199,7 @@
     				"label": "Country",
     				"placeholder": "Country",
     				"className": "form-select bfh-countries",
-    				"name": "adrCountry",
+    				"name": "adrcountry",
     				"width": "col-md-3",
     				"values":[]
     			},
@@ -256,7 +256,7 @@
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "guests[0][firstName]",
+    				"name": "guests.g0.firstName",
     				"width": "col-md-3"
   				},
   				{
@@ -264,7 +264,7 @@
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "guests[0][lastName]",
+    				"name": "guests.g0.lastName",
     				"width": "col-md-3"
   				},
   				{
@@ -273,7 +273,7 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control",
-    				"name": "guests[0][phone]",
+    				"name": "guests.g0.phone",
     				"width": "col-md-3"
     			},
     			{
@@ -281,7 +281,7 @@
     				"label": "Relationship to Patient",
     				"placeholder": "Relationship to Patient",
     				"className": "form-select",
-    				"name": "guests[0][relationship]",
+    				"name": "guests.g0.relationship",
     				"width": "col-md-3",
     				"dataSource":"patientRelation",
     				"multiple": false,
@@ -298,7 +298,7 @@
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "guests[1][firstName]",
+    				"name": "guests.g1.firstName",
     				"width": "col-md-3"
   				},
   				{
@@ -306,7 +306,7 @@
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "guests[1][lastName]",
+    				"name": "guests.g1.lastName",
     				"width": "col-md-3"
   				},
   				{
@@ -315,7 +315,7 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control",
-    				"name": "guests[1][phone]",
+    				"name": "guests.g1.phone",
     				"width": "col-md-3"
     			},
     			{
@@ -323,7 +323,7 @@
     				"label": "Relationship to Patient",
     				"placeholder": "Relationship to Patient",
     				"className": "form-select",
-    				"name": "guests[1][relationship]",
+    				"name": "guests.g1.relationship",
     				"width": "col-md-3",
     				"dataSource": "patientRelation",
     				"multiple": false,
@@ -340,7 +340,7 @@
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "guests[2][firstName]",
+    				"name": "guests.g2.firstName",
     				"width": "col-md-3"
   				},
   				{
@@ -348,7 +348,7 @@
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "guests[2][lastName]",
+    				"name": "guests.g2.lastName",
     				"width": "col-md-3"
   				},
   				{
@@ -357,7 +357,7 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control",
-    				"name": "guests[2][phone]",
+    				"name": "guests.g2.phone",
     				"width": "col-md-3"
     			},
     			{
@@ -365,7 +365,7 @@
     				"label": "Relationship to Patient",
     				"placeholder": "Relationship to Patient",
     				"className": "form-select",
-    				"name": "guests[2][relationship]",
+    				"name": "guests.g2.relationship",
     				"width": "col-md-3",
     				"dataSource": "patientRelation",
     				"multiple": false,
@@ -390,7 +390,7 @@
     				"label": "Hospital",
     				"placeholder": "Hospital Name",
     				"className": "form-control",
-    				"name": "hospital[name]",
+    				"name": "hospital.name",
     				"width": "col-md-3",
   				},
   				{
@@ -398,7 +398,7 @@
     				"label": "Doctor",
     				"placeholder": "Doctor",
     				"className": "form-control",
-    				"name": "hospital[doctor]",
+    				"name": "hospital.doctor",
     				"width": "col-md-3",
   				},
   				{
@@ -406,7 +406,7 @@
     				"label": "Treatment Start Date",
     				"placeholder": "Treatment Start",
     				"className": "form-control",
-    				"name": "hospital[treatmentStart]",
+    				"name": "hospital.treatmentStart",
     				"width": "col-md-3",
   				},
   				{
@@ -414,7 +414,7 @@
     				"label": "Treatment End Date",
     				"placeholder": "Treatment End",
     				"className": "form-control",
-    				"name": "hospital[treatmentEnd]",
+    				"name": "hospital.treatmentEnd",
     				"width": "col-md-3",
   				}
   				]
