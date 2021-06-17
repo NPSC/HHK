@@ -825,7 +825,7 @@
 			var successContent = settingsDialog.find('textarea#formSuccessContent').val();
 			var formData = settings.formBuilder.actions.getData();
 			
-			if(idDocument, title, style, formData, successTitle, successContent){
+			if(typeof idDocument !== 'undefined', typeof title !== 'undefined', typeof style !== 'undefined', typeof formData !== 'undefined', typeof successTitle !== 'undefined', typeof successContent !== 'undefined'){
 				//check required fields
 				var missingFields = [];
 				settings.requiredFields.forEach(function(field){
