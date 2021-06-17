@@ -1069,6 +1069,7 @@ CREATE TABLE if not exists `name_demog` (
   `Income_Bracket` varchar(5) NOT NULL DEFAULT '',
   `Education_Level` varchar(5) NOT NULL DEFAULT '',
   `Special_Needs` varchar(5) NOT NULL DEFAULT '',
+  `Covid` varchar(5) NOT NULL DEFAULT '',
   `Gl_Code_Debit` VARCHAR(25) NOT NULL DEFAULT '' ,
   `Gl_Code_Credit` VARCHAR(25) NOT NULL DEFAULT '',
   `tax_exempt` TINYINT NOT NULL DEFAULT 0,
