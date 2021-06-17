@@ -18,6 +18,7 @@ class FinancialInterval {
 	protected $payAmounts;
 	
 	protected $baArray;
+	protected $errorMsg;
 	
 
 	public function __construct(\DateTimeImmutable $startDate, \DateTimeImmutable $endDate) {
@@ -29,6 +30,7 @@ class FinancialInterval {
 	
 		$uS = Session::getInstance();
 
+		$this->errorMsg = [];
 		$this->totalCatNites = [];
 		$this->totalItemPayment = [];
 		$this->baArray = [];
@@ -77,6 +79,12 @@ class FinancialInterval {
 					
 					$stmtCalc->addVisit($visitCalc->closeInterval($record['Has_Future_Nights']), $serialId);
 					
+					// Testing only
+					if ($stmtCalc->getIncome() != $stmtCalc->getFullIntervalCharge()) {
+						$this->errorMsg[] = 'Visit ' . $visitId . ' breaks the balance. Sold to '. $record['Sold_To_Id'] . '.  Income = '.$stmtCalc->getIncome()
+								. ' Full Charge = '.$stmtCalc->getFullIntervalCharge();
+					}
+					
 					// Reset for next visit
 					$visitCalc = new VisitIntervalCalculator();
 					$visitId = $r['idVisit'];
@@ -100,7 +108,7 @@ class FinancialInterval {
 				// Add up interval charges
 				if ($r['Actual_Interval_Nights'] > 0) {
 					
-					// Guest Charges
+					// Reated Charges
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
 					$charge = $priceModel->amountCalculator($r['Actual_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['Actual_Guest_Nights']) * $adjRatio;
 					
@@ -108,7 +116,7 @@ class FinancialInterval {
 					$priceModel->setCreditDays($r['Pre_Interval_Nights']);
 					$fullCharge = $priceModel->amountCalculator($r['Actual_Interval_Nights'], 0, RoomRateCategories::FullRateCategory, $uS->guestLookups['Static_Room_Rate'][$r['Rate_Code']][2], $r['Actual_Guest_Nights']);
 					
-					$visitCalc->updateIntervalCharge($charge, $fullCharge, $adjRatio, $r['Rate_Category']);
+					$visitCalc->updateIntervalCharge($charge, $fullCharge, $r['Rate_Category']);
 					
 				}
 			}
@@ -443,7 +451,7 @@ where
     	FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)ELSE (SELECT SUM(DATEDIFF(CASE
       	WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start') THEN DATE('$start')
       	ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END, DATE(s.Span_Start_Date)))
-        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";;
+        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";
 		}
 		
 		return " 0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`, ";
@@ -478,5 +486,8 @@ where
 	
 	public function getTotalItemPayment() {
 		return $this->totalItemPayment;
+	}
+	public function getErrorArray() {
+		return $this->errorMsg;
 	}
 }

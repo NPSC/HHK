@@ -15,6 +15,7 @@ use HHK\SysConst\{GLTableNames, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Visit\Visit_onLeaveRS;
 use HHK\sec\Session;
+use HHK\sec\Labels;
 
 /*
  * RoomChooser.php
@@ -355,7 +356,7 @@ class RoomChooser {
     }
 
     protected function createChooserMarkup(\PDO $dbh, $constraintsDisabled, $classId = '') {
-
+        
         $resOptions = $this->makeRoomSelectorOptions();
 
         $errorMessage = $this->getRoomSelectionError($dbh, $resOptions);
@@ -378,7 +379,7 @@ class RoomChooser {
         if ($this->resv->isNew() === FALSE) {
 
             $tbl = new HTMLTable();
-            $tbl->addHeaderTr(HTMLTable::makeTh("Total Guests") . HTMLTable::makeTh('Room', array('id'=>'hhk-roomChsrtitle')));
+            $tbl->addHeaderTr(HTMLTable::makeTh("Total " . Labels::getString('MemberType', 'visitor', 'Guest') . "s") . HTMLTable::makeTh('Room', array('id'=>'hhk-roomChsrtitle')));
 
             $tbl->addBodyTr(
                     HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->getTotalGuests(), array('id'=>'spnNumGuests','style'=>'font-weight:bold;')), array('style'=>'text-align:center;'))

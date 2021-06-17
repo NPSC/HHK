@@ -888,9 +888,7 @@ class Visit {
 	                $mail->send();
 	            }
 	        } catch (\Exception $ex) {
-	            // Do nothing.
-	            $msg .= $ex->getMessage();
-	            $this->setErrorMessage($msg);
+	            $this->setErrorMessage("Failed to send email to house admin: " . $ex->getMessage());
 	        }
         }
         

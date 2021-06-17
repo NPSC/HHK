@@ -98,7 +98,7 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
                 width: 1000,
                 resizable: true,
                 modal: true,
-                title: 'Hospital Details',
+                title: (data.title ? data.title : 'Hospital Details'),
                 buttons: {
                     "Cancel": function() {
                         $(this).dialog("close");

@@ -35,7 +35,7 @@ class Hospital {
 
     }
     
-    protected static function justHospitalMarkup(HospitalStay $hstay) {
+    protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE) {
 
         $uS = Session::getInstance();
 
@@ -80,7 +80,7 @@ class Hospital {
                         ) : '')
                 .HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup(removeOptionGroups($hList), ($hstay->getHospitalId() == 0 && count($hList) == 1 ? $hList[0][0] : $hstay->getHospitalId())),
+                                HTMLSelector::doOptionsMkup(removeOptionGroups($hList), ($hstay->getHospitalId() == 0 && count($hList) == 1 ? $hList[0][0] : $hstay->getHospitalId()), $offerBlank),
                         		array('name'=>'selHospital', 'class'=>'ignrSave hospital-stay' )
                                 )
                         )
@@ -134,7 +134,7 @@ class Hospital {
 
     }
 
-    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay) {
+    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE) {
 
         $uS = Session::getInstance();
         $referralAgentMarkup = '';
@@ -357,7 +357,7 @@ $(document).ready(function () {
         }
 
         $div = HTMLContainer::generateMarkup('div',
-        		self::justHospitalMarkup($hstay)
+        		self::justHospitalMarkup($hstay, $offerBlankHosp)
         		. $referralAgentMarkup
         		. $docRowMkup
         		. $hstayLog
@@ -379,7 +379,7 @@ $(document).ready(function () {
 
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
-        return array('hdr'=>$hdr, 'div'=>$div);
+        return array('hdr'=>$hdr, 'title'=>$labels->getString('hospital', 'hospital', 'Hospital') . ' Details', 'div'=>$div);
     }
 
     public static function saveReferralMarkup(\PDO $dbh, Psg $psg, HospitalStay $hstay, array $post, $idResv = -1) {

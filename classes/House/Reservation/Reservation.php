@@ -12,12 +12,10 @@ use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay, PSGMemVisit, PSGMemR
 use HHK\House\Room\RoomChooser;
 use HHK\House\Vehicle;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
-use HHK\SysConst\DefaultSettings;
-use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus};
+use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus, DefaultSettings};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
-use HHK\sec\Labels;
-use HHK\sec\{SecurityComponent, Session};
+use HHK\sec\{Labels, SecurityComponent, Session};
 use HHK\Exception\RuntimeException;
 
 
@@ -436,6 +434,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $days = '';
         $prefix = '';
+        $repetr = '';
 
         $cidAttr = array('name'=>$prefix.'gstDate', 'readonly'=>'readonly', 'size'=>'14' );
 
@@ -450,6 +449,18 @@ WHERE r.idReservation = " . $rData->getIdResv());
             }
         }
 
+        if ($uS->UseRepeatResv) {
+
+        	$contents = HTMLContainer::generateMarkup('option', 'Week', array('value'=>'w'))
+        			.HTMLContainer::generateMarkup('option', '2 Weeks', array('value'=>'2w'))
+        			.HTMLContainer::generateMarkup('option', 'Month', array('value'=>'m'));
+
+        	$repetr = HTMLContainer::generateMarkup('span', 'Repeat each '
+        			. HTMLSelector::generateMarkup($contents, array('id'=>$prefix.'resvRepeatIndex', 'style'=>'display:inline;')) . ' for '
+        			. HTMLInput::generateMarkup('', array('id'=>$prefix.'resvRepeatCycles', 'size'=>'4')) . ' cycles'
+        			, array('style'=>'margin-left:1em;font-size:.9em;', 'id'=>$prefix.'resvRepeater'));
+        }
+
         $mkup = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', 'Arrival: '.
                     HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr))
@@ -460,7 +471,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4'))
                     , array('style'=>'margin-left:.7em;'))
         		.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'margin-left:1em; font-size:.8em;'))
-                , array('style'=>'font-size:.9em;', 'id'=>$prefix.'spnRangePicker'));
+        		, array('style'=>'font-size:.9em;', 'id'=>$prefix.'spnRangePicker'))
+        		.$repetr;
 
         return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays', 'updateOnChange'=>$updateOnChange, 'startDate'=>$startDate, 'endDate'=>$endDate);
 
@@ -642,7 +654,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $expArrDT->setTime(0, 0, 0);
 
             if ($resvRs->Status->getStoredVal() == ReservationStatus::Staying) {
-                $checkinNow = HTMLInput::generateMarkup('Add Guest', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
+                $checkinNow = HTMLInput::generateMarkup('Add ' . Labels::getString('MemberType', 'visitor', 'Guest'), array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
             } else if ($expArrDT->diff($today, TRUE)->days == 0) {
                 $checkinNow .= HTMLInput::generateMarkup('Check-in Now', array('type'=>'button', 'class'=>'hhk-checkinNow', 'data-rid'=>$resvRs->idReservation->getStoredVal()));
             } else if ($expArrDT->diff($today, TRUE)->days <= $this->reserveData->getResvEarlyArrDays()) {
@@ -667,7 +679,7 @@ where rg.idReservation =" . $r['idReservation']);
                     $name = ', ' . $g['Name_Full'];
                 }
                 if ($g['Primary_Guest'] == 1) {
-                    $names .= HTMLContainer::generateMarkup('span', $name, array('style'=>'font-weight:bold;', 'title'=>'Primary Guest'));
+                    $names .= HTMLContainer::generateMarkup('span', $name, array('style'=>'font-weight:bold;', 'title'=>Labels::getString('MemberType', 'primaryGuest', 'Primary Guest')));
                 } else {
                     $names .= HTMLContainer::generateMarkup('span', $name);
                 }
@@ -810,7 +822,8 @@ FROM
     registration r ON v.idRegistration = r.idRegistration
 WHERE
     DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
-    and DATE(ifnull(s.Span_End_Date, DATE_ADD(DATE(datedefaultnow(s.Expected_Co_Date)), INTERVAL 1 Day))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
+  --  and DATE(ifnull(s.Span_End_Date, DATE_ADD(DATE(datedefaultnow(s.Expected_Co_Date)), INTERVAL 1 Day))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
+    and DATE(ifnull(s.Span_End_Date, DATE(datedefaultnow(s.Expected_Co_Date)))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
     and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
     and s.idName in (" . substr($whStays, 1) . ") "
                     . " order by s.idVisit, s.Visit_Span");

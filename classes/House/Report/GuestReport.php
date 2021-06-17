@@ -4,6 +4,7 @@ namespace HHK\House\Report;
 
 use HHK\HTMLControls\HTMLTable;
 use HHK\Exception\RuntimeException;
+use HHK\sec\Labels;
 
 /**
  * GuestReport.php
@@ -86,11 +87,11 @@ class GuestReport {
 
             $th .= HTMLTable::makeTh($indxDT->format('M, Y'));
 
-            $accum[$thisPeriod]['Guests']['o']['cnt'] = 0;
+            $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt'] = 0;
             if ($whichGuests == 'new') {
-                $accum[$thisPeriod]['Guests']['o']['title'] = 'New Guests';
+                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'New ' . Labels::getString('memberType', 'visitor', 'Guest') . 's';
             } else {
-                $accum[$thisPeriod]['Guests']['o']['title'] = 'All Guests starting in month';
+                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's starting in month';
             }
 
             // Demographics
@@ -107,7 +108,7 @@ class GuestReport {
 
         $periods[] = 'Total';
 
-        $accum['Total']['Guests']['o']['cnt'] = 0;
+        $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt'] = 0;
 
         // Totals
         foreach ($demoCategorys as $k => $d) {
@@ -174,8 +175,8 @@ class GuestReport {
                 $accum['Total'][$d][$r[$d]]['cnt']++;
             }
 
-            $accum[$startPeriod]['Guests']['o']['cnt']++;
-            $accum['Total']['Guests']['o']['cnt']++;
+            $accum[$startPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt']++;
+            $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt']++;
 
 
             try {

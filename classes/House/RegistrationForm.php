@@ -228,7 +228,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
             $expPay = '<div><span>Expected Payment Type: ' . $expectedPayType . ' </span></div>';
         }
 
-        return '<div class="imdsection" style="margin-top:10px;">Payment Information - <span class="imdsection" style="font-style: italic;">Please Complete Contact Info if Different than Primary Guest</span></div>' . $expPay . $paymentMessage . '<div id="divPayor">
+        return '<div class="imdsection" style="margin-top:10px;">Payment Information - <span class="imdsection" style="font-style: italic;">Please Complete Contact Info if Different than ' . Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . '</span></div>' . $expPay . $paymentMessage . '<div id="divPayor">
        <table style="width:100%; margin-left:20px;">
            <tr><td style="border-bottom: 1px solid black;width:45%;">' . $cardName . '&nbsp;</td><td style="border-bottom: 1px solid black;">&nbsp;</td></tr>
             <tr><td class="prompt">&#9650;Payor First Name</td><td class="prompt">&#9650;Payor Last Name</td></tr>
@@ -333,7 +333,7 @@ td.prompt {vertical-align: top; font: 9px/11px sans-serif; color:slategray; heig
         $phoneData = $phone->get_Data(PhonePurpose::Cell);
         $emailData = $email->get_Data();
 
-        return '<div class="imdlist">1. Primary Guest Information (Required)</div>
+        return '<div class="imdlist">1. ' . Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Information (Required)</div>
     <div id="divPrimaryGuest">
        <table style="width:100%; margin-left:20px;">
            <tr><td style="border-bottom: 1px solid black;width:45%;">' . $name->get_firstName() . '&nbsp;</td><td style="border-bottom: 1px solid black;">' . $name->get_lastName() . '</td></tr>

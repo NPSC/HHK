@@ -30,16 +30,12 @@ class VisitIntervalCalculator {
 	
 	public function closeInterval($hasFutureNights) {
 		
-		$overWaive = 0;
-		$overDiscount = 0;
-		
 		// pre-Discounts diminish pre-lodging charge amounts, already paid by house.
 		if ($this->preIntervalCharge >= abs($this->preIntervalDiscount)) {
 			$this->preIntervalCharge += $this->preIntervalDiscount;
 		} else {
 			// more discounts than charges.
-			$overDiscount = $this->preIntervalDiscount + $this->preIntervalCharge;
-			$this->preIntervalDiscount = 0 - $this->preIntervalCharge;
+			$this->intervalCharge += $this->preIntervalDiscount + $this->preIntervalCharge;
 			$this->preIntervalCharge = 0;
 		}
 		
@@ -49,81 +45,95 @@ class VisitIntervalCalculator {
 			$this->preIntervalPay += $this->preIntervalWaiveAmt;  // remove "fake" payment
 		} else {
 			// Waive bleed over to this month
-			$overWaive = $this->preIntervalWaiveAmt + $this->preIntervalCharge;  // Waive forwarded to next month
+			$this->intervalCharge += $this->preIntervalWaiveAmt + $this->preIntervalCharge;  // Waive forwarded to next month
 			
 			$this->preIntervalPay += $this->preIntervalWaiveAmt;  // remove "fake" payment
 			$this->preIntervalCharge = 0;  // Reduce Charge to guest
 		}
-		
-		// The interval charge is reduced by any overage from pre-interval
-		$this->intervalCharge += ($overDiscount + $overWaive);
-		$this->intervalPay += $overWaive;
-		
-		
+
+
 		// Remove discounts from charges
 		if ($this->intervalCharge >= abs($this->intervalDiscount)) {
 			$this->intervalCharge += $this->intervalDiscount;
 		} else {
 			// more discounts than charges.
-			$overDiscount = $this->intervalDiscount + $this->intervalCharge;
-			$this->intervalDiscount = 0 - $this->intervalCharge;
-			$this->intervalCharge = 0;
+
+			// Discounts meant for the past?
+			$unpaidPreCharges = $this->preIntervalCharge - $this->preIntervalPay;
+			
+			if ($unpaidPreCharges > 0 && $unpaidPreCharges >= abs($this->intervalDiscount)) {
+				// All interval waives goes to preinterval.
+				$this->preIntervalCharge += $this->intervalDiscount;
+				$this->intervalDiscount = 0;
+				
+			} else if ($unpaidPreCharges > 0) {
+				// interval waive amount split between pre and now interval charges.
+				$this->intervalDiscount += $unpaidPreCharges;
+				$this->preIntervalCharge -= $unpaidPreCharges;
+				$this->intervalCharge += $this->intervalDiscount;
+			} else {
+				$this->intervalCharge += $this->intervalDiscount;
+			}
+
 		}
-		
+
 		// Interval Waive amounts
 		if ($this->intervalCharge >= abs($this->intervalWaiveAmt)) {
 			$this->intervalCharge += $this->intervalWaiveAmt;
 			$this->intervalPay += $this->intervalWaiveAmt;
 		} else {
-			
-			// Remove all waive payments
+			// More waives than charges.
+
+			// Remove waive payments
 			$this->intervalPay += $this->intervalWaiveAmt;
-			
-			// More waives than charges.  Waives meant for the past?
-			$unpaidCharges = $this->preIntervalCharge - $this->preIntervalPay;
-			
-			if ($unpaidCharges > 0 && $unpaidCharges >= abs($this->intervalWaiveAmt)) {
+
+			// Waives meant for the past?
+			$unpaidPreCharges = $this->preIntervalCharge - $this->preIntervalPay;
+
+			if ($unpaidPreCharges > 0 && $unpaidPreCharges >= abs($this->intervalWaiveAmt)) {
 				// All interval waives goes to preinterval.
 				$this->preIntervalCharge += $this->intervalWaiveAmt;
 				$this->intervalWaiveAmt = 0;
-				
-			} else if ($unpaidCharges > 0) {
+
+			} else if ($unpaidPreCharges > 0) {
 				// interval waive amount split between pre and now interval charges.
-				$this->intervalWaiveAmt += $unpaidCharges;
-				$this->preIntervalCharge -= $unpaidCharges;
+				$this->intervalWaiveAmt += $unpaidPreCharges;
+				$this->preIntervalCharge -= $unpaidPreCharges;
 				$this->intervalCharge += $this->intervalWaiveAmt;
 			} else {
 				$this->intervalCharge += $this->intervalWaiveAmt;
 			}
 		}
 
-		// Payments and charges from the past.
-		$pfp = 0;
-		$pptn = 0;
-		$cfp = 0;
+		// Past payments and charges.
+		$pfp = 0;	// payment From Past
+		$pptn = 0;	// prepayment to now
+		$cfp = 0;	// charge from past
+		$ptp = 0;	// Paymemt to past
+		
 		if ($this->preIntervalPay - $this->preIntervalCharge >= 0) {
-			// leftover Payments from past (C23)
+			// leftover Payments from past
 			$pfp = $this->preIntervalPay - $this->preIntervalCharge;
-			
+
 			if ($pfp > $this->intervalCharge) {
 				$pptn = $this->intervalCharge;
+				$ptp = $this->intervalCharge - $pfp;
+				$pfp += $ptp;
 			} else {
 				$pptn = $pfp;
 			}
 		} else {
-			// leftover charge after previous payments (C22)
+			// leftover charge after previous payments
 			$cfp = $this->preIntervalCharge - $this->preIntervalPay;
-		}
-
-		// Payments to the past
-		$ptp = 0;
-		if ($cfp > 0) {
+			
 			if($this->intervalPay >= $cfp) {
 				$ptp = $cfp;
 			} else {
 				$ptp = $this->intervalPay;
 			}
-		} else if ($cfp == 0 && $this->intervalCharge == 0) {
+		}
+
+		if ($cfp == 0 && $this->intervalCharge == 0) {
 			// Unallocated payment to the past.
 			$ptp -= $pfp;
 		}
@@ -131,7 +141,8 @@ class VisitIntervalCalculator {
 		// Payments to now
 		$ptn = 0;
 		if ($cfp <= $this->intervalPay) {
-			if ($this->intervalPay - $cfp > $this->intervalCharge) {
+			
+			if ($this->intervalPay - $cfp >= $this->intervalCharge - $pptn) {	// fix the $130
 				$ptn = $this->intervalCharge - $pptn;
 			} else {
 				$ptn = $this->intervalPay - $cfp;
@@ -161,8 +172,8 @@ class VisitIntervalCalculator {
 		
 		return $this;
 	}
-	
-	
+
+
 	
 	/**
 	 * @return number
@@ -277,17 +288,12 @@ class VisitIntervalCalculator {
 	 * @param number $adjRatio
 	 * @param string $rateCategory
 	 */
-	public function updateIntervalCharge($charge, $fullCharge, $adjRatio, $rateCategory) {
+	public function updateIntervalCharge($charge, $fullCharge, $rateCategory) {
 		
 		$this->intervalCharge += $charge;
 		
-		// Adjust ratio
-		if ($adjRatio > 0) {
-			$this->fullIntervalCharge += ($fullCharge * $adjRatio);
-		} else {
-			$this->fullIntervalCharge += $fullCharge;
-		}
-		
+		$this->fullIntervalCharge += $fullCharge;
+
 		// Subsidy
 		if ($rateCategory != RoomRateCategories::FlatRateCategory) {
 			$this->subsidyCharge += $fullCharge - $charge;

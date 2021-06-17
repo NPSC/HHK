@@ -10,6 +10,8 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Name\{NameRS, NameVolunteerRS};
 use HHK\sec\Session;
 use HHK\Config_Lite\Config_Lite;
+use HHK\Member\Relation\RelationCode;
+use HHK\sec\Labels;
 
 /**
  * RoleMember.php
@@ -50,7 +52,24 @@ abstract class AbstractRoleMember extends IndivMember {
 
     }
 
-
+    protected function translatePatRelTypes($patientRelationCodes) {
+    	
+    	$labels = Labels::getLabels();
+    	$guestLabel = $labels->getString('MemberType', 'guest', 'Guest');
+    	$relTypes = [];
+    	
+    	foreach ($patientRelationCodes as $tpe) {
+    		
+    		if ($tpe[0] != RelLinkType::Self) {
+    			$tpe[2] = $guestLabel . 's';
+    		}
+    		
+    		$relTypes[$tpe[0]] = $tpe;
+    	}
+    	
+    	return $relTypes;
+    }
+    
     protected abstract function getMyMemberType();
 
     public static function createThinMarkupHdr($labels = NULL, $hideRelChooser = TRUE, $showBirthDate = TRUE, $showCopyDown = TRUE) {

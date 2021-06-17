@@ -160,7 +160,7 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 $resvAr = $resvObj->toArray();
 $resvAr['patBD'] = $resvObj->getPatBirthDateFlag();
-$resvAr['gstBD'] = $resvObj->getGuestBirthDateFlag();
+$resvAr['gstBD'] = false; //disable guest bd check on reservation
 $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
@@ -298,9 +298,11 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate"/>
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
+        <input type="hidden" value="<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>" id="visitorLabel" />
+        <input type="hidden" value="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>" id="guestLabel" />
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
-        <script type="text/javascript" src="js/reserve.js"></script>
+        <script type="text/javascript" src="<?php echo RESERVE_JS; ?>"></script>
     </body>
 </html>

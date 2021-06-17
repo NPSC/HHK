@@ -35,7 +35,7 @@ class UserClass
         $ssn = Session::getInstance();
 
         if ($this->testTries() === FALSE) {
-            $this->logMessage = "To many log-in attempts.  ";
+            $this->logMessage = "Too many log-in attempts.  ";
             return FALSE;
         }
 
@@ -486,11 +486,12 @@ class UserClass
             $osName = "HHK";
         }else{
             try {
-            	$userAgentArray = get_browser(NULL, TRUE);
-            	$browserName = $userAgentArray['parent'];
-            	$osName = $userAgentArray['platform'];
+            	if ($userAgentArray = get_browser(NULL, TRUE)) {
+            		$browserName = $userAgentArray['parent'];
+            		$osName = $userAgentArray['platform'];
+            	}
             } catch (\Exception $d) {
-            	$browserName = "Missing Browscap";
+            	$browserName = "Missing Browscap?";
             }
         }
         
