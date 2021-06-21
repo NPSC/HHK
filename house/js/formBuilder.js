@@ -16,6 +16,7 @@
             serviceURL: 'ws_resc.php',
             previewURL: 'showReferral.php',
             formBuilder: null,
+            labels: {},
             fields: [
     		{
       			label: "Source",
@@ -39,14 +40,14 @@
   			],
             inputSets: [
       		{
-        		label: 'Patient Details',
+        		label: (options.labels.patient || 'Patient') + ' Details',
         		name: 'patient-details', // optional - one will be generated from the label if name not supplied
         		showHeader: true, // optional - Use the label as the header for this set of inputs
         		fields: [
 				{
 					"type": "text",
 					"required": true,
-    				"label": "Patient First Name",
+    				"label": (options.labels.patient || 'Patient') + " First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
     				"name": "patient.firstName",
@@ -55,7 +56,7 @@
   				{
   					"type": "text",
   					"required": true,
-    				"label": "Patient Last Name",
+    				"label": (options.labels.patient || 'Patient') + " Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
     				"name": "patient.lastName",
@@ -63,7 +64,7 @@
   				},
   				{
     				"type": "date",
-    				"label": "Patient Birthdate",
+    				"label": (options.labels.patient || 'Patient') + " Birthdate",
     				"placeholder": "Patient Birthdate",
     				"className": "form-control",
     				"name": "patient.birthdate",
@@ -71,8 +72,8 @@
   				},
   				{
     				"type": "select",
-    				"label": "Patient Sex",
-    				"placeholder": "Patient Sex",
+    				"label": (options.labels.patient || 'Patient') + " Sex",
+    				"placeholder": (options.labels.patient || 'Patient') + " Sex",
     				"className": "form-select",
     				"name": "patient.sex",
     				"width": "col-md-2",
@@ -80,62 +81,6 @@
     				"multiple": false,
     				"values": []
   				},
-  				{
-					"type": "header",
-					"subtype": "h3",
-    				"label": "Address",
-    				"placeholder": "Address",
-    				"className": "col-md-12"
-    				
-  				},
-  				{
-					"type": "text",
-    				"label": "Street",
-    				"placeholder": "Street",
-    				"className": "form-control",
-    				"name": "adrstreet",
-    				"width": "col-md-12"
-  				},
-  				{
-  					"type": "text",
-    				"label": "City",
-    				"placeholder": "City",
-    				"className": "form-control",
-    				"name": "adrcity",
-    				"width": "col-md-5"
-  				},
-  				{
-    				"type": "select",
-    				"label": "State",
-    				"placeholder": "State",
-    				"className": "form-select bfh-states",
-    				"name": "adrstate",
-    				"width": "col-md-2",
-    				"values": []
-  				},
-  				{
-    				"type": "text",
-    				"label": "Zip Code",
-    				"placeholder": "Zip Code",
-    				"className": "form-control",
-    				"name": "adrzip",
-    				"width": "col-md-2"
-    			},
-    			{
-    				"type": "select",
-    				"label": "Country",
-    				"placeholder": "Country",
-    				"className": "form-select bfh-countries",
-    				"name": "adrcountry",
-    				"width": "col-md-3",
-    				"values": [
-    					{
-    						"label":"United States",
-    						"value":"US",
-    						"selected":true
-    					}
-    				]
-    			},
     			{
     				"type": "text",
     				"subtype": "tel",
@@ -247,8 +192,8 @@
   				]
   			},
   			{
-        		label: 'Family Members/Caregivers',
-        		name: 'family-members',
+        		label: (options.labels.guest || 'Guest') + 's',
+        		name: 'guests',
         		showHeader: true,
         		fields: [
 				{
@@ -278,8 +223,8 @@
     			},
     			{
   					"type": "select",
-    				"label": "Relationship to Patient",
-    				"placeholder": "Relationship to Patient",
+    				"label": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
     				"className": "form-select",
     				"name": "guests.g0.relationship",
     				"width": "col-md-3",
@@ -287,7 +232,7 @@
     				"multiple": false,
     				"values": [
       				{
-        				"label": "Patient Relationship",
+        				"label": (options.labels.patient || 'Patient') + " Relationship",
         				"value": "",
         				"selected": true
       				}
@@ -320,8 +265,8 @@
     			},
     			{
   					"type": "select",
-    				"label": "Relationship to Patient",
-    				"placeholder": "Relationship to Patient",
+    				"label": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
     				"className": "form-select",
     				"name": "guests.g1.relationship",
     				"width": "col-md-3",
@@ -329,7 +274,7 @@
     				"multiple": false,
     				"values": [
       				{
-        				"label": "Patient Relationship",
+        				"label": (options.labels.patient || 'Patient') + " Relationship",
         				"value": "",
         				"selected": true
       				}
@@ -362,8 +307,8 @@
     			},
     			{
   					"type": "select",
-    				"label": "Relationship to Patient",
-    				"placeholder": "Relationship to Patient",
+    				"label": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
     				"className": "form-select",
     				"name": "guests.g2.relationship",
     				"width": "col-md-3",
@@ -371,7 +316,7 @@
     				"multiple": false,
     				"values": [
       				{
-        				"label": "Patient Relationship",
+        				"label": (options.labels.patient || 'Patient') + " Relationship",
         				"value": "",
         				"selected": true
       				}
@@ -380,15 +325,15 @@
   				]
   			},
   			{
-        		label: 'Hospital Info',
+        		label: (options.labels.hospital || 'Hospital') + ' Info',
         		name: 'hospital-info',
         		showHeader: true,
         		fields: [
 				{
 					"type": "text",
 					"required": true,
-    				"label": "Hospital",
-    				"placeholder": "Hospital Name",
+    				"label": (options.labels.hospital || 'Hospital'),
+    				"placeholder": (options.labels.hospital || 'Hospital') + " Name",
     				"className": "form-control",
     				"name": "hospital.name",
     				"width": "col-md-3",
@@ -403,16 +348,16 @@
   				},
   				{
 					"type": "date",
-    				"label": "Treatment Start Date",
-    				"placeholder": "Treatment Start",
+    				"label": (options.labels.treatmentStart || 'Treatment Start'),
+    				"placeholder": (options.labels.treatmentStart || 'Treatment Start'),
     				"className": "form-control",
     				"name": "hospital.treatmentStart",
     				"width": "col-md-3",
   				},
   				{
 					"type": "date",
-    				"label": "Treatment End Date",
-    				"placeholder": "Treatment End",
+    				"label": (options.labels.treatmentEnd || 'Treatment End'),
+    				"placeholder": (options.labels.treatmentEnd || 'Treatment End'),
     				"className": "form-control",
     				"name": "hospital.treatmentEnd",
     				"width": "col-md-3",
@@ -812,7 +757,7 @@
 		$wrapper.on('click', '#formiframebtn', function(){
 			var code = $(this).data('code');
 			navigator.clipboard.writeText(code)
-				.then(() => { $(this).attr('title','Embed Code Copied').tooltip(); })
+				.then(() => { alert("Embed Code Copied.") })
 				.catch((error) => { $(this).attr('title',`Copy failed! ${error}`).tooltip() })
 		});
 		

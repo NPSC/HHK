@@ -2247,7 +2247,19 @@ $resultMessage = $alertMsg->createMarkup();
 	<script type="text/javascript">
 	
 		$(document).ready(function(){
-			$('#formBuilder').hhkFormBuilder();
+			$('#formBuilder').hhkFormBuilder({
+				labels: {
+					hospital: "<?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>",
+					guest: "<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>",
+					patient: "<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>",
+					diagnosis: "<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>",
+					location: "<?php echo $labels->getString('hospital', 'location', 'Unit'); ?>",
+					referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
+					treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
+					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>"
+					
+				}
+			});
 		});
 
 	</script>

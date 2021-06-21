@@ -84,6 +84,13 @@ class FormTemplate {
             $validationErrors['css'] = $cssValidation;
         }
         
+        if(!$title){
+            $validationErrors['title'] = "The title field is required.";
+        }
+        if(!$successTitle){
+            $validationErrors['successTitle'] = "The success title field is required.";
+        }
+        
         
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
             $successJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent]);
