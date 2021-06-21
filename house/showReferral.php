@@ -63,6 +63,9 @@ unset($patientRels['slf']);
 $formTemplate = '';
 $formData = '';
 $style = '';
+$successTitle = '';
+$successContent = '';
+$enableRecaptcha = false;
 $error = '';
 
 if(isset($_GET['template'])){
@@ -72,6 +75,12 @@ if(isset($_GET['template'])){
         if($formTemplate->loadTemplate($dbh, $id)){
             $formData = $formTemplate->getTemplate();
             $style = $formTemplate->getStyle();
+            $formSettings = $formTemplate->getSettings();
+            
+            //enableRecaptcha
+            if(($uS->mode == 'demo' || $uS->mode == 'prod') && $formSettings['enableRecaptcha']){
+                $enableRecaptcha = $formSettings['enableRecaptcha'];
+            }
         }else{
             $error = "Document is not a form template";
         }
@@ -127,7 +136,7 @@ if(isset($_GET['template'])){
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
         <?php
-        if($uS->mode == 'demo' || $uS->mode == 'prod'){
+        if($enableRecaptcha){
             echo $recaptcha->getScriptTag();
         }
         ?>
@@ -151,7 +160,7 @@ if(isset($_GET['template'])){
             	
             	var csrfToken = '<?php echo $login->generateCSRF(); ?>';
             	var siteKey = '<?php echo $recaptcha->getSiteKey(); ?>';
-            	var recaptchaEnabled = <?php echo ($uS->mode == 'demo' || $uS->mode == 'live' ? 'true':'false');?>;
+            	var recaptchaEnabled = '<?php echo $enableRecaptcha; ?>';
             	
             	var $renderedForm = $(document).find('.rendered-form');
             	$renderedForm.addClass('row');
@@ -269,11 +278,8 @@ if(isset($_GET['template'])){
 			</div>
         </div>
         <div class="alert alert-success msg" role="alert" style="display: none">
-    		<h4 class="alert-heading">Referral Form Submitted</h4>
-    		<p>We've received your referral form and will be in touch shortly.</p>
-    		<p>
-    			Thank you
-    		</p>
+    		<h4 class="alert-heading"><?php echo $successTitle; ?></h4>
+    		<p><?php echo $successContent; ?></p>
     		<p>Recaptcha Score: <span id="recaptchascore"></span></p>
     	</div>
     	<div class="alert alert-danger errmsg" role="alert" style="display: none">

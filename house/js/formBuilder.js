@@ -566,7 +566,11 @@
         		"Revert Changes": function() {
         			settingsDialog.find('textarea, input').each(
         				function(i,element){
-        					$(this).val($(this).data('oldVal'));
+        					if($(this).prop('type') == 'checkbox'){
+        						$(this).prop('checked', $(this).data('oldval'));
+        					}else{
+        						$(this).val($(this).data('oldVal'));
+        					}
         				}
         			);
           			settingsDialog.dialog( "close" );
@@ -655,7 +659,15 @@
 				    </div>
 				    
 				    <div id="tabs-3">
-				        test 3
+				        <div class="row">
+				        	<div class="col-12">
+				        		<div style="margin-bottom: 0.5em;">
+				        			<label for="enableRecaptcha" style="margin-right: 0.5em;">Enable Recaptcha</label>
+				        			<input type="checkbox" name="enableRecaptcha" id="enableRecaptcha">
+				        		</div>
+				        		<small>Combat spam submissions by using <a href="https://www.google.com/recaptcha/about/" target="_blank">Google Recaptcha Enterprise</a>. Using this service is subject to Google's <a href="https://www.google.com/intl/en/policies/terms/" target="_blank">Terms of Use</a> and <a href="https://www.google.com/intl/en/policies/privacy/" target="_blank">Privacy Policy</a></small>
+				        	</div>
+				        </div>
 				    </div>
     
 				</div>
@@ -741,6 +753,7 @@
 							settingsDialog.find('input#formSuccessTitle').val(data.formSettings.successTitle).data('oldVal',data.formSettings.successTitle);
 							settingsDialog.find('textarea#formSuccessContent').val(data.formSettings.successContent).data('oldVal',data.formSettings.successContent);
 	    					settingsDialog.find('textarea#formStyle').val(data.formSettings.formStyle).data('oldVal', data.formSettings.formStyle);
+	    					settingsDialog.find('input#enableRecaptcha').prop('checked', data.formSettings.enableRecaptcha).data('oldval', data.formSettings.enableRecaptcha);;
 	    					$wrapper.find('#formTitle').val(data.formTitle);
 	    				}
 	    			}
@@ -750,6 +763,7 @@
 				$wrapper.find('#formiframebtn').data('code', '').hide();
 				$wrapper.find('#formTitle').val("");
 				settingsDialog.find('textarea').val('').data('oldstyles', '');
+				settingsDialog.find('input#enableRecaptcha').prop('checked', false);
 			}
 			
 		});
@@ -768,6 +782,7 @@
 			var style = settingsDialog.find('textarea#formStyle').val();
 			var successTitle = settingsDialog.find('input#formSuccessTitle').val();
 			var successContent = settingsDialog.find('textarea#formSuccessContent').val();
+			var enableRecaptcha = settingsDialog.find('input#enableRecaptcha').prop('checked');
 			var formData = settings.formBuilder.actions.getData();
 			
 			if(typeof idDocument !== 'undefined', typeof title !== 'undefined', typeof style !== 'undefined', typeof formData !== 'undefined', typeof successTitle !== 'undefined', typeof successContent !== 'undefined'){
@@ -791,7 +806,8 @@
 		    				"doc": JSON.stringify(formData),
 		    				"style": style,
 		    				"successTitle": successTitle,
-		    				"successContent": successContent
+		    				"successContent": successContent,
+		    				"enableRecaptcha": enableRecaptcha
 		    			},
 		    			dataType: "json",
 		    			success: function(data, textStatus, jqXHR)

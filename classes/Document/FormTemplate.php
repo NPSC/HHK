@@ -46,7 +46,7 @@ class FormTemplate {
         return $rows;
     }
     
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $username){
         
         $validationErrors = array();
         
@@ -56,12 +56,22 @@ class FormTemplate {
             $validationErrors['css'] = $cssValidation;
         }
         
+        if(!$title){
+            $validationErrors['title'] = "The title field is required.";
+        }
+        if(!$successTitle){
+            $validationErrors['successTitle'] = "The success title field is required.";
+        }
+        
+        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha]);
+        
         $this->doc = new Document();
         $this->doc->setTitle($title);
         $this->doc->setType(self::JsonType);
         $this->doc->setCategory(self::TemplateCat);
         $this->doc->setDoc($doc);
         $this->doc->setStyle($style);
+        $this->doc->setAbstract($abstractJson);
         $this->doc->setStatus('a');
         $this->doc->setCreatedBy($username);
         
@@ -74,7 +84,7 @@ class FormTemplate {
         }
     }
     
-    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $username){
         
         $validationErrors = array();
         
@@ -93,9 +103,9 @@ class FormTemplate {
         
         
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $successJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent]);
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha]);
             
-            $count = $this->doc->save($dbh, $title, $doc, $style, $successJson, $username);
+            $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, $username);
             if($count == 1){
                 return array('status'=>'success', 'msg'=>"Form updated successfully");
             }else{
@@ -156,7 +166,8 @@ class FormTemplate {
         return [
             'formStyle'=>$this->getStyle(),
             'successTitle'=>$abstract->successTitle,
-            'successContent'=>$abstract->successContent
+            'successContent'=>$abstract->successContent,
+            'enableRecaptcha'=>(isset($abstract->enableRecaptcha) ? $abstract->enableRecaptcha : false)
         ];
     }
 
