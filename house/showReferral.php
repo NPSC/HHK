@@ -60,6 +60,9 @@ $genders = readGenLookupsPDO($dbh, 'gender', 'Order');
 unset($genders['z']);
 $patientRels = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Order');
 unset($patientRels['slf']);
+$stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
+    'KY', 'LA', 'LB', 'MA', 'MB', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NB', 'NC', 'ND', 'NE', 'NF', 'NH', 'NJ', 'NM', 'NS', 'NT', 'NV', 'NY', 'OH',
+    'OK', 'ON', 'OR', 'PA', 'PE', 'PR', 'PQ', 'RI', 'SC', 'SD', 'SK', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY');
 $formTemplate = '';
 $formData = '';
 $style = '';
@@ -168,16 +171,22 @@ if(isset($_GET['template'])){
             	//fill data sources (gender, relationship, etc)
             	var genders = <?php echo json_encode($genders); ?>;
             	var patientRels = <?php echo json_encode($patientRels); ?>;
+            	var vehicleStates = <?php echo json_encode($stateList); ?>;
             	var genderLabel = $(document).find('.rendered-form label[for=patientSex]').text();
             	var relationshipLabel = $(document).find('.rendered-form label[for="guests[0][relationship]"').text();
             	$(document).find('.rendered-form select[data-source=gender]').html('<option disabled selected>' + genderLabel + '</option>');
             	$(document).find('.rendered-form select[data-source=patientRelation]').html('<option disabled selected>' + relationshipLabel + '</option>');
+            	$(document).find('.rendered-form select[data-source=vehicleStates]').html('<option disabled selected>State</option>');
             	for(i in genders){
             		$(document).find('.rendered-form select[data-source=gender]').append('<option value="' + genders[i].Code + '">' + genders[i].Description + '</option>');
             	}
             	
             	for(i in patientRels){
             		$(document).find('.rendered-form select[data-source=patientRelation]').append('<option value="' + patientRels[i].Code + '">' + patientRels[i].Description + '</option>');
+            	}
+            	
+            	for(i in vehicleStates){
+            		$(document).find('.rendered-form select[data-source=vehicleStates]').append('<option value="' + vehicleStates[i] + '">' + vehicleStates[i] + '</option>');
             	}
             	
             	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', '').data('hhkindex','');
@@ -199,6 +208,16 @@ if(isset($_GET['template'])){
                     var lastXhr;
                     createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
                 });
+                
+                //add guest button
+                var elements = $renderedForm.find('input[group=guest], select[group=guest]')
+                index = 0;
+                $renderedForm.on('click', '#addGuest', function(){
+	    			elements.each(function(){
+	    				var formgroup = $(this).parent('.form-group').clone();
+	    				formgroup.insertBefore('.field-addGuest');
+	    			});
+            	});
             	
             	function submitForm(token = ''){
             		var formRenderData = formRender.userData;

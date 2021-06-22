@@ -102,6 +102,117 @@
   				]
   			},
   			{
+        		label: 'Emergency Contact',
+        		name: 'emergency-contact',
+        		showHeader: true,
+        		fields: [
+				{
+					"type": "text",
+    				"label": "First Name",
+    				"placeholder": "First Name",
+    				"className": "form-control",
+    				"name": "emerg.firstName",
+    				"width": "col-md-3"
+  				},
+  				{
+					"type": "text",
+    				"label": "Last Name",
+    				"placeholder": "Last Name",
+    				"className": "form-control",
+    				"name": "emerg.lastName",
+    				"width": "col-md-3"
+  				},
+  				{
+					"type": "text",
+    				"label": "Phone",
+    				"placeholder": "Phone",
+    				"className": "form-control",
+    				"name": "emerg.phone",
+    				"width": "col-md-2"
+  				},
+  				{
+					"type": "text",
+    				"label": "Alternate Phone",
+    				"placeholder": "Alternate Phone",
+    				"className": "form-control",
+    				"name": "emerg.alternate",
+    				"width": "col-md-2"
+  				},
+  				{
+  					"type": "select",
+    				"label": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"className": "form-select",
+    				"name": "emerg.relationship",
+    				"width": "col-md-2",
+    				"dataSource":"patientRelation",
+    				"multiple": false,
+    				"values": [
+      				{
+        				"label": (options.labels.patient || 'Patient') + " Relationship",
+        				"value": "",
+        				"selected": true
+      				}
+    				]
+  				},
+  				]
+  			},
+  			{
+        		label: 'Vehicle',
+        		name: 'vehicle',
+        		showHeader: true,
+        		fields: [
+				{
+					"type": "text",
+    				"label": "Make",
+    				"placeholder": "Make",
+    				"className": "form-control",
+    				"name": "vehicle.make",
+    				"width": "col-md-3"
+  				},
+  				{
+					"type": "text",
+    				"label": "Model",
+    				"placeholder": "Model",
+    				"className": "form-control",
+    				"name": "vehicle.model",
+    				"width": "col-md-3"
+  				},
+  				{
+					"type": "text",
+    				"label": "Color",
+    				"placeholder": "Color",
+    				"className": "form-control",
+    				"name": "vehicle.color",
+    				"width": "col-md-2"
+  				},
+  				{
+  					"type": "select",
+    				"label": "State",
+    				"placeholder": "State",
+    				"className": "form-select",
+    				"name": "vehicle.state",
+    				"width": "col-md-2",
+    				"multiple": false,
+    				"values": [
+      				{
+        				"label": "State",
+        				"value": "",
+        				"selected": true
+      				}
+    				]
+  				},
+  				{
+					"type": "text",
+    				"label": "License Plate",
+    				"placeholder": "License Plate",
+    				"className": "form-control",
+    				"name": "vehicle.license",
+    				"width": "col-md-2"
+  				},
+  				]
+  			},
+  			{
         		label: 'Address',
         		name: 'pat-address',
         		showHeader: true,
@@ -201,16 +312,18 @@
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "guests.g0.firstName",
-    				"width": "col-md-3"
+    				"name": "firstName",
+    				"width": "col-md-3",
+    				"group": "guest"
   				},
   				{
   					"type": "text",
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "guests.g0.lastName",
-    				"width": "col-md-3"
+    				"name": "lastName",
+    				"width": "col-md-3",
+    				"group": "guest"
   				},
   				{
     				"type": "text",
@@ -218,16 +331,18 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control",
-    				"name": "guests.g0.phone",
-    				"width": "col-md-3"
+    				"name": "phone",
+    				"width": "col-md-3",
+    				"group": "guest"
     			},
     			{
   					"type": "select",
     				"label": "Relationship to " + (options.labels.patient || 'Patient'),
     				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
     				"className": "form-select",
-    				"name": "guests.g0.relationship",
+    				"name": "relationship",
     				"width": "col-md-3",
+    				"group": "guest",
     				"dataSource":"patientRelation",
     				"multiple": false,
     				"values": [
@@ -239,89 +354,10 @@
     				]
   				},
   				{
-					"type": "text",
-    				"label": "First Name",
-    				"placeholder": "First Name",
-    				"className": "form-control",
-    				"name": "guests.g1.firstName",
-    				"width": "col-md-3"
-  				},
-  				{
-  					"type": "text",
-    				"label": "Last Name",
-    				"placeholder": "Last Name",
-    				"className": "form-control",
-    				"name": "guests.g1.lastName",
-    				"width": "col-md-3"
-  				},
-  				{
-    				"type": "text",
-    				"subtype": "tel",
-    				"label": "Phone",
-    				"placeholder": "Phone",
-    				"className": "form-control",
-    				"name": "guests.g1.phone",
-    				"width": "col-md-3"
-    			},
-    			{
-  					"type": "select",
-    				"label": "Relationship to " + (options.labels.patient || 'Patient'),
-    				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
-    				"className": "form-select",
-    				"name": "guests.g1.relationship",
-    				"width": "col-md-3",
-    				"dataSource": "patientRelation",
-    				"multiple": false,
-    				"values": [
-      				{
-        				"label": (options.labels.patient || 'Patient') + " Relationship",
-        				"value": "",
-        				"selected": true
-      				}
-    				]
-  				},
-  				{
-					"type": "text",
-    				"label": "First Name",
-    				"placeholder": "First Name",
-    				"className": "form-control",
-    				"name": "guests.g2.firstName",
-    				"width": "col-md-3"
-  				},
-  				{
-  					"type": "text",
-    				"label": "Last Name",
-    				"placeholder": "Last Name",
-    				"className": "form-control",
-    				"name": "guests.g2.lastName",
-    				"width": "col-md-3"
-  				},
-  				{
-    				"type": "text",
-    				"subtype": "tel",
-    				"label": "Phone",
-    				"placeholder": "Phone",
-    				"className": "form-control",
-    				"name": "guests.g2.phone",
-    				"width": "col-md-3"
-    			},
-    			{
-  					"type": "select",
-    				"label": "Relationship to " + (options.labels.patient || 'Patient'),
-    				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
-    				"className": "form-select",
-    				"name": "guests.g2.relationship",
-    				"width": "col-md-3",
-    				"dataSource": "patientRelation",
-    				"multiple": false,
-    				"values": [
-      				{
-        				"label": (options.labels.patient || 'Patient') + " Relationship",
-        				"value": "",
-        				"selected": true
-      				}
-    				]
-  				},
+  					"type": "button",
+  					"name": 'addGuest',
+  					"label": "Add " + (options.labels.guest || 'Guest')
+  				}
   				]
   			},
   			{
@@ -394,7 +430,6 @@
     			events: {
     				click: function() {
     					var formData = settings.formBuilder.actions.getData();
-    					console.log(JSON.stringify(formData));
     					
     					var f = $("<form target='formPreviewIframe' method='POST' style='display:none;'></form>").attr({
         					action: settings.previewURL
@@ -402,8 +437,7 @@
     					
     					f.append('<input type="hidden" name="cmd" value="preview">');
     					f.append('<input type="hidden" name="formData" value="' + encodeURI(JSON.stringify(formData)) + '">');
-    					f.append('<input type="hidden" name="style" value="' + settingsDialog.find("textarea").val() + '">');
-    					console.log(f);
+    					f.append('<input type="hidden" name="style" value="' + settingsDialog.find("textarea#formStyle").val() + '">');
     					f.submit();
     					f.remove();
 	    				
@@ -444,6 +478,9 @@
         					'col-md-1': '1 Column',
       					},
       					value: 'col-md-12'
+    				},
+    				group: {
+    					label: 'Group'
     				}
     			},
   				
@@ -473,8 +510,12 @@
     					options: {
     						'':'',
     						'gender': 'Gender',
-    						'patientRelation': 'Patient Relationsip'
+    						'patientRelation': 'Patient Relationsip',
+    						'vehicleStates': 'Vehicle States'
     					}
+    				},
+    				group: {
+    					label: 'Group'
     				}
   				},
   				date: {
@@ -496,6 +537,9 @@
         					'col-md-1': '1 Column',
       					},
       					value: 'col-md-12'
+    				},
+    				group: {
+    					label: 'Group'
     				}
   				},
   				paragraph: {
@@ -517,6 +561,9 @@
         					'col-md-1': '1 Column',
       					},
       					value: 'col-md-12'
+    				},
+    				"data-group": {
+    					label: 'Group'
     				}
   				},
   				textarea: {
@@ -538,6 +585,9 @@
         					'col-md-1': '1 Column',
       					},
       					value: 'col-md-12'
+    				},
+    				group: {
+    					label: 'Group'
     				}
   				}
 			},
