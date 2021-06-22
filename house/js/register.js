@@ -686,6 +686,7 @@ $(document).ready(function () {
 
             if (showCreatedDate) {
                 wlCols.push({data: 'Timestamp', title: 'Created On', render: function (data, type) {return dateRender(data, type, "MMM D, YYYY H:mm")}});
+				wlCols.push({data: 'Updated_By', title: 'Updated By'});
             }
 
             wlCols.push({data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}});

@@ -2249,6 +2249,7 @@ CREATE or Replace VIEW `vreservation_events` AS
         r.Confirmation,
         r.Expected_Pay_Type,
         r.`Timestamp`,
+        r.`Updated_By`,
         r.`Checkin_Notes`,
         ifnull(hs.idPsg, 0) as `idPsg`,
         ifnull(rg.idGuest, 0) as `Patient_Staying`
