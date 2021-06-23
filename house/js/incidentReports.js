@@ -84,8 +84,11 @@
                 rows: 2
             },
             alertMessage: function (text, type) {},
+        };
 
-            dtCols: [
+        var settings = $.extend(true, {}, defaults, options);
+
+		settings.dtCols = [
                 {
                     "targets": [0],
                     title: "Actions",
@@ -106,7 +109,7 @@
                 },
                 {
                     "targets": [2],
-                    title: 'Guest',
+                    title: settings.visitorLabel,
                     searchable: true,
                     sortable: true,
                     data: "Guest"
@@ -137,9 +140,6 @@
                     data: "Status",
                 }
             ]
-        };
-
-        var settings = $.extend(true, {}, defaults, options);
 
         var $wrapper = $(this);
         $wrapper.incidentdialog = incidentdialog;
@@ -406,7 +406,7 @@
                     }
                     var body = '<div id="incidentPrint">';
                     if (data.guest) {
-                        body += '<h3>'+settings.guestLabel+'</h3>' +
+                        body += '<h3>'+settings.visitorLabel+'</h3>' +
                                 '<table cellpadding="10" style="margin-bottom: 2em;">' +
                                 '<thead>' +
                                 '<tr>' +

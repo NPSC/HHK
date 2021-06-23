@@ -15,7 +15,7 @@ class StmtCalc {
 	protected $waiveAmt = 0;
 	protected $discount = 0;
 	protected $overPaidVisitIds = [];
-	private $vCounter = 0;
+
 	
 	/**
 	 * @return number
@@ -99,6 +99,12 @@ class StmtCalc {
 	 */
 	public function getOverpaidVisitIds() {
 		return $this->overPaidVisitIds;
+	}
+	
+	public function getIncome() {
+		return $this->getPaymentToNow() + $this->getPastPaymentsToNow() + $this->getUnpaidCharges() + abs($this->getDiscount())
+			+ abs($this->getWaiveAmt()) + $this->getSubsidyCharge();
+		
 	}
 	
 	public function addVisit(VisitIntervalCalculator $visitCalc, $idVisit) {

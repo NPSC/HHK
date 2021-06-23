@@ -626,8 +626,8 @@ try {
                         'status'=>'success',
                         'formTitle'=>$formTemplate->getTitle(),
                         'formTemplate'=>$formTemplate->getTemplate(),
-                        'formStyle'=>$formTemplate->getStyle(),
-                        'formURL'=>$uS->resourceURL . 'house/showReferral.php?form=' . $idDocument
+                        'formSettings'=>$formTemplate->getSettings(),
+                        'formURL'=>$uS->resourceURL . 'house/showReferral.php?template=' . $idDocument
                     );
                 }else{
                     $events = array("error"=>"Form not found");
@@ -673,12 +673,17 @@ try {
                 $successContent = filter_var($_REQUEST['successContent'], FILTER_SANITIZE_STRING);
             }
             
+            $enableRecaptcha = '';
+            if(isset($_REQUEST['enableRecaptcha'])) {
+                $enableRecaptcha = filter_var($_REQUEST['enableRecaptcha'], FILTER_VALIDATE_BOOLEAN);
+            }
+            
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             if($idDocument > 0) {
-                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $uS->username);
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $uS->username);
             }else{
-                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $uS->username);
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $uS->username);
             }
             
             break;

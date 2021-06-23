@@ -1,9 +1,7 @@
 <?php
 namespace HHK\GlStmt;
 
-use HHK\SysConst\{PaymentStatusCode};
-
-use HHK\SysConst\ResourceStatus;
+use HHK\SysConst\{PaymentStatusCode, InvoiceStatus, ResourceStatus, ItemId};
 use HHK\sec\Session;
 use HHK\HTMLControls\{HTMLTable};
 use HHK\House\Resource\ResourceTypes;
@@ -21,6 +19,7 @@ class GlStmt {
 	protected $payAmounts = [];
 	protected $itemPayments = [];
 	protected $orderIds = [];
+	protected $delegatedInvoiceLines;
 
 	protected $errors;
 
@@ -74,6 +73,7 @@ class GlStmt {
 		$this->lines = [];
 		$idInvoice = 0;
 		$serialId = '0';
+		$this->delegatedInvoiceLines = [];
 		
 		$query = "call gl_report('" . $this->startDate->format('Y-m-d') . "','" . $this->endDate->format('Y-m-d') . "')";
 		$stmt = $dbh->query($query);
@@ -89,7 +89,7 @@ class GlStmt {
 					//Invoice Change
 					
 					$idInvoice = $r['idInvoice'];
-					$this->orderIds[] = $r['Order_Number'];
+					$this->orderIds[$r['Order_Number']] = $r['Order_Number'];
 				}
 				
 				// Record new payment lines
@@ -106,6 +106,37 @@ class GlStmt {
 			// Multiple invoice lines for one payment...
 			if (isset($this->payAmounts[$r['idPayment']]) === FALSE) {
 				$this->payAmounts[$r['idPayment']] = $r['pAmount'];
+			}
+			
+			// Carried Invoices
+			if ($r['Delegated_Id'] > 0) {
+				
+				$line = array(
+						'il_Id'=>$r['il_Id'],
+						'il_Amount'=>$r['il_Amount'],
+						'il_Item_Id'=>$r['il_Item_Id'],
+						'il_Type_Id'=>$r['il_Type_Id'],
+						'Item_Gl_Code'=>$r['Item_Gl_Code'],
+				);
+				
+				// Save the line.  The carrying invoice will show up eventually.
+				$this->delegatedInvoiceLines[$r['Delegated_Id']][$r['il_Id']] = $line;
+				
+			} else if (isset($this->delegatedInvoiceLines[$r['idInvoice']])) {
+				
+				// process the carried invoice lines.
+				foreach ($this->delegatedInvoiceLines[$r['idInvoice']] as $line) {
+					
+					$rcopy = $r;
+					
+					foreach ($line as $key => $item) {
+						$rcopy[$key] = $item;
+					}
+					
+					$this->recordInvLine($rcopy);
+				}
+				
+				unset($this->delegatedInvoiceLines[$r['idInvoice']]);
 			}
 			
 			$this->recordInvLine($r);
@@ -125,7 +156,10 @@ class GlStmt {
 	
 	protected function recordPayment($r) {
 				
-			
+		if ($r['iStatus'] == InvoiceStatus::Carried) {
+			return;
+		}
+		
 		if ($r['pStatus'] == PaymentStatusCode::Reverse || $r['pStatus'] == PaymentStatusCode::VoidSale || $r['pStatus'] == PaymentStatusCode::Declined) {
 			return;
 		}
@@ -134,7 +168,7 @@ class GlStmt {
 		if ($r['pTimestamp'] != '') {
 			$paymentDate = new \DateTime($r['pTimestamp']);
 		} else {
-			$this->recordError("Missing Payment Date. Payment Id = ". $r['idPayment']);
+			$this->recordError("Missing Payment Date. Payment Id = ". $r['idPayment'] . ", Invoice Id = " . $r['idInvoice']);
 			return;
 		}
 		
@@ -218,7 +252,11 @@ class GlStmt {
 	}
 	
 	protected function recordInvLine($r) {
-				
+		
+		if ($r['il_Item_Id'] == ItemId::InvoiceDue || $r['idPayment'] == 0) {
+			return;
+		}
+			
 		// Payment dates
 		if ($r['pTimestamp'] != '') {
 			$paymentDate = new \DateTime($r['pTimestamp']);
@@ -309,6 +347,11 @@ class GlStmt {
 		
 		$stmtCalc = $finInterval->collectData($dbh, $priceModel, $this->getOrderNumbers());
 		
+		// Collect any errors.
+		foreach ($finInterval->getErrorArray() as $e) {
+			$this->recordError($e);
+		}
+		
 		$tbl = new HTMLTable();
 		
 		$tbl->addHeaderTr(HTMLTable::makeTh('Lodging Payment Distribution', array('colspan'=>'2')));
@@ -355,7 +398,7 @@ class GlStmt {
 						, 'title'=>'May include payments slated for future months. '))
 				);
 		$tbl->addBodyTr(
-				HTMLTable::makeTd('Prepayments for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
+				HTMLTable::makeTd('Prior payments to ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
 				. HTMLTable::makeTd(number_format($stmtCalc->getPastPaymentsToNow(), 2), array('style'=>'text-align:right;'))
 				);
 		$tbl->addBodyTr(
@@ -396,12 +439,9 @@ class GlStmt {
 				. HTMLTable::makeTd(number_format($stmtCalc->getSubsidyCharge(), 2), array('style'=>'text-align:right;'))
 				);
 		
-		$income = $stmtCalc->getPaymentToNow() + $stmtCalc->getPastPaymentsToNow() + $stmtCalc->getUnpaidCharges() + abs($stmtCalc->getDiscount())
-		+ abs($stmtCalc->getWaiveAmt()) + $stmtCalc->getSubsidyCharge();
-		
 		$tbl->addBodyTr(
 				HTMLTable::makeTd('Income for ' . $monthArray[$this->startDate->format('n')][1], array('class'=>'tdlabel'))
-				. HTMLTable::makeTd(number_format($income, 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchinc'))
+				. HTMLTable::makeTd(number_format($stmtCalc->getIncome(), 2), array('style'=>'text-align:right;','class'=>'hhk-tdTotals hhk-matchinc'))
 				);
 		
 		return $tbl->generateMarkup($tableAttrs)

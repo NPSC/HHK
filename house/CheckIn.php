@@ -35,7 +35,7 @@ $labels = Labels::getLabels();
 $wListMarkup = '';
 
 // Guest Search markup
-$gMk = AbstractRole::createSearchHeaderMkup('', $labels->getString('MemberType', 'guest', 'Guest').' Search: ', TRUE);
+$gMk = AbstractRole::createSearchHeaderMkup('', $labels->getString('MemberType', 'guest', 'Guest').' or ' . $labels->getString('MemberType', 'patient', 'Patient') . ' Search: ', TRUE);
 $mk1 = $gMk['hdr'];
 
 // Hide guest search?
@@ -118,6 +118,6 @@ if ($stayingMarkup == '') {
             
             <input type="hidden" id="dateFormat" value ="<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM D YYYY"); ?>" />
         </div>  <!-- div id="contentDiv"-->
-        <script type="text/javascript" src="js/checkin.js"></script>
+        <script type="text/javascript" src="<?php echo CHECKIN_JS; ?>"></script>
     </body>
 </html>

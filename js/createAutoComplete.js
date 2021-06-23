@@ -1,8 +1,8 @@
-function createZipAutoComplete(txtCtrl, wsUrl, lastXhr, selCallback) {
+function createZipAutoComplete(txtCtrl, wsUrl, lastXhr, selCallback, csrfToken) {
     "use strict";
     txtCtrl.autocomplete({
         source: function(request, response) {
-              lastXhr = $.getJSON(wsUrl, {zip: request.term, cmd: 'schzip'})
+              lastXhr = $.getJSON(wsUrl, {zip: request.term, cmd: 'schzip', csrfToken: csrfToken})
                 .done(function(data, status, xhr) {
                     if (xhr === lastXhr) {
                         if (data && data.error) {

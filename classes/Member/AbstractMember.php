@@ -633,7 +633,7 @@ abstract class AbstractMember {
                 // Member deceased
                 $n->Member_Status->setNewVal(MemStatus::Deceased);
 
-                if (isset($post[$idPrefix.'txtDeathDate']) && $post[$idPrefix.'txtDeathDate'] != '' && $n->Date_Deceased->getStoredVal() == '') {
+                if (isset($post[$idPrefix.'txtDeathDate']) && $post[$idPrefix.'txtDeathDate'] != '') {
                     $ddec = filter_var($post[$idPrefix.'txtDeathDate'], FILTER_SANITIZE_STRING);
                     $n->Date_Deceased->setNewVal($ddec);
                 }

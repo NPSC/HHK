@@ -478,3 +478,20 @@ li.hhk-myMenuTop {
 .ui-tabs-vertical .ui-tabs-nav li a { display:block; }
 .ui-tabs-vertical .ui-tabs-nav li.ui-tabs-active { padding-bottom: 0; padding-right: .1em; border-right-width: 1px; margin-bottom: 0.2em; }
 .ui-tabs-vertical .ui-tabs-panel { padding: 1em; width: 100%;}
+
+/* form builder css fixes */
+.form-wrap.form-builder .form-actions button{
+	border: 1px solid #c5dbec !important;
+}
+.form-wrap.form-builder .form-actions {
+	display: flex !important;
+	justify-content: flex-end !important;
+	margin-top: 10px !important;
+}
+.form-wrap.form-builder .form-actions>:first-childe {
+	margin-left: 0;
+}
+.form-wrap.form-builder .form-actions>* {
+	margin: 0 0 0 -1px !important;
+	padding: .4em 0.5em !important;
+}

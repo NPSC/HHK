@@ -30,12 +30,12 @@ class PricePerpetualSteps extends AbstractPriceModel {
 
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
-        // Short circuit for fixed rate x
+        // Short circuit for fixed rate f
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category) {
             return $nites * $pledgedRate;
         }
 
-        // Flat Rate?
+        // Flat Rate e?
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategories::FlatRateCategory) {
            return $nites * $rrateRs->Reduced_Rate_1->getStoredVal();
         }

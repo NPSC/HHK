@@ -68,8 +68,10 @@ class ReserveData {
     protected $patAsGuestFlag;
     protected $patBirthDateFlag;
     protected $guestBirthDateFlag;
+    protected $useRepeatingResv;
     protected $showBirthDate;
     protected $patLabel;
+    protected $primaryGuestLabel;
     protected $guestLabel;
     protected $visitorLabel;
     protected $wlNotesLabel;
@@ -150,10 +152,12 @@ class ReserveData {
         $this->patBirthDateFlag = $uS->InsistPatBD;
         $this->guestBirthDateFlag = $uS->InsistGuestBD;
         $this->showBirthDate = $uS->ShowBirthDate;
+        $this->useRepeatingResv = $uS->UseRepeatResv;
         $this->insistCkinDemog = FALSE;
         $this->fillEmergencyContact = isset($uS->EmergContactFill) ? $uS->EmergContactFill : 'false';
         $this->patLabel = $labels->getString('MemberType', 'patient', 'Patient');
         $this->guestLabel = $labels->getString('MemberType', 'guest', 'Guest');
+        $this->primaryGuestLabel = $labels->getString('MemberType', 'primaryGuest', 'Primary Guest');
         $this->visitorLabel = $labels->getString('MemberType', 'visitor', 'Guest');
         $this->psgTitle = $labels->getString('statement', 'psgLabel', 'Patient Support Group');
         $this->wlNotesLabel = $labels->getString('referral', 'waitlistNotesLabel', 'Waitlist Notes');
@@ -235,6 +239,8 @@ class ReserveData {
             'span'=> $this->getSpan(),
             'patLabel' => $this->getPatLabel(),
             'guestLabel' => $this->guestLabel,
+            'primaryGuestLabel' => $this->primaryGuestLabel,
+            'visitorLabel' => $this->visitorLabel,
             'resvTitle' => $this->getResvTitle(),
             'saveButtonLabel' => $this->saveButtonLabel,
         	'insistCkinDemog' => $this->insistCkinDemog,

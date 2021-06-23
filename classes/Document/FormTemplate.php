@@ -46,18 +46,7 @@ class FormTemplate {
         return $rows;
     }
     
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $username){
-        $this->doc = new Document();
-        $this->doc->setTitle($title);
-        $this->doc->setType(self::JsonType);
-        $this->doc->setCategory(self::TemplateCat);
-        $this->doc->setDoc($doc);
-        $this->doc->setStyle($style);
-        $this->doc->setStatus('a');
-        $this->doc->setCreatedBy($username);
-    }
-    
-    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $username){
         
         $validationErrors = array();
         
@@ -67,11 +56,56 @@ class FormTemplate {
             $validationErrors['css'] = $cssValidation;
         }
         
+        if(!$title){
+            $validationErrors['title'] = "The title field is required.";
+        }
+        if(!$successTitle){
+            $validationErrors['successTitle'] = "The success title field is required.";
+        }
+        
+        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha]);
+        
+        $this->doc = new Document();
+        $this->doc->setTitle($title);
+        $this->doc->setType(self::JsonType);
+        $this->doc->setCategory(self::TemplateCat);
+        $this->doc->setDoc($doc);
+        $this->doc->setStyle($style);
+        $this->doc->setAbstract($abstractJson);
+        $this->doc->setStatus('a');
+        $this->doc->setCreatedBy($username);
+        
+        $this->doc->saveNew($dbh);
         
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $successJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent]);
+            return array('status'=>'success', 'msg'=>"Form saved successfully", 'doc'=>array('idDocument'=>$this->doc->getIdDocument(), 'title'=>$this->doc->getTitle()));
+        }else{
+            return array('status'=>'error', 'msg'=>'Unable to create new form', 'errors'=>$validationErrors);
+        }
+    }
+    
+    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $username){
+        
+        $validationErrors = array();
+        
+        //validate CSS
+        $cssValidation = $this->validateCSS($style);
+        if($cssValidation['valid'] == "false"){
+            $validationErrors['css'] = $cssValidation;
+        }
+        
+        if(!$title){
+            $validationErrors['title'] = "The title field is required.";
+        }
+        if(!$successTitle){
+            $validationErrors['successTitle'] = "The success title field is required.";
+        }
+        
+        
+        if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha]);
             
-            $count = $this->doc->save($dbh, $title, $doc, $style, $successJson, $username);
+            $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, $username);
             if($count == 1){
                 return array('status'=>'success', 'msg'=>"Form updated successfully");
             }else{
@@ -124,6 +158,17 @@ class FormTemplate {
     
     public function getTitle() {
         return $this->doc->getTitle();
+    }
+    
+    public function getSettings(){
+        $abstract = json_decode($this->doc->getAbstract());
+        
+        return [
+            'formStyle'=>$this->getStyle(),
+            'successTitle'=>$abstract->successTitle,
+            'successContent'=>$abstract->successContent,
+            'enableRecaptcha'=>(isset($abstract->enableRecaptcha) ? $abstract->enableRecaptcha : false)
+        ];
     }
 
 }

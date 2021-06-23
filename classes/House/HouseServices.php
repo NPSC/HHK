@@ -204,11 +204,12 @@ class HouseServices {
                 'status' => 'a',
                 'merchant' => $curResc->getMerchant(),
             );
-            $dataArray['deposit'] = $visit->getKeyDeposit();
+            $dataArray['deposit'] = $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]);
             $dataArray['idReservation'] = $r['idReservation'];
             $dataArray['cbRs'] = $reserv->getConstraints($dbh);
             $dataArray['numGuests'] = $reserv->getNumberGuests();
             $dataArray['visitStart'] = $visit->getArrivalDate();
+            $dataArray['expDep'] = $expDepDT->format('c');
 
         // Pay fees
         } else if ($action == 'pf') {
@@ -432,7 +433,9 @@ class HouseServices {
                         }
 
                         //if deposit needs to be paid
-                        if($visit->getKeyDeposit() == 0 && $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]) > 0){
+                        $curRescId = $visit->getidResource();
+                        $curResc = AbstractResource::getResourceObj($dbh, $curRescId);
+                        if($curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]) < $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode])){
                             $returntoVisit = TRUE;
                         }
                         
@@ -474,7 +477,7 @@ class HouseServices {
                         $resv->setIdGuest($newPg);
                         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
 
-                        $reply .= 'Primary Guest Id updated.  ';
+                        $reply .= Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ' Id updated.  ';
                     }
                 }
 

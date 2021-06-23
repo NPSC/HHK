@@ -217,7 +217,7 @@ if ($idPsg > 0) {
 
         }
 
-        $psgmkup = HTMLContainer::generateMarkup('h3', 'Choose ' . $labels->getString('MemberType', 'patient', 'Patient') . ' Support Group') .$tbl->generateMarkup();
+        $psgmkup = HTMLContainer::generateMarkup('h3', 'Choose ' . $labels->getString('GuestEdit', 'psgTab', 'Patient Support Group')) .$tbl->generateMarkup();
         $guestTabIndex = 1;
 
     } else if (count($ngRss) == 1) {
@@ -768,9 +768,9 @@ $uS->guestId = $id;
             </div>
             <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px; float: left;">
                 <span>Name Search </span>
-                <input type="text" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                <input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" autocomplete="search" />
                 <span>Phone Search </span>
-                <input type="text" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
+                <input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" autocomplete="search" />
             </div>
             <div style="clear:both;"></div>
             <?php if ($alertMessage != '') { ?>
@@ -960,6 +960,6 @@ $uS->guestId = $id;
             var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
             var useDocUpload = '<?php echo $uS->UseDocumentUpload; ?>';
         </script>
-        <script type="text/javascript" src="js/guestload-min.js?t=6"></script>
+        <script type="text/javascript" src="<?php echo GUESTLOAD_JS; ?>"></script>
     </body>
 </html>

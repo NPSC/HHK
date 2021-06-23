@@ -135,9 +135,9 @@ try {
     		$idHs = intval(filter_input(INPUT_POST, 'idhs', FILTER_SANITIZE_NUMBER_INT), 10);
     	}
     	
-    	$hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, 0, $idHs));
+    	$hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, 0, $idHs), FALSE);
     	
-    	$events = array('success'=>$hArray['div']);
+    	$events = array('success'=>$hArray['div'], 'title'=>$hArray['title']);
     	
     	break;
     	

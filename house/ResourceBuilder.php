@@ -1168,7 +1168,9 @@ if (isset($_POST['docUpload'])) {
     	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
     }
     
-    if (! empty($_FILES['formfile']['tmp_name']) && mime_content_type($_FILES['formfile']['tmp_name']) == "text/html") {
+    $mimetype = mime_content_type($_FILES['formfile']['tmp_name']);
+    
+    if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
 
         $docId = - 1;
         if (isset($_POST['docId'])) {
@@ -2028,9 +2030,9 @@ $resultMessage = $alertMsg->createMarkup();
 	<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-	<script type="text/javascript" src="js/rescBuilder.js"></script>
 	<script type="text/javascript" src="../js/formBuilder/form-builder.min.js"></script>
 	<script type="text/javascript" src="js/formBuilder.js"></script>
+	<script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
 </head>
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
@@ -2245,7 +2247,19 @@ $resultMessage = $alertMsg->createMarkup();
 	<script type="text/javascript">
 	
 		$(document).ready(function(){
-			$('#formBuilder').hhkFormBuilder();
+			$('#formBuilder').hhkFormBuilder({
+				labels: {
+					hospital: "<?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>",
+					guest: "<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>",
+					patient: "<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>",
+					diagnosis: "<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>",
+					location: "<?php echo $labels->getString('hospital', 'location', 'Unit'); ?>",
+					referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
+					treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
+					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>"
+					
+				}
+			});
 		});
 
 	</script>

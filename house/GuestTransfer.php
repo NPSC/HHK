@@ -439,7 +439,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
         
-        <script type="text/javascript" src="js/GuestTransfer.js"></script>
+        <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
         
     </body>
 </html>

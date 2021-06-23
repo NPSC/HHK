@@ -53,7 +53,7 @@ function initPDO($override = FALSE)
     	$dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
     	$options = [
     			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    			PDO::ATTR_EMULATE_PREPARES   => false,
+    			PDO::ATTR_EMULATE_PREPARES   => TRUE,
     	];
 
     	$dbh = new PDO($dsn, $dbuName, $dbPw, $options);

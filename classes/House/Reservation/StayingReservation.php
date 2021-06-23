@@ -14,6 +14,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\ReservationRS;
 use HHK\Tables\Visit\VisitRS;
 use HHK\sec\{SecurityComponent, Session};
+use HHK\sec\Labels;
 
 /**
  * Description of StayingReservation
@@ -81,7 +82,7 @@ class StayingReservation extends CheckingIn {
         
         $uS = Session::getInstance();
         
-        $resvSectionHeaderPrompt = 'Add Guests:';
+        $resvSectionHeaderPrompt = 'Add ' . Labels::getString('MemberType', 'visitor', 'Guest') . 's:';
         
         $nowDT = new \DateTime();
         $nowDT->setTime(intval($uS->CheckInTime), 0, 0);

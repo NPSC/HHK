@@ -1,20 +1,13 @@
 <?php
 
-use HHK\sec\{Session, WebInit};
+use HHK\sec\{Session, WebInit, Labels};
 use HHK\House\Resource\ResourceTypes;
-use HHK\SysConst\ResourceStatus;
+use HHK\SysConst\{ResourceStatus, RoomRateCategories, GLTableNames, ItemPriceCode, InvoiceStatus, ItemType, ItemId, VolMemberType};
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\SysConst\RoomRateCategories;
-use HHK\SysConst\GLTableNames;
 use HHK\ColumnSelectors;
-use HHK\SysConst\ItemPriceCode;
 use HHK\Purchase\RoomRate;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
-use HHK\SysConst\InvoiceStatus;
-use HHK\SysConst\ItemType;
-use HHK\SysConst\ItemId;
-use HHK\SysConst\VolMemberType;
 use HHK\Purchase\ValueAddedTax;
 use HHK\Config_Lite\Config_Lite;
 use HHK\Payment\PaymentSvcs;
@@ -22,7 +15,6 @@ use HHK\Exception\RuntimeException;
 use HHK\House\Report\ReportFilter;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\ExcelHelper;
-use HHK\sec\Labels;
 use HHK\House\Report\ReportFieldSet;
 
 
@@ -50,7 +42,7 @@ $uS = Session::getInstance();
 creditIncludes($uS->PaymentGateway);
 
 
-function statsPanel(\PDO $dbh, $visitNites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup, $siteName) {
+function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup, $siteName) {
 
     // Stats panel
     if (count($visitNites) < 1) {
@@ -157,7 +149,7 @@ order by r.idResource;";
     $numUsefulNights = $numRoomNights - $totalOOSNites;
     $avStay = $totalVisitNites / count($visitNites);
 
-    // Median
+    // Median visit nights
     array_multisort($visitNites);
     $entries = count($visitNites);
     $emod = $entries % 2;
@@ -743,6 +735,7 @@ where
     $visit = array();
     $savedr = array();
     $nites = array();
+    $rates = [];
 
     //$reportStartDT = new DateTime($start . ' 00:00:00');
     $reportEndDT = new \DateTime($end . ' 00:00:00');
@@ -971,6 +964,7 @@ where
         $days = $r['Actual_Month_Nights'];
         $gdays = $r['Actual_Guest_Nights'];
 
+        //$rates[] = $r['idRoom_Rate'];
         $visit['nit'] += $days;
         $totalCatNites[$r[$rescGroup[0]]] += $days;
         $visit['gnit'] += $gdays;
@@ -1255,7 +1249,7 @@ where
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact'));
 
         // Stats panel
-        $statsTable = statsPanel($dbh, $nites, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup[0], $uS->siteName);
+        $statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup[0], $uS->siteName);
 
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
@@ -1315,7 +1309,7 @@ $filter->createResoourceGroups($rescGroups, $uS->CalResourceGroupBy);
 // Report column-selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style, td parms
 $cFields[] = array('Visit Id', 'idVisit', 'checked', 'f', 'n', '', array('style'=>'text-align:center;'));
-$cFields[] = array("Primary ".$labels->getString('MemberType', 'guest', 'Guest'), 'idPrimaryGuest', 'checked', '', 's', '', array());
+$cFields[] = array($labels->getString('MemberType', 'primaryGuest', 'Primary Guest'), 'idPrimaryGuest', 'checked', '', 's', '', array());
 $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient'), 'idPatient', 'checked', '', 's', '', array());
 
 // Patient address.
@@ -1417,7 +1411,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
         $cFields[] = array('Tax Charged', 'taxcgd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
 
-    $cFields[] = array($labels->getString('MemberType', 'guest', 'Guest')." Paid", 'gpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
+    $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Paid", 'gpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     $cFields[] = array("3rd Party Paid", 'thdpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     $cFields[] = array("House Paid", 'hpaid', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     $cFields[] = array("Lodging Paid", 'totpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));

@@ -11,6 +11,7 @@ use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\Labels;
 
 /**
  * CreditToken.php
@@ -351,7 +352,7 @@ order by n.Name_Last, n.Name_First, t.Merchant");
     	}
     	
     	$tbl->addHeaderTr(
-    			HTMLTable::makeTh('Guest')
+    			HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'))
     			.HTMLTable::makeTh('Card Holder')
     			.HTMLTable::makeTh('Type')
     			.HTMLTable::makeTh('Account')
