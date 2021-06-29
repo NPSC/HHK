@@ -7,16 +7,7 @@ use HHK\Member\ProgressiveSearch\SearchNameData\SearchResults;
 
 class ProgressiveSearch {
 	
-	
-	protected $whereClause;
-	
-	
-	public function __construct() {
-	    
-	    $this->whereClause = '';
-	}
-	
-	
+		
 	public function doSearch(\PDO $dbh, SearchFor $searchFor) {
 	    
 	    $stmt = $dbh->query($this->getQuery($searchFor));
@@ -87,6 +78,8 @@ FROM
         AND n.Preferred_Email = na.Purpose
         LEFT JOIN
     name_demog nd ON n.idName = nd.idName
+        LEFT JOIN
+    name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'
         LEFT JOIN
     gen_lookups g ON g.Table_Name = 'Name_Suffix'
         AND g.Code = n.Name_Suffix

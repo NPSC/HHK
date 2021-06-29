@@ -8,6 +8,7 @@ use HHK\Member\Address\CleanAddress;
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
 use HHK\Member\ProgressiveSearch\SearchNameData\{SearchFor, SearchResults};
 use HHK\SysConst\ReferralFormStatus;
+use HHK\SysConst\VolMemberType;
 
 class ReferralForm {
 	
@@ -45,19 +46,18 @@ class ReferralForm {
 	public function searchPatient(\PDO $dbh) {
 	    
 	    // Patient
-	    if ( ! isset($this->formUserData['patientFirstName']) || ! isset($this->formUserData['patientLastName'])) {
-	        
+	    if ( ! isset($this->formUserData['patient.firstName']) || ! isset($this->formUserData['patient.lastName'])) {
 	        throw new \Exception('Patient first and/or last name not set.');
 	    }
 	    
 	    $this->patSearchFor = new SearchFor();
 	    
-	    $this->patSearchFor->setNameFirst($this->formUserData['patientFirstName'])
-	       ->setNameLast($this->formUserData['patientLastName']);
+	    $this->patSearchFor->setNameFirst($this->formUserData['patient.firstName'])
+	       ->setNameLast($this->formUserData['patient.lastName']);
 	    
 	    // patientBirthdate
-	    if (isset($this->formUserData['patientBirthdate']) && $this->formUserData['patientBirthdate'] != '') {
-	        $this->patSearchFor->setBirthDate($this->formUserData['patientBirthdate']);
+	    if (isset($this->formUserData['patientBirthdate']) && $this->formUserData['patient.birthdate'] != '') {
+	        $this->patSearchFor->setBirthDate($this->formUserData['patient.birthdate']);
 	    }
 	    
 	    // Phone
@@ -95,24 +95,28 @@ class ReferralForm {
 	    
 	    return $this->patResults;
 	}
-	
+
 	public function searchGuests(\PDO $dbh) {
 	    
 	    $this->gstResults = [];
+	    
+	    if (isset($this->formUserData['guests']) === FALSE || is_array($this->formUserData['guests']) === FALSE) {
+	        throw new \Exception('Guests are missing from form data.  ');
+	    }
 
-	    //for ($indx = 0; $indx < 3; $indx++) {
+	    for ($indx = 0; $indx < 3; $indx++) {
 	        
-	        if (isset($this->formUserData['guests[0][firstName]']) && isset($this->formUserData['guests[0][lastName]'])) {
+	        if (isset($this->formUserData['guests['.$indx.'][firstName]']) && isset($this->formUserData['guests['.$indx.'][lastName]'])) {
 	            
 	            $searchFor = new SearchFor();
 	            
 	            // First, last name
-	            $searchFor->setNameFirst($this->formUserData['guests[0][firstName]'])
-	            ->setNameLast($this->formUserData['guests[0][lastName]']);
+	            $searchFor->setNameFirst($this->formUserData['guests['.$indx.'][firstName]'])
+	            ->setNameLast($this->formUserData['guests['.$indx.'][lastName]']);
 	                
 	            // Phone
-	            if (isset($this->formUserData['guests[0][phone]']) && $this->formUserData['guests[0][phone]'] != '') {
-	                $searchFor->setPhone($this->formUserData['guests[0][phone]']);
+	            if (isset($this->formUserData['guests['.$indx.'][phone]']) && $this->formUserData['guests['.$indx.'][phone]'] != '') {
+	                $searchFor->setPhone($this->formUserData['guests['.$indx.'][phone]']);
 	            }
 	            
 	            $this->gstSearchFor[] = $searchFor;
@@ -121,16 +125,54 @@ class ReferralForm {
 	            $this->gstResults[] = $progSearch->doSearch($dbh, $searchFor);
 	        }
 	            
-	    //}
+	    }
 	    
 	    return $this->gstResults;
 	    
 	}
-		
+	
+	public function searchDoctor(\PDO $dbh) {
+	    
+	    if (isset($this->formUserData['doctor']) === FALSE) {
+	        
+	    }
+	    
+	    $searchFor = new SearchFor();
+	    
+	    // last name
+	    $searchFor->setNameLast($this->formUserData['doctor']);
+	    $searchFor->setMemberType(VolMemberType::Doctor);
+	    $progSearch = new ProgressiveSearch();
+	    
+	    $results[] = $progSearch->doSearch($dbh, $searchFor);
+	}
+	
+	public function searchAgent(\PDO $dbh) {
+	    
+	    if (isset($this->formUserData['agent']) === FALSE) {
+	        
+	    }
+	    
+	    $searchFor = new SearchFor();
+	    $searchFor->setNameLast($this->formUserData['agent']);
+	    $searchFor->setMemberType(VolMemberType::ReferralAgent);
+	    $progSearch = new ProgressiveSearch();
+	    
+	    $results[] = $progSearch->doSearch($dbh, $searchFor);
+	    
+	}
+	
+	
+	public function searchHosptial(\PDO $dbh) {
+	    
+	}
+	
+	
 	public function createPatientMarkup() {
 	    
 	    $tbl = new HTMLTable();
 	    
+	    //Header titles
 	    $tbl->addHeaderTr(
 	        HTMLTable::makeTh('Id')
 	        . HTMLTable::makeTh('First Name')

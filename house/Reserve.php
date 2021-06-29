@@ -139,6 +139,7 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 } else if ($idDoc > 0) {
 	
+    // Guest posted a referral form from client website.
     try {
     	$refForm = new ReferralForm($dbh, $idDoc);
     	
@@ -149,7 +150,7 @@ if ($idReserv > 0 || $idGuest >= 0) {
      	$mk1 .= $refForm->guestsMarkup();
 	
     } catch (\Exception $ex) {
-        $mk1 = 'Referral form Error: ' . $ex->getMessage();
+        $mk1 .= '<p>Referral form Error: ' . $ex->getMessage() . '</p>';
     }
 	
 } else {
@@ -242,6 +243,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($docId > 0) {echo GUEST_REFERRAL_JS;} ?>
         
 
     </head>

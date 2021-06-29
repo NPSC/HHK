@@ -2,10 +2,12 @@
 namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
 use HHK\Member\Address\CleanAddress;
+use HHK\SysConst\MemType;
+use HHK\SysConst\VolMemberType;
 
 class SearchFor extends SearchNameData
 {
-    
+    protected $memberType = '';
     protected $whereClause;
     
     /**
@@ -83,6 +85,18 @@ class SearchFor extends SearchNameData
         return $this->whereClause;
     }
     
+    public function setMemberType($memberType) {
+        
+        if (is_string($memberType)) {
+            $this->memberType = $memberType;
+            
+            $this->whereClause .= " and nv.Vol_Code = '$memberType' ";
+        }
+        return $this;
+    }
     
+    public function getMemberType() {
+        return $this->memberType;
+    }
 }
 

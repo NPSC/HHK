@@ -31,7 +31,7 @@ define('RESCBUILDER_JS', 'js/rescBuilder.js' . JSV);
 define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/GuestTransfer.js' . JSV);
 define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
-
+define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js"></script>');
 define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
 define('BOOTSTRAP_CSS', "<link href='css/bootstrap.min.css' rel='stylesheet' type='text/css' />");
 /**
