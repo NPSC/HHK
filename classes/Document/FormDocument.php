@@ -131,9 +131,14 @@ group by g.Code order by g.Order';
                     }
                     
                     $today = new \DateTime();
-                    if($date->format('Y-m-d') < $today->format('Y-m-d')){ //if date is in the past
+                    if(isset($field->validation) && $field->validation == 'lessThanToday' && $date->format('Y-m-d') > $today->format('Y-m-d')){
+                        $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be in the past.'];
+                    }else if(isset($field->validation) && $field->validation == 'greaterThanToday' && $date->format('Y-m-d') < $today->format('Y-m-d')){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be in the future.'];
                     }
+                    
+                    //save dates in correct format
+                    $field->userData[0] = $date->format('Y-m-d');
                     
                 }elseif($field->type == "text" && $field->subtype == "email" && $field->userData[0] != ''){ //if email field and not empty
                     if(!filter_var($field->userData[0], FILTER_VALIDATE_EMAIL)){

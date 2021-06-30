@@ -60,6 +60,8 @@ $genders = readGenLookupsPDO($dbh, 'gender', 'Order');
 unset($genders['z']);
 $patientRels = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Order');
 unset($patientRels['slf']);
+$mediaSources = readGenLookupsPDO($dbh, 'Media_Source','Order');
+$namePrefixes = readGenLookupsPDO($dbh, 'Name_Prefix', 'Order');
 $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
     'KY', 'LA', 'LB', 'MA', 'MB', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NB', 'NC', 'ND', 'NE', 'NF', 'NH', 'NJ', 'NM', 'NS', 'NT', 'NV', 'NY', 'OH',
     'OK', 'ON', 'OR', 'PA', 'PE', 'PR', 'PQ', 'RI', 'SC', 'SD', 'SK', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY');
@@ -134,6 +136,7 @@ if(isset($_GET['template'])){
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
@@ -147,19 +150,73 @@ if(isset($_GET['template'])){
             $(document).ready(function() {
             
             	const formData = `<?php echo $formData; ?>`;
+            	var genders = <?php echo json_encode($genders); ?>;
+            	var patientRels = <?php echo json_encode($patientRels); ?>;
+            	var vehicleStates = <?php echo json_encode($stateList); ?>;
+            	var mediaSources = <?php echo json_encode($mediaSources); ?>;
+            	var namePrefixes = <?php echo json_encode($namePrefixes); ?>;
+            
             
                 const formRender = $('#formContent').formRender({
                 	formData,
                 	layoutTemplates: {
               			default: function(field, label, help, data) {
-              				help = $('<div/>').addClass('validationText').attr("data-field", data.id);
-                			return $('<div/>').addClass(data.width + " form-group").append(label, field, help);
+              				console.log(help);
+              				if(data.description){
+              					help = $('<small/>').addClass('helpText text-muted ms-2').text(data.description);
+              				}
+              				var validation = $('<div/>').addClass('validationText').attr("data-field", data.id);
+              				console.log(data);
+              				
+              				if(data.type == 'radio-group'){
+              					$(field).children().addClass('form-check');
+              					$(field).find('input[type=radio').addClass('form-check-input');
+              					$(field).find('label').addClass('form-check-label');
+              					return $('<div/>').addClass(data.width + ' mb-3 field-container')
+              					.append($('<div/>').addClass('card')
+              						.append($('<div/>').addClass('card-body')
+              							.append(label, field, help, validation)
+              						)
+              					);
+              				}else if(data.type == 'date'){
+              					$(field).attr('type','text').datepicker();
+              				}else if(data.type == 'select' && data.dataSource !== null){
+              					var options = {};
+              					switch(data.dataSource){
+              						case 'namePrefix':
+              							options = namePrefixes;
+              							break;
+              						case 'gender':
+              							options = genders;
+              							break;
+              						case 'patientRelation':
+              							options = patientRels;
+              							break;
+              						case 'mediaSource':
+              							options = mediaSources;
+              							break;
+              						default:
+              							options = {};
+              					}
+              					$(field).html('<option disabled selected>' + data.placeholder + '</option>');
+              					for(i in options){
+              						if(typeof data.userData != 'undefined' && options[i].Code == data.userData[0]){
+            							$(field).append('<option value="' + options[i].Code + '" selected>' + options[i].Description + '</option>');
+            						}else{
+            							$(field).append('<option value="' + options[i].Code + '">' + options[i].Description + '</option>');
+            						}
+            					}
+              				}
+							
+							return $('<div/>').addClass(data.width + ' mb-3 field-container').append($('<div/>').addClass('form-floating').append(field, label, help, validation));
               			}
             		},
                 	"i18n":{
             			"location":"../js/formBuilder"
             		}
             	});
+            	
+            	$('.formBuilder-injected-style').remove();
             	
             	var csrfToken = '<?php echo $login->generateCSRF(); ?>';
             	var siteKey = '<?php echo $recaptcha->getSiteKey(); ?>';
@@ -168,34 +225,11 @@ if(isset($_GET['template'])){
             	var $renderedForm = $(document).find('.rendered-form');
             	$renderedForm.addClass('row');
             	
-            	//fill data sources (gender, relationship, etc)
-            	var genders = <?php echo json_encode($genders); ?>;
-            	var patientRels = <?php echo json_encode($patientRels); ?>;
-            	var vehicleStates = <?php echo json_encode($stateList); ?>;
-            	var genderLabel = $(document).find('.rendered-form label[for=patientSex]').text();
-            	var relationshipLabel = $(document).find('.rendered-form label[for="guests[0][relationship]"').text();
-            	$(document).find('.rendered-form select[data-source=gender]').html('<option disabled selected>' + genderLabel + '</option>');
-            	$(document).find('.rendered-form select[data-source=patientRelation]').html('<option disabled selected>' + relationshipLabel + '</option>');
-            	$(document).find('.rendered-form select[data-source=vehicleStates]').html('<option disabled selected>State</option>');
-            	for(i in genders){
-            		$(document).find('.rendered-form select[data-source=gender]').append('<option value="' + genders[i].Code + '">' + genders[i].Description + '</option>');
-            	}
-            	
-            	for(i in patientRels){
-            		$(document).find('.rendered-form select[data-source=patientRelation]').append('<option value="' + patientRels[i].Code + '">' + patientRels[i].Description + '</option>');
-            	}
-            	
-            	for(i in vehicleStates){
-            		$(document).find('.rendered-form select[data-source=vehicleStates]').append('<option value="' + vehicleStates[i] + '">' + vehicleStates[i] + '</option>');
-            	}
-            	
             	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', '').data('hhkindex','');
             	
             	// set country and state selectors
                 $renderedForm.find('select.bfh-countries').each(function() {
                     var $countries = $(this);
-                    console.log($countries);
-                    console.log($countries.data());
                     $countries.bfhcountries($countries.data());
                 });
                 $renderedForm.find('select.bfh-states').each(function() {
@@ -210,16 +244,23 @@ if(isset($_GET['template'])){
                 });
                 
                 //add guest button
-                var elements = $renderedForm.find('input[group=guest], select[group=guest]')
-                index = 0;
-                $renderedForm.on('click', '#addGuest', function(){
-	    			elements.each(function(){
-	    				var formgroup = $(this).parent('.form-group').clone();
-	    				formgroup.insertBefore('.field-addGuest');
-	    			});
-            	});
+                //var elements = $renderedForm.find('input[group=guest], select[group=guest]').parents('.field-container').remove();
+                //console.log(elements);
+                //index = 0;
+                //$renderedForm.on('click', '#addGuest', function(){
+	    		//	elements.each(function(){
+	    		//		formgroup = $(this).clone();
+	    		//		var fieldname = formgroup.find('input, select').prop('name')
+	    		//		formgroup.find('input, select').prop('name', 'guests.g' + index + '.' + fieldname);
+	    		//		formgroup.insertBefore('.field-addGuest');
+	    		//	});
+	    		//	index++;
+            	//});
             	
             	function submitForm(token = ''){
+            		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");
+            		$renderedForm.find('.submit-btn').prop('disabled','disabled').html(spinner).append(' Submitting...');
+            	
             		var formRenderData = formRender.userData;
             		
             		$.ajax({
@@ -236,6 +277,7 @@ if(isset($_GET['template'])){
             	    	{
             	    	    $('input, select').removeClass('is-invalid');
             	    	    $('.validationText').empty().removeClass('invalid-feedback');
+            	    	    $('.submit-btn').text('Submit').removeAttr('disabled');
             	    	    
             	    	    if(data.errors){
             	    	    	$.each(data.errors, function(key, error){

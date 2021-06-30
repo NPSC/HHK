@@ -19,10 +19,16 @@
             labels: {},
             fields: [
     		{
-      			label: "Source",
-      			type: "text",
-      			subtype: "text"
-    		},
+    			"type": "select",
+    			"label": "Referral Source",
+    			"placeholder": "Referral Source",
+    			"className": "form-select",
+    			"name": "Media_Source",
+    			"width": "col-md-2",
+    			"dataSource":"mediaSource",
+    			"multiple": false,
+    			"values": []
+  			},
     		{
     			label: "Submit",
     			type: "button",
@@ -45,13 +51,24 @@
         		showHeader: true, // optional - Use the label as the header for this set of inputs
         		fields: [
 				{
+    				"type": "select",
+    				"label": "Prefix",
+    				"placeholder": "Prefix",
+    				"className": "form-select",
+    				"name": "patient.prefix",
+    				"width": "col-md-3",
+    				"dataSource":"namePrefix",
+    				"multiple": false,
+    				"values": []
+  				},
+  				{
 					"type": "text",
 					"required": true,
     				"label": (options.labels.patient || 'Patient') + " First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
     				"name": "patient.firstName",
-    				"width": "col-md-4"
+    				"width": "col-md-3"
   				},
   				{
   					"type": "text",
@@ -60,6 +77,24 @@
     				"placeholder": "Last Name",
     				"className": "form-control",
     				"name": "patient.lastName",
+    				"width": "col-md-3"
+  				},
+  				{
+  					"type": "text",
+  					"required": false,
+    				"label": (options.labels.patient || 'Patient') + " Middle Name",
+    				"placeholder": "Middle Name",
+    				"className": "form-control",
+    				"name": "patient.middleName",
+    				"width": "col-md-3"
+  				},
+  				{
+  					"type": "text",
+  					"required": false,
+    				"label": "Nickname",
+    				"placeholder": "Nickname",
+    				"className": "form-control",
+    				"name": "patient.nickname",
     				"width": "col-md-4"
   				},
   				{
@@ -68,7 +103,8 @@
     				"placeholder": "Patient Birthdate",
     				"className": "form-control",
     				"name": "patient.birthdate",
-    				"width": "col-md-2"
+    				"width": "col-md-4",
+    				"validation": "lessThanToday"
   				},
   				{
     				"type": "select",
@@ -76,7 +112,7 @@
     				"placeholder": (options.labels.patient || 'Patient') + " Sex",
     				"className": "form-select",
     				"name": "patient.sex",
-    				"width": "col-md-2",
+    				"width": "col-md-4",
     				"dataSource":"gender",
     				"multiple": false,
     				"values": []
@@ -87,7 +123,7 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control",
-    				"name": "phone",
+    				"name": "patient.phone",
     				"width": "col-md-6"
     			},
     			{
@@ -96,7 +132,7 @@
     				"label": "Email",
     				"placeholder": "Email",
     				"className": "form-control",
-    				"name": "email",
+    				"name": "patient.email",
     				"width": "col-md-6"
     			}
   				]
@@ -164,6 +200,14 @@
         		fields: [
 				{
 					"type": "text",
+    				"label": "Driver's License Number",
+    				"placeholder": "Driver's License Number",
+    				"className": "form-control",
+    				"name": "vehicle.license",
+    				"width": "col-md-3"
+  				},
+				{
+					"type": "text",
     				"label": "Make",
     				"placeholder": "Make",
     				"className": "form-control",
@@ -213,7 +257,7 @@
   				]
   			},
   			{
-        		label: 'Address',
+        		label: 'Patient Address',
         		name: 'pat-address',
         		showHeader: true,
         		fields: [
@@ -222,15 +266,31 @@
     				"label": "Street",
     				"placeholder": "Street",
     				"className": "form-control",
-    				"name": "adrstreet",
+    				"name": "patient.address.street",
     				"width": "col-md-12"
   				},
+  				{
+    				"type": "text",
+    				"label": "Zip Code",
+    				"placeholder": "Zip Code",
+    				"className": "form-control ckzip hhk-zipsearch ui-autocomplete-input",
+    				"name": "patient.address.zip",
+    				"width": "col-md-2"
+    			},
   				{
   					"type": "text",
     				"label": "City",
     				"placeholder": "City",
     				"className": "form-control",
-    				"name": "adrcity",
+    				"name": "patient.address.city",
+    				"width": "col-md-5"
+  				},
+  				{
+  					"type": "text",
+    				"label": "County",
+    				"placeholder": "County",
+    				"className": "form-control",
+    				"name": "patient.address.county",
     				"width": "col-md-5"
   				},
   				{
@@ -238,44 +298,18 @@
     				"label": "State",
     				"placeholder": "State",
     				"className": "form-select bfh-states",
-    				"name": "adrstate",
+    				"name": "patient.address.state",
     				"width": "col-md-2",
     				"values":[]
   				},
-  				{
-    				"type": "text",
-    				"label": "Zip Code",
-    				"placeholder": "Zip Code",
-    				"className": "form-control ckzip hhk-zipsearch ui-autocomplete-input",
-    				"name": "adrzip",
-    				"width": "col-md-2"
-    			},
     			{
     				"type": "select",
     				"label": "Country",
     				"placeholder": "Country",
     				"className": "form-select bfh-countries",
-    				"name": "adrcountry",
+    				"name": "patient.address.country",
     				"width": "col-md-3",
     				"values":[]
-    			},
-    			{
-    				"type": "text",
-    				"subtype": "tel",
-    				"label": "Phone",
-    				"placeholder": "Phone",
-    				"className": "form-control",
-    				"name": "phone",
-    				"width": "col-md-6"
-    			},
-    			{
-    				"type": "text",
-    				"subtype": "email",
-    				"label": "Email",
-    				"placeholder": "Email",
-    				"className": "form-control",
-    				"name": "email",
-    				"width": "col-md-6"
     			}
     			]
   			},
@@ -312,7 +346,7 @@
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "firstName",
+    				"name": "guests.g0.firstName",
     				"width": "col-md-3",
     				"group": "guest"
   				},
@@ -321,7 +355,7 @@
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "lastName",
+    				"name": "guests.g0.lastName",
     				"width": "col-md-3",
     				"group": "guest"
   				},
@@ -331,7 +365,7 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control",
-    				"name": "phone",
+    				"name": "guests.g0.phone",
     				"width": "col-md-3",
     				"group": "guest"
     			},
@@ -340,7 +374,7 @@
     				"label": "Relationship to " + (options.labels.patient || 'Patient'),
     				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
     				"className": "form-select",
-    				"name": "relationship",
+    				"name": "guests.g0.relationship",
     				"width": "col-md-3",
     				"group": "guest",
     				"dataSource":"patientRelation",
@@ -354,10 +388,102 @@
     				]
   				},
   				{
-  					"type": "button",
-  					"name": 'addGuest',
-  					"label": "Add " + (options.labels.guest || 'Guest')
-  				}
+					"type": "text",
+    				"label": "First Name",
+    				"placeholder": "First Name",
+    				"className": "form-control",
+    				"name": "guests.g1.firstName",
+    				"width": "col-md-3",
+    				"group": "guest"
+  				},
+  				{
+  					"type": "text",
+    				"label": "Last Name",
+    				"placeholder": "Last Name",
+    				"className": "form-control",
+    				"name": "guests.g1.lastName",
+    				"width": "col-md-3",
+    				"group": "guest"
+  				},
+  				{
+    				"type": "text",
+    				"subtype": "tel",
+    				"label": "Phone",
+    				"placeholder": "Phone",
+    				"className": "form-control",
+    				"name": "guests.g1.phone",
+    				"width": "col-md-3",
+    				"group": "guest"
+    			},
+    			{
+  					"type": "select",
+    				"label": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"className": "form-select",
+    				"name": "guests.g1.relationship",
+    				"width": "col-md-3",
+    				"group": "guest",
+    				"dataSource":"patientRelation",
+    				"multiple": false,
+    				"values": [
+      				{
+        				"label": (options.labels.patient || 'Patient') + " Relationship",
+        				"value": "",
+        				"selected": true
+      				}
+    				]
+  				},
+  				{
+					"type": "text",
+    				"label": "First Name",
+    				"placeholder": "First Name",
+    				"className": "form-control",
+    				"name": "guests.g2.firstName",
+    				"width": "col-md-3",
+    				"group": "guest"
+  				},
+  				{
+  					"type": "text",
+    				"label": "Last Name",
+    				"placeholder": "Last Name",
+    				"className": "form-control",
+    				"name": "guests.g2.lastName",
+    				"width": "col-md-3",
+    				"group": "guest"
+  				},
+  				{
+    				"type": "text",
+    				"subtype": "tel",
+    				"label": "Phone",
+    				"placeholder": "Phone",
+    				"className": "form-control",
+    				"name": "guests.g2.phone",
+    				"width": "col-md-3",
+    				"group": "guest"
+    			},
+    			{
+  					"type": "select",
+    				"label": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"className": "form-select",
+    				"name": "guests.g2.relationship",
+    				"width": "col-md-3",
+    				"group": "guest",
+    				"dataSource":"patientRelation",
+    				"multiple": false,
+    				"values": [
+      				{
+        				"label": (options.labels.patient || 'Patient') + " Relationship",
+        				"value": "",
+        				"selected": true
+      				}
+    				]
+  				},
+  				//{
+  				//	"type": "button",
+  				//	"name": 'addGuest',
+  				//	"label": "Add " + (options.labels.guest || 'Guest')
+  				//}
   				]
   			},
   			{
@@ -397,14 +523,46 @@
     				"className": "form-control",
     				"name": "hospital.treatmentEnd",
     				"width": "col-md-3",
-  				}
+  				},
+  				{
+					"type": "text",
+    				"label": "Referral Agent Name",
+    				"placeholder": "Referral Agent First Name",
+    				"className": "form-control",
+    				"name": "hospital.referralAgent.firstName",
+    				"width": "col-md-4",
+  				},
+  				{
+					"type": "text",
+    				"label": "Referral Agent Name",
+    				"placeholder": "Referral Agent Last Name",
+    				"className": "form-control",
+    				"name": "hospital.referralAgent.lastName",
+    				"width": "col-md-4",
+  				},
+  				{
+					"type": "text",
+    				"label": "Phone",
+    				"placeholder": "Phone",
+    				"className": "form-control",
+    				"name": "hospital.referralAgent.phone",
+    				"width": "col-md-4",
+  				},
+  				{
+					"type": "text",
+    				"label": "Email",
+    				"placeholder": "Email",
+    				"className": "form-control",
+    				"name": "hospital.referralAgent.email",
+    				"width": "col-md-4",
+  				},
   				]
+  				
   			}
   			],
   			disableFields: [
       			'autocomplete',
       			'button',
-      			'checkbox-group',
       			'date',
       			'file',
       			'hidden',
@@ -509,9 +667,11 @@
     					multiple: false,
     					options: {
     						'':'',
+    						'namePrefix': 'Name Prefix',
     						'gender': 'Gender',
     						'patientRelation': 'Patient Relationsip',
-    						'vehicleStates': 'Vehicle States'
+    						'vehicleStates': 'Vehicle States',
+    						'mediaSource': 'Media Source'
     					}
     				},
     				group: {
@@ -540,6 +700,15 @@
     				},
     				group: {
     					label: 'Group'
+    				},
+    				validation: {
+    					label: 'Validation Rule',
+    					multiple: false,
+    					options: {
+    						'':'',
+    						'lessThanToday': "Date must be in the past",
+    						'greaterThanToday': "Date must be in the future"
+    					}
     				}
   				},
   				paragraph: {
