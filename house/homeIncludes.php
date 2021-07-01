@@ -35,7 +35,7 @@ define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js"></script>');
 define('BOOTSTRAP_JS', 'js/bootstrap.min.js');
 
 define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
-define('BOOTSTRAP_CSS', "<link href='css/bootstrap.min.css' rel='stylesheet' type='text/css' />");
+define('BOOTSTRAP_CSS', "<link href='css/bootstrap.min.css' rel='stylesheet' type='text/css' /><link href='css/bootstrap-print-fix.css' rel='stylesheet' type='text/css' />");
 /**
  * Includes
  */

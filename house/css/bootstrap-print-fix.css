@@ -1,0 +1,76 @@
+/* 
+Author: Will Ireland
+
+These styles fix printing issues
+*/
+
+@media print {
+	.form-control, .form-select {
+		background-color: #fff !important;
+		page-break-inside: avoid !important;
+	}
+	
+	.form-check-input, .form-check-label {
+		opacity: 1 !important;
+	}
+	
+	.col-md-1 {
+	  flex: 0 0 auto;
+	  width: 8.33333333%;
+	}
+	
+	.col-md-2 {
+	  flex: 0 0 auto;
+	  width: 16.66666667%;
+	}
+	
+	.col-md-3 {
+	  flex: 0 0 auto;
+	  width: 25%;
+	}
+	
+	.col-md-4 {
+	  flex: 0 0 auto;
+	  width: 33.33333333%;
+	}
+	
+	.col-md-5 {
+	  flex: 0 0 auto;
+	  width: 41.66666667%;
+	}
+	
+	.col-md-6 {
+	  flex: 0 0 auto;
+	  width: 50%;
+	}
+	
+	.col-md-7 {
+	  flex: 0 0 auto;
+	  width: 58.33333333%;
+	}
+	
+	.col-md-8 {
+	  flex: 0 0 auto;
+	  width: 66.66666667%;
+	}
+	
+	.col-md-9 {
+	  flex: 0 0 auto;
+	  width: 75%;
+	}
+	
+	.col-md-10 {
+	  flex: 0 0 auto;
+	  width: 83.33333333%;
+	}
+	
+	.col-md-11 {
+	  flex: 0 0 auto;
+	  width: 91.66666667%;
+	}
+	
+	.col-md-12 {
+	  flex: 0 0 auto;
+	  width: 100%;
+	}
+}
