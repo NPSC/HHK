@@ -172,6 +172,8 @@ if(isset($_GET['template'])){
               					$(field).children().addClass('form-check');
               					$(field).find('input[type=radio').addClass('form-check-input');
               					$(field).find('label').addClass('form-check-label');
+              					$(field).find('input.other-option').css('margin-top', '0.5em');
+              					$(field).find('input.other-val').addClass('form-control d-inline-block w-75 ms-2');
               					return $('<div/>').addClass(data.width + ' mb-3 field-container')
               					.append($('<div/>').addClass('card')
               						.append($('<div/>').addClass('card-body')
@@ -179,8 +181,8 @@ if(isset($_GET['template'])){
               						)
               					);
               				}else if(data.type == 'date'){
-              					$(field).attr('type','text').datepicker();
-              				}else if(data.type == 'select' && data.dataSource !== null){
+              					$(field).attr('type','text').attr('autocomplete', 'off').datepicker();
+              				}else if(data.type == 'select' && data.dataSource){
               					var options = {};
               					switch(data.dataSource){
               						case 'namePrefix':
