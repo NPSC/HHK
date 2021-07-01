@@ -156,20 +156,23 @@ try {
 
                 $docId = intval(filter_input(INPUT_GET, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-    $document = new Document($docId);
-    $document->loadDocument($dbh);
-
-    if($document->getExtension()){
-            $ending = "." . $document->getExtension();
-    }else{
-            $ending = "";
-    }
-
-    header("Content-Type: " . $document->getMimeType());
-    header('Content-Disposition: inline; filename="' . $document->getTitle() . $ending . '"');
-    echo $document->getDoc();
-    exit();
-
+                $document = new Document($docId);
+                $document->loadDocument($dbh);
+            
+                if($document->getCategory() == 'form' && $document->getType() == 'json'){
+                    header("location: showReferral.php?form=" . $document->getIdDocument());
+                }else{
+                    if($document->getExtension()){
+                            $ending = "." . $document->getExtension();
+                    }else{
+                            $ending = "";
+                    }
+                
+                    header("Content-Type: " . $document->getMimeType());
+                    header('Content-Disposition: inline; filename="' . $document->getTitle() . $ending . '"');
+                    echo $document->getDoc();
+                    exit();
+                }
                 break;
 
         case 'updatedoctitle':

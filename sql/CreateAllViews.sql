@@ -485,7 +485,7 @@ AS SELECT
    `n`.`Name_Full` AS `Guest`,
    `ld`.`idGuest` AS `Guest_Id`,
    `ld`.`idPSG` AS `PSG_Id`
-FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocument`))) left join `name` `n` on((`ld`.`idGuest` = `n`.`idName`))) where (`d`.`Status` = 'a');
+FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocument`))) left join `name` `n` on((`ld`.`idGuest` = `n`.`idName`))) where (`d`.`Status` not in ('d'));
 
 -- -----------------------------------------------------
 -- View `vdonation_view`

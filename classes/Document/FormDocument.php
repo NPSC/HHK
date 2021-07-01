@@ -3,6 +3,7 @@
 namespace HHK\Document;
 
 use HHK\DataTableServer\SSP;
+use HHK\sec\Labels;
 
 /**
  * FormDocument.php
@@ -84,6 +85,7 @@ group by g.Code order by g.Order';
     
     public function saveNew(\PDO $dbh, $json){
         
+        $labels = Labels::getLabels();
         $validatedDoc = $this->validateFields($json);
         
         if(count($validatedDoc['errors']) > 0){
@@ -95,6 +97,7 @@ group by g.Code order by g.Order';
         $this->doc = new Document();
         $this->doc->setType(self::JsonType);
         $this->doc->setCategory(self::formCat);
+        $this->doc->setTitle($labels->getString('GuestEdit', 'referralFormTitle', 'Referral Form'));
         $this->doc->setUserData($validatedFields);
         $this->doc->setDoc($json);
         $this->doc->setStatus('n');

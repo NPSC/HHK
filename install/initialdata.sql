@@ -710,6 +710,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('reservationTab','Reservations','s','g','',''),
 ('reservationTitle','Reservation','s','g','',''),
 ('psgTab','Patient Support Group','s','g','',''),
+('referralFormTitle','Referral Form', 's','g','',''),
 
 ('hospitalsTab','Hospital','s','r','',''),
 ('keyDepositLabel','Deposit','s','r','',''),

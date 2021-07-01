@@ -79,8 +79,10 @@ if(isset($_GET['template'])){
         $formTemplate = new FormTemplate();
         if($formTemplate->loadTemplate($dbh, $id)){
             $formData = $formTemplate->getTemplate();
-            $style = $formTemplate->getStyle();
             $formSettings = $formTemplate->getSettings();
+            $style = $formSettings['formStyle'];
+            $successTitle = $formSettings['successTitle'];
+            $successContent = $formSettings['successContent'];
             
             //enableRecaptcha
             if(($uS->mode == 'demo' || $uS->mode == 'prod') && $formSettings['enableRecaptcha']){
@@ -161,12 +163,10 @@ if(isset($_GET['template'])){
                 	formData,
                 	layoutTemplates: {
               			default: function(field, label, help, data) {
-              				console.log(help);
               				if(data.description){
               					help = $('<small/>').addClass('helpText text-muted ms-2').text(data.description);
               				}
               				var validation = $('<div/>').addClass('validationText').attr("data-field", data.id);
-              				console.log(data);
               				
               				if(data.type == 'radio-group'){
               					$(field).children().addClass('form-check');
@@ -196,6 +196,9 @@ if(isset($_GET['template'])){
               							break;
               						case 'mediaSource':
               							options = mediaSources;
+              							break;
+              						case 'vehicleStates':
+              							options = vehicleStates;
               							break;
               						default:
               							options = {};
@@ -324,6 +327,11 @@ if(isset($_GET['template'])){
 
 	<style>
 	   <?php echo $style; ?>
+	   
+	   fieldset[disabled=disabled] button {
+	       display: none;
+	   }
+	   
 	</style>
 
     </head>

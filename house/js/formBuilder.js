@@ -200,14 +200,6 @@
         		fields: [
 				{
 					"type": "text",
-    				"label": "Driver's License Number",
-    				"placeholder": "Driver's License Number",
-    				"className": "form-control",
-    				"name": "vehicle.license",
-    				"width": "col-md-3"
-  				},
-				{
-					"type": "text",
     				"label": "Make",
     				"placeholder": "Make",
     				"className": "form-control",
@@ -237,6 +229,7 @@
     				"className": "form-select",
     				"name": "vehicle.state",
     				"width": "col-md-2",
+    				"dataSource":"vehicleStates",
     				"multiple": false,
     				"values": [
       				{

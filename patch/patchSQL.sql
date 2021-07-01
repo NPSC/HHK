@@ -86,3 +86,6 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) 
 
 -- Repeating reservations
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('UseRepeatResv', 'false', 'b', 'h', 'Allow repeating reservations');
+
+-- add referral form title label
+INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Description`) VALUES ('referralFormTitle','Referral Form', 's','g','Default: Referral Form');
