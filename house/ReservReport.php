@@ -25,6 +25,7 @@ use HHK\House\Report\ReportFieldSet;
 
 require ("homeIncludes.php");
 
+// 7/1/2021 - Added "Days" column.  EKC
 
 try {
     $wInit = new webInit();
@@ -110,6 +111,7 @@ $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone"
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
+$cFields[] = array("Days", 'Days', '', '', 'integer', '10');
 $cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
 $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest').'s', 'numGuests', 'checked', '', 'integer', '10');
 $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
@@ -260,8 +262,7 @@ from
         LEFT JOIN
     gen_lookups g2 ON g2.Table_Name = 'Location'
         and g2.`Code` = hs.`Location`
-where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration
-";
+where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration";
 
 
     $fltrdTitles = $colSelector->getFilteredTitles();
@@ -301,20 +302,6 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
     $curVisit = 0;
     $curRoom = '';
     $curRate = '';
-//    $nites = 0;
-//    $totalNights = 0;
-
-
-//     $rrates = array();
-
-//     $roomRateRS = new Room_RateRS();
-//     $rows = EditRS::select($dbh, $roomRateRS, array());
-
-//     foreach ($rows as $r) {
-//         $roomRateRS = new Room_RateRS();
-//         EditRS::loadRow($r, $roomRateRS);
-//         $rrates[$roomRateRS->FA_Category->getStoredVal()] = $roomRateRS;
-//     }
 
     $stmt = $dbh->query($query);
 
@@ -324,18 +311,13 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
             $curVisit = $r['idReservation'];
             $curRoom = $r['Room'];
             $curRate = $r['FA_Category'];
-//            $nites = 0;
         } else if ($curRoom != $r['Room']) {
             $curRoom = $r['Room'];
         } else if ($curRate != $r['FA_Category']) {
             $curRate = $r['FA_Category'];
         } else {
-//            $nites += $r['Nights'];
             continue;
         }
-
-//        $nites += $r['Nights'];
-//        $totalNights += $r['Nights'];
 
         if ($r['FA_Category'] == RoomRateCategories::Fixed_Rate_Category) {
             $rate = $r['Fixed_Room_Rate'];
@@ -359,6 +341,8 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         $statusDT = new DateTime($r['Created_Date']);
         $lastUpdatedDT = new DateTime($r['Last_Updated']);
 
+        // add Days column
+        $r['Days'] = $r['Nights'] + 1;
 
         if ($local) {
 
@@ -379,10 +363,6 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 
         } else {
 
-            //$r['Arrival'] = \PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
-            //$r['Departure'] = \PHPExcel_Shared_Date::PHPToExcel($departureDT);
-            //$r['Created_Date'] = \PHPExcel_Shared_Date::PHPToExcel($statusDT);
-            //$r['Last_Updated'] = \PHPExcel_Shared_Date::PHPToExcel($lastUpdatedDT);
             $r['FA_Category'] = $rate;
 
             $flds = array();
