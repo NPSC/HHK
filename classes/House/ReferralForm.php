@@ -4,9 +4,9 @@ namespace HHK\House;
 
 use HHK\Document\FormDocument;
 use HHK\HTMLControls\HTMLTable;
-use HHK\Member\Address\CleanAddress;
+use HHK\Member\MemberSearch;
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
-use HHK\Member\ProgressiveSearch\SearchNameData\{SearchFor, SearchResults};
+use HHK\Member\ProgressiveSearch\SearchNameData\{SearchFor};
 use HHK\SysConst\ReferralFormStatus;
 use HHK\SysConst\VolMemberType;
 
@@ -14,12 +14,18 @@ class ReferralForm {
 	
 	protected $referralDocId;
 	protected $formUserData;
-	protected $cleanAddress;
+	
 	protected $patSearchFor;
 	protected $patResults;
+	
 	protected $gstSearchFor = [];
 	protected $gstResults = [];
+	
+	protected $doctorResults;
 
+	protected $hospitalResults;
+
+	
 	
 	public function __construct(\PDO $dbh, $referralDocId) {
 		
@@ -38,8 +44,6 @@ class ReferralForm {
 		    throw new \Exception("Referral form not found.  Document Id = " . $referralDocId);
 		}
 		
-		$this->cleanAddress = new CleanAddress($dbh);
-		
 	}
 	
 	
@@ -56,38 +60,38 @@ class ReferralForm {
 	       ->setNameLast($this->formUserData['patient.lastName']);
 	    
 	    // patientBirthdate
-	    if (isset($this->formUserData['patientBirthdate']) && $this->formUserData['patient.birthdate'] != '') {
+	    if (isset($this->formUserData['patient.birthdate']) && $this->formUserData['patient.birthdate'] != '') {
 	        $this->patSearchFor->setBirthDate($this->formUserData['patient.birthdate']);
 	    }
 	    
 	    // Phone
-	    if (isset($this->formUserData['phone']) && $this->formUserData['phone'] != '') {
-	        $this->patSearchFor->setPhone($this->formUserData['phone']);
+	    if (isset($this->formUserData['patient.phone']) && $this->formUserData['patient.phone'] != '') {
+	        $this->patSearchFor->setPhone($this->formUserData['patient.phone']);
 	    }
 	    
 	    // email
-	    if (isset($this->formUserData['email']) && $this->formUserData['email'] != '') {
-	        $this->patSearchFor->setBirthDate($this->formUserData['email']);
+	    if (isset($this->formUserData['patient.email']) && $this->formUserData['patient.email'] != '') {
+	        $this->patSearchFor->setBirthDate($this->formUserData['patient.email']);
 	    }
 	    
 	    // City
-	    if (isset($this->formUserData['adrCity']) && $this->formUserData['adrCity'] != '') {
-	        $this->patSearchFor->setAddressCity($this->formUserData['adrCity']);
+	    if (isset($this->formUserData['patient.address.city']) && $this->formUserData['patient.address.city'] != '') {
+	        $this->patSearchFor->setAddressCity($this->formUserData['patient.address.city']);
 	    }
 	    
 	    // State
-	    if (isset($this->formUserData['adrState']) && $this->formUserData['adrState'] != '') {
-	        $this->patSearchFor->setAddressState($this->formUserData['adrState']);
+	    if (isset($this->formUserData['patient.address.state']) && $this->formUserData['patient.address.state'] != '') {
+	        $this->patSearchFor->setAddressState($this->formUserData['patient.address.state']);
 	    }
 	    
 	    // Zip
-	    if (isset($this->formUserData['adrZip']) && $this->formUserData['adrZip'] != '') {
-	        $this->patSearchFor->setAddressZip($this->formUserData['adrZip']);
+	    if (isset($this->formUserData['patient.address.zip']) && $this->formUserData['patient.address.zip'] != '') {
+	        $this->patSearchFor->setAddressZip($this->formUserData['patient.address.zip']);
 	    }
 	    
 	    // Country
-	    if (isset($this->formUserData['adrCountry']) && $this->formUserData['adrCountry'] != '') {
-	        $this->patSearchFor->setAddressCountry($this->formUserData['adrCountry']);
+	    if (isset($this->formUserData['patient.address.country']) && $this->formUserData['patient.address.country'] != '') {
+	        $this->patSearchFor->setAddressCountry($this->formUserData['patient.address.country']);
 	    }
 	    
 	    $progSearch = new ProgressiveSearch();
@@ -104,20 +108,28 @@ class ReferralForm {
 	        throw new \Exception('Guests are missing from form data.  ');
 	    }
 
-	    for ($indx = 0; $indx < 3; $indx++) {
+	    for ($indx = 0; $indx < 5; $indx++) {
 	        
-	        if (isset($this->formUserData['guests['.$indx.'][firstName]']) && isset($this->formUserData['guests['.$indx.'][lastName]'])) {
+	        $gindx = 'g' . $indx;
+	        
+	        if (isset($this->formUserData['guests['.$gindx.'][firstName]']) && isset($this->formUserData['guests['.$gindx.'][lastName]'])) {
 	            
 	            $searchFor = new SearchFor();
 	            
 	            // First, last name
-	            $searchFor->setNameFirst($this->formUserData['guests['.$indx.'][firstName]'])
-	            ->setNameLast($this->formUserData['guests['.$indx.'][lastName]']);
+	            $searchFor->setNameFirst($this->formUserData['guests['.$gindx.'][firstName]'])
+	            ->setNameLast($this->formUserData['guests['.$gindx.'][lastName]']);
 	                
 	            // Phone
-	            if (isset($this->formUserData['guests['.$indx.'][phone]']) && $this->formUserData['guests['.$indx.'][phone]'] != '') {
-	                $searchFor->setPhone($this->formUserData['guests['.$indx.'][phone]']);
+	            if (isset($this->formUserData['guests['.$gindx.'][phone]']) && $this->formUserData['guests['.$gindx.'][phone]'] != '') {
+	                $searchFor->setPhone($this->formUserData['guests['.$gindx.'][phone]']);
 	            }
+	            
+	            // Relationship
+	            if (isset($this->formUserData['guests['.$gindx.'][relationship]']) && $this->formUserData['guests['.$gindx.'][relationship]'] != '') {
+	                $searchFor->setRelationship($this->formUserData['guests['.$gindx.'][relationship]']);
+	            }
+	            
 	            
 	            $this->gstSearchFor[] = $searchFor;
 	            
@@ -133,37 +145,22 @@ class ReferralForm {
 	
 	public function searchDoctor(\PDO $dbh) {
 	    
-	    if (isset($this->formUserData['doctor']) === FALSE) {
-	        
+	    if (isset($this->formUserData['hospital']['doctor']) && $this->formUserData['hospital']['doctor'] != '') {
+	    
+	       $memberSearch = new MemberSearch($this->formUserData['hospital']['doctor']);
+	    
+	       $this->doctorResults = $memberSearch->volunteerCmteFilter($dbh, VolMemberType::Doctor, '');
 	    }
-	    
-	    $searchFor = new SearchFor();
-	    
-	    // last name
-	    $searchFor->setNameLast($this->formUserData['doctor']);
-	    $searchFor->setMemberType(VolMemberType::Doctor);
-	    $progSearch = new ProgressiveSearch();
-	    
-	    $results[] = $progSearch->doSearch($dbh, $searchFor);
 	}
 	
-	public function searchAgent(\PDO $dbh) {
+	public function hosptialMarkup(\PDO $dbh) {
 	    
-	    if (isset($this->formUserData['agent']) === FALSE) {
+	    if (isset($this->formUserData['hospital']) && $this->formUserData['hospital'] != '') {
+	        
+	    } else {
+	        // hospital name not entered.
 	        
 	    }
-	    
-	    $searchFor = new SearchFor();
-	    $searchFor->setNameLast($this->formUserData['agent']);
-	    $searchFor->setMemberType(VolMemberType::ReferralAgent);
-	    $progSearch = new ProgressiveSearch();
-	    
-	    $results[] = $progSearch->doSearch($dbh, $searchFor);
-	    
-	}
-	
-	
-	public function searchHosptial(\PDO $dbh) {
 	    
 	}
 	
@@ -321,6 +318,7 @@ class ReferralForm {
 	   
 	   return $tbl->generateMarkup(array('class'=>'hhk-visitdialog hhk-tdbox'));
 	}
+	
 	
 	public function setReferralStatus($dbh, ReferralFormStatus $status) {
 	    

@@ -75,6 +75,7 @@ class MemberSearch {
             $operation = 'AND';
         }
 
+        
         if ($basis == "m") {
 
             $prts = explode("|", $fltr);
@@ -130,6 +131,8 @@ class MemberSearch {
                 $events[] = array("error" => "Bad filter: " . $fltr);
             }
 
+            
+            
         // Referral Agent & Doctor
         } else if ($basis == VolMemberType::ReferralAgent || $basis == VolMemberType::Doctor) {
 
@@ -184,6 +187,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             $events[] = array('id' => 0, 'value' => ($basis == VolMemberType::Doctor ? 'New Doctor' : 'New ' . $labels->getString('hospital', 'referralAgent', 'Referral Agent')));
 
 
+            
 
         // Third party billing agent?
         } else if ($basis == VolMemberType::BillingAgent) {
@@ -244,6 +248,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             }
 
 
+            
 
        // Guest or Patient as Guest
         } else if ($basis == VolMemberType::Guest || $basis == 'g,p') {
@@ -302,6 +307,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
 
 
+            
+            
         } else if ($basis == VolMemberType::Patient) {
             // Search patient
 
