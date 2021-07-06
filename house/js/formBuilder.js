@@ -516,38 +516,45 @@
     				"className": "form-control",
     				"name": "hospital.treatmentEnd",
     				"width": "col-md-3",
+  				}
+  				]
+  			},
+  			{
+        		label: 'Referral Agent',
+        		name: 'referral-agent',
+        		showHeader: true,
+        		fields: [
+  				{
+					"type": "text",
+    				"label": "First Name",
+    				"placeholder": "First Name",
+    				"className": "form-control",
+    				"name": "referralAgent.firstName",
+    				"width": "col-md-3",
   				},
   				{
 					"type": "text",
-    				"label": "Referral Agent Name",
-    				"placeholder": "Referral Agent First Name",
+    				"label": "Last Name",
+    				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "hospital.referralAgent.firstName",
-    				"width": "col-md-4",
-  				},
-  				{
-					"type": "text",
-    				"label": "Referral Agent Name",
-    				"placeholder": "Referral Agent Last Name",
-    				"className": "form-control",
-    				"name": "hospital.referralAgent.lastName",
-    				"width": "col-md-4",
+    				"name": "referralAgent.lastName",
+    				"width": "col-md-3",
   				},
   				{
 					"type": "text",
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control",
-    				"name": "hospital.referralAgent.phone",
-    				"width": "col-md-4",
+    				"name": "referralAgent.phone",
+    				"width": "col-md-3",
   				},
   				{
 					"type": "text",
     				"label": "Email",
     				"placeholder": "Email",
     				"className": "form-control",
-    				"name": "hospital.referralAgent.email",
-    				"width": "col-md-4",
+    				"name": "referralAgent.email",
+    				"width": "col-md-3",
   				},
   				]
   				
@@ -758,6 +765,14 @@
   				default: function(field, label, help, data) {
     				return $('<div/>').addClass(data.width).append(field);
   				}
+			},
+			stickyControls: {
+				enable: true,
+				offset: {
+					top: 50,
+			        bottom: 'auto',
+			        right: 'auto',
+			    },
 			}
         };
 
@@ -772,7 +787,7 @@
 		var settingsDialog = $wrapper.find('#settingsDialog').dialog({
       		autoOpen: false,
       		height: 800,
-      		width: 800,
+      		width: 900,
       		modal: true,
       		buttons: {
         		"Revert Changes": function() {
@@ -853,18 +868,26 @@
 				    
 				    <div id="tabs-2">
 				        <div class="row">
-							<div class="col-9">
+							<div class="col-8">
 								<h3>Edit Form Style</h3>
 								<textarea id="formStyle" name="formStyle" style="width: 100%; height: 600px;"></textarea>
 							</div>
-							<div class="col-3">
+							<div class="col-4">
+								<h3>Style Guide</h3>
+								<p>Forms use Bootstrap 5.0 with .form-floating and the Jquery UI datepicker</p>
 								<h3>Available Styles</h3>
-								<ul style="list-style:none;">
+								<ul class="styleList">
 									<li>h1</li>
 									<li>h2</li>
 									<li>h3</li>
 									<li>label</li>
 									<li>.submit-btn</li>
+									<li>.ui-datepicker (and all associated jquery UI datepicker classes)</li>
+									<li>.form-control</li>
+									<li>.form-select</li>
+									<li>.msg - the success message, which uses bootstrap's alert-success class</li>
+									<li>.errmsg - the error message, uses bootstrap's alert-danger classe</li>
+									
 								</ul>
 							</div>
 						</div>
@@ -925,6 +948,7 @@
 				typeUserAttrs: settings.typeUserAttrs,
 				layoutTemplates: settings.layoutTemplates,
 				onSave: onSave,
+				stickyControls: settings.stickyControls,
 				"i18n":{
 					"location":"../js/formBuilder"
 				}
@@ -956,6 +980,7 @@
 								typeUserAttrs: settings.typeUserAttrs,
 								layoutTemplates: settings.layoutTemplates,
 								onSave: onSave,
+								stickyControls: settings.stickyControls,
 								"i18n":{
 									"location":"../js/formBuilder"
 								}
