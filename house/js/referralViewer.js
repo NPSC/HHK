@@ -191,8 +191,9 @@
 	function createActions(idDocument, row){
 		return `
 			<ul class="hhk-ui-icons">
-				<li class="formDetails" data-docid="` + idDocument + `"><span class="ui-icon ui-icon-extlink"></span></li>
-				<li class="formDelete" data-docid="` + idDocument + `"><span class="ui-icon ui-icon-trash"></span></li>
+				<li class="formDetails" data-docid="` + idDocument + `" title="Form Details"><span class="ui-icon ui-icon-extlink"></span></li>
+				<li class="formArchive" data-docid="` + idDocument + `" title="Archive Form"><span class="ui-icon ui-icon-folder-open"></span></li>
+				<li class="formDelete" data-docid="` + idDocument + `" title="Delete Form"><span class="ui-icon ui-icon-trash"></span></li>
 			</ul>
 		`;
 		//return '<button type="button" class="formDetails" data-id="' + idDocument + '" style="margin-right: 0.5em">Open</button><button type="button" class="formDelete" data-id="' + idDocument + '"><span class="ui-icon ui-icon-trash"></span></button>';
@@ -238,6 +239,24 @@
 						cmd: 'updateFormStatus',
 						idDocument: idDocument,
 						status: 'd'
+					},
+					success: function( data ){
+						settings.dtTable.ajax.reload();
+					}
+				});
+			}
+		}); 
+		$wrapper.on('click', '.formArchive', function(e){
+			var idDocument = $(e.currentTarget).data('docid');
+			if(idDocument){
+				$.ajax({
+					url: settings.serviceURL,
+					dataType: 'JSON',
+					type: 'get',
+					data: {
+						cmd: 'updateFormStatus',
+						idDocument: idDocument,
+						status: 'ar'
 					},
 					success: function( data ){
 						settings.dtTable.ajax.reload();

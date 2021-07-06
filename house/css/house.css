@@ -495,3 +495,9 @@ li.hhk-myMenuTop {
 	margin: 0 0 0 -1px !important;
 	padding: .4em 0.5em !important;
 }
+#settingsDialog ul.styleList {
+	list-style: inside square;
+}
+#settingsDialog ul.styleList > li {
+	margin-bottom: 0.5em;
+}
