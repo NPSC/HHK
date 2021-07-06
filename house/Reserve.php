@@ -243,7 +243,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php if ($docId > 0) {echo GUEST_REFERRAL_JS;} ?>
+        <?php if ($idDoc > 0) {echo GUEST_REFERRAL_JS;} ?>
         
 
     </head>

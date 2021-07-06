@@ -7,7 +7,6 @@ use HHK\SysConst\VolMemberType;
 
 class SearchFor extends SearchNameData
 {
-    protected $memberType = '';
     protected $whereClause;
     
     /**
@@ -18,7 +17,7 @@ class SearchFor extends SearchNameData
         parent::setBirthDate($strBirthDate);
         
         if ($this->birthDate != '') {
-            $this->whereClause .= " AND DATE(n.BirthDate) = " . $this->birthDate;
+            $this->whereClause .= " AND DATE(n.BirthDate) = DATE('" . $this->birthDate . "')";
         }
         
         return $this;
@@ -84,19 +83,6 @@ class SearchFor extends SearchNameData
     public function getWhereClause() {
         return $this->whereClause;
     }
-    
-    public function setMemberType($memberType) {
-        
-        if (is_string($memberType)) {
-            $this->memberType = $memberType;
-            
-            $this->whereClause .= " and nv.Vol_Code = '$memberType' ";
-        }
-        return $this;
-    }
-    
-    public function getMemberType() {
-        return $this->memberType;
-    }
+
 }
 

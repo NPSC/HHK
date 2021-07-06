@@ -382,7 +382,7 @@ $(document).ready(function () {
         return array('hdr'=>$hdr, 'title'=>$labels->getString('hospital', 'hospital', 'Hospital') . ' Details', 'div'=>$div);
     }
 
-    public static function saveReferralMarkup(\PDO $dbh, Psg $psg, HospitalStay $hstay, array $post, $idResv = -1) {
+    public static function saveReferralMarkup(\PDO $dbh, PSG $psg, HospitalStay $hstay, array $post, $idResv = -1) {
 
         $uS = Session::getInstance();
 

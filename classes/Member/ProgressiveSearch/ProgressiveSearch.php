@@ -24,12 +24,13 @@ class ProgressiveSearch {
 	           ->setNameLast($r["Last"])
 	           ->setNickname($r["Nickname"])
 	           ->setNameMiddle($r["Middle"])
+	           ->setBirthDate($r['Birthdate'])
 	           ->setPhone($r['Phone'])
 	           ->setEmail($r['Email'])
 	           ->setAddressStreet($r['Street Address'])
 	           ->setAddressCity($r['City'])
 	           ->setAddressState($r['State'])
-	           ->setAddressZip($r['Zip Code'])
+	           ->setAddressZip($r['Zip'])
 	           ->setAddressCountry($r['Country'])
 	           ->setNoReturn($r['No_Return']);
 	        
@@ -51,16 +52,16 @@ class ProgressiveSearch {
     n.Name_Last as `Last`,
     n.Name_First as `First`,
     n.Name_Middle as `Middle`,
-    IFNULL(g.Description, '') AS Suffix,
+    IFNULL(g.Description, '') AS `Suffix`,
     n.Name_Nickname as `Nickname`,
-    IFNULL(n.BirthDate, '') as `Birth Date`,
+    IFNULL(n.BirthDate, '') as `Birthdate`,
     n.Member_Status as `Member Status`,
     IFNULL(np.Phone_Num, '') AS `Phone`,
     IFNULL(ne.Email, '') as `Email`,
     IFNULL(case when na.Address_2 = '' then na.Address_1 else concat_ws(na.Address_1, na.Address_2) end, '') as `Street Address`,
     IFNULL(na.City, '') AS `City`,
     IFNULL(na.State_Province, '') AS `State`,
-    IFNULL(na.Postal_Code, '') AS `Zip Code`,
+    IFNULL(na.Postal_Code, '') AS `Zip`,
     IFNULL(na.Country_Code, '') AS `Country`,
     IFNULL(gr.Description, '') AS `No_Return`
 FROM
@@ -78,8 +79,6 @@ FROM
         AND n.Preferred_Email = na.Purpose
         LEFT JOIN
     name_demog nd ON n.idName = nd.idName
-        LEFT JOIN
-    name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'
         LEFT JOIN
     gen_lookups g ON g.Table_Name = 'Name_Suffix'
         AND g.Code = n.Name_Suffix
