@@ -333,6 +333,13 @@ if(isset($_GET['template'])){
 	       display: none;
 	   }
 	   
+	   .msg, .errmsg {
+	       margin: 1em;
+	   }
+	   .msg p.successmsg {
+	       white-space: pre-wrap;
+	   }
+	   
 	</style>
 
     </head>
@@ -351,7 +358,7 @@ if(isset($_GET['template'])){
         </div>
         <div class="alert alert-success msg" role="alert" style="display: none">
     		<h4 class="alert-heading"><?php echo $successTitle; ?></h4>
-    		<p><?php echo $successContent; ?></p>
+    		<p class="successmsg"><?php echo $successContent; ?></p>
     		<p>Recaptcha Score: <span id="recaptchascore"></span></p>
     	</div>
     	<div class="alert alert-danger errmsg" role="alert" style="display: none">

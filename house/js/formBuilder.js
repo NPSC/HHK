@@ -886,7 +886,7 @@
 									<li>.form-control</li>
 									<li>.form-select</li>
 									<li>.msg - the success message, which uses bootstrap's alert-success class</li>
-									<li>.errmsg - the error message, uses bootstrap's alert-danger classe</li>
+									<li>.errmsg - the error message, uses bootstrap's alert-danger class</li>
 									
 								</ul>
 							</div>

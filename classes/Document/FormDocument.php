@@ -93,13 +93,14 @@ group by g.Code order by g.Order';
         }
         
         $validatedFields = json_encode($validatedDoc['fields']);
+        $sanitizedDoc = json_encode($validatedDoc['sanitizedDoc']);
         
         $this->doc = new Document();
         $this->doc->setType(self::JsonType);
         $this->doc->setCategory(self::formCat);
         $this->doc->setTitle($labels->getString('GuestEdit', 'referralFormTitle', 'Referral Form'));
         $this->doc->setUserData($validatedFields);
-        $this->doc->setDoc($json);
+        $this->doc->setDoc($sanitizedDoc);
         $this->doc->setStatus('n');
         
         $this->doc->saveNew($dbh);
@@ -151,6 +152,9 @@ group by g.Code order by g.Order';
                     if(!filter_var($field->userData[0], FILTER_VALIDATE_INT)){
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid phone number.'];
                     }
+                }elseif($field->type == "text" && $field->userData[0] != ''){
+                    $sanitized = filter_var($field->userData[0], FILTER_SANITIZE_STRING);
+                    $field->userData[0] = $sanitized;
                 }
                 
                 if(isset($field->userData[0])){ //fill fields array
@@ -176,6 +180,7 @@ group by g.Code order by g.Order';
             }
         }
         $response['fields'] = $fieldData;
+        $response['sanitizedDoc'] = $fields;
         return $response;
     }
     
