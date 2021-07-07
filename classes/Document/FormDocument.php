@@ -34,7 +34,7 @@ class FormDocument {
     public static function listForms(\PDO $dbh, $status, $params, $totalsOnly = false){
         
         if($totalsOnly){
-            $query = 'select g.Code as "idStatus", g.Description as "Status", count(v.idDocument) as "count" from `gen_lookups` g
+            $query = 'select g.Code as "idStatus", g.Description as "Status", g.Substitute as "icon", count(v.idDocument) as "count" from `gen_lookups` g
 left join `vform_listing` v on g.Code = v.`status ID`
 where g.Table_Name = "Referral_Form_Status"
 group by g.Code order by g.Order';

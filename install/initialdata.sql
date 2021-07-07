@@ -340,11 +340,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Rate_Period', '2', 'Reduced Rate 2', '14','',0),
 ('Rate_Period', '3', 'Reduced Rate 3', '19999','',0),
 
-('Referral_Form_Status', 'n', 'New','','',10),
-('Referral_form_Status', 'ip', 'In-Process','','',20),
-('Referral_Form_Status', 'ac', 'Accepted','','',30),
-('Referral_Form_Status', 'ar', 'Archived','','',40),
-('Referral_Form_Status', 'd', 'Deleted','','',50),
+('Referral_Form_Status', 'n', 'New','ui-icon ui-icon-mail-closed','',10),
+('Referral_form_Status', 'ip', 'In-Process','ui-icon ui-icon-mail-open','',20),
+('Referral_Form_Status', 'ac', 'Accepted','ui-icon ui-icon-check','',30),
+('Referral_Form_Status', 'ar', 'Archived','ui-icon ui-icon-folder-open','',40),
+('Referral_Form_Status', 'd', 'Deleted','ui-icon ui-icon-trash','',50),
 
 ('Reg_Agreement', 'en', 'English', '1','',0),
 

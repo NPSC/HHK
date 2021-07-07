@@ -231,7 +231,7 @@ if(isset($_GET['template'])){
             	var $renderedForm = $(document).find('.rendered-form');
             	$renderedForm.addClass('row');
             	
-            	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', '').data('hhkindex','');
+            	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', 'patient\\.address\\.').data('hhkindex','');
             	
             	// set country and state selectors
                 $renderedForm.find('select.bfh-countries').each(function() {

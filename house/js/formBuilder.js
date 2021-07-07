@@ -108,10 +108,10 @@
   				},
   				{
     				"type": "select",
-    				"label": (options.labels.patient || 'Patient') + " Sex",
-    				"placeholder": (options.labels.patient || 'Patient') + " Sex",
+    				"label": (options.labels.patient || 'Patient') + " Gender",
+    				"placeholder": (options.labels.patient || 'Patient') + " Gender",
     				"className": "form-select",
-    				"name": "patient.sex",
+    				"name": "patient.gender",
     				"width": "col-md-4",
     				"dataSource":"gender",
     				"multiple": false,
@@ -275,7 +275,7 @@
     				"label": "City",
     				"placeholder": "City",
     				"className": "form-control",
-    				"name": "patient.address.city",
+    				"name": "patient.address.adrcity",
     				"width": "col-md-5"
   				},
   				{
@@ -283,7 +283,7 @@
     				"label": "County",
     				"placeholder": "County",
     				"className": "form-control",
-    				"name": "patient.address.county",
+    				"name": "patient.address.adrcounty",
     				"width": "col-md-5"
   				},
   				{
@@ -291,7 +291,7 @@
     				"label": "State",
     				"placeholder": "State",
     				"className": "form-select bfh-states",
-    				"name": "patient.address.state",
+    				"name": "patient.address.adrstate",
     				"width": "col-md-2",
     				"values":[]
   				},
@@ -300,7 +300,7 @@
     				"label": "Country",
     				"placeholder": "Country",
     				"className": "form-select bfh-countries",
-    				"name": "patient.address.country",
+    				"name": "patient.address.adrcountry",
     				"width": "col-md-3",
     				"values":[]
     			}

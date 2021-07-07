@@ -16,6 +16,7 @@
 	    var defaults = {    
             serviceURL: 'ws_resc.php',
             detailURL: 'showReferral.php',
+            reserveURL: 'Reserve.php',
             dtTable: "",
             dtData: {'cmd': 'listforms', 'status':'inbox'},
             dtCols: [
@@ -140,10 +141,10 @@
 		);
 		
 		//build status tabs
-		$wrapper.find('#referralTabs ul').append('<li data-status="inbox"><a href="#referralTabContent">Inbox (' + settings.statuses['n'].count + ')</a></li>');
+		$wrapper.find('#referralTabs ul').append('<li data-status="inbox"><a href="#referralTabContent">' + (settings.statuses['n'].icon ? '<span class="' + settings.statuses['n'].icon + '"></span>' : '<span class="ui-icon ui-icon-blank"></span>') + ' Inbox (' + settings.statuses['n'].count + ')</a></li>');
 		$.each(settings.statuses, function(key,value){
 			if(value.idStatus != 'n' && value.idStatus != 'ip'){
-				$wrapper.find('#referralTabs ul').append('<li data-status="' + value.idStatus + '"><a href="#referralTabContent">' + value.Status + ' (' + settings.statuses[value.idStatus].count + ')</a></li>');
+				$wrapper.find('#referralTabs ul').append('<li data-status="' + value.idStatus + '"><a href="#referralTabContent">' + (value.icon ? '<span class="' + value.icon + '"></span>':'<span class="ui-icon ui-icon-blank"></span>') + ' ' + value.Status + ' (' + settings.statuses[value.idStatus].count + ')</a></li>');
 			}
 		});
 		
@@ -206,7 +207,7 @@
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
 			
 			settings.formDetailsDialogBtns["Create Reservation"] = function(){
-				window.location.href = "Reserve.php?docid=" + idDocument;
+				window.location.href = settings.reserveURL + "?docid=" + idDocument;
 			};
 			
 			formDetailsDialog.dialog('option', 'buttons', settings.formDetailsDialogBtns);

@@ -501,3 +501,11 @@ li.hhk-myMenuTop {
 #settingsDialog ul.styleList > li {
 	margin-bottom: 0.5em;
 }
+
+/* ui icon tab fix */
+div#referralTabs ul>li>a>span.ui-icon {
+	background-image: url(jqui/images/ui-icons_217bc0_256x240.png) !important;
+}
+div#referralTabs ul>li.ui-state-active .ui-icon {
+	background-image: url(jqui/images/ui-icons_f9bd01_256x240.png) !important;
+}
