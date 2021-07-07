@@ -559,6 +559,7 @@ CREATE TABLE if not exists `hospital_stay` (
   `idReferralAgent` int(11) NOT NULL DEFAULT '0',
   `Status` varchar(5) NOT NULL DEFAULT '',
   `Diagnosis` varchar(245) NOT NULL DEFAULT '',
+  `Diagnosis2` varchar(245) NOT NULL DEFAULT '',
   `Location` VARCHAR(5) NOT NULL DEFAULT '',
   `idDoctor` int(11) NOT NULL DEFAULT '0',
   `idPcDoctor` int(11) NOT NULL DEFAULT '0',

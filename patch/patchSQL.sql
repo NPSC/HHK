@@ -39,3 +39,7 @@ INSERT IGNORE INTO `gen_lookups` (Table_Name, Code, Description, Type, `Order`) 
 ('Demographics', 'Covid', 'Covid-19 Vaccine', 'm', 40),
 ('Covid', 'n', 'Not Vaccinated', 'd', 0),
 ('Covid', 'y', 'Fully Vaccinated', 'd', 0);
+
+-- add 2nd diagnosis field
+ALTER TABLE `hospital_stay` 
+ADD COLUMN `Diagnosis2` VARCHAR(245) NOT NULL DEFAULT '' AFTER `Diagnosis`;

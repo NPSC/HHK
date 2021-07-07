@@ -23,6 +23,7 @@ class Hospital_StayRS extends AbstractTableRS {
     public $idReferralAgent;   // int(11) NOT NULL DEFAULT '0',
     public $Status;   // varchar(5) NOT NULL DEFAULT '',
     public $Diagnosis;   // varchar(245) NOT NULL DEFAULT '',
+    public $Diagnosis2;   // varchar(245) NOT NULL DEFAULT '',
     public $Location;  //`Location` VARCHAR(5) NOT NULL DEFAULT ''
     public $idDoctor;  // int(11) NOT NULL DEFAULT '0',
     public $idPcDoctor;  // int(11) NOT NULL DEFAULT '0',
@@ -48,6 +49,7 @@ class Hospital_StayRS extends AbstractTableRS {
         $this->idReferralAgent = new DB_Field("idReferralAgent", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Diagnosis = new DB_Field("Diagnosis", "", new DbStrSanitizer(245), TRUE, TRUE);
+        $this->Diagnosis2 = new DB_Field("Diagnosis2", "", new DbStrSanitizer(245), TRUE, TRUE);
         $this->Location = new DB_Field("Location", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->idDoctor = new DB_Field("idDoctor", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idPcDoctor = new DB_Field("idPcDoctor", 0, new DbIntSanitizer(), TRUE, TRUE);
