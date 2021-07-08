@@ -52,6 +52,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     $query = '';
     $agentTitle = $labels->getString('hospital', 'referralAgent', 'Referral Agent');
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
+    $diagDetailTitle = $labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details');
     $locTitle = $labels->getString('hospital', 'location', 'Location');
     $patTitle = $labels->getString('MemberType', 'patient', 'Patient');
     
@@ -71,7 +72,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
         $hospAssocSql = "h.Title as `Hospital`, a.Title as `Association`, ";
         $agentSql = "ifnull(nr.Name_Full, '') as `$agentTitle` ";
         $locSql = "ifnull(gl.Description, '') as `$locTitle`, ";
-        $diagSql = " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ";
+        $diagSql = " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(hs.Diagnosis2, '') as `$diagDetailTitle`, ";
     }
     
     if ($showAddr && $showFullName) {
@@ -202,6 +203,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         
         if ($showDiagnosis === FALSE) {
             unset($r['Diagnosis']);
+            unset($r['Diagnosis2']);
         }
         
         if ($showLocation === FALSE) {
@@ -366,6 +368,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
 function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $hospCodes, $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true, $showCounty = FALSE) {
     
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
+    $diagDetailTitle = $labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details');
     $locTitle = $labels->getString('hospital', 'location', 'Location');
     $psgLabel = $labels->getString('statement', 'psgAbrev', 'PSG') . ' Id';
     $patRelTitle = $labels->getString('MemberType', 'patient', 'Patient') . " Relationship";
@@ -384,6 +387,7 @@ function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $ho
     ifnull(hs.idHospital, '') as `$hospTitle`,
     ifnull(hs.idAssociation, '') as `Association`,
     ifnull(g.Description, hs.Diagnosis) as `$diagTitle`,
+    ifnull(hs.Diagnosis2, '') as `$diagDetailTitle`,
     ifnull(g1.Description, '') as `$locTitle`,
 	case when ng.Relationship_Code = 'slf' then 0 else 1 end as `ispat`
 from

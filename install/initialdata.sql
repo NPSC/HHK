@@ -669,6 +669,7 @@ INSERT INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description
 
 ('referralAgent','Referral Agent','s','h','','Default: Referral Agent'),
 ('diagnosis','Diagnosis','s','h','','Default: Diagnosis'),
+('diagnosisDetail','Diagnosis Details','s','h','','Default: Diagnosis Details'),
 ('location','Unit','s','h','','Default: Unit'),
 ('hospital','Hospital','s','h','','Default: Hospital'),
 ('treatmentStart','Treatment Start','s','h','','Default: Treatment Start'),

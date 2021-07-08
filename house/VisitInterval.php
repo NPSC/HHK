@@ -550,6 +550,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(hs.idAssociation, 0) as idAssociation,
     ifnull(nra.Name_Full, '') as Referral_Agent,
     ifnull(g.Description, hs.Diagnosis) as Diagnosis,
+    ifnull(hs.Diagnosis2, '') as Diagnosis2,
     ifnull(gl.Description, '') as Location,
     ifnull(rm.Rate_Code, '') as Rate_Code,
     ifnull(rm.Category, '') as Category,
@@ -1362,6 +1363,9 @@ if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
 }
 
+if($uS->ShowDiagTB){
+    $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
+}
 
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', '', array(), 'date');
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'n', '', array(), 'date');

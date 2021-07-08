@@ -278,7 +278,6 @@ class Hospital {
             );
 
             $myDiagnosis = $hstay->getDiagnosisCode();
-            $diagnosis2 = $hstay->getDiagnosis2();
 
             $diagtbl->addBodyTr(HTMLTable::makeTd(
                 HTMLSelector::generateMarkup(
@@ -296,7 +295,7 @@ class Hospital {
                     $myDiagnosis = '';
                 }else{
                     $diagtbl->addBodyTr(
-                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis2(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay'))));
+                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis2(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', 'placeholder'=>$labels->getString('hospital','diagnosisDetail', 'Diagnosis Details')))));
                     
                 }
             }

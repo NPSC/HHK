@@ -78,7 +78,7 @@ if (count($diags) > 0) {
 }
 
 if($uS->ShowDiagTB){
-    $cFields[] = array($labels->getString('hospital', 'diagnosis2', 'Diagnosis 2'), 'Diagnosis 2', 'checked', '', 'string', '20', array());
+    $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
 }
 
 // Reservation statuses
@@ -230,7 +230,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     nd.Name_Full as `Name_Doctor`,
     nr.Name_Full as `Name_Agent`,
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
-    hs.Diagnosis2 as `Diagnosis 2`,
+    hs.Diagnosis2,
     ifnull(g2.`Description`, '') as `Location`,
     r.`Timestamp` as `Created_Date`,
     r.Last_Updated,
