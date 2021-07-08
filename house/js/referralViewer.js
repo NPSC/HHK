@@ -16,7 +16,7 @@
 	    var defaults = {    
             serviceURL: 'ws_resc.php',
             detailURL: 'showReferral.php',
-            reserveURL: 'Reserve.php',
+            reserveURL: 'GuestReferral.php',
             dtTable: "",
             dtData: {'cmd': 'listforms', 'status':'inbox'},
             dtCols: [
