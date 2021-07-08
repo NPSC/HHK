@@ -24,10 +24,12 @@ class ProgressiveSearch {
 	           ->setNameLast($r["Last"])
 	           ->setNickname($r["Nickname"])
 	           ->setNameMiddle($r["Middle"])
+	           ->setGender($r['Gender'])
 	           ->setBirthDate($r['Birthdate'])
 	           ->setPhone($r['Phone'])
 	           ->setEmail($r['Email'])
-	           ->setAddressStreet($r['Street Address'])
+	           ->setAddressStreet1($r['Address1'])
+	           ->setAddressStreet2($r['Address2'])
 	           ->setAddressCity($r['City'])
 	           ->setAddressState($r['State'])
 	           ->setAddressZip($r['Zip'])
@@ -55,11 +57,14 @@ class ProgressiveSearch {
     IFNULL(g.Description, '') AS `Suffix`,
     n.Name_Nickname as `Nickname`,
     IFNULL(n.BirthDate, '') as `Birthdate`,
-    n.Member_Status as `Member Status`,
+    n.`Gender`,
+    IFNULL(ng.Relationship_Code, '') as `Relationship`,
     IFNULL(np.Phone_Num, '') AS `Phone`,
     IFNULL(ne.Email, '') as `Email`,
-    IFNULL(case when na.Address_2 = '' then na.Address_1 else concat_ws(na.Address_1, na.Address_2) end, '') as `Street Address`,
+    IFNULL(na.Address_1, '') as `Address1`,
+    IFNULL(na.Address_2, '') as `Address2`,
     IFNULL(na.City, '') AS `City`,
+    IFNULL(na.County, '') AS `County`,
     IFNULL(na.State_Province, '') AS `State`,
     IFNULL(na.Postal_Code, '') AS `Zip`,
     IFNULL(na.Country_Code, '') AS `Country`,
@@ -67,7 +72,7 @@ class ProgressiveSearch {
 FROM
     name n
         LEFT JOIN
-    name_guest ng on n.idName = ng.idName and ng.Relationship_Code = 'slf'
+    name_guest ng on n.idName = ng.idName
         LEFT JOIN
     name_phone np ON n.idName = np.idName
         AND n.Preferred_Phone = np.Phone_Code
@@ -85,7 +90,7 @@ FROM
         LEFT JOIN
     gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
         AND gr.Code = nd.No_Return
-WHERE n.idName > 0 and n.Record_Member = 1 and n.Name_Last = '" . $searchFor->getNameLast() . "' AND n.Name_First = '" . $searchFor->getNameFirst() . "' "
+WHERE n.idName > 0 and n.Record_Member = 1 and n.Member_Status ='a' and n.Name_Last = '" . $searchFor->getNameLast() . "' AND n.Name_First = '" . $searchFor->getNameFirst() . "' "
     .  $searchFor->getWhereClause();
 	    
 	}

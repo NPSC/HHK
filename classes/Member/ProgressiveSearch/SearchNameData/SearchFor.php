@@ -12,11 +12,11 @@ class SearchFor extends SearchNameData
     /**
      * @param string $birthDate
      */
-    public function setBirthDate($strBirthDate) {
+    public function setBirthDate($strBirthDate, $include = TRUE) {
         
         parent::setBirthDate($strBirthDate);
         
-        if ($this->birthDate != '') {
+        if ($this->birthDate != '' && $include) {
             $this->whereClause .= " AND DATE(n.BirthDate) = DATE('" . $this->birthDate . "')";
         }
         
@@ -26,11 +26,11 @@ class SearchFor extends SearchNameData
     /**
      * @param string $email
      */
-    public function setEmail($email) {
+    public function setEmail($email, $include = TRUE) {
         
         parent::setEmail($email);
         
-        if ($this->email != '') {
+        if ($this->email != '' && $include) {
             $this->whereClause .= " OR ne.Email = '" . $this->email . "' ";
         }
         return $this;
@@ -39,43 +39,17 @@ class SearchFor extends SearchNameData
     /**
      * @param string $phone
      */
-    public function setPhone($phone) {
+    public function setPhone($phone, $include = TRUE) {
         
         parent::setPhone($phone);
         
-        if ($this->phone != '') {
+        if ($this->phone != '' && $include) {
             $this->whereClause .= " OR np.Phone_Search = '" . $this->phone . "' ";
         }
         return $this;
     }
     
     
-    
-    /**
-     * @param string $addressStreet
-     */
-    public function setAddressStreet($addressStreet, CleanAddress $cleanAddress = NULL) {
-        
-        if (is_null($cleanAddress)) {
-            $this->addressStreet = trim($addressStreet);
-        } else {
-            
-            $addrs = $cleanAddress->cleanAddr(trim(filter_var($addressStreet, FILTER_SANITIZE_STRING)));
-                        
-            $this->addressStreet = $addrs[0];
-            $this->addressStreet2 =  $addrs[1];
-            
-        }
-        
-        return $this;
-    }
-    
-    /**
-     * @return string
-     */
-    public function getAddressStreet() {
-        return $this->addressStreet . ($this->addressStreet2 == '' ? '' : ', ' . $this->addressStreet2);
-    }
     
     /**
      * @return string

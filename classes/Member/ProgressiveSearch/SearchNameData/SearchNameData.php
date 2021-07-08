@@ -7,14 +7,16 @@ class SearchNameData {
     protected $nameMiddle;
     protected $nameLast;
     protected $nickname;
+    protected $gender;
     protected $birthDate;
     protected $relationship;
     protected $email;
     protected $phone;
-    protected $addressStreet;
+    protected $addressStreet1;
     protected $addressStreet2;
     protected $addressCity;
     protected $addressState;
+    protected $addressCounty;
     protected $addressZip;
     protected $addressCountry;
     
@@ -51,7 +53,15 @@ class SearchNameData {
         return $this;
     }
     
-    /**
+        /**
+     * @param string $gender
+     */
+    public function setGender($gender) {
+        $this->gender = trim($gender);
+        return $this;
+    }
+    
+/**
      * @param string $birthDate
      */
     public function setBirthDate($strBirthDate) {
@@ -93,10 +103,18 @@ class SearchNameData {
     }
     
     /**
-     * @param string $addressStreet
+     * @param string $addressStreet1
      */
-    public function setAddressStreet($addressStreet) {
-        $this->addressStreet = trim($addressStreet);
+    public function setAddressStreet1($addressStreet1) {
+        $this->addressStreet1 = trim($addressStreet1);
+        return $this;
+    }
+    
+    /**
+     * @param string $addressStreet2
+     */
+    public function setAddressStreet2($addressStreet2) {
+        $this->addressStreet2 = trim($addressStreet2);
         return $this;
     }
     
@@ -105,6 +123,14 @@ class SearchNameData {
      */
     public function setAddressCity($addressCity) {
         $this->addressCity = trim($addressCity);
+        return $this;
+    }
+    
+    /**
+     * @param string $addressCounty
+     */
+    public function setAddressCounty($addressCounty) {
+        $this->addressCounty = trim($addressCounty);
         return $this;
     }
     
@@ -157,7 +183,7 @@ class SearchNameData {
         return $this->nameLast;
     }
     
-        /**
+    /**
      * @return string
      */
     public function getNickname()
@@ -173,7 +199,15 @@ class SearchNameData {
         return $this->birthDate;
     }
     
-        /**
+    /**
+     * @return string
+     */
+    public function getGender()
+    {
+        return $this->gender;
+    }
+    
+    /**
      * @return string
      */
     public function getRelationship()
@@ -181,7 +215,7 @@ class SearchNameData {
         return $this->relationship;
     }
     
-/**
+    /**
      * @return string
      */
     public function getEmail()
@@ -200,12 +234,12 @@ class SearchNameData {
     /**
      * @return string
      */
-    public function getAddressStreet()
+    public function getAddressStreet1()
     {
-        return $this->addressStreet;
+        return $this->addressStreet1;
     }
     
-        /**
+    /**
      * @return string
      */
     public function getAddressStreet2()
@@ -213,12 +247,20 @@ class SearchNameData {
         return $this->addressStreet2;
     }
     
-/**
+    /**
      * @return string
      */
     public function getAddressCity()
     {
         return $this->addressCity;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getAddressCounty()
+    {
+        return $this->addressCounty;
     }
     
     /**
@@ -244,6 +286,33 @@ class SearchNameData {
     {
         return $this->addressCountry;
     }
+    
+    /**
+     * @param string $addressStreet
+     */
+    public function setAddressStreet($addressStreet, $include = FALSE, CleanAddress $cleanAddress = NULL) {
+        
+        if (is_null($cleanAddress)) {
+            $this->addressStreet1 = trim($addressStreet);
+        } else {
+            
+            $addrs = $cleanAddress->cleanAddr(trim(filter_var($addressStreet, FILTER_SANITIZE_STRING)));
+            
+            $this->addressStreet1 = $addrs[0];
+            $this->addressStreet2 =  $addrs[1];
+            
+        }
+        
+        return $this;
+    }
+    
+    /**
+     * @return string
+     */
+    public function getAddressStreet() {
+        return $this->addressStreet1 . ($this->addressStreet2 == '' ? '' : ', ' . $this->addressStreet2);
+    }
+    
     
 }
 

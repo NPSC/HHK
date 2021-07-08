@@ -46,7 +46,7 @@ $payFailPage = $wInit->page->getFilename();
 $idGuest = -1;
 $idReserv = 0;
 $idPsg = 0;
-$idDoc = 0;
+
 
 // Hosted payment return
 try {
@@ -125,10 +125,6 @@ if (isset($_GET['idPsg'])) {
     $idPsg = intval(filter_var($_GET['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
-// Referral form
-if (isset($_GET['docid'])) {
-	$idDoc = intval(filter_input(INPUT_GET, 'docid', FILTER_SANITIZE_NUMBER_INT), 10);
-}
 
 if ($idReserv > 0 || $idGuest >= 0) {
 
@@ -136,22 +132,6 @@ if ($idReserv > 0 || $idGuest >= 0) {
     $resvObj->setIdResv($idReserv);
     $resvObj->setId($idGuest);
     $resvObj->setIdPsg($idPsg);
-
-} else if ($idDoc > 0) {
-	
-    // Guest posted a referral form from client website.
-    try {
-    	$refForm = new ReferralForm($dbh, $idDoc);
-    	
-    	$refForm->searchPatient($dbh);
-    	$mk1 = $refForm->createPatientMarkup();
-    	
-     	$refForm->searchGuests($dbh);
-     	$mk1 .= $refForm->guestsMarkup();
-	
-    } catch (\Exception $ex) {
-        $mk1 .= '<p>Referral form Error: ' . $ex->getMessage() . '</p>';
-    }
 	
 } else {
 	
@@ -243,8 +223,6 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <?php if ($idDoc > 0) {echo GUEST_REFERRAL_JS;} ?>
-        
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

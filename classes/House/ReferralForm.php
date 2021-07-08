@@ -52,20 +52,30 @@ class ReferralForm {
 	    
 	    // Patient
 	    if ( ! isset($this->formUserData['patient']['firstName']) || ! isset($this->formUserData['patient']['lastName'])) {
-	        throw new \Exception('Patient first and/or last name not set.');
+	        throw new \Exception('Patient first and/or last name fields are not set.');
+	    }
+	    
+	    if ($this->formUserData['patient']['firstName'] == '' || $this->formUserData['patient']['lastName'] == '') {
+	        throw new \Exception('Patient first and last name must both be filled in.  First name = ' . $this->formUserData['patient']['firstName'] . ', Last name = ' . $this->formUserData['patient']['lastName']);
 	    }
 	    
 	    $this->patSearchFor = new SearchFor();
 	    
+	    // First and last names
 	    $this->patSearchFor->setNameFirst($this->formUserData['patient']['firstName'])
 	       ->setNameLast($this->formUserData['patient']['lastName']);
 	    
-	    // patientBirthdate
+	    // patient Birthdate
 	    if (isset($this->formUserData['patient']['birthdate']) && $this->formUserData['patient']['birthdate'] != '') {
 	        $this->patSearchFor->setBirthDate($this->formUserData['patient']['birthdate']);
 	    }
-	    
-	    // Phone
+	       
+	    // patient gender
+	    if (isset($this->formUserData['patient']['gender']) && $this->formUserData['patient']['gender'] != '') {
+	        $this->patSearchFor->setGender($this->formUserData['patient']['gender']);
+	    }
+	       
+	       // Phone
 	    if (isset($this->formUserData['patient']['phone']) && $this->formUserData['patient']['phone'] != '') {
 	        $this->patSearchFor->setPhone($this->formUserData['patient']['phone']);
 	    }
@@ -76,13 +86,13 @@ class ReferralForm {
 	    }
 	    
 	    // City
-	    if (isset($this->formUserData['patient']['address']['city']) && $this->formUserData['patient']['address']['city'] != '') {
-	        $this->patSearchFor->setAddressCity($this->formUserData['patient']['address']['city']);
+	    if (isset($this->formUserData['patient']['address']['adrcity']) && $this->formUserData['patient']['address']['adrcity'] != '') {
+	        $this->patSearchFor->setAddressCity($this->formUserData['patient']['address']['adrcity']);
 	    }
 	    
 	    // State
-	    if (isset($this->formUserData['patient']['address']['state']) && $this->formUserData['patient']['address']['state'] != '') {
-	        $this->patSearchFor->setAddressState($this->formUserData['patient']['address']['state']);
+	    if (isset($this->formUserData['patient']['address']['adrstate']) && $this->formUserData['patient']['address']['adrstate'] != '') {
+	        $this->patSearchFor->setAddressState($this->formUserData['patient']['address']['adrstate']);
 	    }
 	    
 	    // Zip
@@ -91,8 +101,8 @@ class ReferralForm {
 	    }
 	    
 	    // Country
-	    if (isset($this->formUserData['patient']['address']['country']) && $this->formUserData['patient']['address']['country'] != '') {
-	        $this->patSearchFor->setAddressCountry($this->formUserData['patient']['address']['country']);
+	    if (isset($this->formUserData['patient']['address']['adrcountry']) && $this->formUserData['patient']['address']['adrcountry'] != '') {
+	        $this->patSearchFor->setAddressCountry($this->formUserData['patient']['address']['adrcountry']);
 	    }
 	    
 	    $progSearch = new ProgressiveSearch();
@@ -161,7 +171,7 @@ class ReferralForm {
 	    $formHospitalName = '';
 	    
 	    if (isset($this->formUserData['hospital'])) {
-	        $formHospitalName = $this->formUserData['hospital'];
+	        $formHospitalName = $this->formUserData['hospital']['name'];
 	    }
 
 	    // Make hospital list
@@ -238,9 +248,9 @@ class ReferralForm {
 	        , array('class'=>'hhk-origUserData'));
 	    
 	    // Searched data
-	    foreach ($this->patResults as $id => $r) {
+	    foreach ($this->patResults as $r) {
 	        $tbl->addBodyTr(
-	            HTMLTable::makeTd($id)
+	            HTMLTable::makeTd($r->getId())
 	            .HTMLTable::makeTd($r->getNameFirst())
 	            .HTMLTable::makeTd($r->getNameMiddle())
 	            .HTMLTable::makeTd($r->getNameLast())
@@ -259,7 +269,7 @@ class ReferralForm {
 	    
 	    // Offer New Patient
 	    $tbl->addBodyTr(
-	        HTMLTABLE::makeTd('0')
+	        HTMLTABLE::makeTd('')
 	        .HTMLTable::makeTd('New Patient', array('colspan'=>'15'))
 	        , array('class'=>'hhk-newPatient'));
 	    
@@ -345,7 +355,7 @@ class ReferralForm {
 	   
 	   // Offer New Guest
 	   $tbl->addBodyTr(
-	       HTMLTABLE::makeTd('0')
+	       HTMLTABLE::makeTd('')
 	       .HTMLTable::makeTd('New Guest', array('colspan'=>'15'))
 	       , array('class'=>'hhk-newGuest'));
 	   

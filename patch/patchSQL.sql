@@ -89,3 +89,7 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 -- add referral form title label
 INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Description`) VALUES ('referralFormTitle','Referral Form', 's','g','Default: Referral Form');
+
+-- Add GuestReferral web page
+call new_Webpage('GuestReferral.php', 31, 'Guest Referral', 0, 'h', '', '', 'p', '', '', NULL, 'g');
+call new_Webpage('GuestReferral.php', 31, 'Guest Referral', 0, 'h', '', '', 'p', '', '', NULL, 'ga');
