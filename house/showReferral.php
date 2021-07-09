@@ -62,9 +62,15 @@ $patientRels = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Order');
 unset($patientRels['slf']);
 $mediaSources = readGenLookupsPDO($dbh, 'Media_Source','Order');
 $namePrefixes = readGenLookupsPDO($dbh, 'Name_Prefix', 'Order');
+$nameSuffixes = readGenLookupsPDO($dbh, 'Name_Suffix', 'Order');
 $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
     'KY', 'LA', 'LB', 'MA', 'MB', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NB', 'NC', 'ND', 'NE', 'NF', 'NH', 'NJ', 'NM', 'NS', 'NT', 'NV', 'NY', 'OH',
     'OK', 'ON', 'OR', 'PA', 'PE', 'PR', 'PQ', 'RI', 'SC', 'SD', 'SK', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY');
+$formattedStates = array();
+foreach($stateList as $state){
+    $formattedStates[$state] = ["Code"=>$state, "Description"=>$state];
+}
+
 $formTemplate = '';
 $formData = '';
 $style = '';
@@ -155,9 +161,10 @@ if(isset($_GET['template'])){
             	const formData = `<?php echo $formData; ?>`;
             	var genders = <?php echo json_encode($genders); ?>;
             	var patientRels = <?php echo json_encode($patientRels); ?>;
-            	var vehicleStates = <?php echo json_encode($stateList); ?>;
+            	var vehicleStates = <?php echo json_encode($formattedStates); ?>;
             	var mediaSources = <?php echo json_encode($mediaSources); ?>;
             	var namePrefixes = <?php echo json_encode($namePrefixes); ?>;
+            	var nameSuffixes = <?php echo json_encode($nameSuffixes); ?>;
             
             
                 const formRender = $('#formContent').formRender({
@@ -188,6 +195,9 @@ if(isset($_GET['template'])){
               					switch(data.dataSource){
               						case 'namePrefix':
               							options = namePrefixes;
+              							break;
+              						case 'nameSuffix':
+              							options = nameSuffixes;
               							break;
               						case 'gender':
               							options = genders;

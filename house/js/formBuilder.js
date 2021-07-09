@@ -80,6 +80,17 @@
     				"width": "col-md-3"
   				},
   				{
+    				"type": "select",
+    				"label": "Suffix",
+    				"placeholder": "Suffix",
+    				"className": "form-select",
+    				"name": "patient.suffix",
+    				"width": "col-md-3",
+    				"dataSource":"nameSuffix",
+    				"multiple": false,
+    				"values": []
+  				},
+  				{
   					"type": "text",
   					"required": false,
     				"label": (options.labels.patient || 'Patient') + " Middle Name",
@@ -315,6 +326,7 @@
 					"type": "date",
 					"required": true,
     				"label": "Checkin Date",
+					"placeholder": "Checkin Date",
     				"className": "form-control",
     				"name": "checkindate",
     				"width": "col-md-6"
@@ -323,6 +335,7 @@
 					"type": "date",
 					"required": true,
     				"label": "Checkout Date",
+					"placeholder": "Checkout Date",
     				"className": "form-control",
     				"name": "checkoutdate",
     				"width": "col-md-6"
@@ -668,8 +681,9 @@
     					options: {
     						'':'',
     						'namePrefix': 'Name Prefix',
+    						'nameSuffix': 'Name Suffix',
     						'gender': 'Gender',
-    						'patientRelation': 'Patient Relationsip',
+    						'patientRelation': 'Patient Relationship',
     						'vehicleStates': 'Vehicle States',
     						'mediaSource': 'Media Source'
     					}

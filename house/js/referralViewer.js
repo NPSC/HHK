@@ -192,7 +192,7 @@
 	function createActions(idDocument, row){
 		return `
 			<ul class="hhk-ui-icons">
-				<li class="formDetails" data-docid="` + idDocument + `" title="Form Details"><span class="ui-icon ui-icon-extlink"></span></li>
+				<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" title="Form Details"><span class="ui-icon ui-icon-extlink"></span></li>
 				<li class="formArchive" data-docid="` + idDocument + `" title="Archive Form"><span class="ui-icon ui-icon-folder-open"></span></li>
 				<li class="formDelete" data-docid="` + idDocument + `" title="Delete Form"><span class="ui-icon ui-icon-trash"></span></li>
 			</ul>
@@ -204,6 +204,7 @@
 		
 		$wrapper.on('click', '.formDetails', function(e){
 			var idDocument = $(e.currentTarget).data('docid');
+			var idStatus = $(e.currentTarget).data('status');
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
 			
 			settings.formDetailsDialogBtns["Create Reservation"] = function(){
@@ -212,19 +213,21 @@
 			
 			formDetailsDialog.dialog('option', 'buttons', settings.formDetailsDialogBtns);
 			
-			$.ajax({
-				url: settings.serviceURL,
-				dataType: 'JSON',
-				type: 'get',
-				data: {
-					cmd: 'updateFormStatus',
-					idDocument: idDocument,
-					status: 'ip'
-				},
-				success: function( data ){
-					settings.dtTable.ajax.reload();
-				}
-			});
+			if(idStatus == 'n'){
+				$.ajax({
+					url: settings.serviceURL,
+					dataType: 'JSON',
+					type: 'get',
+					data: {
+						cmd: 'updateFormStatus',
+						idDocument: idDocument,
+						status: 'ip'
+					},
+					success: function( data ){
+						settings.dtTable.ajax.reload();
+					}
+				});
+			}
 			formDetailsDialog.dialog('open');
 		
 		}); 
