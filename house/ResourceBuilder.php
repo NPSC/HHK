@@ -2257,7 +2257,11 @@ $resultMessage = $alertMsg->createMarkup();
 					referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
 					treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
 					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>"
-					
+				},
+				fieldOptions: {
+					county: "<?php echo $uS->county; ?>",
+					doctor: "<?php echo $uS->Doctor; ?>",
+					referralAgent: "<?php echo $uS->ReferralAgent; ?>"
 				}
 			});
 		});
