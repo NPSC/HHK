@@ -1,9 +1,6 @@
 <?php
 namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
-use HHK\Member\Address\CleanAddress;
-use HHK\SysConst\MemType;
-use HHK\SysConst\VolMemberType;
 
 class SearchFor extends SearchNameData
 {
@@ -17,7 +14,7 @@ class SearchFor extends SearchNameData
         parent::setBirthDate($strBirthDate);
         
         if ($this->birthDate != '' && $include) {
-            $this->whereClause .= " AND DATE(n.BirthDate) = DATE('" . $this->birthDate . "')";
+            $this->whereClause .= " AND (DATE(n.BirthDate) = DATE('" . $this->birthDate . "') OR n.BirthDate = NULL) ";
         }
         
         return $this;

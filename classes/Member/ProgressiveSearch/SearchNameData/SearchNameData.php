@@ -1,6 +1,8 @@
 <?php
 namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
+use HHK\Member\Address\CleanAddress;
+
 class SearchNameData {
    
     protected $nameFirst;
@@ -290,7 +292,7 @@ class SearchNameData {
     /**
      * @param string $addressStreet
      */
-    public function setAddressStreet($addressStreet, $include = FALSE, CleanAddress $cleanAddress = NULL) {
+    public function setAddressStreet($addressStreet, CleanAddress $cleanAddress = NULL, $include = FALSE) {
         
         if (is_null($cleanAddress)) {
             $this->addressStreet1 = trim($addressStreet);

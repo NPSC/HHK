@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
+use HHK\SysConst\GLTableNames;
+use HHK\sec\Session;
+
 class SearchResults extends SearchNameData
 {
     
@@ -110,7 +113,29 @@ class SearchResults extends SearchNameData
         return $this;
     }
     
+    public function getBirthDate() {
+        
+        if ($this->birthDate != '') {
+            return date('M d, Y', strtotime($this->birthDate));
+        }
+        
+        return $this->birthDate;
+    }
     
+    public function getPhone() {
+        return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->phone);
+    }
     
+    public function getRelationship() {
+        
+        $uS = Session::getInstance();
+        
+        if (isset($uS->guestLookups[GLTableNames::PatientRel][$this->relationship])) {
+            return $uS->guestLookups[GLTableNames::PatientRel][$this->relationship][1];
+        }
+        
+        return $this->relationship;
+        
+    }
 }
 

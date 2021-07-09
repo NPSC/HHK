@@ -10,6 +10,11 @@ use HHK\Member\ProgressiveSearch\ProgressiveSearch;
 use HHK\Member\ProgressiveSearch\SearchNameData\{SearchFor};
 use HHK\SysConst\ReferralFormStatus;
 use HHK\SysConst\VolMemberType;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\RelLinkType;
+use HHK\Member\Address\CleanAddress;
+use HHK\HTMLControls\HTMLInput;
+use HHK\sec\Session;
 
 class ReferralForm {
 	
@@ -49,40 +54,48 @@ class ReferralForm {
 	
 	
 	public function searchPatient(\PDO $dbh) {
-	    
+
 	    // Patient
 	    if ( ! isset($this->formUserData['patient']['firstName']) || ! isset($this->formUserData['patient']['lastName'])) {
 	        throw new \Exception('Patient first and/or last name fields are not set.');
 	    }
-	    
+
 	    if ($this->formUserData['patient']['firstName'] == '' || $this->formUserData['patient']['lastName'] == '') {
 	        throw new \Exception('Patient first and last name must both be filled in.  First name = ' . $this->formUserData['patient']['firstName'] . ', Last name = ' . $this->formUserData['patient']['lastName']);
 	    }
-	    
+
 	    $this->patSearchFor = new SearchFor();
 	    
+	    // Relationship
+	    $this->patSearchFor->setRelationship(RelLinkType::Self);
+
 	    // First and last names
 	    $this->patSearchFor->setNameFirst($this->formUserData['patient']['firstName'])
 	       ->setNameLast($this->formUserData['patient']['lastName']);
-	    
+
 	    // patient Birthdate
 	    if (isset($this->formUserData['patient']['birthdate']) && $this->formUserData['patient']['birthdate'] != '') {
 	        $this->patSearchFor->setBirthDate($this->formUserData['patient']['birthdate']);
 	    }
 	       
 	    // patient gender
-	    if (isset($this->formUserData['patient']['gender']) && $this->formUserData['patient']['gender'] != '') {
-	        $this->patSearchFor->setGender($this->formUserData['patient']['gender']);
+	    if (isset($this->formUserData['patient']['demogs']['gender']) && $this->formUserData['patient']['demogs']['gender'] != '') {
+	        $this->patSearchFor->setGender($this->formUserData['patient']['demogs']['gender']);
 	    }
-	       
+
 	       // Phone
 	    if (isset($this->formUserData['patient']['phone']) && $this->formUserData['patient']['phone'] != '') {
 	        $this->patSearchFor->setPhone($this->formUserData['patient']['phone']);
 	    }
-	    
+
 	    // email
 	    if (isset($this->formUserData['patient']['email']) && $this->formUserData['patient']['email'] != '') {
 	        $this->patSearchFor->setEmail($this->formUserData['patient']['email']);
+	    }
+
+	    // Street
+	    if (isset($this->formUserData['patient']['address']['street']) && $this->formUserData['patient']['address']['street'] != '') {
+	        $this->patSearchFor->setAddressStreet($this->formUserData['patient']['address']['street'], new CleanAddress($dbh));
 	    }
 	    
 	    // City
@@ -90,16 +103,21 @@ class ReferralForm {
 	        $this->patSearchFor->setAddressCity($this->formUserData['patient']['address']['adrcity']);
 	    }
 	    
+	    // County
+	    if (isset($this->formUserData['patient']['address']['adrcounty']) && $this->formUserData['patient']['address']['adrcounty'] != '') {
+	        $this->patSearchFor->setAddressCounty($this->formUserData['patient']['address']['adrcounty']);
+	    }
+	    
 	    // State
 	    if (isset($this->formUserData['patient']['address']['adrstate']) && $this->formUserData['patient']['address']['adrstate'] != '') {
 	        $this->patSearchFor->setAddressState($this->formUserData['patient']['address']['adrstate']);
 	    }
-	    
+
 	    // Zip
-	    if (isset($this->formUserData['patient']['address']['zip']) && $this->formUserData['patient']['address']['zip'] != '') {
-	        $this->patSearchFor->setAddressZip($this->formUserData['patient']['address']['zip']);
+	    if (isset($this->formUserData['patient']['address']['adrzip']) && $this->formUserData['patient']['address']['adrzip'] != '') {
+	        $this->patSearchFor->setAddressZip($this->formUserData['patient']['address']['adrzip']);
 	    }
-	    
+
 	    // Country
 	    if (isset($this->formUserData['patient']['address']['adrcountry']) && $this->formUserData['patient']['address']['adrcountry'] != '') {
 	        $this->patSearchFor->setAddressCountry($this->formUserData['patient']['address']['adrcountry']);
@@ -111,7 +129,7 @@ class ReferralForm {
 	    return $this->patResults;
 	}
 
-	public function searchGuests(\PDO $dbh) {
+	public function searchGuests(\PDO $dbh, $maxGuests = 5) {
 	    
 	    $this->gstResults = [];
 	    
@@ -119,7 +137,7 @@ class ReferralForm {
 	        throw new \Exception('Guests are missing from form data.  ');
 	    }
 
-	    for ($indx = 0; $indx < 5; $indx++) {
+	    for ($indx = 0; $indx < $maxGuests; $indx++) {
 	        
 	        $gindx = 'g' . $indx;
 	        
@@ -229,9 +247,29 @@ class ReferralForm {
 	        .HTMLTable::makeTh('No Return')
 	        );
 	    
+	    // Searched data
+	    foreach ($this->patResults as $r) {
+	        $tbl->addBodyTr(
+	            HTMLTable::makeTd(HTMLInput::generateMarkup('Me', array('type'=>'button', 'id'=>'patSel'.$r->getId(), 'data-nid'=>$r->getId())))
+	            .HTMLTable::makeTd($r->getNameFirst())
+	            .HTMLTable::makeTd($r->getNameMiddle())
+	            .HTMLTable::makeTd($r->getNameLast())
+	            .HTMLTable::makeTd($r->getNickname())
+	            .HTMLTable::makeTd($r->getBirthDate())
+	            .HTMLTable::makeTd($r->getPhone())
+	            .HTMLTable::makeTd($r->getEmail())
+	            .HTMLTable::makeTd($r->getAddressStreet())
+	            .HTMLTable::makeTd($r->getAddressCity())
+	            .HTMLTable::makeTd($r->getAddressState())
+	            .HTMLTable::makeTd($r->getAddressZip())
+	            .HTMLTable::makeTd($r->getAddressCountry())
+	            .HTMLTable::makeTd($r->getNoReturn())
+	            , array('class'=>'hhk-resultUserData'));
+	    }
+	    
 	    // Original data
 	    $tbl->addBodyTr(
-	        HTMLTable::makeTd('-')
+	        HTMLTable::makeTd(HTMLInput::generateMarkup('New', array('type'=>'button', 'id'=>'patSel0', 'data-nid'=>'0')))
 	        .HTMLTable::makeTd($this->patSearchFor->getNameFirst())
 	        .HTMLTable::makeTd('')
 	        .HTMLTable::makeTd($this->patSearchFor->getNameLast())
@@ -247,31 +285,6 @@ class ReferralForm {
 	        .HTMLTable::makeTd('')
 	        , array('class'=>'hhk-origUserData'));
 	    
-	    // Searched data
-	    foreach ($this->patResults as $r) {
-	        $tbl->addBodyTr(
-	            HTMLTable::makeTd($r->getId())
-	            .HTMLTable::makeTd($r->getNameFirst())
-	            .HTMLTable::makeTd($r->getNameMiddle())
-	            .HTMLTable::makeTd($r->getNameLast())
-	            .HTMLTable::makeTd($r->getNickname())
-	            .HTMLTable::makeTd(($r->getBirthDate() == '' ? '' : date('M d, Y', strtotime($r->getBirthDate()))))
-	            .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $r->getPhone()))
-	            .HTMLTable::makeTd($r->getEmail())
-	            .HTMLTable::makeTd($r->getAddressStreet())
-	            .HTMLTable::makeTd($r->getAddressCity())
-	            .HTMLTable::makeTd($r->getAddressState())
-	            .HTMLTable::makeTd($r->getAddressZip())
-	            .HTMLTable::makeTd($r->getAddressCountry())
-	            .HTMLTable::makeTd($r->getNoReturn())
-	            , array('class'=>'hhk-resultUserData'));
-	    }
-	    
-	    // Offer New Patient
-	    $tbl->addBodyTr(
-	        HTMLTABLE::makeTd('')
-	        .HTMLTable::makeTd('New Patient', array('colspan'=>'15'))
-	        , array('class'=>'hhk-newPatient'));
 	    
 	    return $tbl->generateMarkup(array('class'=>'hhk-visitdialog hhk-tdbox'));
 	}
@@ -294,6 +307,7 @@ class ReferralForm {
 	
 	public function createGuestMarkup($indx, array $guestResults) {
 	    
+	    $uS = Session::getInstance();
 	    $gindx = 'g' . $indx;
 	    $tbl = new HTMLTable();
 	    
@@ -314,29 +328,10 @@ class ReferralForm {
 	        .HTMLTable::makeTh('No Return')
 	        );
 	    
-	    // Original data
-	    $tbl->addBodyTr(
-    	    HTMLTable::makeTd('')
-	        .HTMLTable::makeTd($this->formUserData['guests'][$gindx]['firstName'])
-    	    .HTMLTable::makeTd('')
-	        .HTMLTable::makeTd($this->formUserData['guests'][$gindx]['lastName'])
-    	    .HTMLTable::makeTd('')
-	        .HTMLTable::makeTd($this->formUserData['guests'][$gindx]['relationship'])
-	        .HTMLTable::makeTd($this->formUserData['guests'][$gindx]['phone'])
-    	    .HTMLTable::makeTd('')
-    	    .HTMLTable::makeTd('')
-    	    .HTMLTable::makeTd('')
-    	        .HTMLTable::makeTd('')
-    	        .HTMLTable::makeTd('')
-    	        .HTMLTable::makeTd('')
-    	        .HTMLTable::makeTd('')
-	        , array('class'=>'hhk-origUserData'));
-
-	        
 	   // Searched data
-	    foreach ($guestResults as $r) {
+	   foreach ($guestResults as $r) {
 	       $tbl->addBodyTr(
-	           HTMLTable::makeTd($r->getId())
+	           HTMLTable::makeTd(HTMLInput::generateMarkup('Me', array('type'=>'button', 'id'=>'gstSel'.$r->getId(), 'data-nid'=>$r->getId())))
 	           .HTMLTable::makeTd($r->getNameFirst())
 	           .HTMLTable::makeTd($r->getNameMiddle())
 	           .HTMLTable::makeTd($r->getNameLast())
@@ -353,11 +348,23 @@ class ReferralForm {
 	           , array('class'=>'hhk-resultUserData'));
 	   }
 	   
-	   // Offer New Guest
+	   // Original data
 	   $tbl->addBodyTr(
-	       HTMLTABLE::makeTd('')
-	       .HTMLTable::makeTd('New Guest', array('colspan'=>'15'))
-	       , array('class'=>'hhk-newGuest'));
+	       HTMLTable::makeTd(HTMLInput::generateMarkup('New', array('type'=>'button', 'id'=>'gstSel0', 'data-nid'=>'0')))
+	       .HTMLTable::makeTd($this->formUserData['guests'][$gindx]['firstName'])
+	       .HTMLTable::makeTd('')
+	       .HTMLTable::makeTd($this->formUserData['guests'][$gindx]['lastName'])
+	       .HTMLTable::makeTd('')
+	       .HTMLTable::makeTd((isset($uS->guestLookups[GLTableNames::PatientRel][$this->formUserData['guests'][$gindx]['relationship']]) ? $uS->guestLookups[GLTableNames::PatientRel][$this->formUserData['guests'][$gindx]['relationship']][1] : $this->formUserData['guests'][$gindx]['relationship']))
+	       .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->formUserData['guests'][$gindx]['phone']))
+	       .HTMLTable::makeTd('')
+	       .HTMLTable::makeTd('')
+	       .HTMLTable::makeTd('')
+	       .HTMLTable::makeTd('')
+	       .HTMLTable::makeTd('')
+	       .HTMLTable::makeTd('')
+	       .HTMLTable::makeTd('')
+	       , array('class'=>'hhk-origUserData'));
 	   
 	   return $tbl->generateMarkup(array('class'=>'hhk-visitdialog hhk-tdbox'));
 	}
