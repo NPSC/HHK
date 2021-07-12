@@ -34,8 +34,8 @@
     			label: "Submit",
     			type: "button",
     			subtype: "submit",
-    			className: "submit-btn"
-    			
+    			className: "submit-btn",
+    			name: "submit",
     		}
   			],
   			requiredFields:[ //fields that every referral form must include and set as required
@@ -43,7 +43,8 @@
   				'patient.lastName',
   				'checkindate',
   				'checkoutdate',
-  				'hospital.name'
+  				'hospital.name',
+  				'submit'
   			],
             inputSets: [
       		{
@@ -1044,7 +1045,7 @@ console.log(settings.fieldOptions);
 				//check required fields
 				var missingFields = [];
 				settings.requiredFields.forEach(function(field){
-					var filtered = formData.filter(x=> x.name === field && x.required === true);
+					var filtered = formData.filter(x=> (x.name === field && x.required === true) || x.name === 'submit');
 					if(filtered.length == 0){
 						missingFields.push(field);
 					}
