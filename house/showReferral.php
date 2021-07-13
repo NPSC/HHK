@@ -189,7 +189,19 @@ if(isset($_GET['template'])){
               						)
               					);
               				}else if(data.type == 'date'){
-              					$(field).attr('type','text').attr('autocomplete', 'off').datepicker();
+              					$(field).attr('type','text').attr('autocomplete', 'off')
+              					if(data.name == 'patient.birthdate'){
+              						$(field).datepicker({
+                                        yearRange: '-99:+00',
+                                        changeMonth: true,
+                                        changeYear: true,
+                                        autoSize: true,
+                                        maxDate:0,
+                                        dateFormat: 'M d, yy'
+                                    });
+              					}else{
+              						$(field).datepicker();
+              					}
               				}else if(data.type == 'select' && data.dataSource){
               					var options = {};
               					switch(data.dataSource){

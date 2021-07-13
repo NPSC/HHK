@@ -17,6 +17,7 @@
             previewURL: 'showReferral.php',
             formBuilder: null,
             labels: {},
+            fieldOptions: {},
             fields: [
     		{
     			"type": "select",
@@ -33,8 +34,8 @@
     			label: "Submit",
     			type: "button",
     			subtype: "submit",
-    			className: "submit-btn"
-    			
+    			className: "submit-btn",
+    			name: "submit",
     		}
   			],
   			requiredFields:[ //fields that every referral form must include and set as required
@@ -42,7 +43,8 @@
   				'patient.lastName',
   				'checkindate',
   				'checkoutdate',
-  				'hospital.name'
+  				'hospital.name',
+  				'submit'
   			],
             inputSets: [
       		{
@@ -289,14 +291,15 @@
     				"name": "patient.address.adrcity",
     				"width": "col-md-5"
   				},
-  				{
+  				... (options.fieldOptions.county ?
+  				[{
   					"type": "text",
     				"label": "County",
     				"placeholder": "County",
     				"className": "form-control",
     				"name": "patient.address.adrcounty",
     				"width": "col-md-5"
-  				},
+  				}]:[]),
   				{
     				"type": "select",
     				"label": "State",
@@ -506,14 +509,15 @@
     				"name": "hospital.name",
     				"width": "col-md-3",
   				},
-  				{
+  				... (options.fieldOptions.doctor ?
+  				[{
 					"type": "text",
     				"label": "Doctor",
     				"placeholder": "Doctor",
     				"className": "form-control",
     				"name": "hospital.doctor",
     				"width": "col-md-3",
-  				},
+  				}]:[]),
   				{
 					"type": "date",
     				"label": (options.labels.treatmentStart || 'Treatment Start'),
@@ -532,7 +536,8 @@
   				}
   				]
   			},
-  			{
+  			... (options.fieldOptions.referralAgent ?
+  			[{
         		label: 'Referral Agent',
         		name: 'referral-agent',
         		showHeader: true,
@@ -571,7 +576,7 @@
   				},
   				]
   				
-  			}
+  			}]:[])
   			],
   			disableFields: [
       			'autocomplete',
@@ -791,7 +796,7 @@
         };
 
         var settings = $.extend(true, {}, defaults, options);
-
+console.log(settings.fieldOptions);
         var $wrapper = $(this);
         
         createMarkup($wrapper, settings);
@@ -1040,7 +1045,7 @@
 				//check required fields
 				var missingFields = [];
 				settings.requiredFields.forEach(function(field){
-					var filtered = formData.filter(x=> x.name === field && x.required === true);
+					var filtered = formData.filter(x=> (x.name === field && x.required === true) || x.name === 'submit');
 					if(filtered.length == 0){
 						missingFields.push(field);
 					}
