@@ -67,14 +67,8 @@ class SearchNameData {
      * @param string $birthDate
      */
     public function setBirthDate($strBirthDate) {
-        try {
-            
-            $birthDT = new \DateTime($strBirthDate);
-            $this->birthDate = $birthDT->format('Y-m-d');
-            
-        } catch (\Exception $ex) {
-            $this->birthDate = '';
-        }
+        
+        $this->birthDate = $strBirthDate;
         
         return $this;
     }

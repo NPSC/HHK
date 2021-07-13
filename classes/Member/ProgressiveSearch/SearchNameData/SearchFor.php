@@ -9,12 +9,13 @@ class SearchFor extends SearchNameData
     /**
      * @param string $birthDate
      */
-    public function setBirthDate($strBirthDate, $include = TRUE) {
+    public function setBirthDate($strBirthDate, $include = FALSE) {
         
         parent::setBirthDate($strBirthDate);
-        
+                
         if ($this->birthDate != '' && $include) {
-            $this->whereClause .= " AND (DATE(n.BirthDate) = DATE('" . $this->birthDate . "') OR n.BirthDate = NULL) ";
+            $bDay = new \DateTime($this->birthDate);
+            $this->whereClause .= " AND (DATE(n.BirthDate) = DATE('" . $bDay->format('Y-m-d') . "') OR n.BirthDate is NULL OR n.BirthDate = '') ";
         }
         
         return $this;

@@ -41,7 +41,9 @@ $errorMessage = '';
 $idDoc = 0;
 $patMkup = '';
 $guestMkup = '';
-$hospMkup = '';
+
+$datesMkup = '';
+$displayGuest = 'display:none;';
 
 // Referral form
 if (isset($_GET['docid'])) {
@@ -51,17 +53,32 @@ if (isset($_GET['docid'])) {
 
 if ($idDoc > 0) {
 	
-    // Guest posted a referral form from client website.
+    // House selected a referral form.
     try {
     	$refForm = new ReferralForm($dbh, $idDoc);
     	
-    	$refForm->searchPatient($dbh);
+    	$datesMkup = $refForm->datesMarkup();
+    	
+    	$includes = [];
+    	
+    	if (isset($_POST[$refForm::HTML_Incl_Birthday])) {
+    	    $includes[$refForm::HTML_Incl_Birthday] = 'y';
+    	}
+    	
+    	if (isset($_POST[$refForm::HTML_Incl_Phone])) {
+    	    $includes[$refForm::HTML_Incl_Phone] = 'y';
+    	}
+    	
+    	if (isset($_POST[$refForm::HTML_Incl_Email])) {
+    	    $includes[$refForm::HTML_Incl_Email] = 'y';
+    	}
+    	
+    	$refForm->searchPatient($dbh, $includes);
     	$patMkup = $refForm->createPatientMarkup();
     	
      	$refForm->searchGuests($dbh);
      	$guestMkup .= $refForm->guestsMarkup();
      	
-     	$hospMkup = $refForm->hosptialMarkup($dbh, $uS->guestLookups[GLTableNames::Hospital]);
 	
     } catch (\Exception $ex) {
         $errorMessage = '<p>Referral form error: ' . $ex->getMessage() . '</p>';
@@ -109,21 +126,26 @@ if ($idDoc > 0) {
                 <?php echo $errorMessage; ?>
             </div>
             <form action="GuestReferral.php" method="post"  id="form1">
+                <div id="datesSection" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3">
+                <?php echo $datesMkup; ?>
+                </div>
                 <div id="PatientSection" style="font-size: .9em; min-width: 810px;"  class="ui-widget hhk-visitdialog mb-3">
-                <?php echo $patMkup; ?>
-                </div>
-                <div id="HospitalSection" style="font-size: .9em;  min-width: 810px;"  class="ui-widget hhk-visitdialog mb-3">
-                <?php echo $hospMkup; ?>
-                
-                </div>
-                <div id="GuestSection" style="font-size: .9em;  min-width: 810px;"  class="ui-widget hhk-visitdialog mb-3">
-                <?php echo $guestMkup; ?>
+                    <div id="PatientHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3">
+                    	<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>
+                    </div>
+                    <?php echo $patMkup; ?>
+                    </div>
+                <div id="GuestSection" style="font-size: .9em; min-width: 810px; margin-top:50px;<?php echo $displayGuest; ?>"  class="ui-widget hhk-visitdialog mb-3">
+                    <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3">
+                    	<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>
+                    </div>
+                    <?php echo $guestMkup; ?>
                 </div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >
                         <tr><td ><span id="pWarnings" style="display:none; font-size: 1.4em; border: 1px solid #ddce99;margin-bottom:3px; padding: 0 2px; color:red; background-color: yellow; float:right;"></span></td></tr>
                         <tr><td>
-                        	<input type='button' id='btnDone' value='Continue' style="display:none;"/>
+                        	<input type='button' id='btnDone' value='Continue' />
                         </td></tr>
                     </table>
                 </div>
@@ -132,6 +154,7 @@ if ($idDoc > 0) {
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>" id="visitorLabel" />
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>" id="guestLabel" />
+        <input type="hidden" value="<?php echo $idDoc ?>" id="idDoc" />
         <?php echo GUEST_REFERRAL_JS; ?>
     </body>
 </html>
