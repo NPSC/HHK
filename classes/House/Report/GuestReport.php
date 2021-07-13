@@ -81,36 +81,44 @@ class GuestReport {
 
         // Set up the Months array
         $th = HTMLTable::makeTh('');
-        while ($indxDT < $endDT) {
-
-            $thisPeriod = $indxDT->format($periodFormat);
-
-            $th .= HTMLTable::makeTh($indxDT->format('M, Y'));
-
-            $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt'] = 0;
-            if ($whichGuests == 'new') {
-                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'New ' . Labels::getString('memberType', 'visitor', 'Guest') . 's';
-            } else if($whichGuests == 'allStarted'){
-                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's starting in month';
-            } else if($whichGuests == 'allStayed'){
-                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in month';
+        if($whichGuests != 'allStayed'){
+            while ($indxDT < $endDT) {
+    
+                $thisPeriod = $indxDT->format($periodFormat);
+    
+                $th .= HTMLTable::makeTh($indxDT->format('M, Y'));
+    
+                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt'] = 0;
+                if ($whichGuests == 'new') {
+                    $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'New ' . Labels::getString('memberType', 'visitor', 'Guest') . 's';
+                } else if($whichGuests == 'allStarted'){
+                    $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's starting in month';
+                } else if($whichGuests == 'allStayed'){
+                    $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
+                }
+    
+                // Demographics
+                foreach ($demoCategorys as $k => $d) {
+                    $accum[$thisPeriod][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
+                }
+    
+                $accum[$thisPeriod]['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
+    
+                $periods[] = $thisPeriod;
+    
+                $indxDT->add(new \DateInterval('P1M'));
             }
-
-            // Demographics
-            foreach ($demoCategorys as $k => $d) {
-                $accum[$thisPeriod][$d] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, $k, 'Order')));
-            }
-
-            $accum[$thisPeriod]['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
-
-            $periods[] = $thisPeriod;
-
-            $indxDT->add(new \DateInterval('P1M'));
         }
-
         $periods[] = 'Total';
 
         $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt'] = 0;
+        if ($whichGuests == 'new') {
+            $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'New ' . Labels::getString('memberType', 'visitor', 'Guest') . 's';
+        } else if($whichGuests == 'allStarted'){
+            $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's starting in month';
+        } else if($whichGuests == 'allStayed'){
+            $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
+        }
 
         // Totals
         foreach ($demoCategorys as $k => $d) {
@@ -123,8 +131,10 @@ class GuestReport {
 
         if ($whichGuests == 'new') {
             $query = "SELECT s.idName, MIN(s.Span_Start_Date) AS `minDate`,";
-        } else if ($whichGuests == 'allStarted' || $whichGuests == 'allStayed'){
+        } else if ($whichGuests == 'allStarted'){
             $query = "SELECT s.idName, DATE(s.Span_Start_Date) as `minDate`,";
+        }else if ($whichGuests == 'allStayed'){
+            $query = "SELECT DISTINCT s.idName,";
         }
 
         $query .= "na.Postal_Code,
@@ -163,9 +173,12 @@ class GuestReport {
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-            $spanStDT = new \DateTime($r['minDate']);
-            $startPeriod = $spanStDT->format($periodFormat);
-
+            if($whichGuests != 'allStayed'){
+                $spanStDT = new \DateTime($r['minDate']);
+                $startPeriod = $spanStDT->format($periodFormat);
+            }else{
+                $startPeriod = 'Total';
+            }
             if ($r['idName'] == $currId && $startPeriod == $currPeriod) {
 
                 continue;
@@ -175,11 +188,15 @@ class GuestReport {
             $currPeriod = $startPeriod;
 
             foreach ($demoCategorys as $d) {
-                $accum[$startPeriod][$d][$r[$d]]['cnt']++;
+                if($whichGuests != 'allStayed'){
+                    $accum[$startPeriod][$d][$r[$d]]['cnt']++;
+                }
                 $accum['Total'][$d][$r[$d]]['cnt']++;
             }
 
-            $accum[$startPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt']++;
+            if($whichGuests != 'allStayed'){
+                $accum[$startPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt']++;
+            }
             $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt']++;
 
 
@@ -189,7 +206,9 @@ class GuestReport {
                 foreach ($accum[$startPeriod]['Distance'] as $d => $val) {
 
                     if ($miles <= $d) {
-                        $accum[$startPeriod]['Distance'][$d]['cnt']++;
+                        if($whichGuests != 'allStayed'){
+                            $accum[$startPeriod]['Distance'][$d]['cnt']++;
+                        }
                         $accum['Total']['Distance'][$d]['cnt']++;
                         break;
                     }
@@ -198,11 +217,12 @@ class GuestReport {
             } catch (RuntimeException $hex) {
 
                 $badZipCodes[$r['Postal_Code']] = 'y';
-                $accum[$startPeriod]['Distance']['']['cnt']++;
+                if($whichGuests != 'allStayed'){
+                    $accum[$startPeriod]['Distance']['']['cnt']++;
+                }
                 $accum['Total']['Distance']['']['cnt']++;
 
             }
-
             //$totalPSGs[$r['idPsg']] = 'y';
         }
 
@@ -210,7 +230,7 @@ class GuestReport {
         $rowCount = 0;
 
         // Title Column
-        foreach ($accum[$firstPeriod] as $k => $demog) {
+        foreach ($accum['Total'] as $k => $demog) {
 
             $trs[$rowCount++] = HTMLTable::makeTd(str_replace('_', ' ', $k), array('class' => 'hhk-tdTitle'));
 
