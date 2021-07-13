@@ -275,6 +275,17 @@ class HouseServices {
             }
         }
 
+        // Ribbon Note
+        if (isset($post["txtRibbonNote"])){
+            $ribbonNote = filter_var($post["txtRibbonNote"], FILTER_SANITIZE_STRING);
+            $oldNote = $visit->getNotes();
+            $visit->setNotes($ribbonNote, $uS->username);
+            $visit->updateVisitRecord($dbh, $uS->username);
+            
+            if($oldNote != $visit->getNotes()){
+                $reply .= " Ribbon Note updated.";
+            }
+        }
 
         // Change room rate
         if ($isGuestAdmin && isset($post['rateChgCB']) && isset($post['extendCb']) === FALSE) {

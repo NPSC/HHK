@@ -2118,6 +2118,7 @@ select
         `v`.`Span_Start`,
         `v`.`Expected_Departure`,
         `v`.`Span_End`,
+        `v`.`Notes` AS `Ribbon_Note`,
         gv.Description as `Status_Text`,
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         ifnull(hs.idAssociation, 0) as `idAssociation`,
@@ -2176,7 +2177,8 @@ CREATE or Replace VIEW `vregister_resv` AS
         nd.Income_Bracket,
         nd.Age_Bracket,
         nd.Education_Level,
-        nd.Special_Needs
+        nd.Special_Needs,
+        r.Notes as 'Ribbon_Note'
     from
         `reservation` `r`
             left join
@@ -2580,7 +2582,7 @@ CREATE or replace VIEW `vspan_listing` AS
         `v`.`Ext_Phone_Installed`,
         `v`.`OverRideMaxOcc`,
         '' as `Visit_Notes`,
-        '' AS `Notes`,
+        `v`.`Notes` AS `Notes`,
         `v`.`Status`,
         ifnull(`g2`.`Description`, '') AS `Status_Title`,
         `v`.`Updated_By`,

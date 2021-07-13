@@ -160,6 +160,11 @@ class ActiveReservation extends Reservation {
             $resv->setCheckinNotes(filter_var($post['taCkinNotes'], FILTER_SANITIZE_STRING));
         }
         
+        // Ribbon Note
+        if (isset($post['txtRibbonNote'])){
+            $resv->setNotes(filter_var($post['txtRibbonNote'], FILTER_SANITIZE_STRING));
+        }
+        
         // remove room if reservation is in waitlist
         if ($reservStatus == ReservationStatus::Waitlist) {
             $resv->setIdResource(0);

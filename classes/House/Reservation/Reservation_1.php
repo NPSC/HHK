@@ -1346,6 +1346,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     public function getNotes() {
         return $this->reservRs->Notes->getStoredVal();  // == '' ? $this->reservRs->Notes->getNewVal() : $this->reservRs->Notes->getStoredVal();
     }
+    
+    public function setNotes($val) {
+        $this->reservRs->Notes->setNewVal($val);
+    }
 
     public function getIdResource() {
         //return $this->reservRs->idResource->getStoredVal();
