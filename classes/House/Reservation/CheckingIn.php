@@ -315,6 +315,9 @@ FROM reservation r
         // hospital stay id
         $visit->setIdHospital_stay($resv->getIdHospitalStay());
         
+        // copy ribbon note
+        $visit->setNotes($resv->getNotes(), $uS->username);
+        
         //
         // Checkin  Saves visit
         //
