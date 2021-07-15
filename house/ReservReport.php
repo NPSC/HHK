@@ -112,6 +112,7 @@ $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
 $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
 $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
+$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
@@ -209,6 +210,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(na.Country_Code, '') as gCountry,
     ifnull(na.Postal_Code, '') as gZip,
     np.Phone_Num,
+    ne.Email,
     rm.Phone,
     ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
     ifnull(r.Actual_Departure, r.Expected_Departure) as `Departure`,
@@ -248,6 +250,8 @@ from
     name_address na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
         left join
     name_phone np ON n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+        left join
+    name_email ne ON n.idName = ne.idName and n.Preferred_Email = ne.Purpose
         left join
     hospital_stay hs ON r.idHospital_Stay = hs.idHospital_stay
         left join
