@@ -2,8 +2,12 @@
 
 namespace HHK;
 
-use HHK\SysConst\{VolMemberType, RelLinkType, MemStatus};
-use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLTable;
+use HHK\SysConst\MemStatus;
+use HHK\SysConst\RelLinkType;
+use HHK\SysConst\VolMemberType;
 
 /**
  * Duplicate.php

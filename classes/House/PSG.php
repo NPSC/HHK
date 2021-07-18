@@ -26,7 +26,7 @@ use HHK\Exception\RuntimeException;
  *
  * @author Eric Crane
  */
- 
+
 class PSG {
 
     public $psgRS;
@@ -126,18 +126,18 @@ class PSG {
                 VisitLog::logNameGuest($dbh, $this->getIdPsg(), $idGuest, $logText, "delete", $uname);
 
                 unset($this->psgMembers[$idGuest]);
-                
+
                 // Remove guest from 0-day stays
                 //get stays
                 $query = "select s.idStays, s.idVisit, s.Visit_Span, (select count(*) from stays where stays.idVisit = s.idVisit and stays.Visit_Span = s.Visit_Span) as 'VisitStayCount'
 from stays s join visit v on s.idVisit = v.idVisit
 	left join registration r on v.idRegistration = r.idRegistration
 where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.Span_Start_Date) = 0";
-                
+
                 $stmt = $dbh->prepare($query);
                 $stmt->execute(array(':idPsg'=>$this->getIdPsg(), ':idGuest'=>$idGuest));
                 $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-                
+
                 foreach($stays as $stay){
                     if($stay['VisitStayCount'] == 1){
                         $query = "delete from visit v where idVisit = :idVisit and Visit_Span = :visitSpan";
@@ -148,7 +148,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                     $stmt = $dbh->prepare($query);
                     $stmt->execute(array(':idStays'=>$stay['idStays']));
                 }
-                
+
                 return TRUE;
             }
         }
@@ -530,7 +530,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
         return $nameRS->Name_First->getStoredVal() . ' ' . $nameRS->Name_Last->getStoredVal() . ($nameRS->Name_Suffix->getStoredVal() == '' ? '' : ' ' . $uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()][1]);
     }
-    
+
     public function getPatientStatus(\PDO $dbh) {
 
         $nameRS = new NameRS();

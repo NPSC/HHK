@@ -18,14 +18,14 @@ use HHK\SysConst\AttributeTypes;
  *
  * @author Eric
  */
- 
+
 class RoomAttribute extends AbstractObjectAttribute {
-    
+
     public function __construct(\PDO $dbh, $id) {
-        
+
         $this->attributeType = AttributeTypes::Room;
         parent::__construct($dbh, $id);
     }
-    
+
 }
 ?>

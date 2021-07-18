@@ -30,7 +30,7 @@ class ImReturnResponse extends AbstractCreditResponse {
         $this->amount = $vcr->getRequestAmount();
         $this->setPartialPayment(FALSE);
         $this->setPaymentDate($payDate);
-        
+
     }
 
     public function getPaymentMethod() {

@@ -20,10 +20,10 @@ use HHK\SysConst\VolMemberType;
  */
 
 class DoctorMember extends AbstractRoleMember {
-    
+
     protected function getMyMemberType() {
         return VolMemberType::Doctor;
     }
-    
+
 }
 ?>

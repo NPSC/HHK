@@ -9,7 +9,6 @@ use HHK\Exception\RuntimeException;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\HTMLControls\HTMLTable;
-use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\Labels;
 
@@ -212,19 +211,19 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
             $rows = EditRS::select($dbh, $gtRs, array($gtRs->idGuest, $gtRs->Merchant));
 
             if (count($rows) > 0) {
-            	
+
 	            foreach ($rows as $r) {
-	            	
+
 	                $gtRs = new Guest_TokenRS();
 	                EditRS::loadRow($r, $gtRs);
-	
+
 	                if (self::hasToken($gtRs)) {
 	                    $rsRows[$gtRs->idGuest_token->getStoredVal()] = $gtRs;
 	                }
 	            }
             }
         }
-        
+
         return $rsRows;
     }
 
@@ -313,31 +312,31 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
     }
 
     public static function deleteToken(\PDO $dbh, $guestTokenId) {
-    	
+
     	$gtRs = new Guest_TokenRS();
     	$gtRs->idGuest_token->setStoredVal(intval($guestTokenId, 10));
     	$cnt = EditRS::delete($dbh, $gtRs, array($gtRs->idGuest_token));
-    	
+
     	if ($cnt == 1) {
     		return TRUE;
     	}
-    	
+
     	return FALSE;
     }
-    
+
     public static function getCardsOnFile(\PDO $dbh, $page) {
-    	
+
     	$tbl = new HTMLTable();
-    	
+
     	$stmt = $dbh->query("select t.*, n.Name_Full
 from guest_token t JOIN `name` n on t.idGuest = n.idName
 order by n.Name_Last, n.Name_First, t.Merchant");
-    	
+
     	while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-    		
+
     		$gtRs = new Guest_TokenRS();
     		EditRS::loadRow($r, $gtRs);
-    		
+
     		if (self::hasToken($gtRs)) {
     			$tbl->addBodyTr(
     					HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_Full'], array('href'=>$page.$r['idGuest'])))
@@ -350,7 +349,7 @@ order by n.Name_Last, n.Name_First, t.Merchant");
     					);
     		}
     	}
-    	
+
     	$tbl->addHeaderTr(
     			HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'))
     			.HTMLTable::makeTh('Card Holder')
@@ -359,10 +358,10 @@ order by n.Name_Last, n.Name_First, t.Merchant");
     			.HTMLTable::makeTh('Granted')
     			.HTMLTable::makeTh('Merchant')
     			.HTMLTable::makeTh('Running Total'));
-    	
+
     	return $tbl->generateMarkup();
-    	
+
     }
-    
+
 }
 ?>

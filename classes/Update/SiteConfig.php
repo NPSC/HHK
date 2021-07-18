@@ -205,11 +205,11 @@ class SiteConfig {
                 $county = filter_var(trim($fields[7]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
                 $city = filter_var(trim($fields[3]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
                 $altCitys = filter_var(trim($fields[4]), FILTER_SANITIZE_STRING, FILTER_FLAG_ENCODE_HIGH);
-                
+
                 // Use precision coordinates if available
                 $lat = filter_var(trim($fields[16]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
                 $long = filter_var(trim($fields[17]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
-                
+
                 if ($lat == '' || $long == '') {
                 	// use approximate coordinates
                 	$lat = filter_var(trim($fields[12]), FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
@@ -231,13 +231,13 @@ class SiteConfig {
             }
 
             if ($indx > $maxRecords) {
-            	
+
                 $indx = 0;
-                
+
                 if ($query != "") {
                     $dbh->exec("insert into postal_codes values " . substr($query, 0, -1));
                 }
-                
+
                 $query = '';
             }
         }
@@ -410,9 +410,9 @@ class SiteConfig {
                     foreach ($name as $key => $val) {
 
                     	if ($key == 'Password' || $key == 'sitePepper' || $key == 'ReadonlyPassword' || $key == 'BackupPassword') {
-                        	
+
                         	$inpt = '********';
-                        	
+
                         } else {
 
                         	$inpt = $val;
@@ -448,7 +448,7 @@ class SiteConfig {
         while($r = $stmt->fetch(\PDO::FETCH_ASSOC)){
             $cats[strtolower($r['Description'])] = $r['Code'];
         }
-        
+
         if(count($cats) > 0){
             $uS = Session::getInstance();
             foreach ($uS->labels as $section => $name) {
@@ -560,7 +560,7 @@ class SiteConfig {
 
         // site.cfg entries
         $tbl = self::createCliteMarkup($config, $titles);
-        
+
         return $sctbl->generateMarkup() . $tbl->generateMarkup();
     }
 
@@ -598,7 +598,7 @@ class SiteConfig {
     public static function saveSysConfig(\PDO $dbh, array $post) {
 
         $mess = ['type'=>'', 'text'=>''];
-        
+
         // save sys config
         foreach ($post['sys_config'] as $itemName => $val) {
 
@@ -619,9 +619,9 @@ class SiteConfig {
         return $mess;
 
     }
-    
+
     public static function saveLabels(\PDO $dbh, array $post) {
-        
+
     	$uS = Session::getInstance();
     	$mess = ['type'=>'', 'text'=>''];
         // save labels
@@ -633,23 +633,23 @@ class SiteConfig {
                 foreach ($vals as $key=>$val){
                     $value = filter_var($val, FILTER_SANITIZE_STRING);
                     $key = filter_var($key, FILTER_SANITIZE_STRING);
-                    
+
                     SysConfig::saveKeyValue($dbh, 'labels', $key, $value, $category);
                 }
-                
+
             }
             //reload labels
             $uS->labels = Labels::initLabels($dbh);
-            
+
             $mess['type'] = 'success';
             $mess['text'] = "Labels saved successfully";
         }catch(\Exception $e){
             $mess['type'] = 'error';
             $mess['text'] = "Labels not saved: " . htmlspecialchars($e->getMessage(), ENT_QUOTES);
         }
-        
+
         return $mess;
-        
+
     }
 
     public static function createPaymentCredentialsMarkup(\PDO $dbh, $resultMessage) {

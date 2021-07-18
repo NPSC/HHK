@@ -2,7 +2,6 @@
 
 namespace HHK\Payment;
 
-use HHK\Payment\PaymentResponse\CashResponse;
 use HHK\Payment\PaymentResponse\CheckResponse;
 use HHK\SysConst\{TransMethod, TransType, PaymentStatusCode};
 use HHK\Tables\EditRS;

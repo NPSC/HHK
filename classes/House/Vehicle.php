@@ -143,7 +143,7 @@ WHERE
         $x = 1;
 
         foreach ($idx as $i) {
-        	
+
             $tbl->addBodyTr(
                 //HTMLTable::makeTd(HTMLSelector::generateMarkup( , array('name'=>'selVehGuest['.$idPrefix.']')))
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))

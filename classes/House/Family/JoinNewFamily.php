@@ -15,14 +15,14 @@ use HHK\SysConst\VolMemberType;
  */
 
 class JoinNewFamily extends Family {
-    
+
     public function initMembers(\PDO $dbh, ReserveData &$rData) {
-        
+
         $uS = Session::getInstance();
-        
+
         // forced New PSG
         $psgMember = $rData->findMemberById($rData->getId());
-        
+
         if ($psgMember != NULL) {
             $prefix = $psgMember->getPrefix();
         } else {
@@ -30,11 +30,11 @@ class JoinNewFamily extends Family {
             $psgMember = new PSGMember($rData->getId(), $prefix, VolMemberType::Guest, FALSE, new PSGMemStay(ReserveData::NOT_STAYING));
             $rData->setMember($psgMember);
         }
-        
+
         $this->roleObjs[$prefix] = new Guest($dbh, $prefix, $rData->getId());
-        
+
         $psgMember->setStay(($this->roleObjs[$prefix]->getNoReturn() == '' ? ReserveData::NOT_STAYING : ReserveData::CANT_STAY));
-        
+
     }
 }
 ?>

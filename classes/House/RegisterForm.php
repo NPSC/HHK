@@ -168,7 +168,7 @@ class RegisterForm {
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" .$veh->License_Number->getStoredVal() . "</p>
   </td>
  </tr>";
-                
+
                 if ($veh->Note->getStoredVal() != '') {
                 	$mkup .= "<tr><td style='width:.5in;border-top:none; border-left:none;border-bottom:none;border-right:solid windowtext 1pt;'>
   <p class=MsoNormal align=right style='margin-bottom:0; text-align:right;line-height:normal'>&nbsp;</p>
@@ -528,13 +528,13 @@ p.label {
                 $gst->setPatientRelationshipCode($psg->psgMembers[$gst->getIdName()]->Relationship_Code->getStoredVal());
                 $guests[] = $gst;
             }
-          
+
             $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, '') from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
 				left join hospital h on hs.idHospital = h.idHospital  where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
 
             $stmt = $dbh->query($query);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
-            
+
         } else if ($idReservation > 0) {
 
             $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation
@@ -576,7 +576,7 @@ p.label {
                 $guests[] = $gst;
 
             }
-            
+
             $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, '') from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
 				left join hospital h on hs.idHospital = h.idHospital where r.idReservation = " . intval($idReservation) . " limit 1";
 
@@ -611,7 +611,7 @@ p.label {
             $hospRoom = $hospitalStay[0][1];
             $hospital = $hospitalStay[0][2];
         }
-        
+
         // Title
         $title = $uS->siteName . " Registration Form for Overnight " . $this->labels->getString('MemberType', 'visitor', 'Guest') . "s";
 

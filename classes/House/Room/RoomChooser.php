@@ -2,13 +2,12 @@
 
 namespace HHK\House\Room;
 
-use HHK\Purchase\{FinAssistance, VisitCharges, PaymentChooser};
+use HHK\Purchase\{FinAssistance, VisitCharges};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Constraint\{ConstraintsReservation, ConstraintsVisit};
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\Resource\AbstractResource;
 use HHK\House\Visit\Visit;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\SysConst\DefaultSettings;
 use HHK\SysConst\{GLTableNames, ReservationStatus, VisitStatus};
@@ -202,7 +201,6 @@ class RoomChooser {
 
     public function createChangeRoomsMarkup(\PDO $dbh, VisitCharges $visitCharge, $idGuest, $isAuthorized) {
 
-        $uS = Session::getInstance();
         $paymentMarkup = '';
 
         $table = new HTMLTable();
@@ -232,7 +230,7 @@ class RoomChooser {
             HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
             . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
                 . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'margin-left: 0.8em; display:none'))));
-        
+
         $table->addBodyTr(
             HTMLTable::makeTd('', array('colspan'=>'2', 'id'=>'rmChgMsg', 'style'=>'color:red;display:none')));
 
@@ -356,7 +354,7 @@ class RoomChooser {
     }
 
     protected function createChooserMarkup(\PDO $dbh, $constraintsDisabled, $classId = '') {
-        
+
         $resOptions = $this->makeRoomSelectorOptions();
 
         $errorMessage = $this->getRoomSelectionError($dbh, $resOptions);

@@ -287,7 +287,7 @@ where pi.Invoice_Id = " . $this->getIdInvoice () );
 			}
 		}
 	}
-	
+
 	public function createMarkup(\PDO $dbh) {
 		$uS = Session::getInstance ();
 
@@ -744,7 +744,7 @@ where
 		$invRs->Status->setNewVal ( InvoiceStatus::Unpaid );
 		$invRs->Description->setNewVal ( $description );
         $invRs->tax_exempt->setNewVal($tax_exempt);
-		
+
 		$invRs->Updated_By->setNewVal ( $username );
 		$invRs->Last_Updated->setNewVal ( date ( 'Y-m-d H:i:s' ) );
 

@@ -571,7 +571,7 @@ class RateChooser {
         }else{
             $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'text-align:center;');
         }
-        
+
         // Fixed rate?
         if ($roomRateCategory == DefaultSettings::Fixed_Rate_Category) {
 
@@ -583,7 +583,7 @@ class RateChooser {
             $attrFixed['style'] = 'display:none;';
             $fixedRate = '';
         }
-        
+
         if($uS->RoomPriceModel == ItemPriceCode::None){
             $attrAdj['style'] .= 'display:none;';
         }
@@ -593,7 +593,7 @@ class RateChooser {
         if ($this->payVisitFee) {
             $vFeeMkup = $this->makeVisitFeeSelector($this->makeVisitFeeArray($dbh), $resv->getVisitFee());
         }
-        
+
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $resv->getIdRoomRate());
         $rateSelectorAttrs = array('name'=>'selRateCategory', 'style'=>'display:table;');
 

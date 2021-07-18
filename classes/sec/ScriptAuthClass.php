@@ -5,7 +5,7 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\{WebSiteCode, Mode};
-use HHK\Config_Lite\Config_Lite;
+
 
 /**
  * ScriptAuthClass.php
@@ -355,13 +355,13 @@ class ScriptAuthClass extends SecurityComponent {
         //    <div id='version'>$disclaimer User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
         $markup .= "</div></div></header>
             <div id='version'>$disclaimer Build:" . $uS->ver . "  <button id='userSettingsBtn' style='margin-left: .5em' class='ui-button ui-corner-all ui-widget'>Hello, " . $uS->username . "</button></div>";
-        
+
         //add user settings modal
         if($dbh && isset($uS)){
             $markup .= UserClass::createUserSettingsMarkup($dbh);
             $markup .= '<input  type="hidden" id="isPassExpired" value="' . UserClass::isPassExpired($dbh, $uS) . '" />';
         }
-        
+
         return $markup;
     }
 

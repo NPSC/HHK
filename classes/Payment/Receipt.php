@@ -33,35 +33,35 @@ Define('NEWLINE', "\n");
  * @author Eric
  */
 class Receipt {
-	
+
 	protected static function makeInvoiceLineMarkup(\PDO $dbh, Invoice $invoice, &$tbl) {
 		$uS = Session::getInstance();
-		
+
 		// Taxes
 		$tax = floatval($uS->ImpliedTaxRate)/100;
-		
+
 		if ($tax > 0) {
 			// Implement tax
 			$taxAmt = 0;
-			
+
 			foreach ($invoice->getLines($dbh) as $line) {
-				
+
 				$lineAmt = $line->getAmount();
-				
+
 				// Tax on lodging only
 				if ($line->getItemId() == ItemId::Lodging) {
 					$lineAmt = round($line->getAmount() / (1 + $tax), 2);
 					$taxAmt += $line->getAmount() - $lineAmt;
 				}
-				
+
 				$tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($lineAmt, 2), array('style'=>'font-size:.8em;')));
 			}
-			
+
 			// Tax amount
 			if ($taxAmt > 0) {
 				$tbl->addBodyTr(HTMLTable::makeTd('Taxes (' . $tax*100 . '%):', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($taxAmt, 2), array('style'=>'font-size:.8em;')));
 			}
-			
+
 		} else {
 			// No taxes.
 			foreach ($invoice->getLines($dbh) as $line) {
@@ -222,7 +222,7 @@ class Receipt {
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
         self::makeInvoiceLineMarkup($dbh, $invoice, $tbl);
-        
+
         $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
@@ -273,7 +273,7 @@ class Receipt {
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
         self::makeInvoiceLineMarkup($dbh, $invoice, $tbl);
-        
+
         $tbl->addBodyTr(HTMLTable::makeTd("Total Refunded:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
@@ -762,14 +762,14 @@ WHERE
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
         $detailTbl = NULL;
-        
+
         $priceModel->rateHeaderMarkup($tbl, $labels);
-        
+
         if ($showDetails) {
         	$detailTbl = new HTMLTable();
         	$priceModel->rateDetailHeaderMarkup($detailTbl, $labels);
         }
-        
+
         $idVisitTracker = 0;
         $separator = '';
         $guestNites = 0;
@@ -801,15 +801,15 @@ WHERE
 
                 if ($idVisitTracker > 0) {
                     // Close up last visit
-                    
+
                     // Add tax info
                     foreach ($vat->getCurrentTaxedItems($r['vid'], $visitNights) as $t) {
 
                         if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
-                            
+
                             $taxableRmFees = $preTaxRmCharge - $taxExemptRmFees;
                             $taxableRmFees = ($taxableRmFees < 0 ? 0 : $taxableRmFees);
-                            
+
                             $roomBal = $preTaxRmCharge - $roomFeesPaid;
 
                             if ($roomBal >= 0) {
@@ -827,7 +827,7 @@ WHERE
                             		HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ' of ' . number_format($taxableRmFees, 2) . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
                             		.HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                             		);
-                            
+
                         }
                     }
                 }
@@ -884,9 +884,9 @@ WHERE
             if ($showDetails) {
             	$priceModel->tiersDetailMarkup($r, $detailTbl, $tiers, $startDT, $separator, $guestNites);
             }
-            
+
             $rChg = $priceModel->tiersMarkup($r, $totalAmt, $tbl, $tiers, $startDT, $separator, $guestNites);
-            
+
             $preTaxRmCharge += $rChg;
             $separator = '';
 
@@ -902,11 +902,11 @@ WHERE
                         );
 
                 $priceModel->itemMarkup($item, $tbl);
-                
+
                 if ($showDetails) {
                 	$priceModel->itemDetailMarkup($item, $detailTbl);
                 }
-                
+
                 $totalAmt += $r['vfa'];
 
             }
@@ -941,7 +941,7 @@ WHERE
                         if ($showDetails) {
                         	$priceModel->itemDetailMarkup($item, $detailTbl);
                         }
-                        
+
                         $totalAmt += floatval($addChgAmt);
 
                     } else if ($l['Item_Id'] == ItemId::Discount || $l['Item_Id'] == ItemId::Waive) {
@@ -963,7 +963,7 @@ WHERE
                         if ($showDetails) {
                         	$priceModel->itemDetailMarkup($item, $detailTbl);
                         }
-                        
+
                     } else if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Amount'] < 0) {
 
                         $moaAmt = floatval($l['Amount']);
@@ -982,7 +982,7 @@ WHERE
                         if ($showDetails) {
                         	$priceModel->itemDetailMarkup($item, $detailTbl);
                         }
-                        
+
                     } else if ($l['Type_Id'] == InvoiceLineType::Tax && $l['Status'] != InvoiceStatus::Carried && ($l['Source_Item_Id'] == ItemId::Lodging || $l['Source_Item_Id'] == ItemId::LodgingReversal)) {
                         $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
                     } else if (($l['Item_Id'] == ItemId::Lodging || $l['Item_Id'] == ItemId::LodgingReversal) && ($l['Status'] == InvoiceStatus::Paid || $l['Status'] == InvoiceStatus::Unpaid)) {

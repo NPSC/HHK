@@ -37,7 +37,7 @@ class ColumnSelectors {
     protected $controlName;
 
     protected $columnDefs;
-    
+
     /**
      * Filter Sets array
      *
@@ -47,7 +47,7 @@ class ColumnSelectors {
     protected $filterSetSelection;
     protected $useFilterSets;
     protected $alertMsg;
-    
+
     /**
      *
      * @param array $cols
@@ -121,12 +121,12 @@ class ColumnSelectors {
     public function makeFilterSetSelector(){
         $size = count($this->filterSets) + 3;
         $size = ($size > 15 ? 15: $size);
-        
+
         return HTMLSelector::generateMarkup(
             HTMLSelector::doOptionsMkup($this->filterSets, $this->filterSetSelection, TRUE)
         , ['style'=>'width: 100%;', 'name'=>'fieldset', 'size'=>$size]);
     }
-    
+
     public function makeFilterSetButtons(){
         return HTMLContainer::generateMarkup("div",
             HTMLContainer::generateMarkup("div",
@@ -146,31 +146,31 @@ class ColumnSelectors {
         $tbl = new HTMLTable();
 
         $tbl->addheaderTr(HTMLTable::makeTh('Include Fields', ['colspan'=>'2']));
-        
+
         $bodyTr = '';
         $filterActionTr = false;
-        
+
         //if using filterSets
         if($this->useFilterSets){
             $bodyTr .= HTMLTable::makeTd($this->makeFilterSetSelector(), ['style'=>'vertical-align: top; border-bottom: 0; width: 215px;', 'id'=>'filterSets']);
             $filterActionTr = HTMLTable::makeTd($this->makeFilterSetButtons(), ['style'=>'vertical-align: bottom; border-top: 0;']);
             $tbl->addHeaderTr(HTMLTable::makeTh('Saved Sets') . HTMLTable::makeTh(HTMLContainer::generateMarkup('span', '', ['id'=>'filterSetTitle']) .  ' Fields')); //add 2nd header
         }
-        
+
         $fieldsTdContent = $this->makeDropdown();
-        
+
         if ($includeSetClear) {
             $fieldsTdContent .= $this->getRanges();
         }
-        
+
         $bodyTr .= HTMLTable::makeTd($fieldsTdContent, ['id'=>'fields', 'rowspan'=>'2']);
-        
+
         $tbl->addBodyTr($bodyTr);
 
         if($filterActionTr){
             $tbl->addBodyTr($filterActionTr);
         }
-        
+
         return $tbl;
     }
 
@@ -247,7 +247,7 @@ class ColumnSelectors {
         return $this->columnDefs;
 
     }
-    
+
     public function getAlertMsg($type, $msg) {
         // Instantiate the alert message control
         $this->alertMsg = new AlertMessage("divFieldsetError");

@@ -1,7 +1,6 @@
 <?php
 
 namespace HHK;
-
 use HHK\Exception\RuntimeException;
 
 /**

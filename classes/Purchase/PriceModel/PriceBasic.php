@@ -56,7 +56,7 @@ class PriceBasic extends AbstractPriceModel {
         // No new rates are possible
         return;
     }
-    
+
     public function saveEditMarkup(\PDO $dbh, $post, $username) {
         $defaultRate = RoomRateCategories::Fixed_Rate_Category;
         return $defaultRate;
