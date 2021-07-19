@@ -821,7 +821,7 @@ class HouseServices {
 
             } else if ($invoice->getAmountToPay() < 0) {
                 // Make guest return
-                $payResult = $paymentManager->makeHouseReturn($dbh, date('Y-m-d H:i:s'));
+                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate());
             }
         }
 
