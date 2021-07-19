@@ -42,7 +42,8 @@ $hospitalSelections = array('');
 $assocSelections = array('');
 $calSelection = '22';
 $newGuestsChecked = 'checked="checked"';
-$allGuestsChecked = '';
+$allGuestsStartedChecked = '';
+$allGuestsStayedChecked = '';
 $whichGuests = 'new';
 $title = '';
 
@@ -71,9 +72,13 @@ if (isset($_POST['btnSmt'])) {
     if (isset($_POST['rbAllGuests'])) {
         $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_STRING);
 
-        if ($whichGuests == 'all') {
+        if ($whichGuests == 'allStarted') {
             $newGuestsChecked = '';
-            $allGuestsChecked = 'checked="checked"';
+            $allGuestsStartedChecked = 'checked="checked"';
+        }else if($whichGuests == 'allStayed') {
+            $newGuestsChecked = '';
+            $allGuestsStartedChecked = '';
+            $allGuestsStayedChecked = 'checked="checked"';
         } else {
             $whichGuests = 'new';
         }
@@ -207,11 +212,12 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
                     </table></fieldset>
                     </div>
                     <div style="clear:both;"></div>
-                    <table style="padding-top:20px; ">
+                    <table style="margin-top:10px; width: 100%;">
                         <tr>
                             <td>
-                                <label for="rbnewG">First Time <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Only </label><input type="radio" name="rbAllGuests" id="rbnewG" value="new" <?php echo $newGuestsChecked; ?> />
-                                <label for="rbAllG" style="margin-left:.5em;">All <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s </label><input type="radio" name="rbAllGuests" id="rbAllG" value="all" <?php echo $allGuestsChecked; ?> />
+                                <input type="radio" name="rbAllGuests" id="rbnewG" value="new" <?php echo $newGuestsChecked; ?> style="margin-right:.3em;" /><label for="rbnewG" style="margin-right:.5em;">First Time <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Only </label>
+                                <input type="radio" name="rbAllGuests" id="rbAllGStartStay" value="allStarted" <?php echo $allGuestsStartedChecked; ?> style="margin-right:.3em;" /><label for="rbAllGStartStay" style="margin-right:.5em;">All <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s who started stay </label>
+                                <input type="radio" name="rbAllGuests" id="rbAllGStay" value="allStayed" <?php echo $allGuestsStayedChecked; ?> style="margin-right:.3em;" /><label for="rbAllGStay">All <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s who stayed </label>
                             </td>
                             <td>
                                 <input type="submit" id="btnSmt" name="btnSmt" value="Run Report" />
