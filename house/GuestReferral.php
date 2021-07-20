@@ -36,54 +36,92 @@ $uS = Session::getInstance();
 // Get labels
 $labels = Labels::getLabels();
 
-$title = "Guest Referral";
+$title = "Guest Referral Form";
 $errorMessage = '';
 $idDoc = 0;
+$idPatient = -1;
+$done = FALSE;
 $patMkup = '';
 $guestMkup = '';
 
 $datesMkup = '';
 $displayGuest = 'display:none;';
+$final = '';
 
 // Referral form
-if (isset($_GET['docid'])) {
-	$idDoc = intval(filter_input(INPUT_GET, 'docid', FILTER_SANITIZE_NUMBER_INT), 10);
+if (isset($_REQUEST['docid'])) {
+    $idDoc = intval(filter_input(INPUT_GET, 'docid', FILTER_SANITIZE_NUMBER_INT), 10);
+} else if (isset($_POST['idDoc'])) {
+    $idDoc = intval(filter_input(INPUT_POST, 'idDoc', FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
+// Patient
+if (isset($_POST['rbPatient'])) {
+    $idPatient = intval(filter_input(INPUT_POST, 'rbPatient', FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
+// final step
+if (isset($_POST['final'])) {
+    $final = filter_input(INPUT_POST, 'final', FILTER_SANITIZE_STRING);
 }
 
 
+
 if ($idDoc > 0) {
-	
-    // House selected a referral form.
+
+    // House user selected a referral form.
     try {
     	$refForm = new ReferralForm($dbh, $idDoc);
-    	
+
     	$datesMkup = $refForm->datesMarkup();
-    	
-    	$includes = [];
-    	
-    	if (isset($_POST[$refForm::HTML_Incl_Birthday])) {
-    	    $includes[$refForm::HTML_Incl_Birthday] = 'y';
+
+    	if ($idPatient < 0) {
+
+    	    // Patient search
+        	$includes = [];
+
+        	if (isset($_POST[$refForm::HTML_Incl_Birthday])) {
+        	    $includes[$refForm::HTML_Incl_Birthday] = 'y';
+        	}
+
+        	if (isset($_POST[$refForm::HTML_Incl_Phone])) {
+        	    $includes[$refForm::HTML_Incl_Phone] = 'y';
+        	}
+
+        	if (isset($_POST[$refForm::HTML_Incl_Email])) {
+        	    $includes[$refForm::HTML_Incl_Email] = 'y';
+        	}
+
+        	$refForm->searchPatient($dbh, $includes);
+        	$patMkup = $refForm->createPatientMarkup();
+
+    	} else if ($final != 1) {
+
+    	    // Guest search
+
+    	    $patient = $refForm->setPatient($dbh, $idPatient);
+    	    $patMkup = $refForm->chosenPatientMkup($patient);
+
+    	    $refForm->searchGuests($dbh);
+    	    $guestMkup .= $refForm->guestsMarkup();
+
+    	    // Unhide guest section
+    	    $displayGuest = '';
+
+    	} else {
+    	    // Fininsh
+
+    	    // Save Guests
+
+
+
     	}
-    	
-    	if (isset($_POST[$refForm::HTML_Incl_Phone])) {
-    	    $includes[$refForm::HTML_Incl_Phone] = 'y';
-    	}
-    	
-    	if (isset($_POST[$refForm::HTML_Incl_Email])) {
-    	    $includes[$refForm::HTML_Incl_Email] = 'y';
-    	}
-    	
-    	$refForm->searchPatient($dbh, $includes);
-    	$patMkup = $refForm->createPatientMarkup();
-    	
-     	$refForm->searchGuests($dbh);
-     	$guestMkup .= $refForm->guestsMarkup();
-     	
-	
+
+
     } catch (\Exception $ex) {
         $errorMessage = '<p>Referral form error: ' . $ex->getMessage() . '</p>';
     }
-	
+
 } else {
     $errorMessage = "The Referral Form Document Id is missing.  ";
 }
@@ -117,7 +155,7 @@ if ($idDoc > 0) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        
+
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <div id="contentDiv" class="container-fluid" style="margin-left: auto;">
@@ -145,7 +183,7 @@ if ($idDoc > 0) {
                     <table >
                         <tr><td ><span id="pWarnings" style="display:none; font-size: 1.4em; border: 1px solid #ddce99;margin-bottom:3px; padding: 0 2px; color:red; background-color: yellow; float:right;"></span></td></tr>
                         <tr><td>
-                        	<input type='button' id='btnDone' value='Continue' />
+                        	<input type='submit' id='btnDone' name='btnDone' />
                         </td></tr>
                     </table>
                 </div>
@@ -154,7 +192,9 @@ if ($idDoc > 0) {
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>" id="visitorLabel" />
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>" id="guestLabel" />
-        <input type="hidden" value="<?php echo $idDoc ?>" id="idDoc" />
+        <input type="hidden" value="<?php echo $idDoc ?>" id="idDoc" name="idDoc" />
+        <input type="hidden" value="<?php echo $idPatient ?>" id="idPatient" name='idPatient'/>
+        <input type="hidden" value="<?php echo $final ?>" id="final" name='final'/>
         <?php echo GUEST_REFERRAL_JS; ?>
     </body>
 </html>

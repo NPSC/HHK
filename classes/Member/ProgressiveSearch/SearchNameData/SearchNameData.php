@@ -3,26 +3,26 @@ namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
 use HHK\Member\Address\CleanAddress;
 
-class SearchNameData {
-   
-    protected $nameFirst;
-    protected $nameMiddle;
-    protected $nameLast;
-    protected $nickname;
-    protected $gender;
-    protected $birthDate;
-    protected $relationship;
-    protected $email;
-    protected $phone;
-    protected $addressStreet1;
-    protected $addressStreet2;
-    protected $addressCity;
-    protected $addressState;
-    protected $addressCounty;
-    protected $addressZip;
-    protected $addressCountry;
-    
-    
+abstract class SearchNameData {
+
+    protected $nameFirst = '';
+    protected $nameMiddle = '';
+    protected $nameLast = '';
+    protected $nickname = '';
+    protected $gender = '';
+    protected $birthDate = '';
+    protected $relationship = '';
+    protected $email = '';
+    protected $phone = '';
+    protected $addressStreet1 = '';
+    protected $addressStreet2 = '';
+    protected $addressCity = '';
+    protected $addressState = '';
+    protected $addressCounty = '';
+    protected $addressZip = '';
+    protected $addressCountry = '';
+
+
     /**
      * @param string $nameFirst
      */
@@ -30,7 +30,7 @@ class SearchNameData {
         $this->nameFirst = trim($nameFirst);
         return $this;
     }
-    
+
     /**
      * @param string $nameMiddle
      */
@@ -38,7 +38,7 @@ class SearchNameData {
         $this->nameMiddle = trim($nameMiddle);
         return $this;
     }
-    
+
     /**
      * @param string $nameLast
      */
@@ -46,7 +46,7 @@ class SearchNameData {
         $this->nameLast = trim($nameLast);
         return $this;
     }
-    
+
     /**
      * @param string $nickname
      */
@@ -54,7 +54,7 @@ class SearchNameData {
         $this->nickname = trim($nickname);
         return $this;
     }
-    
+
         /**
      * @param string $gender
      */
@@ -62,17 +62,15 @@ class SearchNameData {
         $this->gender = trim($gender);
         return $this;
     }
-    
+
 /**
      * @param string $birthDate
      */
     public function setBirthDate($strBirthDate) {
-        
         $this->birthDate = $strBirthDate;
-        
         return $this;
     }
-    
+
     /**
      * @param string $relationship
      */
@@ -80,7 +78,7 @@ class SearchNameData {
         $this->relationship = trim($rel);
         return $this;
     }
-    
+
     /**
      * @param string $email
      */
@@ -88,7 +86,7 @@ class SearchNameData {
         $this->email = trim(filter_var($email, FILTER_SANITIZE_EMAIL));
         return $this;
     }
-    
+
     /**
      * @param string $phone
      */
@@ -97,7 +95,7 @@ class SearchNameData {
         $this->phone = str_replace($ary, '', filter_var($phone, FILTER_SANITIZE_NUMBER_INT));
         return $this;
     }
-    
+
     /**
      * @param string $addressStreet1
      */
@@ -105,7 +103,7 @@ class SearchNameData {
         $this->addressStreet1 = trim($addressStreet1);
         return $this;
     }
-    
+
     /**
      * @param string $addressStreet2
      */
@@ -113,7 +111,7 @@ class SearchNameData {
         $this->addressStreet2 = trim($addressStreet2);
         return $this;
     }
-    
+
     /**
      * @param string $addressCity
      */
@@ -121,7 +119,7 @@ class SearchNameData {
         $this->addressCity = trim($addressCity);
         return $this;
     }
-    
+
     /**
      * @param string $addressCounty
      */
@@ -129,7 +127,7 @@ class SearchNameData {
         $this->addressCounty = trim($addressCounty);
         return $this;
     }
-    
+
     /**
      * @param string $addressState
      */
@@ -137,7 +135,7 @@ class SearchNameData {
         $this->addressState = trim($addressState);
         return $this;
     }
-    
+
     /**
      * @param string $addressZip
      */
@@ -145,7 +143,7 @@ class SearchNameData {
         $this->addressZip = trim($addressZip);
         return $this;
     }
-    
+
     /**
      * @param string $addressCountry
      */
@@ -153,8 +151,8 @@ class SearchNameData {
         $this->addressCountry = trim($addressCountry);
         return $this;
     }
-    
-    
+
+
     /**
      * @return string
      */
@@ -162,7 +160,7 @@ class SearchNameData {
     {
         return $this->nameFirst;
     }
-    
+
     /**
      * @return string
      */
@@ -170,7 +168,7 @@ class SearchNameData {
     {
         return $this->nameMiddle;
     }
-    
+
     /**
      * @return string
      */
@@ -178,7 +176,7 @@ class SearchNameData {
     {
         return $this->nameLast;
     }
-    
+
     /**
      * @return string
      */
@@ -186,7 +184,7 @@ class SearchNameData {
     {
         return $this->nickname;
     }
-    
+
     /**
      * @return string
      */
@@ -194,7 +192,7 @@ class SearchNameData {
     {
         return $this->birthDate;
     }
-    
+
     /**
      * @return string
      */
@@ -202,7 +200,7 @@ class SearchNameData {
     {
         return $this->gender;
     }
-    
+
     /**
      * @return string
      */
@@ -210,7 +208,7 @@ class SearchNameData {
     {
         return $this->relationship;
     }
-    
+
     /**
      * @return string
      */
@@ -218,7 +216,7 @@ class SearchNameData {
     {
         return $this->email;
     }
-    
+
     /**
      * @return mixed
      */
@@ -226,7 +224,7 @@ class SearchNameData {
     {
         return $this->phone;
     }
-    
+
     /**
      * @return string
      */
@@ -234,7 +232,7 @@ class SearchNameData {
     {
         return $this->addressStreet1;
     }
-    
+
     /**
      * @return string
      */
@@ -242,7 +240,7 @@ class SearchNameData {
     {
         return $this->addressStreet2;
     }
-    
+
     /**
      * @return string
      */
@@ -250,7 +248,7 @@ class SearchNameData {
     {
         return $this->addressCity;
     }
-    
+
     /**
      * @return string
      */
@@ -258,7 +256,7 @@ class SearchNameData {
     {
         return $this->addressCounty;
     }
-    
+
     /**
      * @return string
      */
@@ -266,7 +264,7 @@ class SearchNameData {
     {
         return $this->addressState;
     }
-    
+
     /**
      * @return string
      */
@@ -274,7 +272,7 @@ class SearchNameData {
     {
         return $this->addressZip;
     }
-    
+
     /**
      * @return string
      */
@@ -282,33 +280,33 @@ class SearchNameData {
     {
         return $this->addressCountry;
     }
-    
+
     /**
      * @param string $addressStreet
      */
     public function setAddressStreet($addressStreet, CleanAddress $cleanAddress = NULL, $include = FALSE) {
-        
+
         if (is_null($cleanAddress)) {
             $this->addressStreet1 = trim($addressStreet);
         } else {
-            
+
             $addrs = $cleanAddress->cleanAddr(trim(filter_var($addressStreet, FILTER_SANITIZE_STRING)));
-            
+
             $this->addressStreet1 = $addrs[0];
             $this->addressStreet2 =  $addrs[1];
-            
+
         }
-        
+
         return $this;
     }
-    
+
     /**
      * @return string
      */
     public function getAddressStreet() {
         return $this->addressStreet1 . ($this->addressStreet2 == '' ? '' : ', ' . $this->addressStreet2);
     }
-    
-    
+
+
 }
 

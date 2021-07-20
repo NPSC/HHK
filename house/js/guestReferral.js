@@ -1,22 +1,33 @@
 
-function guestReferral(initData, options) {
-    var t = this;
-
-    
-}
+var idPatient, idDoc, final;
 
 $(document).ready(function() {
     "use strict";
 
-	// Search includes columns
-	$('.hhk-includeSearch').hide();
+	idPatient = parseInt($('#idPatient').val());
+	idDoc = parseInt($('#idDoc').val());
+	$final = $('#final');
 	
-	// done button
-	$('#btnDone').button().click(function () {
+	var $btnDone = $('#btnDone');
+
+	// Set up done button
+	if (idPatient < 0) {
+		// Patient chooser
+		$btnDone.val('Save Patient');
+		$('#final').val('');
 		
-		// Patient selector set?
+		// Search includes columns
+		$('.hhk-includeSearch').show();
 		
-		
-		// Guest selector set?
-	});
-})
+	} else {
+		// Guest chooser
+		$btnDone.val('Save Guests');
+		$('#final').val('1');
+		// Search includes columns
+		$('.hhk-includeSearch').hide();
+	}
+
+	$('input[name=rbPatient]:radio').change(function () {
+		$('#idPatient').val($(this).val());
+	})
+});
