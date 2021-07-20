@@ -50,7 +50,7 @@ class ReferralForm {
 	const HTML_Incl_Phone = 'cbPIncludePhone';
 	const HTML_Incl_Email = 'cbPIncludeEmail';
 
-
+    const MAX_GUESTS = 3;
 
 	public function __construct(\PDO $dbh, $referralDocId) {
 
@@ -148,7 +148,7 @@ class ReferralForm {
 	    return $this->patResults;
 	}
 
-	public function searchGuests(\PDO $dbh, $maxGuests = 5) {
+	public function searchGuests(\PDO $dbh, $maxGuests = self::MAX_GUESTS) {
 
 	    $this->gstResults = [];
 
@@ -354,7 +354,7 @@ class ReferralForm {
 	        .HTMLTable::makeTd($this->patSearchFor->getEmail())
 	        .HTMLTable::makeTd($this->patSearchFor->getAddressStreet())
 	        .HTMLTable::makeTd($this->patSearchFor->getAddressCity())
-	        .HTMLTable::makeTd($uS->county ? HTMLTable::makeTd($this->patSearchFor->getAddressCounty()) : '')
+	        .($uS->county ? HTMLTable::makeTd($this->patSearchFor->getAddressCounty()) : '')
 	        .HTMLTable::makeTd($this->patSearchFor->getAddressState())
 	        .HTMLTable::makeTd($this->patSearchFor->getAddressZip())
 	        .HTMLTable::makeTd($this->patSearchFor->getAddressCountry())
@@ -376,7 +376,7 @@ class ReferralForm {
 	            .HTMLTable::makeTd($r->getEmail())
 	            .HTMLTable::makeTd($r->getAddressStreet())
 	            .HTMLTable::makeTd($r->getAddressCity())
-	            .HTMLTable::MakeTd($uS->county ? HTMLTable::makeTd($r->getAddressCounty()) : '')
+	            .($uS->county ? HTMLTable::makeTd($r->getAddressCounty()) : '')
 	            .HTMLTable::makeTd($r->getAddressState())
 	            .HTMLTable::makeTd($r->getAddressZip())
 	            .HTMLTable::makeTd($r->getAddressCountry())
@@ -387,7 +387,7 @@ class ReferralForm {
 	    return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
 	}
 
-	public function guestsMarkup($numberGuests = 3) {
+	public function guestsMarkup($numberGuests = self::MAX_GUESTS) {
 
 	    $markup = '';
 	    $indx = 0;
@@ -420,6 +420,7 @@ class ReferralForm {
 	        .HTMLTable::makeTh('Email')
 	        .HTMLTable::makeTh('Street Address')
 	        .HTMLTable::makeTh('City')
+	       .($uS->county ? HTMLTable::makeTh('County') : '')
 	        .HTMLTable::makeTh('State')
 	        .HTMLTable::makeTh('Zip Code')
 	        .HTMLTable::makeTh('Country')
@@ -438,6 +439,7 @@ class ReferralForm {
 	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
 	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
 	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
+	       .($uS->county ? HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;')) : '')
 	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
 	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
 	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
@@ -459,6 +461,7 @@ class ReferralForm {
 	           .HTMLTable::makeTd($r->getEmail())
 	           .HTMLTable::makeTd($r->getAddressStreet())
 	           .HTMLTable::makeTd($r->getAddressCity())
+	           .($uS->county ? HTMLTable::makeTd($r->getAddressCounty()) : '')
 	           .HTMLTable::makeTd($r->getAddressState())
 	           .HTMLTable::makeTd($r->getAddressZip())
 	           .HTMLTable::makeTd($r->getAddressCountry())

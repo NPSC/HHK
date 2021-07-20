@@ -36,7 +36,7 @@ $uS = Session::getInstance();
 // Get labels
 $labels = Labels::getLabels();
 
-$title = "Guest Referral Form";
+$title = "Public Referral Form";
 $errorMessage = '';
 $idDoc = 0;
 $idPatient = -1;
@@ -49,7 +49,7 @@ $displayGuest = 'display:none;';
 $final = '';
 
 // Referral form
-if (isset($_REQUEST['docid'])) {
+if (isset($_GET['docid'])) {
     $idDoc = intval(filter_input(INPUT_GET, 'docid', FILTER_SANITIZE_NUMBER_INT), 10);
 } else if (isset($_POST['idDoc'])) {
     $idDoc = intval(filter_input(INPUT_POST, 'idDoc', FILTER_SANITIZE_NUMBER_INT), 10);
@@ -61,8 +61,8 @@ if (isset($_POST['rbPatient'])) {
 }
 
 // final step
-if (isset($_POST['final'])) {
-    $final = filter_input(INPUT_POST, 'final', FILTER_SANITIZE_STRING);
+if (isset($_POST['finaly'])) {
+    $final = filter_input(INPUT_POST, 'finaly', FILTER_SANITIZE_STRING);
 }
 
 
@@ -158,7 +158,7 @@ if ($idDoc > 0) {
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
-        <div id="contentDiv" class="container-fluid" style="margin-left: auto;">
+        <div id="contentDiv" class="container-fluid" style="margin-left: auto; margin-top: 5px;">
             <h1><?php echo $title; ?> <span id="spnStatus" style="display:inline;"></span></h1>
             <div id="errorMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; <?php if ($errorMessage == '') {echo('display:none;');} ?>" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $errorMessage; ?>
@@ -194,7 +194,7 @@ if ($idDoc > 0) {
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>" id="guestLabel" />
         <input type="hidden" value="<?php echo $idDoc ?>" id="idDoc" name="idDoc" />
         <input type="hidden" value="<?php echo $idPatient ?>" id="idPatient" name='idPatient'/>
-        <input type="hidden" value="<?php echo $final ?>" id="final" name='final'/>
+        <input type="hidden" value="<?php echo $final ?>" id="finaly" name='finaly'/>
         <?php echo GUEST_REFERRAL_JS; ?>
     </body>
 </html>

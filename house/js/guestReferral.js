@@ -6,9 +6,9 @@ $(document).ready(function() {
 
 	idPatient = parseInt($('#idPatient').val());
 	idDoc = parseInt($('#idDoc').val());
-	$final = $('#final');
 	
 	var $btnDone = $('#btnDone');
+	$btnDone.button();
 
 	// Set up done button
 	if (idPatient < 0) {
@@ -23,11 +23,9 @@ $(document).ready(function() {
 		// Guest chooser
 		$btnDone.val('Save Guests');
 		$('#final').val('1');
+		
 		// Search includes columns
 		$('.hhk-includeSearch').hide();
 	}
 
-	$('input[name=rbPatient]:radio').change(function () {
-		$('#idPatient').val($(this).val());
-	})
 });
