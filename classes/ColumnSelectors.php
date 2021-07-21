@@ -134,10 +134,10 @@ class ColumnSelectors {
                 HTMLInput::generateMarkup("", ['name'=>'fieldsetName']) .
                 $this->getAlertMsg(AlertMessage::Alert, 'Error')->createMarkup()
             , ["id"=>"fieldSetName", "style"=>"display: none;"]) .
-            HTMLContainer::generateMarkup("button", "Save Changes", ['id'=>"saveSet", 'style'=>'margin-top: 1em; display: none']) .
-            HTMLContainer::generateMarkup("button", "Save as Personal Set", ['id'=>"saveNewSet", 'style'=>'margin-top: 1em; display: none']) .
-            (SecurityComponent::is_Admin() ? HTMLContainer::generateMarkup("button", "Save as House Set", ['id'=>"saveGlobalSet", 'style'=>'margin-top: 1em; display: none']): '') .
-            HTMLContainer::generateMarkup("button", "Delete Set", ['id'=>"delSet", 'style'=>'margin-top: 1em; display: none'])
+            HTMLContainer::generateMarkup("button", "Save Changes", ['id'=>"saveSet", 'style'=>'margin-top: 1em; display: none', 'type'=>'button']) .
+            HTMLContainer::generateMarkup("button", "Save as Personal Set", ['id'=>"saveNewSet", 'style'=>'margin-top: 1em; display: none', 'type'=>'button']) .
+            (SecurityComponent::is_Admin() ? HTMLContainer::generateMarkup("button", "Save as House Set", ['id'=>"saveGlobalSet", 'style'=>'margin-top: 1em; display: none', 'type'=>'button']): '') .
+            HTMLContainer::generateMarkup("button", "Delete Set", ['id'=>"delSet", 'style'=>'margin-top: 1em; display: none', 'type'=>'button'])
             ,['style'=>"display: flex; flex-flow: column", 'id'=>'filterSetBtns']);
     }
 
