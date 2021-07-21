@@ -42,7 +42,7 @@ $uS = Session::getInstance();
 creditIncludes($uS->PaymentGateway);
 
 
-function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup, $siteName) {
+function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
 
     // Stats panel
     if (count($visitNites) < 1) {
@@ -192,7 +192,11 @@ order by r.idResource;";
     $sTbl->addBodyTr(HTMLTable::makeTd('Median visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($median,2)));
 
     $sTbl->addBodyTr(HTMLTable::makeTd('Mean Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($avDailyFee,2)));
-
+    
+    if($uS->RoomPriceModel == ItemPriceCode::Dailey){
+        $sTbl->addBodyTr(HTMLTable::makeTd('Median Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($medDailyFee,2)));
+    }
+    
     $sTbl->addBodyTr($trs[4]);
 
     $sTbl->addBodyTr($trs[5]);
@@ -737,6 +741,7 @@ where
     $savedr = array();
     $nites = array();
     $rates = [];
+    $chargesAr = [];
 
     //$reportStartDT = new DateTime($start . ' 00:00:00');
     $reportEndDT = new \DateTime($end . ' 00:00:00');
@@ -758,6 +763,7 @@ where
             if (count($visit) > 0 && $visit['nit'] > 0) {
 
                 $totalLodgingCharge += $visit['chg'];
+                $chargesAr[] = $visit['chg']/$visit['nit'];
                 $totalAddnlCharged += ($visit['addch']);
 
                 $totalTaxCharged += $visit['taxcgd'];
@@ -1002,6 +1008,7 @@ where
     if (count($savedr) > 0 && $visit['nit'] > 0) {
 
         $totalLodgingCharge += $visit['chg'];
+        $chargesAr[] = $visit['chg']/$visit['nit'];
         $totalAddnlCharged += ($visit['addch']);
         $totalVisitFee += $visit['vfa'];
         $totalCharged += $visit['chg'];
@@ -1127,9 +1134,21 @@ where
 
         $avDailyFee = 0;
         $avGuestFee = 0;
+        $medDailyFee = 0;
 
         if ($totalNights > 0) {
             $avDailyFee = $totalCharged / $totalNights;
+            
+            array_multisort($chargesAr);
+            $entries = count($chargesAr);
+            $emod = $entries % 2;
+            
+            if ($emod > 0) {
+                // odd number of entries
+                $medDailyFee = $chargesAr[(ceil($entries / 2) - 1)];
+            } else {
+                $medDailyFee = ($chargesAr[($entries / 2) - 1] + $chargesAr[($entries / 2)]) / 2;
+            }
         }
 
         if ($totalGuestNights > 0 && $uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
@@ -1250,7 +1269,7 @@ where
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact'));
 
         // Stats panel
-        $statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $rescGroup[0], $uS->siteName);
+        $statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
 
         return array('data'=>$dataTable, 'stats'=>$statsTable);
 
