@@ -322,7 +322,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         }
     }
 
-    protected function saveMembers(\PDO $dbh, $uname) {
+    public function saveMembers(\PDO $dbh, $uname) {
 
         if ($this->getIdPsg() == 0) {
             return;

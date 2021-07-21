@@ -43,6 +43,7 @@ $idPatient = -1;
 $done = FALSE;
 $patMkup = '';
 $guestMkup = '';
+$chosen = '';
 
 $datesMkup = '';
 $displayGuest = 'display:none;';
@@ -59,6 +60,7 @@ if (isset($_GET['docid'])) {
 if (isset($_POST['rbPatient'])) {
     $idPatient = intval(filter_input(INPUT_POST, 'rbPatient', FILTER_SANITIZE_NUMBER_INT), 10);
 }
+
 
 // final step
 if (isset($_POST['finaly'])) {
@@ -100,20 +102,32 @@ if ($idDoc > 0) {
     	    // Guest search
 
     	    $patient = $refForm->setPatient($dbh, $idPatient);
-    	    $patMkup = $refForm->chosenPatientMkup($patient);
+    	    $patMkup = $refForm->chosenMemberMkup($patient);
 
     	    $refForm->searchGuests($dbh);
     	    $guestMkup .= $refForm->guestsMarkup();
 
     	    // Unhide guest section
     	    $displayGuest = '';
+    	    $chosen = ' Chosen';
 
     	} else {
     	    // Fininsh
 
+    	    // Get idPsg
+    	    $stmt = $dbh->query("Select idPsg from name_guest where idName = $idPatient");
+    	    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+    	    if ($idPsg = $rows[0][0] == 0) {
+    	        throw new \Exception('Patient has no PSG.  Patient Id = '.$idPatient);
+    	    } else {
+    	        $psg = new Psg($dbh, $idPsg, 0);
+    	    }
+
     	    // Save Guests
+            $guests = $refForm->setGuests($dbh, $_POST, $psg);
 
-
+            // Create reservation
 
     	}
 
@@ -169,7 +183,7 @@ if ($idDoc > 0) {
                 </div>
                 <div id="PatientSection" style="font-size: .9em; min-width: 810px;"  class="ui-widget hhk-visitdialog mb-3">
                     <div id="PatientHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3">
-                    	<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>
+                    	<?php echo $labels->getString('MemberType', 'patient', 'Patient') . $chosen; ?>
                     </div>
                     <?php echo $patMkup; ?>
                     </div>
@@ -187,14 +201,14 @@ if ($idDoc > 0) {
                         </td></tr>
                     </table>
                 </div>
+                <input type="hidden" value="<?php echo $idDoc ?>" id="idDoc" name="idDoc" />
+                <input type="hidden" value="<?php echo $idPatient ?>" id="idPatient" name='idPatient'/>
+                <input type="hidden" value="<?php echo $final ?>" id="finaly" name='finaly'/>
             </form>
         </div>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>" id="visitorLabel" />
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>" id="guestLabel" />
-        <input type="hidden" value="<?php echo $idDoc ?>" id="idDoc" name="idDoc" />
-        <input type="hidden" value="<?php echo $idPatient ?>" id="idPatient" name='idPatient'/>
-        <input type="hidden" value="<?php echo $final ?>" id="finaly" name='finaly'/>
         <?php echo GUEST_REFERRAL_JS; ?>
     </body>
 </html>

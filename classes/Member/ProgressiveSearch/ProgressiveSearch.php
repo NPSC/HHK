@@ -6,63 +6,90 @@ use HHK\Member\ProgressiveSearch\SearchNameData\SearchFor;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchResults;
 
 class ProgressiveSearch {
-	
-		
-	public function doSearch(\PDO $dbh, SearchFor $searchFor) {
-	    
-	    $stmt = $dbh->query($this->getQuery($searchFor));
-	    
+
+
+	public static function doSearch(\PDO $dbh, SearchFor $searchFor) {
+
+	    $stmt = $dbh->query(self::getSearchQuery($searchFor));
+
 	    $results = [];
-	    
+
 	    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-	        
+
 	        $searchResults = new SearchResults();
-	                
-	        $searchResults->setId($r['Id'])
-	           ->setNameFirst($r["First"])
-	           ->setNameLast($r["Last"])
-	           ->setNickname($r["Nickname"])
-	           ->setNameMiddle($r["Middle"])
-	           ->setGender($r['Gender'])
-	           ->setBirthDate($r['Birthdate'])
-	           ->setPhone($r['Phone'])
-	           ->setEmail($r['Email'])
-	           ->setAddressStreet1($r['Address1'])
-	           ->setAddressStreet2($r['Address2'])
-	           ->setAddressCity($r['City'])
-	           ->setAddressState($r['State'])
-	           ->setAddressZip($r['Zip'])
-	           ->setAddressCountry($r['Country'])
-	           ->setNoReturn($r['No_Return']);
-	        
+
+	        $searchResults->loadMeFrom($r);
+
 	        $results[] = $searchResults;
 	    }
-	    
+
 	    return $results;
     }
 
+    public static function getMemberQuery($idName) {
 
+        $id = intval($idName);
 
-    protected function getQuery(SearchFor $searchFor) {
-	    
-	    return "SELECT
-    n.idName as `Id`,
-    n.Name_Last as `Last`,
-    n.Name_First as `First`,
-    n.Name_Middle as `Middle`,
-    n.Name_Suffix AS `Suffix`,
-    n.Name_Nickname as `Nickname`,
+        return "SELECT
+    n.idName,
+    n.Name_Last,
+    n.Name_First,
+    n.Name_Middle,
+    n.Name_Suffix,
+    n.Name_Nickname,
     IFNULL(n.BirthDate, '') as `Birthdate`,
     n.`Gender`,
-    IFNULL(np.Phone_Num, '') AS `Phone`,
+    IFNULL(np.Phone_Num, '') AS `Phone_Num`,
     IFNULL(ne.Email, '') as `Email`,
     IFNULL(na.Address_1, '') as `Address1`,
     IFNULL(na.Address_2, '') as `Address2`,
     IFNULL(na.City, '') AS `City`,
     IFNULL(na.County, '') AS `County`,
-    IFNULL(na.State_Province, '') AS `State`,
-    IFNULL(na.Postal_Code, '') AS `Zip`,
-    IFNULL(na.Country_Code, '') AS `Country`,
+    IFNULL(na.State_Province, '') AS `State_Province`,
+    IFNULL(na.Postal_Code, '') AS `Postal_Code`,
+    IFNULL(na.Country_Code, '') AS `Country_Code`,
+    IFNULL(gr.Description, '') AS `No_Return`
+FROM
+    name n
+        LEFT JOIN
+    name_phone np ON n.idName = np.idName
+        AND n.Preferred_Phone = np.Phone_Code
+        LEFT JOIN
+    name_email ne ON n.idName = ne.idName
+        AND n.Preferred_Email = ne.Purpose
+        LEFT JOIN
+    name_address na ON n.idName = na.idName
+        AND n.Preferred_Mail_Address = na.Purpose
+        LEFT JOIN
+    name_demog nd ON n.idName = nd.idName
+        LEFT JOIN
+    gen_lookups gr ON gr.Table_Name = 'NoReturnReason'
+        AND gr.Code = nd.No_Return
+WHERE n.idName = $id ";
+
+    }
+
+
+    public static function getSearchQuery(SearchFor $searchFor) {
+
+	    return "SELECT
+    n.idName,
+    n.Name_Last,
+    n.Name_First,
+    n.Name_Middle,
+    n.Name_Suffix,
+    n.Name_Nickname,
+    IFNULL(n.BirthDate, '') as `Birthdate`,
+    n.`Gender`,
+    IFNULL(np.Phone_Num, '') AS `Phone_Num`,
+    IFNULL(ne.Email, '') as `Email`,
+    IFNULL(na.Address_1, '') as `Address1`,
+    IFNULL(na.Address_2, '') as `Address2`,
+    IFNULL(na.City, '') AS `City`,
+    IFNULL(na.County, '') AS `County`,
+    IFNULL(na.State_Province, '') AS `State_Province`,
+    IFNULL(na.Postal_Code, '') AS `Postal_Code`,
+    IFNULL(na.Country_Code, '') AS `Country_Code`,
     IFNULL(gr.Description, '') AS `No_Return`
 FROM
     name n
@@ -83,9 +110,9 @@ FROM
 WHERE n.idName > 0 and n.Record_Member = 1 and n.Member_Status ='a' and n.Name_Last = '" . $searchFor->getNameLast() . "'
     AND (n.Name_First = '" . $searchFor->getNameFirst() . "' OR n.Name_Nickname = '" . $searchFor->getNameFirst() . "') "
     .  $searchFor->getWhereClause();
-	    
+
 	}
 
-	
+
 }
 

@@ -3,8 +3,9 @@ namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
 use HHK\Member\Address\CleanAddress;
 
-abstract class SearchNameData {
+class SearchNameData {
 
+    protected $id = 0;
     protected $nameFirst = '';
     protected $nameMiddle = '';
     protected $nameLast = '';
@@ -22,6 +23,14 @@ abstract class SearchNameData {
     protected $addressZip = '';
     protected $addressCountry = '';
 
+    /**
+     * @param mixed $id
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
 
     /**
      * @param string $nameFirst
@@ -152,6 +161,13 @@ abstract class SearchNameData {
         return $this;
     }
 
+    /**
+     * @return mixed
+     */
+    public function getId()
+    {
+        return $this->id;
+    }
 
     /**
      * @return string
@@ -306,7 +322,6 @@ abstract class SearchNameData {
     public function getAddressStreet() {
         return $this->addressStreet1 . ($this->addressStreet2 == '' ? '' : ', ' . $this->addressStreet2);
     }
-
 
 }
 

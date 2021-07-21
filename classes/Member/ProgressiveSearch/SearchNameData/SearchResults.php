@@ -6,27 +6,36 @@ use HHK\sec\Session;
 
 class SearchResults extends SearchNameData
 {
-    
+
     protected $noReturn;
-    protected $id;
     protected $psgId;
 
-    
-    
+    public function loadMeFrom(array $r) {
+
+        $this->setId($r['idName'])
+        ->setNameFirst($r["Name_First"])
+        ->setNameLast($r["Name_Last"])
+        ->setNickname($r["Name_Nickname"])
+        ->setNameMiddle($r["Name_Middle"])
+        ->setGender($r['Gender'])
+        ->setBirthDate($r['Birthdate'])
+        ->setPhone($r['Phone_Num'])
+        ->setEmail($r['Email'])
+        ->setAddressStreet1($r['Address1'])
+        ->setAddressStreet2($r['Address2'])
+        ->setAddressCity($r['City'])
+        ->setAddressState($r['State_Province'])
+        ->setAddressZip($r['Postal_Code'])
+        ->setAddressCountry($r['Country_Code'])
+        ->setNoReturn($r['No_Return']);
+    }
+
     /**
      * @return mixed
      */
     public function getNoReturn()
     {
         return $this->noReturn;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getId()
-    {
-        return $this->id;
     }
 
     /**
@@ -43,15 +52,6 @@ class SearchResults extends SearchNameData
     public function setNoReturn($noReturn)
     {
         $this->noReturn = $noReturn;
-        return $this;
-    }
-
-    /**
-     * @param mixed $id
-     */
-    public function setId($id)
-    {
-        $this->id = $id;
         return $this;
     }
 
@@ -73,7 +73,7 @@ class SearchResults extends SearchNameData
             );
         return $this;
     }
-    
+
     /**
      * @param string $nameMiddle
      */
@@ -86,7 +86,7 @@ class SearchResults extends SearchNameData
             );
         return $this;
     }
-    
+
     /**
      * @param string $nameLast
      */
@@ -99,7 +99,7 @@ class SearchResults extends SearchNameData
             );
         return $this;
     }
-    
+
     /**
      * @param string $nickname
      */
@@ -112,30 +112,30 @@ class SearchResults extends SearchNameData
             );
         return $this;
     }
-    
+
     public function getBirthDate() {
-        
+
         if ($this->birthDate != '') {
             return date('M d, Y', strtotime($this->birthDate));
         }
-        
+
         return $this->birthDate;
     }
-    
+
     public function getPhone() {
         return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->phone);
     }
-    
+
     public function getRelationship() {
-        
+
         $uS = Session::getInstance();
-        
+
         if (isset($uS->guestLookups[GLTableNames::PatientRel][$this->relationship])) {
             return $uS->guestLookups[GLTableNames::PatientRel][$this->relationship][1];
         }
-        
+
         return $this->relationship;
-        
+
     }
 }
 
