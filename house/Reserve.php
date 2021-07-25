@@ -64,7 +64,7 @@ try {
     $paymentMarkup = $ex->getMessage();
 }
 
-
+// Confirmation form return
 if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST['hdnCfmAmt'])) {
 
     $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -72,7 +72,7 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
     $amt = filter_var($_POST['hdnCfmAmt'], FILTER_SANITIZE_STRING);
     $amt = preg_replace('/\D/', '', $amt);
     $amt = floatval($amt/100);
-    
+
     $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
 
     $idGuest = $resv->getIdGuest();
@@ -132,9 +132,9 @@ if ($idReserv > 0 || $idGuest >= 0) {
     $resvObj->setIdResv($idReserv);
     $resvObj->setId($idGuest);
     $resvObj->setIdPsg($idPsg);
-	
+
 } else {
-	
+
     // Guest Search markup
 	$gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ");
     $mk1 = $gMk['hdr'];
@@ -163,19 +163,19 @@ $title = $wInit->pageHeading;
 
 // Imediate checkin, no prior reservation
 if (isset($_GET['title'])) {
-	
+
 	$nowDT = new DateTime();
 	$extendHours = intval($uS->ExtendToday);
-	
-	
+
+
 
 	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) < $extendHours) {
 		$nowDT->sub(new DateInterval('P1D'));
 	}
-	
+
 	$resvAr['arrival'] = $nowDT->format('M j, Y');
     $title = 'Check In';
-    
+
 }
 
 $resvObjEncoded = json_encode($resvAr);

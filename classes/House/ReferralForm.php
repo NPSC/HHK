@@ -8,13 +8,17 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\Member\MemberSearch;
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
 use HHK\Member\ProgressiveSearch\SearchNameData\{SearchNameData, SearchResults, SearchFor};
-use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, ReferralFormStatus, VolMemberType, GLTableNames, RelLinkType};
+use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, ReferralFormStatus, VolMemberType, GLTableNames, RelLinkType, ReservationStatus};
 use HHK\Member\Address\CleanAddress;
 use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
 use HHK\Member\Role\{Patient, Guest};
 use HHK\Member\Role\AbstractRole;
+use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameAddressRS;
+use HHK\House\Reservation\Reservation_1;
+use HHK\House\Hospital\HospitalStay;
+use HHK\Tables\Reservation\Reservation_GuestRS;
 
 
 
@@ -42,6 +46,9 @@ class ReferralForm {
 
 	protected $idPatient;
 	protected $idPsg;
+
+	protected $CkinDT = NULL;
+	protected $CkoutDT = NULL;
 
 	// Patient search includes
 	const HTML_Incl_Birthday = 'cbPIncludeBD';
@@ -196,31 +203,6 @@ class ReferralForm {
 
 	}
 
-	public function datesMarkup() {
-
-	    $ckinDate = '';
-	    $ckoutDate = '';
-
-	    if (isset($this->formUserData['checkindate'])) {
-
-	        $dateDT = new \DateTime($this->formUserData['checkindate']);
-
-	        $ckinDate = HTMLContainer::generateMarkup('span', 'Arrival: '
-	            . HTMLInput::generateMarkup($dateDT->format('M j, Y'), array('size'=>'13')) );
-	    }
-
-	    if (isset($this->formUserData['checkoutdate'])) {
-
-	        $dateDT = new \DateTime($this->formUserData['checkoutdate']);
-
-	        $ckoutDate = HTMLContainer::generateMarkup('span', 'Expected Departure: '
-	            . HTMLInput::generateMarkup($dateDT->format('M j, Y'), array('size'=>'13'))
-	            , array('style'=>'margin-left:.9em;'));
-	    }
-
-	    return HTMLContainer::generateMarkup('div', $ckinDate . $ckoutDate, array('style'=>'font-size:.9em;'));
-	}
-
 	public function searchDoctor(\PDO $dbh) {
 
 	    if (isset($this->formUserData['hospital']['doctor']) && $this->formUserData['hospital']['doctor'] != '') {
@@ -284,13 +266,29 @@ class ReferralForm {
 	            }
 
 	            if (is_null($searchNameData) === FALSE) {
-	                $guests[$id] = $this->saveGuest($dbh, $id, $psg, $searchNameData, $uS->username);
-
+	                $guest = $this->saveGuest($dbh, $id, $psg, $searchNameData, $uS->username);
+                    $guests[] = $guest->getIdName();
 	           }
 	       }
 	   }
 
 	   return $guests;
+	}
+
+	public function setDates() {
+
+	    if (isset($this->formUserData['checkindate'])) {
+	        $this->CkinDT = new \DateTime($this->formUserData['checkindate']);
+	    } else {
+	        throw new \Exception('Check-in date is missing.');
+	    }
+
+	    if (isset($this->formUserData['checkoutdate'])) {
+	        $this->CkoutDT = new \DateTime($this->formUserData['checkoutdate']);
+	    } else {
+	        throw new \Exception('Checkout date is missing.');
+	    }
+
 	}
 
 	protected function LoadMemberResult(\PDO $dbh, $id) {
@@ -342,6 +340,50 @@ class ReferralForm {
 
 	}
 
+	public function makeNewReservation(\PDO $dbh, PSG $psg, array $guests) {
+
+	    $uS = Session::getInstance();
+
+	    $reg = new Registration($dbh, $psg->getIdPsg());
+	    $reg->saveRegistrationRs($dbh, $this->reserveData->getIdPsg(), $uS->username);
+
+	    $hospStay = new HospitalStay($dbh, $psg->getIdPatient());
+	    $idHospStay = $hospStay->save($dbh, $psg, 0, $uS->username);
+
+
+        $resv = Reservation_1::instantiateFromIdReserv($dbh, 0);
+
+        $resv->setExpectedArrival($this->CkinDT_format('Y-m-d'))
+            ->setExpectedDeparture($this->CkoutDT->format('Y-m-d'))
+            ->setIdGuest($psg->getIdPatient())
+            ->setStatus(ReservationStatus::Waitlist)
+            ->setIdHospitalStay($idHospStay)
+            ->setNumberGuests(count($guests))
+            ->setIdResource(0);
+
+        $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
+
+        $resv->saveConstraints($dbh, array());
+
+        // Save Reservtaion geusts - patient
+        $rgRs = new Reservation_GuestRS();
+        $rgRs->idReservation->setStoredVal($resv->getIdResv());
+        $rgRs->idGuest->setNewVal($psg->getIdPatient());
+        $rgRs->Primary_Guest->setNewVal('1');
+        EditRS::insert($dbh, $rgRs);
+
+        foreach ($guests as $g) {
+
+            $rgRs = new Reservation_GuestRS();
+            $rgRs->idReservation->setStoredVal($resv->getIdResv());
+            $rgRs->idGuest->setNewVal($g);
+            $rgRs->Primary_Guest->setNewVal('');
+            EditRS::insert($dbh, $rgRs);
+        }
+
+        return $resv->getIdReservation();
+
+	}
 
 	public function chosenMemberMkup(AbstractRole $role) {
 
@@ -553,6 +595,27 @@ class ReferralForm {
 
 
 	   return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
+	}
+
+	public function datesMarkup() {
+
+	    $ckinDate = '';
+	    $ckoutDate = '';
+
+	    if (is_null($this->CkinDT) === FALSE) {
+
+	        $ckinDate = HTMLContainer::generateMarkup('span', 'Arrival: '
+	            . HTMLInput::generateMarkup($this->CkinDT->format('M j, Y'), array('size'=>'13')) );
+	    }
+
+	    if (is_null($this->CkoutDT) === FALSE) {
+
+	        $ckoutDate = HTMLContainer::generateMarkup('span', 'Expected Departure: '
+	            . HTMLInput::generateMarkup($this->CkoutDT->format('M j, Y'), array('size'=>'13'))
+	            , array('style'=>'margin-left:.9em;'));
+	    }
+
+	    return HTMLContainer::generateMarkup('div', $ckinDate . $ckoutDate, array('style'=>'font-size:.9em;'));
 	}
 
 	protected function memberDataPost(SearchNameData $data) {

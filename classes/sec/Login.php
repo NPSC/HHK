@@ -47,21 +47,21 @@ class Login {
         }
 
         $ssn->sitePepper = $config->getString('site', 'sitePepper', false);
-        
+
         try {
         	self::dbParmsToSession($config);
         	$dbh = initPDO(TRUE);
         } catch (RuntimeException $hex) {
         	exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
         }
-        
+
          // Check site maintenance
         $ssn->Site_Maintenance = SysConfig::getKeyValue($dbh, 'sys_config', 'Site_Maintenance', false);
-        
+
         if ($ssn->Site_Maintenance === TRUE) {
              exit("<h1>HHK is offline for maintenance.  Try again later.</h1>");
         }
-         
+
 
 		// Check SsL
         $ssn->ssl = SysConfig::getKeyValue($dbh, 'sys_config', 'SSL', false);
@@ -75,7 +75,7 @@ class Login {
             }
         }
 
-        
+
         $ssn->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'mode', 'demo'));
         $ssn->testVersion = SysConfig::getKeyValue($dbh, 'sys_config', 'Run_As_Test', false);
         $ssn->resourceURL = $secureComp->getRootURL();
@@ -85,10 +85,10 @@ class Login {
         if (isset($ssn->rolecode) === FALSE) {
         	$ssn->rolecode = WebRole::Guest;
         }
-        
+
         //get google API keys
         SysConfig::getCategory($dbh, $ssn, "'ga'", WebInit::SYS_CONFIG);
-        
+
         return $dbh;
     }
 
@@ -179,19 +179,19 @@ class Login {
             $alertMsg->set_styleId("alrResponse");
             $alertMsg->set_txtSpanId("alrMessage");
             $alertMsg->set_Text("Internet Explorer 11 detected<span style='margin-top: 0.5em; display: block'>HHK may not function as intended. For the best experience, consider using a supported browser such as Edge, Chrome or Firefox. If you are required to continue using IE 11, and are having trouble with HHK, please contact NPSC.</span>");
-            
+
             return HTMLContainer::generateMarkup('div', $alertMsg->createMarkup(), array('style'=>'margin-top: 1em;'));
         }else{
             return '';
         }
     }
-    
+
     public function loginForm($uname = '') {
-        
+
         if ($uname != '' && $this->userName == '') {
             $this->setUserName($uname);
         }
-        
+
         $tbl = new HTMLTable();
         $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')), array('colspan'=>'2')));
         $tbl->addBodyTr(
@@ -205,21 +205,21 @@ class Login {
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'17', 'type'=>'password')) . '<button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button>')
             .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg')))
         );
-        
+
         //pass xf to login
         if(isset($_GET['xf'])){
             $xfInput = HTMLInput::generateMarkup($_GET['xf'], array('name'=>'xf', 'id'=>'xf', 'type'=>'hidden'));
         }else{
             $xfInput = '';
         }
-        
+
         $tbl->addBodyTr(HTMLTable::makeTd($xfInput . HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button', 'style'=>'margin-top: 1em;')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
 
 
         return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls'));
 
     }
-    
+
     public function generateCSRF(){
         $uS = Session::getInstance();
         if(empty($uS->CSRFtoken)){
@@ -227,7 +227,7 @@ class Login {
         }
         return $uS->CSRFtoken;
     }
-    
+
     public static function verifyCSRF($token = false){
         $uS = Session::getInstance();
         if($token && !empty($uS->CSRFtoken) && $token == $uS->CSRFtoken){

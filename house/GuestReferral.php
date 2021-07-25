@@ -9,6 +9,8 @@ use HHK\Member\Role\AbstractRole;
 use HHK\sec\Labels;
 use HHK\House\ReferralForm;
 use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose};
+use HHK\House\PSG;
+use HHK\SysConst\ReferralFormStatus;
 
 /**
  * Referral.php
@@ -75,6 +77,7 @@ if ($idDoc > 0) {
     try {
     	$refForm = new ReferralForm($dbh, $idDoc);
 
+    	$refForm->setDates();
     	$datesMkup = $refForm->datesMarkup();
 
     	if ($idPatient < 0) {
@@ -115,22 +118,24 @@ if ($idDoc > 0) {
     	    // Fininsh
 
     	    // Get idPsg
-    	    $stmt = $dbh->query("Select idPsg from name_guest where idName = $idPatient");
-    	    $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-
-    	    if ($idPsg = $rows[0][0] == 0) {
+    	    $psg = new PSG($dbh, 0, $idPatient);
+    	    if ($psg->getIdPsg() < 1) {
     	        throw new \Exception('Patient has no PSG.  Patient Id = '.$idPatient);
-    	    } else {
-    	        $psg = new Psg($dbh, $idPsg, 0);
     	    }
 
     	    // Save Guests
             $guests = $refForm->setGuests($dbh, $_POST, $psg);
 
             // Create reservation
+            $idResv = $refForm->makeNewReservation($dbh, $psg, $guests);
+
+            // Set referral form status to done.
+            $refForm->setReferralStatus($dbh, ReferralFormStatus::Accepted);
+
+            // Load reserve page.
+            header('location:Reserve.php?rid='.$idResv);
 
     	}
-
 
     } catch (\Exception $ex) {
         $errorMessage = '<p>Referral form error: ' . $ex->getMessage() . '</p>';
