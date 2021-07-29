@@ -1692,6 +1692,17 @@ CREATE TABLE if not exists `reservation_guest` (
 
 
 -- -----------------------------------------------------
+-- Table `reservation_referral`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `reservation_referral` (
+  `Reservation_Id` INT NOT NULL,
+  `Document_Id` INT NOT NULL,
+  PRIMARY KEY (`Reservation_Id`)
+) ENGINE=InnoDB;
+
+
+
+-- -----------------------------------------------------
 -- Table `reservation_log`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `reservation_log` (

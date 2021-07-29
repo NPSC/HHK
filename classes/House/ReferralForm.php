@@ -3,8 +3,7 @@
 namespace HHK\House;
 
 use HHK\Document\FormDocument;
-use HHK\HTMLControls\HTMLContainer;
-use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\{HTMLContainer,HTMLTable};
 use HHK\Member\MemberSearch;
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
 use HHK\Member\ProgressiveSearch\SearchNameData\{SearchNameData, SearchResults, SearchFor};
@@ -12,13 +11,13 @@ use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, ReferralFormStatus
 use HHK\Member\Address\CleanAddress;
 use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
-use HHK\Member\Role\{Patient, Guest};
-use HHK\Member\Role\AbstractRole;
+use HHK\Member\Role\{AbstractRole, Patient, Guest};
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameAddressRS;
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Tables\Reservation\Reservation_GuestRS;
+use HHK\Tables\Reservation\Reservation_ReferralRS;
 
 
 
@@ -32,7 +31,7 @@ class ReferralForm {
 
 	/**
 	 *
-	 * @var array
+	 * @var array Form data
 	 */
 	protected $formUserData;
 
@@ -41,8 +40,6 @@ class ReferralForm {
 
 	protected $gstSearchFor = [];
 	protected $gstResults = [];
-
-	protected $doctorResults;
 
 	protected $idPatient;
 	protected $idPsg;
@@ -205,12 +202,16 @@ class ReferralForm {
 
 	public function searchDoctor(\PDO $dbh) {
 
+	    $doctorResults = [];
+
 	    if (isset($this->formUserData['hospital']['doctor']) && $this->formUserData['hospital']['doctor'] != '') {
 
 	       $memberSearch = new MemberSearch($this->formUserData['hospital']['doctor']);
 
-	       $this->doctorResults = $memberSearch->volunteerCmteFilter($dbh, VolMemberType::Doctor, '');
+	       $doctorResults = $memberSearch->volunteerCmteFilter($dbh, VolMemberType::Doctor, '');
 	    }
+
+	    return $doctorResults;
 	}
 
 	public function setPatient(\PDO $dbh, $idPatient) {
@@ -380,6 +381,13 @@ class ReferralForm {
             $rgRs->Primary_Guest->setNewVal('');
             EditRS::insert($dbh, $rgRs);
         }
+
+        // Save guest referral doc id
+        $rrRs = new Reservation_ReferralRS();
+        $rrRs->Reservation_Id->setNewVal($resv->getIdReservation());
+        $rrRs->Document_Id->setNewVal($this->referralDocId);
+
+        EditRS::insert($dbh, $rrRs);
 
         return $resv->getIdReservation();
 

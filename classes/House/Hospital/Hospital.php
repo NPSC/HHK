@@ -10,6 +10,7 @@ use HHK\sec\Session;
 use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\HospitalRS;
+use HHK\Document\FormData;
 use HHK\Exception\RuntimeException;
 use HHK\House\PSG;
 
@@ -34,8 +35,8 @@ class Hospital {
         return EditRS::select($dbh, $hospRs, array());
 
     }
-    
-    protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE) {
+
+    protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE, FormData $ReferralFormData = NULL) {
 
         $uS = Session::getInstance();
 
@@ -59,11 +60,11 @@ class Hospital {
                 }
             }
         }
-        
+
         $table = new HTMLTable();
 
         $mrn = $labels->getString('hospital', 'MRN', '');
-        
+
         $table->addHeaderTr(
                 (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
@@ -97,7 +98,7 @@ class Hospital {
         						)
         				))
         );
-        
+
         $hospMkup = $table->generateMarkup(array('style'=>'display:inline-table'));
 
 
@@ -106,9 +107,9 @@ class Hospital {
         $hospDates = '';
 
         if ($trtSt !== '' || $trtEnd !== '') {
-        	
+
 	        $table2 = new HTMLTable();
-	        
+
 	        $table2->addHeaderTr(
 	        		($trtSt == '' ? '' : HTMLTable::makeTh($trtSt))
 	        		.($trtEnd !== '' ? HTMLTable::makeTh($trtEnd) : '')
@@ -126,15 +127,15 @@ class Hospital {
 	        						array('name'=>'txtExitDate', 'class'=>'ckhsdate ignrSave hospital-stay', 'readonly'=>'readonly'))
 	        				) : '')
 	       );
-	        
+
 	        $hospDates = $table2->generateMarkup(array('style'=>'display:inline-table'));
         }
-        
+
         return HTMLContainer::generateMarkup('div', $hospMkup . $hospDates, array('id'=>'hospRow'));
 
     }
 
-    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE) {
+    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE, FormData $ReferralFormData = NULL) {
 
         $uS = Session::getInstance();
         $referralAgentMarkup = '';
@@ -357,7 +358,7 @@ $(document).ready(function () {
         }
 
         $div = HTMLContainer::generateMarkup('div',
-        		self::justHospitalMarkup($hstay, $offerBlankHosp)
+        		self::justHospitalMarkup($hstay, $offerBlankHosp, )
         		. $referralAgentMarkup
         		. $docRowMkup
         		. $hstayLog

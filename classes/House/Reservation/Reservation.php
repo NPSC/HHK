@@ -78,14 +78,14 @@ class Reservation {
 
 
         // idResv = 0 ------------------------------
-        
+
         $hasNameGuestRecord = FALSE;
 
         // if we have a member id, is them in the name_guest table?
         if ($rData->getId() > 0) {
         	$stmt = $dbh->query("Select count(*) from name_guest where idName = " . $rData->getId());
         	$rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-        	
+
         	if ($rows[0][0] > 0) {
         		$hasNameGuestRecord = TRUE;
         	}
@@ -105,14 +105,18 @@ class Reservation {
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
 
     	$uS = Session::getInstance();
-    	
+
     	// Load reservation
-        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`, ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
+        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`,
+            ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`, ifnull(rv.Docunent_Id, 0) as idReferralDoc
 FROM reservation r
         LEFT JOIN
     registration rg ON r.idRegistration = rg.idRegistration
-	LEFT JOIN
+	    LEFT JOIN
     visit v on v.idReservation = r.idReservation and v.Span = 0
+        LEFT JOIN
+    reservation_referral rv on r.idReservation = rv.Reservation_Id
+
 WHERE r.idReservation = " . $rData->getIdResv());
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -129,7 +133,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
             ->setSpanStatus($rows[0]['SpanStatus'])
             ->setSpanStartDT($rows[0]['SpanStart'])
             ->setSpanEndDT($rows[0]['SpanEnd'])
-            ->setIdHospital_Stay($rows[0]['idHospital_Stay']);
+            ->setIdHospital_Stay($rows[0]['idHospital_Stay'])
+            ->setidReferralDoc($rows[0]['idReferralDoc']);
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
@@ -233,12 +238,12 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     ->setDepartureDT($expDepDT);
 
         } else if ($this->reservRs->Expected_Arrival->getStoredVal() == '') {
-        	
+
         	$uS = Session::getInstance();
         	$nowDT = new \DateTime();
         	$extendHours = intval($uS->ExtendToday);
-        	
-        	
+
+
         	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) <= $extendHours) {
         		$nowDT->sub(new \DateInterval('P1D'));
         		$nowDT->setTime(16, 0);
@@ -259,7 +264,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         //get hospitalStay from reservation
         $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId(), $this->reserveData->getIdHospital_Stay());
 
-        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay));
+        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay, TRUE, $this->reserveData->getIdReferralDoc()));
 
     }
 
@@ -1104,12 +1109,12 @@ WHERE
 
         return $oldResvId;
     }
-    
+
     /*
      *
      */
     protected function findLastVisit(\PDO $dbh, $class = '') {
-    	
+
     	if ($this->reserveData->getIdPsg() < 1) {
     		return '';
     	}
@@ -1121,7 +1126,7 @@ WHERE
 	(SELECT  MAX(v.Span_Start)
 		FROM visit v LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
 	WHERE rg.idPsg = " . $this->reserveData->getIdPsg() .")");
-    	
+
     	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$mkup = '';
 
