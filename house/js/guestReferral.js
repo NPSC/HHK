@@ -14,7 +14,7 @@ $(document).ready(function() {
 	if (idPatient < 0) {
 		// Patient chooser
 		$btnDone.val('Save Patient');
-		$('#final').val('');
+		$('#finaly').val('');
 		
 		// Search includes columns
 		$('.hhk-includeSearch').show();
@@ -22,7 +22,7 @@ $(document).ready(function() {
 	} else {
 		// Guest chooser
 		$btnDone.val('Save Guests');
-		$('#final').val('1');
+		$('#finaly').val('1');
 		
 		// Search includes columns
 		$('.hhk-includeSearch').hide();

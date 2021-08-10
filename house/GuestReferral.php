@@ -11,6 +11,7 @@ use HHK\House\ReferralForm;
 use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose};
 use HHK\House\PSG;
 use HHK\SysConst\ReferralFormStatus;
+use HHK\Tables\WebSec\Page_SecurityGroupRS;
 
 /**
  * Referral.php
@@ -64,9 +65,15 @@ if (isset($_POST['rbPatient'])) {
 }
 
 
+// Patient already selected
+if (isset($_POST['idPatient'])) {
+    $idPatient = intval(filter_input(INPUT_POST, 'idPatient', FILTER_SANITIZE_NUMBER_INT), 10);
+}
+
+
 // final step
 if (isset($_POST['finaly'])) {
-    $final = 1;
+    $final = intval(filter_input(INPUT_POST, 'finaly', FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
 
@@ -130,7 +137,7 @@ if ($idDoc > 0) {
             $idResv = $refForm->makeNewReservation($dbh, $psg, $guests);
 
             // Set referral form status to done.
-            $refForm->setReferralStatus($dbh, ReferralFormStatus::Accepted);
+            $refForm->setReferralStatus($dbh, ReferralFormStatus::Accepted, $psg->getIdPsg());
 
             // Load reserve page.
             header('location:Reserve.php?rid='.$idResv);

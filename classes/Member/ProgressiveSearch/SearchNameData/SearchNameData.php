@@ -23,6 +23,7 @@ class SearchNameData {
     protected $addressZip = '';
     protected $addressCountry = '';
 
+
     /**
      * @param mixed $id
      */

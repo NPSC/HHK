@@ -117,8 +117,8 @@ class ReferralForm {
 	    }
 
 	    // Street
-	    if (isset($formUserData['address']['street']) && $formUserData['address']['street'] != '') {
-	        $searchFor->setAddressStreet($formUserData['address']['street'], new CleanAddress($dbh));
+	    if (isset($formUserData['address']['adrstreet']) && $formUserData['address']['adrstreet'] != '') {
+	        $searchFor->setAddressStreet($formUserData['address']['adrstreet'], new CleanAddress($dbh));
 	    }
 
 	    // City
@@ -137,8 +137,8 @@ class ReferralForm {
 	    }
 
 	    // Zip
-	    if (isset($formUserData['address']['zip']) && $formUserData['address']['zip'] != '') {
-	        $searchFor->setAddressZip($formUserData['address']['zip']);
+	    if (isset($formUserData['address']['adrzip']) && $formUserData['address']['adrzip'] != '') {
+	        $searchFor->setAddressZip($formUserData['address']['adrzip']);
 	    }
 
 	    // Country
@@ -671,9 +671,10 @@ class ReferralForm {
 
 	}
 
-	public function setReferralStatus($dbh, ReferralFormStatus $status) {
+	public function setReferralStatus($dbh, ReferralFormStatus $status, $idPsg) {
 
 	    $this->formDocument->updateStatus($dbh, $status);
+	    $this->formDocument->linkNew($dbh, 0, $idPsg);
 
 	}
 }

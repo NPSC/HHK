@@ -40,7 +40,7 @@ class Document {
         'application/msword' => 'doc',
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx'
     ];
-    
+
     // Document record field vars
     protected $idDocument = 0;
     protected $title = '';
@@ -104,7 +104,7 @@ class Document {
                 $this->setCreatedBy($documentRS->Created_By->getStoredVal());
                 $this->setUpdatedBy($documentRS->Updated_By->getstoredVal());
                 $this->setLastUpdated($documentRS->Last_Updated->getStoredVal());
-                
+
                 $this->documentRS = $documentRS;
             } else {
                 $response = FALSE;
@@ -119,8 +119,11 @@ class Document {
      * @param string $title
      * @param string $mimeType
      * @param string $doc
+     * @param string $username
      * @param string $documentType
      * @param string $docStatus
+     * @throws RuntimeException
+     * @return \HHK\Document\Document
      */
     public static function createNew($title, $mimeType, $doc, $username, $documentType = self::FileType, $docStatus = Document::ActiveStatus) {
 
@@ -142,6 +145,11 @@ class Document {
         return $document;
     }
 
+    /**
+     *
+     * @param \PDO $dbh
+     * @return boolean
+     */
     public function saveNew(\PDO $dbh) {
 
         if ($this->isValid() === FALSE) {
@@ -179,7 +187,7 @@ class Document {
      */
     public function linkNew(\PDO $dbh, $guestId = null, $psgId = null) {
         if ($this->idDocument && ($psgId || $guestId)) {
-            $query = 'INSERT INTO `link_doc` (`idDocument`, `idGuest`, `idPSG`) VALUES("' . $this->idDocument . '", "' . $guestId . '", "' . $psgId . '");';
+            $query = 'INSERT INTO `link_doc` (`idDocument`, `idGuest`, `idPSG`) VALUES("' . $this->idDocument . '", "' . intval($guestId) . '", "' . intval($psgId) . '");';
             $stmt = $dbh->prepare($query);
             $stmt->execute();
             return $dbh->lastInsertId();
@@ -206,22 +214,28 @@ class Document {
 
         return $counter;
     }
-    
+
+    /**
+     *
+     * @param \PDO $dbh
+     * @param string $status
+     * @return number
+     */
     public function updateStatus(\PDO $dbh, $status) {
-        
+
         $counter = 0;
-        
+
         if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
-            
+
             $this->documentRS->Status->setNewVal($status);
-            
+
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
             EditRS::updateStoredVals($this->documentRS);
         }
-        
+
         return $counter;
     }
-    
+
     /**
      *
      * @param \PDO $dbh
@@ -233,21 +247,21 @@ class Document {
      * @return int the number of records updated.
      */
     public function save(\PDO $dbh, $title, $doc, $style, $abstract, $username) {
-        
+
         $counter = 0;
-        
+
         if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
-            
+
             $this->documentRS->Title->setNewVal($title);
             $this->documentRS->Doc->setNewVal($doc);
             $this->documentRS->Style->setNewVal($style);
             $this->documentRS->Abstract->setNewVal($abstract);
             $this->documentRS->Updated_By->setNewVal($username);
-            
+
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
             EditRS::updateStoredVals($this->documentRS);
         }
-        
+
         return $counter;
     }
 
@@ -341,11 +355,11 @@ class Document {
     public function getDoc() {
         return $this->doc;
     }
-    
+
     public function getUserData() {
         return $this->userData;
     }
-    
+
     public function getStyle() {
         return $this->style;
     }
@@ -401,11 +415,11 @@ class Document {
     public function setDoc($doc) {
         $this->doc = $doc;
     }
-    
+
     public function setUserData($userData) {
         $this->userData = $userData;
     }
-    
+
     public function setStyle($style) {
         $this->style = $style;
     }
