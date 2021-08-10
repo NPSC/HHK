@@ -17,6 +17,8 @@ use HHK\sec\SecurityComponent;
 use HHK\sec\Pages;
 use HHK\sec\SysConfig;
 use HHK\sec\Recaptcha;
+use HHK\SysConst\GLTableNames;
+use HHK\House\Hospital\Hospital;
 
 /**
  * ShowStatement.php
@@ -31,13 +33,13 @@ require ("homeIncludes.php");
 
 // Access the login object, set session vars,
 try {
-    
+
     $login = new Login();
     $dbh = $login->initHhkSession(ciCFG_FILE);
-    
+
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
-    
+
 } catch (Exception $ex) {
     exit ("<h3>" . $ex->getMessage());
 }
@@ -63,6 +65,11 @@ unset($patientRels['slf']);
 $mediaSources = readGenLookupsPDO($dbh, 'Media_Source','Order');
 $namePrefixes = readGenLookupsPDO($dbh, 'Name_Prefix', 'Order');
 $nameSuffixes = readGenLookupsPDO($dbh, 'Name_Suffix', 'Order');
+$hospitals = Hospital::loadHospitals($dbh);
+$hospitalAr = array();
+foreach($hospitals as $hospital){
+    $hospitalAr[] = ['Code'=>$hospital['idHospital'], 'Description'=>$hospital['Title']];
+}
 $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
     'KY', 'LA', 'LB', 'MA', 'MB', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NB', 'NC', 'ND', 'NE', 'NF', 'NH', 'NJ', 'NM', 'NS', 'NT', 'NV', 'NY', 'OH',
     'OK', 'ON', 'OR', 'PA', 'PE', 'PR', 'PQ', 'RI', 'SC', 'SD', 'SK', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY');
@@ -89,7 +96,7 @@ if(isset($_GET['template'])){
             $style = $formSettings['formStyle'];
             $successTitle = $formSettings['successTitle'];
             $successContent = $formSettings['successContent'];
-            
+
             //enableRecaptcha
             if(($uS->mode == 'demo' || $uS->mode == 'prod') && $formSettings['enableRecaptcha']){
                 $enableRecaptcha = $formSettings['enableRecaptcha'];
@@ -100,7 +107,7 @@ if(isset($_GET['template'])){
     }else{
         $error = "No Referral form found";
     }
-    
+
 }else if(isset($_GET['form'])){
     if(!$uS->logged){
         $error = "Unauthorized for page: Please login";
@@ -118,9 +125,9 @@ if(isset($_GET['template'])){
             $error = "No Referral form found";
         }
     }
-    
+
 }else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style'])){
-    
+
     if(!$uS->logged){
         $error = "Unauthorized for page: Please login";
     }else{
@@ -157,7 +164,7 @@ if(isset($_GET['template'])){
         ?>
         <script type='text/javascript'>
             $(document).ready(function() {
-            
+
             	const formData = `<?php echo $formData; ?>`;
             	var genders = <?php echo json_encode($genders); ?>;
             	var patientRels = <?php echo json_encode($patientRels); ?>;
@@ -165,8 +172,8 @@ if(isset($_GET['template'])){
             	var mediaSources = <?php echo json_encode($mediaSources); ?>;
             	var namePrefixes = <?php echo json_encode($namePrefixes); ?>;
             	var nameSuffixes = <?php echo json_encode($nameSuffixes); ?>;
-            
-            
+				var hospitals = <?php echo json_encode($hospitalAr); ?>;
+
                 const formRender = $('#formContent').formRender({
                 	formData,
                 	layoutTemplates: {
@@ -175,7 +182,7 @@ if(isset($_GET['template'])){
               					help = $('<small/>').addClass('helpText text-muted ms-2').text(data.description);
               				}
               				var validation = $('<div/>').addClass('validationText').attr("data-field", data.id);
-              				
+
               				if(data.type == 'radio-group'){
               					$(field).children().addClass('form-check');
               					$(field).find('input[type=radio').addClass('form-check-input');
@@ -223,6 +230,9 @@ if(isset($_GET['template'])){
               						case 'vehicleStates':
               							options = vehicleStates;
               							break;
+              						case 'hospitals':
+              							options = hospitals;
+              							break;
               						default:
               							options = {};
               					}
@@ -235,7 +245,7 @@ if(isset($_GET['template'])){
             						}
             					}
               				}
-							
+
 							return $('<div/>').addClass(data.width + ' mb-3 field-container').append($('<div/>').addClass('form-floating').append(field, label, help, validation));
               			}
             		},
@@ -243,18 +253,18 @@ if(isset($_GET['template'])){
             			"location":"../js/formBuilder"
             		}
             	});
-            	
+
             	$('.formBuilder-injected-style').remove();
-            	
+
             	var csrfToken = '<?php echo $login->generateCSRF(); ?>';
             	var siteKey = '<?php echo $recaptcha->getSiteKey(); ?>';
             	var recaptchaEnabled = '<?php echo $enableRecaptcha; ?>';
-            	
+
             	var $renderedForm = $(document).find('.rendered-form');
             	$renderedForm.addClass('row');
-            	
+
             	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', 'patient\\.address\\.').data('hhkindex','');
-            	
+
             	// set country and state selectors
                 $renderedForm.find('select.bfh-countries').each(function() {
                     var $countries = $(this);
@@ -264,13 +274,13 @@ if(isset($_GET['template'])){
                     var $states = $(this);
                     $states.bfhstates($states.data());
                 });
-            	
+
             	//zip code search
             	$renderedForm.find('input.hhk-zipsearch').each(function() {
                     var lastXhr;
                     createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
                 });
-                
+
                 //add guest button
                 //var elements = $renderedForm.find('input[group=guest], select[group=guest]').parents('.field-container').remove();
                 //console.log(elements);
@@ -284,13 +294,13 @@ if(isset($_GET['template'])){
 	    		//	});
 	    		//	index++;
             	//});
-            	
+
             	function submitForm(token = ''){
             		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");
             		$renderedForm.find('.submit-btn').prop('disabled','disabled').html(spinner).append(' Submitting...');
-            	
+
             		var formRenderData = formRender.userData;
-            		
+
             		$.ajax({
             	    	url : "ws_forms.php",
             	   		type: "POST",
@@ -306,7 +316,7 @@ if(isset($_GET['template'])){
             	    	    $('input, select').removeClass('is-invalid');
             	    	    $('.validationText').empty().removeClass('invalid-feedback');
             	    	    $('.submit-btn').text('Submit').removeAttr('disabled');
-            	    	    
+
             	    	    if(data.errors){
             	    	    	$.each(data.errors, function(key, error){
             	    	    		if(key == 'server'){
@@ -333,7 +343,7 @@ if(isset($_GET['template'])){
             	    	}
             	    });
                 }
-            	
+
             	$(document).on('submit', 'form', function(e){
             		e.preventDefault();
             		if(recaptchaEnabled){
@@ -344,30 +354,30 @@ if(isset($_GET['template'])){
             			submitForm();
             		}
             	});
-            	
+
             });
 	</script>
 
 	<style>
 	   <?php echo $style; ?>
-	   
+
 	   fieldset[disabled=disabled] button {
 	       display: none;
 	   }
-	   
+
 	   .msg, .errmsg {
 	       margin: 1em;
 	   }
 	   .msg p.successmsg {
 	       white-space: pre-wrap;
 	   }
-	   
+
 	</style>
 
     </head>
     <body>
-    
-    		
+
+
     	<?php if(isset($_GET['form'])){ ?>
     	<fieldset disabled="disabled">
     	<?php }else{ ?>
@@ -381,7 +391,7 @@ if(isset($_GET['template'])){
         <div class="alert alert-success msg" role="alert" style="display: none">
     		<h4 class="alert-heading"><?php echo $successTitle; ?></h4>
     		<p class="successmsg"><?php echo $successContent; ?></p>
-    		<p>Recaptcha Score: <span id="recaptchascore"></span></p>
+    		<p style="display:none">Recaptcha Score: <span id="recaptchascore"></span></p>
     	</div>
     	<div class="alert alert-danger errmsg" role="alert" style="display: none">
     		<h4 class="alert-heading">Server Error</h4>
@@ -392,6 +402,6 @@ if(isset($_GET['template'])){
         <?php }else{ ?>
         </form>
         <?php } ?>
-        
+
     </body>
 </html>

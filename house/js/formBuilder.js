@@ -280,7 +280,7 @@
     				"label": "Zip Code",
     				"placeholder": "Zip Code",
     				"className": "form-control ckzip hhk-zipsearch ui-autocomplete-input",
-    				"name": "patient.address.zip",
+    				"name": "patient.address.adrzip",
     				"width": "col-md-2"
     			},
   				{
@@ -350,6 +350,11 @@
         		name: 'guests',
         		showHeader: true,
         		fields: [
+        		{
+        			"type": "header",
+        			"subtype": "h3",
+        			"label": "Guest #1"
+    			},
 				{
 					"type": "text",
     				"label": "First Name",
@@ -397,6 +402,11 @@
     				]
   				},
   				{
+        			"type": "header",
+        			"subtype": "h3",
+        			"label": "Guest #2"
+    			},
+  				{
 					"type": "text",
     				"label": "First Name",
     				"placeholder": "First Name",
@@ -443,6 +453,11 @@
     				]
   				},
   				{
+        			"type": "header",
+        			"subtype": "h3",
+        			"label": "Guest #3"
+    			},
+  				{
 					"type": "text",
     				"label": "First Name",
     				"placeholder": "First Name",
@@ -488,6 +503,57 @@
       				}
     				]
   				},
+  				{
+        			"type": "header",
+        			"subtype": "h3",
+        			"label": "Guest #4"
+    			},
+  				{
+					"type": "text",
+    				"label": "First Name",
+    				"placeholder": "First Name",
+    				"className": "form-control",
+    				"name": "guests.g3.firstName",
+    				"width": "col-md-3",
+    				"group": "guest"
+  				},
+  				{
+  					"type": "text",
+    				"label": "Last Name",
+    				"placeholder": "Last Name",
+    				"className": "form-control",
+    				"name": "guests.g3.lastName",
+    				"width": "col-md-3",
+    				"group": "guest"
+  				},
+  				{
+    				"type": "text",
+    				"subtype": "tel",
+    				"label": "Phone",
+    				"placeholder": "Phone",
+    				"className": "form-control",
+    				"name": "guests.g3.phone",
+    				"width": "col-md-3",
+    				"group": "guest"
+    			},
+    			{
+  					"type": "select",
+    				"label": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
+    				"className": "form-select",
+    				"name": "guests.g3.relationship",
+    				"width": "col-md-3",
+    				"group": "guest",
+    				"dataSource":"patientRelation",
+    				"multiple": false,
+    				"values": [
+      				{
+        				"label": (options.labels.patient || 'Patient') + " Relationship",
+        				"value": "",
+        				"selected": true
+      				}
+    				]
+  				}
   				//{
   				//	"type": "button",
   				//	"name": 'addGuest',
@@ -501,13 +567,22 @@
         		showHeader: true,
         		fields: [
 				{
-					"type": "text",
+					"type": "select",
 					"required": true,
     				"label": (options.labels.hospital || 'Hospital'),
-    				"placeholder": (options.labels.hospital || 'Hospital') + " Name",
-    				"className": "form-control",
-    				"name": "hospital.name",
+    				"placeholder": (options.labels.hospital || 'Hospital'),
+    				"className": "form-select",
+    				"name": "hospital.idHospital",
     				"width": "col-md-3",
+    				"dataSource":"hospitals",
+    				"multiple": false,
+    				"values": [
+    				{
+    					"label": (options.labels.hospital || 'Hospital'),
+    					"value": "",
+    					"selected": true
+    				}
+    				]
   				},
   				... (options.fieldOptions.doctor ?
   				[{
@@ -690,7 +765,8 @@
     						'gender': 'Gender',
     						'patientRelation': 'Patient Relationship',
     						'vehicleStates': 'Vehicle States',
-    						'mediaSource': 'Media Source'
+    						'mediaSource': 'Media Source',
+    						'hospitals': 'Hospital'
     					}
     				},
     				group: {
