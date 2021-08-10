@@ -3,8 +3,17 @@
 namespace HHK\Document;
 
 class FormData {
-	
-	public function __construct() {
+
+    protected $patient;
+    protected $guests;
+    protected $checkinDate;
+    protected $checkoutDate;
+    protected $hospital;
+
+
+
+	public function __construct($formUserData) {
+
 	}
 }
 

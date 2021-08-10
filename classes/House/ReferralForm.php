@@ -84,9 +84,17 @@ class ReferralForm {
 	    if (isset($formUserData['firstName'])) {
 	        $searchFor->setNameFirst($formUserData['firstName']);
 	    }
-
-	    if (isset($formUserData['lastName']))
+	    if (isset($formUserData['lastName'])) {
 	        $searchFor->setNameLast($formUserData['lastName']);
+	    }
+
+	    if (isset($formUserData['middleName'])) {
+	        $searchFor->setNameLast($formUserData['middleName']);
+	    }
+
+	    if (isset($formUserData['nickname'])) {
+	        $searchFor->setNameLast($formUserData['nickname']);
+	    }
 
 	    // patient Birthdate
 	    if (isset($formUserData['birthdate']) && $formUserData['birthdate'] != '') {
@@ -129,8 +137,8 @@ class ReferralForm {
 	    }
 
 	    // Zip
-	    if (isset($formUserData['address']['adrzip']) && $formUserData['address']['adrzip'] != '') {
-	        $searchFor->setAddressZip($formUserData['address']['adrzip']);
+	    if (isset($formUserData['address']['zip']) && $formUserData['address']['zip'] != '') {
+	        $searchFor->setAddressZip($formUserData['address']['zip']);
 	    }
 
 	    // Country

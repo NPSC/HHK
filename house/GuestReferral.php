@@ -66,7 +66,7 @@ if (isset($_POST['rbPatient'])) {
 
 // final step
 if (isset($_POST['finaly'])) {
-    $final = filter_input(INPUT_POST, 'finaly', FILTER_SANITIZE_STRING);
+    $final = 1;
 }
 
 
