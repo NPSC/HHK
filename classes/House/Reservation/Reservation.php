@@ -17,6 +17,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
 use HHK\sec\{Labels, SecurityComponent, Session};
 use HHK\Exception\RuntimeException;
+use HHK\Document\FormDocument;
 
 
 /**
@@ -108,7 +109,7 @@ class Reservation {
 
     	// Load reservation
         $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`,
-            ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`, ifnull(rv.Docunent_Id, 0) as idReferralDoc
+            ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`, ifnull(rv.Document_Id, 0) as idReferralDoc
 FROM reservation r
         LEFT JOIN
     registration rg ON r.idRegistration = rg.idRegistration
@@ -259,12 +260,21 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     protected function createHospitalMarkup(\PDO $dbh) {
 
-        // Hospital
-        //$hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
         //get hospitalStay from reservation
         $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId(), $this->reserveData->getIdHospital_Stay());
 
-        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay, TRUE, $this->reserveData->getIdReferralDoc()));
+        $formUserData = NULL;
+
+        if ($this->reserveData->getIdReferralDoc() > 0) {
+
+            $formDoc = new FormDocument();
+
+            if ($formDoc->loadDocument($dbh, $this->reserveData->getIdReferralDoc())) {
+                $formUserData = $formDoc->getUserData();
+            }
+        }
+
+        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay, TRUE, $formUserData));
 
     }
 

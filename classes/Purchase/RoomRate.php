@@ -71,6 +71,8 @@ class RoomRate {
             $titles[$r['idRoom_rate']] = self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1'], 0));
         }
 
+        $titles[0] = '';
+
         return $titles;
     }
 

@@ -7,63 +7,6 @@ use HHK\sec\Session;
 class SearchResults extends SearchNameData
 {
 
-    protected $noReturn;
-    protected $psgId;
-
-    public function loadMeFrom(array $r) {
-
-        $this->setId($r['idName'])
-        ->setNameFirst($r["Name_First"])
-        ->setNameLast($r["Name_Last"])
-        ->setNickname($r["Name_Nickname"])
-        ->setNameMiddle($r["Name_Middle"])
-        ->setGender($r['Gender'])
-        ->setBirthDate($r['Birthdate'])
-        ->setPhone($r['Phone_Num'])
-        ->setEmail($r['Email'])
-        ->setAddressStreet1($r['Address1'])
-        ->setAddressStreet2($r['Address2'])
-        ->setAddressCity($r['City'])
-        ->setAddressState($r['State_Province'])
-        ->setAddressZip($r['Postal_Code'])
-        ->setAddressCountry($r['Country_Code'])
-        ->setNoReturn($r['No_Return']);
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getNoReturn()
-    {
-        return $this->noReturn;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getPsgId()
-    {
-        return $this->psgId;
-    }
-
-    /**
-     * @param mixed $noReturn
-     */
-    public function setNoReturn($noReturn)
-    {
-        $this->noReturn = $noReturn;
-        return $this;
-    }
-
-    /**
-     * @param mixed $psgId
-     */
-    public function setPsgId($psgId)
-    {
-        $this->psgId = $psgId;
-        return $this;
-    }
-
     public function setNameFirst($nameFirst) {
         $this->nameFirst = preg_replace_callback("/(&#[0-9]+;)/",
             function($m) {

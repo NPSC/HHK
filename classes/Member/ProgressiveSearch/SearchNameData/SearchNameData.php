@@ -3,7 +3,7 @@ namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
 use HHK\Member\Address\CleanAddress;
 
-class SearchNameData {
+class SearchNameData implements SearchNameDataInterface {
 
     protected $id = 0;
     protected $nameFirst = '';
@@ -22,6 +22,7 @@ class SearchNameData {
     protected $addressCounty = '';
     protected $addressZip = '';
     protected $addressCountry = '';
+    protected $noReturn = '';
 
 
     /**
@@ -323,6 +324,50 @@ class SearchNameData {
     public function getAddressStreet() {
         return $this->addressStreet1 . ($this->addressStreet2 == '' ? '' : ', ' . $this->addressStreet2);
     }
+
+
+
+    /**
+     *
+     * @param array $r
+     */
+    public function loadMeFrom(array $r) {
+
+        $this->setId($r['idName'])
+        ->setNameFirst($r["Name_First"])
+        ->setNameLast($r["Name_Last"])
+        ->setNickname($r["Name_Nickname"])
+        ->setNameMiddle($r["Name_Middle"])
+        ->setGender($r['Gender'])
+        ->setBirthDate($r['Birthdate'])
+        ->setPhone($r['Phone_Num'])
+        ->setEmail($r['Email'])
+        ->setAddressStreet1($r['Address1'])
+        ->setAddressStreet2($r['Address2'])
+        ->setAddressCity($r['City'])
+        ->setAddressState($r['State_Province'])
+        ->setAddressZip($r['Postal_Code'])
+        ->setAddressCountry($r['Country_Code'])
+        ->setNoReturn($r['No_Return']);
+
+        if (isset($r['Relationship'])) {
+            $this->setRelationship($r['Relationship']);
+        }
+    }
+
+    public function setNoReturn($v)
+    {
+        $this->noReturn = $v;
+        return $this;
+    }
+
+    public function getNoReturn()
+    {
+        return $this->noReturn;
+    }
+
+
+
 
 }
 

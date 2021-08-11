@@ -36,7 +36,7 @@ class Hospital {
 
     }
 
-    protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE, FormData $ReferralFormData = NULL) {
+    protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE, array $ReferralFormData = NULL) {
 
         $uS = Session::getInstance();
 
@@ -135,7 +135,7 @@ class Hospital {
 
     }
 
-    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE, FormData $ReferralFormData = NULL) {
+    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE, array $ReferralFormData = NULL) {
 
         $uS = Session::getInstance();
         $referralAgentMarkup = '';
@@ -358,7 +358,7 @@ $(document).ready(function () {
         }
 
         $div = HTMLContainer::generateMarkup('div',
-        		self::justHospitalMarkup($hstay, $offerBlankHosp, )
+            self::justHospitalMarkup($hstay, $offerBlankHosp, $ReferralFormData)
         		. $referralAgentMarkup
         		. $docRowMkup
         		. $hstayLog

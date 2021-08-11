@@ -1,12 +1,14 @@
 <?php
 namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
+use HHK\Member\Address\CleanAddress;
+
 /**
  *
  * @author Eric
  *
  */
-interface iSearchNameData
+interface SearchNameDataInterface
 {
 
     public function setId($id);
@@ -24,6 +26,8 @@ interface iSearchNameData
 
     public function setPhone($phone);
 
+    public function setAddressStreet($addressStreet, CleanAddress $cleanAddress = NULL, $include = FALSE);
+
     public function setAddressStreet1($addressStreet1);
 
     public function setAddressStreet2($addressStreet2);
@@ -37,6 +41,8 @@ interface iSearchNameData
     public function setAddressZip($addressZip);
 
     public function setAddressCountry($addressCountry);
+
+    public function setNoReturn($v);
 
     public function getId();
 
@@ -79,6 +85,8 @@ interface iSearchNameData
      */
     public function getPhone();
 
+    public function getAddressStreet();
+
     /**
      * @return string
      */
@@ -111,5 +119,8 @@ interface iSearchNameData
      */
     public function getAddressCountry();
 
+    public function getNoReturn();
+
+    public function loadMeFrom(array $r);
 }
 

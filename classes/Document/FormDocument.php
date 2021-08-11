@@ -127,6 +127,10 @@ group by g.Code order by g.Order';
         return $this->doc->updateStatus($dbh, $status);
     }
 
+    public function getStatus() {
+        return $this->doc->getStatus();
+    }
+
     public function validateFields($doc){
         $response = ["fields"=>[], "errors"=>[]];
 

@@ -5,6 +5,24 @@ namespace HHK\Member\ProgressiveSearch\SearchNameData;
 class SearchFor extends SearchNameData
 {
     protected $whereClause = '';
+    protected $psgId;
+
+    /**
+     * @return mixed
+     */
+    public function getPsgId()
+    {
+        return $this->psgId;
+    }
+
+    /**
+     * @param mixed $psgId
+     */
+    public function setPsgId($psgId)
+    {
+        $this->psgId = $psgId;
+        return $this;
+    }
 
     /**
      * @param string $birthDate

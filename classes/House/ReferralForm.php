@@ -7,7 +7,7 @@ use HHK\HTMLControls\{HTMLContainer,HTMLTable};
 use HHK\Member\MemberSearch;
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
 use HHK\Member\ProgressiveSearch\SearchNameData\{SearchNameData, SearchResults, SearchFor};
-use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, ReferralFormStatus, VolMemberType, GLTableNames, RelLinkType, ReservationStatus};
+use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, VolMemberType, GLTableNames, RelLinkType, ReservationStatus};
 use HHK\Member\Address\CleanAddress;
 use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
@@ -18,6 +18,7 @@ use HHK\House\Reservation\Reservation_1;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Tables\Reservation\Reservation_ReferralRS;
+use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface;
 
 
 
@@ -34,6 +35,7 @@ class ReferralForm {
 	 * @var array Form data
 	 */
 	protected $formUserData;
+	protected $formDoc;
 
 	protected $patSearchFor;
 	protected $patResults;
@@ -43,6 +45,8 @@ class ReferralForm {
 
 	protected $idPatient;
 	protected $idPsg;
+	protected $idRegistration;
+	protected $idHospitalStay;
 
 	protected $CkinDT = NULL;
 	protected $CkoutDT = NULL;
@@ -57,18 +61,18 @@ class ReferralForm {
 	public function __construct(\PDO $dbh, $referralDocId) {
 
 		//Referral Form
-		$this->referralDocId = $referralDocId;
+		$this->referralDocId = intval($referralDocId, 10);
 
-		$formDoc = new FormDocument();
+		$this->formDoc = new FormDocument();
 
-		if ($formDoc->loadDocument($dbh, $referralDocId)) {
+		if ($this->formDoc->loadDocument($dbh, $this->referralDocId)) {
 
-		    if (is_null($this->formUserData = $formDoc->getUserData())) {
-		        throw new \Exception("Referral form user input is blank.  Document Id = " . $referralDocId);
+		    if (is_null($this->formUserData = $this->formDoc->getUserData())) {
+		        throw new \Exception("Referral form user input is blank.  Document Id = " . $this->referralDocId);
 		    }
 
 		} else {
-		    throw new \Exception("Referral form not found.  Document Id = " . $referralDocId);
+		    throw new \Exception("Referral form not found.  Document Id = " . $this->referralDocId);
 		}
 
 	}
@@ -76,9 +80,6 @@ class ReferralForm {
 	public static function loadSearchFor(\PDO $dbh, array $formUserData, array $searchIncludes = []) {
 
 	    $searchFor = new SearchFor();
-
-	    // Relationship is static
-	    $searchFor->setRelationship(RelLinkType::Self);
 
 	    // First and last names
 	    if (isset($formUserData['firstName'])) {
@@ -102,8 +103,8 @@ class ReferralForm {
 	    }
 
 	    // patient gender
-	    if (isset($formUserData['demogs']['gender']) && $formUserData['demogs']['gender'] != '') {
-	        $searchFor->setGender($formUserData['demogs']['gender']);
+	    if (isset($formUserData['demogs']['Gender']) && $formUserData['demogs']['Gender'] != '') {
+	        $searchFor->setGender($formUserData['demogs']['Gender']);
 	    }
 
 	    // Phone
@@ -144,6 +145,11 @@ class ReferralForm {
 	    // Country
 	    if (isset($formUserData['address']['adrcountry']) && $formUserData['address']['adrcountry'] != '') {
 	        $searchFor->setAddressCountry($formUserData['address']['adrcountry']);
+	    }
+
+	    // Relationship
+	    if (isset($formUserData['relationship']) && $formUserData['relationship'] != '') {
+	        $searchFor->setRelationship($formUserData['relationship']);
 	    }
 
 	    return $searchFor;
@@ -188,6 +194,7 @@ class ReferralForm {
 	            && $this->formUserData['guests'][$gindx]['firstName'] != '' && $this->formUserData['guests'][$gindx]['lastName'] != '') {
 
 	            $searchFor = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
+	            $searchFor->setPsgId($this->idPsg);
 
 
 	            // Relationship
@@ -195,17 +202,17 @@ class ReferralForm {
 	                $searchFor->setRelationship($this->formUserData['guests'][$gindx]['relationship']);
 	            }
 
-
 	            $this->gstSearchFor[$gindx] = $searchFor;
 
+                // Do the search which creats a new SearchResult.
 	            $progSearch = new ProgressiveSearch();
 	            $this->gstResults[$gindx] = $progSearch->doSearch($dbh, $searchFor);
+
 	        }
 
 	    }
 
 	    return $this->gstResults;
-
 	}
 
 	public function searchDoctor(\PDO $dbh) {
@@ -239,7 +246,7 @@ class ReferralForm {
 	        $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['patient']);
 	    } else {
 
-	        $searchNameData = $this->LoadMemberResult($dbh, $idP);
+	        $searchNameData = $this->LoadMemberData($dbh, $idP, new SearchNameData());
 	    }
 
 	    if (is_null($searchNameData) === FALSE) {
@@ -255,7 +262,6 @@ class ReferralForm {
 
 	    $uS = Session::getInstance();
 	    $guests = [];
-	    $psg = NULL;
 
 
 	    for ($indx = 0; $indx < $maxGuests; $indx++) {
@@ -269,9 +275,18 @@ class ReferralForm {
 	            $id = intval(filter_var($post['rbGuest'.$gindx], FILTER_SANITIZE_NUMBER_INT), 10);
 
 	            if ($id == 0) {
-	                $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['Guests'][$gindx]);
+
+	                $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
+
 	            } else {
-	                $searchNameData = $this->LoadMemberResult($dbh, $id);
+
+	                $searchNameData = $this->LoadMemberData($dbh, $id, new SearchNameData());
+
+	                // Update Relationship
+	                if (isset($this->formUserData['guests'][$gindx]['relationship']) && $this->formUserData['guests'][$gindx]['relationship'] != '') {
+	                    $searchNameData->setRelationship($this->formUserData['guests'][$gindx]['relationship']);
+	                }
+
 	            }
 
 	            if (is_null($searchNameData) === FALSE) {
@@ -300,17 +315,17 @@ class ReferralForm {
 
 	}
 
-	protected function LoadMemberResult(\PDO $dbh, $id) {
+	protected function LoadMemberData(\PDO $dbh, $id, SearchNameDataInterface $snd) {
 
-	    $searchResult = new SearchResults();
+	    //$searchResult = new SearchResults();
 
 	    $stmt = $dbh->query(ProgressiveSearch::getMemberQuery($id));
 
 	    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-	        $searchResult->loadMeFrom($r);
+	        $snd->loadMeFrom($r);
 	    }
 
-	    return $searchResult;
+	    return $snd;
 
 	}
 
@@ -326,10 +341,15 @@ class ReferralForm {
 	    $psg = new Psg($dbh, 0, $patient->getIdName());
 	    $psg->setNewMember($patient->getIdName(), RelLinkType::Self);
 	    $psg->savePSG($dbh, $patient->getIdName(), $username);
+	    $this->idPsg = $psg->getIdPsg();
 
 	    // Registration
 	    $reg = new Registration($dbh, $psg->getIdPsg());
 	    $reg->saveRegistrationRs($dbh, $psg->getIdPsg(), $username);
+
+	    $hospStay = new HospitalStay($dbh, $psg->getIdPatient());
+	    $hospStay->setHospitalId($this->setHospital());
+	    $hospStay->save($dbh, $psg, 0, $username);
 
 	    return $patient;
 	}
@@ -343,40 +363,45 @@ class ReferralForm {
 	    $guest->save($dbh, $post, $username);
 
         // PSG
-
 	    $psg->setNewMember($guest->getIdName(), ($searchNameData->getRelationship() == "" ? RelLinkType::Friend : $searchNameData->getRelationship()));
 	    $psg->saveMembers($dbh, $username);
 
+	    return $guest;
 	}
 
 	public function makeNewReservation(\PDO $dbh, PSG $psg, array $guests) {
 
 	    $uS = Session::getInstance();
 
+	    // Reservation Checkin set?
+	    if (is_null($this->CkinDT)) {
+	        return 0;
+	    }
+
+	    // Replace missing checkout date with check-in + default days.
+	    if (is_null($this->CkoutDT)) {
+	        $this->CkoutDT = $this->CkinDT->add(new \DateInterval('P' . $uS->DefaultDays . 'D'));
+	    }
+
 	    $reg = new Registration($dbh, $psg->getIdPsg());
-	    $reg->saveRegistrationRs($dbh, $this->reserveData->getIdPsg(), $uS->username);
-
 	    $hospStay = new HospitalStay($dbh, $psg->getIdPatient());
-	    $idHospStay = $hospStay->save($dbh, $psg, 0, $uS->username);
-
-
         $resv = Reservation_1::instantiateFromIdReserv($dbh, 0);
 
-        $resv->setExpectedArrival($this->CkinDT_format('Y-m-d'))
+        $resv->setExpectedArrival($this->CkinDT->format('Y-m-d'))
             ->setExpectedDeparture($this->CkoutDT->format('Y-m-d'))
             ->setIdGuest($psg->getIdPatient())
             ->setStatus(ReservationStatus::Waitlist)
-            ->setIdHospitalStay($idHospStay)
+            ->setIdHospitalStay($hospStay->getIdHospital_Stay())
             ->setNumberGuests(count($guests))
-            ->setIdResource(0);
+            ->setIdResource(0)
+            ->setRoomRateCategory($uS->RoomRateDefault);
 
         $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
-
         $resv->saveConstraints($dbh, array());
 
-        // Save Reservtaion geusts - patient
+        // Save Reservtaion guests - patient
         $rgRs = new Reservation_GuestRS();
-        $rgRs->idReservation->setStoredVal($resv->getIdResv());
+        $rgRs->idReservation->setNewVal($resv->getIdReservation());
         $rgRs->idGuest->setNewVal($psg->getIdPatient());
         $rgRs->Primary_Guest->setNewVal('1');
         EditRS::insert($dbh, $rgRs);
@@ -384,7 +409,7 @@ class ReferralForm {
         foreach ($guests as $g) {
 
             $rgRs = new Reservation_GuestRS();
-            $rgRs->idReservation->setStoredVal($resv->getIdResv());
+            $rgRs->idReservation->setNewVal($resv->getIdReservation());
             $rgRs->idGuest->setNewVal($g);
             $rgRs->Primary_Guest->setNewVal('');
             EditRS::insert($dbh, $rgRs);
@@ -634,7 +659,18 @@ class ReferralForm {
 	    return HTMLContainer::generateMarkup('div', $ckinDate . $ckoutDate, array('style'=>'font-size:.9em;'));
 	}
 
-	protected function memberDataPost(SearchNameData $data) {
+	protected function setHospital() {
+
+	    $hospId = 0;
+
+	    if (isset($this->formUserData['hospital']['idHospital'])) {
+	        $hospId = intval($this->formUserData['hospital']['idHospital'], 10);
+	    }
+
+	    return $hospId;
+	}
+
+	protected function memberDataPost(SearchNameDataInterface $data) {
 
 	    $post = array(
 	        'txtFirstName' => $data->getNameFirst(),
@@ -650,12 +686,12 @@ class ReferralForm {
 	    );
 
 
-	    $post['rbEmPref'] = ($data->getEmail() == '' ? '' : '1');
-	    $post['txtEmail'] = array('1'=>$data->getEmail());
-	    $post['rbPhPref'] = "dh";
-	    $post['txtPhone'] = array('dh'=>preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $data->getPhone()));
+	    $post['rbEmPref'] = ($data->getEmail() == '' ? '' : EmailPurpose::Home);
+	    $post['txtEmail'] = array(EmailPurpose::Home=>$data->getEmail());
+	    $post['rbPhPref'] = PhonePurpose::Home;
+	    $post['txtPhone'] = array(PhonePurpose::Home=>preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $data->getPhone()));
 
-	    $adr1 = array('1' => array(
+	    $adr1 = array(AddressPurpose::Home => array(
 	        'address1' => $data->getAddressStreet1(),
 	        'address2' => $data->getAddressStreet2(),
 	        'city' => $data->getAddressCity(),
@@ -664,18 +700,21 @@ class ReferralForm {
 	        'country' => $data->getAddressCountry(),
 	        'zip' => $data->getAddressZip()));
 
-	    $post['rbPrefMail'] = '1';
+	    $post['rbPrefMail'] = AddressPurpose::Home;
 	    $post['adr'] = $adr1;
 
 	    return $post;
+	}
+
+	public function setReferralStatus($dbh, $status, $idPsg) {
+
+	    $this->formDoc->updateStatus($dbh, $status);
+	    $this->formDoc->linkNew($dbh, 0, $idPsg);
 
 	}
 
-	public function setReferralStatus($dbh, ReferralFormStatus $status, $idPsg) {
-
-	    $this->formDocument->updateStatus($dbh, $status);
-	    $this->formDocument->linkNew($dbh, 0, $idPsg);
-
+	public function getReferralStatus() {
+	    return $this->formDoc->getStatus();
 	}
 }
 

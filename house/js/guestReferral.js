@@ -1,13 +1,14 @@
 
-var idPatient, idDoc, final;
+var idPatient, idDoc;
 
 $(document).ready(function() {
     "use strict";
 
+	var $btnDone = $('#btnDone');
+
 	idPatient = parseInt($('#idPatient').val());
 	idDoc = parseInt($('#idDoc').val());
-	
-	var $btnDone = $('#btnDone');
+		
 	$btnDone.button();
 
 	// Set up done button

@@ -39,7 +39,6 @@ $uS = Session::getInstance();
 // Get labels
 $labels = Labels::getLabels();
 
-$title = "Public Referral Form";
 $errorMessage = '';
 $idDoc = 0;
 $idPatient = -1;
@@ -47,6 +46,7 @@ $done = FALSE;
 $patMkup = '';
 $guestMkup = '';
 $chosen = '';
+
 
 $datesMkup = '';
 $displayGuest = 'display:none;';
@@ -61,12 +61,12 @@ if (isset($_GET['docid'])) {
 
 // Patient
 if (isset($_POST['rbPatient'])) {
+
     $idPatient = intval(filter_input(INPUT_POST, 'rbPatient', FILTER_SANITIZE_NUMBER_INT), 10);
-}
 
+} else if (isset($_POST['idPatient'])) {
 
-// Patient already selected
-if (isset($_POST['idPatient'])) {
+    // Patient already selected
     $idPatient = intval(filter_input(INPUT_POST, 'idPatient', FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
@@ -84,64 +84,88 @@ if ($idDoc > 0) {
     try {
     	$refForm = new ReferralForm($dbh, $idDoc);
 
-    	$refForm->setDates();
-    	$datesMkup = $refForm->datesMarkup();
+    	if ($refForm->getReferralStatus() == ReferralFormStatus::New || $refForm->getReferralStatus() == ReferralFormStatus::InProcess) {
 
-    	if ($idPatient < 0) {
+        	$refForm->setDates();
+        	$datesMkup = $refForm->datesMarkup();
 
-    	    // Patient search
-        	$includes = [];
+        	if ($idPatient < 0) {
 
-        	if (isset($_POST[$refForm::HTML_Incl_Birthday])) {
-        	    $includes[$refForm::HTML_Incl_Birthday] = 'y';
+        	    // Patient search
+            	$includes = [];
+
+            	if (isset($_POST[$refForm::HTML_Incl_Birthday])) {
+            	    $includes[$refForm::HTML_Incl_Birthday] = 'y';
+            	}
+
+            	if (isset($_POST[$refForm::HTML_Incl_Phone])) {
+            	    $includes[$refForm::HTML_Incl_Phone] = 'y';
+            	}
+
+            	if (isset($_POST[$refForm::HTML_Incl_Email])) {
+            	    $includes[$refForm::HTML_Incl_Email] = 'y';
+            	}
+
+            	$refForm->searchPatient($dbh, $includes);
+            	$patMkup = $refForm->createPatientMarkup();
+
+        	} else if ($final != 1) {
+
+        	    // Guest search
+        	    $patient = $refForm->setPatient($dbh, $idPatient);
+        	    $patMkup = $refForm->chosenMemberMkup($patient);
+
+        	    $refForm->searchGuests($dbh);
+        	    $guestMkup .= $refForm->guestsMarkup();
+
+        	    // Unhide guest section
+        	    $displayGuest = '';
+        	    $chosen = ' Chosen';
+
+        	} else {
+        	    // Fininsh
+
+        	    // Get idPsg
+        	    $psg = new PSG($dbh, 0, $idPatient);
+        	    if ($psg->getIdPsg() < 1) {
+        	        throw new \Exception('Patient has no PSG.  Patient Id = '.$idPatient);
+        	    }
+
+        	    // Save Guests
+                $guests = $refForm->setGuests($dbh, $_POST, $psg);
+
+                // Create reservation
+                $idResv = $refForm->makeNewReservation($dbh, $psg, $guests);
+
+                if ($idResv > 0) {
+
+                    // Set referral form status to done.
+                    $refForm->setReferralStatus($dbh, ReferralFormStatus::Accepted, $psg->getIdPsg());
+
+                    // Load reserve page.
+                    header('location:Reserve.php?rid='.$idResv);
+                }
+
+
+                $errorMessage = 'The People are Saved, but a reservation was not created because the check-in dates are missing.  '
+                    . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'register.php'));
+
         	}
-
-        	if (isset($_POST[$refForm::HTML_Incl_Phone])) {
-        	    $includes[$refForm::HTML_Incl_Phone] = 'y';
-        	}
-
-        	if (isset($_POST[$refForm::HTML_Incl_Email])) {
-        	    $includes[$refForm::HTML_Incl_Email] = 'y';
-        	}
-
-        	$refForm->searchPatient($dbh, $includes);
-        	$patMkup = $refForm->createPatientMarkup();
-
-    	} else if ($final != 1) {
-
-    	    // Guest search
-
-    	    $patient = $refForm->setPatient($dbh, $idPatient);
-    	    $patMkup = $refForm->chosenMemberMkup($patient);
-
-    	    $refForm->searchGuests($dbh);
-    	    $guestMkup .= $refForm->guestsMarkup();
-
-    	    // Unhide guest section
-    	    $displayGuest = '';
-    	    $chosen = ' Chosen';
 
     	} else {
-    	    // Fininsh
+    	    // Wrong document status
 
-    	    // Get idPsg
-    	    $psg = new PSG($dbh, 0, $idPatient);
-    	    if ($psg->getIdPsg() < 1) {
-    	        throw new \Exception('Patient has no PSG.  Patient Id = '.$idPatient);
+    	    $lookups = readGenLookupsPDO($dbh, 'Referral_Form_Status');
+
+    	    if ($refForm->getReferralStatus() == ReferralFormStatus::Accepted) {
+
+    	        $errorMessage = 'This Referral has already been accepted.  ' . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'register.php'));
+
+    	    } else {
+
+    	       $errorMessage = 'The Referral has the wrong status: ' . (isset($lookups[$refForm->getReferralStatus()]) ? $lookups[$refForm->getReferralStatus()][1] : 'Unknown Status')
+    	            . '.  ' . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'register.php'));
     	    }
-
-    	    // Save Guests
-            $guests = $refForm->setGuests($dbh, $_POST, $psg);
-
-            // Create reservation
-            $idResv = $refForm->makeNewReservation($dbh, $psg, $guests);
-
-            // Set referral form status to done.
-            $refForm->setReferralStatus($dbh, ReferralFormStatus::Accepted, $psg->getIdPsg());
-
-            // Load reserve page.
-            header('location:Reserve.php?rid='.$idResv);
-
     	}
 
     } catch (\Exception $ex) {
@@ -180,10 +204,11 @@ if ($idDoc > 0) {
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <div id="contentDiv" class="container-fluid" style="margin-left: auto; margin-top: 5px;">
-            <h1><?php echo $title; ?> <span id="spnStatus" style="display:inline;"></span></h1>
+            <h1><?php echo $wInit->pageTitle; ?> <span id="spnStatus" style="display:inline;"></span></h1>
             <div id="errorMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; <?php if ($errorMessage == '') {echo('display:none;');} ?>" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $errorMessage; ?>
             </div>
+            <div id="divuserData" style="<?php if ($errorMessage != '') {echo('display:none;');} ?>">
             <form action="GuestReferral.php" method="post"  id="form1">
                 <div id="datesSection" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3">
                 <?php echo $datesMkup; ?>
@@ -196,7 +221,7 @@ if ($idDoc > 0) {
                     </div>
                 <div id="GuestSection" style="font-size: .9em; min-width: 810px; margin-top:50px;<?php echo $displayGuest; ?>"  class="ui-widget hhk-visitdialog mb-3">
                     <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3">
-                    	<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>
+                    	<?php echo $labels->getString('MemberType', 'guest', 'Guest') . 's'; ?>
                     </div>
                     <?php echo $guestMkup; ?>
                 </div>
@@ -212,6 +237,7 @@ if ($idDoc > 0) {
                 <input type="hidden" value="<?php echo $idPatient ?>" id="idPatient" name='idPatient'/>
                 <input type="hidden" value="<?php echo $final ?>" id="finaly" name='finaly'/>
             </form>
+            </div>
         </div>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value="<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>" id="visitorLabel" />

@@ -72,6 +72,15 @@ WHERE n.idName = $id ";
 
     public static function getSearchQuery(SearchFor $searchFor) {
 
+        $selRel = '';
+        $joinRel = '';
+
+        if ($searchFor->getPsgId() > 0) {
+
+            $selRel = " IFNULL(ng.Relationship_Code, '') as Relationship, ";
+            $joinRel = " LEFT JOIN name_guest ng on n.idName = ng.idName and ng.idPsg = " . $searchFor->getPsgId() . " ";
+        }
+
 	    return "SELECT
     n.idName,
     n.Name_Last,
@@ -90,9 +99,11 @@ WHERE n.idName = $id ";
     IFNULL(na.State_Province, '') AS `State_Province`,
     IFNULL(na.Postal_Code, '') AS `Postal_Code`,
     IFNULL(na.Country_Code, '') AS `Country_Code`,
+    " . $selRel . "
     IFNULL(gr.Description, '') AS `No_Return`
 FROM
     name n
+    " . $joinRel . "
         LEFT JOIN
     name_phone np ON n.idName = np.idName
         AND n.Preferred_Phone = np.Phone_Code
