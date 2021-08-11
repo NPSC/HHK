@@ -1160,6 +1160,8 @@
 		    							for(k in data.errors[i].errors){
 		    								errors += "<li>Styles: Line:" + data.errors[i].errors[k].line[0] + ":" + data.errors[i].errors[k].message[0] + "</li>";
 		    							}
+		    						}else{
+		    							errors += "<li>" + data.errors[i] + "</li>";
 		    						}
 		    					}
 		    					errors += "</ul>";
