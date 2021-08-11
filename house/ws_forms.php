@@ -45,7 +45,7 @@ require ("homeIncludes.php");
 
 
 try {
-    
+
     $login = new Login();
     $dbh = $login->initHhkSession(ciCFG_FILE);
 
@@ -54,7 +54,7 @@ try {
 		$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_STRING);
 	}
 	$login->verifyCSRF($csrfToken);
-    
+
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 } catch (CsrfException $e) {
@@ -88,39 +88,39 @@ $events = array();
 try {
 
     switch ($c) {
-            
+
         case 'schzip':
-            
+
             if (isset($_GET['zip'])) {
                 $zip = filter_var($_GET['zip'], FILTER_SANITIZE_NUMBER_INT);
                 $events = searchZip($dbh, $zip);
             }
             break;
-        
+
          case "submitform" :
-		 
+
 			$recaptchaToken = '';
 			if(isset($_POST['recaptchaToken'])){
 				$recaptchaToken = filter_var($_POST['recaptchaToken'], FILTER_SANITIZE_STRING);
 			}
-			
+
 			$recaptcha = new Recaptcha();
-			if($uS->mode == 'demo' || $uS->mode == 'prod'){
+			if(($uS->mode == 'demo' || $uS->mode == 'prod') && $recaptchaToken != ''){
 			     $score = $recaptcha->verify($recaptchaToken);
 			}else{
 			    $score = 1.0;
 			}
-			
+
             $formRenderData = '';
             if(isset($_POST['formRenderData'])){
                 try{
                     json_decode(stripslashes($_REQUEST['formRenderData']));
                     $formRenderData = stripslashes($_REQUEST['formRenderData']);
                 }catch(\Exception $e){
-                    
+
                 }
             }
-			
+
 			if($score >= 0.5){
 				$formDocument = new FormDocument();
 				$events = $formDocument->saveNew($dbh, $formRenderData);
@@ -129,7 +129,7 @@ try {
 				$events = ['status'=>'error', 'errors'=>['server'=>'Recaptcha failed with score of ' . $score]];
 			}
             break;
-			
+
         default:
             $events = array("error" => "Bad Command: \"" . $c . "\"");
     }
@@ -150,25 +150,25 @@ if (is_array($events)) {
 }
 
 function searchZip(\PDO $dbh, $zip) {
-    
+
     $query = "select * from postal_codes where Zip_Code like :zip LIMIT 10";
     $stmt = $dbh->prepare($query);
     $stmt->execute(array(':zip'=>$zip . "%"));
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     $events = array();
     foreach ($rows as $r) {
         $ent = array();
-        
+
         $ent['value'] = $r['Zip_Code'];
         $ent['label'] = $r['City'] . ', ' . $r['State'] . ', ' . $r['Zip_Code'];
         $ent['City'] = $r['City'];
         $ent['County'] = $r['County'];
         $ent['State'] = $r['State'];
-        
+
         $events[] = $ent;
     }
-    
+
     return $events;
 }
 exit();
