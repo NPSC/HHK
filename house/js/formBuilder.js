@@ -872,7 +872,7 @@
         };
 
         var settings = $.extend(true, {}, defaults, options);
-console.log(settings.fieldOptions);
+
         var $wrapper = $(this);
         
         createMarkup($wrapper, settings);
