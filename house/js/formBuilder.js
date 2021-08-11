@@ -1126,7 +1126,7 @@
 					}
 				});
 				
-				if(missingFields.length == 0){
+				if(missingFields.length == 0 && title.length > 0){
 					$.ajax({
 		    			url : settings.serviceURL,
 		   				type: "POST",
@@ -1164,14 +1164,21 @@
 		    					}
 		    					errors += "</ul>";
 		    					
-		    					flagAlertMessage("The following erros were found" + errors, true);
+		    					flagAlertMessage("The following errors were found" + errors, true);
 		    				}else if(data.status == "error"){
 		    					flagAlertMessage(data.msg, true);
 		    				}
 		    			}
 		    		});
 	    		}else{
-	    			flagAlertMessage("<strong>Error: </strong>The following fields must be included and set as required: " + missingFields.join(', '), true);
+	    			var errorMsg = "<strong>Error: </strong>";
+	    			if(title.length == 0){
+	    				errorMsg += "Form title is required<br>"
+	    			}
+	    			if(missingFields.length > 0){
+	    				errorMsg += "The following fields must be included and set as required: " + missingFields.join(', ');
+	    			}
+	    			flagAlertMessage(errorMsg, true);
 	    		}
 			}
 			
