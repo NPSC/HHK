@@ -42,8 +42,7 @@
   				'patient.firstName',
   				'patient.lastName',
   				'checkindate',
-  				'checkoutdate',
-  				'hospital.name',
+  				'hospital.idHospital',
   				'submit'
   			],
             inputSets: [
