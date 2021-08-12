@@ -41,12 +41,11 @@ $labels = Labels::getLabels();
 
 $errorMessage = '';
 $idDoc = 0;
-$idPatient = -1;
-$done = FALSE;
+$idPatient = -1;    // negative number triggers patient search.
 $patMkup = '';
 $guestMkup = '';
 $chosen = '';
-
+$continueLink = HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'register.php'));
 
 $datesMkup = '';
 $displayGuest = 'display:none;';
@@ -110,46 +109,34 @@ if ($idDoc > 0) {
             	$patMkup = $refForm->createPatientMarkup();
 
         	} else if ($final != 1) {
-
         	    // Guest search
+
+        	    // Save selected patient
         	    $patient = $refForm->setPatient($dbh, $idPatient);
         	    $patMkup = $refForm->chosenMemberMkup($patient);
+        	    $idPatient = $patient->getIdName();
 
-        	    $refForm->searchGuests($dbh);
-        	    $guestMkup .= $refForm->guestsMarkup();
+        	    // Search guests and present results to UI
+        	    $guests = $refForm->searchGuests($dbh);
 
-        	    // Unhide guest section
-        	    $displayGuest = '';
-        	    $chosen = ' Chosen';
+        	    // Any guests to search for?
+        	    if (count($guests) > 0) {
 
-        	} else {
-        	    // Fininsh
+        	        // Guests are listed.
+            	    $guestMkup .= $refForm->guestsMarkup();
 
-        	    // Get idPsg
-        	    $psg = new PSG($dbh, 0, $idPatient);
-        	    if ($psg->getIdPsg() < 1) {
-        	        throw new \Exception('Patient has no PSG.  Patient Id = '.$idPatient);
+            	    // Unhide guest section
+            	    $displayGuest = '';
+            	    $chosen = ' Chosen';   // Patient title ribbon.
+
+        	    } else {
+        	        // no guests, Create reservation
+        	        $refForm->finishReferral($dbh, $patient->getIdName());
         	    }
 
-        	    // Save Guests
-                $guests = $refForm->setGuests($dbh, $_POST, $psg);
-
-                // Create reservation
-                $idResv = $refForm->makeNewReservation($dbh, $psg, $guests);
-
-                if ($idResv > 0) {
-
-                    // Set referral form status to done.
-                    $refForm->setReferralStatus($dbh, ReferralFormStatus::Accepted, $psg->getIdPsg());
-
-                    // Load reserve page.
-                    header('location:Reserve.php?rid='.$idResv);
-                }
-
-
-                $errorMessage = 'The People are Saved, but a reservation was not created because the check-in dates are missing.  '
-                    . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'register.php'));
-
+        	} else {
+        	    // Create reservation
+        	    $refForm->finishReferral($dbh, $idPatient);
         	}
 
     	} else {
@@ -159,21 +146,21 @@ if ($idDoc > 0) {
 
     	    if ($refForm->getReferralStatus() == ReferralFormStatus::Accepted) {
 
-    	        $errorMessage = 'This Referral has already been accepted.  ' . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'register.php'));
+    	        $errorMessage = 'This Referral has already been accepted.  ' . $continueLink;
 
     	    } else {
 
     	       $errorMessage = 'The Referral has the wrong status: ' . (isset($lookups[$refForm->getReferralStatus()]) ? $lookups[$refForm->getReferralStatus()][1] : 'Unknown Status')
-    	            . '.  ' . HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'register.php'));
+    	       . '.  ' . $continueLink;
     	    }
     	}
 
     } catch (\Exception $ex) {
-        $errorMessage = '<p>Referral form error: ' . $ex->getMessage() . '</p>';
+        $errorMessage = $ex->getMessage() . '.  ' . $continueLink;
     }
 
 } else {
-    $errorMessage = "The Referral Form Document Id is missing.  ";
+    $errorMessage = "The Referral Form Document Id is missing.  " . $continueLink;
 }
 
 ?>

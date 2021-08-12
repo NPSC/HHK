@@ -19,7 +19,9 @@ use HHK\House\Hospital\HospitalStay;
 use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Tables\Reservation\Reservation_ReferralRS;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface;
-
+use HHK\House\PSG;
+use HHK\SysConst\ReferralFormStatus;
+use HHK\Exception\RuntimeException;
 
 
 class ReferralForm {
@@ -58,6 +60,13 @@ class ReferralForm {
 
     const MAX_GUESTS = 3;
 
+    /**
+     * Open the referral and pull in the user data.
+     *
+     * @param \PDO $dbh
+     * @param integer $referralDocId
+     * @throws \Exception
+     */
 	public function __construct(\PDO $dbh, $referralDocId) {
 
 		//Referral Form
@@ -77,6 +86,14 @@ class ReferralForm {
 
 	}
 
+	/**
+	 * FIlls a SearchFor object in preparatino for the db search.
+	 *
+	 * @param \PDO $dbh
+	 * @param array $formUserData The userdata array with patient or guest already selected.
+	 * @param array $searchIncludes The columns to include in the search.
+	 * @return \HHK\Member\ProgressiveSearch\SearchNameData\SearchFor
+	 */
 	public static function loadSearchFor(\PDO $dbh, array $formUserData, array $searchIncludes = []) {
 
 	    $searchFor = new SearchFor();
@@ -90,11 +107,11 @@ class ReferralForm {
 	    }
 
 	    if (isset($formUserData['middleName'])) {
-	        $searchFor->setNameLast($formUserData['middleName']);
+	        $searchFor->setNameMiddle($formUserData['middleName']);
 	    }
 
 	    if (isset($formUserData['nickname'])) {
-	        $searchFor->setNameLast($formUserData['nickname']);
+	        $searchFor->setNickname($formUserData['nickname']);
 	    }
 
 	    // patient Birthdate
@@ -103,8 +120,8 @@ class ReferralForm {
 	    }
 
 	    // patient gender
-	    if (isset($formUserData['demogs']['Gender']) && $formUserData['demogs']['Gender'] != '') {
-	        $searchFor->setGender($formUserData['demogs']['Gender']);
+	    if (isset($formUserData['demogs']['gender']) && $formUserData['demogs']['gender'] != '') {
+	        $searchFor->setGender($formUserData['demogs']['gender']);
 	    }
 
 	    // Phone
@@ -118,8 +135,8 @@ class ReferralForm {
 	    }
 
 	    // Street
-	    if (isset($formUserData['address']['adrstreet']) && $formUserData['address']['adrstreet'] != '') {
-	        $searchFor->setAddressStreet($formUserData['address']['adrstreet'], new CleanAddress($dbh));
+	    if (isset($formUserData['address']['street']) && $formUserData['address']['street'] != '') {
+	        $searchFor->setAddressStreet($formUserData['address']['street'], new CleanAddress($dbh));
 	    }
 
 	    // City
@@ -156,6 +173,13 @@ class ReferralForm {
 
 	}
 
+	/**
+	 *
+	 * @param \PDO $dbh
+	 * @param array $searchIncludes The columns to include in the search.
+	 * @throws \Exception If pateint first and last name is missing.
+	 * @return \HHK\Member\ProgressiveSearch\SearchNameData\SearchResults[]
+	 */
 	public function searchPatient(\PDO $dbh, array $searchIncludes = []) {
 
 	    // Patient
@@ -178,38 +202,43 @@ class ReferralForm {
 	    return $this->patResults;
 	}
 
+	/**
+	 *
+	 * @param \PDO $dbh
+	 * @param integer $maxGuests Defaults to const MAX_GUESTS.
+	 * @return array An array of SearchResults objects, one per guest searched.
+	 */
 	public function searchGuests(\PDO $dbh, $maxGuests = self::MAX_GUESTS) {
 
 	    $this->gstResults = [];
 
-	    if (isset($this->formUserData['guests']) === FALSE || is_array($this->formUserData['guests']) === FALSE) {
-	        throw new \Exception('Guests are missing from form data.  ');
-	    }
+	    if (isset($this->formUserData['guests']) && is_array($this->formUserData['guests'])) {
 
-	    for ($indx = 0; $indx < $maxGuests; $indx++) {
+    	    for ($indx = 0; $indx < $maxGuests; $indx++) {
 
-	        $gindx = 'g' . $indx;
+    	        $gindx = 'g' . $indx;
 
-	        if (isset($this->formUserData['guests'][$gindx]['firstName']) && isset($this->formUserData['guests'][$gindx]['lastName'])
-	            && $this->formUserData['guests'][$gindx]['firstName'] != '' && $this->formUserData['guests'][$gindx]['lastName'] != '') {
+    	        if (isset($this->formUserData['guests'][$gindx]['firstName']) && isset($this->formUserData['guests'][$gindx]['lastName'])
+    	            && $this->formUserData['guests'][$gindx]['firstName'] != '' && $this->formUserData['guests'][$gindx]['lastName'] != '') {
 
-	            $searchFor = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
-	            $searchFor->setPsgId($this->idPsg);
+    	            $searchFor = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
+    	            $searchFor->setPsgId($this->idPsg);
 
 
-	            // Relationship
-	            if (isset($this->formUserData['guests'][$gindx]['relationship']) && $this->formUserData['guests'][$gindx]['relationship'] != '') {
-	                $searchFor->setRelationship($this->formUserData['guests'][$gindx]['relationship']);
-	            }
+    	            // Relationship
+    	            if (isset($this->formUserData['guests'][$gindx]['relationship']) && $this->formUserData['guests'][$gindx]['relationship'] != '') {
+    	                $searchFor->setRelationship($this->formUserData['guests'][$gindx]['relationship']);
+    	            }
 
-	            $this->gstSearchFor[$gindx] = $searchFor;
+    	            $this->gstSearchFor[$gindx] = $searchFor;
 
-                // Do the search which creats a new SearchResult.
-	            $progSearch = new ProgressiveSearch();
-	            $this->gstResults[$gindx] = $progSearch->doSearch($dbh, $searchFor);
+                    // Do the search which creats a new SearchResult.
+    	            $progSearch = new ProgressiveSearch();
+    	            $this->gstResults[$gindx] = $progSearch->doSearch($dbh, $searchFor);
 
-	        }
+    	        }
 
+    	    }
 	    }
 
 	    return $this->gstResults;
@@ -229,6 +258,13 @@ class ReferralForm {
 	    return $doctorResults;
 	}
 
+	/**
+	 * Defines and saves the selected patient.
+	 *
+	 * @param \PDO $dbh
+	 * @param integer $idPatient
+	 * @return boolean|NULL|\HHK\Member\Role\Patient
+	 */
 	public function setPatient(\PDO $dbh, $idPatient) {
 
 	    $uS = Session::getInstance();
@@ -258,6 +294,15 @@ class ReferralForm {
 
 	}
 
+	/**
+	 * Defines and saves the selected guests.
+	 *
+	 * @param \PDO $dbh
+	 * @param array $post
+	 * @param PSG $psg
+	 * @param integer $maxGuests
+	 * @return mixed[]
+	 */
 	public function setGuests(\PDO $dbh, $post, PSG $psg, $maxGuests = self::MAX_GUESTS) {
 
 	    $uS = Session::getInstance();
@@ -299,6 +344,10 @@ class ReferralForm {
 	   return $guests;
 	}
 
+	/**
+	 * Sets the date parameter
+	 * @throws \Exception If dates are missing.
+	 */
 	public function setDates() {
 
 	    if (isset($this->formUserData['checkindate'])) {
@@ -315,6 +364,14 @@ class ReferralForm {
 
 	}
 
+	/**
+	 * Loads member data from the database.
+	 *
+	 * @param \PDO $dbh
+	 * @param integer $id IdName of member to get data from.
+	 * @param SearchNameDataInterface $snd The object to be loaded.
+	 * @return \HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface
+	 */
 	protected function LoadMemberData(\PDO $dbh, $id, SearchNameDataInterface $snd) {
 
 	    //$searchResult = new SearchResults();
@@ -329,6 +386,15 @@ class ReferralForm {
 
 	}
 
+	/**
+	 * Save defined patient (idP) along with PSG, Registration, and Hospital_Stay.
+	 *
+	 * @param \PDO $dbh
+	 * @param integer $idP
+	 * @param SearchNameData $searchNameData
+	 * @param string $username
+	 * @return \HHK\Member\Role\Patient
+	 */
 	protected function savePatient(\PDO $dbh, $idP, SearchNameData $searchNameData, $username) {
 
 	    $post = $this->memberDataPost($searchNameData);
@@ -338,7 +404,7 @@ class ReferralForm {
 	    $patient->save($dbh, $post, $username);
 
 	    // PSG
-	    $psg = new Psg($dbh, 0, $patient->getIdName());
+	    $psg = new PSG($dbh, 0, $patient->getIdName());
 	    $psg->setNewMember($patient->getIdName(), RelLinkType::Self);
 	    $psg->savePSG($dbh, $patient->getIdName(), $username);
 	    $this->idPsg = $psg->getIdPsg();
@@ -354,6 +420,16 @@ class ReferralForm {
 	    return $patient;
 	}
 
+	/**
+	 * Save defined guest (idname) and adds guest to patient's PSG.
+	 *
+	 * @param \PDO $dbh
+	 * @param integer $idName
+	 * @param PSG $psg Patient's PSG
+	 * @param SearchNameData $searchNameData
+	 * @param string $username
+	 * @return \HHK\Member\Role\Guest
+	 */
 	protected function saveGuest(\PDO $dbh, $idName, PSG $psg, SearchNameData $searchNameData, $username) {
 
 	    $post = $this->memberDataPost($searchNameData);
@@ -369,7 +445,49 @@ class ReferralForm {
 	    return $guest;
 	}
 
-	public function makeNewReservation(\PDO $dbh, PSG $psg, array $guests) {
+	/**
+	 *
+	 * @param \PDO $dbh
+	 * @param integer $idPatient
+	 * @throws RuntimeException
+	 */
+	public function finishReferral(\PDO $dbh, $idPatient) {
+
+	    // Get idPsg
+	    $psg = new PSG($dbh, 0, $idPatient);
+
+	    if ($psg->getIdPsg() < 1) {
+	        throw new RuntimeException('Patient has no PSG.  Patient Id = '.$idPatient . '.  ');
+	    }else {
+
+	        // Save Guests
+	        $guests = $this->setGuests($dbh, $_POST, $psg);
+
+	        // Create reservation
+	        $idResv = $this->makeNewReservation($dbh, $psg, $guests);
+
+	        if ($idResv > 0) {
+
+	            // Set referral form status to done.
+	            $this->setReferralStatus($dbh, ReferralFormStatus::Accepted, $psg->getIdPsg());
+
+	            // Load reserve page.
+	            header('location:Reserve.php?rid='.$idResv);
+	        }
+
+	        throw new RuntimeException('The People are Saved, but a reservation was not created yet.  ');
+	    }
+
+	}
+
+	/**
+	 * Make a new reservation for patient and any guests.
+	 * @param \PDO $dbh
+	 * @param PSG $psg Patient's PSG
+	 * @param array $guests array of guest member id's
+	 * @return number|mixed
+	 */
+	protected function makeNewReservation(\PDO $dbh, PSG $psg, array $guests) {
 
 	    $uS = Session::getInstance();
 
@@ -426,6 +544,12 @@ class ReferralForm {
 
 	}
 
+	/**
+	 * Selected patient Markup.
+	 *
+	 * @param AbstractRole $role
+	 * @return string An HTML Table
+	 */
 	public function chosenMemberMkup(AbstractRole $role) {
 
 	    $tbl = new HTMLTable();
@@ -463,6 +587,12 @@ class ReferralForm {
 	    return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
 	}
 
+	/**
+	 * Concatenates the full address into a single string.
+	 *
+	 * @param NameAddressRS $addr
+	 * @return string
+	 */
 	public function createAddrString(NameAddressRS $addr) {
 
 	    if (is_null($addr) === FALSE) {
@@ -477,6 +607,11 @@ class ReferralForm {
 	    return '';
 	}
 
+	/**
+	 * Patient selection markup.
+	 *
+	 * @return string
+	 */
 	public function createPatientMarkup() {
 
 	    $uS = Session::getInstance();
@@ -505,9 +640,9 @@ class ReferralForm {
 	    $tbl->addBodyTr(
 	        HTMLTable::makeTd(HTMLInput::generateMarkup('0', array('type'=>'radio', 'name'=>'rbPatient', 'id'=>'patSel0')))
 	        .HTMLTable::makeTd($this->patSearchFor->getNameFirst())
-	        .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
+	        .HTMLTable::makeTd($this->patSearchFor->getNameMiddle())
 	        .HTMLTable::makeTd($this->patSearchFor->getNameLast())
-	        .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
+	        .HTMLTable::makeTd($this->patSearchFor->getNickname())
 	        .HTMLTable::makeTd(($this->patSearchFor->getBirthDate() == '' ? '' : date('M d, Y', strtotime($this->patSearchFor->getBirthDate()))))
 	        .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->patSearchFor->getPhone()))
 	        .HTMLTable::makeTd($this->patSearchFor->getEmail())
@@ -547,11 +682,16 @@ class ReferralForm {
 	    return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
 	}
 
+	/**
+	 * Guests selections markup.
+	 * @param integer $numberGuests
+	 * @return string
+	 */
 	public function guestsMarkup($numberGuests = self::MAX_GUESTS) {
 
 	    $markup = '';
 
-
+        // Search Each guest
 	    foreach ($this->gstSearchFor as $g => $d) {
 
 	        $markup .= $this->createGuestMarkup($g, $d, $this->gstResults[$g]);
@@ -561,7 +701,14 @@ class ReferralForm {
 	    return $markup;
 	}
 
-	public function createGuestMarkup($gindx, SearchFor $guestSearchFor, array $guestResults) {
+	/**
+	 *
+	 * @param string $gindx Indexes the specific guest.
+	 * @param SearchFor $guestSearchFor
+	 * @param array $guestResults
+	 * @return string
+	 */
+	protected function createGuestMarkup($gindx, SearchFor $guestSearchFor, array $guestResults) {
 
 	   $uS = Session::getInstance();
 	   $tbl = new HTMLTable();
@@ -595,19 +742,19 @@ class ReferralForm {
 	   $tbl->addBodyTr(
 	       HTMLTable::makeTd(HTMLInput::generateMarkup('0', $idArray))
 	        .HTMLTable::makeTd($guestSearchFor->getNameFirst())
-	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
+	       .HTMLTable::makeTd($guestSearchFor->getNameMiddle())
 	       .HTMLTable::makeTd($guestSearchFor->getNameLast())
-	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
+	       .HTMLTable::makeTd($guestSearchFor->getNickname())
 	       .HTMLTable::makeTd((isset($uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()]) ? $uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()][1] : ''))
 	       .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $guestSearchFor->getPhone()))
-	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
-	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
-	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
-	       .($uS->county ? HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;')) : '')
-	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
-	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
-	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
-	       .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
+	       .HTMLTable::makeTd($guestSearchFor->getEmail())
+	       .HTMLTable::makeTd($guestSearchFor->getAddressStreet())
+	       .HTMLTable::makeTd($guestSearchFor->getAddressCity())
+	       .($uS->county ? HTMLTable::makeTd($guestSearchFor->getAddressCounty()) : '')
+	       .HTMLTable::makeTd($guestSearchFor->getAddressState())
+	       .HTMLTable::makeTd($guestSearchFor->getAddressZip())
+	       .HTMLTable::makeTd($guestSearchFor->getAddressCountry())
+	       .HTMLTable::makeTd('')
 	        , array('class'=>'hhk-origUserData'));
 
 	   $cols = ($uS->county ? 15 : 14);
@@ -638,6 +785,10 @@ class ReferralForm {
 	   return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
 	}
 
+	/**
+	 *
+	 * @return string
+	 */
 	public function datesMarkup() {
 
 	    $ckinDate = '';
@@ -670,6 +821,12 @@ class ReferralForm {
 	    return $hospId;
 	}
 
+	/**
+	 * Builds an array to simulate a member save from a page.
+	 *
+	 * @param SearchNameDataInterface $data
+	 * @return string[]|mixed[][]|NULL[]|string[][]|string[][][]|NULL[][][]
+	 */
 	protected function memberDataPost(SearchNameDataInterface $data) {
 
 	    $post = array(
@@ -706,13 +863,23 @@ class ReferralForm {
 	    return $post;
 	}
 
-	public function setReferralStatus($dbh, $status, $idPsg) {
+	/**
+	 *
+	 * @param \PDO $dbh
+	 * @param string $status A ReferralFormStatus code.
+	 * @param integer $idPsg
+	 */
+	public function setReferralStatus(\PDO $dbh, $status, $idPsg) {
 
 	    $this->formDoc->updateStatus($dbh, $status);
 	    $this->formDoc->linkNew($dbh, 0, $idPsg);
 
 	}
 
+	/**
+	 *
+	 * @return string A ReferralFormStatus code.
+	 */
 	public function getReferralStatus() {
 	    return $this->formDoc->getStatus();
 	}
