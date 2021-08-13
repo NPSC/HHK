@@ -782,7 +782,7 @@ class ReferralForm {
 	   }
 
 
-	   return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
+	   return $tbl->generateMarkup(array('class'=>'hhk-tdbox hhkrefguestsel'));
 	}
 
 	/**

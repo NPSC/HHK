@@ -509,3 +509,7 @@ div#referralTabs ul>li>a>span.ui-icon {
 div#referralTabs ul>li.ui-state-active .ui-icon {
 	background-image: url(jqui/images/ui-icons_f9bd01_256x240.png) !important;
 }
+.hhkrefguestsel {
+	margin-top:10px;
+	margin-bottom: 30px;
+}
