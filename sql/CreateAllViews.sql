@@ -803,14 +803,15 @@ CREATE OR REPLACE VIEW `vform_listing` AS
         JSON_VALUE(`d`.`userData`, '$.patient.lastName') AS `patientLastName`,
         JSON_VALUE(`d`.`userData`, '$.checkindate') AS `ExpectedCheckin`,
         JSON_VALUE(`d`.`userData`, '$.checkoutdate') AS `ExpectedCheckout`,
-        JSON_VALUE(`d`.`userData`, '$.hospital.name') AS `hospitalName`,
+        `h`.`Title` as `hospitalName`,
         `d`.`Status` AS `status ID`,
         `g`.`Description` AS `status`,
         `d`.`Timestamp` AS `Timestamp`
     FROM
         (`document` `d`
         LEFT JOIN `gen_lookups` `g` ON (`d`.`Status` = `g`.`Code`
-            AND `g`.`Table_Name` = 'Referral_Form_Status'))
+            AND `g`.`Table_Name` = 'Referral_Form_Status')
+		LEFT JOIN `hospital` `h` ON (JSON_VALUE(`d`.`userData`, '$.hospital.idHospital') = `h`.`idHospital`))
     WHERE
         `d`.`Type` = 'json'
             AND `d`.`Category` = 'form';

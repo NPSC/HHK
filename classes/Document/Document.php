@@ -4,6 +4,7 @@ namespace HHK\Document;;
 
 use HHK\Tables\{DocumentRS, EditRS};
 use HHK\Exception\RuntimeException;
+use HHK\sec\Session;
 
 /**
  * Document.php
@@ -226,8 +227,10 @@ class Document {
         $counter = 0;
 
         if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
-
+            $uS = Session::getInstance();
             $this->documentRS->Status->setNewVal($status);
+            $this->documentRS->Updated_By->setNewVal($uS->username);
+            $this->documentRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
             EditRS::updateStoredVals($this->documentRS);

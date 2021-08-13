@@ -172,7 +172,7 @@ class FormTemplate {
         return [
             'formStyle'=>$this->getStyle(),
             'successTitle'=>$abstract->successTitle,
-            'successContent'=>$abstract->successContent,
+            'successContent'=>htmlspecialchars_decode($abstract->successContent, ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) ? $abstract->enableRecaptcha : false)
         ];
     }

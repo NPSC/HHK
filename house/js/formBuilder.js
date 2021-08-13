@@ -123,7 +123,7 @@
     				"label": (options.labels.patient || 'Patient') + " Gender",
     				"placeholder": (options.labels.patient || 'Patient') + " Gender",
     				"className": "form-select",
-    				"name": "patient.gender",
+    				"name": "patient.demogs.gender",
     				"width": "col-md-4",
     				"dataSource":"gender",
     				"multiple": false,
@@ -278,7 +278,7 @@
     				"type": "text",
     				"label": "Zip Code",
     				"placeholder": "Zip Code",
-    				"className": "form-control ckzip hhk-zipsearch ui-autocomplete-input",
+    				"className": "form-control address ckzip hhk-zipsearch ui-autocomplete-input",
     				"name": "patient.address.adrzip",
     				"width": "col-md-2"
     			},
@@ -286,7 +286,7 @@
   					"type": "text",
     				"label": "City",
     				"placeholder": "City",
-    				"className": "form-control",
+    				"className": "form-control address",
     				"name": "patient.address.adrcity",
     				"width": "col-md-5"
   				},
@@ -295,7 +295,7 @@
   					"type": "text",
     				"label": "County",
     				"placeholder": "County",
-    				"className": "form-control",
+    				"className": "form-control address",
     				"name": "patient.address.adrcounty",
     				"width": "col-md-5"
   				}]:[]),
@@ -303,7 +303,7 @@
     				"type": "select",
     				"label": "State",
     				"placeholder": "State",
-    				"className": "form-select bfh-states",
+    				"className": "form-select bfh-states address",
     				"name": "patient.address.adrstate",
     				"width": "col-md-2",
     				"values":[]
@@ -312,7 +312,7 @@
     				"type": "select",
     				"label": "Country",
     				"placeholder": "Country",
-    				"className": "form-select bfh-countries",
+    				"className": "form-select bfh-countries address",
     				"name": "patient.address.adrcountry",
     				"width": "col-md-3",
     				"values":[]
@@ -992,7 +992,7 @@
 				        	<div class="col-12">
 				        		<div style="margin-bottom: 0.5em;">
 				        			<label for="enableRecaptcha" style="margin-right: 0.5em;">Enable Recaptcha</label>
-				        			<input type="checkbox" name="enableRecaptcha" id="enableRecaptcha">
+				        			<input type="checkbox" name="enableRecaptcha" id="enableRecaptcha" checked="checked">
 				        		</div>
 				        		<small>Combat spam submissions by using <a href="https://www.google.com/recaptcha/about/" target="_blank">Google Recaptcha Enterprise</a>. Using this service is subject to Google's <a href="https://www.google.com/intl/en/policies/terms/" target="_blank">Terms of Use</a> and <a href="https://www.google.com/intl/en/policies/privacy/" target="_blank">Privacy Policy</a></small>
 				        	</div>

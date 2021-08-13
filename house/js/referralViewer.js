@@ -71,7 +71,7 @@
                 },
                 {
                 "targets": [ 6 ],
-                        title: "Hopsital",
+                        title: "Hospital",
                         data: 'Hospital',
                         sortable: true
                 },

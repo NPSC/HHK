@@ -113,6 +113,7 @@ group by g.Code order by g.Order';
         $this->doc->setUserData($validatedFields);
         $this->doc->setDoc($sanitizedDoc);
         $this->doc->setStatus('n');
+        $this->doc->setCreatedBy('Web');
 
         $this->doc->saveNew($dbh);
 
@@ -139,7 +140,7 @@ group by g.Code order by g.Order';
 
         foreach($fields as $field){
             if(isset($field->name) && isset($field->required)){ //filter out non input fields
-                if($field->required && $field->userData[0] == ''){ //if field is required but user didn't fill field
+                if($field->required && (!isset($field->userData[0]) || $field->userData[0] == '')){ //if field is required but user didn't fill field
                     $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' is required.'];
                     continue;
                 }elseif($field->type == "date" && $field->userData[0] != ''){ //if date field and not empty

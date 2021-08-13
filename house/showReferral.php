@@ -268,11 +268,11 @@ if(isset($_GET['template'])){
             	// set country and state selectors
                 $renderedForm.find('select.bfh-countries').each(function() {
                     var $countries = $(this);
-                    $countries.bfhcountries($countries.data());
+                    $countries.bfhcountries($countries.data()).val($countries.attr('user-data'));
                 });
                 $renderedForm.find('select.bfh-states').each(function() {
                     var $states = $(this);
-                    $states.bfhstates($states.data());
+                    $states.bfhstates($states.data()).val($states.attr('user-data'));
                 });
 
             	//zip code search
@@ -280,6 +280,8 @@ if(isset($_GET['template'])){
                     var lastXhr;
                     createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
                 });
+
+                $renderedForm.find('.address').prop('autocomplete', 'search');
 
                 //add guest button
                 //var elements = $renderedForm.find('input[group=guest], select[group=guest]').parents('.field-container').remove();
@@ -323,7 +325,7 @@ if(isset($_GET['template'])){
             	    	    			$('#errorcontent').text(error);
             	    	    			$('.errmsg').show();
             	    	    		}else{
-            	    	    			$('input[name="' + error.field + '"]').addClass('is-invalid');
+            	    	    			$('form *[name="' + error.field + '"]').addClass('is-invalid');
             	    	    			$('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
             	    	    		}
             	    	    	});
