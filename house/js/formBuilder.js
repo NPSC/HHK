@@ -621,7 +621,7 @@
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "referralAgent.firstName",
+    				"name": "hospital.referralAgent.firstName",
     				"width": "col-md-3",
   				},
   				{
@@ -629,7 +629,7 @@
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "referralAgent.lastName",
+    				"name": "hospital.referralAgent.lastName",
     				"width": "col-md-3",
   				},
   				{
@@ -637,7 +637,7 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control",
-    				"name": "referralAgent.phone",
+    				"name": "hospital.referralAgent.phone",
     				"width": "col-md-3",
   				},
   				{
@@ -645,7 +645,7 @@
     				"label": "Email",
     				"placeholder": "Email",
     				"className": "form-control",
-    				"name": "referralAgent.email",
+    				"name": "hospital.referralAgent.email",
     				"width": "col-md-3",
   				},
   				]
