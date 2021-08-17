@@ -167,36 +167,38 @@ WHERE r.Email_Receipt = 1 and
         }
 
 
-        $mail = prepareEmail();
-
-        $mail->From = $fromAddr;
-        $mail->addReplyTo($uS->ReplyTo);
-        $mail->FromName = $uS->siteName;
-
-        $mail->addAddress($toAddrSan);     // Add a recipient
-
-        $bccEntry = $uS->BccAddress;
-        $bccs = explode(',', $bccEntry);
-
-        foreach ($bccs as $b) {
-
-            $bcc = filter_var($b, FILTER_SANITIZE_EMAIL);
-
-            if ($bcc !== FALSE && $bcc != '') {
-                $mail->addBCC($bcc);
+        try{
+            $mail = prepareEmail();
+    
+            $mail->From = $fromAddr;
+            $mail->addReplyTo($uS->ReplyTo);
+            $mail->FromName = $uS->siteName;
+    
+            $mail->addAddress($toAddrSan);     // Add a recipient
+    
+            $bccEntry = $uS->BccAddress;
+            $bccs = explode(',', $bccEntry);
+    
+            foreach ($bccs as $b) {
+    
+                $bcc = filter_var($b, FILTER_SANITIZE_EMAIL);
+    
+                if ($bcc !== FALSE && $bcc != '') {
+                    $mail->addBCC($bcc);
+                }
             }
-        }
-
-        $mail->isHTML(true);
-
-        $mail->Subject = $uS->siteName . ' Payment Receipt';
-        $mail->msgHTML($this->receiptMarkup);
-
-        if($mail->send()) {
+    
+            $mail->isHTML(true);
+    
+            $mail->Subject = $uS->siteName . ' Payment Receipt';
+            $mail->msgHTML($this->receiptMarkup);
+    
+            $mail->send();
             if ($guestHasEmail) {
                 return "Email sent" . $guestName;
             }
-        } else {
+            
+        }catch(\Exception $e){
             return "Send Email failed:  " . $mail->ErrorInfo;
         }
 

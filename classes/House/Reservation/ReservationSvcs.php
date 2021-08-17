@@ -150,26 +150,27 @@ class ReservationSvcs
 
             if ($emailAddr != '') {
 
-                $mail = prepareEmail();
-                $mail->From = $uS->FromAddress;
-                $mail->FromName = $uS->siteName;
-                $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
-                $mail->addReplyTo($uS->ReplyTo);
-
-                $bccs = explode(',', $uS->BccAddress);
-                foreach ($bccs as $bcc) {
-                    if ($bcc != '') {
-                        $mail->addBCC(filter_var($bcc, FILTER_SANITIZE_EMAIL));
+                try{
+                    $mail = prepareEmail();
+                    $mail->From = $uS->FromAddress;
+                    $mail->FromName = $uS->siteName;
+                    $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
+                    $mail->addReplyTo($uS->ReplyTo);
+    
+                    $bccs = explode(',', $uS->BccAddress);
+                    foreach ($bccs as $bcc) {
+                        if ($bcc != '') {
+                            $mail->addBCC(filter_var($bcc, FILTER_SANITIZE_EMAIL));
+                        }
                     }
-                }
-
-                $mail->isHTML(true);
-
-                $mail->Subject = Labels::getString('referral', 'Res_Confirmation_Subject', htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation');
-                $mail->msgHTML($docs[$docCode]['doc']);
-
-                if ($mail->send()) {
-
+    
+                    $mail->isHTML(true);
+    
+                    $mail->Subject = Labels::getString('referral', 'Res_Confirmation_Subject', htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation');
+                    $mail->msgHTML($docs[$docCode]['doc']);
+    
+                    $mail->send();
+    
                     // Make a note in the reservation.
                     $noteText = 'Confirmation Email sent to ' . $emailAddr;
                     if ($notes) { // add special note if any are present
@@ -180,7 +181,8 @@ class ReservationSvcs
                     $reserv->saveReservation($dbh, $reserv->getIdRegistration(), $uS->username);
 
                     $dataArray['mesg'] = "Email sent.  ";
-                } else {
+                    
+                }catch(\Exception $e){
                     $dataArray['mesg'] = "Email failed!  " . $mail->ErrorInfo;
                 }
             } else {
