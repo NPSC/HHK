@@ -36,7 +36,7 @@ class Hospital {
 
     }
 
-    protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE, array $ReferralFormData = NULL) {
+    protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE) {
 
         $uS = Session::getInstance();
 
@@ -135,7 +135,7 @@ class Hospital {
 
     }
 
-    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE, array $ReferralFormData = NULL) {
+    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE, array $ReferralHospitalData = []) {
 
         $uS = Session::getInstance();
         $referralAgentMarkup = '';
@@ -172,19 +172,15 @@ class Hospital {
                         HTMLContainer::generateMarkup('span', '', array('name'=>'agentSearch', 'class'=>'hhk-agentSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'margin-left:1.3em;'))
                         . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'txtAgentSch', 'class'=>'ignrSave', 'size'=>'16', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'margin-left:0.3em;'))
                         , array('colspan'=>'3', 'id'=>'a_titleTh'))
-                .HTMLTable::makeTh('Phone', array('class'=>'hhk-agentInfo'))
-                .HTMLTable::makeTh('Email', array('rowspan'=>'2', 'style'=>'vertical-align:bottom;', 'class'=>'hhk-agentInfo')));
+                .HTMLTable::makeTh('', array('colspan'=>'3'))
+            );
 
             $ratbl->addBodyTr(
                 HTMLTable::makeTh("x", array('class'=>'a_actions')) .
                 HTMLTable::makeTh('First')
                 .HTMLTable::makeTh('Last')
-                . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ' .
-                        HTMLInput::generateMarkup(
-                                $wPhone["Phone_Num"],
-                                array('id'=>'a_txtPhone'.PhonePurpose::Work, 'name'=>'a_txtPhone[' . PhonePurpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
-                        , array('style'=>'text-align:right;')
-                        )
+                .HTMLTable::makeTh('Phone', array('class'=>'hhk-agentInfo', 'colspan'=>'2'))
+                .HTMLTable::makeTh('Email', array('style'=>'vertical-align:bottom;', 'class'=>'hhk-agentInfo'))
                 , array('class'=>'hhk-agentInfo'));
 
             $ratbl->addBodyTr(
@@ -206,6 +202,12 @@ class Hospital {
                                 array('id'=>'a_txtPhone'.PhonePurpose::Cell, 'name'=>'a_txtPhone[' .PhonePurpose::Cell. ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
                         , array('style'=>'text-align:right;')
                         )
+                . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ' .
+                    HTMLInput::generateMarkup(
+                        $wPhone["Phone_Num"],
+                        array('id'=>'a_txtPhone'.PhonePurpose::Work, 'name'=>'a_txtPhone[' . PhonePurpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
+                    , array('style'=>'text-align:right;')
+                    )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
                                 $email["Email"],
@@ -358,7 +360,7 @@ $(document).ready(function () {
         }
 
         $div = HTMLContainer::generateMarkup('div',
-            self::justHospitalMarkup($hstay, $offerBlankHosp, $ReferralFormData)
+            self::justHospitalMarkup($hstay, $offerBlankHosp)
         		. $referralAgentMarkup
         		. $docRowMkup
         		. $hstayLog

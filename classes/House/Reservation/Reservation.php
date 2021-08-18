@@ -17,7 +17,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
 use HHK\sec\{Labels, SecurityComponent, Session};
 use HHK\Exception\RuntimeException;
-use HHK\Document\FormDocument;
+
 
 
 /**
@@ -258,23 +258,12 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createHospitalMarkup(\PDO $dbh) {
+    protected function createHospitalMarkup(\PDO $dbh, array $refHospital = []) {
 
         //get hospitalStay from reservation
         $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId(), $this->reserveData->getIdHospital_Stay());
 
-        $formUserData = NULL;
-
-        if ($this->reserveData->getIdReferralDoc() > 0) {
-
-            $formDoc = new FormDocument();
-
-            if ($formDoc->loadDocument($dbh, $this->reserveData->getIdReferralDoc())) {
-                $formUserData = $formDoc->getUserData();
-            }
-        }
-
-        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay, TRUE, $formUserData));
+        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay, TRUE, $refHospital));
 
     }
 
@@ -493,7 +482,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createResvMarkup(\PDO $dbh, $oldResv, $prefix = '') {
+    protected function createResvMarkup(\PDO $dbh, $oldResv, $prefix = '', $refVehicle = []) {
 
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
@@ -543,7 +532,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Vehicles
             if ($uS->TrackAuto) {
-                $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+                $dataArray['vehicle'] = $this->vehicleMarkup($dbh, $refVehicle);
             }
 
             // Add room title to status title
@@ -619,7 +608,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
-    protected function vehicleMarkup(\PDO $dbh) {
+    protected function vehicleMarkup(\PDO $dbh, array $refVehicle = []) {
 
         $regId = $this->reservRs->idRegistration->getStoredVal();
 
