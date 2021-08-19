@@ -10,7 +10,6 @@ use HHK\sec\Session;
 use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\HospitalRS;
-use HHK\Document\FormData;
 use HHK\Exception\RuntimeException;
 use HHK\House\PSG;
 
@@ -135,7 +134,7 @@ class Hospital {
 
     }
 
-    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE, array $ReferralHospitalData = []) {
+    public static function createReferralMarkup(\PDO $dbh, HospitalStay $hstay, $offerBlankHosp = TRUE, array $referralHospitalData = []) {
 
         $uS = Session::getInstance();
         $referralAgentMarkup = '';
@@ -164,6 +163,23 @@ class Hospital {
             $wPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Work);
             $cPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Cell);
             $email = $agent->getEmailsObj()->get_Data();
+
+            // Guest Referral agent selected?
+            if (isset($referralHospitalData['referralAgent']) && $referralHospitalData['referralAgent']['lastName'] != '') {
+
+                // Agent already saved?
+                if ($agent->getIdName() > 0) {
+
+                    // Is our agent the same name?
+
+                } else {
+
+                    // Does our agent already exist?
+
+                    // if not, queue up referral agent as new agent.
+
+                }
+            }
 
             $ratbl = new HTMLTable();
 

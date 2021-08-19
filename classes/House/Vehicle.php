@@ -86,7 +86,7 @@ WHERE
         return $events;
     }
 
-    public static function createVehicleMarkup(\PDO $dbh, $idReg, $noVehicle = 0) {
+    public static function createVehicleMarkup(\PDO $dbh, $idReg, $noVehicle, $refVehicle) {
 
         // work on the state
         $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
@@ -98,6 +98,8 @@ WHERE
         $tbl = new HTMLTable();
 
         $labels = Labels::getLabels();
+
+        $hasRef = FALSE;
 
         foreach ($rows as $r) {
 
@@ -115,6 +117,9 @@ WHERE
                 }
             }
 
+            if (self::checkMatch($carRS, $refVehicle)) {
+                $hasRef = TRUE;
+            }
 
             $tbl->addBodyTr(
                 //HTMLTable::makeTd(HTMLSelector::generateMarkup( , array('name'=>'selVehGuest['.$idPrefix.']')))
@@ -128,8 +133,10 @@ WHERE
                 );
         }
 
+
+        // new cars
         $stateOpt = '';
-        // new car
+
         foreach ($stateList as $s) {
 
             if ('' == $s) {
@@ -142,10 +149,45 @@ WHERE
         $idx = array('a', 'b','c','d');
         $x = 1;
 
+        // Check for referral Vehicle selected
+        if ($hasRef === FALSE && isset($refVehicle['model']) && ($refVehicle['model'] != '' || $refVehicle['make'] != '')) {
+
+            $i = 'a';
+            $idx = array('b','c','d');
+
+            if (isset($refVehicle['state']) && $refVehicle['state'] != '') {
+
+                $opts = '';
+
+                foreach ($stateList as $s) {
+
+                    if ($refVehicle['state'] == $s) {
+                        $opts .= "<option value='" . $s . "' selected='selected'>" . $s . "</option>";
+                    } else {
+                        $opts .= "<option value='" . $s . "'>" . $s . "</option>";
+                    }
+                }
+
+            } else {
+                $opts = $stateOpt;
+            }
+
+            $tbl->addBodyTr(
+                HTMLTable::makeTd(HTMLInput::generateMarkup($refVehicle['make'], array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($refVehicle['model'], array('name'=>"txtVehModel[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($refVehicle['color'], array('name'=>"txtVehColor[$i]", 'class'=>'hhk-vehicle', 'size'=>'7')))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup($opts, array('name'=>"selVehLicense[$i]", 'class'=>'hhk-vehicle hhk-US-States')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($refVehicle['license'], array('name'=>"txtVehLic[$i]", 'class'=>'hhk-vehicle', 'size'=>'8')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehNote[$i]", 'class'=>'hhk-vehicle')))
+                .HTMLTable::makeTd('(Referral)')
+                , array('id'=>"trVeh$x"));
+
+            $x++;
+        }
+
         foreach ($idx as $i) {
 
             $tbl->addBodyTr(
-                //HTMLTable::makeTd(HTMLSelector::generateMarkup( , array('name'=>'selVehGuest['.$idPrefix.']')))
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehMake[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehModel[$i]", 'class'=>'hhk-vehicle', 'size'=>'10')))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>"txtVehColor[$i]", 'class'=>'hhk-vehicle', 'size'=>'7')))
@@ -173,7 +215,7 @@ WHERE
 
         $cars = HTMLContainer::generateMarkup('div', $tbl->generateMarkup() . $nextVehButton, array('id'=>'tblVehicle'));
 
-        $noV = array('name'=>'cbNoVehicle', 'type'=>'checkbox', 'class'=>'hhk-vehicle');
+        $noV = array('name'=>'cbNoVehicle', 'type'=>'checkbox', 'class'=>'hhk-vehicle', 'title'=>'Check for no vehicle');
         if ($noVehicle == '1') {
             $noV['checked'] = 'checked';
         }
@@ -190,6 +232,20 @@ WHERE
     }
 
 
+    protected static function checkMatch(VehicleRs $carRs, $refVehicle) {
+
+        if (isset($refVehicle['model']) && isset($refVehicle['license'])) {
+
+            // Check model and license
+            if ($carRs->Model->getStoredVal() == $refVehicle['model']) {
+                return TRUE;
+            } else if ($carRs->License_Number->getStoredVal() == $refVehicle['license']) {
+                return TRUE;
+            }
+        }
+
+        return FALSE;
+    }
 
     public static function saveVehicle(\PDO $dbh, $pData, $idReg) {
         $rtnMsg = "";
