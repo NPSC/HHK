@@ -7,11 +7,12 @@ use HHK\Member\Role\{Agent, Doctor};
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
 use HHK\sec\Labels;
 use HHK\sec\Session;
-use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose};
+use HHK\SysConst\{GLTableNames, MemStatus, PhonePurpose, VolMemberType};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\HospitalRS;
 use HHK\Exception\RuntimeException;
 use HHK\House\PSG;
+use HHK\Member\MemberSearch;
 
 /**
  * Hospital.php
@@ -160,25 +161,62 @@ class Hospital {
             }
 
 
-            $wPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Work);
-            $cPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Cell);
-            $email = $agent->getEmailsObj()->get_Data();
+            $wPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Work)["Phone_Num"];
+            $cPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Cell)["Phone_Num"];
+            $email = $agent->getEmailsObj()->get_Data()['Email'];
+            $name = array('first'=>$agent->getRoleMember()->get_firstName(), 'last'=>$agent->getRoleMember()->get_lastName());
+            $idName = $agent->getIdName();
+            $guestSubmittedAgent = '';
 
             // Guest Referral agent selected?
             if (isset($referralHospitalData['referralAgent']) && $referralHospitalData['referralAgent']['lastName'] != '') {
 
-                // Agent already saved?
-                if ($agent->getIdName() > 0) {
+                // Agent already assigned?
+                if ($hstay->getAgentId() > 0) {
+                    // Agent already assigned.
 
-                    // Is our agent the same name?
+                    // Is guest's submitted agent the same name?
+                    if ($referralHospitalData['referralAgent']['lastName'] != $agent->getRoleMember()->get_lastName()
+                        || $referralHospitalData['referralAgent']['firstName'] != $agent->getRoleMember()->get_firstName()) {
+
+                            // No, The guest's agent name is different than the one saved.
+                            $guestSubmittedAgent = $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName'];
+
+                    }
 
                 } else {
+                    // Agent unassigned.
 
-                    // Does our agent already exist?
+                    // Does guest's submitted agent already exist?
+                    $memberSearch = new MemberSearch($referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']);
+                    $results = $memberSearch->volunteerCmteFilter($dbh, VolMemberType::ReferralAgent, '');
 
-                    // if not, queue up referral agent as new agent.
+                    if (count($results) == 2) {
+                        // Agent exists, assign agent
+                        $hstay->setAgentId($results[0]['id']);
+                        $psg = new PSG($dbh, $hstay->getIdPsg());
+                        $hstay->save($dbh, $psg, $results[0]['id'], $uS->username);
+
+                        $agent = new Agent($dbh, 'a_', $hstay->getAgentId());
+
+                        $wPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Work)["Phone_Num"];
+                        $cPhone = $agent->getPhonesObj()->get_Data(PhonePurpose::Cell)["Phone_Num"];
+                        $email = $agent->getEmailsObj()->get_Data()['Email'];
+                        $name = array('first'=>$agent->getRoleMember()->get_firstName(), 'last'=>$agent->getRoleMember()->get_lastName());
+                        $idName = $agent->getIdName();
+
+                    } else {
+                        // agent not exists yet.
+
+                        $wPhone = preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $referralHospitalData['referralAgent']['phone']);
+                        $cPhone = '';
+                        $email = $referralHospitalData['referralAgent']['email'];
+                        $name = array('first'=>$referralHospitalData['referralAgent']['firstName'], 'last'=>$referralHospitalData['referralAgent']['lastName']);
+                        $idName = 0;
+                    }
 
                 }
+
             }
 
             $ratbl = new HTMLTable();
@@ -188,7 +226,7 @@ class Hospital {
                         HTMLContainer::generateMarkup('span', '', array('name'=>'agentSearch', 'class'=>'hhk-agentSearch ui-icon ui-icon-search', 'title'=>'Search', 'style'=>'margin-left:1.3em;'))
                         . HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup('', array('id'=>'txtAgentSch', 'class'=>'ignrSave', 'size'=>'16', 'title'=>'Type 3 characters to start the search.')), array('title'=>'Search', 'style'=>'margin-left:0.3em;'))
                         , array('colspan'=>'3', 'id'=>'a_titleTh'))
-                .HTMLTable::makeTh('', array('colspan'=>'3'))
+                .HTMLTable::makeTh($guestSubmittedAgent, array('colspan'=>'3'))
             );
 
             $ratbl->addBodyTr(
@@ -203,30 +241,30 @@ class Hospital {
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash')), array('class'=>'ui-corner-all ui-state-default ui-button ui-widget', 'style'=>'padding: 0.2em 0.4em;', 'id'=>'a_delete', 'type'=>'button')), array('class'=>'a_actions')) .
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
-                                $agent->getRoleMember()->get_firstName(),
+                                $name['first'],
                                 array('name'=>'a_txtFirstName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay name'))
-                        .HTMLInput::generateMarkup($agent->getIdName(), array('name'=>'a_idName', 'type'=>'hidden', 'class'=>'hospital-stay'))
+                    .HTMLInput::generateMarkup($idName, array('name'=>'a_idName', 'type'=>'hidden', 'class'=>'hospital-stay'))
                         )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
-                                $agent->getRoleMember()->get_lastName(),
+                                $name['last'],
                                 array('name'=>'a_txtLastName', 'size'=>'17', 'class'=>'hhk-agentInfo hospital-stay name'))
                         )
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Cell][1] . ': ' .
                         HTMLInput::generateMarkup(
-                                $cPhone["Phone_Num"],
+                                $cPhone,
                                 array('id'=>'a_txtPhone'.PhonePurpose::Cell, 'name'=>'a_txtPhone[' .PhonePurpose::Cell. ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
                         , array('style'=>'text-align:right;')
                         )
                 . HTMLTable::makeTd($uS->nameLookups['Phone_Type'][PhonePurpose::Work][1] . ': ' .
                     HTMLInput::generateMarkup(
-                        $wPhone["Phone_Num"],
+                        $wPhone,
                         array('id'=>'a_txtPhone'.PhonePurpose::Work, 'name'=>'a_txtPhone[' . PhonePurpose::Work . ']', 'size'=>'16', 'class'=>'hhk-phoneInput hhk-agentInfo hospital-stay'))
                     , array('style'=>'text-align:right;')
                     )
                 . HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
-                                $email["Email"],
+                                $email,
                                 array('id'=>'a_txtEmail1', 'name'=>'a_txtEmail[1]', 'size'=>'24', 'class'=>'hhk-emailInput hhk-agentInfo hospital-stay'))
                         .HTMLContainer::generateMarkup('span', '', array('class'=>'hhk-send-email'))
                         )

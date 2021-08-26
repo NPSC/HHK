@@ -4,10 +4,9 @@ namespace HHK\House;
 
 use HHK\Document\FormDocument;
 use HHK\HTMLControls\{HTMLContainer,HTMLTable};
-use HHK\Member\MemberSearch;
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
 use HHK\Member\ProgressiveSearch\SearchNameData\{SearchNameData, SearchResults, SearchFor};
-use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, VolMemberType, GLTableNames, RelLinkType, ReservationStatus};
+use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, GLTableNames, RelLinkType, ReservationStatus};
 use HHK\Member\Address\CleanAddress;
 use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
@@ -19,7 +18,6 @@ use HHK\House\Hospital\HospitalStay;
 use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Tables\Reservation\Reservation_ReferralRS;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface;
-use HHK\House\PSG;
 use HHK\SysConst\ReferralFormStatus;
 use HHK\Exception\RuntimeException;
 
@@ -242,20 +240,6 @@ class ReferralForm {
 	    }
 
 	    return $this->gstResults;
-	}
-
-	public function searchDoctor(\PDO $dbh) {
-
-	    $doctorResults = [];
-
-	    if (isset($this->formUserData['hospital']['doctor']) && $this->formUserData['hospital']['doctor'] != '') {
-
-	       $memberSearch = new MemberSearch($this->formUserData['hospital']['doctor']);
-
-	       $doctorResults = $memberSearch->volunteerCmteFilter($dbh, VolMemberType::Doctor, '');
-	    }
-
-	    return $doctorResults;
 	}
 
 	/**
