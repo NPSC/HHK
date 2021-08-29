@@ -86,7 +86,7 @@ WHERE
         return $events;
     }
 
-    public static function createVehicleMarkup(\PDO $dbh, $idReg, $noVehicle, $refVehicle) {
+    public static function createVehicleMarkup(\PDO $dbh, $idReg, $noVehicle, $refVehicle = []) {
 
         // work on the state
         $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',

@@ -191,7 +191,7 @@ if ($idDoc > 0) {
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <div id="contentDiv" class="container-fluid" style="margin-left: auto; margin-top: 5px;">
-            <h1><?php echo $wInit->pageTitle; ?> <span id="spnStatus" style="display:inline;"></span></h1>
+            <h1><?php echo $wInit->pageHeading; ?> <span id="spnStatus" style="display:inline;"></span></h1>
             <div id="errorMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; <?php if ($errorMessage == '') {echo('display:none;');} ?>" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $errorMessage; ?>
             </div>

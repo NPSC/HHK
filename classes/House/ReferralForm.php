@@ -133,8 +133,8 @@ class ReferralForm {
 	    }
 
 	    // Street
-	    if (isset($formUserData['address']['street']) && $formUserData['address']['street'] != '') {
-	        $searchFor->setAddressStreet($formUserData['address']['street'], new CleanAddress($dbh));
+	    if (isset($formUserData['address']['adrstreet']) && $formUserData['address']['adrstreet'] != '') {
+	        $searchFor->setAddressStreet($formUserData['address']['adrstreet'], new CleanAddress($dbh));
 	    }
 
 	    // City
@@ -620,9 +620,19 @@ class ReferralForm {
 	        .HTMLTable::makeTh('No Return')
 	        );
 
+	    $idArray = array('type'=>'radio', 'name'=>'rbPatient');
+
+	    if (count($this->patResults) == 0) {
+	        $idArray['checked'] = 'checked';
+	    }
+
+	    $cols = ($uS->county ? 15 : 14);
+
 	    // Original data
+	    $tbl->addBodyTr(HTMLTable::makeTd('Referral Form Submission:', array('colspan'=>$cols)));
+
 	    $tbl->addBodyTr(
-	        HTMLTable::makeTd(HTMLInput::generateMarkup('0', array('type'=>'radio', 'name'=>'rbPatient', 'id'=>'patSel0')))
+	        HTMLTable::makeTd(HTMLInput::generateMarkup('0', $idArray))
 	        .HTMLTable::makeTd($this->patSearchFor->getNameFirst())
 	        .HTMLTable::makeTd($this->patSearchFor->getNameMiddle())
 	        .HTMLTable::makeTd($this->patSearchFor->getNameLast())
@@ -639,13 +649,22 @@ class ReferralForm {
 	        .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
 	        , array('class'=>'hhk-origUserData'));
 
-	    $cols = ($uS->county ? 15 : 14);
-	    $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+
+	    if (count($this->patResults) > 0) {
+
+	       $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+	       $tbl->addBodyTr(HTMLTable::makeTd('Matches Found in HHK:', array('colspan'=>$cols)));
+	    }
 
 	    // Searched data
 	    foreach ($this->patResults as $r) {
+
+	        if (count($this->patResults) == 1) {
+	            $idArray['checked'] = 'checked';
+	        }
+
 	        $tbl->addBodyTr(
-	            HTMLTable::makeTd(HTMLInput::generateMarkup($r->getId(), array('type'=>'radio', 'name'=>'rbPatient', 'id'=>'patSel'.$r->getId())))
+	            HTMLTable::makeTd(HTMLInput::generateMarkup($r->getId(), $idArray))
 	            .HTMLTable::makeTd($r->getNameFirst())
 	            .HTMLTable::makeTd($r->getNameMiddle())
 	            .HTMLTable::makeTd($r->getNameLast())
@@ -717,12 +736,14 @@ class ReferralForm {
 
 	   // Preset checked if only one.
 	   $idArray = array('type'=>'radio', 'name'=>'rbGuest'.$gindx);
+	   $cols = ($uS->county ? 15 : 14);
 
 	   if (count($guestResults) == 0) {
 	       $idArray['checked'] = 'checked';
 	   }
 
 	   // Original data
+	   $tbl->addBodyTr(HTMLTable::makeTd('Referral Form Submission:', array('colspan'=>$cols)));
 	   $tbl->addBodyTr(
 	       HTMLTable::makeTd(HTMLInput::generateMarkup('0', $idArray))
 	        .HTMLTable::makeTd($guestSearchFor->getNameFirst())
@@ -741,13 +762,21 @@ class ReferralForm {
 	       .HTMLTable::makeTd('')
 	        , array('class'=>'hhk-origUserData'));
 
-	   $cols = ($uS->county ? 15 : 14);
-	   $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+	   if (count($guestResults) > 0) {
+	       $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+	       $tbl->addBodyTr(HTMLTable::makeTd('Matches Found in HHK:', array('colspan'=>$cols)));
+	   }
 
 	   // Searched data
 	   foreach ($guestResults as $r) {
+
+
+	       if (count($guestResults) == 1) {
+	           $idArray['checked'] = 'checked';
+	       }
+
 	       $tbl->addBodyTr(
-	           HTMLTable::makeTd(HTMLInput::generateMarkup($r->getId(), array('type'=>'radio', 'name'=>'rbGuest'.$gindx)))
+	           HTMLTable::makeTd(HTMLInput::generateMarkup($r->getId(), $idArray))
 	           .HTMLTable::makeTd($r->getNameFirst())
 	           .HTMLTable::makeTd($r->getNameMiddle())
 	           .HTMLTable::makeTd($r->getNameLast())

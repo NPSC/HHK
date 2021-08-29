@@ -180,8 +180,9 @@ class Hospital {
                         || $referralHospitalData['referralAgent']['firstName'] != $agent->getRoleMember()->get_firstName()) {
 
                             // No, The guest's agent name is different than the one saved.
-                            $guestSubmittedAgent = 'Different Agent submitted: '. $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
-                            . ', ' . $referralHospitalData['referralAgent']['phone'] . ', ' .$referralHospitalData['referralAgent']['email'];
+                            $guestSubmittedAgent = HTMLContainer::generateMarkup('span', 'Different Agent submitted: '. $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
+                            . ', ' . $referralHospitalData['referralAgent']['phone'] . ', ' .$referralHospitalData['referralAgent']['email'],
+                            array('class'=>'ui-state-highlight'));
 
                     }
 
@@ -201,8 +202,9 @@ class Hospital {
                         $name = array('first'=>$results[0]['first'], 'last'=>$results[0]['last']);
                         $idName = $results[0]['id'];
 
-                        $guestSubmittedAgent = 'Existing Agent submitted: '. $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
-                        . ', ' . $referralHospitalData['referralAgent']['phone'] . ', ' .$referralHospitalData['referralAgent']['email'];
+                        $guestSubmittedAgent = HTMLContainer::generateMarkup('span', 'Existing Agent submitted: '. $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
+                            . ', ' . $referralHospitalData['referralAgent']['phone'] . ', ' .$referralHospitalData['referralAgent']['email'],
+                            array('class'=>'ui-state-highlight'));
 
 
                     } else {
@@ -214,8 +216,9 @@ class Hospital {
                         $name = array('first'=>$referralHospitalData['referralAgent']['firstName'], 'last'=>$referralHospitalData['referralAgent']['lastName']);
                         $idName = 0;
 
-                        $guestSubmittedAgent = 'New Agent submitted: '. $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
-                        . ', ' . $referralHospitalData['referralAgent']['phone'] . ', ' .$referralHospitalData['referralAgent']['email'];
+                        $guestSubmittedAgent = HTMLContainer::generateMarkup('span', 'New Agent submitted: '. $referralHospitalData['referralAgent']['firstName'] . ' ' . $referralHospitalData['referralAgent']['lastName']
+                            . ', ' . $referralHospitalData['referralAgent']['phone'] . ', ' .$referralHospitalData['referralAgent']['email'],
+                            array('class'=>'ui-state-highlight'));
                     }
 
                 }
@@ -342,7 +345,8 @@ class Hospital {
                     if ($docLast != $doc->getRoleMember()->get_lastName()) {
 
                         // No, The guest's agent name is different than the one saved.
-                        $guestSubmittedDoc = HTMLTable::makeTd('Different Doctor submitted: '.$referralHospitalData['doctor'], array('colspan'=>'3'));
+                        $guestSubmittedDoc = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', 'Different Doctor submitted: '.$referralHospitalData['doctor'],
+                            array('class'=>'ui-state-highlight')), array('colspan'=>'3'));
                     }
 
                 } else {
@@ -359,12 +363,14 @@ class Hospital {
                         $docLast = $results[0]['last'];
                         $idDoc = $results[0]['id'];
 
-                        $guestSubmittedDoc = HTMLTable::makeTd('Existing Doctor submitted: '.$referralHospitalData['doctor'], array('colspan'=>'3'));
+                        $guestSubmittedDoc = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', 'Existing Doctor submitted: '.$referralHospitalData['doctor'],
+                            array('class'=>'ui-state-highlight')), array('colspan'=>'3'));
 
                     } else {
                         // Doctor not exists yet.
                         $idDoc = 0;
-                        $guestSubmittedDoc = HTMLTable::makeTd('New Doctor submitted: '.$referralHospitalData['doctor'], array('colspan'=>'3'));
+                        $guestSubmittedDoc = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', 'New Doctor submitted: '.$referralHospitalData['doctor'],
+                            array('class'=>'ui-state-highlight')), array('colspan'=>'3'));
                     }
                 }
             }
