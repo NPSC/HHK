@@ -36,7 +36,7 @@ class Hospital {
 
     }
 
-    protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE) {
+    protected static function justHospitalMarkup(HospitalStay $hstay, $offerBlank = TRUE, array $referralHospitalData = []) {
 
         $uS = Session::getInstance();
 
@@ -105,6 +105,20 @@ class Hospital {
         $trtSt = $labels->getString('hospital', 'treatmentStart', '');
         $trtEnd = $labels->getString('hospital', 'treatmentEnd', '');
         $hospDates = '';
+        $treatStart = '';
+        $treatEnd = '';
+
+        // Check for guest referral dates.
+        if (isset($referralHospitalData['treatmentStart']) && $referralHospitalData['treatmentStart'] != '') {
+
+            $treatDT = new \DateTime($referralHospitalData['treatmentStart']);
+            $treatStart = $treatDT->format('M j, Y');
+        }
+        if (isset($referralHospitalData['treatmentEnd']) && $referralHospitalData['treatmentEnd'] != '') {
+
+            $treatDT = new \DateTime($referralHospitalData['treatmentEnd']);
+            $treatEnd = $treatDT->format('M j, Y');
+        }
 
         if ($trtSt !== '' || $trtEnd !== '') {
 
@@ -118,12 +132,12 @@ class Hospital {
 	        $table2->addBodyTr(
 	        		($trtSt == '' ? '' : HTMLTable::makeTd(
 	        				HTMLInput::generateMarkup(
-	        						($hstay->getArrivalDate() != '' ? date("M j, Y", strtotime($hstay->getArrivalDate())) : ""),
+	        						($hstay->getArrivalDate() != '' ? date("M j, Y", strtotime($hstay->getArrivalDate())) : $treatStart),
 	        						array('name'=>'txtEntryDate', 'class'=>'ckhsdate ignrSave hospital-stay', 'readonly'=>'readonly'))
 	        				))
 	        		. ($trtEnd !== '' ? HTMLTable::makeTd(
 	        				HTMLInput::generateMarkup(
-	        						($hstay->getExpectedDepartureDate() != '' ? date("M j, Y", strtotime($hstay->getExpectedDepartureDate())) : ''),
+	        						($hstay->getExpectedDepartureDate() != '' ? date("M j, Y", strtotime($hstay->getExpectedDepartureDate())) : $treatEnd),
 	        						array('name'=>'txtExitDate', 'class'=>'ckhsdate ignrSave hospital-stay', 'readonly'=>'readonly'))
 	        				) : '')
 	       );
@@ -499,7 +513,7 @@ $(document).ready(function () {
         }
 
         $div = HTMLContainer::generateMarkup('div',
-            self::justHospitalMarkup($hstay, $offerBlankHosp)
+            self::justHospitalMarkup($hstay, $offerBlankHosp, $referralHospitalData)
         		. $referralAgentMarkup
         		. $docRowMkup
         		. $hstayLog

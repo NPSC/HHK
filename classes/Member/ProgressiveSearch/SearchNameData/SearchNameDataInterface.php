@@ -16,6 +16,8 @@ interface SearchNameDataInterface
     public function setNameMiddle($nameMiddle);
     public function setNameLast($nameLast);
     public function setNickname($nickname);
+    public function setPrefix($prefix);
+    public function setSuffix($suffix);
 
     public function setGender($gender);
     public function setBirthDate($strBirthDate);
@@ -59,6 +61,9 @@ interface SearchNameDataInterface
      * @return string
      */
     public function getNickname();
+
+    public function getPrefix();
+    public function getSuffix();
 
     /**
      * @return string

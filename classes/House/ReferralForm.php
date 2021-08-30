@@ -85,7 +85,7 @@ class ReferralForm {
 	}
 
 	/**
-	 * FIlls a SearchFor object in preparatino for the db search.
+	 * Fills a SearchFor object in preparatino for the db search.
 	 *
 	 * @param \PDO $dbh
 	 * @param array $formUserData The userdata array with patient or guest already selected.
@@ -112,12 +112,20 @@ class ReferralForm {
 	        $searchFor->setNickname($formUserData['nickname']);
 	    }
 
-	    // patient Birthdate
+	    if (isset($formUserData['prefix'])) {
+	        $searchFor->setPrefix($formUserData['prefix']);
+	    }
+
+	    if (isset($formUserData['suffix'])) {
+	        $searchFor->setSuffix($formUserData['suffix']);
+	    }
+
+	    // Birthdate
 	    if (isset($formUserData['birthdate']) && $formUserData['birthdate'] != '') {
 	        $searchFor->setBirthDate($formUserData['birthdate'], (isset($searchIncludes[self::HTML_Incl_Birthday]) ? TRUE : FALSE));
 	    }
 
-	    // patient gender
+	    // gender
 	    if (isset($formUserData['demogs']['gender']) && $formUserData['demogs']['gender'] != '') {
 	        $searchFor->setGender($formUserData['demogs']['gender']);
 	    }
@@ -133,8 +141,8 @@ class ReferralForm {
 	    }
 
 	    // Street
-	    if (isset($formUserData['address']['adrstreet']) && $formUserData['address']['adrstreet'] != '') {
-	        $searchFor->setAddressStreet($formUserData['address']['adrstreet'], new CleanAddress($dbh));
+	    if (isset($formUserData['address']['street']) && $formUserData['address']['street'] != '') {
+	        $searchFor->setAddressStreet($formUserData['address']['street'], new CleanAddress($dbh));
 	    }
 
 	    // City
@@ -357,8 +365,6 @@ class ReferralForm {
 	 * @return \HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface
 	 */
 	protected function LoadMemberData(\PDO $dbh, $id, SearchNameDataInterface $snd) {
-
-	    //$searchResult = new SearchResults();
 
 	    $stmt = $dbh->query(ProgressiveSearch::getMemberQuery($id));
 
@@ -607,6 +613,7 @@ class ReferralForm {
 	        . HTMLTable::makeTh('First Name')
 	        .HTMLTable::makeTh('Middle')
 	        .HTMLTable::makeTh('Last Name')
+	        .HTMLTable::makeTh('Suffix')
 	        .HTMLTable::makeTh('Nickame')
 	        .HTMLTable::makeTh('Birth Date' . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-includeSearch', 'name'=>self::HTML_Incl_Birthday, 'style'=>'margin-left:3px;', 'title'=>'Check to include in search parameters')))
 	        .HTMLTable::makeTh('Phone' . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-includeSearch', 'name'=>self::HTML_Incl_Phone, 'style'=>'margin-left:3px;', 'title'=>'Check to include in search parameters')))
@@ -626,7 +633,7 @@ class ReferralForm {
 	        $idArray['checked'] = 'checked';
 	    }
 
-	    $cols = ($uS->county ? 15 : 14);
+	    $cols = ($uS->county ? 16 : 15);
 
 	    // Original data
 	    $tbl->addBodyTr(HTMLTable::makeTd('Referral Form Submission:', array('colspan'=>$cols)));
@@ -636,6 +643,7 @@ class ReferralForm {
 	        .HTMLTable::makeTd($this->patSearchFor->getNameFirst())
 	        .HTMLTable::makeTd($this->patSearchFor->getNameMiddle())
 	        .HTMLTable::makeTd($this->patSearchFor->getNameLast())
+	        .HTMLTable::makeTd($this->patSearchFor->getSuffixTitle())
 	        .HTMLTable::makeTd($this->patSearchFor->getNickname())
 	        .HTMLTable::makeTd(($this->patSearchFor->getBirthDate() == '' ? '' : date('M d, Y', strtotime($this->patSearchFor->getBirthDate()))))
 	        .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->patSearchFor->getPhone()))
@@ -649,11 +657,12 @@ class ReferralForm {
 	        .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
 	        , array('class'=>'hhk-origUserData'));
 
+	    $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
 
 	    if (count($this->patResults) > 0) {
-
-	       $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
 	       $tbl->addBodyTr(HTMLTable::makeTd('Matches Found in HHK:', array('colspan'=>$cols)));
+	    } else {
+	        $tbl->addBodyTr(HTMLTable::makeTd('No Matches Found', array('colspan'=>$cols)));
 	    }
 
 	    // Searched data
@@ -668,6 +677,7 @@ class ReferralForm {
 	            .HTMLTable::makeTd($r->getNameFirst())
 	            .HTMLTable::makeTd($r->getNameMiddle())
 	            .HTMLTable::makeTd($r->getNameLast())
+	            .HTMLTable::makeTd($r->getSuffix())
 	            .HTMLTable::makeTd($r->getNickname())
 	            .HTMLTable::makeTd($r->getBirthDate())
 	            .HTMLTable::makeTd($r->getPhone())
@@ -721,7 +731,8 @@ class ReferralForm {
 	        . HTMLTable::makeTh('First Name')
 	        .HTMLTable::makeTh('Middle')
 	        .HTMLTable::makeTh('Last Name')
-	        .HTMLTable::makeTh('Nickame')
+	       .HTMLTable::makeTh('Suffix')
+	       .HTMLTable::makeTh('Nickame')
 	        .HTMLTable::makeTh('Relationship')
 	        .HTMLTable::makeTh('Phone')
 	        .HTMLTable::makeTh('Email')
@@ -736,7 +747,7 @@ class ReferralForm {
 
 	   // Preset checked if only one.
 	   $idArray = array('type'=>'radio', 'name'=>'rbGuest'.$gindx);
-	   $cols = ($uS->county ? 15 : 14);
+	   $cols = ($uS->county ? 16 : 15);
 
 	   if (count($guestResults) == 0) {
 	       $idArray['checked'] = 'checked';
@@ -749,6 +760,7 @@ class ReferralForm {
 	        .HTMLTable::makeTd($guestSearchFor->getNameFirst())
 	       .HTMLTable::makeTd($guestSearchFor->getNameMiddle())
 	       .HTMLTable::makeTd($guestSearchFor->getNameLast())
+	       .HTMLTable::makeTd($guestSearchFor->getSuffixTitle())
 	       .HTMLTable::makeTd($guestSearchFor->getNickname())
 	       .HTMLTable::makeTd((isset($uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()]) ? $uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()][1] : ''))
 	       .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $guestSearchFor->getPhone()))
@@ -762,9 +774,12 @@ class ReferralForm {
 	       .HTMLTable::makeTd('')
 	        , array('class'=>'hhk-origUserData'));
 
+	   $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+
 	   if (count($guestResults) > 0) {
-	       $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
 	       $tbl->addBodyTr(HTMLTable::makeTd('Matches Found in HHK:', array('colspan'=>$cols)));
+	   } else {
+	       $tbl->addBodyTr(HTMLTable::makeTd('No Matches Found', array('colspan'=>$cols)));
 	   }
 
 	   // Searched data
@@ -780,6 +795,7 @@ class ReferralForm {
 	           .HTMLTable::makeTd($r->getNameFirst())
 	           .HTMLTable::makeTd($r->getNameMiddle())
 	           .HTMLTable::makeTd($r->getNameLast())
+	           .HTMLTable::makeTd($r->getSuffix())
 	           .HTMLTable::makeTd($r->getNickname())
 	           .HTMLTable::makeTd($r->getRelationship())
 	           .HTMLTable::makeTd($r->getPhone())
@@ -848,6 +864,8 @@ class ReferralForm {
 
 	        'txtMiddleName'=>  $data->getNameMiddle(),
 	        'txtNickname'=>  $data->getNickname(),
+	        'selPrefix'=> $data->getPrefix(),
+            'selSuffix'=> $data->getSuffix(),
 	        'txtBirthDate'=> $data->getBirthDate(),
 
 	        'selStatus'=>'a',

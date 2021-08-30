@@ -1,6 +1,8 @@
 <?php
 namespace HHK\Member\ProgressiveSearch\SearchNameData;
 
+use HHK\sec\Session;
+use HHK\SysConst\GLTableNames;
 
 class SearchFor extends SearchNameData
 {
@@ -65,6 +67,17 @@ class SearchFor extends SearchNameData
         return $this;
     }
 
+    public function getSuffixTitle() {
+
+        $uS = Session::getInstance();
+
+        if (isset($uS->nameLookups[GLTableNames::NameSuffix][$this->suffix])) {
+            return $uS->nameLookups[GLTableNames::NameSuffix][$this->suffix][1];
+        }
+
+        return $this->suffix;
+
+    }
 
 
     /**

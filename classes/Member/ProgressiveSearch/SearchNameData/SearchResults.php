@@ -80,5 +80,29 @@ class SearchResults extends SearchNameData
         return $this->relationship;
 
     }
+
+    public function getPrefix() {
+
+        $uS = Session::getInstance();
+
+        if (isset($uS->nameLookups[GLTableNames::NamePrefix][$this->prefix])) {
+            return $uS->nameLookups[GLTableNames::NamePrefix][$this->prefix][1];
+        }
+
+        return $this->prefix;
+
+    }
+
+    public function getSuffix() {
+
+        $uS = Session::getInstance();
+
+        if (isset($uS->nameLookups[GLTableNames::NameSuffix][$this->suffix])) {
+            return $uS->nameLookups[GLTableNames::NameSuffix][$this->suffix][1];
+        }
+
+        return $this->suffix;
+
+    }
 }
 

@@ -37,6 +37,8 @@ class ProgressiveSearch {
     n.Name_Middle,
     n.Name_Suffix,
     n.Name_Nickname,
+    n.Name_Prefix,
+    n.Name_Suffix,
     IFNULL(n.BirthDate, '') as `Birthdate`,
     n.`Gender`,
     IFNULL(np.Phone_Num, '') AS `Phone_Num`,
@@ -83,6 +85,7 @@ WHERE n.idName = $id ";
 
 	    return "SELECT
     n.idName,
+    n.Name_Prefix,
     n.Name_Last,
     n.Name_First,
     n.Name_Middle,
