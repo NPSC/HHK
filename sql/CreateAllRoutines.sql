@@ -290,7 +290,7 @@ DROP procedure IF EXISTS `delete_names_u_tbd`; -- ;
 CREATE PROCEDURE `delete_names_u_tbd`()
 
 BEGIN
-	delete p from photo p where p.idPhoto = (select Guest_Photo_Id from name_demog nd left join name n on nd.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD')); 
+	delete p from photo p where p.idPhoto in (select Guest_Photo_Id from name_demog nd left join name n on nd.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD')); 
 	delete na from volunteer_hours na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	update donations d left join name n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	update donations d left join name n on d.Assoc_Id = n.idName set d.Assoc_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
@@ -311,8 +311,8 @@ BEGIN
 	update hospital_stay na left join name n on na.idReferralAgent = n.idName set na.idReferralAgent = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from fin_application na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from guest_token na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-	update name n join name n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='' where  n1.Member_Status = 'u' or n1.Member_Status = 'TBD';
-	delete na from name_guest na where na.idPsg = (select idPsg from psg p left join name n on p.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD')); 
+	update name n join name n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='' where  (n1.Member_Status = 'u' or n1.Member_Status = 'TBD');
+	delete na from name_guest na where na.idPsg in (select idPsg from psg p left join name n on p.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD')); 
 	delete p from psg p left join name n on p.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	
 	delete na from name_address na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
