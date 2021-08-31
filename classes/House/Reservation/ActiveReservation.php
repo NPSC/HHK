@@ -51,11 +51,11 @@ class ActiveReservation extends Reservation {
 
         // Add the family, hospital, etc sections.
         $this->createDatesMarkup();
-        $this->createHospitalMarkup($dbh, $formUserData['hospital']);
+        $this->createHospitalMarkup($dbh, (isset($formUserData['hospital'])?$formUserData['hospital']:[]));
         $this->createFamilyMarkup($dbh);
 
         // Add the reservation section.
-        $this->reserveData->setResvSection($this->createResvMarkup($dbh, $oldResvId, '', $formUserData['vehicle']));
+        $this->reserveData->setResvSection($this->createResvMarkup($dbh, $oldResvId, '', (isset($formUserData['vehicle'])?$formUserData['vehicle']:[])));
 
         return $this->reserveData->toArray();
 

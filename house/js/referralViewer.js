@@ -31,28 +31,31 @@
                             return createActions(data, row);  
                         }
                 },
+                //{
+                //"targets": [ 1 ],
+                //        title: "Document Id",
+                //        data: "idDocument",
+                //        sortable: false,
+                //        searchable: false,
+                //        className:'actionBtns',
+                //},
                 {
                 "targets": [ 1 ],
-                        title: "Document Id",
-                        data: "idDocument",
-                        sortable: false,
-                        searchable: false,
-                        className:'actionBtns',
-                },
-                {
-                "targets": [ 2 ],
                         title: "Patient First Name",
                         data: 'Patient First Name',
                         sortable: true
                 },
                 {
-                "targets": [ 3 ],
+                "targets": [ 2 ],
                         title: "Patient Last Name",
                         data: 'Patient Last Name',
-                        sortable: true
+                        sortable: true,
+                        render: function (data, type, row){
+                        	return '<a href="#" class="formDetails" data-docid="' + row.idDocument + '">' + data + '</a>';
+                        }
                 },
                 {
-                "targets": [ 4 ],
+                "targets": [ 3 ],
                         title: "Expected Checkin",
                         data: 'Expected Checkin',
                         sortable: true,
@@ -61,7 +64,7 @@
                         }
                 },
                 {
-                "targets": [ 5 ],
+                "targets": [ 4 ],
                         title: "Expected Checkout",
                         data: 'Expected Checkout',
                         sortable: true,
@@ -70,19 +73,19 @@
                         }
                 },
                 {
-                "targets": [ 6 ],
+                "targets": [ 5 ],
                         title: "Hospital",
                         data: 'Hospital',
                         sortable: true
                 },
                 {
-                "targets": [ 7 ],
+                "targets": [ 6 ],
                         title: "Status",
                         data: 'Status',
                         sortable: true
                 },
                 {
-                "targets": [ 8 ],
+                "targets": [ 7 ],
                         title: "Submit Date",
                         data: 'Date',
                         sortable: true,
@@ -155,7 +158,7 @@
 			"processing": true,
 			"deferRender": true,
 			"language": {"sSearch": "Search Referrals:"},
-			"sorting": [[7,'desc'], [8,'desc']],
+			"sorting": [[6,'desc'], [7,'desc']],
 			"displayLength": 10,
 			"lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
 			"dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
