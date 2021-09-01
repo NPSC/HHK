@@ -176,14 +176,25 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
     }
 }
 
+//Resource grouping controls
+$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
 
-/*
-$checkingIn = Reservation_1::showListByStatus($dbh, '', '', ReservationStatus::Committed, TRUE, NULL, 1, TRUE);
+$rescGroupBy = '';
 
-if ($checkingIn == '') {
-    $checkingIn = "<p style='margin-left:60px;'>-None-</p>";
+if (isset($rescGroups[$uS->CalResourceGroupBy])) {
+    $rescGroupBy = $uS->CalResourceGroupBy;
 }
-*/
+
+foreach ($rescGroups as $g) {
+    
+    if ($rescGroupBy === $g[0]) {
+        
+        $groupingTitle = $g[1];
+        break;
+    }
+}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -195,6 +206,7 @@ if ($checkingIn == '') {
         <?php echo FAVICON; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <link href="css/rowGroup.jqueryui.min.css" rel="stylesheet" type="text/css" />
 
         <style type="text/css"  media="print">
             #ckout {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -206,6 +218,7 @@ if ($checkingIn == '') {
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+        <script type="text/javascript" src="../js/dataTables.rowGroup.min.js"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
@@ -214,13 +227,16 @@ if ($checkingIn == '') {
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript">
             var dateFormat = '<?php echo "ddd MMM D, YYYY"; ?>';
+            var groupingTitle = $('#groupingTitle').val();
             var cgCols = [
+            	{	'data': 'Group_Title',
+            		'title': groupingTitle,
+            		"visible": false
+            	},
                 {
                     'data': 'Room',
                     'title': 'Room',
-                    'searchable': true,
-                    'sortable': true,
-                    'type': 's'
+                    'searchable': true
                 },
                 {
                     'data': 'Status',
@@ -432,8 +448,7 @@ if ($checkingIn == '') {
                 $.extend($.fn.dataTable.defaults, {
                     "dom": '<"top"if>rt<"bottom"lp><"clear">',
                     "displayLength": 50,
-                    "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
-                    "order": [[0, 'asc']]
+                    "lengthMenu": [[25, 50, -1], [25, 50, "All"]]
                 });
 
                 $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrintAll, #btnExcelAll, #btnSubmitTable, #prtCkOut, #prtCkIn, #prtClnToday').button();
@@ -533,7 +548,8 @@ if ($checkingIn == '') {
                         dataSrc: 'roomTable'
                     },
                     "deferRender": true,
-                    "columns": cgCols
+                    "columns": cgCols,
+                    rowGroup: {dataSrc: 'Group_Title'}
                 });
 
                 $('#dirtyTable').dataTable({
@@ -542,7 +558,8 @@ if ($checkingIn == '') {
                         dataSrc: 'dirtyTable'
                     },
                     "deferRender": true,
-                    "columns": cgCols
+                    "columns": cgCols,
+                    rowGroup: {dataSrc: 'Group_Title'}
                 });
 
                 $('#outTable').dataTable({
@@ -676,6 +693,7 @@ if ($checkingIn == '') {
                     </div>
                 </div>
             </form>
+            <input type="hidden" value="<?php $groupingTitle;  ?>" id='groupingTitle' />
         </div>  <!-- div id="contentDiv"-->
     </body>
 </html>
