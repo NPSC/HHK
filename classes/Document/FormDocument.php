@@ -58,7 +58,8 @@ group by g.Code order by g.Order';
                 array( 'db' => 'ExpectedCheckout', 'dt'=>'Expected Checkout'),
                 array( 'db' => 'hospitalName', 'dt'=>'Hospital'),
                 array( 'db' => 'status', 'dt'=>'Status'),
-                array( 'db' => 'status ID', 'dt'=>'idStatus')
+                array( 'db' => 'status ID', 'dt'=>'idStatus'),
+                array( 'db' => 'idResv', 'dt'=>'idResv')
             );
             if($status == 'inbox'){
                 $whereClause = '`Status ID` IN ("n", "ip")';

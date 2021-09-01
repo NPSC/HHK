@@ -806,12 +806,14 @@ CREATE OR REPLACE VIEW `vform_listing` AS
         `h`.`Title` as `hospitalName`,
         `d`.`Status` AS `status ID`,
         `g`.`Description` AS `status`,
+        `rr`.`Reservation_Id` AS `idResv`,
         `d`.`Timestamp` AS `Timestamp`
     FROM
         (`document` `d`
         LEFT JOIN `gen_lookups` `g` ON (`d`.`Status` = `g`.`Code`
             AND `g`.`Table_Name` = 'Referral_Form_Status')
-		LEFT JOIN `hospital` `h` ON (JSON_VALUE(`d`.`userData`, '$.hospital.idHospital') = `h`.`idHospital`))
+		LEFT JOIN `hospital` `h` ON (JSON_VALUE(`d`.`userData`, '$.hospital.idHospital') = `h`.`idHospital`)
+        LEFT JOIN `reservation_referral` `rr` ON (`d`.`idDocument` = `rr`.`Document_Id`))
     WHERE
         `d`.`Type` = 'json'
             AND `d`.`Category` = 'form';

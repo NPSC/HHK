@@ -31,14 +31,6 @@
                             return createActions(data, row);  
                         }
                 },
-                //{
-                //"targets": [ 1 ],
-                //        title: "Document Id",
-                //        data: "idDocument",
-                //        sortable: false,
-                //        searchable: false,
-                //        className:'actionBtns',
-                //},
                 {
                 "targets": [ 1 ],
                         title: "Patient First Name",
@@ -124,6 +116,8 @@
 	
 		actions($wrapper, settings, formDetailsDialog);
 		
+		$wrapper.find('.gmenu').menu();
+		
 		return this;
 	}
 	
@@ -169,7 +163,7 @@
 			    },
 			},
 			"drawCallback": function(settings){
-				$wrapper.find('.hhk-ui-icons li').button();
+				$wrapper.find('.gmenu').menu();
 			},
 			"createdRow": function( row, data, dataIndex){
 				if( data["idStatus"] ==  "n"){
@@ -194,10 +188,15 @@
 	
 	function createActions(idDocument, row){
 		return `
-			<ul class="hhk-ui-icons">
-				<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" title="Form Details"><span class="ui-icon ui-icon-extlink"></span></li>
-				<li class="formArchive" data-docid="` + idDocument + `" title="Archive Form"><span class="ui-icon ui-icon-folder-open"></span></li>
-				<li class="formDelete" data-docid="` + idDocument + `" title="Delete Form"><span class="ui-icon ui-icon-trash"></span></li>
+			<ul class="gmenu">
+				<li>Action
+					<ul>
+						<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" title="Form Details"><div>View Referral</div></li>` +
+						(row.idResv ? `<li class="formResv"><div><a href="Reserve.php?rid=` + row.idResv + `" style="text-decoration:none;">View Reservation</a></div></li>`: ``) +
+						`<li class="formArchive" data-docid="` + idDocument + `" title="Archive Form"><div>Archive</div></li>
+						<li class="formDelete" data-docid="` + idDocument + `" title="Delete Form"><div>Delete</div></li>
+					</ul>
+				</li>
 			</ul>
 		`;
 		//return '<button type="button" class="formDetails" data-id="' + idDocument + '" style="margin-right: 0.5em">Open</button><button type="button" class="formDelete" data-id="' + idDocument + '"><span class="ui-icon ui-icon-trash"></span></button>';
@@ -210,8 +209,12 @@
 			var idStatus = $(e.currentTarget).data('status');
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
 			
-			settings.formDetailsDialogBtns["Create Reservation"] = function(){
-				window.location.href = settings.reserveURL + "?docid=" + idDocument;
+			if(idStatus != 'ac'){
+				settings.formDetailsDialogBtns["Create Reservation"] = function(){
+					window.location.href = settings.reserveURL + "?docid=" + idDocument;
+				};
+			}else{
+				delete settings.formDetailsDialogBtns["Create Reservation"];
 			};
 			
 			formDetailsDialog.dialog('option', 'buttons', settings.formDetailsDialogBtns);
