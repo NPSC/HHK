@@ -49,6 +49,8 @@ function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end
         return '';
     }
 
+    $uS = Session::getInstance();
+    
     $totalVisitNites = 0;
     $numCategoryRooms = array();
 
