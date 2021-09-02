@@ -29,7 +29,7 @@
                         className:'actionBtns',
                         render: function (data, type, row) {
                             return createActions(data, row);  
-                        }
+                        },
                 },
                 {
                 "targets": [ 1 ],
@@ -127,7 +127,7 @@
 			<div id="referralTabs">
 				<ul>
 				</ul>
-				<div id="referralTabContent">
+				<div id="referralTabContent" style="width: 100%">
 					<table style="width: 100%"></table>
 				</div>
 			</div>
@@ -138,10 +138,10 @@
 		);
 		
 		//build status tabs
-		$wrapper.find('#referralTabs ul').append('<li data-status="inbox"><a href="#referralTabContent">' + (settings.statuses['n'].icon ? '<span class="' + settings.statuses['n'].icon + '"></span>' : '<span class="ui-icon ui-icon-blank"></span>') + ' Inbox (' + settings.statuses['n'].count + ')</a></li>');
+		$wrapper.find('#referralTabs ul').append('<li data-status="inbox"><a href="#referralTabContent">' + (settings.statuses['n'].icon ? '<span class="' + settings.statuses['n'].icon + '"></span>' : '<span class="ui-icon ui-icon-blank"></span>') + ' Inbox (<span class="referralCount">' + settings.statuses['n'].count + '</span>)</a></li>');
 		$.each(settings.statuses, function(key,value){
 			if(value.idStatus != 'n' && value.idStatus != 'ip'){
-				$wrapper.find('#referralTabs ul').append('<li data-status="' + value.idStatus + '"><a href="#referralTabContent">' + (value.icon ? '<span class="' + value.icon + '"></span>':'<span class="ui-icon ui-icon-blank"></span>') + ' ' + value.Status + ' (' + settings.statuses[value.idStatus].count + ')</a></li>');
+				$wrapper.find('#referralTabs ul').append('<li data-status="' + value.idStatus + '"><a href="#referralTabContent">' + (value.icon ? '<span class="' + value.icon + '"></span>':'<span class="ui-icon ui-icon-blank"></span>') + ' ' + value.Status + ' (<span class="referralCount">' + settings.statuses[value.idStatus].count + '</span>)</a></li>');
 			}
 		});
 		
@@ -188,13 +188,15 @@
 	
 	function createActions(idDocument, row){
 		return `
-			<ul class="gmenu">
+			<ul class="gmenu" style="font-weight:normal">
 				<li>Action
 					<ul>
-						<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" title="Form Details"><div>View Referral</div></li>` +
+						<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" data-resvid="` + row.idResv + `" title="Form Details"><div>View Referral</div></li>` +
 						(row.idResv ? `<li class="formResv"><div><a href="Reserve.php?rid=` + row.idResv + `" style="text-decoration:none;">View Reservation</a></div></li>`: ``) +
-						`<li class="formArchive" data-docid="` + idDocument + `" title="Archive Form"><div>Archive</div></li>
-						<li class="formDelete" data-docid="` + idDocument + `" title="Delete Form"><div>Delete</div></li>
+						`<li></li>` +
+						(row.idStatus != 'n' && row.idStatus != 'ip' ? `<li class="formInbox" data-docid="` + idDocument + `" title="Move to Inbox"><div>Move to Inbox</div></li>`:'') +
+						(row.idStatus != 'ar' ? `<li class="formArchive" data-docid="` + idDocument + `" title="Archive Form"><div>Archive</div></li>`:'') +
+						`<li class="formDelete" data-docid="` + idDocument + `" title="Delete Form"><div>Delete</div></li>
 					</ul>
 				</li>
 			</ul>
@@ -207,9 +209,11 @@
 		$wrapper.on('click', '.formDetails', function(e){
 			var idDocument = $(e.currentTarget).data('docid');
 			var idStatus = $(e.currentTarget).data('status');
+			var idResv = $(e.currentTarget).data('resvid');
+			
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
 			
-			if(idStatus != 'ac'){
+			if(!idResv){
 				settings.formDetailsDialogBtns["Create Reservation"] = function(){
 					window.location.href = settings.reserveURL + "?docid=" + idDocument;
 				};
@@ -231,6 +235,7 @@
 					},
 					success: function( data ){
 						settings.dtTable.ajax.reload();
+						reloadTotals($wrapper, settings);
 					}
 				});
 			}
@@ -252,6 +257,26 @@
 					},
 					success: function( data ){
 						settings.dtTable.ajax.reload();
+						reloadTotals($wrapper, settings);
+					}
+				});
+			}
+		});
+		$wrapper.on('click', '.formInbox', function(e){
+			var idDocument = $(e.currentTarget).data('docid');
+			if(idDocument){
+				$.ajax({
+					url: settings.serviceURL,
+					dataType: 'JSON',
+					type: 'get',
+					data: {
+						cmd: 'updateFormStatus',
+						idDocument: idDocument,
+						status: 'ip'
+					},
+					success: function( data ){
+						settings.dtTable.ajax.reload();
+						reloadTotals($wrapper, settings);
 					}
 				});
 			}
@@ -270,10 +295,35 @@
 					},
 					success: function( data ){
 						settings.dtTable.ajax.reload();
+						reloadTotals($wrapper, settings);
 					}
 				});
 			}
 		}); 
+		
+	}
+	
+	function reloadTotals($wrapper, settings){
+		
+		$.ajax({
+			url: settings.serviceURL,
+			dataType: 'JSON',
+			type: 'get',
+			data: {
+				cmd: 'listforms',
+				totalsonly: true
+			},
+			success: function( data ){
+				if(data.totals){
+					$wrapper.find('#referralTabs ul li[data-status=inbox] span.referralCount').text(data.totals['n'].count);
+					$('#spnNumReferral').text(data.totals['n'].count);
+					$.each(data.totals, function(key,value){
+						$wrapper.find('#referralTabs ul li[data-status=' + key + '] span.referralCount').text(value.count);
+					});
+					settings.statuses = data.totals;
+				}
+			}
+		});
 		
 	}
 }(jQuery));
