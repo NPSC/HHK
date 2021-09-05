@@ -45,3 +45,5 @@ ALTER TABLE `hospital_stay`
 ADD COLUMN `Diagnosis2` VARCHAR(245) NOT NULL DEFAULT '' AFTER `Diagnosis`;
 -- add diagnosis detail label
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('diagnosisDetail', 'Diagnosis Details', 's', 'h', 'Default: Diagnosis Details');
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Web_User_Actions', 'LF', 'Login Failure');
