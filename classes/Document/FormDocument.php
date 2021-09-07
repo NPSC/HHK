@@ -126,7 +126,11 @@ group by g.Code order by g.Order';
     }
 
     public function updateStatus(\PDO $dbh, $status){
-        return $this->doc->updateStatus($dbh, $status);
+        if($this->getStatus() == 'd' && $status == 'd'){
+            return $this->doc->updateStatus($dbh, 'dd'); //fully delete
+        }else{
+            return $this->doc->updateStatus($dbh, $status);
+        }
     }
 
     public function getStatus() {
