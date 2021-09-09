@@ -322,7 +322,7 @@ GROUP BY s.Visit_Span");
         }
         
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-        		. "(5,'Flat Rate','','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+        		. "(5,'Flat Rate','','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,0,0,10,'a'), "
         		. "(6,'Assigned','','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }

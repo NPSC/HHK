@@ -288,8 +288,13 @@ END -- ;
 DROP procedure IF EXISTS `delete_names_u_tbd`; -- ;
 
 CREATE PROCEDURE `delete_names_u_tbd`()
+-- assumes you already deleted any payments, invoices, visits and stays
 
 BEGIN
+
+	create temporary table tids (idName int);
+	insert into tids (idName) select idName from name where (Member_Status = 'u' or Member_Status = 'TBD');
+
 	delete p from photo p where p.idPhoto in (select Guest_Photo_Id from name_demog nd left join name n on nd.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD')); 
 	delete na from volunteer_hours na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	update donations d left join name n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
@@ -303,17 +308,32 @@ BEGIN
 	delete na from mail_listing na left join name n on na.id = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from fbx na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from member_history na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-	delete na from reservation_guest na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-	delete na from reservation na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-	delete na from hospital_stay na left join name n on na.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-	update hospital_stay na left join name n on na.idDoctor = n.idName set na.idDoctor = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-	update hospital_stay na left join name n on na.idPcDoctor = n.idName set na.idPcDoctor = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-	update hospital_stay na left join name n on na.idReferralAgent = n.idName set na.idReferralAgent = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from fin_application na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from guest_token na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	-- remove deleted organizations from member records.
 	update name n join name n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='' where  (n1.Member_Status = 'u' or n1.Member_Status = 'TBD');
-	delete na from name_guest na where na.idPsg in (select idPsg from psg p left join name n on p.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD')); 
+
+	-- remove from any reservation guest listing.
+	delete rg from reservation_guest rg left join name n on rg.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	-- remove reservation_guest for any deleted reservations.
+	delete rg from reservation_guest rg where rg.idReservation in (select r.idReservation from reservation r left join name n on r.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD'));
+	delete rn from reservation_note rn where rn.Reservation_Id in (select r.idReservation from reservation r left join name n on r.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD'));
+	delete nt from note nt where nt.idNote in (select r.idReservation from reservation r left join name n on r.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD'));
+	delete r from reservation r left join name n on r.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+
+	-- hospital stay entries.
+	delete hs from hospital_stay hs left join name n on hs.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	update hospital_stay hs left join name n on hs.idDoctor = n.idName set hs.idDoctor = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	update hospital_stay hs left join name n on hs.idPcDoctor = n.idName set hs.idPcDoctor = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	update hospital_stay hs left join name n on hs.idReferralAgent = n.idName set hs.idReferralAgent = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	-- delete any members of a deleted patient's PSG
+	delete ng from name_guest ng where ng.idPsg in (select idPsg from psg p left join name n on p.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD'));
+	-- remove deleted members from the name_guest
+	delete ng from name_guest ng left join name n on ng.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	-- delete the deleted patient's PSG
 	delete p from psg p left join name n on p.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
+	
+	delete v from vehicle v left join name n on v.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	
 	delete na from name_address na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from name_crypto na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
@@ -322,9 +342,15 @@ BEGIN
 	delete na from name_phone na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from name_insurance na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from name_language na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-	delete na from name_guest na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
 	delete na from name_volunteer2 na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-	delete from name where name.Member_Status = 'u' or name.Member_Status = 'TBD';
+	
+	-- Log it
+	Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
+        select Now(), 'audit', 'delete', 'delete_names_u_tbd', idName, concat('name.idName: ', idName, ' -> null') from name where (name.Member_Status = 'u' or name.Member_Status = 'TBD');
+	
+	delete from name where (name.Member_Status = 'u' or name.Member_Status = 'TBD');
+	
+	drop table tids;
 
 END -- ;
 
