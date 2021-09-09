@@ -34,7 +34,7 @@
     			label: "Submit",
     			type: "button",
     			subtype: "submit",
-    			className: "submit-btn",
+    			className: "submit-btn btn btn-primary",
     			name: "submit",
     		}
   			],

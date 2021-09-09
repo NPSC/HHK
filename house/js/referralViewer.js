@@ -194,9 +194,10 @@
 						<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" data-resvid="` + row.idResv + `" title="Form Details"><div>View Referral</div></li>` +
 						(row.idResv ? `<li class="formResv"><div><a href="Reserve.php?rid=` + row.idResv + `" style="text-decoration:none;">View Reservation</a></div></li>`: ``) +
 						`<li></li>` +
-						(row.idStatus != 'n' && row.idStatus != 'ip' ? `<li class="formInbox" data-docid="` + idDocument + `" title="Move to Inbox"><div>Move to Inbox</div></li>`:'') +
-						(row.idStatus != 'ar' ? `<li class="formArchive" data-docid="` + idDocument + `" title="Archive Form"><div>Archive</div></li>`:'') +
-						`<li class="formDelete" data-docid="` + idDocument + `" title="Delete Form"><div>Delete</div></li>
+						(row.idStatus == 'ip' ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="n" title="Mark as Unread"><div>Mark as Unread</div></li>`:'') +
+						(row.idStatus != 'n' && row.idStatus != 'ip' ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="ip" title="Move to Inbox"><div>Move to Inbox</div></li>`:'') +
+						(row.idStatus != 'ar' ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="ar" title="Archive Form"><div>Archive</div></li>`:'') +
+						`<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="d" title="Delete Form"><div>Delete</div></li>
 					</ul>
 				</li>
 			</ul>
@@ -243,9 +244,10 @@
 		
 		}); 
 		
-		$wrapper.on('click', '.formDelete', function(e){
+		$wrapper.on('click', '.formUpdateStatus', function(e){
 			var idDocument = $(e.currentTarget).data('docid');
-			if(idDocument){
+			var idStatus = $(e.currentTarget).data('target');
+			if(idDocument && idStatus){
 				$.ajax({
 					url: settings.serviceURL,
 					dataType: 'JSON',
@@ -253,7 +255,7 @@
 					data: {
 						cmd: 'updateFormStatus',
 						idDocument: idDocument,
-						status: 'd'
+						status: idStatus
 					},
 					success: function( data ){
 						settings.dtTable.ajax.reload();
@@ -261,46 +263,7 @@
 					}
 				});
 			}
-		});
-		$wrapper.on('click', '.formInbox', function(e){
-			var idDocument = $(e.currentTarget).data('docid');
-			if(idDocument){
-				$.ajax({
-					url: settings.serviceURL,
-					dataType: 'JSON',
-					type: 'get',
-					data: {
-						cmd: 'updateFormStatus',
-						idDocument: idDocument,
-						status: 'ip'
-					},
-					success: function( data ){
-						settings.dtTable.ajax.reload();
-						reloadTotals($wrapper, settings);
-					}
-				});
-			}
-		}); 
-		$wrapper.on('click', '.formArchive', function(e){
-			var idDocument = $(e.currentTarget).data('docid');
-			if(idDocument){
-				$.ajax({
-					url: settings.serviceURL,
-					dataType: 'JSON',
-					type: 'get',
-					data: {
-						cmd: 'updateFormStatus',
-						idDocument: idDocument,
-						status: 'ar'
-					},
-					success: function( data ){
-						settings.dtTable.ajax.reload();
-						reloadTotals($wrapper, settings);
-					}
-				});
-			}
-		}); 
-		
+		});		
 	}
 	
 	function reloadTotals($wrapper, settings){
