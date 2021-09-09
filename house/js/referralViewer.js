@@ -17,6 +17,7 @@
             serviceURL: 'ws_resc.php',
             detailURL: 'showReferral.php',
             reserveURL: 'GuestReferral.php',
+            labels: {},
             dtTable: "",
             dtData: {'cmd': 'listforms', 'status':'inbox'},
             dtCols: [
@@ -28,18 +29,18 @@
                         searchable: false,
                         className:'actionBtns',
                         render: function (data, type, row) {
-                            return createActions(data, row);  
+                            return createActions(data, row, settings);  
                         },
                 },
                 {
                 "targets": [ 1 ],
-                        title: "Patient First Name",
+                        title: (options.labels.patient || 'Patient') + " First Name",
                         data: 'Patient First Name',
                         sortable: true
                 },
                 {
                 "targets": [ 2 ],
-                        title: "Patient Last Name",
+                        title: (options.labels.patient || 'Patient') + " Last Name",
                         data: 'Patient Last Name',
                         sortable: true,
                         render: function (data, type, row){
@@ -66,7 +67,7 @@
                 },
                 {
                 "targets": [ 5 ],
-                        title: "Hospital",
+                        title: (options.labels.hospital || 'Hospital'),
                         data: 'Hospital',
                         sortable: true
                 },
@@ -186,13 +187,14 @@
 		
 	}
 	
-	function createActions(idDocument, row){
+	function createActions(idDocument, row, settings){
+		console.log(settings.labels);
 		return `
 			<ul class="gmenu" style="font-weight:normal">
 				<li>Action
 					<ul>
-						<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" data-resvid="` + row.idResv + `" title="Form Details"><div>View Referral</div></li>` +
-						(row.idResv ? `<li class="formResv"><div><a href="Reserve.php?rid=` + row.idResv + `" style="text-decoration:none;">View Reservation</a></div></li>`: ``) +
+						<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" data-resvid="` + row.idResv + `" title="Form Details"><div>View ` + (settings.labels.referralFormTitle || 'Referral Form') + `</div></li>` +
+						(row.idResv ? `<li class="formResv"><div><a href="Reserve.php?rid=` + row.idResv + `" style="text-decoration:none;">View ` + (settings.labels.reservation || 'Reservation') + `</a></div></li>`: ``) +
 						`<li></li>` +
 						(row.idStatus == 'ip' ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="n" title="Mark as Unread"><div>Mark as Unread</div></li>`:'') +
 						(row.idStatus != 'n' && row.idStatus != 'ip' ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="ip" title="Move to Inbox"><div>Move to Inbox</div></li>`:'') +
@@ -202,7 +204,6 @@
 				</li>
 			</ul>
 		`;
-		//return '<button type="button" class="formDetails" data-id="' + idDocument + '" style="margin-right: 0.5em">Open</button><button type="button" class="formDelete" data-id="' + idDocument + '"><span class="ui-icon ui-icon-trash"></span></button>';
 	}
 	
 	function actions($wrapper, settings, formDetailsDialog){
