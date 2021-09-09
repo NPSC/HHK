@@ -94,7 +94,7 @@ class GuestReport {
                 } else if($whichGuests == 'allStarted'){
                     $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's starting in month';
                 } else if($whichGuests == 'allStayed'){
-                    $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
+                    $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'Unique ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
                 }
     
                 // Demographics
@@ -117,7 +117,7 @@ class GuestReport {
         } else if($whichGuests == 'allStarted'){
             $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's starting in month';
         } else if($whichGuests == 'allStayed'){
-            $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'All ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
+            $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'Unique ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
         }
 
         // Totals
