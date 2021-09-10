@@ -86,3 +86,5 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Web_User_Actions', 'LF', 'Login Failure');
 
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('rtnDeposit', 'Deposit Refund', 's', 'pc','','');
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('onlineReferralTitle','Referral Form', 's', 'rg', '', '');
+

@@ -511,7 +511,6 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) V
 ('ReservStatus','p','New','y','y','',''),
 ('ReservStatus','s','Checked In','y','y','','ui-icon-circle-check'),
 ('ReservStatus','td','Turned Away','y','y','','ui-icon-arrowreturnthick-1-s'),
-('ReservStatus', 'im', 'Immediate', 'y', 'y', '', 'ui-icon-check'),
 ('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e');
 -- ;
 
@@ -669,6 +668,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('recentPayTab','Recent Payments','s','rg','','Default: Recent Payments'),
 ('rateTitle','Room Rate','s','rg','','Default: Room Rate'),
 ('onlineReferralTab', 'Referrals', 's', 'rg','','Default: Referrals'),
+('onlineReferralTitle', 'Referral Form', 's', 'rg', '', 'Default: Referral Form'),
 
 ('notesLabel','Reservation Notes','s','rf','','Default: Reservation Notes'),
 ('waitlistNotesLabel','Waitlist Notes','s','rf','','Default: Waitlist Notes'),
