@@ -299,7 +299,7 @@ where ru.idResource_use is null
             }
 
             // Render Event
-            $titleText = htmlspecialchars_decode($r['Guest Last'], ENT_QUOTES);
+            $titleText = htmlspecialchars_decode($r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note']: ''), ENT_QUOTES);
             $visitExtended = FALSE;
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
@@ -569,7 +569,7 @@ where ru.idResource_use is null
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $s['title'] = '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-arrowthick-2-n-s" style="background-color:white; border:1px solid black;  margin-right:.3em;"></span>' . htmlspecialchars_decode($r['Guest Last'], ENT_QUOTES);
+            $s['title'] = '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-arrowthick-2-n-s" style="background-color:white; border:1px solid black;  margin-right:.3em;"></span>' . htmlspecialchars_decode($r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note']: ''), ENT_QUOTES);
             $s['hospName'] = htmlspecialchars_decode($hospitals[$r['idHospital']]['Title'], ENT_QUOTES);
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];

@@ -238,24 +238,25 @@ if (isset($_REQUEST['cmd'])) {
             $msg .= "No Statement.  ";
         } else {
 
-
-            $mail = prepareEmail();
-
-            $mail->From = $uS->FromAddress;
-            $mail->FromName = $uS->siteName;
-            $mail->addAddress($emAddr);     // Add a recipient
-            $mail->addReplyTo($uS->ReplyTo);
-
-            $mail->isHTML(true);
-
-            $mail->Subject = $emSubject;
-            $mail->msgHTML($stmtMarkup);
-
-
-            if($mail->send()) {
+            try{
+                $mail = prepareEmail();
+    
+                $mail->From = $uS->FromAddress;
+                $mail->FromName = $uS->siteName;
+                $mail->addAddress($emAddr);     // Add a recipient
+                $mail->addReplyTo($uS->ReplyTo);
+    
+                $mail->isHTML(true);
+    
+                $mail->Subject = $emSubject;
+                $mail->msgHTML($stmtMarkup);
+    
+    
+                $mail->send();
                 $msg .= "Email sent.  ";
-            } else {
-                $msg .= "Email failed!  " . $mail->ErrorInfo;
+                
+            }catch (\Exception $e){
+                $msg .= "Email failed! " . $mail->ErrorInfo;
             }
 
         }

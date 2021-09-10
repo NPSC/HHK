@@ -230,33 +230,34 @@ if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
     
     if ($emAddr != '' && $subject != '') {
 
-        $mail = prepareEmail();
-
-        $mail->From = $uS->NoReplyAddr;
-        $mail->FromName = $uS->siteName;
-
-        $tos = explode(',', $emAddr);
-        foreach ($tos as $t) {
-            $bcc = filter_var($t, FILTER_SANITIZE_EMAIL);
-            if ($bcc !== FALSE && $bcc != '') {
-                $mail->addAddress($bcc);
+        try{
+            $mail = prepareEmail();
+    
+            $mail->From = $uS->NoReplyAddr;
+            $mail->FromName = $uS->siteName;
+    
+            $tos = explode(',', $emAddr);
+            foreach ($tos as $t) {
+                $bcc = filter_var($t, FILTER_SANITIZE_EMAIL);
+                if ($bcc !== FALSE && $bcc != '') {
+                    $mail->addAddress($bcc);
+                }
             }
-        }
-
-        $mail->isHTML(true);
-
-        $mail->Subject = $subject;
-
-        if (isset($_POST['btnEmail'])) {
-            $body = $guestTable;
-        } else {
-            $body = $vehicleTable;
-        }
-
-        $mail->msgHTML($title . $body);
-        if($mail->send()) {
+    
+            $mail->isHTML(true);
+    
+            $mail->Subject = $subject;
+    
+            if (isset($_POST['btnEmail'])) {
+                $body = $guestTable;
+            } else {
+                $body = $vehicleTable;
+            }
+    
+            $mail->msgHTML($title . $body);
+            $mail->send();
             $resultMessage .= "Email sent.  ";
-        } else {
+        }catch(\Exception $e){
             $resultMessage .= "Email failed!  " . $mail->ErrorInfo;
         }
 

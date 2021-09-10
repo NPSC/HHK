@@ -83,21 +83,24 @@ function manageRegistration(PDO $dbh, $n, $admin) {
 
             $returnAddress = SysConfig::getKeyValue($dbh, 'sys_config', 'ReturnAddress');
             $regSubject = SysConfig::getKeyValue($dbh, 'sys_config', 'RegSubj');
-            $mail = prepareEmail();
-
-            $mail->From = $uS->ReturnAddress;
-            $mail->addReplyTo($uS->ReturnAddress);
-            $mail->FromName = $uS->siteName;
-            $mail->addAddress($fbEmail);     // Add a recipient
-            $mail->addBCC($uS->ReturnAddress);
-            $mail->isHTML(true);
-
-            $mail->Subject = $uS->RegSubj;
-            $mail->msgHTML(getRegConfBody($uS->siteName, $fbRs, $uname));
-
-            if($mail->send()) {
+            
+            try{
+                $mail = prepareEmail();
+    
+                $mail->From = $uS->ReturnAddress;
+                $mail->addReplyTo($uS->ReturnAddress);
+                $mail->FromName = $uS->siteName;
+                $mail->addAddress($fbEmail);     // Add a recipient
+                $mail->addBCC($uS->ReturnAddress);
+                $mail->isHTML(true);
+    
+                $mail->Subject = $uS->RegSubj;
+                $mail->msgHTML(getRegConfBody($uS->siteName, $fbRs, $uname));
+    
+                $mail->send();
                 $rtnMsg .= "Email sent.  ";
-            } else {
+                
+            }catch(\Exception $e){
                 $rtnMsg .= "Warning: Email confirmation message failed: " . $mail->ErrorInfo;
             }
 

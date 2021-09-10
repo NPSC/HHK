@@ -275,6 +275,17 @@ class HouseServices {
             }
         }
 
+        // Ribbon Note
+        if (isset($post["txtRibbonNote"])){
+            $ribbonNote = filter_var($post["txtRibbonNote"], FILTER_SANITIZE_STRING);
+            $oldNote = $visit->getNotes();
+            $visit->setNotes($ribbonNote, $uS->username);
+            $visit->updateVisitRecord($dbh, $uS->username);
+            
+            if($oldNote != $visit->getNotes()){
+                $reply .= " Ribbon Note updated.";
+            }
+        }
 
         // Change room rate
         if ($isGuestAdmin && isset($post['rateChgCB']) && isset($post['extendCb']) === FALSE) {
@@ -810,7 +821,7 @@ class HouseServices {
 
             } else if ($invoice->getAmountToPay() < 0) {
                 // Make guest return
-                $payResult = $paymentManager->makeHouseReturn($dbh, date('Y-m-d H:i:s'));
+                $payResult = $paymentManager->makeHouseReturn($dbh, $paymentManager->pmp->getPayDate());
             }
         }
 

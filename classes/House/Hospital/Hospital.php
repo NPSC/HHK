@@ -435,24 +435,26 @@ class Hospital {
 
             $myDiagnosis = $hstay->getDiagnosisCode();
 
+            $diagtbl->addBodyTr(HTMLTable::makeTd(
+                HTMLSelector::generateMarkup(
+                    HTMLSelector::doOptionsMkup($diags, $myDiagnosis, TRUE),
+                    array('name'=>'selDiagnosis', 'class'=>'hospital-stay', 'style'=>'width: 100%'))
+            ));
+            
             // Use Diagnosis as a text box?
             if ($uS->ShowDiagTB) {
-                if ($myDiagnosis == '' || ($myDiagnosis != '' && isset($diags[$myDiagnosis]) === FALSE)) {
+                if ($myDiagnosis != '' && isset($diags[$myDiagnosis]) === FALSE) {
 
                     $diagtbl->addBodyTr(
                         HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay'))));
 
                     $myDiagnosis = '';
+                }else{
+                    $diagtbl->addBodyTr(
+                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis2(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', 'placeholder'=>$labels->getString('hospital','diagnosisDetail', 'Diagnosis Details')))));
+                    
                 }
             }
-
-
-            $diagtbl->addBodyTr(HTMLTable::makeTd(
-                HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($diags, $myDiagnosis, TRUE),
-                		array('name'=>'selDiagnosis', 'class'=>'hospital-stay'))
-                )
-            );
 
 
             $diagMarkup = $diagtbl->generateMarkup(array('style'=>'display:inline-table; vertical-align: top;'));
@@ -579,13 +581,12 @@ $(document).ready(function () {
 
             $myDiagnosis = filter_var($post['selDiagnosis'], FILTER_SANITIZE_STRING);
             $hstay->setDiagnosisCode($myDiagnosis);
-
-            if ($myDiagnosis == '' && isset($post['txtDiagnosis'])) {
-                $hstay->setDiagnosis(filter_var($post['txtDiagnosis'], FILTER_SANITIZE_STRING));
-            }
-
         }
-
+        
+        if (isset($post['txtDiagnosis'])) {
+            $hstay->setDiagnosis2(filter_var($post['txtDiagnosis'], FILTER_SANITIZE_STRING));
+        }
+        
         if (isset($post['selLocation'])) {
             $hstay->setLocationCode(filter_var($post['selLocation'], FILTER_SANITIZE_STRING));
         }

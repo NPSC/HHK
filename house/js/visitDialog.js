@@ -845,6 +845,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     }
 
+	// Save Ribbon Note
+	parms['txtRibbonNote'] = $('#txtRibbonNote').val();
+
     // Save Note
     if ($('#taNewVNote').length > 0 && $('#taNewVNote').val() !== '') {
         parms['taNewVNote'] = $('#taNewVNote').val();

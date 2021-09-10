@@ -11,9 +11,9 @@ namespace HHK\SysConst;
  */
 
 class CodeVersion {
-    const BUILD = '212';
-    const VERSION = '3.16';
-    const PATCH = '4';
+    const BUILD = '214';
+    const VERSION = '3.17';
+    const PATCH = '0';
     const GIT_Id = 'dev';
     const REL_DATE = '';
 }

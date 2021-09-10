@@ -25,6 +25,7 @@ use HHK\House\Report\ReportFieldSet;
 
 require ("homeIncludes.php");
 
+// 7/1/2021 - Added "Days" column.  EKC
 
 try {
     $wInit = new webInit();
@@ -76,6 +77,10 @@ if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 'string', '20', array());
 }
 
+if($uS->ShowDiagTB){
+    $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
+}
+
 // Reservation statuses
 $statusList = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
 
@@ -107,9 +112,11 @@ $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
 $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
 $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
+$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
+$cFields[] = array("Days", 'Days', '', '', 'integer', '10');
 $cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
 $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest').'s', 'numGuests', 'checked', '', 'integer', '10');
 $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
@@ -203,6 +210,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(na.Country_Code, '') as gCountry,
     ifnull(na.Postal_Code, '') as gZip,
     np.Phone_Num,
+    ne.Email,
     rm.Phone,
     ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
     ifnull(r.Actual_Departure, r.Expected_Departure) as `Departure`,
@@ -224,6 +232,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     nd.Name_Full as `Name_Doctor`,
     nr.Name_Full as `Name_Agent`,
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
+    hs.Diagnosis2,
     ifnull(g2.`Description`, '') as `Location`,
     r.`Timestamp` as `Created_Date`,
     r.Last_Updated,
@@ -241,6 +250,8 @@ from
     name_address na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
         left join
     name_phone np ON n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+        left join
+    name_email ne ON n.idName = ne.idName and n.Preferred_Email = ne.Purpose
         left join
     hospital_stay hs ON r.idHospital_Stay = hs.idHospital_stay
         left join
@@ -260,8 +271,7 @@ from
         LEFT JOIN
     gen_lookups g2 ON g2.Table_Name = 'Location'
         and g2.`Code` = hs.`Location`
-where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration
-";
+where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration";
 
 
     $fltrdTitles = $colSelector->getFilteredTitles();
@@ -301,20 +311,6 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
     $curVisit = 0;
     $curRoom = '';
     $curRate = '';
-//    $nites = 0;
-//    $totalNights = 0;
-
-
-//     $rrates = array();
-
-//     $roomRateRS = new Room_RateRS();
-//     $rows = EditRS::select($dbh, $roomRateRS, array());
-
-//     foreach ($rows as $r) {
-//         $roomRateRS = new Room_RateRS();
-//         EditRS::loadRow($r, $roomRateRS);
-//         $rrates[$roomRateRS->FA_Category->getStoredVal()] = $roomRateRS;
-//     }
 
     $stmt = $dbh->query($query);
 
@@ -324,18 +320,13 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
             $curVisit = $r['idReservation'];
             $curRoom = $r['Room'];
             $curRate = $r['FA_Category'];
-//            $nites = 0;
         } else if ($curRoom != $r['Room']) {
             $curRoom = $r['Room'];
         } else if ($curRate != $r['FA_Category']) {
             $curRate = $r['FA_Category'];
         } else {
-//            $nites += $r['Nights'];
             continue;
         }
-
-//        $nites += $r['Nights'];
-//        $totalNights += $r['Nights'];
 
         if ($r['FA_Category'] == RoomRateCategories::Fixed_Rate_Category) {
             $rate = $r['Fixed_Room_Rate'];
@@ -359,6 +350,8 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         $statusDT = new DateTime($r['Created_Date']);
         $lastUpdatedDT = new DateTime($r['Last_Updated']);
 
+        // add Days column
+        $r['Days'] = $r['Nights'] + 1;
 
         if ($local) {
 
@@ -379,10 +372,6 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 
         } else {
 
-            //$r['Arrival'] = \PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
-            //$r['Departure'] = \PHPExcel_Shared_Date::PHPToExcel($departureDT);
-            //$r['Created_Date'] = \PHPExcel_Shared_Date::PHPToExcel($statusDT);
-            //$r['Last_Updated'] = \PHPExcel_Shared_Date::PHPToExcel($lastUpdatedDT);
             $r['FA_Category'] = $rate;
 
             $flds = array();

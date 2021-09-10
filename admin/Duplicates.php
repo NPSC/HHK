@@ -89,16 +89,6 @@ $mtypes = array(
 
 $mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, '', TRUE), array('name' => 'selmtype'));
 
-// Instantiate the alert message control
-$alertMsg = new AlertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(AlertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
 
 ?>
 <!DOCTYPE html>
@@ -116,174 +106,13 @@ $resultMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="js/duplicate.js"></script>
 
-        
-        <script type="text/javascript">
-// Init j-query
-$(document).ready(function () {
-    $('#selmtype').change(function() {
-        $('#divExpansion').children().remove();
-        $.post('Duplicates.php', {cmd: 'list', mType: $(this).val()},
-            function (data) {
-                "use strict";
-                if (!data) {
-                    alert('Bad Reply from Server');
-                    return;
-                }
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-                $('#divList').children().remove().end().append($(data.mk));
-
-                $('.hhk-expand').click(function () {
-                    $('#dupNames td').css('background-color','');
-                    $(this).parent('td').css('background-color','yellow');
-                    $.post('Duplicates.php', {cmd: 'exp', nf: $(this).data('fn'), mType: $(this).data('type')},
-                        function (data) {
-                            "use strict";
-                            if (!data) {
-                                alert('Bad Reply from Server');
-                                return;
-                            }
-                            try {
-                                data = $.parseJSON(data);
-                            } catch (err) {
-                                alert("Parser error - " + err.message);
-                                return;
-                            }
-                            if (data.error) {
-                                flagAlertMessage(data.error, true);
-                                return;
-                            }
-
-                            $('#divExpansion').children().remove().end().append($(data.mk)).show();
-                            $('#btnCombPSG, #btnCombId').button();
-                            $('#btnCombine').click(function () {
-                                var id = $('input[name=rbchoose]:checked').val();
-                                $('#spnAlert').text('');
-                                if (!id || id == 0) {
-                                    $('#spnAlert').text('Pick a name to combine.');
-                                    return false;
-                                }
-                                $.post('Duplicates.php', {cmd: 'pik', id: id, mType: $(this).data('type')},
-                                        function (data) {
-                                            "use strict";
-                                            if (!data) {
-                                                alert('Bad Reply from Server');
-                                                return;
-                                            }
-                                            try {
-                                                data = $.parseJSON(data);
-                                            } catch (err) {
-                                                alert("Parser error - " + err.message);
-                                                return;
-                                            }
-                                            if (data.error) {
-                                                flagAlertMessage(data.error, true);
-                                                return;
-                                            }
-                                            if (data.msg) {
-                                                $('#divExpansion').children().remove().end().append($(data.msg)).show();
-                                            }
-                                        });
-                            });
-                            $('#btnCombPSG').click(function () {
-                                $("#divAlert1").hide();
-                                var idGood = $('input[name=rbgood]:checked').val();
-                                var idBad = $('input[name=rbbad]:checked').val();
-                                $('#spnAlert').text('');
-                                if (!idGood || idGood == 0) {
-                                    $('#spnAlert').text('Pick a Good PSG to combine.');
-                                    return false;
-                                }
-                                if (!idBad || idBad == 0) {
-                                    $('#spnAlert').text('Pick a Bad PSG to combine.');
-                                    return false;
-                                }
-                                if (idBad == idGood) {
-                                    $('#spnAlert').text('Pick a different bad and good PSG to combine.');
-                                    return false;
-                                }
-                                $.post('Duplicates.php', {cmd: 'cpsg', idg: idGood, idb: idBad},
-                                        function (data) {
-                                            "use strict";
-                                            if (!data) {
-                                                alert('Bad Reply from Server');
-                                                return;
-                                            }
-                                            try {
-                                                data = $.parseJSON(data);
-                                            } catch (err) {
-                                                alert("Parser error - " + err.message);
-                                                return;
-                                            }
-                                            if (data.error) {
-                                                flagAlertMessage(data.error, 'error');
-                                                return;
-                                            }
-                                            if (data.msg && data.msg != '') {
-                                                flagAlertMessage(data.msg, 'info');
-                                            }
-                                });
-                            });
-                            $('#btnCombId').click(function () {
-                                $("#divAlert1").hide();
-                                var idGood = $('input[name=rbsave]:checked').val();
-                                var idBad = $('input[name=rbremove]:checked').val();
-                                $('#spnAlert').text('');
-                                if (!idGood || idGood == 0) {
-                                    $('#spnAlert').text('Pick a Save Id to combine.');
-                                    return false;
-                                }
-                                if (!idBad || idBad == 0) {
-                                    $('#spnAlert').text('Pick a Remove Id to combine.');
-                                    return false;
-                                }
-                                if (idBad == idGood) {
-                                    $('#spnAlert').text('Pick a different save and remove Id to combine.');
-                                    return false;
-                                }
-                                $.post('Duplicates.php', {cmd: 'cids', idg: idGood, idb: idBad},
-                                        function (data) {
-                                            "use strict";
-                                            if (!data) {
-                                                alert('Bad Reply from Server');
-                                                return;
-                                            }
-                                            try {
-                                                data = $.parseJSON(data);
-                                            } catch (err) {
-                                                alert("Parser error - " + err.message);
-                                                return;
-                                            }
-                                            if (data.error) {
-                                                flagAlertMessage(data.error, 'alert');
-                                                return;
-                                            }
-                                            if (data.msg && data.msg != '') {
-                                                flagAlertMessage(data.msg, 'success');
-                                            }
-                                });
-                            });
-                    });
-                });
-        });
-    });
-});
-        </script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div id="divAlertMsg" style="clear:left;"><?php echo $resultMessage; ?></div>
             <?php echo 'Search for: ' . $mtypeSel; ?>
             <div style="clear:both;"></div>
             <div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="overflow: scroll; float:left; max-height: 500px; font-size:.85em;"></div>

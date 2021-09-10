@@ -274,8 +274,12 @@ class VisitViewer {
             $tblMarkup .= $etbl->generateMarkup(array('style'=>'float:left;margin-left:.5em;margin-bottom:.3em; margin-top:.3em;'));
         }
 
-
-        $tblMarkup .= $notesContainer;
+        //Ribbon note
+        $ribbonTbl = new HTMLTable();
+        $ribbonTbl->addHeaderTr(HTMLTable::makeTh("Ribbon Note") . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Notes'], array('name'=>'txtRibbonNote', 'maxlength'=>'20'))));
+        $ribbonTblMarkup = $ribbonTbl->generateMarkup(array('style'=>'float:left; clear:left; margin-bottom: 0.3em; margin-top: 0.3em;'));
+        
+        $tblMarkup .= $ribbonTblMarkup . $notesContainer;
 
         $undoCkoutButton = '';
 

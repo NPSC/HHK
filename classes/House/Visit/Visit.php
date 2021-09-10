@@ -444,12 +444,10 @@ class Visit {
                 $mail->Subject = "Change rooms from " . $oldRoom . " to " . $resc->getTitle() . " by " . $uS->username;
                 $mail->msgHTML("Room change Date: " . $chgDT->format('g:ia D M jS, Y') . "<br />");
 
-                if ($mail->send() === FALSE) {
-                    $rtnMessage .= $mail->ErrorInfo;
-                }
+                $mail->send();
 
             } catch (\Exception $ex) {
-                $rtnMessage .= 'Email Failed.  ' . $ex->errorMessage();
+                $rtnMessage .= 'Email Failed.  ' . $mail->ErrorInfo;
             }
         }
 
@@ -1857,8 +1855,9 @@ class Visit {
     }
     
     public function setNotes($notes, $username, $roomTitle = '') {
-        $oldNotes = $this->getNotes();
-        $this->visitRS->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', visit ' . $this->getIdVisit() . '-' . $this->getSpan() . ', room ' . $roomTitle . ', ' . $username . ' - ' . $notes);
+        //$oldNotes = $this->getNotes();
+        //$this->visitRS->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', visit ' . $this->getIdVisit() . '-' . $this->getSpan() . ', room ' . $roomTitle . ', ' . $username . ' - ' . $notes);
+        $this->visitRS->Notes->setNewVal($notes);
     }
 
     public function getNotes() {

@@ -1159,54 +1159,59 @@ class VolCal {
             return false;
         }
 
-       $mail = prepareEmail();
-
-       $mail->From = $uS->ReturnAddress;
-       $mail->addReplyTo($uS->ReturnAddress);
-       $mail->FromName = $uS->siteName;
-       $mail->addAddress($uS->Admin_Address);     // Add a recipient
-       $mail->isHTML(true);
-
-       $mail->Subject = "Shift Cancellation Notice for " . $evt->get_volDescription();
-
-        // Set the dates with the correct timezone
-        $start = new \DateTime($evt->get_start());
-        $start->setTimezone(new \DateTimeZone($uS->tz));
-        $end = new \DateTime($evt->get_end());
-        $end->setTimezone(new \DateTimeZone($uS->tz));
-
-        $mail->msgHTML('
-<html><head>
-<style type="text/css">
-TH { padding: 3px 7px;}
-TD {padding: 3px 7px;
-    vertical-align: top;}
-table{ border-collapse:collapse;}
-.tdBox { border: 1px solid #D4CCB0;
-    vertical-align: top;}
-.tdlabel { text-align: right;
-    font-size: .9em;}
-</style>
-</head>
-    <body>
-       <p>Shift Cancellation - Member Name: ' . $evt->get_memberName() . ';  Id: ' . $evt->get_idName() .'</p>
-       <p>Number of events deleted: '.$numEvents.'</p>
-        <table>
-        <caption>' . $evt->get_volDescription() . '</caption>
-            <tr>
-                <th class="tdlabel tdBox">Title</th><td class="tdBox"><span>'.$evt->get_title().'</span></td>
-            </tr>
-            <tr>
-                <th class="tdlabel tdBox">Start</th><td class="tdBox"><span>'. $start->format('m/d/Y g:i a').'</span></td>
-            </tr>
-            <tr>
-                <th class="tdlabel tdBox">End</th><td class="tdBox"><span>'. $end->format('m/d/Y g:i a').'</span></td>
-            </tr>
-        </table>
-</body></html>');
-
-
-        return $mail->send();
+        try{
+           $mail = prepareEmail();
+    
+           $mail->From = $uS->ReturnAddress;
+           $mail->addReplyTo($uS->ReturnAddress);
+           $mail->FromName = $uS->siteName;
+           $mail->addAddress($uS->Admin_Address);     // Add a recipient
+           $mail->isHTML(true);
+    
+           $mail->Subject = "Shift Cancellation Notice for " . $evt->get_volDescription();
+    
+            // Set the dates with the correct timezone
+            $start = new \DateTime($evt->get_start());
+            $start->setTimezone(new \DateTimeZone($uS->tz));
+            $end = new \DateTime($evt->get_end());
+            $end->setTimezone(new \DateTimeZone($uS->tz));
+    
+            $mail->msgHTML('
+    <html><head>
+    <style type="text/css">
+    TH { padding: 3px 7px;}
+    TD {padding: 3px 7px;
+        vertical-align: top;}
+    table{ border-collapse:collapse;}
+    .tdBox { border: 1px solid #D4CCB0;
+        vertical-align: top;}
+    .tdlabel { text-align: right;
+        font-size: .9em;}
+    </style>
+    </head>
+        <body>
+           <p>Shift Cancellation - Member Name: ' . $evt->get_memberName() . ';  Id: ' . $evt->get_idName() .'</p>
+           <p>Number of events deleted: '.$numEvents.'</p>
+            <table>
+            <caption>' . $evt->get_volDescription() . '</caption>
+                <tr>
+                    <th class="tdlabel tdBox">Title</th><td class="tdBox"><span>'.$evt->get_title().'</span></td>
+                </tr>
+                <tr>
+                    <th class="tdlabel tdBox">Start</th><td class="tdBox"><span>'. $start->format('m/d/Y g:i a').'</span></td>
+                </tr>
+                <tr>
+                    <th class="tdlabel tdBox">End</th><td class="tdBox"><span>'. $end->format('m/d/Y g:i a').'</span></td>
+                </tr>
+            </table>
+    </body></html>');
+    
+    
+            $mail->send();
+            return true;
+        }catch(\Exception $e){
+            return "Email send failed: " . $mail->ErrorInfo;
+        }
     }
 
 }

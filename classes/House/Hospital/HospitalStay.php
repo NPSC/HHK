@@ -270,6 +270,14 @@ order by `order` desc, `arrival` desc limit 1");
         $this->hstayRs->Diagnosis->setNewVal($v);
     }
     
+    public function getDiagnosis2() {
+        return $this->hstayRs->Diagnosis2->getStoredVal();
+    }
+    
+    public function setDiagnosis2($v) {
+        $this->hstayRs->Diagnosis2->setNewVal($v);
+    }
+    
     public function getDiagnosisCode() {
         return $this->hstayRs->Diagnosis->getStoredVal();
     }

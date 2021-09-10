@@ -722,7 +722,7 @@ ORDER BY v.idVisit , v.Span;");
             $keyDepPaid = $visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid();
             if ($keyDepPaid > 0) {
                 $feesTbl->addBodyTr(
-                    HTMLTable::makeTd('Deposit Refund:', array('class'=>'tdlabel'))
+                    HTMLTable::makeTd($labels->getString('PaymentChooser', 'rtnDeposit', 'Deposit Refund') . ':', array('class'=>'tdlabel'))
                     .HTMLTable::makeTd(
                             HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbDepRefundApply', 'style'=>'margin-left:5px;margin-right:3px;'))
                             .HTMLInput::generateMarkup('', array('name'=>'cbDepRefundApply', 'class'=>'hhk-feeskeys', 'checked'=>'checked', 'type'=>'checkbox', 'style'=>'margin-right:.4em;')))

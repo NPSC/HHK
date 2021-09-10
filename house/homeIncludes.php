@@ -8,13 +8,13 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-define('JSV', '?v=14');
+define('JSV', '?v=15');
 
 define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
-define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
+define('VISIT_DIALOG_JS', "js/visitDialog.js" . JSV);
 define('INCIDENT_REP_JS', 'js/incidentReports.min.js' . JSV);
 define('DOC_UPLOAD_JS', 'js/documentUpload.min.js' . JSV);
 define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);

@@ -914,10 +914,34 @@ from
 
         $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 
+        //Resource grouping controls
+        $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
+        
+        $rescGroupBy = '';
+        $genJoin = '';
+        $orderBy = 'r.Util_Priority';
+        
+        if (isset($rescGroups[$uS->CalResourceGroupBy])) {
+            $rescGroupBy = $uS->CalResourceGroupBy;
+        }
+        
+        
+        foreach ($rescGroups as $g) {
+            
+            if ($rescGroupBy === $g[0]) {
+                
+                $genJoin = " left join `gen_lookups` gr on gr.`Table_Name` = '" . $g[2] . "' and gr.`Code` = r." . $g[0] . " ";
+                $orderBy = "gr.`Order`, " . $orderBy;
+                break;
+            }
+        }
+        
         $stmt = $dbh->query("select
     r.idRoom,
     ifnull(v.idVisit, 0) as idVisit,
     r.Title,
+    gr.Description as `Group_Title`,
+    re.Util_Priority,
     r.`Status`,
     ifnull(g.Description, 'Unknown') as `Status_Text`,
     r.`Cleaning_Cycle_Code`,
@@ -931,6 +955,8 @@ from
         left join
     resource_room rr ON r.idRoom = rr.idRoom
         left join
+    resource re on rr.idResource = re.idResource
+        left join
     visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
         left join
     name n ON v.idPrimaryGuest = n.idName
@@ -940,9 +966,9 @@ from
     gen_lookups g3 on g3.Table_Name = 'Room_Cleaning_Days' and g3.`Code` = r.Cleaning_Cycle_Code
         left join
     resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $beginDT->format('Y-m-d') . "')
-
-where g3.Substitute > 0 and ru.idResource_use is null");
-
+    $genJoin
+where g3.Substitute > 0 and ru.idResource_use is null
+ORDER BY $orderBy;");
 
         // Loop rooms.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -951,6 +977,7 @@ where g3.Substitute > 0 and ru.idResource_use is null");
                     !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver || ($uS->HouseKeepingSteps > 1 && $r['Status'] == RoomState::Clean && $r['idVisit'] == 0))) {
                 continue;
             }
+            
 
             $expDeparture = $r['Expected_Departure'];
             $arrival = $r['Arrival'];
@@ -1029,6 +1056,7 @@ where g3.Substitute > 0 and ru.idResource_use is null");
 
             }
 
+            $fixedRows['Group_Title'] = $r['Group_Title'];
             $fixedRows['Room'] = $r['Title'];
             $fixedRows['Status'] = $stat;
             $fixedRows['Action'] = $action;

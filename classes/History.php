@@ -222,6 +222,8 @@ class History {
                 } else {
                     $fixedRows['Timestamp'] = $bDay->format('c');
                 }
+                
+                $fixedRows['Updated_By'] = (isset($r['Updated_By']) ? $r['Updated_By'] : '');
             }
 
 
