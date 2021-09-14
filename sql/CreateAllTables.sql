@@ -779,13 +779,14 @@ CREATE TABLE if not exists `item_type`
 ) ENGINE=InnoDB;
 
 
-# -----------------------------------------------------------------------
-# Table item_type_map
-# -----------------------------------------------------------------------
+-- -----------------------------------------------------------------------
+-- Table item_type_map
+-- -----------------------------------------------------------------------
 CREATE TABLE if not exists `item_type_map`
 (
     `Item_Id` INTEGER,
-    `Type_Id` INTEGER);
+    `Type_Id` INTEGER
+) ENGINE=MyISAM;
 
 -- -----------------------------------------------------
 -- Table `labels`
@@ -1164,7 +1165,7 @@ CREATE TABLE if not exists `name_log` (
   `idName` varchar(15) NOT NULL DEFAULT '',
   `Log_Text` varchar(255) NOT NULL DEFAULT '',
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
+) ENGINE=MyISAM;
 
 
 
@@ -1247,7 +1248,8 @@ CREATE TABLE if not exists `neon_type_map` (
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `Last_Updated` DATETIME NULL,
   `Timestamp` TIMESTAMP NOT NULL DEFAULT now(),
-  PRIMARY KEY (`idNeon_type_map`));
+  PRIMARY KEY (`idNeon_type_map`)
+ ) ENGINE=MyISAM;
 
 
 -- -----------------------------------------------------
@@ -1267,23 +1269,6 @@ CREATE TABLE IF NOT EXISTS `note` (
   PRIMARY KEY (`idNote`),
   INDEX `INDEX_USERNAME` (`User_Name` ASC)
  ) ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table `note_comment`
--- -----------------------------------------------------
--- CREATE TABLE IF NOT EXISTS `note_comment` (
---   `idNote_omment` INT NOT NULL AUTO_INCREMENT,
---   `Note_Id` INT NULL,
---   `Comment` TEXT NULL,
---   `User_Name` VARCHAR(45) NOT NULL,
---   `Updated_By` VARCHAR(45) NULL,
---   `Last_Updated` DATETIME NULL,
---   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
---   PRIMARY KEY (`idNote_omment`),
---   INDEX `INDEX_NOTE_ID` (`Note_Id` ASC),
---   INDEX `INDEX_USERNAME` (`User_Name` ASC)
--- ) ENGINE = InnoDB
 
 
 -- -----------------------------------------------------
@@ -1452,7 +1437,8 @@ CREATE TABLE if not exists `paymentid_externalid` (
   `Payment_Id` INT NOT NULL,
   `External_Id` VARCHAR(15) NOT NULL,
   `TimeStamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`Payment_Id`, `External_Id`));
+  PRIMARY KEY (`Payment_Id`, `External_Id`)
+ ) ENGINE=InnoDB;
 
 
 
@@ -1483,7 +1469,7 @@ CREATE TABLE if not exists `payment_invoice`
     `Create_Datetime` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY(`idPayment_Invoice`),
     INDEX ix_uq_payment_inv_map_pa_in (Payment_Id, Invoice_Id)
-) AUTO_INCREMENT=4;
+) ENGINE=InnoDB AUTO_INCREMENT=4;
 
 
 
@@ -1511,7 +1497,8 @@ CREATE TABLE if not exists `photo` (
   `Last_Updated` DATETIME NULL,
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idPhoto`));
+  PRIMARY KEY (`idPhoto`)
+  ) ENGINE=InnoDB;
 
 
 
@@ -1527,7 +1514,8 @@ CREATE  TABLE if not exists `postal_codes` (
   `Lng` VARCHAR(15) NOT NULL DEFAULT '' ,
   `Type` VARCHAR(15) NOT NULL DEFAULT '' ,
   `Acceptable_Cities` VARCHAR(511) NOT NULL DEFAULT '' ,
-  PRIMARY KEY (`Zip_Code`) );
+  PRIMARY KEY (`Zip_Code`) 
+  ) ENGINE=InnoDB;
 
 
 
@@ -2000,12 +1988,13 @@ CREATE TABLE if not exists `syslog` (
 -- -----------------------------------------------------
 CREATE TABLE `template_tag` (
   `idTemplate_tag` int(11) NOT NULL AUTO_INCREMENT,
-  `Doc_Name` varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `Tag_Title` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `Tag_Name` varchar(25) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
-  `Replacement_Wrapper` varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `Doc_Name` varchar(45) NOT NULL DEFAULT '',
+  `Tag_Title` varchar(25) NOT NULL DEFAULT '',
+  `Tag_Name` varchar(25) NOT NULL DEFAULT '',
+  `Replacement_Wrapper` varchar(45) NOT NULL DEFAULT '',
   PRIMARY KEY (`idTemplate_tag`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18;
+
 
 -- -----------------------------------------------------
 -- Table `trans`
