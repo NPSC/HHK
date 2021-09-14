@@ -687,6 +687,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('amtTenderedPrompt','Amount Tendered','s','pc','',''),
 ('housePays','House pays difference','s','pc','',''),
 ('rtnTenderedPrompt','Return Amount','s','pc','',''),
+('rtnDeposit', 'Deposit Refund', 's', 'pc','',''),
 ('RmFeesPledged', '	Room fees pledged to-date',	's', 'pc', '', ''),
 ('PayRmFees', 'Pay room fees', 's', 'pc', '', ''),
 ('RoomCharges',	'Room Charges',	's', 'pc', '', ''),

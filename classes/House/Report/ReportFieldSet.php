@@ -144,13 +144,13 @@ class ReportFieldSet {
         
     }
     
-    public static function updateFieldSet(\PDO $dbh, int $idFieldSet, string $title, array $fields = []){
+    public static function updateFieldSet(\PDO $dbh, int $idFieldSet, string $title, $fields = []){
         if(self::isAuthorized($dbh, $idFieldSet)){ //authorized
             $uS = Session::getInstance();
             $uname = $uS->username;
             
-            if (count($fields) ==  0) {
-                return array('error' => 'Empty fields.');
+            if (!is_array($fields) || count($fields) ==  0) {
+                return array('error' => 'Please choose at least one field');
             }
             
             $fieldsJSON = json_encode($fields);
