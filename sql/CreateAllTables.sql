@@ -738,7 +738,7 @@ CREATE TABLE if not exists `item`
 -- -----------------------------------------------------
 -- Table `item_item`
 -- -----------------------------------------------------
-CREATE TABLE `item_item` (
+CREATE TABLE if not exists `item_item` (
   `idItem` INT NOT NULL,
   `Item_Id` INT NOT NULL,
   PRIMARY KEY (`idItem`, `Item_Id`)
@@ -1975,7 +1975,7 @@ CREATE TABLE if not exists `syslog` (
 -- -----------------------------------------------------
 -- Table `template_tag`
 -- -----------------------------------------------------
-CREATE TABLE `template_tag` (
+CREATE TABLE if not exists `template_tag` (
   `idTemplate_tag` int(11) NOT NULL AUTO_INCREMENT,
   `Doc_Name` varchar(45) NOT NULL DEFAULT '',
   `Tag_Title` varchar(25) NOT NULL DEFAULT '',
@@ -2353,9 +2353,9 @@ ALTER TABLE `name_address`
 ALTER TABLE `name_guest`
     ADD INDEX IF NOT EXISTS `INDEX_IdPsg` (`idPsg` ASC);
     
-CREATE INDEX  IF NOT EXISTS `INDEX_PHONE_SEARCH` name_phone(`Phone_Search`);
+CREATE INDEX  IF NOT EXISTS `INDEX_PHONE_SEARCH` ON name_phone(`Phone_Search`);
     
-CREATE INDEX IF NOT EXISTS `INDEX_USERNAME` ON `note`(`User_Name` ASC)
+CREATE INDEX IF NOT EXISTS `INDEX_USERNAME` ON `note`(`User_Name` ASC);
 
 ALTER TABLE `payment`
     ADD INDEX IF NOT EXISTS `Index_Date` (`Payment_Date` ASC);
@@ -2377,7 +2377,7 @@ ALTER TABLE `registration`
     ADD INDEX IF NOT EXISTS `Index_idPsg` (`idPsg` ASC);
 
 ALTER TABLE `report`
-	ADD  INDX IF NOT EXISTS `Index_Psg_Id` (`Psg_Id`);
+	ADD  INDEX IF NOT EXISTS `Index_Psg_Id` (`Psg_Id`);
 
 ALTER TABLE `report_field_sets`
 	ADD UNIQUE KEY IF NOT EXISTS `U_INDEX_TRC` (`Title`,`Report`,`Created_by`);
@@ -2445,7 +2445,7 @@ ALTER TABLE `visit_log`
     
     
     
--------Functions-------
+-- -------Functions-------
     
 --
 -- function `dateDefaultNow`
