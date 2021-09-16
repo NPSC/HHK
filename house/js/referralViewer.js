@@ -44,7 +44,7 @@
                         data: 'Patient Last Name',
                         sortable: true,
                         render: function (data, type, row){
-                        	return '<a href="#" class="formDetails" data-docid="' + row.idDocument + '">' + data + '</a>';
+                        	return '<a href="#" class="formDetails" data-docid="' + row.idDocument + '" data-status="' + row.idStatus + '" data-resvid="' + row.idResv + '">' + data + '</a>';
                         }
                 },
                 {
