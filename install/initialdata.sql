@@ -427,7 +427,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Time_Zone', 'America/Chicago', 'Central','','',0),
 ('Time_Zone', 'America/New_York', 'Eastern','','',0),
-('Time_Zone', 'America/Denver', 'Moutain','','',0),
+('Time_Zone', 'America/Denver', 'Moutain Daylight (Denver)','','',0),
+('Time_Zone', 'America/Phoenix', 'Moutain Standard (Phoenix)','','',0),
 ('Time_Zone', 'America/Los_Angeles', 'Pacific','','',0),
 
 ('Utilization_Category', 'uc1', 'Standard', '', 'h',0),
