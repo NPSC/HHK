@@ -38,6 +38,7 @@ class VisitLog extends AbstractTableLog {
         $logRS->idName->setNewVal($idPatient);
         $logRS->Log_Text->setNewVal($encodedText);
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -56,6 +57,7 @@ class VisitLog extends AbstractTableLog {
         $logRS->idName->setNewVal($idGuest);
         $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -74,6 +76,7 @@ class VisitLog extends AbstractTableLog {
         $logRS->idRegistration->setNewVal($idRegistration);
         $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -94,6 +97,7 @@ class VisitLog extends AbstractTableLog {
         $logRS->idRegistration->setNewVal($idRegistration);
         $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -117,6 +121,7 @@ class VisitLog extends AbstractTableLog {
         $logRS->idName->setNewVal($idGuest);
         $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 

@@ -41,6 +41,7 @@ class ReservationLog extends AbstractTableLog {
 
         $logRS->Log_Text->setNewVal($encodedText);
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -62,6 +63,7 @@ class ReservationLog extends AbstractTableLog {
         $logRS->idRoom_rate->setNewVal($idRoomRate);
         $logRS->Log_Text->setNewVal($encodedText);
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -85,6 +87,7 @@ class ReservationLog extends AbstractTableLog {
         $logRS->idPsg->setNewVal($idPsg);
         $logRS->Log_Text->setNewVal($encodedText);
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 

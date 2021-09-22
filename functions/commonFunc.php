@@ -11,7 +11,7 @@ use HHK\SysConst\PaymentMethod;
 use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
 use HHK\TableLog\HouseLog;
 use HHK\ExcelHelper;
-use HHK\sec\SecurityComponent;
+use HHK\sec\{SecurityComponent, SysConfig};
 
 /**
  * commonFunc.php
@@ -49,7 +49,7 @@ function initPDO($override = FALSE)
     }
 
     try {
-    	
+
     	$dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
     	$options = [
     			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -57,12 +57,12 @@ function initPDO($override = FALSE)
     	];
 
     	$dbh = new PDO($dsn, $dbuName, $dbPw, $options);
-    	
+
         $dbh->exec("SET SESSION wait_timeout = 3600;");
 
         // Syncromize PHP and mySQL timezones
         syncTimeZone($dbh);
-        
+
     } catch (\PDOException $e) {
 
         $ssn->destroy(TRUE);
@@ -70,7 +70,7 @@ function initPDO($override = FALSE)
         if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
             throw new RuntimeException("<br/>Database Error: " . $e->getMessage());
         }
-        
+
         $sec = new SecurityComponent();
 
         header('location:' . $sec->getRootURL(). 'reset.php?r=' . $e->getMessage());
@@ -81,7 +81,7 @@ function initPDO($override = FALSE)
 }
 
 function creditIncludes($gatewayName) {
-    
+
 /*     require (PMT . 'paymentgateway/CreditPayments.php');
 
     switch ($gatewayName) {
@@ -111,6 +111,8 @@ function creditIncludes($gatewayName) {
 
 function syncTimeZone(\PDO $dbh)
 {
+    $tz = SysConfig::getKeyValue($dbh, 'sys_config', 'tz', false);
+    date_default_timezone_set($tz);
     $now = new \DateTime();
     $tmins = $now->getOffset() / 60;
     $sgn = ($tmins < 0 ? - 1 : 1);
@@ -147,7 +149,7 @@ function doExcelDownLoad($rows, $fileName)
     }
 
     $hdrStyle = $writer->getHdrStyle($colWidths);
-    
+
     $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
     foreach ($rows as $r) {
@@ -162,7 +164,7 @@ function doExcelDownLoad($rows, $fileName)
 
 function prepareEmail()
 {
-    
+
     $uS = Session::getInstance();
 
     $mail = new PHPMailer(true);
@@ -170,7 +172,7 @@ function prepareEmail()
     switch (strtolower($uS->EmailType)) {
 
         case 'smtp':
-            
+
             $mail->isSMTP();
 
             $mail->Host = $uS->SMTP_Host;
@@ -202,16 +204,16 @@ function prepareEmail()
 }
 
 function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
-	
+
 	$startDT = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
 	$start = $startDT->format('Y-m-d');
-	
+
 	// End date is the beginning of the next month.
 	$endDT = $startDT->add(new DateInterval('P1M'));
 	$end = $endDT->format('Y-m-d');
-	
+
 	$tbl = new HTMLTable();
-	
+
 	// get payment methods
 	$payTypes = array();
 	$stmtp = $dbh->query("select * from payment_method");
@@ -221,7 +223,7 @@ function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
 		}
 	}
 	$payTypes[''] = 'Total';
-	
+
 	// Payment Method Totals
 	$pmStmt = $dbh->query("Select p.idPayment_Method,
     		sum(Case
@@ -242,11 +244,11 @@ function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
     				or (Date(p.Last_Updated) < Date('2020-07-01') and Date(p.Last_Updated) >= Date('$start'))
     				)
     		Group by p.idPayment_Method WITH ROLLUP");
-	
+
 	while ($r = $pmStmt->fetch(PDO::FETCH_NUM)) {
 		$tbl->addBodyTr(HTMLTable::makeTd($payTypes[$r[0]], array('class'=>'tdlabel')) . HTMLTable::makeTd($r[1], array('style'=>'text-align:right;')));
 	}
-	
+
 	return $tbl->generateMarkup();
 }
 

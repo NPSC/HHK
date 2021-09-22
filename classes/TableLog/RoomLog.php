@@ -36,6 +36,7 @@ class RoomLog extends AbstractTableLog {
         $logRS->Id1->setNewVal($idResource);
         $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -53,6 +54,7 @@ class RoomLog extends AbstractTableLog {
         $logRS->Id1->setNewVal($idRoom);
         $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -70,6 +72,7 @@ class RoomLog extends AbstractTableLog {
             $logRs->Notes->setNewVal($notes);
             $logRs->Last_Cleaned->setNewVal($lastCleaned);
             $logRs->Username->setNewVal($username);
+            $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
             return self::insertLog($dbh, $logRs);
         }

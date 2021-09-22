@@ -30,13 +30,14 @@ class HouseLog extends AbstractTableLog {
         $logRS->Str2->setNewVal($code);
         $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
     }
 
     public static function logSysConfig(\PDO $dbh, $key, $value, $logText, $userName, $type = 'sys_config') {
-    	
+
     	$logRS = new House_LogRS();
     	$logRS->Log_Type->setNewVal($type);
     	$logRS->Sub_Type->setNewVal('update');
@@ -44,11 +45,12 @@ class HouseLog extends AbstractTableLog {
     	$logRS->Str2->setNewVal($value);
     	$logRS->Log_Text->setNewVal(self::encodeLogText($logText));
     	$logRS->User_Name->setNewVal($userName);
-    	
+    	$logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
+
     	return self::insertLog($dbh, $logRS);
-    	
+
     }
-       
+
     public static function logSiteConfig(\PDO $dbh, $key, $value, $userName, $subType = 'update') {
 
         $logRS = new House_LogRS();
@@ -57,6 +59,7 @@ class HouseLog extends AbstractTableLog {
         $logRS->Str1->setNewVal($key);
         $logRS->Str2->setNewVal($value);
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
@@ -71,6 +74,7 @@ class HouseLog extends AbstractTableLog {
         $logRS->Id1->setNewVal($idRoomRate);
         $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
         $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 
         return self::insertLog($dbh, $logRS);
 
