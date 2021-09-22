@@ -34,6 +34,9 @@ class FormDocument {
     public static function listForms(\PDO $dbh, $status, $params, $totalsOnly = false){
 
         if($totalsOnly){
+            //sync referral/resv statuses
+            $dbh->exec('CALL sync_referral_resv_status()');
+
             $query = 'select g.Code as "idStatus", g.Description as "Status", g.Substitute as "icon", count(v.idDocument) as "count" from `gen_lookups` g
 left join `vform_listing` v on g.Code = v.`status ID`
 where g.Table_Name = "Referral_Form_Status"
@@ -59,7 +62,9 @@ group by g.Code order by g.Order';
                 array( 'db' => 'hospitalName', 'dt'=>'Hospital'),
                 array( 'db' => 'status', 'dt'=>'Status'),
                 array( 'db' => 'status ID', 'dt'=>'idStatus'),
-                array( 'db' => 'idResv', 'dt'=>'idResv')
+                array( 'db' => 'idResv', 'dt'=>'idResv'),
+                array( 'db' => 'resvStatus', 'dt'=>'resvStatus'),
+                array( 'db' => 'resvStatusName', 'dt'=>'resvStatusName')
             );
             if($status == 'inbox'){
                 $whereClause = '`Status ID` IN ("n", "ip")';

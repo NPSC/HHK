@@ -79,6 +79,12 @@
                 },
                 {
                 "targets": [ 7 ],
+                        title: (options.labels.reservation || 'Reservation') + " Status",
+                        data: 'resvStatusName',
+                        sortable: true
+                },
+                {
+                "targets": [ 8 ],
                         title: "Submit Date",
                         data: 'Date',
                         sortable: true,
@@ -153,7 +159,7 @@
 			"processing": true,
 			"deferRender": true,
 			"language": {"sSearch": "Search Referrals:"},
-			"sorting": [[6,'desc'], [7,'desc']],
+			"sorting": [[6,'desc'], [8,'desc']],
 			"displayLength": 10,
 			"lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
 			"dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
@@ -197,10 +203,10 @@
 						(row.idResv ? `<li class="formResv"><div><a href="Reserve.php?rid=` + row.idResv + `" style="text-decoration:none;">View ` + (settings.labels.reservation || 'Reservation') + `</a></div></li>`: ``) +
 						`<li></li>` +
 						(row.idStatus == 'ip' ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="n" title="Mark as Unread"><div>Mark as Unread</div></li>`:'') +
-						(row.idStatus != 'n' && row.idStatus != 'ip' ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="ip" title="Move to Inbox"><div>Move to Inbox</div></li>`:'') +
-						(row.idStatus != 'ar' ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="ar" title="Archive Form"><div>Archive</div></li>`:'') +
-						`<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="d" title="Delete Form"><div>Delete</div></li>
-					</ul>
+						(row.idStatus != 'n' && row.idStatus != 'ip' && !row.idResv ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="ip" title="Move to Inbox"><div>Move to Inbox</div></li>`:'') +
+						(row.idStatus != 'ar' && !row.idResv ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="ar" title="Archive Form"><div>Archive</div></li>`:'') +
+						(!row.idResv ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="d" title="Delete Form"><div>Delete</div></li>`:'') +
+					`</ul>
 				</li>
 			</ul>
 		`;
