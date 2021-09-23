@@ -814,8 +814,7 @@ CREATE OR REPLACE VIEW `vform_listing` AS
         LEFT JOIN `gen_lookups` `g` ON (`d`.`Status` = `g`.`Code`
             AND `g`.`Table_Name` = 'Referral_Form_Status')
 		LEFT JOIN `hospital` `h` ON (JSON_VALUE(`d`.`userData`, '$.hospital.idHospital') = `h`.`idHospital`)
-        LEFT JOIN `reservation_referral` `rr` ON (`d`.`idDocument` = `rr`.`Document_Id`)
-        LEFT JOIN `reservation` `r` ON (`rr`.`Reservation_Id` = `r`.`idReservation`)
+        LEFT JOIN `reservation` `r` ON (`d`.`idDocument` = `r`.`idReferralDoc`)
         LEFT JOIN `lookups` `rs` ON (`r`.`Status` = `rs`.`Code` AND `rs`.`Category` = 'ReservStatus'))
     WHERE
         `d`.`Type` = 'json'
