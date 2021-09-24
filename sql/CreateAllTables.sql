@@ -662,7 +662,7 @@ CREATE TABLE if not exists `invoice` (
   `Status` varchar(5) NOT NULL DEFAULT '',
   `Carried_Amount` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Balance` decimal(10,2) NOT NULL DEFAULT '0.00',
-  `Order_Number` varchar(45) NOT NULL DEFAULT '',
+  `Order_Number` int(11) NOT NULL DEFAULT 0,
   `Suborder_Number` smallint(6) NOT NULL DEFAULT '0',
   `Due_Date` date DEFAULT NULL,
   `In_Process_Payment` tinyint(4) NOT NULL DEFAULT '0',
