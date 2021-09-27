@@ -88,3 +88,5 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('rtnDeposit', 'Deposit Refund', 's', 'pc','','');
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('onlineReferralTitle','Referral Form', 's', 'rg', '', '');
 
+ALTER TABLE `reservation` 
+ADD COLUMN `idReferralDoc` INT(11) NOT NULL DEFAULT 0 AFTER `idResource`;

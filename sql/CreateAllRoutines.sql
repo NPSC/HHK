@@ -643,8 +643,25 @@ BEGIN
 END -- ;
 
 
+-- --------------------------------------------------------
+--
+-- Procedure `sync_referral_resv_status`
+--
 
+drop procedure IF EXISTS `sync_referral_resv_status`;
 
+CREATE PROCEDURE `sync_referral_resv_status` ()
+BEGIN
+	UPDATE `document` `d`
+	LEFT JOIN `reservation` `r` on `d`.`idDocument` = `r`.`idReferralDoc`
+	SET `d`.`Status` = 'ar'
+	WHERE `r`.`Status` in ('c','c1','c2', 'c3','c4','co','ns','s','td') ;
+
+	UPDATE `document` `d`
+	LEFT JOIN `reservation` `r` on `d`.`idDocument` = `r`.`idReferralDoc`
+	SET `d`.`Status` = 'ac'
+	WHERE `r`.`Status` in ('a', 'p','uc','w');
+END -- ;
 
 
 -- --------------------------------------------------------

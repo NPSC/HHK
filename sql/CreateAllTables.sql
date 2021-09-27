@@ -1654,6 +1654,7 @@ CREATE TABLE if not exists `reservation` (
   `idGuest` int(11) NOT NULL DEFAULT '0',
   `idHospital_Stay` int(11) NOT NULL DEFAULT '0',
   `idResource` int(11) NOT NULL DEFAULT '0',
+  `idReferralDoc` INT(11) NOT NULL DEFAULT '0',
   `Resource_Suitable` VARCHAR(4) NOT NULL DEFAULT '',
   `Confirmation` varchar(4) NOT NULL DEFAULT '',
   `Room_Rate_Category` varchar(4) NOT NULL DEFAULT '',
@@ -1690,18 +1691,6 @@ CREATE TABLE if not exists `reservation_guest` (
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idReservation`,`idGuest`)
 ) ENGINE=InnoDB;
-
-
-
--- -----------------------------------------------------
--- Table `reservation_referral`
--- -----------------------------------------------------
-CREATE TABLE if not exists `reservation_referral` (
-  `Reservation_Id` INT NOT NULL,
-  `Document_Id` INT NOT NULL,
-  PRIMARY KEY (`Reservation_Id`)
-) ENGINE=InnoDB;
-
 
 
 -- -----------------------------------------------------

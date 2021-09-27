@@ -792,12 +792,11 @@ CREATE or replace VIEW `vemail_directory` AS
             and (`n`.`Exclude_Email` = 0)
             and (`ne`.`Email` <> ''));
 
-
 -- -----------------------------------------------------
 -- View `vform_listing`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vform_listing` AS
-    SELECT 
+    SELECT
         `d`.`idDocument` AS `idDocument`,
         IFNULL(JSON_VALUE(`d`.`userData`, '$.patient.firstName'), '') AS `patientFirstName`,
         IFNULL(JSON_VALUE(`d`.`userData`, '$.patient.lastName'), '') AS `patientLastName`,
@@ -805,18 +804,22 @@ CREATE OR REPLACE VIEW `vform_listing` AS
         IFNULL(JSON_VALUE(`d`.`userData`, '$.checkoutdate'), '') AS `ExpectedCheckout`,
         IFNULL(`h`.`Title`, '') as `hospitalName`,
         `d`.`Status` AS `status ID`,
-        IFNULL(`g`.`Description`, '') AS `status`,
-        IFNULL(`rr`.`Reservation_Id`, 0) AS `idResv`,
+        `g`.`Description` AS `status`,
+        `r`.`idReservation` AS `idResv`,
+        `r`.`Status` AS `resvStatus`,
+        `rs`.`Title` AS `resvStatusName`,
         `d`.`Timestamp` AS `Timestamp`
     FROM
         (`document` `d`
         LEFT JOIN `gen_lookups` `g` ON (`d`.`Status` = `g`.`Code`
             AND `g`.`Table_Name` = 'Referral_Form_Status')
 		LEFT JOIN `hospital` `h` ON (JSON_VALUE(`d`.`userData`, '$.hospital.idHospital') = `h`.`idHospital`)
-        LEFT JOIN `reservation_referral` `rr` ON (`d`.`idDocument` = `rr`.`Document_Id`))
+        LEFT JOIN `reservation` `r` ON (`d`.`idDocument` = `r`.`idReferralDoc`)
+        LEFT JOIN `lookups` `rs` ON (`r`.`Status` = `rs`.`Code` AND `rs`.`Category` = 'ReservStatus'))
     WHERE
         `d`.`Type` = 'json'
-            AND `d`.`Category` = 'form';
+            AND `d`.`Category` = 'form'
+	ORDER BY `d`.`Timestamp` DESC , `r`.`idReservation` DESC;
 
 -- -----------------------------------------------------
 -- View `vgetIncidentlisting`
@@ -1479,7 +1482,7 @@ CREATE or replace VIEW `vindividual_donations` AS
         left join `vmember_listing_noex` `vp` ON `vp`.`Id` = `d`.`Assoc_Id`
         left join `vmember_listing_noex` `ve` ON `ve`.`Id` = `d`.`Care_Of_Id`
         left join gen_lookups g on g.Table_Name = 'Pay_Type' and g.Code = `d`.`Pay_Type`
-        
+
     where
         `d`.`Status` = 'a';
 
