@@ -262,6 +262,12 @@ table {
     color: #228C5F;
     
 }
+.hhi-wasblank {
+	color:blue;
+}
+.hhk-origUserData {
+	color:blue;
+}
 textarea {
     padding: .3em;
 }
@@ -510,6 +516,6 @@ div#referralTabs ul>li.ui-state-active .ui-icon {
 	background-image: url(jqui/images/ui-icons_f9bd01_256x240.png) !important;
 }
 .hhkrefguestsel {
-	margin-top:10px;
+	margin-top:0;
 	margin-bottom: 30px;
 }

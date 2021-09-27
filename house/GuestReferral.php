@@ -207,9 +207,9 @@ if ($idDoc > 0) {
                     <?php echo $patMkup; ?>
                     </div>
                 <div id="GuestSection" style="font-size: .9em; min-width: 810px; margin-top:50px;<?php echo $displayGuest; ?>"  class="ui-widget hhk-visitdialog mb-3">
-                    <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3">
+<!--                     <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"> -->
                     	<?php echo $labels->getString('MemberType', 'guest', 'Guest') . 's'; ?>
-                    </div>
+<!--                     </div> -->
                     <?php echo $guestMkup; ?>
                 </div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">

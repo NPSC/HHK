@@ -47,6 +47,7 @@ group by g.Code order by g.Order';
             }
 
             return array('totals'=>$totals);
+
         }else{
             $columns = array(
                 array( 'db' => 'idDocument', 'dt' => 'idDocument'),

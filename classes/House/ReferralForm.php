@@ -5,7 +5,7 @@ namespace HHK\House;
 use HHK\Document\FormDocument;
 use HHK\HTMLControls\{HTMLContainer,HTMLTable};
 use HHK\Member\ProgressiveSearch\ProgressiveSearch;
-use HHK\Member\ProgressiveSearch\SearchNameData\{SearchNameData, SearchResults, SearchFor};
+use HHK\Member\ProgressiveSearch\SearchNameData\{SearchNameData, SearchFor};
 use HHK\SysConst\{AddressPurpose, EmailPurpose, PhonePurpose, GLTableNames, RelLinkType, ReservationStatus};
 use HHK\Member\Address\CleanAddress;
 use HHK\HTMLControls\HTMLInput;
@@ -56,7 +56,7 @@ class ReferralForm {
 	const HTML_Incl_Phone = 'cbPIncludePhone';
 	const HTML_Incl_Email = 'cbPIncludeEmail';
 
-    const MAX_GUESTS = 3;
+    const MAX_GUESTS = 4;
 
     /**
      * Open the referral and pull in the user data.
@@ -525,10 +525,23 @@ class ReferralForm {
 
         // Save guest referral doc id
         $rrRs = new Reservation_ReferralRS();
-        $rrRs->Reservation_Id->setNewVal($resv->getIdReservation());
-        $rrRs->Document_Id->setNewVal($this->referralDocId);
+        $rrRs->Reservation_Id->setStoredVal($resv->getIdReservation());
 
-        EditRS::insert($dbh, $rrRs);
+        $rows = EditRS::select($dbh, $rrRs, array($rrRs->Reservation_Id));
+
+        if (count($rows) == 0) {
+
+            $rrRs = new Reservation_ReferralRS();
+            $rrRs->Reservation_Id->setNewVal($resv->getIdReservation());
+            $rrRs->Document_Id->setNewVal($this->referralDocId);
+
+            EditRS::insert($dbh, $rrRs);
+
+        } else {
+
+            $rrRs->Document_Id->setNewVal($this->referralDocId);
+            EditRS::update($dbh, $rrRs, array($rrRs->Reservation_Id));
+        }
 
         return $resv->getIdReservation();
 
@@ -587,8 +600,11 @@ class ReferralForm {
 
 	    if (is_null($addr) === FALSE) {
 
-	    return ($addr->Address_2->getStoredVal() == '' ? $addr->Address_1->getStoredVal() : $addr->Address_1->getStoredVal() . ', ' . $addr->Address_2->getStoredVal())
+	        $uS = Session::getInstance();
+
+       	    return ($addr->Address_2->getStoredVal() == '' ? $addr->Address_1->getStoredVal() : $addr->Address_1->getStoredVal() . ', ' . $addr->Address_2->getStoredVal())
     	    . ($addr->City->getStoredVal() == '' ? '' : ', ' . $addr->City->getStoredVal())
+    	    . ($uS->county ? ($addr->County->getStoredVal() == '' ? '' : ', ' . $addr->County->getStoredVal()) : '')
     	    . ($addr->State_Province->getStoredVal() == '' ? '' : ', ' . $addr->State_Province->getStoredVal())
     	    . ($addr->Postal_Code->getStoredVal() == '' ? '' : ', ' . $addr->Postal_Code->getStoredVal())
     	    . ($addr->Country_Code->getStoredVal() == '' ? '' : ', ' . $addr->Country_Code->getStoredVal());
@@ -636,32 +652,35 @@ class ReferralForm {
 	    $cols = ($uS->county ? 16 : 15);
 
 	    // Original data
-	    $tbl->addBodyTr(HTMLTable::makeTd('Referral Form Submission:', array('colspan'=>$cols)));
+	    $tbl->addBodyTr(HTMLTable::makeTd('Referral Form Patient Submission:', array('colspan'=>$cols)));
 
 	    $tbl->addBodyTr(
 	        HTMLTable::makeTd(HTMLInput::generateMarkup('0', $idArray))
 	        .HTMLTable::makeTd($this->patSearchFor->getNameFirst())
-	        .HTMLTable::makeTd($this->patSearchFor->getNameMiddle())
+	        .HTMLTable::makeTd($this->patSearchFor->getNameMiddle(), array('id'=>'tbPatMiddle'))
 	        .HTMLTable::makeTd($this->patSearchFor->getNameLast())
-	        .HTMLTable::makeTd($this->patSearchFor->getSuffixTitle())
-	        .HTMLTable::makeTd($this->patSearchFor->getNickname())
-	        .HTMLTable::makeTd(($this->patSearchFor->getBirthDate() == '' ? '' : date('M d, Y', strtotime($this->patSearchFor->getBirthDate()))))
-	        .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->patSearchFor->getPhone()))
-	        .HTMLTable::makeTd($this->patSearchFor->getEmail())
-	        .HTMLTable::makeTd($this->patSearchFor->getAddressStreet())
-	        .HTMLTable::makeTd($this->patSearchFor->getAddressCity())
-	        .($uS->county ? HTMLTable::makeTd($this->patSearchFor->getAddressCounty()) : '')
-	        .HTMLTable::makeTd($this->patSearchFor->getAddressState())
-	        .HTMLTable::makeTd($this->patSearchFor->getAddressZip())
-	        .HTMLTable::makeTd($this->patSearchFor->getAddressCountry())
+	        .HTMLTable::makeTd($this->patSearchFor->getSuffixTitle(), array('id'=>'tbPatSuffix'))
+	        .HTMLTable::makeTd($this->patSearchFor->getNickname(), array('id'=>'tbPatNickname'))
+	        .HTMLTable::makeTd(($this->patSearchFor->getBirthDate() == '' ? '' : date('M d, Y', strtotime($this->patSearchFor->getBirthDate()))), array('id'=>'tbPatBD'))
+	        .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->patSearchFor->getPhone()), array('id'=>'tbPatPhone'))
+	        .HTMLTable::makeTd($this->patSearchFor->getEmail(), array('id'=>'tbPatEmail'))
+	        .HTMLTable::makeTd($this->patSearchFor->getAddressStreet(), array('id'=>'tbPatStreet'))
+	        .HTMLTable::makeTd($this->patSearchFor->getAddressCity(), array('id'=>'tbPatCity'))
+	        .($uS->county ? HTMLTable::makeTd($this->patSearchFor->getAddressCounty(), array('id'=>'tbPatCounty')) : '')
+	        .HTMLTable::makeTd($this->patSearchFor->getAddressState(), array('id'=>'tbPatState'))
+	        .HTMLTable::makeTd($this->patSearchFor->getAddressZip(), array('id'=>'tbPatZip'))
+	        .HTMLTable::makeTd($this->patSearchFor->getAddressCountry(), array('id'=>'tbPatCountry'))
 	        .HTMLTable::makeTd('', array('style'=>'background-color:#f7f1e8;'))
 	        , array('class'=>'hhk-origUserData'));
 
-	    $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+
 
 	    if (count($this->patResults) > 0) {
-	       $tbl->addBodyTr(HTMLTable::makeTd('Matches Found in HHK:', array('colspan'=>$cols)));
+	        // $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'usePatContactData')).HTMLContainer::generateMarkup('label', ' Use this contact information', array('for'=>'usePatContactData')), array('colspan'=>$cols, 'style'=>'text-align:center;')));
+	        $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+	        $tbl->addBodyTr(HTMLTable::makeTd('Matches Found in HHK:', array('colspan'=>$cols)));
 	    } else {
+	        $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
 	        $tbl->addBodyTr(HTMLTable::makeTd('No Matches Found', array('colspan'=>$cols)));
 	    }
 
@@ -675,19 +694,19 @@ class ReferralForm {
 	        $tbl->addBodyTr(
 	            HTMLTable::makeTd(HTMLInput::generateMarkup($r->getId(), $idArray))
 	            .HTMLTable::makeTd($r->getNameFirst())
-	            .HTMLTable::makeTd($r->getNameMiddle())
+	            .HTMLTable::makeTd($r->getNameMiddle(), array('id'=>'tbPatMiddle'.$r->getId()))
 	            .HTMLTable::makeTd($r->getNameLast())
-	            .HTMLTable::makeTd($r->getSuffix())
-	            .HTMLTable::makeTd($r->getNickname())
-	            .HTMLTable::makeTd($r->getBirthDate())
-	            .HTMLTable::makeTd($r->getPhone())
-	            .HTMLTable::makeTd($r->getEmail())
-	            .HTMLTable::makeTd($r->getAddressStreet())
-	            .HTMLTable::makeTd($r->getAddressCity())
-	            .($uS->county ? HTMLTable::makeTd($r->getAddressCounty()) : '')
-	            .HTMLTable::makeTd($r->getAddressState())
-	            .HTMLTable::makeTd($r->getAddressZip())
-	            .HTMLTable::makeTd($r->getAddressCountry())
+	            .HTMLTable::makeTd($r->getSuffix(), array('id'=>'tbPatSuffix'.$r->getId()))
+	            .HTMLTable::makeTd($r->getNickname(), array('id'=>'tbPatNickname'.$r->getId()))
+	            .HTMLTable::makeTd($r->getBirthDate(), array('id'=>'tbPatBD'.$r->getId()))
+	            .HTMLTable::makeTd($r->getPhone(), array('id'=>'tbPatPhone'.$r->getId()))
+	            .HTMLTable::makeTd($r->getEmail(), array('id'=>'tbPatEmail'.$r->getId()))
+	            .HTMLTable::makeTd($r->getAddressStreet(), array('id'=>'tbPatStreet'.$r->getId()))
+	            .HTMLTable::makeTd($r->getAddressCity(), array('id'=>'tbPatCity'.$r->getId()))
+	            .($uS->county ? HTMLTable::makeTd($r->getAddressCounty(), array('id'=>'tbPatCounty'.$r->getId())) : '')
+	            .HTMLTable::makeTd($r->getAddressState(), array('id'=>'tbPatState'.$r->getId()))
+	            .HTMLTable::makeTd($r->getAddressZip(), array('id'=>'tbPatZip'.$r->getId()))
+	            .HTMLTable::makeTd($r->getAddressCountry(), array('id'=>'tbPatCountry'.$r->getId()))
 	            .HTMLTable::makeTd($r->getNoReturn())
 	            , array('class'=>'hhk-resultUserData'));
 	    }
@@ -700,12 +719,17 @@ class ReferralForm {
 	 * @param integer $numberGuests
 	 * @return string
 	 */
-	public function guestsMarkup($numberGuests = self::MAX_GUESTS) {
+	public function guestsMarkup() {
 
 	    $markup = '';
 
         // Search Each guest
 	    foreach ($this->gstSearchFor as $g => $d) {
+
+	        // remove button
+
+	        // Guest header
+	        $markup .= HTMLContainer::generateMarkup('div', 'Guest: ' . $d->getNameFirst() . ' ' . $d->getNameLast(), array('class'=>"ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"));
 
 	        $markup .= $this->createGuestMarkup($g, $d, $this->gstResults[$g]);
 
@@ -725,6 +749,7 @@ class ReferralForm {
 
 	   $uS = Session::getInstance();
 	   $tbl = new HTMLTable();
+
 
 	   $tbl->addHeaderTr(
 	        HTMLTable::makeTh('Id')
@@ -754,7 +779,10 @@ class ReferralForm {
 	   }
 
 	   // Original data
-	   $tbl->addBodyTr(HTMLTable::makeTd('Referral Form Submission:', array('colspan'=>$cols)));
+
+	   $rel = (isset($uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()]) ? $uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()][1] : '');
+
+	   $tbl->addBodyTr(HTMLTable::makeTd('Referral Form Guest Submission:', array('colspan'=>$cols)));
 	   $tbl->addBodyTr(
 	       HTMLTable::makeTd(HTMLInput::generateMarkup('0', $idArray))
 	        .HTMLTable::makeTd($guestSearchFor->getNameFirst())
@@ -762,9 +790,9 @@ class ReferralForm {
 	       .HTMLTable::makeTd($guestSearchFor->getNameLast())
 	       .HTMLTable::makeTd($guestSearchFor->getSuffixTitle())
 	       .HTMLTable::makeTd($guestSearchFor->getNickname())
-	       .HTMLTable::makeTd((isset($uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()]) ? $uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()][1] : ''))
-	       .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $guestSearchFor->getPhone()))
-	       .HTMLTable::makeTd($guestSearchFor->getEmail())
+	       .HTMLTable::makeTd($rel, array('id'=>'tbGuestRel'.$gindx))
+	       .HTMLTable::makeTd(preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $guestSearchFor->getPhone()), array('id'=>'tbGuestPhone'.$gindx))
+	       .HTMLTable::makeTd($guestSearchFor->getEmail(), array('id'=>'tbGuestEmail'.$gindx))
 	       .HTMLTable::makeTd($guestSearchFor->getAddressStreet())
 	       .HTMLTable::makeTd($guestSearchFor->getAddressCity())
 	       .($uS->county ? HTMLTable::makeTd($guestSearchFor->getAddressCounty()) : '')
@@ -797,9 +825,9 @@ class ReferralForm {
 	           .HTMLTable::makeTd($r->getNameLast())
 	           .HTMLTable::makeTd($r->getSuffix())
 	           .HTMLTable::makeTd($r->getNickname())
-	           .HTMLTable::makeTd($r->getRelationship())
-	           .HTMLTable::makeTd($r->getPhone())
-	           .HTMLTable::makeTd($r->getEmail())
+	           .HTMLTable::makeTd($r->getRelationship(), array('id'=>'tbGuestRel'.$gindx.$r->getId()))
+	           .HTMLTable::makeTd($r->getPhone(), array('id'=>'tbGuestPhone'.$gindx.$r->getId()))
+	           .HTMLTable::makeTd($r->getEmail(), array('id'=>'tbGuestEmail'.$gindx.$r->getId()))
 	           .HTMLTable::makeTd($r->getAddressStreet())
 	           .HTMLTable::makeTd($r->getAddressCity())
 	           .($uS->county ? HTMLTable::makeTd($r->getAddressCounty()) : '')

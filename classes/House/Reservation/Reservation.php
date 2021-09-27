@@ -109,14 +109,12 @@ class Reservation {
 
     	// Load reservation
         $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`,
-            ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`, ifnull(rv.Document_Id, 0) as idReferralDoc
+            ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
 FROM reservation r
         LEFT JOIN
     registration rg ON r.idRegistration = rg.idRegistration
 	    LEFT JOIN
     visit v on v.idReservation = r.idReservation and v.Span = 0
-        LEFT JOIN
-    reservation_referral rv on r.idReservation = rv.Reservation_Id
 
 WHERE r.idReservation = " . $rData->getIdResv());
 
@@ -763,7 +761,7 @@ where rg.idReservation =" . $r['idReservation']);
         if ($uS->UseWLnotes === FALSE && $resv->isActive()) {
             $tbl2->addBodyTr(HTMLTable::makeTd('Registration Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40')),array('colspan'=>'3')));
         }
-        
+
         //Ribbon Note
         $tbl2->addBodyTr(HTMLTable::makeTd('Ribbon Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLInput::generateMarkup($resv->getNotes(), array('name'=>'txtRibbonNote', 'maxlength'=>'20')),array('colspan'=>'3')));
 
