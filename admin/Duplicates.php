@@ -113,10 +113,10 @@ $mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, ''
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <?php echo 'Search for: ' . $mtypeSel; ?>
-            <div style="clear:both;"></div>
-            <div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="overflow: scroll; float:left; max-height: 500px; font-size:.85em;"></div>
-            <div id="divExpansion" style="float:left;display:none;font-size:.85em;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail"></div>
+            <div id="searchSel" style="margin: 1em 0"><?php echo 'Search for: ' . $mtypeSel; ?></div>
+            
+            <div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="display: none; margin-right: 1em; font-size:.85em;"></div>
+            <div id="divExpansion" style="display:none;font-size:.85em;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail"></div>
         </div>
     </body>
 </html>

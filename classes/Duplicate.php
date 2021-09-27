@@ -268,7 +268,6 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
     'g' as Good,
     'b' as Bad,
     ng.Relationship_Code as `Rel`,
-    hs.idHospital_stay as `Hs id`,
     n2.idName as `P id`,
     n2.Name_Full as `Patient`,
     (select count(*) from visit where idRegistration = r.idregistration) as `visits`,
@@ -285,9 +284,9 @@ from
         left join
     name_guest ng ON n.idName = ng.idName
         left join
-    hospital_stay hs ON ng.idPsg = hs.idPsg
+    psg ON ng.idPsg = psg.idPsg
         left join
-    name n2 ON hs.idPatient = n2.idName
+    name n2 ON psg.idPatient = n2.idName
         left join
     registration r ON ng.idPsg = r.idPsg
 where
@@ -311,7 +310,6 @@ where
     np.Phone_Num as Phone,
     ng.idPsg,
     ng.Relationship_Code as `Rel`,
-    hs.idHospital_stay as `Hs id`,
     n2.idName as `P id`,
     n2.Name_Full as `Patient`,
     (select count(*) from visit where idRegistration = r.idregistration) as `visits`,
@@ -328,9 +326,9 @@ from
         left join
     name_guest ng ON n.idName = ng.idName
         left join
-    hospital_stay hs ON ng.idPsg = hs.idPsg
+    psg ON ng.idPsg = psg.idPsg
         left join
-    name n2 ON hs.idPatient = n2.idName
+    name n2 ON psg.idPatient = n2.idName
         left join
     registration r ON ng.idPsg = r.idPsg
 where
@@ -486,9 +484,10 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
             return 'Good and Bad are the same.  No action.';
         }
 
-        $affRows = $dbh->exec("call combinePSG($sPsgId, $dPsgId);");
+        //$affRows = $dbh->exec("call combinePSG($sPsgId, $dPsgId);");
+        $msg = $dbh->query("call combinePSG($sPsgId, $dPsgId);");
 
-        return 'Affected rows: ' . $affRows;
+        return $msg->fetch()[0];
 
     }
 

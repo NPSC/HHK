@@ -1,6 +1,6 @@
 $(document).ready(function () {
     $('#selmtype').change(function() {
-        $('#divExpansion').children().remove();
+        $('#divExpansion').hide().children().remove();
         $.post('Duplicates.php', {cmd: 'list', mType: $(this).val()},
             function (data) {
                 "use strict";
@@ -19,6 +19,8 @@ $(document).ready(function () {
                     return;
                 }
                 $('#divList').children().remove().end().append($(data.mk));
+                $('#divList').find('input[type=button]').button();
+                $('#divList').show();
 
                 $('.hhk-expand').click(function () {
                     $('#dupNames td').css('background-color','');

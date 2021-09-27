@@ -322,8 +322,7 @@ BEGIN
     -- remove notes
 	delete rn from reservation_note rn where rn.Reservation_Id in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
 	delete nt from note nt where nt.idNote in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
-    delete rr from reservation_referral rr where rr.Reservation_Id in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
-	delete r from reservation r join tids n on r.idGuest = n.idName;
+    delete r from reservation r join tids n on r.idGuest = n.idName;
 
 	-- hospital stay entries.
 	delete hs from hospital_stay hs join tids n on hs.idPatient = n.idName;
@@ -813,70 +812,131 @@ END -- ;
 --
 drop procedure if exists `combinePSG`; -- ;
 
-CREATE PROCEDURE `combinePSG`(keepIdPsg int(11), dupIdPsg int(11))
+CREATE PROCEDURE `combinePSG` (keepIdPsg int(11), dupIdPsg int(11))
 BEGIN
-    -- Declare goodHs int;
-    Declare goodReg int;
+    
+    DECLARE goodReg int;
     Declare badReg int;
     Declare goodIdP int;
     Declare badIdP int;
 
-    update ignore name_guest set idPsg = keepIdPsg where idPsg = dupIdPsg;
-    delete from name_guest where idPsg = dupIdPsg;
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @text = MESSAGE_TEXT;
+		ROLLBACK;
+		SELECT CONCAT('ERROR: Cannot combine PSGs. No changes made.<br>', @text);
+	END;
 
-    select idPatient into badIdP from psg where idPsg = dupIdPsg;
-    select idPatient into goodIdP from psg where idPsg = keepIdPsg;
-    -- select idHospital_stay into goodHs from hospital_stay where idPsg = keepIdPsg;
-    select idRegistration into goodReg from registration where idPsg = keepIdPsg;
-    select idRegistration into badreg from registration where idPsg = dupIdPsg;
+	START TRANSACTION;
 
-    update reservation set
-        idRegistration = goodReg -- ,
-        -- idHospital_stay = goodHs
-    where idRegistration = badReg;
+	UPDATE IGNORE name_guest 
+	SET 
+		idPsg = keepIdPsg
+	WHERE
+		idPsg = dupIdPsg;
+	DELETE FROM name_guest 
+	WHERE
+		idPsg = dupIdPsg;
 
-    update visit set
-        idRegistration = goodReg -- ,
-        -- idHospital_stay = goodHs
-    where idRegistration = badReg;
+	SELECT 
+		idPatient
+	INTO badIdP FROM
+		psg
+	WHERE
+		idPsg = dupIdPsg;
+	SELECT 
+		idPatient
+	INTO goodIdP FROM
+		psg
+	WHERE
+		idPsg = keepIdPsg;
+		-- select idHospital_stay into goodHs from hospital_stay where idPsg = keepIdPsg;
+	SELECT 
+		idRegistration
+	INTO goodReg FROM
+		registration
+	WHERE
+		idPsg = keepIdPsg;
+	SELECT 
+		idRegistration
+	INTO badreg FROM
+		registration
+	WHERE
+		idPsg = dupIdPsg;
 
-    update fin_application set
-            idregistration = goodReg
-    where idRegistration = badReg;
+	UPDATE reservation 
+	SET 
+		idRegistration = goodReg
+	WHERE
+		idRegistration = badReg;
 
-	update link_doc set
-		idPSG = goodIdP
-	where idPSG = badIdP;
+	UPDATE visit 
+	SET 
+		idRegistration = goodReg
+	WHERE
+		idRegistration = badReg;
 
-	update report set
-		Psg_Id = goodIdP
-	where Psg_Id = badIdP;
+	UPDATE fin_application 
+	SET 
+		idregistration = goodReg
+	WHERE
+		idRegistration = badReg;
 
-	update hospital_stay set
-		idPsg = goodIdP
-	where idPsg = badIdP;
+		UPDATE link_doc 
+	SET 
+		idPSG = keepIdPsg
+	WHERE
+		idPSG = dupIdPsg;
 
-    update invoice set
-            idGroup = goodReg
-    where idGroup = badReg;
+		UPDATE report 
+	SET 
+		Psg_Id = keepIdPsg
+	WHERE
+		Psg_Id = dupIdPsg;
 
-    update guest_token set
-            idRegistration = goodReg
-    where idRegistration = badReg;
+		UPDATE hospital_stay 
+	SET 
+		idPsg = keepIdPsg
+	WHERE
+		idPsg = dupIdPsg;
 
-    update vehicle set
-            idRegistration = goodReg
-    where idRegistration = badReg;
+	UPDATE invoice 
+	SET 
+		idGroup = goodReg
+	WHERE
+		idGroup = badReg;
 
-	update psg_note set
-			Psg_Id = keepIdPsg
-	where Psg_Id = dupIdPsg;
+	UPDATE guest_token 
+	SET 
+		idRegistration = goodReg
+	WHERE
+		idRegistration = badReg;
 
-    delete from registration where idRegistration = badReg;
-    delete from psg where idPsg = dupIdPsg;
+	UPDATE vehicle 
+	SET 
+		idRegistration = goodReg
+	WHERE
+		idRegistration = badReg;
+
+		UPDATE psg_note 
+	SET 
+		Psg_Id = keepIdPsg
+	WHERE
+		Psg_Id = dupIdPsg;
+
+	DELETE FROM registration 
+	WHERE
+		idRegistration = badReg;
+	DELETE FROM psg 
+	WHERE
+		idPsg = dupIdPsg;
     -- delete from hospital_stay where idPsg = dupIdPsg;
 
     call remove_dup_guest(goodIdP, badIdP);
+
+	commit;
+    
+    select concat("Success: PSG ", dupIdPsg, " combined into PSG ", keepIdPsg);
 
 END -- ;
 
