@@ -765,6 +765,18 @@ BEGIN
 	idName = goodId
         where idName = badId;
 
+	update link_doc set
+    idGuest = goodId
+		where idGuest = badId;
+
+	update report set
+    Guest_Id = goodId
+		where Guest_Id = badId;
+
+	update hospital_stay set
+	idPatient = goodId
+		where idPatient = badId;
+
     update invoice set
 	Sold_To_Id = goodId
         where Sold_To_Id = badId;
@@ -803,7 +815,7 @@ drop procedure if exists `combinePSG`; -- ;
 
 CREATE PROCEDURE `combinePSG`(keepIdPsg int(11), dupIdPsg int(11))
 BEGIN
-    Declare goodHs int;
+    -- Declare goodHs int;
     Declare goodReg int;
     Declare badReg int;
     Declare goodIdP int;
@@ -814,23 +826,35 @@ BEGIN
 
     select idPatient into badIdP from psg where idPsg = dupIdPsg;
     select idPatient into goodIdP from psg where idPsg = keepIdPsg;
-    select idHospital_stay into goodHs from hospital_stay where idPsg = keepIdPsg;
+    -- select idHospital_stay into goodHs from hospital_stay where idPsg = keepIdPsg;
     select idRegistration into goodReg from registration where idPsg = keepIdPsg;
     select idRegistration into badreg from registration where idPsg = dupIdPsg;
 
     update reservation set
-        idRegistration = goodReg,
-        idHospital_stay = goodHs
+        idRegistration = goodReg -- ,
+        -- idHospital_stay = goodHs
     where idRegistration = badReg;
 
     update visit set
-        idRegistration = goodReg,
-        idHospital_stay = goodHs
+        idRegistration = goodReg -- ,
+        -- idHospital_stay = goodHs
     where idRegistration = badReg;
 
     update fin_application set
             idregistration = goodReg
     where idRegistration = badReg;
+
+	update link_doc set
+		idPSG = goodIdP
+	where idPSG = badIdP;
+
+	update report set
+		Psg_Id = goodIdP
+	where Psg_Id = badIdP;
+
+	update hospital_stay set
+		idPsg = goodIdP
+	where idPsg = badIdP;
 
     update invoice set
             idGroup = goodReg
@@ -850,7 +874,7 @@ BEGIN
 
     delete from registration where idRegistration = badReg;
     delete from psg where idPsg = dupIdPsg;
-    delete from hospital_stay where idPsg = dupIdPsg;
+    -- delete from hospital_stay where idPsg = dupIdPsg;
 
     call remove_dup_guest(goodIdP, badIdP);
 
