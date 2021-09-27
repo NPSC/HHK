@@ -325,6 +325,9 @@ class Reservation_1 {
             throw new RuntimeException('Reservation cannot be deleted.  Delete the Visit instead.');
         }
 
+        // Set referal doc to archived
+        $dbh->exec("update document d left join reservation r on d.idDocument = r.idReferralDoc set d.Status = 'ar' where r.idReservation = " . $this->getIdReservation());
+        
         // Delete
         $cnt = $dbh->exec("Delete from reservation where idReservation = " . $this->getIdReservation());
 
