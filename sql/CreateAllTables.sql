@@ -2337,8 +2337,7 @@ ALTER TABLE `hospital_stay`
     ADD INDEX `Index_idPatient` (`idPatient` ASC);
 ALTER TABLE `hospital_stay`
     ADD INDEX `Index_idPsg` (`idPsg` ASC);
-ALTER TABLE `hospital_stay`
-    ADD INDEX `Index_idHospital_Stay` (`idHospital_stay` ASC);
+
 
 ALTER TABLE `invoice`
     ADD INDEX `Index_Order_SO_Number` (`Order_Number` ASC, `Suborder_Number` ASC);

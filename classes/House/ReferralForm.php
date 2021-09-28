@@ -502,7 +502,8 @@ class ReferralForm {
             ->setIdHospitalStay($hospStay->getIdHospital_Stay())
             ->setNumberGuests(count($guests))
             ->setIdResource(0)
-            ->setRoomRateCategory($uS->RoomRateDefault);
+            ->setRoomRateCategory($uS->RoomRateDefault)
+            ->setIdReferralDoc($this->referralDocId);
 
         $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);
         $resv->saveConstraints($dbh, array());
@@ -521,26 +522,6 @@ class ReferralForm {
             $rgRs->idGuest->setNewVal($g);
             $rgRs->Primary_Guest->setNewVal('');
             EditRS::insert($dbh, $rgRs);
-        }
-
-        // Save guest referral doc id
-        $rrRs = new Reservation_ReferralRS();
-        $rrRs->Reservation_Id->setStoredVal($resv->getIdReservation());
-
-        $rows = EditRS::select($dbh, $rrRs, array($rrRs->Reservation_Id));
-
-        if (count($rows) == 0) {
-
-            $rrRs = new Reservation_ReferralRS();
-            $rrRs->Reservation_Id->setNewVal($resv->getIdReservation());
-            $rrRs->Document_Id->setNewVal($this->referralDocId);
-
-            EditRS::insert($dbh, $rrRs);
-
-        } else {
-
-            $rrRs->Document_Id->setNewVal($this->referralDocId);
-            EditRS::update($dbh, $rrRs, array($rrRs->Reservation_Id));
         }
 
         return $resv->getIdReservation();

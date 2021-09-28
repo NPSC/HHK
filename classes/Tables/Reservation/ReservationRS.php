@@ -14,12 +14,13 @@ use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer
  */
 
 class ReservationRS extends AbstractTableRS {
-    
+
     public $idReservation;   // int(11) NOT NULL AUTO_INCREMENT,
     public $idRegistration;   // int(11) NOT NULL DEFAULT '0',
     public $idGuest;  // int(11) NOT NULL DEFAULT '0',
     public $idHospital_Stay;   // int(11) NOT NULL DEFAULT '0',
     public $idResource;   // int(11) NOT NULL DEFAULT '0',
+    public $idReferralDoc;   // int(11) NOT NULL DEFAULT '0',
     public $Resource_Suitable;  // VARCHAR(4) NOT NULL DEFAULT '',
     public $Confirmation;  // varchar(4) NOT NULL DEFALUT '',
     public $Room_Rate_Category;  // VARCHAR(4)
@@ -42,12 +43,13 @@ class ReservationRS extends AbstractTableRS {
     public $Updated_By;   // varchar(45) NOT NULL DEFAULT '',
     public $Last_Updated;   // datetime DEFAULT NULL,
     public $Timestamp;   // timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    
+
     function __construct($TableName = 'reservation') {
         $this->idReservation = new DB_Field('idReservation', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idRegistration = new DB_Field('idRegistration', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idGuest = new DB_Field('idGuest', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idResource = new DB_Field('idResource', 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->idReferralDoc = new DB_Field('idReferralDoc', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->idHospital_Stay = new DB_Field('idHospital_Stay', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Resource_Suitable = new DB_Field('Resource_Suitable', '', new DbStrSanitizer(4), TRUE, TRUE);
         $this->Confirmation = new DB_Field('Confirmation', '', new DbStrSanitizer(4), TRUE, TRUE);
@@ -68,12 +70,12 @@ class ReservationRS extends AbstractTableRS {
         $this->Checkin_Notes = new DB_Field('Checkin_Notes', '', new DbStrSanitizer(1000), TRUE, TRUE);
         $this->Notes = new DB_Field('Notes', '', new DbStrSanitizer(2000), TRUE, TRUE);
         $this->Status = new DB_Field('Status', '', new DbStrSanitizer(5), TRUE, TRUE);
-        
+
         $this->Updated_By = new DB_Field('Updated_By', '', new DbStrSanitizer(45), FALSE);
         $this->Last_Updated = new DB_Field('Last_Updated', null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field('Timestamp', null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         parent::__construct($TableName);
     }
-    
+
 }
 ?>
