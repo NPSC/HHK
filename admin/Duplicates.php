@@ -60,7 +60,7 @@ if (isset($_POST['cmd'])) {
         $idGood = intval(filter_var($_POST['idg'], FILTER_SANITIZE_NUMBER_INT), 10);
         $idBad = intval(filter_var($_POST['idb'], FILTER_SANITIZE_NUMBER_INT), 10);
 
-        $events['msg'] = Duplicate::combinePsg($dbh, $idGood, $idBad);
+        $events = Duplicate::combinePsg($dbh, $idGood, $idBad);
 
 
     } else if ($cmd == 'cids') {
@@ -68,7 +68,7 @@ if (isset($_POST['cmd'])) {
         $idGood = intval(filter_var($_POST['idg'], FILTER_SANITIZE_NUMBER_INT), 10);
         $idBad = intval(filter_var($_POST['idb'], FILTER_SANITIZE_NUMBER_INT), 10);
 
-        $events['msg'] = Duplicate::combineId($dbh, $idGood, $idBad);
+        $events = Duplicate::combineId($dbh, $idGood, $idBad);
     }
 
     } catch (PDOException $pex) {
@@ -116,7 +116,7 @@ $mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, ''
             <div id="searchSel" style="margin: 1em 0"><?php echo 'Search for: ' . $mtypeSel; ?></div>
             
             <div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="display: none; margin-right: 1em; font-size:.85em;"></div>
-            <div id="divExpansion" style="display:none;font-size:.85em;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail"></div>
+            <div id="divExpansion" style="display:none;font-size:.85em;text-align:center;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail"></div>
         </div>
     </body>
 </html>

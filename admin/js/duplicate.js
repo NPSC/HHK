@@ -23,8 +23,10 @@ $(document).ready(function () {
                 $('#divList').show();
 
                 $('.hhk-expand').click(function () {
-                    $('#dupNames td').css('background-color','');
-                    $(this).parent('td').css('background-color','yellow');
+                	$('.hhk-expand').removeClass('selected');
+                	$(this).addClass('selected');
+                    $('#dupNames td').css('background-color','')
+                    $(this).parent('td').css('background-color','yellow')
                     $.post('Duplicates.php', {cmd: 'exp', nf: $(this).data('fn'), mType: $(this).data('type')},
                         function (data) {
                             "use strict";
@@ -44,7 +46,7 @@ $(document).ready(function () {
                             }
 
                             $('#divExpansion').children().remove().end().append($(data.mk)).show();
-                            $('#btnCombPSG, #btnCombId').button();
+                            $('#btnCombPSG, #btnCombId, #btnCombine').button();
                             $('#btnCombine').click(function () {
                                 var id = $('input[name=rbchoose]:checked').val();
                                 $('#spnAlert').text('');
@@ -108,7 +110,8 @@ $(document).ready(function () {
                                                 return;
                                             }
                                             if (data.msg && data.msg != '') {
-                                                flagAlertMessage(data.msg, 'info');
+                                                flagAlertMessage(data.msg, 'success');
+                                                $('.hhk-expand.selected').trigger('click');
                                             }
                                 });
                             });
@@ -142,11 +145,13 @@ $(document).ready(function () {
                                                 return;
                                             }
                                             if (data.error) {
-                                                flagAlertMessage(data.error, 'alert');
+                                                flagAlertMessage(data.error, 'error');
                                                 return;
                                             }
                                             if (data.msg && data.msg != '') {
                                                 flagAlertMessage(data.msg, 'success');
+                                                $('.hhk-expand.selected').trigger('click');
+                                                
                                             }
                                 });
                             });

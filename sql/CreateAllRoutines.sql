@@ -292,12 +292,30 @@ CREATE PROCEDURE `delete_names_u_tbd`()
 
 BEGIN
 
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @text = MESSAGE_TEXT;
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot delete names. No changes made.<br>', @text) as `error`;
+	END;
+
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
+
 	-- collect all deletable names.
 	create temporary table tids (idName int);
 	insert into tids (idName) select idName from name where (Member_Status = 'u' or Member_Status = 'TBD');
 
 	delete p from photo p where p.idPhoto in (select Guest_Photo_Id from name_demog nd join tids n on nd.idName = n.idName); 
-	delete na from volunteer_hours na join tids n on na.idName = n.idName;
+    delete na from volunteer_hours na join tids n on na.idName = n.idName;
 	update donations d join tids n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0;
 	update donations d join tids n on d.Assoc_Id = n.idName set d.Assoc_Id = 0;
 	delete r from relationship r join tids n on (r.idName = n.idName or r.Target_Id = n.idName);
@@ -360,8 +378,20 @@ BEGIN
 	-- Log it
 	Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
         select Now(), 'audit', 'delete', 'delete_names_u_tbd', idName, concat('name.idName: ', idName, ' -> null') from tids;
-	
-	drop table tids;
+
+	drop temporary table tids;
+
+	IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        select "Success: Names deleted." as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+        THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
+
 
 END -- ;
 
@@ -737,6 +767,24 @@ drop procedure if exists `remove_dup_guest`; -- ;
 CREATE PROCEDURE `remove_dup_guest`(goodId int, badId int)
 BEGIN
 
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @text = MESSAGE_TEXT;
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot remove duplicate guest. No changes made.<br>', @text) as `error`;
+	END;
+
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
+    
     update ignore name_guest set idName = goodId where idName = badId;
     delete from name_guest where idName = badId;
 
@@ -801,6 +849,16 @@ BEGIN
     insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
         values (now(), 'audit', 'update', 'sp', badId, 'Remove Dup Guest');
 
+	IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        SELECT CONCAT("Success: Duplicate guest ", badId, " removed successfully") as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+		THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
 END -- ;
 
 
@@ -814,20 +872,29 @@ drop procedure if exists `combinePSG`; -- ;
 
 CREATE PROCEDURE `combinePSG` (keepIdPsg int(11), dupIdPsg int(11))
 BEGIN
-    
+
     DECLARE goodReg int;
     Declare badReg int;
     Declare goodIdP int;
     Declare badIdP int;
-
+    
 	DECLARE exit handler for sqlexception
 	BEGIN
 		GET DIAGNOSTICS CONDITION 1 @text = MESSAGE_TEXT;
-		ROLLBACK;
-		SELECT CONCAT('ERROR: Cannot combine PSGs. No changes made.<br>', @text);
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot combine PSGs. No changes made.<br>', @text) as `error`;
 	END;
-
-	START TRANSACTION;
+    
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
 
 	UPDATE IGNORE name_guest 
 	SET 
@@ -933,11 +1000,17 @@ BEGIN
     -- delete from hospital_stay where idPsg = dupIdPsg;
 
     call remove_dup_guest(goodIdP, badIdP);
-
-	commit;
     
-    select concat("Success: PSG ", dupIdPsg, " combined into PSG ", keepIdPsg);
-
+    IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        select concat("Success: PSG ", dupIdPsg, " combined into PSG ", keepIdPsg) as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+		THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
 END -- ;
 
 
