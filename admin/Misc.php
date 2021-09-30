@@ -32,7 +32,6 @@ try {
 $dbh = $wInit->dbh;
 //$dbcon = initDB();
 
-
 $testVersion = $wInit->testVersion;
 // get session instance
 $uS = Session::getInstance();
@@ -86,8 +85,9 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
 
     $query = "SELECT * FROM name_log WHERE 1=1 " . $whereName . $logDates . " order by Date_Time desc limit 100;";
 
-    $result2 = $dbh->query($query);
-
+    $stmt2 = $dbh->query($query);
+    $result2 = $stmt2->fetchAll(\PDO::FETCH_ASSOC);
+    
     $data = "<table id='dataTbl' class='display'><thead><tr>
             <th>Date</th>
             <th>Type</th>
@@ -96,7 +96,7 @@ function getChangeLog(\PDO $dbh, $naIndex, $stDate = "", $endDate = "") {
             <th>Member Id</th>
             <th>Log Text</th></tr></thead><tbody>";
 
-    while ($row2 = $result2->fetch(\PDO::FETCH_ASSOC)) {
+    foreach ($result2 as $row2) {
 
         $data .= "<tr>
                 <td>" . date("Y-m-d H:i:s", strtotime($row2['Timestamp'])) . "</td>
@@ -115,9 +115,10 @@ left join gen_lookups g2 on g2.Table_Name = 'Vol_Category' and substring_index(P
 left join gen_lookups g3 on g3.Table_Name = 'Vol_Rank' and g3.Code = a.Other_Code
         where a.Type = 'vol' $whereName $whDates order by a.Effective_Date desc limit 100;";
 
-    $result3 = $dbh->query($query);
-
-    while ($row2 = $result3->fetch(\PDO::FETCH_ASSOC)) {
+    $stmt3 = $dbh->query($query);
+    $result3 = $stmt3->fetchAll(\PDO::FETCH_ASSOC);
+    
+    foreach ($result3 as $row2) {
 
         $data .= "<tr>
                 <td>" . date("Y-m-d H:i:s", strtotime($row2['Effective_Date'])) . "</td>
@@ -245,7 +246,7 @@ if (isset($_POST["btnGenLookups"])) {
             }
 
             if ($query != "") {
-                $dbh->exec($query);
+                $dbh->execute($query);
                 $lookUpAlert->set_Context(AlertMessage::Success);
                 $lookUpAlert->set_Text("Okay");
             }
@@ -287,7 +288,7 @@ if (isset($_POST['btnClnPhone'])) {
 
         $srch = str_replace('(', '', str_replace(')', '', str_replace('-', '', str_replace(' ', '', $new))));
 
-        $n += $dbh->exec("update name_phone set Phone_Num = '$new', Phone_Search = '$srch' where idName = " . $r['idName'] . " and Phone_Code='".$r['Phone_Code']."'");
+        $n += $dbh->execute("update name_phone set Phone_Num = '$new', Phone_Search = '$srch' where idName = " . $r['idName'] . " and Phone_Code='".$r['Phone_Code']."'");
     }
 
     $cleanMsg = $n . " phone records cleaned.";
@@ -405,9 +406,9 @@ if (isset($_POST["btnDoBackup"])) {
 $delIdListing = "";
 
 
-$res3 = $dbh->query("select idName from name where name.Member_Status = 'u' || name.Member_Status = 'TBD';");
-
-    while ($r = $res3->fetch(\PDO::FETCH_NUM)) {
+$stmt3 = $dbh->query("select idName from name where name.Member_Status = 'u' || name.Member_Status = 'TBD';");
+$rows3 = $stmt3->fetchAll(\PDO::FETCH_NUM);
+    foreach ($rows3 as $r) {
         $delIdListing .= "<a href='NameEdit.php?id=" . $r[0] . "'>" . $r[0] . "</a> ";
     }
 
@@ -424,9 +425,8 @@ $donMoveNames = "";
 // Check for existing donation records
 $query = "select d.Donor_Id, sum(d.Amount), n.Name_Last_First from donations d left join name n on d.Donor_Id = n.idName where d.Status='a' and (n.Member_Status = 'u' or n.Member_Status = 'TBD') group by d.Donor_Id;";
 $res = $dbh->query($query);
-
-
-    while ($r = $res->fetch(\PDO::FETCH_NUM)) {
+$rows = $res->fetchAll(\PDO::FETCH_NUM);
+    foreach($rows as $r) {
         $donMoveNames .= "<tr><td>($r[0]) $r[2]</td><td class='tdBox'><input type='text' id='t_$r[0]' name='$r[0]' size='5' class='srchChars' title='Enter at least 3 characters to invoke search' />
           <select id='s_$r[0]' name='$r[0]' class='Selector'><option value='0'></option></select></td></tr>";
         $ids .= $r[0] . ",  ";
@@ -435,7 +435,8 @@ $res = $dbh->query($query);
 
 // Check for existing stays
 $staysStmt = $dbh->query("select n.idName, n.Name_Last_First from stays s left join name n on n.idName = s.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD') and DATEDIFF(ifnull(s.Span_End_Date, now()), s.Span_Start_Date) > 0 group by s.idName");
-   while ($r = $staysStmt->fetch(\PDO::FETCH_ASSOC)) {
+$rows = $staysStmt->fetchAll(\PDO::FETCH_ASSOC);
+   foreach ($rows as $r) {
        $stayIds .= $r['idName'] . ', ';
        $numStays++;
    }
@@ -456,11 +457,19 @@ if (isset($_POST["btnDelDups"])) {
     } else {
 
         // delete the name and associated records.
-        $query = "call delete_names_u_tbd;";
-        $res = $dbh->exec($query);
-
-        $delDupsAlert->set_Context(alertMessage::Success);
-        $delDupsAlert->set_Text("Oday.  Uh-oh, I must have a dold.");
+        $delStmt = $dbh->query("call delete_names_u_tbd();");
+        $response = $delStmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        if(isset($response[0]['msg'])){
+            $delDupsAlert->set_Context(alertMessage::Success);
+            $delDupsAlert->set_Text($response[0]['msg']);
+        }elseif(isset($response[0]['error'])){
+            $delDupsAlert->set_Context(alertMessage::Alert);
+            $delDupsAlert->set_Text($response[0]['error']);
+        }else{
+            $delDupsAlert->set_Context(alertMessage::Alert);
+            $delDupsAlert->set_Text("An unknown error has occurred.");
+        }
     }
     $delNamesMsg = $delDupsAlert->createMarkup();
 }
@@ -729,6 +738,7 @@ $selLookups = getGenLookups($dbh);
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
+        	<h1><?php echo $wInit->pageHeading; ?></h1>
             <form action="Misc.php" method="post" id="frmLookups" name="frmLookups">
                 <div id="accordion" class="hhk-member-detail" style="display:none;">
                     <ul>

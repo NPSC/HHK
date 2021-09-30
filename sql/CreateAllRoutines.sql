@@ -313,7 +313,8 @@ BEGIN
 	-- collect all deletable names.
 	create temporary table tids (idName int);
 	insert into tids (idName) select idName from name where (Member_Status = 'u' or Member_Status = 'TBD');
-
+	select count(*) into @numMembers from tids;
+    
 	delete p from photo p where p.idPhoto in (select Guest_Photo_Id from name_demog nd join tids n on nd.idName = n.idName); 
     delete na from volunteer_hours na join tids n on na.idName = n.idName;
 	update donations d join tids n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0;
@@ -384,7 +385,7 @@ BEGIN
 	IF @@in_transaction = 1 AND @tranLevel = 0
     THEN
 		COMMIT;
-        select "Success: Names deleted." as `msg`;
+        select concat(@numMembers, " members deleted.") as `msg`;
 	ELSE
 		IF @@in_transaction = 1 AND @tranLevel > 0
         THEN
