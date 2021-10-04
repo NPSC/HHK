@@ -852,6 +852,54 @@
     				group: {
     					label: 'Group'
     				}
+  				},
+  				"radio-group": {
+    				width: {
+      					label: 'Field Width',
+      					multiple: false,
+      					options: {
+        					'col-md-12': '12 Columns',
+        					'col-md-11': '11 Columns',
+        					'col-md-10': '10 Columns',
+        					'col-md-9': '9 Columns',
+        					'col-md-8': '8 Columns',
+        					'col-md-7': '7 Columns',
+        					'col-md-6': '6 Columns',
+        					'col-md-5': '5 Columns',
+        					'col-md-4': '4 Columns',
+        					'col-md-3': '3 Columns',
+        					'col-md-2': '2 Columns',
+        					'col-md-1': '1 Column',
+      					},
+      					value: 'col-md-12'
+    				},
+    				group: {
+    					label: 'Group'
+    				}
+  				},
+  				"checkbox-group": {
+    				width: {
+      					label: 'Field Width',
+      					multiple: false,
+      					options: {
+        					'col-md-12': '12 Columns',
+        					'col-md-11': '11 Columns',
+        					'col-md-10': '10 Columns',
+        					'col-md-9': '9 Columns',
+        					'col-md-8': '8 Columns',
+        					'col-md-7': '7 Columns',
+        					'col-md-6': '6 Columns',
+        					'col-md-5': '5 Columns',
+        					'col-md-4': '4 Columns',
+        					'col-md-3': '3 Columns',
+        					'col-md-2': '2 Columns',
+        					'col-md-1': '1 Column',
+      					},
+      					value: 'col-md-12'
+    				},
+    				group: {
+    					label: 'Group'
+    				}
   				}
 			},
 			disabledActionButtons: ['data', 'save', 'clear'],

@@ -185,7 +185,21 @@ if(isset($_GET['template'])){
 
               				if(data.type == 'radio-group'){
               					$(field).children().addClass('form-check');
+              					$(field).find('.formbuilder-radio-inline').addClass('form-check-inline');
               					$(field).find('input[type=radio').addClass('form-check-input');
+              					$(field).find('label').addClass('form-check-label');
+              					$(field).find('input.other-option').css('margin-top', '0.5em');
+              					$(field).find('input.other-val').addClass('form-control d-inline-block w-75 ms-2');
+              					return $('<div/>').addClass(data.width + ' mb-3 field-container')
+              					.append($('<div/>').addClass('card')
+              						.append($('<div/>').addClass('card-body')
+              							.append(label, field, help, validation)
+              						)
+              					);
+              				}else if(data.type == 'checkbox-group'){
+              					$(field).children().addClass('form-check');
+              					$(field).find('.formbuilder-checkbox-inline').addClass('form-check-inline');
+              					$(field).find('input[type=checkbox').addClass('form-check-input');
               					$(field).find('label').addClass('form-check-label');
               					$(field).find('input.other-option').css('margin-top', '0.5em');
               					$(field).find('input.other-val').addClass('form-control d-inline-block w-75 ms-2');
@@ -209,41 +223,52 @@ if(isset($_GET['template'])){
               					}else{
               						$(field).datepicker();
               					}
-              				}else if(data.type == 'select' && data.dataSource){
-              					var options = {};
-              					switch(data.dataSource){
-              						case 'namePrefix':
-              							options = namePrefixes;
-              							break;
-              						case 'nameSuffix':
-              							options = nameSuffixes;
-              							break;
-              						case 'gender':
-              							options = genders;
-              							break;
-              						case 'patientRelation':
-              							options = patientRels;
-              							break;
-              						case 'mediaSource':
-              							options = mediaSources;
-              							break;
-              						case 'vehicleStates':
-              							options = vehicleStates;
-              							break;
-              						case 'hospitals':
-              							options = hospitals;
-              							break;
-              						default:
-              							options = {};
-              					}
-              					$(field).html('<option disabled selected>' + data.placeholder + '</option>');
-              					for(i in options){
-              						if(typeof data.userData != 'undefined' && options[i].Code == data.userData[0]){
-            							$(field).append('<option value="' + options[i].Code + '" selected>' + options[i].Description + '</option>');
-            						}else{
-            							$(field).append('<option value="' + options[i].Code + '">' + options[i].Description + '</option>');
-            						}
-            					}
+              				}else if(data.type == 'select'){
+              					if(data.dataSource){
+                  					var options = {};
+                  					switch(data.dataSource){
+                  						case 'namePrefix':
+                  							options = namePrefixes;
+                  							break;
+                  						case 'nameSuffix':
+                  							options = nameSuffixes;
+                  							break;
+                  						case 'gender':
+                  							options = genders;
+                  							break;
+                  						case 'patientRelation':
+                  							options = patientRels;
+                  							break;
+                  						case 'mediaSource':
+                  							options = mediaSources;
+                  							break;
+                  						case 'vehicleStates':
+                  							options = vehicleStates;
+                  							break;
+                  						case 'hospitals':
+                  							options = hospitals;
+                  							break;
+                  						default:
+                  							options = {};
+                  					}
+                  					$(field).html('<option disabled selected>' + data.placeholder + '</option>');
+                  					for(i in options){
+                  						if(typeof data.userData != 'undefined' && options[i].Code == data.userData[0]){
+                							$(field).append('<option value="' + options[i].Code + '" selected>' + options[i].Description + '</option>');
+                						}else{
+                							$(field).append('<option value="' + options[i].Code + '">' + options[i].Description + '</option>');
+                						}
+                					}
+                				}
+                				
+                				if(data.multiple){
+                    				return $('<div/>').addClass(data.width + ' mb-3 field-container')
+                  					.append($('<div/>').addClass('card')
+                  						.append($('<div/>').addClass('card-body')
+                  							.append(label, field, help, validation)
+                  						)
+                  					);
+                				}
               				}
 
 							return $('<div/>').addClass(data.width + ' mb-3 field-container').append($('<div/>').addClass('form-floating').append(field, label, help, validation));
