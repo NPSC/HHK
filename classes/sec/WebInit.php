@@ -224,7 +224,7 @@ class WebInit {
         SysConfig::getCategory($this->dbh, $uS, "'p'", webInit::SYS_CONFIG);
         
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
-            where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
+            where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Rate_Adjustment', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
             UNION select `Category` as `Table_Name`, `Code`, `Title` as `Description`, `Other` as `Substitute` from `lookups` where `Show` = 'y'
             order by `Table_Name`, `Description`;";
         $stmt = $this->dbh->query($query);

@@ -87,8 +87,9 @@ class RateChooser {
 
     public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs, $isAdmin = FALSE) {
 
+        $uS = Session::getInstance();
         $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');
-        $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'text-align:center;margin-left:.7em;');
+        $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'');
         $fixedRate = '';
         $rateTitle = '';
         $rateAdjust = '';
@@ -112,6 +113,8 @@ class RateChooser {
 
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $vRs->idRoom_rate->getStoredVal());
 
+        $adjSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($uS->guestLookups['Room_Rate_Adjustment']),'', TRUE), $attrAdj);
+        
         $rateTbl = new HTMLTable();
 
         if ($isAdmin) {
@@ -136,8 +139,8 @@ class RateChooser {
                 .HTMLTable::makeTd($rateCat[1] . $rateTitle, array('id'=>'showRateTd'))
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $rateCat[0], FALSE), array('name'=>'selRateCategory', 'class'=>'hhk-feeskeys'))
                 .HTMLContainer::generateMarkup('span', 'Amt: $' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'class'=>'hhk-feeskeys', 'size'=>'4')), $attrFixed)
-                .HTMLContainer::generateMarkup('span', 'Adj:'.HTMLInput::generateMarkup($rateAdjust, array('name'=>'txtadjAmount', 'class'=>'hhk-feeskeys', 'size'=>'2')) . '%', $attrAdj), array('class'=>'changeRateTd', 'style'=>'display:none;'))
-
+                //.HTMLContainer::generateMarkup('span', 'Adj:'.HTMLInput::generateMarkup($rateAdjust, array('name'=>'txtadjAmount', 'class'=>'hhk-feeskeys', 'size'=>'2')) . '%', $attrAdj), array('class'=>'changeRateTd', 'style'=>'display:none;'))
+                . $adjSel)
                 .HTMLTable::makeTh('As Of: ', array('class'=>'changeRateTd', 'style'=>'display:none;'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('rpl', array('name'=>'rbReplaceRate', 'type'=>'radio', 'checked'=>'checked', 'class'=>'hhk-feeskeys'))
                     .HTMLContainer::generateMarkup('span', $visitStart, array('style'=>'margin-left:.3em;')), array('class'=>'changeRateTd', 'style'=>'display:none;'))
@@ -569,7 +572,7 @@ class RateChooser {
         if($uS->RoomPriceModel == ItemPriceCode::None){
             $attrAdj = array('style'=>'display:none;');
         }else{
-            $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'text-align:center;');
+            $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'', 'name'=>'txtadjAmount');
         }
         
         // Fixed rate?
@@ -620,11 +623,14 @@ class RateChooser {
         $rateSel = $this->makeRateSelControl(
                 HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs),
                 HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'size'=>'4')), $attrFixed));
-
+        
+        $adjSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($uS->guestLookups['Room_Rate_Adjustment']), $resv->getRateAdjust(), TRUE), $attrAdj);
+        
         $tbl->addBodyTr(
                 ($this->payVisitFee ? HTMLTable::makeTd($vFeeMkup, array('style'=>'text-align:center;')) : '')
             .HTMLTable::makeTd($rateSel, array('style'=>($uS->RoomPriceModel == ItemPriceCode::None ? 'display:none;':'')))
-                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup(($resv->getRateAdjust() == 0 ? '' : number_format($resv->getRateAdjust(), 0)), array('name'=>'txtadjAmount', 'size'=>'2')) . '%'), $attrAdj)
+                //. HTMLTable::makeTd(HTMLContainer::generateMarkup('span', HTMLInput::generateMarkup(($resv->getRateAdjust() == 0 ? '' : number_format($resv->getRateAdjust(), 0)), array('name'=>'txtadjAmount', 'size'=>'2')) . '%'), $attrAdj)
+                . HTMLTable::makeTd($adjSel)
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $nites, array('name'=>'spnNites')), array('style'=>'text-align:center;'))
                 . ($this->payVisitFee || $tax > 0 ? HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnLodging')), array('style'=>'text-align:center;')) : '')
                 . ($tax > 0 ? HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnRcTax', 'data-tax'=>$tax)), array('style'=>'text-align:center;')) : '')
