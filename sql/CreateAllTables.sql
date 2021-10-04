@@ -1953,6 +1953,7 @@ CREATE TABLE if not exists `sys_config` (
   `Header` VARCHAR(5) NOT NULL DEFAULT '',
   `Description` varchar(1000) NOT NULL DEFAULT '',
   `GenLookup` VARCHAR(45) NOT NULL DEFAULT '',
+  `Show` tinyint NOT NULL DEFAULT 1,
   PRIMARY KEY (`Key`)
 ) ENGINE=InnoDB;
 
