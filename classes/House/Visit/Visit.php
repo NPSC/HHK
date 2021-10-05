@@ -1666,7 +1666,7 @@ class Visit {
         } else {
             // continue with current room rate.
 
-            // Remove any previous visit
+            // Remove any previous visit-on-leave
             $vol = new Visit_onLeaveRS();
             $vol->idVisit->setStoredVal($this->getIdVisit());
             EditRS::delete($dbh, $vol, array($vol->idVisit));

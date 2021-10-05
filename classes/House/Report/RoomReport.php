@@ -216,6 +216,7 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
             r.idRoom,
             r.`Title`,
             r.`Status`,
+            s.On_Leave,
             gc.Substitute as Cleaning_Days,
             IFNULL(g.Description, '') AS `Status_Text`,
             IFNULL(n.Name_Full, '') AS `Name`,
@@ -314,6 +315,11 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
         // Check OOS
         if (isset($roomsOOS[$r['idRoom']])) {
             $stat = $roomsOOS[$r['idRoom']]['StatusTitle'] . ': ' . $roomsOOS[$r['idRoom']]['OOSCode'];
+        }
+        
+        // Check On Leave
+        if ($r['On_Leave'] > 0) {
+            $stat .= ' (On Leave)';
         }
 
         $fixed['titleSort'] = $r['Util_Priority'];

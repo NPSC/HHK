@@ -74,6 +74,8 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
         $locSql = "ifnull(gl.Description, '') as `$locTitle`, ";
         $diagSql = " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(hs.Diagnosis2, '') as `$diagDetailTitle`, ";
     }
+    
+    $queryStatus = " CASE WHEN s.On_Leave > 0 and s.`Status` = 'a' THEN 'On Leave' ELSE ifnull(g2.Description,'') END as `Status`, ";
 
     if ($showAddr && $showFullName) {
 
@@ -81,8 +83,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
             . "g3.Description as `Patient Rel.`, vn.Prefix, vn.First as `$guestFirst`, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, "
                 . "np.Name_First as `$patTitle First` , np.Name_Last as `$patTitle Last`, "
                 . " vn.Address, vn.City, vn.County, vn.State, vn.Zip, vn.Country, vn.Phone, vn.Email, "
-                . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, ")
-                . ($showUnique ? "" : "r.title as `Room`,")
+                    . ($showUnique ? "" : $queryStatus  . "r.title as `Room`,")
                 . $spanDates
                 //. " ifnull(rr.Title, '') as `Rate Category`, 0 as `Total Cost`, "
                 . $hospAssocSql
@@ -93,8 +94,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code,
             vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, vn.Phone, vn.Email, vn.`Address`, vn.City, vn.County, vn.State, vn.Zip, case when vn.Country = '' then 'US' else vn.Country end as Country, `nd`.`No_Return`, "
-            . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, "
-                . "r.title as `Room`," )
+            . ($showUnique ? "" : $queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . $hospAssocSql
                     . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
@@ -103,8 +103,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     } else if (!$showAddr && $showFullName) {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Prefix, vn.First as `$guestFirst`, vn.Middle, vn.Last as `$guestLast`, vn.Suffix, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
-            . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, "
-                . "r.title as `Room`," )
+            . ($showUnique ? "" :$queryStatus . "r.title as `Room`," )
                     . $spanDates
                     . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First` , "
                     . $diagSql . $locSql . $hospAssocSql . $docSql . $agentSql;
@@ -112,7 +111,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     } else {
 
         $query = "select s.idName as Id, hs.idPsg, ng.Relationship_Code, vn.Last as `$guestLast`, vn.First as `$guestFirst`, ifnull(vn.BirthDate, '') as `Birth Date`, g3.Description as `Patient Rel.`, `nd`.`No_Return`, "
-            . ($showUnique ? "" : "ifnull(g2.Description,'') as `Status`, r.title as `Room`, ") . $spanDates
+            . ($showUnique ? "" : $queryStatus . "r.title as `Room`, ") . $spanDates
                 . "np.Name_Last as `$patTitle Last`, np.Name_First as `$patTitle First`, "
                 . $diagSql . $locSql . $hospAssocSql . $docSql . $agentSql;
     }
