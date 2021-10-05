@@ -7,7 +7,7 @@ if(ini_get('display_errors') == FALSE){ //use errorHandler if errors are off (pr
 }
 
 function fatal_handler() {
-    
+
     //get error
     $error = error_get_last();
 
@@ -52,7 +52,7 @@ function formHandler($error) {
 function getSiteName(){
     $host = explode('.', $_SERVER['HTTP_HOST']);
     $requestURI = explode('/', $_SERVER['REQUEST_URI']);
-    
+
     if(count($host) == 3){
         return $host[0]; //return subdomain if it exists
     }else if($requestURI[1] == 'demo'){
@@ -82,7 +82,7 @@ function returnJSON($error) {
 
     sendMail($message);
 
-    echo json_encode(["status" => "error", "message" => "An error Occurred."]);
+    //echo json_encode(["status" => "error", "message" => "An error Occurred."]);
 }
 
 function buildPage($error, $success = false) {

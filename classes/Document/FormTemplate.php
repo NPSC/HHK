@@ -96,7 +96,9 @@ class FormTemplate {
 
         //validate CSS
         $cssValidation = $this->validateCSS($style);
-        if($cssValidation['valid'] == "false"){
+        if ($cssValidation['error']) {
+            $validationErrors['cssserver'] = $cssValidation['error'];
+        }else if(isset($cssValidation['valid']) && $cssValidation['valid'] == "false"){
             $validationErrors['css'] = $cssValidation;
         }
 
@@ -124,31 +126,36 @@ class FormTemplate {
 
     public function validateCSS($styles){
         try{
-
+            ini_set('default_socket_timeout', 10);
             $encodedStyle = urlencode($styles);
             $url = 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=' . $encodedStyle;
             $resp = file_get_contents($url);
-            $resp = preg_replace("/(<\/?)(\w+):([^>]*>)/", "$1$2$3", $resp);
-            $respObj = new \SimpleXMLElement($resp);
-            $isValid = $respObj->xpath('//envBody')[0]->mcssvalidationresponse->mvalidity;
-            $warnings = array();
-            $errors = array();
+            if($resp === FALSE){
+                return array('error'=>"Could not validate CSS: CSS Validator service could not be reached.");
+            }else{
+                $resp = preg_replace("/(<\/?)(\w+):([^>]*>)/", "$1$2$3", $resp);
+                $respObj = new \SimpleXMLElement($resp);
+                $isValid = $respObj->xpath('//envBody')[0]->mcssvalidationresponse->mvalidity;
+                $warnings = array();
+                $errors = array();
+                ini_restore('default_socket_timeout');
 
-            //collect errors
-            if($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->merrors->merrorcount > 0){
-                foreach($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->merrors->merrorlist->merror as $error){
-                    $errors[] = ['line'=>$error->mline, 'message'=>$error->mmessage];
+                //collect errors
+                if($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->merrors->merrorcount > 0){
+                    foreach($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->merrors->merrorlist->merror as $error){
+                        $errors[] = ['line'=>$error->mline, 'message'=>$error->mmessage];
+                    }
                 }
-            }
 
-            //collect warnings
-            if($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->mwarnings->mwarningcount > 0){
-                foreach($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->mwarnings->mwarninglist->mwarning as $warning){
-                    $warnings[] = ['line'=>$warning->mline, 'message'=>$warning->mmessage];
+                //collect warnings
+                if($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->mwarnings->mwarningcount > 0){
+                    foreach($respObj->xpath('//envBody')[0]->mcssvalidationresponse->mresult->mwarnings->mwarninglist->mwarning as $warning){
+                        $warnings[] = ['line'=>$warning->mline, 'message'=>$warning->mmessage];
+                    }
                 }
-            }
 
-            return array('valid'=>$isValid, 'errors'=>$errors, 'warnings'=>$warnings);
+                return array('valid'=>$isValid, 'errors'=>$errors, 'warnings'=>$warnings);
+            }
         }catch (\Exception $e){
             return array('error'=>"Could not validate CSS: " .  $e->getMessage());
         }
