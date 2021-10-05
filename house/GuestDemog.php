@@ -62,7 +62,9 @@ foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
     }
 }
 
-$whDemos .= ") ";
+if(strlen($whDemos) > 0){
+    $whDemos .= ") ";
+}
 
 function getDemographicField($tableName, $recordSet) {
 
@@ -87,46 +89,46 @@ function getMissingDemogs($dbh, $columns, $whDemos){
     }catch(\Exception $e){
         return array("error"=>"An error occurred while loading DataTable: " . $e->getMessage());
     }
-    
+
 }
 
 function saveMissingDemogs($dbh, $uS, $demos){
     try{
-        
+
         foreach ($demos as $j => $d) {
-            
+
             if (isset($_POST['sel' . $j])) {
-                
+
                 foreach ($_POST['sel' . $j] as $k => $v) {
-                    
+
                     $id = intval(filter_var($k, FILTER_SANITIZE_NUMBER_INT), 10);
-                    
+
                     if ($j == 'Gender') {
                         $nameRS = new NameRS();
                     } else {
                         $nameRS = new NameDemogRS();
                     }
-                    
+
                     $nameRS->idName->setStoredVal($id);
                     $rows = EditRS::select($dbh, $nameRS, array($nameRS->idName));
-                    
+
                     if (count($rows) === 1) {
-                        
+
                         EditRS::loadRow($rows[0], $nameRS);
-                        
+
                         $dbField = getDemographicField($j, $nameRS);
-                        
+
                         if (isset($_POST['cbUnkn'][$k])) {
                             $dbField->setNewVal('z');
                         } else {
                             $dbField->setNewVal(filter_var($v, FILTER_SANITIZE_STRING));
                         }
-                        
+
                         $nameRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
                         $nameRS->Updated_By->setNewVal($uS->username);
-                        
+
                         $numRows = EditRS::update($dbh, $nameRS, array($nameRS->idName));
-                        
+
                         if ($numRows > 0) {
                             NameLog::writeUpdate($dbh, $nameRS, $nameRS->idName->getStoredVal(), $uS->username);
                         }
@@ -134,9 +136,9 @@ function saveMissingDemogs($dbh, $uS, $demos){
                 }
             }
         }
-        
+
         return array("success"=> "Demographics updated successfully.");
-        
+
     }catch(\Exception $e){
         return array("error"=>"Error: " . $e->getMessage());
     }
@@ -146,7 +148,7 @@ $cmd = isset($_REQUEST['cmd']) ? $_REQUEST['cmd']: '';
 $events = '';
 
 if ($cmd){
-    
+
     switch ($cmd){
         case 'getMissingDemog':
             $events = getMissingDemogs($dbh, $columns, $whDemos);
@@ -157,22 +159,22 @@ if ($cmd){
         default:
             $events = array("error" => "Bad Command: \"" . $cmd . "\"");
     }
-    
+
     if (is_array($events)) {
-        
+
         $json = json_encode($events);
-        
+
         if ($json !== FALSE) {
             echo ($json);
         } else {
             $events = array("error" => "PHP json encoding error: " . json_last_error_msg());
             echo json_encode($events);
         }
-        
+
     } else {
         echo $events;
     }
-    
+
     exit;
 }
 
@@ -188,13 +190,13 @@ if ($cmd){
         <?php echo FAVICON; ?>
         <?php echo JQ_DT_CSS; ?>
 		<?php echo MULTISELECT_CSS; ?>
-		
+
 		<style>
 		  .fixedHeader-floating, .fixedHeader-locked {
 		      font-size: 0.8em !important;
 		      font-family: Lucida Grande,Lucida Sans,Arial,sans-serif !important;
 		  }
-		  
+
 		  .fixedHeader-floating *, .fixedHeader-locked * {
 		      font-size: 1em;
 		  }
