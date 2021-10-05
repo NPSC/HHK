@@ -61,9 +61,9 @@ class UpdateSite {
 
             foreach ($patch->results as $err) {
 
-                if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
-                    continue;
-                }
+//                 if ($err['errno'] == 1091 || $err['errno'] == 1061) {  // key not exist, Duplicate Key name
+//                     continue;
+//                 }
 
                 $this->errorMsg .= 'Create Table Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
             }
@@ -84,9 +84,9 @@ class UpdateSite {
 
                 foreach ($patch->results as $err) {
 
-                    if ($err['errno'] == 1062 || $err['errno'] == 1060) {
-                        continue;
-                    }
+//                     if ($err['errno'] == 1062 || $err['errno'] == 1060) {
+//                         continue;
+//                     }
 
                     $this->errorMsg .= 'Update Patch SQL Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                     $errorCount++;
@@ -103,6 +103,7 @@ class UpdateSite {
 
                     $this->errorMsg .= 'Update Views Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                 }
+                
             } else {
 
                 $this->errorMsg .= '**Views not updated**  ';
