@@ -1222,7 +1222,7 @@ if ($uS->UseIncidentReports) {
                 $('#tblrpt').dataTable({
 	                "displayLength": 50,
 	                "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-	                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+	                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
 	                "order": [[1, 'asc']]
             	});
                 } catch (error) {}

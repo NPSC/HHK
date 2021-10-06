@@ -198,6 +198,7 @@ $(document).ready(function() {
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-member-detail hhk-visitdialog">
                 <form action="RoomUtilization.php" method="post"  id="form1" name="form1" >
+                    <div class="ui-helper-clearfix">
                     <?php echo $timePeriodMarkup; ?>
                     <?php
                         if (count($filter->getHospitals()) > 1) {
@@ -212,20 +213,14 @@ $(document).ready(function() {
                             <td><?php echo $roomGrouping; ?></td>
                         </tr>
                     </table>
-                    <table style="width:100%; clear:both; margin-top:10px;">
-                        <tr>
-                            <td style="text-align:right;">
-                                <input type="submit" name="btnByRoom" value="By Room" id="btnByRoom" />
-                            </td>
-                            <td colspan="2" style="text-align:right;">
-                                <input type="submit" name="btnByGuest" value="By <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>" id="btnByGuest" />
-                            </td>
-                        </tr>
-                    </table>
+                    </div>
+                    <div style="text-align:center; margin-top: 10px;">
+                    	<input type="submit" name="btnByRoom" value="By Room" id="btnByRoom" style="margin-right: 1em;"/>
+                    	<input type="submit" name="btnByGuest" value="By <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>" id="btnByGuest" />
+                    </div>
                 </form>
             </div>
-            <div style="clear:both;"></div>
-            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <?php echo $output; ?>
             </div>

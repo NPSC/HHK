@@ -15,6 +15,7 @@ use HHK\Purchase\PriceModel\PriceNone;
 use HHK\SysConst\ItemPriceCode;
 use HHK\Payment\CreditToken;
 use HHK\House\Report\ReportFieldSet;
+use HHK\House\Report\ReportFilter;
 
 /**
  * PaymentReport.php
@@ -48,6 +49,10 @@ $mkTable = '';  // var handed to javascript to make the report table or not.
 $hdrTbl = '';
 $dataTable = '';
 
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+$filter->createHospitals();
+
 $hospitalSelections = array();
 $assocSelections = array();
 $statusSelections = array();
@@ -80,17 +85,7 @@ if (isset($_POST['cmd'])) {
 	exit();
 }
 
-$monthArray = array(
-    1 => array(1, 'January'),
-    2 => array(2, 'February'),
-    3 => array(3, 'March'), 4 => array(4, 'April'), 5 => array(5, 'May'), 6 => array(6, 'June'),
-    7 => array(7, 'July'), 8 => array(8, 'August'), 9 => array(9, 'September'), 10 => array(10, 'October'), 11 => array(11, 'November'), 12 => array(12, 'December'));
 
-if ($uS->fy_diff_Months == 0) {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 21 => array(21, 'Cal. Year'), 22 => array(22, 'Year to Date'));
-} else {
-    $calOpts = array(18 => array(18, 'Dates'), 19 => array(19, 'Month'), 20 => array(20, 'Fiscal Year'), 21 => array(21, 'Calendar Year'), 22 => array(22, 'Year to Date'));
-}
 
 $statusList = readGenLookupsPDO($dbh, 'Payment_Status');
 
@@ -99,21 +94,6 @@ $payTypes = array();
 foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
     if ($p[2] != '') {
         $payTypes[$p[2]] = array($p[2], $p[1]);
-    }
-}
-
-// Hospital and association lists
-$hospList = $uS->guestLookups[GLTableNames::Hospital];
-$hList = array();
-$aList = array();
-
-if (count($hospList) > 0) {
-    foreach ($hospList as $h) {
-        if ($h[2] == 'h') {
-            $hList[$h[0]] = array(0=>$h[0], 1=>$h[1]);
-        } else if ($h[2] == 'a' && $h[1] != '(None)') {
-            $aList[$h[0]] = array(0=>$h[0], 1=>$h[1]);
-        }
     }
 }
 
@@ -137,7 +117,7 @@ $cFields[] = array("Time", 'Payment_Timestamp', 'checked', '', 'h:mm:ss AM/PM;@'
 $cFields[] = array("Invoice", 'Invoice_Number', 'checked', '', 'string', '10', array());
 $cFields[] = array("Room", 'Title', 'checked', '', 'string', '15', array('style'=>'text-align:center;'));
 
-if ((count($hospList)) > 1) {
+if ((count($filter->getHList())) > 1) {
     $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'idHospital', 'checked', '', 'string', '25', array());
 }
 
@@ -187,40 +167,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     // set the column selectors
     $colSelector->setColumnSelectors($_POST);
-
-    if (isset($_POST['selIntMonth'])) {
-        $months = filter_var_array($_POST['selIntMonth'], FILTER_SANITIZE_NUMBER_INT);
-    }
-
-    if (isset($_POST['selCalendar'])) {
-        $calSelection = intval(filter_var($_POST['selCalendar'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-
-    if (isset($_POST['selIntYear'])) {
-        $year = intval(filter_var($_POST['selIntYear'], FILTER_SANITIZE_NUMBER_INT), 10);
-    }
-
-    if (isset($_POST['stDate'])) {
-        $txtStart = filter_var($_POST['stDate'], FILTER_SANITIZE_STRING);
-    }
-
-    if (isset($_POST['enDate'])) {
-        $txtEnd = filter_var($_POST['enDate'], FILTER_SANITIZE_STRING);
-    }
-
-    if (isset($_POST['selAssoc'])) {
-        $reqs = $_POST['selAssoc'];
-        if (is_array($reqs)) {
-            $assocSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-        }
-    }
-
-    if (isset($_POST['selHospital'])) {
-        $reqs = $_POST['selHospital'];
-        if (is_array($reqs)) {
-            $hospitalSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
-        }
-    }
+    $filter->loadSelectedTimePeriod();
+    $filter->loadSelectedHospitals();
 
     if (isset($_POST['selPayStatus'])) {
         $reqs = $_POST['selPayStatus'];
@@ -246,111 +194,53 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     		$gwSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
     	}
     }
-    
 
-    // Determine time span
-    if ($calSelection == 20) {
-        // fiscal year
-        $adjustPeriod = new DateInterval('P' . $uS->fy_diff_Months . 'M');
-        $startDT = new DateTime($year . '-01-01');
-
-        $start = $startDT->sub($adjustPeriod)->format('Y-m-d');
-
-        $endDT = new DateTime(($year + 1) . '-01-01');
-        $end = $endDT->sub($adjustPeriod)->format('Y-m-d');
-
-    } else if ($calSelection == 21) {
-        // Calendar year
-        $startDT = new DateTime($year . '-01-01');
-        $start = $startDT->format('Y-m-d');
-
-        $end = ($year + 1) . '-01-01';
-
-    } else if ($calSelection == 18) {
-        // Dates
-        if ($txtStart != '') {
-            $startDT = new DateTime($txtStart);
-        } else {
-            $startDT = new DateTime();
-        }
-
-        if ($txtEnd != '') {
-            $endDT = new DateTime($txtEnd);
-        } else {
-            $endDT = new DateTime();
-        }
-
-        $start = $startDT->format('Y-m-d');
-        $end = $endDT->format('Y-m-d');
-
-    } else if ($calSelection == 22) {
-        // Year to date
-        $start = date('Y') . '-01-01';
-
-        $endDT = new DateTime();
-        $endDT->add(new DateInterval('P1D'));
-        $end = $endDT->format('Y-m-d');
-
-    } else {
-        // Months
-        $interval = 'P' . count($months) . 'M';
-        $month = $months[0];
-        $start = $year . '-' . $month . '-01';
-
-        $endDate = new DateTime($start);
-        $endDate->add(new DateInterval($interval));
-
-        $end = $endDate->format('Y-m-d');
-    }
-
-
-
-    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) < DATE('$end') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('$start') ";
+    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) < DATE('" . $filter->getReportEnd() . "') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $filter->getReportEnd() . "') ";
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));
 
-    $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start)) . ' thru ' . date('M j, Y', strtotime($end))));
+    $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd()))));
 
     // Hospitals
     $whHosp = '';
-    $hdrHosps = 'All';
-    foreach ($hospitalSelections as $a) {
+    foreach ($filter->getSelectedHosptials() as $a) {
         if ($a != '') {
             if ($whHosp == '') {
-                $whHosp = $a;
-                $hdrHosps = $hList[$a][1];
+                $whHosp .= $a;
             } else {
                 $whHosp .= ",". $a;
-                $hdrHosps .= ", ". $hList[$a][1];
             }
         }
     }
-
+    
     $whAssoc = '';
-    $hdrAssocs = 'All';
-    foreach ($assocSelections as $a) {
+    foreach ($filter->getSelectedAssocs() as $a) {
         if ($a != '') {
             if ($whAssoc == '') {
-                $whAssoc = $a;
-                $hdrAssocs = $aList[$a][1];
+                $whAssoc .= $a;
             } else {
                 $whAssoc .= ",". $a;
-                $hdrAssocs .= ", ". $aList[$a][1];
             }
         }
     }
-
     if ($whHosp != '') {
         $whHosp = " and hs.idHospital in (".$whHosp.") ";
     }
+    
     if ($whAssoc != '') {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
 
-    $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
+    $hdrHosps = $filter->getSelectedHospitalsString();
+    $hdrAssocs = $filter->getSelectedAssocString();
+    $hospList = $filter->getHospitals();
+    
+    if(count($hospList) > 0){
+        $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
+    }
 
-    if (count($aList) > 0) {
+    if (count($filter->getAList()) > 1) {
         $headerTable->addBodyTr(HTMLTable::makeTd('Associations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrAssocs));
     }
 
@@ -574,14 +464,6 @@ where lp.idPayment > 0
 }
 
 // Setups for the page.
-if (count($aList) > 0) {
-$assocs = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($aList, $assocSelections),
-                array('name'=>'selAssoc[]', 'size'=>'3', 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-}
-$hospitals = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($hList, $hospitalSelections),
-		array('name'=>'selHospital[]', 'size'=>(count($hList)>12 ? '12' : (count($hList)+1)), 'multiple'=>'multiple', 'style'=>'min-width:60px;'));
-
-
 $statusSelector = HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selPayStatus[]', 'size' => '7', 'multiple' => 'multiple'));
 
@@ -591,11 +473,10 @@ $payTypeSelector = HTMLSelector::generateMarkup(
 
 $gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($gwList, $gwSelections), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($gwList) + 1)));
 
-$monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
-$yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
-$calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;', 'id'=>'includeFields'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left; margin-left: 5px;', 'id'=>'includeFields'));
 
 ?>
 <!DOCTYPE html>
@@ -755,7 +636,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                  ],
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"ilp><"clear">'
+                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
             });
 
             $('#printButton').button().click(function() {
@@ -782,44 +663,17 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                 <?php }?>
             </ul>
             <div id="payr" >
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="min-width: 400px; padding:10px;">
                 <form id="fcat" action="PaymentReport.php" method="post">
-                    <table style="float: left;">
-                        <tr>
-                            <th colspan="3">Time Period</th>
-                        </tr>
-                        <tr>
-                            <th>Interval</th>
-                            <th style="min-width:100px; ">Month</th>
-                            <th>Year</th>
-                        </tr>
-                        <tr>
-                            <td style="vertical-align: top;"><?php echo $calSelector; ?></td>
-                            <td><?php echo $monthSelector; ?></td>
-                            <td style="vertical-align: top;"><?php echo $yearSelector; ?></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3">
-                                <span class="dates" style="margin-right:.3em;">Start:</span>
-                                <input type="text" value="<?php echo $txtStart; ?>" name="stDate" id="stDate" class="ckdate dates" style="margin-right:.3em;"/>
-                                <span class="dates" style="margin-right:.3em;">End:</span>
-                                <input type="text" value="<?php echo $txtEnd; ?>" name="enDate" id="enDate" class="ckdate dates"/></td>
-                        </tr>
-                    </table>
-                    <?php if ((count($aList) + count($hList)) > 1) { ?>
-                    <table style="float: left;">
-                        <tr>
-                            <th colspan="2"><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Filter</th>
-                        </tr>
-                        <?php if (count($aList) > 0) { ?><tr>
-                            <th>Associations</th>
-                            <th><?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>s</th>
-                        </tr><?php } ?>
-                        <tr>
-                            <?php if (count($aList) > 0) { ?><td style="vertical-align: top;"><?php echo $assocs; ?></td><?php } ?>
-                            <td><?php echo $hospitals; ?></td>
-                        </tr>
-                    </table><?php } ?>
-                    <table style="float: left;">
+                    <div class="ui-helper-clearfix">
+                    <?php
+                        echo $timePeriodMarkup;
+                        
+                    	if (count($filter->getHospitals()) > 1) {
+                            echo $hospitalMarkup;
+                        }
+                    ?>
+                    <table style="float: left; margin-left: 5px;">
                         <tr>
                             <th colspan="2">Pay Type</th>
                         </tr>
@@ -827,7 +681,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                            <td><?php echo $payTypeSelector; ?></td>
                         </tr>
                     </table>
-                    <table style="float: left;">
+                    <table style="float: left; margin-left: 5px;">
                         <tr>
                             <th colspan="2">Pay Status</th>
                         </tr>
@@ -835,7 +689,8 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                            <td><?php echo $statusSelector; ?></td>
                         </tr>
                     </table>
-                    <?php if (count($gwList) > 1) { ?><table style="float: left;">
+                    <?php if (count($gwList) > 1) { ?>
+                    <table style="float: left; margin-left: 5px;">
                         <tr>
                             <th colspan="2">Location</th>
                         </tr>
@@ -844,16 +699,15 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                         </tr>
                     </table>
                     <?php } echo $columSelector; ?>
-                   <table style="width:100%; clear:both;">
-                        <tr>
-                            <td style="width:50%;"></td>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
-                            <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
-                        </tr>
-                    </table>
+                    </div>
+                    <div style="text-align:center; margin-top: 10px;">
+                       <input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right:1em;"/>
+                       <input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/>
+                    </div>
                 </form>
-            <div style="clear:both;"><p id="rptFeeLoading" class="ui-state-active" style="font-size: 1.1em; float:left; display:none; margin:20px; padding: 5px;">Loading Payment Report...</p></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
+                </div>
+			<div style="clear:left;"></div>
+            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; font-size: 0.9em; padding: 5px 5px 25px; margin: 10px 0px;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $hdrTbl; ?>

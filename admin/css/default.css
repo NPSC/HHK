@@ -315,3 +315,37 @@ li.hhk-myMenuTop {
     margin-left: 2px;
 }
 
+/* Datatables fixes */
+
+.dataTables_wrapper .dataTables_length select {
+	background-color: white !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+	background-color: white !important;
+}
+
+.dataTables_wrapper .top, .dataTables_wrapper .bottom,.dataTables_wrapper .dtTop, .dataTables_wrapper .dtBottom {
+	padding: 8px;
+	
+}
+
+.dataTables_wrapper .top:before,
+.dataTables_wrapper .bottom:before,
+.dataTables_wrapper .top:after,
+.dataTables_wrapper .bottom:after,
+.dataTables_wrapper .dtTop:before,
+.dataTables_wrapper .dtBottom:before,
+.dataTables_wrapper .dtTop:after,
+.dataTables_wrapper .dtBottom:after  {
+	content: "";
+    display: table;
+    border-collapse: collapse;
+}
+
+.dataTables_wrapper .top:after,
+.dataTables_wrapper .bottom:after,
+.dataTables_wrapper .dtTop:after,
+.dataTables_wrapper .dtBottom:after {
+	clear: both;
+}

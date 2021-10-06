@@ -439,7 +439,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         });
 
         if (makeTable === '1') {
-            $('div#printArea').css('display', 'block');
+            $('div#printArea, div#stats').css('display', 'block');
 
             $('#tblrpt').dataTable({
                 'columnDefs': [
@@ -450,7 +450,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                  ],
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
+                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
             });
 
             $('#printButton').button().click(function() {
@@ -467,25 +467,23 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
             <div id="vnewguests" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <p class="ui-state-active" style="max-width: 750px; margin:9px;padding:4px;">Shows the number of <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s STARTING their stay during the selected period.  This may not be the same number as the total number of <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s at the house.</p>
                 <form id="fcat" action="NewGuest.php" method="post">
-                
-                    <?php echo $timePeriodMarkup; ?>
-                    <?php echo $hospitalMarkup; ?>
-                    <?php echo $columSelector; ?>
-                    <table style="width:100%; clear:both;">
-                        <tr>
-                            <!--<td><?php echo $colSelector->getRanges(); ?></td>-->
-                            <td style="width:50%;"><span style="color:red;"><?php echo $errorMessage; ?></span></td>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
-                            <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
-                        </tr>
-                    </table>
+                	<div class="ui-helper-clearfix">
+                    	<?php echo $timePeriodMarkup; ?>
+                    	<?php echo $hospitalMarkup; ?>
+                    	<?php echo $columSelector; ?>
+                    </div>
+                    <div style="text-align:center; margin-top: 10px;">
+                    	<span style="color:red; margin-right:1em;"><?php echo $errorMessage; ?></span>
+                        <input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right: 1em;"/>
+                    	<input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/>
+                    </div>
                 </form>
             </div>
-            <div id="stats" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="padding:10px;clear:left;">
+            <div id="stats" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display: none; padding:10px; margin: 10px 0; clear:left;">
                 <?php echo $statsTable; ?>
             </div>
             <div style="clear:both;"></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; font-size: .8em; padding: 5px; padding-bottom:25px; margin-bottom: 10px;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $headerTable; ?>

@@ -297,13 +297,13 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         // build header
         $hdr = array();
         $colWidths = array();
-        
+
 
         foreach($fltrdFields as $field){
             $hdr[$field[0]] = $field[4]; //set column header name and type;
             $colWidths[] = $field[5]; //set column width
         }
-        
+
         $hdrStyle = $writer->getHdrStyle($colWidths);
         $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
     }
@@ -502,13 +502,13 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
              ],
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
             });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });
         }
-        
+
         $('#includeFields').fieldSets({'reportName': 'reserv', 'defaultFields': <?php echo json_encode($defaultFields) ?>});
     });
  </script>
@@ -517,32 +517,34 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="font-size: 0.9em; display: inline-block; min-width: 400px; padding:10px;">
                 <form id="fcat" action="ReservReport.php" method="post">
+                	<div class="ui-helper-clearfix">
                     <?php echo $timePeriodMarkup; ?>
-                    <table style="float: left;">
-                        <tr>
-                            <th>Status</th>
-                        </tr>
-                        <tr>
-                            <td><?php echo $statusSelector; ?></td>
-                        </tr>
+                    <table style="float: left; margin-left:5px;">
+                        <thead>
+                        	<tr>
+                            	<th>Status</th>
+                        	</tr>
+                        </thead>
+                        <tbody>
+                        	<tr>
+                            	<td><?php echo $statusSelector; ?></td>
+                        	</tr>
+                        </tbody>
                     </table>
                     <?php if (count($filter->getHospitals()) > 1) {
                             echo $hospitalMarkup;
                         }
                         echo $columSelector; ?>
-                    <table style="width:100%; clear:both;">
-                        <tr>
-                            <td style="width:50%;"></td>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
-                            <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
-                        </tr>
-                    </table>
+                    </div>
+                    <div style="text-align:center; margin-top: 10px;">
+                    	<input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right: 1em;"/>
+                    	<input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/>
+                    </div>
                 </form>
             </div>
-            <div style="clear:both;"></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <?php echo $headerTable; ?>
                 <?php echo $dataTable; ?>

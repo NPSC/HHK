@@ -1678,7 +1678,7 @@ if ($uS->CoTod) {
         });
 
         if (makeTable === '1') {
-            $('div#printArea').css('display', 'block');
+            $('div#printArea, div#stats').css('display', 'block');
 
             $('#tblrpt').dataTable({
                 'columnDefs': [
@@ -1689,7 +1689,7 @@ if ($uS->CoTod) {
                  ],
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"ilp><"clear">',
+                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
             });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
@@ -1720,8 +1720,9 @@ if ($uS->CoTod) {
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="min-width: 400px; padding:10px;">
                 <form id="fcat" action="VisitInterval.php" method="post">
+                	<div class="ui-helper-clearfix">
                     <?php
                         echo $timePeriodMarkup;
 
@@ -1731,21 +1732,20 @@ if ($uS->CoTod) {
                         echo $roomGroupMarkup;
                         echo $columSelector;
                     ?>
-                    <table style="width:100%; clear:both;">
-                        <tr>
-                            <td style="width:50%;"><span style="color:red;"><?php echo $errorMessage; ?></span></td>
-                            <td><input type="submit" name="btnStatsOnly" id="btnStatsOnly" value="Stats Only"/></td>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
-                            <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
-                        </tr>
-                    </table>
+                    </div>
+                    <div style="text-align:center; margin-top: 10px;">
+                    	<span style="color:red; margin-right:1em;"><?php echo $errorMessage; ?></span>
+                    	<input type="submit" name="btnStatsOnly" id="btnStatsOnly" value="Stats Only" style="margin-right: 1em;"/>
+                    	<input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right: 1em;"/>
+                    	<input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/>
+                    </div>
                 </form>
             </div>
-            <div id="stats" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="padding:10px;clear:left;">
+            <div id="stats" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display: none; padding:10px; margin: 10px 0; clear:left;">
                 <?php echo $statsTable; ?>
             </div>
             <div style="clear:both;"></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; font-size: .8em; padding: 5px; padding-bottom:25px; margin-bottom: 10px;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $headerTable; ?>

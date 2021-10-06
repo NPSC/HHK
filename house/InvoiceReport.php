@@ -1029,7 +1029,7 @@ $(document).ready(function() {
                                  'render': function ( data, type, row ) {return dateRender(data, type);}
                                 }
                              ],
-                            "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                            "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
                             "displayLength": 50,
                             "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
                             "order": [[ 1, 'asc' ]]
@@ -1059,7 +1059,7 @@ $(document).ready(function() {
                  ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf>rt<"bottom"ilp><"clear">'
+            "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
         });
 
         $('#printButton').button().click(function() {
@@ -1141,7 +1141,7 @@ $(document).ready(function() {
                         </tr>
                     </table>
                 </form>
-                <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; padding: 5px; padding-bottom:25px;">
+                <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; padding: 5px; padding-bottom:25px;">
                     <div><input id="printButton" value="Print" type="button"/></div>
                     <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
                         <?php echo $headerTableMkup; ?>

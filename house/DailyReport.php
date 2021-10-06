@@ -72,7 +72,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         $('#btnHere').button();
 
         $('#daily').DataTable({
-            "dom": '<"top"if>rt<"bottom"lp><"clear">',
+            "dom": '<"top ui-toolbar ui-helper-clearfix"if>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
             "displayLength": 50,
             "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
             "order": [[ 0, 'asc' ]],
@@ -106,7 +106,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
                 </form>
             </div>
             <div style="clear:both;"></div>
-            <div class="ui-widget ui-widget-content hhk-tdbox" style="font-size: .9em; padding: 5px; padding-bottom:25px;">
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
                 <?php echo $dailyLog; ?>
             </div>
         </div>

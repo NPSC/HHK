@@ -206,7 +206,6 @@ foreach ($rescGroups as $g) {
         <?php echo FAVICON; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo NOTY_CSS; ?>
-        <link href="css/rowGroup.jqueryui.min.css" rel="stylesheet" type="text/css" />
 
         <style type="text/css"  media="print">
             #ckout {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -218,7 +217,6 @@ foreach ($rescGroups as $g) {
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="../js/dataTables.rowGroup.min.js"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
