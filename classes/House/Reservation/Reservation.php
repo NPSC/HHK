@@ -995,15 +995,18 @@ WHERE
                 $resv->setRateAdjust(0);
             }
 
-        } else if (isset($post['txtadjAmount']) && (SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN) || $uS->RateChangeAuth === FALSE)) {
+        } else if (isset($post['seladjAmount']) && $post['seladjAmount'] != 'keyed' && $post['seladjAmount'] != $resv->getIdRateAdjust() && (SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN) || $uS->RateChangeAuth === FALSE)) {
 
             // Save rate adjustment
-            if ($post['txtadjAmount'] === '0' || $post['txtadjAmount'] === '') {
+            if(isset($uS->guestLookups['Room_Rate_Adjustment'][$post['seladjAmount']])){
+                $idRateAdjust = $post['seladjAmount'];
+                $rateAdjust = $uS->guestLookups['Room_Rate_Adjustment'][$post['seladjAmount']][2];
+            }else{
                 $rateAdjust = 0;
-            } else {
-                $rateAdjust = floatval(filter_var($post['txtadjAmount'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
+                $idRateAdjust = 0;
             }
 
+            $resv->setIdRateAdjust($idRateAdjust);
             $resv->setRateAdjust($rateAdjust);
 
         }

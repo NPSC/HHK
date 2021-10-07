@@ -1634,6 +1634,7 @@ CREATE TABLE if not exists `reservation` (
   `Room_Rate_Category` varchar(4) NOT NULL DEFAULT '',
   `Fixed_Room_Rate` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Rate_Adjust` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `idRateAdjust` varchar(5) NOT NULL DEFAULT '0',
   `Visit_Fee` decimal(10,2) NOT NULL DEFAULT '0.00',
   `idRoom_rate` int(11) NOT NULL DEFAULT '0',
   `Title` varchar(145) NOT NULL DEFAULT '',

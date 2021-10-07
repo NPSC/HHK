@@ -455,7 +455,7 @@ if (isset($_POST['table'])) {
 
             foreach ($_POST['txtDiagAmt'] as $k => $a) {
                 if (is_numeric($a)) {
-                    $a = abs($a);
+                    $a = floatval($a);
                 }
 
                 $amounts[$k] = $a;

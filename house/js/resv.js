@@ -228,11 +228,11 @@ function setupRates(ckIn) {
         }
     });
 
-    $('#txtadjAmount').change(function () {
+    $('#seladjAmount').change(function () {
 
         if ($selRateCat.val() !== fixedRate) {
 
-            var adj = parseFloat($(this).val()),
+            var adj = parseFloat($(this).find(':selected').data('amount')),
                 fa = 0,
                 taxAmt = 0,
                 days = parseInt($('#spnNites').text(), 10),
@@ -296,7 +296,7 @@ function setupRates(ckIn) {
         }
 
         $('#txtFixedRate').change();
-        $('#txtadjAmount').change();
+        $('#seladjAmount').change();
 
         if (ckIn.resources[$selResource.val()].key > 0) {
             $('#spnDepAmt').text('($'+ckIn.resources[$selResource.val()].key+')');
