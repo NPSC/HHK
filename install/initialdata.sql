@@ -523,6 +523,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('CalRescColWidth','8%','s','c','','The width of the rooms column on the calendar page as percent of the overall width','',1),
 ('CalResourceGroupBy','Type','lu','c','','Calendar resource grouping parameter','Room_Group',1),
 ('CalViewWeeks','3','i','c','','Number of weeks showing in the calendar view','',1),
+('CCAgentConf', 'false', 'b','h','','CC referral agent on reservation confirmation email','',1),
 ('CheckInTime','16','i','h','','Normal House Check in time of day in 24-hour format, hh','',1),
 ('CheckOutTime','10','i','h','','Normal House Checkout time of day in 24-hour format, hh','',1),
 ('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true','',1),

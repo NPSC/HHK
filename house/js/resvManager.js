@@ -1976,8 +1976,12 @@ function resvManager(initData, options) {
 
                         $('div#submitButtons').hide();
                         $("#frmConfirm").children().remove();
-                        $("#frmConfirm").html(data.confrv)
-                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
+                        $("#frmConfirm").html(data.confrv);
+                        
+                        var emailMkup = '<div style="width: 100%"><label for="confEmail" style="padding-right: 0.5em;">To Address</label><input type="text" style="width:70%" id="confEmail" value="'+data.email+'"></div>';
+                        emailMkup += '<div style="width: 100%"><label for="ccConfEmail" style="padding-right: 0.5em;">CC Address</label><input type="text" style="width:70%" id="ccConfEmail" value="'+data.ccemail+'"></div>';;
+                        
+                        $("#frmConfirm").append($('<div style="padding-top:10px; display: flex;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"">' + emailMkup + '</div>'));
 
                         $("#frmConfirm").find('#confirmTabDiv').tabs();
                         

@@ -18,6 +18,8 @@ use HHK\SysConst\RoomRateCategories;
 use HHK\House\RegisterForm;
 use HHK\House\RegistrationForm;
 use HHK\House\TemplateForm\ConfirmationForm;
+use HHK\House\Hospital\HospitalStay;
+use HHK\Member\Role\Agent;
 
 /**
  * ReservationSvcs.php
@@ -73,7 +75,7 @@ class ReservationSvcs
         return $rows;
     }
 
-    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '', $docCode = false)
+    public static function getConfirmForm(\PDO $dbh, $idReservation, $idGuest, $amount, $sendEmail = FALSE, $notes = '', $emailAddr = '', $docCode = false, $ccEmailAddr = '')
     {
         if ($idReservation == 0) {
             return array(
@@ -145,6 +147,13 @@ class ReservationSvcs
                 ->get_preferredCode());
             $emailAddr = $emAddr["Email"];
         }
+        
+        if ($uS->CCAgentConf && $uS->ReferralAgent && $ccEmailAddr == '' && !$sendEmail){
+            $hstay = new HospitalStay($dbh, 0, $reserv->getIdHospitalStay());
+            $agent = new Agent($dbh, '', $hstay->getAgentId());
+            $ccEmailAddr = $agent->getEmailsObj()->get_Data($agent->getEmailsObj()->get_preferredCode());
+            $ccEmailAddr = $ccEmailAddr["Email"];
+        }
 
         if ($sendEmail && $docCode && isset($docs[$docCode])) {
 
@@ -155,6 +164,11 @@ class ReservationSvcs
                     $mail->From = $uS->FromAddress;
                     $mail->FromName = $uS->siteName;
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
+                    
+                    if($ccEmailAddr){
+                        $mail->addCC(filter_var($ccEmailAddr, FILTER_SANITIZE_EMAIL));
+                    }
+                    
                     $mail->addReplyTo($uS->ReplyTo);
     
                     $bccs = explode(',', $uS->BccAddress);
@@ -181,17 +195,23 @@ class ReservationSvcs
                     $reserv->saveReservation($dbh, $reserv->getIdRegistration(), $uS->username);
 
                     $dataArray['mesg'] = "Email sent.  ";
+                    $dataArray['status'] = 'success';
                     
                 }catch(\Exception $e){
                     $dataArray['mesg'] = "Email failed!  " . $mail->ErrorInfo;
+                    $dataArray['status'] = 'error';
                 }
             } else {
                 $dataArray['mesg'] = "Guest email address is blank.  ";
+                $dataArray['status'] = 'error';
             }
         } else {
 
             $dataArray['confrv'] = $tabControl;
             $dataArray['email'] = $emailAddr;
+            if(isset($ccEmailAddr)){
+                $dataArray['ccemail'] = $ccEmailAddr;
+            }
         }
 
         return $dataArray;

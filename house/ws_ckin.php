@@ -188,13 +188,18 @@ try {
             if (isset($_POST['eaddr'])) {
                 $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
             }
-
+            
+            $ccAddr = '';
+            if (isset($_POST['ccAddr'])) {
+                $ccAddr = filter_var($_POST['ccAddr'], FILTER_SANITIZE_STRING);
+            }
+            
             $tabIndex = false;
             if (isset($_POST['tabIndex'])) {
                 $tabIndex = filter_var($_POST['tabIndex'], FILTER_SANITIZE_STRING);
             }
             
-            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $tabIndex);
+            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $tabIndex,$ccAddr);
             break;
 
         case 'void':
