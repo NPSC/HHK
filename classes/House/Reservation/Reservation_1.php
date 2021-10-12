@@ -1284,6 +1284,11 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         }
         return $this;
     }
+    
+    public function setIdRateAdjust($v){
+        $this->reservRs->idRateAdjust->setNewVal($v);
+        return $this;
+    }
 
     public function getIdRoomRate() {
         return $this->reservRs->idRoom_rate->getStoredVal();
@@ -1378,6 +1383,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     public function getRateAdjust() {
         return $this->reservRs->Rate_Adjust->getStoredVal();
+    }
+    
+    public function getIdRateAdjust(){
+        return $this->reservRs->idRateAdjust->getStoredVal();
     }
 
     public function getAmouontPerGuest() {

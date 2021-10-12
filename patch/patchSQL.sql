@@ -1,9 +1,9 @@
 
 
--- UPDATE `page` SET `Hide` = 1 where `File_Name` = "Duplicates.php"; -- hide Duplicates page until it gets fixed
+ UPDATE `page` SET `Hide` = 0 where `File_Name` = "Duplicates.php"; -- restore Duplicates page
 
 -- Add Mountain Standard timezone
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Time_Zone', 'America/Phoenix', 'Mountain Standard (Phoenix)');
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Time_Zone', 'America/Phoenix', 'Mountain Standard (Phoenix)');
 UPDATE `gen_lookups` SET `Description` = 'Moutain Daylight (Denver)' WHERE (`Table_Name` = 'Time_Zone') and (`Code` = 'America/Denver');
 
 
@@ -16,4 +16,9 @@ ADD COLUMN `Show` TINYINT NOT NULL DEFAULT 1 AFTER `GenLookup`;
 UPDATE `sys_config` SET `Show` = 0 where `Category` IN ('fg', 'ga');
 UPDATE `sys_config` SET `Show` = 0 where `Key` IN ('HHK_Secret_Key', 'HHK_Site_Key','Error_Report_Email', 'HUF_URL','Run_As_Test', 'SSL','Training_URL','Tutorial_URL','RoomPriceModel');
 
-INSERT INTO sys_config (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`) VALUES ('CCAgentConf', 'false', 'b','h','','CC referral agent on reservation confirmation email');
+INSERT IGNORE INTO sys_config (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`) VALUES ('CCAgentConf', 'false', 'b','h','','CC referral agent on reservation confirmation email');
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`,`Type`) VALUES ('Room_Rate_Adjustment', 'ra1', '10%', '-10','ca');
+
+ALTER TABLE reservation
+ADD COLUMN idRateAdjust VARCHAR(5) DEFAULT '0' AFTER Rate_Adjust;

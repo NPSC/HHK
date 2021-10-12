@@ -1012,7 +1012,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
             noGuests = parseInt($('#spnNumGuests').text()),
             feePayAmt = p.feePayAmt,
             tax = parseFloat($('#spnRcTax').data('tax')),
-            adjust = parseFloat($('#txtadjAmount').val());
+            adjust = parseFloat($('#seladjAmount').find(':selected').data('amount'));
 
         $(this).val('');
 

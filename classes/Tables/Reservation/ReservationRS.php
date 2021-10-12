@@ -25,6 +25,7 @@ class ReservationRS extends AbstractTableRS {
     public $Room_Rate_Category;  // VARCHAR(4)
     public $Fixed_Room_Rate;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Rate_Adjust;  // decimal(10,2) NOT NULL DEFAULT '0.00',
+    public $idRateAdjust; // varchar(5) NOT NULL DEFAULT '0',
     public $Visit_Fee;  // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $idRoom_rate;  // int(11) NOT NULL DEFAULT '0',
     public $Title;   // varchar(145) NOT NULL DEFAULT '',
@@ -54,6 +55,7 @@ class ReservationRS extends AbstractTableRS {
         $this->Room_Rate_Category = new DB_Field('Room_Rate_Category', '', new DbStrSanitizer(4), TRUE, TRUE);
         $this->Fixed_Room_Rate = new DB_Field('Fixed_Room_Rate', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Rate_Adjust = new DB_Field('Rate_Adjust', 0, new DbDecimalSanitizer(), TRUE, TRUE);
+        $this->idRateAdjust = new DB_Field('idRateAdjust', '0', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Visit_Fee = new DB_Field('Visit_Fee', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->idRoom_rate = new DB_Field('idRoom_rate', 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Title = new DB_Field('Title', '', new DbStrSanitizer(145), TRUE, TRUE);
