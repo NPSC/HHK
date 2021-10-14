@@ -250,22 +250,23 @@ try {
 
             $strt = $startDT->format('Y-m-d');
             $end = $endDT->format('Y-m-d');
+            
+            $idPsg = 0;
+            if (isset($_REQUEST["psg"])) {
+                $idPsg = intval(filter_var($_REQUEST["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
 
             $markup = '';
             if (isset($_REQUEST['visit'])) {
-                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::staysLog($dbh, $strt, $end), array('style' => 'float:left;'));
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::staysLog($dbh, $strt, $end, $idPsg), array('style' => 'float:left;'));
             }
 
             if (isset($_REQUEST['resv'])) {
-                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::reservLog($dbh, $strt, $end), array('style' => 'float:left;'));
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::reservLog($dbh, $strt, $end, 0, $idPsg), array('style' => 'float:left;'));
             }
 
             if (isset($_REQUEST['hstay'])) {
 
-                $idPsg = 0;
-                if (isset($_REQUEST["psg"])) {
-                    $idPsg = intval(filter_var($_REQUEST["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
-                }
 
                 $markup .= HTMLContainer::generateMarkup('div', ActivityReport::HospStayLog($dbh, $strt, $end, $idPsg), array('style' => 'float:left;'));
             }

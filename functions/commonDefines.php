@@ -47,14 +47,14 @@ define('JQ_DT_CSS', '<link href="css/datatables.min.css" rel="stylesheet" type="
 define('MULTISELECT_CSS', '<link href="css/jquery.multiselect.css" rel="stylesheet" type="text/css" />');
 define('FAVICON', '<link rel="icon" type="image/svg+xml" href="../favicon.svg" />');
 define('DR_PICKER_CSS', '<link rel="stylesheet" href="css/daterangepicker.min.css">');
-define('FULLC_CSS', '<link href="css/fullcalendar.css" rel="stylesheet" type="text/css" />');
+define('FULLC_CSS', '<link href="css/fullcalendar.min.css" rel="stylesheet" type="text/css" />');
 define('SELECT2_CSS', '<link href="css/select2.min.css" rel="stylesheet" type="text/css" />');
 define('NOTY_CSS', "<link href='css/noty/noty.css' rel='stylesheet' type='text/css' /><link href='css/noty/themes/semanticui.css' rel='stylesheet' type='text/css' /><link href='css/noty/animate.css' rel='stylesheet' type='text/css' />");
 define('INCIDENT_CSS', '<link href="css/incidentReports.css" rel="stylesheet" type="text/css" />');
 define('UPPLOAD_CSS', '<link rel="stylesheet" href="../js/uppload/uppload.css"><link rel="stylesheet" href="../js/uppload/light.css">');
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js');
-define('JQ_JS', '../js/jquery-3.4.1.js');
+define('JQ_JS', 'js/jquery-min.js');
 define('JQ_DT_JS', '../js/datatables.min.js');
 define('NOTY_JS', '../js/noty-min.js');
 define('NOTY_SETTINGS_JS', 'js/notySettings.js');  //These are local
@@ -70,7 +70,7 @@ define('LOGIN_JS', '../js/login.js' . CJSV);
 define('MOMENT_JS', '../js/moment.min.js');
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js');
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js');
-define('FULLC_JS', '../js/fullcalendarold.min.js');
+define('FULLC_JS', 'js/fullcalendarold.min.js');
 define('NOTES_VIEWER_JS', '../js/notesViewer.js');
 define('SELECT2_JS', '../js/select2.min.js');
 define('UPPLOAD_JS', '../js/uppload/uppload-3.2.1.min.js');

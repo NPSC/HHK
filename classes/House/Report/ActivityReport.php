@@ -26,12 +26,16 @@ class ActivityReport {
      * @param string $endDate
      * @return string HTML table markup
      */
-    public static function staysLog(\PDO $dbh, $startDate, $endDate) {
+    public static function staysLog(\PDO $dbh, $startDate, $endDate, $idPsg = 0) {
 
-        $query = "select * from vstays_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
-
-        $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
+        if ($idPsg > 0) {
+            $stmt = $dbh->query("select * from vstays_log sl where sl.idName in (select idName from name_guest where idPsg = $idPsg);");
+        } else {
+            $query = "select * from vstays_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
+            
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
+        }
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $visitId = 0;
@@ -133,18 +137,24 @@ class ActivityReport {
             $tbl->addBodyTr($trow);
         }
 
-        return $tbl->generateMarkup(array(), '<h3>Rooms Activity</h3>');
+        return $tbl->generateMarkup(array(), '<h3>Visit Activity</h3>');
     }
 
-    public static function reservLog(\PDO $dbh, $startDate, $endDate, $resvId = 0) {
+    public static function reservLog(\PDO $dbh, $startDate, $endDate, $resvId = 0, $idPsg = 0) {
 
         $uS = Session::getInstance();
 
         if ($resvId > 0) {
+            
             $idResv = intval($resvId, 10);
-
             $stmt = $dbh->query("select * from vreservation_log where idReservation = $idResv;");
+            
+        } else if ($idPsg > 0) {
+            
+            $stmt = $dbh->query("select * from vreservation_log sl where sl.idName in (select idName from name_guest where idPsg = $idPsg);");
+            
         } else {
+            
             $query = "select * from vreservation_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));

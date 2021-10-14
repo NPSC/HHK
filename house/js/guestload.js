@@ -271,30 +271,7 @@ $(document).ready(function () {
 
         beforeActivate: function (event, ui) {
 
-            var tbl = $('#vvisitLog').find('table');
-
-            if (ui.newTab.prop('id') === 'visitLog' && tbl.length === 0) {
-
-                $.post('ws_ckin.php', {cmd: 'gtvlog', idReg: memData.idReg}, function (data) {
-                    if (data) {
-                        try {
-                            data = $.parseJSON(data);
-                        } catch (err) {
-                            alert("Parser error - " + err.message);
-                            return;
-                        }
-                        if (data.error) {
-                            if (data.gotopage) {
-                                window.open(data.gotopage, '_self');
-                            }
-                            flagAlertMessage(data.error, 'error');
-                        } else if (data.vlog) {
-                            $('#vvisitLog').append($(data.vlog));
-                        }
-                    }
-                });
-
-            } else if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
+		if (ui.newTab.prop('id') === 'chglog' && !listEvtTable) {
 
                 listEvtTable = $('#dataTbl').dataTable({
                 "columnDefs": dtCols,
@@ -535,6 +512,81 @@ $(document).ready(function () {
 
     // init dirrty
     $("#form1").dirrty();
+
+
+
+    $('#btnActvtyGo').button().click(function () {
+        $(".hhk-alert").hide();
+        var stDate = $('#txtactstart').datepicker("getDate");
+        if (stDate === null) {
+            $('#txtactstart').addClass('ui-state-highlight');
+            flagAlertMessage('Enter start date', 'alert');
+            return;
+        } else {
+            $('#txtactstart').removeClass('ui-state-highlight');
+        }
+        var edDate = $('#txtactend').datepicker("getDate");
+        if (edDate === null) {
+            edDate = new Date();
+        }
+        var parms = {
+            cmd: 'actrpt',
+            start: stDate.toLocaleDateString(),
+            end: edDate.toLocaleDateString(),
+			psg: memData.idPsg
+        };
+        if ($('#cbVisits').prop('checked')) {
+            parms.visit = 'on';
+        }
+        if ($('#cbReserv').prop('checked')) {
+            parms.resv = 'on';
+        }
+        if ($('#cbHospStay').prop('checked')) {
+            parms.hstay = 'on';
+        }
+        $.post('ws_resc.php', parms,
+            function (data) {
+                if (data) {
+                    try {
+                        data = $.parseJSON(data);
+                    } catch (err) {
+                        alert("Parser error - " + err.message);
+                        return;
+                    }
+                    if (data.error) {
+                        if (data.gotopage) {
+                            window.open(data.gotopage, '_self');
+                        }
+                        flagAlertMessage(data.error, 'error');
+
+                    } else if (data.success) {
+                        
+                        $('#activityLog').remove();
+						$('#vvisitLog').append($('<div id="activityLog"/>').append($(data.success)));
+							
+                        $('.hhk-viewvisit').css('cursor', 'pointer');
+                        $('#activityLog').on('click', '.hhk-viewvisit', function () {
+                            if ($(this).data('visitid')) {
+                                var parts = $(this).data('visitid').split('_');
+                                if (parts.length !== 2)
+                                    return;
+                                var buttons = {
+                                    "Save": function () {
+                                        saveFees(0, parts[0], parts[1]);
+                                    },
+                                    "Cancel": function () {
+                                        $(this).dialog("close");
+                                    }
+                                };
+                                viewVisit(0, parts[0], buttons, 'View Visit', 'n', parts[1]);
+                            } else if ($(this).data('reservid')) {
+                                window.location.assign('Reserve.php?rid=' + $(this).data('reservid'));
+                            }
+                        });
+                    }
+                }
+          });
+	});
 
 	if(showGuestPhoto || useDocUpload){
 	var guestPhoto = window.uploader;

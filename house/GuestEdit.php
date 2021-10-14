@@ -810,7 +810,24 @@ $uS->guestId = $id;
                         <?php echo $ExcludeTab; ?>
                     </div>
                     <?php if ($memberFlag) {  ?>
-                    <div id="vvisitLog"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;"></div>
+                    <div id="vvisitLog"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
+                        <table><tr>
+                            <th>Reports</th><th>Dates</th>
+                        </tr><tr>
+                            <td><input id='cbVisits' type='checkbox' checked="checked" class="ignrSave"/> Visits</td>
+                            <td>Starting: <input type="text" id="txtactstart" class="ckdate ignrSave" value="" /></td>
+                        </tr><tr>
+                            <td><input id='cbReserv' type='checkbox' class="ignrSave"/> Reservations</td>
+                            <td>Ending: <input type="text" id="txtactend" class="ckdate ignrSave" value="" /></td>
+                        </tr><tr>
+                            <td colspan="2"><input id='cbHospStay' type='checkbox' class="ignrSave"/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</td>
+                            
+                        </tr><tr>
+                            
+                            <td colspan="2" style="text-align: right;"><input type="button" id="btnActvtyGo" value="Submit" class="ignrSave"/></td>
+                        </tr></table>
+                        <div id="activityLog" class="hhk-visitdialog"></div>
+                    </div>
                     <?php } ?>
                     <div id="nameTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
                         <div class="hhk-showonload hhk-tdbox" style="display:none;" >
