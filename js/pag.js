@@ -116,7 +116,6 @@ function logoutTimer(){
 			url: '../admin/ws_session.php',
 			dataType: 'json',
 			success: function(data){
-				console.log(data);
 				clearTimeout(timerID);
 				clearInterval(intervalID);
 				if(data.ExpiresIn > 60){
@@ -156,7 +155,6 @@ function logoutTimer(){
 						clearTimeout(timerID);
 						clearInterval(intervalID);
 						if(data.ExpiresIn > 60){
-							console.log(data);
 							timerID = setTimeout(resetTimer, (data.ExpiresIn-60)*1000);
 							$dialog.dialog('close');
 						}
