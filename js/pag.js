@@ -107,6 +107,68 @@ function openiframe(src, width, height, title, buttons) {
 
 }
 
+function logoutTimer(){
+	var timerID;
+	var intervalID;
+	
+	function resetTimer(){
+		$.ajax({
+			url: '../admin/ws_session.php',
+			dataType: 'json',
+			success: function(data){
+				console.log(data);
+				clearTimeout(timerID);
+				clearInterval(intervalID);
+				if(data.ExpiresIn > 60){
+					timerID = setTimeout(resetTimer, (data.ExpiresIn-60)*1000);
+					$dialog.dialog('close');
+				}else{
+					$("#expiresIn").text(data.ExpiresIn);
+					intervalID = setInterval(countdown, 1000);
+					$dialog.dialog('open');
+					timerID = setTimeout(function(){location.href = 'index.php?log=lo';}, data.ExpiresIn*1000);
+				}
+			}
+		});
+	}
+	
+	function countdown(){
+		var expiresIn = $("#expiresIn").text();
+		$("#expiresIn").text(expiresIn - 1);
+	}
+	
+	$dialog = $('<div id="logoutTimer" style="display:none; text-align: center;"><h3>You will be logged out in</h3><h2><span id="expiresIn"></span> Seconds</h2></div>');
+	$('#contentDiv').append($dialog);
+	
+	$dialog.dialog({
+		width : 400,
+		height : 225,
+		modal : true,
+		autoOpen: false,
+		title : "Stay Logged In?",
+		closeOnEscape: false,
+		buttons : {
+			"Stay Logged In" : function(){
+				$.ajax({
+					url: '../admin/ws_session.php?cmd=extend',
+					dataType: 'json',
+					success: function(data){
+						clearTimeout(timerID);
+						clearInterval(intervalID);
+						if(data.ExpiresIn > 60){
+							console.log(data);
+							timerID = setTimeout(resetTimer, (data.ExpiresIn-60)*1000);
+							$dialog.dialog('close');
+						}
+					}
+				});
+			}
+		}
+	});
+	
+	resetTimer();
+}
+
 $(document).ready(
 	function() {
 		"use strict";
@@ -276,4 +338,7 @@ $(document).ready(
 				buttons : chPwButtons
 			});
 		}
+		
+		//Logout after inactivity
+		logoutTimer();
 });
