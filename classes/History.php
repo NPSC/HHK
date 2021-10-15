@@ -391,47 +391,51 @@ class History {
                     $fixedRows['Action'] =  HTMLContainer::generateMarkup(
                         'ul', HTMLContainer::generateMarkup('li', 'Action' .
                                 HTMLContainer::generateMarkup('ul',
-//                                ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Take a Payment', array('class'=>'stpayFees', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span']))) : '')
-                              HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Edit Visit', array('class'=>'stvisit', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
+                                HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Edit Visit', array('class'=>'stvisit', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
                               . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Check Out', array('class'=>'stckout', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
                               . HTMLContainer::generateMarkup('li', ($r['Room_Status'] == RoomState::Clean || $r['Room_Status'] == RoomState::Ready ? HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Dirty][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>RoomState::Dirty)) : HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Clean][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>  RoomState::Clean))))
                               . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Change Rooms', array('class'=>'stchgrooms', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
                               . (SecurityComponent::is_Authorized('guestadmin') === FALSE || count($hdArry) == 0 ? '' : HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Apply Discount', array('class'=>'applyDisc', 'data-vid'=>$r['idVisit']))))
-//                              . ($creditGw != '' ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['Id'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest']))) : '')
                         )), array('class' => 'gmenu'));
 
                 }
             }
 
+            // Guest first name
             $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];
 
-            // Build the page anchor
+            // Guest last name
             if ($page != '') {
-                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
+            
+                // Indicate On leave
+                if ($r['On_Leave'] > 0) {
+    
+                    $daysOnLv = intval($r['On_Leave']);
+    
+                    $now = new \DateTime();
+                    $now->setTime(0, 0, 0);
+    
+                    $stDay = new \DateTime($r['Span_Start_Date']);
+                    $stDay->setTime(0, 0, 0);
+                    $stDay->add(new \DateInterval('P' . $daysOnLv . 'D'));
+    
+                    if ($now > $stDay) {
+                        // Past Due
+                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('class'=>'ui-state-error','title'=>'On Leave - past due!'));
+    
+                    } else {
+                        // on leave
+                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
+                    }
+                } else {
+                    
+                    // Build the page anchor
+                    $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
+
+                }
+            
             } else {
                 $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = $r['Guest Last'];
-            }
-
-            // Indicate On leave
-            if ($r['On_Leave'] > 0 && $page != '') {
-
-                $daysOnLv = intval($r['On_Leave']);
-
-                $now = new \DateTime();
-                $now->setTime(0, 0, 0);
-
-                $stDay = new \DateTime($r['Span_Start_Date']);
-                $stDay->setTime(0, 0, 0);
-                $stDay->add(new \DateInterval('P' . $daysOnLv . 'D'));
-
-                if ($now > $stDay) {
-                    // Past Due
-                    $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . 'Last'] = HTMLContainer::generateMarkup('span', $fixedRows['Guest Last'], array('class'=>'ui-state-error','title'=>'On Leave - past due!'));
-
-                } else {
-                    // on leave
-                    $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('span', $fixedRows['Guest Last'], array('class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
-                }
             }
 
 

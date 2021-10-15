@@ -771,11 +771,6 @@ $(document).ready(function () {
         $(".hhk-alert").hide();
         getApplyDiscDiag($(this).data('vid'), $('#pmtRcpt'));
     });
-//    $('#vstays, #vuncon').on('click', '.stupCredit', function (event) {
-//        event.preventDefault();
-//        $(".hhk-alert").hide();
-//        updateCredit($(this).data('id'), $(this).data('reg'), $(this).data('name'), 'cardonfile', 'register.php');
-//    });
     $('#vstays').on('click', '.stckout', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
@@ -1547,7 +1542,8 @@ $(document).ready(function () {
            $('#spnNumConfirmed').text(this.api().rows().data().length);
            $('#reservs .gmenu').menu();
        },
-       columns: rvCols
+       columns: rvCols,
+
     });
     
     if ($('#unreserv').length > 0) {
