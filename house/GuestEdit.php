@@ -768,9 +768,9 @@ $uS->guestId = $id;
             </div>
             <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px; float: left;">
                 <span>Name Search </span>
-                <input type="text" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                <input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
                 <span>Phone Search </span>
-                <input type="text" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
+                <input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
             </div>
             <div style="clear:both;"></div>
             <?php if ($alertMessage != '') { ?>
@@ -810,21 +810,21 @@ $uS->guestId = $id;
                         <?php echo $ExcludeTab; ?>
                     </div>
                     <?php if ($memberFlag) {  ?>
-                    <div id="vvisitLog"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
+                    <div id="vvisitLog"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail ignrSave" style="display:none;">
                         <table><tr>
                             <th>Reports</th><th>Dates</th>
                         </tr><tr>
-                            <td><input id='cbVisits' type='checkbox' checked="checked" class="ignrSave"/> Visits</td>
-                            <td>Starting: <input type="text" id="txtactstart" class="ckdate ignrSave" value="" /></td>
+                            <td><input id='cbVisits' type='checkbox' checked="checked"/> Visits</td>
+                            <td>Starting: <input type="text" id="txtactstart" class="ckdate" value="" /></td>
                         </tr><tr>
-                            <td><input id='cbReserv' type='checkbox' class="ignrSave"/> Reservations</td>
-                            <td>Ending: <input type="text" id="txtactend" class="ckdate ignrSave" value="" /></td>
+                            <td><input id='cbReserv' type='checkbox'/> Reservations</td>
+                            <td>Ending: <input type="text" id="txtactend" class="ckdate" value="" /></td>
                         </tr><tr>
-                            <td colspan="2"><input id='cbHospStay' type='checkbox' class="ignrSave"/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</td>
+                            <td colspan="2"><input id='cbHospStay' type='checkbox'/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</td>
                             
                         </tr><tr>
                             
-                            <td colspan="2" style="text-align: right;"><input type="button" id="btnActvtyGo" value="Submit" class="ignrSave"/></td>
+                            <td colspan="2" style="text-align: right;"><input type="button" id="btnActvtyGo" value="Submit"/></td>
                         </tr></table>
                         <div id="activityLog" class="hhk-visitdialog"></div>
                     </div>
