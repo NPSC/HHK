@@ -338,5 +338,5 @@ $(document).ready(
 		}
 		
 		//Logout after inactivity
-		logoutTimer();
+		//logoutTimer();
 });

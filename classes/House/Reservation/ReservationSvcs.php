@@ -165,8 +165,11 @@ class ReservationSvcs
                     $mail->FromName = $uS->siteName;
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
                     
-                    if($ccEmailAddr){
-                        $mail->addCC(filter_var($ccEmailAddr, FILTER_SANITIZE_EMAIL));
+                    $ccs = explode(',', $ccEmailAddr);
+                    foreach ($ccs as $cc){
+                        if($cc != ''){
+                            $mail->addCC(filter_var($cc, FILTER_SANITIZE_EMAIL));
+                        }
                     }
                     
                     $mail->addReplyTo($uS->ReplyTo);
@@ -187,6 +190,14 @@ class ReservationSvcs
     
                     // Make a note in the reservation.
                     $noteText = 'Confirmation Email sent to ' . $emailAddr;
+                    if($ccEmailAddr != '' && count($ccs) > 0){
+                        $noteText .= '; CC\'d to ';
+                        foreach ($ccs as $cc){
+                            if($cc != ''){
+                                $noteText .= $cc . ' ';
+                            }
+                        }
+                    }
                     if ($notes) { // add special note if any are present
                         $noteText .= ' with the following as a special note: ' . str_replace('\n', ' ', $notes);
                     }
