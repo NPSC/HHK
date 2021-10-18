@@ -1,70 +1,24 @@
 <?php
+
+use HHK\sec\{Session, WebInit, Labels};
+use HHK\Payment\PaymentSvcs;
+use HHK\SysConst\WebPageCode;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\House\Registration;
+use HHK\House\Reservation\ReservationSvcs;
+use HHK\HTMLControls\HTMLInput;
+
+
 /**
  * ShowRegForm.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
-
-
-require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "ReservationRS.php");
-require(DB_TABLES . "registrationRS.php");
-
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-
-
-require CLASSES . 'FinAssistance.php';
-require (CLASSES . 'PaymentSvcs.php');
-
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
-
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require(HOUSE . "psg.php");
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'Visit.php');
-require (HOUSE . 'RegisterForm.php');
-require (HOUSE . 'RegistrationForm.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-require (HOUSE . 'Vehicle.php');
-
 
 $wInit = new webInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
@@ -73,7 +27,8 @@ $pageTitle = $wInit->pageTitle;
 $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
+$labels = Labels::getLabels();
+
 
 $idVisit = 0;
 $idResv = 0;
@@ -209,7 +164,7 @@ unset($reservArray);
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type='text/javascript'>
 $(document).ready(function() {
     "use strict";
@@ -225,8 +180,10 @@ $(document).ready(function() {
         popWd      : 950,
         popX       : 20,
         popY       : 20,
-        popTitle   : 'Guest Registration Form'};
+        popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' + ' Registration Form'};
 
+    $('#mainTabs').tabs();
+    
     $('.btnPrint').click(function() {
         opt.popHt = $('div#PrintArea' + $(this).data('tab')).height();
         $('div#PrintArea' + $(this).data('tab')).printArea(opt);
@@ -263,7 +220,7 @@ $(document).ready(function() {
         window.open('ShowInvoice.php?invnum=' + invoiceNumber);
     }
 
-    $('#mainTabs').tabs().show();
+    $('#mainTabs').show();
     $('#regTabDiv').tabs();
 
 });

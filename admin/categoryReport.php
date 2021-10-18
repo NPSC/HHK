@@ -1,4 +1,9 @@
 <?php
+
+use HHK\sec\{SecurityComponent, WebInit};
+use HHK\HTMLControls\selCtrl;
+use HHK\sec\Session;
+
 /**
  * categoryReport.php
  *
@@ -9,12 +14,13 @@
  */
 require("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
+// require(CLASSES . "chkBoxCtrlClass.php");
+// require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
+$uS = Session::getInstance();
 
 $page = $wInit->page;
 
@@ -66,20 +72,9 @@ if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"]) || isset($_POST["btnCSV
 
     ini_set('memory_limit', "128M");
 
-    require(CLASSES . "OpenXML.php");
     require("functions" . DS . "CategoryReportMgr.php");
-    require ("classes" . DS . "VolCats.php");
-    require("classes" . DS . "Salutation.php");
 
-        // Get the site configuration object
-    try {
-        $config = new Config_Lite(ciCFG_FILE);
-        $guestBlackOutDays = $config->getString('house', 'Guest_Solicit_Buffer_Days', '61');
-    } catch (Exception $ex) {
-        return "Configurtion file is missing, path=".ciCFG_FILE;
-    }
-
-    $volCat = processCategory($dbh, $catSelCtrls, $catSelRoles, $catSelDormancy, $catVolStatus, $guestBlackOutDays);  //, $catSortSel);
+    $volCat = processCategory($dbh, $catSelCtrls, $catSelRoles, $catSelDormancy, $catVolStatus, $uS->SolicitBuffer);
 
     if ($volCat->get_andOr() == "and") {
         $andChecked = "checked='checked'";
@@ -119,13 +114,15 @@ foreach ($catSelCtrls as $sel) {
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         
         <script type="text/javascript">
             // Init j-query and the page blocker.
             $(document).ready(function() {
+            	$("input[type=submit], input[type=button]").button();
+            	
                 var listTable;
                 var makeTable = <?php echo $makeTable; ?>;
                 var now = new Date();
@@ -230,7 +227,7 @@ foreach ($catSelCtrls as $sel) {
                 <table style="margin-top:40px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $catagoryHeadertable; ?>
                 </table>
-                <table id="tblCategory" cellpadding="0" cellspacing="0" border="0" class="display">
+                <table id="tblCategory" class="display">
                     <?php echo $catmarkup; ?>
                 </table>
             </div>

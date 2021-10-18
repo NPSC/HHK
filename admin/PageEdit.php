@@ -1,4 +1,10 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\sec\Pages;
+use HHK\sec\{SecurityComponent, WebInit};
+use HHK\Exception\RuntimeException;
+
 /**
  * PageEdit.php
  *
@@ -9,10 +15,10 @@
  */
 
 require ("AdminIncludes.php");
-require (DB_TABLES . 'WebSecRS.php');
+// require (DB_TABLES . 'WebSecRS.php');
 
-require(SEC . 'Pages.php');
-require(REL_BASE_DIR . "classes" . DS . "selCtrl.php");
+// require(SEC . 'Pages.php');
+// require(REL_BASE_DIR . "classes" . DS . "selCtrl.php");
 
 $wInit = new webInit();
 
@@ -30,9 +36,9 @@ $siteMarkup = "";
 $webSite = '';
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
@@ -50,14 +56,14 @@ if (isset($_POST["btnSubmit"])) {
         } catch (Exception $ex) {
 
             $alertMsg->set_Text("Error: " . $ex->getMessage());
-            $alertMsg->set_Context(alertMessage::Alert);
+            $alertMsg->set_Context(AlertMessage::Alert);
             $alertMsg->set_DisplayAttr("block");
 
         }
     } else {
 
         $alertMsg->set_Text("Unauthorized for Edit");
-        $alertMsg->set_Context(alertMessage::Notice);
+        $alertMsg->set_Context(AlertMessage::Notice);
         $alertMsg->set_DisplayAttr("block");
     }
 }
@@ -85,7 +91,7 @@ if ($stmt->rowCount() > 0) {
     }
 
  } else {
-     throw new Hk_Exception_Runtime("web_sites records not found.");
+     throw new RuntimeException("web_sites records not found.");
  }
 
 
@@ -120,7 +126,7 @@ $getSiteReplyMessage = '';
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
 
         <script type="text/javascript">
     function getPages(site) {

@@ -1,15 +1,19 @@
 <?php
+
+use HHK\sec\{WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\Member\MemberSearch;
+
 /**
  * roleSearch.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
-require(MEMBER . 'MemberSearch.php');
 
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
@@ -111,4 +115,3 @@ switch ($c) {
 
 echo( json_encode($events) );
 exit();
-

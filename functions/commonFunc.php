@@ -1,5 +1,18 @@
 <?php
 
+use HHK\Exception\RuntimeException;
+use HHK\sec\Session;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\SysConst\{WebRole};
+use HHK\Config_Lite\Config_Lite;
+use PHPMailer\PHPMailer\PHPMailer;
+use HHK\HTMLControls\{HTMLContainer, HTMLTable};
+use HHK\SysConst\PaymentMethod;
+use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
+use HHK\TableLog\HouseLog;
+use HHK\ExcelHelper;
+use HHK\sec\{SecurityComponent, SysConfig};
+
 /**
  * commonFunc.php
  *
@@ -14,7 +27,7 @@ function initPDO($override = FALSE)
     $roleCode = $ssn->rolecode;
 
     if (! isset($ssn->databaseURL)) {
-        throw new Hk_Exception_Runtime('<p>Missing Database URL (initPDO)</p>');
+        throw new RuntimeException('<p>Missing Database URL (initPDO)</p>');
     }
 
     $dbuName = $ssn->databaseUName;
@@ -28,7 +41,7 @@ function initPDO($override = FALSE)
             $config = new Config_Lite(ciCFG_FILE);
         } catch (Exception $ex) {
             $ssn->destroy();
-            throw new Hk_Exception_Runtime("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
+            throw new RuntimeException("<p>Missing Database Session Initialization: " . $ex->getMessage() . "</p>");
         }
 
         $dbuName = $config->getString('db', 'ReadonlyUser', '');
@@ -36,29 +49,31 @@ function initPDO($override = FALSE)
     }
 
     try {
-    	
+
     	$dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
     	$options = [
     			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-    			PDO::ATTR_EMULATE_PREPARES   => false,
+    			PDO::ATTR_EMULATE_PREPARES   => TRUE,
     	];
 
     	$dbh = new PDO($dsn, $dbuName, $dbPw, $options);
-    	
+
         $dbh->exec("SET SESSION wait_timeout = 3600;");
 
         // Syncromize PHP and mySQL timezones
         syncTimeZone($dbh);
-        
+
     } catch (\PDOException $e) {
 
         $ssn->destroy(TRUE);
 
         if ($roleCode >= WebRole::DefaultRole && $override === FALSE) {
-            throw new Hk_Exception_Runtime("<br/>Database Error: " . $e->getMessage());
+            throw new RuntimeException("<br/>Database Error: " . $e->getMessage());
         }
 
-        header('location:../reset.php?r=' . $e->getMessage());
+        $sec = new SecurityComponent();
+
+        header('location:' . $sec->getRootURL(). 'reset.php?r=' . $e->getMessage());
         die();
     }
 
@@ -67,18 +82,18 @@ function initPDO($override = FALSE)
 
 function creditIncludes($gatewayName) {
 
-    require (PMT . 'paymentgateway/CreditPayments.php');
+/*     require (PMT . 'paymentgateway/CreditPayments.php');
 
     switch ($gatewayName) {
 
-        case PaymentGateway::INSTAMED:
+        case AbstractPaymentGateway::INSTAMED:
             require (PMT . 'paymentgateway/instamed/InstamedConnect.php');
             require (PMT . 'paymentgateway/instamed/InstamedResponse.php');
             require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
 
             break;
 
-        case PaymentGateway::VANTIV:
+        case AbstractPaymentGateway::VANTIV:
 
             require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
 
@@ -92,10 +107,12 @@ function creditIncludes($gatewayName) {
             require (PMT . 'paymentgateway/local/LocalGateway.php');
 
     }
-}
+ */}
 
 function syncTimeZone(\PDO $dbh)
 {
+    $tz = SysConfig::getKeyValue($dbh, 'sys_config', 'tz', false);
+    date_default_timezone_set($tz);
     $now = new \DateTime();
     $tmins = $now->getOffset() / 60;
     $sgn = ($tmins < 0 ? - 1 : 1);
@@ -117,59 +134,45 @@ function doExcelDownLoad($rows, $fileName)
         return;
     }
 
-    require_once CLASSES . 'OpenXML.php';
-
     $reportRows = 1;
-    $sml = OpenXML::createExcel('', $fileName);
+    $writer = new ExcelHelper($fileName);
 
     // build header
     $hdr = array();
-    $n = 0;
+    $colWidths = array();
 
     $keys = array_keys($rows[0]);
 
     foreach ($keys as $t) {
-        $hdr[$n ++] = $t;
+        $hdr[$t] = "string";
+        $colWidths[] = "20";
     }
 
-    OpenXML::writeHeaderRow($sml, $hdr);
-    $reportRows ++;
+    $hdrStyle = $writer->getHdrStyle($colWidths);
+
+    $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
     foreach ($rows as $r) {
 
-        $n = 0;
-        $flds = array();
+        $flds = array_values($r);
 
-        foreach ($r as $col) {
-
-            $flds[$n ++] = array(
-                'type' => "s",
-                'value' => $col
-            );
-        }
-
-        $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+        $row = $writer->convertStrings($hdr, $flds);
+        $writer->writeSheetRow("Sheet1", $row);
     }
-
-    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    header('Content-Disposition: attachment;filename="' . $fileName . '.xlsx"');
-    header('Cache-Control: max-age=0');
-
-    OpenXML::finalizeExcel($sml);
-    exit();
+    $writer->download();
 }
 
 function prepareEmail()
 {
-    
+
     $uS = Session::getInstance();
 
-    $mail = new PHPMailer\PHPMailer\PHPMailer();
+    $mail = new PHPMailer(true);
 
     switch (strtolower($uS->EmailType)) {
 
         case 'smtp':
-            
+
             $mail->isSMTP();
 
             $mail->Host = $uS->SMTP_Host;
@@ -200,19 +203,69 @@ function prepareEmail()
     return $mail;
 }
 
+function doPaymentMethodTotals(\PDO $dbh, $month, $year) {
+
+	$startDT = new \DateTimeImmutable(intval($year) . '-' . intval($month) . '-01');
+	$start = $startDT->format('Y-m-d');
+
+	// End date is the beginning of the next month.
+	$endDT = $startDT->add(new DateInterval('P1M'));
+	$end = $endDT->format('Y-m-d');
+
+	$tbl = new HTMLTable();
+
+	// get payment methods
+	$payTypes = array();
+	$stmtp = $dbh->query("select * from payment_method");
+	while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
+		if ($t[0] > 0 && $t[0] != PaymentMethod::ChgAsCash) {
+			$payTypes[$t[0]] = $t[1];
+		}
+	}
+	$payTypes[''] = 'Total';
+
+	// Payment Method Totals
+	$pmStmt = $dbh->query("Select p.idPayment_Method,
+    		sum(Case
+    				When p.Is_Refund = 1 Then (0 - p.Amount)
+    				When p.Status_Code = 'r' and Date(p.Timestamp) < Date('$end') and Date(p.Timestamp) >= Date('$start')
+    				  and Date(p.Last_Updated) < Date('$end') and Date(p.Last_Updated) >= Date('$start') then 0
+    				When p.Status_Code = 'r' and Date(p.Timestamp) < Date('$start')
+    				  and Date(p.Last_Updated) < Date('$end') and Date(p.Last_Updated) >= Date('$start') then (0 - p.Amount)
+    				Else p.Amount
+    				END
+    				) as mAmount
+    		FROM
+    		`payment` `p`
+    		where
+    		p.Status_Code not in ('d', 'v')
+    		and (
+    				(Date(p.Timestamp) < Date('2020-07-01') and Date(p.Timestamp) >= Date('$start'))
+    				or (Date(p.Last_Updated) < Date('2020-07-01') and Date(p.Last_Updated) >= Date('$start'))
+    				)
+    		Group by p.idPayment_Method WITH ROLLUP");
+
+	while ($r = $pmStmt->fetch(PDO::FETCH_NUM)) {
+		$tbl->addBodyTr(HTMLTable::makeTd($payTypes[$r[0]], array('class'=>'tdlabel')) . HTMLTable::makeTd($r[1], array('style'=>'text-align:right;')));
+	}
+
+	return $tbl->generateMarkup();
+}
+
+
 // This is named backwards. I'll start the new name, but it may take a while for all the code to comply
 function addslashesextended(&$arr_r)
 {
-    if (get_magic_quotes_gpc()) {
+/*     if (get_magic_quotes_gpc()) {
         array_walk_recursive($arr_r, 'stripslashes_gpc');
-    }
+    } */
 }
 
 function stripSlashesExtended(&$arr_r)
 {
-    if (get_magic_quotes_gpc()) {
+/*     if (get_magic_quotes_gpc()) {
         array_walk_recursive($arr_r, 'stripslashes_gpc');
-    }
+    } */
 }
 
 function newDateWithTz($strDate, $strTz)
@@ -233,7 +286,7 @@ function newDateWithTz($strDate, $strTz)
 
 function setTimeZone($uS, $strDate)
 {
-    if (is_null($uS) || is_a($uS, 'Session') == FALSE) {
+    if (is_null($uS) || $uS instanceof Session == FALSE) {
         $uS = Session::getInstance();
     }
 
@@ -249,7 +302,7 @@ function incCounter(\PDO $dbh, $counterName)
     }
 
     if ($rptId == 0) {
-        throw new Hk_Exception_Runtime("Increment counter not set up for $counterName.");
+        throw new RuntimeException("Increment counter not set up for $counterName.");
     }
 
     return $rptId;
@@ -411,7 +464,7 @@ function readGenLookups($con, $tbl, $orderBy = "Code")
     if (! is_a($con, 'mysqli')) {
         return readGenLookupsPDO($con, $tbl, $orderBy);
     } else {
-        throw new Hk_Exception_Runtime('Non-PDO access not supported.  ');
+        throw new RuntimeException('Non-PDO access not supported.  ');
     }
 }
 
@@ -713,7 +766,7 @@ function showGuestPicture ($idGuest, $widthPx) {
         HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-plusthick'))
-        , array("class"=>"ui-button ui-corner-all ui-widget", 'style'=>'padding: .3em; margin-right:0.3em;', 'data-uppload-button'=>'true')) . HTMLContainer::generateMarkup('div',
+        , array("class"=>"ui-button ui-corner-all ui-widget upload-guest-photo", 'style'=>'padding: .3em; margin-right:0.3em;')) . HTMLContainer::generateMarkup('div',
         htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
         , array("class"=>"ui-button ui-corner-all ui-widget delete-guest-photo", 'style'=>'padding: .3em'))
         , array('style'=>"position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;", 'id'=>'hhk-guest-photo-actions'))

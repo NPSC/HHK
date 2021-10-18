@@ -1,4 +1,12 @@
 <?php
+
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\CreateMarkupFromDB;
+use HHK\House\ResourceView;
+use HHK\SysConst\RoomState;
+use HHK\HTMLControls\HTMLContainer;
+
 /**
  * ShowHsKpg.php
  *
@@ -8,13 +16,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-require (CLASSES . 'Notes.php');
-
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'ResourceView.php');
 
 $wInit = new webInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
@@ -26,8 +27,21 @@ $uS = Session::getInstance();
 $logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
 $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
-
-$stmtMarkup = CreateMarkupFromDB::generateHTML_Table(ResourceView::roomsClean($dbh, '', $guestAdmin, TRUE), 'tbl');
+if(isset($_GET['tbl'])){
+    switch ($_GET['tbl']){
+        case 'all':
+            $stmtMarkup = HTMLContainer::generateMarkup('h2', 'Housekeeping - All Rooms - ' . date('M d, Y'), ['style'=>'margin-bottom: 1em;']) . CreateMarkupFromDB::generateHTML_Table(ResourceView::roomsClean($dbh, '', $guestAdmin, TRUE), 'tbl');
+            break;
+        case 'notReady':
+            $stmtMarkup = HTMLContainer::generateMarkup('h2', 'Housekeeping - Rooms Not Ready - ' . date('M d, Y'), ['style'=>'margin-bottom: 1em;']) . CreateMarkupFromDB::generateHTML_Table(ResourceView::roomsClean($dbh, RoomState::Dirty, $guestAdmin, TRUE), 'tbl');
+            break;
+        default:
+            $stmtMarkup = '<h2>No table defined</h2>';
+            break;
+    }
+}else{
+    $stmtMarkup = '<h2>No table defined</h2>';
+}
 
 ?>
 <!DOCTYPE html>
@@ -40,9 +54,15 @@ $stmtMarkup = CreateMarkupFromDB::generateHTML_Table(ResourceView::roomsClean($d
         <?php echo FAVICON; ?>
         <style type="text/css" media="print">
             body {margin:0; padding:0; line-height: 1.4em; word-spacing:1px; letter-spacing:0.2px; font: 13px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
+            div#divBody table {width: 100%};
         </style>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript">
+        	$(document).ready(function(){
+        		window.print();
+        	});
+        </script>
     </head>
     <body>
         <div id="contentDiv">

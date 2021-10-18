@@ -1,4 +1,7 @@
 <?php
+
+use HHK\sec\{SecurityComponent, WebInit};
+
 /**
  * recent.php
  *
@@ -43,7 +46,7 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         
@@ -118,7 +121,7 @@ $donationsFlag = SecurityComponent::is_Authorized("NameEdit_Donations");
                             <tr><td class="tdlabel">Include New Members</td><td><input type="checkbox" class="parm" id="incnew" checked="checked"/></td></tr>
                             <tr><td class="tdlabel">Include Updates to Existing Members</td><td><input type="checkbox" class="parm" id="incupd" checked="checked"/></td></tr>
 
-                            <tr><td class="tdlabel">Name, Type & Statuses</td><td><input type="checkbox" id="cbname" class="parm" checked="checked"/></td></tr>
+                            <tr><td class="tdlabel">Name, Type &#38; Statuses</td><td><input type="checkbox" id="cbname" class="parm" checked="checked"/></td></tr>
                             <tr><td class="tdlabel">Addresses</td><td><input type="checkbox" id="cbaddr" class="parm" checked="checked"/></td></tr>
                             <tr><td class="tdlabel">Phone</td><td><input type="checkbox" id="cbphone" class="parm" checked="checked"/></td></tr>
                             <tr><td class="tdlabel">Email</td><td><input type="checkbox" id="cbemail" class="parm" checked="checked"/></td></tr>

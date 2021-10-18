@@ -1,4 +1,7 @@
 <?php
+
+use HHK\sec\{Session, UserClass, WebInit};
+
 /**
  * VolListing.php
  *
@@ -17,6 +20,15 @@ $testVersion = $wInit->testVersion;
 $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
+
+//disable inactive users
+$stmt = $dbh->query("select * from w_users");
+if ($stmt->rowCount() > 0) {
+    $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    foreach($users as $user){
+        $user = UserClass::disableInactiveUser($dbh, $user);
+    }
+}
 
 // Create volunteer report
 $query = "SELECT * FROM vweb_users where Id > 0 order by Id;";
@@ -82,7 +94,7 @@ if (count($rows) > 0) {
                     $markup .= "<td><input type='checkbox' id='delCkBox" . $r . "' name='" . $r . "' class='delCkBox' /></td>";
                 }
                 $markup .= "<td><a href='NameEdit.php?id=" . $r . "'>" . $r . "</a></td>";
-            } else if ($k == 'Last Login') {
+            } else if ($k == 'Last Login' || $k == 'Password Changed') {
                 $markup .= "<td>" . ($r == '' ? '' : date('m/d/Y g:ia', strtotime($r))) . "</td>";
             } else {
                 $markup .= "<td>" . $r . "</td>";
@@ -112,7 +124,7 @@ $volReport = $markup;
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         
@@ -172,7 +184,7 @@ $volReport = $markup;
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="vollisting" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
                 <?php echo $noReport ?>
-                <table id="dataTbl" cellpadding="0" cellspacing="0" border="0" class="display">
+                <table id="dataTbl" class="display">
 <?php echo $volReport ?>
                 </table>
             </div>

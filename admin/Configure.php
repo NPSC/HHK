@@ -1,4 +1,17 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\SysConst\{WebRole, CodeVersion};
+use HHK\Config_Lite\Config_Lite;
+use HHK\Config_Lite\Exception\Config_Lite_Exception_Runtime;
+use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
+use HHK\CreateMarkupFromDB;
+use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
+use HHK\Exception\UploadException;
+use HHK\Neon\TransferMembers;
+use HHK\sec\Labels;
+
 /**
  * Configure.php
  *
@@ -8,26 +21,6 @@
   -- @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-
-require DB_TABLES . 'PaymentGwRS.php';
-require DB_TABLES . 'GenLookupsRS.php';
-
-require CLASSES . 'SiteLog.php';
-require CLASSES . 'TableLog.php';
-require CLASSES . 'HouseLog.php';
-require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'SiteConfig.php';
-require CLASSES . 'UpdateSite.php';
-require CLASSES . 'Patch.php';
-require CLASSES . 'US_Holidays.php';
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'CreditToken.php');
-
-require SEC . 'Login.php';
-
 require (FUNCTIONS . 'mySqlFunc.php');
 
 try {
@@ -38,12 +31,10 @@ try {
 
 // get session instance
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
 
 // Kick out 'Guest' Users
 if ($uS->rolecode > WebRole::WebUser) {
-    include("../errorPages/forbid.html");
-    exit();
+    exit("Not Authorized");
 }
 
 
@@ -62,14 +53,11 @@ $rteMsg = '';
 $confError = '';
 
 $config = new Config_Lite(ciCFG_FILE);
-$labl = new Config_Lite(LABEL_FILE);
+$labl = Labels::getLabels();
 $wsConfig = NULL;
 
 
 if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
-
-    require (CLASSES . 'neon.php');
-    require (CLASSES . "TransferMembers.php");
 
     if (file_exists(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''))) {
         try {
@@ -86,14 +74,15 @@ if (isset($_POST["btnSiteCnf"])) {
 
     addslashesextended($_POST);
 
-    $confError = SiteConfig::saveSysConfig($dbh, $_POST);
+    $notymsg = SiteConfig::saveSysConfig($dbh, $_POST);
 
 }
 
 if (isset($_POST["btnLabelCnf"])) {
 
     $tabIndex = 5;
-    SiteConfig::saveConfig($dbh, $labl, $_POST, $uS->username);
+
+    $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }
 
 if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
@@ -196,7 +185,7 @@ if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
             }
         }
 
-    } catch (Hk_Exception_Upload $ex) {
+    } catch (UploadException $ex) {
         $externalErrMsg = "Transfer Error: " . $ex->getMessage();
     }
 }
@@ -227,11 +216,11 @@ if (isset($_FILES['zipfile'])) {
 
         $resultMsg .= SiteConfig::loadZipCodeFile($dbh, $_FILES['zipfile']['tmp_name']);
 
-        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
+        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
 
     } catch (Exception $hex) {
         $resultMsg .= $hex->getMessage();
-        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, $config->getString('code', 'GIT_Id', ''));
+        SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
     }
 }
 
@@ -267,7 +256,7 @@ if (isset($_POST['btnSaveSQL'])) {
 
     // Log update.
     $logText = "Save SQL.  " . $resultAccumulator;
-    SiteLog::writeLog($dbh, 'DB', $logText, $config->getString('code', 'GIT_Id', ''));
+    SiteLog::writeLog($dbh, 'DB', $logText, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
 }
 
 // Payment credentials
@@ -301,6 +290,7 @@ if (isset($_POST['btnLogs'])) {
 
 $logMarkup = '';
 $logSelRows = array(
+	1=>array(0=>'sl', 1=>'Combined Log'),
     2=>array(0=>'ss', 1=>'Sys Config Log'),
     3=>array(0=>'rr', 1=>'Rooms Log'),
     4=>array(0=>'ll', 1=>'Lookups Log'),
@@ -363,7 +353,7 @@ $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'
 
 $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
 
-$labels = SiteConfig::createLabelsMarkup($labl)->generateMarkup();
+$labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
 $externals = '';
 if (is_null($wsConfig) === FALSE) {
@@ -438,7 +428,31 @@ if (is_null($wsConfig) === FALSE) {
 
             $externals .= $nTbl->generateMarkup(array('style'=>'margin-top:5px;'), $list['List_Name']);
         }
+        
+        // Custom fields
+        $results = $transfer->listCustomFields();
+        $cfTbl = new HTMLTable();
+        
+        foreach ($results as $v) {
+        	if ($wsConfig->has('custom_fields', $v['fieldName'])) {
+        		$cfTbl->addBodyTr(HTMLTable::makeTd($v['fieldName']) . HTMLTable::makeTd($v['fieldId']));
+        	}
+        }
+        
+        $externals .= $cfTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Custom Fields');
+        
+        // Sources
+        $results = $transfer->listSources();
+        $sTbl = new HTMLTable();
+        
+        foreach ($results as $v) {
+        	
+        	$sTbl->addBodyTr(HTMLTable::makeTd($v['id']) . HTMLTable::makeTd($v['name']));
 
+        }
+        
+        $externals .= $sTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Sources');
+        
       } catch (Exception $pe) {
           $externalErrMsg = "Transfer Error: " .$pe->getMessage();
       }
@@ -447,9 +461,9 @@ if (is_null($wsConfig) === FALSE) {
 }
 
 // Alert Message
-$webAlert = new alertMessage("webContainer");
+$webAlert = new AlertMessage("webContainer");
 $webAlert->set_DisplayAttr("none");
-$webAlert->set_Context(alertMessage::Success);
+$webAlert->set_Context(AlertMessage::Success);
 $webAlert->set_iconId("webIcon");
 $webAlert->set_styleId("webResponse");
 $webAlert->set_txtSpanId("webMessage");
@@ -474,7 +488,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         
@@ -483,10 +497,12 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
 $(document).ready(function () {
     var tabIndex = '<?php echo $tabIndex; ?>';
+    var notyMsg = JSON.parse('<?php echo json_encode((isset($notymsg) ? $notymsg:"[]")); ?>');
+    
     var tbs;
     var logTable = [];
     var dateFormat = $('#dateFormat').val();
-
+	
     var dtCols = [
     {
         "targets": [ 0 ],
@@ -545,6 +561,15 @@ $(document).ready(function () {
         }
     }
 ];
+
+	//display noty
+	
+	if(notyMsg.type){
+		new Noty({
+			type : notyMsg.type,
+			text : notyMsg.text
+		}).show();
+	}
 
     tbs = $('#tabs').tabs({
 
@@ -609,7 +634,7 @@ $(document).ready(function () {
         }
     });
 
-$('#logsTabDiv').tabs("option", "active", 0);
+$('#logsTabDiv').tabs("option", "active", 1);
 
     $('#btnreset, #btnSiteCnf, #btnLogs, #btnSaveSQL, #btnUpdate, #btnlblreset, #btnLabelCnf, #btnPay, #btnZipGo, #zipfile').button();
     $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
@@ -638,8 +663,8 @@ $('#logsTabDiv').tabs("option", "active", 0);
                     <li><a href="#pay">Credit Card Processor</a></li>
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Codes</a></li>
-                    <li><a href="#labels">Labels & Prompts</a></li>
-                    <li id="liLogs"><a href="#logs">System Logs</a></li>
+                    <li><a href="#labels">Labels &#38; Prompts</a></li>
+                    <li id="liLogs"><a href="#logs">Site Logs</a></li>
                     <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
@@ -697,7 +722,7 @@ $('#logsTabDiv').tabs("option", "active", 0);
                         <?php echo $patchMarkup; ?>
                         <div style="clear:both"></div>
                         <form method="post" action="" name="form1">
-                            <input type="submit" name="btnLogs" id="btnLogs" value="View Site Log" style="margin-left:100px;margin-top:20px;"/>
+                            <input type="submit" name="btnLogs" id="btnLogs" value="View Patch Log" style="margin-left:100px;margin-top:20px;"/>
                             <input type="submit" name="btnSaveSQL" id="btnSaveSQL" value="Re-Create Tables, Views and SP's" style="margin-left:20px;margin-top:20px;"/>
                             <input type="submit" name="btnUpdate" id="btnUpdate" value="Update Config" style="margin-left:20px;margin-top:20px;"/>
                         </form>

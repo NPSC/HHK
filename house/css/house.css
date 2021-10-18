@@ -30,6 +30,9 @@
 .hhk-logerrmsg {
     color:red;
 }
+#unallocVids {
+	cursor:pointer;
+}
 .hhk-view-visit:hover {
     background-color: #d0e5f5;
     background-image: url("jqui/images/ui-bg_glass_75_d0e5f5_1x400.png");
@@ -134,6 +137,7 @@ table.hhk-badAddress {
     background-color: lightgoldenrodyellow;
     opacity: 80%;
 }
+
 .spnHosp {
     padding: 0 .4em;
     border:solid 1px black;
@@ -142,6 +146,9 @@ table.hhk-badAddress {
 }
 .spnHosp:hover {
     cursor: pointer;
+}
+#unallocVisits:hover {
+	cursor: pointer;
 }
 
 div#hideCalendar, div#hideLog {
@@ -156,6 +163,7 @@ div#hideCalendar, div#hideLog {
 }
 div#contentDiv {
     margin-left: 10px;
+    margin-right: 10px;
     margin-top: 43px;
 }
 .pageSpacer {
@@ -181,12 +189,14 @@ div.logo {
     z-index: 99;
 }
 #version {
-    height: 15px;
-    position: absolute;
+/*     height: 15px; */
+/*     position: absolute; */
+    position: relative;
     right: 2px;
-    top: 47px;
+/*     top: 47px; */
     font-size: .6em;
-    padding: 0 6px;
+    padding: 7px 6px;
+    float: right;
 }
 table {
     border-collapse:collapse;
@@ -416,14 +426,89 @@ li.hhk-myMenuTop {
 	float: left;
 }*/
 
-*:focus {
-outline: none;
-}
-
 #TwoFactorHelp p {
 	margin-bottom: 1em;
 }
 
 #TwoFactorHelp li {
 	margin-bottom: 0.5em;
+}
+
+/* Report Filter tables */
+.filters table td {
+	vertical-align:top;
+}
+
+@media screen {
+	.hhk-printmedia {
+		display: none;
+	}
+}
+
+@media print {
+	.hhk-printmedia {
+		display: inline;
+	}
+}
+
+.user-agent-spacing * {
+	padding: revert;
+	margin: revert;
+}
+
+
+/* hospital dialog */
+
+.hhk-hsdialog input.name:read-only, .hhk-hsdialog input.name:read-only {
+	pointer-events: none;
+	border: 0;
+}
+
+
+.hhk-hospTitleBtn, .hhk-smallBtn {
+	font-size: small !important;
+	padding: 1px 0.8em !important;
+}
+
+/*
+.ui-checkboxradio-icon.ui-icon-background.ui-icon-blank{
+	background-color: initial !important;
+}
+*/
+.ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}
+.ui-state-active .ui-icon-background {background-color: #fbec88; border: 1px solid #fad42e;}
+
+/* Datatables fixes */
+
+.dataTables_wrapper .dataTables_length select {
+	background-color: white !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+	background-color: white !important;
+}
+
+.dataTables_wrapper .top, .dataTables_wrapper .bottom,.dataTables_wrapper .dtTop, .dataTables_wrapper .dtBottom {
+	padding: 8px;
+	
+}
+
+.dataTables_wrapper .top:before,
+.dataTables_wrapper .bottom:before,
+.dataTables_wrapper .top:after,
+.dataTables_wrapper .bottom:after,
+.dataTables_wrapper .dtTop:before,
+.dataTables_wrapper .dtBottom:before,
+.dataTables_wrapper .dtTop:after,
+.dataTables_wrapper .dtBottom:after  {
+	content: "";
+    display: table;
+    border-collapse: collapse;
+}
+
+.dataTables_wrapper .top:after,
+.dataTables_wrapper .bottom:after,
+.dataTables_wrapper .dtTop:after,
+.dataTables_wrapper .dtBottom:after {
+	clear: both;
 }

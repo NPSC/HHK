@@ -1,4 +1,9 @@
 <?php
+
+use HHK\sec\WebInit;
+use HHK\Donation\Campaign;
+use HHK\SysConst\WebPageCode;
+
 /**
  * liveGetCamp.php
  *
@@ -9,9 +14,6 @@
  */
 
 require ("AdminIncludes.php");
-require (CLASSES . "Campaign.php");
-
-require (DB_TABLES . 'DonateRS.php');
 
 // Set page type for AdminPageCommon
 $wInit = new webInit(WebPageCode::Service);

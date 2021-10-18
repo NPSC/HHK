@@ -3,9 +3,13 @@ function resvManager(initData, options) {
     var t = this;
 
     var patLabel = initData.patLabel;
+    var visitorLabel = initData.visitorLabel;
+    var guestLabel = initData.guestLabel;
+    var primaryGuestLabel = initData.primaryGuestLabel;
     var resvTitle = initData.resvTitle;
     var saveButtonLabel = initData.saveButtonLabel;
     var patBirthDate = initData.patBD;
+    var gstBirthDate = initData.gstBD;
     var patAddrRequired = initData.patAddr;
     var gstAddrRequired = initData.gstAddr;
     var patAsGuest = initData.patAsGuest;
@@ -160,7 +164,7 @@ function resvManager(initData, options) {
             }
         }
 
-        function addGuest(item, data) {
+        function addGuest(item, data, term) {
 
             if (item.No_Return !== undefined && item.No_Return !== '') {
                 flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
@@ -183,7 +187,8 @@ function resvManager(initData, options) {
                 isCheckin: isCheckin,
                 gstDate: $('#gstDate').val(),
                 gstCoDate: $('#gstCoDate').val(),
-                cmd: 'addResvGuest'
+                cmd: 'addResvGuest',
+                schTerm: term
             };
 
             getReserve(resv);
@@ -598,7 +603,9 @@ function resvManager(initData, options) {
 
                 //call incident report jQuery				
                 iDiv.incidentViewer({
-                    psgId: idPsg
+                    psgId: idPsg,
+                    guestLabel: $('#guestLabel').val(),
+                    visitorLabel: $('#visitorLabel').val()
                 });
 
                 //incident section toggler
@@ -816,7 +823,7 @@ function resvManager(initData, options) {
 
                 // Add people search
                 createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
-                    addGuest(item, data);
+                    addGuest(item, data, $('#txtPersonSearch').val());
                 });
 
                 // Emergency Contact search icon hook to emergency contact dialog box
@@ -1021,8 +1028,8 @@ function resvManager(initData, options) {
                }
 
             } else if (numPriGuests === 0) {
-                $pWarning.text('Set one guest as primary guest.').show();
-                flagAlertMessage('Set one guest as primary guest.', 'alert', $pWarning);
+                $pWarning.text('Set one ' + visitorLabel + ' as ' + primaryGuestLabel + '.').show();
+                flagAlertMessage('Set one ' + visitorLabel + ' as ' + primaryGuestLabel + '.', 'alert', $pWarning);
                 $("input.hhk-rbPri").parent().addClass('ui-state-error');
                 return false;
             }
@@ -1104,6 +1111,16 @@ function resvManager(initData, options) {
 
                 // Guests
                 } else {
+
+					// Check guest birthdate
+                    if (gstBirthDate & $('#' + p + 'txtBirthDate').val() === '') {
+                        $('#' + p + 'txtBirthDate').addClass('ui-state-error');
+                        flagAlertMessage(visitorLabel + ' is missing the Birth Date.', 'alert', $pWarning);
+                        openSection(true);
+                        return false;
+                    } else {
+                        $('#' + p + 'txtBirthDate').removeClass('ui-state-error');
+                    }
 
                     // Check Guest address
                     if (gstAddrRequired) {
@@ -1573,6 +1590,19 @@ function resvManager(initData, options) {
                 if ($('#a_txtLastName').val() === '') {
                     $('.hhk-agentInfo').hide();
                 }
+                
+                $(document).on('click', '#a_delete', function(){
+	            	$('#a_idName').val('');
+	            	$('input.hhk-agentInfo').val('');
+	            	$('.hhk-agentInfo').hide();
+	            });
+	            
+	            
+	            if ($('#a_idName').val() !== '') {
+	            	$('input.hhk-agentInfo.name').attr('readonly', 'readonly');
+	            }else{
+	            	$('input.hhk-agentInfo.name').removeAttr('readonly');
+	            }
             }
 
             if ($('#txtDocSch').length > 0) {
@@ -1580,6 +1610,18 @@ function resvManager(initData, options) {
                 if ($('#d_txtLastName').val() === '') {
                     $('.hhk-docInfo').hide();
                 }
+                
+                if ($('#d_idName').val() !== '') {
+	            	$('input.hhk-docInfo.name').attr('readonly', 'readonly');
+	            }else{
+	            	$('input.hhk-docInfo.name').removeAttr('readonly');
+	            }
+	            
+	            $(document).on('click', '#d_delete', function(){
+	            	$('#d_idName').val('');
+	            	$('input.hhk-docInfo').val('');
+	            	$('.hhk-docInfo').hide();
+	            });
             }
 
             verifyAddrs('#divhospDetail');
@@ -1934,8 +1976,12 @@ function resvManager(initData, options) {
 
                         $('div#submitButtons').hide();
                         $("#frmConfirm").children().remove();
-                        $("#frmConfirm").html(data.confrv)
-                            .append($('<div style="padding-top:10px;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"><span>Email Address </span><input type="text" id="confEmail" value="'+data.email+'"/></div>'));
+                        $("#frmConfirm").html(data.confrv);
+                        
+                        var emailMkup = '<div style="width: 100%"><label for="confEmail" style="padding-right: 0.5em;">To Address</label><input type="text" style="width:70%" id="confEmail" value="'+data.email+'"></div>';
+                        emailMkup += '<div style="width: 100%"><label for="ccConfEmail" style="padding-right: 0.5em;">CC Address</label><input type="text" style="width:70%" id="ccConfEmail" value="'+data.ccemail+'"></div>';;
+                        
+                        $("#frmConfirm").append($('<div style="padding-top:10px; display: flex;" class="ui-dialog-buttonpane ui-widget-content ui-helper-clearfix"">' + emailMkup + '</div>'));
 
                         $("#frmConfirm").find('#confirmTabDiv').tabs();
                         
@@ -2362,6 +2408,7 @@ function resvManager(initData, options) {
 
                 var tot = familySection.findStaysChecked() + familySection.findStays('r');
                 resvSection.$totalGuests.text(tot);
+				$('#selRateCategory').trigger('change');
 
                 if ($('#selResource').length > 0 && $('#selResource').val() !== '0') {
                     var msg = 'Room may be too small';

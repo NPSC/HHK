@@ -1,4 +1,14 @@
 <?php
+
+use HHK\Donation\{Campaign, DonateMarkup};
+use HHK\History;
+use HHK\AlertControl\AlertMessage;
+use HHK\Member\{AbstractMember, WebUser};
+use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, SalutationCodes};
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\Volunteer\VolunteerCategory;
+use HHK\Member\Address\{Address, Phones, Emails, Addresses};
+
 /**
  * NameEdit.php
  *
@@ -9,31 +19,6 @@
  */
 
 require ("AdminIncludes.php");
-
-
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'WebSecRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-
-require (CLASSES . 'Campaign.php');
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . 'Addresses.php');
-require (MEMBER . 'WebUser.php');
-
-require (CLASSES . 'UserCategories.php');
-require (CLASSES . 'volunteer.php');
-require (CLASSES . 'selCtrl.php');
-require (CLASSES . 'History.php');
-require (CLASSES . 'CleanAddress.php');
-require (CLASSES . 'Donate.php');
-require (CLASSES . 'AuditLog.php');
-require (CLASSES . 'Relation.php');
-
-require (CLASSES . 'Notes.php');
 
 $wInit = new webInit();
 
@@ -106,7 +91,7 @@ if (is_null($cmd) === FALSE) {
 
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 
 
 /*
@@ -128,8 +113,8 @@ if ($id < 0) {
 $mbasis = filter_input(INPUT_POST, 'selMbrType', FILTER_SANITIZE_STRING);
 if (is_null($mbasis) === FALSE) {
 
-    if (isset($uS->nameLookups[GL_TableNames::MemberBasis][$mbasis])) {
-        if ($uS->nameLookups[GL_TableNames::MemberBasis][$mbasis][Member::SUBT] == MemDesignation::Organization) {
+    if (isset($uS->nameLookups[GLTableNames::MemberBasis][$mbasis])) {
+        if ($uS->nameLookups[GLTableNames::MemberBasis][$mbasis][AbstractMember::SUBT] == MemDesignation::Organization) {
             $setForOrg = TRUE;
         }
     }
@@ -146,7 +131,7 @@ if ($setForOrg) {
 // Instantiate the member object
 try {
 
-    $name = Member::GetDesignatedMember($dbh, $id, $defBasis);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, $defBasis);
 
 } catch (Exception $ex) {
 
@@ -155,7 +140,7 @@ try {
     $resultMessage = $alertMsg->createMarkup();
 
     $id = 0;
-    $name = Member::GetDesignatedMember($dbh, $id, $defBasis);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, $defBasis);
 
 }
 
@@ -163,9 +148,9 @@ try {
 // the rest
 try {
 
-    $address = new Address($dbh, $name, $uS->nameLookups[GL_TableNames::AddrPurpose]);
-    $phones = new Phones($dbh, $name, $uS->nameLookups[GL_TableNames::PhonePurpose]);
-    $emails = new Emails($dbh, $name, $uS->nameLookups[GL_TableNames::EmailPurpose]);
+    $address = new Address($dbh, $name, $uS->nameLookups[GLTableNames::AddrPurpose]);
+    $phones = new Phones($dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+    $emails = new Emails($dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
 
     $rel = $name->loadRealtionships($dbh);
 
@@ -339,17 +324,17 @@ if ($id != 0 && $donationsFlag) {
 
     $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', false, false);
 
-    $donateMkup = Donate::createDonateMarkup(
+    $donateMkup = DonateMarkup::createDonateMarkup(
             $CampOpt,
-            removeOptionGroups($uS->nameLookups[GL_TableNames::AddrPurpose]),
+            removeOptionGroups($uS->nameLookups[GLTableNames::AddrPurpose]),
             $name->get_preferredMailAddr(),
-            $uS->nameLookups[GL_TableNames::SalutationCodes],
+            $uS->nameLookups[GLTableNames::SalutationCodes],
             SalutationCodes::FirstOnly,
             SalutationCodes::Formal,
             $name->getAssocDonorList($rel),
             $name->getDefaultDonor($rel),
             $name->getAssocDonorLabel(),
-            removeOptionGroups($uS->nameLookups[GL_TableNames::PayType]),
+            removeOptionGroups($uS->nameLookups[GLTableNames::PayType]),
             NULL
             );
 
@@ -420,7 +405,7 @@ $alertMessage = $alertMsg->createMarkup();
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
@@ -528,19 +513,17 @@ $alertMessage = $alertMsg->createMarkup();
                 </table>
             </div>
             <div id="achgPw" class="hhk-member-detail" style="display:none;font-size:0.95em;">
+            	<div style="margin: 0.5em 0 0.5em 0;">The user's password will be reset to a random temporary password. <br>They will be required to change their password when they log in.</div>
                 <table>
                     <tr>
                         <td class="tdlabel">User Name</td><td><input id="txtUserName" type="text" value="<?php echo $userName; ?>" class="ro ignrSave" readonly="readonly" style="width: 100%" /></td>
                     </tr><tr>
                         <td class="tdlabel">Admin Password</td><td style="display: flex"><input id="txtOldPw" type="password" value="" title="Enter your password, not the users old password." /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
                     </tr><tr>
-                        <td class="tdlabel">Enter New Password</td><td style="display: flex"><input id="txtNewPw1" type="password" value="" title="This will be the users new password."/><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                    </tr><tr>
-                        <td class="tdlabel">Enter New Password Again</td><td style="display: flex"><input id="txtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                    </tr><tr>
-                        <td class="tdlabel">Require password change on login</td><td><input id="resetNext" type="checkbox" value="1" checked="checked"  /></td>
-                    </tr><tr>
-                        <td colspan ="2"><span id="apwChangeErrMsg"><?php echo $PWresultMessage; ?></span></td>
+                        <td colspan ="2">
+                        	<span id="apwChangeErrMsg"><?php echo $PWresultMessage; ?></span>
+                        	<div id="apwNewPW" style="display:hidden; margin: 0.5em 0 0.5em 0;"></div>
+                        </td>
                     </tr>
                 </table>
             </div>
@@ -551,7 +534,7 @@ $alertMessage = $alertMsg->createMarkup();
                 </div>
             </div>
             <div id="zipSearch" class="hhk-tdbox-noborder"  style="display:none;">
-                <table width="100%">
+                <table style="width:100%;">
                     <tr>
                         <td class="tdlabel">Country: </td><td><select id="zipCtry" class="input-medium bfh-countries" data-country="US"></select></td>
                     </tr>

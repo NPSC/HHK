@@ -1,28 +1,24 @@
 <?php
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Login;
+use HHK\Exception\RuntimeException;
+use HHK\sec\UserClass;
+use HHK\sec\Session;
+use HHK\SysConst\WebRole;
+use HHK\sec\SysConfig;
+use HHK\House\TemplateForm\SurveyForm;
+use HHK\sec\Labels;
+
 /**
  * EmailedCheckedout.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
   */
 
 require 'homeIncludes.php';
-require(HOUSE . 'TemplateForm.php');
-require(HOUSE . 'SurveyForm.php');
-require(SEC . 'Login.php');
-
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-try {
-    $labels = new Config_Lite(LABEL_FILE);
-} catch (Exception $ex) {
-    exit("Label file is missing, path=".LABEL_FILE);
-}
 
 
 try {
@@ -30,7 +26,7 @@ try {
 	$login = new Login();
 	$login->initHhkSession(ciCFG_FILE);
 	
-} catch (Hk_Exception_InvalidArguement $pex) {
+} catch (InvalidArgumentException $pex) {
 	exit ("Database Access Error.");
 	
 } catch (Exception $ex) {
@@ -39,9 +35,30 @@ try {
 
 // Override user DB login credentials
 try {
-	$dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
-	exit( $hex->getMessage());
+    $dbh = initPDO(TRUE);
+} catch (RuntimeException $hex) {
+    exit( $hex->getMessage());
+}
+
+try {
+    $labels = Labels::getLabels();
+} catch (Exception $ex) {
+    exit("Labels Error: " . $ex->getMessage());
+}
+
+$u = new UserClass();
+if(!$u->isCron()){
+    // Authenticate user
+    $user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
+    $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+    
+    if (($user == '' && $pass == '') || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
+        
+        header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
+        header('HTTP/1.0 401 Unauthorized');
+        exit("Not authorized");
+        
+    }
 }
 
 
@@ -130,6 +147,7 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
 
 $stmt->execute($paramList);
 $numRecipients = $stmt->rowCount();
+$recipients = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 if ($numRecipients > $maxAutoEmail) {
     // to many recipients.
@@ -146,13 +164,20 @@ $mail->FromName = $siteName;
 $mail->isHTML(true);
 $mail->Subject = $subjectLine;
 
-$sForm = new SurveyForm('survey.txt');
+$stmt = $dbh->query("Select d.`idDocument`, g.`Code`, g.`Description` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 's' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
+$docRow = $stmt->fetch();
+if($docRow){
+    $sForm = new SurveyForm($dbh, $docRow['idDocument']);
+}else{
+    exit("Cannot find Survey document");
+}
+
 $badAddresses = 0;
 $resultsRegister = '';
 $deparatureDT = new \DateTime();
 $deparatureDT->sub(new \DateInterval('P' . $delayDays . 'D'));
 
-foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
+foreach ($recipients as $r) {
 
     $deparatureDT = new \DateTime($r['Last_Departure']);
 
@@ -187,7 +212,7 @@ foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
         $resultsRegister .= "<p>Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . "</p>";
 
     } else {
-        echo "===========================<br/>(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>" . $subjectLine . "<br/>" . $form;
+        echo "===========================<br/>(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>" . $subjectLine . "<br/>" . $form . "<br/>";
     }
 
     // Log in Visit Log?
@@ -200,12 +225,12 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
 
     $mail->clearAddresses();
     $mail->addAddress($copyEmail);
-    $mail->Subject = "Auto Email Results for guests leaving " . $deparatureDT->format('M j, Y');
+    $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'MemberType', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
 
     $messg = "<p>Today's date: " . date('M j, Y');
-    $messg .= "<p>For guests leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
+    $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
     $messg .= "<p>Subject Line: </p>" . $subjectLine;
-    $messg .= "<p>Template Text: </p>" . $sForm->templateFile . "<br/>";
+    $messg .= "<p>Template Text: </p>" . $sForm->template . "<br/>";
     $messg .= "<p>Results:</p>" . $resultsRegister;
 
     $mail->msgHTML($messg);
@@ -213,9 +238,10 @@ if ($sendEmail && $copyEmail && $copyEmail != '') {
     $mail->send();
 
 } else if (!$sendEmail) {
-    echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages sent. Bad: ".$badAddresses;
+    echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages would be sent. Bad: ".$badAddresses;
+    echo "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y');
     echo "<br/> Subject Line: " . $subjectLine;
-    echo "<br/>Body Template:<br/>" . $sForm->templateFile;
+    echo "<br/>Body Template:<br/>" . $sForm->template;
 }
 
 // Log - Activity?

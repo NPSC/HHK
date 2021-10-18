@@ -1,43 +1,54 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\sec\{Session, WebInit};
+use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
+use HHK\TableLog\HouseLog;
+use HHK\Config_Lite\Config_Lite;
+use HHK\SysConst\GLTypeCodes;
+use HHK\House\Reservation\Reservation_1;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput, HTMLSelector};
+use HHK\SysConst\WebRole;
+use HHK\sec\SysConfig;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\Tables\Item\ItemRS;
+use HHK\SysConst\ItemId;
+use HHK\SysConst\PayType;
+use HHK\Tables\House\Fa_CategoryRS;
+use HHK\Tables\Registration\HospitalRS;
+use HHK\SysConst\AttributeTypes;
+use HHK\House\Constraint\ConstraintsHospital;
+use HHK\Tables\Attribute\AttributeRS;
+use HHK\SysConst\ItemType;
+use HHK\Tables\DocumentRS;
+use HHK\House\ResourceView;
+use HHK\SysConst\ItemPriceCode;
+use HHK\Purchase\RoomRate;
+use HHK\Purchase\FinAssistance;
+use HHK\SysConst\ConstraintType;
+use HHK\House\Constraint\Constraints;
+use HHK\House\Attribute\Attributes;
+use HHK\Purchase\TaxedItem;
+use HHK\SysConst\RoomRateCategories;
+use HHK\sec\Labels;
+
 /**
  * ResourceBuilder.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2013-2021` <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-require (CLASSES . 'History.php');
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (HOUSE . 'Reservation_1.php');
-
-require (DB_TABLES . 'GenLookupsRS.php');
-require (DB_TABLES . 'LookupsRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'ItemRS.php');
-
-require (CLASSES . 'TableLog.php');
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Room.php');
-require (CLASSES . 'HouseLog.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-require (CLASSES . 'FinAssistance.php');
-require (CLASSES . 'ValueAddedTax.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
 
 const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
 
 const LOCATION_TABLE_NAME = 'Location';
 
 const RESERV_STATUS_TABLE_NAME = 'lookups';
+
 try {
     $wInit = new webInit();
 } catch (Exception $exw) {
@@ -105,7 +116,7 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName)
                 HouseLog::logGenLookups($dbh, $tblName, $defaultCode, $logText, 'insert', $uS->username);
 
                 // Update Old
-                $glRs->Type->setNewVal(GlTypeCodes::Archive);
+                $glRs->Type->setNewVal(GLTypeCodes::Archive);
 
                 $ctr = EditRS::update($dbh, $glRs, array(
                     $glRs->Table_Name,
@@ -136,7 +147,7 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName)
     return $defaultCode;
 }
 
-function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels)
+function getSelections(\PDO $dbh, $tableName, $type, $labels)
 {
     $uS = Session::getInstance();
 
@@ -163,7 +174,8 @@ function getSelections(\PDO $dbh, $tableName, $type, Config_Lite $labels)
 
     $tbl = new HTMLTable();
 
-    $hdrTr = HTMLTable::makeTh(count($diags) . ' Entries') . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Order') : '') . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '') . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '') . ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '') . ($type == GlTypeCodes::U ? '' : $type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With'));
+    $hdrTr =
+    HTMLTable::makeTh(count($diags) . ' Entries') . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Order') : '') . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '') . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '') . ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '') . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
     $tbl->addHeaderTr($hdrTr);
 
@@ -253,9 +265,10 @@ $rteMsg = '';
 $rateTableErrorMessage = '';
 $itemMessage = '';
 $formType = '';
+$demoMessage = '';
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 // Add diags and locations buttons
 if (isset($_POST['btnAddDiags'])) {
@@ -319,7 +332,7 @@ if (isset($_POST['table'])) {
             $aText = '';
 
             if ($tableName == 'Patient_Rel_Type') {
-                $aText = 'Guests';
+            	$aText = $labels->getString('MemberType', 'visitor', 'Guest').'s';
             }
 
             if (isset($_POST['txtDiagAmt'][0])) {
@@ -442,7 +455,7 @@ if (isset($_POST['table'])) {
 
             foreach ($_POST['txtDiagAmt'] as $k => $a) {
                 if (is_numeric($a)) {
-                    $a = abs($a);
+                    $a = floatval($a);
                 }
 
                 $amounts[$k] = $a;
@@ -524,7 +537,7 @@ if (isset($_POST['btnkfSave'])) {
     $tabIndex = 2;
 
     // room pricing
-    $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+    $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
     $newDefault = $priceModel->saveEditMarkup($dbh, $_POST, $uS->username);
 
     if ($newDefault != '') {
@@ -679,6 +692,22 @@ if (isset($_POST['btnkfSave'])) {
             }
         }
     }
+    
+    // Payment types GL Codes
+    if (isset($_POST['ptGlCode'])) {
+    	
+    	$stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+    	$payMethods = $stmtp->fetchAll(\PDO::FETCH_NUM);
+    	
+    	foreach ($payMethods as $t) {
+    		
+    		if (isset($_POST['ptGlCode'][$t[0]])) {
+    			$gl = filter_var($_POST['ptGlCode'][$t[0]], FILTER_SANITIZE_STRING);
+    			
+    			$dbh->exec("Update payment_method set Gl_Code = '$gl' where idPayment_method = ". $t[0]);
+    		}
+    	}
+    }
 
     // Excess Pay
     if (isset($_POST['epdesc'][$uS->VisitExcessPaid])) {
@@ -693,7 +722,7 @@ if (isset($_POST['btnkfSave'])) {
         $faIb = filter_var_array($_POST['faIb'], FILTER_SANITIZE_NUMBER_INT);
         $faIc = filter_var_array($_POST['faIc'], FILTER_SANITIZE_NUMBER_INT);
 
-        $faRs = new Fa_CategoryRs();
+        $faRs = new Fa_CategoryRS();
         $faRows = EditRS::select($dbh, $faRs, array());
 
         foreach ($faRows as $r) {
@@ -728,21 +757,22 @@ if (isset($_POST['btnhSave'])) {
 
         $idHosp = intval($hid, 10);
 
-        $hospRs = new Hospital_RS();
+        $hospRs = new HospitalRS();
         $hospRs->idHospital->setStoredVal($idHosp);
 
         // Delete?
         if (isset($_POST['hdel'][$idHosp])) {
-            EditRS::delete($dbh, $hospRs, array(
-                $hospRs->idHospital
-            ));
+        	
+        	// Change status to "Retired"
+        	$hospRs->Status->setNewVal('r');
+        	EditRS::update($dbh, $hospRs, array($hospRs->idHospital));
 
             // Delete any attribute entries
             $query = "delete from attribute_entity where idEntity = :id and Type = :tpe";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':id' => $idHosp,
-                ':tpe' => Attribute_Types::Hospital
+                ':tpe' => AttributeTypes::Hospital
             ));
             continue;
         }
@@ -922,13 +952,19 @@ if (isset($_POST['btnItemSave'])) {
         }
 
         if (isset($_POST['txtItem'][$idItem])) {
-
-            $desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_STRING);
-            $glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_STRING);
-
-            $dbh->exec("update `item` set `Description` = '$desc', `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
+        	
+        	$desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_STRING);
+        	
+        	$dbh->exec("update `item` set `Description` = '$desc' where `idItem` = " . $idItem);
         }
-
+        
+        if (isset($_POST['txtGlCode'][$idItem])) {
+        	
+        	$glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_STRING);
+        	
+        	$dbh->exec("update `item` set `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
+        }
+        
         if (isset($_POST['cbtax'][$idItem])) {
             // Define tax items for each item.
             foreach ($_POST['cbtax'][$idItem] as $t) {
@@ -1081,10 +1117,10 @@ if (isset($_POST['ldfm'])) {
         )), array('class'=>'hhk-sortable', 'data-code'=>$r['Code']));
 
         $tabContent .= HTMLContainer::generateMarkup('div',  $help .($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
-            'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3')): '') .
+            'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3 user-agent-spacing')): '') .
             '<div class="row"><div class="col-10 uploadFormDiv ui-widget-content" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="d-inline-block" style="padding: 5px 7px;">
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/><input type="hidden" name="filefrmtype" value="' . $formType . '"/>
-Upload new file: <input name="formfile" type="file" required />
+Upload new HTML file: <input name="formfile" type="file" required accept="text/html" />
 <input type="submit" name="docUpload" value="Save Form" />
 </form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><input type="hidden" name="docfrmtype" value="' . $formType . '"/><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
             'id' => $r['Code']
@@ -1101,7 +1137,7 @@ Upload new file: <input name="formfile" type="file" required />
             'style' => 'float: right;'
         ));
 
-        $tabContent .= HTMLContainer::generateMarkup('div', '<div class="mb-3">You may use the following codes in your document to personalize the document to each guest</div>' . $rTbl->generateMarkup(), array(
+        $tabContent .= HTMLContainer::generateMarkup('div', '<div class="mb-3">You may use the following codes in your document to personalize the document to each ' .$labels->getString('MemberType', 'guest', 'Guest').'</div>' . $rTbl->generateMarkup(), array(
             'id' => 'replacements'
         ));
     }
@@ -1131,7 +1167,9 @@ if (isset($_POST['docUpload'])) {
     	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
     }
     
-    if (! empty($_FILES['formfile']['tmp_name'])) {
+    $mimetype = mime_content_type($_FILES['formfile']['tmp_name']);
+    
+    if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
 
         $docId = - 1;
         if (isset($_POST['docId'])) {
@@ -1267,9 +1305,13 @@ if (isset($_POST['txtformLang'])) {
         }
     }
 }
+
+
 //
 // Generate tab content
 //
+
+
 // hospital tab title
 $hospitalTabTitle = $labels->getString('hospital', 'hospital', 'Hospitals & Associations');
 
@@ -1288,11 +1330,12 @@ $pricingModelTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::ge
     'style' => 'margin:7px;'
 ));
 
+// Room and Resourse lists
 $rescTable = ResourceView::resourceTable($dbh);
 $roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->PaymentGateway);
 
 // Room Pricing
-$priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+$priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 $fTbl = $priceModel->getEditMarkup($dbh, $uS->RoomRateDefault);
 
 // Static room rate
@@ -1339,7 +1382,7 @@ if ($priceModel->hasRateCalculator()) {
 
     $tbl = new HTMLTable();
 
-    $tbl->addHeaderTr(HTMLTable::makeTh('Room Rate') . HTMLTable::makeTh('Credit') . ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? HTMLTable::makeTh('Guest Nights') : HTMLTable::makeTh('Nights')) . HTMLTable::makeTh('Total'));
+    $tbl->addHeaderTr(HTMLTable::makeTh('Room Rate') . HTMLTable::makeTh('Credit') . ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily ? HTMLTable::makeTh($labels->getString('MemberType', 'guest', 'Guest').' Nights') : HTMLTable::makeTh('Nights')) . HTMLTable::makeTh('Total'));
 
     $attrFixed = array(
         'id' => 'spnRateTB',
@@ -1533,10 +1576,18 @@ if ($uS->KeyDeposit) {
 $payTypesTable = '';
 
 if ($uS->RoomPriceModel != ItemPriceCode::None) {
+	
+	$payMethods = array();
+	$stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+	while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
+		$payMethods[$t[0]] = $t[1];
+	}
+	$payMethods[''] = '';
+	
 
     $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
     $ptTbl = new HTMLTable();
-    $ptTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description'));
+    $ptTbl->addHeaderTr(HTMLTable::makeTh('Default') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('GL Code'));
 
     foreach ($payTypes as $r) {
 
@@ -1551,12 +1602,11 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
             unset($ptAttrs['checked']);
         }
 
-        $ptTbl->addBodyTr(HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), array(
-            'style' => 'text-align:center;'
-        )) . HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array(
-            'name' => 'ptdesc[' . $r[0] . ']',
-            'size' => '16'
-        ))));
+        $ptTbl->addBodyTr(
+        		HTMLTable::makeTd(($r[0] == PayType::Invoice ? '' : HTMLInput::generateMarkup($r[0], $ptAttrs)), array('style' => 'text-align:center;'))
+        		. HTMLTable::makeTd(HTMLInput::generateMarkup($r[1], array('name' => 'ptdesc[' . $r[0] . ']', 'size' => '16')))
+        		. HTMLTable::makeTd(HTMLInput::generateMarkup($payMethods[$r[2]], array('name' => 'ptGlCode[' . $r[2] . ']', 'size' => '19')))
+        );
     }
 
     $payTypesTable = HTMLContainer::generateMarkup('fieldset', HTMLContainer::generateMarkup('legend', 'Pay Types', array(
@@ -1569,13 +1619,13 @@ if ($uS->RoomPriceModel != ItemPriceCode::None) {
 }
 
 // Hospitals and associations
-$hospRs = new Hospital_RS();
-$hrows = EditRS::select($dbh, $hospRs, array());
+$hospRs = new HospitalRS();
+$hrows = EditRS::select($dbh, $hospRs, array(), '', array($hospRs->Status, $hospRs->Title));
 
 $hospTypes = readGenLookupsPDO($dbh, 'Hospital_Type');
 
 $constraints = new Constraints($dbh);
-$hospConstraints = $constraints->getConstraintsByType(Constraint_Type::Hospital);
+$hospConstraints = $constraints->getConstraintsByType(ConstraintType::Hospital);
 
 $hTbl = new HTMLTable();
 $hths = HTMLTable::makeTh('Id') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Type') . HTMLTable::makeTh('Description') . HTMLTable::makeTh('Color') . HTMLTable::makeTh('Text Color');
@@ -1583,18 +1633,14 @@ foreach ($hospConstraints as $c) {
     $hths .= HTMLTable::makeTh($c->getTitle());
 }
 
-$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Delete');
+$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire');
 $hTbl->addHeaderTr($hths);
 
 foreach ($hrows as $h) {
-
-    $hattr = array(
-        'name' => 'hstat[' . $h['idHospital'] . ']',
-        'type' => 'checkbox'
-    );
-    if ($h['Status'] == 'a') {
-        $hattr['checked'] = 'checked';
-    }
+	
+	if ($h['Title'] == '(None)' && $h['Type'] == 'a') {
+		continue;
+	}
 
     $myConsts = new ConstraintsHospital($dbh, $h['idHospital']);
     $hConst = $myConsts->getConstraints();
@@ -1629,14 +1675,24 @@ foreach ($hrows as $h) {
         ));
     }
 
-    $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated']))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
-        'name' => 'hdel[' . $h['idHospital'] . ']',
-        'type' => 'checkbox'
-    )), array(
+    $hdelAtr = array(
+    		'name' => 'hdel[' . $h['idHospital'] . ']',
+    		'type' => 'checkbox'
+    );
+    
+    $rowAtr = array();
+    
+    if ($h['Status'] == 'r') {
+    	$hdelAtr['checked'] = 'checked';
+    	$rowAtr['style'] = 'background-color:lightgray;';
+    }
+    
+    $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated'])))
+    	. HTMLTable::makeTd(HTMLInput::generateMarkup('', $hdelAtr), array(
         'style' => 'text-align:center;'
     ));
 
-    $hTbl->addBodyTr($htds);
+    $hTbl->addBodyTr($htds, $rowAtr);
 }
 
 // new hospital
@@ -1929,15 +1985,18 @@ $rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(remove
 ));
 
 // Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
+$alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
+$alertMsg->set_Context(AlertMessage::Success);
 $alertMsg->set_iconId("alrIcon");
 $alertMsg->set_styleId("alrResponse");
 $alertMsg->set_txtSpanId("alrMessage");
 $alertMsg->set_Text("uh-oh");
 
 $resultMessage = $alertMsg->createMarkup();
+
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -1950,521 +2009,20 @@ $resultMessage = $alertMsg->createMarkup();
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
-        <style>
-@media screen {
-	.hhk-printmedia {
-		display: none;
-	}
-}
 
-@media print {
-	.hhk-printmedia {
-		display: inline;
-	}
-}
-</style>
-
-<script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
-<script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-<script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-<script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
-<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-<script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-
-<script type="text/javascript">
-    function isNumber(n) {
-        "use strict";
-        return !isNaN(parseFloat(n)) && isFinite(n);
-    }
-
-    var fixedRate = '<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>';
-    var savedRow;
-
-    function getRoomFees(cat) {
-        if (cat != '' && cat != fixedRate) {
-            // go get the total
-            var ds = parseInt($('#txtNites').val(), 10);
-            if (isNaN(ds)) {
-                ds = 0;
-            }
-            var ct = parseInt($('#txtCredit').val(), 10);
-            if (isNaN(ct)) {
-                ct = 0;
-            }
-            $('#spnAmount').text('').addClass('ui-autocomplete-loading');
-            $.post('ws_ckin.php', {
-                cmd: 'rtcalc',
-                rcat: cat,
-                nites: ds,
-                credit: ct
-            }, function (data) {
-                $('#spnAmount').text('').removeClass('ui-autocomplete-loading');
-                data = $.parseJSON(data);
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-                if (data.amt) {
-                    $('#spnAmount').text(data.amt);
-                }
-                if (data.cat) {
-                    $('#selRateCategory').val(cat);
-                }
-            });
-        }
-    }
-    function setupRates() {
-        "use strict";
-        $('#txtFixedRate').change(function () {
-            if ($('#selRateCategory').val() == fixedRate) {
-                var amt = parseFloat($(this).val());
-                if (isNaN(amt) || amt < 0) {
-                    amt = parseFloat($(this).prop("defaultValue"));
-                    if (isNaN(amt) || amt < 0)
-                        amt = 0;
-                    $(this).val(amt);
-                }
-                var ds = parseInt($('#txtNites').val(), 10);
-                if (isNaN(ds)) {
-                    ds = 0;
-                }
-                $('#spnAmount').text(amt * ds);
-            }
-        });
-        $('#txtNites, #txtCredit').change(function () {
-            getRoomFees($('#selRateCategory').val());
-        });
-        $('#selRateCategory').change(function () {
-            if ($(this).val() == fixedRate) {
-                $('.hhk-fxFixed').show();
-            } else {
-                $('.hhk-fxFixed').hide();
-                getRoomFees($(this).val());
-            }
-            $('#txtFixedRate').change();
-        });
-        $('#selRateCategory').change();
-    }
-    function getResource(idResc, type, trow) {
-        "use strict";
-        if ($('#cancelbtn').length > 0) {
-            $('#cancelbtn').click();
-        }
-        $.post('ws_resc.php', {
-            cmd: 'getResc',
-            tp: type,
-            id: idResc
-        }, function (data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-                if (data.row) {
-                    savedRow = trow.children();
-                    trow.children().remove().end().append($(data.row));
-                    $('#savebtn').button().click(function () {
-                        var btn = $(this);
-                        saveResource(btn.data('id'), btn.data('type'), btn.data('cls'));
-                    });
-                    $('#cancelbtn').button().click(function () {
-                        trow.children().remove().end().append(savedRow);
-                        $('.reNewBtn').button();
-                    });
-                }
-            }
-        });
-    }
-    function getStatusEvent(idResc, type, title) {
-        "use strict";
-        $.post('ws_resc.php', {
-            cmd: 'getStatEvent',
-            tp: type,
-            title: title,
-            id: idResc
-        }, function (data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                    flagAlertMessage(data.error, true);
-                    return;
-                }
-                if (data.tbl) {
-                    $('#statEvents').children().remove().end().append($(data.tbl));
-                    $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
-                    var buttons = {
-                        "Save": function () {
-                            saveStatusEvent(idResc, type);
-                        },
-                        'Cancel': function () {
-                            $(this).dialog('close');
-                        }
-                    };
-                    $('#statEvents').dialog('option', 'buttons', buttons);
-                    $('#statEvents').dialog('open');
-                }
-            }
-        });
-    }
-    function saveStatusEvent(idResc, type) {
-        "use strict";
-        $.post('ws_resc.php', $('#statForm').serialize() + '&cmd=saveStatEvent' + '&id=' + idResc + '&tp=' + type,
-                function (data) {
-                    $('#statEvents').dialog('close');
-                    if (data) {
-                        try {
-                            data = $.parseJSON(data);
-                        } catch (err) {
-                            alert("Parser error - " + err.message);
-                            return;
-                        }
-                        if (data.error) {
-                            if (data.gotopage) {
-                                window.open(data.gotopage, '_self');
-                            }
-                            flagAlertMessage(data.error, true);
-                            return;
-                        }
-
-                        if (data.msg && data.msg != '') {
-                            flagAlertMessage(data.msg, false);
-                        }
-
-                    }
-                });
-    }
-    function saveResource(idresc, type, clas) {
-        "use strict";
-        var parms = {};
-        $('.' + clas).each(function () {
-
-            if ($(this).attr('type') === 'radio' || $(this).attr('type') === 'checkbox') {
-                if (this.checked !== false) {
-                    parms[$(this).attr('id')] = 'on';
-                }
-            } else {
-                parms[$(this).attr('id')] = $(this).val();
-            }
-        });
-        $.post('ws_resc.php', {
-            cmd: 'redit',
-            tp: type,
-            id: idresc,
-            parm: parms
-        }, function (data) {
-            if (data) {
-                try {
-                    data = $.parseJSON(data);
-                } catch (err) {
-                    alert("Parser error - " + err.message);
-                    return;
-                }
-                if (data.error) {
-                    if (data.gotopage) {
-                        window.open(data.gotopage, '_self');
-                    }
-                    flagAlertMessage(data.error, true);
-                    return;
-                } else if (data.roomList) {
-                    $('#roomTable').children().remove().end().append($(data.roomList));
-                    $('#tblroom').dataTable({
-                        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                        "displayLength": 50,
-                        "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
-                    });
-                } else if (data.rescList) {
-                    $('#rescTable').children().remove().end().append($(data.rescList));
-                    $('#tblresc').dataTable({
-                        "dom": '<"top"if>rt<"bottom"lp><"clear">',
-                        "displayLength": 50,
-                        "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
-                    });
-                } else if (data.constList) {
-                    $('#constr').children().remove().end().append($(data.constList));
-                }
-                $('.reNewBtn').button();
-            }
-        });
-    }
-    $(document).ready(function () {
-        "use strict";
-
-        var tabIndex = parseInt('<?php echo $tabIndex; ?>');
-        $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
-
-        $('#txtFaIncome, #txtFaSize').change(function () {
-            var inc = $('#txtFaIncome').val().replace(',', ''),
-                    size = $('#txtFaSize').val(),
-                    errmsg = $('#spnErrorMsg');
-            errmsg.text('');
-            $('#txtFaIncome, #txtFaSize, #spnErrorMsg').removeClass('ui-state-highlight');
-            if (inc == '' || size == '') {
-                $('#spnFaCatTitle').text('');
-                $('#hdnRateCat').val('');
-                return false;
-            }
-            if (inc == '' || inc == '0' || isNaN(inc)) {
-                $('#txtFaIncome').addClass('ui-state-highlight');
-                errmsg.text('Fill in the Household Income').addClass('ui-state-highlight');
-                return false;
-            }
-            if (size == '' || size == '0' || isNaN(size)) {
-                $('#txtFaSize').addClass('ui-state-highlight');
-                errmsg.text('Fill in the Household Size').addClass('ui-state-highlight');
-                return false;
-            }
-            $.post('ws_ckin.php', {
-                cmd: 'rtcalc',
-                income: inc,
-                hhsize: size,
-                nites: 0
-            }, function (data) {
-                data = $.parseJSON(data);
-                if (data.catTitle) {
-                    $('#spnFaCatTitle').text(data.catTitle);
-                }
-                if (data.cat) {
-                    $('#hdnRateCat').val(data.cat);
-                }
-            });
-            return false;
-        });
-        setupRates();
-        $('#mainTabs').tabs();
-        $('#mainTabs').tabs("option", "active", tabIndex);
-        $('#statEvents').dialog({
-            autoOpen: false,
-            resizable: true,
-            width: 800,
-            modal: true,
-            title: 'Manage Status Events'
-        });
-        $('#divNewForm').dialog({
-            autoOpen: false,
-            resizable: true,
-            width: 800,
-            modal: true,
-            title: 'Create New Form',
-            buttons: {
-                "Create New Form": function() {
-                    var fmType = $('#hdnFormType').val(),
-                        fmLang = $('txtformLang').val();
-
-                    if (fmType !== '' && fmLang !== '') {
-                        // Make a new form
-                        $('#formFormNew').submit();
-                    }
-                },
-                "Cancel": function() {
-                    $(this).dialog("close");
-                    $('#regTabDiv').tabs('option', 'active', 0);
-                }
-            }
-        });
-
-        $('div#mainTabs').on('click', '.reEditBtn, .reNewBtn', function () {
-            getResource($(this).attr('name'), $(this).data('enty'), $(this).parents('tr'));
-        });
-        $('div#mainTabs').on('click', '.reStatBtn', function () {
-            getStatusEvent($(this).attr('name'), $(this).data('enty'), $(this).data('title'));
-        });
-        $('#btnNewForm').button().click(function () {
-        	$('#divNewForm').dialog('open');
-        });
-        $('#selFormUpload').change(function () {
-
-            $('#hdnFormType').val('');
-            
-            if ($(this).val() == '') {
-            	$('#divUploadForm').empty();
-            	$('#btnNewForm').hide()
-            	return;
-            }
-            $('#spnFrmLoading').show();
-            
-            $.post('ResourceBuilder.php', {'ldfm': $(this).val()},
-                function (data) {
-                    $('#spnFrmLoading').hide();
-
-                    if (data) {
-                    	data = $.parseJSON(data);
-
-                        $('#divUploadForm').empty().append(data.mkup);
-                        $('#btnNewForm').show();
-                        $('#hdnFormType').val(data.type);
-                       	$('#spanFrmTypeTitle').text(data.title);
-                       	$('#txtformLang').val('');
-
-                        $('#regTabDiv').tabs({
-                            collapsible: true,
-                        });
-
-                        $('#regTabDiv .ui-tabs-nav').sortable({
-                            axis: "x",
-                            items: "> li.hhk-sortable",
-                            stop: function(event, ui) {
-                              $('#regTabDiv').tabs( "refresh" );
-
-                              var order = $('#regTabDiv .ui-tabs-nav').sortable('toArray', {'attribute': 'data-code'});
-                              
-							  data = {
-									  'cmd':'reorderfm',
-									  'formDef':$(document).find('#regTabDiv').data('formdef'),
-									  'order':order
-									  };
-							  
-                              $.ajax({
-                           		url: 'ResourceBuilder.php',
-                            	type: "POST",
-                            	data: JSON.stringify(data),
-                            	processData: false,
-                            	contentType: "application/json; charset=UTF-8",
-                            	dataType: 'json',
-                            	success: function(data) {
-                                	if(data && data.status == "error"){
-                                		flagAlertMessage("Unable to set form order: " + data.message, true);
-                                	}
-                            	}
-                              });
-                            }
-                          });
-
-                        $('#divUploadForm button').button();
-                        $('#divUploadForm input[type=submit]').button();
-                    }
-                });
-        });
-        $('#selFormUpload').change();
-
-        $('#tblroom, #tblresc').dataTable({
-            "dom": '<"top"if>rt<"bottom"lp><"clear">',
-            "displayLength": 50,
-            "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
-        });
-        $('.hhk-selLookup').change(function () {
-            var $sel = $(this),
-                table = $(this).find("option:selected").text(),
-                type = $(this).val();
-
-            if ($sel.data('type') === 'd') {
-                table = $sel.val();
-                type = 'd';
-            }else if($sel.val() == "ReservStatus"){
-				table = "ReservStatus";
-				type = "ReservStatus";
-            }
-
-            $sel.closest('form').children('div').empty().text('Loading...');
-            $sel.prop('disabled', true);
-
-            $.post('ResourceBuilder.php', {table: table, cmd: "load", tp: type},
-                    function (data) {
-                        $sel.prop('disabled', false);
-                        if (data) {
-                            $sel.closest('form').children('div').empty().append(data);
-                        }
-                    });
-        });
-        $('.hhk-saveLookup').click(function () {
-            var $frm = $(this).closest('form');
-            var sel = $frm.find('select.hhk-selLookup');
-            var table = sel.find('option:selected').text(),
-                type = $frm.find('select').val(),
-                $btn = $(this);
-
-            if (sel.data('type') === 'd') {
-                table = sel.val();
-                type = 'd';
-            }
-
-            if ($btn.val() === 'Saving...') {
-                return;
-            }
-
-            $btn.val('Saving...');
-
-            $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + table + '&tp=' + type,
-                function(data) {
-                    $btn.val('Save');
-                    if (data) {
-                        $frm.children('div').empty().append(data);
-                    }
-                });
-        }).button();
-
-        $('#btndemoSave').click(function () {
-            var $frm = $(this).closest('form');
-
-            $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
-                function(data) {
-                    if (data) {
-                        $frm.children('div').children().remove().end().append(data);
-                    }
-                });
-        }).button();
-
-        // Add diagnosis and locations
-        if ($('#btnAddDiags').length > 0) {
-            $('#btnAddDiags').button();
-        }
-        if ($('#btnAddLocs').length > 0) {
-            $('#btnAddLocs').button();
-        }
-        if ($('#btnHouseDiscs').length > 0) {
-            $('#btnHouseDiscs').button();
-        }
-        if ($('#btnAddnlCharge').length > 0) {
-            $('#btnAddnlCharge').button();
-        }
-
-        $('input.number-only').change(function () {
-            if (isNumber(this.value) === false) {
-                $(this).val('0');
-            }
-            $(this).val(this.value);
-        });
-        $('#mainTabs').show();
-
-        $(document).on('click', '.replaceForm', function(){
-            var form = $(this).closest("div.row").find('.uploadFormDiv');
-            if(form.is(':hidden')){
-				$(this).text('Cancel');
-            }else{
-				$(this).text('Replace Form');
-				form.find('input[type=file]').val('');
-            }
-			form.toggle();
-			
-        });
-    });
-        </script>
+	<script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
+	<script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
+	<script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
+	<script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
+	<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+	<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+	<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+	<script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
 </head>
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-		<div style="float: left; margin-right: 100px; margin-top: 10px;">
+		<div style="float: left; margin-right: 20px; margin-top: 10px;">
 			<h1><?php echo $wInit->pageHeading; ?>&nbsp; (Any changes require everybody to log out and log back in!)</h1>
 		</div>
 <?php echo $resultMessage ?>
@@ -2492,8 +2050,8 @@ $resultMessage = $alertMsg->createMarkup();
 				style="font-size: .9em;">
                     <?php echo $roomTable; ?>
                 </div>
-			<div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
-				style="font-size: .9em;">
+			<div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+				<div><?php echo $demoMessage; ?></div>
 				<div style="float: left;">
 					<h3>Demographic Categories</h3>
 					<form id="formdemo">

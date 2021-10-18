@@ -1,4 +1,9 @@
 <?php
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\SecurityComponent;
+use HHK\Update\SiteConfig;
+use HHK\HTMLControls\HTMLContainer;
+
 /**
  * step1.php
  *
@@ -8,7 +13,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("InstallIncludes.php");
-require CLASSES . 'SiteConfig.php';
 
 
 // Get the site configuration object

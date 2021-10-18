@@ -1,20 +1,21 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\HTMLTable;
+use HHK\ExcelHelper;
+
+
 /**
  * Survey.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
 
-require (CLASSES . 'AuditLog.php');
-
-require(DB_TABLES . "nameRS.php");
-
 $wInit = new webInit();
-
 
 $dbh = $wInit->dbh;
 
@@ -29,39 +30,24 @@ $refreshDate = NULL;
 $dataTable = '';
 $showTable = 'display:none;';
 
-function outputIt(array $gName, $excel, $reportRows, $sml, $tbl) {
+function outputIt(array $gName, $excel, ExcelHelper $writer, $hdr, $tbl) {
     // write last patient out
     foreach ($gName as $g) {
 
         if ($excel) {
 
-            $n = 0;
             $flds = array(
-                $n++ => array('type' => "s",
-                    'value' => $g['depart']
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $g['last']
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $g['first']
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $g['street']
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $g['city']
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $g['state']
-                ),
-                $n++ => array('type' => "s",
-                    'value' => $g['zip'],
-                    'style' => '00000'
-                )
+                $g['depart'],
+                $g['last'],
+                $g['first'],
+                $g['street'],
+                $g['city'],
+                $g['state'],
+                $g['zip']
             );
 
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Worksheet", $row);
 
 
         } else {
@@ -93,8 +79,6 @@ $endDT->sub(new DateInterval('P' . $uS->SolicitBuffer . 'D'));
 
 //
 if (isset($_POST['btnPsg']) || isset($_POST['btnGen'])) {
-
-    require(CLASSES . "OpenXML.php");
 
     $excel = FALSE;
     if (isset($_POST['btnGen'])) {
@@ -134,23 +118,23 @@ order by h.idPsg, na.Address_1, na.Address_2";
 
 
     if ($excel) {
-        $sml = OpenXML::createExcel($uS->username, 'Guest Survey');
+        $writer = new ExcelHelper("GuestSurvey");
+        $writer->setAuthor($uS->username);
+        $writer->setTitle("Guest Survey");
+        
         // build header
-        $hdr = array();
-        $n = 0;
-
-        $hdr[$n++] = "Depart";
-        $hdr[$n++] = "Last Name";
-        $hdr[$n++] = "First Name";
-        $hdr[$n++] = "Address";
-        $hdr[$n++] = "City";
-        $hdr[$n++] = "State";
-        $hdr[$n++] = "Zip";
-
-
-        OpenXML::writeHeaderRow($sml, $hdr);
-        $reportRows++;
-
+        $hdr = array(
+            "Depart"=>"string",
+            "Last Name"=>"string",
+            "First Name"=>"string",
+            "Address"=>"string",
+            "City"=>"string",
+            "State"=>"string",
+            "Zip"=>"string"
+        );
+        $colWidths = array("15", "20", "20", "20", "15", "10", "10");
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Worksheet", $hdr, $hdrStyle);
     }
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
@@ -158,7 +142,7 @@ order by h.idPsg, na.Address_1, na.Address_2";
         // New PSG?
         if ($r['pFirst'] . ' ' . $r['pLast'] != $pName) {
 
-            $reportRows = outputIt($gName, $excel, $reportRows, $sml, $tbl);
+            $reportRows = outputIt($gName, $excel, $reportRows, $writer, $hdr, $tbl);
 
             $gName = array();
             $pName = $r['pFirst'] . ' ' . $r['pLast'];
@@ -200,26 +184,18 @@ order by h.idPsg, na.Address_1, na.Address_2";
                         'zip' => $r['Postal_Code']);
         }
 
-
-
         $address = $addr;
     }
 
     // write last patient out
-    outputIt($gName, $excel, $reportRows, $sml, $tbl);
+    outputIt($gName, $excel, $reportRows, $writer, $hdr, $tbl);
 
     if ($excel) {
 
         // update the saved survey date.
         $dbh->exec("update gen_lookups set Description = '$endDate' where Table_Name='Guest_Survey' and Code = 'Survey_Date'");
 
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        $writer->download();
     }
 
     $tbl->addHeaderTr(HTMLTable::makeTh('Patient').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Guest').HTMLTable::makeTh('Address'));
@@ -227,8 +203,6 @@ order by h.idPsg, na.Address_1, na.Address_2";
     $dataTable = $tbl->generateMarkup();
     $showTable = 'display:block;';
 }
-
-
 
 
 
@@ -241,11 +215,14 @@ order by h.idPsg, na.Address_1, na.Address_2";
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
     </head>
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>
@@ -264,5 +241,6 @@ order by h.idPsg, na.Address_1, na.Address_2";
             <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog" style="padding:5px;margin-top:15px; <?php echo $showTable; ?>">
                 <?php echo $dataTable; ?>
             </div>
+        </div>
     </body>
 </html>

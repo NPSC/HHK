@@ -1,4 +1,10 @@
 <?php
+
+namespace HHK;
+
+use HHK\SysConst\{VolMemberType, RelLinkType, MemStatus};
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+
 /**
  * Duplicate.php
  *
@@ -13,6 +19,7 @@
  *
  * @author Eric
  */
+
 class Duplicate {
 
     protected static function getNameDuplicates(\PDO $dbh, $mType) {
@@ -30,7 +37,7 @@ where
     n.Member_Status = 'a' and n.Record_Member = 1
 group by n.Name_Full having count(n.idName) > 1;");
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         } else if ($mType == VolMemberType::Patient) {
 
@@ -44,7 +51,7 @@ group by LOWER(n.Name_Full)
 having count(n.idName) > 1
 order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
 
-            while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
                 //$name = $r['Name_Full'];
 
@@ -84,7 +91,7 @@ group by LOWER(n.Name_Full), ng.idPsg
 having count(n.idName) > 1
 order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         }
 
@@ -111,20 +118,18 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
             // Expand this selection
             $expansion = Duplicate::expandPatient($dbh, $fullName);
             $data = array();
-            $ids = array();
             $idPsgs = array();
 
             foreach ($expansion as $d) {
 
-                $ids[$d['Id']] = $d['Id'];
                 $id = $d['Id'];
 
                 $idPsgs[$d['idPsg']] = $d['idPsg'];
 
                 $d['Id'] = HTMLContainer::generateMarkup('a', $d['Id'], array('href'=>'NameEdit.php?id=' . $d['Id']));
                 $d['P id'] = HTMLContainer::generateMarkup('a', $d['P id'], array('href'=>'NameEdit.php?id=' . $d['P id']));
-                $d['Good'] = HTMLInput::generateMarkup($d['idPsg'], array('type'=>'radio', 'name'=>'rbgood', 'id'=>'g'.$d['idPsg']));
-                $d['Bad'] = HTMLInput::generateMarkup($d['idPsg'], array('type'=>'radio', 'name'=>'rbbad', 'id'=>'b'.$d['idPsg']));
+                $d['Save'] = HTMLInput::generateMarkup($d['idPsg'], array('type'=>'radio', 'name'=>'rbgood', 'id'=>'g'.$d['idPsg']));
+                $d['Remove'] = HTMLInput::generateMarkup($d['idPsg'], array('type'=>'radio', 'name'=>'rbbad', 'id'=>'b'.$d['idPsg']));
                 $d['Rel'] = $relLinkTypes[$d['Rel']][1];
 
                 $data[] = $d;
@@ -134,7 +139,7 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
 
             $markup = CreateMarkupFromDB::generateHTML_Table($data, 'pickId');
 
-            $markup .= HTMLInput::generateMarkup('Combine PSG\'s', array('id'=>'btnCombPSG', 'type'=>'button', 'style'=>'margin-left:300px;'));
+            $markup .= HTMLInput::generateMarkup('Combine PSG\'s', array('id'=>'btnCombPSG', 'type'=>'button', 'style'=>'margin: 10px 0 5px 0;'));
             $markup .= HTMLContainer::generateMarkup('div', '', array('id'=>'spnAlert', 'style'=>'color:red; margin-left:10px;'));
 
             foreach ($idPsgs as $p) {
@@ -166,7 +171,7 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
     order by idStays;");
 
                 $markup .= HTMLContainer::generateMarkup('div',
-                            CreateMarkupFromDB::generateHTML_Table($stmt->fetchAll(PDO::FETCH_ASSOC), 'idPsg')
+                            CreateMarkupFromDB::generateHTML_Table($stmt->fetchAll(\PDO::FETCH_ASSOC), 'idPsg')
                             , array('style'=>'margin:5px;'));
             }
 
@@ -175,12 +180,12 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
             // Expand this selection
             $expansion = Duplicate::expandGuest($dbh, $fullName);
             $data = array();
-            $ids = array();
+
             $idPsgs = array();
 
             foreach ($expansion as $d) {
 
-                $ids[$d['Id']] = $d['Id'];
+
                 $id = $d['Id'];
 
                 $idPsgs[$d['idPsg']] = $d['idPsg'];
@@ -204,7 +209,7 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
 
 
             $markup = CreateMarkupFromDB::generateHTML_Table($data, 'pickId');
-            $markup .= HTMLInput::generateMarkup('Combine Id\'s', array('id'=>'btnCombId', 'type'=>'button'));
+            $markup .= HTMLInput::generateMarkup('Combine Id\'s', array('id'=>'btnCombId', 'type'=>'button', 'style'=>'margin: 10px 0 5px 0;'));
 
             $markup .= HTMLContainer::generateMarkup('div', '', array('id'=>'spnAlert', 'style'=>'color:red; margin-left:10px;'));
 
@@ -241,7 +246,7 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
     order by idStays;");
 
                 $markup .= HTMLContainer::generateMarkup('div',
-                            CreateMarkupFromDB::generateHTML_Table($stmt->fetchAll(PDO::FETCH_ASSOC), 'idPsg')
+                            CreateMarkupFromDB::generateHTML_Table($stmt->fetchAll(\PDO::FETCH_ASSOC), 'idPsg')
                             , array('style'=>'margin:5px;'));
             }
 
@@ -254,21 +259,22 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
 
         $stmt = $dbh->prepare("select
     n.idName as `Id`,
+    ng.idPsg,
+    's' as `Save`,
+    'r' as `Remove`,
     n.Name_Full as `Name`,
     concat(na.Address_1, na.Address_2) as `Address`,
     na.City,
     na.State_Province as `St`,
     np.Phone_Num as Phone,
-    ng.idPsg,
-    'g' as Good,
-    'b' as Bad,
     ng.Relationship_Code as `Rel`,
-    hs.idHospital_stay as `Hs id`,
     n2.idName as `P id`,
     n2.Name_Full as `Patient`,
     (select count(*) from visit where idRegistration = r.idregistration) as `visits`,
     (select count(*) from stays where idName = n.idName) as `stays`,
-    (select count(*) from reservation_guest where idGuest = n.idName) as `Resvs`
+    (select count(*) from reservation_guest where idGuest = n.idName) as `Resvs`,
+    (select count(*) from link_doc where idGuest = n.idName or idPSG = ng.idPsg) as `Docs`,
+    (select count(*) from report where Guest_Id = n.idName or Psg_Id = ng.idPsg) as `Incidents`
 from
     `name` n
         left join
@@ -280,9 +286,9 @@ from
         left join
     name_guest ng ON n.idName = ng.idName
         left join
-    hospital_stay hs ON ng.idPsg = hs.idPsg
+    psg ON ng.idPsg = psg.idPsg
         left join
-    name n2 ON hs.idPatient = n2.idName
+    name n2 ON psg.idPatient = n2.idName
         left join
     registration r ON ng.idPsg = r.idPsg
 where
@@ -290,7 +296,7 @@ where
 
         $stmt->execute(array(':name'=>  strtolower($name)));
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public static function expandGuest(\PDO $dbh, $name) {
@@ -306,12 +312,13 @@ where
     np.Phone_Num as Phone,
     ng.idPsg,
     ng.Relationship_Code as `Rel`,
-    hs.idHospital_stay as `Hs id`,
     n2.idName as `P id`,
     n2.Name_Full as `Patient`,
     (select count(*) from visit where idRegistration = r.idregistration) as `visits`,
     (select count(*) from stays where idName = n.idName) as `stays`,
-    (select count(*) from reservation_guest where idGuest = n.idName) as `Resvs`
+    (select count(*) from reservation_guest where idGuest = n.idName) as `Resvs`,
+    (select count(*) from link_doc where idGuest = n.idName) as `Docs`,
+    (select count(*) from report where Guest_Id = n.idName or Psg_Id = ng.idPsg) as `Incidents`
 from
     `name` n
         left join
@@ -323,9 +330,9 @@ from
         left join
     name_guest ng ON n.idName = ng.idName
         left join
-    hospital_stay hs ON ng.idPsg = hs.idPsg
+    psg ON ng.idPsg = psg.idPsg
         left join
-    name n2 ON hs.idPatient = n2.idName
+    name n2 ON psg.idPatient = n2.idName
         left join
     registration r ON ng.idPsg = r.idPsg
 where
@@ -333,7 +340,7 @@ where
 
         $stmt->execute(array(':name'=>  strtolower($name)));
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
     }
 
@@ -354,7 +361,7 @@ FROM
 WHERE
     n.Member_Status='a' and n.Name_Full = '$nameLastFirst'");
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $tbl = new HTMLTable();
 
         foreach ($rows as $r) {
@@ -365,9 +372,9 @@ WHERE
                     . HTMLTable::makeTd($r['Name_Full']). HTMLTable::makeTd($r['Phone_Num']) . HTMLTable::makeTd($r['Email'])));
         }
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('') . HTMLTable::makeTh('Id'). HTMLTable::makeTh('Name'). HTMLTable::makeTh('Phone'). HTMLTable::makeTh('Email'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Keep') . HTMLTable::makeTh('Id'). HTMLTable::makeTh('Name'). HTMLTable::makeTh('Phone'). HTMLTable::makeTh('Email'));
 
-        return $tbl->generateMarkup() . HTMLInput::generateMarkup('Combine', array('id'=>'btnCombine', 'type'=>'button', 'data-type'=> $mType));
+        return $tbl->generateMarkup() . HTMLInput::generateMarkup('Combine', array('id'=>'btnCombine', 'type'=>'button', 'data-type'=> $mType, 'style'=>'margin-top: 10px'));
     }
 
     public static function listNames(\PDO $dbh, $mType) {
@@ -403,7 +410,7 @@ WHERE
 
             $stmt = $dbh->query("SELECT Name_Last_First FROM name WHERE idName = $id");
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 1) {
 
@@ -414,7 +421,7 @@ WHERE
                     $stmt = $dbh->query("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
 where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::ReferralAgent . "' and n.Name_Last_First = '$nameLastFirst'");
 
-                    while ($r = $stmt->fetch(PDO::FETCH_NUM)) {
+                    while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
 
                         if ($r[0] == $id) {
                             continue;
@@ -436,7 +443,7 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Referra
 
             $stmt = $dbh->query("SELECT Name_Last_First FROM name WHERE idName = $id");
 
-            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) == 1) {
 
@@ -447,7 +454,7 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Referra
                     $stmt = $dbh->query("select n.idName from name n join name_volunteer2 nv on n.idName = nv.idName
 where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor . "' and n.Name_Last_First = '$nameLastFirst'");
 
-                    while ($r = $stmt->fetch(PDO::FETCH_NUM)) {
+                    while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
 
                         if ($r[0] == $id) {
                             continue;
@@ -474,16 +481,18 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
         $dPsgId = intval($deletePsgId, 10);
 
         if ($sPsgId == 0 || $dPsgId == 0) {
-            return 'One or the other PSG id is 0.  No action.';
+            return array('error'=>'One or the other PSG id is 0.  No action.');
         }
 
         if ($sPsgId == $dPsgId) {
-            return 'Good and Bad are the same.  No action.';
+            return array('error'=>'Good and Bad are the same.  No action.');
         }
 
-        $affRows = $dbh->exec("call combinePSG($sPsgId, $dPsgId);");
-
-        return 'Affected rows: ' . $affRows;
+        //$affRows = $dbh->exec("call combinePSG($sPsgId, $dPsgId);");
+        $stmt = $dbh->query("call combinePSG($sPsgId, $dPsgId);");
+        $rtn = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        return (isset($rtn[0])? $rtn[0]: array('error'=>'Query failed'));
 
     }
 
@@ -493,16 +502,17 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
         $dPsgId = intval($deleteId, 10);
 
         if ($sPsgId == 0 || $dPsgId == 0) {
-            return 'One or the other Id id is 0.  No action.';
+            return array('error'=>'One or the other Id id is 0.  No action.');
         }
 
         if ($sPsgId == $dPsgId) {
-            return 'Save and Remove are the same.  No action.';
+            return array('error'=>'Save and Remove are the same.  No action.');
         }
 
-        $affRows = $dbh->exec("call remove_dup_guest($sPsgId, $dPsgId);");
-
-        return 'Affected rows: ' . $affRows;
+        $stmt = $dbh->query("call remove_dup_guest($sPsgId, $dPsgId);");
+        $rtn = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        
+        return (isset($rtn[0])? $rtn[0]: array('error'=>'Query failed'));
 
     }
 

@@ -3,19 +3,23 @@ function getAgent(item) {
     "use strict";
     var cid = parseInt(item.id, 10);
     if (isNaN(cid) === false && cid > 0) {
-        $('#a_txtFirstName').val(item.first);
-        $('#a_txtLastName').val(item.last);
+        $('#a_txtFirstName').val(item.first).attr('readonly', 'readonly');
+        $('#a_txtLastName').val(item.last).attr('readonly', 'readonly');
         $('#a_txtPhonemc').val(item.cphone);
         $('#a_txtPhonegw').val(item.wphone);
         $('#a_txtEmail1').val(item.email);
         $('#a_idName').val(cid);
+        $('.a_actions').show();
+        $('#a_titleTh').attr('colspan', '3');
     } else {
-        $('#a_txtFirstName').val('');
-        $('#a_txtLastName').val('');
+        $('#a_txtFirstName').val('').removeAttr('readonly');
+        $('#a_txtLastName').val('').removeAttr('readonly');
         $('#a_txtPhonemc').val('');
         $('#a_txtPhonegw').val('');
         $('#a_txtEmail1').val('');
         $('#a_idName').val('0');
+        $('.a_actions').hide();
+        $('#a_titleTh').attr('colspan', '2');
     }
     $('.hhk-agentInfo').show();
 }
@@ -23,13 +27,15 @@ function getDoc(item) {
     "use strict";
     var cid = parseInt(item.id, 10);
     if (isNaN(cid) === false && cid > 0) {
-        $('#d_txtFirstName').val(item.first);
-        $('#d_txtLastName').val(item.last);
+        $('#d_txtFirstName').val(item.first).attr('readonly', 'readonly');
+        $('#d_txtLastName').val(item.last).attr('readonly', 'readonly');
         $('#d_idName').val(cid);
+        $('.d_actions').show();
     } else {
-        $('#d_txtFirstName').val('');
-        $('#d_txtLastName').val('');
+        $('#d_txtFirstName').val('').removeAttr('readonly');
+        $('#d_txtLastName').val('').removeAttr('readonly');
         $('#d_idName').val('0');
+        $('.d_actions').hide();
     }
     $('.hhk-docInfo').show();
 }
@@ -72,7 +78,19 @@ function gotIncomeDiag(idResv, idReg, data) {
             }
         };
         $("#faDialog").children().remove().end().append($(data.incomeDiag)).dialog("option", "buttons", buttons).dialog('open');
-        $('.ckdate').datepicker();
+
+    	// add closer to visit dialog box
+    	if ($('#keysfees').length > 0) {
+        	$('#keysfees').on( "dialogclose", function( event, ui ) {
+        		
+        	    // Close hospital stay dialog
+        	    if ($("#faDialog").dialog('isOpen')) {
+        	    	$("#faDialog").dialog('close');
+        	    }
+
+        	} );
+        }
+
         $('#txtFaIncome, #txtFaSize').change(function () {
             var income = $('#txtFaIncome'),
                 size = $('#txtFaSize');
@@ -210,11 +228,11 @@ function setupRates(ckIn) {
         }
     });
 
-    $('#txtadjAmount').change(function () {
+    $('#seladjAmount').change(function () {
 
         if ($selRateCat.val() !== fixedRate) {
 
-            var adj = parseFloat($(this).val()),
+            var adj = parseFloat($(this).find(':selected').data('amount')),
                 fa = 0,
                 taxAmt = 0,
                 days = parseInt($('#spnNites').text(), 10),
@@ -278,7 +296,7 @@ function setupRates(ckIn) {
         }
 
         $('#txtFixedRate').change();
-        $('#txtadjAmount').change();
+        $('#seladjAmount').change();
 
         if (ckIn.resources[$selResource.val()].key > 0) {
             $('#spnDepAmt').text('($'+ckIn.resources[$selResource.val()].key+')');

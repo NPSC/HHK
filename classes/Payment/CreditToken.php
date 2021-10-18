@@ -1,4 +1,18 @@
 <?php
+
+namespace HHK\Payment;
+
+use HHK\SysConst\{MpTranType};
+use HHK\Tables\EditRS;
+use HHK\Tables\PaymentGW\Guest_TokenRS;
+use HHK\Exception\RuntimeException;
+use HHK\Payment\GatewayResponse\GatewayResponseInterface;
+use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\Labels;
+
 /**
  * CreditToken.php
  *
@@ -17,7 +31,7 @@
  */
 class CreditToken {
 
-    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, iGatewayResponse $vr, $idToken = 0) {
+    public static function storeToken(\PDO $dbh, $idRegistration, $idPayor, GatewayResponseInterface $vr, $idToken = 0) {
 
         if ($vr->saveCardonFile() === FALSE || $vr->getToken() == '') {
             return 0;
@@ -68,7 +82,7 @@ class CreditToken {
         if ($gtRs->idGuest_token->getStoredVal() > 0) {
             // Update
         	$gtRs->Last_Updated->resetNewVal(date('Y-m-d'));
-        	$num = EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
+        	EditRS::update($dbh, $gtRs, array($gtRs->idGuest_token));
             $idToken = $gtRs->idGuest_token->getStoredVal();
         } else {
             //Insert
@@ -110,7 +124,7 @@ class CreditToken {
     }
 
 
-    public static function updateToken(\PDO $dbh, PaymentResponse $vr) {
+    public static function updateToken(\PDO $dbh, AbstractPaymentResponse $vr) {
 
         $gtRs = new Guest_TokenRS();
         $gtRs->idGuest_token->setStoredVal($vr->idToken);
@@ -238,7 +252,7 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
 
         } else {
 
-            throw new Hk_Exception_Runtime('Multiple Payment Tokens for guest Id: '.$gid.', ccgw='.$merchant);
+            throw new RuntimeException('Multiple Payment Tokens for guest Id: '.$gid.', ccgw='.$merchant);
         }
 
         return $gtRs;
@@ -267,7 +281,7 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
 
         if ($tokenRs->idGuest_token->getStoredVal() > 0 && $tokenRs->Token->getStoredVal() != '') {
 
-            $now = new DateTime();
+            $now = new \DateTime();
 
             // Card expired?
             $expDate = $tokenRs->ExpDate->getStoredVal();
@@ -276,9 +290,9 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
 
                 $expMonth = $expDate[0] . $expDate[1];
                 $expYear = $expDate[2] . $expDate[3];
-                $expDT = new DateTime($expYear . '-' . $expMonth . '-01');
-                $expDT->add(new DateInterval('P1M'));
-                $expDT->sub(new DateInterval('P1D'));
+                $expDT = new \DateTime($expYear . '-' . $expMonth . '-01');
+                $expDT->add(new \DateInterval('P1M'));
+                $expDT->sub(new \DateInterval('P1D'));
 
                 if ($now > $expDT) {
                     return FALSE;
@@ -286,8 +300,8 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
             }
 
             // Token Expired?
-            $grantedDT = new DateTime($tokenRs->Granted_Date->getStoredVal());
-            $p1d = new DateInterval('P' . $tokenRs->LifetimeDays->getStoredVal() . 'D');
+            $grantedDT = new \DateTime($tokenRs->Granted_Date->getStoredVal());
+            $p1d = new \DateInterval('P' . $tokenRs->LifetimeDays->getStoredVal() . 'D');
             $grantedDT->add($p1d);
 
             if ($grantedDT > $now) {
@@ -298,5 +312,57 @@ where t.idRegistration = $idReg $whMerchant and nv.idName is null order by t.Mer
         return FALSE;
     }
 
-
+    public static function deleteToken(\PDO $dbh, $guestTokenId) {
+    	
+    	$gtRs = new Guest_TokenRS();
+    	$gtRs->idGuest_token->setStoredVal(intval($guestTokenId, 10));
+    	$cnt = EditRS::delete($dbh, $gtRs, array($gtRs->idGuest_token));
+    	
+    	if ($cnt == 1) {
+    		return TRUE;
+    	}
+    	
+    	return FALSE;
+    }
+    
+    public static function getCardsOnFile(\PDO $dbh, $page) {
+    	
+    	$tbl = new HTMLTable();
+    	
+    	$stmt = $dbh->query("select t.*, n.Name_Full
+from guest_token t JOIN `name` n on t.idGuest = n.idName
+order by n.Name_Last, n.Name_First, t.Merchant");
+    	
+    	while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+    		
+    		$gtRs = new Guest_TokenRS();
+    		EditRS::loadRow($r, $gtRs);
+    		
+    		if (self::hasToken($gtRs)) {
+    			$tbl->addBodyTr(
+    					HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $r['Name_Full'], array('href'=>$page.$r['idGuest'])))
+    					.HTMLTable::makeTd($r['CardHolderName'])
+    					.HTMLTable::makeTd($r['CardType'])
+    					.HTMLTable::makeTd($r['MaskedAccount'])
+    					.HTMLTable::makeTd(date('M d, Y', strtotime($r['Granted_Date'])))
+    					.HTMLTable::makeTd($r['Merchant'])
+    					.HTMLTable::makeTd($r['Running_Total'], array('style'=>'text-align:right;'))
+    					);
+    		}
+    	}
+    	
+    	$tbl->addHeaderTr(
+    			HTMLTable::makeTh(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'))
+    			.HTMLTable::makeTh('Card Holder')
+    			.HTMLTable::makeTh('Type')
+    			.HTMLTable::makeTh('Account')
+    			.HTMLTable::makeTh('Granted')
+    			.HTMLTable::makeTh('Merchant')
+    			.HTMLTable::makeTh('Running Total'));
+    	
+    	return $tbl->generateMarkup();
+    	
+    }
+    
 }
+?>

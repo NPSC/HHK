@@ -1,22 +1,35 @@
 <?php
+use HHK\SysConst\WebPageCode;
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\AlertControl\AlertMessage;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\SecurityComponent;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\CreateMarkupFromDB;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Neon\TransferMembers;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\HTMLControls\HTMLInput;
+use HHK\ExcelHelper;
+use HHK\sec\Labels;
+
 /**
  * GuestTransfer.php
+ * List and transfer guests to NEON
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2021 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
 
-require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'TransferMembers.php';
-require CLASSES . 'OpenXML.php';
 
 try {
     // Do not add CSP.
-    $wInit = new webInit(WebPageCode::Page, FALSE);
+    $wInit = new WebInit(WebPageCode::Page, FALSE);
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -31,16 +44,6 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-
 $config = new Config_Lite(ciCFG_FILE);
 
 $serviceName = $config->getString('webServices', 'Service_Name', '');
@@ -49,18 +52,16 @@ $webServices = $config->getString('webServices', 'ContactManager', '');
 if ($serviceName != '' && $webServices != '') {
     $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
 } else {
-    exit('<h2>HHK configuration error:  Web Services Configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h2>');
+    exit('<h4>HHK configuration error:  Web Services Configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h4>');
 }
 
 if (function_exists('curl_version') === FALSE) {
-    exit('<h2>PHP configuration error: cURL functions are missing. </h2>');
+    exit('<h4>PHP configuration error: cURL functions are missing. </h4>');
 }
-
-$resultMessage = $alertMsg->createMarkup();
 
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 function getPaymentReport(\PDO $dbh, $start, $end) {
 
@@ -98,7 +99,7 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
 }
 
-function getPeopleReport(\PDO $dbh, $local, $start, $end, $extIdFlag = FALSE) {
+function getPeopleReport(\PDO $dbh, $start, $end, $extIdFlag = FALSE) {
 
     $whExt = '';
     if ($extIdFlag) {
@@ -108,122 +109,83 @@ function getPeopleReport(\PDO $dbh, $local, $start, $end, $extIdFlag = FALSE) {
     $uS = Session::getInstance();
     $transferIds = [];
 
-    $query = "select vg.External_Id, vg.Id, CASE WHEN vg.Relationship_Code = 'slf' THEN 'p' ELSE '' END as `Patient`, concat(vg.Prefix, ' ', vg.First, ' ', vg.Last, ' ', vg.Suffix) as `Name`, ifnull(vg.BirthDate, '') as `Birth Date`, "
-        . " concat(vg.Address, ', ', vg.City, ', ', vg.County, ' ', vg.State, ' ', vg.Zip) as `Address`,  vg.Phone, vg.Email, vg.idPsg,"
-        . " max(ifnull(s.Span_Start_Date, '')) as `Arrival`, ifnull(s.Span_End_Date, '') as `Departure` "
-        . " from stays s
-        join
-    vguest_listing vg on vg.Id = s.idName
-where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') "
-            . " GROUP BY vg.Id";
+    $query = "SELECT
+    vg.External_Id as `External Id`,
+    vg.Id,
+    CASE
+        WHEN vg.Relationship_Code = 'slf' THEN '&#x2714;'
+        ELSE ''
+    END AS `Patient`,
+    CASE
+		WHEN v.idPrimaryGuest = s.idName THEN 'Yes'
+        ELSE ''
+	END AS `Primary Guest`,
+    CONCAT(vg.Prefix,
+            ' ',
+            vg.First,
+            ' ',
+            vg.Last,
+            ' ',
+            vg.Suffix) AS `Name`,
+    IFNULL(vg.BirthDate, '') AS `Birth Date`,
+    CONCAT(vg.Address,
+            ', ',
+            vg.City,
+            ', ',
+            vg.County,
+            ' ',
+            vg.State,
+            ' ',
+            vg.Zip) AS `Address`,
+    vg.Phone,
+    vg.Email,
+    vg.idPsg,
+    MAX(IFNULL(s.Span_Start_Date, '')) AS `Arrival`,
+    IFNULL(s.Span_End_Date, '') AS `Departure`
+FROM
+    stays s
+        JOIN
+    vguest_listing vg ON vg.Id = s.idName
+        JOIN
+    visit v ON s.idVisit = v.idVisit
+        AND s.Visit_Span = v.Span
+where $whExt ifnull(DATE(s.Span_End_Date), DATE(now())) >= DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end')
+GROUP BY vg.Id ORDER BY vg.idPsg";
 
     $stmt = $dbh->query($query);
 
-    if (!$local) {
-
-        $reportRows = 1;
-        $file = 'GuestTransfer';
-        $sml = OpenXML::createExcel('Guest Tracker', 'Guest Transfer');
-    }
-
     $rows = array();
     $firstRow = TRUE;
-
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-
-        if ($uS->county === FALSE) {
-            unset($r['County']);
-        }
+    $hdr = array();
+    
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
         $transferIds[] = $r['Id'];
 
-        if ($firstRow) {
 
-            $firstRow = FALSE;
-
-            if ($local === FALSE) {
-
-                // build header
-                $hdr = array();
-                $n = 0;
-                $noReturn = '';
-
-                // HEader row
-                $keys = array_keys($r);
-                foreach ($keys as $k) {
-                    $hdr[$n++] =  $k;
-                }
-
-                if ($noReturn != '') {
-                    $hdr[$n++] =  $noReturn;
-                }
-
-                OpenXML::writeHeaderRow($sml, $hdr);
-                $reportRows++;
-            }
+        if ($r['Address'] == ', ,   ') {
+        	$r['Address'] = '';
         }
-
-        if ($local) {
-
-            $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
-
-            if (isset($r['Birth Date']) && $r['Birth Date'] != '') {
-                $r['Birth Date'] = date('c', strtotime($r['Birth Date']));
-            }
-            if ($r['Arrival'] != '') {
-                $r['Arrival'] = date('c', strtotime($r['Arrival']));
-            }
-            if ($r['Departure'] != '') {
-                $r['Departure'] = date('c', strtotime($r['Departure']));
-            }
-
-            if ($r['Patient'] != '') {
-                $r['Patient'] = '&#x2714;';
-            }
-
-            $rows[] = $r;
-
-        } else {
-
-            $n = 0;
-            $flds = array();
-
-
-            foreach ($r as $key => $col) {
-
-                if (($key == 'Arrival' or $key == 'Departure' || $key == 'Birth Date') && $col != '') {
-
-                    $flds[$n++] = array('type' => "n",
-                        'value' => PHPExcel_Shared_Date::PHPToExcel(new DateTime($col)),
-                        'style' => PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14);
-
-                } else {
-                    $flds[$n++] = array('type' => "s", 'value' => $col);
-                }
-            }
-
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
+        
+        // Transfer opt-out
+        if ($r['External Id'] == '') {
+        	
+       		if ($r['Email'] !== '' || $r['Address'] !== '') {
+       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['Id'], 'type'=>'checkbox', 'checked'=>'checked'));
+       		} else {
+       			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['Id'], 'type'=>'checkbox'));
+        	}
         }
+            
+        $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
+        
+        $rows[] = $r;
 
     }
 
-    if ($local) {
+    $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
+    return array('mkup' =>$dataTable, 'xfer'=>$transferIds);
 
-        $dataTable = CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-        return array('mkup' =>$dataTable, 'xfer'=>$transferIds);
-
-
-    } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
-    }
 }
 
 
@@ -257,11 +219,6 @@ if ($uS->fy_diff_Months == 0) {
 
 // Process report.
 if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
-
-    $local = TRUE;
-    if (isset($_POST['btnExcel'])) {
-        $local = FALSE;
-    }
 
     // gather input
 
@@ -338,7 +295,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
     if (isset($_POST['btnHere'])) {
 
         // Get HHK records result table.
-        $results = getPeopleReport($dbh, $local, $start, $end, FALSE);
+        $results = getPeopleReport($dbh, $start, $end, FALSE);
         $dataTable = $results['mkup'];
         $transferIds = $results['xfer'];
 
@@ -411,356 +368,14 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
-<script type="text/javascript">
-function updateLocal(id) {
-    var postUpdate = $.post('ws_tran.php', {cmd:'rmvAcctId', id:id});
 
-    postUpdate.done(function(incmg) {
-        $('div#retrieve').empty();
-
-        if (!incmg) {
-            alert('Bad Reply from Server');
-            return;
-        }
-
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.result) {
-            flagAlertMessage(incmg.result, false);
-
-        }
-    });
-}
-
-function updateRemote(id, accountId) {
-
-    var postUpdate = $.post('ws_tran.php', {cmd:'update', accountId:accountId, id:id});
-
-    postUpdate.done(function(incmg) {
-        $('#btnUpdate').val('Update Remote');
-        if (!incmg) {
-            alert('Bad Reply from Server');
-            return;
-        }
-
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.warning) {
-
-            var updteLocal = $('<input type="button" id="btnLocal" value="" />');
-            $('#btnUpdate').hide();
-
-            flagAlertMessage(incmg.warning, true);
-
-            updteLocal.val('Remove Remote Account Id from Local Record');
-
-            updteLocal.button().click(function () {
-                $("#divAlert1").hide();
-                if ($(this).val() === 'Working...') {
-                    return;
-                }
-                $(this).val('Working...');
-
-                updateLocal(id);
-            });
-
-            $('div#retrieve').prepend(updteLocal);
-
-        } else if (incmg.result) {
-            flagAlertMessage(incmg.result, false);
-        }
-    });
-}
-
-function transferRemote(transferIds) {
-    var parms = {
-        cmd: 'xfer',
-        ids: transferIds
-    };
-
-    var posting = $.post('ws_tran.php', parms);
-    posting.done(function(incmg) {
-        $('#TxButton').val('Transfer').hide();
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.data) {
-            $('div#retrieve').empty();
-            $('#divTable').empty().append($(incmg.data));
-        }
-    });
-
-}
-
-function transferPayments($btn, start, end) {
-
-    var parms = {
-        cmd: 'payments',
-        st: start,
-        en: end
-    };
-
-    var posting = $.post('ws_tran.php', parms);
-
-    posting.done(function(incmg) {
-        $btn.val('Transfer Payments');
-
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        $('div#retrieve').empty();
-
-        if (incmg.data) {
-            $('#divTable').empty().append($(incmg.data)).show();
-        }
-
-        if (incmg.members) {
-            $('#divMembers').empty().append($(incmg.members)).show();
-        }
-
-    });
-}
-
-function getRemote(item, source) {
-    $('div#printArea').hide();
-    $('#divPrintButton').hide();
-
-    var posting = $.post('ws_tran.php', {cmd:'getAcct', src:source, accountId:item.id});
-    posting.done(function(incmg) {
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-        try {
-        incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        if (incmg.data) {
-            $('div#retrieve').children().remove();
-            $('div#retrieve').html(incmg.data);
-
-            if (source === 'remote') {
-                $('div#retrieve').prepend($('<h3>Remote Data</h3>'));
-                $('#txtRSearch').val('');
-
-            } else {
-
-                var updteRemote = $('<input type="button" id="btnUpdate" value="" />');
-
-                if (incmg.accountId === '') {
-                    updteRemote.val('Transfer to Remote');
-                    updteRemote.button().click(function () {
-                        $("#divAlert1").hide();
-                        if ($(this).val() === 'Working...') {
-                            return;
-                        }
-                        $(this).val('Working...');
-
-                        transferRemote([item.id]);
-                    });
-                } else if (incmg.accountId) {
-                    updteRemote.val('Update Remote');
-                    updteRemote.button().click(function () {
-                        $("#divAlert1").hide();
-                        if ($(this).val() === 'Working...') {
-                            return;
-                        }
-                        $(this).val('Working...');
-                        updateRemote(item.id, incmg.accountId);
-                    });
-                } else {
-                    updteRemote = '';
-                }
-
-                $('div#retrieve').prepend($('<h3>Local (HHK) Data </h3>').append(updteRemote));
-                $('#txtSearch').val('');
-            }
-        }
-    });
-}
-
-$(document).ready(function() {
-    var makeTable = '<?php echo $mkTable; ?>';
-    var transferIds = <?php echo json_encode($transferIds); ?>;
-    var start = '<?php echo $start; ?>';
-    var end = '<?php echo $end; ?>';
-    var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-
-    $('#btnHere, #btnCustFields, #btnGetPayments').button();
-
-    $('#printButton').button().click(function() {
-        $("div#printArea").printArea();
-    });
-
-    if (makeTable === '1') {
-        $('div#printArea').show();
-        $('#divPrintButton').show();
-        $('#btnPay').hide();
-        $('#divMembers').empty();
-
-        $('#tblrpt').dataTable({
-           'columnDefs': [
-                {'targets': [4, 9, 10],
-                 'type': 'date',
-                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                }
-            ],
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        });
-
-        $('#TxButton').button().show().click(function () {
-            $("#divAlert1").hide();
-            if ($('#TxButton').val() === 'Working...') {
-                return;
-            }
-            $('#TxButton').val('Working...');
-            transferRemote(transferIds);
-        });
-
-    } else if (makeTable === '2') {
-
-        $('div#printArea').show();
-        $('#divPrintButton').show();
-        $('#TxButton').hide();
-        $('#divMembers').empty();
-
-        $('#tblrpt').dataTable({
-            'columnDefs': [
-                {'targets': [4],
-                 'type': 'date',
-                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                }
-            ],
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        });
-
-        $('#btnPay').button().show().click(function () {
-            $("#divAlert1").hide();
-            if ($(this).val() === 'Transferring ...') {
-                return;
-            }
-            $(this).val('Transferring ...');
-
-            transferPayments($(this), start, end);
-        });
-    }
-
-
-    $('.ckdate').datepicker({
-        yearRange: '-07:+01',
-        changeMonth: true,
-        changeYear: true,
-        autoSize: true,
-        numberOfMonths: 1,
-        dateFormat: 'M d, yy'
-    });
-
-    $('#selCalendar').change(function () {
-        if ($(this).val() && $(this).val() != '19') {
-            $('#selIntMonth').hide();
-        } else {
-            $('#selIntMonth').show();
-        }
-        if ($(this).val() && $(this).val() != '18') {
-            $('.dates').hide();
-        } else {
-            $('.dates').show();
-        }
-    });
-
-    $('#selCalendar').change();
-
-    createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item, 'remote');}, false, '../house/ws_tran.php');
-    createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {getRemote(item, 'hhk');}, false);
-});
- </script>
     </head>
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?>  <span style="font-size: .7em;"><a href="SetupNeonCRM.htm" target="_blank">(Instructions)</a></span></h2>
-            <a id='aLoginLink' href="<?php echo $wsLink; ?>" style="float:left;margin-top:15px;margin-left:5px;margin-right:5px;padding-left:5px;padding-right:5px;" title="Click to log in."><div style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></div></a>
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
+            <a id='aLoginLink' href="<?php echo $wsLink; ?>" style="float:left;margin-top:15px;margin-left:5px;margin-right:5px;padding-left:5px;padding-right:5px;" title="Click to log in."><span style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></span></a>
+
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
                    <table style="clear:left;float: left;">
@@ -819,5 +434,13 @@ $(document).ready(function() {
                 <div id="divMembers"></div>
             </div>
         </div>
+        <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
+        <input id='htransferIds' type="hidden" value='<?php echo json_encode($transferIds); ?>'/>
+        <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
+        <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
+        <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
+        
+        <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
+        
     </body>
 </html>

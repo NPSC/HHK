@@ -65,11 +65,9 @@ where ((`n`.`idName` > 0) and (`n`.`Member_Status` in ('a','d','in')));
 -- View `vmember_listing_blackout`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vmember_listing_blackout` AS
-select vm.*, ifnull(v.idVisit,0) as idVisit, max(ifnull(v.Span_End, now() - INTERVAL 90 DAY)) as spanEnd
+select vm.*, ifnull(s.idVisit,0) as idVisit, max(ifnull(s.Span_End_Date, now())) as spanEnd
 from vmember_listing vm
-left join name_guest ng on vm.Id = ng.idName
-left join registration r on ng.idPsg = r.idPsg
-left join visit v on r.idRegistration = v.idRegistration and v.Status in ('co', 'a')
+left join stays s on vm.Id = s.idName and s.Status in ('co', 'a')
 group by vm.Id;
 
 
@@ -1119,6 +1117,25 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
             AND (`n`.`Record_Member` = 1)
             AND (`n`.`Member_Status` IN ('a' , 'd', 'in')));
 
+-- -----------------------------------------------------
+-- View `vguest_demog`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vguest_demog` AS
+	SELECT DISTINCT
+        `n`.`Name_Full` AS `Name_Full`,
+        `np`.`Name_Full` AS `Patient_Name`,
+        `n`.`Gender` AS `Gender`,
+        `nd`.*
+    FROM
+        ((((`name_guest` `ng`
+        JOIN `name_demog` `nd` ON ((`ng`.`idName` = `nd`.`idName`)))
+        LEFT JOIN `name` `n` ON ((`n`.`idName` = `ng`.`idName`)))
+        LEFT JOIN `psg` `p` ON ((`ng`.`idPsg` = `p`.`idPsg`)))
+        LEFT JOIN `name` `np` ON ((`p`.`idPatient` = `np`.`idName`)))
+    WHERE
+        (`n`.`Member_Status` IN ('a' , 'in', 'd'))
+    ORDER BY `n`.`idName` DESC;
+
 
 -- -----------------------------------------------------
 -- View `vguest_neon_payment`
@@ -1237,12 +1254,14 @@ CREATE OR REPLACE VIEW `vguest_view` AS
             ELSE `s`.`Expected_Co_Date`
         END) AS `Expected Departure`,
         `s`.`On_Leave` AS `On_Leave`,
+        TO_DAYS(CURRENT_TIMESTAMP()) - TO_DAYS(`s`.`Checkin_Date`) AS `Nights`,
+        `hosp`.`Title` AS `Hospital`,
         IFNULL(`v`.`Make`, '') AS `Make`,
         IFNULL(`v`.`Model`, '') AS `Model`,
         IFNULL(`v`.`Color`, '') AS `Color`,
         IFNULL(`v`.`State_Reg`, '') AS `State Reg.`,
         IFNULL(`v`.`License_Number`, '') AS `License Plate`,
-        IFNULL(v.Note, '') as `Note`
+        IFNULL(`v`.`Note`, '') as `Note`
     FROM
         ((((((`stays` `s`
         LEFT JOIN `name` `n` ON ((`n`.`idName` = `s`.`idName`)))
@@ -1250,8 +1269,10 @@ CREATE OR REPLACE VIEW `vguest_view` AS
             AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`))))
         LEFT JOIN `visit` `vs` ON (((`s`.`idVisit` = `vs`.`idVisit`)
             AND (`s`.`Visit_Span` = `vs`.`Span`))))
-        LEFT JOIN `vehicle` `v` ON ((`vs`.`idRegistration` = `v`.`idRegistration`)))
-        LEFT JOIN `room` `rm` ON ((`s`.`idRoom` = `rm`.`idRoom`)))
+		LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`)))
+        LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`)
+        LEFT JOIN `vehicle` `v` ON ((`vs`.`idRegistration` = `v`.`idRegistration`))
+        LEFT JOIN `room` `rm` ON ((`s`.`idRoom` = `rm`.`idRoom`))
         LEFT JOIN `gen_lookups` `g` ON (((`g`.`Table_Name` = 'Name_Suffix')
             AND (`g`.`Code` = `n`.`Name_Suffix`))))
     WHERE
@@ -1398,6 +1419,7 @@ CREATE or replace VIEW `vindividual_donations` AS
             else ifnull( `vp`.`PostalCode`, '')
         end) AS `Assoc_Zipcode`,
         `d`.`Amount` AS `Amount`,
+        `g`.`Description` as `Pay Type`,
         (case
             when
                 (ifnull(`c`.`Campaign_Type`, '') = 'pct')
@@ -1427,13 +1449,15 @@ CREATE or replace VIEW `vindividual_donations` AS
         d.Fund_Code,
         d.Note
     from
-        ((((`donations` `d`
-        left join `campaign` `c` ON ((lcase(trim(`d`.`Campaign_Code`)) = lcase(trim(`c`.`Campaign_Code`)))))
-        left join `vmember_listing_noex` `vm` ON ((`vm`.`Id` = `d`.`Donor_Id`)))
-        left join `vmember_listing_noex` `vp` ON ((`vp`.`Id` = `d`.`Assoc_Id`)))
-        left join `vmember_listing_noex` `ve` ON ((`ve`.`Id` = `d`.`Care_Of_Id`)))
+        `donations` `d`
+        left join `campaign` `c` ON lcase(trim(`d`.`Campaign_Code`)) = lcase(trim(`c`.`Campaign_Code`))
+        left join `vmember_listing_noex` `vm` ON `vm`.`Id` = `d`.`Donor_Id`
+        left join `vmember_listing_noex` `vp` ON `vp`.`Id` = `d`.`Assoc_Id`
+        left join `vmember_listing_noex` `ve` ON `ve`.`Id` = `d`.`Care_Of_Id`
+        left join gen_lookups g on g.Table_Name = 'Pay_Type' and g.Code = `d`.`Pay_Type`
+        
     where
-        (`d`.`Status` = 'a');
+        `d`.`Status` = 'a';
 
 
 
@@ -2094,6 +2118,7 @@ select
         `v`.`Span_Start`,
         `v`.`Expected_Departure`,
         `v`.`Span_End`,
+        `v`.`Notes` AS `Ribbon_Note`,
         gv.Description as `Status_Text`,
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         ifnull(hs.idAssociation, 0) as `idAssociation`,
@@ -2152,7 +2177,8 @@ CREATE or Replace VIEW `vregister_resv` AS
         nd.Income_Bracket,
         nd.Age_Bracket,
         nd.Education_Level,
-        nd.Special_Needs
+        nd.Special_Needs,
+        r.Notes as 'Ribbon_Note'
     from
         `reservation` `r`
             left join
@@ -2225,6 +2251,7 @@ CREATE or Replace VIEW `vreservation_events` AS
         r.Confirmation,
         r.Expected_Pay_Type,
         r.`Timestamp`,
+        r.`Updated_By`,
         r.`Checkin_Notes`,
         ifnull(hs.idPsg, 0) as `idPsg`,
         ifnull(rg.idGuest, 0) as `Patient_Staying`
@@ -2555,7 +2582,7 @@ CREATE or replace VIEW `vspan_listing` AS
         `v`.`Ext_Phone_Installed`,
         `v`.`OverRideMaxOcc`,
         '' as `Visit_Notes`,
-        '' AS `Notes`,
+        `v`.`Notes` AS `Notes`,
         `v`.`Status`,
         ifnull(`g2`.`Description`, '') AS `Status_Title`,
         `v`.`Updated_By`,
@@ -2566,7 +2593,8 @@ CREATE or replace VIEW `vspan_listing` AS
         `v`.`Rate_Category`,
         v.idRoom_Rate,
         v.Rate_Glide_Credit,
-        ifnull(n.Name_Full, '') as `Patient_Name`,
+        case when ifnull(hs.MRN, '') = '' then ifnull(n.Name_Full, '') else concat( ifnull(n.Name_Full, '') ,' (' , ifnull(hs.MRN, '') , ')') end
+         as `Patient_Name`,
 	ifnull(hs.idHospital, 0) as `idHospital`,
 	ifnull(hs.idAssociation, 0) as `idAssociation`
     from
@@ -2577,7 +2605,6 @@ CREATE or replace VIEW `vspan_listing` AS
         left join `name` n on hs.idPatient = n.idName
         left join `gen_lookups` `g2` ON `g2`.`Table_Name` = 'Visit_Status'
             and `g2`.`Code` = `v`.`Status`;
-
 
 
 -- -----------------------------------------------------
@@ -2827,6 +2854,16 @@ select
     u.Default_Page AS `Default Page`,
     wg.Title as `Authorization Code`,
     u.Last_Login AS `Last Login`,
+    `u`.`PW_Change_Date` AS `Password Changed`,
+    CASE
+        WHEN `u`.`Chg_PW` THEN 'Next Login'
+        WHEN (`u`.`pass_rules` = 0 || `sc`.`Value` = 0) THEN 'Never'
+        WHEN `u`.`PW_Change_Date`
+            THEN DATE_FORMAT((`u`.`PW_Change_Date` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
+        WHEN `u`.`Timestamp`
+            THEN DATE_FORMAT((`u`.`Timestamp` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
+        ELSE ''
+    END AS `Password Expires`,
     u.Updated_By AS `Updated By`,
     DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`
 from
@@ -2836,7 +2873,8 @@ from
 	left join id_securitygroup s on s.idName = u.idName
 	left join w_groups wg on s.Group_Code = wg.Group_Code
     left join gen_lookups gr ON (((a.Role_Id = gr.Code) and (gr.Table_Name = 'Role_Codes'))))
-    left join gen_lookups gs ON (((u.Status = gs.Code) and (gs.Table_Name = 'Web_User_Status'))));
+    left join gen_lookups gs ON (((u.Status = gs.Code) and (gs.Table_Name = 'Web_User_Status')))
+    left join sys_config sc ON (sc.Key = 'passResetDays'));
 
 
 

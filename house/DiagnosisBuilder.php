@@ -1,4 +1,17 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\SysConst\WebRole;
+use HHK\Config_Lite\Config_Lite;
+use HHK\Tables\GenLookupsRS;
+use HHK\Tables\EditRS;
+use HHK\TableLog\HouseLog;
+use HHK\sec\Labels;
+
 /**
  * ResourceBuilder.php
  *
@@ -9,14 +22,8 @@
  */
 require ("homeIncludes.php");
 
-
-require (DB_TABLES . 'GenLookupsRS.php');
-require CLASSES . 'TableLog.php';
-require (CLASSES . 'HouseLog.php');
-
-
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
@@ -110,7 +117,7 @@ $rteFileSelection = '';
 $rteMsg = '';
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 // Add diags and locations buttons
 if (isset($_POST['btnAddDiags'])) {
@@ -242,10 +249,13 @@ $selLookups = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($lkups, '
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript">
     $(document).ready(function () {
         "use strict";

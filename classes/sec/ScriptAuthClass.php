@@ -1,4 +1,12 @@
 <?php
+namespace HHK\sec;
+
+use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\{HTMLContainer};
+use HHK\SysConst\WebPageCode;
+use HHK\SysConst\{WebSiteCode, Mode};
+use HHK\Config_Lite\Config_Lite;
+
 /**
  * ScriptAuthClass.php
  *
@@ -31,7 +39,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             $site = $this->loadWebSite($dbh);
 
-        } catch (Hk_Exception_Runtime $hex) {
+        } catch (RuntimeException $hex) {
 
             $uS->destroy(TRUE);
             exit("error: ".$hex->getMessage());
@@ -110,7 +118,7 @@ class ScriptAuthClass extends SecurityComponent {
                 $uS->siteList = $sl;
 
             } else {
-                throw new Hk_Exception_Runtime("web_sites records not found.");
+                throw new RuntimeException("web_sites records not found.");
             }
         }
 
@@ -161,7 +169,7 @@ class ScriptAuthClass extends SecurityComponent {
 
             try {
                 $stmt = $dbh->query($query . $where . $orderBy);
-            } catch (PDOException $pex) {
+            } catch (\PDOException $pex) {
                 $where = " where p.Web_Site = '$wsCode' ";
                 $stmt = $dbh->query($query . $where . $orderBy);
             }
@@ -194,11 +202,11 @@ class ScriptAuthClass extends SecurityComponent {
 
                 $uS->webPages = $wp;
             } else {
-                throw new Hk_Exception_Runtime("Web pages list not found.");
+                throw new RuntimeException("Web pages list not found.");
             }
         } else {
 
-            throw new Hk_Exception_Runtime("web_sites not found.  Host: " . $this->getRootURL() . "  Doc Root: " . $this->getHhkSiteDir());
+            throw new RuntimeException("web_sites not found.  Host: " . $this->getRootURL() . "  Doc Root: " . $this->getHhkSiteDir());
         }
 
         return $uS->webSite;
@@ -346,7 +354,7 @@ class ScriptAuthClass extends SecurityComponent {
         //$markup .= "</div></div></header>
         //    <div id='version'>$disclaimer User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
         $markup .= "</div></div></header>
-            <div id='version'>$disclaimer Build:" . $uS->ver . "  <button id='userSettingsBtn' style='margin-left: .5em'>Hello, " . $uS->username . "</button></div>";
+            <div id='version'>$disclaimer Build:" . $uS->ver . "  <button id='userSettingsBtn' style='margin-left: .5em' class='ui-button ui-corner-all ui-widget'>Hello, " . $uS->username . "</button></div>";
         
         //add user settings modal
         if($dbh && isset($uS)){
@@ -362,10 +370,11 @@ class ScriptAuthClass extends SecurityComponent {
         $mu = "<ul id='ulIcons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix hhk-ui-icons'>";
         $siteCount = 0;
         $siteMu = '';
+        $uS = Session::getInstance();
 
-        $config = new Config_Lite(ciCFG_FILE);
-        $tutorialURL = $config->getString('site', 'Tutorial_URL', '');
-        $hufURL = $config->getString('site', 'HUF_URL', '');
+        // $config = new Config_Lite(ciCFG_FILE);
+        $tutorialURL = $uS->Tutorial_URL;  //$config->getString('site', 'Tutorial_URL', '');
+        $hufURL = $uS->HUF_URL;  //$config->getString('site', 'HUF_URL', '');
 
         foreach ($siteList as $r) {
 
@@ -406,3 +415,4 @@ class ScriptAuthClass extends SecurityComponent {
     }
 
 }
+?>

@@ -1,31 +1,25 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\Config_Lite\Config_Lite;
+use HHK\Member\Role\AbstractRole;
+use HHK\House\Reservation\Reservation_1;
+use HHK\SysConst\ReservationStatus;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\Labels;
+
 /**
  * CheckIn.php
  *
 * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-
-
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
@@ -36,12 +30,12 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 $wListMarkup = '';
 
 // Guest Search markup
-$gMk = Role::createSearchHeaderMkup('', 'Guest Search: ', TRUE);
+$gMk = AbstractRole::createSearchHeaderMkup('', $labels->getString('MemberType', 'guest', 'Guest').' or ' . $labels->getString('MemberType', 'patient', 'Patient') . ' Search: ', TRUE);
 $mk1 = $gMk['hdr'];
 
 // Hide guest search?
@@ -91,6 +85,7 @@ if ($stayingMarkup == '') {
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -98,7 +93,8 @@ if ($stayingMarkup == '') {
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
@@ -109,7 +105,7 @@ if ($stayingMarkup == '') {
             <div id="divResvList" style="font-size:.7em;" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                 <?php echo $committedMarkup; ?>
                 <?php echo $wListMarkup; ?>
-                <h3 id="hhk-chkedInHdr" style='padding:5px;background-color: #D3D3D3;' title="Click to show or hide the Checked-In Guests">Checked-In Guests
+                <h3 id="hhk-chkedInHdr" style='padding:5px;background-color: #D3D3D3;' title="Click to show or hide the Checked-In <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s">Checked-In <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s
                     <span class="ui-icon ui-icon-triangle-1-e" style="float:right;"></span></h3>
                 <?php echo $stayingMarkup; ?>
             </div>
@@ -123,6 +119,6 @@ if ($stayingMarkup == '') {
             
             <input type="hidden" id="dateFormat" value ="<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM D YYYY"); ?>" />
         </div>  <!-- div id="contentDiv"-->
-        <script type="text/javascript" src="js/checkin.js"></script>
+        <script type="text/javascript" src="<?php echo CHECKIN_JS; ?>"></script>
     </body>
 </html>

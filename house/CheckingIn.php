@@ -1,72 +1,28 @@
 <?php
+use HHK\sec\Session;
+use HHK\sec\WebInit;
+use HHK\Config_Lite\Config_Lite;
+use HHK\Payment\PaymentSvcs;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\Exception\RuntimeException;
+use HHK\House\ReserveData\ReserveData;
+use HHK\SysConst\VisitStatus;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\SysConst\RoomRateCategories;
+use HHK\sec\Labels;
+
 /**
  * CheckingIn.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'visitRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require (CLASSES . 'CleanAddress.php');
-require (CLASSES . 'AuditLog.php');
-require (CLASSES . 'PaymentSvcs.php');
-require (CLASSES . 'Purchase/Item.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-require CLASSES . 'TableLog.php';
-
-require (HOUSE . 'PaymentManager.php');
-require (HOUSE . 'PaymentChooser.php');
-require (HOUSE . 'psg.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Agent.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReserveData.php');
-require (HOUSE . 'RegistrationForm.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'Hospital.php');
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'Constraint.php');
-require (HOUSE . 'Attributes.php');
-
-
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
@@ -75,12 +31,11 @@ $dbh = $wInit->dbh;
 
 // get session instance
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
 
 $pageHdr = $wInit->pageHeading;
 $pageStyle = '';
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
 $payFailPage = $wInit->page->getFilename();
@@ -103,7 +58,7 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
@@ -132,7 +87,7 @@ if (isset($_GET['idPsg'])) {
 
 if (isset($_GET['vid'])) {
     $idVisit = intval(filter_var($_GET['vid'], FILTER_SANITIZE_NUMBER_INT), 10);
-    $resvObj->setSaveButtonLabel('Add Guest');
+    $resvObj->setSaveButtonLabel('Add '.$labels->getString('MemberType', 'guest', 'Guest'));
 
 }
 
@@ -169,6 +124,7 @@ if ($visitStatus != '' && $visitStatus != VisitStatus::CheckedIn) {
 
 $resvAr = $resvObj->toArray();
 $resvAr['patBD'] = $resvObj->getPatBirthDateFlag();
+$resvAr['gstBD'] = $resvObj->getGuestBirthDateFlag();
 $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
@@ -230,14 +186,14 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv" class="container-fluid" style="margin-left: auto;" <?php echo $pageStyle; ?>>
-            <h1><?php echo $pageHdr; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
+            <h1><?php echo $pageHdr; ?> <span id="spnStatus" style="display:inline;"></span></h1>
 
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
@@ -266,6 +222,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
+            <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="ecSearch" style="display:none;">
                 <table>
                     <tr>
@@ -275,13 +232,13 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
                 </table>
             </div>
         </div>
-        <input type="hidden" value="<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>" id="fixedRate"/>
+        <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate"/>
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
 
-        <script type="text/javascript" src='js/checkingIn.js'></script>
+        <script type="text/javascript" src='<?php echo CHECKINGIN_JS; ?>'></script>
 
         <form name="xform" id="xform" method="post"><input type="hidden" name="CardID" id="CardID" value=""/></form>
     </body>

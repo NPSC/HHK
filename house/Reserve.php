@@ -1,69 +1,28 @@
 <?php
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\HTMLContainer;
+use HHK\Payment\PaymentSvcs;
+use HHK\Exception\RuntimeException;
+use HHK\House\Reservation\Reservation_1;
+use HHK\Member\Role\Guest;
+use HHK\House\TemplateForm\ConfirmationForm;
+use HHK\House\ReserveData\ReserveData;
+use HHK\Member\Role\AbstractRole;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\SysConst\RoomRateCategories;
+use HHK\sec\Labels;
+
 /**
  * Reserve.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'registrationRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'visitRS.php');
-require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-
-require (CLASSES . 'Purchase/Item.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require (CLASSES . 'CleanAddress.php');
-require (CLASSES . 'AuditLog.php');
-require (CLASSES . 'PaymentSvcs.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-require CLASSES . 'TableLog.php';
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
-
-require (HOUSE . 'psg.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Agent.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReserveData.php');
-require (HOUSE . 'RegistrationForm.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'Hospital.php');
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'Constraint.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'PaymentManager.php');
-require (HOUSE . 'PaymentChooser.php');
 
 
 try {
@@ -76,11 +35,10 @@ $dbh = $wInit->dbh;
 
 // get session instance
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
 
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $paymentMarkup = '';
 $receiptMarkup = '';
 $payFailPage = $wInit->page->getFilename();
@@ -100,7 +58,7 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
@@ -124,8 +82,8 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
 
-    require(HOUSE . 'TemplateForm.php');
-    require(HOUSE . 'ConfirmationForm.php');
+    //require(HOUSE . 'TemplateForm.php');
+    //require(HOUSE . 'ConfirmationForm.php');
 
     try {
         $confirmForm = new ConfirmationForm($dbh, $docId);
@@ -177,13 +135,14 @@ if ($idReserv > 0 || $idGuest >= 0) {
 
 } else {
     // Guest Search markup
-    $gMk = Role::createSearchHeaderMkup("gst", "Guest or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ");
+	$gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ");
     $mk1 = $gMk['hdr'];
 
 }
 
 $resvAr = $resvObj->toArray();
 $resvAr['patBD'] = $resvObj->getPatBirthDateFlag();
+$resvAr['gstBD'] = false; //disable guest bd check on reservation
 $resvAr['patAddr'] = $uS->PatientAddr;
 $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
@@ -207,8 +166,9 @@ if (isset($_GET['title'])) {
 	$nowDT = new DateTime();
 	$extendHours = intval($uS->ExtendToday);
 	
+	
 
-	if ($extendHours > 0 && $extendHours < 10 && intval($nowDT->format('H')) <= $extendHours) {
+	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) < $extendHours) {
 		$nowDT->sub(new DateInterval('P1D'));
 	}
 	
@@ -261,14 +221,14 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
-        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv" class="container-fluid" style="margin-left: auto;">
-            <h1><?php echo $title; ?> <span id="spnStatus" sytle="margin-left:50px; display:inline;"></span></h1>
+            <h1><?php echo $title; ?> <span id="spnStatus" style="display:inline;"></span></h1>
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
             </div>
@@ -306,6 +266,7 @@ $resvObjEncoded = json_encode($resvAr);
 
             <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
             <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
+            <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
@@ -316,12 +277,14 @@ $resvObjEncoded = json_encode($resvAr);
         <div id="confirmDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;">
             <form id="frmConfirm" action="Reserve.php" method="post"></form>
         </div>
-        <input type="hidden" value="<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>" id="fixedRate"/>
+        <input type="hidden" value="<?php echo RoomRateCategories::Fixed_Rate_Category; ?>" id="fixedRate"/>
         <input type="hidden" value="<?php echo $payFailPage; ?>" id="payFailPage"/>
         <input type="hidden" value="<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>" id="dateFormat"/>
+        <input type="hidden" value="<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>" id="visitorLabel" />
+        <input type="hidden" value="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>" id="guestLabel" />
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
-        <script type="text/javascript" src="js/reserve.js"></script>
+        <script type="text/javascript" src="<?php echo RESERVE_JS; ?>"></script>
     </body>
 </html>

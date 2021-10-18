@@ -1,18 +1,20 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\History;
+use HHK\CreateMarkupFromDB;
+use HHK\SysConst\ReservationStatus;
+
 /**
  * PrtWaitList.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-require (CLASSES . 'History.php');
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-
 
 
 $wInit = new webInit(WebPageCode::Page);

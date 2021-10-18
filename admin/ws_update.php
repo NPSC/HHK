@@ -1,5 +1,7 @@
 <?php
 
+use HHK\sec\{Session, Login, ScriptAuthClass, UserClass};
+use HHK\Update\UpdateSite;
 /*
  * The MIT License
  *
@@ -34,10 +36,10 @@
  */
 
 /**
- * GET params:
+ * POST params:
  *  cd = string, site identifier
  *  un = string, user name
- *  so = string, MD5 encoded password
+ *  so = string, password
  *  ck = check password only, returns 'bubbly' if correct
  *
  * Returns:
@@ -49,19 +51,6 @@
  *
  */
 require ("AdminIncludes.php");
-
-require CLASSES . 'SiteLog.php';
-require CLASSES . 'TableLog.php';
-require CLASSES . 'HouseLog.php';
-require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'SiteConfig.php';
-require CLASSES . 'Patch.php';
-require CLASSES . 'UpdateSite.php';
-
-require SEC . 'Login.php';
-require SEC . 'UserClass.php';
-
-require DB_TABLES . 'GenLookupsRS.php';
 
 require (FUNCTIONS . 'mySqlFunc.php');
 
@@ -76,17 +65,17 @@ $events = array('init'=>'Im here');
 
 
 // Check input
-if (isset($_GET['cd'])) {
-    $cd = filter_input(INPUT_GET, 'cd');
+if (isset($_POST['cd'])) {
+    $cd = filter_input(INPUT_POST, 'cd');
 }
-if (isset($_GET['so'])) {
-    $so = filter_input(INPUT_GET, 'so');
+if (isset($_POST['so'])) {
+    $so = filter_input(INPUT_POST, 'so');
 }
-if (isset($_GET['un'])) {
-    $un = filter_input(INPUT_GET, 'un');
+if (isset($_POST['un'])) {
+    $un = filter_input(INPUT_POST, 'un');
 }
-if (isset($_GET['ck'])) {
-    $ck = filter_input(INPUT_GET, 'ck');
+if (isset($_POST['ck'])) {
+    $ck = filter_input(INPUT_POST, 'ck');
 }
 
 if ($cd == '' || $so == '' || $un == '') {
@@ -98,10 +87,7 @@ if ($cd == '' || $so == '' || $un == '') {
 try {
 
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
-
-    // define db connection obj
-    $dbh = initPDO(TRUE);
+    $dbh = $login->initHhkSession(ciCFG_FILE);
 
     // Load the page information
     $page = new ScriptAuthClass($dbh);
@@ -114,49 +100,43 @@ try {
 }
 
 // Check site identifier
-if ($cd !== $config->getString('db', 'Schema', '')) {
+if ($cd !== $uS->databaseName) {
 
     $uS->destroy(true);
-    echo(json_encode(array('error'=>"Bad Site Identifier")));
+    echo(json_encode(array('error'=>"Bad Site Identifier: " . $cd)));
     exit();
 }
 
+
+// Log in
 $user = new UserClass();
 
-// validate username and password
-$record = $user->getUserCredentials($dbh, $un);
+if($user->_checkLogin($dbh, $un, $so)){
 
-if (is_array($record) && isset($record['Enc_PW']) && $record['Enc_PW'] === $so) {
+	// Must be THE ADMIN
+	if ($page->is_TheAdmin()) {
 
-    if (strtolower($ck) == 'y') {
-        // password check
-        $events['resultMsg'] = 'bubbly';
+	    if (strtolower($ck) == 'y') {
+	        // password check
+	        $events['resultMsg'] = 'bubbly';
 
-    } else {
+	    } else {
 
-        //perform update
-        $uS->regenSessionId();
+	        //perform update
+	        $update = new UpdateSite();
+	        $update->doUpdate($dbh);
 
-        // Record the login.
-        $user->setSession($dbh, $uS, $record);
+	        $events['errorMsg'] = $update->getErrorMsg();
+	        $events['resultMsg'] = $update->getResultAccumulator();
 
-        // Must be THE ADMIN
-        if ($page->is_TheAdmin()) {
-
-            $update = new UpdateSite();
-
-            $update->doUpdate($dbh);
-
-            $events['errorMsg'] = $update->getErrorMsg();
-            $events['resultMsg'] = $update->getResultAccumulator();
-
-        } else {
-            $events['error'] = 'This user does not enjoy site update priviledges.';
-        }
-    }
+	    }
+	    
+	} else {
+		$events['error'] = 'This user does not enjoy site update priviledges.  username = ' . $un;
+	}
 
 } else {
-    $events['error'] = 'Bad username or password.';
+    $events['error'] = $user->logMessage;
 }
 
 

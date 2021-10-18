@@ -1,10 +1,26 @@
+<?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\Session;
+use HHK\House\Reservation\Reservation;
+use HHK\House\Reservation\CheckingIn;
+use HHK\House\Reservation\ActiveReservation;
+use HHK\House\ReserveData\ReserveData;
+use HHK\House\PSG;
+use HHK\Note\ListNotes;
+use HHK\Note\LinkNote;
+use HHK\Note\Note;
+use HHK\Incident\ListReports;
+use HHK\Incident\Report;
+use HHK\House\Hospital\{Hospital, HospitalStay};
+?>
 
 <?php
 /**
  * ws_resv.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -13,106 +29,13 @@
  */
 require ("homeIncludes.php");
 
-require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "registrationRS.php");
-require(DB_TABLES . "ReservationRS.php");
-
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'ItemRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-require (DB_TABLES . 'ReportRS.php');
-
-require CLASSES . 'CleanAddress.php';
-require CLASSES . 'AuditLog.php';
-require CLASSES . 'History.php';
-require (CLASSES . 'CreateMarkupFromDB.php');
-
-
-require (CLASSES . 'Note.php');
-require (CLASSES . 'ListNotes.php');
-require (CLASSES . 'ListReports.php');
-require (CLASSES . 'LinkNote.php');
-require (CLASSES . 'Report.php');
-require (CLASSES . 'US_Holidays.php');
-require (CLASSES . 'PaymentSvcs.php');
-require (CLASSES . 'FinAssistance.php');
-require CLASSES . 'TableLog.php';
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
-
-require (CLASSES . 'Purchase/Item.php');
-require (CLASSES . "ValueAddedTax.php");
-require(CLASSES . 'Purchase/RoomRate.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'ActivityReport.php');
-require (HOUSE . 'Agent.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-require (HOUSE . 'Doctor.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Hospital.php');
-
-require (HOUSE . 'HouseServices.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'PaymentManager.php');
-require (HOUSE . 'PaymentChooser.php');
-require (HOUSE . "psg.php");
-require (HOUSE . 'RateChooser.php');
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'RoomChooser.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'Reservation.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'RegisterForm.php');
-require (HOUSE . 'ReserveData.php');
-require (HOUSE . 'RegistrationForm.php');
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Vehicle.php');
-require (HOUSE . 'Visit.php');
-require (HOUSE . 'Family.php');
-require (HOUSE . "visitViewer.php");
-
-require (HOUSE . "CurrentAccount.php");
-
-require (HOUSE . 'VisitCharges.php');
-
-
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
+
 
 $c = "";
 
@@ -205,7 +128,49 @@ try {
 
         break;
 
+    case 'viewHS':
+    	
+    	$idHs = 0;
+    	if (isset($_POST['idhs'])) {
+    		$idHs = intval(filter_input(INPUT_POST, 'idhs', FILTER_SANITIZE_NUMBER_INT), 10);
+    	}
+    	
+    	$hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, 0, $idHs), FALSE);
+    	
+    	$events = array('success'=>$hArray['div'], 'title'=>$hArray['title']);
+    	
+    	break;
+    	
+    case 'saveHS':
+    	
+    	$idHs = 0;
+    	if (isset($_POST['idhs'])) {
+    		$idHs = intval(filter_input(INPUT_POST, 'idhs', FILTER_SANITIZE_NUMBER_INT), 10);
+    	}
+    	$idVisit = 0;
+    	if (isset($_POST['idv'])) {
+    		$idVisit = intval(filter_input(INPUT_POST, 'idv', FILTER_SANITIZE_NUMBER_INT), 10);
+    	}
+    	
+    	if ($idHs > 0 && $idVisit > 0) {
 
+    		$hstay = new HospitalStay($dbh, 0, $idHs, FALSE);
+
+    		$newHsId = Hospital::saveReferralMarkup($dbh, new PSG($dbh, 0, $hstay->getIdPatient()), $hstay, $_POST);
+    		
+    		if ($newHsId != $idHs) {
+    			// Update visit and reservation
+    			$dbh->exec("call updt_visit_hospstay($idVisit, $newHsId);");
+    		}
+    	
+    		$events = array('success'=>'Hospital Saved');
+    		
+    	} else {
+    		$events = array('error'=>'Missing ids. ');
+    	}
+    	
+    	break;
+    	
     case 'getNoteList':
 
         $linkType = '';
@@ -219,7 +184,7 @@ try {
             $idLink = intval(filter_input(INPUT_GET, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        require(CLASSES . 'DataTableServer.php');
+        //require(CLASSES . 'DataTableServer.php');
 
         $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET, $uS->ConcatVisitNotes);
 
@@ -380,7 +345,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 			}
         }
 
-        require(CLASSES . 'DataTableServer.php');
+        //require(CLASSES . 'DataTableServer.php');
 
         $events = ListReports::loadList($dbh, $guestId, $psgId, $_GET);
 
@@ -402,6 +367,8 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 	            $stmt = $dbh->query("SELECT * from `vguest_listing` where id = $idGuest limit 1");
 	            $guestAr = $stmt->fetch(PDO::FETCH_ASSOC);
 	            $reportAr = $reportAr + ["guest"=>$guestAr];
+	            $reportAr['description'] = nl2br($reportAr['description']);
+	            $reportAr['resolution'] = nl2br($reportAr['resolution']);
             }
             
             $events = $reportAr;
@@ -578,3 +545,4 @@ if (is_array($events)) {
 }
 
 exit();
+?>

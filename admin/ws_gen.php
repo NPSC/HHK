@@ -1,5 +1,17 @@
 <?php
 
+use HHK\sec\Pages;
+use HHK\sec\{Session, SecurityComponent, UserClass, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\Tables\EditRS;
+use HHK\Tables\WebSec\{Id_SecurityGroupRS, W_authRS, W_usersRS};
+use HHK\AuditLog\NameLog;
+use HHK\DataTableServer\SSP;
+use HHK\Exception\RuntimeException;
+use HHK\House\Report\GuestReport;
+use HHK\Member\WebUser;
+use HHK\Member\Relation\AbstractRelation;
+
 /**
  * ws_gen.php
  *
@@ -11,18 +23,8 @@
 require ("AdminIncludes.php");
 
 
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'WebSecRS.php');
-
-require (CLASSES . 'Relation.php');
-require (CLASSES . 'AuditLog.php');
-require (CLASSES . 'member/WebUser.php');
-
-require(SEC . 'Pages.php');
 
 
-
-//
 $wInit = new webInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
@@ -46,7 +48,6 @@ try {
     switch ($c) {
 
         case "zipd":
-            include(HOUSE . "GuestReport.php");
 
             if (isset($_POST["zipf"])) {
                 $zipf = filter_var($_POST["zipf"], FILTER_SANITIZE_NUMBER_INT);
@@ -57,7 +58,7 @@ try {
 
             try{
                 $events['success'] = number_format(GuestReport::calcZipDistance($dbh, $zipf, $zipt), 0);
-            } catch (Hk_Exception_Runtime $hex) {
+            } catch (RuntimeException $hex) {
                 $events['error'] = "Zip code not found.  ";
             }
 
@@ -155,7 +156,6 @@ try {
                 $where = " `Log_Type` = 'gen_lookups' ";
             }
 
-            require(CLASSES . 'DataTableServer.php');
             $events = SSP::complex ( $_GET, $dbh, $dbView, $priKey, $columns, null, $where );
 
             break;
@@ -238,15 +238,10 @@ try {
 
         case "adchgpw":
             $adPw = '';
-            $newPw = '';
             $uid = 0;
-            $resetNext = false;
-
+            
             if (isset($_POST["adpw"])) {
                 $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_STRING);
-            }
-            if (isset($_POST["newer"])) {
-                $newPw = filter_var($_POST["newer"], FILTER_SANITIZE_STRING);
             }
 
             if (isset($_POST['uid'])) {
@@ -257,21 +252,22 @@ try {
                 $uname = filter_var($_POST["uname"], FILTER_SANITIZE_STRING);
             }
             
-            if(isset($_POST['resetNext'])){
-                $resetNext = intval(filter_var($_POST['resetNext'], FILTER_VALIDATE_BOOLEAN));
-            }
-            
-            $events = adminChangePW($dbh, $adPw, $newPw, $uid, $uname, $resetNext);
+            $events = adminChangePW($dbh, $adPw, $uid, $uname);
 
             break;
-
+            
+        case "accesslog":
+            $events = AccessLog($dbh, $_GET);
+            
+            break;
+            
         default:
             $events = array("error" => "Bad Command");
     }
 } catch (PDOException $ex) {
 
     $events = array("error" => "Database Error" . $ex->getMessage());
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
 
     $events = array("error" => "HouseKeeper Error" . $ex->getMessage());
 }
@@ -310,16 +306,18 @@ function searchZip(PDO $dbh, $zip) {
     return $events;
 }
 
-function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId, $uname, $resetNext) {
+function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
 
     $event = array();
 
     if (SecurityComponent::is_Admin()) {
-
+        
         $u = new UserClass();
 
-        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, $resetNext) === TRUE) {
-            $event = array('success' => 'Password updated.');
+        $newPw = $u->generateStrongPassword();
+        
+        if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, true) === TRUE) {
+            $event = array('success' => 'Password updated.', 'tempPW'=>$newPw);
         } else {
             $event = array('error' => $u->logMessage .  '.  Password is unchanged.');
         }
@@ -332,13 +330,13 @@ function adminChangePW(PDO $dbh, $adminPw, $newPw, $wUserId, $uname, $resetNext)
 
 function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
-    $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+    $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
     if (is_null($rel) === FALSE) {
         $uS = Session::getInstance();
         $msh = $rel->setCareOf($dbh, $rId, $flag, $uS->username);
 
-        $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+        $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
         return array('success' => $msh, 'rc' => $relCode, 'markup' => $rel->createMarkup());
     }
@@ -347,13 +345,13 @@ function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
 function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
-    $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+    $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
     if (is_null($rel) === FALSE) {
 
         $msh = $rel->removeRelationship($dbh, $rId);
 
-        $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+        $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
         return array('success' => $msh, 'rc' => $relCode, 'markup' => $rel->createMarkup());
     }
@@ -364,12 +362,12 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
     $uS = Session::getInstance();
 
-    $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+    $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
     if (is_null($rel) === FALSE) {
         $msh = $rel->addRelationship($dbh, $rId, $uS->username);
 
-        $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+        $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
         return array('success' => $msh, 'rc' => $relCode, 'markup' => $rel->createMarkup());
     }
 
@@ -378,7 +376,7 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
 function changeLog(PDO $dbh, $id, $get) {
 
-    require(CLASSES . 'DataTableServer.php');
+    //require(CLASSES . 'DataTableServer.php');
 
     $view = 'vaudit_log';
 
@@ -697,4 +695,18 @@ function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $pa
     return $reply;
 }
 
-
+function AccessLog(\PDO $dbh, $get) {
+        
+    $columns = array(
+        
+        //array( 'db' => 'id',  'dt' => 'id' ),
+        array( 'db' => 'Username',   'dt' => 'Username' ),
+        array( 'db' => 'IP',     'dt' => 'IP' ),
+        array( 'db'  => 'Action', 'dt' => 'Action' ),
+        array( 'db' => 'Access_Date',   'dt' => 'Date' ),
+        array( 'db' => 'Browser', 'dt' => 'Browser' ),
+        array( 'db' => 'OS', 'dt' => 'OS' )
+    );
+    
+    return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
+}

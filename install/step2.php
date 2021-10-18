@@ -1,4 +1,14 @@
 <?php
+use HHK\sec\Login;
+use HHK\sec\Session;
+use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\Update\Patch;
+use HHK\SysConst\WebSiteCode;
+use HHK\Update\SiteConfig;
+use HHK\Update\SiteLog;
+use HHK\SysConst\CodeVersion;
+
 /**
  * step2.php
  *
@@ -9,13 +19,6 @@
  */
 require_once ("InstallIncludes.php");
 
-require_once (SEC . 'UserClass.php');
-require_once(SEC . 'Login.php');
-require CLASSES . 'SiteLog.php';
-require CLASSES . 'TableLog.php';
-require CLASSES . 'SiteConfig.php';
-
-require_once(CLASSES . 'Patch.php');
 require_once(FUNCTIONS . 'mySqlFunc.php');
 
 try {
@@ -35,7 +38,7 @@ $pageTitle = $ssn->siteName;
 // define db connection obj
 try {
     $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
+} catch (RuntimeException $hex) {
     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 
@@ -129,7 +132,6 @@ if (isset($_POST['btnNext'])) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <script type="text/javascript" src="../<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="../<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="../js/install.js"></script>
         <script type="text/javascript">
             $(document).ready(function () {
@@ -157,7 +159,7 @@ if (isset($_POST['btnNext'])) {
                         return;
                     }
 
-                    $.post('ws_install.php', {cmd: 'loadmd', 'new': hex_md5(pword)}, function (data) {
+                    $.post('ws_install.php', {cmd: 'loadmd', 'new': pword}, function (data) {
                         if (data) {
                             try {
                                 data = $.parseJSON(data);

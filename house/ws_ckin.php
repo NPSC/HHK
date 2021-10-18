@@ -1,4 +1,23 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\SecurityComponent;
+use HHK\sec\Session;
+use HHK\House\Reservation\Reservation_1;
+use HHK\House\Reservation\ReservationSvcs;
+use HHK\House\HouseServices;
+use HHK\Payment\PaymentSvcs;
+use HHK\Payment\Invoice\Invoice;
+use HHK\House\Registration;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\Purchase\ValueAddedTax;
+use HHK\Purchase\PaymentChooser;
+use HHK\SysConst\GLTableNames;
+use HHK\Config_Lite\Config_Lite;
+use HHK\House\PSG;
+use HHK\House\Room\RoomChooser;
+use HHK\sec\Labels;
+
 /**
  * ws_ckin.php
  *
@@ -12,102 +31,13 @@
  */
 require ("homeIncludes.php");
 
-require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "registrationRS.php");
-require(DB_TABLES . "ReservationRS.php");
-
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'ItemRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-
-require CLASSES . 'CleanAddress.php';
-require CLASSES . 'AuditLog.php';
-require CLASSES . 'History.php';
-require (CLASSES . 'CreateMarkupFromDB.php');
-
-require (CLASSES . 'Notes.php');
-require (CLASSES . 'Note.php');
-require (CLASSES . 'LinkNote.php');
-require (CLASSES . 'US_Holidays.php');
-require (CLASSES . 'PaymentSvcs.php');
-require (CLASSES . 'FinAssistance.php');
-require (CLASSES . "ValueAddedTax.php");
-
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
-
-require (CLASSES . 'Purchase/Item.php');
-
-require(CLASSES . 'Purchase/RoomRate.php');
-require CLASSES . 'TableLog.php';
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'ActivityReport.php');
-require (HOUSE . 'Agent.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-require (HOUSE . 'Doctor.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Hospital.php');
-
-require (HOUSE . 'HouseServices.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'PaymentManager.php');
-require (HOUSE . 'PaymentChooser.php');
-require (HOUSE . "psg.php");
-require (HOUSE . 'RateChooser.php');
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'RoomChooser.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'RegisterForm.php');
-require (HOUSE . 'RegistrationForm.php');
-require (HOUSE . 'TemplateForm.php');
-require (HOUSE . 'ConfirmationForm.php');
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Vehicle.php');
-require (HOUSE . 'Visit.php');
-require (HOUSE . "CurrentAccount.php");
-require (HOUSE . "visitViewer.php");
-
-require (HOUSE . 'VisitCharges.php');
-
-
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
 
-creditIncludes($uS->PaymentGateway);
 
 $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
@@ -258,13 +188,18 @@ try {
             if (isset($_POST['eaddr'])) {
                 $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
             }
-
+            
+            $ccAddr = '';
+            if (isset($_POST['ccAddr'])) {
+                $ccAddr = filter_var($_POST['ccAddr'], FILTER_SANITIZE_STRING);
+            }
+            
             $tabIndex = false;
             if (isset($_POST['tabIndex'])) {
                 $tabIndex = filter_var($_POST['tabIndex'], FILTER_SANITIZE_STRING);
             }
             
-            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $tabIndex);
+            $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $tabIndex,$ccAddr);
             break;
 
         case 'void':
@@ -459,9 +394,10 @@ try {
             $s = filter_var($_POST['action'], FILTER_SANITIZE_STRING);
         }
 
-        $cod = '';
+        $cod = [];
         if (isset($_POST['ckoutdt'])) {
-            $cod = filter_var($_POST['ckoutdt'], FILTER_SANITIZE_STRING);
+        	
+        	$cod = filter_var_array($_POST['ckoutdt'], FILTER_SANITIZE_STRING);
         }
 
         $span = 0;
@@ -652,8 +588,8 @@ try {
         $idPsg = 0;
         if (isset($_POST['psg'])) {
             $idPsg = intval(filter_var($_POST['psg'], FILTER_SANITIZE_NUMBER_INT), 10);
-            $psg = new Psg($dbh, $idPsg);
-            $events = array('markup'=>$psg->createEditMarkup($dbh, $uS->guestLookups[GL_TableNames::PatientRel], new Config_Lite(LABEL_FILE)));
+            $psg = new PSG($dbh, $idPsg);
+            $events = array('markup'=>$psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], new Labels()));
 
         } else {
             $events = array('error'=>'PSG ID is missing.');
@@ -786,6 +722,14 @@ try {
 
     default:
         $events = array("error" => "Bad Command: \"" . $c . "\"");
+}
+
+//make receipt copy
+if(isset($events['receipt']) && $uS->merchantReceipt == true){
+    $events['receipt'] = HTMLContainer::generateMarkup('div',
+        HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Customer Copy', array('style'=>'text-align:center;')), array('style'=>'margin-right: 15px; width: 100%;'))
+        . HTMLContainer::generateMarkup('div', $events['receipt'] . HTMLContainer::generateMarkup('div', 'Merchant Copy', array('style'=> 'text-align: center')), array('style'=>'margin-left: 15px; width: 100%;'))
+        , array('style'=>'display: flex; min-width: 100%;', 'data-merchCopy'=>'1'));
 }
 
 } catch (PDOException $ex) {

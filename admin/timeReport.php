@@ -1,4 +1,8 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\selCtrl;
+
 /**
  * timeReport.php
  *
@@ -8,9 +12,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 require("AdminIncludes.php");
-
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
 
 $wInit = new webInit();
 
@@ -72,10 +73,6 @@ for ($y = $now["year"]; $y > ($now["year"] - 4); $y--) {
 if (isset($_POST["btnCat"]) || isset($_POST["btnCatDL"])) {
 
     require("functions" . DS . "TimeReportMgr.php");
-    require(CLASSES . "CreateMarkupFromDB.php");
-    require("classes" . DS . "VolCats.php");
-    require("classes" . DS . "Salutation.php");
-    require(CLASSES . "OpenXML.php");
 
     addslashesextended($_POST);
 
@@ -114,7 +111,7 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         
@@ -123,6 +120,9 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
 //            var listTable;
 //            var makeTable = <?php echo $makeTable; ?>;
             $(document).ready(function() {
+            	
+            	$("input[type=submit], input[type=button]").button();
+            
                 var listTable;
                 var makeTable = <?php echo $makeTable; ?>;
                 var now = new Date();

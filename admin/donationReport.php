@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\WebInit;
+use HHK\HTMLControls\{selCtrl, chkBoxCtrl};
+use HHK\SysConst\SalutationCodes;
+use HHK\Donation\Campaign;
+
 /**
  * donationReport.php
  *
@@ -9,11 +15,7 @@
  */
 require ("AdminIncludes.php");
 
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-require(CLASSES . 'Campaign.php');
-
-$wInit = new webInit();
+$wInit = new WebInit();
 $dbh = $wInit->dbh;
 
 $pageTitle = $wInit->pageTitle;
@@ -36,7 +38,7 @@ $anddChecked = "checked='checked'";
 $ordChecked = "";
 $exDeceasedChecked = "";
 $donSelMemberType = new selCtrl($dbh, "Vol_Type", false, "donMT", true);
-$cbBasisDonor = new chkBoxCtrlClass($dbh, "Member_Basis", "Include", "cbDonBasis", true);
+$cbBasisDonor = new chkBoxCtrl($dbh, "Member_Basis", "Include", "cbDonBasis", true);
 $cbBasisDonor->set_class("ui-widget");
 $SelectDonCamp = "";
 $rollup = 't';
@@ -53,10 +55,7 @@ $letterSalSelector->set_value(TRUE, SalutationCodes::FirstOnly);
 if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
 #--------------------------------------------------------------
     require_once("functions" . DS . "donorReportManager.php");
-    require_once(CLASSES . "OpenXML.php");
-    require_once("classes" . DS . "VolCats.php");
-    require_once("classes" . DS . "Salutation.php");
-
+    
     //$selectedTab = "2";
     $makeTable = 2;
 
@@ -124,7 +123,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         
@@ -145,6 +144,9 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                 return x1 + x2;
             }
             $(document).ready(function() {
+            
+            	$("input[type=submit], input[type=button]").button();
+            
                 var rollup = '<?php echo $rollup; ?>';
 
                 if (makeTable == 2) {

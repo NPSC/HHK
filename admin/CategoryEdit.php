@@ -1,4 +1,12 @@
 <?php
+
+use HHK\sec\{WebInit};
+use HHK\Tables\EditRS;
+use HHK\Tables\GenLookupsRS;
+use HHK\Tables\Name\NameVolunteerRS;
+use HHK\AlertControl\AlertMessage;
+use HHK\Exception\RuntimeException;
+
 /**
  * CategoryEdit.php
  *
@@ -9,8 +17,8 @@
  */
 require ("AdminIncludes.php");
 
-require (DB_TABLES . 'GenLookupsRS.php');
-require (DB_TABLES . 'nameRS.php');
+// require (DB_TABLES . 'GenLookupsRS.php');
+// require (DB_TABLES . 'nameRS.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -50,7 +58,7 @@ function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$vol
             $rptId = $row[0];
         }
         if ($rptId == 0) {
-            throw new Hk_Exception_Runtime("Event Repeater counter not set up.");
+            throw new RuntimeException("Event Repeater counter not set up.");
         }
 
         $gl = new GenLookupsRS();
@@ -60,7 +68,7 @@ function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$vol
         $gl->Table_Name->setNewVal($tbl);
         EditRS::insert($dbh, $gl);
 
-        $volAlert->set_Context(alertMessage::Success);
+        $volAlert->set_Context(AlertMessage::Success);
         $volAlert->set_Text("ok");
 
     } else if (count($rows) == 1) {
@@ -81,7 +89,7 @@ function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$vol
 
                 // delete orig from gen_lookups
                 EditRS::delete($dbh, $gl, array($gl->Table_Name, $gl->Code));
-                $volAlert->set_Context(alertMessage::Success);
+                $volAlert->set_Context(AlertMessage::Success);
                 $volAlert->set_Text("Category deleted from the database.");
 
             } else {
@@ -109,11 +117,11 @@ function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$vol
                     // delete orig from gen_lookups
                     EditRS::delete($dbh, $gl, array($gl->Table_Name, $gl->Code));
 
-                    $volAlert->set_Context(alertMessage::Success);
+                    $volAlert->set_Context(AlertMessage::Success);
                     $volAlert->set_Text("Category deleted from the database.");
                 } else {
 
-                    $volAlert->set_Context(alertMessage::Alert);
+                    $volAlert->set_Context(AlertMessage::Alert);
                     $volAlert->set_Text("Invalid replacement Category - couldn't find it: " . $tbl . "-" . $repl);
                 }
             }
@@ -124,12 +132,12 @@ function processAction(PDO $dbh, $tbl, $cde, $colr, $desc, $repl, $action, &$vol
             $x = EditRS::update($dbh, $gl, array($gl->Table_Name, $gl->Code));
 
             if ($x > 0) {
-                $volAlert->set_Context(alertMessage::Success);
+                $volAlert->set_Context(AlertMessage::Success);
                 $volAlert->set_Text("Category Updated.");
             }
         }
     } else {
-        $volAlert->set_Context(alertMessage::Alert);
+        $volAlert->set_Context(AlertMessage::Alert);
         $volAlert->set_Text("Couldn't find the TableName and Code: $tbl, $cde");
     }
 }
@@ -140,8 +148,8 @@ $resMessage = "";
 
 if (isset($_POST["btnvType"])) {
 
-    $volAlert = new alertMessage("volAlert");
-    $volAlert->set_Context(alertMessage::Alert);
+    $volAlert = new AlertMessage("volAlert");
+    $volAlert->set_Context(AlertMessage::Alert);
 
     $repl = '';
     $action = 'add';
@@ -188,7 +196,7 @@ $vCatOptions = DoLookups($dbh, "Vol_Category", '', false);
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         

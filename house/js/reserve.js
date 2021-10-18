@@ -66,12 +66,17 @@ $(document).ready(function() {
                 $confForm.submit();
             },
             'Send Email': function() {
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val(), tabIndex: $('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("aria-controls")}, function(data) {
+                $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), ccAddr: $('#ccConfEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val(), tabIndex: $('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("aria-controls")}, function(data) {
                     data = $.parseJSON(data);
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
                     }
-                    flagAlertMessage(data.mesg, true);
+                    
+                    if(data.status == 'success'){
+                    	flagAlertMessage(data.mesg, false);
+                    }else{
+                    	flagAlertMessage(data.mesg, true);
+                    }
                 });
                 $(this).dialog("close");
             },

@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable, HTMLSelector};
+use HHK\Tables\EditRS;
+use HHK\Tables\VolCalendar\ShellEventsRS;
+
 /**
  * EventShells.php
  *
@@ -9,7 +15,7 @@
  */
 
 require("AdminIncludes.php");
-require(DB_TABLES . 'volCalendarRS.php');
+//require(DB_TABLES . 'volCalendarRS.php');
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -285,7 +291,7 @@ $evtShellMarkup = $tbl->generateMarkup(array('id'=>'dataTbl'));
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         

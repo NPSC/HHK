@@ -1,4 +1,11 @@
 <?php
+use HHK\sec\Session;
+use HHK\sec\Login;
+use HHK\Exception\RuntimeException;
+use HHK\sec\ScriptAuthClass;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\SecurityComponent;
+
 /**
  * index.php
  *
@@ -10,9 +17,6 @@
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 require ('VolIncludes.php');
-require(SEC . 'Login.php');
-require(THIRD_PARTY . 'GoogleAuthenticator.php');
-
 
 // get session instance
 $uS = Session::getInstance();
@@ -37,7 +41,7 @@ if (isset($_GET['u'])) {
 try {
 
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(ciCFG_FILE);
 } catch (PDOException $pex) {
     exit("<h3>Database Error.  </h3>");
 } catch (Exception $ex) {
@@ -46,11 +50,11 @@ try {
 
 
 // define db connection obj
-try {
-    $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
-    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
-}
+// try {
+//     $dbh = initPDO(TRUE);
+// } catch (RuntimeException $hex) {
+//     exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
+// }
 
 
 // Load the page information
@@ -106,7 +110,6 @@ if (SecurityComponent::isHTTPS()) {
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
 
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
@@ -114,7 +117,7 @@ if (SecurityComponent::isHTTPS()) {
     <body >
         <div id="page">
             <div id="content">
-            <a href="<?php echo $logoLink; ?>"><div id="logoLT"></div></a>
+            <a href="<?php echo $logoLink; ?>"><span id="logoLT"></span></a>
             <div style="clear:both;"></div>
             <div id="formlogin"  style="float:left;">
                     <div style="margin-top:10px;"><?php echo $siteName; ?>
@@ -132,7 +135,7 @@ if (SecurityComponent::isHTTPS()) {
                 <div style="clear:left;"></div>
                 <div style="margin-top: 50px;width:600px;">
                     <hr>
-                    <div><a href ="http://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
+                    <div><a href ="http://nonprofitsoftwarecorp.org" ><span class="nplogo"></span></a></div>
                     <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software Corporation</div>
                 </div>
             </div>

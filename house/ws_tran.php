@@ -1,4 +1,13 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Session;
+use HHK\Neon\TransferMembers;
+use HHK\CreateMarkupFromDB;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Exception\RuntimeException;
+
 /**
  * ws_tran.php
  *
@@ -9,20 +18,7 @@
  */
 
 require ("homeIncludes.php");
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-
-require (CLASSES . "TransferMembers.php");
-require (CLASSES . "SiteConfig.php");
-require CLASSES . 'TableLog.php';
-require CLASSES . 'HouseLog.php';
-require CLASSES . 'AuditLog.php';
-
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (MEMBER . 'MemberSearch.php');
-
-// Set page type for AdminPageCommon
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 
@@ -37,10 +33,10 @@ $webServices = $config->getString('webServices', 'ContactManager', '');
 if ($webServices != '') {
 
     $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
-    require (CLASSES . 'neon.php');
+    //require (CLASSES . 'neon.php');
 
 } else {
-    throw new Hk_Exception_Runtime('Web Services Configuration file is missing. ');
+    throw new RuntimeException('Web Services Configuration file is missing. ');
 }
 
 
@@ -149,7 +145,7 @@ switch ($c) {
             $tbl->addHeader($th);
             $events = array('data'=>$tbl->generateMarkup());
 
-        } catch (Hk_Exception_Runtime $ex) {
+        } catch (RuntimeException $ex) {
             $events = array("error" => "Transfer Error: " . $ex->getMessage());
         }
 
@@ -224,7 +220,7 @@ switch ($c) {
             $events = array('warning'=>'Both the account id and the HHK id must be present.  Remote Account Id=' . $accountId . ', HHK Id =' . $id);
         }
 
-        } catch (Hk_Exception_Runtime $hex) {
+        } catch (RuntimeException $hex) {
             $events = array('warning'=>$hex->getMessage());
         }
 
@@ -266,4 +262,4 @@ if (is_array($events)) {
 }
 
 exit();
-
+?>

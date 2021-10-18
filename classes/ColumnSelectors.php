@@ -1,4 +1,11 @@
 <?php
+
+namespace HHK;
+
+use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector, HTMLInput};
+use HHK\sec\SecurityComponent;
+use HHK\AlertControl\AlertMessage;
+
 /**
  * ColumnSelectors.php
  *
@@ -13,6 +20,7 @@
  * @package Hospitality HouseKeeper
  * @author Eric
  */
+
 class ColumnSelectors {
 
     /**
@@ -29,16 +37,30 @@ class ColumnSelectors {
     protected $controlName;
 
     protected $columnDefs;
-
+    
+    /**
+     * Filter Sets array
+     *
+     * @var array
+     */
+    protected $filterSets;
+    protected $filterSetSelection;
+    protected $useFilterSets;
+    protected $alertMsg;
+    
     /**
      *
      * @param array $cols
      * @param string $contrlName
+     * @param array $filterSets - 0 = index, 1 = description, 2 = option group name.
      */
-    public function __construct(array $cols, $contrlName) {
+    public function __construct(array $cols, $contrlName, $useFilterSets = false, $filterSets = false, $filterSetSelection = false) {
         $this->cols = $cols;
         $this->controlName = $contrlName;
         $this->columnDefs = array();
+        $this->useFilterSets = $useFilterSets;
+        $this->filterSets = $filterSets;
+        $this->filterSetSelection = $filterSetSelection;
     }
 
 
@@ -93,31 +115,71 @@ class ColumnSelectors {
         }
 
 
-        return HTMLSelector::generateMarkup($opts, array('name'=>$this->controlName . '[]', 'multiple'=>'multiple', 'size'=>$countr));
+        return HTMLSelector::generateMarkup($opts, array('name'=>$this->controlName . '[]', 'multiple'=>'multiple', 'size'=>$countr, 'style'=>'width: 100%'));
     }
 
-
+    public function makeFilterSetSelector(){
+        $size = count($this->filterSets) + 3;
+        $size = ($size > 15 ? 15: $size);
+        
+        return HTMLSelector::generateMarkup(
+            HTMLSelector::doOptionsMkup($this->filterSets, $this->filterSetSelection, TRUE)
+        , ['style'=>'width: 100%;', 'name'=>'fieldset', 'size'=>$size]);
+    }
+    
+    public function makeFilterSetButtons(){
+        return HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("label", "Title:", ["for"=>"fieldsetName", "style"=>"margin-right: 5px;"]) .
+                HTMLInput::generateMarkup("", ['name'=>'fieldsetName']) .
+                $this->getAlertMsg(AlertMessage::Alert, 'Error')->createMarkup()
+            , ["id"=>"fieldSetName", "style"=>"display: none;"]) .
+            HTMLContainer::generateMarkup("button", "Save Changes", ['id'=>"saveSet", 'style'=>'margin-top: 1em; display: none', 'type'=>'button']) .
+            HTMLContainer::generateMarkup("button", "Save as Personal Set", ['id'=>"saveNewSet", 'style'=>'margin-top: 1em; display: none', 'type'=>'button']) .
+            (SecurityComponent::is_Admin() ? HTMLContainer::generateMarkup("button", "Save as House Set", ['id'=>"saveGlobalSet", 'style'=>'margin-top: 1em; display: none', 'type'=>'button']): '') .
+            HTMLContainer::generateMarkup("button", "Delete Set", ['id'=>"delSet", 'style'=>'margin-top: 1em; display: none', 'type'=>'button'])
+            ,['style'=>"display: flex; flex-flow: column", 'id'=>'filterSetBtns']);
+    }
 
     public function makeSelectorTable($includeSetClear = TRUE) {
 
         $tbl = new HTMLTable();
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('Include Fields'));
-
-        $tbl->addBodyTr(HTMLTable::makeTd($this->makeDropdown()));
-
-        if ($includeSetClear) {
-            $tbl->addBodyTr(HTMLTable::makeTd(
-                $this->getRanges()));
+        $tbl->addheaderTr(HTMLTable::makeTh('Include Fields', ['colspan'=>'2']));
+        
+        $bodyTr = '';
+        $filterActionTr = false;
+        
+        //if using filterSets
+        if($this->useFilterSets){
+            $bodyTr .= HTMLTable::makeTd($this->makeFilterSetSelector(), ['style'=>'vertical-align: top; border-bottom: 0; width: 215px;', 'id'=>'filterSets']);
+            $filterActionTr = HTMLTable::makeTd($this->makeFilterSetButtons(), ['style'=>'vertical-align: bottom; border-top: 0;']);
+            $tbl->addHeaderTr(HTMLTable::makeTh('Saved Sets') . HTMLTable::makeTh(HTMLContainer::generateMarkup('span', '', ['id'=>'filterSetTitle']) .  ' Fields')); //add 2nd header
         }
+        
+        $fieldsTdContent = $this->makeDropdown();
+        
+        if ($includeSetClear) {
+            $fieldsTdContent .= $this->getRanges();
+        }
+        
+        $bodyTr .= HTMLTable::makeTd($fieldsTdContent, ['id'=>'fields', 'rowspan'=>'2']);
+        
+        $tbl->addBodyTr($bodyTr);
 
+        if($filterActionTr){
+            $tbl->addBodyTr($filterActionTr);
+        }
+        
         return $tbl;
     }
 
     public function getRanges() {
 
-        return HTMLInput::generateMarkup('Select All', array('type'=>'button', 'id'=>'cbColSelAll', 'style'=>'margin-right:10px;'))
-               . HTMLInput::generateMarkup('Clear All', array('type'=>'button', 'id'=>'cbColClearAll'));
+        return HTMLContainer::generateMarkup('div',
+            HTMLInput::generateMarkup('Select All', array('type'=>'button', 'id'=>'cbColSelAll', 'style'=>'margin-right:10px;'))
+          . HTMLInput::generateMarkup('Clear All', array('type'=>'button', 'id'=>'cbColClearAll'))
+        , ['style'=>'margin-top: 1em']);
     }
 
     public function getFilteredTitles() {
@@ -184,6 +246,18 @@ class ColumnSelectors {
 
         return $this->columnDefs;
 
+    }
+    
+    public function getAlertMsg($type, $msg) {
+        // Instantiate the alert message control
+        $this->alertMsg = new AlertMessage("divFieldsetError");
+        $this->alertMsg->set_DisplayAttr("none");
+        $this->alertMsg->set_Context($type);
+        $this->alertMsg->set_iconId("alrIcon");
+        $this->alertMsg->set_styleId("alrResponse");
+        $this->alertMsg->set_txtSpanId("alrMessage");
+        $this->alertMsg->set_Text($msg);
+        return $this->alertMsg;
     }
 
 }
@@ -274,6 +348,4 @@ class SelectColumn {
     public function getDataTablesType() {
         return $this->dataTablesType;
     }
-
-
 }

@@ -67,6 +67,140 @@ function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
         });
 }
 
+function viewHospitalStay(idHs, idVisit, $hsDialog) {
+
+	$.post('ws_resv.php', {cmd: 'viewHS', 'idhs': idHs}, function (data) {
+        if (!data) {
+            alert('Bad Reply from Server');
+            return;
+        }
+        
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+        
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+            
+        } else if (data.success) {
+        	
+        	$hsDialog.empty();
+        	$hsDialog.append($(data.success));
+        	$hsDialog.dialog({
+                autoOpen: true,
+                width: 1000,
+                resizable: true,
+                modal: true,
+                title: (data.title ? data.title : 'Hospital Details'),
+                buttons: {
+                    "Cancel": function() {
+                        $(this).dialog("close");
+                    },
+                    "Save": function() {
+                    	saveHospitalStay(idHs, idVisit);
+                    	$(this).dialog("close");
+                    }
+                }
+            });
+        	
+        	// add closer to visit dialog box
+        	if ($('#keysfees').length > 0) {
+	        	$('#keysfees').on( "dialogclose", function( event, ui ) {
+	        		
+	        	    // Close hospital stay dialog
+	        	    if ($hsDialog.dialog('isOpen')) {
+	        	    	$hsDialog.dialog('close');
+	        	    }
+	
+	        	} );
+	        }
+        	
+        	//Autocompletes for agent and doctor
+            createAutoComplete($('.hhk-hsdialog #txtAgentSch'), 3, {cmd: 'filter', add: 'phone', basis: 'ra'}, getAgent);
+            if ($('.hhk-hsdialog #a_txtLastName').val() === '') {
+                $('.hhk-hsdialog .hhk-agentInfo').hide();
+            }
+            
+            $(document).on('click', '#a_delete', function(){
+            	$('.hhk-hsdialog #a_idName').val('');
+            	$('.hhk-hsdialog input.hhk-agentInfo').val('');
+            	$('.hhk-hsdialog .hhk-agentInfo').hide();
+            });
+            
+            
+            if ($('.hhk-hsdialog #a_idName').val() !== '') {
+            	$('.hhk-hsdialog input.hhk-agentInfo.name').attr('readonly', 'readonly');
+            }else{
+            	$('.hhk-hsdialog input.hhk-agentInfo.name').removeAttr('readonly');
+            }
+
+            createAutoComplete($('.hhk-hsdialog #txtDocSch'), 3, {cmd: 'filter', basis: 'doc'}, getDoc);
+            if ($('.hhk-hsdialog #d_txtLastName').val() === '') {
+                $('.hhk-hsdialog .hhk-docInfo').hide();
+            }
+            
+            if ($('.hhk-hsdialog #d_idName').val() !== '') {
+            	$('.hhk-hsdialog input.hhk-docInfo.name').attr('readonly', 'readonly');
+            }else{
+            	$('.hhk-hsdialog input.hhk-docInfo.name').removeAttr('readonly');
+            }
+            
+            $(document).on('click', '#d_delete', function(){
+            	$('.hhk-hsdialog #d_idName').val('');
+            	$('.hhk-hsdialog input.hhk-docInfo').val('');
+            	$('.hhk-hsdialog .hhk-docInfo').hide();
+            });
+
+            // Calendars for treatment start and end dates
+            $('.ckhsdate').datepicker({
+                yearRange: '-01:+01',
+                changeMonth: true,
+                changeYear: true,
+                autoSize: true,
+                dateFormat: 'M d, yy'
+            });
+
+        }
+	})
+}
+
+function saveHospitalStay(idHs, idVisit) {
+	var parms = [{'name':'cmd', 'value': 'saveHS'},{'name': 'idhs', 'value': idHs}, {'name': 'idv', 'value': idVisit}];
+	var parms = parms.concat($('.hospital-stay').serializeArray());
+	
+	$.post('ws_resv.php', parms, function (data) {
+        if (!data) {
+            alert('Bad Reply from Server');
+            return;
+        }
+
+        try {
+            data = $.parseJSON(data);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+        
+        if (data.error) {
+            if (data.gotopage) {
+                window.open(data.gotopage, '_self');
+            }
+            flagAlertMessage(data.error, 'error');
+            return;
+            
+        } else if (data.success) {
+        	flagAlertMessage(data.success, 'success');
+        }
+	});
+}
+
 var isCheckedOut = false;
 
 /**
@@ -80,7 +214,7 @@ var isCheckedOut = false;
  * @param {string} ckoutDt
  * @returns {undefined}
  */
-function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt) {
+function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDates) {
     "use strict";
     $.post('ws_ckin.php',
         {
@@ -89,7 +223,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             idGuest: idGuest,
             action: action,
             span: visitSpan,
-            ckoutdt: ckoutDt
+            ckoutdt: ckoutDates
         },
     function(data) {
         "use strict";
@@ -215,18 +349,25 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                 $('#rateChgCB').change();
             }
+            
+            // Hospital stay dialog
+            $('#tblActiveVisit').on('click', '.hhk-hospitalstay', function (event){
+            	event.preventDefault();
+            	viewHospitalStay($(this).data('idhs'), idVisit, $('#hsDialog'));
+            });
 
             $('#spnExPay').hide();
             isCheckedOut = false;
 
             var roomChgBal = 0.00;
             var vFeeChgBal = 0.00;
+            var totChgBal = 0.00;
 
             if ($('#spnCfBalDue').length > 0) {
-                roomChgBal = parseFloat($('#spnCfBalDue').data('bal'));
+                roomChgBal = parseFloat($('#spnCfBalDue').data('rmbal'));
                 vFeeChgBal = parseFloat($('#spnCfBalDue').data('vfee'));
+                totChgBal = parseFloat($('#spnCfBalDue').data('totbal'));
 
-                roomChgBal -= vFeeChgBal;
             }
 
 
@@ -234,11 +375,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
             if ($('input.hhk-ckoutCB').length > 0) {
                 // still checked in...
 
+            	// Checkout checkbox change function
                 $('#tblStays').on('change', 'input.hhk-ckoutCB', function() {
 
                     var ckout = true,
                         coTime = 1,
-                        today = new Date();
+                        today = new Date(),
+                    	coStayDates = {};
 
                     if (this.checked === false) {
                         $(this).next().val('');  // clear the checkout date field
@@ -246,17 +389,18 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                         $(this).next().val($.datepicker.formatDate('M d, yy', new Date()));  // set the checkout date field
                     }
 
-                    // Are we checking out?
+                    // Is the visit ending?
                     // Scan all checkout checkboxes
                     $('input.hhk-ckoutCB').each(function () {
 
                         if (this.checked === false) {
 
-                            ckout = false;
+                            ckout = false;	// not checking out.
 
                         } else if ($(this).next().val() != '') {
 
                             var d = new Date($(this).next().val());
+                            coStayDates[$(this).next().data('gid')] = d.toDateString();
 
                             if (d.getTime() > today.getTime()) {
                                 $(this).next().val('');
@@ -270,6 +414,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
 
                     if (ckout === true) {
+                    	// Visit is ending
 
                         isCheckedOut = true;
                         // check to update the final amount...
@@ -282,13 +427,14 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             return false;
                         }
 
+                        // Check for early visit checkout (co before today)
                         if (todayStr !== coDateStr && action !== 'ref') {
-                            // update dialog with new co date.
+                            // update dialog with new co date.  Sets the room fee amounts accordingly.
                             $diagbox.children().remove();
                             $diagbox.dialog('option', 'buttons', {});
                             $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>')
                                     .append($('<div class="ui-autocomplete-loading" style="width:5em;">Loading</div>')));
-                            viewVisit(idGuest, idVisit, buttons, title, 'ref', visitSpan, coDate.toDateString());
+                            viewVisit(idGuest, idVisit, buttons, title, 'ref', visitSpan, coStayDates);
                             return;
                         }
 
@@ -310,18 +456,17 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('#DepRefundAmount').val('');
                             $('.hhk-refundDeposit').hide('fade');
                         }
+                        
+                        $('#cbDepRefundApply').trigger('change');
 
 
-                        if (roomChgBal < 0) {
+                        if (totChgBal < 0) {
 
                             $('#guestCredit').val(roomChgBal.toFixed(2).toString());
                             $('#feesCharges').val('');
                             $('.hhk-RoomCharge').hide();
                             $('.hhk-GuestCredit').show();
-                            // force pay cleaning fee if unpaid...
-                            if ($('#visitFeeCb').length > 0 && Math.abs(roomChgBal) >= vFeeChgBal) {
-                                $('#visitFeeCb').prop('checked', true).prop('disabled', true);
-                            }
+                            
 
                         } else {
 
@@ -329,12 +474,17 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                             $('#guestCredit').val('');
                             $('.hhk-GuestCredit').hide();
                             $('.hhk-RoomCharge').show();
+                            // force pay cleaning fee if unpaid...
+                            if ($('#visitFeeCb').length > 0 && Math.abs(totChgBal) >= vFeeChgBal) {
+                                $('#visitFeeCb').prop('checked', true).prop('disabled', true).trigger('change');
+                            }
                         }
 
                         $('input#cbFinalPayment').change();
 
                     } else if (action === 'ref') {
 
+                    	// return back to normal visit viewer.
                         $diagbox.children().remove();
                         $diagbox.dialog('option', 'buttons', {});
                         $diagbox.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog"/>')
@@ -346,17 +496,20 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                         isCheckedOut = false;
                         $('.hhk-finalPayment').hide('fade');
-                        $('.hhk-GuestCredit').hide();
-                        $('.hhk-RoomCharge').hide();
+                        $('.hhk-GuestCredit').hide('fade');
+                        $('.hhk-RoomCharge').hide('fade');
                         $('#feesCharges').val('');
                         $('#guestCredit').val('');
                         $('.hhk-refundDeposit').hide('fade');
                         $('#DepRefundAmount').val('');
                         $('input#cbFinalPayment').prop('checked', false);
                         $('input#cbFinalPayment').change();
+                        $('#cbDepRefundApply').trigger('change');
+                        $('#visitFeeCb').prop('checked', false).prop('disabled', false).trigger('change');
                     }
                 });
 
+                
                 $('#tblStays').on('change', 'input.hhk-ckoutDate', function() {
 
                     if ($(this).val() != '') {
@@ -378,7 +531,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
                 $('input.hhk-ckoutCB').change();
 
-            } else if ($('#cbFinalPayment').length > 0) {
+            } else {
 
                 isCheckedOut = true;
 
@@ -393,6 +546,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                 } else {
                      $('#DepRefundAmount').val((0 - kdamt).toFixed(2).toString());
                     $('.hhk-refundDeposit').show('fade');
+                    $('#cbDepRefundApply').trigger('change');
                 }
 
                 if (roomChgBal < 0) {
@@ -413,7 +567,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
 
             setupPayments($('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
 
-            if ($('table#moveTable').length > 0) {
+            /* if ($('table#moveTable').length > 0) {
 
                 // Change Rooms control - only used for visit editor
                 $('table#moveTable').on('change', 'select', function() {
@@ -490,7 +644,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDt)
                     }
                 });
             }
-    
+    		*/
     
             // Financial Application
             var $btnFapp = $('#btnFapp');
@@ -558,7 +712,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         rtntbl: (rtnTbl === true ? '1' : '0'),
         pbp: postbackPage
     };
-
+    
     // Expected Checkout date
     $('input.hhk-expckout').each(function() {
         var parts = $(this).attr('id').split('_');
@@ -691,6 +845,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
         }
     }
 
+	// Save Ribbon Note
+	parms['txtRibbonNote'] = $('#txtRibbonNote').val();
+
     // Save Note
     if ($('#taNewVNote').length > 0 && $('#taNewVNote').val() !== '') {
         parms['taNewVNote'] = $('#taNewVNote').val();
@@ -711,19 +868,16 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             }
         } else if ($(this).attr('type') === 'radio') {
             if (this.checked !== false) {
-                parms[$(this).attr('id')] = this.value;
+                parms[$(this).attr('id')] = $(this).val();
             }
         } else{
-            parms[$(this).attr('id')] = this.value;
+            parms[$(this).attr('id')] = $(this).val();
         }
     });
 
     $('#keysfees').css('background-color', 'white');
 
-    // Unlock Put Neo Card On file. 
-    //$('#cbNewCard').prop('disabled', false);
-    
-    //working
+    // show working icon
     $('#keysfees').empty().append('<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Working...</p></div>');
 
     $.post('ws_ckin.php', parms,
@@ -744,8 +898,30 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 return;
             }
 
-            $('#keysfees').dialog("close");
-
+			if(data.success && data.openvisitviewer){
+				$('#pmtRcpt').dialog("close");
+				//load visit dialog
+            	var buttons = {
+            		"Show Statement": function() {
+                		window.open('ShowStatement.php?vid=' + idVisit, '_blank');
+            		},
+            		"Show Registration Form": function() {
+                		window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + visitSpan, '_blank');
+            		},
+            		"Save": function() {
+                		saveFees(idGuest, idVisit, visitSpan, false, 'register.php');
+            		},
+            		"Cancel": function() {
+                		$(this).dialog("close");
+            		}
+        		};
+         		
+         		viewVisit(idGuest, idVisit, buttons, 'Edit Visit #' + idVisit + '-' + visitSpan, '', visitSpan);
+			}else{
+            	$('#keysfees').dialog("close");
+            	$('#pmtRcpt').dialog("close");
+			}
+			
             paymentRedirect(data, $('#xform'));
 
             if (typeof refreshdTables !== 'undefined') {
@@ -763,6 +939,10 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 if ($('#calendar').length > 0) {
                     $('#calendar').fullCalendar('refetchEvents');
                 }
+            }
+
+            if (data.warning && data.warning !== '') {
+                flagAlertMessage(data.warning, 'error');
             }
 
             if (data.receipt && data.receipt !== '') {

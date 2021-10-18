@@ -1,19 +1,31 @@
 <?php
+
+use HHK\AlertControl\AlertMessage;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\HTMLContainer;
+use HHK\House\Report\ReportFilter;
+use HHK\ColumnSelectors;
+use HHK\HTMLControls\HTMLTable;
+use HHK\SysConst\RoomRateCategories;
+use HHK\SysConst\GLTableNames;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\ExcelHelper;
+use HHK\sec\Labels;
+use HHK\House\Report\ReportFieldSet;
+
 /**
  * ReservReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
 
-require (CLASSES . 'ColumnSelectors.php');
-require CLASSES . 'OpenXML.php';
-require(HOUSE . 'ReportFilter.php');
-
+// 7/1/2021 - Added "Days" column.  EKC
 
 try {
     $wInit = new webInit();
@@ -27,21 +39,8 @@ $pageTitle = $wInit->pageTitle;
 
 // get session instance
 $uS = Session::getInstance();
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $menuMarkup = $wInit->generatePageMenu();
-
-
-// Instantiate the alert message control
-$alertMsg = new alertMessage("divAlert1");
-$alertMsg->set_DisplayAttr("none");
-$alertMsg->set_Context(alertMessage::Success);
-$alertMsg->set_iconId("alrIcon");
-$alertMsg->set_styleId("alrResponse");
-$alertMsg->set_txtSpanId("alrMessage");
-$alertMsg->set_Text("help");
-
-$resultMessage = $alertMsg->createMarkup();
-
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Reservation Report', array('style'=>'margin-top: .5em;'))
@@ -56,42 +55,45 @@ $filter->createHospitals();
 
 // Report column selector
 // array: title, ColumnName, checked, fixed, Excel Type, Excel Style
-$cFields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'n', '');
-$cFields[] = array("Room", 'Room', 'checked', '', 's', '');
+$cFields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'string', '10');
+$cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
 
 if ((count($filter->getAList()) + count($filter->getHList())) > 1) {
 
-    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 's', '');
+    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
 
     if (count($filter->getAList()) > 0) {
-        $cFields[] = array("Association", 'Assoc', 'checked', '', 's', '');
+        $cFields[] = array("Association", 'Assoc', 'checked', '', 'string', '20');
     }
 }
 
 $locations = readGenLookupsPDO($dbh, 'Location');
 if (count($locations) > 0) {
-    $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 'string', '20', array());
 }
 
 $diags = readGenLookupsPDO($dbh, 'Diagnosis');
 if (count($diags) > 0) {
-    $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 's', '', array());
+    $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 'string', '20', array());
+}
+
+if($uS->ShowDiagTB){
+    $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
 }
 
 // Reservation statuses
-//$statusList = removeOptionGroups($uS->guestLookups['ReservStatus']);
-$statusList = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", TRUE));
+$statusList = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
 
 if ($uS->Doctor) {
-    $cFields[] = array("Doctor", 'Name_Doctor', '', '', 's', '');
+    $cFields[] = array("Doctor", 'Name_Doctor', '', '', 'string', '20');
 }
 
 if ($uS->ReferralAgent) {
-    $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 's', '');
+    $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 'string', '20');
 }
 
-$cFields[] = array("First", 'Name_First', 'checked', '', 's', '');
-$cFields[] = array("Last", 'Name_Last', 'checked', '', 's', '');
+$cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
+$cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
 
 // Address.
 $pFields = array('gAddr', 'gCity');
@@ -105,24 +107,31 @@ if ($uS->county) {
 $pFields = array_merge($pFields, array('gState', 'gCountry', 'gZip'));
 $pTitles = array_merge($pTitles, array('State', 'Country', 'Zip'));
 
-$cFields[] = array($pTitles, $pFields, '', '', 's', '', array());
+$cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
 
-$cFields[] = array("Room Phone", 'Phone', '', '', 's', '');
-$cFields[] = array("Guest Phone", 'Phone_Num', '', '', 's', '');
-$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
-$cFields[] = array("Depart", 'Departure', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
-$cFields[] = array("Nights", 'Nights', 'checked', '', 'n', '');
-$cFields[] = array("Rate", 'FA_Category', 'checked', '', 's', '');
-$cFields[] = array('Guests', 'numGuests', 'checked', '', 's', '');
-$cFields[] = array("Status", 'Status_Title', 'checked', '', 's', '');
-$cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
-$cFields[] = array("Last Updated", 'Last_Updated', '', '', 'n', PHPExcel_Style_NumberFormat::FORMAT_DATE_XLSX14, array(), 'date');
+$cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
+$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
+$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
+$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
+$cFields[] = array("Days", 'Days', '', '', 'integer', '10');
+$cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
+$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest').'s', 'numGuests', 'checked', '', 'integer', '10');
+$cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
+$cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
+$cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', array(), 'date');
 
-$colSelector = new ColumnSelectors($cFields, 'selFld');
-
-
-
+$fieldSets = ReportFieldSet::listFieldSets($dbh, 'reserv', true);
+$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
+$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
+$defaultFields = array();
+foreach($cFields as $field){
+    if($field[2] == 'checked'){
+        $defaultFields[] = $field[1];
+    }
+}
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
@@ -201,6 +210,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(na.Country_Code, '') as gCountry,
     ifnull(na.Postal_Code, '') as gZip,
     np.Phone_Num,
+    ne.Email,
     rm.Phone,
     ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
     ifnull(r.Actual_Departure, r.Expected_Departure) as `Departure`,
@@ -222,6 +232,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     nd.Name_Full as `Name_Doctor`,
     nr.Name_Full as `Name_Agent`,
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
+    hs.Diagnosis2,
     ifnull(g2.`Description`, '') as `Location`,
     r.`Timestamp` as `Created_Date`,
     r.Last_Updated,
@@ -239,6 +250,8 @@ from
     name_address na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
         left join
     name_phone np ON n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+        left join
+    name_email ne ON n.idName = ne.idName and n.Preferred_Email = ne.Purpose
         left join
     hospital_stay hs ON r.idHospital_Stay = hs.idHospital_stay
         left join
@@ -258,8 +271,7 @@ from
         LEFT JOIN
     gen_lookups g2 ON g2.Table_Name = 'Location'
         and g2.`Code` = hs.`Location`
-where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration
-";
+where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration";
 
 
     $fltrdTitles = $colSelector->getFilteredTitles();
@@ -278,37 +290,27 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 
         $reportRows = 1;
         $file = 'ReservReport';
-        $sml = OpenXML::createExcel($uS->username, 'Reservation Report');
+        $writer = new ExcelHelper($file);
+        $writer->setAuthor($uS->username);
+        $writer->setTitle("Reservation Report");
 
         // build header
         $hdr = array();
-        $n = 0;
+        $colWidths = array();
 
-        foreach ($fltrdTitles as $t) {
-            $hdr[$n++] = $t;
+
+        foreach($fltrdFields as $field){
+            $hdr[$field[0]] = $field[4]; //set column header name and type;
+            $colWidths[] = $field[5]; //set column width
         }
 
-        OpenXML::writeHeaderRow($sml, $hdr);
-        $reportRows++;
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
     }
 
     $curVisit = 0;
     $curRoom = '';
     $curRate = '';
-    $nites = 0;
-    $totalNights = 0;
-
-
-    $rrates = array();
-
-    $roomRateRS = new Room_RateRS();
-    $rows = EditRS::select($dbh, $roomRateRS, array());
-
-    foreach ($rows as $r) {
-        $roomRateRS = new Room_RateRS();
-        EditRS::loadRow($r, $roomRateRS);
-        $rrates[$roomRateRS->FA_Category->getStoredVal()] = $roomRateRS;
-    }
 
     $stmt = $dbh->query($query);
 
@@ -318,20 +320,15 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
             $curVisit = $r['idReservation'];
             $curRoom = $r['Room'];
             $curRate = $r['FA_Category'];
-            $nites = 0;
         } else if ($curRoom != $r['Room']) {
             $curRoom = $r['Room'];
         } else if ($curRate != $r['FA_Category']) {
             $curRate = $r['FA_Category'];
         } else {
-            $nites += $r['Nights'];
             continue;
         }
 
-        $nites += $r['Nights'];
-        $totalNights += $r['Nights'];
-
-        if ($r['FA_Category'] == RoomRateCategorys::Fixed_Rate_Category) {
+        if ($r['FA_Category'] == RoomRateCategories::Fixed_Rate_Category) {
             $rate = $r['Fixed_Room_Rate'];
         } else {
             $rate = $r['Rate'];
@@ -339,11 +336,11 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 
 
         $r['Assoc'] = '';
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $r['Assoc'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1];
+        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+            $r['Assoc'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
         }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-            $r['Hospital'] = $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+            $r['Hospital'] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
         }
 
 
@@ -353,6 +350,8 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         $statusDT = new DateTime($r['Created_Date']);
         $lastUpdatedDT = new DateTime($r['Last_Updated']);
 
+        // add Days column
+        $r['Days'] = $r['Nights'] + 1;
 
         if ($local) {
 
@@ -373,21 +372,16 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 
         } else {
 
-            $r['Arrival'] = PHPExcel_Shared_Date::PHPToExcel($arrivalDT);
-            $r['Departure'] = PHPExcel_Shared_Date::PHPToExcel($departureDT);
-            $r['Created_Date'] = PHPExcel_Shared_Date::PHPToExcel($statusDT);
-            $r['Last_Updated'] = PHPExcel_Shared_Date::PHPToExcel($lastUpdatedDT);
             $r['FA_Category'] = $rate;
 
-            $n = 0;
             $flds = array();
 
             foreach ($fltrdFields as $f) {
-                $flds[$n++] = array('type' => $f[4], 'value' => $r[$f[1]], 'style'=>$f[5]);
+                $flds[] = $r[$f[1]];
             }
 
-            $reportRows = OpenXML::writeNextRow($sml, $flds, $reportRows);
-
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
         }
     }
 
@@ -437,14 +431,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 
 
     } else {
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $file . '.xlsx"');
-        header('Cache-Control: max-age=0');
-
-        OpenXML::finalizeExcel($sml);
-        exit();
-
+        $writer->download();
     }
 
 }
@@ -454,7 +441,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 $statusSelector = HTMLSelector::generateMarkup(
         HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selResvStatus[]', 'size'=>'6', 'multiple'=>'multiple'));
 
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;'));
+$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;margin-left:5px', 'id'=>'includeFields'));
 
 $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
@@ -470,6 +457,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
         <?php echo JQ_DT_CSS ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -477,7 +465,10 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
 
 <script type="text/javascript">
     $(document).ready(function() {
@@ -512,46 +503,49 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
              ],
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top"ilf>rt<"bottom"lp><"clear">',
+                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
             });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();
             });
         }
+
+        $('#includeFields').fieldSets({'reportName': 'reserv', 'defaultFields': <?php echo json_encode($defaultFields) ?>});
     });
  </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="font-size: 0.9em; display: inline-block; min-width: 400px; padding:10px;">
                 <form id="fcat" action="ReservReport.php" method="post">
+                	<div class="ui-helper-clearfix">
                     <?php echo $timePeriodMarkup; ?>
-                    <table style="float: left;">
-                        <tr>
-                            <th>Status</th>
-                        </tr>
-                        <tr>
-                            <td><?php echo $statusSelector; ?></td>
-                        </tr>
+                    <table style="float: left; margin-left:5px;">
+                        <thead>
+                        	<tr>
+                            	<th>Status</th>
+                        	</tr>
+                        </thead>
+                        <tbody>
+                        	<tr>
+                            	<td><?php echo $statusSelector; ?></td>
+                        	</tr>
+                        </tbody>
                     </table>
                     <?php if (count($filter->getHospitals()) > 1) {
                             echo $hospitalMarkup;
                         }
                         echo $columSelector; ?>
-                    <table style="width:100%; clear:both;">
-                        <tr>
-                            <td style="width:50%;"></td>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Run Here"/></td>
-                            <td><input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/></td>
-                        </tr>
-                    </table>
+                    </div>
+                    <div style="text-align:center; margin-top: 10px;">
+                    	<input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right: 1em;"/>
+                    	<input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/>
+                    </div>
                 </form>
             </div>
-            <div style="clear:both;"></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <?php echo $headerTable; ?>
                 <?php echo $dataTable; ?>

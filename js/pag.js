@@ -57,7 +57,7 @@ function dateRender(data, type, format) {
 			format = 'MMM D, YYYY';
 		}
 
-		return moment(data).format(format);
+		return moment(data, 'YYYY-MM-DD HH:mm:ss Z').format(format);
 	}
 
 	// Otherwise the data type requested (`type`) is type detection or
@@ -84,198 +84,183 @@ function checkStrength(pwCtrl) {
 	return rtn;
 }
 
-$(document).ready(
-				function() {
-					"use strict";
-					// Hover states on the nav bar left icons.
-					$("ul.hhk-ui-icons li").hover(function() {
-						$(this).addClass("ui-state-hover");
-					}, function() {
-						$(this).removeClass("ui-state-hover");
-					});
+function openiframe(src, width, height, title, buttons) {
+	var $dialog = $('<div id="iframeDialog" style="overflow:hidden"><div class="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div><iframe id="hhk-iframe" src="'
+			+ src
+			+ '" style="border: none; height: 95%; width: 100%"></iframe></div>');
+	$("#contentDiv").append($dialog);
 
-					$('#contentDiv').css('margin-top',
-							$('#global-nav').css('height'));
+	$dialog.dialog({
+		width : width,
+		height : height,
+		modal : true,
+		title : title,
+		buttons : buttons,
+		close : function(event, ui) {
+			$dialog.dialog("destroy").remove();
+		}
+	});
 
-					if ($('#dchgPw').length > 0) {
-						var chPwButtons = {
-								"Save" : function() {
+	$dialog.find("#hhk-iframe").on("load", function() {
+		$dialog.find(".hhk-loading-spinner").hide();
+	});
 
-									var oldpw = $('#utxtOldPw'), pw1 = $('#utxtNewPw1'), pw2 = $('#utxtNewPw2'), oldpwMD5, newpwMD5, challVar = $("#challVar").val(), msg = $('#pwChangeErrMsg'), qmsg = $('#SecQuestionErrMsg'), success = false;
-									$('div#dchgPw').find("input").prop("type",
-											"password");
-									$('div#dchgPw').find("button.showPw").text(
-											"Show");
-									var errors = false;
-									msg.empty();
+}
 
-									if (oldpw.val() == "") {
-										msg.text("Old password is required");
-										return;
-									}
-
-									// if intent is to change password
-									if (oldpw.val() != "") {
-
-										if (pw1.val() !== pw2.val()) {
-											msg.text("New passwords do not match");
-											return;
-										}
-
-										if (oldpw.val() == pw1.val()) {
-											pw1.addClass("ui-state-error");
-											msg
-													.text("The new password must be different from the old password");
-											pw1.focus();
-											pw2.val('');
-											return;
-										}
-
-										if (checkStrength(pw1) === false) {
-											pw1.addClass("ui-state-error");
-											msg
-													.text('Password must have at least 8 characters including at least one uppercase, one lower case letter, one number and one symbol.');
-											pw1.focus();
-											return;
-										}
-
-										pw1.removeClass("ui-state-error");
-
-										// make MD5 hash of password and concatenate
-										// challenge value
-										// next calculate MD5 hash of combined
-										// values
-										//console.log("challVar: " + challVar);
-										//oldpwMD5 = hex_md5(hex_md5(oldpw.val())
-										//		+ challVar);
-										//newpwMD5 = hex_md5(pw1.val());
-
-										var oldpwval = oldpw.val();
-										var newpwval = pw1.val();
-										oldpw.val('');
-										pw1.val('');
-										pw2.val('');
-
-										$.post("../house/ws_admin.php", {
-											cmd : 'chgpw',
-											old : oldpwval,
-											newer : newpwval
-										}, function(data) {
-											if (data) {
-												try {
-													data = $.parseJSON(data);
-												} catch (err) {
-													alert("Parser error - "
-															+ err.message);
-													return;
-												}
-												if (data.error) {
-
-													if (data.gotopage) {
-														window.open(data.gotopage,
-																'_self');
-													}
-													flagAlertMessage(data.error,
-															'error');
-
-												} else if (data.success) {
-
-													flagAlertMessage(data.success, 'success');
-													$("#dchgPw").dialog('close');
-
-												} else if (data.warning) {
-													$('#pwChangeErrMsg').text(
-															data.warning);
-												}
-											}
-										});
-									}
-									;
-								}
-							};
-						
-						$('.hhk-tooltip').tooltip({
-							classes: {
-								"ui-tooltip": "ui-corner-all"
-							}
-						});
-						
-/*						$('#version').css('cursor', 'pointer');
-						$('#version').hover(function() {
-							$(this).addClass("ui-state-hover");
-						}, function() {
-							$(this).removeClass("ui-state-hover");
-						});
-
-						$('#version').click(
-*/
-						$('#userSettingsBtn').button().click(
-								function() {
-									chPwButtons["Cancel"] = function() {
-										$(this).dialog("close");
-									};
-									$(".PassExpDesc").hide();
-									$('div#dchgPw').find('input').removeClass(
-											"ui-state-error").val('');
-									$('#pwChangeErrMsg').text('');
-
-									$('div#dchgPw').find("#qrcode").empty();
-									$('div#dchgPw').find("#otpForm").hide();
-									$('div#dchgPw').find('button').button();
-									$('div#dchgPw').find('a.button').button();
-									$('#dchgPw').dialog("option", "title","User Settings");
-									$('#dchgPw').dialog("option", "closeOnEscape",true);
-									$('#dchgPw').dialog("option", "dialogClass",'');
-									$('#dchgPw').dialog("option", "buttons",chPwButtons);
-									$('#dchgPw').dialog('open');
-									$('#txtOldPw').focus();
-								});
-
-						$('div#dchgPw').on('mousedown', '.showPw', function() {
-							var input = $(this).closest("td").find("input");
-							input.prop("type", "text");
-						});
-						
-						$('div#dchgPw').on('mouseup', '.showPw', function() {
-							var input = $(this).closest("td").find("input");
-							input.prop("type", "password");
-						});
-
-						
-
-						var chgPW = $("input#isPassExpired").val();
-						if (chgPW) {
-							var autoOpen = true;
-							var closeOnEscape = false;
-							var dialogClass = "no-close";
-						} else {
-							var autoOpen = false;
-							var closeOnEscape = true;
-							var dialogClass = '';
-							chPwButtons["Cancel"] = function() {
-								$(this).dialog("close");
-							};
-							$(".PassExpDesc").hide();
+function logoutTimer(){
+	var timerID;
+	var intervalID;
+	
+	function resetTimer(){
+		$.ajax({
+			url: '../admin/ws_session.php',
+			dataType: 'json',
+			success: function(data){
+				clearTimeout(timerID);
+				clearInterval(intervalID);
+				if(data.ExpiresIn > 60){
+					timerID = setTimeout(resetTimer, (data.ExpiresIn-60)*1000);
+					$dialog.dialog('close');
+				}else{
+					$("#expiresIn").text(data.ExpiresIn);
+					intervalID = setInterval(countdown, 1000);
+					$dialog.dialog('open');
+					timerID = setTimeout(function(){location.href = 'index.php?log=lo';}, data.ExpiresIn*1000);
+				}
+			}
+		});
+	}
+	
+	function countdown(){
+		var expiresIn = $("#expiresIn").text();
+		$("#expiresIn").text(expiresIn - 1);
+	}
+	
+	$dialog = $('<div id="logoutTimer" style="display:none; text-align: center;"><h3>You will be logged out in</h3><h2><span id="expiresIn"></span> Seconds</h2></div>');
+	$('#contentDiv').append($dialog);
+	
+	$dialog.dialog({
+		width : 400,
+		height : 225,
+		modal : true,
+		autoOpen: false,
+		title : "Stay Logged In?",
+		closeOnEscape: false,
+		buttons : {
+			"Stay Logged In" : function(){
+				$.ajax({
+					url: '../admin/ws_session.php?cmd=extend',
+					dataType: 'json',
+					success: function(data){
+						clearTimeout(timerID);
+						clearInterval(intervalID);
+						if(data.ExpiresIn > 60){
+							timerID = setTimeout(resetTimer, (data.ExpiresIn-60)*1000);
+							$dialog.dialog('close');
 						}
-						
-						$('div#dchgPw').find('button').button();
+					}
+				});
+			}
+		}
+	});
+	
+	resetTimer();
+}
 
-						$('div#dchgPw').on('change', 'input', function() {
-							$(this).removeClass("ui-state-error");
-							$(".hhk-alert").hide();
-							$('#pwChangeErrMsg').text('');
-						});
+$(document).ready(
+	function() {
+		"use strict";
+		// Hover states on the nav bar left icons.
+		$("ul.hhk-ui-icons li").hover(function() {
+			$(this).addClass("ui-state-hover");
+		}, function() {
+			$(this).removeClass("ui-state-hover");
+		});
 
-						$('#dchgPw').dialog({
-							autoOpen : autoOpen,
-							width : '60em',
-							autoResize : true,
-							resizable : true,
-							modal : true,
-							dialogClass : dialogClass,
-							closeOnEscape : closeOnEscape,
-							title : "Welcome",
-							buttons : chPwButtons
+		$('#contentDiv').css('margin-top',
+				$('#global-nav').css('height'));
+
+		if ($('#dchgPw').length > 0) {
+			var chPwButtons = {
+				"Save" : function() {
+
+					var oldpw = $('#utxtOldPw'), pw1 = $('#utxtNewPw1'), pw2 = $('#utxtNewPw2'), oldpwMD5, newpwMD5, challVar = $(
+							"#challVar").val(), msg = $('#pwChangeErrMsg'), qmsg = $('#SecQuestionErrMsg'), success = false;
+					$('div#dchgPw').find("input").prop("type",
+							"password");
+					$('div#dchgPw').find("button.showPw").text(
+							"Show");
+					var errors = false;
+					msg.empty();
+
+					if (oldpw.val() == "") {
+						msg.text("Old password is required");
+						return;
+					}
+
+					// if intent is to change password
+					if (oldpw.val() != "") {
+
+						if (pw1.val() !== pw2.val()) {
+							msg.text("New passwords do not match");
+							return;
+						}
+
+						if (oldpw.val() == pw1.val()) {
+							pw1.addClass("ui-state-error");
+							msg.text("The new password must be different from the old password");
+							pw1.focus();
+							pw2.val('');
+							return;
+						}
+
+						if (checkStrength(pw1) === false) {
+							pw1.addClass("ui-state-error");
+							msg.html('Password must have at least 8 characters including at least <br>one uppercase, one lower case letter, one number and one symbol.');
+							pw1.focus();
+							return;
+						}
+
+						pw1.removeClass("ui-state-error");
+
+						var oldpwval = oldpw.val();
+						var newpwval = pw1.val();
+						oldpw.val('');
+						pw1.val('');
+						pw2.val('');
+
+						$.post("../house/ws_admin.php", {
+							cmd : 'chgpw',
+							old : oldpwval,
+							newer : newpwval
+						}, function(data) {
+							if (data) {
+								try {
+									data = $.parseJSON(data);
+								} catch (err) {
+									alert("Parser error - "
+											+ err.message);
+									return;
+								}
+								if (data.error) {
+
+									if (data.gotopage) {
+										window.open(data.gotopage,
+												'_self');
+									}
+									flagAlertMessage(data.error, 'error');
+
+								} else if (data.success) {
+
+									flagAlertMessage(data.success,
+											'success');
+									$("#dchgPw").dialog('close');
+
+								} else if (data.warning) {
+									$('#pwChangeErrMsg').text(
+											data.warning);
+								}
+							}
 						});
 						
 						//two factor Auth
@@ -359,5 +344,76 @@ $(document).ready(
 							});
 						});
 					}
-				});
+					;
+				}
+			};
 
+			$('.hhk-tooltip').tooltip({
+				classes : {
+					"ui-tooltip" : "ui-corner-all"
+				}
+			});
+
+			$('#userSettingsBtn').button().click(
+					function() {
+						chPwButtons["Cancel"] = function() {
+							$(this).dialog("close");
+						};
+						$(".PassExpDesc").hide();
+						$('div#dchgPw').find('input').removeClass("ui-state-error").val('');
+						$('#pwChangeErrMsg').text('');
+
+						$('div#dchgPw').find('button').button();
+						$('div#dchgPw').find("#qrcode").empty();
+						$('div#dchgPw').find("#otpForm").hide();
+						$('#dchgPw').dialog("option", "title", "User Settings");
+						$('#dchgPw').dialog("option", "closeOnEscape", true);
+						$('#dchgPw').dialog("option", "dialogClass", '');
+						$('#dchgPw').dialog("option", "buttons", chPwButtons);
+						$('#dchgPw').dialog('open');
+						$('#txtOldPw').focus();
+					});
+
+			$('div#dchgPw').on('mousedown', '.showPw', function() {
+				var input = $(this).closest("td").find("input");
+				input.prop("type", "text");
+			});
+
+			$('div#dchgPw').on('mouseup', '.showPw', function() {
+				var input = $(this).closest("td").find("input");
+				input.prop("type", "password");
+			});
+
+			var chgPW = $("input#isPassExpired").val();
+			if (chgPW) {
+				var autoOpen = true;
+			} else {
+				var autoOpen = false;
+				chPwButtons["Cancel"] = function() {
+					$(this).dialog("close");
+				};
+				$(".PassExpDesc").hide();
+			}
+
+			$('div#dchgPw').find('button').button();
+
+			$('div#dchgPw').on('change', 'input', function() {
+				$(this).removeClass("ui-state-error");
+				$(".hhk-alert").hide();
+				$('#pwChangeErrMsg').text('');
+			});
+
+			$('#dchgPw').dialog({
+				autoOpen : autoOpen,
+				width : 'auto',
+				autoResize : true,
+				resizable : true,
+				modal : true,
+				title : "Welcome",
+				buttons : chPwButtons
+			});
+		}
+		
+		//Logout after inactivity
+		//logoutTimer();
+});

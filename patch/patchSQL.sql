@@ -1,96 +1,37 @@
-ALTER TABLE `w_groups`
- ADD COLUMN `IP_Restricted` BOOLEAN NOT NULL DEFAULT 0 AFTER `Cookie_Restricted`;
-
-ALTER TABLE `location`
-    CHANGE COLUMN `Phone` `Merchant` VARCHAR(45) NOT NULL DEFAULT '' ;
-
-ALTER TABLE `card_id`
-    ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Amount`;
 
 
-ALTER TABLE `guest_token`
-     ADD COLUMN  `Merchant` VARCHAR(45) NOT NULL DEFAULT '';
+ UPDATE `page` SET `Hide` = 0 where `File_Name` = "Duplicates.php"; -- restore Duplicates page
 
-ALTER TABLE `payment_auth`
-    ADD COLUMN `Merchant` VARCHAR(45) NOT NULL DEFAULT '' AFTER `Processor`;
-
-update `guest_token` set `Merchant` = ifnull((Select `Value`  from `sys_config` where `Key` = 'ccgw'), '');
-update `payment_auth` set `Merchant` = ifnull((Select `Value`  from `sys_config` where `Key` = 'ccgw'), '');
-Insert into location (idLocation, Title, Merchant, Status) select 1, ifnull(`Value`, ''), ifnull(`Value`, ''), 'a' from `sys_config` where `Key` = 'ccgw';
-update room r set r.idLocation = (select ifnull(idLocation, '') from location where idLocation = 1) where r.idLocation = 0;
-
-UPDATE `sys_config` SET `Category`='fg' WHERE `Key`='BatchSettlementHour';
-
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`, `GenLookup`) VALUES('UseDocumentUpload', 'false', 'b', 'h', '', 'Enable Document Uploads', '');
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('ExtendToday', '0', 'i', 'h', 'Extend immediate Check-in by this many hours into tomorrow');
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('InsistCkinPayAmt', 'true', 'b', 'h', 'Insist on the user filling in the payment amount on checkin page');
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('InsistCkinDemog', 'false', 'b', 'h', 'Insist that user fill in the demographics on the check in page (see ShowDemographics)');
-INSERT INTO `sys_config` (`Key`, `Type`, `Category`, `Description`) VALUES ('NotificationAddress', 'ea', 'f', 'Gets financial notifications.');
-
-REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'ra', 'Registration Agreement', 'Reg_Agreement');
-REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 'c', 'Confirmation', 'Resv_Conf');
-REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`) VALUES ('Form_Upload', 's', 'Survey Form', 'Survy_Form');
-
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'a', 'Active', 'h', '1');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'r', 'Resolved', 'h', '7');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'd', 'Deleted', 'h', '10');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Incident_Status', 'h', 'On Hold', 'h', '4');
-
-UPDATE `gen_lookups` SET `Type`='u' WHERE `Table_Name`='Room_Status';
+-- Add Mountain Standard timezone
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Time_Zone', 'America/Phoenix', 'Mountain Standard (Phoenix)');
+UPDATE `gen_lookups` SET `Description` = 'Moutain Daylight (Denver)' WHERE (`Table_Name` = 'Time_Zone') and (`Code` = 'America/Denver');
 
 
-ALTER TABLE `note`
-ADD COLUMN `flag` BOOL default false AFTER `Note_Type`;
+ALTER TABLE `invoice` 
+CHANGE COLUMN `Order_Number` `Order_Number` INT(11) NOT NULL DEFAULT 0 ;
 
-INSERT INTO `template_tag` VALUES (6,'c','Guest Name','${GuestName}','');
-INSERT INTO `template_tag` VALUES (7,'c','Expected Arrival','${ExpectedArrival}','');
-INSERT INTO `template_tag` VALUES (8,'c','Expected Departure','${ExpectedDeparture}','');
-INSERT INTO `template_tag` VALUES (9,'c','Date Today','${DateToday}','');
-INSERT INTO `template_tag` VALUES (10,'c','Nights','${Nites}','');
-INSERT INTO `template_tag` VALUES (11,'c','Amount','${Amount}','');
-INSERT INTO `template_tag` VALUES (12,'c','Notes','${Notes}','');
-INSERT INTO `template_tag` VALUES (13,'c','Visit Fee Notice','${VisitFeeNotice}','');
-INSERT INTO `template_tag` VALUES (14,'s','First Name','${FirstName}','');
-INSERT INTO `template_tag` VALUES (15,'s','Last Name','${LastName}','');
-INSERT INTO `template_tag` VALUES (16,'s','Name Suffix','${NameSuffix}','');
-INSERT INTO `template_tag` VALUES (17,'s','Name Prefix','${NamePrefix}','');
+ALTER TABLE `sys_config` 
+ADD COLUMN `Show` TINYINT NOT NULL DEFAULT 1 AFTER `GenLookup`;
 
-ALTER TABLE `document` 
-	CHANGE COLUMN `Doc` `Doc` MEDIUMBLOB NULL DEFAULT NULL ;
-	
-UPDATE `sys_config` SET `Category`='h' WHERE `Key`='ShowUncfrmdStatusTab';
+UPDATE `sys_config` SET `Show` = 0 where `Category` IN ('fg', 'ga');
+UPDATE `sys_config` SET `Show` = 0 where `Key` IN ('HHK_Secret_Key', 'HHK_Site_Key','Error_Report_Email', 'HUF_URL','Run_As_Test', 'SSL','Training_URL','Tutorial_URL','RoomPriceModel');
 
--- Update gen_lookups Pay_Types to index paymentId 2 instead of 4
-Update `gen_lookups` set `Substitute` = '2' where `Table_Name` = 'Pay_Type' and `Code` = 'cc';
+INSERT IGNORE INTO sys_config (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`) VALUES ('CCAgentConf', 'false', 'b','h','','CC referral agent on reservation confirmation email');
 
-DELETE FROM `sys_config` WHERE `Key`='PmtPageLogoUrl';
-DELETE FROM `sys_config` WHERE `Key`='CardSwipe';
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`,`Type`) VALUES ('Room_Rate_Adjustment', 'ra1', '10%', '-10','ca');
 
-ALTER TABLE `name_demog`
- 	CHANGE COLUMN `Ethnicity` `Ethnicity` VARCHAR(5) NOT NULL DEFAULT '' ;
-ALTER TABLE `name_demog`
- 	ADD COLUMN `Gl_Code_Debit` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Special_Needs`;
-ALTER TABLE `name_demog`
- 	ADD COLUMN `Gl_Code_Credit` VARCHAR(25) NOT NULL DEFAULT '' AFTER `Gl_Code_Debit`;
-
-
--- Password changes
-
-INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES 
-('Sys_Config_Category', 'pr', 'Password Rules','','',0),
-('dayIncrements', '30', '30 days', '','', '1'),
-('dayIncrements', '60', '60 days', '','', '2'),
-('dayIncrements', '90', '90 days', '','', '3'),
-('dayIncrements', '180', '180 days', '','', '4'),
-('dayIncrements', '365', '365 days', '','', '5');
+ALTER TABLE reservation
+ADD COLUMN idRateAdjust VARCHAR(5) DEFAULT '0' AFTER Rate_Adjust;
 
 INSERT IGNORE INTO `sys_config` VALUES
 ('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication'),
-('passResetDays','365','lu','pr','','Number of days between automatic password resets','dayIncrements'),
-('PriorPasswords','0','i','pr','','Number of prior passwords user cannot use',''),
-('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements');
 
 ALTER TABLE `w_users` 
-ADD COLUMN `Chg_PW` TINYINT NOT NULL DEFAULT 1 AFTER `PW_Change_Date`,
 ADD COLUMN `OTP` bit(1) NOT NULL DEFAULT b'0' AFTER `Chg_PW`,
 ADD COLUMN `OTPcode` VARCHAR(45) NOT NULL DEFAULT '' AFTER `OTP`;
+
+CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'g');
+CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'ga');
+CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'gr');
+CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'mm');
+CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'v');

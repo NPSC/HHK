@@ -35,6 +35,9 @@ $(document).ready(function() {
             {'targets': [4,5],
              'type': 'date',
              'render': function ( data, type ) {return dateRender(data, type, dateFormat);}
+            },
+            {'targets':[0],
+            	sortable: false
             }
          ]
      });

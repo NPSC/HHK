@@ -1,5 +1,11 @@
 <?php
 
+use HHK\Update\SiteConfig;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Session;
+use HHK\sec\SecurityComponent;
+use HHK\SysConst\CodeVersion;
+
 //The MIT License
 //
 //Copyright 2017 Eric Crane <ecrane at nonprofitsoftwarecorp.org>.
@@ -28,34 +34,27 @@ define('DS', DIRECTORY_SEPARATOR);
 define('P_ROOT', dirname(__FILE__) . DS);
 define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
 
-require 'classes' . DS . 'SiteConfig.php';
-require ('classes' . DS .'PDOdata.php');
+require('vendor/autoload.php');
 require ('functions' . DS . 'commonFunc.php');
-require ('classes' . DS. 'config'. DS . 'Lite.php');
-require ('classes' . DS. 'sec' .DS . 'sessionClass.php');
-require ('classes' . DS . 'SysConst.php');
-require ('classes' . DS . 'HTML_Controls.php');
-require ('classes' . DS. 'sec' . DS . 'SecurityComponent.php');
 
 function testdb($ssn) {
 
     try {
 
-        switch ($ssn->dbms) {
-
-            case 'MS_SQL':
-                $dbh = initMS_SQL($ssn->databaseURL, $ssn->databaseName, $ssn->databaseUName, $ssn->databasePWord);
-                break;
-
-            case 'MYSQL':
-                $dbh = initMY_SQL($ssn->databaseURL, $ssn->databaseName, $ssn->databaseUName, $ssn->databasePWord);
-                break;
-
-            default:
-                return "Bad Database Type: '" . $ssn->dbms . "'";
-
-        }
-
+    	$dbuName = $ssn->databaseUName;
+    	$dbPw = $ssn->databasePWord;
+    	$dbHost = $ssn->databaseURL;
+    	$dbName = $ssn->databaseName;
+    	
+    	$dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
+    	
+    	$options = [
+    			PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+    			PDO::ATTR_EMULATE_PREPARES   => false,
+    	];
+    	
+    	$dbh = new PDO($dsn, $dbuName, $dbPw, $options);
+    	
     } catch (PDOException $e) {
         return 'Database Error:  ' . $e;
     }
@@ -125,7 +124,7 @@ if (isset($_GET['r'])) {
     $result = filter_var($_GET['r'], FILTER_SANITIZE_STRING);
 }
 
-$pageTitle = $uS->siteName;
+$pageTitle = $ssn->siteName;
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 $copyYear = date('Y');
 
@@ -161,7 +160,7 @@ $tbl = SiteConfig::createCliteMarkup($config, new Config_Lite('conf' . DS . 'sit
                     <input type="submit" name="btnSave" id="btnSave" value="Save" style="margin-left:700px;margin-top:20px;"/>
                 </form>
                 <p style="color:red;margin:10px;"><?php echo $result; ?></p>
-                <div style="margin-top:20px;"><a href ="http://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
+                <div style="margin-top:20px;"><a href ="http://nonprofitsoftwarecorp.org" class="nplogo" ></a></div>
                 <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software</div>
 
                 </div>

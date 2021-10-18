@@ -1,4 +1,8 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\Member\MemberSearch;
+
 /**
  * VolNameSearch.php
  *
@@ -12,9 +16,7 @@
 
 require ("VolIncludes.php");
 
-require(MEMBER . 'MemberSearch.php');
-
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 

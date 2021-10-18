@@ -1,4 +1,9 @@
 <?php
+namespace HHK\sec;
+
+use HHK\Exception\RuntimeException;
+use HHK\SysConst\WebPageCode;
+
 /**
  * SecurityComponent.php
  *
@@ -142,15 +147,15 @@ class SecurityComponent {
 
     private function defineThisURL() {
 
-        $scriptName = filter_var($_SERVER["SCRIPT_NAME"], FILTER_SANITIZE_STRING);
-        $serverName = filter_var($_SERVER["SERVER_NAME"], FILTER_SANITIZE_URL);
+        $scriptName = filter_var((isset($_SERVER["SCRIPT_NAME"]) ? $_SERVER["SCRIPT_NAME"]: false), FILTER_SANITIZE_STRING);
+        $serverName = filter_var((isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"]: false), FILTER_SANITIZE_URL);
 
         if (is_null($scriptName) || $scriptName === FALSE) {
-            throw new Hk_Exception_Runtime('Script name not set.');
+            throw new RuntimeException('Script name not set.');
         }
 
         if (is_null($serverName) || $serverName === FALSE) {
-            throw new Hk_Exception_Runtime('Server name not set.');
+            throw new RuntimeException('Server name not set.');
         }
 
         // scriptName = /rootDirs.../hhkSiteDir/filename

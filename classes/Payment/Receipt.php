@@ -1,4 +1,19 @@
 <?php
+
+namespace HHK\Payment;
+
+use HHK\Payment\Invoice\Invoice;
+use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
+use HHK\Purchase\{Item, ValueAddedTax};
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\sec\Labels;
+use HHK\sec\Session;
+use HHK\SysConst\{InvoiceLineType, InvoiceStatus, ItemId, PaymentMethod, PaymentStatusCode, GLTableNames};
+use HHK\SysConst\MemBasis;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer};
+use HHK\House\Registration;
+use HHK\Member\AbstractMember;
+
 /**
  * Receipt.php
  *
@@ -18,8 +33,44 @@ Define('NEWLINE', "\n");
  * @author Eric
  */
 class Receipt {
+	
+	protected static function makeInvoiceLineMarkup(\PDO $dbh, Invoice $invoice, &$tbl) {
+		$uS = Session::getInstance();
+		
+		// Taxes
+		$tax = floatval($uS->ImpliedTaxRate)/100;
+		
+		if ($tax > 0) {
+			// Implement tax
+			$taxAmt = 0;
+			
+			foreach ($invoice->getLines($dbh) as $line) {
+				
+				$lineAmt = $line->getAmount();
+				
+				// Tax on lodging only
+				if ($line->getItemId() == ItemId::Lodging) {
+					$lineAmt = round($line->getAmount() / (1 + $tax), 2);
+					$taxAmt += $line->getAmount() - $lineAmt;
+				}
+				
+				$tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($lineAmt, 2), array('style'=>'font-size:.8em;')));
+			}
+			
+			// Tax amount
+			if ($taxAmt > 0) {
+				$tbl->addBodyTr(HTMLTable::makeTd('Taxes (' . $tax*100 . '%):', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($taxAmt, 2), array('style'=>'font-size:.8em;')));
+			}
+			
+		} else {
+			// No taxes.
+			foreach ($invoice->getLines($dbh) as $line) {
+				$tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
+			}
+		}
+	}
 
-    public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
+    public static function createSaleMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, AbstractPaymentResponse $payResp) {
 
         $uS = Session::getInstance();
 
@@ -35,7 +86,7 @@ class Receipt {
 
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+            $tbl->addBodyTr(HTMLTable::makeTd( Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
         $idPriGuest = 0;
@@ -44,7 +95,7 @@ class Receipt {
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
-            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $payor = AbstractMember::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
         }
 
@@ -58,37 +109,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($invoice->getInvoiceNumber()));
 
-        // Taxes
-        $tax = floatval($uS->ImpliedTaxRate)/100;
-
-        if ($tax > 0) {
-            // Implement tax
-            $taxAmt = 0;
-
-            foreach ($invoice->getLines($dbh) as $line) {
-
-                $lineAmt = $line->getAmount();
-
-                // Tax on lodging only
-                if ($line->getItemId() == ItemId::Lodging) {
-                    $lineAmt = round($line->getAmount() / (1 + $tax), 2);
-                    $taxAmt += $line->getAmount() - $lineAmt;
-                }
-
-                $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($lineAmt, 2), array('style'=>'font-size:.8em;')));
-            }
-
-            // Tax amount
-            if ($taxAmt > 0) {
-                $tbl->addBodyTr(HTMLTable::makeTd('Taxes (' . $tax*100 . '%):', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($taxAmt, 2), array('style'=>'font-size:.8em;')));
-            }
-
-        } else {
-            // No taxes.
-            foreach ($invoice->getLines($dbh) as $line) {
-                $tbl->addBodyTr(HTMLTable::makeTd($line->getDescription() . ':', array('class'=>'tdlabel', 'style'=>'font-size:.8em;')) . HTMLTable::makeTd(number_format($line->getAmount(), 2), array('style'=>'font-size:.8em;')));
-            }
-        }
+        self::makeInvoiceLineMarkup($dbh, $invoice, $tbl);
 
         //Total Amount
         $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
@@ -113,7 +134,7 @@ class Receipt {
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
     }
 
-    public static function createVoidMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId, $type = 'Void Sale') {
+    public static function createVoidMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId, $type = 'Void Sale') {
 
        $rec = self::getHouseIconMarkup();
 
@@ -126,7 +147,7 @@ class Receipt {
         $info = self::getVisitInfo($dbh, $invoice);
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
         $idPriGuest = 0;
@@ -135,7 +156,7 @@ class Receipt {
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
-            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $payor = AbstractMember::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
         }
 
@@ -156,13 +177,13 @@ class Receipt {
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
     // Return a Payment
-    public static function createReturnMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
+    public static function createReturnMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId) {
 
         $rec = self::getHouseIconMarkup();
 
@@ -176,7 +197,7 @@ class Receipt {
         $info = self::getVisitInfo($dbh, $invoice);
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
         $idPriGuest = 0;
@@ -185,7 +206,7 @@ class Receipt {
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
-            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $payor = AbstractMember::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
         }
 
@@ -200,18 +221,20 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
+        self::makeInvoiceLineMarkup($dbh, $invoice, $tbl);
+        
         $tbl->addBodyTr(HTMLTable::makeTd("Total Returned:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
     // Refund arbitrary Amount
-    public static function createRefundAmtMarkup(\PDO $dbh, PaymentResponse $payResp, $siteName, $siteId) {
+    public static function createRefundAmtMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId) {
 
         $rec = self::getHouseIconMarkup();
 
@@ -225,7 +248,7 @@ class Receipt {
         $info = self::getVisitInfo($dbh, $invoice);
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd("Guest: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
         }
 
         $idPriGuest = 0;
@@ -234,7 +257,7 @@ class Receipt {
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
-            $payor = Member::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
+            $payor = AbstractMember::GetDesignatedMember($dbh, $payResp->idPayor, MemBasis::Indivual);
             $tbl->addBodyTr(HTMLTable::makeTd("Payor: ", array('class'=>'tdlabel')) . HTMLTable::makeTd($payor->getMemberName()));
         }
 
@@ -249,17 +272,19 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Invoice:", array('class'=>'tdlabel')) . HTMLTable::makeTd($payResp->getInvoiceNumber()));
 
+        self::makeInvoiceLineMarkup($dbh, $invoice, $tbl);
+        
         $tbl->addBodyTr(HTMLTable::makeTd("Total Refunded:", array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($payResp->getAmount(), 2)));
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'receiptMarkup;', 'style'=>'display:block;padding:10px;'));
     }
 
-    public static function createDeclinedMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, PaymentResponse $payResp) {
+    public static function createDeclinedMarkup(\PDO $dbh, Invoice $invoice, $siteName, $siteId, AbstractPaymentResponse $payResp) {
 
         // Assemble the statement
         $rec = self::getHouseIconMarkup();
@@ -301,7 +326,7 @@ class Receipt {
 
         $tbl->addBodyTr(HTMLTable::makeTd("Total:", array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($invoice->getAmount(), 2), array('class'=>'hhk-tdTotals')));
 
-        $tbl->addBodyTr(HTMLTable::makeTd("Payment Declined", array('colspan'=>'2', 'style'=>'font-weight:bold;')));
+        $tbl->addBodyTr(HTMLTable::makeTd("Payment Declined", array('colspan'=>'2', 'style'=>'font-weight:bold; text-align:center;')));
 
         // Create pay type determined markup
         $payResp->receiptMarkup($dbh, $tbl);
@@ -311,7 +336,7 @@ class Receipt {
         }
 
 
-        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;float:left;background-color:pink;'));
+        $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin-bottom:10px;clear:both;background-color:pink;'));
         $rec .= HTMLContainer::generateMarkup('div', '', array('style'=>'clear:both;'));
 
         return HTMLContainer::generateMarkup('div', $rec, array('id'=>'hhk-receiptMarkup', 'style'=>'display:block;padding:10px;'));
@@ -321,7 +346,7 @@ class Receipt {
 
         $uS = Session::getInstance();
 
-        $logoUrl = '../conf/' . $uS->receiptLogoFile;
+        $logoUrl = $uS->resourceURL . 'conf/' . $uS->receiptLogoFile;
         $rec = '';
 
         // Don't write img if logo URL not sepcified
@@ -379,7 +404,7 @@ where
                 }
             }
 
-        } catch (PDOException $pex) {
+        } catch (\PDOException $pex) {
             $data = array();
         }
 
@@ -417,7 +442,7 @@ where
                         $hsNames = $r['Hospital'];
                     }
                 }
-            } catch (PDOException $pex) {
+            } catch (\PDOException $pex) {
                 $hsNames = '';
             }
         }
@@ -732,20 +757,26 @@ WHERE
         }
     }
 
-    public static function makeOrdersRatesTable($rates, &$totalAmt, PriceModel $priceModel, Config_Lite $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem) {
+    public static function makeOrdersRatesTable($rates, &$totalAmt, AbstractPriceModel $priceModel, $labels, array $invLines, ValueAddedTax $vat, &$numberNites, Item $moaItem, Item $donateItem, $showDetails) {
 
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
-
+        $detailTbl = NULL;
+        
         $priceModel->rateHeaderMarkup($tbl, $labels);
-
+        
+        if ($showDetails) {
+        	$detailTbl = new HTMLTable();
+        	$priceModel->rateDetailHeaderMarkup($detailTbl, $labels);
+        }
+        
         $idVisitTracker = 0;
         $separator = '';
         $guestNites = 0;
         $visitFeeInvoiced = FALSE;
         $visitNights = 0;
-        $roomCharge = 0;
         $preTaxRmCharge = 0;
+        $taxExemptRmFees = 0;
         $roomTaxPaid = array();
         $roomFeesPaid = 0;
 
@@ -770,12 +801,15 @@ WHERE
 
                 if ($idVisitTracker > 0) {
                     // Close up last visit
-
+                    
                     // Add tax info
                     foreach ($vat->getCurrentTaxedItems($r['vid'], $visitNights) as $t) {
 
                         if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
-
+                            
+                            $taxableRmFees = $preTaxRmCharge - $taxExemptRmFees;
+                            $taxableRmFees = ($taxableRmFees < 0 ? 0 : $taxableRmFees);
+                            
                             $roomBal = $preTaxRmCharge - $roomFeesPaid;
 
                             if ($roomBal >= 0) {
@@ -784,15 +818,16 @@ WHERE
                                     + (isset($roomTaxPaid[$t->getIdTaxingItem()]) ? $roomTaxPaid[$t->getIdTaxingItem()] : 0);
                             } else {
                                 // Fees paid greater than fees charged.
-                                $totalTax = round($preTaxRmCharge * $t->getDecimalTax(), 2);
+                                $totalTax = round($taxableRmFees * $t->getDecimalTax(), 2);
                             }
 
                             $totalAmt += $totalTax;
 
                             $tbl->addBodyTr(
-                                HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
-                                .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
-                            );
+                            		HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ' of ' . number_format($taxableRmFees, 2) . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
+                            		.HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
+                            		);
+                            
                         }
                     }
                 }
@@ -803,6 +838,7 @@ WHERE
 
                 $visitNights = 0;
                 $preTaxRmCharge = 0;
+                $taxExemptRmFees = 0;
                 $roomFeesPaid = 0;
                 $idVisitTracker = $r['vid'];
 
@@ -813,10 +849,10 @@ WHERE
 
             }
 
-            $startDT = new DateTime($r['start']);
+            $startDT = new \DateTime($r['start']);
             $startDT->setTime(0,0,0);
             $startDateStr = $startDT->format('M j, Y');
-            $endDT = ($r['end'] == '' ? new DateTime($r['expEnd']) : new DateTime($r['end']));
+            $endDT = ($r['end'] == '' ? new \DateTime($r['expEnd']) : new \DateTime($r['end']));
             $endDT->setTime(0,0,0);
             $days = $startDT->diff($endDT, TRUE)->days;
 
@@ -844,8 +880,13 @@ WHERE
 
             }
 
+            // Write the record to the table
+            if ($showDetails) {
+            	$priceModel->tiersDetailMarkup($r, $detailTbl, $tiers, $startDT, $separator, $guestNites);
+            }
+            
             $rChg = $priceModel->tiersMarkup($r, $totalAmt, $tbl, $tiers, $startDT, $separator, $guestNites);
-            $roomCharge += $rChg;
+            
             $preTaxRmCharge += $rChg;
             $separator = '';
 
@@ -861,7 +902,11 @@ WHERE
                         );
 
                 $priceModel->itemMarkup($item, $tbl);
-
+                
+                if ($showDetails) {
+                	$priceModel->itemDetailMarkup($item, $detailTbl);
+                }
+                
                 $totalAmt += $r['vfa'];
 
             }
@@ -883,7 +928,7 @@ WHERE
                             }
                         }
 
-                        $invDate = new DateTime($l['Invoice_Date']);
+                        $invDate = new \DateTime($l['Invoice_Date']);
                         $item = array(
                             'orderNum'=>$r['vid'] . '-' . $r['span'],
                             'date'=>$invDate->format('M j, Y'),
@@ -893,6 +938,10 @@ WHERE
 
                         $priceModel->itemMarkup($item, $tbl);
 
+                        if ($showDetails) {
+                        	$priceModel->itemDetailMarkup($item, $detailTbl);
+                        }
+                        
                         $totalAmt += floatval($addChgAmt);
 
                     } else if ($l['Item_Id'] == ItemId::Discount || $l['Item_Id'] == ItemId::Waive) {
@@ -901,7 +950,7 @@ WHERE
                         $totalAmt += $discAmt;
                         $preTaxRmCharge += $discAmt;
 
-                        $invDate = new DateTime($l['Invoice_Date']);
+                        $invDate = new \DateTime($l['Invoice_Date']);
                         $item = array(
                             'orderNum'=>$r['vid'] . '-' . $r['span'],
                             'date'=>$invDate->format('M j, Y'),
@@ -911,12 +960,16 @@ WHERE
 
                         $priceModel->itemMarkup($item, $tbl);
 
+                        if ($showDetails) {
+                        	$priceModel->itemDetailMarkup($item, $detailTbl);
+                        }
+                        
                     } else if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Amount'] < 0) {
 
                         $moaAmt = floatval($l['Amount']);
                         $totalAmt += $moaAmt;
 
-                        $invDate = new DateTime($l['Invoice_Date']);
+                        $invDate = new \DateTime($l['Invoice_Date']);
                         $item = array(
                             'orderNum'=>$r['vid'] . '-' . $r['span'],
                             'date'=>$invDate->format('M j, Y'),
@@ -926,10 +979,17 @@ WHERE
 
                         $priceModel->itemMarkup($item, $tbl);
 
+                        if ($showDetails) {
+                        	$priceModel->itemDetailMarkup($item, $detailTbl);
+                        }
+                        
                     } else if ($l['Type_Id'] == InvoiceLineType::Tax && $l['Status'] != InvoiceStatus::Carried && ($l['Source_Item_Id'] == ItemId::Lodging || $l['Source_Item_Id'] == ItemId::LodgingReversal)) {
                         $roomTaxPaid[$l['Item_Id']] += floatval($l['Amount']);
                     } else if (($l['Item_Id'] == ItemId::Lodging || $l['Item_Id'] == ItemId::LodgingReversal) && ($l['Status'] == InvoiceStatus::Paid || $l['Status'] == InvoiceStatus::Unpaid)) {
                         $roomFeesPaid += floatval($l['Amount']);
+                        if($l['tax_exempt'] == 1){
+                            $taxExemptRmFees += floatval($l['Amount']);
+                        }
                     }
 
                 }
@@ -943,6 +1003,8 @@ WHERE
 
             if ($preTaxRmCharge > 0 && $t->getIdTaxedItem() == ItemId::Lodging) {
 
+                $taxableRmFees = $preTaxRmCharge - $taxExemptRmFees;
+                $taxableRmFees = ($taxableRmFees < 0 ? 0 : $taxableRmFees);
                 //$totalTax = round( ($preTaxRmCharge * $t->getDecimalTax()), 2);
 
                 $roomBal = $preTaxRmCharge - $roomFeesPaid;
@@ -953,13 +1015,13 @@ WHERE
                         + (isset($roomTaxPaid[$t->getIdTaxingItem()]) ? $roomTaxPaid[$t->getIdTaxingItem()] : 0);
                 } else {
                     // Fees paid greater than fees charged.
-                    $totalTax = round($preTaxRmCharge * $t->getDecimalTax(), 2);
+                    $totalTax = round(($taxableRmFees) * $t->getDecimalTax(), 2);
                 }
 
                 $totalAmt += $totalTax;
 
                 $tbl->addBodyTr(
-                    HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
+                    HTMLTable::makeTd($t->getTaxingItemDesc() . ' (' . $t->getTextPercentTax() . ' of ' . number_format($taxableRmFees, 2) . ')', array('colspan'=>'6', 'style'=>'text-align:right;'))
                     .HTMLTable::makeTd(number_format($totalTax, 2), array('style'=>'text-align:right;'))
                 );
             }
@@ -1010,7 +1072,7 @@ WHERE
             $priceModel->rateTotalMarkup($tbl, $labels->getString('statement', 'TotalLabel', 'Total'), '', number_format($totalAmt, 2), '');
         }
 
-        return $tbl;
+        return array($tbl, $detailTbl);
     }
 
     protected static function makePaymentLine(array $payLines, &$tbl, $tdAttrs, array $descs, $i) {
@@ -1067,7 +1129,7 @@ WHERE
 
     }
 
-    public static function makePaymentsTable($invoices, $invLines, $subsidyId, $returnId, &$totalAmt, $pmtDisclaimer, \Config_Lite $labels, $tdClass = '') {
+    public static function makePaymentsTable($invoices, $invLines, $subsidyId, $returnId, &$totalAmt, $pmtDisclaimer, $labels, $tdClass = '') {
 
         // Markup
         $tbl = new HTMLTable();
@@ -1100,14 +1162,14 @@ WHERE
             // Payments
             foreach ($r['p'] as $p) {
 
-                $amt = floatval($p['Payment_Amount']);  // - floatval($p['Payment_Balance']);
+                $amt = floatval($p['Payment_Amount']);
 
                 if ($p['Is_Refund'] > 0) {
                     $amt = 0 - $amt;
                 }
                 $amtStyle = 'text-align:right;';
 
-                if ($p['Payment_Status'] != PaymentStatusCode::Paid) {
+                if ($p['Payment_Status'] != PaymentStatusCode::Paid && $p['Payment_Status'] != PaymentStatusCode::VoidReturn) {
                     $amtMkup = HTMLContainer::generateMarkup('span', number_format(floatval($p['Payment_Amount']), 2), array('style'=>'color:red;'));
                     $amtStyle = 'text-align:left;';
                 } else {
@@ -1116,6 +1178,8 @@ WHERE
 
                     if ($r['i']['Invoice_Balance'] != 0 && $r['i']['Invoice_Balance'] != $r['i']['Invoice_Amount']) {
                         $p['Payment_Status_Title'] = 'Paying';
+                    } else {
+                    	$p['Payment_Status_Title'] = 'Paid';
                     }
 
                 }
@@ -1123,7 +1187,7 @@ WHERE
                 $addnl = '';
                 $numPayments++;
 
-                if ($p['idPayment_Method'] == PaymentMethod::Charge || $p['idPayment_Method'] == PaymentMethod::ChgAsCash) {
+                if ($p['idPayment_Method'] == PaymentMethod::Charge) {
 
                     if (isset($p['auths'])) {
 
@@ -1233,7 +1297,7 @@ WHERE
             }
 
             $guestPayment = $totalPment - $totalReimbursment;
-            $tbl->addBodyTr(HTMLTable::makeTd('Guest ' . $labels->getString('statement', 'paymentTotalLabel', 'Payment Total (Thank You!)'), array('colspan'=>'6', 'class'=>'tdlabel '.$blackLine.$tdClass, 'style'=>'font-weight:bold;'))
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('memberType', 'visitor', 'Visitor') . ' ' . $labels->getString('statement', 'paymentTotalLabel', 'Payment Total (Thank You!)'), array('colspan'=>'6', 'class'=>'tdlabel '.$blackLine.$tdClass, 'style'=>'font-weight:bold;'))
                 .HTMLTable::makeTd('$'. number_format($guestPayment, 2), array('class'=>$tdClass.$blackLine, 'style'=>'text-align:right;')));
 
             // Totals Line needed?
@@ -1255,7 +1319,7 @@ WHERE
         return $tbl;
     }
 
-    public static function makeThirdParyTable($invoices, $invLines,  Config_Lite $labels, &$totAmt, $tdClass = '') {
+    public static function makeThirdParyTable($invoices, $invLines, $labels, &$totAmt, $tdClass = '') {
 
         $tbl = new HTMLTable();
         $totalPment = 0.0;
@@ -1364,11 +1428,11 @@ WHERE
 
         // Hospital
         $hospital = '';
-        if ($spans[0]['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']][1] != '(None)') {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']][1] . ' / ';
+        if ($spans[0]['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] != '(None)') {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] . ' / ';
         }
-        if ($spans[0]['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idHospital']])) {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idHospital']][1];
+        if ($spans[0]['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']])) {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']][1];
         }
 
         // Collect rates and rooms
@@ -1378,7 +1442,7 @@ WHERE
         $totalNights = 0;
 
         // Get labels & config
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
         // Payments
         $query = "select lp.*, ifnull(n.Name_First, '') as `First`,
@@ -1387,13 +1451,13 @@ WHERE
 from vlist_inv_pments lp
     left join
     `name` n ON lp.Sold_To_Id = n.idName
- where lp.idGroup = $idRegistration and lp.Deleted = 0 ";
+ where lp.idGroup = $idRegistration and lp.Deleted = 0 ORDER BY lp.idInvoice";
         $stmt = $dbh->query($query);
 
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.tax_exempt, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by i.idGroup, il.Invoice_Id, ilt.Order_Position");
@@ -1402,7 +1466,8 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbls = self::makeOrdersRatesTable($rates, $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate), FALSE);
+        $tbl = $tbls[0];
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1417,7 +1482,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         if ($idPsg > 0){
 
             $pstmt = $dbh->query("select n.Name_First, n.Name_Last from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
-            $rows = $pstmt->fetchAll(PDO::FETCH_ASSOC);
+            $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
             }
@@ -1425,7 +1490,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
 
         // Build the statement
-        $logoUrl = '../conf/' . $uS->statementLogoFile;
+        $logoUrl = $uS->resourceURL . 'conf/' . $uS->statementLogoFile;
         $rec = '';
 
         // Don't write img if logo URL not sepcified
@@ -1462,7 +1527,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $uS = Session::getInstance();
         $spans = array();
 
-        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+        $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         if ($idVisit > 0) {
             $spans = $priceModel->loadVisitNights($dbh, $idVisit);
@@ -1480,22 +1545,22 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         // Hospital
         $hospital = '';
-        if ($spans[0]['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']][1] != '(None)') {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idAssociation']][1] . ' / ';
+        if ($spans[0]['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] != '(None)') {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] . ' / ';
         }
-        if ($spans[0]['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idHospital']])) {
-            $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$spans[0]['idHospital']][1];
+        if ($spans[0]['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']])) {
+            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']][1];
         }
 
         // Payments
         $stmt = $dbh->query("select lp.*, ifnull(n.Name_First, '') as `First`, ifnull(n.Name_Last, '') as `Last`, ifnull(n.Company, '') as `Company`
 from vlist_inv_pments `lp` left join `name` n ON lp.Sold_To_Id = n.idName
- where lp.Order_Number = $idVisit and lp.Deleted = 0 ");
+ where lp.Order_Number = $idVisit and lp.Deleted = 0 ORDER BY lp.idInvoice ");
 
         $pments = self::processPayments($stmt, array('Last', 'First', 'Company'));
 
         // Items
-        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
+        $ilStmt = $dbh->query("select il.Invoice_Id, il.idInvoice_line, il.Type_Id, il.Amount, il.Description, il.Item_Id, il.Source_Item_Id, i.tax_exempt, i.Delegated_Invoice_Id, i.Order_Number, i.Suborder_Number, i.Invoice_Date, i.Status
 from invoice_line il join invoice i on il.Invoice_Id = i.idInvoice and il.Deleted = 0
 left join invoice_line_type ilt on il.Type_Id = ilt.id
 where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Order_Position");
@@ -1506,11 +1571,12 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
         $totalNights = 0;
 
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        $labels = Labels::getLabels();
 
 
         // Visits and Rates
-        $tbl = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate));
+        $tbls = self::makeOrdersRatesTable(self::processRatesRooms($spans), $totalAmt, $priceModel, $labels, $invLines, new ValueAddedTax($dbh), $totalNights, new Item($dbh, ItemId::LodgingMOA), new Item($dbh, ItemId::LodgingDonate), $uS->ShowRateDetail);
+		$tbl = $tbls[0];
         $totalCharge = $totalAmt;
 
         // Thirdparty payments
@@ -1534,7 +1600,7 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
 
         // Build the statement
-        $logoUrl = '../conf/' . $uS->statementLogoFile;
+        $logoUrl = $uS->resourceURL . 'conf/' . $uS->statementLogoFile;
         $rec = '';
 
         // Don't write img if logo URL not sepcified
@@ -1562,6 +1628,10 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
         $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'paymentsCaption', 'Payments'), array('style'=>'margin-top:15px;'));
         $rec .= HTMLContainer::generateMarkup('div', $ptbl->generateMarkup(), array('style'=>'margin-bottom:10px;', 'class'=>'hhk-tdbox'));
 
+        if ($uS->ShowRateDetail) {
+        	$rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'rateHeader', 'Rate').' Detail', array('style'=>'margin-top:15px;'));
+        	$rec .= HTMLContainer::generateMarkup('div', $tbls[1]->generateMarkup(), array('style'=>'margin-bottom:10px;', 'class'=>'hhk-tdbox'));
+        }
         return $rec;
 
     }
@@ -1570,7 +1640,7 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
         $tbl = new HTMLTable();
 
-        $tbl->addBodyTr(HTMLTable::makeTd('Guest:', array('class'=>'tdlabel')) . HTMLTable::makeTd($guestName));
+        $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('memberType', 'visitor', 'Guest') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($guestName));
         $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientName));
         //$tbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'psgLabel', 'Patient Support Group') . ' Id: ' . $idPsg, array('colspan'=>'2', 'style'=>'font-size:.8em;')));
         $tbl->addBodyTr(HTMLTable::makeTd('Provider:', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospital));
@@ -1603,7 +1673,7 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
         }
 
         $sTbl->addBodyTr(
-                HTMLTable::makeTd('Guest Payments:', array('class'=>'tdlabel', 'style'=>'border-bottom: 2px solid #2E99DD;'))
+                HTMLTable::makeTd($labels->getString('memberType', 'visitor', 'Guest') . ' Payments:', array('class'=>'tdlabel', 'style'=>'border-bottom: 2px solid #2E99DD;'))
                 . HTMLTable::makeTd('$'. number_format($totalGuestPayments, 2), array('style'=>'text-align:right;border-bottom: 2px solid #2E99DD;')));
 
         $sTbl->addBodyTr(
@@ -1628,3 +1698,4 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
     }
 
 }
+?>

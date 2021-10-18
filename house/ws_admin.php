@@ -1,24 +1,22 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\Member\MemberSearch;
+use HHK\Member\Relation\AbstractRelation;
+use HHK\sec\UserClass;
+
+
 /**
  * ws_admin.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
-
-
-require (DB_TABLES . 'nameRS.php');
-require (CLASSES . 'Relation.php');
-require (CLASSES . 'AuditLog.php');
-require(DB_TABLES . 'WebSecRS.php');
-
-require (MEMBER . 'MemberSearch.php');
-require (THIRD_PARTY . 'GoogleAuthenticator.php');
-
 
 // Set page type for AdminPageCommon
 $wInit = new webInit(WebPageCode::Service);
@@ -156,6 +154,14 @@ switch ($c) {
             $events = searchZip($dbh, $zip);
         }
         break;
+        
+    case 'getcounties':
+        
+        if(isset($_GET['state'])) {
+            $state = filter_var($_GET['state'], FILTER_SANITIZE_STRING);
+            $events = getCounties($dbh, $state);
+        }
+        break;
 
     case "chgpw":
 
@@ -271,15 +277,26 @@ function searchZip(PDO $dbh, $zip) {
     return $events;
 }
 
+function getCounties(PDO $dbh, $state) {
+    $query = "select `County`, `State` from `postal_codes` where `State` = :state and  `County` != '' group by `County`";
+    $stmt = $dbh->prepare($query);
+    $stmt->execute(array(':state'=>strtoupper($state)));
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    $events = ['success'=>$rows];
+    
+    return $events;
+}
+
 function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
-    $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+    $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
     if (is_null($rel) === FALSE) {
         $uS = Session::getInstance();
         $msh = $rel->setCareOf($dbh, $rId, $flag, $uS->username);
 
-        $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+        $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
         return array('success'=>$msh, 'rc'=>$relCode, 'markup'=>$rel->createMarkup());
     }
@@ -289,13 +306,13 @@ function changeCareOfFlag(PDO $dbh, $id, $rId, $relCode, $flag) {
 
 function deleteRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
-    $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+    $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
     if (is_null($rel) === FALSE) {
 
         $msh = $rel->removeRelationship($dbh, $rId);
 
-        $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+        $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
         return array('success'=>$msh, 'rc'=>$relCode, 'markup'=>$rel->createMarkup());
     }
@@ -307,12 +324,12 @@ function newRelationLink(PDO $dbh, $id, $rId, $relCode) {
 
     $uS = Session::getInstance();
 
-    $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+    $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
 
     if (is_null($rel) === FALSE) {
         $msh = $rel->addRelationship($dbh, $rId, $uS->username);
 
-        $rel = Relation::instantiateRelation($dbh, $relCode, $id);
+        $rel = AbstractRelation::instantiateRelation($dbh, $relCode, $id);
         return array('success'=>$msh, 'rc'=>$relCode, 'markup'=>$rel->createMarkup());
     }
 

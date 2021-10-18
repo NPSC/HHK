@@ -1,4 +1,17 @@
 <?php
+
+use HHK\Update\SiteLog;
+use HHK\AlertControl\AlertMessage;
+use HHK\AuditLog\NameLog;
+use HHK\sec\{Session, WebInit};
+use HHK\Config_Lite\Config_Lite;
+use HHK\SysConst\GLTableNames;
+use HHK\Tables\EditRS;
+use HHK\Tables\Name\NameRS;
+use HHK\HTMLControls\HTMLSelector;
+use HHK\Admin\SiteDbBackup;
+use HHK\Member\AbstractMember;
+
 /**
  * Misc.php
  *
@@ -9,17 +22,6 @@
  */
 
 require ("AdminIncludes.php");
-
-require (DB_TABLES . 'nameRS.php');
-require (CLASSES . 'AuditLog.php');
-//require (THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-require CLASSES . 'CreateMarkupFromDB.php';
-require CLASSES . 'SiteDbBackup.php';
-require CLASSES . 'SiteLog.php';
-
 
 try {
     $wInit = new webInit();
@@ -194,8 +196,8 @@ $accordIndex = 0;
 if (isset($_POST["btnGenLookups"])) {
 
     $accordIndex = 0;
-    $lookUpAlert = new alertMessage("lookUpAlert");
-    $lookUpAlert->set_Context(alertMessage::Alert);
+    $lookUpAlert = new AlertMessage("lookUpAlert");
+    $lookUpAlert->set_Context(AlertMessage::Alert);
     
     if ($wInit->page->is_TheAdmin() == FALSE) {
         $lookUpAlert->set_Text("Don't mess with these settings.  ");
@@ -244,7 +246,7 @@ if (isset($_POST["btnGenLookups"])) {
 
             if ($query != "") {
                 $dbh->exec($query);
-                $lookUpAlert->set_Context(alertMessage::Success);
+                $lookUpAlert->set_Context(AlertMessage::Success);
                 $lookUpAlert->set_Text("Okay");
             }
         }
@@ -324,11 +326,11 @@ if (isset($_POST['btnClnNames'])) {
             $prefix = '';
             $suffix = '';
             $qstring = '';
-            if (isset($uS->nameLookups[GL_TableNames::NamePrefix][$n->Name_Prefix->getNewVal()])) {
-                $prefix = $uS->nameLookups[GL_TableNames::NamePrefix][$n->Name_Prefix->getNewVal()][Member::DESC];
+            if (isset($uS->nameLookups[GLTableNames::NamePrefix][$n->Name_Prefix->getNewVal()])) {
+                $prefix = $uS->nameLookups[GLTableNames::NamePrefix][$n->Name_Prefix->getNewVal()][AbstractMember::DESC];
             }
-            if (isset($uS->nameLookups[GL_TableNames::NameSuffix][$n->Name_Suffix->getNewVal()])) {
-                $suffix = $uS->nameLookups[GL_TableNames::NameSuffix][$n->Name_Suffix->getNewVal()][Member::DESC];
+            if (isset($uS->nameLookups[GLTableNames::NameSuffix][$n->Name_Suffix->getNewVal()])) {
+                $suffix = $uS->nameLookups[GLTableNames::NameSuffix][$n->Name_Suffix->getNewVal()][AbstractMember::DESC];
             }
 
             if ($n->Name_Middle->getNewVal() != "") {
@@ -454,77 +456,27 @@ if (isset($_POST["btnDelDups"])) {
     } else {
 
         // delete the name and associated records.
-        $query = "call delete_names_u_tbd;";
-        $res = $dbh->exec($query);
-
-        $delDupsAlert->set_Context(alertMessage::Success);
-        $delDupsAlert->set_Text("Oday.  Uh-oh, I must have a dold.");
+        $delStmt = $dbh->query("call delete_names_u_tbd;");
+        $response = $delStmt->fetchAll(\PDO::FETCH_ASSOC);
+        $delStmt->closeCursor();
+        
+        if(isset($response[0]['msg'])){
+            $delDupsAlert->set_Context(alertMessage::Success);
+            $delDupsAlert->set_Text($response[0]['msg']);
+        }elseif(isset($response[0]['error'])){
+            $delDupsAlert->set_Context(alertMessage::Alert);
+            $delDupsAlert->set_Text($response[0]['error']);
+        }else{
+            $delDupsAlert->set_Context(alertMessage::Alert);
+            $delDupsAlert->set_Text("An unknown error has occurred.");
+        }
     }
     $delNamesMsg = $delDupsAlert->createMarkup();
 }
 
 
-// View user log
-$log = '';
-$users = array();
-$userNameDate = '';
 
-if (isset($_POST['btnAccess'])) {
-    $accordIndex = 6;
-
-    $whereStr = '';
-    $dte = filter_var($_POST['aclogdate'], FILTER_SANITIZE_STRING);
-
-    if ($dte != '') {
-        $userNameDate = date('M j, Y', strtotime($dte));
-        $whereStr = " DATE(Access_Date) = DATE('" . date('Y-m-d', strtotime($dte)) . "') ";
-    }
-
-    $userStr = '';
-
-    if (isset($_POST['selUsers'])) {
-
-        $postUsers = filter_var_array($_POST['selUsers']);
-
-        foreach ($postUsers as $u) {
-            $userStr .= ($userStr == '' ? "'" : ",'") . $u . "'";
-            $users[$u] = $u;
-        }
-
-        if ($userStr != '') {
-            $userStr = " w.idName in (" . $userStr . ")";
-        }
-    }
-
-    if ($whereStr != '' && $userStr != '') {
-        $whereStr = " where " . $whereStr . ' and ' . $userStr;
-    } else if ($whereStr != '' && $userStr == '') {
-        $whereStr = " where " . $whereStr;
-    } else if ($whereStr == '' && $userStr != '') {
-        $whereStr = "where " . $userStr;
-    }
-
-    $stmt = $dbh->query("Select w.idName as Id, l.* from w_user_log l left join w_users w on l.Username = w.User_Name $whereStr order by Access_Date DESC Limit 100;");
-
-    $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    $edRows = array();
-
-    foreach ($rows as $r) {
-
-        $r['Date'] = date('M j, Y H:i:s', strtotime($r['Access_Date']));
-
-        unset($r['Session_Id']);
-        unset($r['Access_Date']);
-        unset($r['Page']);
-
-        $edRows[] = $r;
-    }
-
-    $log = CreateMarkupFromDB::generateHTML_Table($edRows, 'userlog');
-
-}
-
-$usernames = HTMLSelector::generateMarkup(HTMLSelector::getLookups($dbh, "select idName, User_Name from w_users", $users), array('name'=>'selUsers[]', 'multiple'=>'multiple', 'size'=>'5'));
+//$usernames = HTMLSelector::generateMarkup(HTMLSelector::getLookups($dbh, "select idName, User_Name from w_users", $users), array('name'=>'selUsers[]', 'multiple'=>'multiple', 'size'=>'5'));
 
 
 $webAlert = new alertMessage("webContainer");
@@ -556,13 +508,16 @@ $selLookups = getGenLookups($dbh);
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         
         <script type="text/javascript">
             var table, accordIndex;
             $(document).ready(function() {
+            
+            	$("input[type=submit], input[type=button]").button();
+            	
                 table = new Object();
                 accordIndex = <?php echo $accordIndex; ?>;
                 $.ajaxSetup ({
@@ -585,23 +540,6 @@ $selLookups = getGenLookups($dbh);
                          "dom": '<"top"ilfp>rt<"bottom"p>'
                     });
                 }
-                $('#divMoveDon').dialog({
-                    autoOpen: false,
-                    width: 550,
-                    resizable: true,
-                    modal: true,
-                    buttons: {
-                        "Move Donations": function() {
-                            doMoveDon();
-
-                        },
-                        "Exit": function() {
-                            $( this ).dialog( "close" );
-                        }
-                    },
-                    close: function() {
-                    }
-                })
                 $( "input.autoCal" ).datepicker({
                     changeMonth: true,
                     changeYear: true,
@@ -802,6 +740,7 @@ $selLookups = getGenLookups($dbh);
     <body <?php if ($testVersion) echo "class='testbody'"; ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
+        	<h1><?php echo $wInit->pageHeading; ?></h1>
             <form action="Misc.php" method="post" id="frmLookups" name="frmLookups">
                 <div id="accordion" class="hhk-member-detail" style="display:none;">
                     <ul>
@@ -810,29 +749,9 @@ $selLookups = getGenLookups($dbh);
                         <li><a href="#backup">Backup Database</a></li>
                         <li><a href="#changlog">View Change Log</a></li>
                         <li><a href="#delid">Delete Member Records</a></li>
-                        <li><a href="#access">View User Access Log</a></li>
+
 
                     </ul>
-                    <div id="access" class="ui-tabs-hide">
-                        <table>
-                            <tr>
-                                <td class="tdlabel">Choose a date (leave empty for most recent entries):</td>
-                                <td><input type="text" id ="aclogdate" class="autoCal" name="aclogdate" VALUE='<?php echo $userNameDate; ?>' /></td>
-                            </tr>
-                            <tr>
-                                <td class="tdlabel">Choose one or more usernames:</td>
-                                <td><?php echo $usernames; ?></td>
-                            </tr>
-                            <tr>
-                                <td colspan="2" style="text-align: right;"><input name="btnAccess" type="submit" value="View Access Log"/></td>
-                            </tr>
-                        </table>
-
-                        <div style="margin-top:10px;">
-                            <?php echo $log; ?>
-                        </div>
-                    </div>
-
                     <div id="lookups" class="ui-tabs-hide" >
                         <table>
                             <tr>
@@ -925,9 +844,6 @@ $selLookups = getGenLookups($dbh);
                             <tr>
                                 <td><?php echo $delNamesMsg; ?></td>
                             </tr>
-                            <tr>
-                                <td><input type="button" id="btnMoveDon" value="Move Donations"/></td>
-                            </tr>
                         </table>
                     </div>
                     <div id="clean" class="ui-tabs-hide" >
@@ -944,16 +860,6 @@ $selLookups = getGenLookups($dbh);
                     </div>
                 </div>
             </form>
-            <div id="divMoveDon">
-                <h3>Move Donations to Active Members</h3>
-                <table>
-                    <tr>
-                        <th>To Be deleted</th><th>Move Donations To:</th>
-                    </tr>
-<?php echo $donMoveNames; ?>
-                    <tr><td colspan="2"> <?php echo $getWebReplyMessage; ?></td></tr>
-                </table>
-            </div>
         </div>
     </body>
 </html>

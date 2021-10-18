@@ -1,49 +1,20 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLInput};
+use HHK\SysConst\WebPageCode;
+use HHK\SysConst\ReservationStatus;
+use HHK\House\Reservation\ReservationSvcs;
+
 /**
  * PrtRegForm.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "ReservationRS.php");
-require(DB_TABLES . "registrationRS.php");
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-
-require CLASSES . 'FinAssistance.php';
-require (PMT . 'Receipt.php');
-require (PMT . 'CreditToken.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require(HOUSE . "psg.php");
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'Visit.php');
-require (HOUSE . 'RegisterForm.php');
-require (HOUSE . 'RegistrationForm.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-
-require (HOUSE . 'Vehicle.php');
 
 $wInit = new webInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
@@ -87,9 +58,9 @@ if ($checkinDate == '') {
     foreach ($rows as $r) {
 
         $reservArray = ReservationSvcs::generateCkinDoc($dbh, $r['idReservation'], 0, 0, $wInit->resourceURL . '../conf/registrationLogo.png');
-        $sty = $reservArray['style'];
+        //$sty = $reservArray['style'];
 
-        $regForm .= $reservArray['doc'] . HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: right;'));
+        $regForm .= $reservArray['docs'][0]['doc'] . HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: right;'));
 
     }
 }

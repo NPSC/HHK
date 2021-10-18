@@ -1,4 +1,10 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\Session;
+use HHK\sec\UserClass;
+use HHK\HTMLControls\HTMLTable;
+
 /**
  * ws_vol.php
  *
@@ -11,15 +17,8 @@
  */
 
 require("VolIncludes.php");
-require(SEC . 'UserClass.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
 
-
-
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
 
@@ -104,6 +103,8 @@ exit();
 
 function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
 
+    $uS = Session::getInstance();
+    
     $events = array();
 
     if ($vcc != "" && $subj != "" && $body != "") {
@@ -120,7 +121,8 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
             $missingEmail = array();
             $emailAddrs = array();
             $em = prepareEmail();
-
+            $em->FromName = $uS->siteName;
+            
             // Collect members in one of two containers from above
             foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $r) {
 
@@ -128,6 +130,7 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
                     // Send email
                     if ($r['Id'] == $id) {
                         $em->addReplyTo($r['PreferredEmail']);
+                        $em->FromName = $r["Name"] . " - " . $uS->siteName;
                     }
 
                     $emailAddrs[] = array('Name'=>$r["Name"], 'Email'=>$r["PreferredEmail"]);
@@ -157,6 +160,7 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
 
                 $cBody = preg_replace_callback("/(&#[0-9]+;)/",
                         function($m) { return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES"); }, $body);
+                $cBody = nl2br($cBody, false);
 
                 $cSubj = preg_replace_callback("/(&#[0-9]+;)/",
                         function($m) { return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES"); }, $subj);
@@ -164,7 +168,11 @@ function volSendMail(\PDO $dbh, $vcc, $subj, $body, $id) {
                 $em->isHTML(true);
 
                 $em->Subject = $uS->RegSubj;
-
+                
+                if(!isset($uS->Admin_Address) || $uS->Admin_Address == ''){
+                    return array("error"=>"Admin_Address not set");
+                }
+                
                 $em->From = $uS->Admin_Address;
                 $em->addAddress($uS->Admin_Address);
                 $em->Subject = $cSubj;
@@ -292,4 +300,4 @@ function listMembers(\PDO $dbh, $codes) {
 
     return array("error" => "invalid vol codes: " . $codes);
 }
-
+?>

@@ -1,4 +1,7 @@
 <?php
+
+Namespace HHK;
+
 /**
  * UserCategories.php
  *
@@ -7,6 +10,9 @@
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
+
+use HHK\SysConst\VolRank;
+use HHK\sec\SecurityComponent;
 
 class UserCategories {
 
@@ -29,13 +35,13 @@ class UserCategories {
         $this->isLoaded = false;
     }
 
-    public function loadFromDb(PDO $dbh) {
+    public function loadFromDb(\PDO $dbh) {
         $query = "select Vol_Category, Vol_Code, ifnull(Dormant_Code,'') as Dormant_Code, ifnull(Vol_Rank,'') as Vol_Rank, Vol_Status, Vol_Begin
             from name_volunteer2 where idName =:id;";
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':id'=>$this->id));
 
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $temp = array();
         foreach ($rows as $row) {
             $temp["cat"] = $row["Vol_Category"];

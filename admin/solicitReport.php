@@ -1,4 +1,10 @@
 <?php
+
+use HHK\MailList;
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\selCtrl;
+use HHK\Donation\Campaign;
+
 /**
  * solicitReport.php
  *
@@ -8,11 +14,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 require("AdminIncludes.php");
-
-require(CLASSES . "chkBoxCtrlClass.php");
-require(CLASSES . "selCtrl.php");
-require(CLASSES . "Campaign.php");
-require(CLASSES . "MailList.php");
 
 $wInit = new webInit();
 $dbh = $wInit->dbh;
@@ -83,11 +84,6 @@ if (isset($_POST["btnDlSol"])) {
     $envNameCtrl->setReturnValues($_POST[$envNameCtrl->get_htmlNameBase()]);
     $salNameCtrl->setReturnValues($salNameCtrl->get_htmlNameBase());
 
-    require('classes'.DS . 'SolicitReportGen.php');
-    require('classes'.DS . 'Salutation.php');
-    require(CLASSES . "OpenXML.php");
-
-
     $report = SolicitReportGen::createSqlSelect($dbh, $_POST);
 
 }
@@ -113,7 +109,7 @@ $catSelExcl = "<td style='text-align: center;'>" . $catExclCtrl->createMarkup($c
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         

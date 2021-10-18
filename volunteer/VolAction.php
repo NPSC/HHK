@@ -1,4 +1,12 @@
 <?php
+use HHK\SysConst\VolRank;
+use HHK\sec\WebInit;
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\Session;
+use HHK\SysConst\WebRole;
+use HHK\AlertControl\AlertMessage;
+use HHK\sec\Labels;
+
 /**
  * VolAction.php
  *
@@ -11,8 +19,6 @@
  */
 
 require_once ('VolIncludes.php');
-
-require_once (CLASSES . 'UserCategories.php');
 
 
 function getVolUSerMarkup(\PDO $dbh, $id) {
@@ -105,7 +111,7 @@ $wInit = new WebInit("p");
 
 $dbh = $wInit->dbh;
 $PageMenu = $wInit->generatePageMenu();
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 // Load the session with member - based lookups
 $wInit->sessionLoadGenLkUps();
@@ -292,9 +298,9 @@ if (count($rows) > 1) {
 $volPanelMkup = getVolUSerMarkup($dbh, $id);
 
 
-$calAlert = new alertMessage("calContainer");
+$calAlert = new AlertMessage("calContainer");
 $calAlert->set_DisplayAttr("none");
-$calAlert->set_Context(alertMessage::Success);
+$calAlert->set_Context(AlertMessage::Success);
 $calAlert->set_iconId("calIcon");
 $calAlert->set_styleId("calResponse");
 $calAlert->set_txtSpanId("calMessage");
@@ -921,7 +927,7 @@ $('.inputForChair').click(function () {
                                 <span id="listDateRange" style="margin-left:15px;"></span>
                              </div>
                         <div style="clear: both;"></div>
-                        <table class="display" cellpadding="0" cellspacing="0" border="0" width='100%' id="dataTbl"></table>
+                        <table class="display" id="dataTbl"></table>
                     </div>
                     <div id="calTab">
                         <div id="divnoPrt" style="margin-bottom:7px; padding:3px; border-bottom: solid 1px;">

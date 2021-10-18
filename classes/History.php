@@ -1,4 +1,17 @@
 <?php
+
+namespace HHK;
+
+use HHK\Purchase\RoomRate;
+use HHK\SysConst\{WebRole, ReservationStatus, ItemPriceCode, RoomRateCategories, GLTableNames, RoomState};
+use HHK\Tables\EditRS;
+use HHK\Tables\House\Room_RateRS;
+use HHK\sec\Labels;
+use HHK\sec\{Session, SecurityComponent};
+use HHK\Exception\InvalidArgumentException;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer};
+use HHK\House\Reservation\Reservation_1;
+
 /**
  * History.php
  *
@@ -13,6 +26,7 @@
  * @package name
  * @author Eric
  */
+
 class History {
 
     protected $resvEvents;
@@ -43,7 +57,7 @@ class History {
     public static function getHistoryMarkup(\PDO $dbh, $view, $page) {
 
         if ($view == "") {
-            throw new Hk_Exception_InvalidArguement("Database view name must be defined.");
+            throw new InvalidArgumentException("Database view name must be defined.");
         }
 
         $query = "select * from $view";
@@ -125,15 +139,15 @@ class History {
 
         if ($start != '') {
             try {
-                $startDT = new DateTime(filter_var($start, FILTER_SANITIZE_STRING));
+                $startDT = new \DateTime(filter_var($start, FILTER_SANITIZE_STRING));
                 $days = intval($days);
 
-                $endDT = new DateTime(filter_var($start, FILTER_SANITIZE_STRING));
-                $endDT->add(new DateInterval('P' . $days . 'D'));
+                $endDT = new \DateTime(filter_var($start, FILTER_SANITIZE_STRING));
+                $endDT->add(new \DateInterval('P' . $days . 'D'));
 
                 $whDate = " and DATE(Expected_Arrival) >= DATE('" . $startDT->format('Y-m-d') . "') and DATE(Expected_Arrival) <= DATE('" . $endDT->format('Y-m-d') . "') ";
 
-            } catch (Exception $ex) {
+            } catch (\Exception $ex) {
                 $whDate = '';
             }
         }
@@ -167,7 +181,8 @@ class History {
 
         $uS = Session::getInstance();
         // Get labels
-        $labels = new Config_Lite(LABEL_FILE);
+        
+        $labels = Labels::getLabels();
         $returnRows = array();
 
         foreach ($this->resvEvents as $r) {
@@ -203,10 +218,12 @@ class History {
                 $bDay = new \DateTime($r['Timestamp']);
 
                 if ($static) {
-                    $fixedRows['Timestamp'] = $bDay->format('n/d/Y');
+                    $fixedRows['Timestamp'] = $bDay->format('Y-m-d');
                 } else {
                     $fixedRows['Timestamp'] = $bDay->format('c');
                 }
+                
+                $fixedRows['Updated_By'] = (isset($r['Updated_By']) ? $r['Updated_By'] : '');
             }
 
 
@@ -215,7 +232,7 @@ class History {
             $stDay->setTime(10, 0, 0);
 
             if ($static) {
-                $fixedRows['Expected Arrival'] = $stDay->format('n/d/Y');
+                $fixedRows['Expected Arrival'] = $stDay->format('Y-m-d');
             } else {
                 $fixedRows['Expected Arrival'] = $stDay->format('c');
             }
@@ -229,7 +246,7 @@ class History {
                 $fixedRows['Nights'] = $edDay->diff($stDay, TRUE)->days;
 
                 if ($static) {
-                    $fixedRows['Expected Departure'] = $edDay->format('n/d/Y');
+                    $fixedRows['Expected Departure'] = $edDay->format('Y-m-d');
                 } else {
                     $fixedRows['Expected Departure'] = $edDay->format('c');
                 }
@@ -255,7 +272,7 @@ class History {
 
                     $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']];
 
-                    if ($r['Rate'] == RoomRateCategorys::Fixed_Rate_Category && $r['Fixed_Room_Rate'] > 0) {
+                    if ($r['Rate'] == RoomRateCategories::Fixed_Rate_Category && $r['Fixed_Room_Rate'] > 0) {
                         $fixedRows['Rate'] = $this->roomRates[$r['idRoom_rate']] . ': $' . number_format($r['Fixed_Room_Rate'], 2);
                     }
                 } else {
@@ -277,13 +294,13 @@ class History {
 
 
             // Hospital
-            if (count($uS->guestLookups[GL_TableNames::Hospital]) > 1) {
+            if (count($uS->guestLookups[GLTableNames::Hospital]) > 1) {
                 $hospital = '';
-                if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-                    $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idAssociation']][1] . ' / ';
+                if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
+                    $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] . ' / ';
                 }
-                if ($r['idHospital'] > 0 && isset($uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']])) {
-                    $hospital .= $uS->guestLookups[GL_TableNames::Hospital][$r['idHospital']][1];
+                if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
+                    $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
                 }
 
                 $fixedRows['Hospital'] = $hospital;
@@ -323,8 +340,8 @@ class History {
         $uS = Session::getInstance();
 
         $hospList = array();
-        if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-            $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+        if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+            $hospList = $uS->guestLookups[GLTableNames::Hospital];
         }
 
         return self::getCheckedInMarkup($dbh, $uS->PaymentGateway, $hospList, $page, $includeAction, $static, $patientColName, $hospColName);
@@ -374,47 +391,51 @@ class History {
                     $fixedRows['Action'] =  HTMLContainer::generateMarkup(
                         'ul', HTMLContainer::generateMarkup('li', 'Action' .
                                 HTMLContainer::generateMarkup('ul',
-                                ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Take a Payment', array('class'=>'stpayFees', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span']))) : '')
+                                HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Edit Visit', array('class'=>'stvisit', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
                               . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Check Out', array('class'=>'stckout', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
-                              . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Edit Visit', array('class'=>'stvisit', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
-                                		. HTMLContainer::generateMarkup('li', ($r['Room_Status'] == RoomState::Clean || $r['Room_Status'] == RoomState::Ready ? HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Dirty][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>RoomState::Dirty)) : HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Clean][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>  RoomState::Clean))))
+                              . HTMLContainer::generateMarkup('li', ($r['Room_Status'] == RoomState::Clean || $r['Room_Status'] == RoomState::Ready ? HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Dirty][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>RoomState::Dirty)) : HTMLContainer::generateMarkup('div', 'Set Room '.$roomStatuses[RoomState::Clean][1], array('class'=>'stcleaning', 'data-idroom'=>$r['RoomId'], 'data-clean'=>  RoomState::Clean))))
                               . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Change Rooms', array('class'=>'stchgrooms', 'data-name'=>$r['Guest'], 'data-id'=>$r['Id'], 'data-vid'=>$r['idVisit'], 'data-spn'=>$r['Span'])))
                               . (SecurityComponent::is_Authorized('guestadmin') === FALSE || count($hdArry) == 0 ? '' : HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Apply Discount', array('class'=>'applyDisc', 'data-vid'=>$r['idVisit']))))
-//                              . ($creditGw != '' ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['Id'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest']))) : '')
                         )), array('class' => 'gmenu'));
 
                 }
             }
 
-            $fixedRows['Guest First'] = $r['Guest First'];
+            // Guest first name
+            $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];
 
-            // Build the page anchor
+            // Guest last name
             if ($page != '') {
-                $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
-            } else {
-                $fixedRows['Guest Last'] = $r['Guest Last'];
-            }
-
-            // Indicate On leave
-            if ($r['On_Leave'] > 0 && $page != '') {
-
-                $daysOnLv = intval($r['On_Leave']);
-
-                $now = new \DateTime();
-                $now->setTime(0, 0, 0);
-
-                $stDay = new \DateTime($r['Span_Start_Date']);
-                $stDay->setTime(0, 0, 0);
-                $stDay->add(new \DateInterval('P' . $daysOnLv . 'D'));
-
-                if ($now > $stDay) {
-                    // Past Due
-                    $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('span', $fixedRows['Guest Last'], array('class'=>'ui-state-error','title'=>'On Leave - past due!'));
-
+            
+                // Indicate On leave
+                if ($r['On_Leave'] > 0) {
+    
+                    $daysOnLv = intval($r['On_Leave']);
+    
+                    $now = new \DateTime();
+                    $now->setTime(0, 0, 0);
+    
+                    $stDay = new \DateTime($r['Span_Start_Date']);
+                    $stDay->setTime(0, 0, 0);
+                    $stDay->add(new \DateInterval('P' . $daysOnLv . 'D'));
+    
+                    if ($now > $stDay) {
+                        // Past Due
+                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('class'=>'ui-state-error','title'=>'On Leave - past due!'));
+    
+                    } else {
+                        // on leave
+                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
+                    }
                 } else {
-                    // on leave
-                    $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('span', $fixedRows['Guest Last'], array('class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
+                    
+                    // Build the page anchor
+                    $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
+
                 }
+            
+            } else {
+                $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = $r['Guest Last'];
             }
 
 
@@ -422,7 +443,7 @@ class History {
             if ($static) {
                 $fixedRows['Checked In'] = date('M j, Y H:i', strtotime($r['Checked-In']));
             } else {
-                $fixedRows['Checked In'] = date('c', strtotime($r['Checked-In']));
+                $fixedRows['Checked In'] = date('Y-m-d', strtotime($r['Checked-In']));
             }
 
             // Days
@@ -438,7 +459,7 @@ class History {
                 if ($static) {
                     $fixedRows['Expected Departure'] = date('M j, Y', strtotime($r['Expected Depart']));
                 } else {
-                    $fixedRows['Expected Departure'] = date('c', strtotime($r['Expected Depart']));
+                    $fixedRows['Expected Departure'] = date('Y-m-d', strtotime($r['Expected Depart']));
                 }
 
             } else {
@@ -462,9 +483,9 @@ class History {
 
                     $fixedRows['Rate'] = $roomRates[$r['idRoom_rate']]['Title'];
 
-                    if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategorys::Fixed_Rate_Category && $r['Pledged_Rate'] > 0) {
+                    if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategories::Fixed_Rate_Category && $r['Pledged_Rate'] > 0) {
                         $fixedRows['Rate'] .= ': $' .number_format($r['Pledged_Rate'], 2);
-                    } else if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategorys::FlatRateCategory) {
+                    } else if ($roomRates[$r['idRoom_rate']]['FA_Category'] == RoomRateCategories::FlatRateCategory) {
                         $fixedRows['Rate'] .= ': $' . number_format($roomRates[$r['idRoom_rate']]['Reduced_Rate_1'], 2);
                     }
 
@@ -537,4 +558,4 @@ class History {
     }
 
 }
-
+?>

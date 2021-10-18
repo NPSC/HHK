@@ -96,7 +96,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
 
         } else {
 
-            inputParms.letters = term //request.term;
+            inputParms.letters = term;
 
             // Get basis from active control
             if ($basisCtrl !== undefined && $basisCtrl.length > 0) {

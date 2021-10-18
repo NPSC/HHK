@@ -157,13 +157,14 @@ $(document).ready(function () {
     });
     
     $('#chgPW').click(function () {
-        $('#achgPw').dialog("option", "title", "Change Password for " + memData.memName);
+        $('#achgPw').dialog("option", "title", "Reset Password for " + memData.memName);
         $('#txtOldPw').val('');
         $('#txtNewPw1').val('');
         $('#txtNewPw2').val('');
 
         $('#achgPw').dialog('open');
-        $('#pwChangeErrMsg').val('');
+        $('#apwChangeErrMsg').text('').removeClass("ui-state-highlight");
+        $('#apwNewPW').text('').hide();
         $('#txtOldPw').focus();
     });
     
@@ -181,21 +182,16 @@ $(document).ready(function () {
     
     $('#achgPw').dialog({
         autoOpen: false,
-        width: 580,
+        width: "auto",
         resizable: true,
         modal: true,
         buttons: {
             "Save": function () {
                 var tips = $('#apwChangeErrMsg'),
-                        oldpw = $('#txtOldPw'), 
-                        pw1 = $('#txtNewPw1'),
-                        pw2 = $('#txtNewPw2'),
-                        oldpwMD5, 
-                        newpwMD5,
-                		resetNext = $('#resetNext').prop('checked');
+                		tempPWmsg = $('#apwNewPW'),
+                        oldpw = $('#txtOldPw');
                 
                 oldpw.removeClass("ui-state-error");
-                pw1.removeClass("ui-state-error").css('background-color', 'white');
                 updateTips(tips, '');
 
                 if (oldpw.val() == "") {
@@ -204,27 +200,9 @@ $(document).ready(function () {
                     return;
                 }
 
-                if (checkStrength(pw1)) {
-
-                    if (pw1.val() !== pw2.val()) {
-                        updateTips(tips, "New passwords do not match");
-                        return;
-                    }
-                    
-                } else {
-                    updateTips(tips, "Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.");
-                    return;
-                }
-
-                // make MD5 hash of password and concatenate challenge value
-                // next calculate MD5 hash of combined values
                 var oldpwval = oldpw.val();
-                var newpwval = pw1.val();
 
                 oldpw.val('');
-                pw1.val('');
-                pw2.val('');
-                pw1.removeClass("ui-state-error").css('background-color', 'white');
                 
                 $.post("ws_gen.php",
                     {
@@ -232,8 +210,6 @@ $(document).ready(function () {
                         adpw: oldpwval,
                         uid: memData.id,
                         uname: memData.webUserName,
-                        newer: newpwval,
-                        resetNext: resetNext
                     },
                     function (data) {
                         if (data) {
@@ -252,6 +228,9 @@ $(document).ready(function () {
                             } else if (data.success) {
                                 
                                 updateTips(tips, data.success);
+                                if(data.tempPW){
+                                	tempPWmsg.html('<strong>New Temporary Password:</strong> <span style="user-select:all;">' + data.tempPW + '</span>').show();
+                                }
                             }
                         }
                     }
@@ -312,7 +291,7 @@ $(document).ready(function () {
     
     $('#vwebUser').dialog({
         autoOpen: false,
-        height: 450,
+        height: 500,
         width: 'auto', // 732
         resizable: true,
         modal: true,
@@ -334,12 +313,12 @@ $(document).ready(function () {
                     if (!checkLength($('#txtwUserName'), 'User Name', 6, 35, tipmsg)) {
                         return;
                     }
-                    if (!checkStrength($('#txtwUserPW'))) {
-                        updateTips(tipmsg, 'Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.');
-                        return;
-                    }
+//                    if (!checkStrength($('#txtwUserPW'))) {
+//                        updateTips(tipmsg, 'Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.');
+//                        return;
+//                    }
                     parms['wuname'] = $('#txtwUserName').val();
-                    parms['wupw'] = $('#txtwUserPW').val();
+//                    parms['wupw'] = $('#txtwUserPW').val();
                     parms['grpSec_v'] = 'checked';  // check the volunteer auth code.
                     
                 }
@@ -380,13 +359,16 @@ $(document).ready(function () {
                     } else if (data.success) {
                         
                         mess = "Success: " + data.success;
+                        if(data.tempPW){
+                        	mess += '<div style="margin: 0.5em 0 0.5em 0">Temporary Password (click to select):</div><div style="user-select: all">' + data.tempPW + '</div>';
+                        }
                         $('webResponse').removeClass("ui-state-highlight").addClass("ui-state-error");
                         $('#webIcon').removeClass("ui-icon-info").addClass("ui-icon-alert");
 
                     }
 
                     if (mess !== '') {
-                        $('#webMessage').text(mess);
+                        $('#webMessage').html(mess);
                         $("#webContainer").show("pulsate");
                     }
 
@@ -522,12 +504,24 @@ $(document).ready(function () {
     $("#selStatus").change(function () {
         changeMemberStatus($(this), memData, savePressed);
     });
-        // Date of death
+        
+    // Date of death
     $('#cbdeceased').change(function () {
         if ($(this).prop('checked')) {
             $('#disp_deceased').show('blind');
         } else {
             $('#disp_deceased').hide('blind');
+        }
+    });
+    
+    // Date of background check
+    $('#cbbackgroundcheck').change(function () {
+        if ($(this).prop('checked')) {
+        	$('#txtBackgroundCheckDate').datepicker('setDate', '+0');
+            $('#disp_backgroundcheck').show();
+        } else {
+        	$('#txtBackgroundCheckDate').val('');
+            $('#disp_backgroundcheck').hide();
         }
     });
 

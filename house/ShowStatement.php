@@ -1,57 +1,25 @@
 <?php
+
+use HHK\sec\{Session, WebInit, Labels};
+use HHK\SysConst\WebPageCode;
+use HHK\Member\Role\Guest;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
+use HHK\Payment\Receipt;
+use HHK\House\Visit\Visit;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+
 /**
  * ShowStatement.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
-
-require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "registrationRS.php");
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'ItemRS.php');
-
-
-require CLASSES . 'FinAssistance.php';
-require CLASSES . 'ValueAddedTax.php';
-require CLASSES . 'Purchase/Item.php';
-require(CLASSES . 'Purchase/RoomRate.php');
-
-require PMT . 'Receipt.php';
-require PMT . 'Invoice.php';
-require (PMT . 'CreditToken.php');
-
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require(HOUSE . "psg.php");
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'Visit.php');
-require (HOUSE . 'RegisterForm.php');
-require (HOUSE . 'RegistrationForm.php');
-require (HOUSE . 'Vehicle.php');
 
 $wInit = new webInit(WebPageCode::Page);
 $pageTitle = $wInit->pageTitle;
@@ -60,6 +28,7 @@ $pageTitle = $wInit->pageTitle;
 $dbh = $wInit->dbh;
 
 $uS = Session::getInstance();
+$labels = Labels::getLabels();
 
 $idVisit = 0;
 $idGuest = 0;
@@ -74,7 +43,7 @@ $emAddr = '';
 $includeLogo = TRUE;
 
 
-function createScript() {
+function createScript($guestLabel) {
     return "
     $('#btnPrint, #btnEmail, #btnWord').button();
     $('#btnEmail').click(function () {
@@ -115,7 +84,7 @@ function createScript() {
         popWd      : $('#divStmt').width(),
         popX       : 20,
         popY       : 20,
-        popTitle   : 'Guest Statement'};
+        popTitle   : '$guestLabel' +' Statement'};
 
     $('#btnPrint').click(function() {
         $('div.PrintArea').printArea(opt);
@@ -171,7 +140,7 @@ if ($idRegistration > 0) {
         $guest = new Guest($dbh, '', $spans[(count($spans) - 1)]['idPrimaryGuest']);
         $name = $guest->getRoleMember();
 
-        $priceModel = PriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+        $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
         $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $spans, $idRegistration, $name->get_fullName(), $priceModel, $includeLogo);
 
     } else {
@@ -201,7 +170,7 @@ if (isset($_POST['btnWord'])) {
     $form = "<!DOCTYPE html>"
             . "<html>"
                 . "<head>"
-                    . "<style type='text/css'>" . file_get_contents('css/redmond/jquery-ui.min.css') . "</style>"
+                    . "<style type='text/css'>" . file_get_contents('css/jqui/jquery-ui.min.css') . "</style>"
                     . "<style type='text/css'>" . file_get_contents('css/house.css') . "</style>"
                 . "</head>"
                 . "<body><div class='ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'
@@ -218,7 +187,7 @@ if (isset($_POST['btnWord'])) {
 
 }
 
-$emSubject = $wInit->siteName . " Guest Statement";
+$emSubject = $wInit->siteName .' '. $labels->getString('MemberType', 'visitor', 'Guest')." Statement";
 
 if (is_null($guest) === FALSE && $emAddr == '') {
     $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
@@ -236,7 +205,7 @@ $emTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span','', arr
 $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name'=>'btnEmail', 'type'=>'button', 'data-reg'=>$idRegistration, 'data-vid'=>$idVisit))));
 
 $emtableMarkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('form',
-        $emTbl->generateMarkup(array(), 'Email Guest Statement'), array('id'=>'formEm'))
+		$emTbl->generateMarkup(array(), 'Email '.$labels->getString('MemberType', 'visitor', 'Guest') . ' Statement'), array('id'=>'formEm'))
 
         .HTMLContainer::generateMarkup('form',
                 HTMLInput::generateMarkup('Print', array('id'=>'btnPrint', 'style'=>'margin-right:1em;'))
@@ -269,24 +238,25 @@ if (isset($_REQUEST['cmd'])) {
             $msg .= "No Statement.  ";
         } else {
 
-
-            $mail = prepareEmail();
-
-            $mail->From = $uS->FromAddress;
-            $mail->FromName = $uS->siteName;
-            $mail->addAddress($emAddr);     // Add a recipient
-            $mail->addReplyTo($uS->ReplyToAddr);
-
-            $mail->isHTML(true);
-
-            $mail->Subject = $emSubject;
-            $mail->msgHTML($stmtMarkup);
-
-
-            if($mail->send()) {
+            try{
+                $mail = prepareEmail();
+    
+                $mail->From = $uS->FromAddress;
+                $mail->FromName = $uS->siteName;
+                $mail->addAddress($emAddr);     // Add a recipient
+                $mail->addReplyTo($uS->ReplyTo);
+    
+                $mail->isHTML(true);
+    
+                $mail->Subject = $emSubject;
+                $mail->msgHTML($stmtMarkup);
+    
+    
+                $mail->send();
                 $msg .= "Email sent.  ";
-            } else {
-                $msg .= "Email failed!  " . $mail->ErrorInfo;
+                
+            }catch (\Exception $e){
+                $msg .= "Email failed! " . $mail->ErrorInfo;
             }
 
         }
@@ -294,7 +264,7 @@ if (isset($_REQUEST['cmd'])) {
         echo (json_encode(array('msg'=>$msg)));
 
     } else {
-        echo "<script type='text/javascript'>" . createScript() . "</script>" . $emtableMarkup . $stmtMarkup;
+        echo "<script type='text/javascript'>" . createScript($labels->getString('Member', 'guest', 'Guest')) . "</script>" . $emtableMarkup . $stmtMarkup;
     }
 
     exit();
@@ -366,7 +336,7 @@ $(document).ready(function() {
         popWd      : $('#divStmt').width(),
         popX       : 20,
         popY       : 20,
-        popTitle   : 'Guest Statement'};
+        popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>'+' Statement'};
 
     $('#btnPrint').click(function() {
         $('div.PrintArea').printArea(opt);

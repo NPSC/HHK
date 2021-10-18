@@ -1,57 +1,29 @@
 <?php
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector};
+use HHK\Payment\PaymentSvcs;
+use HHK\Exception\RuntimeException;
+use HHK\History;
+use HHK\SysConst\ReservationStatus;
+use HHK\House\Report\PaymentReport;
+use HHK\SysConst\ItemPriceCode;
+use HHK\SysConst\GLTableNames;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\House\Report\RoomReport;
+use HHK\SysConst\RoomRateCategories;
+use HHK\sec\Labels;
+
 /**
  * Register.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-require (CLASSES . 'History.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'visitRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-require (MEMBER . "EmergencyContact.php");
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-require (PMT . 'PaymentResult.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'CheckTX.php');
-require (PMT . 'CashTX.php');
-require (PMT . 'Transaction.php');
-require (PMT . 'CreditToken.php');
-
-require (CLASSES . 'PaymentSvcs.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-require CLASSES . 'TableLog.php';
-
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-
-require (HOUSE . 'VisitLog.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'RoomReport.php');
-
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (CLASSES . 'Notes.php');
 
 $wInit = new webInit();
 
@@ -60,12 +32,10 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
-creditIncludes($uS->PaymentGateway);
-
 $totalRest = $uS->PreviousNights;
 
 // Get labels
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
@@ -100,7 +70,7 @@ try {
         }
     }
 
-} catch (Hk_Exception_Runtime $ex) {
+} catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
 }
 
@@ -130,7 +100,7 @@ if (isset($_POST['btnDlWlist'])) {
     doExcelDownLoad($rows, 'Waitlist');
 }
 if (isset($_POST['btnFeesDl'])) {
-    require (HOUSE . 'PaymentReport.php');
+    //require (HOUSE . 'PaymentReport.php');
     PaymentReport::generateDayReport($dbh, $_POST);
 }
 
@@ -155,7 +125,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
 
 // Currently Checked In guests
-$currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current Guests' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        $currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divcurres'));
 
 // make registration form print button
@@ -233,7 +203,7 @@ $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
 if (isset($rescGroups[$uS->CalResourceGroupBy])) {
     $resourceGroupBy = $uS->CalResourceGroupBy;
 } else {
-    $resourceGroupBy = reset($rescGroups)[0];
+    $resourceGroupBy = '';
 }
 
 $rescGroupSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rescGroups), $resourceGroupBy, FALSE), array('id'=>'selRoomGroupScheme'));
@@ -242,7 +212,7 @@ $showCharges = TRUE;
 $addnl = readGenLookupsPDO($dbh, 'Addnl_Charge');
 
 // decide to show payments and invoices
-if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
+if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0 && $uS->VisitFee == FALSE && $uS->KeyDeposit == FALSE) {
     $showCharges = FALSE;
 
 } else {
@@ -254,7 +224,7 @@ if ($uS->RoomPriceModel == ItemPriceCode::None && count($addnl) == 0) {
 
     $payTypes = array();
 
-    foreach ($uS->nameLookups[GL_TableNames::PayType] as $p) {
+    foreach ($uS->nameLookups[GLTableNames::PayType] as $p) {
         if ($p[2] != '') {
             $payTypes[$p[2]] = array($p[2], $p[1]);
         }
@@ -293,11 +263,11 @@ if ($uS->UseWLnotes) {
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="js/fullcalendar.min.js"></script>
-        <script type="text/javascript" src="../js/hhk-scheduler.min.js"></script>
+        <script type="text/javascript" src="js/scheduler-min.js"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
@@ -310,9 +280,9 @@ if ($uS->UseWLnotes) {
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
-        <?php if ($uS->PaymentGateway == PaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
+        <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
         <style>
 .hhk-justify-r {
@@ -339,7 +309,7 @@ if ($uS->UseWLnotes) {
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?> >
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-            <div style="float:left; margin-top:10px;">
+            <div style="float:left;">
                 <h2><?php echo $wInit->pageHeading; echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); echo RoomReport::getGlobalStaysCounter($dbh); ?>
                 <span style="margin-left:10px; font-size: .65em; background:#DEEDF8; padding:2px;">Name Search:
                     <input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
@@ -354,7 +324,7 @@ if ($uS->UseWLnotes) {
             <div id="mainTabs" style="display:none; font-size:.9em;">
                 <ul>
                     <li id="liCal"><a href="#vcal">Calendar</a></li>
-                    <li><a href="#vstays">Current Guests (<span id="spnNumCurrent"></span>)</a></li>
+                    <li><a href="#vstays">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s (<span id="spnNumCurrent"></span>)</a></li>
                     <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?> (<span id="spnNumConfirmed"></span>)</a></li>
                     <?php if ($uS->ShowUncfrmdStatusTab) { ?>
                     <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>
@@ -470,24 +440,29 @@ if ($uS->UseWLnotes) {
 
         <div class="gmenu"></div>
 
-        <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
         <form name="xform" id="xform" method="post"></form>
 
+        <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
         <div id="cardonfile" style="font-size: .9em; display:none;"></div>
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
+        <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>
         
         <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />
+        <input  type="hidden" id="defaultEventColor" value='<?php echo $uS->DefaultCalEventColor; ?>' />
+        <input  type="hidden" id="defCalEventTextColor" value='<?php echo $uS->DefCalEventTextColor; ?>' />
         <input  type="hidden" id="resourceGroupBy" value='<?php echo $resourceGroupBy; ?>' />
         <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />
+        <input  type="hidden" id="guestLabel" value='<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' />
+        <input  type="hidden" id="visitorLabel" value='<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
-        <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategorys::Fixed_Rate_Category; ?>' />
+        <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
         <input  type="hidden" id="resvPageName" value='<?php echo 'Reserve.php'; ?>' />
         <input  type="hidden" id="showCreatedDate" value='<?php echo $uS->ShowCreatedDate; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
@@ -502,7 +477,8 @@ if ($uS->UseWLnotes) {
         <input  type="hidden" id="wlTitle" value='<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>' />
         <input  type="hidden" id="showCharges" value='<?php echo $showCharges ?>' />
 
-        <script type="text/javascript" src="js/register-min.js?sd=3"></script>
+		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REGISTER_JS; ?>"></script>
 
     </body>
 </html>

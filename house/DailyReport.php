@@ -1,23 +1,23 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\sec\Session;
+use HHK\Config_Lite\Config_Lite;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\Labels;
+
 /**
  * DailyReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 
 require ("homeIncludes.php");
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'visitRS.php');
-require (HOUSE . 'VisitCharges.php');
-require (HOUSE . 'RoomReport.php');
-require (CLASSES . 'Purchase/Item.php');
-
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die("arrg!  " . $exw->getMessage());
 }
@@ -25,12 +25,13 @@ try {
 // get session instance
 $uS = Session::getInstance();
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 
 // Daily Log
 $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         , array('style' => 'background-color:#D3D3D3; padding:10px;'))
-        . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
+        . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>",
+        		array('id' => 'divdaily'));
 
 
 ?>
@@ -44,6 +45,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         <?php echo JQ_DT_CSS ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -51,7 +53,9 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
         var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
@@ -59,7 +63,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
             {data: 'titleSort', 'visible': false },
             {data: 'Title', title: 'Room', 'orderData': [0, 1], sortable: true, searchable:true},
             {data: 'Status', title: 'Status'},
-            {data: 'Guests', title: 'Guests'},
+            {data: 'Guests', title: '<?php echo $labels->getString("MemberType", "visitor", "Guest"); ?>'+'s'},
             {data: 'Patient_Name', title: patientLabel},
             {data: 'Unpaid', title: 'Unpaid', className: 'hhk-justify-r'},
             {data: 'Visit_Notes', title: 'Last Visit Note'},
@@ -69,7 +73,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
         $('#btnHere').button();
 
         $('#daily').DataTable({
-            "dom": '<"top"if>rt<"bottom"lp><"clear">',
+            "dom": '<"top ui-toolbar ui-helper-clearfix"if>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
             "displayLength": 50,
             "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
             "order": [[ 0, 'asc' ]],
@@ -103,7 +107,7 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
                 </form>
             </div>
             <div style="clear:both;"></div>
-            <div class="ui-widget ui-widget-content hhk-tdbox" style="font-size: .9em; padding: 5px; padding-bottom:25px;">
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
                 <?php echo $dailyLog; ?>
             </div>
         </div>

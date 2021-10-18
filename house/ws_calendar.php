@@ -1,9 +1,14 @@
 <?php
+use HHK\Exception\InvalidArgumentException;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\WebInit;
+use HHK\House\GuestRegister;
+
 /**
  * ws_calendar.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -12,15 +17,10 @@
  */
 require ("homeIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
-require (HOUSE . 'GuestRegister.php');
-require (CLASSES . 'US_Holidays.php');
-require (HOUSE . 'Reservation_1.php');
-
 
 try {
-    $wInit = new webInit(WebPageCode::Service);
-} catch (Hk_Exception_InvalidArguement $ex) {
+    $wInit = new WebInit(WebPageCode::Service);
+} catch (InvalidArgumentException $ex) {
     // Password may be missing
     exit('');
 }
@@ -119,5 +119,4 @@ if (is_array($events)) {
 }
 
 exit();
-
-
+?>

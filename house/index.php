@@ -1,4 +1,16 @@
 <?php
+use HHK\sec\Session;
+use HHK\sec\Login;
+use HHK\sec\Labels;
+use HHK\Exception\InvalidArgumentException;
+use HHK\Exception\RuntimeException;
+use HHK\sec\ScriptAuthClass;
+use HHK\SysConst\Mode;
+use HHK\SysConst\CodeVersion;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\SecurityComponent;
+use HHK\sec\SysConfig;
+
 /**
  * Index.php
  *
@@ -8,8 +20,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 include ("homeIncludes.php");
-require(SEC . 'Login.php');
-require(THIRD_PARTY . 'GoogleAuthenticator.php');
 
 // get session instance
 $uS = Session::getInstance();
@@ -33,20 +43,13 @@ if (isset($_GET["log"])) {
 try {
 
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(ciCFG_FILE);
 
-} catch (Hk_Exception_InvalidArguement $pex) {
+} catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 
 } catch (Exception $ex) {
     exit ("<h3>" . $ex->getMessage());
-}
-
-// Override user DB login credentials
-try {
-    $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
-    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 
 
@@ -66,16 +69,19 @@ if (isset($_POST['txtUname'])) {
     exit();
 }
 
+// Get labels
+$labels = Labels::getLabels();
+
 // disclamer
 $disclaimer = $uS->Disclaimer;
 
 if ($uS->mode != Mode::Live) {
-    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA complient and not intended to be used for storing Protected Health Information.';
+    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA compliant and not intended to be used for storing Protected Health Information.';
 }
 
 
-$tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
-$trainingSiteURL = $config->getString('site', 'Training_URL', '');
+$tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
+$trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
 $icons = array();
@@ -87,7 +93,7 @@ foreach ($uS->siteList as $r) {
     }
 }
 
-$siteName = HTMLContainer::generateMarkup('h3', 'Guest Tracking Site' . $icons[$page->get_Site_Code()]);
+$siteName = HTMLContainer::generateMarkup('h3', $labels->getString('MemberType', 'guest', 'Guest').' Tracking Site' . $icons[$page->get_Site_Code()]);
 
 $extLinkIcon = "<span class='ui-icon ui-icon-extlink' style='float: right; margin-right:.3em;margin-top:2px;'></span>";
 
@@ -109,9 +115,9 @@ $loginMkup = $login->loginForm();
 
 $cspURL = $page->getHostName();
 
-header('X-Frame-Options: SAMEORIGIN');
-header("Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-header("X-Content-Security-Policy: default-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
+header('X-Frame-Options: DENY');
+header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
 
 if (SecurityComponent::isHTTPS()) {
     header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
@@ -128,7 +134,7 @@ if (SecurityComponent::isHTTPS()) {
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
     </head>
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
@@ -142,7 +148,9 @@ if (SecurityComponent::isHTTPS()) {
                     <div style="clear:left; margin-bottom: 20px;"></div>
                 <div id="formlogin" style="float:left;" >
                     <div><?php echo $siteName; ?>
-                        <p style="margin-left:6px; width: 65%;"><?php echo $disclaimer ?></p>
+                        <div style="margin-left:6px; width: 65%;">
+                        	<?php echo $disclaimer . $login->IEMsg(); ?>
+                        </div>
                     </div>
                     <?php echo $loginMkup; ?>
                 </div>
@@ -151,7 +159,7 @@ if (SecurityComponent::isHTTPS()) {
                 </div>
                 <div style="margin-top: 90px;width:500px;">
                     <hr>
-                    <div><a href ="https://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
+                    <div><a href ="https://nonprofitsoftwarecorp.org" class="nplogo"></a></div>
                     <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software Corporation</div>
                 </div>
             </div>

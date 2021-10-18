@@ -157,7 +157,7 @@
 
 	function showFlag(flagged, row){
 		var flagContainer = $("<span />");
-		var flagLabel = $("<label />").prop("for", "flag-" + uid + "-" + row.NoteId).text("Flag");
+		var flagLabel = $("<label />").prop("for", "flag-" + uid + "-" + row.NoteId).prop('title', 'Flag this note to bold it and make it stay at the top of the list').text("Flag");
 		
 		if(flagged == "1"){
 			var flagEl = $('<input type="checkbox" name="flag" checked="true" id="flag-' + uid + "-" + row.NoteId + '" />').addClass("flag");

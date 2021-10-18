@@ -1,4 +1,10 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
+use HHK\Tables\EditRS;
+use HHK\Tables\PaymentGW\Gateway_TransactionRS;
+
 /**
  * PaymentTx.php
  *
@@ -9,8 +15,8 @@
  */
 require ("AdminIncludes.php");
 
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'PaymentGwRS.php');
+/* require (DB_TABLES . 'PaymentsRS.php');
+require (DB_TABLES . 'PaymentGwRS.php'); */
 
 
 $wInit = new webInit();
@@ -35,9 +41,9 @@ function makeParmtable($parms) {
     if (is_array($parms)) {
 
         foreach ($parms as $key => $v) {
-//            if ($key == 'MerchantID' && $v != '') {
-//                $v = '******';
-//            }
+           if ($key == 'MerchantID' && $v != '') {
+               $v = 'xxxx.' . substr($v, -4);
+           }
 
             $reqTbl->addBodyTr(HTMLTable::makeTd($key . ':', array('class' => 'tdlabel')) . HTMLTable::makeTd($v));
         }
@@ -173,7 +179,7 @@ $txSelector = HTMLSelector::generateMarkup(
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         
@@ -213,7 +219,7 @@ $txSelector = HTMLSelector::generateMarkup(
                     </tr>
                 </table>
                 </form>
-            </div></div>
+            </div>
             <div class="ui-widget ui-widget-content" style='clear:left; float:left; font-size: .8em;'>
                 <?php echo $txData; ?>
             </div>

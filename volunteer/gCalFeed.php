@@ -1,4 +1,11 @@
 <?php
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\Session;
+use HHK\UserCategories;
+use HHK\Volunteer\VolCal;
+use HHK\Volunteer\cEventClass;
+
 /**
  * gCalFeed.php
  *
@@ -12,19 +19,7 @@
 
 require ('VolIncludes.php');
 
-
-require (DB_TABLES . 'volCalendarRS.php');
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-require('classes' . DS . 'cEventClass.php');
-require(CLASSES . "shellEvent_Class.php");
-require (CLASSES . 'UserCategories.php');
-
-require(CLASSES . 'VolCal.php');
-
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 $dbh = $wInit->dbh;
 

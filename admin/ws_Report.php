@@ -1,5 +1,9 @@
 <?php
 
+use HHK\sec\{WebInit};
+use HHK\House\Report\GuestReport;
+use HHK\SysConst\WebPageCode;
+
 /**
  * ws_Report.php
  *
@@ -9,7 +13,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 require("AdminIncludes.php");
-require(CLASSES . "Campaign.php");
 
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
@@ -21,9 +24,9 @@ function campaignList(PDO $dbh, $yr) {
 
 
     if ($yr != "" && strtolower($yr) != 'all') {
-        $query = "select * from vdump_campaigns where year(Start)= :yr or year(End) = :yr;";
+        $query = "select * from vdump_campaigns where year(Start)= :startyr or year(End) = :endyr;";
         $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':yr' => $yr));
+        $stmt->execute(array(':startyr' => $yr, ':endyr' => $yr));
         $headerYears = "$yr";
     } else {
         $query = "select * from vdump_campaigns;";
@@ -352,4 +355,4 @@ switch ($c) {
 
 echo( json_encode($events) );
 exit();
-
+?>

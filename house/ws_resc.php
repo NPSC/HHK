@@ -1,5 +1,29 @@
 <?php
 
+use HHK\sec\WebInit;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\SecurityComponent;
+use HHK\sec\Session;
+use HHK\Photo;
+use HHK\Update\SiteConfig;
+use HHK\Document\ListDocuments;
+use HHK\Document\Document;
+use HHK\House\Vehicle;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\House\Report\ActivityReport;
+use HHK\SysConst\GLTableNames;
+use HHK\House\ResourceView;
+use HHK\House\Constraint\Constraints;
+use HHK\History;
+use HHK\House\Report\RoomReport;
+use HHK\SysConst\ReservationStatus;
+use HHK\House\Room\Room;
+use HHK\SysConst\RoomState;
+use HHK\Payment\Invoice\Invoice;
+use HHK\HTMLControls\HTMLTable;
+use HHK\Payment\Receipt;
+use HHK\Exception\PaymentException;
+
 /**
  * ws_resc.php
  *
@@ -13,66 +37,8 @@
  */
 require ("homeIncludes.php");
 
-require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "registrationRS.php");
-require(DB_TABLES . "ReservationRS.php");
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
 
-require CLASSES . 'AuditLog.php';
-require CLASSES . 'History.php';
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (CLASSES . 'Notes.php');
-require CLASSES . 'TableLog.php';
-
-require (PMT . 'GatewayConnect.php');
-require (PMT . 'PaymentGateway.php');
-require (PMT . 'PaymentResponse.php');
-
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'CreditToken.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-
-require(HOUSE . "psg.php");
-require(HOUSE . "visitViewer.php");
-require(HOUSE . "VisitLog.php");
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'RoomChooser.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-require (HOUSE . 'ActivityReport.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'RoomReport.php');
-require (HOUSE . 'VisitCharges.php');
-
-require (CLASSES . 'HouseLog.php');
-require (CLASSES . 'Purchase/Item.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-require (CLASSES . 'FinAssistance.php');
-require (CLASSES . 'US_Holidays.php');
-require (CLASSES . 'Photo.php');
-require (CLASSES . 'SiteConfig.php');
-require (CLASSES . 'Document.php');
-require (CLASSES . 'ListDocuments.php');
-require(CLASSES . 'DataTableServer.php');
-
-$wInit = new webInit(WebPageCode::Service);
+$wInit = new WebInit(WebPageCode::Service);
 
 /* @var $dbh PDO */
 $dbh = $wInit->dbh;
@@ -87,7 +53,6 @@ if (isset($_REQUEST["cmd"])) {
 
 $uS = Session::getInstance();
 
-creditIncludes($uS->PaymentGateway);
 
 $events = array();
 
@@ -177,7 +142,7 @@ try {
     $document->saveNew($dbh);
 
     if($document->linkNew($dbh, $guestId, $psgId) > 0){
-            $events = ["idDoc"=> $document->getIdDocument(), "length"=>strlen($docContents)];
+            $events = ["idDoc"=> $document->getIdDocument(), "length"=>$doc['size']];
     }else{
             $events = ["error" => "Unable to save document"];
     }
@@ -260,7 +225,7 @@ try {
         case 'vehsch':
 
             if (isset($_REQUEST['letters'])) {
-                require (HOUSE . 'Vehicle.php');
+                //require (HOUSE . 'Vehicle.php');
                 $tag = filter_var($_REQUEST['letters'], FILTER_SANITIZE_STRING);
                 $events = Vehicle::searchTag($dbh, $tag);
             }
@@ -271,36 +236,37 @@ try {
 
             if (isset($_REQUEST["start"]) && $_REQUEST["start"] != '') {
                 $startDate = filter_var($_REQUEST["start"], FILTER_SANITIZE_STRING);
-                $startDT = setTimeZone($uS, $startDate);
+                $startDT = new DateTime($startDate);
             } else {
                 $startDT = new DateTime();
             }
 
             if (isset($_REQUEST["end"]) && $_REQUEST["end"] != '') {
                 $endDate = filter_var($_REQUEST["end"], FILTER_SANITIZE_STRING);
-                $endDT = setTimeZone($uS, $endDate);
+                $endDT = new DateTime($endDate);
             } else {
                 $endDT = new DateTime();
             }
 
             $strt = $startDT->format('Y-m-d');
             $end = $endDT->format('Y-m-d');
+            
+            $idPsg = 0;
+            if (isset($_REQUEST["psg"])) {
+                $idPsg = intval(filter_var($_REQUEST["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
 
             $markup = '';
             if (isset($_REQUEST['visit'])) {
-                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::staysLog($dbh, $strt, $end), array('style' => 'float:left;'));
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::staysLog($dbh, $strt, $end, $idPsg), array('style' => 'float:left;'));
             }
 
             if (isset($_REQUEST['resv'])) {
-                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::reservLog($dbh, $strt, $end), array('style' => 'float:left;'));
+                $markup .= HTMLContainer::generateMarkup('div', ActivityReport::reservLog($dbh, $strt, $end, 0, $idPsg), array('style' => 'float:left;'));
             }
 
             if (isset($_REQUEST['hstay'])) {
 
-                $idPsg = 0;
-                if (isset($_REQUEST["psg"])) {
-                    $idPsg = intval(filter_var($_REQUEST["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
-                }
 
                 $markup .= HTMLContainer::generateMarkup('div', ActivityReport::HospStayLog($dbh, $strt, $end, $idPsg), array('style' => 'float:left;'));
             }
@@ -381,11 +347,11 @@ try {
             if ($type == 'resc') {
 
                 $hospList = array();
-                if (isset($uS->guestLookups[GL_TableNames::Hospital])) {
-                    $hospList = $uS->guestLookups[GL_TableNames::Hospital];
+                if (isset($uS->guestLookups[GLTableNames::Hospital])) {
+                    $hospList = $uS->guestLookups[GLTableNames::Hospital];
                 }
 
-                $events = ResourceView::resourceDialog($dbh, $id, $uS->guestLookups[GL_TableNames::RescType], $hospList);
+                $events = ResourceView::resourceDialog($dbh, $id, $uS->guestLookups[GLTableNames::RescType], $hospList);
             } else if ($type == 'room') {
 
                 $roomRates = array();
@@ -396,7 +362,7 @@ try {
                 $reportCategories = readGenLookupsPDO($dbh, 'Room_Rpt_Cat');
 
 
-                $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GL_TableNames::RoomType], $uS->guestLookups[GL_TableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GL_TableNames::KeyDepositCode], $uS->KeyDeposit);
+                $events = ResourceView::roomDialog($dbh, $id, $uS->guestLookups[GLTableNames::RoomType], $uS->guestLookups[GLTableNames::RoomCategory], $reportCategories, $roomRates, $uS->guestLookups[GLTableNames::KeyDepositCode], $uS->KeyDeposit);
             } else if ($type == 'rs') {
                 // constraint
                 $constraints = new Constraints($dbh);
@@ -420,7 +386,7 @@ try {
                 $title = filter_var($_REQUEST["title"], FILTER_SANITIZE_STRING);
             }
 
-            $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GL_TableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
+            $events = ResourceView::getStatusEvents($dbh, $id, $type, $title, $uS->guestLookups[GLTableNames::RescStatus], readGenLookupsPDO($dbh, 'OOS_Codes'));
 
             break;
 
@@ -808,7 +774,7 @@ WHERE
         try {
             $invoice->deleteInvoice($dbh, $uS->username);
             return array('delete' => 'Invoice Number ' . $invoice->getInvoiceNumber() . ' is deleted.', 'eid' => $eid);
-        } catch (Hk_Exception_Payment $ex) {
+        } catch (PaymentException $ex) {
             return array('error' => $ex->getMessage());
         }
     } else if ($action == 'srch') {

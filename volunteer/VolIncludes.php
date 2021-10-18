@@ -17,17 +17,5 @@ define('PUBLIC_CSS', "<link href='css/publicStyle.css' rel='stylesheet' type='te
 define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
 
 require ('../functions/commonDefines.php');
-
-require (CLASSES . 'PDOdata.php');
-require (DB_TABLES . 'HouseRS.php');
-require (CLASSES . 'HTML_Controls.php');
 require (FUNCTIONS . 'commonFunc.php');
-require (CLASSES . 'config'. DS . 'Lite.php');
-require (SEC . 'sessionClass.php');
-require (CLASSES . 'alertMessage.php');
-require (CLASSES . 'Exception_hk/Hk_Exception.php');
-require (SEC . 'SecurityComponent.php');
-require (SEC . 'ScriptAuthClass.php');
-require (CLASSES . 'SysConst.php');
-require (SEC . 'webInit.php');
-require (SEC . 'UserClass.php');
+require (THIRD_PARTY . '/autoload.php');

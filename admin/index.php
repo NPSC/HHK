@@ -1,4 +1,11 @@
 <?php
+
+use HHK\sec\{Session, Login, ScriptAuthClass, SecurityComponent};
+use HHK\Exception\{InvalidArgumentException, RuntimeException};
+use HHK\SysConst\{Mode, CodeVersion};
+use HHK\HTMLControls\{HTMLContainer};
+use HHK\sec\SysConfig;
+
 /**
  * index.php  (admin)
  *
@@ -8,10 +15,8 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-
 require(SEC . 'Login.php');
 require(THIRD_PARTY . 'GoogleAuthenticator.php');
-
 
 // get session instance
 $uS = Session::getInstance();
@@ -31,21 +36,13 @@ if (isset($_GET["log"])) {
 try {
 
     $login = new Login();
-    $config = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(ciCFG_FILE);
 
-} catch (Hk_Exception_InvalidArguement $pex) {
+} catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");
 
 } catch (Exception $ex) {
     echo ("<h3>Server Error</h3>" . $ex->getMessage());
-}
-
-
-// define db connection obj
-try {
-    $dbh = initPDO(TRUE);
-} catch (Hk_Exception_Runtime $hex) {
-    exit('<h3>' . $hex->getMessage() . '; <a href="index.php">Continue</a></h3>');
 }
 
 
@@ -66,13 +63,13 @@ if (isset($_POST['txtUname'])) {
 
 // disclamer
 if ($uS->mode != Mode::Live) {
-    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA complient and not intended to be used for storing Protected Health Information.';
+    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA compliant and not intended to be used for storing Protected Health Information.';
 } else {
     $disclaimer = '';
 }
 
-$tutorialSiteURL = $config->getString('site', 'Tutorial_URL', '');
-$trainingSiteURL = $config->getString('site', 'Training_URL', '');
+$tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
+$trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
 $icons = array();
@@ -124,27 +121,36 @@ if (SecurityComponent::isHTTPS()) {
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+        <style>
+            .ui-state-error {
+                border: 1px solid #cd0a0a;
+                background: #fef1ec url("images/ui-bg_glass_95_fef1ec_1x400.png") 50% 50% repeat-x;
+                color: #cd0a0a;
+            }
+        </style>
     </head>
     <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >
         <div id="page">
             <div class='pageSpacer'>
-                <h2 style="color:white;"><?php echo $uS->siteName; ?></h2></div>
+                <h2 style="color:white;"><?php echo $uS->siteName; ?></h2>
+            </div>
             <div style="float:right;font-size: .6em;margin-right:5px;"><?php echo $build; ?></div>
             <div id="content">
-                    <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
-                    <div style="clear:left; margin-bottom: 20px;"></div>
+                <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
+                <div style="clear:left; margin-bottom: 20px;"></div>
                 <div id="formlogin" style="float:left;" >
                     <div><?php echo $siteName; ?>
-                        <p style="margin-left:6px; width: 65%;"><?php echo $disclaimer ?></p>
+                        <div style="margin-left:6px; width: 65%;">
+                        	<?php echo $disclaimer . $login->IEMsg(); ?>
+                        </div>
                     </div>
                     <?php echo $loginMkup . $linkMkup; ?></div>
                 </div>
-            </div>
+
                 <div style="clear:left;"></div>
                 <div style="margin-top: 70px;width:500px;">
                     <hr>
-                    <div><a href ="https://nonprofitsoftwarecorp.org" ><div class="nplogo"></div></a></div>
+                    <div><a href ="https://nonprofitsoftwarecorp.org" ><span class="nplogo"></span></a></div>
                     <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software Corporation</div>
                 </div>
         </div>

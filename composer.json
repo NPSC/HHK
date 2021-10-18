@@ -1,0 +1,27 @@
+{
+	"name" : "npsc/hhk",
+	"description" : "Healthcare Hospitality Houses Guest Tracking and Reservations",
+	"type" : "project",
+	"homepage" : "https://nonprofitsoftwarecorp.org",
+	"license" : "MIT",
+	"authors" : [{
+			"name" : "Eric Crane",
+			"email" : "ecrane@nonprofitsoftwarecorp.org"
+		}, {
+			"name" : "Will Ireland",
+			"email" : "wireland@nonprofitsoftwarecorp.org"
+		}
+	],
+	"autoload" : {
+		"psr-4" : {
+			"HHK\\" : "classes/"
+		}
+	},
+	"require" : {
+		"mk-j/php_xlsxwriter" : "~0.38",
+		"phpmailer/phpmailer" : "~6.1",
+		"phelium/recaptcha" : "~1.0",
+		"phpgangsta/googleauthenticator" : "dev-master",
+		"cerdic/css-tidy" : "^1.7"
+	}
+}

@@ -1,32 +1,43 @@
 <?php
+use HHK\sec\{Session,WebInit};
+use HHK\SysConst\{ActivityTypes, AddressPurpose, CampaignType, GLTableNames, MemBasis, MemDesignation, MemStatus, SalutationCodes, WebPageCode};
+use HHK\Tables\EditRS;
+use HHK\Tables\ActivityRS;
+use HHK\Tables\Donate\DonationsRS;
+use HHK\Tables\Name\{NameAddressRS,NamePhoneRS,NameEmailRS};
+use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\Member\AbstractMember;
+use HHK\Donation\Campaign;
+
 /**
  * donate.php
  *
- * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @author Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
- * @license   MIT
- * @link      https://github.com/NPSC/HHK
+ * @license MIT
+ * @link https://github.com/NPSC/HHK
  */
 
 require ("AdminIncludes.php");
 
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'ActivityRS.php');
-require (DB_TABLES . 'DonateRS.php');
-
-require (CLASSES . 'Campaign.php');
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . 'Addresses.php');
+/*
+ * require (DB_TABLES . 'nameRS.php');
+ * require (DB_TABLES . 'ActivityRS.php');
+ * require (DB_TABLES . 'DonateRS.php');
+ *
+ * require (CLASSES . 'Campaign.php');
+ */
+// require (MEMBER . 'Member.php');
+// require (MEMBER . 'IndivMember.php');
+// require (MEMBER . 'OrgMember.php');
+// require (MEMBER . 'Addresses.php');
 
 $wInit = new webInit(WebPageCode::Service);
 $dbh = $wInit->dbh;
 
-
 // get session instance
 $uS = Session::getInstance();
-
 
 // Array for responses
 $resp = array();
@@ -40,7 +51,7 @@ if (isset($_POST["sq"])) {
 
     if ($ts < $tnow) {
         $resp["error"] = "Timed out: timestamp=$pw";
-        echo( json_encode($resp) );
+        echo (json_encode($resp));
         exit();
     }
 } else {
@@ -57,67 +68,67 @@ if (isset($_POST['cmd'])) {
 
 try {
 
-switch ($cmd) {
-    case "insert":
-        $maxDonationAmt = floatval($uS->MaxDonate);
+    switch ($cmd) {
+        case "insert":
+            $maxDonationAmt = floatval($uS->MaxDonate);
 
-        $id = 0;
-        if (isset($_POST["id"])) {
-            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
+            $id = 0;
+            if (isset($_POST["id"])) {
+                $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
 
-        $resp = recordDonation($dbh, $maxDonationAmt, $id, $_POST);
+            $resp = recordDonation($dbh, $maxDonationAmt, $id, $_POST);
 
-        break;
+            break;
 
-    case "delete":
-        $donId = 0;
-        if (isset($_POST['did'])) {
-            $donId = intval(filter_var($_POST['did'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-        $resp = deleteDonation($dbh, $donId, $uname);
+        case "delete":
+            $donId = 0;
+            if (isset($_POST['did'])) {
+                $donId = intval(filter_var($_POST['did'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+            $resp = deleteDonation($dbh, $donId, $uname);
 
-        break;
+            break;
 
-    case "markup":
+        case "markup":
 
-        $id = 0;
-        if (isset($_POST["id"])) {
-            $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
+            $id = 0;
+            if (isset($_POST["id"])) {
+                $id = intval(filter_var($_POST["id"], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
 
-        $resp = genDonationMarkup($dbh, $id);
+            $resp = genDonationMarkup($dbh, $id);
 
-        break;
+            break;
 
-    default:
-        $resp["error"] = "Unknown command: $cmd";
-        break;
-}
-
+        default:
+            $resp["error"] = "Unknown command: $cmd";
+            break;
+    }
 } catch (PDOException $ex) {
-    $resp = array("error" => "Database Error: " . $ex->getMessage());
+    $resp = array(
+        "error" => "Database Error: " . $ex->getMessage()
+    );
 } catch (Exception $ex) {
-    $resp = array("error" => "HouseKeeper Error: " . $ex->getMessage());
+    $resp = array(
+        "error" => "HouseKeeper Error: " . $ex->getMessage()
+    );
 }
 
+// output the response
+echo (json_encode($resp));
+exit();
 
-//output the response
- echo(json_encode($resp));
- exit();
-
-
-
-
-
-function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
-
+function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms)
+{
     $reply = array();
     // get session instance
     $uS = Session::getInstance();
 
     if ($id <= 0) {
-        return array("error"=> "Bad Id: " . $id);
+        return array(
+            "error" => "Bad Id: " . $id
+        );
     }
 
     // other values packed here
@@ -125,7 +136,9 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
     if (isset($parms["qd"])) {
         $data = $parms["qd"];
     } else {
-        return array("error"=> "Missing data.  ");
+        return array(
+            "error" => "Missing data.  "
+        );
     }
 
     // Amount
@@ -136,10 +149,10 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
 
     // Filter donation amouont
     if ($amt <= 0 || $amt > $maxDonationAmt) {
-        return array("error"=>"Bad Amount: " . number_format($amt, 2, ".", ",") .
-                ".  Amount must be greater than 0 and less than $" . number_format($maxDonationAmt, 2, ".", ","));
+        return array(
+            "error" => "Bad Amount: " . number_format($amt, 2, ".", ",") . ".  Amount must be greater than 0 and less than $" . number_format($maxDonationAmt, 2, ".", ",")
+        );
     }
-
 
     // Campaign code must me defined.
     $campaignCode = '';
@@ -147,17 +160,20 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
         $campaignCode = filter_var($data["dselCamp"], FILTER_SANITIZE_STRING);
     }
     if ($campaignCode == '') {
-        return array("error"=> "The Campaign is not specified.  ");
+        return array(
+            "error" => "The Campaign is not specified.  "
+        );
     }
-
 
     // Pay type
     $payType = '';
     if (isset($data["dselPaytype"])) {
         $payType = filter_var($data["dselPaytype"], FILTER_SANITIZE_STRING);
     }
-    if (isset($uS->nameLookups[GL_TableNames::PayType][$payType]) === FALSE) {
-        return array("error"=> "Bad Pay type: " . $payType);
+    if (isset($uS->nameLookups[GLTableNames::PayType][$payType]) === FALSE) {
+        return array(
+            "error" => "Bad Pay type: " . $payType
+        );
     }
 
     // Date
@@ -177,7 +193,7 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
     if (isset($data["dselEnvelope"])) {
         $envel = filter_var($data["dselEnvelope"], FILTER_SANITIZE_STRING);
     }
-    $addr = Address_Purpose::Home;
+    $addr = AddressPurpose::Home;
     if (isset($data["dselAddress"])) {
         $addr = intval(filter_var($data["dselAddress"]), FILTER_SANITIZE_STRING);
     }
@@ -191,14 +207,17 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
         $notes = filter_var($data["dnote"], FILTER_SANITIZE_STRING);
     }
 
-
     $campaign = new Campaign($dbh, $campaignCode);
     if ($campaign->get_idcampaign() == 0) {
-        return array("error"=> "Bad Campaign Code: " . $campaignCode);
+        return array(
+            "error" => "Bad Campaign Code: " . $campaignCode
+        );
     }
 
-    if ($campaign->isAmountValid ($amt) === FALSE) {
-        return array("error"=> "Amount outside campaign range limits: $" . number_format($amt, 2, ".", ","));
+    if ($campaign->isAmountValid($amt) === FALSE) {
+        return array(
+            "error" => "Amount outside campaign range limits: $" . number_format($amt, 2, ".", ",")
+        );
     }
 
     $fundCode = '';
@@ -206,11 +225,12 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
         $fundCode = filter_var($data["dselStudent"], FILTER_SANITIZE_NUMBER_INT);
     }
 
-    $name = Member::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
+    $name = AbstractMember::GetDesignatedMember($dbh, $id, MemBasis::Indivual);
     if ($name->isNew()) {
-        return array("error"=>"Bad Member Id: ".$id);
+        return array(
+            "error" => "Bad Member Id: " . $id
+        );
     }
-
 
     if ($name->getMemberDesignation() == MemDesignation::Individual) {
         $assocId = $includedId;
@@ -222,13 +242,16 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
 
     if ($name->getMemberDesignation() == MemDesignation::Organization and $careOfId < 1) {
         // All organizations must have an employee assigned as care of
-        return array("error"=> "Please select an employee.  If no employees are listed, then create one and try the donation again.  (Someone signed that check.)");
+        return array(
+            "error" => "Please select an employee.  If no employees are listed, then create one and try the donation again.  (Someone signed that check.)"
+        );
     }
 
     if ($name->get_status() != MemStatus::Active && $name->get_status() != MemStatus::Deceased) {
-        return array("error"=> "The donor's Member Status must be set to Active in order to donate.");
+        return array(
+            "error" => "The donor's Member Status must be set to Active in order to donate."
+        );
     }
-
 
     // do the drop
 
@@ -249,9 +272,8 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
 
     $acId = EditRS::insert($dbh, $activRS);
 
-
     if ($acId > 0) {
-        //Insert donation record
+        // Insert donation record
         $donRS = new DonationsRS();
         $donRS->Activity_Id->setNewVal($acId);
         $donRS->Amount->setNewVal($amt);
@@ -277,7 +299,10 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
         $addrRS = new NameAddressRS();
         $addrRS->idName->setStoredVal($id);
         $addrRS->Purpose->setStoredVal($addr);
-        $rows = EditRS::select($dbh, $addrRS, array($addrRS->idName, $addrRS->Purpose));
+        $rows = EditRS::select($dbh, $addrRS, array(
+            $addrRS->idName,
+            $addrRS->Purpose
+        ));
         if (count($rows) > 0) {
             EditRS::loadRow($rows[0], $addrRS);
         }
@@ -293,7 +318,10 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
         $phoneRS = new NamePhoneRS();
         $phoneRS->idName->setStoredVal($id);
         $phoneRS->Phone_Code->setStoredVal($name->get_preferredPhone());
-        $rows = EditRS::select($dbh, $phoneRS, array($phoneRS->idName, $phoneRS->Phone_Code));
+        $rows = EditRS::select($dbh, $phoneRS, array(
+            $phoneRS->idName,
+            $phoneRS->Phone_Code
+        ));
         if (count($rows) > 0) {
             EditRS::loadRow($rows[0], $phoneRS);
         }
@@ -301,7 +329,10 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
         $emailRS = new NameEmailRS();
         $emailRS->idName->setStoredVal($id);
         $emailRS->Purpose->setStoredVal($addr);
-        $rows = EditRS::select($dbh, $emailRS, array($emailRS->idName, $emailRS->Purpose));
+        $rows = EditRS::select($dbh, $emailRS, array(
+            $emailRS->idName,
+            $emailRS->Purpose
+        ));
         if (count($rows) > 0) {
             EditRS::loadRow($rows[0], $emailRS);
         }
@@ -325,58 +356,63 @@ function recordDonation(PDO $dbh, $maxDonationAmt, $id, $parms) {
 
             $reply["success"] = "ok";
         } else {
-            throw new Hk_Exception_Runtime("DB Error, table=donations - insert failure.");
+            throw new RuntimeException("DB Error, table=donations - insert failure.");
         }
-
     } else {
-        throw new Hk_Exception_Runtime("DB Error, table=activiy, insert failure");
+        throw new RuntimeException("DB Error, table=activiy, insert failure");
     }
     return $reply;
 }
 
-function deleteDonation(PDO $dbh, $donId, $uname) {
+function deleteDonation(PDO $dbh, $donId, $uname)
+{
     $reply = array();
 
     if ($donId > 0) {
         // mark donation record as deleted
         $query = "update donations set Status='d', Last_Updated=now(), Updated_By=:ub where iddonations = :did;";
         $stmt = $dbh->prepare($query);
-        $stmt->execute(array(':ub'=>$uname, ':did'=>$donId));
+        $stmt->execute(array(
+            ':ub' => $uname,
+            ':did' => $donId
+        ));
 
         if ($stmt->rowCount() == 1) {
             $reply["success"] = "Donation Deleted.  ";
         } else {
             $reply["error"] = "Donation not found.  ";
         }
-
-     } else {
+    } else {
         $reply["error"] = "Bad donation record Id";
     }
     return $reply;
 }
 
-
-function genDonationMarkup(PDO $dbh, $id) {
-
+function genDonationMarkup(PDO $dbh, $id)
+{
     if ($id == 0) {
-        return array('error'=>"<p>Bad Member Id</p>");
+        return array(
+            'error' => "<p>Bad Member Id</p>"
+        );
     }
 
     $tbl = new HTMLTable();
-    //Table header row
-    $tbl->addHeaderTr(
-    		HTMLTable::makeTh('', array('style'=>'width:25px;'))
-    		.HTMLTable::makeTh('Source', array('style'=>'width:70px;'))
-        .HTMLTable::makeTh('Campaign')
-        .HTMLTable::makeTh('Amount')
-        .HTMLTable::makeTh('Date')
-        .HTMLTable::makeTh('X')
-            );
+    // Table header row
+    $tbl->addHeaderTr(HTMLTable::makeTh('', array(
+        'style' => 'width:25px;'
+    )) . HTMLTable::makeTh('Source', array(
+        'style' => 'width:70px;'
+    )) . HTMLTable::makeTh('Campaign') . HTMLTable::makeTh('Amount') . HTMLTable::makeTh('Date') . HTMLTable::makeTh('X'));
 
     $query = "SELECT iddonations, Donor_Id, Amount, Campaign_Code, Date_Entered, Record_Member, Care_Of_Id, Assoc_Id, Name_Last, Name_First, Donor_Name, Campaign_Type, Fund_Code, Note
         FROM vdonation_view   WHERE Donor_Id = :id or Assoc_id = :id2 order by Date_Entered desc;";
-    $stmt = $dbh->prepare($query, array(PDO::ATTR_CURSOR=>  PDO::CURSOR_FWDONLY));
-    $stmt->execute(array(":id"=>$id,":id2"=>$id));
+    $stmt = $dbh->prepare($query, array(
+        PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY
+    ));
+    $stmt->execute(array(
+        ":id" => $id,
+        ":id2" => $id
+    ));
 
     $totInd = 0;
     $donorName = "";
@@ -401,13 +437,13 @@ function genDonationMarkup(PDO $dbh, $id) {
                 $src = "jt";
                 $srcTitle = "Joint with my partner/spouse";
             } else if ($careId != 0 && $isIndividual === FALSE) {
-                $src = "<a href='NameEdit.php?id=" . $row2["Care_Of_Id"] . "' title='Sponser Employee'>".$row2["Name_Last"] . ", ". $row2["Name_First"]."</a>";      // I'm a company (or individual) with an employee ID listed in the donation
+                $src = "<a href='NameEdit.php?id=" . $row2["Care_Of_Id"] . "' title='Sponser Employee'>" . $row2["Name_Last"] . ", " . $row2["Name_First"] . "</a>"; // I'm a company (or individual) with an employee ID listed in the donation
                 $srcTitle = "Sponser employee";
             } else if ($isIndividual === FALSE) {
                 $src = "org";
                 $srcTitle = "Organization without a sponser assigned";
             } else {
-                $src = "ind";       // I'm an individual donor
+                $src = "ind"; // I'm an individual donor
                 $srcTitle = "Individual Donation";
             }
 
@@ -415,20 +451,19 @@ function genDonationMarkup(PDO $dbh, $id) {
             if ($row2['Campaign_Type'] != CampaignType::InKind) {
                 $totInd = $totInd + $row2['Amount'];
             }
-
         } else if ($assocId == $id) {
             // what if this is the associate?
             if ($row2['Campaign_Type'] != CampaignType::InKind) {
                 $totInd = $totInd + $row2['Amount'];
             }
 
-//            if ($donId == $partnerId) {    // If i am the assoc_ID and the donor is my spouse
-                $src = "jt";
-                $srcTitle = "Partner/spouse of the donor";
-//            } else {               // Here we can check other relatives as we define them
-//                $src = "asoc";   // I'm an associate.
-//                $srcTitle = "Associated with the donor";
-//            }
+            // if ($donId == $partnerId) { // If i am the assoc_ID and the donor is my spouse
+            $src = "jt";
+            $srcTitle = "Partner/spouse of the donor";
+            // } else { // Here we can check other relatives as we define them
+            // $src = "asoc"; // I'm an associate.
+            // $srcTitle = "Associated with the donor";
+            // }
         } else {
             // Dont know what this is.
             $src = "?";
@@ -440,40 +475,66 @@ function genDonationMarkup(PDO $dbh, $id) {
             $styl = 'font-style: italic;';
         }
 
-
         // Did we catch the donor's name?
         if ($donorName == "") {
             $query = "select case when Record_Member = 1 then concat( Name_First, ' ', Name_Last) else Company end as `name` from name where idName = :id;";
             $stmt = $dbh->prepare($query);
-            $stmt->execute(array(":id"=>$id));
+            $stmt->execute(array(
+                ":id" => $id
+            ));
             $r = $stmt->fetchall();
             $donorName = $r[0][0];
         }
-        
-        $editIcon = HTMLContainer::generateMarkup('button'
-        		, HTMLContainer::generateMarkup('span', '', array('class'=>'ui-button-icon ui-icon ui-icon-pencil')) . 'Close'
-        		, array('type'=>'button', 'title'=>'Edit Donation', 'data-idDonation'=>$donationsId, 'style'=>'padding: 0 0;width: 1.5em;', 'class'=>'ui-button ui-corner-all ui-widget ui-button-icon-only hhk-edit-donation'));
 
-        $tbl->addBodyTr(
-        		HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $editIcon, array('class'=>'donlisting')))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $src, array('class'=>'donlisting', 'title'=>$srcTitle)))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $row2['Campaign_Code'], array('class'=>'donlisting')))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $row2['Amount'], array('class'=>'donlisting', 'style'=>$styl)))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', date("M j, Y", strtotime($row2["Date_Entered"])), array('class'=>'donlisting')))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'id'=>'undonate_' . $row2["iddonations"], 'class'=>'donlisting hhk-undonate')))
-             );
+        $editIcon = HTMLContainer::generateMarkup('button', HTMLContainer::generateMarkup('span', '', array(
+            'class' => 'ui-button-icon ui-icon ui-icon-pencil'
+        )) . 'Close', array(
+            'type' => 'button',
+            'title' => 'Edit Donation',
+            'data-idDonation' => $donationsId,
+            'style' => 'padding: 0 0;width: 1.5em;',
+            'class' => 'ui-button ui-corner-all ui-widget ui-button-icon-only hhk-edit-donation'
+        ));
+
+        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $editIcon, array(
+            'class' => 'donlisting'
+        ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $src, array(
+            'class' => 'donlisting',
+            'title' => $srcTitle
+        ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $row2['Campaign_Code'], array(
+            'class' => 'donlisting'
+        ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $row2['Amount'], array(
+            'class' => 'donlisting',
+            'style' => $styl
+        ))) . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', date("M j, Y", strtotime($row2["Date_Entered"])), array(
+            'class' => 'donlisting'
+        ))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
+            'type' => 'checkbox',
+            'id' => 'undonate_' . $row2["iddonations"],
+            'class' => 'donlisting hhk-undonate'
+        ))));
 
         if ($row2['Note'] != '') {
-        	$tbl->addBodyTr( HTMLTable::makeTd('Note:', array('class'=>'tdlabel', 'colspan'=>'2', 'style'=>'font-size:small;'))
-                    .HTMLTable::makeTd($row2['Note'], array('colspan'=>'4', 'style'=>'font-size:small;'))
-            );
+            $tbl->addBodyTr(HTMLTable::makeTd('Note:', array(
+                'class' => 'tdlabel',
+                'colspan' => '2',
+                'style' => 'font-size:small;'
+            )) . HTMLTable::makeTd($row2['Note'], array(
+                'colspan' => '4',
+                'style' => 'font-size:small;'
+            )));
         }
-
     }
 
     $totalMarkup = number_format($totInd, 2, '.', ',');
-    $tbl->prependBodyTr(HTMLTable::makeTd('Donor: '.$donorName.";  Total: $".$totalMarkup, array('colspan'=>'6', 'style'=>'font-size:smaller;')));
+    $tbl->prependBodyTr(HTMLTable::makeTd('Donor: ' . $donorName . ";  Total: $" . $totalMarkup, array(
+        'colspan' => '6',
+        'style' => 'font-size:smaller;'
+    )));
 
-
-    return array('success'=> $tbl->generateMarkup(array('style'=>'width:100%')));
+    return array(
+        'success' => $tbl->generateMarkup(array(
+            'style' => 'width:100%'
+        ))
+    );
 }

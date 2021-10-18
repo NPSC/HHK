@@ -3,16 +3,6 @@
 -- @license   MIT
 -- @link      https://github.com/NPSC/HHK
 
---
--- function `dateDefaultNow`
---
-DROP function IF EXISTS `datedefaultnow`; -- ;
-
-CREATE FUNCTION `datedefaultnow` (dt DateTime)
-RETURNS DATETIME
-DETERMINISTIC NO SQL
-RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end  -- ;
-
 
 -- --------------------------------------------------------
 --
@@ -27,16 +17,16 @@ CREATE PROCEDURE `get_credit_gw`(
 BEGIN
 
     DECLARE myResc INT;
-    
+
     if (visitId > 0) then
 	Select ifnull(idResource, 0) into myResc from visit where idVisit = visitId and Span = spanId;
     ELSE
 	select ifnull(r.idResource, 0) into myResc from reservation r join registration rg on r.idRegistration = rg.idRegistration where rg. idRegistration = regId order by r.idReservation DESC limit 0, 1;
     END IF;
-    
+
     if (myResc > 0) THEN
 
-        SELECT 
+        SELECT
             ifnull(l.Merchant, '') as `Merchant`, l.idLocation
         FROM
             resource_room rr
@@ -49,7 +39,7 @@ BEGIN
 
     ELSE
 
-        SELECT 
+        SELECT
            DISTINCT ifnull(l.Merchant, '') as `Merchant`, l.idLocation
         FROM
             room rm
@@ -70,36 +60,42 @@ END -- ;
 DROP procedure IF EXISTS `gl_report`; -- ;
 
 CREATE PROCEDURE `gl_report` (
-	IN pmtStart VARCHAR(15), 
+	IN pmtStart VARCHAR(15),
     IN pmtEnd VARCHAR(15))
 BEGIN
 	create temporary table idinp (idInvoice int NOT NULL, PRIMARY KEY (idInvoice));
 	create temporary table idind (idInvoice int);
 
 	replace into idinp
-		select 
+		select
 			`pi`.`Invoice_Id`
 		FROM
 			`payment` `p`
 			JOIN `payment_invoice` `pi` ON `p`.`idPayment` = `pi`.`Payment_Id`
-		where 
-            ((DATE(`p`.`Timestamp`) >= DATE(pmtStart) && DATE(`p`.`Timestamp`) < DATE(pmtEnd))
+		where
+            ((DATE(`p`.`Payment_Date`) >= DATE(pmtStart) && DATE(`p`.`Payment_Date`) < DATE(pmtEnd))
 			OR (DATE(`p`.`Last_Updated`) >= DATE(pmtStart) && DATE(`p`.`Last_Updated`) < DATE(pmtEnd)));
-        
+
 	insert into idind
 		select idInvoice from invoice where Delegated_Invoice_Id in (select idinvoice from idinp);
 
 	replace into idinp select idInvoice from idind;
 
 	select  `i`.`idInvoice`,
+		`i`.`Order_Number`,
+		`i`.`Suborder_Number`,
         `i`.`Amount` AS `iAmount`,
+        `i`.`Balance` as `iBalance`,
         `i`.`Status` AS `iStatus`,
         `i`.`Carried_Amount` AS `icAmount`,
         `i`.`Invoice_Number` AS `iNumber`,
         `i`.`Delegated_Invoice_Id` AS `Delegated_Id`,
         `i`.`Deleted` AS `iDeleted`,
         ifnull(`v`.`Pledged_Rate`, 0) as `Pledged_Rate`,
-        ifnull(`rr`.`Reduced_Rate_1`, 0) as `Rate`,
+        ifnull(`v`.`Expected_Rate`, 0) as `Expected_Rate`,
+        ifnull(`v`.`idRoom_Rate`, 0) as `idRoom_Rate`,
+        case when ifnull(`v`.`Expected_Rate`, 0) = 0 THEN ifnull(`rr`.`Reduced_Rate_1`, 0)
+        	ELSE (1 + (`v`.`Expected_Rate` / 100)) * `rr`.`Reduced_Rate_1` END as `Rate`,
         ifnull(`il`.`idInvoice_Line`, '') as `il_Id`,
         ifnull(`il`.`Amount`, 0) as `il_Amount`,
 		ifnull(`il`.`Item_Id`, 0) as `il_Item_Id`,
@@ -111,21 +107,20 @@ BEGIN
         IFNULL(`p`.`Last_Updated`, '') AS `pUpdated`,
         IFNULL(`p`.`Is_Refund`, 0) AS `Is_Refund`,
         IFNULL(`p`.`idPayor`, 0) AS `idPayor`,
-        IFNULL(`p`.`Timestamp`, '') as `pTimestamp`,
+        IFNULL(`p`.`Payment_Date`, '') as `pTimestamp`,
+        IFNULL(`pm`.`Gl_Code`, '') as `PayMethod_Gl_Code`,
 		IFNULL(`it`.`Gl_Code`, '') as `Item_Gl_Code`,
 		IFNULL(`nd`.`Gl_Code_Debit`, '') as `ba_Gl_Debit`,
         IFNULL(`nd`.`Gl_Code_Credit`, '') as `ba_Gl_Credit`
-	from 
-        `invoice` `i` 
+	from
+        `invoice` `i`
         Join idinp on i.idInvoice = idinp.idInvoice
         LEFT JOIN `payment_invoice` `pi` ON `pi`.`Invoice_Id` = `i`.`idInvoice`
         LEFT JOIN `payment` `p` ON `p`.`idPayment` = `pi`.`Payment_Id`
+        left join `payment_method` `pm` on `p`.`idPayment_Method` = `pm`.`idPayment_method`
         JOIN `invoice_line` `il` on `i`.`idInvoice` = `il`.`Invoice_Id` and `il`.`Deleted` < 1
         left join `visit` `v` on `i`.`Order_Number` = `v`.`idVisit` and `i`.`Suborder_Number` = `v`.`Span`
         left join `room_rate` `rr` on `v`.`idRoom_Rate` = `rr`.`idRoom_rate`
-        LEFT JOIN `name_volunteer2` `nv` ON `p`.`idPayor` = `nv`.`idName`
-            AND (`nv`.`Vol_Category` = 'Vol_Type')
-            AND (`nv`.`Vol_Code` = 'ba')
 		LEFT JOIN name_demog nd on p.idPayor = nd.idName
 		LEFT JOIN item it on it.idItem = il.Item_Id
 	ORDER BY i.idInvoice, il.idInvoice_Line, p.idPayment;
@@ -147,22 +142,41 @@ CREATE PROCEDURE `sum_visit_days`(
 )
 BEGIN
 
-Declare startDate varchar(12);
-Declare endDate varchar(12);
-
-Select concat_ws('-', (targetYear + 1), '01', '01') into endDate;
-Select concat_ws('-', (targetYear), '01', '01') into startDate;
-
-select sum(
-	datediff(
-             case when DATE(ifnull(Span_End, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(ifnull(Span_End, NOW())) end
-            , case when  DATE(Span_Start) < DATE(startDate) then DATE(startDate) else  DATE(Span_Start) end)
-    ) 
-    as numNites 
-from visit
-Where DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
+	Declare startDate varchar(12);
+	Declare endDate varchar(12);
+	
+	Select concat_ws('-', (targetYear + 1), '01', '01') into endDate;
+	Select concat_ws('-', (targetYear), '01', '01') into startDate;
+	
+	select sum(
+		datediff(
+	             case when DATE(ifnull(Span_End, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(ifnull(Span_End, NOW())) end
+	            , case when  DATE(Span_Start) < DATE(startDate) then DATE(startDate) else  DATE(Span_Start) end)
+	    )
+	    as numNites
+	from visit
+	Where DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
 
 END -- ;
+
+
+-- --------------------------------------------------------
+--
+-- Procedure `updt_visit_hospstay`
+--
+DROP procedure IF EXISTS `updt_visit_hospstay`; -- ;
+
+CREATE PROCEDURE `updt_visit_hospstay` (
+	IN idV int, 
+	IN idHospitalStay int)
+BEGIN
+	update visit set `idHospital_stay` = idHospitalStay where `idVisit` = idV;
+    
+    update reservation r join visit v on r.idReservation = v.idReservation
+		set r.idHospital_Stay = idHospitalStay
+        where v.idVisit = idV and v.Span = 0;
+END -- ;
+
 
 
 
@@ -187,8 +201,8 @@ BEGIN
 		datediff(
                     case when DATE(IFNULL(Span_End_Date, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(IFNULL(Span_End_Date, NOW())) end
                    , case when  DATE(Span_Start_Date) < DATE(startDate) then DATE(startDate) else  DATE(IFNULL(Span_Start_Date, NOW())) end)
-        ) 
-        as numNites 
+        )
+        as numNites
 	from stays
 	Where `On_Leave` = 0 and DATE(Span_Start_Date) < DATE(endDate) and DATE(IFNULL(Span_End_Date, NOW())) >= DATE(startDate);
 
@@ -206,39 +220,33 @@ DROP procedure IF EXISTS `constraint_room`; -- ;
 CREATE PROCEDURE `constraint_room` (resvId int)
 BEGIN
 
-Declare hospId int;
-Declare asscId int;
-Declare rId int;
+	Declare rId int;
 
--- Pick up the hospital and association id's
-select
-	CASE WHEN ce.idEntity is null THEN 0 Else hs.idHospital End,
-    CASE WHEN ce2.idEntity is null THEN 0 Else hs.idAssociation  END,
-    CASE WHEN ce3.idEntity is null THEN 0 Else r.idReservation  END
-		into hospId, asscId, rId
-from hospital_stay hs
-	join reservation r on hs.idHospital_stay = r.idHospital_stay
-    left join constraint_entity ce on ce.idEntity = hs.idHospital and ce.`Type` = 'hos'
-    left join constraint_entity ce2 on ce2.idEntity = hs.idAssociation and ce2.`Type` = 'hos'
-    left join constraint_entity ce3 on ce3.idEntity = r.idReservation and ce3.`Type` = 'rv'
-where r.idReservation = resvId LIMIT 1;
+	-- Pick up the reserv id's
+	select
+	    CASE WHEN ce3.idEntity is null THEN 0 Else r.idReservation  END
+			into rId
+	from hospital_stay hs
+		join reservation r on hs.idHospital_stay = r.idHospital_stay
+	    left join constraint_entity ce3 on ce3.idEntity = r.idReservation and ce3.`Type` = 'rv'
+	where r.idReservation = resvId LIMIT 1;
 
-if (hospId + asscId + rId) > 0 THEN
-	-- find the rooms that have the attributes.
-	select idEntity, count(idEntity) as `num`
-	from attribute_entity
-	where idAttribute in (
-		select ca.idAttribute
-		from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
-		where ce.idEntity in (hospId, asscId, rId))
-	group by idEntity having `num` = (
-		select count(ca.idAttribute)
-		from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
-		where ce.idEntity in (hospId, asscId, rId));
-ELSE
-	-- there are no constraints.
-	select 0 as `idEntity`, 0 as `num`;
-END if;
+	if (rId) > 0 THEN
+		-- find the rooms that have the attributes.
+		select idEntity, count(idEntity) as `num`
+		from attribute_entity
+		where idAttribute in (
+			select ca.idAttribute
+			from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
+			where ce.idEntity = rId)
+		group by idEntity having `num` = (
+			select count(ca.idAttribute)
+			from constraint_entity ce join constraint_attribute ca on ce.idConstraint = ca.idConstraint and ca.Operation = ''
+			where ce.idEntity = rId);
+	ELSE
+		-- there are no constraints.
+		select 0 as `idEntity`, 0 as `num`;
+	END if;
 
 END -- ;
 
@@ -280,39 +288,112 @@ END -- ;
 DROP procedure IF EXISTS `delete_names_u_tbd`; -- ;
 
 CREATE PROCEDURE `delete_names_u_tbd`()
+-- assumes you already deleted any payments, invoices, visits and stays
 
 BEGIN
-delete na from name_address na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_crypto na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_demog na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_email na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_phone na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_insurance na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_language na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_guest na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from name_volunteer2 na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from volunteer_hours na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-update donations d left join name n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-update donations d left join name n on d.Assoc_Id = n.idName set d.Assoc_Id = 0 where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from relationship na left join name n on (na.idName = n.idName or na.Target_Id = n.idName) where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from w_auth na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from w_users na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from id_securitygroup na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from mcalendar na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from mail_listing na left join name n on na.id = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from fbx na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from member_history na left join name n on na.idName = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from reservation_guest na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from reservation na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from hospital_stay na left join name n on na.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from hospital_stay na left join name n on na.idDoctor = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from hospital_stay na left join name n on na.idPcDoctor = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from hospital_stay na left join name n on na.idReferralAgent = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from psg na left join name n on na.idPatient = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from fin_application na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-delete na from guest_token na left join name n on na.idGuest = n.idName where (n.Member_Status = 'u' or n.Member_Status = 'TBD');
-update name n join name n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='' where  n1.Member_Status = 'u' or n1.Member_Status = 'TBD';
-delete from name where name.Member_Status = 'u' or name.Member_Status = 'TBD';
+
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @text = MESSAGE_TEXT;
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot delete names. No changes made.<br>', @text) as `error`;
+	END;
+
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
+
+	-- collect all deletable names.
+	create temporary table tids (idName int);
+	insert into tids (idName) select idName from name where (Member_Status = 'u' or Member_Status = 'TBD');
+	select count(*) into @numMembers from tids;
+    
+	delete p from photo p where p.idPhoto in (select Guest_Photo_Id from name_demog nd join tids n on nd.idName = n.idName); 
+    delete na from volunteer_hours na join tids n on na.idName = n.idName;
+	update donations d join tids n on d.Care_Of_Id = n.idName set d.Care_Of_Id = 0;
+	update donations d join tids n on d.Assoc_Id = n.idName set d.Assoc_Id = 0;
+	delete r from relationship r join tids n on (r.idName = n.idName or r.Target_Id = n.idName);
+	delete wa from w_auth wa join tids n on wa.idName = n.idName;
+	delete wu from w_users wu join tids n on wu.idName = n.idName;
+	delete wp from w_user_passwords wp join tids n on wp.idUser = n.idName;
+	delete id from id_securitygroup id join tids n on id.idName = n.idName;
+	delete m from mcalendar m join tids n on m.idName = n.idName;
+	delete ml from mail_listing ml join tids n on ml.id = n.idName;
+	delete mn from member_note mn join tids n on mn.idName = n.idName;
+	delete f from fbx f join tids n on f.idName = n.idName;
+	delete mh from member_history mh join tids n on mh.idName = n.idName;
+	delete fa from fin_application fa join tids n on fa.idGuest = n.idName;
+	delete gt from guest_token gt join tids n on gt.idGuest = n.idName;
+	-- remove deleted organizations from member records.
+	update name n join tids n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='';
+
+	-- remove from any reservation guest listing.
+	delete rg from reservation_guest rg join tids n on rg.idGuest = n.idName;
+	-- remove reservation_guest for any deleted reservations.
+	delete rg from reservation_guest rg where rg.idReservation in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
+    -- remove notes
+	delete rn from reservation_note rn where rn.Reservation_Id in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
+	delete nt from note nt where nt.idNote in (select r.idReservation from reservation r join tids n on r.idGuest = n.idName);
+    delete r from reservation r join tids n on r.idGuest = n.idName;
+
+	-- hospital stay entries.
+	delete hs from hospital_stay hs join tids n on hs.idPatient = n.idName;
+	update hospital_stay hs join tids n on hs.idDoctor = n.idName set hs.idDoctor = 0;
+	update hospital_stay hs join tids n on hs.idPcDoctor = n.idName set hs.idPcDoctor = 0;
+	update hospital_stay hs join tids n on hs.idReferralAgent = n.idName set hs.idReferralAgent = 0;
+
+	-- delete any reports for this psg or guest
+    delete rp from report rp where rp.Psg_Id in (select idPsg from psg p join tids n on p.idPatient = n.idName);
+    delete rp from report rp join tids n on rp.Guest_Id = n.idName;
+    
+    -- delete any registrations for the psg.
+    delete rg from registration rg where rg.idPsg in (select idPsg from psg p join tids n on p.idPatient = n.idName);
+	-- delete any members of a deleted patient's PSG
+	delete ng from name_guest ng where ng.idPsg in (select idPsg from psg p join tids n on p.idPatient = n.idName);
+	-- remove deleted members from the psg
+	delete ng from name_guest ng join tids n on ng.idName = n.idName;
+	-- delete the deleted patient's PSG
+	delete p from psg p join tids n on p.idPatient = n.idName;
+	
+	delete v from vehicle v join tids n on v.idName = n.idName;
+    delete ec from emergency_contact ec join tids n on ec.idName = n.idName;
+	
+	delete na from name_address na join tids n on na.idName = n.idName;
+	delete na from name_crypto na join tids n on na.idName = n.idName;
+	delete na from name_demog na join tids n on na.idName = n.idName;
+	delete na from name_email na join tids n on na.idName = n.idName;
+	delete na from name_phone na join tids n on na.idName = n.idName;
+	delete na from name_insurance na join tids n on na.idName = n.idName;
+	delete na from name_language na join tids n on na.idName = n.idName;
+	delete na from name_volunteer2 na join tids n on na.idName = n.idName;
+	
+	DELETE n from name n join tids t on n.idName = t.idName;
+    
+	-- Log it
+	Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
+        select Now(), 'audit', 'delete', 'delete_names_u_tbd', idName, concat('name.idName: ', idName, ' -> null') from tids;
+
+	drop temporary table tids;
+
+	IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        select concat(@numMembers, " members deleted.") as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+        THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
+
+
 END -- ;
 
 
@@ -542,7 +623,6 @@ END -- ;
 
 
 
-
 -- --------------------------------------------------------
 --
 -- Procedure `selectvolcategory`
@@ -688,6 +768,24 @@ drop procedure if exists `remove_dup_guest`; -- ;
 CREATE PROCEDURE `remove_dup_guest`(goodId int, badId int)
 BEGIN
 
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @text = MESSAGE_TEXT;
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot remove duplicate guest. No changes made.<br>', @text) as `error`;
+	END;
+
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
+    
     update ignore name_guest set idName = goodId where idName = badId;
     delete from name_guest where idName = badId;
 
@@ -715,6 +813,18 @@ BEGIN
 	idName = goodId
         where idName = badId;
 
+	update link_doc set
+    idGuest = goodId
+		where idGuest = badId;
+
+	update report set
+    Guest_Id = goodId
+		where Guest_Id = badId;
+
+	update hospital_stay set
+	idPatient = goodId
+		where idPatient = badId;
+
     update invoice set
 	Sold_To_Id = goodId
         where Sold_To_Id = badId;
@@ -740,6 +850,16 @@ BEGIN
     insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
         values (now(), 'audit', 'update', 'sp', badId, 'Remove Dup Guest');
 
+	IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        SELECT CONCAT("Success: Duplicate guest ", badId, " removed successfully") as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+		THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
 END -- ;
 
 
@@ -751,59 +871,147 @@ END -- ;
 --
 drop procedure if exists `combinePSG`; -- ;
 
-CREATE PROCEDURE `combinePSG`(keepIdPsg int(11), dupIdPsg int(11))
+CREATE PROCEDURE `combinePSG` (keepIdPsg int(11), dupIdPsg int(11))
 BEGIN
-    Declare goodHs int;
-    Declare goodReg int;
+
+    DECLARE goodReg int;
     Declare badReg int;
     Declare goodIdP int;
     Declare badIdP int;
+    
+	DECLARE exit handler for sqlexception
+	BEGIN
+		GET DIAGNOSTICS CONDITION 1 @text = MESSAGE_TEXT;
+        IF @@in_transaction = 1
+        THEN
+			ROLLBACK;
+		END IF;
+		SELECT CONCAT('ERROR: Cannot combine PSGs. No changes made.<br>', @text) as `error`;
+	END;
+    
+    IF @@in_transaction = 0
+    THEN
+		START TRANSACTION;
+        SET @tranLevel = 0;
+	ELSE
+		SET @tranLevel = @tranLevel + 1;
+	END IF;
 
-    update ignore name_guest set idPsg = keepIdPsg where idPsg = dupIdPsg;
-    delete from name_guest where idPsg = dupIdPsg;
+	UPDATE IGNORE name_guest 
+	SET 
+		idPsg = keepIdPsg
+	WHERE
+		idPsg = dupIdPsg;
+	DELETE FROM name_guest 
+	WHERE
+		idPsg = dupIdPsg;
 
-    select idPatient into badIdP from psg where idPsg = dupIdPsg;
-    select idPatient into goodIdP from psg where idPsg = keepIdPsg;
-    select idHospital_stay into goodHs from hospital_stay where idPsg = keepIdPsg;
-    select idRegistration into goodReg from registration where idPsg = keepIdPsg;
-    select idRegistration into badreg from registration where idPsg = dupIdPsg;
+	SELECT 
+		idPatient
+	INTO badIdP FROM
+		psg
+	WHERE
+		idPsg = dupIdPsg;
+	SELECT 
+		idPatient
+	INTO goodIdP FROM
+		psg
+	WHERE
+		idPsg = keepIdPsg;
+		-- select idHospital_stay into goodHs from hospital_stay where idPsg = keepIdPsg;
+	SELECT 
+		idRegistration
+	INTO goodReg FROM
+		registration
+	WHERE
+		idPsg = keepIdPsg;
+	SELECT 
+		idRegistration
+	INTO badreg FROM
+		registration
+	WHERE
+		idPsg = dupIdPsg;
 
-    update reservation set
-        idRegistration = goodReg,
-        idHospital_stay = goodHs
-    where idRegistration = badReg;
+	UPDATE reservation 
+	SET 
+		idRegistration = goodReg
+	WHERE
+		idRegistration = badReg;
 
-    update visit set
-        idRegistration = goodReg,
-        idHospital_stay = goodHs
-    where idRegistration = badReg;
+	UPDATE visit 
+	SET 
+		idRegistration = goodReg
+	WHERE
+		idRegistration = badReg;
 
-    update fin_application set
-            idregistration = goodReg
-    where idRegistration = badReg;
+	UPDATE fin_application 
+	SET 
+		idregistration = goodReg
+	WHERE
+		idRegistration = badReg;
 
-    update invoice set
-            idGroup = goodReg
-    where idGroup = badReg;
+		UPDATE link_doc 
+	SET 
+		idPSG = keepIdPsg
+	WHERE
+		idPSG = dupIdPsg;
 
-    update guest_token set
-            idRegistration = goodReg
-    where idRegistration = badReg;
+		UPDATE report 
+	SET 
+		Psg_Id = keepIdPsg
+	WHERE
+		Psg_Id = dupIdPsg;
 
-    update vehicle set
-            idRegistration = goodReg
-    where idRegistration = badReg;
-	
-	update psg_note set
-			Psg_Id = keepIdPsg 
-	where Psg_Id = dupIdPsg;
+		UPDATE hospital_stay 
+	SET 
+		idPsg = keepIdPsg
+	WHERE
+		idPsg = dupIdPsg;
 
-    delete from registration where idRegistration = badReg;
-    delete from psg where idPsg = dupIdPsg;
-    delete from hospital_stay where idPsg = dupIdPsg;
+	UPDATE invoice 
+	SET 
+		idGroup = goodReg
+	WHERE
+		idGroup = badReg;
+
+	UPDATE guest_token 
+	SET 
+		idRegistration = goodReg
+	WHERE
+		idRegistration = badReg;
+
+	UPDATE vehicle 
+	SET 
+		idRegistration = goodReg
+	WHERE
+		idRegistration = badReg;
+
+		UPDATE psg_note 
+	SET 
+		Psg_Id = keepIdPsg
+	WHERE
+		Psg_Id = dupIdPsg;
+
+	DELETE FROM registration 
+	WHERE
+		idRegistration = badReg;
+	DELETE FROM psg 
+	WHERE
+		idPsg = dupIdPsg;
+    -- delete from hospital_stay where idPsg = dupIdPsg;
 
     call remove_dup_guest(goodIdP, badIdP);
-
+    
+    IF @@in_transaction = 1 AND @tranLevel = 0
+    THEN
+		COMMIT;
+        select concat("Success: PSG ", dupIdPsg, " combined into PSG ", keepIdPsg) as `msg`;
+	ELSE
+		IF @@in_transaction = 1 AND @tranLevel > 0
+		THEN
+			SET @tranLevel = @tranLevel - 1;
+		END IF;
+	END IF;
 END -- ;
 
 
@@ -908,12 +1116,12 @@ DROP procedure IF EXISTS `delete_guest_photo`; -- ;
 CREATE PROCEDURE `delete_guest_photo`(IN guest_id varchar(45))
 BEGIN
 
-    DECLARE idPhoto int;
+    DECLARE photoId int;
 
-    select nd.Guest_Photo_Id into idPhoto from name_demog nd where nd.idName = guest_id;
+    select nd.`Guest_Photo_Id` into photoId from `name_demog` nd where nd.`idName` = guest_id;
 
-    delete from photo where idPhoto = idPhoto;
-    update name_demog set Guest_Photo_Id = 0 where idName = guest_id;
+    delete from `photo` where `idPhoto` = photoId;
+    update `name_demog` set `Guest_Photo_Id` = 0 where `idName` = guest_id;
 
 END -- ;
 
@@ -927,6 +1135,7 @@ DROP procedure IF EXISTS `incidents_report`; -- ;
 CREATE PROCEDURE `incidents_report`(
 	IN activ varchar(3),
 	IN resol varchar(3),
+    IN onHold varchar(3),
 	IN del varchar(3)
 	)
 BEGIN
@@ -935,24 +1144,25 @@ BEGIN
         count_idPsg int
     );
 
-    insert into tble 
-		SELECT 
+    insert into tble
+		SELECT
 			Psg_Id, COUNT(Psg_Id)
 		FROM
 			report
-		WHERE 
-			`Status` in (activ, resol, del)
+		WHERE
+			`Status` in (activ, resol, onHold, del)
 		GROUP BY Psg_Id;
 
-	
+
     select t.count_idPsg, r.Psg_Id, n.idName, n.Name_Full, r.Title, ifnull(r.Report_Date, '') as `Report_Date`, ifnull(r.Resolution_Date, '') as `Resolution_Date`, ifnull(g.Description, '') as `Status`
-    from 
-		tble t join report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, del)
+    from
+		tble t join report r on t.idPsg = r.Psg_Id and  r.`Status` in (activ, resol, onHold, del)
 		left join hospital_stay hs on t.idPsg = hs.idPsg
         left join name n on hs.idPatient = n.idName
         left join gen_lookups g on g.Table_Name = 'Incident_Status' and g.Code = r.`Status`
+	group by r.idReport
 	order by t.count_idPsg DESC, r.Psg_Id;
-	
+
     drop table tble;
-    
+
 END -- ;

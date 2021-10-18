@@ -1,4 +1,9 @@
 <?php
+namespace HHK\sec;
+
+use HHK\SysConst\WebRole;
+use HHK\Tables\WebSec\{W_auth_ipRS, W_user_answersRS};
+use HHK\Tables\EditRS;
 
 /**
  * UserClass.php
@@ -20,25 +25,30 @@ class UserClass
     const PW_New = 'PS';
 
     const Login = 'L';
-    
+
     const Lockout = 'PL';
     
     const OTPSecChanged = 'OTPC';
+
+    const Expired = 'E';
+
+    const Login_Fail = 'LF';
 
     public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE, $checkOTP = true, $otp = '')
     {
         $ssn = Session::getInstance();
 
         if ($this->testTries() === FALSE) {
-            $this->logMessage = "To many log-in attempts.  ";
+            $this->logMessage = "Too many log-in attempts.  ";
             return FALSE;
         }
 
         $r = self::getUserCredentials($dbh, $username);
 
-        // disable user if inactive
+        // disable user if inactive || force password reset
         if ($r != NULL) {
             $r = self::disableInactiveUser($dbh, $r); // returns updated user array
+            $r = self::setPassExpired($dbh, $r);
         }
 
         //check PW
@@ -49,7 +59,7 @@ class UserClass
         }else if ($r != NULL && $r['Enc_PW'] == md5($password)) { //old method
             $match = true;
         }
-        
+
         if ($match && $r['Status'] == 'a') {
             
             //if OTP is required
@@ -64,11 +74,8 @@ class UserClass
                     $success = true;
                 }else{
                     $success = false;
-                }
-                
-            }else{
-                $success = false;
-            }
+				}
+			}
             
             if($success){
                 // Regenerate session ID to prevent session fixation attacks
@@ -105,6 +112,7 @@ class UserClass
         } else {
             $this->incrementTries();
             $this->logMessage = "Bad username or password.  ";
+            $this->insertUserLog($dbh, UserClass::Login_Fail, $username);
         }
 
         return FALSE;
@@ -230,7 +238,7 @@ class UserClass
         $updateCount = 0;
 
         foreach ($questions as $question) {
-            $answerRS = new W_userAnswersRS();
+            $answerRS = new W_user_answersRS();
             // if question already exists, update
             if ($question['idAnswer']) {
                 $answerRS->idAnswer->setStoredVal($question['idAnswer']);
@@ -287,10 +295,10 @@ class UserClass
         }else{
             $newPwHash = md5($newPw);
         }
-        
-        
+
+
         // check if password has already been used
-        if ($this->isPasswordUsed($dbh, $newPwHash)) {
+        if ($this->isPasswordUsed($dbh, $newPw)) {
             $this->logMessage = "You cannot use any of the prior " . $priorPasswords . " passwords";
             return FALSE;
         }
@@ -314,7 +322,7 @@ class UserClass
                 $query = "insert into w_user_passwords (idUser, Enc_PW) values(:idUser, :newPw);";
                 $stmt = $dbh->prepare($query);
                 $stmt->execute(array(
-                    ':idUser' => $ssn->uid,
+                    ':idUser' => $id,
                     ':newPw' => $newPwHash
                 ));
 
@@ -327,18 +335,19 @@ class UserClass
     public function isPasswordUsed(\PDO $dbh, $newPw)
     {
         $uS = Session::getInstance();
-        $priorPasswords = SysConfig::getKeyValue($dbh, 'sys_config', 'PriorPasswords');
 
         // get prior password hashes
-        $query = "select Enc_Pw from w_user_passwords where idUser = " . $uS->uid . " order by Timestamp desc limit " . $priorPasswords . ";";
+        $query = "select Enc_PW from w_user_passwords where idUser = " . $uS->uid . " order by Timestamp desc limit " . $uS->PriorPasswords . ";";
         $stmt = $dbh->query($query);
-        $passwords = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+        $hashes = $stmt->fetchAll(\PDO::FETCH_COLUMN);
 
-        if (in_array($newPw, $passwords)) {
-            return true;
-        } else {
-            return false;
+        foreach($hashes as $hash){
+            if(isset($uS->sitePepper) && $uS->sitePepper && password_verify($newPw . $uS->sitePepper, $hash)){
+                return true;
+            }
         }
+
+        return false;
     }
 
     public function setPassword(\PDO $dbh, $id, $newPw)
@@ -347,7 +356,7 @@ class UserClass
         if ($newPw != '' && $id != 0) {
 
             $newPwHash = password_hash($newPw . $uS->sitePepper, PASSWORD_ARGON2ID);
-            
+
             $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = 'install', Enc_PW = :newPw where idName = :id;";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
@@ -374,14 +383,14 @@ class UserClass
 
         return false;
     }
-    
+
     public static function isPassExpired(\PDO $dbh, $uS)
     {
         $u = self::getUserCredentials($dbh, $uS->username);
-        if ($u['Chg_PW']) {
+        if (isset($u['Chg_PW']) && $u['Chg_PW']) {
             return true;
         }
-        
+
         return false;
     }
     
@@ -393,6 +402,37 @@ class UserClass
         }
         
         return false;
+    }
+
+    public static function setPassExpired(\PDO $dbh, array $user){
+        if(isset($user['pass_rules']) && $user['pass_rules']){ //if password rules apply
+            $date = false;
+            //use creation date if never logged in
+            if($user['PW_Change_Date'] != ''){
+                $date = new \DateTimeImmutable($user['PW_Change_Date']);
+            }else{
+                $date = new \DateTimeImmutable($user['Timestamp']);
+            }
+
+            $passResetDays = SysConfig::getKeyValue($dbh, 'sys_config', 'passResetDays');
+
+            if ($date && ($user['idName'] > 0) && $user['Status'] == 'a' && $passResetDays) {
+
+                $date = $date->setTime(0, 0);
+                $deactivateDate = $date->add(new \DateInterval('P' . $passResetDays . 'D')); // add resetdays
+                $now = new \DateTime();
+                $today = $now->setTime(0, 0);
+                $lastChangeDays = $date->diff($today)->format('%a');
+                if ($lastChangeDays >= $passResetDays) {
+                    $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
+                    if ($dbh->exec($stmt) > 0) {
+                        $user['Chg_PW'] = '1';
+                        self::insertUserLog($dbh, UserClass::Expired, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
+                    }
+                }
+            }
+        }
+        return $user;
     }
 
     public static function createUserSettingsMarkup(\PDO $dbh)
@@ -483,7 +523,7 @@ class UserClass
             <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
         		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
         		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-        		
+
                     <table style="width: 100%"><tr>
                             <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
                         </tr><tr>
@@ -518,7 +558,7 @@ class UserClass
         return $remoteIp;
     }
 
-    public static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false)
+    public static function insertUserLog(\PDO $dbh, $action, $username = false, $date = false, $fromHHK = false)
     {
         if (! $username) {
             $ssn = Session::getInstance();
@@ -533,12 +573,37 @@ class UserClass
 
         $ssn = Session::getInstance();
         $remoteIp = self::getRemoteIp();
-        $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`) values ('" . $username . "', $timestamp , '$remoteIp', '$action')");
+        $browserName = '';
+        $osName = '';
+
+
+        //get user agent
+        if($fromHHK){
+            $remoteIp = '';
+            $browserName = "HHK";
+            $osName = "HHK";
+        }else{
+            try {
+            	if ($userAgentArray = get_browser(NULL, TRUE)) {
+            		$browserName = $userAgentArray['parent'];
+            		$osName = $userAgentArray['platform'];
+            	}
+            } catch (\Exception $d) {
+            	$browserName = "Missing Browscap?";
+            }
+        }
+
+        try{
+            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`, `Browser`, `OS`) values ('" . $username . "', $timestamp , '$remoteIp', '$action', '$browserName', '$osName')");
+        }catch (\Exception $e){
+            //Browser/OS fields not in DB - skip user agent
+            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`) values ('" . $username . "', $timestamp , '$remoteIp', '$action')");
+        }
     }
 
     public static function getUserCredentials(\PDO $dbh, $username)
     {
-        if (! is_string($username) || $username == '') {
+        if (! is_string($username) || trim($username) == '') {
             return NULL;
         }
 
@@ -547,7 +612,7 @@ class UserClass
         $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
-WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'");
+WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = '$uname'");
 
         if ($stmt->rowCount() === 1) {
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -559,29 +624,34 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
 
     public static function disableInactiveUser(\PDO $dbh, array $user)
     {
-        $date = false;
-        //use creation date if never logged in
-        if($user['Last_Login'] != ''){
-            $date = new DateTimeImmutable($user['Last_Login']);
-        }else{
-            $date = new DateTimeImmutable($user['Timestamp']);
-        }
-        
-        if ($date && ($user['idName'] > 0 || $user['User_Name'] != 'npscuser') && $user['Status'] == 'a') {
+        if(isset($user['pass_rules']) && $user['pass_rules']){ //if password rules apply
+
+            $date = false;
+            //use creation date if never logged in
+            if($user['Last_Login'] != ''){
+                $date = new \DateTimeImmutable($user['Last_Login']);
+            }else{
+                $date = new \DateTimeImmutable($user['Timestamp']);
+            }
+
             $userInactiveDays = SysConfig::getKeyValue($dbh, 'sys_config', 'userInactiveDays');
-            $lastUpdated = new DateTimeImmutable($user['Last_Updated']);
-            $lastUpdated = $lastUpdated->setTime(0, 0);
-            $date = $date->setTime(0, 0);
-            $deactivateDate = $date->add(new DateInterval('P' . $userInactiveDays . 'D')); // add inactivedays
-            $now = new DateTime();
-            $today = $now->setTime(0, 0);
-            $lastLoginDays = $date->diff($today)->format('%a');
-            $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
-            if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
-                $stmt = "update w_users set `Status` = 'd', `Last_Updated` = " . $deactivateDate->format("Y-m-d H:i:s") . " where idName = $user[idName]";
-                if ($dbh->exec($stmt) > 0) {
-                    $user['Status'] = 'd';
-                    self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"));
+
+            if ($date && $user['idName'] > 0 && $user['Status'] == 'a' && $userInactiveDays) {
+
+                $lastUpdated = new \DateTimeImmutable($user['Last_Updated']);
+                $lastUpdated = $lastUpdated->setTime(0, 0);
+                $date = $date->setTime(0, 0);
+                $deactivateDate = $date->add(new \DateInterval('P' . $userInactiveDays . 'D')); // add inactivedays
+                $now = new \DateTime();
+                $today = $now->setTime(0, 0);
+                $lastLoginDays = $date->diff($today)->format('%a');
+                $lastUpdatedDays = $lastUpdated->diff($today)->format('%a');
+                if ($lastLoginDays >= $userInactiveDays && $lastUpdatedDays >= $userInactiveDays) {
+                    $stmt = "update w_users set `Status` = 'd', `Updated_By` = 'HHK', `Last_Updated` = '" . $deactivateDate->format("Y-m-d H:i:s") . "' where idName = $user[idName]";
+                    if ($dbh->exec($stmt) > 0) {
+                        $user['Status'] = 'd';
+                        self::insertUserLog($dbh, UserClass::Lockout, $user['User_Name'], $deactivateDate->format("Y-m-d H:i:s"), TRUE);
+                    }
                 }
             }
         }
@@ -636,12 +706,16 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
         }
     }
 
+    public static function isCron(){
+        return (php_sapi_name() == 'cli')? true:false;
+    }
+
     public static function _logout()
     {
         $uS = Session::getInstance();
         $uS->destroy();
     }
-    
+
     private function incrementTries() {
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries) === FALSE) {
@@ -650,7 +724,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
         $ssn->Challtries++;
         return $ssn->Challtries;
     }
-    
+
     private function testTries($max = 3) {
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries) && $ssn->Challtries > $max) {
@@ -658,7 +732,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
         }
         return TRUE;
     }
-    
+
     private function resetTries(){
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries)){
@@ -714,5 +788,57 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and u.User_Name = '$uname'
             $this->logMessage = 'Failed to disable Two Step Verification';
             return false;
         }
+
+    //Strong Password generator from https://gist.github.com/tylerhall/521810
+    // Generates a strong password of N length containing at least one lower case letter,
+    // one uppercase letter, one digit, and one special character. The remaining characters
+    // in the password are chosen at random from those four sets.
+    //
+    // The available characters in each set are user friendly - there are no ambiguous
+    // characters such as i, l, 1, o, 0, etc. This, coupled with the $add_dashes option,
+    // makes it much easier for users to manually type or speak their passwords.
+    //
+    // Note: the $add_dashes option will increase the length of the password by
+    // floor(sqrt(N)) characters.
+
+    public function generateStrongPassword($length = 9, $add_dashes = false, $available_sets = 'luds')
+    {
+        $sets = array();
+        if(strpos($available_sets, 'l') !== false)
+            $sets[] = 'abcdefghjkmnpqrstuvwxyz';
+            if(strpos($available_sets, 'u') !== false)
+                $sets[] = 'ABCDEFGHJKMNPQRSTUVWXYZ';
+                if(strpos($available_sets, 'd') !== false)
+                    $sets[] = '23456789';
+                    if(strpos($available_sets, 's') !== false)
+                        $sets[] = '!@#$%&*?';
+
+                        $all = '';
+                        $password = '';
+                        foreach($sets as $set)
+                        {
+                            $password .= $set[array_rand(str_split($set))];
+                            $all .= $set;
+                        }
+
+                        $all = str_split($all);
+                        for($i = 0; $i < $length - count($sets); $i++)
+                            $password .= $all[array_rand($all)];
+
+                            $password = str_shuffle($password);
+
+                            if(!$add_dashes)
+                                return $password;
+
+                                $dash_len = floor(sqrt($length));
+                                $dash_str = '';
+                                while(strlen($password) > $dash_len)
+                                {
+                                    $dash_str .= substr($password, 0, $dash_len) . '-';
+                                    $password = substr($password, $dash_len);
+                                }
+                                $dash_str .= $password;
+                                return $dash_str;
     }
 }
+?>

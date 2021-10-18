@@ -1,4 +1,11 @@
 <?php
+
+use HHK\sec\{SecurityComponent, Session, UserClass, WebInit};
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\{HTMLInput, HTMLSelector, HTMLTable};
+use HHK\Tables\EditRS;
+use HHK\Tables\WebSec\{W_groupsRS, W_auth_ipRS};
+
 /**
  * AuthGroupEdit.php
  *
@@ -8,10 +15,6 @@
   -- @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-
-require (DB_TABLES . 'WebSecRS.php');
-require (SEC . 'UserClass.php');
-
 
 $wInit = new webInit();
 
@@ -46,14 +49,11 @@ if (isset($_POST['btnSave'])) {
 
                 $wgRS->Title->setNewVal(filter_var($_POST[$wgRS->Title->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
                 $wgRS->Description->setNewVal(filter_var($_POST[$wgRS->Description->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
-
-                if (isset($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc])) {
-
-                    if (count($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) > 0) {
-                        $wgRS->IP_Restricted->setNewVal(1);
-                    } else {
-                        $wgRS->IP_Restricted->setNewVal(0);
-                    }
+                
+                if (isset($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) && count($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) > 0) {
+                    $wgRS->IP_Restricted->setNewVal(1);
+                }else{
+                    $wgRS->IP_Restricted->setNewVal(0);
                 }
 
                 $wgRS->Updated_By->setNewVal($uS->username);
@@ -192,7 +192,7 @@ $ip_tbl->addHeaderTr(HTMLTable::makeTh('Name') . HTMLTable::makeTh('IP Address')
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript">

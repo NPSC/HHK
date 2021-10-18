@@ -39,9 +39,6 @@ var singleDs = [];
  		saveInitialValues: function(){
  			this.form.find("input, select, textarea").each( function(){
  				$(this).attr("data-dirrty-initial-value", $(this).val());
- 				if($(this).val() == null){
-	 				$(this).attr("data-dirrty-initial-value", "");
- 				}
  			});
 
  			this.form.find("input[type=checkbox], input[type=radio]").each( function(){
@@ -50,12 +47,6 @@ var singleDs = [];
  				}else{
  					$(this).attr("data-dirrty-initial-value", "unchecked");
  				}
- 			});
- 			this.form.find("select.bfh-states").each( function(){
- 				$(this).attr("data-dirrty-initial-value", $(this).attr("data-state"));
- 			});
- 			this.form.find("select.bfh-countries").each( function(){
- 				$(this).attr("data-dirrty-initial-value", $(this).attr("data-country"));
  			});
  		},
 
@@ -95,39 +86,27 @@ var singleDs = [];
  		checkValues: function(){
  			var d = this;
  			this.form.find("input, select, textarea").each( function(){
- 				var initialValue = $(this).attr("data-dirrty-initial-value");
- 				if($(this).val() != initialValue){
- 					$(this).attr("data-is-dirrty", "true");
- 				}else{
- 					$(this).attr("data-is-dirrty", "false");
+ 				if(!$(this).parents().hasClass('ignrSave')){
+ 					var initialValue = $(this).attr("data-dirrty-initial-value");
+ 					if($(this).val() != initialValue){
+ 						$(this).attr("data-is-dirrty", "true");
+ 					}else{
+ 						$(this).attr("data-is-dirrty", "false");
+ 					}
  				}
  			});
  			this.form.find("input[type=checkbox], input[type=radio]").each( function(){
- 				var initialValue = $(this).attr("data-dirrty-initial-value");
- 				if($(this).is(":checked") && initialValue != "checked"
- 					|| !$(this).is(":checked") && initialValue == "checked"){
- 					$(this).attr("data-is-dirrty", "true");
-				}else{
-					$(this).attr("data-is-dirrty", "false");
+ 				if(!$(this).parents().hasClass('ignrSave')){
+ 					var initialValue = $(this).attr("data-dirrty-initial-value");
+ 					if($(this).is(":checked") && initialValue != "checked"
+ 						|| !$(this).is(":checked") && initialValue == "checked"){
+ 						$(this).attr("data-is-dirrty", "true");
+					}else{
+						$(this).attr("data-is-dirrty", "false");
+					}
 				}
  			});
-                        
- 			//prevent field that have .ignoreme class to get dirrty
-                        this.form.find("." + d.options.ignoreClass).each( function(){
-                            var initialValue = $(this).attr("data-dirrty-initial-value");
-
-                            if($(this).val() != initialValue){
-                                $(this).attr("data-is-dirrty", "false");
-                            }
-                        });
-                        this.form.find("." + d.options.ignoreClass + " input, ." + d.options.ignoreClass + " select, ." + d.options.ignoreClass + " textarea").each( function(){
-                            var initialValue = $(this).attr("data-dirrty-initial-value");
-
-                            if($(this).val() != initialValue){
-                                $(this).attr("data-is-dirrty", "false");
-                            }
-                        });
-                                    var isDirty = false;
+ 			var isDirty = false;
  			this.form.find("input, select, textarea").each( function(){
  				if( $(this).attr("data-is-dirrty") == "true" ){
  					isDirty = true;
@@ -178,7 +157,7 @@ var singleDs = [];
 
  	$.fn.dirrty = function(options) {
 
-		if (/^(isDirty)$/i.test(options)) {
+		if (/^(isDirty)$/i.test(options) || /^(setClean)$/i.test(options)) {
 			//Check if we have an instance of dirrty for this form
 			var d = getSingleton($(this).attr("id"));
 
@@ -189,7 +168,9 @@ var singleDs = [];
 			switch(options){
 				case 'isDirty':
 					return d.isDirty;
-					break;
+				case 'setClean':
+					d.setClean();
+					return true;
 			}
 
 		}else if (typeof options == 'object' || !options) {
@@ -207,7 +188,6 @@ var singleDs = [];
  	$.fn.dirrty.defaults = {
  		preventLeaving: true,
  		leavingMessage: "You have unsaved changes",
- 		ignoreClass: "ignrSave",
  		onDirty: function(){},  //This function is fired when the form gets dirty
  		onClean: function(){}   //This funciton is fired when the form gets clean again
  	};

@@ -1,4 +1,10 @@
 <?php
+
+use HHK\CreateMarkupFromDB;
+use HHK\History;
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\{WebSiteCode};
+
 /**
  * NameSch.php
  *
@@ -8,9 +14,9 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-require (CLASSES . 'CreateMarkupFromDB.php');
-require (CLASSES . 'Purchase/RoomRate.php');
-require (CLASSES . 'History.php');
+// require (CLASSES . 'CreateMarkupFromDB.php');
+// require (CLASSES . 'Purchase/RoomRate.php');
+// require (CLASSES . 'History.php');
 
 $wInit = new webInit();
 
@@ -70,7 +76,6 @@ try {
         <script type="text/javascript" src="<?php echo FULLC_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 

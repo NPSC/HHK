@@ -1,34 +1,21 @@
 <?php
+
+use HHK\Config_Lite\Config_Lite;
+use HHK\sec\{SecurityComponent, Session, WebInit};
+use HHK\House\ResourceView;
+use HHK\SysConst\RoomState;
+use HHK\House\Room\Room;
+use HHK\sec\Labels;
+
 /**
  * RoomStatus.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-
-require (DB_TABLES . 'nameRS.php');
-
-require (DB_TABLES . 'ReservationRS.php');
-require (DB_TABLES . 'AttributeRS.php');
-
-require (CLASSES . 'Notes.php');
-require (CLASSES . 'TableLog.php');
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'RoomLog.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'ResourceView.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'Attributes.php');
-require (HOUSE . 'Constraint.php');
-
 
 
 try {
@@ -45,13 +32,12 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$labels = new Config_Lite(LABEL_FILE);
+$labels = Labels::getLabels();
 $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 
 // update room cleaning status for existing guest rooms.
 ResourceView::dirtyOccupiedRooms($dbh);
 
-$resultMessage = "";
 $currentTab = 2;
 
 if (isset($_POST['btnExcelAll'])) {
@@ -190,14 +176,25 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
     }
 }
 
+//Resource grouping controls
+$rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
 
-/*
-$checkingIn = Reservation_1::showListByStatus($dbh, '', '', ReservationStatus::Committed, TRUE, NULL, 1, TRUE);
+$rescGroupBy = '';
 
-if ($checkingIn == '') {
-    $checkingIn = "<p style='margin-left:60px;'>-None-</p>";
+if (isset($rescGroups[$uS->CalResourceGroupBy])) {
+    $rescGroupBy = $uS->CalResourceGroupBy;
 }
-*/
+
+foreach ($rescGroups as $g) {
+    
+    if ($rescGroupBy === $g[0]) {
+        
+        $groupingTitle = $g[1];
+        break;
+    }
+}
+
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -209,8 +206,9 @@ if ($checkingIn == '') {
         <?php echo FAVICON; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
-        <style type="text/css" rel="stylesheet"  media="print">
+        <style type="text/css"  media="print">
             #ckout {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             @page { margin: 1cm; }
         </style>
@@ -223,16 +221,21 @@ if ($checkingIn == '') {
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo MD5_JS; ?>"></script>
+
+        <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript">
             var dateFormat = '<?php echo "ddd MMM D, YYYY"; ?>';
+            var groupingTitle = $('#groupingTitle').val();
             var cgCols = [
+            	{	'data': 'Group_Title',
+            		'title': groupingTitle,
+            		"visible": false
+            	},
                 {
                     'data': 'Room',
                     'title': 'Room',
-                    'searchable': true,
-                    'sortable': true,
-                    'type': 's'
+                    'searchable': true
                 },
                 {
                     'data': 'Status',
@@ -293,13 +296,13 @@ if ($checkingIn == '') {
 	var inCols = [
                 {
                     'data': 'Primary Guest',
-                    'title': 'Primary Guest',
+                    'title': '<?php echo $labels->getString('MemberType', 'primaryGuest', 'Primary Guest'); ?>',
                     'searchable': true,
                     'sortable': true
                 },
                 {
                     'data': 'Guests',
-                    'title': 'Guests',
+                    'title': '<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s',
                     'searchable': true,
                     'sortable': true
                 },
@@ -444,11 +447,10 @@ if ($checkingIn == '') {
                 $.extend($.fn.dataTable.defaults, {
                     "dom": '<"top"if>rt<"bottom"lp><"clear">',
                     "displayLength": 50,
-                    "lengthMenu": [[25, 50, -1], [25, 50, "All"]],
-                    "order": [[0, 'asc']]
+                    "lengthMenu": [[25, 50, -1], [25, 50, "All"]]
                 });
 
-                $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrint, #btnExcelAll, #btnSubmitTable, #prtCkOut, #prtCkIn').button();
+                $('#btnReset1, #btnSubmitClean, #btnReset2, #btnPrintAll, #btnExcelAll, #btnSubmitTable, #prtCkOut, #prtCkIn, #prtClnToday').button();
 
                 $('#mainTabs').tabs({
                     beforeActivate: function (event, ui) {
@@ -545,7 +547,8 @@ if ($checkingIn == '') {
                         dataSrc: 'roomTable'
                     },
                     "deferRender": true,
-                    "columns": cgCols
+                    "columns": cgCols,
+                    rowGroup: {dataSrc: 'Group_Title'}
                 });
 
                 $('#dirtyTable').dataTable({
@@ -554,7 +557,8 @@ if ($checkingIn == '') {
                         dataSrc: 'dirtyTable'
                     },
                     "deferRender": true,
-                    "columns": cgCols
+                    "columns": cgCols,
+                    rowGroup: {dataSrc: 'Group_Title'}
                 });
 
                 $('#outTable').dataTable({
@@ -586,8 +590,8 @@ if ($checkingIn == '') {
                     ]
                 });
 
-                $('#btnPrint').click(function () {
-                    window.open('ShowHsKpg.php', '_blank');
+                $('#btnPrintAll').click(function () {
+                    window.open('ShowHsKpg.php?tbl=all', '_blank');
                 });
 
                 var opt = {mode: 'popup',
@@ -596,8 +600,12 @@ if ($checkingIn == '') {
                     popWd: 1200,
                     popX: 20,
                     popY: 20,
-                    popTitle: 'Guests Checking Out'};
+                    popTitle: '<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out'};
 
+				$('#prtClnToday').click(function () {
+                    window.open('ShowHsKpg.php?tbl=notReady', '_blank');
+                });
+                
 				$('#prtCkIn').click(function () {
                     $('div#ckin').printArea(opt);
                 });
@@ -619,20 +627,20 @@ if ($checkingIn == '') {
             <div style="float:left; margin-right: 100px; margin-top:10px;">
                 <h1><?php echo $wInit->pageHeading; ?></h1>
             </div>
-            <?php echo $resultMessage ?>
             <div style="clear:both;"></div>
             <form action="RoomStatus.php" method="post"  id="form1" name="form1" >
                 <div id="mainTabs" style="font-size: .8em; display:none;" class="hhk-tdbox">
                     <ul>
                         <li><a href="#clnToday">Rooms Not Ready</a></li>
-                        <li><a href="#ckin">Guests Checking In</a></li>
-                        <li><a href="#ckout">Guests Checking Out</a></li>
+                        <li><a href="#ckin"><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking In</a></li>
+                        <li><a href="#ckout"><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Checking Out</a></li>
                         <li><a href="#showAll">Show All Rooms</a></li>
                         <li id="lishoCL"><a href="#showLog">Show Cleaning Log</a></li>
                     </ul>
                     <div id="clnToday" class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog">
                         <table id='dirtyTable' class=' order-column display ' style='width:100%;'></table>
                         <div class="ui-corner-all submitButtons">
+                        	<input type="button" value="Print" id="prtClnToday">
                             <input type="reset" name="btnReset1" value="Reset" id="btnReset1" />
                             <input type="submit" name="btnSubmitClean" value="Save" id="btnSubmitClean" />
                         </div>
@@ -673,7 +681,7 @@ if ($checkingIn == '') {
                     <div id="showAll">
                         <table id='roomTable' class=' order-column display ' style='width:100%;'></table>
                         <div class="ui-corner-all submitButtons">
-                            <input type="button" value="Print" name="btnPrint" id="btnPrint" />
+                            <input type="button" value="Print" name="btnPrintAll" id="btnPrintAll" />
                             <input type="submit" value="Download to Excel" id="btnExcelAll" name="btnExcelAll" />
                             <input type="reset" name="btnReset2" value="Reset" id="btnReset2" />
                             <input type="submit" name="btnSubmitTable" value="Save" id="btnSubmitTable" />
@@ -684,6 +692,7 @@ if ($checkingIn == '') {
                     </div>
                 </div>
             </form>
+            <input type="hidden" value="<?php $groupingTitle;  ?>" id='groupingTitle' />
         </div>  <!-- div id="contentDiv"-->
     </body>
 </html>

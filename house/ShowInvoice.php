@@ -1,4 +1,12 @@
 <?php
+
+use HHK\sec\{Session, WebInit};
+use HHK\SysConst\WebPageCode;
+use HHK\Payment\Invoice\Invoice;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLContainer;
+
 /**
  * ShowInvoice.php
  *
@@ -8,42 +16,6 @@
  * @link      https://github.com/NPSC/HHK
  */
 require ("homeIncludes.php");
-
-require(DB_TABLES . "visitRS.php");
-require(DB_TABLES . "registrationRS.php");
-require (DB_TABLES . 'nameRS.php');
-require (DB_TABLES . 'PaymentsRS.php');
-require (DB_TABLES . 'ItemRS.php');
-
-require (CLASSES . 'Purchase/Item.php');
-require(CLASSES . 'Purchase/RoomRate.php');
-
-require (PMT . 'Invoice.php');
-require (PMT . 'InvoiceLine.php');
-require (PMT . 'Receipt.php');
-require (PMT . 'CreditToken.php');
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-
-//require THIRD_PARTY . 'PHPMailer/PHPMailerAutoload.php';
-require (THIRD_PARTY . 'PHPMailer/v6/src/PHPMailer.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/SMTP.php');
-require (THIRD_PARTY . 'PHPMailer/v6/src/Exception.php');
-
-require(HOUSE . "psg.php");
-require (HOUSE . 'Registration.php');
-require (HOUSE . 'RoleMember.php');
-require (HOUSE . 'Role.php');
-require (HOUSE . 'Guest.php');
-require (HOUSE . 'Patient.php');
-require (HOUSE . 'Resource.php');
-require (HOUSE . 'Room.php');
-require (HOUSE . 'Reservation_1.php');
-require (HOUSE . 'ReservationSvcs.php');
-require (HOUSE . 'Visit.php');
-require (HOUSE . 'VisitCharges.php');
 
 
 $wInit = new webInit(WebPageCode::Page);
@@ -122,22 +94,22 @@ try {
 
     if (isset($_POST['btnEmail']) && $emAddr != '' && $emSubject != '' && $stmtMarkup != '') {
 
-        $mail = prepareEmail();
-
-        $mail->From = $uS->FromAddress;
-        $mail->FromName = $uS->siteName;
-        $mail->addAddress($emAddr);     // Add a recipient
-        $mail->addReplyTo($uS->ReplyToAddr);
-
-        $mail->isHTML(true);
-
-        $mail->Subject = $emSubject;
-        $mail->msgHTML($stmtMarkup);
-
-
-        if ($mail->send()) {
+        try{
+            $mail = prepareEmail();
+    
+            $mail->From = $uS->FromAddress;
+            $mail->FromName = $uS->siteName;
+            $mail->addAddress($emAddr);     // Add a recipient
+            $mail->addReplyTo($uS->ReplyTo);
+    
+            $mail->isHTML(true);
+    
+            $mail->Subject = $emSubject;
+            $mail->msgHTML($stmtMarkup);
+    
+            $mail->send();
             $msg .= "Email sent.  ";
-        } else {
+        }catch(\Exception $e){
             $msg .= "Email failed!  " . $mail->ErrorInfo;
         }
     }
