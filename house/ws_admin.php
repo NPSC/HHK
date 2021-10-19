@@ -5,6 +5,7 @@ use HHK\SysConst\WebPageCode;
 use HHK\Member\MemberSearch;
 use HHK\Member\Relation\AbstractRelation;
 use HHK\sec\UserClass;
+use HHK\sec\GoogleAuthenticator;
 
 
 /**
@@ -370,10 +371,11 @@ function changeQuestions(\PDO $dbh, array $questions) {
 
 function generateTwoFA($uname){
     try{
-        $ga = new PHPGangsta_GoogleAuthenticator();
+        $ga = new GoogleAuthenticator();
+        $uS = Session::getInstance();
     
         $secret = $ga->createSecret();
-        $qrCodeUrl = $ga->getQRCodeGoogleUrl($uname, $secret, "HHK");
+        $qrCodeUrl = $ga->getQRCodeImage($uname, $secret, "HHK - " . $uS->siteName);
         
         $event = array('success'=>true, 'secret'=>$secret, 'url'=> $qrCodeUrl);
     }catch(Exception $e){
@@ -396,13 +398,14 @@ function saveTwoFA(\PDO $dbh, $secret, $OTP){
 }
 
 function getTwoFA(\PDO $dbh, $username){
-    $ga = new PHPGangsta_GoogleAuthenticator();
+    $ga = new GoogleAuthenticator();
+    $uS = Session::getInstance();
     
     $u = new UserClass();
     $user = $u->getUserCredentials($dbh, $username);
     if($user['OTP'] && isset($user['OTPcode']) && $user['OTPcode'] != ''){
         $secret = $user['OTPcode'];
-        $qrCodeUrl = $ga->getQRCodeGoogleUrl($username, $secret, "HHK");
+        $qrCodeUrl = $ga->getQRCodeImage($username, $secret, "HHK - " . $uS->siteName);
         $event = array('success'=>true, 'url'=>$qrCodeUrl);
     }else{
         $event = array('error'=>'Two Factor authentication not configured');

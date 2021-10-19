@@ -262,7 +262,9 @@ $(document).ready(
 								}
 							}
 						});
-						
+					}
+				}
+			}		
 						//two factor Auth
 						
 						$('div#dchgPw #TwoFactorHelp').accordion({
@@ -343,10 +345,6 @@ $(document).ready(
 								}
 							});
 						});
-					}
-					;
-				}
-			};
 
 			$('.hhk-tooltip').tooltip({
 				classes : {
@@ -405,7 +403,7 @@ $(document).ready(
 
 			$('#dchgPw').dialog({
 				autoOpen : autoOpen,
-				width : 'auto',
+				width : '1000',
 				autoResize : true,
 				resizable : true,
 				modal : true,

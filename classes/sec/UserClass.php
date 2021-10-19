@@ -61,15 +61,16 @@ class UserClass
         }
 
         if ($match && $r['Status'] == 'a') {
+            $success = false;
             
             //if OTP is required
-            if(!$r['OTP'] && $checkOTP == false){
+            if(!$r['OTP'] == '1' || $checkOTP == false){
                 $success = true;
             }else if($r['OTP'] && $r['OTPcode'] != '' && $otp == ''){
                 $this->logMessage = "OTPRequired";
                 return FALSE;
             }else if($otp != '' && isset($r['OTPcode'])){
-                $ga = new PHPGangsta_GoogleAuthenticator();
+                $ga = new GoogleAuthenticator();
                 if($ga->verifyCode($r['OTPcode'], $otp) == true){
                     $success = true;
                 }else{
@@ -745,7 +746,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
     public function saveTwoFactorSecret(\PDO $dbh, $secret = '', $OTP = ''){
         $uS = Session::getInstance();
         
-        $ga = new PHPGangsta_GoogleAuthenticator();
+        $ga = new GoogleAuthenticator();
             
         if($ga->verifyCode($secret, $OTP) == false){
             $this->logMessage = "One Time Code is invalid";
@@ -788,7 +789,8 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
             $this->logMessage = 'Failed to disable Two Step Verification';
             return false;
         }
-
+    }
+    
     //Strong Password generator from https://gist.github.com/tylerhall/521810
     // Generates a strong password of N length containing at least one lower case letter,
     // one uppercase letter, one digit, and one special character. The remaining characters

@@ -15,8 +15,6 @@ use HHK\sec\SysConfig;
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-require(SEC . 'Login.php');
-require(THIRD_PARTY . 'GoogleAuthenticator.php');
 
 // get session instance
 $uS = Session::getInstance();
