@@ -125,7 +125,7 @@ class Login {
 
         if (isset($post["txtUname"]) && isset($post["challenge"])) {
 
-            $this->userName = strtolower(filter_var($post["txtUname"], FILTER_SANITIZE_STRING));
+            $this->userName = strtolower(filter_var(substr($post["txtUname"], 0, 45), FILTER_SANITIZE_STRING));
 
             $password = filter_var($post["challenge"], FILTER_SANITIZE_STRING);
 
