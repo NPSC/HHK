@@ -2222,7 +2222,7 @@ CREATE TABLE if not exists `w_group_ip` (
 -- Table `w_user_log`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `w_user_log` (
-  `Username` VARCHAR(45) NOT NULL COMMENT '',
+  `Username` VARCHAR(100) NOT NULL COMMENT '',
   `Access_Date` DATETIME NOT NULL COMMENT '',
   `IP` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Session_Id` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',

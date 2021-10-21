@@ -28,3 +28,6 @@ CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_T
 CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'gr');
 CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'mm');
 CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'v');
+
+ALTER TABLE `w_user_log` 
+CHANGE COLUMN `Username` `Username` VARCHAR(100) NOT NULL ;
