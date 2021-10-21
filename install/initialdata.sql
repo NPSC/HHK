@@ -423,6 +423,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'es', 'Email Server','','',60),
 ('Sys_Config_Category', 'fg', 'Payment Gateway','','',0),
 ('Sys_Config_Category', 'pr', 'Password Rules','','',70),
+('Sys_Config_Category', 'sso', 'SAML SSO','','',80),
 ('Sys_Config_Category', 'c', 'Calendar','','',10),
 ('Sys_Config_Category', 'ha', 'House Email Addresses','','',32),
 ('Sys_Config_Category', 'p', 'Patient','','',25),
@@ -545,7 +546,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('EmergContactFill','false','b','h','','Insist on Filling in the emergency contact','',1),
 ('EmptyExtendLimit','0','i','hf','','Extend visit (go on leave) limit - number of days','',1),
 ('Error_Report_Email', 'support@nonprofitsoftwarecorp.org', 's', 'a', '', 'Email for reporting server errors', '',0),
-('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication'),
+('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication','',1),
 ('ExtendToday','0','i','h','','Extend the Check in day by this many hours into tomorrow','',1),
 ('ForceNamePrefix','false','b','h','','Force  name prefixes to be entered','',1),
 ('FromAddress','','ea','g','','House from address for guest emails','',1),
@@ -652,7 +653,11 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('VisitFee','false','b','hf','','Enable the visit fee (cleaning fee) feature','',1),
 ('VisitFeeDelayDays','0','i','hf','','Number of days before cleaning fee is charged','',1),
 ('Volunteers','true','b','a','','Enable the HHK Volunteer Manager site','',1),
-('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','',1);
+('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','',1),
+('UseSSO', 'false', 'b','sso','','Enable SAML Single Sign On for authentication','',1),
+('IdP_Entity_Id', '', 's','sso','','Identity Provider Entity Id','',1),
+('SSO_URL', '', 's','sso','','URL used for SSO Login','',1),
+('IdP_Cert', '', 't','sso','','Identity Provider Certificate','',1);
 -- ;
 
 --

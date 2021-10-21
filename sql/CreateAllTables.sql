@@ -1948,7 +1948,7 @@ CREATE TABLE if not exists `street_suffix` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `sys_config` (
   `Key` varchar(25) NOT NULL,
-  `Value` varchar(500) NOT NULL DEFAULT '',
+  `Value` varchar(5000) NOT NULL DEFAULT '',
   `Type` varchar(15) NOT NULL DEFAULT '',
   `Category` varchar(5) NOT NULL DEFAULT '',
   `Header` VARCHAR(5) NOT NULL DEFAULT '',

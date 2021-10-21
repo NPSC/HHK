@@ -24,7 +24,7 @@ ALTER TABLE reservation
 ADD COLUMN idRateAdjust VARCHAR(5) DEFAULT '0' AFTER Rate_Adjust;
 
 INSERT IGNORE INTO `sys_config` VALUES
-('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication'),
+('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication');
 
 ALTER TABLE `w_users` 
 ADD COLUMN `OTP` bit(1) NOT NULL DEFAULT b'0' AFTER `Chg_PW`,
@@ -35,3 +35,16 @@ CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_T
 CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'gr');
 CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'mm');
 CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'v');
+
+-- add SSO
+INSERT IGNORE into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
+('Sys_Config_Category', 'sso', 'SAML SSO','','',80);
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`, `Show`) VALUES
+('UseSSO', 'false', 'b','sso','','Enable SAML Single Sign On for authentication','',1),
+('IdP_Entity_Id', '', 's','sso','','Identity Provider Entity Id','',1),
+('SSO_URL', '', 's','sso','','URL used for SSO Login','',1),
+('IdP_Cert', '', 't','sso','','Identity Provider Certificate','',1);
+
+ALTER TABLE `sys_config` 
+CHANGE COLUMN `Value` `Value` VARCHAR(5000) NOT NULL DEFAULT '' ;
