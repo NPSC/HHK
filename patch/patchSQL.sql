@@ -31,3 +31,24 @@ CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_T
 
 ALTER TABLE `w_user_log` 
 CHANGE COLUMN `Username` `Username` VARCHAR(100) NOT NULL ;
+
+-- Confirmation form changes
+ALTER TABLE `template_tag` 
+ADD UNIQUE INDEX `Unq_Doc_Tag` (`Doc_Name` ASC, `Tag_Name` ASC);
+;
+
+REPLACE INTO `template_tag` (`Doc_Name`,`Tag_Title`,`Tag_Name`) values
+('c','Guest Address Line 1','${GuestAddr1}'),
+('c','Guest Address Line 2','${GuestAddr2}'),
+('c','Guest City','${GuestCity}'),
+('c','Guest State','${GuestState}'),
+('c','Guest Zip Code','${GuestZip}'),
+('c','Guest Phone','${GuestPhone}'),
+('c','Room','${Room}'),
+('c','Room Rate Title','${RoomRateTitle}'),
+('c','Room Rate (pre tax)','${RoomRateAmount}'),
+('c','Rate Adjustment Percent','${RateAdjust}'),
+('c','Nightly Rate (pre tax)','${NightlyRate}')
+;
+
+UPDATE `template_tag` SET `Tag_Title` = 'Total Amount' WHERE `Doc_Name` = 'c' AND `Tag_Name` = "${Amount}";

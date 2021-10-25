@@ -1983,7 +1983,8 @@ CREATE TABLE if not exists `template_tag` (
   `Tag_Title` varchar(25) NOT NULL DEFAULT '',
   `Tag_Name` varchar(25) NOT NULL DEFAULT '',
   `Replacement_Wrapper` varchar(45) NOT NULL DEFAULT '',
-  PRIMARY KEY (`idTemplate_tag`)
+  PRIMARY KEY (`idTemplate_tag`),
+  UNIQUE INDEX `Unq_Doc_Tag` (`Doc_Name` ASC, `Tag_Name` ASC)
 ) ENGINE=InnoDB;
 
 

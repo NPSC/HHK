@@ -737,13 +737,24 @@ REPLACE INTO `template_tag` VALUES
 (8,'c','Expected Departure','${ExpectedDeparture}',''),
 (9,'c','Date Today','${DateToday}',''),
 (10,'c','Nights','${Nites}',''),
-(11,'c','Amount','${Amount}',''),
+(11,'c','Total Amount','${Amount}',''),
 (12,'c','Notes','${Notes}',''),
 (13,'c','Visit Fee Notice','${VisitFeeNotice}',''),
 (14,'s','First Name','${FirstName}',''),
 (15,'s','Last Name','${LastName}',''),
 (16,'s','Name Suffix','${NameSuffix}',''),
-(17,'s','Name Prefix','${NamePrefix}','');
+(17,'s','Name Prefix','${NamePrefix}',''),
+(18,'c','Guest Address Line 1','${GuestAddr1}',''),
+(19,'c','Guest Address Line 2','${GuestAddr2}',''),
+(20,'c','Guest City','${GuestCity}',''),
+(21,'c','Guest State','${GuestState}',''),
+(22,'c','Guest Zip Code','${GuestZip}',''),
+(23,'c','Guest Phone','${GuestPhone}',''),
+(24,'c','Room','${Room}',''),
+(25,'c','Room Rate Title','${RoomRateTitle}',''),
+(26,'c','Room Rate (pre tax)','${RoomRateAmount}',''),
+(27,'c','Rate Adjustment Percent','${RateAdjust}',''),
+(28,'c','Nightly Rate (pre tax)','${NightlyRate}','');
 -- ;
 
 replace into `item` (`idItem`, `Description`) values

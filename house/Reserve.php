@@ -89,7 +89,7 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
         $confirmForm = new ConfirmationForm($dbh, $docId);
 
         $formNotes = $confirmForm->createNotes($notes, FALSE);
-        $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($resv, $guest, $amt, $formNotes));
+        $form = '<!DOCTYPE html>' . $confirmForm->createForm($confirmForm->makeReplacements($dbh, $resv, $guest, $amt, $formNotes));
 
         header('Content-Disposition: attachment; filename=confirm.doc');
         header("Content-Description: File Transfer");

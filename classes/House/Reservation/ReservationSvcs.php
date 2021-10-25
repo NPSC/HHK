@@ -108,7 +108,7 @@ class ReservationSvcs
                 $formNotes = $confirmForm->createNotes($notes, ! $sendEmail);
                 
                 $docs[$d['Code']] = array(
-                    'doc' => $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes)),
+                    'doc' => $confirmForm->createForm($confirmForm->makeReplacements($dbh, $reserv, $guest, $amount, $formNotes)),
                     'style' => RegisterForm::getStyling(),
                     'tabIndex' => $d['Code'],
                     'tabTitle' => $d['Description'],
