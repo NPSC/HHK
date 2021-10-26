@@ -542,7 +542,7 @@ class Family {
         } else {
 
             // idPsg > 0.  Make sure the selected patient is this psg
-            $psg = new Psg($dbh, $rData->getIdPsg());
+            $psg = new PSG($dbh, $rData->getIdPsg());
 
             if ($patMem->getId() != $psg->getIdPatient()) {
                 $rData->addError("The person selected as a new patient is already a patient.");
