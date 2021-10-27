@@ -488,6 +488,34 @@ AS SELECT
 FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocument`))) left join `name` `n` on((`ld`.`idGuest` = `n`.`idName`))) where (`d`.`Status` = 'a');
 
 -- -----------------------------------------------------
+-- View `vdaily_waitlist`
+-- -----------------------------------------------------
+
+CREATE or replace VIEW `vdaily_waitlist` AS
+select 
+	`r`.`idReservation`,
+    `hs`.`MRN`,
+    `p`.`Name_First` as "Patient First",
+    `p`.`Name_Last` as "Patient Last",
+    `r`.`Expected_Arrival`,
+    `r`.`Expected_Departure`,
+    `hs`.`Room` as "Room Number",
+    `ra`.`Name_Full` as "Referral Agent",
+    `e`.`Description` as "Ethnicity",
+    `ib`.`Description` as "Income_Bracket",
+    `adj`.`Description` as "Adjustment",
+    `r`.`Checkin_Notes` as "Waitlist Notes"
+from reservation r
+	join `hospital_stay` hs on `r`.`idHospital_Stay` = `hs`.`idHospital_stay`
+    join `name` p on `hs`.`idPatient` = `p`.`idName`
+    left join `name_demog` d on `p`.`idName` = `d`.`idName`
+    left join `gen_lookups` adj on `r`.`idRateAdjust` = `adj`.`Code` and `adj`.`Table_Name` = "Room_Rate_Adjustment"
+    left join `gen_lookups` e on `d`.`Ethnicity` = `e`.`Code` and `e`.`Table_Name` = "Ethnicity"
+    left Join `gen_lookups` ib on `d`.`Income_Bracket` = `ib`.`Code` and `ib`.`Table_Name` = "Income_Bracket"
+    left join `name` ra on `hs`.`idReferralAgent` = `ra`.`idName`
+where `r`.`Status` = 'w';
+
+-- -----------------------------------------------------
 -- View `vdonation_view`
 -- -----------------------------------------------------
 CREATE or replace VIEW `vdonation_view` AS

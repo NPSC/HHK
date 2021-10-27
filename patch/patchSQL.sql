@@ -52,3 +52,5 @@ REPLACE INTO `template_tag` (`Doc_Name`,`Tag_Title`,`Tag_Name`) values
 ;
 
 UPDATE `template_tag` SET `Tag_Title` = 'Total Amount' WHERE `Doc_Name` = 'c' AND `Tag_Name` = "${Amount}";
+
+CALL new_webpage('WaitlistReport.php', '0','Daily Waitlist','1','h','79','w','p','','admin',CURRENT_TIMESTAMP, 'g');
