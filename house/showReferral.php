@@ -65,6 +65,7 @@ unset($patientRels['slf']);
 $mediaSources = readGenLookupsPDO($dbh, 'Media_Source','Order');
 $namePrefixes = readGenLookupsPDO($dbh, 'Name_Prefix', 'Order');
 $nameSuffixes = readGenLookupsPDO($dbh, 'Name_Suffix', 'Order');
+
 $hospitals = Hospital::loadHospitals($dbh);
 $hospitalAr = array();
 foreach($hospitals as $hospital){
@@ -173,6 +174,8 @@ if(isset($_GET['template'])){
             	var namePrefixes = <?php echo json_encode($namePrefixes); ?>;
             	var nameSuffixes = <?php echo json_encode($nameSuffixes); ?>;
 				var hospitals = <?php echo json_encode($hospitalAr); ?>;
+				var diagnosis = <?php echo json_encode($diagnosises); ?>;
+				var unit = <?php echo json_encode($units); ?>;
 
                 const formRender = $('#formContent').formRender({
                 	formData,
@@ -248,6 +251,12 @@ if(isset($_GET['template'])){
                   						case 'hospitals':
                   							options = hospitals;
                   							break;
+                  						case 'diagnosis':
+                  							options = diagnosis;
+                  							break;
+                  						case 'unit':
+                  							options = unit;
+                  							break;
                   						default:
                   							options = {};
                   					}
@@ -260,7 +269,7 @@ if(isset($_GET['template'])){
                 						}
                 					}
                 				}
-                				
+
                 				if(data.multiple){
                     				return $('<div/>').addClass(data.width + ' mb-3 field-container')
                   					.append($('<div/>').addClass('card')

@@ -30,6 +30,28 @@
     			"multiple": false,
     			"values": []
   			},
+  			{
+    			"type": "select",
+    			"label": (options.labels.diagnosis || 'Diagnosis'),
+    			"placeholder": (options.labels.diagnosis || 'Diagnosis'),
+    			"className": "form-select",
+    			"name": "Diagnosis",
+    			"width": "col-md-2",
+    			"dataSource":"diagnosis",
+    			"multiple": false,
+    			"values": []
+  			},
+  			{
+    			"type": "select",
+    			"label": (options.labels.unit || 'Unit'),
+    			"placeholder": (options.labels.unit || 'Unit'),
+    			"className": "form-select",
+    			"name": "Unit",
+    			"width": "col-md-2",
+    			"dataSource":"unit",
+    			"multiple": false,
+    			"values": []
+  			},
     		{
     			label: "Submit",
     			type: "button",
@@ -765,7 +787,9 @@
     						'patientRelation': 'Patient Relationship',
     						'vehicleStates': 'Vehicle States',
     						'mediaSource': 'Media Source',
-    						'hospitals': 'Hospital'
+    						'hospitals': 'Hospital',
+    						'diagnosis': 'Diagnosis',
+    						'unit': 'Unit'
     					}
     				},
     				group: {
