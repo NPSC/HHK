@@ -298,6 +298,13 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
             // set up Visit extension
             if ($('.hhk-extVisitSw').length > 0) {
+	
+				$('#extendDays').change(function () {
+					$('#extendDays').removeClass('ui-state-error');
+				});
+				
+	
+				// Enable checkbox, show or hide panel.
                 $('.hhk-extVisitSw').change(function () {
                     if (this.checked) {
                         $('.hhk-extendVisit').show('fade');
@@ -305,6 +312,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                         $('.hhk-extendVisit').hide('fade');
                     }
                 });
+
                 $('.hhk-extVisitSw').change();
             }
 
@@ -566,85 +574,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
 
             setupPayments($('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
-
-            /* if ($('table#moveTable').length > 0) {
-
-                // Change Rooms control - only used for visit editor
-                $('table#moveTable').on('change', 'select', function() {
-                    $(this).removeClass('ui-state-error');
-                    var indx = $(this).val();
-                    if (indx == '') {
-                        indx = 0;
-                    }
-                    // UPdate the key deposit amount
-                    if ($('#keyDepAmt').length > 0 && data.resc[indx]) {
-
-                        if (data.resc[indx].key === 0) {
-                            $('#spnDepAmt').data('amt', '');
-                            $('#spnDepAmt').text('');
-                            $('#keyDepAmt').val('');
-                            $('#keyDepRx').prop("checked", false);
-                            $('.hhk-kdrow').hide();
-
-                        } else {
-                            $('#spnDepAmt').data('amt', data.resc[indx].key);
-                            $('#spnDepAmt').text('($' + data.resc[indx].key + ')');
-                            $('#keyDepAmt').val(data.resc[indx].key);
-                            $('.hhk-kdrow').show('fade');
-                        }
-
-                        amtPaid();
-                    }
-
-                    // Change Rooms Markup only
-                    if (indx > 0 && data.resc[indx] && $('#myRescId').length > 0) {
-
-                        $('#rmChgMsg').text('').hide();
-                        $('#rmDepMessage').text('').hide();
-
-                        var idResc = $('#myRescId').data('idresc'),
-                            priceModel = $('#myRescId').data('pmdl');
-
-                        if (data.resc[idResc].rate !== data.resc[indx].rate && priceModel === 'b') {
-                            $('#rmChgMsg').text('The room rate is different.').show('fade');
-                        }
-
-                        if (data.resc[idResc].key !== data.resc[indx].key) {
-                            var rdmessage = '';
-
-                            $('#spnDepMsg').hide();
-                            $('#selDepDisposition').show('fade');
-
-                            if (data.resc[indx].key == 0) {
-                                if ($('#kdPaid').data('amt') != '0') {
-                                    rdmessage = 'There is no deposit for this room.  Set the Deposit Status (above) accordingly.';
-                                }
-                            } else {
-                                rdmessage = 'The deposit for this room is $' + data.resc[indx].key.toFixed(2).toString();
-                            }
-
-                            $('#rmDepMessage').text(rdmessage).show('fade');
-
-                        } else {
-                            $('#selDepDisposition').hide();
-                            $('#spnDepMsg').show('fade');
-
-                        }
-                    }
-
-                    $('#selRateCategory').change();
-                });
-
-                $('#selResource').change();
-
-                $('#resvChangeDate').datepicker('option', 'onClose', function (dateText) {
-                    $('#rbReplaceRoomnew').prop('checked', true);
-                    if (dateText !== '') {
-                        getVisitRoomList(idVisit, visitSpan, $('#resvChangeDate').val(), $('#selResource'));
-                    }
-                });
-            }
-    		*/
     
             // Financial Application
             var $btnFapp = $('#btnFapp');
@@ -743,6 +672,17 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     if (verifyAmtTendrd() === false) {
         return;
     }
+
+    // Check number days for Visit extension
+    if ($('.hhk-extVisitSw').length > 0) {
+	
+		if ($('#extendCb').prop('checked') && $('#extendDays').val() < 1) {
+			$('#extendDays').addClass('ui-state-error');
+			flagAlertMessage('Weekend Leave days must be filled in. ', 'error');
+			return;
+		}
+	}
+
 
     // Checkout check boxes, one per active guest.
     $('input.hhk-ckoutCB').each(function() {

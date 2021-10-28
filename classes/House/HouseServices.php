@@ -222,7 +222,9 @@ class HouseServices {
 
         } else {
             $mkup = HTMLContainer::generateMarkup('div',
-            		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates) . $mkup, array('id'=>'divksStays'));
+            		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
+                    . $mkup,
+                array('id'=>'divksStays'));
 
             // Show fees if not hf = hide fees.
             if ($action != 'hf') {
@@ -409,12 +411,7 @@ class HouseServices {
                         $extendReturnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_STRING);
                     }
 
-                    $returning = TRUE;
-                    if (isset($post['noReturnRb'])) {
-                        $returning = FALSE;
-                    }
-
-                    $reply .= $visit->endLeave($dbh, $returning, $extendReturnDate);
+                    $reply .= $visit->endLeave($dbh, $extendReturnDate);
                     $returnCkdIn = TRUE;
                 }
 
@@ -1627,3 +1624,4 @@ class HouseServices {
     }
 
 }
+?>

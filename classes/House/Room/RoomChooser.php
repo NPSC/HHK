@@ -2,13 +2,12 @@
 
 namespace HHK\House\Room;
 
-use HHK\Purchase\{FinAssistance, VisitCharges, PaymentChooser};
+use HHK\Purchase\{FinAssistance, VisitCharges};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\House\Constraint\{ConstraintsReservation, ConstraintsVisit};
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\Resource\AbstractResource;
 use HHK\House\Visit\Visit;
-use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\SysConst\DefaultSettings;
 use HHK\SysConst\{GLTableNames, ReservationStatus, VisitStatus};

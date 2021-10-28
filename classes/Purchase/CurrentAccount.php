@@ -184,9 +184,6 @@ class CurrentAccount {
 
     public function getTotalCharged() {
         
-        $roomCharge = $this->getRoomCharge();
-        $roomFeeBalance = $this->getRoomFeeBalance();
-        
         return $this->getRoomCharge() + $this->getItemTaxAmt(ItemId::Lodging, $this->getRoomFeeBalance())
                 + $this->getAdditionalCharge() + $this->getAdditionalChargeTax()
                 + $this->getUnpaidMOA()

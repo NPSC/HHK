@@ -13,9 +13,7 @@ use HHK\Note\Note;
 use HHK\Incident\ListReports;
 use HHK\Incident\Report;
 use HHK\House\Hospital\{Hospital, HospitalStay};
-?>
 
-<?php
 /**
  * ws_resv.php
  *

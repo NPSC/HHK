@@ -4,7 +4,6 @@ namespace HHK\House\GLCodes;
 
 use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode};
 use HHK\SFTPConnection;
-use HHK\Exception\RuntimeException;
 use HHK\SysConst\ItemType;
 
 class GLCodes {

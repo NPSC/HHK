@@ -9,7 +9,6 @@ use HHK\Exception\RuntimeException;
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
 use HHK\HTMLControls\HTMLTable;
-use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\Labels;
 
