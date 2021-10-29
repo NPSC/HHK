@@ -318,9 +318,7 @@ class VisitViewer {
      */
     public static function createStaysMarkup(\PDO $dbh, $idResv, $idVisit, $span, $idPrimaryGuest, $isAdmin, $idGuest, $labels, $action = '', $coDates = []) {
 
-        $uS = Session::getInstance();
-
-        $includeAction = FALSE;
+        $includeActionHdr = FALSE;
         $useRemoveHdr = FALSE;
         $ckOutTitle = '';
         $sTable = new HTMLTable();
@@ -342,8 +340,8 @@ class VisitViewer {
             $numberRows = count($rows);
         }
         
-        
         // cherry pick the checked in stays.
+        // Add them to the stays table.
         if ($visitStatus == VisitStatus::CheckedIn) {
             
             $ckOutTitle = "Exp'd Check Out";
@@ -352,7 +350,7 @@ class VisitViewer {
                 
                 if ($r['Status'] == VisitStatus::CheckedIn) {
                     
-                    $bodyTr = self::createStayRowMarkup($r, $numberRows, $action, $idGuest, $coDates, $idPrimaryGuest, $useRemoveHdr, $includeAction);
+                    $bodyTr = self::createStayRowMarkup($r, $numberRows, $action, $idGuest, $coDates, $idPrimaryGuest, $useRemoveHdr, $includeActionHdr);
                     $sTable->addBody($bodyTr);
                     $ckinRows[$k] = 'y';
                     
@@ -377,15 +375,15 @@ class VisitViewer {
             }
         }
 
+        // Add the rest to the stays table, skipping the checked-ins.
         foreach ($rows as $j => $r) {
 
             if (!isset($ckinRows[$j])) {
             
-                $bodyTr = self::createStayRowMarkup($r, $numberRows, $action, $idGuest, $coDates, $idPrimaryGuest, $useRemoveHdr, $includeAction);
+                $bodyTr = self::createStayRowMarkup($r, $numberRows, $action, $idGuest, $coDates, $idPrimaryGuest, $useRemoveHdr, $includeActionHdr);
                 $sTable->addBody($bodyTr);
             }
         }
-        
 
         // Table header
         $th = ($hdrPgRb == '' ? '' : $hdrPgRb)
@@ -395,6 +393,7 @@ class VisitViewer {
             . HTMLTable::makeTh('Room')
             . HTMLTable::makeTh($chkInTitle);
 
+        // 'Add Guest' button
         if ($action == '') {
             $th .= HTMLTable::makeTh($ckOutTitle) . HTMLTable::makeTh('Nights');
 
@@ -403,7 +402,8 @@ class VisitViewer {
 
         }
 
-        if ($includeAction) {
+        // 'Checkout All' button
+        if ($includeActionHdr) {
 
             $td = 'Check Out';
 
@@ -416,6 +416,7 @@ class VisitViewer {
             $th .= HTMLTable::makeTh($td);
         }
 
+        // add 'Remove' checkbox
         if ($useRemoveHdr) {
             $th .= HTMLTable::makeTh('Remove');
         }
@@ -433,7 +434,7 @@ class VisitViewer {
 
     }
     
-    protected static function createStayRowMarkup($r, $numberRows, $action, $idGuest, $coDates, &$idPrimaryGuest, &$useRemoveHdr, &$includeAction) {
+    protected static function createStayRowMarkup($r, $numberRows, $action, $idGuest, $coDates, &$idPrimaryGuest, &$useRemoveHdr, &$includeActionHdr) {
         
         $uS = Session::getInstance();
         $days = 0;
@@ -472,7 +473,7 @@ class VisitViewer {
             
             $pgAttrs = array('name'=>'rbPriGuest', 'type'=>'radio', 'class'=>'hhk-feeskeys', 'title'=>'Make the ' . Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'));
             
-            // Only set the first instance of any guest.
+            // Only set the first instance of primary guest.
             if ($r['idName'] == $idPrimaryGuest ) {
                 $pgAttrs['checked'] = 'checked';
                 $idPrimaryGuest = 0;
@@ -508,8 +509,9 @@ class VisitViewer {
                 $ckOutDate = HTMLInput::generateMarkup(date('M j, Y', strtotime($r['Expected_Co_Date'])), array('id' => 'stayExpCkOut_' . $r['idName'], 'name' => '[stayExpCkOut][' . $r['idName'] . ']', 'class' => 'ckdateFut hhk-expckout', 'readonly'=>'readonly'));
                 $actionButton = HTMLInput::generateMarkup('', $cbAttr) . $getCkOutDate;
                 
+                //
                 if ($action == 'co' || $action == 'ref' || $action == '') {
-                    $includeAction = TRUE;
+                    $includeActionHdr = TRUE;
                 }
                 
             } else {
@@ -584,8 +586,8 @@ class VisitViewer {
         }
         
         
-        // Action button
-        $tr .=  ($includeAction === TRUE ? HTMLTable::makeTd($actionButton) : "");
+        // Action button column
+        $tr .=  ($includeActionHdr === TRUE ? HTMLTable::makeTd($actionButton) : "");
         
         // Remove button - only if more than one guest is staying
         if ($action == ''
@@ -939,11 +941,21 @@ class VisitViewer {
         $rows = EditRS::select($dbh, $visitRS, array($visitRS->idVisit, $visitRS->Span));
 
         if (count($rows) != 1) {
-            return 'The Visit Span is not found.  ';
+            return 'The Visit Span is not found.  idVisit=' . $idVisit . ', span=' .$span;
         }
 
         EditRS::loadRow($rows[0], $visitRS);
 
+        // Load stays
+        $stayRs = new StaysRS();
+        $stayRs->idVisit->setStoredVal($idVisit);
+        $stayRs->Visit_Span->setStoredVal($span);
+        $stayRows = EditRS::select($dbh, $stayRs, array($stayRs->idVisit, $stayRs->Visit_Span));
+        
+        if (count($stayRows) < 2) {
+            return 'Cannot remove the last stay in the visit span.  ';
+        }
+        
         // Span dates
         $spanStartDT = new \DateTime($visitRS->Span_Start->getStoredVal());
         $spanStartTime = $spanStartDT->format('H:i:s');
@@ -962,11 +974,7 @@ class VisitViewer {
 
         $spanEndDT->setTime(0, 0, 0);
 
-        $stayRs = new StaysRS();
-        $stayRs->idVisit->setStoredVal($idVisit);
-        $stayRs->Visit_Span->setStoredVal($span);
-        $stayRows = EditRS::select($dbh, $stayRs, array($stayRs->idVisit, $stayRs->Visit_Span));
-
+        
         foreach ($stayRows as $st) {
 
             if ($st['idStays'] == $idStay) {
@@ -1550,5 +1558,41 @@ class VisitViewer {
         }
     }
 
+    public static function changeVisitFee(\PDO $dbh, $visitFeeOption, Visit $visit) {
+        
+        $uS = Session::getInstance();
+        $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
+        $reply = '';
+        
+        if (isset($vFees[$visitFeeOption])) {
+            
+            $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
+            
+            if ($resv->isNew() === FALSE) {
+                
+                if ($resv->getVisitFee() != $vFees[$visitFeeOption][2]) {
+                    // visit fee is updated.
+                    
+                    $visitCharge = new VisitCharges($visit->getIdVisit());
+                    $visitCharge->sumPayments($dbh);
+                    
+                    if ($visitCharge->getVisitFeesPaid() > 0) {
+                        // Change to no visit fee, already paid fee
+                        $reply .= ' Return Cleaning Fee Payment and delete the invoice before changing it.  ';
+                        
+                    } else {
+                        
+                        $resv->setVisitFee($vFees[$visitFeeOption][2]);
+                        $resv->saveReservation($dbh, $visit->getIdRegistration(), $uS->username);
+                        
+                        $reply .= 'Cleaning Fee Setting Updated.  ';
+                    }
+                }
+            }
+        }
+        
+        return $reply;
+        
+    }
 }
 ?>
