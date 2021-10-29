@@ -27,6 +27,8 @@ try {
 $uS = Session::getInstance();
 
 $labels = Labels::getLabels();
+$dbh = $wInit->dbh;
+$demographics = readGenLookupsPDO($dbh, 'Demographics');
 
 if(isset($_GET['cmd'])){
     $cmd = filter_var($_GET['cmd'],FILTER_SANITIZE_STRING);
@@ -41,7 +43,7 @@ if(isset($_GET['cmd'])){
             array( 'db' => 'Referral Agent', 'dt' => 'Referral Agent'),
             array( 'db' => 'Ethnicity', 'dt' => 'Ethnicity'),
             array( 'db' => 'Income_Bracket', 'dt' => 'Income_Bracket'),
-            array( 'db' => 'Adjustment', 'dt' => 'Adjustment'),
+            array( 'db' => 'Age_Bracket', 'dt' => 'Age_Bracket'),
             array( 'db' => 'Waitlist Notes', 'dt'=> 'Waitlist Notes')
         );
         echo json_encode(SSP::simple($_REQUEST, $wInit->dbh, 'vdaily_waitlist', 'idReservation', $columns));
@@ -83,6 +85,10 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
         var mrnLabel = '<?php echo $labels->getString('Hospital', 'MRN', 'MRN'); ?>';
         var roomLabel = '<?php echo $labels->getString('Hospital', 'roomNumber', 'Room'); ?>';
         var referralAgentLabel = '<?php echo $labels->getString('Hospital', 'referralAgent'); ?>';
+        var ethnicityLabel = '<?php echo (isset($demographics['Ethnicity']['Description']) ? $demographics['Ethnicity']['Description'] : 'Ethnicity'); ?>';
+        var incomeBracketLabel = '<?php echo (isset($demographics['Income_Bracket']['Description']) ? $demographics['Income_Bracket']['Description'] : 'Income Bracket'); ?>';
+        var ageBracketLabel = '<?php echo (isset($demographics['Age_Bracket']['Description']) ? $demographics['Age_Bracket']['Description'] : 'Age Bracket'); ?>';
+
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
         var waitlistCols = [
             {data: 'MRN', 'title': mrnLabel },
@@ -104,9 +110,9 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
             },
             {data: 'Room Number', title: roomLabel},
             {data: 'Referral Agent', title: referralAgentLabel},
-            {data: 'Ethnicity', title: 'Ethnicity'},
-            {data: 'Income_Bracket', title: 'Income Bracket'},
-            {data: 'Adjustment', title: 'Adjustment'},
+            {data: 'Ethnicity', title: ethnicityLabel},
+            {data: 'Income_Bracket', title: incomeBracketLabel},
+            {data: 'Age_Bracket', title: ageBracketLabel},
             {data: 'Waitlist Notes', title: 'Waitlist Notes'}
         ];
 
