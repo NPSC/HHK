@@ -3,7 +3,7 @@ function isNumber(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-var fixedRate = '<?php echo RoomRateCategories::Fixed_Rate_Category; ?>';
+var fixedRate = $('#fixedRate').val();
 var savedRow;
 
 function getRoomFees(cat) {

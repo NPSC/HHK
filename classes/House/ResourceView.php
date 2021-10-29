@@ -3,6 +3,7 @@
 namespace HHK\House;
 
 use HHK\House\Attribute\Attributes;
+use HHK\Purchase\RoomRate;
 use HHK\SysConst\AttributeTypes;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
@@ -26,6 +27,7 @@ use HHK\SysConst\VisitStatus;
 use HHK\SysConst\RoomState;
 use HHK\Notes;
 use HHK\DataTableServer\SSP;
+use HHK\Purchase\PriceModel\AbstractPriceModel;
 
 /**
  * ResourceView.php
@@ -153,7 +155,7 @@ order by r.Title;");
 
 
         $stmt = $dbh->query("Select '' as `Edit`, r.idRoom as `Id`, r.Title, g.Description as `Type`, g3.Description as `Category`, g7.Description as `Report Category`, r.Max_Occupants as `Max`,
-r.Floor, r.Phone, g4.Description as `Static Rate`, g6.Description as `Clean Cycle` $depositCol
+r.Floor, r.Phone, g4.Description as `Static Rate`, ifnull(rr.Title, '') as `Default Rate` , g6.Description as `Clean Cycle` $depositCol
 from room r
 left join gen_lookups g on g.`Table_Name`='Room_Type' and g.`Code` = r.`Type`
 left join gen_lookups g3 on g3.`Table_Name`='Room_Category' and g3.`Code`=r.Category
@@ -162,6 +164,7 @@ left join gen_lookups g5 on g5.`Table_Name`='Key_Deposit_Code' and g5.`Code`=r.K
 left join gen_lookups g6 on g6.`Table_Name` = 'Room_Cleaning_Days' and g6.`Code` = r.Cleaning_Cycle_Code
 left join gen_lookups g7 on g7.`Table_Name` = 'Room_Rpt_Cat' and g7.`Code` = r.Report_Category
 left join location l on r.idLocation = l.idLocation
+left join room_rate rr on r.Default_Rate_Category = rr.FA_Category and rr.`Status` = 'a'
 order by r.Title;");
 
         $numResc = $stmt->rowCount();
@@ -198,6 +201,7 @@ order by r.Title;");
             'Floor' => '',
             'Phone' => '',
             'Static Rate' => '',
+            'Default Rate' => '',
             'Clean Cycle' => ''
             );
 
@@ -535,11 +539,18 @@ order by r.Title;");
         }
         if (isset($post['selRateCode'])) {
             $code = filter_var($post['selRateCode'], FILTER_SANITIZE_STRING);
-
+            
             $roomRs->Rate_Code->setNewVal($code);
-
+            
         }
-
+        
+        if (isset($post['selRateCat'])) {
+            $code = filter_var($post['selRateCat'], FILTER_SANITIZE_STRING);
+            
+            $roomRs->Default_Rate_Category->setNewVal($code);
+            
+        }
+        
         if (isset($post['selLocId'])) {
             $idLoc = intval(filter_var($post['selLocId'], FILTER_SANITIZE_NUMBER_INT));
             $roomRs->idLocation->setNewVal($idLoc);
@@ -711,6 +722,9 @@ order by r.Title;");
         $cleaningCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         $room = new Room($dbh, 0, $roomRs);
+        
+        $rateCategories = RoomRate::makeSelectorOptions(AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
+        
 
         $cls = 'rmSave' . $room->getIdRoom();
 
@@ -730,9 +744,12 @@ order by r.Title;");
             . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Floor->getStoredVal(), array('id'=>'txtFloor', 'class'=>$cls, 'size'=>'4')), array('style'=>'padding-right:0;padding-left:0;'))
             // phone
             . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Phone->getStoredVal(), array('id'=>'txtPhone', 'class'=>$cls . ' hhk-phoneInput', 'size'=>'10')), array('style'=>'padding-right:0;padding-left:0;'))
-            // rate
+            // Static rate
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
                     HTMLSelector::doOptionsMkup(removeOptionGroups($rateCodes), $room->getRateCode(), FALSE), array('id'=>'selRateCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
+            // Default rate category
+            . HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $room->getDefaultRateCategory(), TRUE), array('id'=>'selRateCat', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
             // Cleaning days
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
                     HTMLSelector::doOptionsMkup(removeOptionGroups($cleaningCodes), $room->getCleaningCycleCode(), FALSE), array('id'=>'selCleanCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'));

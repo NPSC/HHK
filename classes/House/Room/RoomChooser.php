@@ -284,6 +284,7 @@ class RoomChooser {
             $resArray[$rc->getIdResource()] = array(
                 "maxOcc" => $rc->getMaxOccupants(),
                 "rate" => $assignedRate,
+                'defaultRateCat' => $rc->getDefaultRoomCategory(),
                 "title" => $rc->getTitle(),
                 'key' => $rc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]),
                 'status' => 'a',
@@ -295,10 +296,11 @@ class RoomChooser {
         $resArray['0'] = array(
             "maxOcc" => 0,
             "rate" => 0,
+            'defaultRateCat' => '',
             "title" => '',
             'key' => 0,
             'status' => '',
-            'merchant' => ''
+            'merchant' => '',
         );
 
         return $resArray;

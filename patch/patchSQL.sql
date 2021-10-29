@@ -52,3 +52,8 @@ REPLACE INTO `template_tag` (`Doc_Name`,`Tag_Title`,`Tag_Name`) values
 ;
 
 UPDATE `template_tag` SET `Tag_Title` = 'Total Amount' WHERE `Doc_Name` = 'c' AND `Tag_Name` = "${Amount}";
+
+ALTER TABLE `room` DROP COLUMN `Rate`;
+
+ALTER TABLE `room` ADD COLUMN `Default_Rate_Category` VARCHAR(5) NOT NULL DEFAULT '' AFTER `Rate_Code`;
+

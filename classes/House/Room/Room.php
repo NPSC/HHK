@@ -93,8 +93,8 @@ class Room {
         return $this->roomRS->Report_Category->getStoredVal();
     }
 
-    public function getRate() {
-        return $this->roomRS->Rate->getStoredVal();
+    public function getDefaultRateCategory() {
+        return $this->roomRS->Default_Rate_Category->getStoredVal();
     }
 
     public function getRateCode() {

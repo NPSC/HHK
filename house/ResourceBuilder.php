@@ -2224,6 +2224,7 @@ $resultMessage = $alertMsg->createMarkup();
 		</div>
 		<div id="statEvents" class="hhk-tdbox hhk-visitdialog"
 			style="font-size: .9em;"></div>
+		<input type="hidden" id='fixedRate' value="<?php RoomRateCategories::Fixed_Rate_Category;?>" />
 	</div>
 	<!-- div id="contentDiv"-->
 </body>
