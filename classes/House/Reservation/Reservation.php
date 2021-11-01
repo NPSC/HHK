@@ -78,14 +78,14 @@ class Reservation {
 
 
         // idResv = 0 ------------------------------
-        
+
         $hasNameGuestRecord = FALSE;
 
         // if we have a member id, is them in the name_guest table?
         if ($rData->getId() > 0) {
         	$stmt = $dbh->query("Select count(*) from name_guest where idName = " . $rData->getId());
         	$rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-        	
+
         	if ($rows[0][0] > 0) {
         		$hasNameGuestRecord = TRUE;
         	}
@@ -105,7 +105,7 @@ class Reservation {
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
 
     	$uS = Session::getInstance();
-    	
+
     	// Load reservation
         $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`, ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
 FROM reservation r
@@ -233,12 +233,12 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     ->setDepartureDT($expDepDT);
 
         } else if ($this->reservRs->Expected_Arrival->getStoredVal() == '') {
-        	
+
         	$uS = Session::getInstance();
         	$nowDT = new \DateTime();
         	$extendHours = intval($uS->ExtendToday);
-        	
-        	
+
+
         	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) <= $extendHours) {
         		$nowDT->sub(new \DateInterval('P1D'));
         		$nowDT->setTime(16, 0);
@@ -352,7 +352,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     public static function updateAgenda(\PDO $dbh, $post) {
 
-        // decifer posts
+        // decipher posts
         if (isset($post['dt1']) && isset($post['dt2']) && isset($post['mems'])) {
 
             $labels = Labels::getLabels();
@@ -759,7 +759,7 @@ where rg.idReservation =" . $r['idReservation']);
         if ($uS->UseWLnotes === FALSE && $resv->isActive()) {
             $tbl2->addBodyTr(HTMLTable::makeTd('Registration Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40')),array('colspan'=>'3')));
         }
-        
+
         //Ribbon Note
         $tbl2->addBodyTr(HTMLTable::makeTd('Ribbon Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLInput::generateMarkup($resv->getNotes(), array('name'=>'txtRibbonNote', 'maxlength'=>'20')),array('colspan'=>'3')));
 
@@ -1109,12 +1109,12 @@ WHERE
 
         return $oldResvId;
     }
-    
+
     /*
      *
      */
     protected function findLastVisit(\PDO $dbh, $class = '') {
-    	
+
     	if ($this->reserveData->getIdPsg() < 1) {
     		return '';
     	}
@@ -1126,7 +1126,7 @@ WHERE
 	(SELECT  MAX(v.Span_Start)
 		FROM visit v LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
 	WHERE rg.idPsg = " . $this->reserveData->getIdPsg() .")");
-    	
+
     	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$mkup = '';
 

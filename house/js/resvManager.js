@@ -1544,7 +1544,6 @@ function resvManager(initData, options) {
                         }
                     }
 
-
             });
         }
     }
@@ -1768,6 +1767,13 @@ function resvManager(initData, options) {
                 
                 $('#selResource').change(function () {
                     
+					// Room Default Rate
+					var room = rooms[$('#selResource').val()];
+					
+					if (room.defaultRateCat && room.defaultRateCat != '' && ($('#selResvStatus').val() === 'w' || $('#selResvStatus').val() === 'uc')) {
+						$('#selRateCategory').val(room.defaultRateCat);
+					}
+					
                     $('#selRateCategory').change();
 
                     var selected = $("option:selected", this);
@@ -1786,6 +1792,7 @@ function resvManager(initData, options) {
                         // Card on file
                         setupGatewayChooser('g')
                     }
+					
                 });
             }
         }

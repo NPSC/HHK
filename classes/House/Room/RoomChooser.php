@@ -232,7 +232,7 @@ class RoomChooser {
             HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
             . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
                 . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'margin-left: 0.8em; display:none'))));
-        
+
         $table->addBodyTr(
             HTMLTable::makeTd('', array('colspan'=>'2', 'id'=>'rmChgMsg', 'style'=>'color:red;display:none')));
 
@@ -358,7 +358,7 @@ class RoomChooser {
     }
 
     protected function createChooserMarkup(\PDO $dbh, $constraintsDisabled, $classId = '') {
-        
+
         $resOptions = $this->makeRoomSelectorOptions();
 
         $errorMessage = $this->getRoomSelectionError($dbh, $resOptions);
@@ -585,6 +585,7 @@ class RoomChooser {
         $cat = '';
         $catTitle = '';
         $catRate = 0;
+        $defaultCat = '';
         $nites = 1;
         $guestNites = 1;
         $numberGuests = 1;

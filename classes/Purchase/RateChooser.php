@@ -4,6 +4,7 @@ namespace HHK\Purchase;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable, HTMLSelector};
 use HHK\House\Reservation\Reservation_1;
+use HHK\House\Resource\AbstractResource;
 use HHK\House\Visit\Visit;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\SysConst\{DefaultSettings, GLTypeCodes, ItemId, RoomRateCategories, VisitStatus};
@@ -114,7 +115,7 @@ class RateChooser {
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $vRs->idRoom_rate->getStoredVal());
 
         $adjSel = $this->makeRateAdjustSel();
-        
+
         $rateTbl = new HTMLTable();
 
         if ($isAdmin) {
@@ -545,11 +546,13 @@ class RateChooser {
 
         $roomRateCategory = $resv->getRoomRateCategory();
 
+        // Rate not set yet?
         if ($resv->getRoomRateCategory() == '') {
 
+            // First assign house default
             $roomRateCategory = $uS->RoomRateDefault;
 
-            // Look for an approved rate
+            // Next, Look for an approved rate
             if ($idRegistration > 0 && $uS->IncomeRated) {
 
                 $fin = new FinAssistance($dbh, $idRegistration);
@@ -561,11 +564,7 @@ class RateChooser {
         }
 
         // Check for rate glide
-        $dayCredit = self::setRateGlideDays($dbh, $resv->getIdRegistration(), $this->rateGlideExtend);
-
-        //
-        // Javascript calculates the amount based on number of days and number of guests.
-        //
+        //$dayCredit = 0;  //self::setRateGlideDays($dbh, $resv->getIdRegistration(), $this->rateGlideExtend);
 
         $attrFixed = array('class'=>'hhk-fxFixed');
         if($uS->RoomPriceModel == ItemPriceCode::None){
@@ -573,7 +572,7 @@ class RateChooser {
         }else{
             $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'');
         }
-        
+
         // Fixed rate?
         if ($roomRateCategory == DefaultSettings::Fixed_Rate_Category) {
 
@@ -585,7 +584,7 @@ class RateChooser {
             $attrFixed['style'] = 'display:none;';
             $fixedRate = '';
         }
-        
+
         if($uS->RoomPriceModel == ItemPriceCode::None){
             $attrAdj['style'] .= 'display:none;';
         }
@@ -595,7 +594,7 @@ class RateChooser {
         if ($this->payVisitFee) {
             $vFeeMkup = $this->makeVisitFeeSelector($this->makeVisitFeeArray($dbh), $resv->getVisitFee());
         }
-        
+
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $resv->getIdRoomRate());
         $rateSelectorAttrs = array('name'=>'selRateCategory', 'style'=>'display:table;');
 
@@ -622,9 +621,9 @@ class RateChooser {
         $rateSel = $this->makeRateSelControl(
                 HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $roomRateCategory, FALSE), $rateSelectorAttrs),
                 HTMLContainer::generateMarkup('span', '$' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'size'=>'4')), $attrFixed));
-        
+
         $adjSel = $this->makeRateAdjustSel($resv->getIdRateAdjust(), $resv->getRateAdjust());
-        
+
         $tbl->addBodyTr(
                 ($this->payVisitFee ? HTMLTable::makeTd($vFeeMkup, array('style'=>'text-align:center;')) : '')
             .HTMLTable::makeTd($rateSel, array('style'=>($uS->RoomPriceModel == ItemPriceCode::None ? 'display:none;':'')))
@@ -636,9 +635,9 @@ class RateChooser {
                 );
 
         // Add mention of rate glide credit days
-        if ($dayCredit > 0) {
-            $tbl->addBodyTr(HTMLTable::makeTd('(Estimated Total based on ' . $dayCredit . ' days of room rate glide.)', array('colspan'=>'4')));
-        }
+//         if ($dayCredit > 0) {
+//             $tbl->addBodyTr(HTMLTable::makeTd('(Estimated Total based on ' . $dayCredit . ' days of room rate glide.)', array('colspan'=>'4')));
+//         }
 
         return $tbl->generateMarkup();
 
@@ -654,11 +653,11 @@ class RateChooser {
 
         return $tbl->generateMarkup(array('style'=>'border-style:none;padding:0;'));
     }
-    
+
     protected function makeRateAdjustSel($sel = '', $amt = 0){
         $uS = Session::getInstance();
         $adjustments = (isset($uS->guestLookups['Room_Rate_Adjustment']) ? $uS->guestLookups['Room_Rate_Adjustment'] : array());
-        
+
         if(($sel == '' || $sel == '0') && $amt < 0){
             $options = HTMLContainer::generateMarkup('option', '', array('value'=>'0', 'data-amount'=>'0'));
             $options .= HTMLContainer::generateMarkup('option', abs($amt) . '% off*', array('value'=>'keyed', 'data-amount'=>$amt, 'selected'=>'selected'));
@@ -667,7 +666,7 @@ class RateChooser {
         }else{
             $options = HTMLContainer::generateMarkup('option', '', array('value'=>'', 'data-amount'=>'0'));
         }
-        
+
         foreach($adjustments as $adjust){
             if($sel == $adjust[0]){
                 $options .= HTMLContainer::generateMarkup('option', $adjust[1], array('value'=>$adjust[0], 'data-amount'=>$adjust[2], 'selected'=>'selected'));
@@ -675,7 +674,7 @@ class RateChooser {
                 $options .= HTMLContainer::generateMarkup('option', $adjust[1], array('value'=>$adjust[0], 'data-amount'=>$adjust[2]));
             }
         }
-        
+
         return HTMLSelector::generateMarkup($options, array('id'=>'seladjAmount', 'name'=>'seladjAmount'));
     }
 
