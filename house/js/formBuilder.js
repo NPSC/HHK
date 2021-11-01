@@ -35,7 +35,7 @@
     			"label": (options.labels.diagnosis || 'Diagnosis'),
     			"placeholder": (options.labels.diagnosis || 'Diagnosis'),
     			"className": "form-select",
-    			"name": "Diagnosis",
+    			"name": "hospital.diagnosis",
     			"width": "col-md-2",
     			"dataSource":"diagnosis",
     			"multiple": false,
@@ -43,10 +43,10 @@
   			},
   			{
     			"type": "select",
-    			"label": (options.labels.unit || 'Unit'),
-    			"placeholder": (options.labels.unit || 'Unit'),
+    			"label": (options.labels.location || 'Unit'),
+    			"placeholder": (options.labels.location || 'Unit'),
     			"className": "form-select",
-    			"name": "Unit",
+    			"name": "hospital.location",
     			"width": "col-md-2",
     			"dataSource":"unit",
     			"multiple": false,
@@ -156,7 +156,7 @@
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control",
+    				"className": "form-control hhk-phoneInput",
     				"name": "patient.phone",
     				"width": "col-md-6"
     			},
@@ -194,17 +194,19 @@
   				},
   				{
 					"type": "text",
+					"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control",
+    				"className": "form-control hhk-phoneInput",
     				"name": "emerg.phone",
     				"width": "col-md-2"
   				},
   				{
 					"type": "text",
+					"subtype": "tel",
     				"label": "Alternate Phone",
     				"placeholder": "Alternate Phone",
-    				"className": "form-control",
+    				"className": "form-control hhk-phoneInput",
     				"name": "emerg.alternate",
     				"width": "col-md-2"
   				},
@@ -399,7 +401,7 @@
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control",
+    				"className": "form-control hhk-phoneInput",
     				"name": "guests.g0.phone",
     				"width": "col-md-3",
     				"group": "guest"
@@ -450,7 +452,7 @@
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control",
+    				"className": "form-control hhk-phoneInput",
     				"name": "guests.g1.phone",
     				"width": "col-md-3",
     				"group": "guest"
@@ -501,7 +503,7 @@
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control",
+    				"className": "form-control hhk-phoneInput",
     				"name": "guests.g2.phone",
     				"width": "col-md-3",
     				"group": "guest"
@@ -552,7 +554,7 @@
     				"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control",
+    				"className": "form-control hhk-phoneInput",
     				"name": "guests.g3.phone",
     				"width": "col-md-3",
     				"group": "guest"
@@ -656,9 +658,10 @@
   				},
   				{
 					"type": "text",
+					"subtype": "tel",
     				"label": "Phone",
     				"placeholder": "Phone",
-    				"className": "form-control",
+    				"className": "form-control hhk-phoneInput",
     				"name": "hospital.referralAgent.phone",
     				"width": "col-md-3",
   				},
@@ -1176,6 +1179,13 @@
 			navigator.clipboard.writeText(code)
 				.then(() => { alert("Embed Code Copied.") })
 				.catch((error) => { $(this).attr('title',`Copy failed! ${error}`).tooltip() })
+		});
+		
+		$wrapper.on('blur', '[contenteditable]', function(){
+			var val = encodeURI($(this).html());
+			$(this).html(val);
+			console.log(val);
+			console.log($(this).html());
 		});
 		
 		var onSave = function(event, formData){

@@ -96,7 +96,7 @@ class FormTemplate {
 
         //validate CSS
         $cssValidation = $this->validateCSS($style);
-        if ($cssValidation['error']) {
+        if (isset($cssValidation['error'])) {
             $validationErrors['cssserver'] = $cssValidation['error'];
         }else if(isset($cssValidation['valid']) && $cssValidation['valid'] == "false"){
             $validationErrors['css'] = $cssValidation;
