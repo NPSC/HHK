@@ -68,9 +68,9 @@ class StayingReservation extends CheckingIn {
     protected function createFamilyMarkup(\PDO $dbh) {
         
         $psgMembers = $this->reserveData->getPsgMembers();
-        
+                
         $this->reserveData->addConcurrentRooms($this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getSpanEndDT(), $this->reserveData->getResvPrompt()));
-        $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getIdPsg(), $this->reserveData->getSpanEndDT(), $this->reserveData->getIdVisit(), $this->reserveData->getSpan()));
+        $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getIdPsg(),$this->reserveData->getSpanEndDT(), $this->reserveData->getIdVisit(), $this->reserveData->getSpan()));
         
         $this->reserveData->setPsgMembers($psgMembers);
         
@@ -130,7 +130,7 @@ class StayingReservation extends CheckingIn {
         
         
         if ($this->reserveData->hasError()) {
-            return $this;
+            return;
         }
         
         // Does visit exist

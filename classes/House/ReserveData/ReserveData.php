@@ -531,18 +531,18 @@ class ReserveData {
     	return $this;
     }
     
-    public function setSpanStartDT($id) {
-        if ($id != '') {
-            $this->spanStartDT = new \DateTimeImmutable($id);
+    public function setSpanStartDT($strDate) {
+        if ($strDate != '') {
+            $this->spanStartDT = new \DateTimeImmutable($strDate);
         } else {
             $this->spanStartDT = $this->getArrivalDT();
         }
         return $this;
     }
 
-    public function setSpanEndDT($id) {
-        if ($id != '') {
-            $this->spanEndDT = new \DateTimeImmutable($id);
+    public function setSpanEndDT($strDate) {
+        if ($strDate != '') {
+            $this->spanEndDT = new \DateTimeImmutable($strDate);
         } else {
             $this->spanEndDT = $this->getDepartureDT();
         }
@@ -608,7 +608,7 @@ class ReserveData {
     	return $this;
     }
     
-    public function setArrivalDT($arrivalDT) {
+    public function setArrivalDT(\DateTime $arrivalDT) {
         $this->arrivalDT = $arrivalDT;
         return $this;
     }
@@ -621,7 +621,7 @@ class ReserveData {
         return $this;
     }
 
-    public function setDepartureDT($departureDate) {
+    public function setDepartureDT(\DateTime $departureDate) {
         $this->departureDT = $departureDate;
         return $this;
     }

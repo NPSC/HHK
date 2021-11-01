@@ -123,6 +123,29 @@ function syncTimeZone(\PDO $dbh)
     $dbh->exec("SET time_zone='$offset';");
 }
 
+/**
+ * Return a date with time = 0
+ *
+ * @param unknown $dateTime
+ * @throws Exception
+ * @return \DateTime|\DateTimeImmutable
+ */
+function justDate($dateTime) {
+    
+    if ($dateTime instanceof \DateTime) {
+        $dateTime->setTime(0,0,0);
+    } else if ($dateTime instanceof \DateTimeImmutable) {
+        $dateTime =  $dateTime->setTime(0,0,0);
+    } else if (is_string($dateTime)) {
+        $dateTime = new \DateTime($dateTime);
+        $dateTime->setTime(0,0,0);
+    } else {
+        throw new Exception('Not a date or string date. ');
+    }
+    
+    return $dateTime;
+}
+
 function stripslashes_gpc(&$value)
 {
     $value = stripslashes($value);
