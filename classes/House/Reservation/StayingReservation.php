@@ -23,10 +23,9 @@ use HHK\sec\Labels;
  */
 
 class StayingReservation extends CheckingIn {
-    
-    
+
     public function createMarkup(\PDO $dbh) {
-        
+
         if ($this->reserveData->getIdVisit() < 1 || $this->reserveData->getSpan() < 0) {
             throw new RuntimeException('The visit is not defined.');
         }
@@ -36,11 +35,11 @@ class StayingReservation extends CheckingIn {
         $this->reserveData->setResvSection($this->createAddGuestMarkup($dbh));
         
         return $this->reserveData->toArray();
-        
+
     }
-    
+
     public function save(\PDO $dbh, $post) {
-        
+
         // Check for new room
         if (isset($post['cbNewRoom'])) {
             // New Room
@@ -52,32 +51,32 @@ class StayingReservation extends CheckingIn {
             $post['span'] = 0;
             $post['rbPriGuest'] = 0;
             $post['resvCkinNow'] = 'yes';
-            
+
             $checkingIn = new ActiveReservation($this->reserveData, new ReservationRS(), new Family($dbh, $this->reserveData, TRUE));
             $checkingIn->save($dbh, $post);
             return $checkingIn;
-            
+
         } else {
             // Same room, just add the guests.
             $this->addGuestStay($dbh, $post);
         }
-        
+
         return $this;
     }
-    
+
     protected function createFamilyMarkup(\PDO $dbh) {
-        
+
         $psgMembers = $this->reserveData->getPsgMembers();
-                
+
         $this->reserveData->addConcurrentRooms($this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getSpanEndDT(), $this->reserveData->getResvPrompt()));
         $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getIdPsg(),$this->reserveData->getSpanEndDT(), $this->reserveData->getIdVisit(), $this->reserveData->getSpan()));
-        
+
         $this->reserveData->setPsgMembers($psgMembers);
-        
+
         $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData));
-        
+
     }
-    
+
     protected function createAddGuestMarkup(\PDO $dbh) {
         
         $uS = Session::getInstance();
