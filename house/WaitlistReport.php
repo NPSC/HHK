@@ -149,6 +149,16 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
             ]
         });
         
+        $table.rows().every( function ( rowIdx, tableLoop, rowLoop ) {
+    		var data = this.data();
+    		console.log(data);
+    		this
+        		.child(
+            		'test'
+        		)
+        	.show();
+		} );
+        
         $('#vcategory').append($table.buttons().container());
         
     });
