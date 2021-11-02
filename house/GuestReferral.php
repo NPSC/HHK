@@ -44,7 +44,7 @@ $idDoc = 0;
 $idPatient = -1;    // negative number triggers patient search.
 $patMkup = '';
 $guestMkup = '';
-$chosen = '';
+$chosen = ' Search';
 $continueLink = HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'register.php'));
 
 $datesMkup = '';
@@ -201,16 +201,20 @@ if ($idDoc > 0) {
                 <?php echo $datesMkup; ?>
                 </div>
                 <div id="PatientSection" style="font-size: .9em; min-width: 810px;"  class="ui-widget hhk-visitdialog mb-3">
-                    <div id="PatientHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3">
+                    <div id="PatientHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-top hhk-panel">
                     	<?php echo $labels->getString('MemberType', 'patient', 'Patient') . $chosen; ?>
                     </div>
-                    <?php echo $patMkup; ?>
-                    </div>
-                <div id="GuestSection" style="font-size: .9em; min-width: 810px; margin-top:50px;<?php echo $displayGuest; ?>"  class="ui-widget hhk-visitdialog mb-3">
-<!--                     <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"> -->
+                    <div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding:5px;">
+                    	<?php echo $patMkup; ?>
+                    	</div>
+                </div>
+                <div id="GuestSection" style="font-size: .9em; min-width: 810px;<?php echo $displayGuest; ?>"  class="ui-widget hhk-visitdialog mb-3">
+                    <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-top hhk-panel">
                     	<?php echo $labels->getString('MemberType', 'guest', 'Guest') . 's'; ?>
-<!--                     </div> -->
-                    <?php echo $guestMkup; ?>
+                    </div>
+                    <div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding:5px;">
+                    	<?php echo $guestMkup; ?>
+                    </div>
                 </div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >

@@ -267,6 +267,8 @@ table {
 }
 .hhk-origUserData {
 	color:blue;
+	background: #f8f8f8;
+	font-weight: bold;
 }
 textarea {
     padding: .3em;

@@ -341,6 +341,8 @@ if(isset($_GET['template'])){
 
             		var formRenderData = formRender.userData;
 
+					console.log(formRenderData);
+
             		$.ajax({
             	    	url : "ws_forms.php",
             	   		type: "POST",

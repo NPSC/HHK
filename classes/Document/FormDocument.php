@@ -176,8 +176,8 @@ group by g.Code order by g.Order';
                         $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid Email address.'];
                     }
                 }elseif($field->type == "text" && $field->subtype == "tel" && $field->userData[0] != ''){ //if phone field and not empty
-                    if(!filter_var($field->userData[0], FILTER_VALIDATE_INT)){
-                        $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be a valid phone number.'];
+                    if(!filter_var($field->userData[0], FILTER_SANITIZE_STRING) || !preg_match('/^([\(]{1}[0-9]{3}[\)]{1}[\.| |\-]{0,1}|^[0-9]{3}[\.|\-| ]?)?[0-9]{3}(\.|\-| )?[0-9]{4}$/', $field->userData[0])){
+                        $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' must be formatted as: (###) ###-####'];
                     }
                 }elseif($field->type == "text" && $field->userData[0] != ''){
                     $sanitized = filter_var($field->userData[0], FILTER_SANITIZE_STRING);

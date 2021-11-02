@@ -114,8 +114,8 @@ try {
             $formRenderData = '';
             if(isset($_POST['formRenderData'])){
                 try{
-                    json_decode(stripslashes($_REQUEST['formRenderData']));
-                    $formRenderData = stripslashes($_REQUEST['formRenderData']);
+                    json_decode($_REQUEST['formRenderData']);
+                    $formRenderData = $_REQUEST['formRenderData'];
                 }catch(\Exception $e){
 
                 }

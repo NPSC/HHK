@@ -633,7 +633,7 @@ class ReferralForm {
 	    $cols = ($uS->county ? 16 : 15);
 
 	    // Original data
-	    $tbl->addBodyTr(HTMLTable::makeTd('Referral Form Patient Submission:', array('colspan'=>$cols)));
+	    //$tbl->addBodyTr(HTMLTable::makeTd('Referral Form Patient Submission:', array('colspan'=>$cols)));
 
 	    $tbl->addBodyTr(
 	        HTMLTable::makeTd(HTMLInput::generateMarkup('0', $idArray))
@@ -659,10 +659,10 @@ class ReferralForm {
 	    if (count($this->patResults) > 0) {
 	        // $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'usePatContactData')).HTMLContainer::generateMarkup('label', ' Use this contact information', array('for'=>'usePatContactData')), array('colspan'=>$cols, 'style'=>'text-align:center;')));
 	        $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
-	        $tbl->addBodyTr(HTMLTable::makeTd('Matches Found in HHK:', array('colspan'=>$cols)));
+	        $tbl->addBodyTr(HTMLTable::makeTh('Matches Found in HHK', array('colspan'=>$cols, 'style'=>'text-align: left;')));
 	    } else {
-	        $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
-	        $tbl->addBodyTr(HTMLTable::makeTd('No Matches Found', array('colspan'=>$cols)));
+	        //$tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+	        //$tbl->addBodyTr(HTMLTable::makeTd('No Matches Found', array('colspan'=>$cols)));
 	    }
 
 	    // Searched data
