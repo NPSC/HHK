@@ -1764,16 +1764,16 @@ function resvManager(initData, options) {
             }
 
             if ($('#selResource').length > 0) {
-                
+
                 $('#selResource').change(function () {
-                    
+
 					// Room Default Rate
 					var room = rooms[$('#selResource').val()];
-					
-					if (room.defaultRateCat && room.defaultRateCat != '' && ($('#selResvStatus').val() === 'w' || $('#selResvStatus').val() === 'uc')) {
+
+					if (room.defaultRateCat && room.defaultRateCat != '' && ($('#selResvStatus').val() === 'w' || $('#selResvStatus').val() === 'uc' || $('#selResvStatus').val() === 'a')) {
 						$('#selRateCategory').val(room.defaultRateCat);
 					}
-					
+
                     $('#selRateCategory').change();
 
                     var selected = $("option:selected", this);
@@ -1784,7 +1784,7 @@ function resvManager(initData, options) {
                     } else {
                         $('#hhkroomMsg').text(selparent).show();
                     }
-                    
+
                     // Set merchant for payments
                     if ($('#selccgw').length > 0) {
                         setupGatewayChooser('')
@@ -1792,11 +1792,11 @@ function resvManager(initData, options) {
                         // Card on file
                         setupGatewayChooser('g')
                     }
-					
+
                 });
             }
         }
-        
+
         function setupGatewayChooser(idx) {
             var room = rooms[$('#selResource').val()];
             var notThere = true;
