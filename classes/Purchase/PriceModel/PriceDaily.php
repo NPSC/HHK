@@ -55,8 +55,14 @@ class PriceDaily extends AbstractPriceModel {
         if ($rrateRs->Reduced_Rate_1->getStoredVal() > 0) {
 
             $rate = (1 + $rateAdjust / 100) * $rrateRs->Reduced_Rate_1->getStoredVal();
-            $this->remainderAmt = $amount % $rate;
-            return floor($amount / $rate);
+            
+            if($rate > 0){
+                $this->remainderAmt = $amount % $rate;
+                return floor($amount / $rate);
+            }else{
+                $this->remainderAmt = 0;
+                return 0;
+            }
         }
 
         return 0;
