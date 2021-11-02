@@ -17,6 +17,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
 use HHK\sec\{Labels, SecurityComponent, Session};
 use HHK\Exception\RuntimeException;
+use HHK\Exception\NotFoundException;
 
 
 /**
@@ -118,7 +119,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) != 1) {
-            throw new RuntimeException("Reservation Id not found.  ");
+            throw new NotFoundException("Reservation not found.  ");
         }
 
         $rRs = new ReservationRS();

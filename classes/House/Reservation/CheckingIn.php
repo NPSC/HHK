@@ -19,6 +19,7 @@ use HHK\Purchase\{CheckinCharges, PaymentChooser, RateChooser};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\ReservationRS;
+use HHK\Exception\NotFoundException;
 
 /**
  * Description of CheckingIn
@@ -61,7 +62,7 @@ FROM reservation r
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         
         if (count($rows) != 1) {
-            throw new RuntimeException("Reservation Id not found.  ");
+            throw new NotFoundException("Reservation not found.  ");
         }
         
         $rRs = new ReservationRS();
