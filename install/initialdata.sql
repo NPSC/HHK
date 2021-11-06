@@ -533,6 +533,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true',''),
 ('CoTod','false','b','h','','Edit the time of day of a checkout',''),
 ('county','true','b','h','','Include the County for addresses',''),
+('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', '', 'CSS validator service', ''),
 ('DefaultCalEventColor', '', 's', 'c', '', 'Default event ribbon color for the calendar', ''),
 ('DefaultDays','21','i','h','','The Default number of following days for date range control',''),
 ('DefaultPayType','cc','s','f','','Use the Resource Builder',''),

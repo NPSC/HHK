@@ -90,3 +90,6 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Desc
 
 ALTER TABLE `reservation` 
 ADD COLUMN `idReferralDoc` INT(11) NOT NULL DEFAULT 0 AFTER `idResource`;
+
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', 'CSS validator service', '1');
+

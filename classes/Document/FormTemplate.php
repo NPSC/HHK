@@ -2,6 +2,7 @@
 
 namespace HHK\Document;
 
+use HHK\sec\Session;
 /**
  * FormTemplate.php
  *
@@ -125,10 +126,11 @@ class FormTemplate {
     }
 
     public function validateCSS($styles){
+        $uS = Session::getInstance();
         try{
             ini_set('default_socket_timeout', 10);
             $encodedStyle = urlencode($styles);
-            $url = 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=' . $encodedStyle;
+            $url = $uS->CssValidationService . $encodedStyle;
             $resp = file_get_contents($url);
             if($resp === FALSE){
                 return array('error'=>"Could not validate CSS: CSS Validator service could not be reached.");

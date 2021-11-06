@@ -652,8 +652,9 @@ try {
             $doc = '';
             if(isset($_REQUEST['doc'])) {
                 try{
-                    json_decode(stripslashes($_REQUEST['doc']));
-                    $doc = stripslashes($_REQUEST['doc']);
+                    // Use funciton to test the doc.
+                    json_decode($_REQUEST['doc']);
+                    $doc = $_REQUEST['doc'];
                 }catch(\Exception $e){
 
                 }

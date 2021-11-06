@@ -1182,10 +1182,10 @@
 		});
 		
 		$wrapper.on('blur', '[contenteditable]', function(){
-			var val = encodeURI($(this).html());
+			var val = $(this).html().replaceAll('"', "'");
 			$(this).html(val);
-			console.log(val);
-			console.log($(this).html());
+//			console.log(val);
+//			console.log($(this).html());
 		});
 		
 		var onSave = function(event, formData){
