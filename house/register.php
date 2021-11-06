@@ -177,7 +177,7 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital' || (strt
 
 	        $attrs = array('class'=>'spnHosp', 'data-id'=>$r['idHospital']);
 	        $attrs['style'] = 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';';
-	
+
 	        $colorKey .= HTMLContainer::generateMarkup('span', $r['Title'], $attrs);
     	}
     }
@@ -247,6 +247,12 @@ if ($uS->UseWLnotes) {
     $showWlNotes = FALSE;
 }
 
+$referralStatuses = "";
+if($uS->useOnlineReferral){
+    $referralStatuses = json_encode(readGenLookupsPDO($dbh, 'Referral_Form_Status', 'Order'));
+}
+
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -279,6 +285,7 @@ if ($uS->UseWLnotes) {
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo REFERRAL_VIEWER_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
@@ -329,6 +336,9 @@ if ($uS->UseWLnotes) {
                     <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>
                     <?php } ?>
                     <li><a href="#vwls">Wait List (<span id="spnNumWaitlist"></span>)</a></li>
+                    <?php if($uS->useOnlineReferral){ ?>
+                    <li><a href="#vreferrals"><?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?> (<span id="spnNumReferral"></span>)</a></li>
+                    <?php } ?>
                     <?php if ($isGuestAdmin) { ?>
                         <li><a href="#vactivity">Recent Activity</a></li>
                         <?php if ($showCharges) { ?>
@@ -371,6 +381,11 @@ if ($uS->UseWLnotes) {
                 <div id="vwls" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                     <?php echo $waitlist; ?>
                 </div>
+                <?php if($uS->useOnlineReferral){ ?>
+                <div id="vreferrals" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
+
+                </div>
+                <?php } ?>
                 <?php if ($isGuestAdmin) { ?>
                 <div id="vactivity" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                     <table><tr>
@@ -446,7 +461,7 @@ if ($uS->UseWLnotes) {
         <div id="statEvents" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;"></div>
         <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
         <div id="hsDialog" class="hhk-tdbox hhk-visitdialog hhk-hsdialog" style="display:none;font-size:.8em;"></div>
-        
+
         <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
@@ -458,6 +473,8 @@ if ($uS->UseWLnotes) {
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />
         <input  type="hidden" id="guestLabel" value='<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' />
         <input  type="hidden" id="visitorLabel" value='<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>' />
+        <input  type="hidden" id="referralFormTitleLabel" value='<?php echo $labels->getString('Register', 'onlineReferralTitle'); ?>' />
+        <input  type="hidden" id="reservationLabel" value='<?php echo $labels->getString('GuestEdit', 'reservationTitle'); ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />

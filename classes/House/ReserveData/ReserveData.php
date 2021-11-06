@@ -55,6 +55,7 @@ class ReserveData {
     protected $idPsg = 0;
     protected $idHospitalStay = 0;
     protected $idVisit = 0;
+    protected $idReferralDoc = 0;
     protected $span = 0;
     protected $spanStatus = '';
     protected $spanStartDT = NULL;
@@ -137,11 +138,11 @@ class ReserveData {
         if (isset($post['gstCoDate'])) {
         	$this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
         }
-        
+
         if (isset($post['schTerm'])) {
         	$this->setSearchTerm(filter_var($post['schTerm'], FILTER_SANITIZE_STRING));
         }
-        
+
         if (isset($post['mem'])) {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
@@ -309,6 +310,10 @@ class ReserveData {
         return $this->idVisit;
     }
 
+    public function getIdReferralDoc() {
+        return $this->idReferralDoc;
+    }
+
     public function getSpan() {
         return $this->span;
     }
@@ -350,7 +355,7 @@ class ReserveData {
     public function getPatBirthDateFlag() {
         return $this->patBirthDateFlag;
     }
-    
+
     public function getGuestBirthDateFlag() {
         return $this->guestBirthDateFlag;
     }
@@ -370,7 +375,7 @@ class ReserveData {
     public function getSearchTerm($p) {
     	 return $this->searchTerm;
     }
-    
+
     public function getResvEarlyArrDays() {
         return $this->resvEarlyArrDays;
     }
@@ -429,7 +434,7 @@ class ReserveData {
 
         return NULL;
     }
-    
+
     public function getFullName() {
     	return $this->fullName;
     }
@@ -516,6 +521,11 @@ class ReserveData {
         return $this;
     }
 
+    public function setIdReferralDoc($id) {
+        $this->idReferralDoc = $id;
+        return $this;
+    }
+
     public function setSpan($id) {
         $this->span = $id;
         return $this;
@@ -525,7 +535,7 @@ class ReserveData {
     	$this->spanStatus = $id;
     	return $this;
     }
-    
+
     public function setInsistCkinDemog($id) {
     	$this->insistCkinDemog = $id;
     	return $this;
@@ -602,7 +612,7 @@ class ReserveData {
     	$this->checkinSection = $p;
     	return $this;
     }
-    
+
     public function setSearchTerm($p) {
     	$this->searchTerm = $p;
     	return $this;

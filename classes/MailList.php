@@ -2,9 +2,9 @@
 
 namespace HHK;
 
-use HHK\SysConst\SalutationPurpose;
 use HHK\Admin\MemberSalutation\OrganizationSalutation;
 use HHK\Admin\MemberSalutation\IndividualSalutation;
+use HHK\SysConst\SalutationPurpose;
 
 /**
  * MailList.php

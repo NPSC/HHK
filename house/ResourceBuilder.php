@@ -32,6 +32,7 @@ use HHK\House\Attribute\Attributes;
 use HHK\Purchase\TaxedItem;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
+use HHK\Document\FormTemplate;
 
 /**
  * ResourceBuilder.php
@@ -1108,7 +1109,7 @@ if (isset($_POST['ldfm'])) {
     $tabContent = '';
 
     //set help text
-    $help = '<p style="margin: .5em 0 .5em 0;">(NOTE: To set the form order, drag and drop the tabs above.)</p>';
+    $help = '';
     
     foreach ($docRows as $r) {
 
@@ -1984,6 +1985,18 @@ $rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(remove
     'name' => 'selFormUpload'
 ));
 
+// Form Builder
+$forms = FormTemplate::listTemplates($dbh);
+$formTbl = new HTMLTable();
+$formTbl->addHeaderTr(HTMLTable::makeTh('Referral Forms', array('colspan'=>'4')));
+$formTbl->addHeaderTr(HTMLTable::makeTh('Actions') . HTMLTable::makeTh('ID') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Status'));
+if(count($forms) > 0){
+    foreach($forms as $form){
+        $formTbl->addBodyTr(HTMLTable::makeTd('<button class="editForm hhk-btn" data-docId="' . $form['idDocument'] . '">Edit</button>') . HTMLTable::makeTd($form['idDocument']) . HTMLTable::makeTd($form['Title']) . HTMLTable::makeTd($form['Status']));
+    }
+}
+
+
 // Instantiate the alert message control
 $alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -2017,6 +2030,8 @@ $resultMessage = $alertMsg->createMarkup();
 	<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+	<script type="text/javascript" src="../js/formBuilder/form-builder.min.js"></script>
+	<script type="text/javascript" src="js/formBuilder.js"></script>
 	<script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
 </head>
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -2039,6 +2054,7 @@ $resultMessage = $alertMsg->createMarkup();
 				<li><a href="#itemTable">Items</a></li>
 				<li><a href="#taxTable">Taxes</a></li>
 				<li><a href="#formUpload">Forms Upload</a></li>
+				<li><a href="#formBuilder">Form Builder</a></li>
 				<li><a href="#attrTable">Attributes</a></li>
 				<li><a href="#constr">Constraints</a></li>
 			</ul>
@@ -2175,6 +2191,8 @@ $resultMessage = $alertMsg->createMarkup();
 				<p id="rteMsg" style="float: left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
 				<div id="divUploadForm" style="margin-top: 1em;"></div>
 			</div>
+			<div id="formBuilder" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+			</div>
 			<div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
 				<form method="POST" action="ResourceBuilder.php" name="formitem">
 <?php echo $itemTable; ?>
@@ -2227,5 +2245,28 @@ $resultMessage = $alertMsg->createMarkup();
 		<input type="hidden" id='fixedRate' value="<?php RoomRateCategories::Fixed_Rate_Category;?>" />
 	</div>
 	<!-- div id="contentDiv"-->
+	<script type="text/javascript">
+	
+		$(document).ready(function(){
+			$('#formBuilder').hhkFormBuilder({
+				labels: {
+					hospital: "<?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>",
+					guest: "<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>",
+					patient: "<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>",
+					diagnosis: "<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>",
+					location: "<?php echo $labels->getString('hospital', 'location', 'Unit'); ?>",
+					referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
+					treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
+					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>"
+				},
+				fieldOptions: {
+					county: "<?php echo $uS->county; ?>",
+					doctor: "<?php echo $uS->Doctor; ?>",
+					referralAgent: "<?php echo $uS->ReferralAgent; ?>"
+				}
+			});
+		});
+
+	</script>
 </body>
 </html>

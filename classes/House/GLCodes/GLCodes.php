@@ -4,7 +4,6 @@ namespace HHK\House\GLCodes;
 
 use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode};
 use HHK\SFTPConnection;
-use HHK\Exception\RuntimeException;
 use HHK\SysConst\ItemType;
 
 class GLCodes {
@@ -43,7 +42,7 @@ class GLCodes {
 
 		// Period end date is one less than endDate
 		$periodEndDate = $this->endDate->sub(new \DateInterval('P1D'));
-		
+
 		$this->recordError('Report Dates: ' . $this->startDate->format('M j, Y') . ' to ' . $periodEndDate->format('M j, Y'));
 
 		$this->fileId = 'GL_HHK_' . $periodEndDate->format('Ymd') . '_' . getRandomString(3);
@@ -55,7 +54,7 @@ class GLCodes {
 		$this->lines = array();
 
 		$mapperTemplate->setPeriodEndDate($periodEndDate);
-		
+
 		$this->glLineMapper = $mapperTemplate;
 	}
 
@@ -151,7 +150,7 @@ class GLCodes {
 			if ($l['il_Item_Id'] == ItemId::Waive) {
 				$hasWaive = TRUE;
 			}
-			
+
 			if ($l['il_Item_Id'] == ItemId::LodgingMOA) {
 				$hasMOA = TRUE;
 			}
@@ -161,12 +160,12 @@ class GLCodes {
 		if ($hasWaive) {
 			$invLines = $this->mapWaivePayments($invLines);
 		}
-		
+
 		// Special handling for MOA.
 		if ($hasMOA) {
 			$invLines = $this->mapMoaPayments($invLines);
 		}
-		
+
 		// payment type sets glCode.
 		if ($p['ba_Gl_Debit'] != '') {
 			// 3rd party payment
@@ -333,29 +332,29 @@ class GLCodes {
 	protected function mapMoaPayments(array $invLines) {
 
 		$remainingItems = array();
-		
+
 		foreach ($invLines as $l) {
-			
+
 			if ($l['il_Item_Id'] == ItemId::LodgingMOA) {
-				
+
 				if ($l['il_Amount'] > 0) {
-					
+
 					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], 0, $l['il_Amount'], $this->paymentDate, $this->glParm->getJournalCat());
-					
+
 				} else {
-					
+
 					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $l['Item_Gl_Code'], abs($l['il_Amount']), 0, $this->paymentDate, $this->glParm->getJournalCat());
-					
+
 				}
-				
+
 			} else {
 				$remainingItems[] = $l;
 			}
 		}
-		
+
 		return $remainingItems;
 	}
-	
+
 	protected function mapWaivePayments(array $invLines) {
 
 		// add up waiveable items
@@ -378,7 +377,7 @@ class GLCodes {
 
 			// debit the foundation donation
 			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $this->glParm->getFoundation(), $waiveAmt, 0, $this->paymentDate, $this->glParm->getJournalCat());
-			
+
 		}
 
 		// reduce the waiveable items

@@ -928,7 +928,7 @@ from
 
         $endDT = new \DateTime();
         //$endDT->add(new \DateInterval('P2D'));
-        
+
         $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 
         //Resource grouping controls

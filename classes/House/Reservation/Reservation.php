@@ -20,6 +20,7 @@ use HHK\Exception\RuntimeException;
 use HHK\Exception\NotFoundException;
 
 
+
 /**
  * Description of Reservation
  *
@@ -108,12 +109,14 @@ class Reservation {
     	$uS = Session::getInstance();
 
     	// Load reservation
-        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`, ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
+        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`,
+            ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
 FROM reservation r
         LEFT JOIN
     registration rg ON r.idRegistration = rg.idRegistration
-	LEFT JOIN
+	    LEFT JOIN
     visit v on v.idReservation = r.idReservation and v.Span = 0
+
 WHERE r.idReservation = " . $rData->getIdResv());
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -130,7 +133,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
             ->setSpanStatus($rows[0]['SpanStatus'])
             ->setSpanStartDT($rows[0]['SpanStart'])
             ->setSpanEndDT($rows[0]['SpanEnd'])
-            ->setIdHospital_Stay($rows[0]['idHospital_Stay']);
+            ->setIdHospital_Stay($rows[0]['idHospital_Stay'])
+            ->setidReferralDoc($rows[0]['idReferralDoc']);
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
@@ -253,14 +257,12 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createHospitalMarkup(\PDO $dbh) {
+    protected function createHospitalMarkup(\PDO $dbh, array $refHospital = []) {
 
-        // Hospital
-        //$hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
         //get hospitalStay from reservation
         $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId(), $this->reserveData->getIdHospital_Stay());
 
-        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay));
+        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay, TRUE, $refHospital));
 
     }
 
@@ -479,7 +481,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createResvMarkup(\PDO $dbh, $oldResv, $prefix = '') {
+    protected function createResvMarkup(\PDO $dbh, $oldResv, $prefix = '', $refVehicle = []) {
 
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
@@ -529,7 +531,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Vehicles
             if ($uS->TrackAuto) {
-                $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+                $dataArray['vehicle'] = $this->vehicleMarkup($dbh, $refVehicle);
             }
 
             // Add room title to status title
@@ -605,7 +607,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
-    protected function vehicleMarkup(\PDO $dbh) {
+    protected function vehicleMarkup(\PDO $dbh, array $refVehicle = []) {
 
         $regId = $this->reservRs->idRegistration->getStoredVal();
 
@@ -617,7 +619,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $noVeh = '1';
         }
 
-        return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $noVeh);
+        return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $noVeh, $refVehicle);
 
     }
 

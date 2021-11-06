@@ -18,14 +18,14 @@ use HHK\SysConst\AttributeTypes;
  *
  * @author Eric
  */
- 
+
 class HospitalAttribute extends AbstractObjectAttribute {
-    
+
     public function __construct(\PDO $dbh, $id) {
-        
+
         $this->attributeType = AttributeTypes::Hospital;
         parent::__construct($dbh, $id);
     }
-    
+
 }
 ?>

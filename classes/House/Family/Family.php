@@ -563,9 +563,9 @@ class Family {
 
                 //$role = new Patient($dbh, $m->getPrefix(), $m->getId());
                 $role = (isset($this->roleObjs[$m->getPrefix()]) ? $this->roleObjs[$m->getPrefix()] : new Patient($dbh, $m->getPrefix(), $m->getId()));
-                
+
                 $role->save($dbh, $post, $userName, $m->isStaying());
-                
+
                 $this->roleObjs[$m->getPrefix()] = $role;
 
                 $m->setId($role->getIdName());
@@ -598,7 +598,7 @@ class Family {
                 // Save Hospital
                 $this->hospStay = new HospitalStay($dbh, $psg->getIdPatient(), $rData->getIdHospital_Stay());
                 Hospital::saveReferralMarkup($dbh, $psg, $this->hospStay, $post, $rData->getIdResv());
-                
+
                 $rData->setIdHospital_Stay($this->hospStay->getIdHospital_Stay());
 
             }

@@ -13,6 +13,7 @@ use HHK\Member\Role\AbstractRole;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
+use HHK\House\ReferralForm;
 
 /**
  * Reserve.php
@@ -46,6 +47,7 @@ $idGuest = -1;
 $idReserv = 0;
 $idPsg = 0;
 
+
 // Hosted payment return
 try {
 
@@ -62,7 +64,7 @@ try {
     $paymentMarkup = $ex->getMessage();
 }
 
-
+// Confirmation form return
 if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST['hdnCfmAmt'])) {
 
     $idReserv = intval(filter_var($_POST['hdnCfmRid'], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -70,7 +72,7 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
     $amt = filter_var($_POST['hdnCfmAmt'], FILTER_SANITIZE_STRING);
     $amt = preg_replace('/\D/', '', $amt);
     $amt = floatval($amt/100);
-    
+
     $resv = Reservation_1::instantiateFromIdReserv($dbh, $idReserv);
 
     $idGuest = $resv->getIdGuest();
@@ -81,9 +83,6 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
     if (isset($_POST['tbCfmNotes'])) {
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
-
-    //require(HOUSE . 'TemplateForm.php');
-    //require(HOUSE . 'ConfirmationForm.php');
 
     try {
         $confirmForm = new ConfirmationForm($dbh, $docId);
@@ -126,6 +125,7 @@ if (isset($_GET['idPsg'])) {
     $idPsg = intval(filter_var($_GET['idPsg'], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
+
 if ($idReserv > 0 || $idGuest >= 0) {
 
     $mk1 = "<h2>Loading...</h2>";
@@ -134,6 +134,7 @@ if ($idReserv > 0 || $idGuest >= 0) {
     $resvObj->setIdPsg($idPsg);
 
 } else {
+
     // Guest Search markup
 	$gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ");
     $mk1 = $gMk['hdr'];
@@ -162,19 +163,19 @@ $title = $wInit->pageHeading;
 
 // Imediate checkin, no prior reservation
 if (isset($_GET['title'])) {
-	
+
 	$nowDT = new DateTime();
 	$extendHours = intval($uS->ExtendToday);
-	
-	
+
+
 
 	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) < $extendHours) {
 		$nowDT->sub(new DateInterval('P1D'));
 	}
-	
+
 	$resvAr['arrival'] = $nowDT->format('M j, Y');
     $title = 'Check In';
-    
+
 }
 
 $resvObjEncoded = json_encode($resvAr);
@@ -222,7 +223,6 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
-        
 
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>

@@ -1,5 +1,6 @@
 <?php
 namespace HHK\AuditLog;
+
 use HHK\SysConst\VolStatus;
 use HHK\Tables\{EditRS, TableRSInterface, ActivityRS};
 

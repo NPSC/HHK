@@ -46,7 +46,7 @@ class CleanAddress {
         return $newAdr;
     }
 
-    public function checkSecondary($aptAdr) {
+    protected function checkSecondary($aptAdr) {
 
         $secAdr = explode(" ", $aptAdr);
 
@@ -81,7 +81,7 @@ class CleanAddress {
         return $newAdr;
     }
 
-    public function convertSecondary($aptAdr) {
+    protected function convertSecondary($aptAdr) {
 
         $secAdr = explode(" ", $aptAdr);
 
@@ -124,7 +124,7 @@ class CleanAddress {
         return $newAdr;
     }
 
-    public function convertSuffix($primary) {
+    protected function convertSuffix($primary) {
 
         $wrds = explode(" ", $primary);
 
@@ -231,7 +231,7 @@ class CleanAddress {
         return array(0=>$newAdr, 1=>$secAdr);
     }
 
-    public static function getStreetSuffix(\PDO $dbh) {
+    protected static function getStreetSuffix(\PDO $dbh) {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from street_suffix order by Common");
 
@@ -241,7 +241,7 @@ class CleanAddress {
         return $lst;
     }
 
-    public static function getSecondary(\PDO $dbh) {
+    protected static function getSecondary(\PDO $dbh) {
         $lst = array();
         $stmt = $dbh->query("select Common, TitleCaps from secondary_unit_desig order by Common");
 

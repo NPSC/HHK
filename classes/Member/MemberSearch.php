@@ -34,33 +34,39 @@ class MemberSearch {
 
     public function __construct($letters) {
 
-        $parts = explode(' ', strtolower(trim($letters)));
-
-        if (count($parts) > 1) {
-
-            // first or last name?
-            if (stristr($parts[0], ',') === FALSE) {
-                //first name first
-                $this->Name_First = $parts[0] . '%';
-                $this->Name_Last = $parts[1] . '%';
-            } else {
-                // last name first
-                $this->Name_First = $parts[1] . '%';
-                $this->Name_Last = str_replace(',', '', $parts[0]) . '%';
-            }
-
-            $this->twoParts = TRUE;
-            $this->Company = strtolower(trim($letters)) . '%';
-
-        } else {
-
-            $this->Name_First = $parts[0] . '%';
-            $this->Name_Last = $parts[0] . '%';
-            $this->Company = $parts[0] . '%';
-            $this->twoParts = FALSE;
-        }
+    	$this->prepareLetters($letters);
     }
 
+    public function prepareLetters($letters) {
+    	
+    	$parts = explode(' ', strtolower(trim($letters)));
+    	
+    	if (count($parts) > 1) {
+    		
+    		// first or last name?
+    		if (stristr($parts[0], ',') === FALSE) {
+    			//first name first
+    			$this->Name_First = $parts[0] . '%';
+    			$this->Name_Last = $parts[1] . '%';
+    		} else {
+    			// last name first
+    			$this->Name_First = $parts[1] . '%';
+    			$this->Name_Last = str_replace(',', '', $parts[0]) . '%';
+    		}
+    		
+    		$this->twoParts = TRUE;
+    		$this->Company = strtolower(trim($letters)) . '%';
+    		
+    	} else {
+    		
+    		$this->Name_First = $parts[0] . '%';
+    		$this->Name_Last = $parts[0] . '%';
+    		$this->Company = $parts[0] . '%';
+    		$this->twoParts = FALSE;
+    	}
+    	
+    }
+    
     public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '') {
         $events = array();
 
@@ -69,6 +75,7 @@ class MemberSearch {
             $operation = 'AND';
         }
 
+        
         if ($basis == "m") {
 
             $prts = explode("|", $fltr);
@@ -124,6 +131,8 @@ class MemberSearch {
                 $events[] = array("error" => "Bad filter: " . $fltr);
             }
 
+            
+            
         // Referral Agent & Doctor
         } else if ($basis == VolMemberType::ReferralAgent || $basis == VolMemberType::Doctor) {
 
@@ -178,6 +187,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             $events[] = array('id' => 0, 'value' => ($basis == VolMemberType::Doctor ? 'New Doctor' : 'New ' . $labels->getString('hospital', 'referralAgent', 'Referral Agent')));
 
 
+            
 
         // Third party billing agent?
         } else if ($basis == VolMemberType::BillingAgent) {
@@ -238,6 +248,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             }
 
 
+            
 
        // Guest or Patient as Guest
         } else if ($basis == VolMemberType::Guest || $basis == 'g,p') {
@@ -296,6 +307,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
 
 
+            
+            
         } else if ($basis == VolMemberType::Patient) {
             // Search patient
 

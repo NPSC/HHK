@@ -50,6 +50,7 @@ use HHK\sec\Labels;
 use HHK\sec\SecurityComponent;
 use HHK\sec\Session;
 
+
 /**
  * HouseServices.php
  *
@@ -130,28 +131,28 @@ class HouseServices {
         $visitCharge->sumPayments($dbh);
 
         $coDate = '';
-        
+
         if ($action == 'ref' && count($coStayDates) > 0) {
             // Visit is checking out to a different date than "today"
-            
+
         	$coDateDT = new \DateTime('1900-01-01');
         	// find latest co date
         	foreach ($coStayDates as $c) {
-        		
+
         		$cDT= new \DateTime($c);
-        		
+
         		if ($cDT > $coDateDT) {
         			$coDateDT = $cDT;
         		}
         	}
-        	
+
         	$coDate = $coDateDT->format('Y-m-d');
-        	
+
             $visitCharge->sumDatedRoomCharge($dbh, $priceModel, $coDate, 0, TRUE);
-            
+
             // if a previous stay checked out later than the checked in stay.
             $coDate = $visitCharge->getFinalVisitCoDate()->format('Y-m-d H:i:s');
-            
+
         } else {
             $visitCharge->sumCurrentRoomCharge($dbh, $priceModel, 0, TRUE);
         }
@@ -452,7 +453,7 @@ class HouseServices {
                         if($curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]) < $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode])){
                             $returntoVisit = TRUE;
                         }
-                        
+
                         $departDT = new \DateTime($visit->getExpectedDeparture());
                         $departDT->setTime($uS->CheckOutTime, 0, 0);
                         $now2 = new \DateTime();
@@ -531,10 +532,10 @@ class HouseServices {
                         $coDT->setTime($coHour, $coMin, 0);
 
                         $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), '', TRUE);
-                        
+
                         $reply .= $visit->getInfoMessage();
                         $warning .= $visit->getErrorMessage();
-                        
+
                         $returnCkdIn = TRUE;
 
                     }
@@ -594,7 +595,7 @@ class HouseServices {
                 $dataArray['unreserv'] = 'y';
             }
         }
-        
+
         if($returntoVisit){
             $dataArray['openvisitviewer'] = 'y';
         }
@@ -1402,29 +1403,29 @@ class HouseServices {
 
         // New card.
         $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, AbstractPaymentGateway::getCreditGatewayNames($dbh, 0, 0, 0));
-        
+
         if ($gateway->hasCofService()) {
-        	
+
         	$attr = array('type'=>'checkbox', 'name'=>'rbUseCard'.$index);
         	if (count($tkRsArray) == 0) {
 	        	$attr['checked'] = 'checked';
 	        } else {
 	        	unset($attr['checked']);
 	        }
-	
+
 	        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'New', array('for'=>'rbUseCard'.$index, 'style'=>'margin-right: .5em;'))
 	        		.  HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:right;', 'colspan'=> '3'))
 	        );
-	
+
 	        $tbl->addBodyTr( HTMLTable::makeTd('', array('id'=>'tdChargeMsg' . $index, 'colspan'=>'4', 'style'=>'color:red; display:none;')));
-	
+
 	        $gateway->setCheckManualEntryCheckbox(TRUE);
-	
+
 	        $gwTbl = new HTMLTable();
 	        $gateway->selectPaymentMarkup($dbh, $gwTbl, $index, $defaultMerchant);
 	        $tbl->addBodyTr(HTMLTable::makeTd($gwTbl->generateMarkup(array('style'=>'width:100%;')), array('colspan'=>'4', 'style'=>'padding:0;')));
         }
-        
+
         return $tbl->generateMarkup(array('id' => 'tblupCredit'.$index, 'class'=>'igrs'));
 
     }
@@ -1487,34 +1488,34 @@ class HouseServices {
             if (isset($post['btnvrKeyNumber'.$idx])) {
             	$manualKey = TRUE;
             }
-            
+
             if (isset($post['txtvdNewCardName'.$idx]) && $post['txtvdNewCardName'.$idx] != '') {
             	$newCardHolderName = strtoupper(filter_var($post['txtvdNewCardName'.$idx], FILTER_SANITIZE_STRING));
             }
-            
+
             // For mulitple merchants
             if (isset($post['selccgw'.$idx])) {
             	$selGw = strtolower(filter_var($post['selccgw'.$idx], FILTER_SANITIZE_STRING));
             }
-            
+
             if (isset($post['selChargeType'.$idx])) {
             	$cardType = filter_var($post['selChargeType'.$idx], FILTER_SANITIZE_STRING);
             }
-            
+
             if (isset($post['txtChargeAcct'.$idx])) {
-            	
+
             	$chargeAcct = filter_var($post['txtChargeAcct'.$idx], FILTER_SANITIZE_STRING);
-            	
+
             	if (strlen($chargeAcct) > 4) {
             		$chargeAcct = substr($chargeAcct, -4, 4);
             	}
 
             }
-            
+
             try {
 
                 $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $selGw);
-                
+
                 if ($gateway->hasCofService()) {
                 	$dataArray = $gateway->initCardOnFile($dbh, $uS->siteName, $idGuest, $idGroup, $manualKey, $newCardHolderName, $postBackPage, $cardType, $chargeAcct, $idx);
                 }

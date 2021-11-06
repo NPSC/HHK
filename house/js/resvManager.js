@@ -1681,7 +1681,7 @@ function resvManager(initData, options) {
         t.verify = verify;
 
         function setupVehicle(veh) {
-            var nextVehId = 1;
+            var nextVehId = 2;
             var $cbVeh = veh.find('#cbNoVehicle');
             var $nextVeh = veh.find('#btnNextVeh');
             var $tblVeh = veh.find('#tblVehicle');

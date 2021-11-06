@@ -107,9 +107,9 @@ class ReportFilter {
     }
 
     public function timePeriodMarkup() {
-        
+
         $uS = Session::getInstance();
-        
+
         $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->months, $this->selectedMonths, FALSE), array('name' => 'selIntMonth[]', 'size'=>'12', 'multiple'=>'multiple'));
         $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($this->selectedYear, ($uS->StartYear ? $uS->StartYear : "2013"), $this->fyDiffMonths, FALSE), array('name' => 'selIntYear', 'size'=>'12'));
         $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->calendarOptions, $this->selectedCalendar, FALSE), array('name' => 'selCalendar', 'size'=>'5'));
@@ -359,7 +359,7 @@ $ckdate";
 
         return $tbl;
     }
-    
+
     public function getSelectedHospitalsString(){
         $hospList = $this->getHospitals();
         $hospitalTitles = "";
@@ -375,7 +375,7 @@ $ckdate";
             return "All";
         }
     }
-    
+
     public function getSelectedAssocString(){
         $assocList = $this->getHospitals();
         $assocTitles = "";

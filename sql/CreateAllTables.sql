@@ -256,8 +256,10 @@ CREATE TABLE if not exists `document` (
   `Mime_Type` VARCHAR(85) NOT NULL DEFAULT '',
   `Folder` varchar(45) NOT NULL DEFAULT '',
   `Language` varchar(5) NOT NULL DEFAULT '',
-  `Abstract` text,
-  `Doc` mediumblob,
+  `Abstract` TEXT,
+  `Doc` MEDIUMBLOB,
+  `userData` MEDIUMTEXT NULL,
+  `Style` MEDIUMTEXT NULL,
   `Status` varchar(5) NOT NULL,
   `Last_Updated` datetime DEFAULT NULL,
   `Created_By` varchar(45) NOT NULL DEFAULT '',
@@ -1629,6 +1631,7 @@ CREATE TABLE if not exists `reservation` (
   `idGuest` int(11) NOT NULL DEFAULT '0',
   `idHospital_Stay` int(11) NOT NULL DEFAULT '0',
   `idResource` int(11) NOT NULL DEFAULT '0',
+  `idReferralDoc` INT(11) NOT NULL DEFAULT '0',
   `Resource_Suitable` VARCHAR(4) NOT NULL DEFAULT '',
   `Confirmation` varchar(4) NOT NULL DEFAULT '',
   `Room_Rate_Category` varchar(4) NOT NULL DEFAULT '',
@@ -1666,7 +1669,6 @@ CREATE TABLE if not exists `reservation_guest` (
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idReservation`,`idGuest`)
 ) ENGINE=InnoDB;
-
 
 
 -- -----------------------------------------------------
@@ -2323,8 +2325,6 @@ ALTER TABLE `hospital_stay`
     ADD INDEX IF NOT EXISTS `Index_idPatient` (`idPatient` ASC);
 ALTER TABLE `hospital_stay`
     ADD INDEX IF NOT EXISTS `Index_idPsg` (`idPsg` ASC);
-ALTER TABLE `hospital_stay`
-    ADD INDEX IF NOT EXISTS `Index_idHospital_Stay` (`idHospital_stay` ASC);
 
 ALTER TABLE `invoice`
   	ADD UNIQUE KEY IF NOT EXISTS `Invoice_Number_UNIQUE` (`Invoice_Number`);

@@ -567,6 +567,8 @@ var isGuestAdmin,
     patientLabel,
     guestLabel,
     visitorLabel,
+    referralFormTitleLabel,
+    reservationLabel,
     challVar,
     defaultView,
     defaultEventColor,
@@ -606,6 +608,8 @@ $(document).ready(function () {
     patientLabel = $('#patientLabel').val();
     visitorLabel = $('#visitorLabel').val();
     guestLabel = $('#guestLabel').val();
+    referralFormTitleLabel = $('#referralFormTitleLabel').val();
+    reservationLabel = $('#reservationLabel').val();
     challVar = $('#challVar').val();
     defaultView = $('#defaultView').val();
     defaultEventColor = $('#defaultEventColor').val();
@@ -1518,6 +1522,25 @@ $(document).ready(function () {
             within: '#calendar'
     });
 
+
+	//referralViewer
+	$.ajax({
+            url: 'ws_resc.php',
+            dataType: 'JSON',
+            type: 'get',
+            data: {
+                cmd: 'listforms',
+                totalsonly: 'true'
+            },
+            success: function( data ){
+                if(data.totals){
+                    $('#vreferrals').referralViewer({statuses: data.totals, labels: {patient: patientLabel, referralFormTitle: referralFormTitleLabel, reservation: reservationLabel}});
+                    $("#spnNumReferral").text(data.totals.n.count);
+                    
+                }
+            }
+        });
+	
 
 
     $('#curres').DataTable({

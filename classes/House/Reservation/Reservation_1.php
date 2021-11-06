@@ -51,6 +51,7 @@ class Reservation_1 {
     protected $resultMessage = '';
 
     protected $idResource;
+    protected $idReferralDoc;
     protected $expectedArrival;
     protected $expectedDeparture;
     protected $numGuests;
@@ -64,6 +65,7 @@ class Reservation_1 {
         $this->expectedDeparture = $reservRs->Expected_Departure->getStoredVal();
         $this->numGuests = $reservRs->Number_Guests->getStoredVal();
         $this->idResource = $reservRs->idResource->getStoredVal();
+        $this->idReferralDoc = $reservRs->idReferralDoc->getStoredVal();
         $this->roomTitle = '';
 
     }
@@ -272,6 +274,7 @@ class Reservation_1 {
         $this->reservRs->Expected_Arrival->setNewVal($this->getExpectedArrival());
         $this->reservRs->Expected_Departure->setNewVal($this->getExpectedDeparture());
         $this->reservRs->idResource->setNewVal($this->getIdResource());
+        $this->reservRs->idReferralDoc->setNewVal($this->getIdReferralDoc());
 
         // Insert or Update
         if ($this->reservRs->idReservation->getStoredVal() == 0) {
@@ -324,6 +327,9 @@ class Reservation_1 {
         if ($this->getStatus() == ReservationStatus::Staying || $this->getStatus() == ReservationStatus::Checkedout) {
             throw new RuntimeException('Reservation cannot be deleted.  Delete the Visit instead.');
         }
+
+        // Set referal doc to archived
+        $dbh->exec("update document d left join reservation r on d.idDocument = r.idReferralDoc set d.Status = 'ar' where r.idReservation = " . $this->getIdReservation());
 
         // Delete
         $cnt = $dbh->exec("Delete from reservation where idReservation = " . $this->getIdReservation());
@@ -1238,6 +1244,11 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         }
     }
 
+    public function setIdReferralDoc($v) {
+        $this->idReferralDoc = $v;
+        return $this;
+    }
+
     public function setIdResource($v) {
         $this->idResource = $v;
         return $this;
@@ -1359,6 +1370,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     public function getIdResource() {
         //return $this->reservRs->idResource->getStoredVal();
         return $this->idResource;
+    }
+
+    public function getIdReferralDoc() {
+        return $this->idReferralDoc;
     }
 
     public function getIdGuest() {

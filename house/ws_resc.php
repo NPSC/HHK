@@ -23,6 +23,9 @@ use HHK\Payment\Invoice\Invoice;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Payment\Receipt;
 use HHK\Exception\PaymentException;
+use HHK\Document\FormTemplate;
+use HHK\Document\FormDocument;
+
 
 /**
  * ws_resc.php
@@ -153,20 +156,23 @@ try {
 
                 $docId = intval(filter_input(INPUT_GET, 'docId', FILTER_SANITIZE_NUMBER_INT), 10);
 
-    $document = new Document($docId);
-    $document->loadDocument($dbh);
+                $document = new Document($docId);
+                $document->loadDocument($dbh);
 
-    if($document->getExtension()){
-            $ending = "." . $document->getExtension();
-    }else{
-            $ending = "";
-    }
+                if($document->getCategory() == 'form' && $document->getType() == 'json'){
+                    header("location: showReferral.php?form=" . $document->getIdDocument());
+                }else{
+                    if($document->getExtension()){
+                            $ending = "." . $document->getExtension();
+                    }else{
+                            $ending = "";
+                    }
 
-    header("Content-Type: " . $document->getMimeType());
-    header('Content-Disposition: inline; filename="' . $document->getTitle() . $ending . '"');
-    echo $document->getDoc();
-    exit();
-
+                    header("Content-Type: " . $document->getMimeType());
+                    header('Content-Disposition: inline; filename="' . $document->getTitle() . $ending . '"');
+                    echo $document->getDoc();
+                    exit();
+                }
                 break;
 
         case 'updatedoctitle':
@@ -608,6 +614,115 @@ try {
             }
 
             $events = ResourceView::CleanLog($dbh, $idRoom, $_POST);
+            break;
+
+        case "getformtemplates" :
+            $events = array('forms'=>FormTemplate::listTemplates($dbh));
+            break;
+
+        case "loadformtemplate" :
+            $idDocument = 0;
+            if(isset($_REQUEST['idDocument'])) {
+                $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
+                $formTemplate = new FormTemplate();
+                if($formTemplate->loadTemplate($dbh, $idDocument)){
+                    $events = array(
+                        'status'=>'success',
+                        'formTitle'=>htmlspecialchars_decode($formTemplate->getTitle(), ENT_QUOTES),
+                        'formTemplate'=>$formTemplate->getTemplate(),
+                        'formSettings'=>$formTemplate->getSettings(),
+                        'formURL'=>$uS->resourceURL . 'house/showReferral.php?template=' . $idDocument
+                    );
+                }else{
+                    $events = array("error"=>"Form not found");
+                }
+            }
+            break;
+
+        case "saveformtemplate" :
+            $idDocument = 0;
+            if(isset($_REQUEST['idDocument'])) {
+                $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
+            }
+
+            $title = '';
+            if(isset($_REQUEST['title'])) {
+                $title = filter_var($_REQUEST['title'], FILTER_SANITIZE_STRING);
+            }
+
+            $doc = '';
+            if(isset($_REQUEST['doc'])) {
+                try{
+                    // Use funciton to test the doc.
+                    json_decode($_REQUEST['doc']);
+                    $doc = $_REQUEST['doc'];
+                }catch(\Exception $e){
+
+                }
+            }
+
+            $style = '';
+            if(isset($_REQUEST['style'])) {
+                $csstidy = new \csstidy();
+                $csstidy->parse($_REQUEST['style']);
+                $style = $csstidy->print->plain();
+            }
+
+            $successTitle = '';
+            if(isset($_REQUEST['successTitle'])) {
+                $successTitle = filter_var($_REQUEST['successTitle'], FILTER_SANITIZE_STRING);
+            }
+
+            $successContent = '';
+            if(isset($_REQUEST['successContent'])) {
+                $successContent = filter_var($_REQUEST['successContent'], FILTER_SANITIZE_STRING);
+            }
+
+            $enableRecaptcha = '';
+            if(isset($_REQUEST['enableRecaptcha'])) {
+                $enableRecaptcha = filter_var($_REQUEST['enableRecaptcha'], FILTER_VALIDATE_BOOLEAN);
+            }
+
+            $formTemplate = new FormTemplate();
+            $formTemplate->loadTemplate($dbh, $idDocument);
+            if($idDocument > 0) {
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $uS->username);
+            }else{
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $uS->username);
+            }
+
+            break;
+
+        case "listforms" :
+            $status = '';
+            if(isset($_REQUEST['status'])){
+                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+            }
+
+            $totalsOnly = false;
+            if(isset($_REQUEST['totalsonly'])){
+                $totalsOnly = filter_var($_REQUEST['totalsonly'], FILTER_VALIDATE_BOOLEAN);
+            }
+
+            $events = FormDocument::listForms($dbh, $status, $_GET, $totalsOnly);
+
+            break;
+
+        case "updateFormStatus" :
+            $idDocument = 0;
+            if(isset($_REQUEST['idDocument'])) {
+                $idDocument = filter_var($_REQUEST['idDocument'], FILTER_VALIDATE_INT);
+            }
+
+            $status = '';
+            if(isset($_REQUEST['status'])){
+                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+            }
+
+            $formDocument = new FormDocument();
+            $formDocument->loadDocument($dbh, $idDocument);
+            $formDocument->updateStatus($dbh, $status);
+
             break;
 
         default:

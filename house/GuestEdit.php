@@ -52,8 +52,6 @@ $wInit = new WebInit();
 
 $dbh = $wInit->dbh;
 
-$pageTitle = $wInit->pageTitle;
-
 // get session instance
 $uS = Session::getInstance();
 
@@ -116,7 +114,7 @@ if (isset($_GET['psg'])) {
 
 
 if (isset($_GET["tab"])) {
-	
+
 	$guestTabIndex = intval(filter_var($_GET["tab"], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
@@ -531,9 +529,9 @@ if ($psg->getIdPsg() > 0) {
             $room = $r['Status_Title'] . ' to ' . $r['Title'];
             $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
             $hospitalButton = '';
-            
+
 //             if (count($uS->guestLookups['Hospitals']) > 1) {
-            	
+
 //             	$hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
 //             		, array(
 //             				'type'=>'button',
@@ -543,7 +541,7 @@ if ($psg->getIdPsg() > 0) {
 //             				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
 //             		);
 //             }
-            
+
             $stayIcon = '';
 
             foreach ($stays as $s) {
@@ -620,7 +618,7 @@ if ($psg->getIdPsg() > 0) {
         $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
 
         $hospitalButton = '';
-        
+
 //         if (count($uS->guestLookups['Hospitals']) > 1) {
 //         	$hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
 //         		, array(
@@ -631,7 +629,7 @@ if ($psg->getIdPsg() > 0) {
 //         				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
 //         		);
 //         }
-        
+
         $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
                 $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '
                 . (date('Y') == date('Y', strtotime($reserv->getArrival())) ? date('M j', strtotime($reserv->getArrival())) : date('M j, Y', strtotime($reserv->getArrival())))
@@ -712,7 +710,7 @@ $uS->guestId = $id;
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <title><?php echo $pageTitle; ?></title>
+        <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1"/>
         <?php echo JQ_UI_CSS; ?>
@@ -744,7 +742,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        
+
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
         ?>
@@ -756,7 +754,7 @@ $uS->guestId = $id;
         <?php
             echo '<script type="text/javascript" src="' . DOC_UPLOAD_JS . '"></script>';
         }
-        
+
         if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
     </head>
