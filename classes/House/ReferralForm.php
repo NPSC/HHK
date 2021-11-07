@@ -16,7 +16,6 @@ use HHK\Tables\Name\NameAddressRS;
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Tables\Reservation\Reservation_GuestRS;
-use HHK\Tables\Reservation\Reservation_ReferralRS;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface;
 use HHK\SysConst\ReferralFormStatus;
 use HHK\Exception\RuntimeException;

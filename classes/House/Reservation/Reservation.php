@@ -16,8 +16,8 @@ use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCatego
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
 use HHK\sec\{Labels, SecurityComponent, Session};
-use HHK\Exception\RuntimeException;
-use HHK\Exception\NotFoundException;
+use HHK\Exception\{RuntimeException, NotFoundException};
+
 
 
 
