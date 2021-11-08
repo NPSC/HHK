@@ -210,7 +210,7 @@ if ($idDoc > 0) {
                 </div>
                 <div id="GuestSection" style="font-size: .9em; min-width: 810px;<?php echo $displayGuest; ?>"  class="ui-widget hhk-visitdialog mb-3">
                     <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-top hhk-panel">
-                    	<?php echo $labels->getString('MemberType', 'guest', 'Guest') . 's'; ?>
+                    	<?php echo $labels->getString('MemberType', 'guest', 'Guest') . 's (' . $refForm->getGuestCount() . ')'; ?>
                     </div>
                     <div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding:5px;">
                     	<?php echo $guestMkup; ?>

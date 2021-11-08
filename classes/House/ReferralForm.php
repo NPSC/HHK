@@ -709,10 +709,11 @@ class ReferralForm {
 	        // remove button
 
 	        // Guest header
-	        $markup .= HTMLContainer::generateMarkup('div', 'Guest: ' . $d->getNameFirst() . ' ' . $d->getNameLast(), array('class'=>"ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"));
+	        $guestWidget = HTMLContainer::generateMarkup('div', 'Guest: ' . $d->getNameFirst() . ' ' . $d->getNameLast(), array('class'=>"ui-widget ui-widget-header ui-state-default ui-corner-top hhk-panel"));
 
-	        $markup .= $this->createGuestMarkup($g, $d, $this->gstResults[$g]);
+	        $guestWidget .= HTMLContainer::generateMarkup('div', $this->createGuestMarkup($g, $d, $this->gstResults[$g]), array('class'=>'ui-corner-bottom hhk-tdbox ui-widget-content','style'=>'padding: 5px;'));
 
+	        $markup .= HTMLContainer::generateMarkup('div', $guestWidget, array('class'=>'guestWidget mb-4'));
 	    }
 
 	    return $markup;
@@ -762,7 +763,7 @@ class ReferralForm {
 
 	   $rel = (isset($uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()]) ? $uS->guestLookups[GLTableNames::PatientRel][$guestSearchFor->getRelationship()][1] : '');
 
-	   $tbl->addBodyTr(HTMLTable::makeTd('Referral Form Guest Submission:', array('colspan'=>$cols)));
+	   //$tbl->addBodyTr(HTMLTable::makeTd('Referral Form Guest Submission:', array('colspan'=>$cols)));
 	   $tbl->addBodyTr(
 	       HTMLTable::makeTd(HTMLInput::generateMarkup('0', $idArray))
 	        .HTMLTable::makeTd($guestSearchFor->getNameFirst())
@@ -782,12 +783,13 @@ class ReferralForm {
 	       .HTMLTable::makeTd('')
 	        , array('class'=>'hhk-origUserData'));
 
-	   $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+
 
 	   if (count($guestResults) > 0) {
-	       $tbl->addBodyTr(HTMLTable::makeTd('Matches Found in HHK:', array('colspan'=>$cols)));
+	       $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>$cols)));
+	       $tbl->addBodyTr(HTMLTable::makeTh('Matches Found in HHK', array('colspan'=>$cols, 'style'=>'text-align:left;')));
 	   } else {
-	       $tbl->addBodyTr(HTMLTable::makeTd('No Matches Found', array('colspan'=>$cols)));
+	       //$tbl->addBodyTr(HTMLTable::makeTd('No Matches Found', array('colspan'=>$cols)));
 	   }
 
 	   // Searched data
@@ -819,7 +821,7 @@ class ReferralForm {
 	   }
 
 
-	   return $tbl->generateMarkup(array('class'=>'hhk-tdbox hhkrefguestsel'));
+	   return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
 	}
 
 	/**
@@ -921,6 +923,10 @@ class ReferralForm {
 	 */
 	public function getReferralStatus() {
 	    return $this->formDoc->getStatus();
+	}
+
+	public function getGuestCount(){
+	    return count($this->gstSearchFor);
 	}
 }
 
