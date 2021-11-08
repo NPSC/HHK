@@ -194,13 +194,14 @@ if(isset($_GET['template'])){
               					$(field).find('label').addClass('form-check-label');
               					$(field).find('input.other-option').css('margin-top', '0.5em');
               					$(field).find('input.other-val').addClass('form-control d-inline-block w-75 ms-2');
+
               					return $('<div/>').addClass(data.width + ' mb-3 field-container')
-              					.append($('<div/>').addClass('card')
-              						.append($('<div/>').addClass('card-body')
+              							.append($('<div/>').addClass('card')
+              							.append($('<div/>').addClass('card-body')
               							.append(label, field, help, validation)
               						)
               					);
-              				}else if(data.type == 'checkbox-group'){
+              				} else if(data.type == 'checkbox-group'){
               					$(field).children().addClass('form-check');
               					$(field).find('.formbuilder-checkbox-inline').addClass('form-check-inline');
               					$(field).find('input[type=checkbox').addClass('form-check-input');
@@ -208,8 +209,8 @@ if(isset($_GET['template'])){
               					$(field).find('input.other-option').css('margin-top', '0.5em');
               					$(field).find('input.other-val').addClass('form-control d-inline-block w-75 ms-2');
               					return $('<div/>').addClass(data.width + ' mb-3 field-container')
-              					.append($('<div/>').addClass('card')
-              						.append($('<div/>').addClass('card-body')
+              							.append($('<div/>').addClass('card')
+              							.append($('<div/>').addClass('card-body')
               							.append(label, field, help, validation)
               						)
               					);
@@ -321,6 +322,12 @@ if(isset($_GET['template'])){
                 //phone format
                 verifyAddrs($renderedForm);
 
+		$('input.form-control').blur(function(){
+			var val = $(this).val().replaceAll('"', "'");
+			$(this).val(val);
+			console.log(val);
+			console.log($(this).html());
+		});
                 //add guest button
                 //var elements = $renderedForm.find('input[group=guest], select[group=guest]').parents('.field-container').remove();
                 //console.log(elements);
