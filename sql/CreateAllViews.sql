@@ -1266,44 +1266,49 @@ WHERE
 -- View `vguest_view`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_view` AS
-    SELECT
-        IFNULL((CASE
-                    WHEN (`n`.`Name_Suffix` = '') THEN `n`.`Name_Last`
+    SELECT 
+        IFNULL(CASE
+                    WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
                     ELSE CONCAT(`n`.`Name_Last`, ' ', `g`.`Description`)
-                END),
+                END,
                 '') AS `Last Name`,
         IFNULL(`n`.`Name_First`, '') AS `First Name`,
         IFNULL(`rm`.`Title`, '') AS `Room`,
         IFNULL(`np`.`Phone_Num`, '') AS `Phone`,
         `s`.`Checkin_Date` AS `Arrival`,
-        (CASE
-            WHEN (`s`.`Expected_Co_Date` < NOW()) THEN NOW()
+        CASE
+            WHEN `s`.`Expected_Co_Date` < CURRENT_TIMESTAMP() THEN CURRENT_TIMESTAMP()
             ELSE `s`.`Expected_Co_Date`
-        END) AS `Expected Departure`,
+        END AS `Expected Departure`,
         `s`.`On_Leave` AS `On_Leave`,
         TO_DAYS(CURRENT_TIMESTAMP()) - TO_DAYS(`s`.`Checkin_Date`) AS `Nights`,
         `hosp`.`Title` AS `Hospital`,
+        IFNULL(`ec`.`Name_Last`, '') AS `EC Last Name`,
+        IFNULL(`ec`.`Name_First`, '') AS `EC First Name`,
+        IFNULL(`ec`.`Phone_Home`, '') AS `EC Phone Home`,
+        IFNULL(`ec`.`Phone_Mobile`, '') AS `EC Phone Mobile`,
         IFNULL(`v`.`Make`, '') AS `Make`,
         IFNULL(`v`.`Model`, '') AS `Model`,
         IFNULL(`v`.`Color`, '') AS `Color`,
         IFNULL(`v`.`State_Reg`, '') AS `State Reg.`,
         IFNULL(`v`.`License_Number`, '') AS `License Plate`,
-        IFNULL(`v`.`Note`, '') as `Note`
+        IFNULL(`v`.`Note`, '') AS `Note`
     FROM
-        ((((((`stays` `s`
-        LEFT JOIN `name` `n` ON ((`n`.`idName` = `s`.`idName`)))
-        LEFT JOIN `name_phone` `np` ON (((`n`.`idName` = `np`.`idName`)
-            AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`))))
-        LEFT JOIN `visit` `vs` ON (((`s`.`idVisit` = `vs`.`idVisit`)
-            AND (`s`.`Visit_Span` = `vs`.`Span`))))
-		LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`)))
-        LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`)
-        LEFT JOIN `vehicle` `v` ON ((`vs`.`idRegistration` = `v`.`idRegistration`))
-        LEFT JOIN `room` `rm` ON ((`s`.`idRoom` = `rm`.`idRoom`))
-        LEFT JOIN `gen_lookups` `g` ON (((`g`.`Table_Name` = 'Name_Suffix')
-            AND (`g`.`Code` = `n`.`Name_Suffix`))))
+        (((((((((`stays` `s`
+        LEFT JOIN `name` `n` ON (`n`.`idName` = `s`.`idName`))
+        LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`))
+        LEFT JOIN `visit` `vs` ON (`s`.`idVisit` = `vs`.`idVisit`
+            AND `s`.`Visit_Span` = `vs`.`Span`))
+        LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`))
+        LEFT JOIN `vehicle` `v` ON (`vs`.`idRegistration` = `v`.`idRegistration`))
+        LEFT JOIN `emergency_contact` `ec` ON (`n`.`idName` = `ec`.`idName`))
+        LEFT JOIN `room` `rm` ON (`s`.`idRoom` = `rm`.`idRoom`))
+        LEFT JOIN `gen_lookups` `g` ON (`g`.`Table_Name` = 'Name_Suffix'
+            AND `g`.`Code` = `n`.`Name_Suffix`))
     WHERE
-        (`s`.`Status` = 'a');
+        `s`.`Status` = 'a';
 
 
 
