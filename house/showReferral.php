@@ -70,7 +70,9 @@ $locations = readGenLookupsPDO($dbh, 'Location', 'Order');
 $hospitals = Hospital::loadHospitals($dbh);
 $hospitalAr = array();
 foreach($hospitals as $hospital){
-    $hospitalAr[] = ['Code'=>$hospital['idHospital'], 'Description'=>$hospital['Title']];
+    if($hospital['Status'] == 'a' && $hospital['Type'] == 'h'){
+        $hospitalAr[] = ['Code'=>$hospital['idHospital'], 'Description'=>$hospital['Title']];
+    }
 }
 $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
     'KY', 'LA', 'LB', 'MA', 'MB', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NB', 'NC', 'ND', 'NE', 'NF', 'NH', 'NJ', 'NM', 'NS', 'NT', 'NV', 'NY', 'OH',
