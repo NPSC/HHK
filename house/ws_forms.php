@@ -97,6 +97,62 @@ try {
             }
             break;
 
+         case 'gettemplate':
+
+             $id = filter_var($_GET["id"], FILTER_SANITIZE_NUMBER_INT);
+             if($id > 0){
+                 $formTemplate = new FormTemplate();
+                 if($formTemplate->loadTemplate($dbh, $id)){
+                     $events['formData'] = $formTemplate->getTemplate();
+                     $events['formSettings'] = $formTemplate->getSettings();
+                     $events['lookups'] = $formTemplate->getLookups($dbh);
+                 }else{
+                     $events['error'] = "Document is not a form template";
+                 }
+             }else{
+                 $events['error'] = "No Referral form found";
+             }
+             break;
+
+         case 'getform':
+
+             if(!$uS->logged){
+                 $events['error'] = "Unauthorized for page: Please login";
+             }else{
+                 $id = filter_var($_GET["id"], FILTER_SANITIZE_NUMBER_INT);
+                 if($id > 0){
+                     $formDocument = new FormDocument();
+                     if($formDocument->loadDocument($dbh, $id)){
+                         $events['formData'] = $formDocument->getDoc();
+                         $events['formSettings']['formStyle'] = "";
+                         $events['lookups'] = FormTemplate::getLookups($dbh);
+
+                     }else{
+                         $events['error'] = "Document not found";
+                     }
+                 }else{
+                     $events['error'] = "No Referral form found";
+                 }
+             }
+             break;
+
+         case 'previewform':
+
+             $style = "";
+             if(isset($_REQUEST['style'])){
+                 $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_STRING);
+             }
+
+             if(!$uS->logged){
+                 $events['error'] = "Unauthorized for page: Please login";
+             }else{
+                 $events['formData'] = $_REQUEST['formData'];
+                 $events['formSettings']['formStyle'] = $style;
+                 $events['formSettings']['enableRecaptcha'] = false;
+                 $events['lookups'] = FormTemplate::getLookups($dbh);
+             }
+             break;
+
          case "submitform" :
 
 			$recaptchaToken = '';

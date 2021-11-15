@@ -2,7 +2,9 @@
 
 namespace HHK\Document;
 
+use HHK\House\Hospital\Hospital;
 use HHK\sec\Session;
+use HHK\sec\Recaptcha;
 /**
  * FormTemplate.php
  *
@@ -176,14 +178,49 @@ class FormTemplate {
     }
 
     public function getSettings(){
+        $uS = Session::getInstance();
         $abstract = json_decode($this->doc->getAbstract());
+        $recaptcha = new Recaptcha();
 
         return [
             'formStyle'=>$this->getStyle(),
             'successTitle'=>$abstract->successTitle,
             'successContent'=>htmlspecialchars_decode($abstract->successContent, ENT_QUOTES),
-            'enableRecaptcha'=>(isset($abstract->enableRecaptcha) ? $abstract->enableRecaptcha : false)
+            'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
+            'recaptchaScript'=>$recaptcha->getScriptTag()
         ];
+    }
+
+    public static function getLookups(\PDO $dbh){
+        $lookups = array();
+
+        $lookups['genders'] = readGenLookupsPDO($dbh, 'gender', 'Order');
+        unset($lookups['genders']['z']);
+        $lookups['patientRels'] = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Order');
+        unset($lookups['patientRels']['slf']);
+        $lookups['mediaSources'] = readGenLookupsPDO($dbh, 'Media_Source','Order');
+        $lookups['namePrefixes'] = readGenLookupsPDO($dbh, 'Name_Prefix', 'Order');
+        $lookups['nameSuffixes'] = readGenLookupsPDO($dbh, 'Name_Suffix', 'Order');
+        $lookups['diagnosis'] = readGenLookupsPDO($dbh, 'Diagnosis', 'Order');
+        $lookups['locations'] = readGenLookupsPDO($dbh, 'Location', 'Order');
+        $hospitals = Hospital::loadHospitals($dbh);
+        $hospitalAr = array();
+        foreach($hospitals as $hospital){
+            if($hospital['Status'] == 'a' && $hospital['Type'] == 'h'){
+                $hospitalAr[] = ['Code'=>$hospital['idHospital'], 'Description'=>$hospital['Title']];
+            }
+        }
+        $lookups['hospitals'] = $hospitalAr;
+        $stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
+            'KY', 'LA', 'LB', 'MA', 'MB', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NB', 'NC', 'ND', 'NE', 'NF', 'NH', 'NJ', 'NM', 'NS', 'NT', 'NV', 'NY', 'OH',
+            'OK', 'ON', 'OR', 'PA', 'PE', 'PR', 'PQ', 'RI', 'SC', 'SD', 'SK', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY');
+        $formattedStates = array();
+        foreach($stateList as $state){
+            $formattedStates[$state] = ["Code"=>$state, "Description"=>$state];
+        }
+        $lookups['vehicleStates'] = $formattedStates;
+
+        return $lookups;
     }
 
 }

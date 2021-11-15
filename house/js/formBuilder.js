@@ -680,7 +680,6 @@
   			disableFields: [
       			'autocomplete',
       			'button',
-      			'date',
       			'file',
       			'hidden',
       			'number'
@@ -711,7 +710,7 @@
     					}).appendTo(document.body);
     					
     					f.append('<input type="hidden" name="cmd" value="preview">');
-    					f.append('<input type="hidden" name="formData" value="' + encodeURI(JSON.stringify(formData)) + '">');
+    					f.append('<textarea name="formData" style="display:none">' + JSON.stringify(formData) + '</textarea>');
     					f.append('<input type="hidden" name="style" value="' + settingsDialog.find("textarea#formStyle").val() + '">');
     					f.submit();
     					f.remove();

@@ -57,32 +57,8 @@ $uS = Session::getInstance();
 $labels = Labels::getLabels();
 $recaptcha = new Recaptcha();
 
-
-$genders = readGenLookupsPDO($dbh, 'gender', 'Order');
-unset($genders['z']);
-$patientRels = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Order');
-unset($patientRels['slf']);
-$mediaSources = readGenLookupsPDO($dbh, 'Media_Source','Order');
-$namePrefixes = readGenLookupsPDO($dbh, 'Name_Prefix', 'Order');
-$nameSuffixes = readGenLookupsPDO($dbh, 'Name_Suffix', 'Order');
-$diagnosis = readGenLookupsPDO($dbh, 'Diagnosis', 'Order');
-$locations = readGenLookupsPDO($dbh, 'Location', 'Order');
-$hospitals = Hospital::loadHospitals($dbh);
-$hospitalAr = array();
-foreach($hospitals as $hospital){
-    if($hospital['Status'] == 'a' && $hospital['Type'] == 'h'){
-        $hospitalAr[] = ['Code'=>$hospital['idHospital'], 'Description'=>$hospital['Title']];
-    }
-}
-$stateList = array('', 'AB', 'AE', 'AL', 'AK', 'AR', 'AZ', 'BC', 'CA', 'CO', 'CT', 'CZ', 'DC', 'DE', 'FL', 'GA', 'GU', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS',
-    'KY', 'LA', 'LB', 'MA', 'MB', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NB', 'NC', 'ND', 'NE', 'NF', 'NH', 'NJ', 'NM', 'NS', 'NT', 'NV', 'NY', 'OH',
-    'OK', 'ON', 'OR', 'PA', 'PE', 'PR', 'PQ', 'RI', 'SC', 'SD', 'SK', 'TN', 'TX', 'UT', 'VA', 'VI', 'VT', 'WA', 'WI', 'WV', 'WY');
-$formattedStates = array();
-foreach($stateList as $state){
-    $formattedStates[$state] = ["Code"=>$state, "Description"=>$state];
-}
-
 $formTemplate = '';
+$id = -1;
 $formData = '';
 $style = '';
 $successTitle = '';
@@ -91,53 +67,18 @@ $enableRecaptcha = false;
 $error = '';
 
 if(isset($_GET['template'])){
+    $cmd = 'gettemplate';
+    $method = 'get';
     $id = filter_var($_GET["template"], FILTER_SANITIZE_NUMBER_INT);
-    if($id > 0){
-        $formTemplate = new FormTemplate();
-        if($formTemplate->loadTemplate($dbh, $id)){
-            $formData = $formTemplate->getTemplate();
-            $formSettings = $formTemplate->getSettings();
-            $style = $formSettings['formStyle'];
-            $successTitle = $formSettings['successTitle'];
-            $successContent = $formSettings['successContent'];
-
-            //enableRecaptcha
-            if(($uS->mode == 'demo' || $uS->mode == 'prod') && $formSettings['enableRecaptcha']){
-                $enableRecaptcha = $formSettings['enableRecaptcha'];
-            }
-        }else{
-            $error = "Document is not a form template";
-        }
-    }else{
-        $error = "No Referral form found";
-    }
-
 }else if(isset($_GET['form'])){
-    if(!$uS->logged){
-        $error = "Unauthorized for page: Please login";
-    }else{
-        $id = filter_var($_GET["form"], FILTER_SANITIZE_NUMBER_INT);
-        if($id > 0){
-            $formDocument = new FormDocument();
-            if($formDocument->loadDocument($dbh, $id)){
-                $formData = $formDocument->getDoc();
-                $style = "";
-            }else{
-                $error = "Document not found";
-            }
-        }else{
-            $error = "No Referral form found";
-        }
-    }
-
+    $cmd = 'getform';
+    $method = 'get';
+    $id = filter_var($_GET["form"], FILTER_SANITIZE_NUMBER_INT);
 }else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style'])){
-
-    if(!$uS->logged){
-        $error = "Unauthorized for page: Please login";
-    }else{
-        $formData = urldecode($_POST['formData']);
-        $style = $_POST['style'];
-    }
+    $cmd = 'previewform';
+    $method = 'post';
+    $formData = json_decode($_POST['formData']);
+    $style = $_POST['style'];
 }else{
     $error = "Missing required parameters";
 }
@@ -161,175 +102,275 @@ if(isset($_GET['template'])){
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo ADDR_PREFS_JS; ?>"></script>
         <script type="text/javascript" src="../js/formBuilder/form-render.min.js"></script>
-        <?php
-        if($enableRecaptcha){
-            echo $recaptcha->getScriptTag();
-        }
-        ?>
+
         <script type='text/javascript'>
             $(document).ready(function() {
-
-            	const formData = `<?php echo $formData; ?>`;
-            	var genders = <?php echo json_encode($genders); ?>;
-            	var patientRels = <?php echo json_encode($patientRels); ?>;
-            	var vehicleStates = <?php echo json_encode($formattedStates); ?>;
-            	var mediaSources = <?php echo json_encode($mediaSources); ?>;
-            	var namePrefixes = <?php echo json_encode($namePrefixes); ?>;
-            	var nameSuffixes = <?php echo json_encode($nameSuffixes); ?>;
-				var hospitals = <?php echo json_encode($hospitalAr); ?>;
-				var diagnosis = <?php echo json_encode($diagnosis); ?>;
-				var locations = <?php echo json_encode($locations); ?>;
-
-                const formRender = $('#formContent').formRender({
-                	formData,
-                	layoutTemplates: {
-              			default: function(field, label, help, data) {
-              				if(data.description){
-              					help = $('<small/>').addClass('helpText text-muted ms-2').text(data.description);
-              				}
-              				var validation = $('<div/>').addClass('validationText').attr("data-field", data.id);
-
-              				if(data.type == 'radio-group'){
-              					$(field).children().addClass('form-check');
-              					$(field).find('.formbuilder-radio-inline').addClass('form-check-inline');
-              					$(field).find('input[type=radio').addClass('form-check-input');
-              					$(field).find('label').addClass('form-check-label');
-              					$(field).find('input.other-option').css('margin-top', '0.5em');
-              					$(field).find('input.other-val').addClass('form-control d-inline-block w-75 ms-2');
-
-              					return $('<div/>').addClass(data.width + ' mb-3 field-container')
-              							.append($('<div/>').addClass('card')
-              							.append($('<div/>').addClass('card-body')
-              							.append(label, field, help, validation)
-              						)
-              					);
-              				} else if(data.type == 'checkbox-group'){
-              					$(field).children().addClass('form-check');
-              					$(field).find('.formbuilder-checkbox-inline').addClass('form-check-inline');
-              					$(field).find('input[type=checkbox').addClass('form-check-input');
-              					$(field).find('label').addClass('form-check-label');
-              					$(field).find('input.other-option').css('margin-top', '0.5em');
-              					$(field).find('input.other-val').addClass('form-control d-inline-block w-75 ms-2');
-              					return $('<div/>').addClass(data.width + ' mb-3 field-container')
-              							.append($('<div/>').addClass('card')
-              							.append($('<div/>').addClass('card-body')
-              							.append(label, field, help, validation)
-              						)
-              					);
-              				}else if(data.type == 'date'){
-              					$(field).attr('type','text').attr('autocomplete', 'off')
-              					if(data.name == 'patient.birthdate'){
-              						$(field).datepicker({
-                                        yearRange: '-99:+00',
-                                        changeMonth: true,
-                                        changeYear: true,
-                                        autoSize: true,
-                                        maxDate:0,
-                                        dateFormat: 'M d, yy'
-                                    });
-              					}else{
-              						$(field).datepicker();
-              					}
-              				}else if(data.type == 'select'){
-              					if(data.dataSource){
-                  					var options = {};
-                  					switch(data.dataSource){
-                  						case 'namePrefix':
-                  							options = namePrefixes;
-                  							break;
-                  						case 'nameSuffix':
-                  							options = nameSuffixes;
-                  							break;
-                  						case 'gender':
-                  							options = genders;
-                  							break;
-                  						case 'patientRelation':
-                  							options = patientRels;
-                  							break;
-                  						case 'mediaSource':
-                  							options = mediaSources;
-                  							break;
-                  						case 'vehicleStates':
-                  							options = vehicleStates;
-                  							break;
-                  						case 'hospitals':
-                  							options = hospitals;
-                  							break;
-                  						case 'diagnosis':
-                  							options = diagnosis;
-                  							break;
-                  						case 'unit':
-                  							options = locations;
-                  							break;
-                  						default:
-                  							options = {};
-                  					}
-                  					$(field).html('<option disabled selected>' + data.placeholder + '</option>');
-                  					for(i in options){
-                  						if(typeof data.userData != 'undefined' && options[i].Code == data.userData[0]){
-                							$(field).append('<option value="' + options[i].Code + '" selected>' + options[i].Description + '</option>');
-                						}else{
-                							$(field).append('<option value="' + options[i].Code + '">' + options[i].Description + '</option>');
-                						}
-                					}
-                				}
-
-                				if(data.multiple){
-                    				return $('<div/>').addClass(data.width + ' mb-3 field-container')
-                  					.append($('<div/>').addClass('card')
-                  						.append($('<div/>').addClass('card-body')
-                  							.append(label, field, help, validation)
-                  						)
-                  					);
-                				}
-              				}
-
-							return $('<div/>').addClass(data.width + ' mb-3 field-container').append($('<div/>').addClass('form-floating').append(field, label, help, validation));
-              			}
-            		},
-                	"i18n":{
-            			"location":"../js/formBuilder"
-            		}
-            	});
-
-            	$('.formBuilder-injected-style').remove();
-
             	var csrfToken = '<?php echo $login->generateCSRF(); ?>';
-            	var siteKey = '<?php echo $recaptcha->getSiteKey(); ?>';
-            	var recaptchaEnabled = '<?php echo $enableRecaptcha; ?>';
 
-            	var $renderedForm = $(document).find('.rendered-form');
-            	$renderedForm.addClass('row');
+            	var previewFormData = JSON.stringify(<?php echo json_encode($formData); ?>);
 
-            	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', 'patient\\.address\\.').data('hhkindex','');
+				$.ajax({
+					url: 'ws_forms.php',
+					method: '<?php echo $method; ?>',
+					data: {
+						cmd: '<?php echo $cmd; ?>',
+						id: '<?php echo $id; ?>',
+						formData: previewFormData,
+						csrfToken: csrfToken
+					},
+					dataType:'json',
+					success: function(ajaxData){
+						console.log(ajaxData);
+						if(ajaxData.formData && ajaxData.formSettings){
+    						formData = ajaxData.formData;
+    						formSuccessTitle = ajaxData.formSettings.successTitle;
+    						formSuccessContent = ajaxData.formSettings.successContent;
 
-            	// set country and state selectors
-                $renderedForm.find('select.bfh-countries').each(function() {
-                    var $countries = $(this);
-                    $countries.bfhcountries($countries.data()).val($countries.attr('user-data'));
-                });
-                $renderedForm.find('select.bfh-states').each(function() {
-                    var $states = $(this);
-                    $states.bfhstates($states.data()).val($states.attr('user-data'));
-                });
+							$("style").append(ajaxData.formSettings.formStyle);
 
-            	//zip code search
-            	$renderedForm.find('input.hhk-zipsearch').each(function() {
-                    var lastXhr;
-                    createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
-                });
+							if(ajaxData.formSettings.enableRecaptcha){
+								$("head").append(ajaxData.formSettings.recaptchaScript);
+							}
 
-                $renderedForm.find('.address').prop('autocomplete', 'search');
+                            const formRender = $('#formContent').formRender({
+                            	formData,
+                            	layoutTemplates: {
+                          			default: function(field, label, help, data) {
+                          				if(data.description){
+                          					help = $('<small/>').addClass('helpText text-muted ms-2').text(data.description);
+                          				}
+                          				var validation = $('<div/>').addClass('validationText').attr("data-field", data.id);
 
-                //phone format
-                verifyAddrs($renderedForm);
+                          				if(data.type == 'radio-group'){
+                          					$(field).children().addClass('form-check');
+                          					$(field).find('.formbuilder-radio-inline').addClass('form-check-inline');
+                          					$(field).find('input[type=radio').addClass('form-check-input');
+                          					$(field).find('label').addClass('form-check-label');
+                          					$(field).find('input.other-option').css('margin-top', '0.5em');
+                          					$(field).find('input.other-val').addClass('form-control d-inline-block w-75 ms-2');
 
-		$('input.form-control').blur(function(){
-			var val = $(this).val().replaceAll('"', "'");
-			$(this).val(val);
-			console.log(val);
-			console.log($(this).html());
-		});
+                          					return $('<div/>').addClass(data.width + ' mb-3 field-container')
+                          							.append($('<div/>').addClass('card')
+                          							.append($('<div/>').addClass('card-body')
+                          							.append(label, field, help, validation)
+                          						)
+                          					);
+                          				} else if(data.type == 'checkbox-group'){
+                          					$(field).children().addClass('form-check');
+                          					$(field).find('.formbuilder-checkbox-inline').addClass('form-check-inline');
+                          					$(field).find('input[type=checkbox').addClass('form-check-input');
+                          					$(field).find('label').addClass('form-check-label');
+                          					$(field).find('input.other-option').css('margin-top', '0.5em');
+                          					$(field).find('input.other-val').addClass('form-control d-inline-block w-75 ms-2');
+                          					return $('<div/>').addClass(data.width + ' mb-3 field-container')
+                          							.append($('<div/>').addClass('card')
+                          							.append($('<div/>').addClass('card-body')
+                          							.append(label, field, help, validation)
+                          						)
+                          					);
+                          				}else if(data.type == 'date'){
+                          					$(field).attr('type','text').attr('autocomplete', 'off')
+                          					if(data.name == 'patient.birthdate'){
+                          						$(field).datepicker({
+                                                    yearRange: '-99:+00',
+                                                    changeMonth: true,
+                                                    changeYear: true,
+                                                    autoSize: true,
+                                                    maxDate:0,
+                                                    dateFormat: 'M d, yy'
+                                                });
+                          					}else{
+                          						$(field).datepicker();
+                          					}
+                          				}else if(data.type == 'select'){
+                          					if(data.dataSource){
+                              					var options = {};
+                              					switch(data.dataSource){
+                              						case 'namePrefix':
+                              							options = ajaxData.lookups.namePrefixes;
+                              							break;
+                              						case 'nameSuffix':
+                              							options = ajaxData.lookups.nameSuffixes;
+                              							break;
+                              						case 'gender':
+                              							options = ajaxData.lookups.genders;
+                              							break;
+                              						case 'patientRelation':
+                              							options = ajaxData.lookups.patientRels;
+                              							break;
+                              						case 'mediaSource':
+                              							options = ajaxData.lookups.mediaSources;
+                              							break;
+                              						case 'vehicleStates':
+                              							options = ajaxData.lookups.vehicleStates;
+                              							break;
+                              						case 'hospitals':
+                              							options = ajaxData.lookups.hospitals;
+                              							break;
+                              						case 'diagnosis':
+                              							options = ajaxData.lookups.diagnosis;
+                              							break;
+                              						case 'unit':
+                              							options = ajaxData.lookups.locations;
+                              							break;
+                              						default:
+                              							options = {};
+                              					}
+                              					$(field).html('<option disabled selected>' + data.placeholder + '</option>');
+                              					for(i in options){
+                              						if(typeof data.userData != 'undefined' && options[i].Code == data.userData[0]){
+                            							$(field).append('<option value="' + options[i].Code + '" selected>' + options[i].Description + '</option>');
+                            						}else{
+                            							$(field).append('<option value="' + options[i].Code + '">' + options[i].Description + '</option>');
+                            						}
+                            					}
+                            				}
+
+                            				if(data.multiple){
+                                				return $('<div/>').addClass(data.width + ' mb-3 field-container')
+                              					.append($('<div/>').addClass('card')
+                              						.append($('<div/>').addClass('card-body')
+                              							.append(label, field, help, validation)
+                              						)
+                              					);
+                            				}
+                          				}
+
+            							return $('<div/>').addClass(data.width + ' mb-3 field-container').append($('<div/>').addClass('form-floating').append(field, label, help, validation));
+                          			}
+                        		},
+                            	"i18n":{
+                        			"location":"../js/formBuilder"
+                        		}
+                        	});
+
+                        	$('.formBuilder-injected-style').remove();
+
+                        	var siteKey = '<?php echo $recaptcha->getSiteKey(); ?>';
+                        	var recaptchaEnabled = ajaxData.formSettings.enableRecaptcha;
+
+                        	var $renderedForm = $(document).find('.rendered-form');
+                        	$renderedForm.addClass('row');
+
+                        	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', 'patient\\.address\\.').data('hhkindex','');
+
+                        	// set country and state selectors
+                            $renderedForm.find('select.bfh-countries').each(function() {
+                                var $countries = $(this);
+                                $countries.bfhcountries($countries.data()).val($countries.attr('user-data'));
+                            });
+                            $renderedForm.find('select.bfh-states').each(function() {
+                                var $states = $(this);
+                                $states.bfhstates($states.data()).val($states.attr('user-data'));
+                            });
+
+                        	//zip code search
+                        	$renderedForm.find('input.hhk-zipsearch').each(function() {
+                                var lastXhr;
+                                createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
+                            });
+
+                            $renderedForm.find('.address').prop('autocomplete', 'search');
+
+                            //phone format
+                            verifyAddrs($renderedForm);
+
+                    		$('input.form-control').blur(function(){
+                    			var val = $(this).val().replaceAll('"', "'");
+                    			$(this).val(val);
+                    			console.log(val);
+                    			console.log($(this).html());
+                    		});
+
+                    		$(document).on('submit', 'form', function(e){
+                        		e.preventDefault();
+                        		if(recaptchaEnabled){
+                        		    grecaptcha.execute(siteKey, {action: 'submit'}).then(function(token){
+                        		    	submitForm(token);
+                        		    });
+                        		}else{
+                        			submitForm();
+                        		}
+                        	});
+
+                        	function submitForm(token = ''){
+                        		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");
+                        		$renderedForm.find('.submit-btn').prop('disabled','disabled').html(spinner).append(' Submitting...');
+
+                        		var formRenderData = formRender.userData;
+
+            					console.log(formRenderData);
+
+                        		$.ajax({
+                        	    	url : "ws_forms.php",
+                        	   		type: "POST",
+                        	    	data : {
+                        	    		cmd: "submitform",
+                        	    		formRenderData: JSON.stringify(formRenderData),
+                        	    		csrfToken: csrfToken,
+                        	    		recaptchaToken: token
+                        	    	},
+                        	    	dataType: "json",
+                        	    	success: function(data, textStatus, jqXHR)
+                        	    	{
+                        	    	    $('input, select').removeClass('is-invalid');
+                        	    	    $('.validationText').empty().removeClass('invalid-feedback');
+                        	    	    $('.submit-btn').text('Submit').removeAttr('disabled');
+
+                        	    	    if(data.errors){
+                        	    	    	$.each(data.errors, function(key, error){
+                        	    	    		if(key == 'server'){
+                        	    	    			$('#errorcontent').text(error);
+                        	    	    			$('.errmsg').show();
+                        	    	    		}else{
+                        	    	    			$('form *[name="' + error.field + '"]').addClass('is-invalid');
+                        	    	    			$('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
+                        	    	    			$('.errmsg .alert-heading').text('Error');
+                        	    	    			$('.errmsg #errorcontent').text('You have validation errors in your submission, please correct the fields marked in red and try again.');
+                        	    	    			$('.errmsg').show();
+                        	    	    		}
+                        	    	    	});
+                        	    	    }
+                        	    	    if(data.status == "success") {
+                        	    	    	$('.rendered-form button[type=submit]').attr("disabled", "disabled").hide();
+                        	    	    	$('.rendered-form input, .rendered-form select').attr('disabled', 'disabled');
+                        	    	    	$('.msg .alert-heading').html(formSuccessTitle);
+                        	    	    	$('.msg .successmsg').html(formSuccessContent);
+                        	    	    	$('.msg').show();
+                        	    	    	if(data.recaptchaScore){
+                        	    	    		$('.msg #recaptchascore').text(data.recaptchaScore);
+                        	    	    	}else{
+                        	    	    		$('.msg #recaptchascore').empty();
+                        	    	    	}
+                        	    	    	$('.errmsg').hide();
+                        	    	    }
+                        	    	    $('html, body').animate({scrollTop:$(document).height()}, 'slow');
+                        	    	},
+                        	    	error: function(data, textStatus, errorThrown){
+                        	    		$('input, select').removeClass('is-invalid');
+                        	    	    $('.validationText').empty().removeClass('invalid-feedback');
+                        	    	    $('.submit-btn').text('Submit').removeAttr('disabled');
+                        	    	},
+                        	    	statusCode: {
+    									501: function() {
+    										$('.errmsg .alert-heading').text('Error');
+                        	    	    	$('.errmsg #errorcontent').text('You have invalid special characters in your submission. Is your cat on your keyboard? Please check your form and try again.');
+                        	    	    	$('.errmsg').show();
+    									},
+    									500: function() {
+    										$('.errmsg .alert-heading').text('Server Error');
+                        	    	    	$('.errmsg #errorcontent').text("We are unable to process your submission at this time due to a server error. We're hard at work fixing the issue. Please try again in a few minutes.");
+                        	    	    	$('.errmsg').show();
+    									}
+  									}
+                        	    });
+                            }
+
+    					}else if(data.error){
+    						$("#formError").text(data.error);
+    					}
+                	}
+				});
                 //add guest button
                 //var elements = $renderedForm.find('input[group=guest], select[group=guest]').parents('.field-container').remove();
                 //console.log(elements);
@@ -344,70 +385,6 @@ if(isset($_GET['template'])){
 	    		//	index++;
             	//});
 
-            	function submitForm(token = ''){
-            		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");
-            		$renderedForm.find('.submit-btn').prop('disabled','disabled').html(spinner).append(' Submitting...');
-
-            		var formRenderData = formRender.userData;
-
-					console.log(formRenderData);
-
-            		$.ajax({
-            	    	url : "ws_forms.php",
-            	   		type: "POST",
-            	    	data : {
-            	    		cmd: "submitform",
-            	    		formRenderData: JSON.stringify(formRenderData),
-            	    		csrfToken: csrfToken,
-            	    		recaptchaToken: token
-            	    	},
-            	    	dataType: "json",
-            	    	success: function(data, textStatus, jqXHR)
-            	    	{
-            	    	    $('input, select').removeClass('is-invalid');
-            	    	    $('.validationText').empty().removeClass('invalid-feedback');
-            	    	    $('.submit-btn').text('Submit').removeAttr('disabled');
-
-            	    	    if(data.errors){
-            	    	    	$.each(data.errors, function(key, error){
-            	    	    		if(key == 'server'){
-            	    	    			$('#errorcontent').text(error);
-            	    	    			$('.errmsg').show();
-            	    	    		}else{
-            	    	    			$('form *[name="' + error.field + '"]').addClass('is-invalid');
-            	    	    			$('.validationText[data-field="' + error.field + '"').addClass('invalid-feedback').text(error.error);
-            	    	    			$('.errmsg .alert-heading').text('Error');
-            	    	    			$('.errmsg #errorcontent').text('You have validation errors in your submission, please correct the fields marked in red and try again.');
-            	    	    			$('.errmsg').show();
-            	    	    		}
-            	    	    	});
-            	    	    }
-            	    	    if(data.status == "success") {
-            	    	    	$('.rendered-form button[type=submit]').attr("disabled", "disabled").hide();
-            	    	    	$('.rendered-form input, .rendered-form select').attr('disabled', 'disabled');
-            	    	    	$('.msg').show();
-            	    	    	if(data.recaptchaScore){
-            	    	    		$('.msg #recaptchascore').text(data.recaptchaScore);
-            	    	    	}else{
-            	    	    		$('.msg #recaptchascore').empty();
-            	    	    	}
-            	    	    	$('.errmsg').hide();
-            	    	    }
-            	    	    $('html, body').animate({scrollTop:$(document).height()}, 'slow');
-            	    	}
-            	    });
-                }
-
-            	$(document).on('submit', 'form', function(e){
-            		e.preventDefault();
-            		if(recaptchaEnabled){
-            		    grecaptcha.execute(siteKey, {action: 'submit'}).then(function(token){
-            		    	submitForm(token);
-            		    });
-            		}else{
-            			submitForm();
-            		}
-            	});
 
             });
 	</script>
@@ -438,13 +415,11 @@ if(isset($_GET['template'])){
     	<form action="#" method="POST" novalidate>
     	<?php } ?>
         <div id="formContent" class="container-fluid">
-			<div style="text-align: center">
-				<?php echo $error; ?>
-			</div>
+			<div id="formError" style="text-align: center"></div>
         </div>
         <div class="alert alert-success msg" role="alert" style="display: none">
-    		<h4 class="alert-heading"><?php echo $successTitle; ?></h4>
-    		<p class="successmsg"><?php echo $successContent; ?></p>
+    		<h4 class="alert-heading"></h4>
+    		<p class="successmsg"></p>
     		<p style="display:none">Recaptcha Score: <span id="recaptchascore"></span></p>
     	</div>
     	<div class="alert alert-danger errmsg" role="alert" style="display: none">

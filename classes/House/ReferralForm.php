@@ -926,7 +926,11 @@ class ReferralForm {
 	}
 
 	public function getGuestCount(){
-	    return count($this->gstSearchFor);
+	    if(is_countable($this->gstSearchFor)){
+	       return count($this->gstSearchFor);
+	    }else{
+	        return 0;
+	    }
 	}
 }
 

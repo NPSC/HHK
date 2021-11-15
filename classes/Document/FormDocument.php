@@ -191,7 +191,7 @@ group by g.Code order by g.Order';
                 }
 
                 //Check checkin/checkout dates
-                if(isset($fieldData['checkindate']) && isset($fieldData['checkoutdate'])){
+                if(isset($fieldData['checkindate']) && $fieldData['checkindate'] != "" && isset($fieldData['checkoutdate']) && $fieldData['checkoutdate'] != ""){
                     try{
                         $checkin = new \DateTime($fieldData['checkindate']);
                         $checkout = new \DateTime($fieldData['checkoutdate']);
