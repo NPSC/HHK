@@ -24,7 +24,7 @@
     			"label": "Referral Source",
     			"placeholder": "Referral Source",
     			"className": "form-select",
-    			"name": "Media_Source",
+    			"name": "patient.demographics.Media_Source",
     			"width": "col-md-2",
     			"dataSource":"mediaSource",
     			"multiple": false,
@@ -172,7 +172,7 @@
   				]
   			},
   			{
-        		label: 'Emergency Contact',
+        		label: 'Patient Emergency Contact',
         		name: 'emergency-contact',
         		showHeader: true,
         		fields: [
@@ -181,7 +181,7 @@
     				"label": "First Name",
     				"placeholder": "First Name",
     				"className": "form-control",
-    				"name": "emerg.firstName",
+    				"name": "patient.emerg.firstName",
     				"width": "col-md-3"
   				},
   				{
@@ -189,7 +189,7 @@
     				"label": "Last Name",
     				"placeholder": "Last Name",
     				"className": "form-control",
-    				"name": "emerg.lastName",
+    				"name": "patient.emerg.lastName",
     				"width": "col-md-3"
   				},
   				{
@@ -198,7 +198,7 @@
     				"label": "Phone",
     				"placeholder": "Phone",
     				"className": "form-control hhk-phoneInput",
-    				"name": "emerg.phone",
+    				"name": "patient.emerg.phone",
     				"width": "col-md-2"
   				},
   				{
@@ -207,7 +207,7 @@
     				"label": "Alternate Phone",
     				"placeholder": "Alternate Phone",
     				"className": "form-control hhk-phoneInput",
-    				"name": "emerg.alternate",
+    				"name": "patient.emerg.altphone",
     				"width": "col-md-2"
   				},
   				{
@@ -215,7 +215,7 @@
     				"label": "Relationship to " + (options.labels.patient || 'Patient'),
     				"placeholder": "Relationship to " + (options.labels.patient || 'Patient'),
     				"className": "form-select",
-    				"name": "emerg.relationship",
+    				"name": "patient.emerg.relation",
     				"width": "col-md-2",
     				"dataSource":"patientRelation",
     				"multiple": false,
@@ -606,6 +606,14 @@
     					"selected": true
     				}
     				]
+  				},
+  				{
+					"type": "text",
+    				"label": (options.labels.mrn || 'MRN'),
+    				"placeholder": (options.labels.mrn || 'MRN'),
+    				"className": "form-control",
+    				"name": "hospital.mrn",
+    				"width": "col-md-3",
   				},
   				... (options.fieldOptions.doctor ?
   				[{

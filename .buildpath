@@ -16,11 +16,6 @@
 			<attribute name="composer" value="vendor"/>
 		</attributes>
 	</buildpathentry>
-	<buildpathentry kind="src" path="vendor/mexitek/phpcolors/src">
-		<attributes>
-			<attribute name="composer" value="vendor"/>
-		</attributes>
-	</buildpathentry>
 	<buildpathentry kind="src" path="vendor/mk-j/php_xlsxwriter">
 		<attributes>
 			<attribute name="composer" value="vendor"/>

@@ -693,18 +693,18 @@ if (isset($_POST['btnkfSave'])) {
             }
         }
     }
-    
+
     // Payment types GL Codes
     if (isset($_POST['ptGlCode'])) {
-    	
+
     	$stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
     	$payMethods = $stmtp->fetchAll(\PDO::FETCH_NUM);
-    	
+
     	foreach ($payMethods as $t) {
-    		
+
     		if (isset($_POST['ptGlCode'][$t[0]])) {
     			$gl = filter_var($_POST['ptGlCode'][$t[0]], FILTER_SANITIZE_STRING);
-    			
+
     			$dbh->exec("Update payment_method set Gl_Code = '$gl' where idPayment_method = ". $t[0]);
     		}
     	}
@@ -763,7 +763,7 @@ if (isset($_POST['btnhSave'])) {
 
         // Delete?
         if (isset($_POST['hdel'][$idHosp])) {
-        	
+
         	// Change status to "Retired"
         	$hospRs->Status->setNewVal('r');
         	EditRS::update($dbh, $hospRs, array($hospRs->idHospital));
@@ -953,19 +953,19 @@ if (isset($_POST['btnItemSave'])) {
         }
 
         if (isset($_POST['txtItem'][$idItem])) {
-        	
+
         	$desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_STRING);
-        	
+
         	$dbh->exec("update `item` set `Description` = '$desc' where `idItem` = " . $idItem);
         }
-        
+
         if (isset($_POST['txtGlCode'][$idItem])) {
-        	
+
         	$glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_STRING);
-        	
+
         	$dbh->exec("update `item` set `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
         }
-        
+
         if (isset($_POST['cbtax'][$idItem])) {
             // Define tax items for each item.
             foreach ($_POST['cbtax'][$idItem] as $t) {
@@ -1110,7 +1110,7 @@ if (isset($_POST['ldfm'])) {
 
     //set help text
     $help = '';
-    
+
     foreach ($docRows as $r) {
 
         $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', $r['Description'], array(
@@ -1142,14 +1142,14 @@ Upload new HTML file: <input name="formfile" type="file" required accept="text/h
             'id' => 'replacements'
         ));
     }
-    
+
     // Make the final tab control
     $ul = HTMLContainer::generateMarkup('ul', $li, array());
     $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array(
         'id' => 'regTabDiv',
         'data-formDef' => $formDef
     ));
-    
+
     $dataArray['type'] = $formType;
     $dataArray['title'] = $formTitle;
     $dataArray['mkup'] = $output;
@@ -1167,9 +1167,9 @@ if (isset($_POST['docUpload'])) {
     if (isset($_POST['filefrmtype'])) {
     	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
     }
-    
+
     $mimetype = mime_content_type($_FILES['formfile']['tmp_name']);
-    
+
     if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
 
         $docId = - 1;
@@ -1193,19 +1193,19 @@ if (isset($_POST['docUpload'])) {
 }
 
 if (isset($_POST['delfm']) && isset($_POST['docCode']) && isset($_POST['formDef'])) {
-    
+
     $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
     $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_STRING);
-    
+
     $tabIndex = 8;
-    
+
     $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
     $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
-    
+
     if (isset($_POST['docfrmtype'])) {
     	$formType = filter_var($_POST['docfrmtype'], FILTER_SANITIZE_STRING);
     }
-    
+
 }
 
 // Make sure Content-Type is application/json
@@ -1214,7 +1214,7 @@ if (stripos($content_type, 'application/json') !== false) {
     // Read the input stream
     $body = file_get_contents("php://input");
     $data = json_decode($body);
-    
+
     if($data->cmd == "reorderfm"){
         $output = "";
         try{
@@ -1227,7 +1227,7 @@ if (stripos($content_type, 'application/json') !== false) {
         }
         echo json_encode(["status"=>"success"]);
     }
-    
+
     exit;
 }
 
@@ -1241,7 +1241,7 @@ if (isset($_POST['txtformLang'])) {
     if (isset($_POST['hdnFormType'])) {
     	$formType = filter_var($_POST['hdnFormType'], FILTER_SANITIZE_STRING);
     }
-    
+
     if ($lang != '') {
 
         $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
@@ -1577,14 +1577,14 @@ if ($uS->KeyDeposit) {
 $payTypesTable = '';
 
 if ($uS->RoomPriceModel != ItemPriceCode::None) {
-	
+
 	$payMethods = array();
 	$stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
 	while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
 		$payMethods[$t[0]] = $t[1];
 	}
 	$payMethods[''] = '';
-	
+
 
     $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
     $ptTbl = new HTMLTable();
@@ -1638,7 +1638,7 @@ $hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire');
 $hTbl->addHeaderTr($hths);
 
 foreach ($hrows as $h) {
-	
+
 	if ($h['Title'] == '(None)' && $h['Type'] == 'a') {
 		continue;
 	}
@@ -1680,14 +1680,14 @@ foreach ($hrows as $h) {
     		'name' => 'hdel[' . $h['idHospital'] . ']',
     		'type' => 'checkbox'
     );
-    
+
     $rowAtr = array();
-    
+
     if ($h['Status'] == 'r') {
     	$hdelAtr['checked'] = 'checked';
     	$rowAtr['style'] = 'background-color:lightgray;';
     }
-    
+
     $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated'])))
     	. HTMLTable::makeTd(HTMLInput::generateMarkup('', $hdelAtr), array(
         'style' => 'text-align:center;'
@@ -2246,7 +2246,7 @@ $resultMessage = $alertMsg->createMarkup();
 	</div>
 	<!-- div id="contentDiv"-->
 	<script type="text/javascript">
-	
+
 		$(document).ready(function(){
 			$('#formBuilder').hhkFormBuilder({
 				labels: {
@@ -2257,7 +2257,8 @@ $resultMessage = $alertMsg->createMarkup();
 					location: "<?php echo $labels->getString('hospital', 'location', 'Unit'); ?>",
 					referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
 					treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
-					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>"
+					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>",
+					mrn: "<?php echo $labels->getString('hospital', 'MRN', 'MRN'); ?>"
 				},
 				fieldOptions: {
 					county: "<?php echo $uS->county; ?>",
