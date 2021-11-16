@@ -253,7 +253,7 @@ class Hospital {
                 HTMLTable::makeTh("x", array('class'=>'a_actions')) .
                 HTMLTable::makeTh('First')
                 .HTMLTable::makeTh('Last')
-                .HTMLTable::makeTh('Phone', array('class'=>'hhk-agentInfo', 'colspan'=>'2'))
+                .HTMLTable::makeTh('Phone', array('class'=>'hhk-agentInfo', 'colspan'=>'2', 'style'=>'min-width:362px'))
                 .HTMLTable::makeTh('Email', array('style'=>'vertical-align:bottom;', 'class'=>'hhk-agentInfo'))
                 , array('class'=>'hhk-agentInfo'));
 
@@ -440,7 +440,7 @@ class Hospital {
                     HTMLSelector::doOptionsMkup($diags, $myDiagnosis, TRUE),
                     array('name'=>'selDiagnosis', 'class'=>'hospital-stay', 'style'=>'width: 100%'))
             ));
-            
+
             // Use Diagnosis as a text box?
             if ($uS->ShowDiagTB) {
                 if ($myDiagnosis != '' && isset($diags[$myDiagnosis]) === FALSE) {
@@ -452,7 +452,7 @@ class Hospital {
                 }else{
                     $diagtbl->addBodyTr(
                         HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis2(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', 'placeholder'=>$labels->getString('hospital','diagnosisDetail', 'Diagnosis Details')))));
-                    
+
                 }
             }
 
@@ -582,11 +582,11 @@ $(document).ready(function () {
             $myDiagnosis = filter_var($post['selDiagnosis'], FILTER_SANITIZE_STRING);
             $hstay->setDiagnosisCode($myDiagnosis);
         }
-        
+
         if (isset($post['txtDiagnosis'])) {
             $hstay->setDiagnosis2(filter_var($post['txtDiagnosis'], FILTER_SANITIZE_STRING));
         }
-        
+
         if (isset($post['selLocation'])) {
             $hstay->setLocationCode(filter_var($post['selLocation'], FILTER_SANITIZE_STRING));
         }
