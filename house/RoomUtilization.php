@@ -58,7 +58,7 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
 
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
-    
+
     // Room Grouping
     if (isset($_POST['selGroup'])) {
         $groupingSelection = filter_var($_POST['selGroup'], FILTER_SANITIZE_STRING);
@@ -196,7 +196,7 @@ $(document).ready(function() {
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-member-detail hhk-visitdialog">
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox hhk-visitdialog" style="display:inline-block; font-size:0.9em;">
                 <form action="RoomUtilization.php" method="post"  id="form1" name="form1" >
                     <div class="ui-helper-clearfix">
                     <?php echo $timePeriodMarkup; ?>
@@ -220,7 +220,7 @@ $(document).ready(function() {
                     </div>
                 </form>
             </div>
-            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
+            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <?php echo $output; ?>
             </div>
