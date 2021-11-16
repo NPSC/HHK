@@ -346,7 +346,7 @@ class Family {
 
     }
 
-    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData) {
+    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData, $patientUserData = []) {
 
         $rowClass = 'odd';
         $mk1 = '';
@@ -385,12 +385,12 @@ class Family {
 
                 if ($this->IncldEmContact) {
                     // Emergency Contact
-                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
+                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role, (isset($patientUserData['emerg']) ? $patientUserData['emerg'] : []));
                 }
 
                 if ($this->showDemographics) {
                     // Demographics
-                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role, (isset($patientUserData['demograhics']) ? $patientUserData['demograhics'] : []));
                 }
 
                 if ($this->showInsurance) {
@@ -477,11 +477,11 @@ class Family {
 
     }
 
-    protected function getDemographicsMarkup(\PDO $dbh, $role) {
+    protected function getDemographicsMarkup(\PDO $dbh, $role, $demographicsUserData = []) {
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
             HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
-                . $role->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
+            . $role->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE, $demographicsUserData), array('class'=>'hhk-panel')),
             array('style'=>'float:left; margin-right:3px;'));
 
     }
@@ -494,7 +494,7 @@ class Family {
 
     }
 
-    protected function getEmergencyConntactMu(\PDO $dbh, $role) {
+    protected function getEmergencyConntactMu(\PDO $dbh, $role, $emergUserData = []) {
 
         $uS = Session::getInstance();
 
@@ -505,7 +505,7 @@ class Family {
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Emergency Contact for ' . Labels::getString('MemberType', 'visitor', 'Guest') . $ecSearch, array('style'=>'font-weight:bold;'))
-                . $ec->createMarkup($uS->guestLookups[GLTableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact()), array('class'=>'hhk-panel')),
+                . $ec->createMarkup($uS->guestLookups[GLTableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact(), $emergUserData), array('class'=>'hhk-panel')),
                 array('style'=>'float:left; margin-right:3px;'));
 
     }

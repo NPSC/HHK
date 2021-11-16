@@ -199,7 +199,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createFamilyMarkup(\PDO $dbh) {
+    protected function createFamilyMarkup(\PDO $dbh, array $formUserData = []) {
 
         $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
 
@@ -222,7 +222,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             }
         }
 
-        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData));
+        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData, $formUserData));
 
     }
 

@@ -651,7 +651,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout','',1),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
-('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', ''),
+('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',1),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry','',1),
@@ -660,9 +660,9 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('VisitFeeDelayDays','0','i','hf','','Number of days before cleaning fee is charged','',1),
 ('Volunteers','true','b','a','','Enable the HHK Volunteer Manager site','',1),
 ('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','',1),
-('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', ''),
-('recaptchaApiKey', 'AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc', 's', 'ga', '', 'Google API Key for Recaptcha', ''),
-('recaptchaSiteKey', '6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO', 's', 'ga', '', 'Google API Site Key for Recaptcha', '');
+('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', '',0),
+('recaptchaApiKey', 'AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc', 's', 'ga', '', 'Google API Key for Recaptcha', '',0),
+('recaptchaSiteKey', '6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO', 's', 'ga', '', 'Google API Site Key for Recaptcha', '',0);
 -- ;
 
 --

@@ -236,7 +236,7 @@ class IndivMember extends AbstractMember {
      *
       * @return string HTML table structure
      */
-    public function createDemographicsPanel(\PDO $dbh, $limited = FALSE, $includeBirthDate = TRUE) {
+    public function createDemographicsPanel(\PDO $dbh, $limited = FALSE, $includeBirthDate = TRUE, $demographicsUserData = []) {
 
         $uS = Session::getInstance();
         $idPrefix = $this->idPrefix;
@@ -254,7 +254,8 @@ class IndivMember extends AbstractMember {
                     HTMLTable::makeTd($d[1], array('class'=>'tdlabel'))
                     . HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(
-                                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[$d[0]]), $this->getDemographicsEntry($d[0])),
+                                HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[$d[0]]),
+                                    (isset($demographicsUserData[$d[0]]) && $demographicsUserData[$d[0]] != '' ? $demographicsUserData[$d[0]] : $this->getDemographicsEntry($d[0]))),
                         		array('name'=>$idPrefix.'sel_' . $d[0], 'class'=>$idPrefix.'hhk-demog-input')
                                 )
                         , array('style'=>'display:table-cell;')

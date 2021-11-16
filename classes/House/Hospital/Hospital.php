@@ -93,7 +93,7 @@ class Hospital {
         				)
         		. ($mrn == '' ? '' : HTMLTable::makeTd(
         				HTMLInput::generateMarkup(
-        						$hstay->getMrn(),
+        				    (isset($referralHospitalData['mrn']) && $referralHospitalData['mrn'] != '' ? $referralHospitalData['mrn'] : $hstay->getMrn()),
         						array('name'=>'psgMrn', 'size'=>'14', 'class'=>'ignrSave hospital-stay')
         						)
         				))
@@ -433,7 +433,7 @@ class Hospital {
                 HTMLTable::makeTh($labels->getString('hospital', 'diagnosis', 'Diagnosis'))
             );
 
-            $myDiagnosis = $hstay->getDiagnosisCode();
+            $myDiagnosis = (isset($referralHospitalData['diagnosis']) && $referralHospitalData['diagnosis'] != '' ? $referralHospitalData['diagnosis'] : $hstay->getDiagnosisCode());
 
             $diagtbl->addBodyTr(HTMLTable::makeTd(
                 HTMLSelector::generateMarkup(
@@ -475,7 +475,7 @@ class Hospital {
 
             $diagtbl->addBodyTr(HTMLTable::makeTd(
                 HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($locs, $hstay->getLocationCode(), TRUE),
+                    HTMLSelector::doOptionsMkup($locs, (isset($referralHospitalData['location']) && $referralHospitalData['location'] != '' ? $referralHospitalData['location'] : $hstay->getLocationCode()), TRUE),
                 		array('name'=>'selLocation', 'class'=>'hospital-stay'))
                 )
             );

@@ -52,7 +52,7 @@ class ActiveReservation extends Reservation {
         // Add the family, hospital, etc sections.
         $this->createDatesMarkup();
         $this->createHospitalMarkup($dbh, (isset($formUserData['hospital'])?$formUserData['hospital']:[]));
-        $this->createFamilyMarkup($dbh);
+        $this->createFamilyMarkup($dbh, (isset($formUserData['patient'])?$formUserData['patient']:[]));
 
         // Add the reservation section.
         $this->reserveData->setResvSection($this->createResvMarkup($dbh, $oldResvId, '', (isset($formUserData['vehicle'])?$formUserData['vehicle']:[])));
@@ -174,12 +174,12 @@ class ActiveReservation extends Reservation {
         if (isset($post['taCkinNotes'])) {
             $resv->setCheckinNotes(filter_var($post['taCkinNotes'], FILTER_SANITIZE_STRING));
         }
-        
+
         // Ribbon Note
         if (isset($post['txtRibbonNote'])){
             $resv->setNotes(filter_var($post['txtRibbonNote'], FILTER_SANITIZE_STRING));
         }
-        
+
         // remove room if reservation is in waitlist
         if ($reservStatus == ReservationStatus::Waitlist) {
             $resv->setIdResource(0);
