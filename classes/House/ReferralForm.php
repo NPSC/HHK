@@ -687,8 +687,8 @@ class ReferralForm {
 	            .HTMLTable::makeTd($r->getAddressState(), array('id'=>'tbPatState'.$r->getId()))
 	            .HTMLTable::makeTd($r->getAddressZip(), array('id'=>'tbPatZip'.$r->getId()))
 	            .HTMLTable::makeTd($r->getAddressCountry(), array('id'=>'tbPatCountry'.$r->getId()))
-	            .HTMLTable::makeTd($r->getNoReturn())
-	            , array('class'=>'hhk-resultUserData'));
+	            .HTMLTable::makeTd($r->getNoReturn(), array('style'=>'font-weight:bold;'))
+	            , array('class'=>'hhk-resultUserData' . ($r->getNoReturn() != "" ? ' hhk-warning':'')));
 	    }
 
 	    return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
@@ -816,8 +816,8 @@ class ReferralForm {
 	           .HTMLTable::makeTd($r->getAddressState())
 	           .HTMLTable::makeTd($r->getAddressZip())
 	           .HTMLTable::makeTd($r->getAddressCountry())
-	           .HTMLTable::makeTd($r->getNoReturn())
-	           , array('class'=>'hhk-resultUserData'));
+	           .HTMLTable::makeTd($r->getNoReturn(), array('style'=>'font-weight:bold'))
+	           , array('class'=>'hhk-resultUserData' . ($r->getNoReturn() != "" ? ' hhk-warning':'')));
 	   }
 
 

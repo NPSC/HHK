@@ -540,7 +540,7 @@ class ReserveData {
     	$this->insistCkinDemog = $id;
     	return $this;
     }
-    
+
     public function setSpanStartDT($strDate) {
         if ($strDate != '') {
             $this->spanStartDT = new \DateTimeImmutable($strDate);
@@ -617,8 +617,8 @@ class ReserveData {
     	$this->searchTerm = $p;
     	return $this;
     }
-    
-    public function setArrivalDT(\DateTime $arrivalDT) {
+
+    public function setArrivalDT(\DateTimeInterface $arrivalDT) {
         $this->arrivalDT = $arrivalDT;
         return $this;
     }
@@ -631,7 +631,7 @@ class ReserveData {
         return $this;
     }
 
-    public function setDepartureDT(\DateTime $departureDate) {
+    public function setDepartureDT(\DateTimeInterface $departureDate) {
         $this->departureDT = $departureDate;
         return $this;
     }

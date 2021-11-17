@@ -554,3 +554,7 @@ div#referralTabs ul>li.ui-state-active .ui-icon {
 	margin-top:0;
 	margin-bottom: 30px;
 }
+
+.hhk-warning {
+    background-color: #f8d7da;
+}
