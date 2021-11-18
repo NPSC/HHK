@@ -141,23 +141,53 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
                     className: 'ui-corner-all',
                     filename: 'Daily Waitlist Report ' + dateRender(new Date().toISOString(), 'display', 'MMM D, YYYY'),
                     orientation: 'landscape',
+                    pageSize: 'letter',
                     title: function(){
                     	var siteName = '<?php echo $uS->siteName; ?>';
                     	return siteName + '\r\nWaitlist as of ' + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
+                    },
+                    customize: function(doc){
+                    	//doc.content[1].layout = "lightHorizontalLines";
+                    	
+                    	// Get the row data in in table order and search applied
+                          var table = $table;
+                          var rowData = table.rows( {order: 'applied', search:'applied'} ).data();
+                          var headerLines = 0;  // Offset for accessing rowData array
+                
+                          var newBody = []; // this will become our new body (an array of arrays(lines))
+                          //Loop over all lines in the table
+                          doc.content[1].table.body.forEach(function(line, i){
+                
+                            // Remove detail-control column
+                            newBody.push(
+                              [line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],line[9]]
+                            );
+                
+                            if (line[0].style !== 'tableHeader' && line[0].style !== 'tableFooter') {
+                
+                              var data = rowData[i - headerLines];
+                
+                			  if(data["Waitlist Notes"] !== ''){
+                                  // Append child data, matching number of columns in table
+                                  newBody.push(
+                                    [
+                                      {text: data["Waitlist Notes"], style:line[0].style, colSpan:10, margin: [10,0,0,0]},
+                                    ]
+                                  );
+                              };
+                
+                            } else {
+                              headerLines++;
+                            }
+                
+                          });
+                          
+                          doc.content[1].table.body = newBody;
+                          
                     }
                 }
             ]
         });
-        
-        $table.rows().every( function ( rowIdx, tableLoop, rowLoop ) {
-    		var data = this.data();
-    		console.log(data);
-    		this
-        		.child(
-            		'test'
-        		)
-        	.show();
-		} );
         
         $('#vcategory').append($table.buttons().container());
         
