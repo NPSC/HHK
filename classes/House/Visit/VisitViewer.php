@@ -194,7 +194,7 @@ class VisitViewer {
         				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
         		);
         }
-        
+
         $th .= HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'));
         $tr .= HTMLTable::makeTd($hospitalButton, array('id'=>'hhk-HospitalTitle'));
 
@@ -259,7 +259,7 @@ class VisitViewer {
                 $etbl->addBodyTr(HTMLTable::makeTd(
                         HTMLContainer::generateMarkup('span', 'For:', array('style'=>'margin-left:.3em;'))
                         . HTMLInput::generateMarkup($extendVisitDays, array('name' => 'extendDays', 'size'=>'2', 'style'=>'margin-left:.3em;', 'class' => 'hhk-feeskeys'))
-                        . HTMLContainer::generateMarkup('span', 'days', array('style'=>'margin-left:.3em;')), array('style'=>'display:none;', 'class'=>'hhk-extendVisit')));
+                        . HTMLContainer::generateMarkup('span', 'nights', array('style'=>'margin-left:.3em;')), array('style'=>'display:none;', 'class'=>'hhk-extendVisit')));
                 $etbl->addBodyTr(HTMLTable::makeTd(
                         HTMLContainer::generateMarkup('span', 'Starting:', array('style'=>'margin-left:.3em;'))
                         . HTMLInput::generateMarkup('Today', array('name' => 'txtWStart', 'readonly'=>'readonly', 'size'=>'7', 'style'=>'margin-left:.3em;')), array('style'=>'display:none;', 'class'=>'hhk-extendVisit')));
@@ -278,7 +278,7 @@ class VisitViewer {
         $ribbonTbl = new HTMLTable();
         $ribbonTbl->addHeaderTr(HTMLTable::makeTh("Ribbon Note") . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Notes'], array('name'=>'txtRibbonNote', 'maxlength'=>'20'))));
         $ribbonTblMarkup = $ribbonTbl->generateMarkup(array('style'=>'float:left; clear:left; margin-bottom: 0.3em; margin-top: 0.3em;'));
-        
+
         $tblMarkup .= $ribbonTblMarkup . $notesContainer;
 
         $undoCkoutButton = '';
@@ -616,14 +616,14 @@ class VisitViewer {
 
         $includeKeyDep = FALSE;
         $unpaidKeyDep = FALSE;
-        
+
         if ($uS->KeyDeposit && $r['Status'] == VisitStatus::CheckedIn && ($action == '' || $action == 'pf' || $action == 'ref')) {
             $includeKeyDep = TRUE;
             if($visitCharge->getDepositCharged() > 0 && ($visitCharge->getDepositPending() + $visitCharge->getKeyFeesPaid()) < $visitCharge->getDepositCharged()){
                 $unpaidKeyDep = TRUE;
             }
         }
-        
+
         $includeVisitFee = FALSE;
         if ($uS->VisitFee && ($action == '' || $action == 'pf' || $action == 'ref') && $visitCharge->getVisitFeeCharged() > 0) {
             $includeVisitFee = TRUE;
@@ -705,7 +705,7 @@ class VisitViewer {
         $showSubTotal = FALSE;
         // Get labels
         $labels = Labels::getLabels();
-        
+
         // Number of nights
         $tbl2->addBodyTr(
                 HTMLTable::makeTd('# of nights stayed:', array('class'=>'tdlabel'))
@@ -745,7 +745,7 @@ class VisitViewer {
 
                 foreach ($curAccount->getCurentTaxItems(ItemId::Lodging) as $t) {
                     $taxedRoomFees = $curAccount->getRoomCharge() + $curAccount->getTotalDiscounts() - $curAccount->getTaxExemptRoomFees();
-                    
+
                     if ($curAccount->getRoomFeeBalance() < 0) {
                         if($taxedRoomFees > 0){
                             $taxAmt = $t->getTaxAmount($taxedRoomFees);
@@ -762,7 +762,7 @@ class VisitViewer {
                     );
                 }
             }
-            
+
             //}
 
         // Visit fees charged
@@ -799,12 +799,12 @@ class VisitViewer {
                 }
             }
         }
-        
+
         // Discounts
         if ($curAccount->getTotalDiscounts() != 0) {
-            
+
             $showSubTotal = TRUE;
-            
+
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Discounts & Waives:', array('class'=>'tdlabel'))
                 . HTMLTable::makeTd('$' . number_format($curAccount->getTotalDiscounts(), 2), array('style'=>'text-align:right;'))
@@ -1312,7 +1312,7 @@ class VisitViewer {
 
         // Update any invoice line dates
 		Invoice::updateInvoiceLineDates($dbh, $idVisit, $startDelta);
-		
+
         $lastVisit = array_pop($visits);
         $lastVisitRs = $lastVisit['rs'];
 
