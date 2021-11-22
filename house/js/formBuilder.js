@@ -145,7 +145,7 @@
     				"label": (options.labels.patient || 'Patient') + " Gender",
     				"placeholder": (options.labels.patient || 'Patient') + " Gender",
     				"className": "form-select",
-    				"name": "patient.demogs.gender",
+    				"name": "patient.demographics.gender",
     				"width": "col-md-4",
     				"dataSource":"gender",
     				"multiple": false,
