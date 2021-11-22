@@ -1588,7 +1588,7 @@ $(document).ready(function () {
            url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
            dataSrc: 'waitlist'
        },
-       order: [[ (showCreatedDate ? 4 : 3), 'asc' ]],
+       order: [[ (showCreatedDate ? 5 : 3), 'asc' ]],
        drawCallback: function () {
             $('#spnNumWaitlist').text(this.api().rows().data().length);
             $('#waitlist .gmenu').menu();

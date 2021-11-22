@@ -72,9 +72,9 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
         $hospAssocSql = "h.Title as `Hospital`, a.Title as `Association`, ";
         $agentSql = "ifnull(nr.Name_Full, '') as `$agentTitle` ";
         $locSql = "ifnull(gl.Description, '') as `$locTitle`, ";
-        $diagSql = " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, ifnull(hs.Diagnosis2, '') as `$diagDetailTitle`, ";
+        $diagSql = " ifnull(g.Description, hs.Diagnosis) as `$diagTitle`, " . ($uS->ShowDiagTB ? "ifnull(hs.Diagnosis2, '') as `$diagDetailTitle`, ": "");
     }
-    
+
     $queryStatus = " CASE WHEN s.On_Leave > 0 and s.`Status` = 'a' THEN 'On Leave' ELSE ifnull(g2.Description,'') END as `Status`, ";
 
     if ($showAddr && $showFullName) {
@@ -203,6 +203,10 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
         if ($showDiagnosis === FALSE) {
             unset($r['Diagnosis']);
             unset($r['Diagnosis2']);
+        }else{
+            if(!$uS->ShowDiagTB){
+                unset($r['Diagnosis2']);
+            }
         }
 
         if ($showLocation === FALSE) {
@@ -364,7 +368,7 @@ where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Sta
     }
 }
 
-function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $hospCodes, $labels, $showAssoc, $showDiagnosis, $showLocation, $patBirthDate, $patAsGuest = true, $showCounty = FALSE) {
+function getPsgReport(\PDO $dbh, $local, $whFields, $start, $end, $relCodes, $hospCodes, $labels, $showAssoc, $showDiagnosis, $showDiagDetails, $showLocation, $patBirthDate, $patAsGuest = true, $showCounty = FALSE) {
 
     $diagTitle = $labels->getString('hospital', 'diagnosis', 'Diagnosis');
     $diagDetailTitle = $labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details');
@@ -469,6 +473,11 @@ order by ng.idPsg, `ispat`, `Id`";
 
 	     if ($showDiagnosis === FALSE) {
 	         unset($r[$diagTitle]);
+	         unset($r[$diagDetailTitle]);
+	     }else{
+	         if(!$showDiagDetails){
+	             unset($r[$diagDetailTitle]);
+	         }
 	     }
 
 	     if ($showLocation === FALSE) {
@@ -1039,7 +1048,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         switch ($rptSetting) {
 
         	case 'psg':
-        		$rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, $uS->guestLookups['Patient_Rel_Type'], $uS->guestLookups[GLTableNames::Hospital], $labels, $showAssoc, $showDiag, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest, $uS->county);
+        		$rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, $uS->guestLookups['Patient_Rel_Type'], $uS->guestLookups[GLTableNames::Hospital], $labels, $showAssoc, $showDiag, $uS->ShowDiagTB, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest, $uS->county);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
