@@ -390,7 +390,7 @@ class Family {
 
                 if ($this->showDemographics) {
                     // Demographics
-                    $demoMu .= $this->getDemographicsMarkup($dbh, $role, (isset($patientUserData['demograhics']) ? $patientUserData['demograhics'] : []));
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role, (isset($patientUserData['demographics']) ? $patientUserData['demographics'] : []));
                 }
 
                 if ($this->showInsurance) {

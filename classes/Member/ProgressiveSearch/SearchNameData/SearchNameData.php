@@ -25,6 +25,11 @@ class SearchNameData implements SearchNameDataInterface {
     protected $addressZip = '';
     protected $addressCountry = '';
     protected $noReturn = '';
+    protected $emrgFirst = '';
+    protected $emrgLast = '';
+    protected $emrgPhone = '';
+    protected $emrgAltPhone = '';
+    protected $emrgRelation = '';
 
 
     /**
@@ -178,6 +183,27 @@ class SearchNameData implements SearchNameDataInterface {
      */
     public function setAddressCountry($addressCountry) {
         $this->addressCountry = trim($addressCountry);
+        return $this;
+    }
+
+    public function setEmrgFirst($v) {
+        $this->emrgFirst = trim($v);
+        return $this;
+    }
+    public function setEmrgLast($v) {
+        $this->emrgLast = trim($v);
+        return $this;
+    }
+    public function setEmrgPhone($v) {
+        $this->emrgPhone = trim($v);
+        return $this;
+    }
+    public function setEmrgAltPhone($v) {
+        $this->emrgAltPhone = trim($v);
+        return $this;
+    }
+    public function setEmrgRelation($v) {
+        $this->emrgRelation = trim($v);
         return $this;
     }
 
@@ -359,6 +385,26 @@ class SearchNameData implements SearchNameDataInterface {
         return $this->addressStreet1 . ($this->addressStreet2 == '' ? '' : ', ' . $this->addressStreet2);
     }
 
+    public function getEmrgFirst()
+    {
+        return $this->emrgFirst;
+    }
+    public function getEmrgLast()
+    {
+        return $this->emrgLast;
+    }
+    public function getEmrgPhone()
+    {
+        return $this->emrgPhone;
+    }
+    public function getEmrgAltPhone()
+    {
+        return $this->emrgAltPhone;
+    }
+    public function getEmrgRelation()
+    {
+        return $this->emrgRelation;
+    }
 
 
     /**

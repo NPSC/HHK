@@ -46,6 +46,12 @@ interface SearchNameDataInterface
 
     public function setNoReturn($v);
 
+    public function setEmrgFirst($v);
+    public function setEmrgLast($v);
+    public function setEmrgPhone($v);
+    public function setEmrgAltPhone($v);
+    public function setEmrgRelation($v);
+
     public function getId();
 
     public function getNameFirst();
@@ -125,6 +131,13 @@ interface SearchNameDataInterface
     public function getAddressCountry();
 
     public function getNoReturn();
+
+    public function getEmrgFirst();
+    public function getEmrgLast();
+    public function getEmrgPhone();
+    public function getEmrgAltPhone();
+    public function getEmrgRelation();
+
 
     public function loadMeFrom(array $r);
 }

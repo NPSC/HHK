@@ -104,5 +104,48 @@ class SearchResults extends SearchNameData
         return $this->suffix;
 
     }
+
+    public function setEmrgFirst($nameFirst) {
+        $this->emrgFirst = preg_replace_callback("/(&#[0-9]+;)/",
+            function($m) {
+                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+            },
+            $nameFirst
+            );
+        return $this;
+    }
+
+    public function setEmrgLast($nameLast) {
+        $this->emrgLast = preg_replace_callback("/(&#[0-9]+;)/",
+            function($m) {
+                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+            },
+            $nameLast
+            );
+        return $this;
+    }
+
+    public function getEmrgPhone() {
+        return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->emrgPhone);
+    }
+
+    public function getEmrgAltPhone() {
+        return preg_replace('~.*(\d{3})[^\d]*(\d{3})[^\d]*(\d{4}).*~', '($1) $2-$3', $this->emrgAltPhone);
+    }
+
+    public function getEmrgRelation() {
+
+        $uS = Session::getInstance();
+
+        if (isset($uS->guestLookups[GLTableNames::PatientRel][$this->emrgRelation])) {
+            return $uS->guestLookups[GLTableNames::PatientRel][$this->emrgRelation][1];
+        }
+
+        return $this->emrgRelation;
+
+    }
+
+
+
 }
 

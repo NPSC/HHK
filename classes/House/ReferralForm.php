@@ -125,8 +125,8 @@ class ReferralForm {
 	    }
 
 	    // gender
-	    if (isset($formUserData['demogs']['gender']) && $formUserData['demogs']['gender'] != '') {
-	        $searchFor->setGender($formUserData['demogs']['gender']);
+	    if (isset($formUserData['demographics']['gender']) && $formUserData['demographics']['gender'] != '') {
+	        $searchFor->setGender($formUserData['demographics']['gender']);
 	    }
 
 	    // Phone
@@ -172,6 +172,31 @@ class ReferralForm {
 	    // Relationship
 	    if (isset($formUserData['relationship']) && $formUserData['relationship'] != '') {
 	        $searchFor->setRelationship($formUserData['relationship']);
+	    }
+
+	    // Emergency First
+	    if (isset($formUserData['emerg']['firstName']) && $formUserData['emerg']['firstName'] != '') {
+	        $searchFor->setEmrgFirst($formUserData['emerg']['firstName']);
+	    }
+
+	    // Emergency Last
+	    if (isset($formUserData['emerg']['lastName']) && $formUserData['emerg']['lastName'] != '') {
+	        $searchFor->setEmrgLast($formUserData['emerg']['lastName']);
+	    }
+
+	    // Emergency Phone
+	    if (isset($formUserData['emerg']['phone']) && $formUserData['emerg']['phone'] != '') {
+	        $searchFor->setEmrgPhone($formUserData['emerg']['phone']);
+	    }
+
+	    // Emergency altphone
+	    if (isset($formUserData['emerg']['altphone']) && $formUserData['emerg']['altphone'] != '') {
+	        $searchFor->setEmrgAltPhone($formUserData['emerg']['altphone']);
+	    }
+
+	    // Emergency relation
+	    if (isset($formUserData['emerg']['relation']) && $formUserData['emerg']['relation'] != '') {
+	        $searchFor->setEmrgRelation($formUserData['emerg']['relation']);
 	    }
 
 	    return $searchFor;
@@ -881,6 +906,12 @@ class ReferralForm {
 	        'selStatus'=>'a',
 	        'selMbrType'=>'ai',
 	        'sel_Gender'=>$data->getGender(),
+
+	        'txtEmrgFirst'=>$data->getEmrgFirst(),
+	        'txtEmrgLast'=>$data->getEmrgLast(),
+	        'txtEmrgPhn'=>$data->getEmrgPhone(),
+	        'txtEmrgAlt'=>$data->getEmrgAltPhone(),
+	        'selEmrgRel'=>$data->getEmrgRelation(),
 	    );
 
 
