@@ -389,7 +389,7 @@ class GLCodes {
 			}
 
 			// Adjust the amounts after the waive.
-			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge || $l['il_Type_Id'] == ItemType::Tax || $l['il_Item_Id'] == ItemId::VisitFee) {
+			if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Item_Id'] == ItemId::AddnlCharge || $l['il_Type_Id'] == ItemType::Tax || $l['il_Item_Id'] == ItemId::VisitFee || $l['il_Item_Id'] == ItemId::LodgingDonate) {
 
 				if ($l['il_Amount'] >= $waiveAmt) {
 					$l['il_Amount'] -= $waiveAmt;
