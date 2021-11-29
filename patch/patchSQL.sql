@@ -47,10 +47,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'ga', 'Google APIs', '', '', '80');
 
 -- Add Google API sys config values
-REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`) values
-('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', ''),
-('recaptchaApiKey', 'AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc', 's', 'ga', '', 'Google API Key for Recaptcha', ''),
-('recaptchaSiteKey', '6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO', 's', 'ga', '', 'Google API Site Key for Recaptcha', '');
+REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', '','0'),
+('recaptchaApiKey', 'AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc', 's', 'ga', '', 'Google API Key for Recaptcha', '','0'),
+('recaptchaSiteKey', '6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO', 's', 'ga', '', 'Google API Site Key for Recaptcha', '','0');
 
 
 ALTER TABLE reservation
