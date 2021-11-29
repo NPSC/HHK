@@ -87,7 +87,7 @@ class RateChooser {
 
     public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs, $isAdmin = FALSE) {
 
-        $uS = Session::getInstance();
+        
         $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');
         $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'margin-left:.5em;');
         $fixedRate = '';
@@ -136,7 +136,6 @@ class RateChooser {
                 . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'rateChgCB', 'class'=>'hhk-feeskeys'))
                 . ')')
 
-                .HTMLTable::makeTd($rateCat[1] . $rateTitle, array('id'=>'showRateTd'))
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $rateCat[0], FALSE), array('name'=>'selRateCategory', 'class'=>'hhk-feeskeys'))
                 .HTMLContainer::generateMarkup('span', 'Amt: $' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'class'=>'hhk-feeskeys', 'size'=>'4')), $attrFixed)
                 . HTMLContainer::generateMarkup('span', 'Adj:'.$adjSel, $attrAdj), array('class'=>'changeRateTd', 'style'=>'display:none;'))

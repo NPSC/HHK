@@ -1554,35 +1554,36 @@ class Visit {
             $extendReturnDT = new \DateTimeImmutable($extendReturnDateStr);
         }
 
-        $retDT = $extendReturnDT;
-        $retDT->setTime(0, 0, 0);
+        $retDT = $extendReturnDT->setTime(0, 0, 0);
+
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
-        $timeNow = date('H:i:s');
-
+        
         if ($retDT > $today) {
+            // Extend leave
+            
             return 'Cannot return from leave in the future.  ';
-        }
-
-        // Was the rate changed for the leave?
-        $vol = new Visit_onLeaveRS();
-        $vol->idVisit->setStoredVal($this->getIdVisit());
-        $rows = EditRS::select($dbh, $vol, array($vol->idVisit));
-
-        if (count($rows) > 0) {
-            // Rate was changed
-            EditRS::loadRow($rows[0], $vol);
-
-            $reply .= $this->changePledgedRate($dbh, $vol->Rate_Category->getStoredVal(), $vol->Pledged_Rate->getStoredVal(), $vol->Rate_Adjust->getStoredVal(), $uS->username, $retDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE), FALSE);
-
-            EditRS::delete($dbh, $vol, array($vol->idVisit));
-
         } else {
-            // Check out all guest, check back in.
-            $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $retDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
 
+            // Was the rate changed for the leave?
+            $vol = new Visit_onLeaveRS();
+            $vol->idVisit->setStoredVal($this->getIdVisit());
+            $rows = EditRS::select($dbh, $vol, array($vol->idVisit));
+    
+            if (count($rows) > 0) {
+                // Rate was changed
+                EditRS::loadRow($rows[0], $vol);
+    
+                $reply .= $this->changePledgedRate($dbh, $vol->Rate_Category->getStoredVal(), $vol->Pledged_Rate->getStoredVal(), $vol->Rate_Adjust->getStoredVal(), $uS->username, $retDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE), FALSE);
+    
+                EditRS::delete($dbh, $vol, array($vol->idVisit));
+    
+            } else {
+                // Check out all guest, check back in.
+                $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $retDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
+    
+            }
         }
-
 
         return $reply;
 
@@ -1597,11 +1598,11 @@ class Visit {
         $today->setTime(0, 0, 0);
 
         // check the extend days desired
-        if ($extDays > $uS->EmptyExtendLimit) {
-            $extDays = $uS->EmptyExtendLimit;
-        }
+//         if ($extDays > $uS->EmptyExtendLimit) {
+//             $extDays = $uS->EmptyExtendLimit;
+//         }
 
-        if ($extDays < 1) {
+        if ($extDays < 1 || $extDays > 60) {
             return;
         }
 
@@ -1651,7 +1652,7 @@ class Visit {
             }
 
             // Change rate and trigger OnLeave.
-            $reply .= $this->changePledgedRate($dbh, RoomRateCategories::Fixed_Rate_Category, 0, 0, $uS->username, $extndStartDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE), $extDays);
+            $reply .= $this->changePledgedRate($dbh, RoomRateCategories::Fixed_Rate_Category, 0, 0, $uS->username, $extndStartDT, FALSE, $extDays);
             $reply .= 'Guests on Leave.  ';
 
         } else {

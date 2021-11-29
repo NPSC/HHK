@@ -15,6 +15,7 @@ use HHK\House\Resource\AbstractResource;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
 use HHK\House\Visit\VisitViewer;
+use HHK\House\Stays;
 use HHK\Member\Role\Guest;
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
@@ -215,12 +216,13 @@ class HouseServices {
             $dataArray['expDep'] = $expDepDT->format('c');
 
         // Pay fees
-        } else if ($action == 'pf') {
+//         } else if ($action == 'pf') {
 
-            $mkup .= HTMLContainer::generateMarkup('div',
-                    VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
+//             $mkup .= HTMLContainer::generateMarkup('div',
+//                     VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
 
         } else {
+                        
             $mkup = HTMLContainer::generateMarkup('div',
             		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
                     . $mkup,
