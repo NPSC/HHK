@@ -558,3 +558,8 @@ div#referralTabs ul>li.ui-state-active .ui-icon {
 .hhk-warning {
     background-color: #f8d7da;
 }
+
+div.dt-buttons .dt-button:hover>span {
+	background-color: rgba(0, 0, 0, 0) !important;	
+}
+}

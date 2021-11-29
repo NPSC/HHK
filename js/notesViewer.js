@@ -279,7 +279,7 @@
             var idnote = $(this).data("noteid");
             var row = $(this).closest('tr');
             e.preventDefault();
-            if($table.row(row).data()["Flag"]){
+            if($table.row(row).data()["Flag"] == "1"){
 	            var confirmed = confirm("This Note is flagged, are you sure you want to delete it?");
 	            if(!confirmed){
 		            return;

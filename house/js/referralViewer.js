@@ -194,7 +194,6 @@
 	}
 	
 	function createActions(idDocument, row, settings){
-		console.log(settings.labels);
 		return `
 			<ul class="gmenu" style="font-weight:normal">
 				<li>Action
