@@ -23,6 +23,7 @@ function resvManager(initData, options) {
     var span = initData.span;
     var arrival = initData.arrival;
     var insistPayFilledIn = initData.insistPayFilledIn;
+
     var insistCkinDemog = false;
     var rooms = [];
     var people = new Items();
@@ -34,6 +35,7 @@ function resvManager(initData, options) {
     var updateRescChooser = new updateRescChooser();
     var $pWarning = $('#pWarnings');
     var options = options;
+	var resvStatusCode = '';
 
     // Exports
     t.getReserve = getReserve;
@@ -1770,7 +1772,7 @@ function resvManager(initData, options) {
 					// Room Default Rate
 					var room = rooms[$('#selResource').val()];
 
-					if (room.defaultRateCat && room.defaultRateCat != '' && ($('#selResvStatus').val() === 'w' || $('#selResvStatus').val() === 'uc' || $('#selResvStatus').val() === 'a')) {
+					if (room.defaultRateCat && room.defaultRateCat != '' && (resvStatusCode === 'w' || resvStatusCode === 'uc' || resvStatusCode === 'a')) {
 						$('#selRateCategory').val(room.defaultRateCat);
 					}
 
@@ -2366,6 +2368,9 @@ function resvManager(initData, options) {
         if (data.span) {
             span = data.span;
         }
+		if (data.resvStatusCode) {
+			resvStatusCode = data.resvStatusCode
+		}
 
         // Hospital
         if (data.hosp !== undefined) {

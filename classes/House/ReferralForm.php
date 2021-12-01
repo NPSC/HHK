@@ -585,7 +585,7 @@ class ReferralForm {
 	        .HTMLTable::makeTd($r->get_middleName())
 	        .HTMLTable::makeTd($r->get_lastName())
 	        .HTMLTable::makeTd($r->get_nickName())
-	        .HTMLTable::makeTd(date('M j, Y', strtotime($r->get_birthDate())))
+	        .HTMLTable::makeTd($r->get_birthDate() == '' ? '' : date('M j, Y', strtotime($r->get_birthDate())))
 	        .HTMLTable::makeTd($role->getPhonesObj()->get_Data(PhonePurpose::Home)['Phone_Num'])
 	        .HTMLTable::makeTd($role->getEmailsObj()->get_Data(EmailPurpose::Home)['Email'])
 	        .HTMLTable::makeTd($this->createAddrString($role->getAddrObj()->get_recordSet(AddressPurpose::Home)))

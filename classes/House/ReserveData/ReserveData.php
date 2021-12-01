@@ -96,6 +96,7 @@ class ReserveData {
     protected $resvPrompt;
     protected $insistCkinDemog;
     protected $searchTerm;
+    protected $resvStatusCode;
 
     function __construct($post, $reservationTitle = '') {
 
@@ -174,6 +175,7 @@ class ReserveData {
         $this->errors = '';
         $this->resvPrompt = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
         $this->resvTitle = ($reservationTitle == '' ? $this->resvPrompt : $reservationTitle);
+        $this->resvStatusCode = '';
 
     }
 
@@ -245,6 +247,7 @@ class ReserveData {
             'resvTitle' => $this->getResvTitle(),
             'saveButtonLabel' => $this->saveButtonLabel,
         	'insistCkinDemog' => $this->insistCkinDemog,
+            'resvStatusCode' => $this->getResvStatusCode(),
         );
 
         if ($this->resvChooser != '') {
@@ -366,6 +369,10 @@ class ReserveData {
 
     public function getPatLabel() {
         return $this->patLabel;
+    }
+
+    public function getResvStatusCode() {
+        return $this->resvStatusCode;
     }
 
     public function getWlNotesLabel() {
@@ -528,6 +535,11 @@ class ReserveData {
 
     public function setSpan($id) {
         $this->span = $id;
+        return $this;
+    }
+
+    public function setResvStatusCode($resvStatusCode) {
+        $this->resvStatusCode = $resvStatusCode;
         return $this;
     }
 

@@ -134,7 +134,8 @@ WHERE r.idReservation = " . $rData->getIdResv());
             ->setSpanStartDT($rows[0]['SpanStart'])
             ->setSpanEndDT($rows[0]['SpanEnd'])
             ->setIdHospital_Stay($rows[0]['idHospital_Stay'])
-            ->setidReferralDoc($rows[0]['idReferralDoc']);
+            ->setidReferralDoc($rows[0]['idReferralDoc'])
+            ->setResvStatusCode($rows[0]['Status']);
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
