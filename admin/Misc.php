@@ -364,16 +364,28 @@ if (isset($_POST['btnClnNames'])) {
 // Database backup on demand
 $bkupMsg = "";
 $igtables = array(
-    'Zip code data' => 'postal_codes',
-    'street name suffixes and common misspellings' => 'street_suffix',
-    'Apt, Unit, etc.' => 'secondary_unit_desig',
-    'Generated table1' => 'mail_listing',
-    'Generated table2' => 'member_history',
-    'List of world languages' => 'language',
-    'List of world country codes' => 'country_code',
     'Member photos' => 'photo',
     'Documents' => 'document',
-    );
+    'Generated table1' => 'mail_listing',
+    'Generated table2' => 'member_history',
+    'Zip code data' => 'postal_codes',
+    'Street name suffixes and common misspellings' => 'street_suffix',
+    'Apt, Unit, etc.' => 'secondary_unit_desig',
+    'List of world languages' => 'language',
+    'List of world country codes' => 'country_code',
+);
+
+// Create markup
+$ignoreTableMarkup = '';
+foreach ($igtables as $t => $n) {
+
+    // Don;t show generated tables.
+    if (stristr($t, 'Generated')) {
+        break;
+    }
+
+    $ignoreTableMarkup .= "<tr><td>`$n`</td><td>$t</td></tr>";
+}
 
 if (isset($_POST["btnDoBackup"])) {
 
@@ -746,7 +758,7 @@ $selLookups = getGenLookups($dbh);
                     <ul>
                         <li><a href="#lookups">Lookups</a></li>
                         <li><a href="#clean">Clean Data</a></li>
-                        <li><a href="#backup">Backup Database</a></li>
+                        <li><a href="#backup">Dump Database</a></li>
                         <li><a href="#changlog">View Change Log</a></li>
                         <li><a href="#delid">Delete Member Records</a></li>
 
@@ -792,13 +804,20 @@ $selLookups = getGenLookups($dbh);
                     <div id="backup" class="ui-tabs-hide" >
                         <table>
                             <tr>
-                                <td><h3>Backup Database</h3></td>
+                                <td colspan="2"><h3>Dump Database</h3></td>
                             </tr>
                             <tr>
-                                <td style="text-align:right;"><input type="submit" name="btnDoBackup" value="Run Database Backup"/></td>
+                            	<td colspan="2"><span style="font-weight:bold;">The following tables are not included in the dump:</span></td>
+                            </tr>
+                            <?php echo $ignoreTableMarkup; ?>
+                            <tr>
+                            <tr><td>&nbsp;</td></tr>
+                            <tr>
+                                <td colspan="2" style="text-align:right;"><input type="submit" name="btnDoBackup" value="Run Database Dump"/></td>
+
                             </tr>
                             <tr>
-                                <td><?php echo $bkupMsg; ?></td>
+                                <td colspan="2"><?php echo $bkupMsg; ?></td>
                             </tr>
                         </table>
                     </div>
