@@ -1122,6 +1122,8 @@ CREATE TABLE if not exists `name_guest` (
 CREATE TABLE if not exists `name_insurance` (
   `idName` INT NOT NULL COMMENT '',
   `Insurance_Id` INT NOT NULL COMMENT '',
+  `Member_Num` VARCHAR(100) NOT NULL DEFAULT '',
+  `Group_Num` VARCHAR(100) NOT NULL DEFAULT '',
   `Primary` INT(1) NOT NULL DEFAULT 0,
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',

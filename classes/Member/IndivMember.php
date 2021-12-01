@@ -418,18 +418,45 @@ FROM
 ORDER BY `List_Order`");
         $insTypes = array();
 
+
         while ($r = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
             $insTypes[$r['idInsurance_type']] = $r;
+
         }
 
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(HTMLTable::makeTh('Insurance', array('colspan'=>'3')));
+
+        $tabs = HTMLContainer::generateMarkup('li',
+            HTMLContainer::generateMarkup('a', 'Insurance Summary', array('href'=>"#sumInsTab", 'title'=>"Show Insurance summary")));
+        $divs = HTMLContainer::generateMarkup('div', "", array('id'=>'sumInsTab', 'class'=>'ui-tabs-hide'));
 
         foreach ($insTypes as $i) {
 
             if (isset($ins[$i['idInsurance_type']]) === FALSE) {
                 continue;
             }
+
+            $tabs .= HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('a', $i["Title"], array('href'=>"#". $i["idInsurance_type"] . "InsTab", 'title'=>"Edit " . $i["Title"] . " Insurance")));
+
+            $tbl = new HTMLTable();
+            $tbl->addBodyTr(
+                $tbl->makeTd("Insurance", array('class'=>"tdlabel"))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], array(), true),array('name'=>$idPrefix.'selIns' . $i['Title'])))
+            );
+
+            $tbl->addBodyTr(
+                $tbl->maketd("Group Number", array('class'=>"tdlabel"))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('style'=>'width:100%;')))
+            );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("Member Number", array('class'=>"tdlabel"))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('style'=>'width:100%;')))
+            );
+
+            $divs .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>$i["idInsurance_type"] .'InsTab', 'class'=>'ui-tabs-hide'));
 
             // Chosen Insurnaces...
             $choices = array();
@@ -465,7 +492,10 @@ ORDER BY `List_Order`");
 
         }
 
-        return $tbl->generateMarkup();
+        $ul = HTMLContainer::generateMarkup('ul',$tabs, array('style'=>'font-size:0.9em'));
+
+        //return $tbl->generateMarkup();
+        return HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>'InsTabs', 'class'=>'hhk-phemtabs', 'style'=>'font-size:.9em;'));
 
     }
 

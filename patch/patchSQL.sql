@@ -110,3 +110,9 @@ ADD COLUMN `idReferralDoc` INT(11) NOT NULL DEFAULT 0 AFTER `idResource`;
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', 'CSS validator service', '0');
 
 CALL new_webpage('WaitlistReport.php', '0','Daily Waitlist','1','h','79','w','p','','admin',CURRENT_TIMESTAMP, 'g');
+
+-- Insurance updates
+
+ALTER TABLE `name_insurance` 
+ADD COLUMN `Member_Num` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Insurance_Id`,
+ADD COLUMN `Group_Num` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Member_Num`;
