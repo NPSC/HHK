@@ -714,6 +714,7 @@ function resvManager(initData, options) {
             });
 
             $('.hhk-phemtabs').tabs();
+            $('#InsTabs').tabs();
 
             verifyAddrs('#divfamDetail');
 

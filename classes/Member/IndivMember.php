@@ -347,11 +347,13 @@ class IndivMember extends AbstractMember {
         }
 
         // Insurance
+        $insuranceMarkup = "";
         if ($uS->InsuranceChooser) {
-            $tbl2->addBodyTr(
-                HTMLTable::makeTd(
-                        $this->createInsurancePanel($dbh, $idPrefix)
-                        , array('style'=>'display:table-cell;', 'colspan'=>'3')));
+            //$tbl2->addBodyTr(
+            //    HTMLTable::makeTd(
+            //            $this->createInsurancePanel($dbh, $idPrefix)
+            //            , array('style'=>'display:table-cell;', 'colspan'=>'3')));
+            $insuranceMarkup = $this->createInsurancePanel($dbh, $idPrefix);
         }
 
         //Previous Name
@@ -383,7 +385,7 @@ class IndivMember extends AbstractMember {
                 'Date: ' . HTMLInput::generateMarkup(($this->get_DateBackgroundCheck() == '' ? '' : date('M j, Y', strtotime($this->get_DateBackgroundCheck()))), array('name'=>$idPrefix.'txtBackgroundCheckDate', 'class'=>'ckbdate')), $bcdateAttr))
             );
 
-        return $table->generateMarkup(array('style'=>'float:left; margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'float:left;'));
+        return $table->generateMarkup(array('style'=>'float:left; margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'float:left; margin-right:10px;')) . $insuranceMarkup;
 
     }
 
@@ -424,12 +426,15 @@ ORDER BY `List_Order`");
 
         }
 
-        $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Insurance', array('colspan'=>'3')));
-
+        $sumTbl = new HTMLTable();
+        $sumTbl->addHeaderTr(
+            $sumTbl->makeTh("Insurance", array('colspan'=>"2"))
+        );
         $tabs = HTMLContainer::generateMarkup('li',
-            HTMLContainer::generateMarkup('a', 'Insurance Summary', array('href'=>"#sumInsTab", 'title'=>"Show Insurance summary")));
-        $divs = HTMLContainer::generateMarkup('div', "", array('id'=>'sumInsTab', 'class'=>'ui-tabs-hide'));
+            HTMLContainer::generateMarkup('a', 'Summary', array('href'=>"#sumInsTab", 'title'=>"Show Insurance summary")));
+
+
+        $divs = "";
 
         foreach ($insTypes as $i) {
 
@@ -441,19 +446,34 @@ ORDER BY `List_Order`");
                 HTMLContainer::generateMarkup('a', $i["Title"], array('href'=>"#". $i["idInsurance_type"] . "InsTab", 'title'=>"Edit " . $i["Title"] . " Insurance")));
 
             $tbl = new HTMLTable();
+            $chosen = new Name_InsuranceRS();
+            $chosenTitle = "";
+            foreach ($this->insuranceRSs as $lRs) {
+                if (isset($ins[$i['idInsurance_type']][$lRs->Insurance_Id->getStoredVal()])) {
+                    $choices[$lRs->Insurance_Id->getStoredVal()] = $lRs->Insurance_Id->getStoredVal();
+                    $chosen = $lRs;
+                    $chosenTitle = $ins[$i['idInsurance_type']][$lRs->Insurance_Id->getStoredVal()][1];
+                }
+            }
+
+            $sumTbl->addBodyTr(
+                $sumTbl->makeTd($i["Title"], array('class'=>"tdlabel"))
+                .$sumTbl->makeTd($chosenTitle)
+            );
+
             $tbl->addBodyTr(
                 $tbl->makeTd("Insurance", array('class'=>"tdlabel"))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], array(), true),array('name'=>$idPrefix.'selIns' . $i['Title'])))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], array($chosen->Insurance_Id->getStoredVal()), true),array('name'=>$idPrefix.'selIns' . $i['Title'])))
             );
 
             $tbl->addBodyTr(
                 $tbl->maketd("Group Number", array('class'=>"tdlabel"))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('style'=>'width:100%;')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Group_Num->getStoredVal(), array('style'=>'width:100%;')))
             );
 
             $tbl->addBodyTr(
                 $tbl->makeTd("Member Number", array('class'=>"tdlabel"))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('style'=>'width:100%;')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Member_Num->getStoredVal(), array('style'=>'width:100%;')))
             );
 
             $divs .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>$i["idInsurance_type"] .'InsTab', 'class'=>'ui-tabs-hide'));
@@ -493,9 +513,10 @@ ORDER BY `List_Order`");
         }
 
         $ul = HTMLContainer::generateMarkup('ul',$tabs, array('style'=>'font-size:0.9em'));
+        $divs = HTMLContainer::generateMarkup('div', $sumTbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>'sumInsTab', 'class'=>'ui-tabs-hide')) . $divs;
 
         //return $tbl->generateMarkup();
-        return HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>'InsTabs', 'class'=>'hhk-phemtabs', 'style'=>'font-size:.9em;'));
+        return HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>'InsTabs', 'style'=>'float:left;'));
 
     }
 
