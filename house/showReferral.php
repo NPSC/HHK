@@ -65,6 +65,8 @@ $successTitle = '';
 $successContent = '';
 $enableRecaptcha = false;
 $error = '';
+$cmd = '';
+$method = '';
 
 if(isset($_GET['template'])){
     $cmd = 'gettemplate';
@@ -120,7 +122,6 @@ if(isset($_GET['template'])){
 					},
 					dataType:'json',
 					success: function(ajaxData){
-						console.log(ajaxData);
 						if(ajaxData.formData && ajaxData.formSettings){
     						formData = ajaxData.formData;
     						formSuccessTitle = ajaxData.formSettings.successTitle;
@@ -366,8 +367,8 @@ if(isset($_GET['template'])){
                         	    });
                             }
 
-    					}else if(data.error){
-    						$("#formError").text(data.error);
+    					}else if(ajaxData.error){
+    						$("#formError").text(ajaxData.error);
     					}
                 	}
 				});

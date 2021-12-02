@@ -26,11 +26,11 @@ ALTER TABLE `document`
 ADD COLUMN `Style` MEDIUMTEXT NULL AFTER `Doc`;
 
 -- add referral form status
-INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES 
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES 
 ('Referral_Form_Status', 'n', 'New', 'ui-icon ui-icon-mail-closed', '10'),
-('Referral_Form_Status', 'ip', 'In-Process', 'ui-icon-mail-open', '20'),
+('Referral_Form_Status', 'ip', 'In-Process', 'ui-icon ui-icon-mail-open', '20'),
 ('Referral_Form_Status', 'ac', 'Accepted', 'ui-icon ui-icon-check', '30'),
-('Referral_Form_Status', 'ar', 'Archived', 'ui-icon-ui-icon-folder-open', '40'),
+('Referral_Form_Status', 'ar', 'Archived', 'ui-icon ui-icon-folder-open', '40'),
 ('Referral_Form_Status', 'd', 'Deleted', 'ui-icon ui-icon-trash', '50');
 
 -- add referral tab label
@@ -111,5 +111,5 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Sh
 
 CALL new_webpage('WaitlistReport.php', '0','Daily Waitlist','1','h','79','w','p','','admin',CURRENT_TIMESTAMP, 'g');
 
-CALL new_webpage('showReferral.php', '0','','1','h','','','p','','admin',CURRENT_TIMESTAMP, 'pub');
+CALL new_webpage('showReferral.php', '0','Referral Form','0','h','','','p','','admin',CURRENT_TIMESTAMP, 'pub');
 CALL new_webpage('ws_forms.php', '0','','1','h','','','s','','admin',CURRENT_TIMESTAMP, 'pub');
