@@ -112,4 +112,4 @@ INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Sh
 CALL new_webpage('WaitlistReport.php', '0','Daily Waitlist','1','h','79','w','p','','admin',CURRENT_TIMESTAMP, 'g');
 
 CALL new_webpage('showReferral.php', '0','Referral Form','0','h','','','p','','admin',CURRENT_TIMESTAMP, 'pub');
-CALL new_webpage('ws_forms.php', '0','','1','h','','','s','','admin',CURRENT_TIMESTAMP, 'pub');
+CALL new_webpage('ws_forms.php', '0','','0','h','','','s','','admin',CURRENT_TIMESTAMP, 'pub');
