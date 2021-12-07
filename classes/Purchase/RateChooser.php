@@ -91,22 +91,16 @@ class RateChooser {
         $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');
         $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'margin-left:.5em;');
         $fixedRate = '';
-        $rateTitle = '';
-        $rateAdjust = '';
+        $rateTbl = '';
 
         //
         if ($vRs->Rate_Category->getStoredVal() == DefaultSettings::Fixed_Rate_Category) {
             // Fixed rate
             $attrAdj['style'] .= 'display:none;';
             $fixedRate = $vRs->Pledged_Rate->getStoredVal() == 0 ? '0' : (number_format($vRs->Pledged_Rate->getStoredVal(), 2));
-            $rateTitle = ',  Amt: $' . $fixedRate;
 
         } else {
 
-            $adj = floatval($vRs->Expected_Rate->getStoredVal());
-            $adjRatio = (1 + $adj/100);
-            $rateAdjust = ($adjRatio == 1 ? '' : number_format($adj, 0));
-            $rateTitle = ($rateAdjust == '' ? '' : ',  Adj:' . $adj . '%');
             $attrFixed['style'] .= 'display:none;';
 
         }
@@ -115,7 +109,6 @@ class RateChooser {
 
         $adjSel = $this->makeRateAdjustSel();
         
-        $rateTbl = new HTMLTable();
 
         if ($isAdmin) {
             // add change rate selector
@@ -130,11 +123,11 @@ class RateChooser {
                 $visitStart = 'Start of Visit Span (' . date('M d, Y', strtotime($vRs->Span_Start->getStoredVal())) . ')';
             }
 
-
-            $rateTbl->addBodyTr(HTMLTable::makeTh('Room Rate ('
-                . HTMLContainer::generateMarkup('label', 'Edit', array('for'=>'rateChgCB', 'style'=>'margin-right:.5em;'))
-                . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'rateChgCB', 'class'=>'hhk-feeskeys'))
-                . ')')
+            $rateTbl = new HTMLTable();
+            
+            $rateTbl->addBodyTr(HTMLTable::makeTh(
+                HTMLContainer::generateMarkup('label', 'Change Room Rate', array('for'=>'rateChgCB', 'style'=>'margin: 2px 1px;'))
+                . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'rateChgCB', 'class'=>'hhk-feeskeys', 'style'=>'margin-left: 1em;', 'title'=>'Change the room rate'))
 
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($rateCategories), $rateCat[0], FALSE), array('name'=>'selRateCategory', 'class'=>'hhk-feeskeys'))
                 .HTMLContainer::generateMarkup('span', 'Amt: $' . HTMLInput::generateMarkup($fixedRate, array('name'=>'txtFixedRate', 'class'=>'hhk-feeskeys', 'size'=>'4')), $attrFixed)
@@ -147,12 +140,8 @@ class RateChooser {
                     .HTMLInput::generateMarkup('', array('name'=>'chgRateDate', 'class'=>'hhk-feeskeys'))
                 , array('class'=>'changeRateTd', 'style'=>'display:none;'))
                     .($this->incomeRated ? HTMLTable::makeTd(HTMLInput::generateMarkup('Income Chooser ...', array('type'=>'button', 'id' => 'btnFapp', 'data-rid'=>$vRs->idReservation->getStoredVal(), 'style'=>'margin:1px;'))
-                , array('class'=>'changeRateTd', 'style'=>'display:none;')) : ''));
+                , array('class'=>'changeRateTd', 'style'=>'display:none; padding: 1px 4px;')) : '')));
 
-
-        } else {
-            $rateTbl->addBodyTr(HTMLTable::makeTh('Room Rate')
-                .HTMLTable::makeTd($rateCategories[$vRs->Rate_Category->getStoredVal()][1] . $rateTitle));
         }
 
         return $rateTbl;

@@ -270,21 +270,12 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             });
 
             $diagbox.find('.ckdateFut').datepicker({
-                yearRange: '-02:+01',
+                yearRange: '-01:+01',
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
                 numberOfMonths: 1,
                 minDate: 0,
-                dateFormat: 'M d, yy'
-            });
-
-            $diagbox.find('.ckdateAll').datepicker({
-                yearRange: '-02:+01',
-                changeMonth: true,
-                changeYear: true,
-                autoSize: true,
-                numberOfMonths: 1,
                 dateFormat: 'M d, yy'
             });
 
@@ -302,7 +293,18 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 					$('#extendDays').removeClass('ui-state-error');
 				});
 				
-	
+				// Setting extended date sets "Extend Until" radio button.
+				$('#extendDate').change(function () {
+					$('#rbOlpicker-ext').prop('checked', true);
+				});
+				
+				// Unchecking the extend-until rb clears the associated date field
+				$('input[name="rbOlpicker"]').change(function () {
+					if ($(this).val() !== 'ext') {
+						$('#extendDate').val('');
+					}
+				});
+				
 				// Enable checkbox, show or hide panel.
                 $('.hhk-extVisitSw').change(function () {
                     if (this.checked) {
@@ -315,7 +317,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                     }
                 });
 
-                $('.hhk-extVisitSw').change();
+                $('.hhk-extVisitSw').trigger('change');
             }
 
             // Set up rate changer

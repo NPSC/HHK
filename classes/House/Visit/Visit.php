@@ -1574,13 +1574,13 @@ class Visit {
                 // Rate was changed
                 EditRS::loadRow($rows[0], $vol);
     
-                $reply .= $this->changePledgedRate($dbh, $vol->Rate_Category->getStoredVal(), $vol->Pledged_Rate->getStoredVal(), $vol->Rate_Adjust->getStoredVal(), $uS->username, $retDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE), FALSE);
+                $reply .= $this->changePledgedRate($dbh, $vol->Rate_Category->getStoredVal(), $vol->Pledged_Rate->getStoredVal(), $vol->Rate_Adjust->getStoredVal(), $uS->username, $extendReturnDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE), FALSE);
     
                 EditRS::delete($dbh, $vol, array($vol->idVisit));
     
             } else {
                 // Check out all guest, check back in.
-                $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $retDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
+                $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $extendReturnDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
     
             }
         }
@@ -1597,11 +1597,6 @@ class Visit {
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
 
-        // check the extend days desired
-//         if ($extDays > $uS->EmptyExtendLimit) {
-//             $extDays = $uS->EmptyExtendLimit;
-//         }
-
         if ($extDays < 1 || $extDays > 60) {
             return;
         }
@@ -1611,17 +1606,24 @@ class Visit {
             $extndStartDT = new \DateTimeImmutable($extendStartDate);
             
         } else {
+            //start today.
             $extndStartDT = new \DateTimeImmutable();
         }
         
         
         if ($extndStartDT < $today) {
             
-            // TODO Check dates
-            return  'Starting Leave before today is not implemented yet.  ';
+            // is it less than the current span?
+            $spanStartDT = new \DateTimeImmutable($this->getSpanStart());
+            
+            if ($extndStartDT->setTime(0,0,0) < $spanStartDT->setTime(0,0,0)) {
+                return  'Starting a Leave before the visit span start date is not allowed.  ';
+            }
+            
+            return  'Starting a Leave before today is not yet implemented.  ';
             
         } else if ($extndStartDT > $today->add(new \DateInterval('P1D'))) {
-            return  'Cannot start Leave in the future.  ';
+            return  'Cannot start a Leave in the future.  ';
         }
 
         if ($noCharge) {
