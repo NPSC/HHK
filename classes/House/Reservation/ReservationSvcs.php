@@ -105,7 +105,7 @@ class ReservationSvcs
             foreach ($docRows as $d) {
 
                 $confirmForm = new ConfirmationForm($dbh, $d['idDocument']);
-                $formNotes = $confirmForm->createNotes($notes, ! $sendEmail);
+                $formNotes = $confirmForm->createNotes($notes, ! $sendEmail, $d['Code']);
 
                 $docs[$d['Code']] = array(
                     'doc' => $confirmForm->createForm($confirmForm->makeReplacements($dbh, $reserv, $guest, $amount, $formNotes)),
@@ -147,7 +147,7 @@ class ReservationSvcs
                 ->get_preferredCode());
             $emailAddr = $emAddr["Email"];
         }
-        
+
         if ($uS->CCAgentConf && $uS->ReferralAgent && $ccEmailAddr == '' && !$sendEmail){
             $hstay = new HospitalStay($dbh, 0, $reserv->getIdHospitalStay());
             $agent = new Agent($dbh, '', $hstay->getAgentId());
@@ -164,30 +164,30 @@ class ReservationSvcs
                     $mail->From = $uS->FromAddress;
                     $mail->FromName = $uS->siteName;
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
-                    
+
                     $ccs = explode(',', $ccEmailAddr);
                     foreach ($ccs as $cc){
                         if($cc != ''){
                             $mail->addCC(filter_var($cc, FILTER_SANITIZE_EMAIL));
                         }
                     }
-                    
+
                     $mail->addReplyTo($uS->ReplyTo);
-    
+
                     $bccs = explode(',', $uS->BccAddress);
                     foreach ($bccs as $bcc) {
                         if ($bcc != '') {
                             $mail->addBCC(filter_var($bcc, FILTER_SANITIZE_EMAIL));
                         }
                     }
-    
+
                     $mail->isHTML(true);
-    
+
                     $mail->Subject = Labels::getString('referral', 'Res_Confirmation_Subject', htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation');
                     $mail->msgHTML($docs[$docCode]['doc']);
-    
+
                     $mail->send();
-    
+
                     // Make a note in the reservation.
                     $noteText = 'Confirmation Email sent to ' . $emailAddr;
                     if($ccEmailAddr != '' && count($ccs) > 0){
@@ -207,7 +207,7 @@ class ReservationSvcs
 
                     $dataArray['mesg'] = "Email sent.  ";
                     $dataArray['status'] = 'success';
-                    
+
                 }catch(\Exception $e){
                     $dataArray['mesg'] = "Email failed!  " . $mail->ErrorInfo;
                     $dataArray['status'] = 'error';
