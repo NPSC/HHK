@@ -485,31 +485,6 @@ ORDER BY `List_Order`");
                     $choices[$lRs->Insurance_Id->getStoredVal()] = $lRs->Insurance_Id->getStoredVal();
                 }
             }
-
-            $attr = array(
-                'name'=>$idPrefix.'selIns' . $i['Title'],
-            );
-
-            $controlId = '';
-
-            if ($i['Multiselect'] > 1) {
-                $attr['multiple'] = 'multiple';
-                $attr['class'] = 'hhk-multisel';
-                $attr['name'] = $idPrefix.'selIns' . $i['Title'] . '[]';
-                $attr['id'] = $idPrefix.'selIns' . $i['Title'];
-
-                $controlId = HTMLInput::generateMarkup('y', array('type'=>'hidden', 'name'=>$idPrefix.'insCtrl'));
-            }
-
-            $showBlankChoice = TRUE;
-            if ($i['Is_Primary'] == '1') {
-                $showBlankChoice = FALSE;
-            }
-
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd($i['Title'])
-                    .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], $choices, $showBlankChoice),$attr) . $controlId));
-
         }
 
         $ul = HTMLContainer::generateMarkup('ul',$tabs, array('style'=>'font-size:0.9em','class'=>"hhk-flex"));
@@ -854,9 +829,10 @@ ORDER BY `List_Order`");
 
     protected function saveInsurance(\PDO $dbh, $post, $idPrefix, $username) {
 
-        // Check for insurance controls are on the page.
-        if (isset($post[$idPrefix.'insCtrl']) === FALSE) {
-            return;
+        $uS = Session::getInstance();
+
+        if (!$uS->InsuranceChooser) {
+            return '';
         }
 
         $myInss = array();
@@ -917,41 +893,45 @@ ORDER BY `List_Order`");
                 }
 
                 // set any new insurance
-                foreach ($inss as $v) {
+                foreach ($inss2 as $v) {
 
-                    $idins = intval($v, 10);
 
-                    if ($idins < 1) {
+                    if (intval($v["id"]) < 1) {
                         continue;
                     }
 
                     $found = FALSE;
+                    $insRs = new Name_InsuranceRS();
 
                     foreach ($this->insuranceRSs as $lRs) {
-                        if ($lRs->Insurance_Id->getStoredVal() == $idins) {
+                        if ($lRs->Insurance_Id->getStoredVal() == $v["id"]) {
                             $found = TRUE;
+                            $insRs = $lRs;
                         }
                     }
 
+                    $insRs->Insurance_Id->setNewVal($v["id"]);
+                    $insRs->Group_Num->setNewVal($v["groupNum"]);
+                    $insRs->Member_Num->setNewVal($v["memNum"]);
+                    $insRs->idName->setNewVal($this->get_idName());
+                    $insRs->Updated_By->setNewVal($username);
+
                     if (!$found) {
-                        $insRs = new Name_InsuranceRS();
-                        $insRs->Insurance_Id->setNewVal($idins);
-                        $insRs->idName->setNewVal($this->get_idName());
-                        $insRs->Updated_By->setNewVal($username);
-
                         EditRS::insert($dbh, $insRs);
-
-                        $insRs->Insurance_Id->setStoredVal($idins);
-                        $myInss[] = $insRs;
-                        NameLog::writeInsert($dbh, $insRs, $this->get_idName(), $username, $i['Title'] . '-' . $insCos[$idins]['Title']);
-
+                        $insRs->Insurance_Id->setStoredVal($v["id"]);
+                        NameLog::writeInsert($dbh, $insRs, $this->get_idName(), $username, $i['Title'] . '-' . $insCos[$v["id"]]['Title']);
+                    }else{
+                        EditRS::update($dbh, $insRs, array($insRs->idName, $insRs->Insurance_Id));
+                        $insRs->Insurance_Id->setStoredVal($v["id"]);
+                        NameLog::writeUpdate($dbh, $insRs, $this->get_idName(), $username, $i['Title'] . '-' . $insCos[$v["id"]]['Title']);
                     }
+                    $myInss[] = $insRs;
                 }
             }
         }
 
-        $this->insuranceRSs = $myInss;
-
+        $this->insuranceRSs = array();
+        $this->getInsurance($dbh, $this->get_idName());
     }
     /**
      *
