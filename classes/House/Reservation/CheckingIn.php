@@ -72,7 +72,8 @@ FROM reservation r
         $rData->setIdVisit($rows[0]['idVisit'])
         ->setSpanStatus($rows[0]['SpanStatus'])
         ->setSpanStartDT($rows[0]['SpanStart'])
-        ->setSpanEndDT($rows[0]['SpanEnd']);
+        ->setSpanEndDT($rows[0]['SpanEnd'])
+        ->setResvStatusCode($rows[0]['Status']);
 
         // Reservation status determines which class to use.
 

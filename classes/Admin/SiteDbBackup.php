@@ -90,16 +90,16 @@ class SiteDbBackup {
         }
 
         // ignore tables
-//         $igtables = '';
-//         foreach ($ignoreTables as $t) {
-//             $igtables .= " --ignore-table=$t";
-//         }
+        $igtables = '';
+        foreach ($ignoreTables as $t) {
+            $igtables .= " --ignore-table=$dbname.$t";
+        }
 
         $this->return_var = 0;
 
         // Backup database
         $command = 'mysqldump ';
-        $params = " --single-transaction --skip-lock-tables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password='$dbpwd' $dbname | grep -v DEFINER $zipPipe > " . $this->fileName;
+        $params = " --single-transaction --skip-lock-tables $igtables --log-error=" . $this->dumpErrorFile . " --host='$dbUrl' --user=$dbuser --password='$dbpwd' $dbname | grep -v DEFINER $zipPipe > " . $this->fileName;
         passthru($command . $params, $this->return_var);
 
         // Analyze result
@@ -109,15 +109,15 @@ class SiteDbBackup {
 
             if ($this->clrFileSize > 1000) {
 
-                $this->bkupMessage .= 'Database Backup successful.  File size = ' . $this->clrFileSize . ' bytes.  ';
+                $this->bkupMessage .= 'Database Dump successful.  File size = ' . $this->clrFileSize . ' bytes.  ';
                 $this->dbBkUpFlag = TRUE;
 
             } else {
-                $this->bkupMessage .= 'Database Backup file too small: ' . $this->clrFileSize . ' bytes.  ';
+                $this->bkupMessage .= 'Database Dump file too small: ' . $this->clrFileSize . ' bytes.  ';
             }
 
         } else {
-            $this->bkupMessage .= 'Database Backup file not found.  ';
+            $this->bkupMessage .= 'Database Dump file not found.  ';
         }
 
         return $this->dbBkUpFlag;

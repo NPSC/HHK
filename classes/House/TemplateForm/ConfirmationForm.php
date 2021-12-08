@@ -44,7 +44,7 @@ class ConfirmationForm extends AbstractTemplateForm {
 			$visitFeeNotice = $labels->getString('referral', 'VisitFeeConfirmLabel', '') . " $" . number_format($reserv->getVisitFee(), 2) . ".";
                     }
 		}
-		
+
 		//get Room Rate
 		$priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 		$rateAdjust = $reserv->getRateAdjust();
@@ -53,7 +53,7 @@ class ConfirmationForm extends AbstractTemplateForm {
 		$rateRs = $priceModel->getCategoryRateRs($idRate);
 		$pledgedRate = $reserv->getFixedRoomRate();
 		$roomRateTitle = (isset($rateRs) ? $rateRs->Title->getStoredVal():'');
-		
+
 		if($rateCat == RoomRateCategories::Fixed_Rate_Category){
 		    $roomRateAmount = number_format($pledgedRate,2);
 		}else if(isset($rateRs)){
@@ -61,7 +61,7 @@ class ConfirmationForm extends AbstractTemplateForm {
 		}else{
 		    $roomRateAmount = '';
 		}
-		
+
 		$nightlyRate = (1 + $rateAdjust/100) * $priceModel->amountCalculator(1, $idRate, $rateCat, $pledgedRate);
 
         return array(
@@ -89,13 +89,13 @@ class ConfirmationForm extends AbstractTemplateForm {
 
     }
 
-    public static function createNotes($text, $editable) {
+    public static function createNotes($text, $editable, $tabIndex) {
 
         $notesText = '';
 
         if ($editable) {
             $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style'=>'font-weight:bold;')));
-            $notesText .= HTMLContainer::generateMarkup('textarea', '', array('id'=>'tbCfmNotes', 'name'=>'tbCfmNotes', 'rows'=>'3', 'cols'=>'80'));
+            $notesText .= HTMLContainer::generateMarkup('textarea', '', array('id'=>'tbCfmNotes'. $tabIndex, 'name'=>'tbCfmNotes'.$tabIndex, 'rows'=>'3', 'cols'=>'80'));
         } else if (strlen($text) > 5) {
             $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style'=>'font-weight:bold;')) . "<br/>" . nl2br($text));
             $notesText .= '<br />';

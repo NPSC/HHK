@@ -58,10 +58,11 @@ if ($uS->EmptyExtendLimit > 0) {
 }
 $cFields[] = array("Nights", 'Nights', '', '', 'integer', '10');
 $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', '', '', 'string', '20');
-$cFields[] = array('Emergency Contact Last', 'EC Last Name', '', '', 'string', '20');
-$cFields[] = array('Emergency Contact First', 'EC First Name', '', '', 'string', '20');
-$cFields[] = array('Emergency Contact Home Phone', 'EC Phone Home', '', '', 'string', '20');
-$cFields[] = array('Emergency Contact Alternate Phone', 'EC Phone Mobile', '', '', 'string', '20');
+
+$eFields = array('EC Name', 'EC Phone Home', 'EC Phone Alternate');
+$eTitles = array('Emergency Contact', 'Emergency Contact Home Phone', 'Emergency Contact Alternate Phone');
+
+$cFields[] = array($eTitles, $eFields, '', '', 's', '', array());
 
 if ($uS->TrackAuto) {
     $cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');

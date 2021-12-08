@@ -15,7 +15,7 @@ use HHK\sec\Labels;
 
 class FamilyAddGuest extends Family {
 
-    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData) {
+    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData, $patientUserData = array()) {
 
         $rowClass = 'odd';
         $mk1 = '';

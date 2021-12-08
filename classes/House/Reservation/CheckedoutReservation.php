@@ -44,7 +44,7 @@ class CheckedoutReservation extends CheckingIn {
         return $this;
     }
 
-    protected function createFamilyMarkup(\PDO $dbh) {
+    protected function createFamilyMarkup(\PDO $dbh, $formUserData = array()) {
 
         $psgMembers = $this->reserveData->getPsgMembers();
 

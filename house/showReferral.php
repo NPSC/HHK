@@ -65,6 +65,8 @@ $successTitle = '';
 $successContent = '';
 $enableRecaptcha = false;
 $error = '';
+$cmd = '';
+$method = '';
 
 if(isset($_GET['template'])){
     $cmd = 'gettemplate';
@@ -120,7 +122,6 @@ if(isset($_GET['template'])){
 					},
 					dataType:'json',
 					success: function(ajaxData){
-						console.log(ajaxData);
 						if(ajaxData.formData && ajaxData.formSettings){
     						formData = ajaxData.formData;
     						formSuccessTitle = ajaxData.formSettings.successTitle;
@@ -278,8 +279,6 @@ if(isset($_GET['template'])){
                     		$('input.form-control').blur(function(){
                     			var val = $(this).val().replaceAll('"', "'");
                     			$(this).val(val);
-                    			console.log(val);
-                    			console.log($(this).html());
                     		});
 
                     		$(document).on('submit', 'form', function(e){
@@ -298,8 +297,6 @@ if(isset($_GET['template'])){
                         		$renderedForm.find('.submit-btn').prop('disabled','disabled').html(spinner).append(' Submitting...');
 
                         		var formRenderData = formRender.userData;
-
-            					console.log(formRenderData);
 
                         		$.ajax({
                         	    	url : "ws_forms.php",
@@ -366,8 +363,8 @@ if(isset($_GET['template'])){
                         	    });
                             }
 
-    					}else if(data.error){
-    						$("#formError").text(data.error);
+    					}else if(ajaxData.error){
+    						$("#formError").text(ajaxData.error);
     					}
                 	}
 				});

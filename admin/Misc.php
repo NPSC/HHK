@@ -198,7 +198,7 @@ if (isset($_POST["btnGenLookups"])) {
     $accordIndex = 0;
     $lookUpAlert = new AlertMessage("lookUpAlert");
     $lookUpAlert->set_Context(AlertMessage::Alert);
-    
+
     if ($wInit->page->is_TheAdmin() == FALSE) {
         $lookUpAlert->set_Text("Don't mess with these settings.  ");
     } else {
@@ -364,14 +364,28 @@ if (isset($_POST['btnClnNames'])) {
 // Database backup on demand
 $bkupMsg = "";
 $igtables = array(
+    'Member photos' => 'photo',
+    'Documents' => 'document',
+    'Generated table1' => 'mail_listing',
+    'Generated table2' => 'member_history',
     'Zip code data' => 'postal_codes',
-    'street name suffixes and common misspellings' => 'street_suffix',
+    'Street name suffixes and common misspellings' => 'street_suffix',
     'Apt, Unit, etc.' => 'secondary_unit_desig',
-    'Generated table' => 'mail_listing',
-    'Generated table' => 'member_history',
     'List of world languages' => 'language',
     'List of world country codes' => 'country_code',
-    );
+);
+
+// Create markup
+$ignoreTableMarkup = '';
+foreach ($igtables as $t => $n) {
+
+    // Don;t show generated tables.
+    if (stristr($t, 'Generated')) {
+        break;
+    }
+
+    $ignoreTableMarkup .= "<tr><td>`$n`</td><td>$t</td></tr>";
+}
 
 if (isset($_POST["btnDoBackup"])) {
 
@@ -459,7 +473,7 @@ if (isset($_POST["btnDelDups"])) {
         $delStmt = $dbh->query("call delete_names_u_tbd;");
         $response = $delStmt->fetchAll(\PDO::FETCH_ASSOC);
         $delStmt->closeCursor();
-        
+
         if(isset($response[0]['msg'])){
             $delDupsAlert->set_Context(alertMessage::Success);
             $delDupsAlert->set_Text($response[0]['msg']);
@@ -509,13 +523,13 @@ $selLookups = getGenLookups($dbh);
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        
+
         <script type="text/javascript">
             var table, accordIndex;
             $(document).ready(function() {
-            
+
             	$("input[type=submit], input[type=button]").button();
-            	
+
                 table = new Object();
                 accordIndex = <?php echo $accordIndex; ?>;
                 $.ajaxSetup ({
@@ -744,7 +758,7 @@ $selLookups = getGenLookups($dbh);
                     <ul>
                         <li><a href="#lookups">Lookups</a></li>
                         <li><a href="#clean">Clean Data</a></li>
-                        <li><a href="#backup">Backup Database</a></li>
+                        <li><a href="#backup">Dump Database</a></li>
                         <li><a href="#changlog">View Change Log</a></li>
                         <li><a href="#delid">Delete Member Records</a></li>
 
@@ -790,13 +804,20 @@ $selLookups = getGenLookups($dbh);
                     <div id="backup" class="ui-tabs-hide" >
                         <table>
                             <tr>
-                                <td><h3>Backup Database</h3></td>
+                                <td colspan="2"><h3>Dump Database</h3></td>
                             </tr>
                             <tr>
-                                <td style="text-align:right;"><input type="submit" name="btnDoBackup" value="Run Database Backup"/></td>
+                            	<td colspan="2"><span style="font-weight:bold;">The following tables are not included in the dump:</span></td>
+                            </tr>
+                            <?php echo $ignoreTableMarkup; ?>
+                            <tr>
+                            <tr><td>&nbsp;</td></tr>
+                            <tr>
+                                <td colspan="2" style="text-align:right;"><input type="submit" name="btnDoBackup" value="Run Database Dump"/></td>
+
                             </tr>
                             <tr>
-                                <td><?php echo $bkupMsg; ?></td>
+                                <td colspan="2"><?php echo $bkupMsg; ?></td>
                             </tr>
                         </table>
                     </div>

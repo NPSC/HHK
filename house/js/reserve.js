@@ -47,6 +47,7 @@ $(document).ready(function() {
                 var $hdnCfmRid = $confForm.find('input[name="hdnCfmRid"]');
                 var $hdnCfmDocCode = $confForm.find('input[name="hdnCfmDocCode"]');
                 var $hdnCfmAmt = $confForm.find('input[name="hdnCfmAmt"]');
+                var $hdnTabIndex = $confForm.find('input[name="hdnTabIndex"]');
                 
                 if($hdnCfmRid.length > 0){
                 	$hdnCfmRid.val($('#btnShowCnfrm').data('rid'));
@@ -63,10 +64,16 @@ $(document).ready(function() {
                 }else{
                 	$confForm.append($('<input name="hdnCfmAmt" type="hidden" value="' + $('#spnAmount').text() + '"/>'));
                 }
+                if($hdnTabIndex.length > 0){
+                	$hdnTabIndex.val($('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("aria-controls"));
+                }else{
+                	$confForm.append($('<input name="hdnTabIndex" type="hidden" value="' + $('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("aria-controls") + '"/>'));
+                }
                 $confForm.submit();
             },
             'Send Email': function() {
-                $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), ccAddr: $('#ccConfEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes').val(), tabIndex: $('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("aria-controls")}, function(data) {
+                var tabIndex = $('div[id="confirmTabDiv"] ul .ui-tabs-active').attr("aria-controls");
+                $.post('ws_ckin.php', {cmd:'confrv', rid: $('#btnShowCnfrm').data('rid'), eml: '1', eaddr: $('#confEmail').val(), ccAddr: $('#ccConfEmail').val(), amt: $('#spnAmount').text(), notes: $('#tbCfmNotes'+tabIndex).val(), tabIndex: tabIndex}, function(data) {
                     data = $.parseJSON(data);
                     if (data.gotopage) {
                         window.open(data.gotopage, '_self');
