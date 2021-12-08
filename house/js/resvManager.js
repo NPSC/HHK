@@ -550,7 +550,7 @@ function resvManager(initData, options) {
 
             var fDiv, fHdr, expanderButton;
 
-            fDiv = $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox').prop('id', divFamDetailId).css('padding', '5px');
+            fDiv = $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox hhk-overflow-x').prop('id', divFamDetailId).css('padding', '5px');
 
             $famTbl = $('<table/>')
                         .prop('id', data.famSection.tblId)

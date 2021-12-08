@@ -256,7 +256,7 @@ class IndivMember extends AbstractMember {
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[$d[0]]),
                                     (isset($demographicsUserData[$d[0]]) && $demographicsUserData[$d[0]] != '' ? $demographicsUserData[$d[0]] : $this->getDemographicsEntry($d[0]))),
-                        		array('name'=>$idPrefix.'sel_' . $d[0], 'class'=>$idPrefix.'hhk-demog-input')
+                        		array('name'=>$idPrefix.'sel_' . $d[0], 'class'=>$idPrefix.'hhk-demog-input', 'style'=>"min-width: max-content")
                                 )
                         , array('style'=>'display:table-cell;')
                         )
@@ -385,7 +385,7 @@ class IndivMember extends AbstractMember {
                 'Date: ' . HTMLInput::generateMarkup(($this->get_DateBackgroundCheck() == '' ? '' : date('M j, Y', strtotime($this->get_DateBackgroundCheck()))), array('name'=>$idPrefix.'txtBackgroundCheckDate', 'class'=>'ckbdate')), $bcdateAttr))
             );
 
-        return $table->generateMarkup(array('style'=>'float:left; margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'float:left; margin-right:10px;')) . $insuranceMarkup;
+        return HTMLContainer::generateMarkup("div", $table->generateMarkup(array('style'=>'margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'margin-right:10px;')) . $insuranceMarkup, array("class"=>"hhk-flex"));
 
     }
 
@@ -458,7 +458,7 @@ ORDER BY `List_Order`");
 
             $sumTbl->addBodyTr(
                 $sumTbl->makeTd($i["Title"], array('class'=>"tdlabel"))
-                .$sumTbl->makeTd($chosenTitle)
+                .$sumTbl->makeTd($chosenTitle, array('style'=>"width:100%"))
             );
 
             $tbl->addBodyTr(
@@ -468,12 +468,12 @@ ORDER BY `List_Order`");
 
             $tbl->addBodyTr(
                 $tbl->maketd("Group Number", array('class'=>"tdlabel"))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Group_Num->getStoredVal(), array('style'=>'width:100%;')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Group_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."txtGroupNum" . $i["Title"])))
             );
 
             $tbl->addBodyTr(
                 $tbl->makeTd("Member Number", array('class'=>"tdlabel"))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Member_Num->getStoredVal(), array('style'=>'width:100%;')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Member_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."txtMemNum" . $i["Title"])))
             );
 
             $divs .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>$i["idInsurance_type"] .'InsTab', 'class'=>'ui-tabs-hide'));
@@ -512,11 +512,11 @@ ORDER BY `List_Order`");
 
         }
 
-        $ul = HTMLContainer::generateMarkup('ul',$tabs, array('style'=>'font-size:0.9em'));
+        $ul = HTMLContainer::generateMarkup('ul',$tabs, array('style'=>'font-size:0.9em','class'=>"hhk-flex"));
         $divs = HTMLContainer::generateMarkup('div', $sumTbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>'sumInsTab', 'class'=>'ui-tabs-hide')) . $divs;
 
         //return $tbl->generateMarkup();
-        return HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>'InsTabs', 'style'=>'float:left;'));
+        return HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>'InsTabs'));
 
     }
 
@@ -891,14 +891,11 @@ ORDER BY `List_Order`");
 
             if (isset($post[$idPrefix.'selIns'.$i['Title']]) && $this->get_idName() > 0) {
 
-                if ($i['Multiselect'] > 1) {
-                    $inss = filter_var_array($post[$idPrefix.'selIns'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
-                    $inss2 = array_flip($inss);
-                } else {
-                    $ins = filter_var($post[$idPrefix.'selIns'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
-                    $inss = array($ins=>$ins);
-                    $inss2[$ins] = $ins;
-                }
+                    $insId = filter_var($post[$idPrefix.'selIns'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
+                    $groupNum = filter_var($post[$idPrefix.'txtGroupNum'.$i['Title']], FILTER_SANITIZE_STRING);
+                    $memNum = filter_var($post[$idPrefix.'txtMemNum'.$i['Title']], FILTER_SANITIZE_STRING);
+                    $ins = ["id"=>$insId, "groupNum"=>$groupNum, "memNum"=>$memNum];
+                    $inss2[$insId] = $ins;
 
                 // Remove any unset .
                 foreach ($this->insuranceRSs as $insRs) {

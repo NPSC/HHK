@@ -38,7 +38,7 @@ class History {
         if ($id > 0 && $role < WebRole::Guest) {
             $query = "INSERT INTO member_history (idName, Guest_Access_Date) VALUES ($id, now())
         ON DUPLICATE KEY UPDATE Guest_Access_Date = now();";
-           
+
             $stmt = $dbh->prepare($query);
             $stmt->execute();
         }
@@ -181,7 +181,7 @@ class History {
 
         $uS = Session::getInstance();
         // Get labels
-        
+
         $labels = Labels::getLabels();
         $returnRows = array();
 
@@ -194,7 +194,7 @@ class History {
                 $fixedRows['Action'] =  HTMLContainer::generateMarkup(
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
-                           HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php' . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none;')))
+                           HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php' . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none; display:block;')))
                            . $this->makeResvCanceledStatuses($uS->guestLookups['ReservStatus'], $r['idReservation'])
                            . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
                            . ($includeAction && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
@@ -222,7 +222,7 @@ class History {
                 } else {
                     $fixedRows['Timestamp'] = $bDay->format('c');
                 }
-                
+
                 $fixedRows['Updated_By'] = (isset($r['Updated_By']) ? $r['Updated_By'] : '');
             }
 
@@ -406,34 +406,34 @@ class History {
 
             // Guest last name
             if ($page != '') {
-            
+
                 // Indicate On leave
                 if ($r['On_Leave'] > 0) {
-    
+
                     $daysOnLv = intval($r['On_Leave']);
-    
+
                     $now = new \DateTime();
                     $now->setTime(0, 0, 0);
-    
+
                     $stDay = new \DateTime($r['Span_Start_Date']);
                     $stDay->setTime(0, 0, 0);
                     $stDay->add(new \DateInterval('P' . $daysOnLv . 'D'));
-    
+
                     if ($now > $stDay) {
                         // Past Due
                         $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('class'=>'ui-state-error','title'=>'On Leave - past due!'));
-    
+
                     } else {
                         // on leave
                         $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
                     }
                 } else {
-                    
+
                     // Build the page anchor
                     $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg']));
 
                 }
-            
+
             } else {
                 $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' Last'] = $r['Guest Last'];
             }

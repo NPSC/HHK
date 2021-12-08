@@ -1550,7 +1550,11 @@ $(document).ready(function () {
        },
        drawCallback: function (settings) {
            $('#spnNumCurrent').text(this.api().rows().data().length);
-           $('#curres .gmenu').menu();
+           $('#curres .gmenu').menu({
+           		focus:function(e, ui){
+           			$("#curres .gmenu").not(this).menu("collapseAll", null, true);
+           		}
+           });
        },
        columns: cgCols
     });

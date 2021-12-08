@@ -562,4 +562,21 @@ div#referralTabs ul>li.ui-state-active .ui-icon {
 div.dt-buttons .dt-button:hover>span {
 	background-color: rgba(0, 0, 0, 0) !important;	
 }
+
+/* Add flexbox support */
+.hhk-flex {
+	display: flex;
+	align-items: flex-start;
+}
+
+.hhk-overflow-x {
+	overflow-x: auto;
+}
+
+@media only screen and (max-width: 1024px){
+
+	.hideMobile {
+		display: none;
+	}
+	
 }

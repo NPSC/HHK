@@ -315,9 +315,9 @@ if($uS->useOnlineReferral){
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?> >
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-            <div style="float:left;">
-                <h2><?php echo $wInit->pageHeading; echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); echo RoomReport::getGlobalStaysCounter($dbh); ?>
-                <span style="margin-left:10px; font-size: .65em; background:#DEEDF8; padding:2px;">Name Search:
+            <div>
+                <h2 class="hhk-flex" style="justify-content: space-between;align-items: baseline;"><?php echo $wInit->pageHeading; echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); echo RoomReport::getGlobalStaysCounter($dbh); ?>
+                <span style="margin-right:20px; font-size: .65em; background:#DEEDF8; padding:2px;">Name Search:
                     <input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
                 </span>
                 </h2>
