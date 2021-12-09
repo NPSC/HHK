@@ -119,3 +119,10 @@ CALL new_webpage('ws_forms.php', '0','','0','h','','','s','','admin',CURRENT_TIM
 ALTER TABLE `name_insurance` 
 ADD COLUMN `Member_Num` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Insurance_Id`,
 ADD COLUMN `Group_Num` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Member_Num`;
+
+ALTER TABLE `insurance_type` 
+DROP COLUMN `Multiselect`,
+ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `List_Order`;
+
+ALTER TABLE `insurance` 
+ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`;

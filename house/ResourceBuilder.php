@@ -169,6 +169,18 @@ function getSelections(\PDO $dbh, $tableName, $type, $labels)
                 $diags[] = $lookup;
             }
         }
+
+    }else if($tableName == "insurance_type") {
+
+        $stmt = $dbh->query("SELECT
+    `t`.`idInsurance_type` as 'Table_Name', `t`.`Title` as 'Description',if(`t`.`Status` = 'a','y',''),'', `t`.`List_Order` as 'Order'
+FROM
+    `insurance_type` `t`
+Order by `t`.`List_Order`;");
+
+        $diags = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+
     } else {
         $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
     }
@@ -1777,6 +1789,27 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
     'data-type' => 'd',
     'class' => 'hhk-selLookup'
 ));
+
+// Insurance Types Selection table
+$tbl = getSelections($dbh, 'insurance_type', 'm', $labels);
+$insTypeSelections = $tbl->generateMarkup();
+
+// Insurance types selectors
+$stmt = $dbh->query("SELECT
+    `t`.`idInsurance_type` as 'Table_Name', `t`.`Title` as 'Description'
+FROM
+    `insurance_type` `t`
+WHERE
+    `t`.`Status` = 'a';");
+
+$rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+$selInsTypes = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array(
+    'name' => 'selInsLookup',
+    'data-type' => 'i',
+    'class' => 'hhk-selLookup'
+));
+
 $lookupErrMsg = '';
 
 // General Lookup categories
@@ -2049,6 +2082,9 @@ $resultMessage = $alertMsg->createMarkup();
 				<li><a href="#roomTable">Rooms</a></li>
 				<li><a href="#rateTable"><?php echo $rateTableTabTitle; ?></a></li>
 				<li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
+				<?php if($uS->InsuranceChooser){ ?>
+				<li><a href="#insTable">Insurance</a></li>
+				<?php } ?>
 				<li><a href="#demoTable">Demographics</a></li>
 				<li><a href="#lkTable">Lookups</a></li>
 				<li><a href="#itemTable">Items</a></li>
@@ -2066,6 +2102,37 @@ $resultMessage = $alertMsg->createMarkup();
 				style="font-size: .9em;">
                     <?php echo $roomTable; ?>
                 </div>
+			<div id="insTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+				<div><?php echo $demoMessage; ?></div>
+				<div style="float: left;">
+					<h3>Insurance Types</h3>
+					<form id="formins">
+						<div>
+                                <?php echo $insTypeSelections; ?>
+                            </div>
+						<span style="margin: 10px; float: right;"><input type="button"
+							id='btndemoSave' class="hhk-savedemoCat" data-type="h"
+							value="Save" /></span>
+					</form>
+				</div>
+
+				<div style="float: left; margin-left: 30px;">
+					<h3>Insurance Companies</h3>
+					<form id="formdemoCat">
+						<table>
+							<tr>
+								<th>Insurance</th>
+								<td><?php echo $selInsTypes; ?></td>
+							</tr>
+						</table>
+						<div id="divdemoCat"></div>
+						<span style="margin: 10px; float: right;"><input type="button"
+							id='btndemoSaveCat' class="hhk-saveLookup" data-type="d"
+							value="Save" /></span>
+					</form>
+				</div>
+			</div>
+
 			<div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
 				<div><?php echo $demoMessage; ?></div>
 				<div style="float: left;">
