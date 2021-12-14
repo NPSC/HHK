@@ -421,11 +421,11 @@ class History {
 
                     if ($now > $stDay) {
                         // Past Due
-                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('class'=>'ui-state-error','title'=>'On Leave - past due!'));
+                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class'=>'ui-state-error','title'=>'On Leave - past due!'));
 
                     } else {
                         // on leave
-                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
+                        $fixedRows[Labels::getString('memberType', 'Visitor', 'Guest') . ' Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?id=" . $r["Id"] . '&psg=' . $r['idPsg'], 'class'=>'ui-state-highlight','title'=>'On Leave until ' . $stDay->format('M j')));
                     }
                 } else {
 

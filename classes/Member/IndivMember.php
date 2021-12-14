@@ -398,11 +398,11 @@ class IndivMember extends AbstractMember {
         }
 
         // Insurance Companies
-        $stmt = $dbh->query("select * from insurance order by `Type`, `Title`");
+        $stmt = $dbh->query("select * from insurance order by `idInsuranceType`, `Title`");
         $ins = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $ins[$r['Type']][$r['idInsurance']] = array(0=>$r['idInsurance'], 1=>$r['Title']);
+            $ins[$r['idInsuranceType']][$r['idInsurance']] = array(0=>$r['idInsurance'], 1=>$r['Title']);
         }
 
         // Insurance Types
@@ -413,7 +413,6 @@ class IndivMember extends AbstractMember {
         WHEN Is_Primary = 1 THEN '1'
         ELSE '0'
     END AS `Is_Primary`,
-    Multiselect,
     List_Order
 FROM
     `insurance_type`

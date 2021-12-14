@@ -33,6 +33,8 @@ use HHK\Purchase\TaxedItem;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
 use HHK\Document\FormTemplate;
+use HHK\House\Insurance\InsuranceType;
+use HHK\House\Insurance\Insurance;
 
 /**
  * ResourceBuilder.php
@@ -532,6 +534,13 @@ if (isset($_POST['table'])) {
         } else {
             replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
         }
+    }
+
+    if($cmd == "load" && $tableName == "insurance"){
+        $insurance = new Insurance();
+        $insurance->loadInsurances($dbh, $type);
+        echo $insurance->generateTblMarkup();
+        exit();
     }
 
     // Generate selectors.
@@ -1790,25 +1799,21 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
     'class' => 'hhk-selLookup'
 ));
 
-// Insurance Types Selection table
-$tbl = getSelections($dbh, 'insurance_type', 'm', $labels);
-$insTypeSelections = $tbl->generateMarkup();
+$insuranceType = new InsuranceType();
 
-// Insurance types selectors
-$stmt = $dbh->query("SELECT
-    `t`.`idInsurance_type` as 'Table_Name', `t`.`Title` as 'Description'
-FROM
-    `insurance_type` `t`
-WHERE
-    `t`.`Status` = 'a';");
+// save insurance types
+if(isset($_POST["insuranceTypes"])){
+    $insuranceType = new InsuranceType();
+    $insuranceType->save($dbh, $_POST);
+}
 
-$rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+$insuranceType->loadInsuranceTypes($dbh);
+$selInsTypes = $insuranceType->generateSelector();
 
-$selInsTypes = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''), array(
-    'name' => 'selInsLookup',
-    'data-type' => 'i',
-    'class' => 'hhk-selLookup'
-));
+if(isset($_POST["insurances"])){
+    $insurance = new Insurance();
+    $insurance->save($dbh, $_POST);
+}
 
 $lookupErrMsg = '';
 
@@ -2106,14 +2111,7 @@ $resultMessage = $alertMsg->createMarkup();
 				<div><?php echo $demoMessage; ?></div>
 				<div style="float: left;">
 					<h3>Insurance Types</h3>
-					<form id="formins">
-						<div>
-                                <?php echo $insTypeSelections; ?>
-                            </div>
-						<span style="margin: 10px; float: right;"><input type="button"
-							id='btndemoSave' class="hhk-savedemoCat" data-type="h"
-							value="Save" /></span>
-					</form>
+					<?php echo $insuranceType->generateEditMarkup(); ?>
 				</div>
 
 				<div style="float: left; margin-left: 30px;">
@@ -2126,9 +2124,6 @@ $resultMessage = $alertMsg->createMarkup();
 							</tr>
 						</table>
 						<div id="divdemoCat"></div>
-						<span style="margin: 10px; float: right;"><input type="button"
-							id='btndemoSaveCat' class="hhk-saveLookup" data-type="d"
-							value="Save" /></span>
 					</form>
 				</div>
 			</div>

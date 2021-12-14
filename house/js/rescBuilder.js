@@ -401,6 +401,9 @@ $(document).ready(function () {
         }else if($sel.val() == "ReservStatus"){
 			table = "ReservStatus";
 			type = "ReservStatus";
+        }else if ($sel.data('type') === 'insurance'){
+        	table = "insurance";
+        	type = $sel.val();
         }
 
         $sel.closest('form').children('div').empty().text('Loading...');
