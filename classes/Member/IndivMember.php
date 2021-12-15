@@ -398,7 +398,7 @@ class IndivMember extends AbstractMember {
         }
 
         // Insurance Companies
-        $stmt = $dbh->query("select * from insurance order by `idInsuranceType`, `Title`");
+        $stmt = $dbh->query("select * from insurance where `Status` = 'a' order by `idInsuranceType`, `Title`");
         $ins = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -462,17 +462,17 @@ ORDER BY `List_Order`");
 
             $tbl->addBodyTr(
                 $tbl->makeTd("Insurance", array('class'=>"tdlabel"))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], array($chosen->Insurance_Id->getStoredVal()), true),array('name'=>$idPrefix.'selIns' . $i['Title'])))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], array($chosen->Insurance_Id->getStoredVal()), true),array('name'=>$idPrefix.'Insurance[' . $i['idInsurance_type'] . '][insuranceId]')))
             );
 
             $tbl->addBodyTr(
                 $tbl->maketd("Group Number", array('class'=>"tdlabel"))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Group_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."txtGroupNum" . $i["Title"])))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Group_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."Insurance[".$i['idInsurance_type']."][groupNum]")))
             );
 
             $tbl->addBodyTr(
                 $tbl->makeTd("Member Number", array('class'=>"tdlabel"))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Member_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."txtMemNum" . $i["Title"])))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Member_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."Insurance[".$i['idInsurance_type']."[memNum]")))
             );
 
             $divs .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>$i["idInsurance_type"] .'InsTab', 'class'=>'ui-tabs-hide'));
@@ -850,7 +850,7 @@ ORDER BY `List_Order`");
         }
 
         // Insurances
-        $stmt3 = $dbh->query("select idInsurance, Type, Title from insurance");
+        $stmt3 = $dbh->query("select idInsurance, idInsuranceType, Title from insurance");
         $insCos = array();
 
         while ($c = $stmt3->fetch(\PDO::FETCH_ASSOC)) {
@@ -864,20 +864,26 @@ ORDER BY `List_Order`");
 
         foreach ($insTypes as $i) {
 
-            if (isset($post[$idPrefix.'selIns'.$i['Title']]) && $this->get_idName() > 0) {
+            if (isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]) && $this->get_idName() > 0) {
 
-                    $insId = filter_var($post[$idPrefix.'selIns'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
-                    $groupNum = filter_var($post[$idPrefix.'txtGroupNum'.$i['Title']], FILTER_SANITIZE_STRING);
-                    $memNum = filter_var($post[$idPrefix.'txtMemNum'.$i['Title']], FILTER_SANITIZE_STRING);
-                    $ins = ["id"=>$insId, "groupNum"=>$groupNum, "memNum"=>$memNum];
-                    $inss2[$insId] = $ins;
+                $insId = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['insuranceId'], FILTER_SANITIZE_NUMBER_INT);
+                $groupNum = '';
+                if(isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'])){
+                    $groupNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'], FILTER_SANITIZE_STRING);
+                }
+                $memNum = '';
+                if(isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'])){
+                    $memNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'], FILTER_SANITIZE_STRING);
+                }
+                $ins = ["id"=>$insId, "groupNum"=>$groupNum, "memNum"=>$memNum];
+                $inss2[$insId] = $ins;
 
                 // Remove any unset .
                 foreach ($this->insuranceRSs as $insRs) {
 
                     if (!isset($inss2[$insRs->Insurance_Id->getStoredVal()])) {
 
-                        if ($insCos[$insRs->Insurance_Id->getStoredVal()]['Type'] == $i['idInsurance_type']) {
+                        if ($insCos[$insRs->Insurance_Id->getStoredVal()]['idInsuranceType'] == $i['idInsurance_type']) {
                             // remove recordset
                             $numRecords = EditRS::delete($dbh, $insRs, array($insRs->Insurance_Id, $insRs->idName));
 
