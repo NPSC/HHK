@@ -113,3 +113,8 @@ CALL new_webpage('WaitlistReport.php', '0','Daily Waitlist','1','h','79','w','p'
 
 CALL new_webpage('showReferral.php', '0','Referral Form','0','h','','','p','','admin',CURRENT_TIMESTAMP, 'pub');
 CALL new_webpage('ws_forms.php', '0','','0','h','','','s','','admin',CURRENT_TIMESTAMP, 'pub');
+
+REPLACE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES 
+('c', 'Patient Name', '${PatientName}'),
+('c', 'Number of Guests', '${numGuests}'),
+('c', 'Guest Email', '${GuestEmail}');
