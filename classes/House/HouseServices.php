@@ -15,7 +15,6 @@ use HHK\House\Resource\AbstractResource;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
 use HHK\House\Visit\VisitViewer;
-use HHK\House\Stays;
 use HHK\Member\Role\Guest;
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
@@ -215,12 +214,6 @@ class HouseServices {
             $dataArray['visitStart'] = $visit->getArrivalDate();
             $dataArray['expDep'] = $expDepDT->format('c');
 
-        // Pay fees
-//         } else if ($action == 'pf') {
-
-//             $mkup .= HTMLContainer::generateMarkup('div',
-//                     VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
-
         } else {
                         
             $mkup = HTMLContainer::generateMarkup('div',
@@ -382,33 +375,37 @@ class HouseServices {
     
     
                     // Return/Extend leave?
-                    if (isset($post['leaveRetCb']) && isset ($post['rbOlpicker'])) {
+                    if (isset($post['leaveRetCb'])) {
+                        
+                        $extContrl = '';
     
-                        $extContrl = filter_var($post['rbOlpicker'], FILTER_SANITIZE_STRING);
-                        $returnDate = '';
-                        $extendDate = '';
-                        
-                        if (isset($post['txtWRetDate']) && $post['txtWRetDate'] != '') {
-                            $returnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_STRING);
+                        if (isset($post['rbOlpicker-ext'])) {
+                            $extContrl = 'extend';
+                        } else if (isset($post['rbOlpicker-rtDate'])) {
+                            $extContrl = 'return';
                         }
                         
-                        if (isset($post['extendDate']) && $post['extendDate'] != '') {
-                            $extendDate = filter_var($post['extendDate'], FILTER_SANITIZE_STRING);
-                        }
-                            
-                        if ($extContrl == 'ext') {
+                        if ($extContrl == 'extend') {
                             // Extend current leave
                             
-                            $reply .= $visit->extendLeave($dbh, $extendDate);
-                            $returnCkdIn = TRUE;
+                            if (isset($post['extendDate']) && $post['extendDate'] != '') {
+                                
+                                $extendDate = filter_var($post['extendDate'], FILTER_SANITIZE_STRING);
                             
+                                $reply .= $visit->extendLeave($dbh, $extendDate);
+                                $returnCkdIn = TRUE;
+                            }
                         
-                        } else {
+                        } else if ($extContrl == 'return') {
                             // Return from Leave
                             
-                            $reply .= $visit->endLeave($dbh, $returnDate);
-                            $returnCkdIn = TRUE;
-                            
+                            if (isset($post['txtWRetDate']) && $post['txtWRetDate'] != '') {
+                                
+                                $returnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_STRING);
+
+                                $reply .= $visit->endLeave($dbh, $returnDate);
+                                $returnCkdIn = TRUE;
+                            }
                         }
                     }
                 }

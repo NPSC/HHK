@@ -1540,48 +1540,72 @@ class Visit {
         }
 
         $this->saveNewStays($dbh, $uname);
+        $this->updateVisitRecord($dbh);
 
     }
 
-    public function endLeave(\PDO $dbh, $extendReturnDateStr) {
+    public function endLeave(\PDO $dbh, $returnDateStr) {
 
         $reply = '';
         $uS = Session::getInstance();
 
-        if ($extendReturnDateStr == '') {
-            $extendReturnDT = new \DateTimeImmutable();
+        if ($returnDateStr == '') {
+            $returnDT = new \DateTimeImmutable();
         } else {
-            $extendReturnDT = new \DateTimeImmutable($extendReturnDateStr);
+            $returnDT = new \DateTimeImmutable($returnDateStr);
         }
 
-        $retDT = $extendReturnDT->setTime(0, 0, 0);
+        $retDT = $returnDT->setTime(0, 0, 0);
 
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
         
         if ($retDT > $today) {
             
-            return 'Cannot return from leave in the future.  ';
+            return 'Cannot return from leave in the future. Use "Extend Leave".';
             
         } else {
+            
+            $stayStartDT = NULL;
 
-            // Was the rate changed for the leave?
-            $vol = new Visit_onLeaveRS();
-            $vol->idVisit->setStoredVal($this->getIdVisit());
-            $rows = EditRS::select($dbh, $vol, array($vol->idVisit));
-    
-            if (count($rows) > 0) {
-                // Rate was changed
-                EditRS::loadRow($rows[0], $vol);
-    
-                $reply .= $this->changePledgedRate($dbh, $vol->Rate_Category->getStoredVal(), $vol->Pledged_Rate->getStoredVal(), $vol->Rate_Adjust->getStoredVal(), $uS->username, $extendReturnDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE), FALSE);
-    
-                EditRS::delete($dbh, $vol, array($vol->idVisit));
-    
-            } else {
-                // Check out all guest, check back in.
-                $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $extendReturnDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
-    
+            // Get extended stay start date.
+            foreach ($this->stays as $stayRS) {
+                
+                if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn && $stayRS->On_Leave->getStoredVal() > 0) {
+                    
+                    $stayStartDT = new \DateTimeImmutable($stayRS->Span_Start_Date);
+                    break;
+                }
+            }
+            
+            if (is_null($stayStartDT) === FALSE) {
+                
+                $leaveDays = $retDT->diff($stayStartDT)->days;
+                
+                if ($leaveDays <= 0) {
+                    // Delete Leave from visit
+                    
+                } else if ($leaveDays > 0) {
+            
+                    // Was the rate changed for the leave?
+                    $vol = new Visit_onLeaveRS();
+                    $vol->idVisit->setStoredVal($this->getIdVisit());
+                    $rows = EditRS::select($dbh, $vol, array($vol->idVisit));
+            
+                    if (count($rows) > 0) {
+                        // Rate was changed
+                        EditRS::loadRow($rows[0], $vol);
+            
+                        $reply .= $this->changePledgedRate($dbh, $vol->Rate_Category->getStoredVal(), $vol->Pledged_Rate->getStoredVal(), $vol->Rate_Adjust->getStoredVal(), $uS->username, $returnDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE), FALSE);
+            
+                        EditRS::delete($dbh, $vol, array($vol->idVisit));
+            
+                    } else {
+                        // Check out all guest, check back in.
+                        $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $returnDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
+            
+                    }
+                }
             }
         }
 
@@ -1595,7 +1619,7 @@ class Visit {
         $uS = Session::getInstance();
         
         if ($extendDateStr == '') {
-            $extendDT = new \DateTimeImmutable();
+            return "Leave is not extended. ";
         } else {
             $extendDT = new \DateTimeImmutable($extendDateStr);
         }
@@ -1607,9 +1631,47 @@ class Visit {
         
         if ($retDT > $today) {
             // Extend leave
+
+            if ($retDT->diff($today)->days > 7) {
+                return 'Cannot extend a leave beyond 7 days from today. ';
+            }
             
-            $spanStartDT = new \DateTimeImmutable($this->getSpanStart());
-            $leaveDays = $extendDT->diff($spanStartDT)->
+            $leaveDays = 0;
+            
+            // Get number of days for extended stay
+            foreach ($this->stays as $stayRS) {
+                
+                if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn && $stayRS->On_Leave->getStoredVal() > 0) {
+                    
+                    $stayStartDT = new \DateTimeImmutable($stayRS->Span_Start_Date);
+                    $leaveDays = $retDT->diff($stayStartDT)->days + 1;
+                    break;
+                }
+            }
+            
+            // Found a checked-in extended stay?
+            if ($leaveDays > 0) {
+            
+                // Apply to each checked-in stay
+                foreach ($this->stays as $stayRS) {
+                    
+                    if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
+                        
+                        $stayRS->On_Leave->setNewVal($leaveDays);
+    
+                        $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+                        $stayRS->Updated_By->setNewVal($uS->username);
+                        
+                        EditRS::update($dbh, $stayRS, array($stayRS->idStays));
+                        $logText = VisitLog::getUpdateText($stayRS);
+                        VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
+                        
+                        EditRS::updateStoredVals($stayRS);
+                    }
+                }
+                
+                $reply .= "Guests leave extended. ";
+            }
             
         } else {
             $reply .= $this->endLeave($dbh, $extendDateStr);
@@ -1644,7 +1706,7 @@ class Visit {
         if ($extndStartDT < $today) {
             
             // is it less than the current span?
-            $spanStartDT = new \DateTimeImmutable($this->getSpanStart());
+           // $spanStartDT = new \DateTimeImmutable($this->getSpanStart());
             
             if ($extndStartDT->setTime(0,0,0) < $spanStartDT->setTime(0,0,0)) {
                 return  'Starting a Leave before the visit span start date is not allowed.  ';

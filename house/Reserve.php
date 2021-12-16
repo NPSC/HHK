@@ -82,8 +82,6 @@ if (isset($_POST['hdnCfmRid']) && isset($_POST['hdnCfmDocCode']) && isset($_POST
         $notes = filter_var($_POST['tbCfmNotes'], FILTER_SANITIZE_STRING);
     }
 
-    //require(HOUSE . 'TemplateForm.php');
-    //require(HOUSE . 'ConfirmationForm.php');
 
     try {
         $confirmForm = new ConfirmationForm($dbh, $docId);
