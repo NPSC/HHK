@@ -355,39 +355,62 @@ class HouseServices {
                 }
 
 
-                // Begin visit leave?
-                if (isset($post['extendCb']) && $uS->EmptyExtendLimit > 0) {
-
-                    $extendStartDate = '';
-                    if (isset($post['txtWStart']) && $post['txtWStart'] != '') {
-                        $extendStartDate = filter_var($post['txtWStart'], FILTER_SANITIZE_STRING);
+                // Leave enabled
+                if ($uS->EmptyExtendLimit > 0) {
+                    
+                    // Begin visit leave?
+                    if (isset($post['extendCb'])) {
+    
+                        $extendStartDate = '';
+                        if (isset($post['txtWStart']) && $post['txtWStart'] != '') {
+                            $extendStartDate = filter_var($post['txtWStart'], FILTER_SANITIZE_STRING);
+                        }
+    
+                        $extDays = 0;
+                        if (isset($post['extendDays'])) {
+                            $extDays = intval(filter_var($post['extendDays'], FILTER_SANITIZE_NUMBER_INT), 10);
+                        }
+    
+                        $noCharge = FALSE;
+                        if (isset($post['noChargeCb'])) {
+                            $noCharge = TRUE;
+                        }
+    
+                        $reply .= $visit->beginLeave($dbh, $extendStartDate, $extDays, $noCharge);
+                        $returnCkdIn = TRUE;
                     }
-
-                    $extDays = 0;
-                    if (isset($post['extendDays'])) {
-                        $extDays = intval(filter_var($post['extendDays'], FILTER_SANITIZE_NUMBER_INT), 10);
+    
+    
+                    // Return/Extend leave?
+                    if (isset($post['leaveRetCb']) && isset ($post['rbOlpicker'])) {
+    
+                        $extContrl = filter_var($post['rbOlpicker'], FILTER_SANITIZE_STRING);
+                        $returnDate = '';
+                        $extendDate = '';
+                        
+                        if (isset($post['txtWRetDate']) && $post['txtWRetDate'] != '') {
+                            $returnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_STRING);
+                        }
+                        
+                        if (isset($post['extendDate']) && $post['extendDate'] != '') {
+                            $extendDate = filter_var($post['extendDate'], FILTER_SANITIZE_STRING);
+                        }
+                            
+                        if ($extContrl == 'ext') {
+                            // Extend current leave
+                            
+                            $reply .= $visit->extendLeave($dbh, $extendDate);
+                            $returnCkdIn = TRUE;
+                            
+                        
+                        } else {
+                            // Return from Leave
+                            
+                            $reply .= $visit->endLeave($dbh, $returnDate);
+                            $returnCkdIn = TRUE;
+                            
+                        }
                     }
-
-                    $noCharge = FALSE;
-                    if (isset($post['noChargeCb'])) {
-                        $noCharge = TRUE;
-                    }
-
-                    $reply .= $visit->beginLeave($dbh, $extendStartDate, $extDays, $noCharge);
-                    $returnCkdIn = TRUE;
-                }
-
-
-                // Return from leave?
-                if (isset($post['leaveRetCb']) && $uS->EmptyExtendLimit > 0) {
-
-                    $extendReturnDate = '';
-                    if (isset($post['txtWRetDate']) && $post['txtWRetDate'] != '') {
-                        $extendReturnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_STRING);
-                    }
-
-                    $reply .= $visit->endLeave($dbh, $extendReturnDate);
-                    $returnCkdIn = TRUE;
                 }
 
 

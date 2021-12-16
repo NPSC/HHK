@@ -1560,9 +1560,9 @@ class Visit {
         $today->setTime(0, 0, 0);
         
         if ($retDT > $today) {
-            // Extend leave
             
             return 'Cannot return from leave in the future.  ';
+            
         } else {
 
             // Was the rate changed for the leave?
@@ -1589,6 +1589,36 @@ class Visit {
 
     }
 
+    public function extendLeave(\PDO $dbh, $extendDateStr) {
+        
+        $reply = '';
+        $uS = Session::getInstance();
+        
+        if ($extendDateStr == '') {
+            $extendDT = new \DateTimeImmutable();
+        } else {
+            $extendDT = new \DateTimeImmutable($extendDateStr);
+        }
+        
+        $retDT = $extendDT->setTime(0, 0, 0);
+        
+        $today = new \DateTime();
+        $today->setTime(0, 0, 0);
+        
+        if ($retDT > $today) {
+            // Extend leave
+            
+            $spanStartDT = new \DateTimeImmutable($this->getSpanStart());
+            $leaveDays = $extendDT->diff($spanStartDT)->
+            
+        } else {
+            $reply .= $this->endLeave($dbh, $extendDateStr);
+        }
+        
+        return $reply;
+        
+    }
+    
     public function beginLeave(\PDO $dbh, $extendStartDate, $extDays, $noCharge) {
         // Extend the visit
 
@@ -1849,8 +1879,6 @@ class Visit {
     }
     
     public function setNotes($notes, $username, $roomTitle = '') {
-        //$oldNotes = $this->getNotes();
-        //$this->visitRS->Notes->setNewVal($oldNotes . "\r\n" . date('m-d-Y') . ', visit ' . $this->getIdVisit() . '-' . $this->getSpan() . ', room ' . $roomTitle . ', ' . $username . ' - ' . $notes);
         $this->visitRS->Notes->setNewVal($notes);
     }
 
