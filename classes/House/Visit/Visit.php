@@ -18,6 +18,7 @@ use HHK\House\Reservation\ReservationSvcs;
 use HHK\House\Reservation\Reservation_1;
 use HHK\House\Resource\AbstractResource;
 use HHK\Tables\Fields\DB_Field;
+use HHK\Tables\Visit\Visit_LogRS;
 
 /**
  * Visit.php
@@ -595,14 +596,14 @@ class Visit {
             $this->stays[] = $sRs;
         }
 
-        if ($useRateGlide) {
-            // Calculate days of old span
-            $stDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
-            $stDT->setTime(0, 0, 0);
-            $endDT = new \DateTime($changeDate);
-            $endDT->setTime(0, 0, 0);
-            $glideDays = $this->visitRS->Rate_Glide_Credit->getStoredVal() + $endDT->diff($stDT, TRUE)->days;
-        }
+//         if ($useRateGlide) {
+//             // Calculate days of old span
+//             $stDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
+//             $stDT->setTime(0, 0, 0);
+//             $endDT = new \DateTime($changeDate);
+//             $endDT->setTime(0, 0, 0);
+//             $glideDays = $this->visitRS->Rate_Glide_Credit->getStoredVal() + $endDT->diff($stDT, TRUE)->days;
+//         }
 
         // End old span
         $newSpanStatus = $this->visitRS->Status->getStoredVal();
@@ -1554,6 +1555,10 @@ class Visit {
         } else {
             $returnDT = new \DateTimeImmutable($returnDateStr);
         }
+        
+        if ($returnDT->getTimezone()->getName() != $uS->tz) {
+            $returnDT = $returnDT->setTimezone(new \DateTimeZone($uS->tz));
+        }
 
         $retDT = $returnDT->setTime(0, 0, 0);
 
@@ -1562,7 +1567,7 @@ class Visit {
         
         if ($retDT > $today) {
             
-            return 'Cannot return from leave in the future. Use "Extend Leave".';
+            return 'Cannot return from leave in the future.';
             
         } else {
             
@@ -1573,34 +1578,46 @@ class Visit {
                 
                 if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn && $stayRS->On_Leave->getStoredVal() > 0) {
                     
-                    $stayStartDT = new \DateTimeImmutable($stayRS->Span_Start_Date);
+                    $stayStartDT = new \DateTimeImmutable($stayRS->Span_Start_Date->getStoredVal());
                     break;
                 }
             }
             
+            // Make sure a stay was found.
             if (is_null($stayStartDT) === FALSE) {
                 
                 $leaveDays = $retDT->diff($stayStartDT)->days;
+
+                // Was the rate changed for the leave?
+                $volRS = new Visit_onLeaveRS();
+                $volRS->idVisit->setStoredVal($this->getIdVisit());
+                $rows = EditRS::select($dbh, $volRS, array($volRS->idVisit));
+                
+                if (count($rows) > 0) {
+                    // Rate was changed - Load changed info
+                    EditRS::loadRow($rows[0], $volRS);
+                    
+                    // And delete it.
+                    EditRS::delete($dbh, $volRS, array($volRS->idVisit));
+                } else {
+                    // Rate not changed.
+                    $volRS = NULL;
+                }
                 
                 if ($leaveDays <= 0) {
-                    // Delete Leave from visit
+                    // Undo Leave.
+                    $reply .= $this->undoLeave($dbh, $returnDT, $volRS);
                     
-                } else if ($leaveDays > 0) {
+                } else {
+                    // End Leave
             
-                    // Was the rate changed for the leave?
-                    $vol = new Visit_onLeaveRS();
-                    $vol->idVisit->setStoredVal($this->getIdVisit());
-                    $rows = EditRS::select($dbh, $vol, array($vol->idVisit));
-            
-                    if (count($rows) > 0) {
+                    if (is_null($volRS) === FALSE) {
+                        
                         // Rate was changed
-                        EditRS::loadRow($rows[0], $vol);
-            
-                        $reply .= $this->changePledgedRate($dbh, $vol->Rate_Category->getStoredVal(), $vol->Pledged_Rate->getStoredVal(), $vol->Rate_Adjust->getStoredVal(), $uS->username, $returnDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE), FALSE);
-            
-                        EditRS::delete($dbh, $vol, array($vol->idVisit));
+                        $reply .= $this->changePledgedRate($dbh, $volRS->Rate_Category->getStoredVal(), $volRS->Pledged_Rate->getStoredVal(), $volRS->Rate_Adjust->getStoredVal(), $uS->username, $returnDT, FALSE, FALSE);
             
                     } else {
+                        
                         // Check out all guest, check back in.
                         $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $returnDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
             
@@ -1702,19 +1719,35 @@ class Visit {
             $extndStartDT = new \DateTimeImmutable();
         }
         
+        $extendDayDT = $extndStartDT->setTime(0,0,0);
         
-        if ($extndStartDT < $today) {
+        
+        if ($extendDayDT < $today) {
             
             // is it less than the current span?
-           // $spanStartDT = new \DateTimeImmutable($this->getSpanStart());
+            $stayStartDT = null;
             
-            if ($extndStartDT->setTime(0,0,0) < $spanStartDT->setTime(0,0,0)) {
-                return  'Starting a Leave before the visit span start date is not allowed.  ';
+            // Get current latest stay start date
+            foreach ($this->stays as $stayRS) {
+                
+                if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn && $stayRS->On_Leave->getStoredVal() == 0) {
+                    
+                    $tempDT = new \DateTimeImmutable($stayRS->Span_Start_Date);
+                    $tempDT = $tempDT->setTime(0,0,0);
+                    
+                    if (is_null($stayStartDT) || $tempDT > $stayStartDT) {
+                        $stayStartDT = $tempDT;
+                    }
+                }
             }
-            
-            return  'Starting a Leave before today is not yet implemented.  ';
-            
-        } else if ($extndStartDT > $today->add(new \DateInterval('P1D'))) {
+
+            // Must start no earlier than the day after the stay start date.
+            if (is_null($stayStartDT) || $extendDayDT <= $stayStartDT) {
+                return  'Starting a Leave before the guest stay start date is not implemented.  ';
+            }
+
+
+        } else if ($extendDayDT > $today) {
             return  'Cannot start a Leave in the future.  ';
         }
 
@@ -1766,6 +1799,107 @@ class Visit {
 
     }
 
+    protected function undoLeave(\PDO $dbh, $returnDT, $volRS) {
+        
+        $uS = Session::getInstance();
+        
+        if (is_null($volRS) === FALSE && $this->getSpan() > 0) {
+            //
+            // Changed Rate.  Need to delete new span and reset previuos span
+            //
+            
+            $oldSpan = $this->getSpan() - 1;
+            $prevStays = self::loadStaysStatic($dbh, $this->getIdVisit(), $oldSpan, VisitStatus::ChangeRate);
+            
+            if (count($prevStays) < 1) {
+                // Huh? no previous stays to reset.
+                return;
+            }
+            
+            $changedStays = $this->resetStays($dbh, $prevStays, $returnDT);
+            
+            // Delete current visit
+            if ($changedStays > 0) {
+                
+                // Delete current visit
+                EditRS::delete($dbh, $this->visitRS, array($this->visitRS->idVisit, $this->visitRS->Span));
+                
+                // Delete all stays in current visit
+                $dbh->exec("delete from stays where idVisit = " . $this->getIdVisit() . " and Visit_Span = ".$this->getSpan());
+                
+                // Reset previous visit
+                $vRs = new VisitRS();
+                $vRs->idVisit->setStoredVal($this->getIdVisit());
+                $vRs->Span->setStoredVal($oldSpan);
+                $rows = EditRS::select($dbh, $vRs, array($vRs->idVisit, $vRs->Span));
+
+                if (count($rows) == 1) {
+                    EditRS::loadRow($rows[0], $vRs);
+                    
+                    $vRs->Span_End->setNewVal('');
+                    $vRs->Status->setNewVal(VisitStatus::CheckedIn);
+                    
+                    $this->updateVisitRecordStatic($dbh, $vRs, $uS->username);
+                }
+            }
+            
+            
+        } else if (is_null($volRS)) {
+            //
+            // No rate change. (No span change)  Just delete checked-in stays and reset previous.
+            //
+            
+            $prevStays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), VisitStatus::CheckedOut);
+            
+            if (count($prevStays) < 1) {
+                // Huh? no previous stays to reset.
+                return;
+            }
+            
+            $changedStays = $this->resetStays($dbh, $prevStays, $returnDT);
+            
+            if ($changedStays > 0) {
+                // Delete old checked in stays
+                foreach ($this->stays as $stayRS) {
+                    
+                    EditRS::delete($dbh, $stayRS, array($stayRS->idStays));
+                    $logText = VisitLog::getDeleteText($stayRS, $stayRS->idStays->getStoredVal());
+                    VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
+                }
+            }
+        }
+    }
+    
+    protected function resetStays(\PDO $dbh, $prevStays, $returnDT) {
+        
+        $uS = Session::getInstance();
+        $retDayDT = $returnDT->settime(0,0,0);
+        $changedStays = 0;
+        
+        foreach ($prevStays as $stayRS) {
+            
+            $stayEndDT = new \DateTimeImmutable($stayRS->Span_End_Date->getStoredVal());
+            $stayEndDT = $stayEndDT->setTime(0,0,0);
+            
+            if ($stayEndDT == $retDayDT && $stayRS->On_Leave->getStoredVal() == 0) {
+                // reset this stay
+                
+                $stayRS->Span_End_Date->setNewVal('');
+                $stayRS->Status->setNewVal(VisitStatus::CheckedIn);
+                $stayRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+                $stayRS->Updated_By->setNewVal($uS->username);
+                
+                EditRS::update($dbh, $stayRS, array($stayRS->idStays));
+                $logText = VisitLog::getUpdateText($stayRS);
+                VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
+                
+                $changedStays++;
+            }
+        }
+        
+        return $changedStays;
+    }
+    
     public static function loadStaysStatic(\PDO $dbh, $idVisit, $span, $statusFilter = VisitStatus::CheckedIn) {
 
         $stays = array();
