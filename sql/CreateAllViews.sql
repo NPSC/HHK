@@ -2192,6 +2192,7 @@ select
         nd.Age_Bracket,
         nd.Education_Level,
         nd.Special_Needs,
+        s.On_Leave,
         count(s.idName) as `Guest_Count`
     from
         `visit` `v`

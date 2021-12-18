@@ -18,7 +18,6 @@ use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\PaymentException;
 
-
 /**
  * PaymentManager.php
  *

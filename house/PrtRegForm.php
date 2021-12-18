@@ -68,7 +68,7 @@ if ($checkinDate == '') {
 <!DOCTYPE html>
 <html lang="en" moznomarginboxes>
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>

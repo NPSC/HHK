@@ -529,19 +529,6 @@ if ($psg->getIdPsg() > 0) {
             $room = $r['Status_Title'] . ' to ' . $r['Title'];
             $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check', 'style'=>'float: left; margin-left:.3em;', 'title'=>$r['Status_Title']));
             $hospitalButton = '';
-
-//             if (count($uS->guestLookups['Hospitals']) > 1) {
-
-//             	$hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
-//             		, array(
-//             				'type'=>'button',
-//             				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
-//             				'data-idhs'=>$r['idHospital_stay'],
-//             				'style'=>"font-size:small;float: right; margin-left:.3em; margin-right:.7em; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
-//             				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
-//             		);
-//             }
-
             $stayIcon = '';
 
             foreach ($stays as $s) {
@@ -618,17 +605,6 @@ if ($psg->getIdPsg() > 0) {
         $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
 
         $hospitalButton = '';
-
-//         if (count($uS->guestLookups['Hospitals']) > 1) {
-//         	$hospitalButton = HTMLInput::generateMarkup($uS->guestLookups['Hospitals'][$r['idHospital']][1]
-//         		, array(
-//         				'type'=>'button',
-//         				'class'=>'hhk-hospitalstay ui-corner-all  ignrSave',
-//         				'data-idhs'=>$r['idHospital_Stay'],
-//         				'style'=>"font-size:small;float: right; margin-left:.3em; margin-right:.7em; padding:1px; color:".$uS->guestLookups['Hospitals'][$r['idHospital']][5]."; background-color:".$uS->guestLookups['Hospitals'][$r['idHospital']][4].";",
-//         				'title'=>$labels->getString('Hospital', 'hospital', 'Hospital').' Details')
-//         		);
-//         }
 
         $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
                 $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '

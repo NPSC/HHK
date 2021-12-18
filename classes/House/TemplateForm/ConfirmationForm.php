@@ -5,12 +5,9 @@ namespace HHK\House\TemplateForm;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Reservation\Reservation_1;
 use HHK\Member\Role\Guest;
-
 use HHK\sec\Labels;
 use HHK\sec\Session;
-use HHK\Purchase\RoomRate;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
-use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RoomRateCategories;
 use HHK\House\PSG;
 
@@ -114,3 +111,4 @@ class ConfirmationForm extends AbstractTemplateForm {
     }
 
 }
+?>

@@ -179,7 +179,7 @@ $ip_tbl->addHeaderTr(HTMLTable::makeTh('Name') . HTMLTable::makeTh('IP Address')
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
 <?php echo JQ_UI_CSS; ?>
 <?php echo DEFAULT_CSS; ?>
