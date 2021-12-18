@@ -1585,8 +1585,8 @@ class Visit {
             
             // Make sure a stay was found.
             if (is_null($stayStartDT) === FALSE) {
-                
-                $leaveDays = $retDT->diff($stayStartDT)->days;
+
+                $leaveDays = $retDT->diff($stayStartDT->setTime(0,0,0))->days;
 
                 // Was the rate changed for the leave?
                 $volRS = new Visit_onLeaveRS();
@@ -1615,12 +1615,12 @@ class Visit {
                         
                         // Rate was changed
                         $reply .= $this->changePledgedRate($dbh, $volRS->Rate_Category->getStoredVal(), $volRS->Pledged_Rate->getStoredVal(), $volRS->Rate_Adjust->getStoredVal(), $uS->username, $returnDT, FALSE, FALSE);
-            
+                        $reply .= "Leave ended. ";
                     } else {
                         
                         // Check out all guest, check back in.
                         $this->onLeaveStays($dbh, VisitStatus::CheckedOut, $returnDT->format('Y-m-d H:i:s'), $uS->username, FALSE);
-            
+                        $reply .= "Leave ended. ";
                     }
                 }
             }
@@ -1802,6 +1802,7 @@ class Visit {
     protected function undoLeave(\PDO $dbh, $returnDT, $volRS) {
         
         $uS = Session::getInstance();
+        $reply = '';
         
         if (is_null($volRS) === FALSE && $this->getSpan() > 0) {
             //
@@ -1840,6 +1841,8 @@ class Visit {
                     $vRs->Status->setNewVal(VisitStatus::CheckedIn);
                     
                     $this->updateVisitRecordStatic($dbh, $vRs, $uS->username);
+                    
+                    $reply = "Leave is undone. ";
                 }
             }
             
@@ -1866,8 +1869,12 @@ class Visit {
                     $logText = VisitLog::getDeleteText($stayRS, $stayRS->idStays->getStoredVal());
                     VisitLog::logStay($dbh, $this->getIdVisit(), $stayRS->Visit_Span->getStoredVal(), $stayRS->idRoom->getStoredVal(), $stayRS->idStays->getStoredVal(), $stayRS->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
                 }
+                
+                $reply = "Leave is undone. ";
             }
         }
+        
+        return $reply;
     }
     
     protected function resetStays(\PDO $dbh, $prevStays, $returnDT) {

@@ -340,6 +340,7 @@ class VisitViewer {
 
         $includeActionHdr = FALSE;  // Checkout-All button.
         $useRemoveHdr = FALSE;      // Enable the "Remove" column in stays table.
+        $useAddGuestButton = FALSE;
         $ckOutTitle = '';
         $sTable = new HTMLTable();  // Table to collect each stays markup row.
         $staysDtable = array();     // results of vstays_listing.
@@ -374,6 +375,11 @@ class VisitViewer {
                     $sTable->addBody($bodyTr);
                     $ckinRows[$k] = 'y';
                     
+                    if ($r['On_Leave'] > 0) {
+                        $useAddGuestButton = FALSE;
+                    } else {
+                        $useAddGuestButton = TRUE;
+                    }
                 }
             }
 
@@ -414,12 +420,13 @@ class VisitViewer {
             . HTMLTable::makeTh($chkInTitle);
 
         // 'Add Guest' button
-        if ($action == '') {
+            if ($action == '') {
             $th .= HTMLTable::makeTh($ckOutTitle) . HTMLTable::makeTh('Nights');
 
-            // Make add guest button
-            $guestAddButton = HTMLInput::generateMarkup('Add ' . $labels->getString('MemberType', 'visitor', 'Guest') . '...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-rid'=>$idResv, 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
-
+            if ($useAddGuestButton) {
+                // Make add guest button
+                $guestAddButton = HTMLInput::generateMarkup('Add ' . $labels->getString('MemberType', 'visitor', 'Guest') . '...', array('id'=>'btnAddGuest', 'type'=>'button', 'style'=>'margin-left:1.3em; font-size:.8em;', 'data-rid'=>$idResv, 'data-vstatus'=>$visitStatus, 'data-vid'=>$idVisit, 'data-span'=>$span, 'title'=>'Add another guest to this visit.'));
+            }
         }
 
         // 'Checkout All' button
