@@ -118,3 +118,8 @@ REPLACE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES
 ('c', 'Patient Name', '${PatientName}'),
 ('c', 'Number of Guests', '${numGuests}'),
 ('c', 'Guest Email', '${GuestEmail}');
+
+update `sys_config` set Description = 'Extend visit (go on leave) default number of days' where Key = 'EmptyExtendLimit';
+update `sys_config` set Show = 0 where Key = 'CssValidationService';
+update `sys_config` set Show = 0, Value = 0 where Key = 'RateGlideExtend';
+update `sys_config` set Show = 0, Value = 0 where Key = 'UseRepeatResv';
