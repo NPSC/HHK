@@ -4,7 +4,6 @@ namespace HHK\Purchase;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable, HTMLSelector};
 use HHK\House\Reservation\Reservation_1;
-use HHK\House\Resource\AbstractResource;
 use HHK\House\Visit\Visit;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\SysConst\{DefaultSettings, GLTypeCodes, ItemId, RoomRateCategories, VisitStatus};
@@ -123,7 +122,7 @@ class RateChooser {
             }
 
             $rateTbl = new HTMLTable();
-            
+
             $rateTbl->addBodyTr(HTMLTable::makeTh(
                 HTMLContainer::generateMarkup('label', 'Change Room Rate', array('for'=>'rateChgCB', 'style'=>'margin: 2px 1px;'))
                 . HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'rateChgCB', 'class'=>'hhk-feeskeys', 'style'=>'margin-left: 1em;', 'title'=>'Change the room rate'))

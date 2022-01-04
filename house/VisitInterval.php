@@ -39,7 +39,6 @@ $dbh = $wInit->dbh;
 
 // get session instance
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
 
 
 function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
@@ -50,7 +49,7 @@ function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end
     }
 
     $uS = Session::getInstance();
-    
+
     $totalVisitNites = 0;
     $numCategoryRooms = array();
 
@@ -194,11 +193,11 @@ order by r.idResource;";
     $sTbl->addBodyTr(HTMLTable::makeTd('Median visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($median,2)));
 
     $sTbl->addBodyTr(HTMLTable::makeTd('Mean Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($avDailyFee,2)));
-    
+
     if($uS->RoomPriceModel == ItemPriceCode::Dailey){
         $sTbl->addBodyTr(HTMLTable::makeTd('Median Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($medDailyFee,2)));
     }
-    
+
     $sTbl->addBodyTr($trs[4]);
 
     $sTbl->addBodyTr($trs[5]);
@@ -262,7 +261,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
     if ($visit['gnit'] > 0) {
     	$r['meanGstRate'] = number_format(($visit['chg'] / $visit['gnit']), 2);
     }
-    
+
 
     // Hospital
     $hospital = '';
@@ -293,7 +292,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
     $sub = $visit['fcg'] - $visit['chg'];
     $r['sub'] = ($sub == 0 ? '' : number_format($sub,2));
-    
+
     $rateAdj = $visit['adj'];
     $r['rateAdj'] = ($rateAdj == 0 ? '' : number_format($rateAdj, 2) . '%');
 
@@ -395,7 +394,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         $tbl->addBodyTr($tr);
 
     } else {
-        
+
         $r['Status'] = $uS->guestLookups['Visit_Status'][$r['Status']][1];
         $r['idPrimaryGuest'] = $r['Name_Last'] . ', ' . $r['Name_First'];
         $r['Arrival'] = $arrivalDT->format('Y-m-d');
@@ -457,24 +456,70 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
 
     // Make titles for all the rates
     $rateTitles = RoomRate::makeDescriptions($dbh);
-    
+
     $guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
-    
+
     if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
-    	$guestNightsSql = "CASE WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start') THEN 0
+
+        $guestNightsSql = "CASE
+        WHEN DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start') THEN 0
         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
-        ELSE (SELECT SUM(DATEDIFF(CASE WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$end')
-        THEN DATE('$end') ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END,
-        CASE WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start') ELSE DATE(s.Span_Start_Date) END))
-        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
-    	END AS `Actual_Guest_Nights`,
-    	CASE WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0 WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
-    	THEN (SELECT SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))), DATE(s.Span_Start_Date)))
-    	FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)ELSE (SELECT SUM(DATEDIFF(CASE
-      	WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start') THEN DATE('$start')
-      	ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END, DATE(s.Span_Start_Date)))
-        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";
+        ELSE
+            (SELECT SUM(
+                CASE WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start') THEN 0
+                WHEN DATE(s.Span_Start_Date) >= DATE('$end') THEN 0
+                ELSE
+                    DATEDIFF(CASE
+                        WHEN
+                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$end')
+                        THEN
+                        DATE('$end')
+                        ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                        END,
+                    CASE
+                        WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
+                        ELSE DATE(s.Span_Start_Date)
+                        END)
+                END)
+                FROM
+                stays s
+                WHERE
+                s.idVisit = v.idVisit
+                AND s.Visit_Span = v.Span)
+        END AS `Actual_Guest_Nights`,
+
+        CASE
+            WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
+            ELSE
+                (SELECT SUM(
+            CASE WHEN DATE(s.Span_Start_Date) >= DATE('$start') THEN 0
+                    WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start') THEN
+                    DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))), DATE(s.Span_Start_Date))
+                    ELSE
+                        DATEDIFF(
+                            CASE
+                            WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$start') THEN DATE('$start')
+                            ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                            END,
+                            DATE(s.Span_Start_Date))
+                    END)
+                    FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
+       END AS `PI_Guest_Nights`,";
     }
+//     	"CASE WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start') THEN 0
+//         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
+//         ELSE (SELECT SUM(DATEDIFF(CASE WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$end')
+//         THEN DATE('$end') ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END,
+//         CASE WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start') ELSE DATE(s.Span_Start_Date) END))
+//         FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
+//     	END AS `Actual_Guest_Nights`,
+//     	CASE WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0 WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
+//     	THEN (SELECT SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))), DATE(s.Span_Start_Date)))
+//     	FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)ELSE (SELECT SUM(DATEDIFF(CASE
+//       	WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start') THEN DATE('$start')
+//       	ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END, DATE(s.Span_Start_Date)))
+//         FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";
+
 
     $query = "select
     v.idVisit,
@@ -646,7 +691,7 @@ where
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
     $header = array();
-    
+
     if ($local) {
 
         $th = '';
@@ -670,12 +715,12 @@ where
             'money'=>'money', // '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'
             'date'=>'MM/DD/YYYY'
         ];
-        
-        
+
+
         //build header
         $colWidths = array();
-        
-        
+
+
         foreach($fltrdFields as $field){
               if($field[5] != "" && $field[5] == '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'){ //if format is money
                   $header[$field[0]] = $types['s'];
@@ -691,14 +736,14 @@ where
                 $colWidths[] = 20;
              }
         }
-        
+
         try{
             $hdrStyle = $writer->getHdrStyle($colWidths);
             $writer->writeSheetHeader('Sheet1', $header, $hdrStyle);
         }catch(\Exception $e){
             $writer->download();
         }
-        
+
         $reportRows++;
 
     }
@@ -751,9 +796,9 @@ where
     $now->setTime(0, 0, 0);
 
     $vat = new ValueAddedTax($dbh);
-    
+
     $dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
-    
+
     $stmt = $dbh->query($query);
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1001,9 +1046,9 @@ where
         $savedr = $r;
 
     }   // End of while
-    
+
     $dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, TRUE);
-    
+
 
 
     // Print the last visit.
@@ -1140,11 +1185,11 @@ where
 
         if ($totalNights > 0) {
             $avDailyFee = $totalCharged / $totalNights;
-            
+
             array_multisort($chargesAr);
             $entries = count($chargesAr);
             $emod = $entries % 2;
-            
+
             if ($emod > 0) {
                 // odd number of entries
                 $medDailyFee = $chargesAr[(ceil($entries / 2) - 1)];
@@ -1236,11 +1281,11 @@ where
                 case 'sub':
                 	$entry = '$' . number_format($totalSubsidy,2);
                 	break;
-                	
+
                 case 'rateAdj':
                 	$entry = ' ';
                 	break;
-                	
+
                 case 'meanRate':
                 	$entry = '$' . number_format($avDailyFee,2);
                 	break;
@@ -1422,11 +1467,11 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     } else {
 
         $cFields[] = array("Rate", 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
-        
+
         if ($uS->RoomPriceModel == ItemPriceCode::NdayBlock) {
         	$cFields[] = array("Adj. Rate", 'rateAdj', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
         }
-        
+
         $cFields[] = array("Mean Rate", 'meanRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
 
@@ -1455,7 +1500,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     if ($uS->RoomPriceModel != ItemPriceCode::NdayBlock) {
     	$cFields[] = array("Rate Subsidy", 'sub', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
-    
+
     $cFields[] = array("Contribution", 'donpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 }
 

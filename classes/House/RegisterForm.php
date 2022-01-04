@@ -43,10 +43,16 @@ class RegisterForm {
 
     protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 
+        $staff = 'Staff';
         $mkup = "<h2>" . $title . " </h2>";
 
         if ($houseAddr != '') {
             $mkup .= '<p class="label" style="text-align:left;">' . $houseAddr . '</p>';
+        }
+
+        if (stristr($title, 'Patient Family Housing') !== false) {
+            $agent = '';
+            $staff = '';
         }
 
         $mkup .= "<table cellspacing=0 cellpadding=0 style='border-collapse:collapse;border:none'>
@@ -70,7 +76,7 @@ class RegisterForm {
   <td width=153 style='width:91.8pt;border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class=MsoNormal style='margin-bottom:0;line-height: normal'>$"  . number_format($rate, 2) . "</p>") ."</td>
   <td width=180 style='width:1.5in;border-top:none;border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
-  <p class='label'>Staff</p>
+  <p class='label'>$staff</p>
   </td>
   <td width=278 style='width:166.5pt;border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>$agent</p>
@@ -190,6 +196,7 @@ class RegisterForm {
 
     protected function AgreementBlock(array $guests, $agreementLabel, $agreement) {
 
+        $uS = Session::getInstance();
         $mkup = HTMLContainer::generateMarkup('h2', $agreementLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
 
         if ($agreement != '') {
@@ -198,24 +205,28 @@ class RegisterForm {
             $mkup .= HTMLContainer::generateMarkup('div', "Your Registration Agreement is missing.  ", array('class'=>'ui-state-error'));
         }
 
-        $usedNames = array();
 
-        foreach ($guests as $g) {
+        if (stristr($uS->siteName, 'Patient Family Housing') === false) {
 
-            if (!isset($usedNames[$g->getIdName()])) {
+            $usedNames = array();
 
-                $sigCapture = HTMLContainer::generateMarkup('span', '___________________________________', array('name'=>'divSigCap_' . $g->getIdName(), 'data-gid'=>$g->getIdName(), 'class'=>'hhk-sigCapure'));
+            foreach ($guests as $g) {
 
-                $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>"
-                    . "<span>" . $g->getRoleMember()->get_fullName() . $sigCapture . "</span></p>";
-                $usedNames[$g->getIdName()] = 'y';
+                if (!isset($usedNames[$g->getIdName()])) {
+
+                    $sigCapture = HTMLContainer::generateMarkup('span', '___________________________________', array('name'=>'divSigCap_' . $g->getIdName(), 'data-gid'=>$g->getIdName(), 'class'=>'hhk-sigCapure'));
+
+                    $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>"
+                        . "<span>" . $g->getRoleMember()->get_fullName() . $sigCapture . "</span></p>";
+                    $usedNames[$g->getIdName()] = 'y';
+                }
             }
+
+            // one more blank line
+            $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>
+                <span style='font-size:10pt'>________________________________&emsp; ___________________________________</span></p>";
+
         }
-
-        // one more blank line
-        $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>
-            <span style='font-size:10pt'>________________________________&emsp; ___________________________________</span></p>";
-
 
         return $mkup;
     }
