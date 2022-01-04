@@ -413,7 +413,16 @@ $(document).ready(function () {
                 function (data) {
                     $sel.prop('disabled', false);
                     if (data) {
-                        $sel.closest('form').children('div').empty().append(data);
+                        $sel.closest('form').children('div').empty().append(data).find(".sortable tbody")
+                        	.sortable({
+                        		items: "tr:not(.no-sort)",
+                        		handle: ".sort-handle",
+                        		update: function (e, ui) {
+                        			$(this).find("tr").each(function(i){
+                        				$(this).find("td:first input").val(i);
+                        			});
+                        		}
+                        	});
                     }
                 });
     });
@@ -454,6 +463,17 @@ $(document).ready(function () {
                 }
             });
     }).button();
+    
+    $(document).on("click", "#btnInsSave", function (e) {
+    	e.preventDefault();
+    	console.log("insurance save");
+        var $frm = $(this).closest('form');
+
+        $.post('ResourceBuilder.php', $frm.serialize(),
+            function(data) {
+                $("#selInsLookup").trigger("change");
+            });
+    })
 
     // Add diagnosis and locations
     if ($('#btnAddDiags').length > 0) {

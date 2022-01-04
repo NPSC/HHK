@@ -80,6 +80,11 @@ class InsuranceType {
 
         if(isset($post["insuranceTypes"])){
             foreach($post["insuranceTypes"] as $id=>$type){
+                $id = intval(filter_var($id, FILTER_SANITIZE_NUMBER_INT), 10);
+                $type["Title"] = filter_var($type["Title"], FILTER_SANITIZE_STRING);
+                $type["List_Order"] = filter_var($type["List_Order"], FILTER_SANITIZE_NUMBER_INT);
+                $type["Use"] = boolval(isset($type["Use"]));
+
                 $insuranceTypeRS = new InsuranceTypeRS();
                 $insuranceTypeRS->idInsurance_type->setStoredVal($id);
                 $rows = EditRS::select($dbh, $insuranceTypeRS, array($insuranceTypeRS->idInsurance_type));
@@ -87,7 +92,7 @@ class InsuranceType {
                 if(count($rows) == 1){
                     $insuranceTypeRS->Title->setNewVal($type["Title"]);
                     $insuranceTypeRS->List_Order->setNewVal($type["List_Order"]);
-                    $insuranceTypeRS->Status->setNewVal((isset($type["Use"]) ? "a": "d"));
+                    $insuranceTypeRS->Status->setNewVal(($type["Use"] ? "a": "d"));
                     EditRS::update($dbh, $insuranceTypeRS, array($insuranceTypeRS->idInsurance_type));
                 }
             }

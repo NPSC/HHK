@@ -416,6 +416,8 @@ class IndivMember extends AbstractMember {
     List_Order
 FROM
     `insurance_type`
+WHERE
+    `Status` = 'a'
 ORDER BY `List_Order`");
         $insTypes = array();
 
@@ -472,7 +474,7 @@ ORDER BY `List_Order`");
 
             $tbl->addBodyTr(
                 $tbl->makeTd("Member Number", array('class'=>"tdlabel"))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Member_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."Insurance[".$i['idInsurance_type']."[memNum]")))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Member_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."Insurance[".$i['idInsurance_type']."][memNum]")))
             );
 
             $divs .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>$i["idInsurance_type"] .'InsTab', 'class'=>'ui-tabs-hide'));
