@@ -290,7 +290,7 @@ $(document).ready(function () {
     $('#divNewForm').dialog({
         autoOpen: false,
         resizable: true,
-        width: 800,
+        width: 425,
         modal: true,
         title: 'Create New Form',
         buttons: {
@@ -301,6 +301,7 @@ $(document).ready(function () {
                 if (fmType !== '' && fmLang !== '') {
                     // Make a new form
                     $('#formFormNew').submit();
+                    $(this).dialog("close");
                 }
             },
             "Cancel": function() {
@@ -383,6 +384,23 @@ $(document).ready(function () {
             });
     });
     $('#selFormUpload').change();
+
+	$(document).on("submit", ".uploadFormDiv form, #formFormNew", function(e) {
+	    e.preventDefault();
+	    var formData = new FormData(this);    
+	
+		$.ajax({
+	        url: $(this).attr("action"),
+	        type: 'POST',
+	        data: formData,
+	        success: function (data) {
+	            $('#selFormUpload').change();
+	        },
+	        cache: false,
+	        contentType: false,
+	        processData: false
+	    });
+	});
 
     $('#tblroom, #tblresc').dataTable({
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
