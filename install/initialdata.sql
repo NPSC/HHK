@@ -852,18 +852,18 @@ Replace into `location` (`idLocation`, `Status`) VALUES
 (1, 'a');
 -- ;
 
-REPLACE INTO `insurance_type` (`idInsurance_type`, `Title`, `Is_Primary`, `Multiselect`, `List_Order`) VALUES
-('1h', 'Primary', '1', '10', '10'),
-('p', 'Private', '0', '1', '20');
+REPLACE INTO `insurance_type` (`idInsurance_type`, `Title`, `Is_Primary`, `List_Order`) VALUES
+(1, 'Primary', '1', '10'),
+(2, 'Private', '0', '20');
 -- ;
 
-REPLACE INTO `insurance` (`idInsurance`, `Type`, `Title`, `Opens_Type`) VALUES
-(1, '1h', 'Aetna', ''),
-(2, '1h', 'Blue Cross', ''),
-(3, '1h', 'Private Insurance', 'p'),
-(4, 'p', 'Cigna', ''),
-(5, 'p', 'Kaser', ''),
-(6, '1h', 'No Ins.', '');
+REPLACE INTO `insurance` (`idInsurance`, `idInsuranceType`, `Title`, `Opens_Type`) VALUES
+(1, 1, 'Aetna', ''),
+(2, 1, 'Blue Cross', ''),
+(3, 1, 'Private Insurance', 'p'),
+(4, 2, 'Cigna', ''),
+(5, 2, 'Kaser', ''),
+(6, 1, 'No Ins.', '');
 -- ;
 
 

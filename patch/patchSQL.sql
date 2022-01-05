@@ -132,6 +132,7 @@ update insurance set Type = 3 where Type = 'p';
 
 ALTER TABLE `insurance` 
 ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`,
+ADD COLUMN `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`,
 CHANGE COLUMN `Type` `idInsuranceType` INT(3) NOT NULL;
 
 ALTER TABLE `insurance_type` 
