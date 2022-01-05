@@ -215,15 +215,12 @@ class HouseServices {
             $dataArray['visitStart'] = $visit->getArrivalDate();
             $dataArray['expDep'] = $expDepDT->format('c');
 
-        // Pay fees
-        } else if ($action == 'pf') {
-
-            $mkup .= HTMLContainer::generateMarkup('div',
-                    VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
-
         } else {
+                        
             $mkup = HTMLContainer::generateMarkup('div',
-            		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates) . $mkup, array('id'=>'divksStays'));
+            		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
+                    . $mkup,
+                array('id'=>'divksStays'));
 
             // Show fees if not hf = hide fees.
             if ($action != 'hf') {
@@ -302,35 +299,8 @@ class HouseServices {
         if (isset($post['selVisitFee'])) {
 
             $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_STRING);
-
-            $vFees = readGenLookupsPDO($dbh, 'Visit_Fee_Code');
-
-            if (isset($vFees[$visitFeeOption])) {
-
-                $resv = Reservation_1::instantiateFromIdReserv($dbh, $visit->getReservationId());
-
-                if ($resv->isNew() === FALSE) {
-
-                    if ($resv->getVisitFee() != $vFees[$visitFeeOption][2]) {
-                        // visit fee is updated.
-
-                        $visitCharge = new VisitCharges($idVisit);
-                        $visitCharge->sumPayments($dbh);
-
-                        if ($visitCharge->getVisitFeesPaid() > 0) {
-                            // Change to no visit fee, already paid fee
-                            $reply .= ' Return Cleaning Fee Payment and delete the invoice before changing it.  ';
-
-                        } else {
-
-                            $resv->setVisitFee($vFees[$visitFeeOption][2]);
-                            $resv->saveReservation($dbh, $visit->getIdRegistration(), $uS->username);
-
-                            $reply .= 'Cleaning Fee Setting Updated.  ';
-                        }
-                    }
-                }
-            }
+            
+            $reply .= VisitViewer::changeVisitFee($dbh, $visitFeeOption, $visit);
         }
 
         // Change STAY Checkin date
@@ -379,44 +349,66 @@ class HouseServices {
                 }
 
 
-                // Begin visit leave?
-                if (isset($post['extendCb']) && $uS->EmptyExtendLimit > 0) {
-
-                    $extendStartDate = '';
-                    if (isset($post['txtWStart']) && $post['txtWStart'] != '') {
-                        $extendStartDate = filter_var($post['txtWStart'], FILTER_SANITIZE_STRING);
+                // Leave enabled
+                if ($uS->EmptyExtendLimit > 0) {
+                    
+                    // Begin visit leave?
+                    if (isset($post['extendCb'])) {
+    
+                        $extendStartDate = '';
+                        if (isset($post['txtWStart']) && $post['txtWStart'] != '') {
+                            $extendStartDate = filter_var($post['txtWStart'], FILTER_SANITIZE_STRING);
+                        }
+    
+                        $extDays = 0;
+                        if (isset($post['extendDays'])) {
+                            $extDays = intval(filter_var($post['extendDays'], FILTER_SANITIZE_NUMBER_INT), 10);
+                        }
+    
+                        $noCharge = FALSE;
+                        if (isset($post['noChargeCb'])) {
+                            $noCharge = TRUE;
+                        }
+    
+                        $reply .= $visit->beginLeave($dbh, $extendStartDate, $extDays, $noCharge);
+                        $returnCkdIn = TRUE;
                     }
+    
+    
+                    // Return/Extend leave?
+                    if (isset($post['leaveRetCb'])) {
+                        
+                        $extContrl = '';
+    
+                        if (isset($post['rbOlpicker-ext'])) {
+                            $extContrl = 'extend';
+                        } else if (isset($post['rbOlpicker-rtDate'])) {
+                            $extContrl = 'return';
+                        }
+                        
+                        if ($extContrl == 'extend') {
+                            // Extend current leave
+                            
+                            if (isset($post['extendDate']) && $post['extendDate'] != '') {
+                                
+                                $extendDate = filter_var($post['extendDate'], FILTER_SANITIZE_STRING);
+                            
+                                $reply .= $visit->extendLeave($dbh, $extendDate);
+                                $returnCkdIn = TRUE;
+                            }
+                        
+                        } else if ($extContrl == 'return') {
+                            // Return from Leave
+                            
+                            if (isset($post['txtWRetDate']) && $post['txtWRetDate'] != '') {
+                                
+                                $returnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_STRING);
 
-                    $extDays = 0;
-                    if (isset($post['extendDays'])) {
-                        $extDays = intval(filter_var($post['extendDays'], FILTER_SANITIZE_NUMBER_INT), 10);
+                                $reply .= $visit->endLeave($dbh, $returnDate);
+                                $returnCkdIn = TRUE;
+                            }
+                        }
                     }
-
-                    $noCharge = FALSE;
-                    if (isset($post['noChargeCb'])) {
-                        $noCharge = TRUE;
-                    }
-
-                    $reply .= $visit->beginLeave($dbh, $extendStartDate, $extDays, $noCharge);
-                    $returnCkdIn = TRUE;
-                }
-
-
-                // Return from leave?
-                if (isset($post['leaveRetCb']) && $uS->EmptyExtendLimit > 0) {
-
-                    $extendReturnDate = '';
-                    if (isset($post['txtWRetDate']) && $post['txtWRetDate'] != '') {
-                        $extendReturnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_STRING);
-                    }
-
-                    $returning = TRUE;
-                    if (isset($post['noReturnRb'])) {
-                        $returning = FALSE;
-                    }
-
-                    $reply .= $visit->endLeave($dbh, $returning, $extendReturnDate);
-                    $returnCkdIn = TRUE;
                 }
 
 
@@ -1628,3 +1620,4 @@ class HouseServices {
     }
 
 }
+?>

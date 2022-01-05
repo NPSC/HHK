@@ -5,13 +5,11 @@ namespace HHK\House\TemplateForm;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Reservation\Reservation_1;
 use HHK\Member\Role\Guest;
-
 use HHK\sec\Labels;
 use HHK\sec\Session;
-use HHK\Purchase\RoomRate;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
-use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RoomRateCategories;
+use HHK\House\PSG;
 
 /**
  * ConfirmationForm.php
@@ -64,6 +62,11 @@ class ConfirmationForm extends AbstractTemplateForm {
 
 		$nightlyRate = (1 + $rateAdjust/100) * $priceModel->amountCalculator(1, $idRate, $rateCat, $pledgedRate);
 
+		//get patient
+		$idPsg = $reserv->getIdPsg($dbh);
+		$psg = new PSG($dbh, $idPsg);
+		$patientName = $psg->getPatientName($dbh);
+
         return array(
             'GuestName' => $guest->getRoleMember()->get_fullName(),
             'GuestAddr1' => $guest->getAddrObj()->get_Data()['Address_1'],
@@ -72,6 +75,9 @@ class ConfirmationForm extends AbstractTemplateForm {
             'GuestState' => $guest->getAddrObj()->get_Data()['State_Province'],
             'GuestZip' => $guest->getAddrObj()->get_Data()['Postal_Code'],
             'GuestPhone' => $guest->getPhonesObj()->get_Data()["Phone_Num"],
+            'GuestEmail' => $guest->getEmailsObj()->get_Data()["Email"],
+            'PatientName' =>$patientName,
+            'numGuests' => $reserv->getNumberGuests($dbh),
             'Room' => $reserv->getRoomTitle($dbh),
             'ExpectedArrival' => date('M j, Y', strtotime($reserv->getExpectedArrival())),
             'ExpectedDeparture' => date('M j, Y', strtotime($reserv->getExpectedDeparture())),
@@ -105,3 +111,4 @@ class ConfirmationForm extends AbstractTemplateForm {
     }
 
 }
+?>

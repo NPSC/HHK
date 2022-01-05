@@ -75,7 +75,9 @@ class HTMLTable extends AbstractHTMLControl {
     }
 
     public function addBody($contents) {
-        $this->bodyTR .= $contents;
+        if ($contents != '') {
+            $this->bodyTR .= $contents;
+        }
         return $this;
     }
 

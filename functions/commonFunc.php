@@ -80,34 +80,6 @@ function initPDO($override = FALSE)
     return $dbh;
 }
 
-function creditIncludes($gatewayName) {
-
-/*     require (PMT . 'paymentgateway/CreditPayments.php');
-
-    switch ($gatewayName) {
-
-        case AbstractPaymentGateway::INSTAMED:
-            require (PMT . 'paymentgateway/instamed/InstamedConnect.php');
-            require (PMT . 'paymentgateway/instamed/InstamedResponse.php');
-            require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
-
-            break;
-
-        case AbstractPaymentGateway::VANTIV:
-
-            require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
-
-            require (PMT . 'paymentgateway/vantiv/HostedPayments.php');
-            require (PMT . 'paymentgateway/vantiv/TokenTX.php');
-            require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
-            break;
-
-        default:
-            require (PMT . 'paymentgateway/local/LocalResponse.php');
-            require (PMT . 'paymentgateway/local/LocalGateway.php');
-
-    }
- */}
 
 function syncTimeZone(\PDO $dbh)
 {

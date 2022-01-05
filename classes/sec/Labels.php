@@ -2,7 +2,6 @@
 namespace HHK\sec;
 
 
-
 /**
  * Labels.php
  *

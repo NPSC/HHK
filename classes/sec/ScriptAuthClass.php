@@ -372,7 +372,6 @@ class ScriptAuthClass extends SecurityComponent {
         $siteMu = '';
         $uS = Session::getInstance();
 
-        // $config = new Config_Lite(ciCFG_FILE);
         $tutorialURL = $uS->Tutorial_URL;  //$config->getString('site', 'Tutorial_URL', '');
         $hufURL = $uS->HUF_URL;  //$config->getString('site', 'HUF_URL', '');
 

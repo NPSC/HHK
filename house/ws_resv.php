@@ -13,10 +13,7 @@ use HHK\Note\Note;
 use HHK\Incident\ListReports;
 use HHK\Incident\Report;
 use HHK\House\Hospital\{Hospital, HospitalStay};
-use HHK\Exception\NotFoundException;
-?>
 
-<?php
 /**
  * ws_resv.php
  *

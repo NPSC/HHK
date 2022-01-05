@@ -114,6 +114,17 @@ CALL new_webpage('WaitlistReport.php', '0','Daily Waitlist','1','h','79','w','p'
 CALL new_webpage('showReferral.php', '0','Referral Form','0','h','','','p','','admin',CURRENT_TIMESTAMP, 'pub');
 CALL new_webpage('ws_forms.php', '0','','0','h','','','s','','admin',CURRENT_TIMESTAMP, 'pub');
 
+REPLACE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES 
+('c', 'Patient Name', '${PatientName}'),
+('c', 'Number of Guests', '${numGuests}'),
+('c', 'Guest Email', '${GuestEmail}');
+
+update `sys_config` set Description = 'Extend visit (go on leave) default number of days' where Key = 'EmptyExtendLimit';
+update `sys_config` set Show = 0 where Key = 'CssValidationService';
+update `sys_config` set Show = 0, Value = 0 where Key = 'RateGlideExtend';
+update `sys_config` set Show = 0, Value = 0 where Key = 'UseRepeatResv';
+
+
 -- Insurance updates
 
 ALTER TABLE `name_insurance` 
@@ -137,5 +148,3 @@ CHANGE COLUMN `Type` `idInsuranceType` INT(3) NOT NULL;
 
 ALTER TABLE `insurance_type` 
 CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
-
-
