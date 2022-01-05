@@ -465,14 +465,18 @@ $(document).ready(function () {
     }).button();
     
     $(document).on("click", "#btnInsSave", function (e) {
-    	e.preventDefault();
-    	console.log("insurance save");
         var $frm = $(this).closest('form');
 
         $.post('ResourceBuilder.php', $frm.serialize(),
             function(data) {
+            	if(data.success){
+            		flagAlertMessage(data.success, false);
+            	}else if(data.error){
+            		flagAlertMessage(data.error, true);
+            	}
                 $("#selInsLookup").trigger("change");
-            });
+            },
+            "json");
     })
 
     // Add diagnosis and locations

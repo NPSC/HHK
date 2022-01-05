@@ -898,6 +898,7 @@ ORDER BY `List_Order`");
                         $myInss[] = $insRs;
                     }
                 }
+                $this->getInsurance($dbh, $this->get_idName());
 
                 // set any new insurance
                 foreach ($inss2 as $v) {

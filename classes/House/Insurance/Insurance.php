@@ -59,7 +59,7 @@ class Insurance {
 
         foreach($this->Insurances as $insurance){
             $tbl->addBodyTr(
-                $tbl->makeTd(HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-arrowthick-2-n-s")) . HTMLInput::generateMarkup($insurance['Order'], array("name"=>'insurances['  . $insurance['idInsurance'] . '][Order]', 'style'=>"width: 4em", "type"=>"hidden")), array("class"=>"sort-handle")) .
+                $tbl->makeTd(HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-arrowthick-2-n-s")) . HTMLInput::generateMarkup($insurance['Order'], array("name"=>'insurances['  . $insurance['idInsurance'] . '][Order]', "type"=>"hidden")), array("class"=>"sort-handle", "title"=>"Drag to sort")) .
                 $tbl->makeTd(HTMLInput::generateMarkup($insurance['Title'], array("name"=>'insurances['  . $insurance['idInsurance'] . '][Title]'))) .
                 $tbl->makeTd(HTMLInput::generateMarkup('', array("type"=>"checkbox","name"=>'insurances['  . $insurance['idInsurance'] . '][Delete]'))) .
                 $tbl->makeTd($this->generateReplaceSelector($insurance['idInsurance']))
@@ -67,7 +67,7 @@ class Insurance {
         }
 
         $tbl->addBodyTr(
-            $tbl->makeTd(HTMLInput::generateMarkup("0", array("name"=>'insurances[new][Order]', 'style'=>"width: 4em", "type"=>"hidden"))) .
+            $tbl->makeTd(HTMLInput::generateMarkup("0", array("name"=>'insurances[new][Order]', "type"=>"hidden"))) .
             $tbl->makeTd(HTMLInput::generateMarkup('', array("name"=>'insurances[new][Title]'))) .
             $tbl->makeTd("New" . HTMLInput::generateMarkup($this->insuranceType, array('type'=>'hidden','name'=>"idInsuranceType")), array('colspan'=>'2'))
         ,array("class"=>"no-sort"));
@@ -88,52 +88,65 @@ class Insurance {
     }
 
     public function save(\PDO $dbh, array $post){
+        try{
+            $successMsg = "Insurances saved. ";
+            if(isset($post["insurances"])){
+                foreach($post["insurances"] as $id=>$insurance){
+                    $id = intval(filter_var($id, FILTER_SANITIZE_NUMBER_INT), 10);
+                    $insurance["Title"] = filter_var($insurance["Title"], FILTER_SANITIZE_STRING);
+                    $insurance["Order"] = intval(filter_var($insurance["Order"], FILTER_SANITIZE_NUMBER_INT), 10);
+                    if(isset($insurance["replaceWith"])){
+                        $insurance["replaceWith"] = intval(filter_var($insurance["replaceWith"], FILTER_SANITIZE_NUMBER_INT), 10);
+                    }
 
-        if(isset($post["insurances"])){
-            foreach($post["insurances"] as $id=>$insurance){
-                $id = intval(filter_var($id, FILTER_SANITIZE_NUMBER_INT), 10);
-                $insurance["Title"] = filter_var($insurance["Title"], FILTER_SANITIZE_STRING);
-                $insurance["Order"] = intval(filter_var($insurance["Order"], FILTER_SANITIZE_NUMBER_INT), 10);
-                $insurance["replaceWith"] = intval(filter_var($insurance["replaceWith"], FILTER_SANITIZE_NUMBER_INT), 10);
+                    $insuranceRS = new InsuranceRS();
+                    $insuranceRS->idInsurance->setStoredVal($id);
+                    $rows = EditRS::select($dbh, $insuranceRS, array($insuranceRS->idInsurance));
 
-                $insuranceRS = new InsuranceRS();
-                $insuranceRS->idInsurance->setStoredVal($id);
-                $rows = EditRS::select($dbh, $insuranceRS, array($insuranceRS->idInsurance));
+                    if(count($rows) == 1){
+                        EditRS::loadRow($rows[0], $insuranceRS);
+                        if(isset($insurance["Delete"]) && $insurance["replaceWith"]){
+                            //delete & replace
+                            $old = $id;
+                            $new = $insurance["replaceWith"];
 
-                if(count($rows) == 1){
-                    EditRS::loadRow($rows[0], $insuranceRS);
-                    if(isset($insurance["Delete"]) && $insurance["replaceWith"]){
-                        //delete & replace
-                        $old = $id;
-                        $new = $insurance["replaceWith"];
+                            //replace name_insurance
+                            $query = "update `name_insurance` set `Insurance_Id` = :newId where `Insurance_Id` = :oldId";
+                            $stmt = $dbh->prepare($query);
+                            $stmt->bindValue(":newId", $new);
+                            $stmt->bindValue(":oldId", $old);
+                            $stmt->execute();
+                            $affectedNameCount = $stmt->rowCount();
 
-                        $query = "update `name_insurance` set `Insurance_Id` = :newId where `Insurance_Id` = :oldId";
-                        $stmt = $dbh->prepare($query);
-                        $stmt->bindValue(":newId", $new);
-                        $stmt->bindValue(":oldId", $old);
-                        $stmt->execute();
+                            $nameInsuranceRS = new Name_InsuranceRS();
+                            $nameInsuranceRS->Insurance_Id->setStoredVal($old);
 
-                        $nameInsuranceRS = new Name_InsuranceRS();
-                        $nameInsuranceRS->Insurance_Id->setStoredVal($old);
-
-                        $rows = EditRS::select($dbh, $nameInsuranceRS, array($nameInsuranceRS->Insurance_Id));
-                        if(count($rows) == 0){
-                            EditRS::delete($dbh, $insuranceRS, array($insuranceRS->idInsurance));
+                            //If all name_insurance records were updated successfully, delete the insurance
+                            $rows = EditRS::select($dbh, $nameInsuranceRS, array($nameInsuranceRS->Insurance_Id));
+                            if(count($rows) == 0){
+                                EditRS::delete($dbh, $insuranceRS, array($insuranceRS->idInsurance));
+                                $successMsg .= $insuranceRS->Title->getStoredVal() . " deleted successfully: " . $affectedNameCount . " guests affected. " ;
+                            }
+                        }else{
+                            $insuranceRS->Title->setNewVal($insurance["Title"]);
+                            $insuranceRS->Order->setNewVal($insurance["Order"]);
+                            EditRS::update($dbh, $insuranceRS, array($insuranceRS->idInsurance));
                         }
-                    }else{
+                    }else if($id == "new" && $insurance['Title'] !=''){
+                        //add new insurance
+                        $insuranceRS = new InsuranceRS();
+                        $insuranceRS->idInsuranceType->setNewVal($post['idInsuranceType']);
                         $insuranceRS->Title->setNewVal($insurance["Title"]);
                         $insuranceRS->Order->setNewVal($insurance["Order"]);
-                        EditRS::update($dbh, $insuranceRS, array($insuranceRS->idInsurance));
-                    }
-                }else if($id == "new" && $insurance['Title'] !=''){
-                    $insuranceRS = new InsuranceRS();
-                    $insuranceRS->idInsuranceType->setNewVal($post['idInsuranceType']);
-                    $insuranceRS->Title->setNewVal($insurance["Title"]);
-                    $insuranceRS->Order->setNewVal($insurance["Order"]);
 
-                    EditRS::insert($dbh, $insuranceRS);
+                        EditRS::insert($dbh, $insuranceRS);
+                        $successMsg .= " New Insurance added successfully. ";
+                    }
                 }
             }
+            return array("success"=> $successMsg);
+        }catch(\Exception $e){
+            return array("error"=>"An Error occurred: " . $e->getMessage());
         }
     }
 

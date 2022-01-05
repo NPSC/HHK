@@ -1812,7 +1812,11 @@ $selInsTypes = $insuranceType->generateSelector();
 
 if(isset($_POST["insurances"])){
     $insurance = new Insurance();
-    $insurance->save($dbh, $_POST);
+    $return = $insurance->save($dbh, $_POST);
+    if(is_array($return)){
+        echo json_encode($return);
+        exit;
+    }
 }
 
 $lookupErrMsg = '';
