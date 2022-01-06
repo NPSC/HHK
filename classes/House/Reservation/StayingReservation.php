@@ -15,6 +15,7 @@ use HHK\Tables\Reservation\ReservationRS;
 use HHK\Tables\Visit\VisitRS;
 use HHK\sec\{SecurityComponent, Session};
 use HHK\sec\Labels;
+use HHK\House\ReserveData\PSGMember\PSGMemVisit;
 
 /**
  * Description of StayingReservation
@@ -30,7 +31,7 @@ class StayingReservation extends CheckingIn {
             throw new RuntimeException('The visit is not defined.');
         }
 
-        $this->createFamilyMarkup($dbh);
+        $this->getFamilyMarkup($dbh);
 
         $this->reserveData->setResvSection($this->createAddGuestMarkup($dbh));
 
@@ -64,7 +65,7 @@ class StayingReservation extends CheckingIn {
         return $this;
     }
 
-    protected function createFamilyMarkup(\PDO $dbh, array $formUserData = []) {
+    protected function getFamilyMarkup(\PDO $dbh, array $formUserData = []) {
 
         $psgMembers = $this->reserveData->getPsgMembers();
 
@@ -195,6 +196,94 @@ class StayingReservation extends CheckingIn {
         $this->visit = new Visit($dbh, 0, $visitRs->idVisit->getStoredVal(), NULL, NULL, $resc, $uS->username, $visitRs->Span->getStoredVal());
 
         return;
+    }
+
+    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, $arrivalDT, $idPsg, $departureDT, $idVisit = 0, $idSpan = -1) {
+
+        $whStays = '';
+        $rooms = array();
+
+        // Dates correct?
+        if (is_null($arrivalDT)) {
+            return 0;
+        }
+
+        if (is_null($departureDT)) {
+            $departureDT = new \DateTime($arrivalDT->format('Y-m-d H:i:s'));
+            $departureDT->add(new \DateInterval('P1D'));
+        }
+
+        // Collect member ids
+        foreach ($psgMembers as $m) {
+            if ($m->getId() != 0 && $m->isBlocked() === FALSE) {
+                $whStays .= ',' . $m->getId();
+            }
+        }
+
+        // Find any visits.
+        if ($whStays != '') {
+
+            // Check ongoing visits
+            $vstmt = $dbh->query("SELECT
+    s.`idName`,
+    s.`idVisit`,
+    s.`Visit_Span`,
+    s.`idRoom`,
+    s.`Status` as `Status`,
+    r.`idPsg`,
+    rm.`Title`,
+    v.`idPrimaryGuest`
+FROM
+    stays s
+        JOIN
+    visit v ON s.idVisit = v.idVisit
+        AND s.Visit_Span = v.Span
+        JOIN
+    room rm ON s.idRoom = rm.idRoom
+        JOIN
+    registration r ON v.idRegistration = r.idRegistration
+WHERE
+    s.Status = 'a'
+    and DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
+    and DATE(ifnull(s.Span_End_Date, DATE(datedefaultnow(s.Expected_Co_Date)))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
+    and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
+    and s.idName in (" . substr($whStays, 1) . ") "
+                . " order by s.idVisit, s.Visit_Span");
+
+            while ($s = $vstmt->fetch(\PDO::FETCH_ASSOC)) {
+                // These guests are already staying somewhere
+
+                if ($s['idVisit'] == $idVisit && $s['Visit_Span'] == $idSpan) {
+                    // My visit
+                    $memVisit = new PSGMemVisit(array());
+
+                } else {
+                    // Not my visit
+                    $memVisit = new PSGMemVisit(array('idVisit'=>$s['idVisit'], 'Visit_Span'=>$s['Visit_Span'], 'room'=>$s['Title'], 'status'=>$s['Status']));
+                }
+
+                // Set visit id and Check primary guest
+                foreach ($psgMembers as $m) {
+
+                    if ($m->getId() == $s['idName']) {
+
+                        $psgMembers[$m->getPrefix()]->setStayObj($memVisit);
+
+                        if ($m->getId() == $s['idPrimaryGuest'] && $s['idVisit'] == $idVisit) {
+                            $psgMembers[$m->getPrefix()]->setPrimaryGuest(TRUE);
+                        }
+                    }
+                }
+
+                // Count different rooms
+                if ($s['idPsg'] == $idPsg) {
+                    $rooms[$s['idRoom']] = '1';
+                }
+            }
+        }
+
+        // Return number of rooms being used by this psg.
+        return count($rooms);
     }
 
 }
