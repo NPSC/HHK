@@ -397,6 +397,8 @@ class IndivMember extends AbstractMember {
             return '';
         }
 
+        $this->getInsurance($dbh, $this->get_idName());
+
         // Insurance Companies
         $stmt = $dbh->query("select * from insurance where `Status` = 'a' order by `idInsuranceType`, `Title`");
         $ins = array();
@@ -491,11 +493,88 @@ ORDER BY `List_Order`");
         $ul = HTMLContainer::generateMarkup('ul',$tabs, array('style'=>'font-size:0.9em','class'=>"hhk-flex"));
         $divs = HTMLContainer::generateMarkup('div', $sumTbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>'sumInsTab', 'class'=>'ui-tabs-hide')) . $divs;
 
-        //return $tbl->generateMarkup();
         return HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>'InsTabs'));
-
     }
 
+    public function createInsuranceSummaryPanel(\PDO $dbh) {
+
+        $uS = Session::getInstance();
+
+        if (!$uS->InsuranceChooser) {
+            return '';
+        }
+
+        $this->getInsurance($dbh, $this->get_idName());
+
+        // Insurance Companies
+        $stmt = $dbh->query("select * from insurance where `Status` = 'a' order by `idInsuranceType`, `Title`");
+        $ins = array();
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $ins[$r['idInsuranceType']][$r['idInsurance']] = array(0=>$r['idInsurance'], 1=>$r['Title']);
+        }
+
+        // Insurance Types
+        $stmt2 = $dbh->query("SELECT
+    idInsurance_type,
+    Title,
+    CASE
+        WHEN Is_Primary = 1 THEN '1'
+        ELSE '0'
+    END AS `Is_Primary`,
+    List_Order
+FROM
+    `insurance_type`
+WHERE
+    `Status` = 'a'
+ORDER BY `List_Order`");
+        $insTypes = array();
+
+
+        while ($r = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
+            $insTypes[$r['idInsurance_type']] = $r;
+
+        }
+
+        $sumTbl = new HTMLTable();
+        $sumTbl->addHeaderTr(
+            $sumTbl->makeTh("Insurance for " . $this->get_fullName(), array('colspan'=>"4"))
+        );
+
+        $sumTbl->addHeaderTr(
+           $sumTbl->makeTh("Type")
+           .$sumTbl->makeTh("Name")
+           .$sumTbl->makeTh("Group Number")
+           .$sumTbl->makeTh("Member Number")
+        );
+
+        foreach ($insTypes as $i) {
+
+            if (isset($ins[$i['idInsurance_type']]) === FALSE) {
+                continue;
+            }
+
+
+            $chosen = new Name_InsuranceRS();
+            $chosenTitle = "";
+            foreach ($this->insuranceRSs as $lRs) {
+                if (isset($ins[$i['idInsurance_type']][$lRs->Insurance_Id->getStoredVal()])) {
+                    $chosen = $lRs;
+                    $chosenTitle = $ins[$i['idInsurance_type']][$lRs->Insurance_Id->getStoredVal()][1];
+                }
+            }
+
+            $sumTbl->addBodyTr(
+                $sumTbl->makeTd($i["Title"], array('class'=>"tdlabel"))
+                .$sumTbl->makeTd($chosenTitle)
+                .$sumTbl->makeTd($chosen->Group_Num->getStoredVal())
+                .$sumTbl->makeTd($chosen->Member_Num->getStoredVal())
+            );
+        }
+
+        return HTMLContainer::generateMarkup('div', $sumTbl->generateMarkup(array('style'=>"width: 100%;")), array("class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog", "style"=>"width: 500px; font-size: 0.9em; padding: 0.25em;", "id"=>"insDetailDiv"));
+
+    }
 
     /**
      *

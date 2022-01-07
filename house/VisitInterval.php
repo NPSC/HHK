@@ -349,6 +349,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
     $changeRoomIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-info', 'style'=>'float:left;', 'title'=>'Changed Rooms'));
     $changeRateIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-info', 'style'=>'float:left;', 'title'=>'Room Rate Changed'));
+    $insInfoIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment insAction', 'style'=>'cursor:pointer;', 'data-idName'=>$r['idPatient'], 'id'=>'insAction' . $r['idPatient'], 'title'=>'View Insurance'));
 
     if ($local) {
 
@@ -384,6 +385,10 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
         if ($visit['rmc'] > 1) {
             $r['Title'] = $changeRoomIcon . $r['Title'];
+        }
+
+        if($r['Insurance'] != ''){
+            $r['Insurance'] = $insInfoIcon . $r['Insurance'];
         }
 
         $tr = '';
@@ -602,6 +607,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(nra.Name_Full, '') as Referral_Agent,
     ifnull(g.Description, hs.Diagnosis) as Diagnosis,
     ifnull(hs.Diagnosis2, '') as Diagnosis2,
+    ifnull(group_concat(i.Title order by it.List_Order separator ', '), '') as Insurance,
     ifnull(gl.Description, '') as Location,
     ifnull(rm.Rate_Code, '') as Rate_Code,
     ifnull(rm.Category, '') as Category,
@@ -661,6 +667,12 @@ from
         left join
     name nra ON hs.idReferralAgent = nra.idName
         left join
+	name_insurance ni on np.idName = ni.idName
+		left join
+	insurance i on ni.Insurance_Id = i.idInsurance
+		left join
+	insurance_type it on i.idInsuranceType = it.idInsurance_type
+        left join
     gen_lookups g ON g.`Table_Name` = 'Diagnosis' and g.`Code` = hs.Diagnosis
         left join
     gen_lookups gl ON gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
@@ -680,7 +692,7 @@ where
                         when now() > Expected_Departure then now()
                         else Expected_Departure
                 end)) >= DATE('$start')) "
-    . $whHosp . $whAssoc . " order by v.idVisit, v.Span";
+    . $whHosp . $whAssoc . " group by v.idVisit, v.Span order by v.idVisit, v.Span";
 
 
     $tbl = new HTMLTable();
@@ -1433,6 +1445,10 @@ if($uS->ShowDiagTB){
     $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
 }
 
+if($uS->InsuranceChooser){
+    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 'string', '20', array());
+}
+
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', '', array(), 'date');
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'n', '', array(), 'date');
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
@@ -1732,6 +1748,7 @@ if ($uS->CoTod) {
                      'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                     }
                  ],
+                 "scrollX": true,
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
@@ -1755,6 +1772,54 @@ if ($uS->CoTod) {
     });
 
 	$('#includeFields').fieldSets({'reportName': 'visit', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
+
+	// disappear the pop-up room chooser.
+    $(document).mousedown(function (event) {
+        var target = $(event.target);
+        if ($('div#insDetailDiv').length > 0 && target[0].id !== 'insDetailDiv' && target.parents("#" + 'insDetailDiv').length === 0) {
+            $('div#insDetailDiv').remove();
+        }
+    });
+
+	var detailDiv = $("<div>").attr('id','insDetailDiv');
+	$("body").append(detailDiv);
+	$('#tblrpt').on('click', '.insAction', function (event) {
+        viewInsurance($(this).data('idname'), event.target.id, detailDiv);
+    });
+
+	function viewInsurance(idName, eventTarget) {
+        "use strict";
+        detailDiv.empty();
+        $.post('ws_resc.php', {cmd: 'viewInsurance', idName: idName},
+          function(data) {
+            if (data) {
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return;
+                }
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.location.assign(data.gotopage);
+                    }
+                    flagAlertMessage(data.error, 'error');
+                    return;
+                }
+
+                if (data.markup) {
+                    var contr = $(data.markup);
+
+                    $('body').append(contr);
+                    contr.position({
+                        my: 'left top',
+                        at: 'left bottom',
+                        of: "#" + eventTarget
+                    });
+                }
+            }
+        });
+    }
 
     });
  </script>

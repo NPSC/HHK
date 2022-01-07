@@ -25,6 +25,8 @@ use HHK\Payment\Receipt;
 use HHK\Exception\PaymentException;
 use HHK\Document\FormTemplate;
 use HHK\Document\FormDocument;
+use HHK\Member\IndivMember;
+use HHK\SysConst\MemBasis;
 
 
 /**
@@ -256,7 +258,7 @@ try {
 
             $strt = $startDT->format('Y-m-d');
             $end = $endDT->format('Y-m-d');
-            
+
             $idPsg = 0;
             if (isset($_REQUEST["psg"])) {
                 $idPsg = intval(filter_var($_REQUEST["psg"], FILTER_SANITIZE_NUMBER_INT), 10);
@@ -723,6 +725,16 @@ try {
             $formDocument->loadDocument($dbh, $idDocument);
             $formDocument->updateStatus($dbh, $status);
 
+            break;
+
+        case "viewInsurance":
+            $idName = 0;
+            if(isset($_REQUEST['idName'])){
+                $idName = filter_var($_REQUEST['idName'], FILTER_VALIDATE_INT);
+                $mem = new IndivMember($dbh, MemBasis::Indivual, $idName);
+
+                $events = array("markup"=>$mem->createInsuranceSummaryPanel($dbh));
+            }
             break;
 
         default:
