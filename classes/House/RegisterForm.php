@@ -481,10 +481,12 @@ p.label {
 
         if ($idVisit > 0) {
 
+            $stayingSql = ($uS->showGuestsStayingReg ? " and s.Status = 'a' " : "");
             $query = "select s.idName, s.Span_Start_Date, s.Expected_Co_Date, s.Span_End_Date, s.`Status`, if(s.idName = v.idPrimaryGuest, 1, 0) as `primaryGuest`
 					from stays s "
                     . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
                     . " where s.idVisit = :reg and s.Visit_Span = :spn "
+                    . $stayingSql
                     . " and DATEDIFF(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)), s.Span_Start_Date) > 0 "
                     . " order by `primaryGuest` desc, `Status` desc";
             $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));

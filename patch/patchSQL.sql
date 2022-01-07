@@ -148,3 +148,6 @@ CHANGE COLUMN `Type` `idInsuranceType` INT(3) NOT NULL;
 
 ALTER TABLE `insurance_type` 
 CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('showGuestsStayingReg', 'false', 'b', 'h', '', 'When true, only show guests currently checked in on registration form', '','1');

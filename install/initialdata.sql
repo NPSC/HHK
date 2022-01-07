@@ -621,6 +621,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowDemographics','false','b','h','','Show demographics selectors on Check in and Reservation pages','',1),
 ('ShowDiagTB','false','b','h','','Show the diagnosis textbox (in addition to the diagnosis selector)','',1),
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
+('showGuestsStayingReg', 'false', 'b', 'h', '', 'When true, only show guests currently checked in on registration form', '','1'),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
 ('ShowRateDetail','false','b','f','','Show Rate detail on statements','',1),
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
