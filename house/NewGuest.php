@@ -4,10 +4,10 @@ use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLInput, HTMLSelector};
 use HHK\sec\{Session, WebInit};
 use HHK\ColumnSelectors;
 use HHK\SysConst\GLTableNames;
-use HHK\Config_Lite\Config_Lite;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFilter;
+use HHK\House\Report\NewGuest;
 
 /**
  * NewGuest.php
@@ -33,194 +33,6 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 
 $labels = Labels::getLabels();
-function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp, $whAssoc, $numberAssocs, $local, $labels) {
-
-    // get session instance
-    $uS = Session::getInstance();
-    
-    $pgTitle = $labels->getString('MemberType', 'primaryGuest', 'Primary Guest');
-
-    $query = "SELECT
-    s.idName,
-    IFNULL(g1.Description, '') AS `Name_Prefix`,
-    n.Name_First,
-    n.Name_Middle,
-    n.Name_Last,
-    IFNULL(g2.Description, '') AS `Name_Suffix`,
-    CASE when s.idName = v.idPrimaryGuest then '$pgTitle' else '' end as `Primary`,
-    CASE when IFNULL(na.Address_2, '') = '' THEN IFNULL(na.Address_1, '') ELSE CONCAT(IFNULL(na.Address_1, ''), ' ', IFNULL(na.Address_2, '')) END AS `Address`,
-    IFNULL(na.City, '') AS `City`,
-    IFNULL(na.County, '') AS `County`,
-    IFNULL(na.State_Province, '') AS `State_Province`,
-    IFNULL(na.Postal_Code, '') AS `Postal_Code`,
-    IFNULL(na.Country_Code, '') AS `Country`,
-	IFNULL(np.Phone_Num, '') AS `Phone`,
-	IFNULL(ne.Email, '') AS `Email`,
-    IFNULL(g3.Description, '') AS `Relationship`,
-    IFNULL(ng.idPsg, 0) as `idPsg`,
-    IFNULL(hs.idHospital, 0) AS `idHospital`,
-    IFNULL(hs.idAssociation, 0) AS `idAssociation`,
-	IFNULL(v.Actual_Departure, '') AS `Visit End`,
-    MIN(s.Checkin_Date) AS `First Stay`
-FROM
-    stays s
-        JOIN
-    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-        JOIN
-    `name` n ON s.idName = n.idname
-        LEFT JOIN
-    name_address na ON n.idName = na.idName
-        AND n.Preferred_Mail_Address = na.Purpose
-        LEFT JOIN
-    name_phone np ON n.idName = np.idName AND n.Preferred_Phone = np.Phone_Code
-        LEFT JOIN
-    name_email ne ON n.idName = ne.idName AND n.Preferred_Email = ne.Purpose
-        LEFT JOIN
-    hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
-        LEFT JOIN
-    `name_guest` ng ON s.idName = ng.idName and hs.idPsg = ng.idPsg
-        LEFT JOIN
-    gen_lookups g1 ON g1.`Table_Name` = 'Name_Prefix'
-        AND g1.`Code` = n.Name_Prefix
-        LEFT JOIN
-    gen_lookups g2 ON g2.`Table_Name` = 'Name_Suffix'
-        AND g2.`Code` = n.Name_Suffix
-	left join
-    `gen_lookups` `g3` on `g3`.`Table_Name` = 'Patient_Rel_Type'
-        and `g3`.`Code` = `ng`.`Relationship_Code`
-WHERE
-    n.Member_Status != 'TBD'
-        AND n.Record_Member = 1
-        $whAssoc $whHosp
-GROUP BY s.idName
-HAVING DATE(`First Stay`) >= DATE('$start')
-    AND DATE(`First Stay`) < DATE('$end')
-ORDER BY `First Stay`";
-
-    $stmt = $dbh->query($query);
-
-    $tbl = '';
-    $sml = null;
-    $reportRows = 0;
-    $numNewGuests = $stmt->rowCount();
-
-    if ($numberAssocs > 0) {
-        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital').'/Assoc';
-    } else {
-        $hospHeader = $labels->getString('hospital', 'hospital', 'Hospital');
-    }
-
-    $fltrdTitles = $colSelector->getFilteredTitles();
-    $fltrdFields = $colSelector->getFilteredFields();
-
-    if ($local) {
-
-        $tbl = new HTMLTable();
-        $th = '';
-
-        foreach ($fltrdTitles as $t) {
-            $th .= HTMLTable::makeTh($t);
-        }
-        $tbl->addHeaderTr($th);
-
-    } else {
-
-        $reportRows = 1;
-
-        $file = 'NewGuests';
-        
-        $writer = new ExcelHelper($file);
-        
-
-        // build header
-        $hdr = array();
-        $colWidths = array();
-        
-        foreach($fltrdFields as $field){
-            $hdr[$field[0]] = $field[4]; //set column header name and type;
-            $colWidths[] = $field[5]; //set column width
-        }
-        
-        $hdrStyle = $writer->getHdrStyle($colWidths);
-        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
-        $reportRows++;
-
-    }
-
-
-
-    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-        // Hospital
-        $hospital = '';
-
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] . ' / ';
-            $assoc = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
-        }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
-            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
-            $hosp = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
-        }
-
-        $r['hospitalAssoc'] = $hospital;
-        unset($r['idHospital']);
-        unset($r['idAssociation']);
-
-        $arrivalDT = new DateTime($r['First Stay']);
-
-
-        if ($local) {
-
-            $r['idName'] = HTMLContainer::generateMarkup('a', $r['idName'], array('href'=>'GuestEdit.php?id=' . $r['idName'] . '&psg=' . $r['idPsg']));
-
-            $r['First Stay'] = $arrivalDT->format('c');
-
-            $tr = '';
-            foreach ($fltrdFields as $f) {
-                $tr .= HTMLTable::makeTd($r[$f[1]], $f[6]);
-            }
-
-            $tbl->addBodyTr($tr);
-
-        } else {
-
-            $r['First Stay'] = $arrivalDT->format('Y-m-d');
-
-
-            $flds = array();
-            
-            foreach ($fltrdFields as $f) {
-                //$flds[$n++] = array('type' => $f[4], 'value' => $g[$f[1]], 'style'=>$f[5]);
-                $flds[] = $r[$f[1]];
-            }
-            
-            $row = $writer->convertStrings($hdr, $flds);
-            $writer->writeSheetRow("Sheet1", $row);
-
-        }
-
-    }   // End of while
-
-
-
-    // Finalize and print.
-    if ($local) {
-
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
-
-        // Stats table
-        $stmt2 = $dbh->query("Select COUNT(distinct idName) from stays "
-                . "where DATE(Checkin_Date) >= DATE('$start') and DATE(Checkin_Date) < DATE('$end')");
-        $rows = $stmt2->fetchAll(\PDO::FETCH_NUM);
-
-        return array('tbl'=>$dataTable, 'new'=>$numNewGuests, 'all'=>$rows[0][0]);
-
-    } else {
-        $writer->download();
-    }
-}
-
 
 $mkTable = '';  // var handed to javascript to make the report table or not.
 $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' New ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's Report Details', array('style'=>'margin-top: .5em;'))
@@ -258,10 +70,10 @@ $cFields[] = array($labels->getString('MemberType', 'primaryGuest', 'Primary Gue
     $pTitles = array_merge($pTitles, array('State', 'Zip', 'Country'));
 
     $cFields[] = array($pTitles, $pFields, '', '', 'string', '20', array());
-    
+
 $cFields[] = array('Phone', 'Phone', 'checked', '', 'string', '20', array());
 $cFields[] = array('Email', 'Email', 'checked', '', 'string', '20', array());
-    
+
 $cFields[] = array("First Stay", 'First Stay', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 $cFields[] = array("Visit End", 'Visit End', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 
@@ -286,7 +98,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     // set the column selectors
     $colSelector->setColumnSelectors($_POST);
-    
+
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
 
@@ -321,37 +133,75 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     }
 
     if ($whAssoc != '') {
-        $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
+        $whHosp .= " and hs.idAssociation in (".$whAssoc.") ";
     }
 
     if ($filter->getReportStart() != '' && $filter->getReportEnd() != '') {
 
-        $dataArray = doReport($dbh, $colSelector, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $whAssoc, count($filter->getAList()), $local, $labels);
-
-        $dataTable = $dataArray['tbl'];
         $mkTable = 1;
 
-        // Stats Table
-        $numNewGuests = $dataArray['new'];
-        $numAllGuests = $dataArray['all'];
-        $numReturnGuests = max($numAllGuests - $numNewGuests, 0);
+        $newGuest = new NewGuest($filter->getReportStart(), $filter->getReportEnd());
 
+        $dataTable = $newGuest->doNewGuestReport($dbh, $colSelector, $whHosp, $local, $labels);
+
+        $newGuest->doReturningGuests($dbh, $whHosp);
+
+        $numAllGuests = $newGuest->getNumberNewGuests() + $newGuest->getNumberReturnGuests();
         $newRatio = 0;
+
         if ($numAllGuests > 0) {
-            $newRatio = ($numNewGuests / $numAllGuests) * 100;
+            $newRatio = ($newGuest->getNumberNewGuests() / $numAllGuests) * 100;
         }
 
+        // Guests
         $sTbl = new HTMLTable();
-        $sTbl->addHeader(HTMLTable::makeTh('') . HTMLTable::makeTh('Number') . HTMLTable::makeTh('Percent of Total'));
+        $sTbl->addHeader(HTMLTable::makeTh('Guests') . HTMLTable::makeTh('Number') . HTMLTable::makeTh('Percent of Total'));
 
-        $sTbl->addBodyTr(HTMLTable::makeTd('New ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numNewGuests) . HTMLTable::makeTd(number_format($newRatio) . '%'));
-        $sTbl->addBodyTr(HTMLTable::makeTd('Returning ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numReturnGuests) . HTMLTable::makeTd(number_format(100 - $newRatio) . '%'));
-        $sTbl->addBodyTr(HTMLTable::makeTd('Total ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's:', array('class'=>'tdlabel')) . HTMLTable::makeTd($numAllGuests));
+        $sTbl->addBodyTr(
+            HTMLTable::makeTd('New ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's:', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($newGuest->getNumberNewGuests())
+            . HTMLTable::makeTd(number_format($newRatio) . '%'));
+
+        $sTbl->addBodyTr(
+            HTMLTable::makeTd('Returning ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's:', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($newGuest->getNumberReturnGuests())
+            . HTMLTable::makeTd(number_format(100 - $newRatio) . '%'));
+
+        $sTbl->addBodyTr(
+            HTMLTable::makeTd('Total ' . $labels->getString('MemberType', 'visitor', 'Guest') . 's:', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($numAllGuests));
+
+        // PSGs
+        $newGuest->doNewPSGs($dbh, $whHosp);
+        $newGuest->doReturningPSGs($dbh, $whHosp);
+        $numAllPSGs = $newGuest->getNumberNewPSGs() + $newGuest->getNumberReturnPSGs();
+        $newRatio = 0;
+
+        if ($numAllPSGs > 0) {
+            $newRatio = ($newGuest->getNumberNewPSGs() / $numAllPSGs) * 100;
+        }
+
+        $pTbl = new HTMLTable();
+        $pTbl->addHeader(HTMLTable::makeTh('PSGs') . HTMLTable::makeTh('Number') . HTMLTable::makeTh('Percent of Total'));
+
+        $pTbl->addBodyTr(
+            HTMLTable::makeTd('New PSGs', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($newGuest->getNumberNewPSGs())
+            . HTMLTable::makeTd(number_format($newRatio) . '%'));
+
+        $pTbl->addBodyTr(
+            HTMLTable::makeTd('Returning PSGs', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($newGuest->getNumberReturnPSGs())
+            . HTMLTable::makeTd(number_format(100 - $newRatio) . '%'));
+
+        $pTbl->addBodyTr(
+            HTMLTable::makeTd('Total PSGs', array('class'=>'tdlabel'))
+            . HTMLTable::makeTd($numAllPSGs));
 
 
         $statsTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' New ' .$labels->getString('MemberType', 'visitor', 'Guest'). 's Report Statistics')
                 . HTMLContainer::generateMarkup('p', 'These numbers are specific to this report\'s selected filtering parameters.')
-                . $sTbl->generateMarkup();
+                . $sTbl->generateMarkup(array('style'=>'display:inline;')) . $pTbl->generateMarkup(array('style'=>'display:inline;margin-left:10px;'));
 
 
 
