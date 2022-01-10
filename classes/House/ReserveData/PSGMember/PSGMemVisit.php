@@ -38,7 +38,8 @@ class PSGMemVisit extends PSGMemStay {
     public function createStayButton($prefix) {
 
         if (isset($this->index['idVisit']) && isset($this->index['Visit_Span'])) {
-            $stIcon = '';
+            // A different visit.
+            $stIcon = '';  // No icon for checked in to other visit.
 
             if ($this->index['status'] == VisitStatus::CheckedOut) {
                 $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-extlink', 'style'=>'float: right; margin-right:.3em;', 'title'=>'Checked Out'));
@@ -51,6 +52,7 @@ class PSGMemVisit extends PSGMemStay {
             return HTMLInput::generateMarkup($this->index['room'], array('type'=>'button', 'class'=>'hhk-getVDialog hhk-stayIndicate', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span'])) . $stIcon;
 
         } else {
+            // My visit
             $this->setStay(ReserveData::IN_ROOM);
             return HTMLContainer::generateMarkup('span', 'In Room', array('class'=>'hhk-stayIndicate'));
         }

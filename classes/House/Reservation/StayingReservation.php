@@ -70,7 +70,7 @@ class StayingReservation extends CheckingIn {
         $psgMembers = $this->reserveData->getPsgMembers();
 
         $this->reserveData->addConcurrentRooms($this->findConflictingReservations($dbh, $this->reserveData->getIdPsg(), $this->reserveData->getIdResv(), $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getSpanEndDT(), $this->reserveData->getResvPrompt()));
-        $this->reserveData->addConcurrentRooms($this->findConflictingStays($dbh, $psgMembers, $this->reserveData->getSpanStartDT(), $this->reserveData->getIdPsg(),$this->reserveData->getSpanEndDT(), $this->reserveData->getIdVisit(), $this->reserveData->getSpan()));
+        $this->reserveData->addConcurrentRooms($this->findCheckedInStays($dbh, $psgMembers, $this->reserveData->getIdPsg(), $this->reserveData->getIdVisit(), $this->reserveData->getSpan()));
 
         $this->reserveData->setPsgMembers($psgMembers);
 
@@ -198,20 +198,10 @@ class StayingReservation extends CheckingIn {
         return;
     }
 
-    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, $arrivalDT, $idPsg, $departureDT, $idVisit = 0, $idSpan = -1) {
+    protected function findCheckedInStays(\PDO $dbh, array &$psgMembers, $idPsg, $idVisit = 0, $idSpan = -1) {
 
         $whStays = '';
         $rooms = array();
-
-        // Dates correct?
-        if (is_null($arrivalDT)) {
-            return 0;
-        }
-
-        if (is_null($departureDT)) {
-            $departureDT = new \DateTime($arrivalDT->format('Y-m-d H:i:s'));
-            $departureDT->add(new \DateInterval('P1D'));
-        }
 
         // Collect member ids
         foreach ($psgMembers as $m) {
@@ -244,9 +234,6 @@ FROM
     registration r ON v.idRegistration = r.idRegistration
 WHERE
     s.Status = 'a'
-    and DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
-    and DATE(ifnull(s.Span_End_Date, DATE(datedefaultnow(s.Expected_Co_Date)))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
-    and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
     and s.idName in (" . substr($whStays, 1) . ") "
                 . " order by s.idVisit, s.Visit_Span");
 
