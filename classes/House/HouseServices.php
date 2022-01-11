@@ -203,6 +203,8 @@ class HouseServices {
             $dataArray['resc'] = $roomChooser->makeRoomsArray();
             $dataArray['curResc'] = array(
                 "maxOcc" => $curResc->getMaxOccupants(),
+                "rate" => $visit->getPledgedRate(),
+                'defaultRateCat' => $curResc->getDefaultRoomCategory(),
                 "title" => $curResc->getTitle(),
                 'key' => $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]),
                 'status' => 'a',
@@ -216,7 +218,7 @@ class HouseServices {
             $dataArray['expDep'] = $expDepDT->format('c');
 
         } else {
-                        
+
             $mkup = HTMLContainer::generateMarkup('div',
             		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
                     . $mkup,
@@ -282,7 +284,7 @@ class HouseServices {
             $oldNote = $visit->getNotes();
             $visit->setNotes($ribbonNote, $uS->username);
             $visit->updateVisitRecord($dbh, $uS->username);
-            
+
             if($oldNote != $visit->getNotes()){
                 $reply .= " Ribbon Note updated.";
             }
@@ -299,7 +301,7 @@ class HouseServices {
         if (isset($post['selVisitFee'])) {
 
             $visitFeeOption = filter_var($post['selVisitFee'], FILTER_SANITIZE_STRING);
-            
+
             $reply .= VisitViewer::changeVisitFee($dbh, $visitFeeOption, $visit);
         }
 
@@ -351,57 +353,57 @@ class HouseServices {
 
                 // Leave enabled
                 if ($uS->EmptyExtendLimit > 0) {
-                    
+
                     // Begin visit leave?
                     if (isset($post['extendCb'])) {
-    
+
                         $extendStartDate = '';
                         if (isset($post['txtWStart']) && $post['txtWStart'] != '') {
                             $extendStartDate = filter_var($post['txtWStart'], FILTER_SANITIZE_STRING);
                         }
-    
+
                         $extDays = 0;
                         if (isset($post['extendDays'])) {
                             $extDays = intval(filter_var($post['extendDays'], FILTER_SANITIZE_NUMBER_INT), 10);
                         }
-    
+
                         $noCharge = FALSE;
                         if (isset($post['noChargeCb'])) {
                             $noCharge = TRUE;
                         }
-    
+
                         $reply .= $visit->beginLeave($dbh, $extendStartDate, $extDays, $noCharge);
                         $returnCkdIn = TRUE;
                     }
-    
-    
+
+
                     // Return/Extend leave?
                     if (isset($post['leaveRetCb'])) {
-                        
+
                         $extContrl = '';
-    
+
                         if (isset($post['rbOlpicker-ext'])) {
                             $extContrl = 'extend';
                         } else if (isset($post['rbOlpicker-rtDate'])) {
                             $extContrl = 'return';
                         }
-                        
+
                         if ($extContrl == 'extend') {
                             // Extend current leave
-                            
+
                             if (isset($post['extendDate']) && $post['extendDate'] != '') {
-                                
+
                                 $extendDate = filter_var($post['extendDate'], FILTER_SANITIZE_STRING);
-                            
+
                                 $reply .= $visit->extendLeave($dbh, $extendDate);
                                 $returnCkdIn = TRUE;
                             }
-                        
+
                         } else if ($extContrl == 'return') {
                             // Return from Leave
-                            
+
                             if (isset($post['txtWRetDate']) && $post['txtWRetDate'] != '') {
-                                
+
                                 $returnDate = filter_var($post['txtWRetDate'], FILTER_SANITIZE_STRING);
 
                                 $reply .= $visit->endLeave($dbh, $returnDate);
