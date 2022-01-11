@@ -123,3 +123,31 @@ update `sys_config` set Description = 'Extend visit (go on leave) default number
 update `sys_config` set Show = 0 where Key = 'CssValidationService';
 update `sys_config` set Show = 0, Value = 0 where Key = 'RateGlideExtend';
 update `sys_config` set Show = 0, Value = 0 where Key = 'UseRepeatResv';
+
+
+-- Insurance updates
+
+ALTER TABLE `name_insurance` 
+ADD COLUMN `Member_Num` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Insurance_Id`,
+ADD COLUMN `Group_Num` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Member_Num`;
+
+ALTER TABLE `insurance_type` 
+DROP COLUMN `Multiselect`,
+CHANGE COLUMN `List_Order` `List_Order` INT(3) NOT NULL DEFAULT 0,
+ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `List_Order`;
+
+update insurance_type set idInsurance_Type = 1 where idInsurance_type = '1h';
+update insurance set Type = 1 where Type = '1h';
+update insurance_type set idInsurance_Type = 3 where idInsurance_type = 'p';
+update insurance set Type = 3 where Type = 'p';
+
+ALTER TABLE `insurance` 
+ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`,
+ADD COLUMN `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`,
+CHANGE COLUMN `Type` `idInsuranceType` INT(3) NOT NULL;
+
+ALTER TABLE `insurance_type` 
+CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('showGuestsStayingReg', 'false', 'b', 'h', '', 'When true, only show guests currently checked in on registration form', '','1');

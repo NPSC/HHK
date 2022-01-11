@@ -236,7 +236,7 @@ class IndivMember extends AbstractMember {
      *
       * @return string HTML table structure
      */
-    public function createDemographicsPanel(\PDO $dbh, $limited = FALSE, $includeBirthDate = TRUE, $demographicsUserData = []) {
+    public function createDemographicsPanel(\PDO $dbh, $limited = FALSE, $includeBirthDate = TRUE, $demographicsUserData = [], $includeInsurance = false) {
 
         $uS = Session::getInstance();
         $idPrefix = $this->idPrefix;
@@ -256,7 +256,7 @@ class IndivMember extends AbstractMember {
                         HTMLSelector::generateMarkup(
                                 HTMLSelector::doOptionsMkup(removeOptionGroups($uS->nameLookups[$d[0]]),
                                     (isset($demographicsUserData[$d[0]]) && $demographicsUserData[$d[0]] != '' ? $demographicsUserData[$d[0]] : $this->getDemographicsEntry($d[0]))),
-                        		array('name'=>$idPrefix.'sel_' . $d[0], 'class'=>$idPrefix.'hhk-demog-input')
+                        		array('name'=>$idPrefix.'sel_' . $d[0], 'class'=>$idPrefix.'hhk-demog-input', 'style'=>"min-width: max-content")
                                 )
                         , array('style'=>'display:table-cell;')
                         )
@@ -347,11 +347,9 @@ class IndivMember extends AbstractMember {
         }
 
         // Insurance
-        if ($uS->InsuranceChooser) {
-            $tbl2->addBodyTr(
-                HTMLTable::makeTd(
-                        $this->createInsurancePanel($dbh, $idPrefix)
-                        , array('style'=>'display:table-cell;', 'colspan'=>'3')));
+        $insuranceMarkup = "";
+        if ($uS->InsuranceChooser && $includeInsurance) {
+            $insuranceMarkup = $this->createInsurancePanel($dbh, $idPrefix);
         }
 
         //Previous Name
@@ -383,7 +381,7 @@ class IndivMember extends AbstractMember {
                 'Date: ' . HTMLInput::generateMarkup(($this->get_DateBackgroundCheck() == '' ? '' : date('M j, Y', strtotime($this->get_DateBackgroundCheck()))), array('name'=>$idPrefix.'txtBackgroundCheckDate', 'class'=>'ckbdate')), $bcdateAttr))
             );
 
-        return $table->generateMarkup(array('style'=>'float:left; margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'float:left;'));
+        return HTMLContainer::generateMarkup("div", $table->generateMarkup(array('style'=>'margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'margin-right:10px;')) . $insuranceMarkup, array("class"=>"hhk-flex"));
 
     }
 
@@ -395,12 +393,14 @@ class IndivMember extends AbstractMember {
             return '';
         }
 
+        $this->getInsurance($dbh, $this->get_idName());
+
         // Insurance Companies
-        $stmt = $dbh->query("select * from insurance order by `Type`, `Title`");
+        $stmt = $dbh->query("select * from insurance where `Status` = 'a' order by `idInsuranceType`, `Title`");
         $ins = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $ins[$r['Type']][$r['idInsurance']] = array(0=>$r['idInsurance'], 1=>$r['Title']);
+            $ins[$r['idInsuranceType']][$r['idInsurance']] = array(0=>$r['idInsurance'], 1=>$r['Title']);
         }
 
         // Insurance Types
@@ -411,25 +411,71 @@ class IndivMember extends AbstractMember {
         WHEN Is_Primary = 1 THEN '1'
         ELSE '0'
     END AS `Is_Primary`,
-    Multiselect,
     List_Order
 FROM
     `insurance_type`
+WHERE
+    `Status` = 'a'
 ORDER BY `List_Order`");
         $insTypes = array();
 
+
         while ($r = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
             $insTypes[$r['idInsurance_type']] = $r;
+
         }
 
-        $tbl = new HTMLTable();
-        $tbl->addHeaderTr(HTMLTable::makeTh('Insurance', array('colspan'=>'3')));
+        $sumTbl = new HTMLTable();
+        $sumTbl->addHeaderTr(
+            $sumTbl->makeTh("Insurance", array('colspan'=>"2"))
+        );
+        $tabs = HTMLContainer::generateMarkup('li',
+            HTMLContainer::generateMarkup('a', 'Summary', array('href'=>"#sumInsTab", 'title'=>"Show Insurance summary")));
+
+
+        $divs = "";
 
         foreach ($insTypes as $i) {
 
             if (isset($ins[$i['idInsurance_type']]) === FALSE) {
                 continue;
             }
+
+            $tabs .= HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('a', $i["Title"], array('href'=>"#". $i["idInsurance_type"] . "InsTab", 'title'=>"Edit " . $i["Title"] . " Insurance")));
+
+            $tbl = new HTMLTable();
+            $chosen = new Name_InsuranceRS();
+            $chosenTitle = "";
+            foreach ($this->insuranceRSs as $lRs) {
+                if (isset($ins[$i['idInsurance_type']][$lRs->Insurance_Id->getStoredVal()])) {
+                    $choices[$lRs->Insurance_Id->getStoredVal()] = $lRs->Insurance_Id->getStoredVal();
+                    $chosen = $lRs;
+                    $chosenTitle = $ins[$i['idInsurance_type']][$lRs->Insurance_Id->getStoredVal()][1];
+                }
+            }
+
+            $sumTbl->addBodyTr(
+                $sumTbl->makeTd($i["Title"], array('class'=>"tdlabel"))
+                .$sumTbl->makeTd($chosenTitle, array('style'=>"width:100%"))
+            );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("Insurance", array('class'=>"tdlabel"))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], array($chosen->Insurance_Id->getStoredVal()), true),array('name'=>$idPrefix.'Insurance[' . $i['idInsurance_type'] . '][insuranceId]')))
+            );
+
+            $tbl->addBodyTr(
+                $tbl->maketd("Group Number", array('class'=>"tdlabel"))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Group_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."Insurance[".$i['idInsurance_type']."][groupNum]")))
+            );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("Member Number", array('class'=>"tdlabel"))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($chosen->Member_Num->getStoredVal(), array('style'=>'width:100%;', 'name'=>$idPrefix."Insurance[".$i['idInsurance_type']."][memNum]")))
+            );
+
+            $divs .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>$i["idInsurance_type"] .'InsTab', 'class'=>'ui-tabs-hide'));
 
             // Chosen Insurnaces...
             $choices = array();
@@ -438,37 +484,93 @@ ORDER BY `List_Order`");
                     $choices[$lRs->Insurance_Id->getStoredVal()] = $lRs->Insurance_Id->getStoredVal();
                 }
             }
+        }
 
-            $attr = array(
-                'name'=>$idPrefix.'selIns' . $i['Title'],
-            );
+        $ul = HTMLContainer::generateMarkup('ul',$tabs, array('style'=>'font-size:0.9em','class'=>"hhk-flex"));
+        $divs = HTMLContainer::generateMarkup('div', $sumTbl->generateMarkup(array('style'=>'width:100%;')), array('id'=>'sumInsTab', 'class'=>'ui-tabs-hide')) . $divs;
 
-            $controlId = '';
+        return HTMLContainer::generateMarkup('div', $ul . $divs, array('id'=>'InsTabs'));
+    }
 
-            if ($i['Multiselect'] > 1) {
-                $attr['multiple'] = 'multiple';
-                $attr['class'] = 'hhk-multisel';
-                $attr['name'] = $idPrefix.'selIns' . $i['Title'] . '[]';
-                $attr['id'] = $idPrefix.'selIns' . $i['Title'];
+    public function createInsuranceSummaryPanel(\PDO $dbh) {
 
-                $controlId = HTMLInput::generateMarkup('y', array('type'=>'hidden', 'name'=>$idPrefix.'insCtrl'));
-            }
+        $uS = Session::getInstance();
 
-            $showBlankChoice = TRUE;
-            if ($i['Is_Primary'] == '1') {
-                $showBlankChoice = FALSE;
-            }
+        if (!$uS->InsuranceChooser) {
+            return '';
+        }
 
-            $tbl->addBodyTr(
-                    HTMLTable::makeTd($i['Title'])
-                    .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($ins[$i['idInsurance_type']], $choices, $showBlankChoice),$attr) . $controlId));
+        $this->getInsurance($dbh, $this->get_idName());
+
+        // Insurance Companies
+        $stmt = $dbh->query("select * from insurance where `Status` = 'a' order by `idInsuranceType`, `Title`");
+        $ins = array();
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $ins[$r['idInsuranceType']][$r['idInsurance']] = array(0=>$r['idInsurance'], 1=>$r['Title']);
+        }
+
+        // Insurance Types
+        $stmt2 = $dbh->query("SELECT
+    idInsurance_type,
+    Title,
+    CASE
+        WHEN Is_Primary = 1 THEN '1'
+        ELSE '0'
+    END AS `Is_Primary`,
+    List_Order
+FROM
+    `insurance_type`
+WHERE
+    `Status` = 'a'
+ORDER BY `List_Order`");
+        $insTypes = array();
+
+
+        while ($r = $stmt2->fetch(\PDO::FETCH_ASSOC)) {
+            $insTypes[$r['idInsurance_type']] = $r;
 
         }
 
-        return $tbl->generateMarkup();
+        $sumTbl = new HTMLTable();
+        $sumTbl->addHeaderTr(
+            $sumTbl->makeTh("Insurance for " . $this->get_fullName(), array('colspan'=>"4"))
+        );
+
+        $sumTbl->addHeaderTr(
+           $sumTbl->makeTh("Type")
+           .$sumTbl->makeTh("Name")
+           .$sumTbl->makeTh("Group Number")
+           .$sumTbl->makeTh("Member Number")
+        );
+
+        foreach ($insTypes as $i) {
+
+            if (isset($ins[$i['idInsurance_type']]) === FALSE) {
+                continue;
+            }
+
+
+            $chosen = new Name_InsuranceRS();
+            $chosenTitle = "";
+            foreach ($this->insuranceRSs as $lRs) {
+                if (isset($ins[$i['idInsurance_type']][$lRs->Insurance_Id->getStoredVal()])) {
+                    $chosen = $lRs;
+                    $chosenTitle = $ins[$i['idInsurance_type']][$lRs->Insurance_Id->getStoredVal()][1];
+                }
+            }
+
+            $sumTbl->addBodyTr(
+                $sumTbl->makeTd($i["Title"], array('class'=>"tdlabel"))
+                .$sumTbl->makeTd($chosenTitle)
+                .$sumTbl->makeTd($chosen->Group_Num->getStoredVal())
+                .$sumTbl->makeTd($chosen->Member_Num->getStoredVal())
+            );
+        }
+
+        return HTMLContainer::generateMarkup('div', $sumTbl->generateMarkup(array('style'=>"width: 100%;")), array("class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog", "style"=>"width: 500px; font-size: 0.9em; padding: 0.25em;", "id"=>"insDetailDiv"));
 
     }
-
 
     /**
      *
@@ -803,9 +905,10 @@ ORDER BY `List_Order`");
 
     protected function saveInsurance(\PDO $dbh, $post, $idPrefix, $username) {
 
-        // Check for insurance controls are on the page.
-        if (isset($post[$idPrefix.'insCtrl']) === FALSE) {
-            return;
+        $uS = Session::getInstance();
+
+        if (!$uS->InsuranceChooser) {
+            return '';
         }
 
         $myInss = array();
@@ -824,7 +927,7 @@ ORDER BY `List_Order`");
         }
 
         // Insurances
-        $stmt3 = $dbh->query("select idInsurance, Type, Title from insurance");
+        $stmt3 = $dbh->query("select idInsurance, idInsuranceType, Title from insurance");
         $insCos = array();
 
         while ($c = $stmt3->fetch(\PDO::FETCH_ASSOC)) {
@@ -838,23 +941,26 @@ ORDER BY `List_Order`");
 
         foreach ($insTypes as $i) {
 
-            if (isset($post[$idPrefix.'selIns'.$i['Title']]) && $this->get_idName() > 0) {
+            if (isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]) && $this->get_idName() > 0) {
 
-                if ($i['Multiselect'] > 1) {
-                    $inss = filter_var_array($post[$idPrefix.'selIns'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
-                    $inss2 = array_flip($inss);
-                } else {
-                    $ins = filter_var($post[$idPrefix.'selIns'.$i['Title']], FILTER_SANITIZE_NUMBER_INT);
-                    $inss = array($ins=>$ins);
-                    $inss2[$ins] = $ins;
+                $insId = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['insuranceId'], FILTER_SANITIZE_NUMBER_INT);
+                $groupNum = '';
+                if(isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'])){
+                    $groupNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['groupNum'], FILTER_SANITIZE_STRING);
                 }
+                $memNum = '';
+                if(isset($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'])){
+                    $memNum = filter_var($post[$idPrefix.'Insurance'][$i['idInsurance_type']]['memNum'], FILTER_SANITIZE_STRING);
+                }
+                $ins = ["id"=>$insId, "groupNum"=>$groupNum, "memNum"=>$memNum];
+                $inss2[$insId] = $ins;
 
                 // Remove any unset .
                 foreach ($this->insuranceRSs as $insRs) {
 
                     if (!isset($inss2[$insRs->Insurance_Id->getStoredVal()])) {
 
-                        if ($insCos[$insRs->Insurance_Id->getStoredVal()]['Type'] == $i['idInsurance_type']) {
+                        if ($insCos[$insRs->Insurance_Id->getStoredVal()]['idInsuranceType'] == $i['idInsurance_type']) {
                             // remove recordset
                             $numRecords = EditRS::delete($dbh, $insRs, array($insRs->Insurance_Id, $insRs->idName));
 
@@ -867,43 +973,48 @@ ORDER BY `List_Order`");
                         $myInss[] = $insRs;
                     }
                 }
+                $this->getInsurance($dbh, $this->get_idName());
 
                 // set any new insurance
-                foreach ($inss as $v) {
+                foreach ($inss2 as $v) {
 
-                    $idins = intval($v, 10);
 
-                    if ($idins < 1) {
+                    if (intval($v["id"]) < 1) {
                         continue;
                     }
 
                     $found = FALSE;
+                    $insRs = new Name_InsuranceRS();
 
                     foreach ($this->insuranceRSs as $lRs) {
-                        if ($lRs->Insurance_Id->getStoredVal() == $idins) {
+                        if ($lRs->Insurance_Id->getStoredVal() == $v["id"]) {
                             $found = TRUE;
+                            $insRs = $lRs;
                         }
                     }
 
+                    $insRs->Insurance_Id->setNewVal($v["id"]);
+                    $insRs->Group_Num->setNewVal($v["groupNum"]);
+                    $insRs->Member_Num->setNewVal($v["memNum"]);
+                    $insRs->idName->setNewVal($this->get_idName());
+                    $insRs->Updated_By->setNewVal($username);
+
                     if (!$found) {
-                        $insRs = new Name_InsuranceRS();
-                        $insRs->Insurance_Id->setNewVal($idins);
-                        $insRs->idName->setNewVal($this->get_idName());
-                        $insRs->Updated_By->setNewVal($username);
-
                         EditRS::insert($dbh, $insRs);
-
-                        $insRs->Insurance_Id->setStoredVal($idins);
-                        $myInss[] = $insRs;
-                        NameLog::writeInsert($dbh, $insRs, $this->get_idName(), $username, $i['Title'] . '-' . $insCos[$idins]['Title']);
-
+                        $insRs->Insurance_Id->setStoredVal($v["id"]);
+                        NameLog::writeInsert($dbh, $insRs, $this->get_idName(), $username, $i['Title'] . '-' . $insCos[$v["id"]]['Title']);
+                    }else{
+                        EditRS::update($dbh, $insRs, array($insRs->idName, $insRs->Insurance_Id));
+                        $insRs->Insurance_Id->setStoredVal($v["id"]);
+                        NameLog::writeUpdate($dbh, $insRs, $this->get_idName(), $username, $i['Title'] . '-' . $insCos[$v["id"]]['Title']);
                     }
+                    $myInss[] = $insRs;
                 }
             }
         }
 
-        $this->insuranceRSs = $myInss;
-
+        $this->insuranceRSs = array();
+        $this->getInsurance($dbh, $this->get_idName());
     }
     /**
      *

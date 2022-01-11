@@ -402,7 +402,7 @@ if (isset($_POST["btnSubmit"])) {
     }
 }
 
-
+$isPatient = false;
 
 // Heading member name text
 if ($name->isNew()) {
@@ -413,6 +413,7 @@ if ($name->isNew()) {
 
     if ($psg->getIdPatient() == $name->get_idName()) {
         $niceName = $labels->getString('MemberType', 'patient', 'Patient').": " . $name->getMemberName();
+        $isPatient = true;
     } else {
         $niceName = $labels->getString('MemberType', 'guest', 'Guest').": " . $name->getMemberName();
     }
@@ -428,7 +429,7 @@ $tbl->addBodyTr($name->createMarkupRow('', TRUE));
 $nameMarkup = $tbl->generateMarkup();
 
 // Demographics
-$demogTab = $name->createDemographicsPanel($dbh, FALSE, FALSE);
+$demogTab = $name->createDemographicsPanel($dbh, FALSE, FALSE, [], $isPatient);
 
 // Excludes
 $ta = $name->createExcludesPanel();
@@ -754,10 +755,10 @@ $uS->guestId = $id;
             <?php } ?>
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
-                <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
-                <div style="clear:left;float:left; margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog">
+                <div id="paymentMessage" style="margin-top:5px;margin-bottom:5px; display:none; width: fit-content" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+                <div style="margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog hhk-flex">
 	                <?php echo $guestPhotoMarkup; ?>
-	                <div class="hhk-panel" style="display: inline-block">
+	                <div class="hhk-panel">
                         <?php echo $nameMarkup; ?>
                        <?php echo $contactLastUpdated; ?>
 	                </div>
@@ -774,7 +775,7 @@ $uS->guestId = $id;
                         <?php } ?>
                         <li id="chglog"><a href="#vchangelog">Change Log</a></li>
                     </ul>
-                    <div id="demoTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
+                    <div id="demoTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail hhk-flex">
                         <?php echo $demogTab; ?>
                     </div>
                     <div id="vchangelog" class="ignrSave">
@@ -795,18 +796,18 @@ $uS->guestId = $id;
                             <td>Ending: <input type="text" id="txtactend" class="ckdate" value="" /></td>
                         </tr><tr>
                             <td colspan="2"><input id='cbHospStay' type='checkbox'/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</td>
-                            
+
                         </tr><tr>
-                            
+
                             <td colspan="2" style="text-align: right;"><input type="button" id="btnActvtyGo" value="Submit"/></td>
                         </tr></table>
                         <div id="activityLog" class="hhk-visitdialog"></div>
                     </div>
                     <?php } ?>
                     <div id="nameTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
-                        <div class="hhk-showonload hhk-tdbox" style="display:none;" >
-                            <div id="phEmlTabs" class="hhk-member-detail">
-                                    <ul>
+                        <div class="hhk-showonload hhk-tdbox hhk-flex" style="display:none;" >
+                            <div id="phEmlTabs" class="hhk-member-detail" style="margin-right:10px;">
+                                    <ul class="hhk-flex">
                                         <li><a href="#prefTab" title="Show only preferred phone and Email">Summary</a></li>
                                         <li><a href="#phonesTab" title="Edit the Phone Numbers and designate the preferred number">Phone</a></li>
                                         <li><a href="#emailTab" title="Edit the Email Addresses and designate the preferred address">Email</a></li>
@@ -821,7 +822,7 @@ $uS->guestId = $id;
                                         <?php echo $emailMkup; ?>
                                     </div>
                             </div>
-                            <div id="addrsTabs" class="ui-tabs-hide hhk-member-detail ignrSave" >
+                            <div id="addrsTabs" class="ui-tabs-hide hhk-member-detail ignrSave" style="margin-right: 10px;">
                                 <?php echo $addrPanelMkup; ?>
                             </div>
                             <div id="emergTabs"  style="float:left;" class="ui-tabs-hide hhk-member-detail" >
@@ -837,8 +838,8 @@ $uS->guestId = $id;
                 </div>
                 <div style="clear:both;"></div>
                 <?php if ($id > 0) {  ?>
-                <div id="psgList" class="hhk-showonload hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none;">
-                    <ul>
+                <div id="psgList" class="hhk-showonload hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none; margin:10px 0;">
+                    <ul class="hhk-flex">
                         <li><a href="#vVisits">Visits</a></li>
                         <li id="lipsg"><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
                         <li><a href="#vregister">Registration/Credit</a></li>

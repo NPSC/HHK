@@ -290,7 +290,7 @@ $(document).ready(function () {
     $('#divNewForm').dialog({
         autoOpen: false,
         resizable: true,
-        width: 800,
+        width: 425,
         modal: true,
         title: 'Create New Form',
         buttons: {
@@ -301,6 +301,7 @@ $(document).ready(function () {
                 if (fmType !== '' && fmLang !== '') {
                     // Make a new form
                     $('#formFormNew').submit();
+                    $(this).dialog("close");
                 }
             },
             "Cancel": function() {
@@ -384,6 +385,23 @@ $(document).ready(function () {
     });
     $('#selFormUpload').change();
 
+	$(document).on("submit", ".uploadFormDiv form, #formFormNew", function(e) {
+	    e.preventDefault();
+	    var formData = new FormData(this);    
+	
+		$.ajax({
+	        url: $(this).attr("action"),
+	        type: 'POST',
+	        data: formData,
+	        success: function (data) {
+	            $('#selFormUpload').change();
+	        },
+	        cache: false,
+	        contentType: false,
+	        processData: false
+	    });
+	});
+
     $('#tblroom, #tblresc').dataTable({
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
         "displayLength": 50,
@@ -401,6 +419,9 @@ $(document).ready(function () {
         }else if($sel.val() == "ReservStatus"){
 			table = "ReservStatus";
 			type = "ReservStatus";
+        }else if ($sel.data('type') === 'insurance'){
+        	table = "insurance";
+        	type = $sel.val();
         }
 
         $sel.closest('form').children('div').empty().text('Loading...');
@@ -410,7 +431,16 @@ $(document).ready(function () {
                 function (data) {
                     $sel.prop('disabled', false);
                     if (data) {
-                        $sel.closest('form').children('div').empty().append(data);
+                        $sel.closest('form').children('div').empty().append(data).find(".sortable tbody")
+                        	.sortable({
+                        		items: "tr:not(.no-sort)",
+                        		handle: ".sort-handle",
+                        		update: function (e, ui) {
+                        			$(this).find("tr").each(function(i){
+                        				$(this).find("td:first input").val(i);
+                        			});
+                        		}
+                        	});
                     }
                 });
     });
@@ -451,6 +481,21 @@ $(document).ready(function () {
                 }
             });
     }).button();
+    
+    $(document).on("click", "#btnInsSave", function (e) {
+        var $frm = $(this).closest('form');
+
+        $.post('ResourceBuilder.php', $frm.serialize(),
+            function(data) {
+            	if(data.success){
+            		flagAlertMessage(data.success, false);
+            	}else if(data.error){
+            		flagAlertMessage(data.error, true);
+            	}
+                $("#selInsLookup").trigger("change");
+            },
+            "json");
+    })
 
     // Add diagnosis and locations
     if ($('#btnAddDiags').length > 0) {

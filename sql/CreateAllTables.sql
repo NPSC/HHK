@@ -624,9 +624,11 @@ CREATE TABLE if not exists `id_securitygroup` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `insurance` (
   `idInsurance` INT NOT NULL AUTO_INCREMENT COMMENT '',
-  `Type` VARCHAR(15) NOT NULL COMMENT '',
+  `idInsuranceType` INT(3) NOT NULL COMMENT '',
   `Title` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
+  `Order` INT(3) NOT NULL DEFAULT 0 COMMENT '',
   `Opens_Type` VARCHAR(15) NOT NULL DEFAULT '' COMMENT '',
+  `Status` VARCHAR(1) NOT NULL DEFAULT 'a' COMMENT '',
   `Timestamp` TIMESTAMP NOT NULL DEFAULT now() COMMENT '',
   PRIMARY KEY (`idInsurance`)
 ) ENGINE=InnoDB;
@@ -637,11 +639,11 @@ CREATE TABLE if not exists `insurance` (
 -- Table `insurance_type`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `insurance_type` (
-  `idInsurance_type` VARCHAR(4) NOT NULL COMMENT '',
+  `idInsurance_type` INT(3) NOT NULL COMMENT '',
   `Title` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Is_Primary` INT(1) NOT NULL DEFAULT 0 COMMENT '',
-  `Multiselect` INT NOT NULL DEFAULT 1 COMMENT '',
-  `List_Order` VARCHAR(4) NOT NULL DEFAULT '' COMMENT '',
+  `List_Order` INT(3) NOT NULL DEFAULT 0 COMMENT '',
+  `Status` VARCHAR(1) NOT NULL DEFAULT 'a',
   PRIMARY KEY (`idInsurance_type`)
   ) ENGINE=InnoDB;
 
@@ -1122,6 +1124,8 @@ CREATE TABLE if not exists `name_guest` (
 CREATE TABLE if not exists `name_insurance` (
   `idName` INT NOT NULL COMMENT '',
   `Insurance_Id` INT NOT NULL COMMENT '',
+  `Member_Num` VARCHAR(100) NOT NULL DEFAULT '',
+  `Group_Num` VARCHAR(100) NOT NULL DEFAULT '',
   `Primary` INT(1) NOT NULL DEFAULT 0,
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',

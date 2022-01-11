@@ -1390,7 +1390,11 @@ $(document).ready(function () {
                         
                         $('#rptInvdiv').remove();
                         $('#vInv').append($('<div id="rptInvdiv" style="min-height:500px;"/>').append($(data.success)));
-                        $('#rptInvdiv .gmenu').menu();
+                        $('#rptInvdiv .gmenu').menu({
+           					focus:function(e, ui){
+           						$("#rptInvdiv .gmenu").not(this).menu("collapseAll", null, true);
+           					}
+           				});
                         
                         $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
                             event.preventDefault();
@@ -1550,7 +1554,11 @@ $(document).ready(function () {
        },
        drawCallback: function (settings) {
            $('#spnNumCurrent').text(this.api().rows().data().length);
-           $('#curres .gmenu').menu();
+           $('#curres .gmenu').menu({
+           		focus:function(e, ui){
+           			$("#curres .gmenu").not(this).menu("collapseAll", null, true);
+           		}
+           });
        },
        columns: cgCols
     });
@@ -1563,7 +1571,11 @@ $(document).ready(function () {
        },
        drawCallback: function (settings) {
            $('#spnNumConfirmed').text(this.api().rows().data().length);
-           $('#reservs .gmenu').menu();
+           $('#reservs .gmenu').menu({
+           		focus:function(e, ui){
+           			$("#reservs .gmenu").not(this).menu("collapseAll", null, true);
+           		}
+           });
        },
        columns: rvCols,
 
@@ -1577,7 +1589,11 @@ $(document).ready(function () {
            },
            drawCallback: function (settings) {
                 $('#spnNumUnconfirmed').text(this.api().rows().data().length);
-                $('#unreserv .gmenu').menu();
+                $('#unreserv .gmenu').menu({
+           			focus:function(e, ui){
+           				$("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
+           			}
+           		});
            },
            columns: rvCols
         });
@@ -1591,7 +1607,11 @@ $(document).ready(function () {
        order: [[ (showCreatedDate ? 5 : 3), 'asc' ]],
        drawCallback: function () {
             $('#spnNumWaitlist').text(this.api().rows().data().length);
-            $('#waitlist .gmenu').menu();
+            $('#waitlist .gmenu').menu({
+           		focus:function(e, ui){
+           			$("#waitlist .gmenu").not(this).menu("collapseAll", null, true);
+           		}
+           });
        },
        columns: wlCols
     });

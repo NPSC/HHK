@@ -84,14 +84,14 @@ class Receipt {
 
         $info = self::getVisitInfo($dbh, $invoice);
 
-
-        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd( Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
-        }
-
         $idPriGuest = 0;
         if (isset($info['idPrimaryGuest'])) {
             $idPriGuest = $info['idPrimaryGuest'];
+        }
+
+        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd( Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel', 'style'=>"vertical-align: top;"))
+                . HTMLTable::makeTd($info['Primary_Guest'] . self::getAddressTable($dbh, $idPriGuest, false)));
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
@@ -450,7 +450,7 @@ where
         return $hsNames;
     }
 
-    public static function getAddressTable(\PDO $dbh, $idName) {
+    public static function getAddressTable(\PDO $dbh, $idName, $includeContact = true) {
 
         $mkup = '';
 
@@ -503,16 +503,18 @@ WHERE
 
                 $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['City'] . $rows[0]['State'] . ' ' . $rows[0]['Zip']));
 
-                if ($rows[0]['Phone'] != '') {
-                    $adrTbl->addBodyTr(HTMLTable::makeTd('Phone: ' . $rows[0]['Phone']));
-                }
+                if($includeContact){
+                    if ($rows[0]['Phone'] != '') {
+                        $adrTbl->addBodyTr(HTMLTable::makeTd('Phone: ' . $rows[0]['Phone']));
+                    }
 
-                if ($rows[0]['Email'] != '') {
-                    $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['Email']));
-                }
+                    if ($rows[0]['Email'] != '') {
+                        $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['Email']));
+                    }
 
-                if ($rows[0]['Web_Site'] != '') {
-                    $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['Web_Site']));
+                    if ($rows[0]['Web_Site'] != '') {
+                        $adrTbl->addBodyTr(HTMLTable::makeTd($rows[0]['Web_Site']));
+                    }
                 }
 
                 $mkup = $adrTbl->generateMarkup();

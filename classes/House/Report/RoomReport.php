@@ -106,7 +106,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
             $uS->gnc = intval((self::getGlobalNightsCount($dbh, $year) + $previousCount) / 10);
         }
 
-        $span = HTMLContainer::generateMarkup('span', 'More than <b>' . number_format($uS->gnc * 10) . '</b> nights of rest' . $comment, array('style'=>'margin-left:200px;font-size:.6em;font-weight:normal;'));
+        $span = HTMLContainer::generateMarkup('span', 'More than <b>' . number_format($uS->gnc * 10) . '</b> nights of rest' . $comment, array('style'=>'margin-left:10px; font-size:.6em;font-weight:normal;', "class"=>"hideMobile"));
 
         return $span;
     }
@@ -137,7 +137,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
             $uS->gsc = intval((self::getGlobalStaysCount($dbh, $year) + $previousCount), 10);
         }
 
-        $span = HTMLContainer::generateMarkup('span', number_format($uS->gsc) . ' Stays' . $comment, array('style'=>'margin-left:40px;font-size:.6em;font-weight:normal;'));
+        $span = HTMLContainer::generateMarkup('span', number_format($uS->gsc) . ' Stays' . $comment, array('style'=>'margin-left:10px;font-size:.6em;font-weight:normal;', "class"=>"hideMobile"));
 
         return $span;
     }
@@ -148,7 +148,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         $uS = Session::getInstance();
 
         $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-        
+
         $roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 
         // Get Rooms OOS
@@ -290,7 +290,7 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
         $fixed = array();
         $idVisit = intval($r['idVisit'], 10);
         $stat = '';
-        
+
         // Mangle room status
         if ($r['Cleaning_Days'] > 0) {
             if ($r['Status'] == RoomState::TurnOver) {
@@ -316,7 +316,7 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
         if (isset($roomsOOS[$r['idRoom']])) {
             $stat = $roomsOOS[$r['idRoom']]['StatusTitle'] . ': ' . $roomsOOS[$r['idRoom']]['OOSCode'];
         }
-        
+
         // Check On Leave
         if ($r['On_Leave'] > 0) {
             $stat .= ' (On Leave)';

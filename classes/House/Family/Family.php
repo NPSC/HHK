@@ -398,7 +398,9 @@ class Family {
                     $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
 
-                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex"));
+
+                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
 
@@ -455,7 +457,7 @@ class Family {
 
                 $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
                     HTMLTable::makeTd('')
-                    . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11'))
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex")), array('colspan'=>'11'))
                     , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }

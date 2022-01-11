@@ -299,6 +299,7 @@ $(document).ready(function () {
     $('#phEmlTabs').tabs();
     $('#emergTabs').tabs();
     $('#addrsTabs').tabs();
+    $('#InsTabs').tabs();
     
     $psgList = $('#psgList').tabs({
         collapsible: true,

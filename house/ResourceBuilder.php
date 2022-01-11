@@ -33,6 +33,8 @@ use HHK\Purchase\TaxedItem;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
 use HHK\Document\FormTemplate;
+use HHK\House\Insurance\InsuranceType;
+use HHK\House\Insurance\Insurance;
 
 /**
  * ResourceBuilder.php
@@ -169,6 +171,18 @@ function getSelections(\PDO $dbh, $tableName, $type, $labels)
                 $diags[] = $lookup;
             }
         }
+
+    }else if($tableName == "insurance_type") {
+
+        $stmt = $dbh->query("SELECT
+    `t`.`idInsurance_type` as 'Table_Name', `t`.`Title` as 'Description',if(`t`.`Status` = 'a','y',''),'', `t`.`List_Order` as 'Order'
+FROM
+    `insurance_type` `t`
+Order by `t`.`List_Order`;");
+
+        $diags = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+
     } else {
         $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
     }
@@ -520,6 +534,13 @@ if (isset($_POST['table'])) {
         } else {
             replaceGenLk($dbh, $tableName, $codeArray, $amounts, $orderNums, (isset($_POST['cbDiagDel']) ? $_POST['cbDiagDel'] : NULL), $rep, (isset($_POST['cbDiagDel']) ? $_POST['selDiagDel'] : array()));
         }
+    }
+
+    if($cmd == "load" && $tableName == "insurance"){
+        $insurance = new Insurance();
+        $insurance->loadInsurances($dbh, $type);
+        echo $insurance->generateTblMarkup();
+        exit();
     }
 
     // Generate selectors.
@@ -1120,10 +1141,10 @@ if (isset($_POST['ldfm'])) {
         $tabContent .= HTMLContainer::generateMarkup('div',  $help .($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
             'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3 user-agent-spacing')): '') .
             '<div class="row"><div class="col-10 uploadFormDiv ui-widget-content" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="d-inline-block" style="padding: 5px 7px;">
-<input type="hidden" name="docId" value="' . $r['idDocument'] . '"/><input type="hidden" name="filefrmtype" value="' . $formType . '"/>
+<input type="hidden" name="docId" value="' . $r['idDocument'] . '"/><input type="hidden" name="filefrmtype" value="' . $formType . '"/><input type="hidden" name="docUpload" value="true">
 Upload new HTML file: <input name="formfile" type="file" required accept="text/html" />
-<input type="submit" name="docUpload" value="Save Form" />
-</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><input type="hidden" name="docfrmtype" value="' . $formType . '"/><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
+<input type="submit" value="Save Form" />
+</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><input type="hidden" name="docfrmtype" value="' . $formType . '"/><input type="hidden" name="delfm" value="true"><button type="submit" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
             'id' => $r['Code']
         ));
     }
@@ -1777,6 +1798,27 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
     'data-type' => 'd',
     'class' => 'hhk-selLookup'
 ));
+
+$insuranceType = new InsuranceType();
+
+// save insurance types
+if(isset($_POST["insuranceTypes"])){
+    $insuranceType = new InsuranceType();
+    $insuranceType->save($dbh, $_POST);
+}
+
+$insuranceType->loadInsuranceTypes($dbh);
+$selInsTypes = $insuranceType->generateSelector();
+
+if(isset($_POST["insurances"])){
+    $insurance = new Insurance();
+    $return = $insurance->save($dbh, $_POST);
+    if(is_array($return)){
+        echo json_encode($return);
+        exit;
+    }
+}
+
 $lookupErrMsg = '';
 
 // General Lookup categories
@@ -2049,6 +2091,9 @@ $resultMessage = $alertMsg->createMarkup();
 				<li><a href="#roomTable">Rooms</a></li>
 				<li><a href="#rateTable"><?php echo $rateTableTabTitle; ?></a></li>
 				<li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
+				<?php if($uS->InsuranceChooser){ ?>
+				<li><a href="#insTable">Insurance</a></li>
+				<?php } ?>
 				<li><a href="#demoTable">Demographics</a></li>
 				<li><a href="#lkTable">Lookups</a></li>
 				<li><a href="#itemTable">Items</a></li>
@@ -2066,6 +2111,28 @@ $resultMessage = $alertMsg->createMarkup();
 				style="font-size: .9em;">
                     <?php echo $roomTable; ?>
                 </div>
+            <?php if($uS->InsuranceChooser){ ?>
+			<div id="insTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+				<div><?php echo $demoMessage; ?></div>
+				<div style="float: left;">
+					<h3>Insurance Types</h3>
+					<?php echo $insuranceType->generateEditMarkup(); ?>
+				</div>
+
+				<div style="float: left; margin-left: 30px;">
+					<h3>Insurance Companies</h3>
+					<form id="formdemoCat">
+						<table>
+							<tr>
+								<th>Insurance</th>
+								<td><?php echo $selInsTypes; ?></td>
+							</tr>
+						</table>
+						<div id="divdemoCat"></div>
+					</form>
+				</div>
+			</div>
+			<?php } ?>
 			<div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
 				<div><?php echo $demoMessage; ?></div>
 				<div style="float: left;">

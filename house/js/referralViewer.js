@@ -170,7 +170,11 @@
 			    },
 			},
 			"drawCallback": function(settings){
-				$wrapper.find('.gmenu').menu();
+				$wrapper.find('.gmenu').menu({
+           					focus:function(e, ui){
+           						$("#referralTabs .gmenu").not(this).menu("collapseAll", null, true);
+           					}
+           				});
 			},
 			"createdRow": function( row, data, dataIndex){
 				if( data["idStatus"] ==  "n"){
