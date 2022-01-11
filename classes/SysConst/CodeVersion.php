@@ -15,6 +15,6 @@ class CodeVersion {
     const VERSION = '3.18';
     const PATCH = '0';
     const GIT_Id = 'dev';
-    const REL_DATE = '';
+    const REL_DATE = '1/11/2022';
 }
 ?>
