@@ -890,19 +890,28 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
     protected function adjustColor(&$backgroundColor, &$textColor) {
 
         // darken or lignten based on wheather it is light or dark.
-        $bgcolor = new Color($backgroundColor);
-        $tcolor = new Color($textColor);
+        if($this->isHexColor($backgroundColor) && $this->isHexColor($textColor)){
+            $bgcolor = new Color($backgroundColor);
+            $tcolor = new Color($textColor);
 
-        if ($bgcolor->isDark()) {
-            $backgroundColor = '#' . $bgcolor->lighten();
-            $textColor = '#' . $tcolor->lighten();
-        } else {
-            $backgroundColor = '#' . $bgcolor->darken();
-            $textColor = '#' . $tcolor->darken();
+            if ($bgcolor->isDark()) {
+                $backgroundColor = '#' . $bgcolor->lighten();
+                $textColor = '#' . $tcolor->lighten();
+            } else {
+                $backgroundColor = '#' . $bgcolor->darken();
+                $textColor = '#' . $tcolor->darken();
+            }
         }
-
     }
 
+    protected function isHexColor(string $color){
+
+        if(preg_match('/^#[a-f0-9]{6}$/i', $color)){
+            return true;
+        }else{
+            return false;
+        }
+    }
 
 }
 
