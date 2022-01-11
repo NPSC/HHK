@@ -402,7 +402,7 @@ if (isset($_POST["btnSubmit"])) {
     }
 }
 
-
+$isPatient = false;
 
 // Heading member name text
 if ($name->isNew()) {
@@ -413,6 +413,7 @@ if ($name->isNew()) {
 
     if ($psg->getIdPatient() == $name->get_idName()) {
         $niceName = $labels->getString('MemberType', 'patient', 'Patient').": " . $name->getMemberName();
+        $isPatient = true;
     } else {
         $niceName = $labels->getString('MemberType', 'guest', 'Guest').": " . $name->getMemberName();
     }
@@ -428,7 +429,7 @@ $tbl->addBodyTr($name->createMarkupRow('', TRUE));
 $nameMarkup = $tbl->generateMarkup();
 
 // Demographics
-$demogTab = $name->createDemographicsPanel($dbh, FALSE, FALSE);
+$demogTab = $name->createDemographicsPanel($dbh, FALSE, FALSE, [], $isPatient);
 
 // Excludes
 $ta = $name->createExcludesPanel();

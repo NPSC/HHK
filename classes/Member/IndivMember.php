@@ -236,7 +236,7 @@ class IndivMember extends AbstractMember {
      *
       * @return string HTML table structure
      */
-    public function createDemographicsPanel(\PDO $dbh, $limited = FALSE, $includeBirthDate = TRUE, $demographicsUserData = []) {
+    public function createDemographicsPanel(\PDO $dbh, $limited = FALSE, $includeBirthDate = TRUE, $demographicsUserData = [], $includeInsurance = false) {
 
         $uS = Session::getInstance();
         $idPrefix = $this->idPrefix;
@@ -348,11 +348,7 @@ class IndivMember extends AbstractMember {
 
         // Insurance
         $insuranceMarkup = "";
-        if ($uS->InsuranceChooser) {
-            //$tbl2->addBodyTr(
-            //    HTMLTable::makeTd(
-            //            $this->createInsurancePanel($dbh, $idPrefix)
-            //            , array('style'=>'display:table-cell;', 'colspan'=>'3')));
+        if ($uS->InsuranceChooser && $includeInsurance) {
             $insuranceMarkup = $this->createInsurancePanel($dbh, $idPrefix);
         }
 
