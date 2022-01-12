@@ -256,8 +256,10 @@ CREATE TABLE if not exists `document` (
   `Mime_Type` VARCHAR(85) NOT NULL DEFAULT '',
   `Folder` varchar(45) NOT NULL DEFAULT '',
   `Language` varchar(5) NOT NULL DEFAULT '',
-  `Abstract` text,
-  `Doc` mediumblob,
+  `Abstract` TEXT,
+  `Doc` MEDIUMBLOB,
+  `userData` MEDIUMTEXT NULL,
+  `Style` MEDIUMTEXT NULL,
   `Status` varchar(5) NOT NULL,
   `Last_Updated` datetime DEFAULT NULL,
   `Created_By` varchar(45) NOT NULL DEFAULT '',
@@ -622,9 +624,11 @@ CREATE TABLE if not exists `id_securitygroup` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `insurance` (
   `idInsurance` INT NOT NULL AUTO_INCREMENT COMMENT '',
-  `Type` VARCHAR(15) NOT NULL COMMENT '',
+  `idInsuranceType` INT(3) NOT NULL COMMENT '',
   `Title` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
+  `Order` INT(3) NOT NULL DEFAULT 0 COMMENT '',
   `Opens_Type` VARCHAR(15) NOT NULL DEFAULT '' COMMENT '',
+  `Status` VARCHAR(1) NOT NULL DEFAULT 'a' COMMENT '',
   `Timestamp` TIMESTAMP NOT NULL DEFAULT now() COMMENT '',
   PRIMARY KEY (`idInsurance`)
 ) ENGINE=InnoDB;
@@ -635,11 +639,11 @@ CREATE TABLE if not exists `insurance` (
 -- Table `insurance_type`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `insurance_type` (
-  `idInsurance_type` VARCHAR(4) NOT NULL COMMENT '',
+  `idInsurance_type` INT(3) NOT NULL COMMENT '',
   `Title` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Is_Primary` INT(1) NOT NULL DEFAULT 0 COMMENT '',
-  `Multiselect` INT NOT NULL DEFAULT 1 COMMENT '',
-  `List_Order` VARCHAR(4) NOT NULL DEFAULT '' COMMENT '',
+  `List_Order` INT(3) NOT NULL DEFAULT 0 COMMENT '',
+  `Status` VARCHAR(1) NOT NULL DEFAULT 'a',
   PRIMARY KEY (`idInsurance_type`)
   ) ENGINE=InnoDB;
 
@@ -1120,6 +1124,8 @@ CREATE TABLE if not exists `name_guest` (
 CREATE TABLE if not exists `name_insurance` (
   `idName` INT NOT NULL COMMENT '',
   `Insurance_Id` INT NOT NULL COMMENT '',
+  `Member_Num` VARCHAR(100) NOT NULL DEFAULT '',
+  `Group_Num` VARCHAR(100) NOT NULL DEFAULT '',
   `Primary` INT(1) NOT NULL DEFAULT 0,
   `Status` varchar(4) NOT NULL DEFAULT '',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
@@ -1629,6 +1635,7 @@ CREATE TABLE if not exists `reservation` (
   `idGuest` int(11) NOT NULL DEFAULT '0',
   `idHospital_Stay` int(11) NOT NULL DEFAULT '0',
   `idResource` int(11) NOT NULL DEFAULT '0',
+  `idReferralDoc` INT(11) NOT NULL DEFAULT '0',
   `Resource_Suitable` VARCHAR(4) NOT NULL DEFAULT '',
   `Confirmation` varchar(4) NOT NULL DEFAULT '',
   `Room_Rate_Category` varchar(4) NOT NULL DEFAULT '',
@@ -1666,7 +1673,6 @@ CREATE TABLE if not exists `reservation_guest` (
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idReservation`,`idGuest`)
 ) ENGINE=InnoDB;
-
 
 
 -- -----------------------------------------------------
@@ -1783,9 +1789,9 @@ CREATE TABLE if not exists `room` (
   `idLocation` int(11) NOT NULL DEFAULT '1',
   `Owner_Id` int(11) NOT NULL DEFAULT '0',
   `Last_Cleaned` datetime DEFAULT NULL,
-  `Rate` decimal(15,2) NOT NULL DEFAULT '0.00',
   `Visit_Fee_Code` varchar(5) NOT NULL DEFAULT '',
   `Rate_Code` varchar(5) NOT NULL DEFAULT '',
+  `Default_Rate_Category` VARCHAR(5) NOT NULL DEFAULT '',
   `Key_Deposit` decimal(15,2) NOT NULL DEFAULT '0.00',
   `Key_Deposit_Code` varchar(5) NOT NULL DEFAULT '',
   `Cleaning_Cycle_Code` VARCHAR(5) NOT NULL DEFAULT 'a',
@@ -1983,7 +1989,8 @@ CREATE TABLE if not exists `template_tag` (
   `Tag_Title` varchar(25) NOT NULL DEFAULT '',
   `Tag_Name` varchar(25) NOT NULL DEFAULT '',
   `Replacement_Wrapper` varchar(45) NOT NULL DEFAULT '',
-  PRIMARY KEY (`idTemplate_tag`)
+  PRIMARY KEY (`idTemplate_tag`),
+  UNIQUE INDEX `Unq_Doc_Tag` (`Doc_Name` ASC, `Tag_Name` ASC)
 ) ENGINE=InnoDB;
 
 
@@ -2222,7 +2229,7 @@ CREATE TABLE if not exists `w_group_ip` (
 -- Table `w_user_log`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `w_user_log` (
-  `Username` VARCHAR(45) NOT NULL COMMENT '',
+  `Username` VARCHAR(100) NOT NULL COMMENT '',
   `Access_Date` DATETIME NOT NULL COMMENT '',
   `IP` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
   `Session_Id` VARCHAR(45) NOT NULL DEFAULT '' COMMENT '',
@@ -2324,8 +2331,6 @@ ALTER TABLE `hospital_stay`
     ADD INDEX IF NOT EXISTS `Index_idPatient` (`idPatient` ASC);
 ALTER TABLE `hospital_stay`
     ADD INDEX IF NOT EXISTS `Index_idPsg` (`idPsg` ASC);
-ALTER TABLE `hospital_stay`
-    ADD INDEX IF NOT EXISTS `Index_idHospital_Stay` (`idHospital_stay` ASC);
 
 ALTER TABLE `invoice`
   	ADD UNIQUE KEY IF NOT EXISTS `Invoice_Number_UNIQUE` (`Invoice_Number`);

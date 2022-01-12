@@ -243,7 +243,7 @@ class Note {
 
         return $counter;
     }
-    
+
     /**
      *
      * @param \PDO $dbh
@@ -287,7 +287,7 @@ class Note {
     public function getNoteType() {
         return $this->type;
     }
-    
+
     public function getFlag() {
         return $this->flag;
     }
@@ -329,7 +329,7 @@ class Note {
         $this->type = $type;
         return $this;
     }
-    
+
     public function setFlag($flag) {
         $this->flag = $flag;
         return $this;

@@ -97,7 +97,7 @@ class WebUser {
                 $tbl->addBodyTr(HTMLTable::makeTd('Require password change:' . '<span class="ui-icon ui-icon-help"></span>', ['class'=>'hhk-tooltip', 'title'=>'If selected, user will be prompted to change their password next time they log in with their current password']). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'class'=>'ignrSave'))));
             }
         }
-        
+
          $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('style'=>'color:red;font-size:.9em;', 'id'=>'hhk-wuprompt')), array('colspan'=>'2')));
 
@@ -232,7 +232,7 @@ class WebUser {
 
         $u = new UserClass();
         $wUserPw = $u->generateStrongPassword();
-        
+
         $resetNext = '1';
         if (isset($parms["resetNext"])) {
             $resetNext = filter_var($parms['resetNext'], FILTER_VALIDATE_BOOLEAN);
@@ -281,7 +281,7 @@ class WebUser {
             }else{
                 $pwHash = md5($wUserPw);
             }
-            
+
             // Register the user as a Volunteer (Group_Code = v)(Verify_address = y)
             $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$pwHash', 'v', '$resetNext');";
 
@@ -291,7 +291,7 @@ class WebUser {
             }
 
             UserClass::insertUserLog($dbh, "PS", $wUserName);
-            
+
             $success .= "New Web User.  ";
             $reply['tempPW'] = $wUserPw;
 

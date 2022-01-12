@@ -16,7 +16,9 @@ use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCatego
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
 use HHK\sec\{Labels, SecurityComponent, Session};
-use HHK\Exception\RuntimeException;
+use HHK\Exception\{RuntimeException, NotFoundException};
+
+
 
 
 /**
@@ -78,14 +80,14 @@ class Reservation {
 
 
         // idResv = 0 ------------------------------
-        
+
         $hasNameGuestRecord = FALSE;
 
         // if we have a member id, is them in the name_guest table?
         if ($rData->getId() > 0) {
         	$stmt = $dbh->query("Select count(*) from name_guest where idName = " . $rData->getId());
         	$rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-        	
+
         	if ($rows[0][0] > 0) {
         		$hasNameGuestRecord = TRUE;
         	}
@@ -105,20 +107,22 @@ class Reservation {
     public static function loadReservation(\PDO $dbh, ReserveData $rData) {
 
     	$uS = Session::getInstance();
-    	
+
     	// Load reservation
-        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`, ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
+        $stmt = $dbh->query("SELECT r.*, rg.idPsg, ifnull(v.idVisit, 0) as idVisit, ifnull(v.`Status`, '') as `SpanStatus`, ifnull(v.Span_Start, '') as `SpanStart`,
+            ifnull(v.Span_End, datedefaultnow(v.Expected_Departure)) as `SpanEnd`
 FROM reservation r
         LEFT JOIN
     registration rg ON r.idRegistration = rg.idRegistration
-	LEFT JOIN
+	    LEFT JOIN
     visit v on v.idReservation = r.idReservation and v.Span = 0
+
 WHERE r.idReservation = " . $rData->getIdResv());
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) != 1) {
-            throw new RuntimeException("Reservation Id not found.  ");
+            throw new NotFoundException("Reservation not found.  ");
         }
 
         $rRs = new ReservationRS();
@@ -129,7 +133,9 @@ WHERE r.idReservation = " . $rData->getIdResv());
             ->setSpanStatus($rows[0]['SpanStatus'])
             ->setSpanStartDT($rows[0]['SpanStart'])
             ->setSpanEndDT($rows[0]['SpanEnd'])
-            ->setIdHospital_Stay($rows[0]['idHospital_Stay']);
+            ->setIdHospital_Stay($rows[0]['idHospital_Stay'])
+            ->setidReferralDoc($rows[0]['idReferralDoc'])
+            ->setResvStatusCode($rows[0]['Status']);
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
@@ -194,7 +200,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createFamilyMarkup(\PDO $dbh) {
+    protected function createFamilyMarkup(\PDO $dbh, array $formUserData = []) {
 
         $this->family->setGuestsStaying($dbh, $this->reserveData, $this->reservRs->idGuest->getstoredVal());
 
@@ -217,7 +223,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             }
         }
 
-        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData));
+        $this->reserveData->setFamilySection($this->family->createFamilyMarkup($dbh, $this->reserveData, $formUserData));
 
     }
 
@@ -233,12 +239,12 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     ->setDepartureDT($expDepDT);
 
         } else if ($this->reservRs->Expected_Arrival->getStoredVal() == '') {
-        	
+
         	$uS = Session::getInstance();
         	$nowDT = new \DateTime();
         	$extendHours = intval($uS->ExtendToday);
-        	
-        	
+
+
         	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) <= $extendHours) {
         		$nowDT->sub(new \DateInterval('P1D'));
         		$nowDT->setTime(16, 0);
@@ -252,14 +258,12 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createHospitalMarkup(\PDO $dbh) {
+    protected function createHospitalMarkup(\PDO $dbh, array $refHospital = []) {
 
-        // Hospital
-        //$hospitalStay = new HospitalStay($dbh, $this->family->getPatientId());
         //get hospitalStay from reservation
         $hospitalStay = new HospitalStay($dbh, $this->family->getPatientId(), $this->reserveData->getIdHospital_Stay());
 
-        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay));
+        $this->reserveData->setHospitalSection(Hospital::createReferralMarkup($dbh, $hospitalStay, TRUE, $refHospital));
 
     }
 
@@ -352,7 +356,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     public static function updateAgenda(\PDO $dbh, $post) {
 
-        // decifer posts
+        // decipher posts
         if (isset($post['dt1']) && isset($post['dt2']) && isset($post['mems'])) {
 
             $labels = Labels::getLabels();
@@ -478,7 +482,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
-    protected function createResvMarkup(\PDO $dbh, $oldResv, $prefix = '') {
+    protected function createResvMarkup(\PDO $dbh, $oldResv, $prefix = '', $refVehicle = []) {
 
         $uS = Session::getInstance();
         $labels = Labels::getLabels();
@@ -528,7 +532,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Vehicles
             if ($uS->TrackAuto) {
-                $dataArray['vehicle'] = $this->vehicleMarkup($dbh);
+                $dataArray['vehicle'] = $this->vehicleMarkup($dbh, $refVehicle);
             }
 
             // Add room title to status title
@@ -604,7 +608,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
     }
 
-    protected function vehicleMarkup(\PDO $dbh) {
+    protected function vehicleMarkup(\PDO $dbh, array $refVehicle = []) {
 
         $regId = $this->reservRs->idRegistration->getStoredVal();
 
@@ -616,7 +620,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $noVeh = '1';
         }
 
-        return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $noVeh);
+        return Vehicle::createVehicleMarkup($dbh, $reg->getIdRegistration(), $noVeh, $refVehicle);
 
     }
 
@@ -759,7 +763,7 @@ where rg.idReservation =" . $r['idReservation']);
         if ($uS->UseWLnotes === FALSE && $resv->isActive()) {
             $tbl2->addBodyTr(HTMLTable::makeTd('Registration Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40')),array('colspan'=>'3')));
         }
-        
+
         //Ribbon Note
         $tbl2->addBodyTr(HTMLTable::makeTd('Ribbon Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLInput::generateMarkup($resv->getNotes(), array('name'=>'txtRibbonNote', 'maxlength'=>'20')),array('colspan'=>'3')));
 
@@ -779,7 +783,7 @@ where rg.idReservation =" . $r['idReservation']);
 
     }
 
-    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, $arrivalDT, $idPsg, $departureDT, $idVisit = 0, $idSpan = -1) {
+    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTimeInterface $arrivalDT, $idPsg, \DateTimeInterface $departureDT, $idVisit = 0, $idSpan = -1) {
 
         $whStays = '';
         $rooms = array();
@@ -825,8 +829,7 @@ FROM
     registration r ON v.idRegistration = r.idRegistration
 WHERE
     DATEDIFF(DATE(s.Span_Start_Date), DATE(ifnull(s.Span_End_Date, '2500-01-01'))) != 0
-  --  and DATE(ifnull(s.Span_End_Date, DATE_ADD(DATE(datedefaultnow(s.Expected_Co_Date)), INTERVAL 1 Day))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
-    and DATE(ifnull(s.Span_End_Date, DATE(datedefaultnow(s.Expected_Co_Date)))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
+    and DATE(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('" . $arrivalDT->format('Y-m-d') . "')
     and DATE(s.Span_Start_Date) < DATE('" . $departureDT->format('Y-m-d') . "')
     and s.idName in (" . substr($whStays, 1) . ") "
                     . " order by s.idVisit, s.Visit_Span");
@@ -1110,12 +1113,12 @@ WHERE
 
         return $oldResvId;
     }
-    
+
     /*
      *
      */
     protected function findLastVisit(\PDO $dbh, $class = '') {
-    	
+
     	if ($this->reserveData->getIdPsg() < 1) {
     		return '';
     	}
@@ -1127,7 +1130,7 @@ WHERE
 	(SELECT  MAX(v.Span_Start)
 		FROM visit v LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
 	WHERE rg.idPsg = " . $this->reserveData->getIdPsg() .")");
-    	
+
     	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$mkup = '';
 

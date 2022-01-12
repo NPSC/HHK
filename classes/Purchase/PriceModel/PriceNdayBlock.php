@@ -46,11 +46,11 @@ class PriceNdayBlock extends AbstractPriceModel {
         $dailyRate = $rrateRs->Reduced_Rate_1->getStoredVal();
 
         $interval = $rrateRs->Reduced_Rate_3->getStoredVal();
-        
+
         if ($interval == 0) {
         	$interval = 7;
         }
-        
+
         $creditNites = $this->creditDays % $interval;
 
         $blocks = floor($nites / $interval);
@@ -225,7 +225,7 @@ class PriceNdayBlock extends AbstractPriceModel {
 
         return $roomCharge;
     }
-    
+
     protected static function installRate(\PDO $dbh, $incomeRated) {
 
         $modelCode = ItemPriceCode::NdayBlock;
@@ -237,7 +237,7 @@ class PriceNdayBlock extends AbstractPriceModel {
         			. "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,0,'a'),"
         			. "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,0,'a');");
         }
-        
+
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
         		. "(5,'Flat Rate','','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,25.00,25.00,10,'a'), "
         		. "(6,'Assigned','','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");

@@ -82,21 +82,21 @@ class ReservationSvcs
                 'error' => 'Bad reservation Id: ' . $idReservation
             );
         }
-        
+
         $uS = Session::getInstance();
         $docs = array();
         $li = '';
         $tabContent = '';
         $dataArray = array();
-        
+
         $reserv = Reservation_1::instantiateFromIdReserv($dbh, $idReservation);
-        
+
         if ($idGuest == 0) {
             $idGuest = $reserv->getIdGuest();
         }
-        
+
         $guest = new Guest($dbh, '', $idGuest);
-        
+
         $stmt = $dbh->query("Select d.`idDocument`, g.`Code`, g.`Description` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 'c' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
         $docRows = $stmt->fetchAll();
 
@@ -105,10 +105,10 @@ class ReservationSvcs
             foreach ($docRows as $d) {
 
                 $confirmForm = new ConfirmationForm($dbh, $d['idDocument']);
-                $formNotes = $confirmForm->createNotes($notes, ! $sendEmail);
-                
+                $formNotes = $confirmForm->createNotes($notes, ! $sendEmail, $d['Code']);
+
                 $docs[$d['Code']] = array(
-                    'doc' => $confirmForm->createForm($confirmForm->makeReplacements($reserv, $guest, $amount, $formNotes)),
+                    'doc' => $confirmForm->createForm($confirmForm->makeReplacements($dbh, $reserv, $guest, $amount, $formNotes)),
                     'style' => RegisterForm::getStyling(),
                     'tabIndex' => $d['Code'],
                     'tabTitle' => $d['Description'],
@@ -127,18 +127,18 @@ class ReservationSvcs
         }
 
         foreach ($docs as $r) {
-            
+
             $li .= HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])), array('data-docId'=>$r['docId']));
-            
-            
+
+
             $tabContent .= HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('div', ($r['doc'] != '' ? $r['doc']: '<div class="ui-state-error">The confirmation document is empty</div>'), array('id'=>'PrintArea'.$r['tabIndex'])),
                 array('id'=>$r['tabIndex']));
-            
+
             $sty = $r['style'];
         }
-        
+
         $ul = HTMLContainer::generateMarkup('ul', $li, array());
         $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'confirmTabDiv', 'class'=>'user-agent-spacing'));
 
@@ -147,7 +147,7 @@ class ReservationSvcs
                 ->get_preferredCode());
             $emailAddr = $emAddr["Email"];
         }
-        
+
         if ($uS->CCAgentConf && $uS->ReferralAgent && $ccEmailAddr == '' && !$sendEmail){
             $hstay = new HospitalStay($dbh, 0, $reserv->getIdHospitalStay());
             $agent = new Agent($dbh, '', $hstay->getAgentId());
@@ -164,30 +164,30 @@ class ReservationSvcs
                     $mail->From = $uS->FromAddress;
                     $mail->FromName = $uS->siteName;
                     $mail->addAddress(filter_var($emailAddr, FILTER_SANITIZE_EMAIL)); // Add a recipient
-                    
+
                     $ccs = explode(',', $ccEmailAddr);
                     foreach ($ccs as $cc){
                         if($cc != ''){
                             $mail->addCC(filter_var($cc, FILTER_SANITIZE_EMAIL));
                         }
                     }
-                    
+
                     $mail->addReplyTo($uS->ReplyTo);
-    
+
                     $bccs = explode(',', $uS->BccAddress);
                     foreach ($bccs as $bcc) {
                         if ($bcc != '') {
                             $mail->addBCC(filter_var($bcc, FILTER_SANITIZE_EMAIL));
                         }
                     }
-    
+
                     $mail->isHTML(true);
-    
+
                     $mail->Subject = Labels::getString('referral', 'Res_Confirmation_Subject', htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation');
                     $mail->msgHTML($docs[$docCode]['doc']);
-    
+
                     $mail->send();
-    
+
                     // Make a note in the reservation.
                     $noteText = 'Confirmation Email sent to ' . $emailAddr;
                     if($ccEmailAddr != '' && count($ccs) > 0){
@@ -207,7 +207,7 @@ class ReservationSvcs
 
                     $dataArray['mesg'] = "Email sent.  ";
                     $dataArray['status'] = 'success';
-                    
+
                 }catch(\Exception $e){
                     $dataArray['mesg'] = "Email failed!  " . $mail->ErrorInfo;
                     $dataArray['status'] = 'error';
@@ -489,7 +489,7 @@ class ReservationSvcs
     {
 
     	$uS = Session::getInstance();
-    	
+
     	// Move other reservations to alternative rooms?
         $rRows = Reservation_1::findReservations($dbh, $firstArrival->format('Y-m-d H:i:s'), $lastDepart->format('Y-m-d H:i:s'), $idResource);
 
@@ -503,14 +503,14 @@ class ReservationSvcs
                 $resv = Reservation_1::instantiateFromIdReserv($dbh, $r[0]);
                 $rArrivalDT = new \DateTime($resv->getExpectedArrival());
                 $move = TRUE;
-                
+
                 if ($uS->IncludeLastDay == TRUE && $rArrivalDT->format('Y-m-d') == $lastDepart->format('Y-m-d')) {
                 	// Dont move
                 	$move = FALSE;
                 }
-                
+
                 if ($resv->getStatus() != ReservationStatus::Staying && $resv->getStatus() != ReservationStatus::Checkedout && $move) {
-                	
+
                     $resv->move($dbh, 0, 0, $uname, TRUE);
                     $reply .= $resv->getResultMessage();
                 }

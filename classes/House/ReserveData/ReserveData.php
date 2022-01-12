@@ -55,6 +55,7 @@ class ReserveData {
     protected $idPsg = 0;
     protected $idHospitalStay = 0;
     protected $idVisit = 0;
+    protected $idReferralDoc = 0;
     protected $span = 0;
     protected $spanStatus = '';
     protected $spanStartDT = NULL;
@@ -95,6 +96,7 @@ class ReserveData {
     protected $resvPrompt;
     protected $insistCkinDemog;
     protected $searchTerm;
+    protected $resvStatusCode;
 
     function __construct($post, $reservationTitle = '') {
 
@@ -137,11 +139,11 @@ class ReserveData {
         if (isset($post['gstCoDate'])) {
         	$this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
         }
-        
+
         if (isset($post['schTerm'])) {
         	$this->setSearchTerm(filter_var($post['schTerm'], FILTER_SANITIZE_STRING));
         }
-        
+
         if (isset($post['mem'])) {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
@@ -173,6 +175,7 @@ class ReserveData {
         $this->errors = '';
         $this->resvPrompt = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
         $this->resvTitle = ($reservationTitle == '' ? $this->resvPrompt : $reservationTitle);
+        $this->resvStatusCode = '';
 
     }
 
@@ -244,6 +247,7 @@ class ReserveData {
             'resvTitle' => $this->getResvTitle(),
             'saveButtonLabel' => $this->saveButtonLabel,
         	'insistCkinDemog' => $this->insistCkinDemog,
+            'resvStatusCode' => $this->getResvStatusCode(),
         );
 
         if ($this->resvChooser != '') {
@@ -309,6 +313,10 @@ class ReserveData {
         return $this->idVisit;
     }
 
+    public function getIdReferralDoc() {
+        return $this->idReferralDoc;
+    }
+
     public function getSpan() {
         return $this->span;
     }
@@ -350,7 +358,7 @@ class ReserveData {
     public function getPatBirthDateFlag() {
         return $this->patBirthDateFlag;
     }
-    
+
     public function getGuestBirthDateFlag() {
         return $this->guestBirthDateFlag;
     }
@@ -363,6 +371,10 @@ class ReserveData {
         return $this->patLabel;
     }
 
+    public function getResvStatusCode() {
+        return $this->resvStatusCode;
+    }
+
     public function getWlNotesLabel() {
         return $this->wlNotesLabel;
     }
@@ -370,7 +382,7 @@ class ReserveData {
     public function getSearchTerm($p) {
     	 return $this->searchTerm;
     }
-    
+
     public function getResvEarlyArrDays() {
         return $this->resvEarlyArrDays;
     }
@@ -429,7 +441,7 @@ class ReserveData {
 
         return NULL;
     }
-    
+
     public function getFullName() {
     	return $this->fullName;
     }
@@ -516,8 +528,18 @@ class ReserveData {
         return $this;
     }
 
+    public function setIdReferralDoc($id) {
+        $this->idReferralDoc = $id;
+        return $this;
+    }
+
     public function setSpan($id) {
         $this->span = $id;
+        return $this;
+    }
+
+    public function setResvStatusCode($resvStatusCode) {
+        $this->resvStatusCode = $resvStatusCode;
         return $this;
     }
 
@@ -525,24 +547,24 @@ class ReserveData {
     	$this->spanStatus = $id;
     	return $this;
     }
-    
+
     public function setInsistCkinDemog($id) {
     	$this->insistCkinDemog = $id;
     	return $this;
     }
-    
-    public function setSpanStartDT($id) {
-        if ($id != '') {
-            $this->spanStartDT = new \DateTimeImmutable($id);
+
+    public function setSpanStartDT($strDate) {
+        if ($strDate != '') {
+            $this->spanStartDT = new \DateTimeImmutable($strDate);
         } else {
             $this->spanStartDT = $this->getArrivalDT();
         }
         return $this;
     }
 
-    public function setSpanEndDT($id) {
-        if ($id != '') {
-            $this->spanEndDT = new \DateTimeImmutable($id);
+    public function setSpanEndDT($strDate) {
+        if ($strDate != '') {
+            $this->spanEndDT = new \DateTimeImmutable($strDate);
         } else {
             $this->spanEndDT = $this->getDepartureDT();
         }
@@ -602,13 +624,13 @@ class ReserveData {
     	$this->checkinSection = $p;
     	return $this;
     }
-    
+
     public function setSearchTerm($p) {
     	$this->searchTerm = $p;
     	return $this;
     }
-    
-    public function setArrivalDT($arrivalDT) {
+
+    public function setArrivalDT(\DateTimeInterface $arrivalDT) {
         $this->arrivalDT = $arrivalDT;
         return $this;
     }
@@ -621,7 +643,7 @@ class ReserveData {
         return $this;
     }
 
-    public function setDepartureDT($departureDate) {
+    public function setDepartureDT(\DateTimeInterface $departureDate) {
         $this->departureDT = $departureDate;
         return $this;
     }

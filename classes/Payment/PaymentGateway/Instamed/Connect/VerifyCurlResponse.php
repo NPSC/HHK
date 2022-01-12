@@ -25,14 +25,14 @@ class VerifyCurlResponse extends AbstractGatewayResponse implements GatewayRespo
         }
             return '';
     }
-    
+
     public function getResponseCode() {
         if (isset($this->result['responseCode'])) {
             return $this->result['responseCode'];
         }
         return '';
     }
-    
+
     public function getStatus() {
         return $this->getResponseCode();
     }
@@ -276,6 +276,6 @@ class VerifyCurlResponse extends AbstractGatewayResponse implements GatewayRespo
         }
         return '';
     }
-    
+
 }
 ?>

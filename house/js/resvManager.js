@@ -23,6 +23,7 @@ function resvManager(initData, options) {
     var span = initData.span;
     var arrival = initData.arrival;
     var insistPayFilledIn = initData.insistPayFilledIn;
+
     var insistCkinDemog = false;
     var rooms = [];
     var people = new Items();
@@ -34,6 +35,7 @@ function resvManager(initData, options) {
     var updateRescChooser = new updateRescChooser();
     var $pWarning = $('#pWarnings');
     var options = options;
+	var resvStatusCode = '';
 
     // Exports
     t.getReserve = getReserve;
@@ -550,7 +552,7 @@ function resvManager(initData, options) {
 
             var fDiv, fHdr, expanderButton;
 
-            fDiv = $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox').prop('id', divFamDetailId).css('padding', '5px');
+            fDiv = $('<div/>').addClass('ui-widget-content ui-corner-bottom hhk-tdbox hhk-overflow-x').prop('id', divFamDetailId).css('padding', '5px');
 
             $famTbl = $('<table/>')
                         .prop('id', data.famSection.tblId)
@@ -714,6 +716,7 @@ function resvManager(initData, options) {
             });
 
             $('.hhk-phemtabs').tabs();
+            $('#InsTabs').tabs();
 
             verifyAddrs('#divfamDetail');
 
@@ -1544,7 +1547,6 @@ function resvManager(initData, options) {
                         }
                     }
 
-
             });
         }
     }
@@ -1682,7 +1684,7 @@ function resvManager(initData, options) {
         t.verify = verify;
 
         function setupVehicle(veh) {
-            var nextVehId = 1;
+            var nextVehId = 2;
             var $cbVeh = veh.find('#cbNoVehicle');
             var $nextVeh = veh.find('#btnNextVeh');
             var $tblVeh = veh.find('#tblVehicle');
@@ -1765,9 +1767,16 @@ function resvManager(initData, options) {
             }
 
             if ($('#selResource').length > 0) {
-                
+
                 $('#selResource').change(function () {
-                    
+
+					// Room Default Rate
+					var room = rooms[$('#selResource').val()];
+
+					if (room.defaultRateCat && room.defaultRateCat != '' && (resvStatusCode === 'w' || resvStatusCode === 'uc' || resvStatusCode === 'a')) {
+						$('#selRateCategory').val(room.defaultRateCat);
+					}
+
                     $('#selRateCategory').change();
 
                     var selected = $("option:selected", this);
@@ -1778,7 +1787,7 @@ function resvManager(initData, options) {
                     } else {
                         $('#hhkroomMsg').text(selparent).show();
                     }
-                    
+
                     // Set merchant for payments
                     if ($('#selccgw').length > 0) {
                         setupGatewayChooser('')
@@ -1786,10 +1795,11 @@ function resvManager(initData, options) {
                         // Card on file
                         setupGatewayChooser('g')
                     }
+
                 });
             }
         }
-        
+
         function setupGatewayChooser(idx) {
             var room = rooms[$('#selResource').val()];
             var notThere = true;
@@ -2359,6 +2369,9 @@ function resvManager(initData, options) {
         if (data.span) {
             span = data.span;
         }
+		if (data.resvStatusCode) {
+			resvStatusCode = data.resvStatusCode
+		}
 
         // Hospital
         if (data.hosp !== undefined) {

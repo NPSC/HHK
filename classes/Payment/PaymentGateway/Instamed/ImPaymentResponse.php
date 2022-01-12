@@ -30,14 +30,14 @@ class ImPaymentResponse extends AbstractCreditResponse {
         $this->payNotes = $payNotes;
         $this->amount = $vcr->getRequestAmount();
         $this->setPaymentStatusCode($paymentStatusCode);
-        
+
         if ($isPartialApprovalAmount) {
             $this->setPartialPayment(TRUE);
             $this->amount = $vcr->getPartialPaymentAmount();
         } else {
             $this->setPartialPayment(FALSE);
         }
-        
+
         $this->setPaymentDate($payDate);
     }
 

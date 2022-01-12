@@ -161,7 +161,7 @@ class WebInit {
     public function reloadGenLkUps($uS) {
 
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
-            where `Table_Name` in ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes') order by `Table_Name`, `Code`;";
+            where `Table_Name` in ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes', 'Referral_Form_Status') order by `Table_Name`, `Code`;";
         $stmt = $this->dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -192,6 +192,7 @@ class WebInit {
         SysConfig::getCategory($this->dbh, $uS, "'fg'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'pr'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'v'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'ga'", webInit::SYS_CONFIG);
 
         return $uS->nameLookups;
 
@@ -222,6 +223,7 @@ class WebInit {
         SysConfig::getCategory($this->dbh, $uS, "'c'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'g'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'p'", webInit::SYS_CONFIG);
+        SysConfig::getCategory($this->dbh, $uS, "'ga'", webInit::SYS_CONFIG);
         
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Rate_Adjustment', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')

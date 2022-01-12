@@ -346,7 +346,7 @@ class PaymentSvcs {
         // Get the invoice record
         $invoice = new Invoice($dbh);
         $invoice->loadInvoice($dbh, 0, $idPayment);
-        
+
         switch ($payRs->idPayment_Method->getStoredVal()) {
 
             case PaymentMethod::Charge:
@@ -523,7 +523,7 @@ class PaymentSvcs {
         if ($invoice->getStatus() != InvoiceStatus::Unpaid) {
         	return array('warning' => 'The invoice is already paid, Undo Return failed. ', 'bid' => $bid);
         }
-        
+
         // Record transaction
 
         switch ($payRs->idPayment_Method->getStoredVal()) {
@@ -577,30 +577,30 @@ class PaymentSvcs {
                 break;
 
             case PaymentMethod::Charge:
-            	
+
             	// Find the detail record.
             	$stmt = $dbh->query("Select * from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal() . " order by idPayment_auth");
             	$arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            	
+
             	if (count($arows) < 1) {
             		$dataArray['warning'] = 'Payment Detail record not found.  Unable to Undo this Return. ';
             		return $dataArray;
             	}
-            	
+
             	$pAuthRs = new Payment_AuthRS();
             	EditRS::loadRow(array_pop($arows), $pAuthRs);
-            	
+
             	if ($pAuthRs->Status_Code->getStoredVal() !== PaymentStatusCode::Retrn) {
             		$dataArray['warning'] = 'Return is ineligable for Undoing.  ';
             		return $dataArray;
             	}
-            	
+
             	// Payment Gateway
             	$gateway = AbstractPaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $pAuthRs->Merchant->getStoredVal());
             	$dataArray = $gateway->undoReturnPayment($dbh, $invoice, $payRs, $pAuthRs, $bid);
-            	
+
             	break;
-            	
+
             default:
                 throw new PaymentException('The pay type is ineligible.  ');
         }
@@ -661,45 +661,45 @@ class PaymentSvcs {
                 $dataArray['success'] = 'Cash Refund is undone.  ';
 
                 break;
-                
+
             case PaymentMethod::Charge:
-            	
+
             	$payRs = new PaymentRS();
             	$payRs->idPayment->setStoredVal($idPayment);
             	$pments = EditRS::select($dbh, $payRs, array($payRs->idPayment));
-            	
+
             	if (count($pments) != 1) {
             		return array('warning' => 'Payment record not found.  Unable to Undo this refund.  ', 'bid' => $bid);
             	}
-            	
+
             	EditRS::loadRow($pments[0], $payRs);
-            	
+
             	// ineligible
             	if ($payRs->Status_Code->getStoredVal() != PaymentStatusCode::Paid) {
             		return array('warning' => 'Undo Refund is ineligable.  ', 'bid' => $bid);
             	}
-            	
+
             	// Find the detail record.
             	$stmt = $dbh->query("Select * from payment_auth where idPayment = $idPayment order by idPayment_auth");
             	$arows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            	
+
             	if (count($arows) < 1) {
             		$dataArray['warning'] = 'Payment Detail record not found.  Unable to Undo this Refund. ';
             		return $dataArray;
             	}
-            	
+
             	$pAuthRs = new Payment_AuthRS();
             	EditRS::loadRow(array_pop($arows), $pAuthRs);
-            	
+
             	if ($pAuthRs->Status_Code->getStoredVal() !== PaymentStatusCode::Paid) {
             		$dataArray['warning'] = 'Refund is ineligable for Undoing.  ';
             		return $dataArray;
             	}
-            	
+
             	// Payment Gateway
             	$gateway = AbstractPaymentGateway::factory($dbh, $pAuthRs->Processor->getStoredVal(), $pAuthRs->Merchant->getStoredVal());
             	$dataArray = $gateway->undoReturnAmount($dbh, $invoice, $payRs, $pAuthRs, $bid);
-            	
+
             	break;
 
             default:
@@ -712,17 +712,17 @@ class PaymentSvcs {
     public static function processWebhook(\PDO $dbh, $data) {
 
         $uS = Session::getInstance();
-        
+
         $stmt = $dbh->query("Select cc_name from cc_hosted_gateway where Gateway_Name = 'instamed'");
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
-        
+
         if (count($rows) == 1) {
 
 	        // Payment Gateway
 	        $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $rows[0][0]);
-	
+
 	        $payNotes = '';
-	
+
 	        return $gateway->processWebhook($dbh, $data, $payNotes, $uS->username);
         }
 

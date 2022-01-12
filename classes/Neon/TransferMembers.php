@@ -225,48 +225,48 @@ class TransferMembers {
 
 
     public function listCustomFields() {
-    	
+
     	$request = array(
     			'method' => 'common/listCustomFields',
     			'parameters' => array('searchCriteria.component' => 'Account')
     	);
-    	
+
     	// Log in with the web service
     	$this->openTarget($this->userId, $this->password);
     	$result = $this->webService->go($request);
-    	
+
     	if ($this->checkError($result)) {
     		throw new RuntimeException($this->errorMessage);
     	}
-    	
+
     	if (isset($result['customFields']['customField'])) {
     		return $result['customFields']['customField'];
     	}
-    	
+
     	return array();
     }
-    
+
     public function listSources() {
-    	
+
     	$request = array(
     			'method' => 'account/listSources'
     	);
-    	
+
     	// Log in with the web service
     	$this->openTarget($this->userId, $this->password);
     	$result = $this->webService->go($request);
-    	
+
     	if ($this->checkError($result)) {
     		throw new RuntimeException($this->errorMessage);
     	}
-    	
+
     	if (isset($result['sources']['source'])) {
     		return $result['sources']['source'];
     	}
-    	
+
     	return array();
     }
-    
+
     public function getCountryIds() {
 
         $countries = array();
@@ -281,7 +281,7 @@ class TransferMembers {
 
         if ($this->checkError($result)) {
             throw new RuntimeException($this->errorMessage);
-            
+
         }
 
         if (isset($result['countries']['country'])) {

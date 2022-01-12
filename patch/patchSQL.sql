@@ -18,7 +18,40 @@ UPDATE `sys_config` SET `Show` = 0 where `Key` IN ('HHK_Secret_Key', 'HHK_Site_K
 
 INSERT IGNORE INTO sys_config (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`) VALUES ('CCAgentConf', 'false', 'b','h','','CC referral agent on reservation confirmation email');
 
+
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`,`Type`) VALUES ('Room_Rate_Adjustment', 'ra1', '10%', '-10','ca');
+
+-- add Style to document
+ALTER TABLE `document` 
+ADD COLUMN `Style` MEDIUMTEXT NULL AFTER `Doc`;
+
+-- add referral form status
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES 
+('Referral_Form_Status', 'n', 'New', 'ui-icon ui-icon-mail-closed', '10'),
+('Referral_Form_Status', 'ip', 'In-Process', 'ui-icon ui-icon-mail-open', '20'),
+('Referral_Form_Status', 'ac', 'Accepted', 'ui-icon ui-icon-check', '30'),
+('Referral_Form_Status', 'ar', 'Archived', 'ui-icon ui-icon-folder-open', '40'),
+('Referral_Form_Status', 'd', 'Deleted', 'ui-icon ui-icon-trash', '50');
+
+-- add referral tab label
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('onlineReferralTab', 'Referrals', 's', 'rg', 'Default: Referrals');
+
+-- add referral sys_config
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('useOnlineReferral', 'false', 'b', 'hf', 'Enable public online referrals');
+
+ALTER TABLE `document` 
+ADD COLUMN `userData` MEDIUMTEXT NULL AFTER `Doc`;
+
+-- add Google API category
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) values
+('Sys_Config_Category', 'ga', 'Google APIs', '', '', '80');
+
+-- Add Google API sys config values
+REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', '','0'),
+('recaptchaApiKey', 'AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc', 's', 'ga', '', 'Google API Key for Recaptcha', '','0'),
+('recaptchaSiteKey', '6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO', 's', 'ga', '', 'Google API Site Key for Recaptcha', '','0');
+
 
 ALTER TABLE reservation
 ADD COLUMN idRateAdjust VARCHAR(5) DEFAULT '0' AFTER Rate_Adjust;
@@ -36,15 +69,92 @@ CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_T
 CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'mm');
 CALL new_webpage('ws_session.php', '0','','1','a','','','s','','admin',CURRENT_TIMESTAMP, 'v');
 
--- add SSO
-INSERT IGNORE into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
-('Sys_Config_Category', 'sso', 'SAML SSO','','',80);
+ALTER TABLE `w_user_log` 
+CHANGE COLUMN `Username` `Username` VARCHAR(100) NOT NULL ;
 
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`, `Show`) VALUES
-('UseSSO', 'false', 'b','sso','','Enable SAML Single Sign On for authentication','',1),
-('IdP_Entity_Id', '', 's','sso','','Identity Provider Entity Id','',1),
-('SSO_URL', '', 's','sso','','URL used for SSO Login','',1),
-('IdP_Cert', '', 't','sso','','Identity Provider Certificate','',1);
+-- Confirmation form changes
+ALTER TABLE `template_tag` 
+ADD UNIQUE INDEX `Unq_Doc_Tag` (`Doc_Name` ASC, `Tag_Name` ASC);
 
-ALTER TABLE `sys_config` 
-CHANGE COLUMN `Value` `Value` VARCHAR(5000) NOT NULL DEFAULT '' ;
+-- add referral form title label
+INSERT IGNORE INTO `labels` (`Key`,`Value`,`Type`,`Category`,`Description`) VALUES ('referralFormTitle','Referral Form', 's','g','Default: Referral Form');
+
+-- Add GuestReferral web page
+call new_Webpage('GuestReferral.php', 31, 'Process Guest Referral', 0, 'h', '', '', 'p', '', '', NULL, 'g');
+call new_Webpage('GuestReferral.php', 31, 'Process Guest Referral', 0, 'h', '', '', 'p', '', '', NULL, 'ga');
+
+-- Add new demographic 'Covid' to name_demog and gen_lookups
+ALTER TABLE `name_demog` 
+ADD COLUMN `Covid` VARCHAR(5) NOT NULL DEFAULT '' AFTER `Special_Needs`;
+
+
+REPLACE INTO `template_tag` (`Doc_Name`,`Tag_Title`,`Tag_Name`) values
+('c','Guest Address Line 1','${GuestAddr1}'),
+('c','Guest Address Line 2','${GuestAddr2}'),
+('c','Guest City','${GuestCity}'),
+('c','Guest State','${GuestState}'),
+('c','Guest Zip Code','${GuestZip}'),
+('c','Guest Phone','${GuestPhone}'),
+('c','Room','${Room}'),
+('c','Room Rate Title','${RoomRateTitle}'),
+('c','Room Rate (pre tax)','${RoomRateAmount}'),
+('c','Rate Adjustment Percent','${RateAdjust}'),
+('c','Nightly Rate (pre tax)','${NightlyRate}')
+;
+
+UPDATE `template_tag` SET `Tag_Title` = 'Total Amount' WHERE `Doc_Name` = 'c' AND `Tag_Name` = "${Amount}";
+
+ALTER TABLE `room` DROP COLUMN `Rate`;
+
+ALTER TABLE `room` ADD COLUMN `Default_Rate_Category` VARCHAR(5) NOT NULL DEFAULT '' AFTER `Rate_Code`;
+
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('rtnDeposit', 'Deposit Refund', 's', 'pc','','');
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Description`) VALUES ('onlineReferralTitle','Referral Form', 's', 'rg', '', '');
+
+ALTER TABLE `reservation` 
+ADD COLUMN `idReferralDoc` INT(11) NOT NULL DEFAULT 0 AFTER `idResource`;
+
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', 'CSS validator service', '0');
+
+CALL new_webpage('WaitlistReport.php', '0','Daily Waitlist','1','h','79','w','p','','admin',CURRENT_TIMESTAMP, 'g');
+
+CALL new_webpage('showReferral.php', '0','Referral Form','0','h','','','p','','admin',CURRENT_TIMESTAMP, 'pub');
+CALL new_webpage('ws_forms.php', '0','','0','h','','','s','','admin',CURRENT_TIMESTAMP, 'pub');
+
+REPLACE INTO `template_tag` (`Doc_Name`, `Tag_Title`, `Tag_Name`) VALUES 
+('c', 'Patient Name', '${PatientName}'),
+('c', 'Number of Guests', '${numGuests}'),
+('c', 'Guest Email', '${GuestEmail}');
+
+update `sys_config` set Description = 'Extend visit (go on leave) default number of days' where `Key` = 'EmptyExtendLimit';
+update `sys_config` set `Show` = 0 where `Key` = 'CssValidationService';
+update `sys_config` set `Show` = 0, Value = 0 where `Key` = 'RateGlideExtend';
+update `sys_config` set `Show` = 0, Value = 0 where `Key` = 'UseRepeatResv';
+
+
+-- Insurance updates
+
+ALTER TABLE `name_insurance` 
+ADD COLUMN `Member_Num` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Insurance_Id`,
+ADD COLUMN `Group_Num` VARCHAR(100) NOT NULL DEFAULT '' AFTER `Member_Num`;
+
+ALTER TABLE `insurance_type` 
+DROP COLUMN `Multiselect`,
+CHANGE COLUMN `List_Order` `List_Order` INT(3) NOT NULL DEFAULT 0,
+ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `List_Order`;
+
+update insurance_type set idInsurance_Type = 1 where idInsurance_type = '1h';
+update insurance set Type = 1 where Type = '1h';
+update insurance_type set idInsurance_Type = 3 where idInsurance_type = 'p';
+update insurance set Type = 3 where Type = 'p';
+
+ALTER TABLE `insurance` 
+ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`,
+ADD COLUMN `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`,
+CHANGE COLUMN `Type` `idInsuranceType` INT(3) NOT NULL;
+
+ALTER TABLE `insurance_type` 
+CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('showGuestsStayingReg', 'false', 'b', 'h', '', 'When true, only show guests currently checked in on registration form', '','1');

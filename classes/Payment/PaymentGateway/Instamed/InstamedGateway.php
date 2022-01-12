@@ -1136,9 +1136,9 @@ where r.idRegistration =" . $idReg);
         }else{
             $indx = 0;
         }
-            
 
-            
+
+
 
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Merchant', array('style' => 'border-top:2px solid black;', 'class' => 'tdlabel'))
@@ -1208,7 +1208,7 @@ where r.idRegistration =" . $idReg);
             $ccRs->Gateway_Name->setNewVal($gatewayName);
             $indx = 0;
         }
-            
+
 
             if (isset($post[$indx . '_txtmerch'])) {
             	$ccRs->cc_name->setNewVal(filter_var($post[$indx . '_txtmerch'], FILTER_SANITIZE_STRING));
@@ -1276,7 +1276,7 @@ where r.idRegistration =" . $idReg);
             }else{
                 $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
             }
-            
+
 
             if ($num > 0) {
                 $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");

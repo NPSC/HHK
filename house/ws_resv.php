@@ -13,9 +13,7 @@ use HHK\Note\Note;
 use HHK\Incident\ListReports;
 use HHK\Incident\Report;
 use HHK\House\Hospital\{Hospital, HospitalStay};
-?>
 
-<?php
 /**
  * ws_resv.php
  *
@@ -521,6 +519,8 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         $events = array("error" => "Bad Command: \"" . $c . "\"");
 }
 
+} catch (NotFoundException $e){
+    $events = array("error" => $e->getMessage());
 } catch (PDOException $ex) {
     $events = array("error" => "Database Error: " . $ex->getMessage() . "<br/>" . $ex->getTraceAsString());
 } catch (Exception $ex) {

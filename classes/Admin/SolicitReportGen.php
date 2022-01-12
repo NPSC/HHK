@@ -3,7 +3,8 @@
 namespace HHK\Admin;
 
 use HHK\MailList;
-use HHK\SysConst\{MemStatus, SalutationCodes};
+use HHK\SysConst\MemStatus;
+use HHK\SysConst\SalutationCodes;
 
 /**
  * SolicitReportGen.php

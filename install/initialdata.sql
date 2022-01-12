@@ -340,6 +340,12 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Rate_Period', '2', 'Reduced Rate 2', '14','',0),
 ('Rate_Period', '3', 'Reduced Rate 3', '19999','',0),
 
+('Referral_Form_Status', 'n', 'New','ui-icon ui-icon-mail-closed','',10),
+('Referral_form_Status', 'ip', 'In-Process','ui-icon ui-icon-mail-open','',20),
+('Referral_Form_Status', 'ac', 'Accepted','ui-icon ui-icon-check','',30),
+('Referral_Form_Status', 'ar', 'Archived','ui-icon ui-icon-folder-open','',40),
+('Referral_Form_Status', 'd', 'Deleted','ui-icon ui-icon-trash','',50),
+
 ('Reg_Agreement', 'en', 'English', '1','',0),
 
 ('Reg_Colors', 'r', 'Room','','',0),
@@ -428,6 +434,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Sys_Config_Category', 'ha', 'House Email Addresses','','',32),
 ('Sys_Config_Category', 'p', 'Patient','','',25),
 ('Sys_Config_Category', 'hf', 'House Features','','', 28),
+('Sys_Config_Category', 'ga', 'Google APIs', '', '', '80'),
 
 ('Time_Zone', 'America/Chicago', 'Central','','',0),
 ('Time_Zone', 'America/New_York', 'Eastern','','',0),
@@ -509,7 +516,6 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) V
 ('ReservStatus','p','New','y','y','',''),
 ('ReservStatus','s','Checked In','y','y','','ui-icon-circle-check'),
 ('ReservStatus','td','Turned Away','y','y','','ui-icon-arrowreturnthick-1-s'),
-('ReservStatus', 'im', 'Immediate', 'y', 'y', '', 'ui-icon-check'),
 ('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e');
 -- ;
 
@@ -533,6 +539,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true','',1),
 ('CoTod','false','b','h','','Edit the time of day of a checkout','',1),
 ('county','true','b','h','','Include the County for addresses','',1),
+('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', '', 'CSS validator service', '',0),
 ('DefaultCalEventColor', '', 's', 'c', '', 'Default event ribbon color for the calendar', '',1),
 ('DefaultDays','21','i','h','','The Default number of following days for date range control','',1),
 ('DefaultPayType','cc','s','f','','Use the Resource Builder','',1),
@@ -544,7 +551,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('EmailBlockSize','200','i','v','','Number of email addresses per block','',1),
 ('EmailType','','lu','es','','Email protocol','Email_Server',1),
 ('EmergContactFill','false','b','h','','Insist on Filling in the emergency contact','',1),
-('EmptyExtendLimit','0','i','hf','','Extend visit (go on leave) limit - number of days','',1),
+('EmptyExtendLimit','0','i','hf','','Extend visit (go on leave) default number of days','',1),
 ('Error_Report_Email', 'support@nonprofitsoftwarecorp.org', 's', 'a', '', 'Email for reporting server errors', '',0),
 ('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication','',1),
 ('ExtendToday','0','i','h','','Extend the Check in day by this many hours into tomorrow','',1),
@@ -594,7 +601,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('PreviousNights','0','i','c','','Previous (to HHK) nights to add to nights counter','',1),
 ('PriorPasswords','0','i','pr','','Number of prior passwords user cannot reuse','',1),
 ('RateChangeAuth','false','b','h','','True = only authorized users can change the defailt room rate','',1),
-('RateGlideExtend','0','i','hf','','(Deprecated) Number of days for the Room Rate Glide to time out after visit check-out','',1),
+('RateGlideExtend','0','i','hf','','(Deprecated) Number of days for the Room Rate Glide to time out after visit check-out','',0),
 ('receiptLogoFile','../conf/receiptlogo.png','url','f','','Path to the receipt logo file','',1),
 ('receiptLogoWidth','150','i','f','','in px','',1),
 ('ReferralAgent','true','b','hf','','Track referral agents/social workers','',1),
@@ -616,6 +623,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowDemographics','false','b','h','','Show demographics selectors on Check in and Reservation pages','',1),
 ('ShowDiagTB','false','b','h','','Show the diagnosis textbox (in addition to the diagnosis selector)','',1),
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
+('showGuestsStayingReg', 'false', 'b', 'h', '', 'When true, only show guests currently checked in on registration form', '','1'),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
 ('ShowRateDetail','false','b','f','','Show Rate detail on statements','',1),
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
@@ -646,7 +654,8 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout','',1),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
-('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',1),
+('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
+('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry','',1),
 ('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays',1),
@@ -654,10 +663,9 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('VisitFeeDelayDays','0','i','hf','','Number of days before cleaning fee is charged','',1),
 ('Volunteers','true','b','a','','Enable the HHK Volunteer Manager site','',1),
 ('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','',1),
-('UseSSO', 'false', 'b','sso','','Enable SAML Single Sign On for authentication','',1),
-('IdP_Entity_Id', '', 's','sso','','Identity Provider Entity Id','',1),
-('SSO_URL', '', 's','sso','','URL used for SSO Login','',1),
-('IdP_Cert', '', 't','sso','','Identity Provider Certificate','',1);
+('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', '',0),
+('recaptchaApiKey', 'AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc', 's', 'ga', '', 'Google API Key for Recaptcha', '',0),
+('recaptchaSiteKey', '6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO', 's', 'ga', '', 'Google API Site Key for Recaptcha', '',0);
 -- ;
 
 --
@@ -668,6 +676,8 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('unconfirmedTab','UnConfirmed Reservations','s','rg','','Default: UnConfirmed Reservations'),
 ('recentPayTab','Recent Payments','s','rg','','Default: Recent Payments'),
 ('rateTitle','Room Rate','s','rg','','Default: Room Rate'),
+('onlineReferralTab', 'Referrals', 's', 'rg','','Default: Referrals'),
+('onlineReferralTitle', 'Referral Form', 's', 'rg', '', 'Default: Referral Form'),
 
 ('notesLabel','Reservation Notes','s','rf','','Default: Reservation Notes'),
 ('waitlistNotesLabel','Waitlist Notes','s','rf','','Default: Waitlist Notes'),
@@ -712,6 +722,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('reservationTab','Reservations','s','g','',''),
 ('reservationTitle','Reservation','s','g','',''),
 ('psgTab','Patient Support Group','s','g','',''),
+('referralFormTitle','Referral Form', 's','g','',''),
 
 ('hospitalsTab','Hospital','s','r','',''),
 ('keyDepositLabel','Deposit','s','r','',''),
@@ -743,13 +754,24 @@ REPLACE INTO `template_tag` VALUES
 (8,'c','Expected Departure','${ExpectedDeparture}',''),
 (9,'c','Date Today','${DateToday}',''),
 (10,'c','Nights','${Nites}',''),
-(11,'c','Amount','${Amount}',''),
+(11,'c','Total Amount','${Amount}',''),
 (12,'c','Notes','${Notes}',''),
 (13,'c','Visit Fee Notice','${VisitFeeNotice}',''),
 (14,'s','First Name','${FirstName}',''),
 (15,'s','Last Name','${LastName}',''),
 (16,'s','Name Suffix','${NameSuffix}',''),
-(17,'s','Name Prefix','${NamePrefix}','');
+(17,'s','Name Prefix','${NamePrefix}',''),
+(18,'c','Guest Address Line 1','${GuestAddr1}',''),
+(19,'c','Guest Address Line 2','${GuestAddr2}',''),
+(20,'c','Guest City','${GuestCity}',''),
+(21,'c','Guest State','${GuestState}',''),
+(22,'c','Guest Zip Code','${GuestZip}',''),
+(23,'c','Guest Phone','${GuestPhone}',''),
+(24,'c','Room','${Room}',''),
+(25,'c','Room Rate Title','${RoomRateTitle}',''),
+(26,'c','Room Rate (pre tax)','${RoomRateAmount}',''),
+(27,'c','Rate Adjustment Percent','${RateAdjust}',''),
+(28,'c','Nightly Rate (pre tax)','${NightlyRate}','');
 -- ;
 
 replace into `item` (`idItem`, `Description`) values
@@ -833,18 +855,18 @@ Replace into `location` (`idLocation`, `Status`) VALUES
 (1, 'a');
 -- ;
 
-REPLACE INTO `insurance_type` (`idInsurance_type`, `Title`, `Is_Primary`, `Multiselect`, `List_Order`) VALUES
-('1h', 'Primary', '1', '10', '10'),
-('p', 'Private', '0', '1', '20');
+REPLACE INTO `insurance_type` (`idInsurance_type`, `Title`, `Is_Primary`, `List_Order`) VALUES
+(1, 'Primary', '1', '10'),
+(2, 'Private', '0', '20');
 -- ;
 
-REPLACE INTO `insurance` (`idInsurance`, `Type`, `Title`, `Opens_Type`) VALUES
-(1, '1h', 'Aetna', ''),
-(2, '1h', 'Blue Cross', ''),
-(3, '1h', 'Private Insurance', 'p'),
-(4, 'p', 'Cigna', ''),
-(5, 'p', 'Kaser', ''),
-(6, '1h', 'No Ins.', '');
+REPLACE INTO `insurance` (`idInsurance`, `idInsuranceType`, `Title`, `Opens_Type`) VALUES
+(1, 1, 'Aetna', ''),
+(2, 1, 'Blue Cross', ''),
+(3, 1, 'Private Insurance', 'p'),
+(4, 2, 'Cigna', ''),
+(5, 2, 'Kaser', ''),
+(6, 1, 'No Ins.', '');
 -- ;
 
 
@@ -941,9 +963,9 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 --
 -- Hospitals
 --
-REPLACE INTO `hospital` (`Title`,`Type`,`Status`) values
-('County Hospital', 'h', 'a'),
-('City Hospital', 'h', 'a');
+REPLACE INTO `hospital` (`idHospital`,`Title`,`Type`,`Status`) values
+('1','County Hospital', 'h', 'a'),
+('2','City Hospital', 'h', 'a');
 -- ;
 
 
@@ -994,9 +1016,12 @@ REPLACE INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`
 (92,'GuestDemog.php',31,'Missing Demographics','',0,'h','102','f','p'),(93,'GuestEdit.php',31,'Guest Edit','',0,'h','0','j','p'),(94,'ShowRegForm.php',31,'Registration Form','',0,'h','','','p'),(95,'Reserve.php',31,'Reservation','',0,'h','0','e','p'),(96,'CheckedIn.php',31,'','',0,'h','','','p'),(99,'PaymentResult.php',31,'Payment Result','',0,'h','','','p'),
 (100,'ShowStatement.php',31,'Guest Statement','',0,'h','','','p'),(101,'RoomStatus.php',31,'Housekeeping','',0,'h','79','p','p'),(102,'GuestReport.php',31,'Reports','',0,'h','0','h','p'),(104,'ReservReport.php',31,'Reservations Report','',0,'h','102','b','p'),(105,'PaymentTx.php',2,'Credit Transactions Report','',0,'a','32','v','p'),(106,'Duplicates.php',2,'Duplicates','',0,'a','32','o','p'),(107,'PSGReport.php',31,'People Reports','',0,'h','102','k','p'),(109,'PaymentReport.php',31,'Payment Report','',0,'h','102','m','p'),
 (110,'VisitInterval.php',31,'Visit Interval Report','',0,'h','102','c','p'),(111,'GuestView.php',31,'Guests & Vehicles','',0,'h','79','v','p'),(113,'DRaHospReport.php',31,'Doctors, Hospitals','',0,'h','102','l','p'),(114,'ShowInvoice.php',31,'Show Invoice','',0,'h','','','p'),(115,'InvoiceReport.php',31,'Invoice Report','',0,'h','102','n','p'),(116,'ShowHsKpg.php',31,'Housekeeping','',0,'h','','','p'),(117,'PrtRegForm.php',31,'Print Registration Forms','',0,'h','','','p'),(118,'occDemo.php',31,'Guest Demographics','',0,'h','102','g','p'),(119,'ItemReport.php',31,'Item Report','',0,'h','102','s','p'),
-(120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p'),(121,'GuestTransfer.php',31,'Guest Transfer','',1,'h','79','x','p'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p'),(127,'Help.php',31,'Help','',1,'h','71','f','p'),(128,'ws_calendar.php',31,'','',0,'h','','','s'),(129,'ws_update.php',2,'','',0,'a','','','s'),(130,'DiagnosisBuilder.php',31,'Diagnosis Builder','',1,'h','79','n','p'),(131,'CheckingIn.php',31,'Checking In','',0,'h','','','p'),(132,'ws_session.php',0,'','',0,'a','','','s');
-UNLOCK TABLES;
+(120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p'),(121,'GuestTransfer.php',31,'Guest Transfer','',1,'h','79','x','p'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p'),(127,'Help.php',31,'Help','',1,'h','71','f','p'),(128,'ws_calendar.php',31,'','',0,'h','','','s'),(129,'ws_update.php',2,'','',0,'a','','','s'),
+(130,'DiagnosisBuilder.php',31,'Diagnosis Builder','',1,'h','79','n','p'),(131,'CheckingIn.php',31,'Checking In','',0,'h','','','p'),
+(132,'IncmStmt.php',31,'Income Statement','',0,'h','102','t','p'),(133,'ws_forms.php',31,'','',0,'h','','','s'),(134,'showReferral.php',31,'Referral Form','',0,'h','','','p'),(135,'GuestReferral.php',31,'Guest Referral','',0,'h','','','p');
 -- ;
+
+UNLOCK TABLES;
 
 --
 -- Dumping data for table `page_securitygroup`
@@ -1010,10 +1035,9 @@ REPLACE INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES
 (76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
 (95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),
 (110,'ga'),(111,'g'),(111,'ga'),(113,'ga'),(114,'g'),(114,'ga'),(115,'ga'),(116,'g'),(116,'ga'),(117,'g'),(117,'ga'),(118,'ga'),(119,'ga'),(120,'mm'),(121,'ga'),
-(122,'ga'),(123,'g'),(123,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga'),(132,'g'),(132,'ga'),(132,'gr'),(132,'mm'),(132,'v');
-UNLOCK TABLES;
+(122,'ga'),(123,'g'),(123,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga'), (132,'ga'),(133,'g'),(133,'ga'),(133,'gr'),(134,'g'),(134,'ga'),(135,'g'),(135,'ga');
 -- ;
-
+UNLOCK TABLES;
 
 --
 -- Dumping data for table `language`
@@ -1056,8 +1080,8 @@ REPLACE INTO `language` (`idLanguage`,`Title`,`ISO_639_1`,`Display`) VALUES
 -- Dumping data for table `document`
 --
 REPLACE INTO `document` VALUES
-(1,'Registration Form','','form','html','','','en',NULL,'<p style=\"margin-bottom:10px;\">The (House Name) is a not-for-profit healthcare hospitality house. The Guest House is <span style=\"font-style: italic;\">strictly a lodging facility for referred patients that are actively receiving care at our partner institutions and their families/friends.</span></p>\r\n<ul style=\"list-style-type:disc;margin-left: 20px;\">\r\n    <li><span style=\"font-weight: bold;\">All guests must register at the Front Desk</span></li>\r\n    <li><span style=\"font-weight: bold;\">Smoking is strictly prohibited</span></li>\r\n    <li><span style=\"font-weight: bold;\">Staff must have access to room</span> to perform regular cleaning and maintenance. Rooms must be kept orderly to ensure that they are cleaned properly.</li>\r\n    <li><span style=\"font-weight: bold;\">In case of an emergency,</span> call ###.</li>\r\n    <li><span style=\"font-weight: bold;\">Pets are prohibited.</span> If a pet is found in a guest room, staff will ask that it be removed and may ask guest to leave the facility.</li>\r\n    <li>Do not burn candles, incense or any other flammable objects in the rooms.</li>\r\n    <li><span style=\"font-weight: bold;\">Food must be stored properly</span> in sealed containers or in the refrigerator. Dispose of food properly at time of check out.</li>\r\n    <li><span style=\"font-weight: bold;\">Do not remove anything from the rooms.</span>  Everything has been generously donated to us and is for the comfort of all our guests.  If you find an item missing, please contact our office so that we can replace it before the next guest.</li>\r\n    <li><span style=\"font-weight: bold;\">Do not try to make any repairs yourself.</span> Please contact the House Manager or Front Desk for any problems with appliances, electrical outlets, or plumbing.</li>\r\n    <li>The House strives to provide a supportive, welcoming community for its guests; <span style=\"font-weight: bold;\">please help us by being respectful of all staff, volunteers, fellow guests, and residents.</span></li>\r\n    <li><span style=\"font-weight: bold;\">Check out time is 10 AM.</span> Drop off your key(s) at the Front Desk.</li>\r\n</ul>\r\n<p style=\"margin-top:10px;\">Failure to follow any or all of these policies or to abuse the privilege of staying at the House in anyway can result in the forfeiture of the family&rsquo;s stay. Guests are responsible to communicate any issues or problems directly to (staff).</p>\r\n<p style=\"margin-top:10px;\"><span style=\"font-weight: bold;\">Disclaimer:</span>  I have executed this release willingly and understand that by signing this release. I give up any right I may have to sue or make any claim or demand on my behalf or on the behalf of any family member for any injuries incurred during the course of residency at the House.  I understand and intend that this release cover all injuries, even if such injuries are a result of the negligence of the (House) or any person associated with the House.  The authorization and release constitutes the entire agreement between the House and myself regarding the subjects addressed in this document.  The House reserves the right to inspect any room at any time.</p>\r\n<p style=\"font-weight: bold;margin-top:10px; font-style: italic;\">I/We have read, understand, and agree to all the conditions of this agreement that I/we received today. By signing this guest registration form I/WE agree to abide by the rules and regulations of the House and will communicate this to the other members of my party.</p>\r\n','a','2019-10-12 14:57:39','','patch','2019-10-12 19:57:39'),
-(2,'Reservation Confirmation','','form','html','','en','en',NULL,'<p>Dear ${GuestName}:</p><p>Thank you for your reservation. This is a confirmation for the following dates: ${ExpectedArrival} until ${ExpectedDeparture} for ${Nites} nights for an estimated $${Amount}.</p><p>${VisitFeeNotice}</p><p>Should your plans change, please let us know as soon as possible so that we can serve others in need accommodations.</p><h4>Please enter the facility at:</h4><blockquote><p>(address)</p><p>(City, State, Zip)</p></blockquote><p><b><br></b></p><p><b>Check-in:</b> 4pm-12am</p><p><b>Check-out:</b> Before 10am.</p><h4><br></h4><h4>Parking</h4><p>(Parking Instructions)</p><h4><br></h4><h4>Before You Arrive</h4><p>(Arrival Instructions)</p><p>Should you have any questions or comments or need to change your reservation, please call our office at (phone).</p><p>We look forward to seeing you,</p><p>Hospitality House Staff</p>${Notes}<br>','a','2019-10-12 14:57:39','','patch','2019-10-12 19:57:39');
+(1,'Registration Form','','form','html','','','en',NULL,'<p style=\"margin-bottom:10px;\">The (House Name) is a not-for-profit healthcare hospitality house. The Guest House is <span style=\"font-style: italic;\">strictly a lodging facility for referred patients that are actively receiving care at our partner institutions and their families/friends.</span></p>\r\n<ul style=\"list-style-type:disc;margin-left: 20px;\">\r\n    <li><span style=\"font-weight: bold;\">All guests must register at the Front Desk</span></li>\r\n    <li><span style=\"font-weight: bold;\">Smoking is strictly prohibited</span></li>\r\n    <li><span style=\"font-weight: bold;\">Staff must have access to room</span> to perform regular cleaning and maintenance. Rooms must be kept orderly to ensure that they are cleaned properly.</li>\r\n    <li><span style=\"font-weight: bold;\">In case of an emergency,</span> call ###.</li>\r\n    <li><span style=\"font-weight: bold;\">Pets are prohibited.</span> If a pet is found in a guest room, staff will ask that it be removed and may ask guest to leave the facility.</li>\r\n    <li>Do not burn candles, incense or any other flammable objects in the rooms.</li>\r\n    <li><span style=\"font-weight: bold;\">Food must be stored properly</span> in sealed containers or in the refrigerator. Dispose of food properly at time of check out.</li>\r\n    <li><span style=\"font-weight: bold;\">Do not remove anything from the rooms.</span>  Everything has been generously donated to us and is for the comfort of all our guests.  If you find an item missing, please contact our office so that we can replace it before the next guest.</li>\r\n    <li><span style=\"font-weight: bold;\">Do not try to make any repairs yourself.</span> Please contact the House Manager or Front Desk for any problems with appliances, electrical outlets, or plumbing.</li>\r\n    <li>The House strives to provide a supportive, welcoming community for its guests; <span style=\"font-weight: bold;\">please help us by being respectful of all staff, volunteers, fellow guests, and residents.</span></li>\r\n    <li><span style=\"font-weight: bold;\">Check out time is 10 AM.</span> Drop off your key(s) at the Front Desk.</li>\r\n</ul>\r\n<p style=\"margin-top:10px;\">Failure to follow any or all of these policies or to abuse the privilege of staying at the House in anyway can result in the forfeiture of the family&rsquo;s stay. Guests are responsible to communicate any issues or problems directly to (staff).</p>\r\n<p style=\"margin-top:10px;\"><span style=\"font-weight: bold;\">Disclaimer:</span>  I have executed this release willingly and understand that by signing this release. I give up any right I may have to sue or make any claim or demand on my behalf or on the behalf of any family member for any injuries incurred during the course of residency at the House.  I understand and intend that this release cover all injuries, even if such injuries are a result of the negligence of the (House) or any person associated with the House.  The authorization and release constitutes the entire agreement between the House and myself regarding the subjects addressed in this document.  The House reserves the right to inspect any room at any time.</p>\r\n<p style=\"font-weight: bold;margin-top:10px; font-style: italic;\">I/We have read, understand, and agree to all the conditions of this agreement that I/we received today. By signing this guest registration form I/WE agree to abide by the rules and regulations of the House and will communicate this to the other members of my party.</p>\r\n','','','a','2019-10-12 14:57:39','','patch','2019-10-12 19:57:39'),
+(2,'Reservation Confirmation','','form','html','','en','en',NULL,'<p>Dear ${GuestName}:</p><p>Thank you for your reservation. This is a confirmation for the following dates: ${ExpectedArrival} until ${ExpectedDeparture} for ${Nites} nights for an estimated $${Amount}.</p><p>${VisitFeeNotice}</p><p>Should your plans change, please let us know as soon as possible so that we can serve others in need accommodations.</p><h4>Please enter the facility at:</h4><blockquote><p>(address)</p><p>(City, State, Zip)</p></blockquote><p><b><br></b></p><p><b>Check-in:</b> 4pm-12am</p><p><b>Check-out:</b> Before 10am.</p><h4><br></h4><h4>Parking</h4><p>(Parking Instructions)</p><h4><br></h4><h4>Before You Arrive</h4><p>(Arrival Instructions)</p><p>Should you have any questions or comments or need to change your reservation, please call our office at (phone).</p><p>We look forward to seeing you,</p><p>Hospitality House Staff</p>${Notes}<br>','','','a','2019-10-12 14:57:39','','patch','2019-10-12 19:57:39');
 -- ;
 
 --

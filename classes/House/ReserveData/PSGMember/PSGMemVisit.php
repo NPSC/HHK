@@ -21,25 +21,26 @@ use HHK\SysConst\VisitStatus;
  *
  * @author Eric
  */
- 
+
 class PSGMemVisit extends PSGMemStay {
-    
+
     protected $index = array();
     protected $myStayType = 'visit';
-    
+
     public function __construct($index) {
-        
+
         parent::__construct(ReserveData::NOT_STAYING);
-        
+
         $this->index = $index;
         $this->setNotStaying();
     }
-    
+
     public function createStayButton($prefix) {
-        
+
         if (isset($this->index['idVisit']) && isset($this->index['Visit_Span'])) {
-            $stIcon = '';
-            
+            // A different visit.
+            $stIcon = '';  // No icon for checked in to other visit.
+
             if ($this->index['status'] == VisitStatus::CheckedOut) {
                 $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-extlink', 'style'=>'float: right; margin-right:.3em;', 'title'=>'Checked Out'));
             } else if ($this->index['status'] == VisitStatus::ChangeRate) {
@@ -47,14 +48,15 @@ class PSGMemVisit extends PSGMemStay {
             } else if ($this->index['status'] == VisitStatus::NewSpan) {
                 $stIcon = HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-newwin', 'style'=>'float: right; margin-right:.3em;', 'title'=>'Changed Rooms'));
             }
-            
+
             return HTMLInput::generateMarkup($this->index['room'], array('type'=>'button', 'class'=>'hhk-getVDialog hhk-stayIndicate', 'data-vid'=>$this->index['idVisit'], 'data-span'=>$this->index['Visit_Span'])) . $stIcon;
-            
+
         } else {
+            // My visit
             $this->setStay(ReserveData::IN_ROOM);
             return HTMLContainer::generateMarkup('span', 'In Room', array('class'=>'hhk-stayIndicate'));
         }
     }
-    
+
 }
 ?>

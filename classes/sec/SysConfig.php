@@ -39,7 +39,7 @@ class SysConfig {
 
         $stmt = $dbh->query("select `Key`,`Value`,`Type` from `" . $tableName . "` where Category in ($category) order by `Key`");
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        
+
         foreach ($rows as $r) {
 
             $val = self::getTypedVal($r['Type'], $r['Value']);
@@ -49,7 +49,7 @@ class SysConfig {
 
         unset($rows);
         $stmt = NULL;
-        
+
     }
 
     public static function getKeyValue(\PDO $dbh, $tableName, $key, $default = null) {
@@ -64,7 +64,7 @@ class SysConfig {
         }catch(\Exception $e){
             $rows = array();
         }
-        
+
         if (count($rows) == 1) {
             return self::getTypedVal($rows[0]['Type'], $rows[0]['Value']);
         } else if($default !== null){
@@ -105,7 +105,7 @@ class SysConfig {
                 }else{
                     $query = "update `" . $tableName . "` set `Value` = :val where `Key` = :key";
                 }
-                
+
                 $stmt = $dbh->prepare($query);
                 $stmt->execute($parms);
 
@@ -116,7 +116,7 @@ class SysConfig {
             }
         } else if (count($rows) > 1){
             throw new RuntimeException('Duplicate key: ' . $key);
-            
+
         }else {
             if($category){
                 $query = "insert into `" . $tableName . "` (`Key`, `Value`, `Type`, `Category`) values (:key, :val, 's', :category)";

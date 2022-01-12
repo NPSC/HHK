@@ -49,7 +49,7 @@ if (isset($_POST['btnSave'])) {
 
                 $wgRS->Title->setNewVal(filter_var($_POST[$wgRS->Title->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
                 $wgRS->Description->setNewVal(filter_var($_POST[$wgRS->Description->getColUnticked()][$gc], FILTER_SANITIZE_STRING));
-                
+
                 if (isset($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) && count($_POST[$wgRS->IP_Restricted->getColUnticked()][$gc]) > 0) {
                     $wgRS->IP_Restricted->setNewVal(1);
                 }else{
@@ -79,7 +79,7 @@ if (isset($_POST['btnSave'])) {
     }
 
     if (isset($_POST['ip_title']) && $_POST['ip_cidr'] && is_array($_POST['ip_cidr'])) {
-        
+
         foreach ($_POST['ip_cidr'] as $ip => $cidr) {
             $wauthipRS = new W_auth_ipRS();
             $wauthipRS->IP_addr->setStoredVal($ip);
@@ -176,10 +176,10 @@ foreach ($iprows as $r) {
 
 $ip_tbl->addHeaderTr(HTMLTable::makeTh('Name') . HTMLTable::makeTh('IP Address') . HTMLTable::makeTh('CIDR') . HTMLTable::makeTh('Revoke'));
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-    "http://www.w3.org/TR/html4/loose.dtd"><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta charset="UTF-8">
         <title><?php echo $pageTitle; ?></title>
 <?php echo JQ_UI_CSS; ?>
 <?php echo DEFAULT_CSS; ?>

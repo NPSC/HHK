@@ -32,6 +32,9 @@ use HHK\House\Attribute\Attributes;
 use HHK\Purchase\TaxedItem;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
+use HHK\Document\FormTemplate;
+use HHK\House\Insurance\InsuranceType;
+use HHK\House\Insurance\Insurance;
 
 /**
  * ResourceBuilder.php
@@ -168,6 +171,18 @@ function getSelections(\PDO $dbh, $tableName, $type, $labels)
                 $diags[] = $lookup;
             }
         }
+
+    }else if($tableName == "insurance_type") {
+
+        $stmt = $dbh->query("SELECT
+    `t`.`idInsurance_type` as 'Table_Name', `t`.`Title` as 'Description',if(`t`.`Status` = 'a','y',''),'', `t`.`List_Order` as 'Order'
+FROM
+    `insurance_type` `t`
+Order by `t`.`List_Order`;");
+
+        $diags = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+
     } else {
         $diags = readGenLookupsPDO($dbh, $tableName, 'Order');
     }
@@ -521,6 +536,13 @@ if (isset($_POST['table'])) {
         }
     }
 
+    if($cmd == "load" && $tableName == "insurance"){
+        $insurance = new Insurance();
+        $insurance->loadInsurances($dbh, $type);
+        echo $insurance->generateTblMarkup();
+        exit();
+    }
+
     // Generate selectors.
     if (isset($_POST['selmisc'])) {
         $tbl = getSelections($dbh, RESERV_STATUS_TABLE_NAME, $_POST['selmisc'], $labels);
@@ -692,18 +714,18 @@ if (isset($_POST['btnkfSave'])) {
             }
         }
     }
-    
+
     // Payment types GL Codes
     if (isset($_POST['ptGlCode'])) {
-    	
+
     	$stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
     	$payMethods = $stmtp->fetchAll(\PDO::FETCH_NUM);
-    	
+
     	foreach ($payMethods as $t) {
-    		
+
     		if (isset($_POST['ptGlCode'][$t[0]])) {
     			$gl = filter_var($_POST['ptGlCode'][$t[0]], FILTER_SANITIZE_STRING);
-    			
+
     			$dbh->exec("Update payment_method set Gl_Code = '$gl' where idPayment_method = ". $t[0]);
     		}
     	}
@@ -762,7 +784,7 @@ if (isset($_POST['btnhSave'])) {
 
         // Delete?
         if (isset($_POST['hdel'][$idHosp])) {
-        	
+
         	// Change status to "Retired"
         	$hospRs->Status->setNewVal('r');
         	EditRS::update($dbh, $hospRs, array($hospRs->idHospital));
@@ -952,19 +974,19 @@ if (isset($_POST['btnItemSave'])) {
         }
 
         if (isset($_POST['txtItem'][$idItem])) {
-        	
+
         	$desc = filter_var($_POST['txtItem'][$idItem], FILTER_SANITIZE_STRING);
-        	
+
         	$dbh->exec("update `item` set `Description` = '$desc' where `idItem` = " . $idItem);
         }
-        
+
         if (isset($_POST['txtGlCode'][$idItem])) {
-        	
+
         	$glCode = filter_var($_POST['txtGlCode'][$idItem], FILTER_SANITIZE_STRING);
-        	
+
         	$dbh->exec("update `item` set `Gl_Code` = '$glCode' where `idItem` = " . $idItem);
         }
-        
+
         if (isset($_POST['cbtax'][$idItem])) {
             // Define tax items for each item.
             foreach ($_POST['cbtax'][$idItem] as $t) {
@@ -1108,8 +1130,8 @@ if (isset($_POST['ldfm'])) {
     $tabContent = '';
 
     //set help text
-    $help = '<p style="margin: .5em 0 .5em 0;">(NOTE: To set the form order, drag and drop the tabs above.)</p>';
-    
+    $help = '';
+
     foreach ($docRows as $r) {
 
         $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', $r['Description'], array(
@@ -1119,10 +1141,10 @@ if (isset($_POST['ldfm'])) {
         $tabContent .= HTMLContainer::generateMarkup('div',  $help .($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
             'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3 user-agent-spacing')): '') .
             '<div class="row"><div class="col-10 uploadFormDiv ui-widget-content" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="d-inline-block" style="padding: 5px 7px;">
-<input type="hidden" name="docId" value="' . $r['idDocument'] . '"/><input type="hidden" name="filefrmtype" value="' . $formType . '"/>
+<input type="hidden" name="docId" value="' . $r['idDocument'] . '"/><input type="hidden" name="filefrmtype" value="' . $formType . '"/><input type="hidden" name="docUpload" value="true">
 Upload new HTML file: <input name="formfile" type="file" required accept="text/html" />
-<input type="submit" name="docUpload" value="Save Form" />
-</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><input type="hidden" name="docfrmtype" value="' . $formType . '"/><button type="submit" name="delfm" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
+<input type="submit" value="Save Form" />
+</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><input type="hidden" name="docfrmtype" value="' . $formType . '"/><input type="hidden" name="delfm" value="true"><button type="submit" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
             'id' => $r['Code']
         ));
     }
@@ -1141,14 +1163,14 @@ Upload new HTML file: <input name="formfile" type="file" required accept="text/h
             'id' => 'replacements'
         ));
     }
-    
+
     // Make the final tab control
     $ul = HTMLContainer::generateMarkup('ul', $li, array());
     $output = HTMLContainer::generateMarkup('div', $ul . $tabContent, array(
         'id' => 'regTabDiv',
         'data-formDef' => $formDef
     ));
-    
+
     $dataArray['type'] = $formType;
     $dataArray['title'] = $formTitle;
     $dataArray['mkup'] = $output;
@@ -1166,9 +1188,9 @@ if (isset($_POST['docUpload'])) {
     if (isset($_POST['filefrmtype'])) {
     	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
     }
-    
+
     $mimetype = mime_content_type($_FILES['formfile']['tmp_name']);
-    
+
     if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
 
         $docId = - 1;
@@ -1192,19 +1214,19 @@ if (isset($_POST['docUpload'])) {
 }
 
 if (isset($_POST['delfm']) && isset($_POST['docCode']) && isset($_POST['formDef'])) {
-    
+
     $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
     $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_STRING);
-    
+
     $tabIndex = 8;
-    
+
     $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
     $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
-    
+
     if (isset($_POST['docfrmtype'])) {
     	$formType = filter_var($_POST['docfrmtype'], FILTER_SANITIZE_STRING);
     }
-    
+
 }
 
 // Make sure Content-Type is application/json
@@ -1213,7 +1235,7 @@ if (stripos($content_type, 'application/json') !== false) {
     // Read the input stream
     $body = file_get_contents("php://input");
     $data = json_decode($body);
-    
+
     if($data->cmd == "reorderfm"){
         $output = "";
         try{
@@ -1226,7 +1248,7 @@ if (stripos($content_type, 'application/json') !== false) {
         }
         echo json_encode(["status"=>"success"]);
     }
-    
+
     exit;
 }
 
@@ -1240,7 +1262,7 @@ if (isset($_POST['txtformLang'])) {
     if (isset($_POST['hdnFormType'])) {
     	$formType = filter_var($_POST['hdnFormType'], FILTER_SANITIZE_STRING);
     }
-    
+
     if ($lang != '') {
 
         $rarry = readGenLookupsPDO($dbh, 'Form_Upload');
@@ -1576,14 +1598,14 @@ if ($uS->KeyDeposit) {
 $payTypesTable = '';
 
 if ($uS->RoomPriceModel != ItemPriceCode::None) {
-	
+
 	$payMethods = array();
 	$stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
 	while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
 		$payMethods[$t[0]] = $t[1];
 	}
 	$payMethods[''] = '';
-	
+
 
     $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
     $ptTbl = new HTMLTable();
@@ -1637,7 +1659,7 @@ $hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire');
 $hTbl->addHeaderTr($hths);
 
 foreach ($hrows as $h) {
-	
+
 	if ($h['Title'] == '(None)' && $h['Type'] == 'a') {
 		continue;
 	}
@@ -1679,14 +1701,14 @@ foreach ($hrows as $h) {
     		'name' => 'hdel[' . $h['idHospital'] . ']',
     		'type' => 'checkbox'
     );
-    
+
     $rowAtr = array();
-    
+
     if ($h['Status'] == 'r') {
     	$hdelAtr['checked'] = 'checked';
     	$rowAtr['style'] = 'background-color:lightgray;';
     }
-    
+
     $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated'])))
     	. HTMLTable::makeTd(HTMLInput::generateMarkup('', $hdelAtr), array(
         'style' => 'text-align:center;'
@@ -1776,6 +1798,27 @@ $selDemos = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($rows, ''),
     'data-type' => 'd',
     'class' => 'hhk-selLookup'
 ));
+
+$insuranceType = new InsuranceType();
+
+// save insurance types
+if(isset($_POST["insuranceTypes"])){
+    $insuranceType = new InsuranceType();
+    $insuranceType->save($dbh, $_POST);
+}
+
+$insuranceType->loadInsuranceTypes($dbh);
+$selInsTypes = $insuranceType->generateSelector();
+
+if(isset($_POST["insurances"])){
+    $insurance = new Insurance();
+    $return = $insurance->save($dbh, $_POST);
+    if(is_array($return)){
+        echo json_encode($return);
+        exit;
+    }
+}
+
 $lookupErrMsg = '';
 
 // General Lookup categories
@@ -1984,6 +2027,18 @@ $rteSelectForm = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(remove
     'name' => 'selFormUpload'
 ));
 
+// Form Builder
+$forms = FormTemplate::listTemplates($dbh);
+$formTbl = new HTMLTable();
+$formTbl->addHeaderTr(HTMLTable::makeTh('Referral Forms', array('colspan'=>'4')));
+$formTbl->addHeaderTr(HTMLTable::makeTh('Actions') . HTMLTable::makeTh('ID') . HTMLTable::makeTh('Title') . HTMLTable::makeTh('Status'));
+if(count($forms) > 0){
+    foreach($forms as $form){
+        $formTbl->addBodyTr(HTMLTable::makeTd('<button class="editForm hhk-btn" data-docId="' . $form['idDocument'] . '">Edit</button>') . HTMLTable::makeTd($form['idDocument']) . HTMLTable::makeTd($form['Title']) . HTMLTable::makeTd($form['Status']));
+    }
+}
+
+
 // Instantiate the alert message control
 $alertMsg = new AlertMessage("divAlert1");
 $alertMsg->set_DisplayAttr("none");
@@ -2017,6 +2072,8 @@ $resultMessage = $alertMsg->createMarkup();
 	<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+	<script type="text/javascript" src="../js/formBuilder/form-builder.min.js"></script>
+	<script type="text/javascript" src="js/formBuilder.js"></script>
 	<script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
 </head>
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -2034,11 +2091,15 @@ $resultMessage = $alertMsg->createMarkup();
 				<li><a href="#roomTable">Rooms</a></li>
 				<li><a href="#rateTable"><?php echo $rateTableTabTitle; ?></a></li>
 				<li><a href="#hospTable"><?php echo $hospitalTabTitle; ?></a></li>
+				<?php if($uS->InsuranceChooser){ ?>
+				<li><a href="#insTable">Insurance</a></li>
+				<?php } ?>
 				<li><a href="#demoTable">Demographics</a></li>
 				<li><a href="#lkTable">Lookups</a></li>
 				<li><a href="#itemTable">Items</a></li>
 				<li><a href="#taxTable">Taxes</a></li>
 				<li><a href="#formUpload">Forms Upload</a></li>
+				<li><a href="#formBuilder">Form Builder</a></li>
 				<li><a href="#attrTable">Attributes</a></li>
 				<li><a href="#constr">Constraints</a></li>
 			</ul>
@@ -2050,6 +2111,28 @@ $resultMessage = $alertMsg->createMarkup();
 				style="font-size: .9em;">
                     <?php echo $roomTable; ?>
                 </div>
+            <?php if($uS->InsuranceChooser){ ?>
+			<div id="insTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+				<div><?php echo $demoMessage; ?></div>
+				<div style="float: left;">
+					<h3>Insurance Types</h3>
+					<?php echo $insuranceType->generateEditMarkup(); ?>
+				</div>
+
+				<div style="float: left; margin-left: 30px;">
+					<h3>Insurance Companies</h3>
+					<form id="formdemoCat">
+						<table>
+							<tr>
+								<th>Insurance</th>
+								<td><?php echo $selInsTypes; ?></td>
+							</tr>
+						</table>
+						<div id="divdemoCat"></div>
+					</form>
+				</div>
+			</div>
+			<?php } ?>
 			<div id="demoTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
 				<div><?php echo $demoMessage; ?></div>
 				<div style="float: left;">
@@ -2175,6 +2258,8 @@ $resultMessage = $alertMsg->createMarkup();
 				<p id="rteMsg" style="float: left;" class="ui-state-highlight"><?php echo $rteMsg; ?></p>
 				<div id="divUploadForm" style="margin-top: 1em;"></div>
 			</div>
+			<div id="formBuilder" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+			</div>
 			<div id="itemTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
 				<form method="POST" action="ResourceBuilder.php" name="formitem">
 <?php echo $itemTable; ?>
@@ -2224,7 +2309,32 @@ $resultMessage = $alertMsg->createMarkup();
 		</div>
 		<div id="statEvents" class="hhk-tdbox hhk-visitdialog"
 			style="font-size: .9em;"></div>
+		<input type="hidden" id='fixedRate' value="<?php RoomRateCategories::Fixed_Rate_Category;?>" />
 	</div>
 	<!-- div id="contentDiv"-->
+	<script type="text/javascript">
+
+		$(document).ready(function(){
+			$('#formBuilder').hhkFormBuilder({
+				labels: {
+					hospital: "<?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>",
+					guest: "<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>",
+					patient: "<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>",
+					diagnosis: "<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>",
+					location: "<?php echo $labels->getString('hospital', 'location', 'Unit'); ?>",
+					referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
+					treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
+					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>",
+					mrn: "<?php echo $labels->getString('hospital', 'MRN', 'MRN'); ?>"
+				},
+				fieldOptions: {
+					county: "<?php echo $uS->county; ?>",
+					doctor: "<?php echo $uS->Doctor; ?>",
+					referralAgent: "<?php echo $uS->ReferralAgent; ?>"
+				}
+			});
+		});
+
+	</script>
 </body>
 </html>

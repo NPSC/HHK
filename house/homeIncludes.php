@@ -8,7 +8,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-define('JSV', '?v=16');
+define('JSV', '?v=19');
 
 define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
@@ -23,6 +23,7 @@ define('REGISTER_JS', 'js/register-min.js' . JSV);
 define('RESV_JS', "js/resv.js" . JSV);
 define('INVOICE_JS', "js/invoice.js" . JSV);
 define('REPORTFIELDSETS_JS', "js/reportfieldSets.js" . JSV);
+define('REFERRAL_VIEWER_JS', "js/referralViewer.js" . JSV);
 define('RESERVE_JS', 'js/reserve.js' . JSV);
 define('CHECKIN_JS', 'js/checkin.js' . JSV);
 define('CHECKINGIN_JS', 'js/checkingIn.js' . JSV);
@@ -30,9 +31,11 @@ define('RESCBUILDER_JS', 'js/rescBuilder.js' . JSV);
 define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/GuestTransfer.js' . JSV);
 define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
+define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js"></script>');
+define('BOOTSTRAP_JS', 'js/bootstrap.min.js');
 
 define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
-
+define('BOOTSTRAP_CSS', "<link href='css/bootstrap.min.css' rel='stylesheet' type='text/css' /><link href='css/bootstrap-print-fix.css' rel='stylesheet' type='text/css' />");
 /**
  * Includes
  */

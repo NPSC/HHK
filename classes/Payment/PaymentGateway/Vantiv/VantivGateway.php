@@ -408,7 +408,7 @@ class VantivGateway extends AbstractPaymentGateway {
         if ($this->getPaymentPageLogoUrl() != '') {
         	$pay->setLogoUrl($secure->getRootURL() . $this->getPaymentPageLogoUrl());
         }
-        
+
         // Card reader?
         if ($this->usePOS && ! $this->manualKey) {
             $pay->setCardEntryMethod('swipe')
@@ -461,12 +461,12 @@ class VantivGateway extends AbstractPaymentGateway {
         $uS->manualKey = $this->manualKey;
 
         $pay = new InitCkOutRequest($uS->siteName, 'Custom');
-        
+
         // Payment Logo
         if ($this->getPaymentPageLogoUrl() != '') {
         	$pay->setLogoUrl($siteUrl . $this->getPaymentPageLogoUrl());
         }
-        
+
 
         // Card reader?
         if ($this->usePOS && ! $this->manualKey) {

@@ -151,7 +151,7 @@ class PaymentReport {
         $writer = new ExcelHelper($file);
         $writer->setAuthor($uS->username);
         $writer->setTitle('Payment Report');
-        
+
         // build header
         $hdr = array(
             "Id"=>"string",
@@ -171,9 +171,9 @@ class PaymentReport {
         );
 
         $colWidths = array('10', '10', '20', '20', '15', '10', '10', '15', '20', '15', '15', '15', 15, '20');
-        
+
         $hdrStyle = $writer->getHdrStyle($colWidths);
-        
+
         $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
 
         $name_lk = $uS->nameLookups;
@@ -285,7 +285,7 @@ class PaymentReport {
         );
 
         $row = $writer->convertStrings($hdr, $flds);
-        
+
         $writer->writeSheetRow("Sheet1", $row);
     }
 
@@ -297,7 +297,7 @@ class PaymentReport {
         $payGW = '';
         $payStatus = $p['Payment_Status_Title'];
         $dateDT = new \DateTime($p['Payment_Date']);
-        
+
         $lastUpdatedStr = '';
         if ($p['Last_Updated'] != '') {
         	$lastUpdatedDT = new \DateTime($p['Last_Updated']);
@@ -322,15 +322,15 @@ class PaymentReport {
                 	if ($a['Card_Type'] != '') {
                 		$payDetail = $a['Card_Type'] . ' - ' . $a['Masked_Account'];
                 	}
-                	
+
                 	if ($a['Merchant'] != '' && $a['Merchant'] != 'Production') {
                 		$payGW = ucfirst($a['Merchant']);
                 	}
-                	
+
                     if ($a['Auth_Last_Updated'] !== '') {
-                    	
+
                     	$lastUpdatedDT = new \DateTime($a['Auth_Last_Updated']);
-                    	
+
                     	if ($lastUpdatedDT != $dateDT) {
                     		$lastUpdatedStr = $lastUpdatedDT->format('c');
                     	}
@@ -466,16 +466,16 @@ class PaymentReport {
             $g['Orig_Amount'] = $origAmt;
             $g['Amount'] = $amt;
             $g['Updated'] = $lastUpdatedStr;
-            
+
             $flds = array(
                 $r['i']['Sold_To_Id'],
                 ($r['i']['Bill_Agent'] == 'a' ? $r['i']['Company'] : '')
             );
-            
+
             foreach ($fltrdFields as $f) {
                 $flds[] = $g[$f[1]];
             }
-            
+
             $row = $writer->convertStrings($hdr, $flds);
             $writer->writeSheetRow("Sheet1", $row);
 

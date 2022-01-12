@@ -50,7 +50,7 @@ use HHK\Payment\GatewayResponse\GatewayResponseInterface;
  * @author ecran
  */
 class LocalGateway extends AbstractPaymentGateway {
-    
+
 	public static function getPaymentMethod() {
 		return PaymentMethod::Charge;
 	}
@@ -66,18 +66,18 @@ class LocalGateway extends AbstractPaymentGateway {
 	public function hasVoidReturn() {
 		return FALSE;
 	}
-	
+
 	public function hasCofService() {
 		return TRUE;
 	}
 	public function hasUndoReturnPmt() {
 		return TRUE;
 	}
-	
+
 	public function hasUndoReturnAmt() {
 		return TRUE;
 	}
-	
+
 	protected function setCredentials($credentials) {
 		$this->credentials = $credentials;
 	}
@@ -90,30 +90,30 @@ class LocalGateway extends AbstractPaymentGateway {
 			$pmp->setChargeCard ( $chgTypes [$pmp->getChargeCard ()] [1] );
 		}
 
-		
+
 		// Check token id for pre-stored credentials.
 		$tokenRS = CreditToken::getTokenRsFromId ( $dbh, $pmp->getIdToken () );
 
 		// Do we have a token?
 		if (CreditToken::hasToken ( $tokenRS )) {
-			
+
 			$pmp->setChargeCard ( $tokenRS->CardType->getStoredVal () );
 			$pmp->setChargeAcct ( $tokenRS->MaskedAccount->getStoredVal () );
 			$pmp->setCardHolderName ( $tokenRS->CardHolderName->getStoredVal () );
-			
+
 		} else {
-			
+
 			if (trim($pmp->getCardHolderName()) == '') {
-				
+
 				try {
-					
+
 					$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
-					
+
 				} catch (MemberException $ex) {
-					
+
 					$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 				}
-				
+
 				$pmp->setCardHolderName($guest->get_fullName());
 			}
 		}
@@ -157,39 +157,39 @@ class LocalGateway extends AbstractPaymentGateway {
 
 	public function initCardOnFile(\PDO $dbh, $pageTitle, $idGuest, $idGroup, $manualKey, $cardHolderName, $postbackUrl, $selChgType = '', $chgAcct = '', $idx = '') {
 		$uS = Session::getInstance ();
-		
+
 		if ($selChgType == '' || $chgAcct == '') {
 			return array('COFmsg'=>'Missing charge type and/or account number');
 		}
-		
+
 		if ($cardHolderName == '') {
 			$guest = new Guest($dbh, '', $idGuest);
 			$cardHolderName = $guest->getRoleMember()->getMemberFullName();
 		}
 
 		$gwResp = new LocalGatewayResponse( 0, '', $selChgType, $chgAcct, $cardHolderName, MpTranType::CardOnFile, $uS->username );
-		
+
 		$vr = new LocalResponse ( $gwResp, $idGuest, $idGroup, 0, PaymentStatusCode::Paid );
-		
+
 		try {
 			$vr->idToken = CreditToken::storeToken($dbh, $vr->idRegistration, $vr->idPayor, $vr->response);
 		} catch(\Exception $ex) {
 			return array('error'=> $ex->getMessage());
 		}
-		
+
 		$dataArray['COFmsg'] = 'Card Added.';
 		$dataArray['COFmkup'] = HouseServices::guestEditCreditTable($dbh, $idGroup, $idGuest, $idx);
 		return $dataArray;
 	}
-	
+
 	protected function _voidSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
-		
+
 		$uS = Session::getInstance ();
-		
+
 		$dataArray = array (
 				'bid' => $bid
 		);
-		
+
 		// find the token record
 		$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
 		$cardHolderName = $tknRs->CardHolderName->getStoredVal ();
@@ -202,10 +202,10 @@ class LocalGateway extends AbstractPaymentGateway {
 			} catch (MemberException $ex) {
 				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
-			
+
 			$cardHolderName = $guest->get_fullName();
 		}
-		
+
 		// create gw response
 		$gwResp = new LocalGatewayResponse(
 				$pAuthRs->Approved_Amount->getStoredVal (),
@@ -237,27 +237,27 @@ class LocalGateway extends AbstractPaymentGateway {
 
 	protected function _returnPayment(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $retAmount, $bid) {
 		$uS = Session::getInstance ();
-		
+
 		$dataArray = array (
 				'bid' => $bid
 		);
-		
+
 		// find the token
 		$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
 		$cardHolderName = $tknRs->CardHolderName->getStoredVal ();
 
 		// Get cardholder name
 		if ($cardHolderName == '') {
-			
+
 			try {
 				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 			} catch (MemberException $ex) {
 				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
-			
+
 			$cardHolderName = $guest->get_fullName();
 		}
-		
+
 		$gwResp = new LocalGatewayResponse(
 				$pAuthRs->Approved_Amount->getStoredVal (),
 				$invoice->getInvoiceNumber (),
@@ -288,21 +288,21 @@ class LocalGateway extends AbstractPaymentGateway {
 	}
 
 	public function returnAmount(\PDO $dbh, Invoice $invoice, $rtnToken, $paymentNotes) {
-		
+
 		$uS = Session::getInstance ();
-		
+
 		$tokenRS = CreditToken::getTokenRsFromId ( $dbh, $rtnToken );
 		$amount = abs ( $invoice->getAmount () );
 		$cardHolderName = $tokenRS->CardHolderName->getStoredVal();
-		
+
 		if ($cardHolderName == '') {
-			
+
 			try {
 				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 			} catch (MemberException $ex) {
 				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
-			
+
 			$cardHolderName = $guest->get_fullName();
 		}
 
@@ -336,27 +336,27 @@ class LocalGateway extends AbstractPaymentGateway {
 	public function reverseSale(\PDO $dbh, Invoice $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
 		return $this->_voidSale ( $dbh, $invoice, $payRs, $pAuthRs, $bid );
 	}
-	
+
 	public function undoReturnPayment(\PDO $dbh, $invoice, PaymentRS $payRs, Payment_AuthRS $pAuthRs, $bid) {
-		
+
 		$uS = Session::getInstance();
 		$dataArray = array('bid' => $bid);
-		
+
 		// find the token
 		$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
 		$cardHolderName = $tknRs->CardHolderName->getStoredVal();
-		
+
 		if ($cardHolderName == '') {
-			
+
 			try {
 				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 			} catch (MemberException $ex) {
 				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
-			
+
 			$cardHolderName = $guest->get_fullName();
 		}
-		
+
 		$gwResp = new LocalGatewayResponse(
 				$pAuthRs->Approved_Amount->getStoredVal (),
 				$invoice->getInvoiceNumber (),
@@ -365,55 +365,55 @@ class LocalGateway extends AbstractPaymentGateway {
 				$cardHolderName,
 				MpTranType::ReturnSale,
 				$uS->username );
-		
+
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $tknRs->idGuest_token->getStoredVal (), PaymentStatusCode::VoidReturn );
 		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
-		
+
 		// Record transaction
 		$transRs = Transaction::recordTransaction ( $dbh, $vr, $this->getGatewayType(), TransType::undoRetrn, TransMethod::Token );
 		$vr->setIdTrans ( $transRs->idTrans->getStoredVal () );
-		
+
 		// Payment record
 		$payRs->Status_Code->setNewVal(PaymentStatusCode::Paid);
 		$payRs->Updated_By->setNewVal($uS->username);
 		$payRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
-		
+
 		EditRS::update($dbh, $payRs, array($payRs->idPayment));
 		EditRS::updateStoredVals($payRs);
-		
+
 		// Payment Auth record
 		EditRS::delete($dbh, $pAuthRs, array($pAuthRs->idPayment_auth));
-		
+
 		// Update invoice
 		$invoice->updateInvoiceBalance ( $dbh, $vr->response->getAuthorizedAmount (), $uS->username );
-		
+
 		$vr->idVisit = $invoice->getOrderNumber ();
 		$dataArray ['receipt'] = HTMLContainer::generateMarkup ( 'div', nl2br ( Receipt::createSaleMarkup( $dbh, $invoice, $uS->siteName, $uS->sId, $vr ) ) );
 		$dataArray ['success'] = 'Return is Undone.  ';
-		
+
 		return $dataArray;
 	}
-	
+
 	public function undoReturnAmount(\PDO $dbh, $invoice, PaymentRs $payRs, Payment_AuthRS $pAuthRs, $bid) {
-		
+
 		$uS = Session::getInstance();
 		$dataArray = array('bid' => $bid);
-		
+
 		// find the token
 		$tknRs = CreditToken::getTokenRsFromId ( $dbh, $payRs->idToken->getStoredVal () );
 		$cardHolderName = $tknRs->CardHolderName->getStoredVal();
-		
+
 		if ($cardHolderName == '') {
-			
+
 			try {
 				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Indivual);  //new Guest($dbh, '', $invoice->getSoldToId());
 			} catch (MemberException $ex) {
 				$guest = AbstractMember::GetDesignatedMember($dbh, $invoice->getSoldToId(), MemBasis::Company);
 			}
-			
+
 			$cardHolderName = $guest->get_fullName();
 		}
-		
+
 		$gwResp = new LocalGatewayResponse(
 				$pAuthRs->Approved_Amount->getStoredVal (),
 				$invoice->getInvoiceNumber (),
@@ -422,27 +422,27 @@ class LocalGateway extends AbstractPaymentGateway {
 				$cardHolderName,
 				MpTranType::ReturnAmt,
 				$uS->username );
-		
+
 		$vr = new LocalResponse ( $gwResp, $invoice->getSoldToId (), $invoice->getIdGroup (), $tknRs->idGuest_token->getStoredVal (), PaymentStatusCode::VoidSale );
 		$vr->setPaymentDate ( date ( 'Y-m-d H:i:s' ) );
-		
+
 		// Record transaction
 		Transaction::recordTransaction($dbh, $vr, '', TransType::undoRetrn, TransMethod::Token);
-		
+
 		// Payment records.
 		$dbh->exec("delete from payment_invoice where Payment_Id = " . $payRs->idPayment->getStoredVal ());
 		$dbh->exec("delete from payment_auth where idPayment = " . $payRs->idPayment->getStoredVal ());
 		$dbh->exec("delete from payment where idPayment = " . $payRs->idPayment->getStoredVal ());
-		
+
 		$invoice->updateInvoiceBalance($dbh, $pAuthRs->Approved_Amount->getStoredVal (), $uS->username);
 		// delete invoice
 		$invoice->deleteInvoice($dbh, $uS->username);
-		
+
 		$dataArray['success'] = 'Refund is undone.  ';
 		return $dataArray;
-		
+
 	}
-	
+
 	protected static function _saveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 	}
 	protected static function _createEditMarkup(\PDO $dbh, $gatewayName) {
@@ -457,7 +457,7 @@ class LocalGateway extends AbstractPaymentGateway {
 	public function getCofResponseObj(GatewayResponseInterface $vcr, $idPayor, $idGroup) {
 		return new LocalResponse ( $vcr, $idPayor, $idGroup, 0 );
 	}
-	
+
 	public function selectPaymentMarkup(\PDO $dbh, &$payTbl, $index = '') {
 
 		// Charge card list
@@ -490,13 +490,13 @@ class LocalGateway extends AbstractPaymentGateway {
 		) ), array (
 				'colspan' => '4'
 		) ) );
-		
+
 		$tbl->addBodyTr ( HTMLTable::makeTd ('For security purposes, the Name field only allows letters', array('colspan' => '4'
 		)), array (
 				'style'=>'display:none;font-size:smaller;color:red;',
 				'id'=>'lhnameerror'
 		) );
-		
+
 		$payTbl->addBodyTr ( HTMLTable::makeTd ( $tbl->generateMarkup (), array (
 				'colspan' => '5'
 		) ), array (

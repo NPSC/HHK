@@ -246,7 +246,7 @@ class Report {
 
         return $counter;
     }
-    
+
     public function toArray(){
 	    return array(
 		    "idReport"=>$this->idReport,
@@ -277,7 +277,7 @@ class Report {
     public function getTitle() {
         return $this->title;
     }
-    
+
     public function getCategory() {
 	    return $this->category;
     }
@@ -293,27 +293,27 @@ class Report {
     public function getDescription() {
         return $this->description;
     }
-    
+
     public function getResolution(){
 	    return $this->resolution;
     }
-    
+
     public function getSignature(){
 	    return $this->signature;
     }
-    
+
     public function getSignatureDate(){
 	    return $this->signatureDate;
     }
-    
+
     public function getAuthor(){
 	    return $this->author;
     }
-    
+
     public function getGuestId(){
 	    return $this->guestId;
     }
-    
+
     public function getPsgId(){
 	    return $this->psgId;
     }
@@ -329,7 +329,7 @@ class Report {
     public function getStatus() {
         return $this->status;
     }
-    
+
     public function getTimestamp(){
 	    return $this->timestamp;
     }
@@ -338,7 +338,7 @@ class Report {
         $this->title = $title;
         return $this;
     }
-    
+
     public function setCategory($category) {
 	    $this->category = $category;
 	    return $this;
@@ -353,37 +353,37 @@ class Report {
         $this->resolutionDate = $resolutionDate;
         return $this;
     }
-    
+
     public function setDescription($description){
 	    $this->description = $description;
 	    return $this;
     }
-    
+
     public function setResolution($resolution){
 	    $this->resolution = $resolution;
 	    return $this;
     }
-    
+
     public function setSignature($signature){
 	    $this->signature = $signature;
 	    return $this;
     }
-    
+
     public function setSignatureDate($signatureDate){
 	    $this->signatureDate = $signatureDate;
 	    return $this;
     }
-    
+
     public function setAuthor($username){
 	    $this->author = $username;
 	    return $this;
     }
-    
+
     public function setGuestId($guestId){
 	    $this->guestId = $guestId;
 	    return $this;
     }
-    
+
     public function setPsgId($psgId){
 	    $this->psgId = $psgId;
 	    return $this;
@@ -403,7 +403,7 @@ class Report {
         $this->updatedBy = $updatedBy;
         return $this;
     }
-    
+
     public function setTimestamp($timestamp) {
 	    $this->timestamp = $timestamp;
 	    return $this;

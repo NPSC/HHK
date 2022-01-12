@@ -288,7 +288,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             }
         }
     }
-    
+
     $whAssoc = '';
     foreach ($filter->getSelectedAssocs() as $a) {
         if ($a != '') {
@@ -306,6 +306,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if ($whAssoc != '') {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
+    
+    $whHosp .= $whAssoc;
 
     if (isset($_POST['rbReport'])) {
 
@@ -343,12 +345,12 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         if ($blanksOnly) {
 
-            $dataTable = blanksOnly($dbh, $type, $whHosp, $filter->getHList(), $start, $end, $labels);
+            $dataTable = blanksOnly($dbh, $type, $whHosp, $filter->getHospitals(), $start, $end, $labels);
             $sTbl->addBodyTr(HTMLTable::makeTh('Missing ' . $colTitle . ' Assignments', array('colspan'=>'4')));
 
         } else {
 
-            $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $filter->getHList(), $start, $end, $labels);
+            $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $filter->getHospitals(), $start, $end, $labels);
         }
 
         $hospitalTitles = $filter->getSelectedHospitalsString();

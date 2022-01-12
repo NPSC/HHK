@@ -17,7 +17,6 @@ use HHK\SysConst\VolMemberType;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\PaymentException;
-use HHK\Payment\Invoice\InvoiceLine\WaiveInvoiceLine;
 
 /**
  * PaymentManager.php
@@ -82,15 +81,15 @@ class PaymentManager {
         }
 
         $this->pmp->setIdInvoicePayor($idPayor);
-        
+
         //set Tax Exempt
         $stmt = $dbh->query("SELECT n.idName, nd.tax_exempt " .
             " FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'  and nv.Vol_Code = '" . VolMemberType::BillingAgent . "' " .
             " JOIN name_demog nd on n.idName = nd.idName  ".
             " where n.Member_Status='a' and n.Record_Member = 1 and n.idName='" . $idPayor . "'");
-        
+
         $payor = $stmt->fetch(\PDO::FETCH_ASSOC);
-        
+
         if(isset($payor['tax_exempt']) && $payor['tax_exempt'] == 1){
             $this->pmp->setInvoicePayorTaxExempt(true);
         }

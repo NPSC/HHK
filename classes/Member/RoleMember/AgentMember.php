@@ -18,12 +18,12 @@ use HHK\SysConst\VolMemberType;
  *
  * @author Eric
  */
- 
+
 class AgentMember extends AbstractRoleMember {
-    
+
     protected function getMyMemberType() {
         return VolMemberType::ReferralAgent;
     }
-    
+
 }
 ?>

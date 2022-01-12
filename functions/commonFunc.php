@@ -80,34 +80,6 @@ function initPDO($override = FALSE)
     return $dbh;
 }
 
-function creditIncludes($gatewayName) {
-
-/*     require (PMT . 'paymentgateway/CreditPayments.php');
-
-    switch ($gatewayName) {
-
-        case AbstractPaymentGateway::INSTAMED:
-            require (PMT . 'paymentgateway/instamed/InstamedConnect.php');
-            require (PMT . 'paymentgateway/instamed/InstamedResponse.php');
-            require (PMT . 'paymentgateway/instamed/InstamedGateway.php');
-
-            break;
-
-        case AbstractPaymentGateway::VANTIV:
-
-            require (PMT . 'paymentgateway/vantiv/MercuryHCClient.php');
-
-            require (PMT . 'paymentgateway/vantiv/HostedPayments.php');
-            require (PMT . 'paymentgateway/vantiv/TokenTX.php');
-            require (PMT . 'paymentgateway/vantiv/VantivGateway.php');
-            break;
-
-        default:
-            require (PMT . 'paymentgateway/local/LocalResponse.php');
-            require (PMT . 'paymentgateway/local/LocalGateway.php');
-
-    }
- */}
 
 function syncTimeZone(\PDO $dbh)
 {
@@ -121,6 +93,29 @@ function syncTimeZone(\PDO $dbh)
     $mins -= $hrs * 60;
     $offset = sprintf('%+d:%02d', $hrs * $sgn, $mins);
     $dbh->exec("SET time_zone='$offset';");
+}
+
+/**
+ * Return a date with time = 0
+ *
+ * @param unknown $dateTime
+ * @throws Exception
+ * @return \DateTime|\DateTimeImmutable
+ */
+function justDate($dateTime) {
+    
+    if ($dateTime instanceof \DateTime) {
+        $dateTime->setTime(0,0,0);
+    } else if ($dateTime instanceof \DateTimeImmutable) {
+        $dateTime =  $dateTime->setTime(0,0,0);
+    } else if (is_string($dateTime)) {
+        $dateTime = new \DateTime($dateTime);
+        $dateTime->setTime(0,0,0);
+    } else {
+        throw new Exception('Not a date or string date. ');
+    }
+    
+    return $dateTime;
 }
 
 function stripslashes_gpc(&$value)

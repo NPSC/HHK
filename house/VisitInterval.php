@@ -39,7 +39,6 @@ $dbh = $wInit->dbh;
 
 // get session instance
 $uS = Session::getInstance();
-creditIncludes($uS->PaymentGateway);
 
 
 function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
@@ -50,7 +49,7 @@ function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end
     }
 
     $uS = Session::getInstance();
-    
+
     $totalVisitNites = 0;
     $numCategoryRooms = array();
 
@@ -194,11 +193,11 @@ order by r.idResource;";
     $sTbl->addBodyTr(HTMLTable::makeTd('Median visit length in days:', array('class'=>'tdlabel')) . HTMLTable::makeTd(number_format($median,2)));
 
     $sTbl->addBodyTr(HTMLTable::makeTd('Mean Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($avDailyFee,2)));
-    
+
     if($uS->RoomPriceModel == ItemPriceCode::Dailey){
         $sTbl->addBodyTr(HTMLTable::makeTd('Median Room Charge per visit day:', array('class'=>'tdlabel')) . HTMLTable::makeTd('$'.number_format($medDailyFee,2)));
     }
-    
+
     $sTbl->addBodyTr($trs[4]);
 
     $sTbl->addBodyTr($trs[5]);
@@ -262,7 +261,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
     if ($visit['gnit'] > 0) {
     	$r['meanGstRate'] = number_format(($visit['chg'] / $visit['gnit']), 2);
     }
-    
+
 
     // Hospital
     $hospital = '';
@@ -293,7 +292,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
     $sub = $visit['fcg'] - $visit['chg'];
     $r['sub'] = ($sub == 0 ? '' : number_format($sub,2));
-    
+
     $rateAdj = $visit['adj'];
     $r['rateAdj'] = ($rateAdj == 0 ? '' : number_format($rateAdj, 2) . '%');
 
@@ -350,6 +349,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
 
     $changeRoomIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-info', 'style'=>'float:left;', 'title'=>'Changed Rooms'));
     $changeRateIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-info', 'style'=>'float:left;', 'title'=>'Room Rate Changed'));
+    $insInfoIcon = HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-comment insAction', 'style'=>'cursor:pointer;', 'data-idName'=>$r['idPatient'], 'id'=>'insAction' . $r['idPatient'], 'title'=>'View Insurance'));
 
     if ($local) {
 
@@ -387,6 +387,10 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
             $r['Title'] = $changeRoomIcon . $r['Title'];
         }
 
+        if($r['Insurance'] != ''){
+            $r['Insurance'] = $insInfoIcon . $r['Insurance'];
+        }
+
         $tr = '';
         foreach ($fltrdFields as $f) {
             $tr .= HTMLTable::makeTd($r[$f[1]], $f[6]);
@@ -395,7 +399,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
         $tbl->addBodyTr($tr);
 
     } else {
-        
+
         $r['Status'] = $uS->guestLookups['Visit_Status'][$r['Status']][1];
         $r['idPrimaryGuest'] = $r['Name_Last'] . ', ' . $r['Name_First'];
         $r['Arrival'] = $arrivalDT->format('Y-m-d');
@@ -457,24 +461,70 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
 
     // Make titles for all the rates
     $rateTitles = RoomRate::makeDescriptions($dbh);
-    
+
     $guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
-    
+
     if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
-    	$guestNightsSql = "CASE WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start') THEN 0
+
+        $guestNightsSql = "CASE
+        WHEN DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start') THEN 0
         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
-        ELSE (SELECT SUM(DATEDIFF(CASE WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$end')
-        THEN DATE('$end') ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END,
-        CASE WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start') ELSE DATE(s.Span_Start_Date) END))
-        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
-    	END AS `Actual_Guest_Nights`,
-    	CASE WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0 WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
-    	THEN (SELECT SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))), DATE(s.Span_Start_Date)))
-    	FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)ELSE (SELECT SUM(DATEDIFF(CASE
-      	WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start') THEN DATE('$start')
-      	ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END, DATE(s.Span_Start_Date)))
-        FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";
+        ELSE
+            (SELECT SUM(
+                CASE WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start') THEN 0
+                WHEN DATE(s.Span_Start_Date) >= DATE('$end') THEN 0
+                ELSE
+                    DATEDIFF(CASE
+                        WHEN
+                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$end')
+                        THEN
+                        DATE('$end')
+                        ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                        END,
+                    CASE
+                        WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
+                        ELSE DATE(s.Span_Start_Date)
+                        END)
+                END)
+                FROM
+                stays s
+                WHERE
+                s.idVisit = v.idVisit
+                AND s.Visit_Span = v.Span)
+        END AS `Actual_Guest_Nights`,
+
+        CASE
+            WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
+            ELSE
+                (SELECT SUM(
+            CASE WHEN DATE(s.Span_Start_Date) >= DATE('$start') THEN 0
+                    WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start') THEN
+                    DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))), DATE(s.Span_Start_Date))
+                    ELSE
+                        DATEDIFF(
+                            CASE
+                            WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$start') THEN DATE('$start')
+                            ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                            END,
+                            DATE(s.Span_Start_Date))
+                    END)
+                    FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
+       END AS `PI_Guest_Nights`,";
     }
+//     	"CASE WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start') THEN 0
+//         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
+//         ELSE (SELECT SUM(DATEDIFF(CASE WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$end')
+//         THEN DATE('$end') ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END,
+//         CASE WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start') ELSE DATE(s.Span_Start_Date) END))
+//         FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
+//     	END AS `Actual_Guest_Nights`,
+//     	CASE WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0 WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
+//     	THEN (SELECT SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))), DATE(s.Span_Start_Date)))
+//     	FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)ELSE (SELECT SUM(DATEDIFF(CASE
+//       	WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start') THEN DATE('$start')
+//       	ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END, DATE(s.Span_Start_Date)))
+//         FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";
+
 
     $query = "select
     v.idVisit,
@@ -557,6 +607,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     ifnull(nra.Name_Full, '') as Referral_Agent,
     ifnull(g.Description, hs.Diagnosis) as Diagnosis,
     ifnull(hs.Diagnosis2, '') as Diagnosis2,
+    ifnull(group_concat(i.Title order by it.List_Order separator ', '), '') as Insurance,
     ifnull(gl.Description, '') as Location,
     ifnull(rm.Rate_Code, '') as Rate_Code,
     ifnull(rm.Category, '') as Category,
@@ -616,6 +667,12 @@ from
         left join
     name nra ON hs.idReferralAgent = nra.idName
         left join
+	name_insurance ni on np.idName = ni.idName
+		left join
+	insurance i on ni.Insurance_Id = i.idInsurance
+		left join
+	insurance_type it on i.idInsuranceType = it.idInsurance_type
+        left join
     gen_lookups g ON g.`Table_Name` = 'Diagnosis' and g.`Code` = hs.Diagnosis
         left join
     gen_lookups gl ON gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
@@ -635,7 +692,7 @@ where
                         when now() > Expected_Departure then now()
                         else Expected_Departure
                 end)) >= DATE('$start')) "
-    . $whHosp . $whAssoc . " order by v.idVisit, v.Span";
+    . $whHosp . $whAssoc . " group by v.idVisit, v.Span order by v.idVisit, v.Span";
 
 
     $tbl = new HTMLTable();
@@ -646,7 +703,7 @@ where
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
     $header = array();
-    
+
     if ($local) {
 
         $th = '';
@@ -670,12 +727,12 @@ where
             'money'=>'money', // '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'
             'date'=>'MM/DD/YYYY'
         ];
-        
-        
+
+
         //build header
         $colWidths = array();
-        
-        
+
+
         foreach($fltrdFields as $field){
               if($field[5] != "" && $field[5] == '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)'){ //if format is money
                   $header[$field[0]] = $types['s'];
@@ -691,14 +748,14 @@ where
                 $colWidths[] = 20;
              }
         }
-        
+
         try{
             $hdrStyle = $writer->getHdrStyle($colWidths);
             $writer->writeSheetHeader('Sheet1', $header, $hdrStyle);
         }catch(\Exception $e){
             $writer->download();
         }
-        
+
         $reportRows++;
 
     }
@@ -751,9 +808,9 @@ where
     $now->setTime(0, 0, 0);
 
     $vat = new ValueAddedTax($dbh);
-    
+
     $dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, FALSE);
-    
+
     $stmt = $dbh->query($query);
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1001,9 +1058,9 @@ where
         $savedr = $r;
 
     }   // End of while
-    
+
     $dbh->setAttribute(PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, TRUE);
-    
+
 
 
     // Print the last visit.
@@ -1140,11 +1197,11 @@ where
 
         if ($totalNights > 0) {
             $avDailyFee = $totalCharged / $totalNights;
-            
+
             array_multisort($chargesAr);
             $entries = count($chargesAr);
             $emod = $entries % 2;
-            
+
             if ($emod > 0) {
                 // odd number of entries
                 $medDailyFee = $chargesAr[(ceil($entries / 2) - 1)];
@@ -1236,11 +1293,11 @@ where
                 case 'sub':
                 	$entry = '$' . number_format($totalSubsidy,2);
                 	break;
-                	
+
                 case 'rateAdj':
                 	$entry = ' ';
                 	break;
-                	
+
                 case 'meanRate':
                 	$entry = '$' . number_format($avDailyFee,2);
                 	break;
@@ -1388,6 +1445,10 @@ if($uS->ShowDiagTB){
     $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
 }
 
+if($uS->InsuranceChooser){
+    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 'string', '20', array());
+}
+
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', '', array(), 'date');
 $cFields[] = array("Depart", 'Departure', 'checked', '', 'n', '', array(), 'date');
 $cFields[] = array("Room", 'Title', 'checked', '', 's', '', array('style'=>'text-align:center;'));
@@ -1422,11 +1483,11 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     } else {
 
         $cFields[] = array("Rate", 'rate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array());
-        
+
         if ($uS->RoomPriceModel == ItemPriceCode::NdayBlock) {
         	$cFields[] = array("Adj. Rate", 'rateAdj', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
         }
-        
+
         $cFields[] = array("Mean Rate", 'meanRate', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
 
@@ -1455,7 +1516,7 @@ if ($uS->RoomPriceModel !== ItemPriceCode::None) {
     if ($uS->RoomPriceModel != ItemPriceCode::NdayBlock) {
     	$cFields[] = array("Rate Subsidy", 'sub', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
     }
-    
+
     $cFields[] = array("Contribution", 'donpd', $amtChecked, '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)', array('style'=>'text-align:right;'));
 }
 
@@ -1688,6 +1749,7 @@ if ($uS->CoTod) {
                      'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                     }
                  ],
+                 "scrollX": true,
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
@@ -1711,6 +1773,54 @@ if ($uS->CoTod) {
     });
 
 	$('#includeFields').fieldSets({'reportName': 'visit', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
+
+	// disappear the pop-up room chooser.
+    $(document).mousedown(function (event) {
+        var target = $(event.target);
+        if ($('div#insDetailDiv').length > 0 && target[0].id !== 'insDetailDiv' && target.parents("#" + 'insDetailDiv').length === 0) {
+            $('div#insDetailDiv').remove();
+        }
+    });
+
+	var detailDiv = $("<div>").attr('id','insDetailDiv');
+	$("body").append(detailDiv);
+	$('#tblrpt').on('click', '.insAction', function (event) {
+        viewInsurance($(this).data('idname'), event.target.id, detailDiv);
+    });
+
+	function viewInsurance(idName, eventTarget) {
+        "use strict";
+        detailDiv.empty();
+        $.post('ws_resc.php', {cmd: 'viewInsurance', idName: idName},
+          function(data) {
+            if (data) {
+                try {
+                    data = $.parseJSON(data);
+                } catch (err) {
+                    alert("Parser error - " + err.message);
+                    return;
+                }
+                if (data.error) {
+                    if (data.gotopage) {
+                        window.location.assign(data.gotopage);
+                    }
+                    flagAlertMessage(data.error, 'error');
+                    return;
+                }
+
+                if (data.markup) {
+                    var contr = $(data.markup);
+
+                    $('body').append(contr);
+                    contr.position({
+                        my: 'left top',
+                        at: 'left bottom',
+                        of: "#" + eventTarget
+                    });
+                }
+            }
+        });
+    }
 
     });
  </script>

@@ -34,6 +34,7 @@ abstract class AbstractResource {
     protected $rooms = array();
     protected $currentOccupantsLoaded = FALSE;
     protected $merchant = '';
+    protected $defaultRateCategory = '';
 
     //protected $roomOcc = array();
 
@@ -48,6 +49,10 @@ abstract class AbstractResource {
         if ($this->isNewResource() === FALSE) {
 
             $this->rooms = $this->loadRooms($dbh, $this->getIdResource());
+            
+            foreach ($this->rooms as $r) {
+                $this->defaultRateCategory = $r->getDefaultRateCategory();
+            }
 
             // Flag to load current occupants.
             if ($loadCurrentOccupants) {
@@ -331,6 +336,10 @@ order by r.Util_Priority;", array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
         $this->resourceRS->idSponsor->setNewVal($id);
     }
 
+    public function getDefaultRoomCategory() {
+        return $this->defaultRateCategory;
+    }
+    
     public abstract function allocateRoom($numGuests, $overRideMax = FALSE);
 
     public abstract function testAllocateRoom($numGuests);

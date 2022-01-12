@@ -9,6 +9,8 @@ use HHK\House\Reservation\Reservation_1;
 use HHK\SysConst\VisitStatus;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\CalEventKind;
+use Mexitek\PHPColors\Color;
+
 
 /*
  * GuestRegister.php
@@ -66,14 +68,14 @@ class GuestRegister {
 
         //Resource grouping controls
         $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
-        
+
 
         $genJoin = '';
         $genTableName = '';
         $orderBy = 'r.Util_Priority';
-        
+
         foreach ($rescGroups as $g) {
-        	
+
         	if ($rescGroupBy === $g[0]) {
 
         		$genJoin = " left join `gen_lookups` g on g.`Table_Name` = '" . $g[2] . "' and g.`Code` = rm." . $g[0] . " ";
@@ -82,8 +84,8 @@ class GuestRegister {
         		break;
         	}
         }
-        
-        
+
+
         // Get list of resources
         $qu = "SELECT
     r.idResource as `id`,
@@ -104,14 +106,14 @@ resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . Resource
 	$genJoin
 where ru.idResource_use is null
  order by $orderBy;";
-        
+
         $rstmt = $dbh->query($qu);
         $rawRescs = $rstmt->fetchAll(\PDO::FETCH_ASSOC);
-        
+
         $roomGroups = array();
 
         $groups = readGenLookupsPDO($dbh, $genTableName, 'Order');
-        
+
         // Count the room grouping types
         foreach ($rawRescs as $r) {
 
@@ -135,7 +137,7 @@ where ru.idResource_use is null
         	}
 
        		if ($notFound && $r[$rescGroupBy] == '') {
-	
+
 	       		if (isset($roomGroups[''])) {
 	       			$roomGroups['']['cnt']++;
 	       		} else {
@@ -143,9 +145,9 @@ where ru.idResource_use is null
 	       			$roomGroups['']['title'] = 'not set';
 	       		}
 	       	}
-	        	
+
 	       	if ($notFound && $r[$rescGroupBy] != '') {
-	        		
+
 	        	if (isset($roomGroups[$r[$rescGroupBy]])) {
 	        		$roomGroups[$r[$rescGroupBy]]['cnt']++;
 	        	} else {
@@ -153,7 +155,7 @@ where ru.idResource_use is null
 	        		$roomGroups[$r[$rescGroupBy]]['title'] = 'missing index: ' . $r[$rescGroupBy];
 	        	}
 	        }
-	        	
+
 	    }
 
 
@@ -636,11 +638,11 @@ where ru.idResource_use is null
 
 
             if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
-            	
+
             	if (isset($hospitals[$r['idAssociation']])) {
                 	$h['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
             	}
-            	
+
             } else if (isset($hospitals[$r['idHospital']])) {
                 $h['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
             }
@@ -764,7 +766,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
 
             $stDateDT = new \Datetime($r['Start_Date']);
             $enDateDT = new \DateTime($r['End_Date']);
-            
+
             // Filter Unavailable events.
             if ($r['Status'] == ResourceStatus::Unavailable) {
 
@@ -877,8 +879,40 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
                     $s['textColor'] = $nameColors[$r['idHospital']]['t'];
                 }
             }
+
+            if (isset($r['On_Leave']) && $r['On_Leave'] > 0) {
+                $this->adjustColor($s['backgroundColor'], $s['textColor']);
+            }
+        }
+
+    }
+
+    protected function adjustColor(&$backgroundColor, &$textColor) {
+
+        // darken or lignten based on wheather it is light or dark.
+        if($this->isHexColor($backgroundColor) && $this->isHexColor($textColor)){
+            $bgcolor = new Color($backgroundColor);
+            $tcolor = new Color($textColor);
+
+            if ($bgcolor->isDark()) {
+                $backgroundColor = '#' . $bgcolor->lighten();
+                $textColor = '#' . $tcolor->lighten();
+            } else {
+                $backgroundColor = '#' . $bgcolor->darken();
+                $textColor = '#' . $tcolor->darken();
+            }
         }
     }
+
+    protected function isHexColor(string $color){
+
+        if(preg_match('/^#[a-f0-9]{6}$/i', $color)){
+            return true;
+        }else{
+            return false;
+        }
+    }
+
 }
 
 

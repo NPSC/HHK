@@ -43,10 +43,16 @@ class RegisterForm {
 
     protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 
+        $staff = 'Staff';
         $mkup = "<h2>" . $title . " </h2>";
 
         if ($houseAddr != '') {
             $mkup .= '<p class="label" style="text-align:left;">' . $houseAddr . '</p>';
+        }
+
+        if (stristr($title, 'Patient Family Housing') !== false) {
+            $agent = '';
+            $staff = '';
         }
 
         $mkup .= "<table cellspacing=0 cellpadding=0 style='border-collapse:collapse;border:none'>
@@ -70,7 +76,7 @@ class RegisterForm {
   <td width=153 style='width:91.8pt;border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   " . ($priceModelCode == ItemPriceCode::None ? '' : "<p class=MsoNormal style='margin-bottom:0;line-height: normal'>$"  . number_format($rate, 2) . "</p>") ."</td>
   <td width=180 style='width:1.5in;border-top:none;border-left:none;border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
-  <p class='label'>Staff</p>
+  <p class='label'>$staff</p>
   </td>
   <td width=278 style='width:166.5pt;border-top:none;border-left:none; border-bottom:solid windowtext 1pt;border-right:solid windowtext 1pt;'>
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>$agent</p>
@@ -168,7 +174,7 @@ class RegisterForm {
   <p class=MsoNormal style='margin-bottom:0;line-height: normal'>" .$veh->License_Number->getStoredVal() . "</p>
   </td>
  </tr>";
-                
+
                 if ($veh->Note->getStoredVal() != '') {
                 	$mkup .= "<tr><td style='width:.5in;border-top:none; border-left:none;border-bottom:none;border-right:solid windowtext 1pt;'>
   <p class=MsoNormal align=right style='margin-bottom:0; text-align:right;line-height:normal'>&nbsp;</p>
@@ -190,6 +196,7 @@ class RegisterForm {
 
     protected function AgreementBlock(array $guests, $agreementLabel, $agreement) {
 
+        $uS = Session::getInstance();
         $mkup = HTMLContainer::generateMarkup('h2', $agreementLabel, array('style'=>'border:none;border-bottom:1.5pt solid #98C723'));
 
         if ($agreement != '') {
@@ -198,24 +205,28 @@ class RegisterForm {
             $mkup .= HTMLContainer::generateMarkup('div', "Your Registration Agreement is missing.  ", array('class'=>'ui-state-error'));
         }
 
-        $usedNames = array();
 
-        foreach ($guests as $g) {
+        if (stristr($uS->siteName, 'Patient Family Housing') === false) {
 
-            if (!isset($usedNames[$g->getIdName()])) {
+            $usedNames = array();
 
-                $sigCapture = HTMLContainer::generateMarkup('span', '___________________________________', array('name'=>'divSigCap_' . $g->getIdName(), 'data-gid'=>$g->getIdName(), 'class'=>'hhk-sigCapure'));
+            foreach ($guests as $g) {
 
-                $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>"
-                    . "<span>" . $g->getRoleMember()->get_fullName() . $sigCapture . "</span></p>";
-                $usedNames[$g->getIdName()] = 'y';
+                if (!isset($usedNames[$g->getIdName()])) {
+
+                    $sigCapture = HTMLContainer::generateMarkup('span', '___________________________________', array('name'=>'divSigCap_' . $g->getIdName(), 'data-gid'=>$g->getIdName(), 'class'=>'hhk-sigCapure'));
+
+                    $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>"
+                        . "<span>" . $g->getRoleMember()->get_fullName() . $sigCapture . "</span></p>";
+                    $usedNames[$g->getIdName()] = 'y';
+                }
             }
+
+            // one more blank line
+            $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>
+                <span style='font-size:10pt'>________________________________&emsp; ___________________________________</span></p>";
+
         }
-
-        // one more blank line
-        $mkup .= "<p class=MsoNormal style='margin-top:14pt;margin-right:0;margin-bottom:0;margin-left:.5in;line-height:normal'>
-            <span style='font-size:10pt'>________________________________&emsp; ___________________________________</span></p>";
-
 
         return $mkup;
     }
@@ -470,10 +481,12 @@ p.label {
 
         if ($idVisit > 0) {
 
+            $stayingSql = ($uS->showGuestsStayingReg ? " and s.Status = 'a' " : "");
             $query = "select s.idName, s.Span_Start_Date, s.Expected_Co_Date, s.Span_End_Date, s.`Status`, if(s.idName = v.idPrimaryGuest, 1, 0) as `primaryGuest`
 					from stays s "
                     . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
                     . " where s.idVisit = :reg and s.Visit_Span = :spn "
+                    . $stayingSql
                     . " and DATEDIFF(ifnull(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)), s.Span_Start_Date) > 0 "
                     . " order by `primaryGuest` desc, `Status` desc";
             $stmt = $dbh->prepare($query, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
@@ -528,13 +541,13 @@ p.label {
                 $gst->setPatientRelationshipCode($psg->psgMembers[$gst->getIdName()]->Relationship_Code->getStoredVal());
                 $guests[] = $gst;
             }
-          
+
             $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, '') from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
 				left join hospital h on hs.idHospital = h.idHospital  where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
 
             $stmt = $dbh->query($query);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
-            
+
         } else if ($idReservation > 0) {
 
             $stmt = $dbh->query("Select rg.idGuest as GuestId, rg.Primary_Guest, r.* from reservation_guest rg left join reservation r on rg.idReservation = r.idReservation
@@ -576,7 +589,7 @@ p.label {
                 $guests[] = $gst;
 
             }
-            
+
             $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, '') from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
 				left join hospital h on hs.idHospital = h.idHospital where r.idReservation = " . intval($idReservation) . " limit 1";
 
@@ -611,7 +624,7 @@ p.label {
             $hospRoom = $hospitalStay[0][1];
             $hospital = $hospitalStay[0][2];
         }
-        
+
         // Title
         $title = $uS->siteName . " Registration Form for Overnight " . $this->labels->getString('MemberType', 'visitor', 'Guest') . "s";
 

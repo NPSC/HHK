@@ -346,7 +346,7 @@ class Family {
 
     }
 
-    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData) {
+    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData, $patientUserData = []) {
 
         $rowClass = 'odd';
         $mk1 = '';
@@ -385,12 +385,12 @@ class Family {
 
                 if ($this->IncldEmContact) {
                     // Emergency Contact
-                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role);
+                    $demoMu .= $this->getEmergencyConntactMu($dbh, $role, (isset($patientUserData['emerg']) ? $patientUserData['emerg'] : []));
                 }
 
                 if ($this->showDemographics) {
                     // Demographics
-                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role, (isset($patientUserData['demographics']) ? $patientUserData['demographics'] : []));
                 }
 
                 if ($this->showInsurance) {
@@ -398,7 +398,9 @@ class Family {
                     $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
 
-                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
+                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex"));
+
+                $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
 
@@ -455,7 +457,7 @@ class Family {
 
                 $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
                     HTMLTable::makeTd('')
-                    . HTMLTable::makeTd($role->createAddsBLock() . $demoMu, array('colspan'=>'11'))
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex")), array('colspan'=>'11'))
                     , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
@@ -477,11 +479,11 @@ class Family {
 
     }
 
-    protected function getDemographicsMarkup(\PDO $dbh, $role) {
+    protected function getDemographicsMarkup(\PDO $dbh, $role, $demographicsUserData = []) {
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
             HTMLContainer::generateMarkup('legend', 'Demographics', array('style'=>'font-weight:bold;'))
-                . $role->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE), array('class'=>'hhk-panel')),
+            . $role->getRoleMember()->createDemographicsPanel($dbh, TRUE, FALSE, $demographicsUserData), array('class'=>'hhk-panel')),
             array('style'=>'float:left; margin-right:3px;'));
 
     }
@@ -494,7 +496,7 @@ class Family {
 
     }
 
-    protected function getEmergencyConntactMu(\PDO $dbh, $role) {
+    protected function getEmergencyConntactMu(\PDO $dbh, $role, $emergUserData = []) {
 
         $uS = Session::getInstance();
 
@@ -505,7 +507,7 @@ class Family {
 
         return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Emergency Contact for ' . Labels::getString('MemberType', 'visitor', 'Guest') . $ecSearch, array('style'=>'font-weight:bold;'))
-                . $ec->createMarkup($uS->guestLookups[GLTableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact()), array('class'=>'hhk-panel')),
+                . $ec->createMarkup($uS->guestLookups[GLTableNames::PatientRel], $role->getRoleMember()->getIdPrefix(), $role->getIncompleteEmContact(), $emergUserData), array('class'=>'hhk-panel')),
                 array('style'=>'float:left; margin-right:3px;'));
 
     }
@@ -542,7 +544,7 @@ class Family {
         } else {
 
             // idPsg > 0.  Make sure the selected patient is this psg
-            $psg = new Psg($dbh, $rData->getIdPsg());
+            $psg = new PSG($dbh, $rData->getIdPsg());
 
             if ($patMem->getId() != $psg->getIdPatient()) {
                 $rData->addError("The person selected as a new patient is already a patient.");
@@ -563,9 +565,9 @@ class Family {
 
                 //$role = new Patient($dbh, $m->getPrefix(), $m->getId());
                 $role = (isset($this->roleObjs[$m->getPrefix()]) ? $this->roleObjs[$m->getPrefix()] : new Patient($dbh, $m->getPrefix(), $m->getId()));
-                
+
                 $role->save($dbh, $post, $userName, $m->isStaying());
-                
+
                 $this->roleObjs[$m->getPrefix()] = $role;
 
                 $m->setId($role->getIdName());
@@ -598,7 +600,7 @@ class Family {
                 // Save Hospital
                 $this->hospStay = new HospitalStay($dbh, $psg->getIdPatient(), $rData->getIdHospital_Stay());
                 Hospital::saveReferralMarkup($dbh, $psg, $this->hospStay, $post, $rData->getIdResv());
-                
+
                 $rData->setIdHospital_Stay($this->hospStay->getIdHospital_Stay());
 
             }

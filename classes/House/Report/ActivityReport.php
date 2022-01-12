@@ -637,9 +637,9 @@ where `lp`.`idPayment` > 0
                 $attr['style'] = 'text-align:right;';
 
                 $amt = $p['Payment_Amount'];
-                
+
                 $dateDT = new \DateTime($p['Payment_Date']);
-                
+
                 $updatedDateString = '';
                 if ($p['Last_Updated'] !== '') {
                 	$lastUpdatedDT = new \DateTime($p['Last_Updated']);
@@ -777,7 +777,7 @@ where `lp`.`idPayment` > 0
 
                             IF ($a['Auth_Last_Updated'] !== '') {
                             	$lastUpdatedDT = new \DateTime($a['Auth_Last_Updated']);
-                            	
+
                             	if ($lastUpdatedDT != $dateDT) {
                             		$updatedDateString = $lastUpdatedDT->format('c');
                             	}
@@ -792,7 +792,7 @@ where `lp`.`idPayment` > 0
                 //add receipt icon to action column
                 $voidContent .= HTMLContainer::generateMarkup('span', '', array('class' => 'ui-icon ui-icon-script pmtRecpt', 'id' => 'pmticon' . $p['idPayment'], 'data-pid' => $p['idPayment'], 'style' => 'cursor:pointer; margin-left: auto', 'title' => 'View Payment Receipt'));
                 $actionContent = HTMLContainer::generateMarkup('div', $voidContent, ['style'=>'display:flex; justify-content:space-between; flex-wrap:nowrap;']);
-                
+
                 $trow = HTMLTable::makeTd($r['Room']);
                 $trow .= HTMLTable::makeTd($nameTd);
                 $trow .= HTMLTable::makeTd($invoiceMkup);
@@ -804,7 +804,7 @@ where `lp`.`idPayment` > 0
                 $trow .= HTMLTable::makeTd($dateDT->format('c'));
                 $trow .= HTMLTable::makeTd($updatedDateString);
                 $trow .= HTMLTable::makeTd($p['Payment_Updated_By'] == '' ? $p['Payment_Created_By'] : $p['Payment_Updated_By']);
-                
+
                 if ($showExternlId) {
                     $trow .= HTMLTable::makeTd($p['Payment_External_Id']);
                 }

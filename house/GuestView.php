@@ -58,6 +58,12 @@ if ($uS->EmptyExtendLimit > 0) {
 }
 $cFields[] = array("Nights", 'Nights', '', '', 'integer', '10');
 $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', '', '', 'string', '20');
+
+$eFields = array('EC Name', 'EC Phone Home', 'EC Phone Alternate');
+$eTitles = array('Emergency Contact', 'Emergency Contact Home Phone', 'Emergency Contact Alternate Phone');
+
+$cFields[] = array($eTitles, $eFields, '', '', 's', '', array());
+
 if ($uS->TrackAuto) {
     $cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');
     $cFields[] = array('Model', 'Model', 'checked', '', 'string', '20');
@@ -84,11 +90,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnEmail'])){
     $colSelector->setColumnSelectors($_POST);
     $fltrdTitles = $colSelector->getFilteredTitles();
     $fltrdFields = $colSelector->getFilteredFields();
-    
+
     $stmt = $dbh->query("select * from vguest_view");
-    
+
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    
+
         $g = array();
         foreach ($fltrdFields as $f) {
             if(isset($f[7]) && $f[7] == "date"){
@@ -99,7 +105,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnEmail'])){
         }
         $guests[] = $g;
     }
-    
+
     if (count($guests) > 0) {
         $guestTable = CreateMarkupFromDB::generateHTML_Table($guests, 'tblList');
     } else {
@@ -128,7 +134,7 @@ while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $g['On Leave'] = '';
         }
     }
-    
+
     $g['Nights'] = $r['Nights'];
     $g['Hospital'] = $r['Hospital'];
 
@@ -216,26 +222,26 @@ if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
     if (isset($_POST['txtEmail'])) {
     	$emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_STRING);
     }
-    
+
     if (isset($_POST['txtEmailv'])) {
     	$emAddr = filter_var($_POST['txtEmailv'], FILTER_SANITIZE_STRING);
     }
-    
+
     if (isset($_POST['txtSubject'])) {
     	$subject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
     }
     if (isset($_POST['txtSubjectv'])) {
     	$subject = filter_var($_POST['txtSubjectv'], FILTER_SANITIZE_STRING);
     }
-    
+
     if ($emAddr != '' && $subject != '') {
 
         try{
             $mail = prepareEmail();
-    
+
             $mail->From = $uS->NoReplyAddr;
             $mail->FromName = $uS->siteName;
-    
+
             $tos = explode(',', $emAddr);
             foreach ($tos as $t) {
                 $bcc = filter_var($t, FILTER_SANITIZE_EMAIL);
@@ -243,17 +249,17 @@ if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
                     $mail->addAddress($bcc);
                 }
             }
-    
+
             $mail->isHTML(true);
-    
+
             $mail->Subject = $subject;
-    
+
             if (isset($_POST['btnEmail'])) {
                 $body = $guestTable;
             } else {
                 $body = $vehicleTable;
             }
-    
+
             $mail->msgHTML($title . $body);
             $mail->send();
             $resultMessage .= "Email sent.  ";
@@ -329,9 +335,9 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
     $(document).ready(function () {
         "use strict";
         $('#includeFields').fieldSets({'reportName': 'GuestView', 'defaultFields': <?php echo json_encode($defaultFields) ?>});
-        
+
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
-        
+
         $('#cbColClearAll').click(function () {
             $('#selFld option').each(function () {
                 $(this).prop('selected', false);
@@ -343,11 +349,11 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
                 $(this).prop('selected', true);
             });
         });
-        
+
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var tabReturn = '<?php echo $tab; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
-        
+
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
         $('#tblList').dataTable({
             "displayLength": 50,

@@ -27,6 +27,6 @@ class InvoiceInvoiceLine extends AbstractInvoiceLine {
         parent::__construct($useDetail);
         $this->setTypeId(InvoiceLineType::Invoice);
     }
-    
+
 }
 ?>

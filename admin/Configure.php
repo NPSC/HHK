@@ -4,7 +4,7 @@ use HHK\AlertControl\AlertMessage;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\SysConst\{WebRole, CodeVersion};
 use HHK\Config_Lite\Config_Lite;
-use HHK\Config_Lite\Exception\Config_Lite_Exception_Runtime;
+use HHK\Config_Lite\Exception\Exception;
 use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
@@ -62,7 +62,7 @@ if ($config->has('webServices', 'Service_Name') && $config->getString('webServic
     if (file_exists(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''))) {
         try {
             $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
-        } catch (Config_Lite_Exception_Runtime $ex) {
+        } catch (\HHK\Config_Lite\Exception\Exception $ex) {
             $wsConfig = NULL;
         }
 

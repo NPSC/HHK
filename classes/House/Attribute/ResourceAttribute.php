@@ -18,14 +18,14 @@ use HHK\SysConst\AttributeTypes;
  *
  * @author Eric
  */
- 
+
 class ResourceAttribute extends AbstractObjectAttribute {
-    
+
     public function __construct(\PDO $dbh, $id) {
-        
+
         $this->attributeType = AttributeTypes::Resource;
         parent::__construct($dbh, $id);
     }
-    
+
 }
 ?>

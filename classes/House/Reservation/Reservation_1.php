@@ -51,6 +51,7 @@ class Reservation_1 {
     protected $resultMessage = '';
 
     protected $idResource;
+    protected $idReferralDoc;
     protected $expectedArrival;
     protected $expectedDeparture;
     protected $numGuests;
@@ -64,6 +65,7 @@ class Reservation_1 {
         $this->expectedDeparture = $reservRs->Expected_Departure->getStoredVal();
         $this->numGuests = $reservRs->Number_Guests->getStoredVal();
         $this->idResource = $reservRs->idResource->getStoredVal();
+        $this->idReferralDoc = $reservRs->idReferralDoc->getStoredVal();
         $this->roomTitle = '';
 
     }
@@ -272,6 +274,7 @@ class Reservation_1 {
         $this->reservRs->Expected_Arrival->setNewVal($this->getExpectedArrival());
         $this->reservRs->Expected_Departure->setNewVal($this->getExpectedDeparture());
         $this->reservRs->idResource->setNewVal($this->getIdResource());
+        $this->reservRs->idReferralDoc->setNewVal($this->getIdReferralDoc());
 
         // Insert or Update
         if ($this->reservRs->idReservation->getStoredVal() == 0) {
@@ -324,6 +327,9 @@ class Reservation_1 {
         if ($this->getStatus() == ReservationStatus::Staying || $this->getStatus() == ReservationStatus::Checkedout) {
             throw new RuntimeException('Reservation cannot be deleted.  Delete the Visit instead.');
         }
+
+        // Set referal doc to archived
+        $dbh->exec("update document d left join reservation r on d.idDocument = r.idReferralDoc set d.Status = 'ar' where r.idReservation = " . $this->getIdReservation());
 
         // Delete
         $cnt = $dbh->exec("Delete from reservation where idReservation = " . $this->getIdReservation());
@@ -750,23 +756,23 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
 
     public function getConstraints(\PDO $dbh, $refresh = FALSE) {
-    	
+
     	if (is_null($this->reservConstraints) || $refresh) {
     		$this->reservConstraints = new ConstraintsReservation($dbh, $this->getIdReservation());
     	}
-    	
+
     	return $this->reservConstraints;
     }
-    
+
     public function getVisitConstraints(\PDO $dbh, $refresh = FALSE) {
-    	
+
     	if (is_null($this->visitConstraints) || $refresh) {
     		$this->visitConstraints = new ConstraintsVisit($dbh, $this->getIdReservation());
     	}
-    	
+
     	return $this->visitConstraints;
     }
-    
+
     public static function showListByStatus(\PDO $dbh, $editPage, $checkinPage, $reservStatus = ReservationStatus::Committed, $shoDirtyRooms = FALSE, $idResc = NULL, $daysAhead = 2, $showConstraints = FALSE) {
 
         $dateAhead = new \DateTime();
@@ -811,7 +817,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         }
 
         if (count($rows) > 0) {
-        	
+
         	$roomStatuses = readGenLookupsPDO($dbh, 'Room_Status');
 
             if ($shoDirtyRooms) {
@@ -972,11 +978,11 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         }
 
         $reservStatuses = readLookups($dbh, "reservStatus", "Code", true);
-        
+
         if(isset($reservStatuses[$status])){
             return $reservStatuses[$status]["Title"];
         }
-        
+
          $uS = Session::getInstance();
 
          if (isset($uS->guestLookups['ReservStatus'][$status][1])) {
@@ -996,13 +1002,13 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                 return '';
             }
         }
-        
+
         $reservStatuses = readLookups($dbh, "reservStatus", "Code", true);
 
         if(isset($reservStatuses[$status])){
             return HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ' . $reservStatuses[$status]["Icon"], 'style'=>'float: left; margin-left:.3em;', 'title'=>$reservStatuses[$status]["Title"]));
         }
-        
+
         $uS = Session::getInstance();
 
         if (isset($uS->guestLookups['ReservStatus'][$status][2])) {
@@ -1238,6 +1244,11 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         }
     }
 
+    public function setIdReferralDoc($v) {
+        $this->idReferralDoc = $v;
+        return $this;
+    }
+
     public function setIdResource($v) {
         $this->idResource = $v;
         return $this;
@@ -1278,13 +1289,13 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     public function setRateAdjust($v) {
 
-        if ($v > -100 && $v < 100) {
+        if ($v >= -100 && $v <= 0) {
 
             $this->reservRs->Rate_Adjust->setNewVal($v);
         }
         return $this;
     }
-    
+
     public function setIdRateAdjust($v){
         $this->reservRs->idRateAdjust->setNewVal($v);
         return $this;
@@ -1351,7 +1362,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     public function getNotes() {
         return $this->reservRs->Notes->getStoredVal();  // == '' ? $this->reservRs->Notes->getNewVal() : $this->reservRs->Notes->getStoredVal();
     }
-    
+
     public function setNotes($val) {
         $this->reservRs->Notes->setNewVal($val);
     }
@@ -1359,6 +1370,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     public function getIdResource() {
         //return $this->reservRs->idResource->getStoredVal();
         return $this->idResource;
+    }
+
+    public function getIdReferralDoc() {
+        return $this->idReferralDoc;
     }
 
     public function getIdGuest() {
@@ -1384,7 +1399,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     public function getRateAdjust() {
         return $this->reservRs->Rate_Adjust->getStoredVal();
     }
-    
+
     public function getIdRateAdjust(){
         return $this->reservRs->idRateAdjust->getStoredVal();
     }

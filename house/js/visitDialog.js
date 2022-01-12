@@ -256,37 +256,27 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                 autoSize: true,
                 numberOfMonths: 1,
                 maxDate: 0,
-                dateFormat: 'M d, yy',
-                onSelect: function() {
-                    this.lastShown = new Date().getTime();
-                },
-                beforeShow: function() {
-                    var time = new Date().getTime();
-                    return this.lastShown === undefined || time - this.lastShown > 500;
-                },
-                onClose: function () {
-                    $(this).change();
-                }
+                dateFormat: 'M d, yy'//,
+               // onSelect: function() {
+               //     this.lastShown = new Date().getTime();
+               // },
+               // beforeShow: function() {
+               //     var time = new Date().getTime();
+               //     return this.lastShown === undefined || time - this.lastShown > 500;
+               // },
+               // onClose: function () {
+               //     $(this).change();
+               // }
             });
 
             $diagbox.find('.ckdateFut').datepicker({
-                yearRange: '-02:+01',
+                yearRange: '-01:+01',
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
                 numberOfMonths: 1,
                 minDate: 0,
-                dateFormat: 'M d, yy',
-                onSelect: function() {
-                    this.lastShown = new Date().getTime();
-                },
-                beforeShow: function() {
-                    var time = new Date().getTime();
-                    return this.lastShown === undefined || time - this.lastShown > 500;
-                },
-                onClose: function () {
-                    $(this).change();
-                }
+                dateFormat: 'M d, yy'
             });
 
             $diagbox.css('background-color', '#fff');
@@ -296,16 +286,38 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                 $('.hhk-ckoutDate').prop('disabled', true);
             }
 
-            // set up Visit extension
+            // set up Weekend leave
             if ($('.hhk-extVisitSw').length > 0) {
+
+				$('#extendDays').change(function () {
+					$('#extendDays').removeClass('ui-state-error');
+				});
+				
+				// Setting extended date sets "Extend Until" radio button.
+				$('#extendDate').change(function () {
+					$('#rbOlpicker-ext').prop('checked', true);
+				});
+				
+				// Unchecking the extend-until rb clears the associated date field
+				$('input[name="rbOlpicker"]').change(function () {
+					if ($(this).val() !== 'ext') {
+						$('#extendDate').val('');
+					}
+				});
+				
+				// Enable checkbox, show or hide panel.
                 $('.hhk-extVisitSw').change(function () {
                     if (this.checked) {
+						// Disable Rate Changer
+						$('#rateChgCB').prop('checked', false).change().prop('disabled', true);
                         $('.hhk-extendVisit').show('fade');
                     } else {
                         $('.hhk-extendVisit').hide('fade');
+						$('#rateChgCB').prop('disabled', isCheckedOut);
                     }
                 });
-                $('.hhk-extVisitSw').change();
+
+                $('.hhk-extVisitSw').trigger('change');
             }
 
             // Set up rate changer
@@ -339,11 +351,11 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
                 $('#rateChgCB').change(function () {
                     if (this.checked) {
+						$('.hhk-extVisitSw').prop('checked', false).change().prop('disabled', true);
                         $('.changeRateTd').show();
-                        $('#showRateTd').hide('fade');
                     }else {
                         $('.changeRateTd').hide('fade');
-                        $('#showRateTd').show();
+						$('.hhk-extVisitSw').prop('disabled', isCheckedOut);
                     }
                 });
 
@@ -438,6 +450,11 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                             return;
                         }
 
+						// Disable the Rate changer and the weekend leaver
+						$('#rateChgCB').prop('checked', false).trigger('change').prop('disabled', true);
+						$('.hhk-extVisitSw').prop('checked', false).trigger('change').prop('disabled', true);
+						$('#paymentAdjust').prop('disabled', true);
+						
                         // hide deposit payment
                         $('.hhk-kdrow').hide('fade');
 
@@ -506,6 +523,9 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                         $('input#cbFinalPayment').change();
                         $('#cbDepRefundApply').trigger('change');
                         $('#visitFeeCb').prop('checked', false).prop('disabled', false).trigger('change');
+						$('#rateChgCB').prop('checked', false).change().prop('disabled', false)
+						$('.hhk-extVisitSw').prop('checked', false).change().prop('disabled', false);
+						$('#paymentAdjust').prop('disabled', false);
                     }
                 });
 
@@ -566,85 +586,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
 
 
             setupPayments($('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
-
-            /* if ($('table#moveTable').length > 0) {
-
-                // Change Rooms control - only used for visit editor
-                $('table#moveTable').on('change', 'select', function() {
-                    $(this).removeClass('ui-state-error');
-                    var indx = $(this).val();
-                    if (indx == '') {
-                        indx = 0;
-                    }
-                    // UPdate the key deposit amount
-                    if ($('#keyDepAmt').length > 0 && data.resc[indx]) {
-
-                        if (data.resc[indx].key === 0) {
-                            $('#spnDepAmt').data('amt', '');
-                            $('#spnDepAmt').text('');
-                            $('#keyDepAmt').val('');
-                            $('#keyDepRx').prop("checked", false);
-                            $('.hhk-kdrow').hide();
-
-                        } else {
-                            $('#spnDepAmt').data('amt', data.resc[indx].key);
-                            $('#spnDepAmt').text('($' + data.resc[indx].key + ')');
-                            $('#keyDepAmt').val(data.resc[indx].key);
-                            $('.hhk-kdrow').show('fade');
-                        }
-
-                        amtPaid();
-                    }
-
-                    // Change Rooms Markup only
-                    if (indx > 0 && data.resc[indx] && $('#myRescId').length > 0) {
-
-                        $('#rmChgMsg').text('').hide();
-                        $('#rmDepMessage').text('').hide();
-
-                        var idResc = $('#myRescId').data('idresc'),
-                            priceModel = $('#myRescId').data('pmdl');
-
-                        if (data.resc[idResc].rate !== data.resc[indx].rate && priceModel === 'b') {
-                            $('#rmChgMsg').text('The room rate is different.').show('fade');
-                        }
-
-                        if (data.resc[idResc].key !== data.resc[indx].key) {
-                            var rdmessage = '';
-
-                            $('#spnDepMsg').hide();
-                            $('#selDepDisposition').show('fade');
-
-                            if (data.resc[indx].key == 0) {
-                                if ($('#kdPaid').data('amt') != '0') {
-                                    rdmessage = 'There is no deposit for this room.  Set the Deposit Status (above) accordingly.';
-                                }
-                            } else {
-                                rdmessage = 'The deposit for this room is $' + data.resc[indx].key.toFixed(2).toString();
-                            }
-
-                            $('#rmDepMessage').text(rdmessage).show('fade');
-
-                        } else {
-                            $('#selDepDisposition').hide();
-                            $('#spnDepMsg').show('fade');
-
-                        }
-                    }
-
-                    $('#selRateCategory').change();
-                });
-
-                $('#selResource').change();
-
-                $('#resvChangeDate').datepicker('option', 'onClose', function (dateText) {
-                    $('#rbReplaceRoomnew').prop('checked', true);
-                    if (dateText !== '') {
-                        getVisitRoomList(idVisit, visitSpan, $('#resvChangeDate').val(), $('#selResource'));
-                    }
-                });
-            }
-    		*/
     
             // Financial Application
             var $btnFapp = $('#btnFapp');
@@ -743,6 +684,17 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     if (verifyAmtTendrd() === false) {
         return;
     }
+
+    // Check number days for Visit extension
+    if ($('.hhk-extVisitSw').length > 0) {
+	
+		if ($('#extendCb').prop('checked') && $('#extendDays').val() < 1) {
+			$('#extendDays').addClass('ui-state-error');
+			flagAlertMessage('Weekend Leave days must be filled in. ', 'error');
+			return;
+		}
+	}
+
 
     // Checkout check boxes, one per active guest.
     $('input.hhk-ckoutCB').each(function() {

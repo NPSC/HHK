@@ -485,7 +485,35 @@ AS SELECT
    `n`.`Name_Full` AS `Guest`,
    `ld`.`idGuest` AS `Guest_Id`,
    `ld`.`idPSG` AS `PSG_Id`
-FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocument`))) left join `name` `n` on((`ld`.`idGuest` = `n`.`idName`))) where (`d`.`Status` = 'a');
+FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocument`))) left join `name` `n` on((`ld`.`idGuest` = `n`.`idName`))) where (`d`.`Status` not in ('d'));
+
+-- -----------------------------------------------------
+-- View `vdaily_waitlist`
+-- -----------------------------------------------------
+
+CREATE or replace VIEW `vdaily_waitlist` AS
+select 
+	`r`.`idReservation`,
+    `hs`.`MRN`,
+    `p`.`Name_First` as "Patient First",
+    `p`.`Name_Last` as "Patient Last",
+    `r`.`Expected_Arrival`,
+    `r`.`Expected_Departure`,
+    `hs`.`Room` as "Room Number",
+    `ra`.`Name_Full` as "Referral Agent",
+    `e`.`Description` as "Ethnicity",
+    `ib`.`Description` as "Income_Bracket",
+    `ab`.`Description` as "Age_Bracket",
+    `r`.`Checkin_Notes` as "Waitlist Notes"
+from reservation r
+	join `hospital_stay` hs on `r`.`idHospital_Stay` = `hs`.`idHospital_stay`
+    join `name` p on `hs`.`idPatient` = `p`.`idName`
+    left join `name_demog` d on `p`.`idName` = `d`.`idName`
+    left join `gen_lookups` e on `d`.`Ethnicity` = `e`.`Code` and `e`.`Table_Name` = "Ethnicity"
+    left join `gen_lookups` ib on `d`.`Income_Bracket` = `ib`.`Code` and `ib`.`Table_Name` = "Income_Bracket"
+    left join `gen_lookups` ab on `d`.`Age_Bracket` = `ab`.`Code` and `ab`.`Table_Name` = "Age_Bracket"
+    left join `name` ra on `hs`.`idReferralAgent` = `ra`.`idName`
+where `r`.`Status` = 'w';
 
 -- -----------------------------------------------------
 -- View `vdonation_view`
@@ -792,7 +820,34 @@ CREATE or replace VIEW `vemail_directory` AS
             and (`n`.`Exclude_Email` = 0)
             and (`ne`.`Email` <> ''));
 
-
+-- -----------------------------------------------------
+-- View `vform_listing`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vform_listing` AS
+    SELECT
+        `d`.`idDocument` AS `idDocument`,
+        IFNULL(JSON_VALUE(`d`.`userData`, '$.patient.firstName'), '') AS `patientFirstName`,
+        IFNULL(JSON_VALUE(`d`.`userData`, '$.patient.lastName'), '') AS `patientLastName`,
+        IFNULL(JSON_VALUE(`d`.`userData`, '$.checkindate'), '') AS `ExpectedCheckin`,
+        IFNULL(JSON_VALUE(`d`.`userData`, '$.checkoutdate'), '') AS `ExpectedCheckout`,
+        IFNULL(`h`.`Title`, '') as `hospitalName`,
+        `d`.`Status` AS `status ID`,
+        `g`.`Description` AS `status`,
+        `r`.`idReservation` AS `idResv`,
+        `r`.`Status` AS `resvStatus`,
+        `rs`.`Title` AS `resvStatusName`,
+        `d`.`Timestamp` AS `Timestamp`
+    FROM
+        (`document` `d`
+        LEFT JOIN `gen_lookups` `g` ON (`d`.`Status` = `g`.`Code`
+            AND `g`.`Table_Name` = 'Referral_Form_Status')
+		LEFT JOIN `hospital` `h` ON (JSON_VALUE(`d`.`userData`, '$.hospital.idHospital') = `h`.`idHospital`)
+        LEFT JOIN `reservation` `r` ON (`d`.`idDocument` = `r`.`idReferralDoc`)
+        LEFT JOIN `lookups` `rs` ON (`r`.`Status` = `rs`.`Code` AND `rs`.`Category` = 'ReservStatus'))
+    WHERE
+        `d`.`Type` = 'json'
+            AND `d`.`Category` = 'form'
+	ORDER BY `d`.`Timestamp` DESC , `r`.`idReservation` DESC;
 
 -- -----------------------------------------------------
 -- View `vgetIncidentlisting`
@@ -1239,44 +1294,48 @@ WHERE
 -- View `vguest_view`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vguest_view` AS
-    SELECT
-        IFNULL((CASE
-                    WHEN (`n`.`Name_Suffix` = '') THEN `n`.`Name_Last`
+    SELECT 
+        IFNULL(CASE
+                    WHEN `n`.`Name_Suffix` = '' THEN `n`.`Name_Last`
                     ELSE CONCAT(`n`.`Name_Last`, ' ', `g`.`Description`)
-                END),
+                END,
                 '') AS `Last Name`,
         IFNULL(`n`.`Name_First`, '') AS `First Name`,
         IFNULL(`rm`.`Title`, '') AS `Room`,
         IFNULL(`np`.`Phone_Num`, '') AS `Phone`,
         `s`.`Checkin_Date` AS `Arrival`,
-        (CASE
-            WHEN (`s`.`Expected_Co_Date` < NOW()) THEN NOW()
+        CASE
+            WHEN `s`.`Expected_Co_Date` < CURRENT_TIMESTAMP() THEN CURRENT_TIMESTAMP()
             ELSE `s`.`Expected_Co_Date`
-        END) AS `Expected Departure`,
+        END AS `Expected Departure`,
         `s`.`On_Leave` AS `On_Leave`,
         TO_DAYS(CURRENT_TIMESTAMP()) - TO_DAYS(`s`.`Checkin_Date`) AS `Nights`,
         `hosp`.`Title` AS `Hospital`,
+        CONCAT(IFNULL(`ec`.`Name_First`, ''), " ", IFNULL(`ec`.`Name_Last`, '')) AS `EC Name`,
+        IFNULL(`ec`.`Phone_Home`, '') AS `EC Phone Home`,
+        IFNULL(`ec`.`Phone_Alternate`, '') AS `EC Phone Alternate`,
         IFNULL(`v`.`Make`, '') AS `Make`,
         IFNULL(`v`.`Model`, '') AS `Model`,
         IFNULL(`v`.`Color`, '') AS `Color`,
         IFNULL(`v`.`State_Reg`, '') AS `State Reg.`,
         IFNULL(`v`.`License_Number`, '') AS `License Plate`,
-        IFNULL(`v`.`Note`, '') as `Note`
+        IFNULL(`v`.`Note`, '') AS `Note`
     FROM
-        ((((((`stays` `s`
-        LEFT JOIN `name` `n` ON ((`n`.`idName` = `s`.`idName`)))
-        LEFT JOIN `name_phone` `np` ON (((`n`.`idName` = `np`.`idName`)
-            AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`))))
-        LEFT JOIN `visit` `vs` ON (((`s`.`idVisit` = `vs`.`idVisit`)
-            AND (`s`.`Visit_Span` = `vs`.`Span`))))
-		LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`)))
-        LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`)
-        LEFT JOIN `vehicle` `v` ON ((`vs`.`idRegistration` = `v`.`idRegistration`))
-        LEFT JOIN `room` `rm` ON ((`s`.`idRoom` = `rm`.`idRoom`))
-        LEFT JOIN `gen_lookups` `g` ON (((`g`.`Table_Name` = 'Name_Suffix')
-            AND (`g`.`Code` = `n`.`Name_Suffix`))))
+        (((((((((`stays` `s`
+        LEFT JOIN `name` `n` ON (`n`.`idName` = `s`.`idName`))
+        LEFT JOIN `name_phone` `np` ON (`n`.`idName` = `np`.`idName`
+            AND `n`.`Preferred_Phone` = `np`.`Phone_Code`))
+        LEFT JOIN `visit` `vs` ON (`s`.`idVisit` = `vs`.`idVisit`
+            AND `s`.`Visit_Span` = `vs`.`Span`))
+        LEFT JOIN `hospital_stay` `hs` ON (`vs`.`idHospital_stay` = `hs`.`idHospital_stay`))
+        LEFT JOIN `hospital` `hosp` ON (`hs`.`idHospital` = `hosp`.`idHospital`))
+        LEFT JOIN `vehicle` `v` ON (`vs`.`idRegistration` = `v`.`idRegistration`))
+        LEFT JOIN `emergency_contact` `ec` ON (`n`.`idName` = `ec`.`idName`))
+        LEFT JOIN `room` `rm` ON (`s`.`idRoom` = `rm`.`idRoom`))
+        LEFT JOIN `gen_lookups` `g` ON (`g`.`Table_Name` = 'Name_Suffix'
+            AND `g`.`Code` = `n`.`Name_Suffix`))
     WHERE
-        (`s`.`Status` = 'a');
+        `s`.`Status` = 'a';
 
 
 
@@ -1455,7 +1514,7 @@ CREATE or replace VIEW `vindividual_donations` AS
         left join `vmember_listing_noex` `vp` ON `vp`.`Id` = `d`.`Assoc_Id`
         left join `vmember_listing_noex` `ve` ON `ve`.`Id` = `d`.`Care_Of_Id`
         left join gen_lookups g on g.Table_Name = 'Pay_Type' and g.Code = `d`.`Pay_Type`
-        
+
     where
         `d`.`Status` = 'a';
 
@@ -2133,6 +2192,7 @@ select
         nd.Age_Bracket,
         nd.Education_Level,
         nd.Special_Needs,
+        s.On_Leave,
         count(s.idName) as `Guest_Count`
     from
         `visit` `v`

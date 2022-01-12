@@ -567,6 +567,8 @@ var isGuestAdmin,
     patientLabel,
     guestLabel,
     visitorLabel,
+    referralFormTitleLabel,
+    reservationLabel,
     challVar,
     defaultView,
     defaultEventColor,
@@ -606,6 +608,8 @@ $(document).ready(function () {
     patientLabel = $('#patientLabel').val();
     visitorLabel = $('#visitorLabel').val();
     guestLabel = $('#guestLabel').val();
+    referralFormTitleLabel = $('#referralFormTitleLabel').val();
+    reservationLabel = $('#reservationLabel').val();
     challVar = $('#challVar').val();
     defaultView = $('#defaultView').val();
     defaultEventColor = $('#defaultEventColor').val();
@@ -1386,7 +1390,11 @@ $(document).ready(function () {
                         
                         $('#rptInvdiv').remove();
                         $('#vInv').append($('<div id="rptInvdiv" style="min-height:500px;"/>').append($(data.success)));
-                        $('#rptInvdiv .gmenu').menu();
+                        $('#rptInvdiv .gmenu').menu({
+           					focus:function(e, ui){
+           						$("#rptInvdiv .gmenu").not(this).menu("collapseAll", null, true);
+           					}
+           				});
                         
                         $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
                             event.preventDefault();
@@ -1519,6 +1527,25 @@ $(document).ready(function () {
     });
 
 
+	//referralViewer
+	$.ajax({
+            url: 'ws_resc.php',
+            dataType: 'JSON',
+            type: 'get',
+            data: {
+                cmd: 'listforms',
+                totalsonly: 'true'
+            },
+            success: function( data ){
+                if(data.totals){
+                    $('#vreferrals').referralViewer({statuses: data.totals, labels: {patient: patientLabel, referralFormTitle: referralFormTitleLabel, reservation: reservationLabel}});
+                    $("#spnNumReferral").text(data.totals.n.count);
+                    
+                }
+            }
+        });
+	
+
 
     $('#curres').DataTable({
        ajax: {
@@ -1527,7 +1554,11 @@ $(document).ready(function () {
        },
        drawCallback: function (settings) {
            $('#spnNumCurrent').text(this.api().rows().data().length);
-           $('#curres .gmenu').menu();
+           $('#curres .gmenu').menu({
+           		focus:function(e, ui){
+           			$("#curres .gmenu").not(this).menu("collapseAll", null, true);
+           		}
+           });
        },
        columns: cgCols
     });
@@ -1540,7 +1571,11 @@ $(document).ready(function () {
        },
        drawCallback: function (settings) {
            $('#spnNumConfirmed').text(this.api().rows().data().length);
-           $('#reservs .gmenu').menu();
+           $('#reservs .gmenu').menu({
+           		focus:function(e, ui){
+           			$("#reservs .gmenu").not(this).menu("collapseAll", null, true);
+           		}
+           });
        },
        columns: rvCols,
 
@@ -1554,7 +1589,11 @@ $(document).ready(function () {
            },
            drawCallback: function (settings) {
                 $('#spnNumUnconfirmed').text(this.api().rows().data().length);
-                $('#unreserv .gmenu').menu();
+                $('#unreserv .gmenu').menu({
+           			focus:function(e, ui){
+           				$("#unreserv .gmenu").not(this).menu("collapseAll", null, true);
+           			}
+           		});
            },
            columns: rvCols
         });
@@ -1565,10 +1604,14 @@ $(document).ready(function () {
            url: 'ws_resc.php?cmd=getHist&tbl=waitlist',
            dataSrc: 'waitlist'
        },
-       order: [[ (showCreatedDate ? 4 : 3), 'asc' ]],
+       order: [[ (showCreatedDate ? 5 : 3), 'asc' ]],
        drawCallback: function () {
             $('#spnNumWaitlist').text(this.api().rows().data().length);
-            $('#waitlist .gmenu').menu();
+            $('#waitlist .gmenu').menu({
+           		focus:function(e, ui){
+           			$("#waitlist .gmenu").not(this).menu("collapseAll", null, true);
+           		}
+           });
        },
        columns: wlCols
     });

@@ -145,11 +145,11 @@ class InitCkOutRequest extends AbstractMercRequest {
     }
 
     public function setOperatorID($v) {
-    	
+
     	if ($v != '') {
     		$v = substr($v, 0, 10);
     	}
-    	
+
     	$this->fields["OperatorID"] = $v;
         return $this;
     }
@@ -225,6 +225,6 @@ class InitCkOutRequest extends AbstractMercRequest {
     	}
     	return $this;
     }
-    
+
 }
 ?>
