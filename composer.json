@@ -21,8 +21,10 @@
 		"mk-j/php_xlsxwriter" : "~0.38",
 		"phpmailer/phpmailer" : "~6.1",
 		"phelium/recaptcha" : "~1.0",
+		"phpgangsta/googleauthenticator" : "dev-master",
 		"cerdic/css-tidy" : "^1.7",
-		"chillerlan/php-qrcode" : "4.3",
-		"onelogin/php-saml": "^4.0"
+		"mexitek/phpcolors" : "^1.0",
+		"chillerlan/php-qrcode" : "~4.3",
+		"onelogin/php-saml" : "~4.0"
 	}
 }
