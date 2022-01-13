@@ -616,6 +616,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Run_As_Test', 'false', 'b', 'a', '', 'Run As Test flag', '',0),
 ('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, 0 = never log out','',1),
 ('ShoStaysCtr','true','b','c','','Show the stays counter on the House Calendar page','',1),
+('showAddressReceipt', 'false', 'b', 'h', '', 'Show primary guest address on receipts', '','1'),
 ('ShowBirthDate','true','b','h','','Show birthdate for patients and guests','',1),
 ('ShowCreatedDate','true','b','h','','Show the Created Date in Register page tabs lists','',1),
 ('ShowDemographics','false','b','h','','Show demographics selectors on Check in and Reservation pages','',1),

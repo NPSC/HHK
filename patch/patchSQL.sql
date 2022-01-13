@@ -151,3 +151,6 @@ CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('showGuestsStayingReg', 'false', 'b', 'h', '', 'When true, only show guests currently checked in on registration form', '','1');
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('showAddressReceipt', 'false', 'b', 'h', '', 'Show primary guest address on receipts', '','1');
