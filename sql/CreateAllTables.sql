@@ -2225,6 +2225,21 @@ CREATE TABLE if not exists `w_group_ip` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `w_idp`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `w_idp` (
+	`idIdp` INT(11) NOT NULL AUTO_INCREMENT,
+    `Name` VARCHAR(100) NOT NULL,
+    `Logo_URL` VARCHAR(500),
+    `SSO_URL` VARCHAR(500),
+    `IdP_EntityId` VARCHAR(500),
+    `IdP_Cert` BLOB,
+    `Status` VARCHAR(2) NOT NULL DEFAULT 'a',
+    PRIMARY KEY (`idIdp`)
+) ENGINE=InnoDB;
+
 -- -----------------------------------------------------
 -- Table `w_user_log`
 -- -----------------------------------------------------

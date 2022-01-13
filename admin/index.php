@@ -5,6 +5,7 @@ use HHK\Exception\{InvalidArgumentException, RuntimeException};
 use HHK\SysConst\{Mode, CodeVersion};
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\sec\SysConfig;
+use HHK\sec\SAML;
 
 /**
  * index.php  (admin)
@@ -94,6 +95,8 @@ if ($trainingSiteURL != '') {
             HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Playground' . $extLinkIcon, array('href'=>$trainingSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:25px;clear:left;float:left"));
 }
 
+$samlMkup = SAML::getIdpMarkup($dbh);
+
 $copyYear = date('Y');
 
 $loginMkup = $login->loginForm();
@@ -142,7 +145,7 @@ if (SecurityComponent::isHTTPS()) {
                         	<?php echo $disclaimer . $login->IEMsg(); ?>
                         </div>
                     </div>
-                    <?php echo $loginMkup . $linkMkup; ?></div>
+                    <?php echo $loginMkup . $linkMkup . $samlMkup; ?></div>
                 </div>
 
                 <div style="clear:left;"></div>

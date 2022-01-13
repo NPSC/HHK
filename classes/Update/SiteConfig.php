@@ -11,6 +11,7 @@ use HHK\Tables\House\Desig_HolidaysRS;
 use HHK\sec\{Session, SysConfig};
 use HHK\US_Holidays;
 use HHK\sec\Labels;
+use HHK\sec\SecurityComponent;
 
 /**
  * SiteConfig.php
@@ -552,10 +553,14 @@ class SiteConfig {
 
         }
 
-        // site.cfg entries
-        $tbl = self::createCliteMarkup($config, $titles);
+        if(SecurityComponent::is_TheAdmin()){
+            // site.cfg entries
+            $tblMkup = self::createCliteMarkup($config, $titles)->generateMarkup();
+        }else{
+            $tblMkup = '';
+        }
 
-        return $sctbl->generateMarkup() . $tbl->generateMarkup();
+        return $sctbl->generateMarkup() . $tblMkup;
     }
 
     public static function saveConfig($dbh, Config_Lite $config, array $post, $userName = '') {
