@@ -273,7 +273,7 @@ class RateChooser {
         } else if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
 
             // Add a new rate span to the end this visit
-            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT, ($uS->RateGlideExtend > 0 ? TRUE : FALSE));
+            $reply .= $visit->changePledgedRate($dbh, $rateCategory, $assignedRate, $rateAdj, $uS->username, $chDT);
 
         } else {
 

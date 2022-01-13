@@ -257,16 +257,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                 numberOfMonths: 1,
                 maxDate: 0,
                 dateFormat: 'M d, yy'//,
-               // onSelect: function() {
-               //     this.lastShown = new Date().getTime();
-               // },
-               // beforeShow: function() {
-               //     var time = new Date().getTime();
-               //     return this.lastShown === undefined || time - this.lastShown > 500;
-               // },
-               // onClose: function () {
-               //     $(this).change();
-               // }
             });
 
             $diagbox.find('.ckdateFut').datepicker({

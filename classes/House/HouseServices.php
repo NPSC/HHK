@@ -199,8 +199,8 @@ class HouseServices {
             $visit = new Visit($dbh, $reserv->getIdRegistration(), $idVisit);
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT);
             $curResc = $roomChooser->getSelectedResource();
-            $mkup .= $roomChooser->createChangeRoomsMarkup($dbh, $visitCharge, $idGuest, $isAdmin);
-            $dataArray['resc'] = $roomChooser->makeRoomsArray();
+            $mkup .= $roomChooser->createChangeRoomsMarkup($dbh, $idGuest, $isAdmin);
+            $dataArray['rooms'] = $roomChooser->makeRoomsArray();
             $dataArray['curResc'] = array(
                 "maxOcc" => $curResc->getMaxOccupants(),
                 "rate" => $visit->getPledgedRate(),
@@ -210,12 +210,9 @@ class HouseServices {
                 'status' => 'a',
                 'merchant' => $curResc->getMerchant(),
             );
-            $dataArray['deposit'] = $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]);
             $dataArray['idReservation'] = $r['idReservation'];
             $dataArray['cbRs'] = $reserv->getConstraints($dbh);
             $dataArray['numGuests'] = $reserv->getNumberGuests();
-            $dataArray['visitStart'] = $visit->getArrivalDate();
-            $dataArray['expDep'] = $expDepDT->format('c');
 
         } else {
 
@@ -465,7 +462,14 @@ class HouseServices {
 
                         } else {
 
-                            $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, $isGuestAdmin);
+                            // Default room rate
+                            $newRateCategory = '';
+                            if (isset($post['cbUseDefaultRate'])) {
+                                $newRateCategory = $resc->getDefaultRoomCategory();
+                            }
+
+                            $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, $isGuestAdmin, $newRateCategory);
+
                             $returnCkdIn = TRUE;
                             $returnReserv = TRUE;
                         }

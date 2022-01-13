@@ -199,18 +199,10 @@ class RoomChooser {
         }
     }
 
-    public function createChangeRoomsMarkup(\PDO $dbh, VisitCharges $visitCharge, $idGuest, $isAuthorized) {
-
-        $paymentMarkup = '';
+    public function createChangeRoomsMarkup(\PDO $dbh, $idGuest, $isAuthorized) {
 
         $table = new HTMLTable();
         $table->addHeaderTr(HTMLTable::makeTh('Change Rooms from ' . $this->selectedResource->getTitle(), array('colspan' => '2')));
-
-        // Send along a room selector
-        //$table->addBodyTr(
-        //        HTMLTable::makeTd('From room:', array('class' => 'tdlabel'))
-        //        .HTMLTable::makeTd(HTMLInput::generateMarkup($this->selectedResource->getTitle(), array('id'=>'myRescId', 'style'=>'border:none;', 'data-pmdl'=>$uS->RoomPriceModel, 'data-idresc'=>$this->resv->getIdResource(), 'readonly'=>'readonly')))
-        //        );
 
         $table->addBodyTr(
             HTMLTable::makeTd('As of:', array('class' => 'tdlabel', 'rowspan'=>'2'))
@@ -228,21 +220,30 @@ class RoomChooser {
 
         $table->addBodyTr(
             HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
-            . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
+            . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized, FALSE)
                 . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'margin-left: 0.8em; display:none'))));
+
+        $table->addBodyTr(
+            HTMLTable::makeTd(
+                HTMLInput::generateMarkup('', array('name'=>'cbUseDefaultRate', 'id'=>'cbUseDefaultRate', 'type'=>'checkbox', 'class'=>'hhk-feeskeys'))
+                .HTMLContainer::generateMarkup('label', 'Use default room rate', array('style'=>'margin-left:.3em; margin-right:.3em;', 'for'=>'cbUseDefaultRate'))
+                , array('colspan'=>'2'))
+            , array('id'=>'trUseDefaultRate', 'style'=>'display:none; text-align:center;'));
 
         $table->addBodyTr(
             HTMLTable::makeTd('', array('colspan'=>'2', 'id'=>'rmChgMsg', 'style'=>'color:red;display:none')));
 
-        return $table->generateMarkup(array('id' => 'moveTable', 'style' => 'margin-right:.5em; margin-top:.3em; max-width:350px;')) . $paymentMarkup;
+        return $table->generateMarkup(array('id' => 'moveTable', 'style' => 'margin-right:.5em; margin-top:.3em; max-width:350px;'));
     }
 
-    public function createChangeRoomsSelector(\PDO $dbh, $isAuthorized) {
+    public function createChangeRoomsSelector(\PDO $dbh, $isAuthorized, $includeBlankOption = TRUE) {
 
         // get empty rooms
         $rescs = $this->findResources($dbh, $isAuthorized, FALSE);
 
-        $rmBigEnough[] = array(0 => '0', 1 => '');
+        if ($includeBlankOption) {
+            $rmBigEnough[] = array(0 => '0', 1 => '');
+        }
 
         foreach ($rescs as $r) {
             $rmBigEnough[] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);

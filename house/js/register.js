@@ -297,7 +297,7 @@ function saveStatusEvent(idResc, type) {
     });
 }
 
-        function updateRescChooser(idReservation, numberGuests, cbRs, arrivalDate, departureDate) {
+        function updateResceChooser(idReservation, numberGuests, arrivalDate, departureDate) {
 
             var idResc, $selResource = $('#selResource');
 			var omitSelf = true;
@@ -393,10 +393,8 @@ function cgRoom(gname, id, idVisit, span) {
         {
             cmd: 'visitFees',
             idVisit: idVisit,
-            //idGuest: idGuest,
             action: action,
-            span: span,
-            //ckoutdt: ckoutDates
+            span: span
         },
     function(data) {
         "use strict";
@@ -429,22 +427,16 @@ function cgRoom(gname, id, idVisit, span) {
                 autoSize: true,
                 numberOfMonths: 1,
                 maxDate: 0,
-                dateFormat: 'M d, yy',
-                onSelect: function() {
-                    this.lastShown = new Date().getTime();
-                },
-                beforeShow: function() {
-                    var time = new Date().getTime();
-                    return this.lastShown === undefined || time - this.lastShown > 500;
-                },
-                onClose: function () {
-                	$('#rbReplaceRoomnew').attr('checked','checked');
-                    $(this).change();
-                }
+                dateFormat: 'M d, yy'
             });
             
             //init room chooser
-            updateRescChooser(data.idReservation, data.numGuests, data.cbRs, data.visitStart, data.expDep);
+            //updateResceChooser(data.idReservation, data.numGuests, data.visitStart, data.expDep);
+            if (data.rooms) {
+                rooms = data.rooms;
+            }else{
+            	rooms = {};
+            }
             
             $diagbox.on('change', 'input[name=rbReplaceRoom], input[name=resvChangeDate]', function(){
             	var startdate = '';
@@ -455,18 +447,32 @@ function cgRoom(gname, id, idVisit, span) {
             	}
             	
             	if(startdate){
-            		updateRescChooser(data.idReservation, data.numGuests, data.cbRs, startdate, data.expDep);
+            		updateResceChooser(data.idReservation, data.numGuests, startdate, data.expDep);
             	}
             });
-            
+
             $diagbox.on('change','#selResource', function(){
             	var selResource = $(this).val();
-            	if(rooms[selResource] && data.deposit < rooms[selResource].key){
+            	// Deposit required message
+            	if(rooms[selResource] && data.curResc.key < rooms[selResource].key){
             		$diagbox.find('#rmDepMessage').text('Deposit required').show();
             	}else{
             		$diagbox.find('#rmDepMessage').empty().hide();
             	}
+            	
+            	// Room default rate message.
+            	if ((data.curResc.defaultRateCat == '' && rooms[selResource].defaultRateCat != '')
+            		|| (data.curResc.defaultRateCat != ''  && rooms[selResource].defaultRateCat != '' && data.curResc.defaultRateCat != rooms[selResource].defaultRateCat)) {
+	
+					$diagbox.find('#trUseDefaultRate').show();
+	
+				} else {
+					$diagbox.find('#trUseDefaultRate').hide();
+					$diagbox.find('#cbUseDefaultRate').prop('checked', false)
+				}
             });
+            
+            $diagbox.find('#selResource').change();
             
             $diagbox.dialog('option', 'title', title);
             $diagbox.dialog('option', 'width', '400px');
