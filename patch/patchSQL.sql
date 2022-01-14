@@ -158,3 +158,6 @@ CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('showGuestsStayingReg', 'false', 'b', 'h', '', 'When true, only show guests currently checked in on registration form', '','1');
+
+ALTER TABLE `w_users`
+ADD COLUMN `idIdp` int(11) NOT NULL DEFAULT 0 AFTER `Chg_PW`;

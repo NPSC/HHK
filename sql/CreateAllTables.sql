@@ -2236,6 +2236,8 @@ CREATE TABLE IF NOT EXISTS `w_idp` (
     `SSO_URL` VARCHAR(500),
     `IdP_EntityId` VARCHAR(500),
     `IdP_Cert` BLOB,
+    `enableSigning` BOOL DEFAULT 1,
+    `enableEncryption` BOOL DEFAULT 1,
     `Status` VARCHAR(2) NOT NULL DEFAULT 'a',
     PRIMARY KEY (`idIdp`)
 ) ENGINE=InnoDB;
@@ -2274,6 +2276,7 @@ CREATE TABLE if not exists `w_users` (
   `Enc_PW` varchar(100) NOT NULL DEFAULT '',
   `PW_Change_Date` DATETIME DEFAULT NULL,
   `Chg_PW` BOOL NOT NULL DEFAULT true,
+  `idIdp` int(11) NOT NULL DEFAULT 0,
   `OTP` bit(1) NOT NULL DEFAULT b'0',
   `OTPcode` VARCHAR(45) NOT NULL DEFAULT '',
   `pass_rules` BOOL NOT NULL DEFAULT true,

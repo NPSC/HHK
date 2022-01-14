@@ -27,7 +27,7 @@ class UserClass
     const Login = 'L';
 
     const Lockout = 'PL';
-    
+
     const OTPSecChanged = 'OTPC';
 
     const Expired = 'E';
@@ -45,78 +45,87 @@ class UserClass
 
         $r = self::getUserCredentials($dbh, $username);
 
-        // disable user if inactive || force password reset
-        if ($r != NULL) {
-            $r = self::disableInactiveUser($dbh, $r); // returns updated user array
-            $r = self::setPassExpired($dbh, $r);
-        }
+        if($r['idIdp'] == 0) { //use local auth
 
-        //check PW
-        $match = false;
-        //new method
-        if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
-            $match = true;
-        }else if ($r != NULL && $r['Enc_PW'] == md5($password)) { //old method
-            $match = true;
-        }
-
-        if ($match && $r['Status'] == 'a') {
-            $success = false;
-            
-            //if OTP is required
-            if(!$r['OTP'] == '1' || $checkOTP == false){
-                $success = true;
-            }else if($r['OTP'] && $r['OTPcode'] != '' && $otp == ''){
-                $this->logMessage = "OTPRequired";
-                return FALSE;
-            }else if($otp != '' && isset($r['OTPcode'])){
-                $ga = new GoogleAuthenticator();
-                if($ga->verifyCode($r['OTPcode'], $otp) == true){
-                    $success = true;
-                }else{
-                    $success = false;
-				}
-			}
-            
-            if($success){
-                // Regenerate session ID to prevent session fixation attacks
-                $ssn = Session::getInstance();
-                $ssn->regenSessionId();
-                
-                //reset login tries
-                $this->resetTries();
-    
-                // Get magic PC cookie
-                $housePc = FALSE;
-                if (filter_has_var(INPUT_COOKIE, 'housepc')) {
-    
-                    $remoteIp = self::getRemoteIp();
-    
-                    if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
-                        $housePc = TRUE;
-                    }
-                }
-    
-                $this->setSession($dbh, $ssn, $r);
-    
-                $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
-    
-                $this->defaultPage = $r['Default_Page'];
-    
-                return TRUE;
-            }else{
-                $this->incrementTries();
-                $this->logMessage = "Two Step Code invalid";
+            // disable user if inactive || force password reset
+            if ($r != NULL) {
+                $r = self::disableInactiveUser($dbh, $r); // returns updated user array
+                $r = self::setPassExpired($dbh, $r);
             }
-        } else if ($match && $r['Status'] == 'd') { // is user disabled?
-            $this->logMessage = "Account disabled, please contact your administrator. ";
-        } else {
-            $this->incrementTries();
-            $this->logMessage = "Bad username or password.  ";
-            $this->insertUserLog($dbh, UserClass::Login_Fail, $username);
+
+            //check PW
+            $match = false;
+            //new method
+            if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
+                $match = true;
+            }else if ($r != NULL && $r['Enc_PW'] == md5($password)) { //old method
+                $match = true;
+            }
+
+            if ($match && $r['Status'] == 'a') {
+                $success = false;
+
+                //if OTP is required
+                if(!$r['OTP'] == '1' || $checkOTP == false){
+                    $success = true;
+                }else if($r['OTP'] && $r['OTPcode'] != '' && $otp == ''){
+                    $this->logMessage = "OTPRequired";
+                    return FALSE;
+                }else if($otp != '' && isset($r['OTPcode'])){
+                    $ga = new GoogleAuthenticator();
+                    if($ga->verifyCode($r['OTPcode'], $otp) == true){
+                        $success = true;
+                    }else{
+                        $success = false;
+    				}
+    			}
+
+                if($success){
+                    return $this->doLogin($dbh, $r);
+                }else{
+                    $this->incrementTries();
+                    $this->logMessage = "Two Step Code invalid";
+                }
+            } else if ($match && $r['Status'] == 'd') { // is user disabled?
+                $this->logMessage = "Account disabled, please contact your administrator. ";
+            } else {
+                $this->incrementTries();
+                $this->logMessage = "Bad username or password.  ";
+                $this->insertUserLog($dbh, UserClass::Login_Fail, $username);
+            }
+        }else{
+            $this->logMessage = "Account is managed by " . $r["authProvider"] . ". Please login with " . $r["authProvider"] . ".";
         }
 
         return FALSE;
+    }
+
+    public function doLogin(\PDO $dbh, array $r){
+        // Regenerate session ID to prevent session fixation attacks
+        $ssn = Session::getInstance();
+        $ssn->regenSessionId();
+
+        //reset login tries
+        $this->resetTries();
+
+        // Get magic PC cookie
+        $housePc = FALSE;
+        if (filter_has_var(INPUT_COOKIE, 'housepc')) {
+
+            $remoteIp = self::getRemoteIp();
+
+            if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
+                $housePc = TRUE;
+            }
+        }
+
+        $this->setSession($dbh, $ssn, $r);
+
+        $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+
+        $this->defaultPage = $r['Default_Page'];
+
+        return TRUE;
     }
 
     public function getDefaultPage($site = 'h')
@@ -394,14 +403,14 @@ class UserClass
 
         return false;
     }
-    
+
     public static function hasTOTP(\PDO $dbh, $uS)
     {
         $u = self::getUserCredentials($dbh, $uS->username);
         if ($u['OTP']) {
             return true;
         }
-        
+
         return false;
     }
 
@@ -447,7 +456,7 @@ class UserClass
             <div class="row">
             <div class="col-md-6">
         ';
-        
+
         //TOTP authentication
         $mkup .= '
             <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
@@ -456,7 +465,7 @@ class UserClass
         		</div>
         		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
         ';
-        
+
         if(self::hasTOTP($dbh, $uS)){
             $mkup.= '
                 <p style="margin: 0.5em">Two Step Verification is ON</p>
@@ -491,7 +500,7 @@ class UserClass
                     <button id="genSecret">Enable Two Step Verification</button>
             ';
         }
-        
+
         $mkup .= '
                 <div id="qrcode" style="margin: 1em 0;"></div>
                 <div id="otpForm" style="display: none;">
@@ -505,7 +514,7 @@ class UserClass
             </div> <!--end col-md-6 -->
             <div class="col-md-6">
         ';
-        
+
         if (self::isPassExpired($dbh, $uS)){
             $mkup .= '
             <div class="ui-widget hhk-visitdialog hhk-row PassExpDesc" style="margin-bottom: 1em;">
@@ -543,7 +552,7 @@ class UserClass
             </div>
             </div> <!--end col-md-6 -->
             </div> <!--end row -->';
-        
+
         $mkup .= "</div>";
         return $mkup;
     }
@@ -610,9 +619,10 @@ class UserClass
 
         $uname = str_ireplace("'", "", $username);
 
-        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id
+        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'local') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
+left join `w_idp` idp on u.`idIdp` = idp.`idIdp`
 WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = '$uname'");
 
         if ($stmt->rowCount() === 1) {
@@ -740,19 +750,19 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
             unset($ssn->Challtries);
         }
     }
-    
+
     //two factor authentication
-    
+
     public function saveTwoFactorSecret(\PDO $dbh, $secret = '', $OTP = ''){
         $uS = Session::getInstance();
-        
+
         $ga = new GoogleAuthenticator();
-            
+
         if($ga->verifyCode($secret, $OTP) == false){
             $this->logMessage = "One Time Code is invalid";
             return false;
         }
-        
+
         if($uS->username && $secret != ''){
             $query = "update w_users set OTP = 1, OTPCode = :secret, Last_Updated = now() where User_Name = :username and Status='a';";
             $stmt = $dbh->prepare($query);
@@ -760,7 +770,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
                 ':secret' => $secret,
                 ':username' => $uS->username
             ));
-            
+
             if ($stmt->rowCount() == 1) {
                 $this->insertUserLog($dbh, UserClass::OTPSecChanged, $uS->username);
             }
@@ -770,17 +780,17 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
             return false;
         }
     }
-    
+
     public function disableTwoFactor(\PDO $dbh, $username){
         $uS = Session::getInstance();
-        
+
         if($username){
             $query = "update w_users set OTP = 0, OTPCode = '', Last_Updated = now() where User_Name = :username and Status='a';";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':username' => $username
             ));
-            
+
             if ($stmt->rowCount() == 1) {
                 $this->insertUserLog($dbh, UserClass::OTPSecChanged, $username);
             }
@@ -790,7 +800,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
             return false;
         }
     }
-    
+
     //Strong Password generator from https://gist.github.com/tylerhall/521810
     // Generates a strong password of N length containing at least one lower case letter,
     // one uppercase letter, one digit, and one special character. The remaining characters

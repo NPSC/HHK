@@ -27,12 +27,14 @@ class SAML {
 
     protected $IdpId;
     protected $IdpConfig;
+    protected $dbh;
 
     public function __construct(\PDO $dbh, $idpId){
         $this->IdpId = $idpId;
         $this->loadConfig($dbh);
         if($this->IdpConfig){
             $this->auth = new Auth($this->getSettings());
+            $this->dbh = $dbh;
         }else{
             throw new RuntimeException("Cannot load Identity Providor configuration: Invalid IdpId");
         }
@@ -68,9 +70,34 @@ class SAML {
         }
 
         if (!$this->auth->isAuthenticated()) {
-            return array('error'=>'Not authenticated');
+            return array('error'=>'Authentication Failed');
         }else{
+            //auth success
+            $u = new UserClass();
+            $userAr = $u->getUserCredentials($this->dbh, $this->auth->getNameId());
+
+            if(isset($userAr["idIdp"]) && $userAr["idIdp"] == $this->IdpId){ //correct user found, set up session
+                if($u->doLogin($this->dbh, $userAr)){
+                    //return array('success'=>'logged in', 'redirect path'=>$uS->webSite['Relative_Address'].$uS->webSite['Default_Page']);
+                    header('location:../' . $uS->webSite['Relative_Address'].$uS->webSite['Default_Page']);
+                }
+
+            }else{
+                return array('success'=>'authenticated', 'IdP'=>$this->IdpConfig["Name"], 'NameId'=> $this->auth->getNameId(), 'error'=> "User not provisioned in HHK", 'samlUserdata'=>$this->auth->getAttributes());
+            }
+
             return array('success'=>'authenticated', 'IdP'=>$this->IdpConfig["Name"], 'NameId'=> $this->auth->getNameId(), 'samlUserdata'=>$this->auth->getAttributes());
+        }
+    }
+
+    public function provisionUser(){
+
+        $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
+
+        if($user){
+
+        }else{
+            //provision new user
         }
     }
 

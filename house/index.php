@@ -10,6 +10,7 @@ use HHK\SysConst\CodeVersion;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\SecurityComponent;
 use HHK\sec\SysConfig;
+use HHK\sec\SAML;
 
 /**
  * Index.php
@@ -109,6 +110,7 @@ if ($trainingSiteURL != '') {
             HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Training Playground' . $extLinkIcon, array('href'=>$trainingSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:25px;clear:left;float:left"));
 }
 
+$samlMkup = SAML::getIdpMarkup($dbh);
 $copyYear = date('Y');
 
 $loginMkup = $login->loginForm();
@@ -155,7 +157,7 @@ if (SecurityComponent::isHTTPS()) {
                     <?php echo $loginMkup; ?>
                 </div>
                 <div style="clear:left;">
-                    <?php echo $linkMkup; ?>
+                    <?php echo $linkMkup . $samlMkup; ?>
                 </div>
                 <div style="margin-top: 90px;width:500px;">
                     <hr>
