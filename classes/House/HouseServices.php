@@ -166,22 +166,7 @@ class HouseServices {
             $showAdjust = TRUE;
         }
 
-        $mkup = HTMLInput::generateMarkup($uS->EmptyExtendLimit, array('id' =>'EmptyExtend', 'type' => 'hidden'));
-
-        // Get main visit markup section
-        $mkup .= HTMLContainer::generateMarkup('div',
-                VisitViewer::createActiveMarkup(
-                        $dbh,
-                        $r,
-                        $visitCharge,
-                        $uS->KeyDeposit,
-                        $uS->VisitFee,
-                        $isAdmin,
-                        $uS->EmptyExtendLimit,
-                        $action,
-                		$coDate,
-                        $showAdjust)
-                , array('style' => 'clear:left;margin-top:10px;'));
+        $mkup = '';
 
         // Change rooms control
         if ($action == 'cr' && $r['Status'] == VisitStatus::CheckedIn) {
@@ -197,9 +182,12 @@ class HouseServices {
 
             $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation'], $idVisit);
             $visit = new Visit($dbh, $reserv->getIdRegistration(), $idVisit);
+
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT);
             $curResc = $roomChooser->getSelectedResource();
+
             $mkup .= $roomChooser->createChangeRoomsMarkup($dbh, $idGuest, $isAdmin);
+
             $dataArray['rooms'] = $roomChooser->makeRoomsArray();
             $dataArray['curResc'] = array(
                 "maxOcc" => $curResc->getMaxOccupants(),
@@ -215,6 +203,21 @@ class HouseServices {
             $dataArray['numGuests'] = $reserv->getNumberGuests();
 
         } else {
+
+            // Get main visit markup section
+            $mkup .= HTMLContainer::generateMarkup('div',
+                VisitViewer::createActiveMarkup(
+                    $dbh,
+                    $r,
+                    $visitCharge,
+                    $uS->KeyDeposit,
+                    $uS->VisitFee,
+                    $isAdmin,
+                    $uS->EmptyExtendLimit,
+                    $action,
+                    $coDate,
+                    $showAdjust)
+                , array('style' => 'clear:left;margin-top:10px;'));
 
             $mkup = HTMLContainer::generateMarkup('div',
             		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)

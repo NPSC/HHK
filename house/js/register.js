@@ -139,20 +139,20 @@ function chgRoomCleanStatus(idRoom, statusCode) {
         });
     }
 }
-function payFee(gname, id, idVisit, span) {
-    var buttons = {
-        "Show Statement": function() {
-            window.open('ShowStatement.php?vid=' + idVisit, '_blank');
-        },
-        "Pay Fees": function() {
-            saveFees(id, idVisit, span, false, 'register.php');
-        },
-        "Cancel": function() {
-            $(this).dialog("close");
-        }
-    };
-    viewVisit(id, idVisit, buttons, 'Pay Fees for ' + gname, 'pf', span);
-}
+//function payFee(gname, id, idVisit, span) {
+//    var buttons = {
+//        "Show Statement": function() {
+//            window.open('ShowStatement.php?vid=' + idVisit, '_blank');
+//        },
+//        "Pay Fees": function() {
+//            saveFees(id, idVisit, span, false, 'register.php');
+//        },
+//        "Cancel": function() {
+//            $(this).dialog("close");
+//        }
+//    };
+//    viewVisit(id, idVisit, buttons, 'Pay Fees for ' + gname, 'pf', span);
+//}
 function editPSG(psg) {
     var buttons = {
 //        "Save PSG": function() {
@@ -372,6 +372,7 @@ function saveStatusEvent(idResc, type) {
         }
 
 function cgRoom(gname, id, idVisit, span) {
+
 	var action = 'cr';
 	var title = 'Change Rooms for ' + gname;
     var buttons = {
@@ -415,7 +416,7 @@ function cgRoom(gname, id, idVisit, span) {
 
             }
 
-            var $diagbox = $('#pmtRcpt');
+            let $diagbox = $('#pmtRcpt');
 
             $diagbox.children().remove();
             $diagbox.append($('<div class="hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
@@ -430,8 +431,7 @@ function cgRoom(gname, id, idVisit, span) {
                 dateFormat: 'M d, yy'
             });
             
-            //init room chooser
-            //updateResceChooser(data.idReservation, data.numGuests, data.visitStart, data.expDep);
+            //init room selector data
             if (data.rooms) {
                 rooms = data.rooms;
             }else{
@@ -439,15 +439,17 @@ function cgRoom(gname, id, idVisit, span) {
             }
             
             $diagbox.on('change', 'input[name=rbReplaceRoom], input[name=resvChangeDate]', function(){
-            	var startdate = '';
+            	let startdate = data.start;
             	if($(this).val() == 'rpl'){
-            		startdate = data.visitStart;
+					// manage radio button
+            		startdate = data.start;
             	}else if($(this).val() && $(this).val() != 'new'){
+					// manage date text box
             		startdate = $(this).val();
             	}
             	
             	if(startdate){
-            		updateResceChooser(data.idReservation, data.numGuests, startdate, data.expDep);
+            		updateResceChooser(data.idReservation, data.numGuests, startdate, data.end);
             	}
             });
 
@@ -518,6 +520,7 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta) {
         }
     });
 }
+
 function getRoomList(idResv, eid) {
     if (idResv) {
         // place "loading" icon
@@ -771,11 +774,6 @@ $(document).ready(function () {
         "deferRender": true
     });
 
-    $('#vstays').on('click', '.stpayFees', function (event) {
-        event.preventDefault();
-        $(".hhk-alert").hide();
-        payFee($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
-    });
     $('#vstays').on('click', '.applyDisc', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();

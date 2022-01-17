@@ -15,11 +15,11 @@ define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type
 
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);
 define('PAYMENT_JS', "js/payments-min.js" . JSV);
-define('VISIT_DIALOG_JS', "js/visitDialog-min.js" . JSV);
+define('VISIT_DIALOG_JS', "js/visitDialog.js" . JSV);
 define('INCIDENT_REP_JS', 'js/incidentReports.min.js' . JSV);
 define('DOC_UPLOAD_JS', 'js/documentUpload.min.js' . JSV);
 define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
-define('REGISTER_JS', 'js/register-min.js' . JSV);
+define('REGISTER_JS', 'js/register.js' . JSV);
 define('RESV_JS', "js/resv.js" . JSV);
 define('INVOICE_JS', "js/invoice.js" . JSV);
 define('REPORTFIELDSETS_JS', "js/reportfieldSets.js" . JSV);

@@ -220,12 +220,12 @@ class RoomChooser {
 
         $table->addBodyTr(
             HTMLTable::makeTd('Change to:', array('class' => 'tdlabel', 'id'=>'hhk-roomChsrtitle'))
-            . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized, FALSE)
+            . HTMLTable::makeTd($this->createChangeRoomsSelector($dbh, $isAuthorized)
                 . HTMLContainer::generateMarkup('span', '', array('id'=>'rmDepMessage', 'style'=>'margin-left: 0.8em; display:none'))));
 
         $table->addBodyTr(
             HTMLTable::makeTd(
-                HTMLInput::generateMarkup('', array('name'=>'cbUseDefaultRate', 'id'=>'cbUseDefaultRate', 'type'=>'checkbox', 'class'=>'hhk-feeskeys'))
+                HTMLInput::generateMarkup('', array('name'=>'cbUseDefaultRate', 'id'=>'cbUseDefaultRate', 'checked'=>'checked', 'type'=>'checkbox', 'class'=>'hhk-feeskeys'))
                 .HTMLContainer::generateMarkup('label', 'Use default room rate', array('style'=>'margin-left:.3em; margin-right:.3em;', 'for'=>'cbUseDefaultRate'))
                 , array('colspan'=>'2'))
             , array('id'=>'trUseDefaultRate', 'style'=>'display:none; text-align:center;'));
@@ -236,14 +236,13 @@ class RoomChooser {
         return $table->generateMarkup(array('id' => 'moveTable', 'style' => 'margin-right:.5em; margin-top:.3em; max-width:350px;'));
     }
 
-    public function createChangeRoomsSelector(\PDO $dbh, $isAuthorized, $includeBlankOption = TRUE) {
+    protected function createChangeRoomsSelector(\PDO $dbh, $isAuthorized) {
 
         // get empty rooms
         $rescs = $this->findResources($dbh, $isAuthorized, FALSE);
 
-        if ($includeBlankOption) {
-            $rmBigEnough[] = array(0 => '0', 1 => '');
-        }
+        // Include blank option
+        $rmBigEnough[] = array(0 => '0', 1 => '');
 
         foreach ($rescs as $r) {
             $rmBigEnough[] = array($r->getIdResource(), $r->getTitle(), $r->optGroup);
@@ -367,6 +366,7 @@ class RoomChooser {
         $constraintMkup = '';
         $guestsRoom = '';
 
+        // Add constraints markup.
         if (count($resvConstraints->getConstraints()) + count($visitConstraints->getConstraints()) > 0) {
 
             $constraintMkup = self::createResvConstMkup($dbh, $this->resv->getIdReservation(), $constraintsDisabled, $classId, $this->oldResvId);
@@ -411,7 +411,7 @@ class RoomChooser {
                         . $guestsRoom
                         . HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'clear:left; float:left;')),
                         array('class'=>'hhk-panel'))
-                        , array('style'=>'display: inline-block', 'class'=>'mr-3')
+                    , array('style'=>'display: inline-block', 'class'=>'mr-3')
                 );
         }
 

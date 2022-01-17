@@ -730,9 +730,9 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     // Confirm checking out
     if (ckoutlist.length > 0) {
         var cnfMsg = 'Check Out:\n' + ckoutlist.join('\n');
-        if ($('#EmptyExtend').val() === '1' && $('#extendCb').prop('checked') && ckoutlist.length >= $('#currGuests').val()) {
-           cnfMsg += '\nand extend the visit for ' + $('#extendDays').val() + ' days';
-        }
+//        if ($('#EmptyExtend').val() === '1' && $('#extendCb').prop('checked') && ckoutlist.length >= $('#currGuests').val()) {
+//           cnfMsg += '\nand extend the visit for ' + $('#extendDays').val() + ' days';
+//        }
         if (confirm(cnfMsg + '?') === false) {
             $('#keysfees').dialog("close");
             return;
@@ -750,42 +750,42 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     $('#keyDepAmt').removeClass('ui-state-highlight');
 
     // Room Change?
-    if ($('#resvResource').length > 0) {
-
-        resvResc = $('#resvResource').val();
-
-        if (resvResc != '0') {
-            $('#resvChangeDate').removeClass('ui-state-highlight');
-            $('#chgmsg').text('');
-            var valMsg = $('<span id="chgmsg"/>');
-            if ($('#resvChangeDate').val() == '') {
-                valMsg.text("Enter a change room date.");
-                valMsg.css('color', 'red');
-                $('#moveTable').prepend($('<tr/>').append($('<td colspan="2">').append(valMsg)));
-                $('#resvChangeDate').addClass('ui-state-highlight');
-                return;
-            }
-            var chgDate = $('#resvChangeDate').datepicker("getDate");
-            if (!chgDate) {
-                valMsg.text("Something wrong with the change room date.");
-                valMsg.css('color', 'red');
-                $('#moveTable').prepend($('<tr/>').append($('<td colspan="2">').append(valMsg)));
-                $('#resvChangeDate').addClass('ui-state-highlight');
-                return;
-            }
-            if (chgDate > new Date()) {
-                valMsg.text("Change room date can't be in the future.");
-                valMsg.css('color', 'red');
-                $('#moveTable').prepend($('<tr/>').append($('<td colspan="2">').append(valMsg)));
-                $('#resvChangeDate').addClass('ui-state-highlight');
-                return;
-            }
-            if (confirm('Change Rooms?') === false) {
-                $('#keysfees').dialog("close");
-                return;
-            }
-        }
-    }
+//    if ($('#resvResource').length > 0) {
+//
+//        resvResc = $('#resvResource').val();
+//
+//        if (resvResc != '0') {
+//            $('#resvChangeDate').removeClass('ui-state-highlight');
+//            $('#chgmsg').text('');
+//            var valMsg = $('<span id="chgmsg"/>');
+//            if ($('#resvChangeDate').val() == '') {
+//                valMsg.text("Enter a change room date.");
+//                valMsg.css('color', 'red');
+//                $('#moveTable').prepend($('<tr/>').append($('<td colspan="2">').append(valMsg)));
+//                $('#resvChangeDate').addClass('ui-state-highlight');
+//                return;
+//            }
+//            var chgDate = $('#resvChangeDate').datepicker("getDate");
+//            if (!chgDate) {
+//                valMsg.text("Something wrong with the change room date.");
+//                valMsg.css('color', 'red');
+//                $('#moveTable').prepend($('<tr/>').append($('<td colspan="2">').append(valMsg)));
+//                $('#resvChangeDate').addClass('ui-state-highlight');
+//                return;
+//            }
+//            if (chgDate > new Date()) {
+//                valMsg.text("Change room date can't be in the future.");
+//                valMsg.css('color', 'red');
+//                $('#moveTable').prepend($('<tr/>').append($('<td colspan="2">').append(valMsg)));
+//                $('#resvChangeDate').addClass('ui-state-highlight');
+//                return;
+//            }
+//            if (confirm('Change Rooms?') === false) {
+//                $('#keysfees').dialog("close");
+//                return;
+//            }
+//        }
+//    }
 
 	// Save Ribbon Note
 	parms['txtRibbonNote'] = $('#txtRibbonNote').val();
