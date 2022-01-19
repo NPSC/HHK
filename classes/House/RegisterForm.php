@@ -481,7 +481,7 @@ p.label {
 
         if ($idVisit > 0) {
 
-            $stayingSql = ($uS->showGuestsStayingReg ? " and s.Status = 'a' " : "");
+            $stayingSql = " and s.Status = 'a' "; //only show current stays if visit exists
             $query = "select s.idName, s.Span_Start_Date, s.Expected_Co_Date, s.Span_End_Date, s.`Status`, if(s.idName = v.idPrimaryGuest, 1, 0) as `primaryGuest`
 					from stays s "
                     . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
