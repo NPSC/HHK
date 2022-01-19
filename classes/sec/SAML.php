@@ -6,6 +6,7 @@ use OneLogin\Saml2\Error;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Member\WebUser;
 /**
  * SAML.php
  *
@@ -33,10 +34,10 @@ class SAML {
         $this->IdpId = $idpId;
         $this->loadConfig($dbh);
         if($this->IdpConfig){
-            $this->auth = new Auth($this->getSettings());
             $this->dbh = $dbh;
+            $this->auth = new Auth($this->getSettings());
         }else{
-            throw new RuntimeException("Cannot load Identity Providor configuration: Invalid IdpId");
+            throw new \ErrorException("Cannot load Identity Providor configuration: Invalid IdpId");
         }
     }
 
@@ -77,8 +78,8 @@ class SAML {
             $userAr = $u->getUserCredentials($this->dbh, $this->auth->getNameId());
 
             if(isset($userAr["idIdp"]) && $userAr["idIdp"] == $this->IdpId){ //correct user found, set up session
+                return array("success"=>"authenticated", "userUpdateParams"=>$this->updateUser());
                 if($u->doLogin($this->dbh, $userAr)){
-                    //return array('success'=>'logged in', 'redirect path'=>$uS->webSite['Relative_Address'].$uS->webSite['Default_Page']);
                     header('location:../' . $uS->webSite['Relative_Address'].$uS->webSite['Default_Page']);
                 }
 
@@ -90,7 +91,7 @@ class SAML {
         }
     }
 
-    public function provisionUser(){
+    public function updateUser(){
 
         $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
 
@@ -98,6 +99,23 @@ class SAML {
 
         }else{
             //provision new user
+        }
+
+        //make parms array for group update
+        $parms = array();
+        $attributes = $this->auth->getAttributes();
+        $allSecurityGroups = $this->getSecurityGroups($this->dbh);
+
+        //fill parms array
+        if(isset($attributes["hhkSecurityGroups"])){
+            foreach($attributes["hhkSecurityGroups"] as $secGroup){
+                if(isset($allSecurityGroups[$secGroup])){
+                    $parms["grpSec_" . $allSecurityGroups[$secGroup]["Code"]] = "On";
+                }
+            }
+            //update security groups
+            WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms);
+            return $parms;
         }
     }
 
@@ -133,6 +151,20 @@ class SAML {
         }else{
             $this->IdpConfig = [];
         }
+    }
+
+    public function getSecurityGroups(\PDO $dbh, $titlesOnly = false){
+        $stmt = $dbh->query("select Group_Code as Code, Title from w_groups");
+        $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($groups as $g) {
+            if($titlesOnly){ //list titles
+                $sArray[] = $g['Title'];
+            }else{ //key by title
+                $sArray[$g['Title']] = $g;
+            }
+        }
+        return $sArray;
     }
 
     public function getSettings(){
@@ -174,12 +206,9 @@ class SAML {
                             ]
                         ],
                         [
-                            "name" => "SecurityGroups",
+                            "name" => "hhkSecurityGroups",
                             "isRequired" => true,
-                            "attributeValue"=>[
-                                "Guest Admin",
-                                "Guest Operations"
-                            ]
+                            "attributeValue"=>$this->getSecurityGroups($this->dbh, true)
                         ]
                     ]
                 ],

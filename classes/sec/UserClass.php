@@ -414,6 +414,12 @@ class UserClass
         return false;
     }
 
+    public static function getAuthProvider(\PDO $dbh, $uS)
+    {
+        $u = self::getUserCredentials($dbh, $uS->username);
+        return $u['authProvider'];
+    }
+
     public static function setPassExpired(\PDO $dbh, array $user){
         if(isset($user['pass_rules']) && $user['pass_rules']){ //if password rules apply
             $date = false;
@@ -449,111 +455,120 @@ class UserClass
     {
         $uS = Session::getInstance();
 
+        $authProvider = self::getAuthProvider($dbh, $uS);
+
         $mkup = '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
         $passwordTitle = 'Change your Password';
 
-        $mkup .= '
-            <div class="row">
-            <div class="col-md-6">
-        ';
-
-        //TOTP authentication
-        $mkup .= '
-            <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
-                <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
-        			Two Step Verification
-        		</div>
-        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-        ';
-
-        if(self::hasTOTP($dbh, $uS)){
-            $mkup.= '
-                <p style="margin: 0.5em">Two Step Verification is ON</p>
-                <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
-                    <button id="getSecret">Show QR Code</button>
-                    <button id="genSecret">Generate new QR Code</button>
+        if($authProvider == 'local'){
+            $mkup .= '
+                <div class="row">
+                <div class="col-md-6">
             ';
-        }else{
-            $mkup.= '
-                <p style="margin: 0.5em">Two Step Verification is OFF</p>
-                <p style="margin: 0.5em">Two step verification adds a second layer of security to your account by requiring you to enter a temporary code in addition to your password when logging in.</p>
-                <div id="TwoFactorHelp" style="margin: 0.5em;">
-                    <h3>How it works</h3>
-                    <div>
-                        <p>Once set up, you will be asked for a temporary code after entering your password when logging in. This temporary code can be found in the Authenticator browser extension configured during set up. These codes change every 30 seconds, so you\'ll need a new one each time you login.</p>
-                        <p><strong>Follow these steps to configure Two Step Verification</strong></p>
-                        <ol>
-                            <li>Install the Authenticator browser extension<br><a href="https://authenticator.cc/" target="_blank" class="button">Download here</a></li>
-                            <li>Click "Enable Two Step Verification" below</li>
-                            <li>Click the Authenticator icon <img src="' . $uS->resourceURL . '/conf/img/authenticator.png"> at the top right corner of your browser</li>
-                            <li>Click the Scan QR Code icon <img src="' . $uS->resourceURL . '/conf/img/authenticator-scan-qr.png"></li>
-                            <li>Click and drag from the upper left to the lower right of the QR code generated in Step 2 to select it</li>
-                            <li>If you see a message that says "(user) has been added.", then you have successfully configured the Authenticator extension</li>
-                            <li>Click the code shown in the Authenticator extension to copy it</li>
-                            <li>Click inside the text box below the QR code and press Ctrl-V to paste the code.</li>
-                            <li>Click "Submit Code"</li>
-                            <li>Two Step Verification is now enabled</li>
-                        </ol>
+
+            //TOTP authentication
+            $mkup .= '
+                <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+                    <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
+            			Two Step Verification
+            		</div>
+            		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+            ';
+
+            if(self::hasTOTP($dbh, $uS)){
+                $mkup.= '
+                    <p style="margin: 0.5em">Two Step Verification is ON</p>
+                    <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
+                        <button id="getSecret">Show QR Code</button>
+                        <button id="genSecret">Generate new QR Code</button>
+                ';
+            }else{
+                $mkup.= '
+                    <p style="margin: 0.5em">Two Step Verification is OFF</p>
+                    <p style="margin: 0.5em">Two step verification adds a second layer of security to your account by requiring you to enter a temporary code in addition to your password when logging in.</p>
+                    <div id="TwoFactorHelp" style="margin: 0.5em;">
+                        <h3>How it works</h3>
+                        <div>
+                            <p>Once set up, you will be asked for a temporary code after entering your password when logging in. This temporary code can be found in the Authenticator browser extension configured during set up. These codes change every 30 seconds, so you\'ll need a new one each time you login.</p>
+                            <p><strong>Follow these steps to configure Two Step Verification</strong></p>
+                            <ol>
+                                <li>Install the Authenticator browser extension<br><a href="https://authenticator.cc/" target="_blank" class="button">Download here</a></li>
+                                <li>Click "Enable Two Step Verification" below</li>
+                                <li>Click the Authenticator icon <img src="' . $uS->resourceURL . '/conf/img/authenticator.png"> at the top right corner of your browser</li>
+                                <li>Click the Scan QR Code icon <img src="' . $uS->resourceURL . '/conf/img/authenticator-scan-qr.png"></li>
+                                <li>Click and drag from the upper left to the lower right of the QR code generated in Step 2 to select it</li>
+                                <li>If you see a message that says "(user) has been added.", then you have successfully configured the Authenticator extension</li>
+                                <li>Click the code shown in the Authenticator extension to copy it</li>
+                                <li>Click inside the text box below the QR code and press Ctrl-V to paste the code.</li>
+                                <li>Click "Submit Code"</li>
+                                <li>Two Step Verification is now enabled</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
+                        <button id="genSecret">Enable Two Step Verification</button>
+                ';
+            }
+
+            $mkup .= '
+                    <div id="qrcode" style="margin: 1em 0;"></div>
+                    <div id="otpForm" style="display: none;">
+                        <label for"setupOTP" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
+                        <input type="text" id="setupOTP" size="10">
+                        <button id="submitSetupOTP" style="margin-left: 1em;">Submit Code</button>
+                    </div>
+                    </div>
                     </div>
                 </div>
-                <div class="TwofactorSettings" style="text-align: center; margin:1em 0;">
-                    <button id="genSecret">Enable Two Step Verification</button>
+                </div> <!--end col-md-6 -->
+                <div class="col-md-6">
             ';
-        }
 
-        $mkup .= '
-                <div id="qrcode" style="margin: 1em 0;"></div>
-                <div id="otpForm" style="display: none;">
-                    <label for"setupOTP" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
-                    <input type="text" id="setupOTP" size="10">
-                    <button id="submitSetupOTP" style="margin-left: 1em;">Submit Code</button>
+            if (self::isPassExpired($dbh, $uS)){
+                $mkup .= '
+                <div class="ui-widget hhk-visitdialog hhk-row PassExpDesc" style="margin-bottom: 1em;">
+                    <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
+            			Password Expired
+            		</div>
+            		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+                        <p style="margin: 0.5em">Your password has expired, please choose a new one below</p>
+                    </div>
                 </div>
-                </div>
-                </div>
-            </div>
-            </div> <!--end col-md-6 -->
-            <div class="col-md-6">
-        ';
+                ';
+            }
 
-        if (self::isPassExpired($dbh, $uS)){
+            // password markup
             $mkup .= '
-            <div class="ui-widget hhk-visitdialog hhk-row PassExpDesc" style="margin-bottom: 1em;">
-                <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
-        			Password Expired
-        		</div>
-        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-                    <p style="margin: 0.5em">Your password has expired, please choose a new one below</p>
+                <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+            		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
+            		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+
+                        <table style="width: 100%"><tr>
+                                <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
+                            </tr><tr>
+                                <td class="tdlabel">Enter Old Password:</td><td style="display: flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            </tr><tr>
+                                <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="utxtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            </tr><tr>
+                                <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            </tr><tr>
+                                <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter,<br> 1 lowercase letter, a number and a symbol. Do not use names or dictionary words</span></td>
+                            </tr><tr>
+                                <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
-            </div>
+                </div> <!--end col-md-6 -->
+                </div> <!--end row -->';
+
+            $mkup .= "</div>";
+        }else{
+            $mkup .= '
+                <p>Your account is managed by ' . $authProvider . ', please reach out to them for help with your account</p>
+                </div>
             ';
         }
-
-        // password markup
-        $mkup .= '
-            <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
-        		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
-        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-
-                    <table style="width: 100%"><tr>
-                            <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
-                        </tr><tr>
-                            <td class="tdlabel">Enter Old Password:</td><td style="display: flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="utxtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter,<br> 1 lowercase letter, a number and a symbol. Do not use names or dictionary words</span></td>
-                        </tr><tr>
-                            <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
-                        </tr>
-                    </table>
-                </div>
-            </div>
-            </div> <!--end col-md-6 -->
-            </div> <!--end row -->';
-
-        $mkup .= "</div>";
         return $mkup;
     }
 

@@ -224,7 +224,7 @@ class WebInit {
         SysConfig::getCategory($this->dbh, $uS, "'g'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'p'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'ga'", webInit::SYS_CONFIG);
-        
+
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Rate_Adjustment', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
             UNION select `Category` as `Table_Name`, `Code`, `Title` as `Description`, `Other` as `Substitute` from `lookups` where `Show` = 'y'
@@ -237,16 +237,16 @@ class WebInit {
         foreach ($rows as $r) {
             $nameLookups[$r['Table_Name']][$r['Code']] = array($r['Code'],$r['Description'],$r['Substitute']);
         }
-        
+
         //get hospitals with status
         $query = "select idHospital, IF(`status`='r', concat(`Title`, ' (Retired)'), `Title`) as `Title`, `Type`, `Status`, `Reservation_Style`, `Stay_Style` from hospital where `Status` in ('a','r') order by `Status` asc, `Title` asc";
         $stmt = $this->dbh->query($query);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        
+
         foreach ($rows as $r) {
         	$nameLookups["Hospitals"][$r['idHospital']] = array($r['idHospital'],$r['Title'],$r['Type'], $r['Status'], $r['Reservation_Style'], $r['Stay_Style']);
         }
-        
+
         $uS->guestLookups = $nameLookups;
 
         return $uS->guestLookups;
@@ -288,7 +288,7 @@ class WebInit {
         return $uS->volLookups;
 
     }
-    
+
 }
 
 ?>

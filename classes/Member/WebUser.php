@@ -329,60 +329,7 @@ class WebUser {
                 return $reply;
             }
 
-
-            // Group Code security table
-            //$sArray = readGenLookups($dbh, "Group_Code");
-            $stmt = $dbh->query("select Group_Code as Code, Description from w_groups");
-            $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-            foreach ($groups as $g) {
-                $sArray[$g['Code']] = $g;
-            }
-
-
-
-            $secRS = new Id_SecurityGroupRS();
-            $secRS->idName->setStoredVal($id);
-            $rows = EditRS::select($dbh, $secRS, array($secRS->idName));
-
-            foreach ($rows as $r) {
-                $sArray[$r['Group_Code']]["exist"] = "t";
-            }
-
-            $updtd = FALSE;
-
-            foreach ($sArray as $g) {
-
-                if (isset($parms["grpSec_" . $g["Code"]])) {
-
-                    if (!isset($g["exist"]) && $parms["grpSec_" . $g["Code"]] == "checked") {
-
-                        // new group code to put into the database
-                        $secRS = new Id_SecurityGroupRS();
-                        $secRS->idName->setNewVal($id);
-                        $secRS->Group_Code->setNewVal($g["Code"]);
-                        $n = EditRS::insert($dbh, $secRS);
-
-                        NameLog::writeInsert($dbh, $secRS, $id, $admin);
-                        $updtd = TRUE;
-
-                    } else if (isset($g["exist"]) && $parms["grpSec_" . $g["Code"]] != "checked") {
-
-                        // group code to delete from the database.
-                        $secRS = new Id_SecurityGroupRS();
-                        $secRS->idName->setStoredVal($id);
-                        $secRS->Group_Code->setStoredVal($g["Code"]);
-                        $n = EditRS::delete($dbh, $secRS, array($secRS->idName, $secRS->Group_Code));
-
-                        if ($n == 1) {
-                            NameLog::writeDelete($dbh, $secRS, $id, $admin);
-                            $updtd = TRUE;
-                        }
-                    }
-                }
-            }
-
-            if ($updtd) {
+            if (self::updateSecurityGroups($dbh, $id, $parms)) {
                 $success .= 'Security Groups Updated.';
             }
         }
@@ -392,6 +339,61 @@ class WebUser {
         }
 
         return $reply;
+    }
+
+    public static function updateSecurityGroups(\PDO $dbh, int $id, array $parms){
+        // Group Code security table
+        //$sArray = readGenLookups($dbh, "Group_Code");
+        $stmt = $dbh->query("select Group_Code as Code, Description from w_groups");
+        $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($groups as $g) {
+            $sArray[$g['Code']] = $g;
+        }
+
+
+
+        $secRS = new Id_SecurityGroupRS();
+        $secRS->idName->setStoredVal($id);
+        $rows = EditRS::select($dbh, $secRS, array($secRS->idName));
+
+        foreach ($rows as $r) {
+            $sArray[$r['Group_Code']]["exist"] = "t";
+        }
+
+        $updtd = FALSE;
+
+        foreach ($sArray as $g) {
+
+            if (isset($parms["grpSec_" . $g["Code"]])) {
+
+                if (!isset($g["exist"]) && $parms["grpSec_" . $g["Code"]] == "checked") {
+
+                    // new group code to put into the database
+                    $secRS = new Id_SecurityGroupRS();
+                    $secRS->idName->setNewVal($id);
+                    $secRS->Group_Code->setNewVal($g["Code"]);
+                    $n = EditRS::insert($dbh, $secRS);
+
+                    NameLog::writeInsert($dbh, $secRS, $id, $admin);
+                    $updtd = TRUE;
+
+                } else if (isset($g["exist"]) && $parms["grpSec_" . $g["Code"]] != "checked") {
+
+                    // group code to delete from the database.
+                    $secRS = new Id_SecurityGroupRS();
+                    $secRS->idName->setStoredVal($id);
+                    $secRS->Group_Code->setStoredVal($g["Code"]);
+                    $n = EditRS::delete($dbh, $secRS, array($secRS->idName, $secRS->Group_Code));
+
+                    if ($n == 1) {
+                        NameLog::writeDelete($dbh, $secRS, $id, $admin);
+                        $updtd = TRUE;
+                    }
+                }
+            }
+        }
+        return $updtd;
     }
 
 }
