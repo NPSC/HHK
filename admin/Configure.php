@@ -11,6 +11,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
 use HHK\Exception\UploadException;
 use HHK\Neon\TransferMembers;
 use HHK\sec\Labels;
+use HHK\sec\SAML;
 
 /**
  * Configure.php
@@ -355,6 +356,8 @@ $conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . '
 
 $labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
+$authIdpList = SAML::getIdpList($dbh, false);
+
 $externals = '';
 if (is_null($wsConfig) === FALSE) {
 
@@ -428,31 +431,31 @@ if (is_null($wsConfig) === FALSE) {
 
             $externals .= $nTbl->generateMarkup(array('style'=>'margin-top:5px;'), $list['List_Name']);
         }
-        
+
         // Custom fields
         $results = $transfer->listCustomFields();
         $cfTbl = new HTMLTable();
-        
+
         foreach ($results as $v) {
         	if ($wsConfig->has('custom_fields', $v['fieldName'])) {
         		$cfTbl->addBodyTr(HTMLTable::makeTd($v['fieldName']) . HTMLTable::makeTd($v['fieldId']));
         	}
         }
-        
+
         $externals .= $cfTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Custom Fields');
-        
+
         // Sources
         $results = $transfer->listSources();
         $sTbl = new HTMLTable();
-        
+
         foreach ($results as $v) {
-        	
+
         	$sTbl->addBodyTr(HTMLTable::makeTd($v['id']) . HTMLTable::makeTd($v['name']));
 
         }
-        
+
         $externals .= $sTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Sources');
-        
+
       } catch (Exception $pe) {
           $externalErrMsg = "Transfer Error: " .$pe->getMessage();
       }
@@ -491,18 +494,19 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        
+
 
 <script type="text/javascript">
 
 $(document).ready(function () {
     var tabIndex = '<?php echo $tabIndex; ?>';
     var notyMsg = JSON.parse('<?php echo json_encode((isset($notymsg) ? $notymsg:"[]")); ?>');
-    
+
     var tbs;
+    var authTabs;
     var logTable = [];
     var dateFormat = $('#dateFormat').val();
-	
+
     var dtCols = [
     {
         "targets": [ 0 ],
@@ -563,13 +567,15 @@ $(document).ready(function () {
 ];
 
 	//display noty
-	
+
 	if(notyMsg.type){
 		new Noty({
 			type : notyMsg.type,
 			text : notyMsg.text
 		}).show();
 	}
+
+	authTabs = $('#authTabs').tabs();
 
     tbs = $('#tabs').tabs({
 
@@ -648,6 +654,8 @@ $('#logsTabDiv').tabs("option", "active", 1);
     });
     tbs.tabs("option", "active", tabIndex);
     $('#tabs').show();
+    authTabs.tabs("option", "active", 0);
+    $('#authTabs').show();
 });
 </script>
     </head>
@@ -661,6 +669,7 @@ $('#logsTabDiv').tabs("option", "active", 1);
                     <li><a href="#config">Site Configuration</a></li>
                     <li><a href="#patch">Patch</a></li>
                     <li><a href="#pay">Credit Card Processor</a></li>
+                    <li><a href="#auth">Authentication</a></li>
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels &#38; Prompts</a></li>
@@ -677,6 +686,25 @@ $('#logsTabDiv').tabs("option", "active", 1);
                             <input type="submit" name="btnSiteCnf" id="btnSiteCnf" value="Save Site Configuration"/>
                         </div>
                     </form>
+                </div>
+                <div id="auth" class="ui-tabs-hide">
+                	<div id="authTabs" class="hhk-member-detail" style="display:none; width: 100%;">
+						<ul>
+							<li><a href="#localAuth">Local</a></li>
+							<?php foreach($authIdpList as $idp){ ?>
+								<li><a href="#<?php echo $idp['idIdp']; ?>Auth"><?php echo $idp["Name"]; ?></a></li>
+							<?php } ?>
+						</ul>
+
+						<div id="localAuth" class="ui-tabs-hide">
+
+						</div>
+						<?php foreach($authIdpList as $idp){
+							$saml = new SAML($dbh, $idp['idIdp']);
+                            echo $saml->getEditMarkup();
+						} ?>
+
+					</div>
                 </div>
                 <div id="labels" class="ui-tabs-hide" >
                     <form method="post" name="form5" action="">

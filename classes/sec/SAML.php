@@ -11,6 +11,9 @@ use HHK\Member\WebUser;
 use HHK\SysConst\MemBasis;
 use HHK\SysConst\WebRole;
 use HHK\Tables\WebSec\W_usersRS;
+use HHK\Member\Address\Phones;
+use HHK\Member\Address\Emails;
+use HHK\SysConst\GLTableNames;
 /**
  * SAML.php
  *
@@ -33,6 +36,7 @@ class SAML {
     protected $IdpId;
     protected $IdpConfig;
     protected $dbh;
+    protected $auditUser;
 
     public function __construct(\PDO $dbh, $idpId){
         $this->IdpId = $idpId;
@@ -40,6 +44,7 @@ class SAML {
         if($this->IdpConfig){
             $this->dbh = $dbh;
             $this->auth = new Auth($this->getSettings());
+            $this->auditUser = "SAML: " . $this->IdpConfig["Name"];
         }else{
             throw new \ErrorException("Cannot load Identity Providor configuration: Invalid IdpId");
         }
@@ -110,12 +115,20 @@ class SAML {
             $idName = 0;
         }
         $name = AbstractMember::GetDesignatedMember($this->dbh, $idName, MemBasis::Indivual);
+        $phones = new Phones($this->dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
+        $emails = new Emails($this->dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
 
         $post = array();
         $post["txtFirstName"] = (isset($this->auth->getAttribute("FirstName")[0]) ? $this->auth->getAttribute("FirstName")[0]: "");
         $post["txtLastName"] = (isset($this->auth->getAttribute("LastName")[0]) ? $this->auth->getAttribute("LastName")[0]: "");
+        $post["txtEmail"][1] = (isset($this->auth->getAttribute("Email")[0]) ? $this->auth->getAttribute("Email")[0]: "");
+        $post["rbEmPref"] = "1";
+        $post["txtPhone"]["dh"] = (isset($this->auth->getAttribute("Phone")[0]) ? $this->auth->getAttribute("Phone")[0]: "");
+        $post["rbPhPref"] = "dh";
 
-        $msg = $name->saveChanges($this->dbh, $post, "SAML: " . $this->IdpConfig["Name"]);
+        $msg = $name->saveChanges($this->dbh, $post, $this->auditUser);
+        $msg .= $phones->savePost($this->dbh, $post, $this->auditUser);
+        $msg .= $emails->savePost($this->dbh, $post, $this->auditUser);
         $idName = $name->get_idName();
 
         if($idName > 0){
@@ -137,13 +150,13 @@ class SAML {
             }
 
             //register Web User
-            $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . "SAML: " . $this->IdpConfig["Name"] . "', 'p', '" . $role . "', '', 'v', 0, " . $this->IdpId . ");";
+            $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', 'v', 0, " . $this->IdpId . ");";
             if($this->dbh->exec($query) === false){
                 $err = $this->dbh->errorInfo();
                 return array("error"=>$err[0] . "; " . $err[2]);
             }
 
-            UserClass::insertUserLog($this->dbh, "PS", "SAML: " . $this->IdpConfig["Name"]);
+            UserClass::insertUserLog($this->dbh, "PS", $this->auditUser);
 
             $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
 
@@ -163,7 +176,7 @@ class SAML {
                     }
                 }
                 //update security groups
-                WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms, "SAML: " . $this->IdpConfig["Name"]);
+                WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms, $this->auditUser);
             }
         }else{
             return array("error"=>$msg);
@@ -249,6 +262,10 @@ class SAML {
                         [
                             "name" => "Email",
                             "isRequired" => true
+                        ],
+                        [
+                            "name" => "Phone",
+                            "isRequired" => false
                         ],
                         [
                             "name" => "hhkRole",
@@ -402,14 +419,46 @@ class SAML {
         return $settings;
     }
 
-    public static function getIdpMarkup(\PDO $dbh){
-        $uS = Session::getInstance();
+    public function getEditMarkup(){
 
-        $query = "select * from `w_idp` where `Status` = :status";
-        $stmt = $dbh->prepare($query);
-        $stmt->bindValue(":status", "a");
-        $stmt->execute();
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $securityComponent = new SecurityComponent();
+        $wsURL = $securityComponent->getRootURL() . 'auth/ws_SSO.php';
+
+        $tbl = new HTMLTable();
+
+        $tbl->addBodyTr(
+                $tbl->makeTd("Name").
+                $tbl->makeTd($this->IdpConfig["Name"])
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("Logo URL").
+            $tbl->makeTd($this->IdpConfig["Logo_URL"])
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("SSO URL").
+            $tbl->makeTd($this->IdpConfig["SSO_URL"])
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("IdP Entity ID").
+            $tbl->makeTd($this->IdpConfig["IdP_EntityId"])
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("Metadata").
+            $tbl->makeTd('<a href="' . $wsURL . '?cmd=metadata&idpId=' . $this->IdpId . '" download="SAMLmetadata.xml">Download Metadata</a>')
+            );
+
+
+        return HTMLContainer::generateMarkup("div", $tbl->generateMarkup(), array("id"=>$this->IdpId . "Auth", "class"=>"ui-tabs-hide hhk-tdbox"));
+
+    }
+
+    public static function getIdpMarkup(\PDO $dbh){
+        $rows = self::getIdpList($dbh);
+        $uS = Session::getInstance();
 
         $tbl = new HTMLTable();
 
@@ -426,6 +475,16 @@ class SAML {
         }
 
         return $tbl->generateMarkup();
+    }
+
+    public static function getIdpList(\PDO $dbh, $onlyActive = true){
+
+        $query = "select * from `w_idp` " . ($onlyActive ? "where `Status` = 'a'": "");
+        $stmt = $dbh->prepare($query);
+        $stmt->execute();
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        return $rows;
     }
 
 }

@@ -4,6 +4,7 @@ use HHK\sec\Session;
 use HHK\sec\Login;
 use HHK\sec\SAML;
 use HHK\sec\SysConfig;
+use HHK\sec\SecurityComponent;
 
 /**
  * ws_SSO.php
@@ -24,7 +25,6 @@ try {
     $login->initHhkSession(ciCFG_FILE);
     $uS = Session::getInstance();
     $dbh = initPDO(TRUE);
-    SysConfig::getCategory($dbh, $uS, '"sso"', 'sys_config');
 
 } catch (InvalidArgumentException $pex) {
     exit ("Database Access Error.");
@@ -61,8 +61,12 @@ try {
             $events = $saml->acs();
             break;
         case 'metadata':
-            $saml = new SAML($dbh, $idpId);
-            $events = $saml->getMetadata();
+            if(SecurityComponent::is_Admin()){
+                $saml = new SAML($dbh, $idpId);
+                $events = $saml->getMetadata();
+            }else{
+                $events = array("Unauthorized");
+            }
             break;
         default:
             $events = array("error" => "Bad Command: \"" . $c . "\"");
