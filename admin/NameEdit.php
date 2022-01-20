@@ -350,7 +350,12 @@ $memberData = array();
 $wUserRS = WebUser::loadWebUserRS($dbh, $id);
 $userName = $wUserRS->User_Name->getStoredVal();
 $memberData['webUserName'] = $userName;
-$webUserDialogMarkup = WebUser::getSecurityGroupMarkup($dbh, $id, $maintFlag) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS);
+if($wUserRS->idIdp->getStoredVal() > 0){
+    $editSecGroups = false;
+}else{
+    $editSecGroups = $maintFlag;
+}
+$webUserDialogMarkup = WebUser::getSSOMsg($dbh, $id) . WebUser::getSecurityGroupMarkup($dbh, $id, $editSecGroups) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS);
 
 
 $memberData["id"] = $id;
@@ -544,7 +549,7 @@ $alertMessage = $alertMsg->createMarkup();
                     <tr><td colspan="3" id="placeList"></td></tr>
                 </table>
             </div>
-            <div id="vwebUser" class="hhk-member-detail " style="display:none;">
+            <div id="vwebUser" style="display:none; font-size: 0.9em;">
                 <?php echo $webUserDialogMarkup; ?>
             </div>
         </div>  <!-- div id="page"-->

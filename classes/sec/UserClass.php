@@ -414,9 +414,12 @@ class UserClass
         return false;
     }
 
-    public static function getAuthProvider(\PDO $dbh, $uS)
+    public static function getAuthProvider(\PDO $dbh, $uS, $username = false)
     {
-        $u = self::getUserCredentials($dbh, $uS->username);
+        if($username === false){
+            $username = $uS->username;
+        }
+        $u = self::getUserCredentials($dbh, $username);
         return $u['authProvider'];
     }
 

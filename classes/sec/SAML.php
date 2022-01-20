@@ -6,7 +6,11 @@ use OneLogin\Saml2\Error;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\Member\AbstractMember;
 use HHK\Member\WebUser;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\WebRole;
+use HHK\Tables\WebSec\W_usersRS;
 /**
  * SAML.php
  *
@@ -77,17 +81,17 @@ class SAML {
             $u = new UserClass();
             $userAr = $u->getUserCredentials($this->dbh, $this->auth->getNameId());
 
-            if(isset($userAr["idIdp"]) && $userAr["idIdp"] == $this->IdpId){ //correct user found, set up session
-                return array("success"=>"authenticated", "userUpdateParams"=>$this->updateUser());
+            if($userAr == null || (isset($userAr["idIdp"]) && $userAr["idIdp"] == $this->IdpId)){ //correct user found, set up session
+                $userAr = $this->updateUser();
                 if($u->doLogin($this->dbh, $userAr)){
                     header('location:../' . $uS->webSite['Relative_Address'].$uS->webSite['Default_Page']);
                 }
 
             }else{
-                return array('success'=>'authenticated', 'IdP'=>$this->IdpConfig["Name"], 'NameId'=> $this->auth->getNameId(), 'error'=> "User not provisioned in HHK", 'samlUserdata'=>$this->auth->getAttributes());
+                return array('error'=>'User found, but is not associated with this IdP', 'IdP'=>$this->IdpConfig["Name"], 'NameId'=> $this->auth->getNameId(), 'samlUserdata'=>$this->auth->getAttributes());
             }
 
-            return array('success'=>'authenticated', 'IdP'=>$this->IdpConfig["Name"], 'NameId'=> $this->auth->getNameId(), 'samlUserdata'=>$this->auth->getAttributes());
+            return array('error'=>'User authenticated at IdP, but an error occurred during login or user provisioning', 'IdP'=>$this->IdpConfig["Name"], 'NameId'=> $this->auth->getNameId(), 'samlUserdata'=>$this->auth->getAttributes());
         }
     }
 
@@ -95,28 +99,77 @@ class SAML {
 
         $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
 
-        if($user){
+        //load name lookups
+        $uS = Session::getInstance();
+        WebInit::loadNameLookups($this->dbh, $uS);
 
+        if($user){
+            $idName = $user['idName'];
         }else{
             //provision new user
+            $idName = 0;
         }
+        $name = AbstractMember::GetDesignatedMember($this->dbh, $idName, MemBasis::Indivual);
 
-        //make parms array for group update
-        $parms = array();
-        $attributes = $this->auth->getAttributes();
-        $allSecurityGroups = $this->getSecurityGroups($this->dbh);
+        $post = array();
+        $post["txtFirstName"] = (isset($this->auth->getAttribute("FirstName")[0]) ? $this->auth->getAttribute("FirstName")[0]: "");
+        $post["txtLastName"] = (isset($this->auth->getAttribute("LastName")[0]) ? $this->auth->getAttribute("LastName")[0]: "");
 
-        //fill parms array
-        if(isset($attributes["hhkSecurityGroups"])){
-            foreach($attributes["hhkSecurityGroups"] as $secGroup){
-                if(isset($allSecurityGroups[$secGroup])){
-                    $parms["grpSec_" . $allSecurityGroups[$secGroup]["Code"]] = "On";
+        $msg = $name->saveChanges($this->dbh, $post, "SAML: " . $this->IdpConfig["Name"]);
+        $idName = $name->get_idName();
+
+        if($idName > 0){
+
+            //map hhk role
+            $role = WebRole::WebUser;
+            if(isset($this->auth->getAttribute("hhkRole")[0])){
+                switch($this->auth->getAttribute("hhkRole")[0]){
+                    case "hhkAdminUser":
+                        $role = WebRole::Admin;
+                        break;
+                    case "hhkWebUser":
+                        $role = WebRole::WebUser;
+                        break;
+                    default:
+                        $role = WebRole::WebUser;
+                        break;
                 }
             }
-            //update security groups
-            WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms);
-            return $parms;
+
+            //register Web User
+            $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . "SAML: " . $this->IdpConfig["Name"] . "', 'p', '" . $role . "', '', 'v', 0, " . $this->IdpId . ");";
+            if($this->dbh->exec($query) === false){
+                $err = $this->dbh->errorInfo();
+                return array("error"=>$err[0] . "; " . $err[2]);
+            }
+
+            UserClass::insertUserLog($this->dbh, "PS", "SAML: " . $this->IdpConfig["Name"]);
+
+            $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
+
+
+            //make parms array for group update
+            $parms = array();
+            $attributes = $this->auth->getAttributes();
+            $allSecurityGroups = $this->getSecurityGroups($this->dbh);
+
+            //fill parms array
+            if(isset($attributes["hhkSecurityGroups"])){
+                foreach($allSecurityGroups as $secGroup){
+                    if(in_array($secGroup["Title"], $attributes["hhkSecurityGroups"])){
+                        $parms["grpSec_" . $secGroup["Code"]] = "checked";
+                    }else{
+                        $parms["grpSec_" . $secGroup["Code"]] = "unchecked";
+                    }
+                }
+                //update security groups
+                WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms, "SAML: " . $this->IdpConfig["Name"]);
+            }
+        }else{
+            return array("error"=>$msg);
         }
+
+        return $user;
     }
 
     public function getMetadata(){
@@ -157,14 +210,14 @@ class SAML {
         $stmt = $dbh->query("select Group_Code as Code, Title from w_groups");
         $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        foreach ($groups as $g) {
-            if($titlesOnly){ //list titles
+        if($titlesOnly){ //list titles
+            foreach ($groups as $g) {
                 $sArray[] = $g['Title'];
-            }else{ //key by title
-                $sArray[$g['Title']] = $g;
             }
+            return $sArray;
+        }else{
+            return $groups;
         }
-        return $sArray;
     }
 
     public function getSettings(){

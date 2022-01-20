@@ -69,7 +69,7 @@ try {
     }
 
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage());
+    $events = array("error" => "Database Error: " . $ex->getMessage(), "File"=>$ex->getFile() . " line " . $ex->getLine(), "Trace"=>$ex->getTrace());
 
 } catch (Exception $ex) {
     $events = array("error" => "Programming Error: " . $ex->getMessage());

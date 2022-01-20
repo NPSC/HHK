@@ -158,11 +158,10 @@ class WebInit {
 
     }
 
-    public function reloadGenLkUps($uS) {
-
+    public static function loadNameLookups(\PDO $dbh, $uS){
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes', 'Referral_Form_Status') order by `Table_Name`, `Code`;";
-        $stmt = $this->dbh->query($query);
+        $stmt = $dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
@@ -172,11 +171,11 @@ class WebInit {
         }
 
         // Demographics
-        $demos = readGenLookupsPDO($this->dbh, 'Demographics', 'Order');
+        $demos = readGenLookupsPDO($dbh, 'Demographics', 'Order');
 
         foreach ($demos as $d) {
 
-            $entries = readGenLookupsPDO($this->dbh, $d[0], 'Order');
+            $entries = readGenLookupsPDO($dbh, $d[0], 'Order');
 
             foreach ($entries as $e) {
                 $nameLookups[$d[0]][$e['Code']] = array($e['Code'],$e['Description'],$e['Substitute']);
@@ -184,6 +183,12 @@ class WebInit {
         }
 
         $uS->nameLookups = $nameLookups;
+
+    }
+
+    public function reloadGenLkUps($uS) {
+
+        $this->loadNameLookups($this->dbh, $uS);
 
         SysConfig::getCategory($this->dbh, $uS, "'a'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'d'", webInit::SYS_CONFIG);

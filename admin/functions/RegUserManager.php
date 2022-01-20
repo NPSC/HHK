@@ -70,7 +70,7 @@ function manageRegistration(PDO $dbh, $n, $admin) {
         }
 
         // Register the user as a Volunteer (Group_Code = v)(Verify_address = y)
-        $query = "call register_web_user($id, '$fbId', '$uname', '$apprvd', '$orgCode', '$roleCode', '$pw', 'v', 0);";
+        $query = "call register_web_user($id, '$fbId', '$uname', '$apprvd', '$orgCode', '$roleCode', '$pw', 'v', 0, 0);";
         $dbh->exec($query);
 
         $rtnMsg .= "Web user " . $uname . " is registered.  ";
@@ -83,23 +83,23 @@ function manageRegistration(PDO $dbh, $n, $admin) {
 
             $returnAddress = SysConfig::getKeyValue($dbh, 'sys_config', 'ReturnAddress');
             $regSubject = SysConfig::getKeyValue($dbh, 'sys_config', 'RegSubj');
-            
+
             try{
                 $mail = prepareEmail();
-    
+
                 $mail->From = $uS->ReturnAddress;
                 $mail->addReplyTo($uS->ReturnAddress);
                 $mail->FromName = $uS->siteName;
                 $mail->addAddress($fbEmail);     // Add a recipient
                 $mail->addBCC($uS->ReturnAddress);
                 $mail->isHTML(true);
-    
+
                 $mail->Subject = $uS->RegSubj;
                 $mail->msgHTML(getRegConfBody($uS->siteName, $fbRs, $uname));
-    
+
                 $mail->send();
                 $rtnMsg .= "Email sent.  ";
-                
+
             }catch(\Exception $e){
                 $rtnMsg .= "Warning: Email confirmation message failed: " . $mail->ErrorInfo;
             }
@@ -114,7 +114,7 @@ function manageRegistration(PDO $dbh, $n, $admin) {
 
 function getRegConfBody($siteName, $fbRs, $uname) {
     $uS = Session::getInstance();
-    
+
     return '<html><head>
     <style type="text/css">
     h4 {font-family: Arial, Helvetica, sans-serif;
