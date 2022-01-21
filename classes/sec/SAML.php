@@ -14,6 +14,7 @@ use HHK\Tables\WebSec\W_usersRS;
 use HHK\Member\Address\Phones;
 use HHK\Member\Address\Emails;
 use HHK\SysConst\GLTableNames;
+use HHK\Member\MemberSearch;
 /**
  * SAML.php
  *
@@ -63,6 +64,7 @@ class SAML {
      */
     public function acs(){
         $uS = Session::getInstance();
+        $error = false;
 
         if (isset($uS->AuthNRequestID)) {
             $requestID = $uS->AuthNRequestID;
@@ -76,28 +78,34 @@ class SAML {
         $errors = $this->auth->getErrors();
 
         if (!empty($errors)) {
-            return array('error'=>implode(', ', $errors));
+            $error = implode(', ', $errors);
         }
 
         if (!$this->auth->isAuthenticated()) {
-            return array('error'=>'Authentication Failed');
+            $error = 'Authentication Failed';
         }else{
             //auth success
             $u = new UserClass();
             $userAr = $u->getUserCredentials($this->dbh, $this->auth->getNameId());
 
             if($userAr == null || (isset($userAr["idIdp"]) && $userAr["idIdp"] == $this->IdpId)){ //correct user found, set up session
-                $userAr = $this->updateUser();
+                $userAr = $this->updateUser(); //create/update user with details from IdP
                 if($u->doLogin($this->dbh, $userAr)){
                     header('location:../' . $uS->webSite['Relative_Address'].$uS->webSite['Default_Page']);
                 }
 
+            }else if(isset($userAr["idIdp"]) && $userAr["idIdp"] != $this->IdpId){
+                $error = 'User found, but is not associated with ' . $this->IdpConfig["Name"] . '. Please login via ' . $userAr['authProvider'];
             }else{
-                return array('error'=>'User found, but is not associated with this IdP', 'IdP'=>$this->IdpConfig["Name"], 'NameId'=> $this->auth->getNameId(), 'samlUserdata'=>$this->auth->getAttributes());
+                $error = 'User authenticated at ' . $this->IdpConfig["Name"] . ', but an error occurred during login or user provisioning';
             }
-
-            return array('error'=>'User authenticated at IdP, but an error occurred during login or user provisioning', 'IdP'=>$this->IdpConfig["Name"], 'NameId'=> $this->auth->getNameId(), 'samlUserdata'=>$this->auth->getAttributes());
         }
+
+        if($error){
+            $uS->ssoLoginError = $error;
+            header('location:../' . $uS->webSite['Relative_Address']);
+        }
+
     }
 
     public function updateUser(){
@@ -108,12 +116,13 @@ class SAML {
         $uS = Session::getInstance();
         WebInit::loadNameLookups($this->dbh, $uS);
 
-        if($user){
+        if($user){ //user found
             $idName = $user['idName'];
         }else{
-            //provision new user
-            $idName = 0;
+            //search for existing name record
+            $idName = $this->searchName();
         }
+
         $name = AbstractMember::GetDesignatedMember($this->dbh, $idName, MemBasis::Indivual);
         $phones = new Phones($this->dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
         $emails = new Emails($this->dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
@@ -183,6 +192,30 @@ class SAML {
         }
 
         return $user;
+    }
+
+    private function searchName(){
+
+        //Search by exact email address, if no results, search by first and last name, else return 0
+        $firstName = (isset($this->auth->getAttribute("FirstName")[0]) ? $this->auth->getAttribute("FirstName")[0] : "");
+        $lastName = (isset($this->auth->getAttribute("LastName")[0]) ? $this->auth->getAttribute("LastName")[0] : "");
+        $email = (isset($this->auth->getAttribute("Email")[0]) ? $this->auth->getAttribute("Email")[0] : "");
+
+        $emailSearch = new MemberSearch($email);
+        $result = $emailSearch->searchLinks($this->dbh, "e", 0, true);
+
+        if(count($result) > 0 && $result[0]["id"] > 0){
+            return $result[0]["id"];
+        }
+
+        $nameSearch = new MemberSearch($firstName . " " . $lastName);
+        $result = $nameSearch->searchLinks($this->dbh, "m", 0, true);
+
+        if(count($result) == 1 && $result[0]["id"] > 0){
+            return $result[0]["id"];
+        }
+
+        return 0;
     }
 
     public function getMetadata(){

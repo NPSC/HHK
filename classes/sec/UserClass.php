@@ -45,8 +45,9 @@ class UserClass
 
         $r = self::getUserCredentials($dbh, $username);
 
-        if($r['idIdp'] == 0) { //use local auth
-
+        if(isset($r['idIdp']) && $r['idIdp'] > 0) { //is SSO user, kick out
+            $this->logMessage = "Account is managed by " . $r["authProvider"] . ". Please login with " . $r["authProvider"] . ".";
+        }else{ //local authentication
             // disable user if inactive || force password reset
             if ($r != NULL) {
                 $r = self::disableInactiveUser($dbh, $r); // returns updated user array
@@ -93,8 +94,6 @@ class UserClass
                 $this->logMessage = "Bad username or password.  ";
                 $this->insertUserLog($dbh, UserClass::Login_Fail, $username);
             }
-        }else{
-            $this->logMessage = "Account is managed by " . $r["authProvider"] . ". Please login with " . $r["authProvider"] . ".";
         }
 
         return FALSE;
@@ -420,7 +419,16 @@ class UserClass
             $username = $uS->username;
         }
         $u = self::getUserCredentials($dbh, $username);
-        return $u['authProvider'];
+        return (isset($u['authProvider']) ? $u['authProvider'] : "local");
+    }
+
+    public static function isLocalUser(\PDO $dbh, $uS, $username = false)
+    {
+        if($username === false){
+            $username = $uS->username;
+        }
+        $u = self::getUserCredentials($dbh, $username);
+        return (isset($u['idIdp']) && $u['idIdp'] > 0 ? false : true);
     }
 
     public static function setPassExpired(\PDO $dbh, array $user){
@@ -463,7 +471,7 @@ class UserClass
         $mkup = '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
         $passwordTitle = 'Change your Password';
 
-        if($authProvider == 'local'){
+        if(self::isLocalUser($dbh, $uS)){
             $mkup .= '
                 <div class="row">
                 <div class="col-md-6">
@@ -637,7 +645,7 @@ class UserClass
 
         $uname = str_ireplace("'", "", $username);
 
-        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'local') as 'authProvider'
+        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'local authentication') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
 left join `w_idp` idp on u.`idIdp` = idp.`idIdp`

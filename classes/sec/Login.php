@@ -140,9 +140,9 @@ class Login {
             if(isset($post["otp"])){
                 $otp = filter_var($post["otp"], FILTER_SANITIZE_STRING);
             }
-            
+
             $u = new UserClass();
-            
+
             if ($u->_checkLogin($dbh, $this->userName, $password, false, true, $otp) === FALSE) {
                 if($u->logMessage == "OTPRequired"){
                     $events['OTPRequired'] = true;
@@ -206,8 +206,14 @@ class Login {
             $this->setUserName($uname);
         }
 
+        $uS = Session::getInstance();
+        if($uS->ssoLoginError){
+            $this->validateMsg = $uS->ssoLoginError;
+            unset($uS->ssoLoginError);
+        }
+
         $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')), array('colspan'=>'2')));
+        //HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')$tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')), array('colspan'=>'2')));
         $tbl->addBodyTr(
             HTMLTable::makeTh('User Name:', array('class'=>'hhk-loginLabel'))
             .HTMLTable::makeTd(
@@ -239,8 +245,8 @@ class Login {
                 </div>
             </div>
         ';
-        
-        return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls')) . $dialogMkup;
+
+        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')) . $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls')) . $dialogMkup;
 
     }
 
