@@ -1600,6 +1600,11 @@ class Visit {
             // Make sure a stay was found.
             if (is_null($stayStartDT) === FALSE) {
 
+                // return date must be later than stay start date.
+                if ($stayStartDT->setTime(0,0,0) > $retDT) {
+                    return 'Cannot return before the leave start date.  ';
+                }
+
                 $leaveDays = $retDT->diff($stayStartDT->setTime(0,0,0))->days;
 
                 // Was the rate changed for the leave?

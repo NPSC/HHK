@@ -122,7 +122,6 @@ class HouseServices {
             $vspanEndDT = new \DateTime();
         }
 
-        $vspanEndDT->setTime(23, 59, 59);
         $vspanStartDT = new \DateTime($r['Span_Start']);
 
         $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
@@ -166,70 +165,33 @@ class HouseServices {
             $showAdjust = TRUE;
         }
 
-        $mkup = '';
 
-        // Change rooms control
-        if ($action == 'cr' && $r['Status'] == VisitStatus::CheckedIn) {
+        // Get main visit markup section
+        $mkup = HTMLContainer::generateMarkup('div',
+            VisitViewer::createActiveMarkup(
+                $dbh,
+                $r,
+                $visitCharge,
+                $uS->KeyDeposit,
+                $uS->VisitFee,
+                $isAdmin,
+                $uS->EmptyExtendLimit,
+                $action,
+                $coDate,
+                $showAdjust)
+            , array('style' => 'clear:left;margin-top:10px;'));
 
-            $expDepDT = new \DateTime($r['Expected_Departure']);
-            $expDepDT->setTime(10, 0, 0);
-            $now = new \DateTime();
-            $now->setTime(10, 0, 0);
+        $mkup = HTMLContainer::generateMarkup('div',
+        		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
+                . $mkup,
+            array('id'=>'divksStays'));
 
-            if ($expDepDT < $now) {
-                $expDepDT = $now->add(new \DateInterval('P1D'));
-            }
-
-            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation'], $idVisit);
-            $visit = new Visit($dbh, $reserv->getIdRegistration(), $idVisit);
-
-            $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT);
-            $curResc = $roomChooser->getSelectedResource();
-
-            $mkup .= $roomChooser->createChangeRoomsMarkup($dbh, $idGuest, $isAdmin);
-
-            $dataArray['rooms'] = $roomChooser->makeRoomsArray();
-            $dataArray['curResc'] = array(
-                "maxOcc" => $curResc->getMaxOccupants(),
-                "rate" => $visit->getPledgedRate(),
-                'defaultRateCat' => $curResc->getDefaultRoomCategory(),
-                "title" => $curResc->getTitle(),
-                'key' => $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]),
-                'status' => 'a',
-                'merchant' => $curResc->getMerchant(),
-            );
-            $dataArray['idReservation'] = $r['idReservation'];
-            $dataArray['cbRs'] = $reserv->getConstraints($dbh);
-            $dataArray['numGuests'] = $reserv->getNumberGuests();
-
-        } else {
-
-            // Get main visit markup section
-            $mkup .= HTMLContainer::generateMarkup('div',
-                VisitViewer::createActiveMarkup(
-                    $dbh,
-                    $r,
-                    $visitCharge,
-                    $uS->KeyDeposit,
-                    $uS->VisitFee,
-                    $isAdmin,
-                    $uS->EmptyExtendLimit,
-                    $action,
-                    $coDate,
-                    $showAdjust)
-                , array('style' => 'clear:left;margin-top:10px;'));
-
-            $mkup = HTMLContainer::generateMarkup('div',
-            		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
-                    . $mkup,
-                array('id'=>'divksStays'));
-
-            // Show fees if not hf = hide fees.
-            if ($action != 'hf') {
-            	$mkup .= HTMLContainer::generateMarkup('div',
-                    VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
-            }
+        // Show fees if not hf = hide fees.
+        if ($action != 'hf') {
+        	$mkup .= HTMLContainer::generateMarkup('div',
+                VisitViewer::createPaymentMarkup($dbh, $r, $visitCharge, $idGuest, $action), array('style' => 'min-width:600px;clear:left;'));
         }
+
 
         $dataArray['success'] = $mkup;
 
@@ -241,6 +203,17 @@ class HouseServices {
         return $dataArray;
     }
 
+    /**
+     *
+     * @param \PDO $dbh
+     * @param int $idVisit
+     * @param int $span
+     * @param bool $isGuestAdmin
+     * @param array $post
+     * @param string $postbackPage
+     * @param boolean $returnCkdIn
+     * @return array
+     */
     public static function saveFees(\PDO $dbh, $idVisit, $span, $isGuestAdmin, array $post, $postbackPage, $returnCkdIn = FALSE) {
 
         $uS = Session::getInstance();
@@ -409,72 +382,6 @@ class HouseServices {
                                 $reply .= $visit->endLeave($dbh, $returnDate);
                                 $returnCkdIn = TRUE;
                             }
-                        }
-                    }
-                }
-
-
-                // Change Rooms?
-                if (isset($post['selResource'])) {
-
-                    $newRescId = intval(filter_var($post['selResource'], FILTER_SANITIZE_NUMBER_INT), 10);
-
-                    if ($newRescId != 0 && $newRescId != $visit->getidResource()) {
-
-                        $resc = AbstractResource::getResourceObj($dbh, $newRescId);
-
-                        $now = new \DateTime();
-
-                        if (isset($post['rbReplaceRoomrpl'])) {
-
-                            $chRoomDT = new \DateTime($visit->getSpanStart());
-
-                        } else {
-
-                            if (isset($post['resvChangeDate']) && $post['resvChangeDate'] != '') {
-
-                                $chDT = new \DateTime(filter_var($post['resvChangeDate'], FILTER_SANITIZE_STRING));
-                                $chRoomDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $now->format('H:i:s'));
-
-                            } else {
-                                $chRoomDT = $now;
-                            }
-                        }
-
-                        //if deposit needs to be paid
-                        $curRescId = $visit->getidResource();
-                        $curResc = AbstractResource::getResourceObj($dbh, $curRescId);
-                        if($curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]) < $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode])){
-                            $returntoVisit = TRUE;
-                        }
-
-                        $departDT = new \DateTime($visit->getExpectedDeparture());
-                        $departDT->setTime($uS->CheckOutTime, 0, 0);
-                        $now2 = new \DateTime();
-                        $now2->setTime($uS->CheckOutTime, 0, 0);
-
-                        if ($departDT < $now2) {
-                            $departDT = $now2;
-                        }
-
-                        $arriveDT = new \DateTime($visit->getSpanStart());
-
-                        if ($chRoomDT < $arriveDT || $chRoomDT > $now) {
-
-                            $reply .= "The change room date must be within the visit timeframe, between " . $arriveDT->format('M j, Y') . ' and ' . $now->format('M j, Y');
-
-                        } else {
-
-                            // Default room rate
-                            $newRateCategory = '';
-                            if (isset($post['cbUseDefaultRate'])) {
-                                $newRateCategory = $resc->getDefaultRoomCategory();
-                            }
-
-                            $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, $isGuestAdmin, $newRateCategory);
-
-                            $returnCkdIn = TRUE;
-                            $returnReserv = TRUE;
                         }
                     }
                 }
@@ -834,6 +741,83 @@ class HouseServices {
 
     }
 
+    /** Fill in the change room dialog box in order to show it to the user
+     *
+     * @param \PDO $dbh
+     * @param int $idGuest
+     * @param int $idV
+     * @param int $idSpan
+     * @param boolean $isAdmin
+     * @return array
+     */
+    public static function showChangeRooms(\PDO $dbh, $idGuest, $idV, $idSpan, $isAdmin) {
+
+        $uS = Session::getInstance();
+        $dataArray = array();
+
+        $idVisit = intval($idV, 10);
+        $span = intval($idSpan, 10);
+
+        if ($idVisit < 1 || $span < 0) {
+            return array("error" => "A Visit is not selected: " . $idV . "-" . $idSpan);
+        }
+
+        $query = "select * from vspan_listing where idVisit = $idVisit and Span = $span;";
+        $stmt1 = $dbh->query($query);
+        $rows = $stmt1->fetchAll(\PDO::FETCH_ASSOC);
+
+
+        if (count($rows) == 0) {
+            return array("error" => "<span>No Data for the indicated visit id and span ($idV, $idSpan).</span>");
+        }
+
+        $r = $rows[0];
+
+
+        // Change rooms control
+        if ($r['Status'] == VisitStatus::CheckedIn) {
+
+            $vspanStartDT = new \DateTime($r['Span_Start']);
+
+            $expDepDT = new \DateTime($r['Expected_Departure']);
+
+            $now = new \DateTime();
+            $now->setTime(0, 0, 0);
+
+            if ($expDepDT < $now) {
+                $expDepDT = $now->add(new \DateInterval('P1D'));
+            }
+
+            $reserv = Reservation_1::instantiateFromIdReserv($dbh, $r['idReservation'], $idVisit);
+            $visit = new Visit($dbh, $reserv->getIdRegistration(), $idVisit);
+
+            $roomChooser = new RoomChooser($dbh, $reserv, 0, $vspanStartDT, $expDepDT->setTime($uS->CheckOutTime, 0));
+            $curResc = $roomChooser->getSelectedResource();
+
+            $dataArray['success'] = $roomChooser->createChangeRoomsMarkup($dbh, $idGuest, $isAdmin);
+
+            $dataArray['rooms'] = $roomChooser->makeRoomsArray();
+            $dataArray['curResc'] = array(
+                "maxOcc" => $curResc->getMaxOccupants(),
+                "rate" => $visit->getPledgedRate(),
+                'defaultRateCat' => $curResc->getDefaultRoomCategory(),
+                "title" => $curResc->getTitle(),
+                'key' => $curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]),
+                'status' => 'a',
+                'merchant' => $curResc->getMerchant(),
+            );
+
+            $dataArray['start'] = $vspanStartDT->format('c');
+            $dataArray['end'] = $expDepDT->format('c');
+
+        } else {
+            $dataArray['error'] = "Change rooms command only available for checked-in visits.";
+        }
+
+
+        return $dataArray;
+    }
+
     public static function changeRoomList(\PDO $dbh, $idVisit, $span, $changeDate, $rescId) {
 
         $dataArray = array();
@@ -880,7 +864,7 @@ class HouseServices {
             $roomChooser = new RoomChooser($dbh, $reserv, 0, $changeDT, $expDepDT);
 
             $dataArray['sel'] = $roomChooser->createChangeRoomsSelector($dbh, TRUE);
-            $dataArray['resc'] = $roomChooser->makeRoomsArray();
+            $dataArray['rooms'] = $roomChooser->makeRoomsArray();
             $dataArray['idResc'] = $rescId;
 
         } else {
@@ -889,6 +873,107 @@ class HouseServices {
         }
 
         return $dataArray;
+    }
+
+    public static function changeRooms(\PDO $dbh, $idVisit, $span, $newRescId, $replaceRoom, $useDefaultRate, $changeDate) {
+
+        $uS = Session::getInstance();
+        $dataArray = array();
+        $returntoVisit = FALSE;
+        $returnCkdIn = FALSE;
+        $returnReserv = FALSE;
+        $reply = '';
+
+        // Change Rooms?
+        if ($newRescId != 0) {
+
+            // instantiate current visit
+            $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, $uS->username, $span);
+
+
+            if ($newRescId != $visit->getidResource()) {
+
+                $resc = AbstractResource::getResourceObj($dbh, $newRescId);
+
+                $now = new \DateTime();
+
+                if ($replaceRoom == 'rpl') {
+
+                    $chRoomDT = new \DateTime($visit->getSpanStart());
+
+                } else {
+
+                    if ($changeDate != '') {
+
+                        $chDT = new \DateTime($changeDate);
+                        $chRoomDT = new \DateTime($chDT->format('Y-m-d') . ' ' . $now->format('H:i:s'));
+
+                    } else {
+                        $chRoomDT = $now;
+                    }
+                }
+
+
+                $departDT = new \DateTime($visit->getExpectedDeparture());
+                $departDT->setTime($uS->CheckOutTime, 0, 0);
+                $now2 = new \DateTime();
+                $now2->setTime($uS->CheckOutTime, 0, 0);
+
+                if ($departDT < $now2) {
+                    $departDT = $now2;
+                }
+
+                $arriveDT = new \DateTime($visit->getSpanStart());
+
+                if ($chRoomDT < $arriveDT || $chRoomDT > $now) {
+
+                    $reply .= "The change room date must be within the visit timeframe, between " . $arriveDT->format('M j, Y') . ' and ' . $now->format('M j, Y');
+
+                } else {
+
+                    //if deposit needs to be paid
+                    $curRescId = $visit->getidResource();
+                    $curResc = AbstractResource::getResourceObj($dbh, $curRescId);
+                    if($curResc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]) < $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode])){
+                        $returntoVisit = TRUE;
+                    }
+
+                    // Default room rate
+                    $newRateCategory = '';
+                    if ($useDefaultRate) {
+                        $newRateCategory = $resc->getDefaultRoomCategory();
+                    }
+
+                    $reply .= $visit->changeRooms($dbh, $resc, $uS->username, $chRoomDT, SecurityComponent::is_Authorized("guestadmin"), $newRateCategory);
+
+                    $returnCkdIn = TRUE;
+                    $returnReserv = TRUE;
+                }
+            }
+        }
+
+        // Return checked in guests markup?
+        if ($returnCkdIn) {
+            $dataArray['curres'] = 'y';
+        }
+
+        if ($returnReserv) {
+            $dataArray['reservs'] = 'y';
+            $dataArray['waitlist'] = 'y';
+
+            if ($uS->ShowUncfrmdStatusTab) {
+                $dataArray['unreserv'] = 'y';
+            }
+        }
+
+        if($returntoVisit){
+            $dataArray['openvisitviewer'] = ($span + 1);
+        }
+
+        $dataArray['msg'] = $reply;
+
+        return $dataArray;
+
     }
 
     public static function undoRoomChange(\PDO $dbh, Visit $visit, $uname) {
