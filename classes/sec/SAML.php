@@ -15,6 +15,7 @@ use HHK\Member\Address\Phones;
 use HHK\Member\Address\Emails;
 use HHK\SysConst\GLTableNames;
 use HHK\Member\MemberSearch;
+use HHK\HTMLControls\HTMLInput;
 /**
  * SAML.php
  *
@@ -82,7 +83,7 @@ class SAML {
         }
 
         if (!$this->auth->isAuthenticated()) {
-            $error = 'Authentication Failed';
+            $error = 'Authentication Failed: ' . $error . " - " . $this->auth->getLastErrorReason();
         }else{
             //auth success
             $u = new UserClass();
@@ -274,6 +275,7 @@ class SAML {
 
         $settings = [
             'baseurl' => $securityComponent->getRootURL(),
+            'strict' => true,
             'sp' => [
                 'entityId' => $securityComponent->getRootURL(),
                 'assertionConsumerService' => [
@@ -337,15 +339,15 @@ class SAML {
 
                 // Indicates whether the <samlp:AuthnRequest> messages sent by this SP
                 // will be signed.  [Metadata of the SP will offer this info]
-                'authnRequestsSigned' => false,
+                'authnRequestsSigned' => $this->IdpConfig["enableSPSigning"],
 
                 // Indicates whether the <samlp:logoutRequest> messages sent by this SP
                 // will be signed.
-                'logoutRequestSigned' => false,
+                'logoutRequestSigned' => $this->IdpConfig["enableSPSigning"],
 
                 // Indicates whether the <samlp:logoutResponse> messages sent by this SP
                 // will be signed.
-                'logoutResponseSigned' => false,
+                'logoutResponseSigned' => $this->IdpConfig["enableSPSigning"],
 
                 /* Sign the Metadata
                  False || True (use sp certs) || array (
@@ -363,15 +365,15 @@ class SAML {
 
                 // Indicates a requirement for the <samlp:Response>, <samlp:LogoutRequest>
                 // and <samlp:LogoutResponse> elements received by this SP to be signed.
-                'wantMessagesSigned' => false,
+                'wantMessagesSigned' => $this->IdpConfig["expectIdPSigning"],
 
                 // Indicates a requirement for the <saml:Assertion> elements received by
                 // this SP to be encrypted.
-                'wantAssertionsEncrypted' => false,
+                'wantAssertionsEncrypted' => $this->IdpConfig["expectIdPEncryption"],
 
                 // Indicates a requirement for the <saml:Assertion> elements received by
                 // this SP to be signed. [Metadata of the SP will offer this info]
-                'wantAssertionsSigned' => false,
+                'wantAssertionsSigned' => false, //$this->IdpConfig["expectIdPSigning"],
 
                 // Indicates a requirement for the NameID element on the SAMLResponse
                 // received by this SP to be present.
@@ -452,40 +454,117 @@ class SAML {
         return $settings;
     }
 
+    private function getCertificateInfo(){
+        $certInfo = openssl_x509_parse($this->IdpConfig["IdP_Cert"]);
+        if($certInfo){
+            $validFromDate = date_create_from_format('ymdHise',$certInfo["validFrom"]);
+            $validToDate = date_create_from_format('ymdHise', $certInfo["validTo"]);
+
+            return array(
+                "issuer"=>(isset($certInfo["issuer"]["O"]) ? $certInfo["issuer"]["O"]:""),
+                "validFrom"=>$validFromDate->format("M j, Y"),
+                "expires"=>$validToDate->format("M j, Y")
+            );
+        }else{
+            return false;
+        }
+    }
+
     public function getEditMarkup(){
 
         $securityComponent = new SecurityComponent();
         $wsURL = $securityComponent->getRootURL() . 'auth/ws_SSO.php';
+        $idpCertInfo = $this->getCertificateInfo();
 
         $tbl = new HTMLTable();
 
         $tbl->addBodyTr(
-                $tbl->makeTd("Name").
-                $tbl->makeTd($this->IdpConfig["Name"])
+            $tbl->makeTd("Name", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                HTMLInput::generateMarkup($this->IdpConfig["Name"], array("name"=>"idpConfig[" . $this->IdpId . "][name]", "size"=>"50"))
+            )
+        );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("Logo URL", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                HTMLInput::generateMarkup($this->IdpConfig["Logo_URL"], array("name"=>"idpConfig[" . $this->IdpId . "][logoUrl]", "size"=>"50"))
+            )
+        );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("SSO URL", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                HTMLInput::generateMarkup($this->IdpConfig["SSO_URL"], array("name"=>"idpConfig[" . $this->IdpId . "][ssoUrl]", "size"=>"50"))
+            )
+        );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("IdP Entity ID", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                HTMLInput::generateMarkup($this->IdpConfig["IdP_EntityId"], array("name"=>"idpConfig[" . $this->IdpId . "][idpEntityId]", "size"=>"50"))
+            )
+        );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("IdP Certificate", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                HTMLContainer::generateMarkup("textarea", "", array("placeholder"=>"(unchanged)", "name"=>"idpConfig[" . $this->IdpId . "][idpCert]", "rows"=>"4", "style"=>"width: 100%"))
+            ).
+            $tbl->makeTd(
+                '<span style="font-weight: bold">Installed Certificate</span><br>' .
+                '<span style="font-weight: bold">Issuer: </span>' . $idpCertInfo["issuer"] . '</span><br>' .
+                '<span style="font-weight: bold">Valid From: </span>' . $idpCertInfo["validFrom"] . '</span><br>' .
+                '<span style="font-weight: bold">Expires: </span>' . $idpCertInfo["expires"] . '</span>'
+            )
+        );
+
+        $idpSignAttrs = array("type"=>"checkbox","disabled"=>"disabled", "name"=>"idpConfig[" . $this->IdpId . "][expectIdPSigning]");
+        if($this->IdpConfig["expectIdPSigning"] == "1"){
+            $idpSignAttrs["checked"] = "checked";
+        }
+        $tbl->addBodyTr(
+            $tbl->makeTd("Require IdP Response Signing", array("class"=>"tdLabel")).
+            $tbl->makeTd(
+                HTMLInput::generateMarkup("", $idpSignAttrs)
+            ) .
+            $tbl->makeTd("If checked, all &lt;samlp:Response&gt; elements received from the IdP must be signed.")
+        );
+
+        $idpEncAttrs = array("type"=>"checkbox","disabled"=>"disabled", "name"=>"idpConfig[" . $this->IdpId . "][expectIdPEncryption]");
+        if($this->IdpConfig["expectIdPEncryption"] == "1"){
+            $idpEncAttrs["checked"] = "checked";
+        }
+        $tbl->addBodyTr(
+            $tbl->makeTd("Require IdP Encryption", array("class"=>"tdLabel")).
+            $tbl->makeTd(
+                HTMLInput::generateMarkup("", $idpEncAttrs)
+                ) .
+            $tbl->makeTd("If checked, all &lt;saml:Assertion&gt; elements received from the IdP must be encrypted.")
+            );
+
+        $spSignAttrs = array("type"=>"checkbox","disabled"=>"disabled", "name"=>"idpConfig[" . $this->IdpId . "][enableSPSigning]");
+        if($this->IdpConfig["enableSPSigning"] == "1"){
+            $spSignAttrs["checked"] = "checked";
+        }
+        $tbl->addBodyTr(
+            $tbl->makeTd("Sign AuthnRequests", array("class"=>"tdLabel")).
+            $tbl->makeTd(
+                HTMLInput::generateMarkup("", $spSignAttrs)
+                ) .
+            $tbl->makeTd("If checked, HHk will sign all &lt;samlp:AuthnRequest&gt; messages.")
             );
 
         $tbl->addBodyTr(
-            $tbl->makeTd("Logo URL").
-            $tbl->makeTd($this->IdpConfig["Logo_URL"])
-            );
+            $tbl->makeTd("Upload IdP metadata", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                HTMLInput::generateMarkup("", array("type"=>"file", "name"=>"idpConfig[" . $this->IdpId . "][idpMetadata]"))
+            )
+        );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("SSO URL").
-            $tbl->makeTd($this->IdpConfig["SSO_URL"])
-            );
+        $metadataBtn = HTMLContainer::generateMarkup("a", "Download SP Metadata", array("href"=>$wsURL . '?cmd=metadata&idpId=' . $this->IdpId, "download"=>"HHKmetadata.xml", "class"=>"ui-button ui-corner-all ui-widget"));
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("IdP Entity ID").
-            $tbl->makeTd($this->IdpConfig["IdP_EntityId"])
-            );
-
-        $tbl->addBodyTr(
-            $tbl->makeTd("Metadata").
-            $tbl->makeTd('<a href="' . $wsURL . '?cmd=metadata&idpId=' . $this->IdpId . '" download="SAMLmetadata.xml">Download Metadata</a>')
-            );
-
-
-        return HTMLContainer::generateMarkup("div", $tbl->generateMarkup(), array("id"=>$this->IdpId . "Auth", "class"=>"ui-tabs-hide hhk-tdbox"));
+        return HTMLContainer::generateMarkup("div", $tbl->generateMarkup(array("style"=>"margin-bottom: 0.5em;")) . $metadataBtn, array("id"=>$this->IdpId . "Auth", "class"=>"ui-tabs-hide"));
 
     }
 

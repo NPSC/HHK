@@ -2236,8 +2236,9 @@ CREATE TABLE IF NOT EXISTS `w_idp` (
     `SSO_URL` VARCHAR(500),
     `IdP_EntityId` VARCHAR(500),
     `IdP_Cert` BLOB,
-    `enableSigning` BOOL DEFAULT 1,
-    `enableEncryption` BOOL DEFAULT 1,
+    `expectIdPSigning` BOOL DEFAULT 1,
+    `expectIdPEncryption` BOOL DEFAULT 1,
+    `enableSPSigning` BOOL DEFAULT 1,
     `Status` VARCHAR(2) NOT NULL DEFAULT 'a',
     PRIMARY KEY (`idIdp`)
 ) ENGINE=InnoDB;
