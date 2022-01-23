@@ -222,7 +222,6 @@ class HouseServices {
         $reply = '';
         $warning = '';
         $returnReserv = FALSE;
-        $returntoVisit = FALSE;
 
         if ($idVisit == 0) {
             return array("error" => "Neither Guest or Visit was selected.");
@@ -502,10 +501,6 @@ class HouseServices {
             if ($uS->ShowUncfrmdStatusTab) {
                 $dataArray['unreserv'] = 'y';
             }
-        }
-
-        if($returntoVisit){
-            $dataArray['openvisitviewer'] = 'y';
         }
 
 

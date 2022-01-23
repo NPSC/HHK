@@ -207,7 +207,7 @@ class RoomChooser {
         $table->addBodyTr(
             HTMLTable::makeTd('As of:', array('class' => 'tdlabel', 'rowspan'=>'2'))
             . HTMLTable::makeTd(
-                HTMLInput::generateMarkup('rpl', array('name'=>'rbReplaceRoom', 'id'=>'rbReplaceRoomrpl', 'type'=>'radio', 'checked'=>'checked'))
+                HTMLInput::generateMarkup('rpl', array('name'=>'rbReplaceRoom', 'id'=>'rbReplaceRoomrpl', 'type'=>'radio'))
                 .HTMLContainer::generateMarkup('label', 'Start of Visit Span - '. $this->checkinDT->format('M d, Y'), array('style'=>'margin-left:.3em;', 'for'=>'rbReplaceRoomrpl'
                     , 'title'=>'The visit span is the date of the last room change, rate change, or start of visit.'))
         ));

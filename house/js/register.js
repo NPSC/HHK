@@ -391,7 +391,7 @@ function showChangeRoom(gname, id, idVisit, span) {
 		    let buttons = {
 		        "Change Rooms": function() {
 		        	if($('#selResource').val() > 0){
-		            	changeRooms(idVisit, span, $selResource.val(), $replaceRoom.val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker( "getDate" ).toUTCString());
+		            	changeRooms(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker( "getDate" ).toUTCString());
 		            	$(this).dialog("close");
 		            }else{
 		            	$('#rmDepMessage').text('Choose a room').show();
@@ -431,16 +431,18 @@ function showChangeRoom(gname, id, idVisit, span) {
 	                return;
 	            }
 	            
-	            // Refresh any Register tables.
-	            refreshdTables(data);
-	            
+	            // Open visit edit window?
+	            if (data.openvisitviewer) {
+					editVisit('', 0, idVisit, data.openvisitviewer);
+				}
+				
 	            if (data.msg && data.msg != '') {
 	                flagAlertMessage(data.msg, 'info');
 	            }
 	            
-	            if (data.openvisitviewer) {
-					editVisit('', 0, idVisit, data.openvisitviewer);
-				}
+				$('#calendar').fullCalendar('refetchEvents');
+	            refreshdTables(data);
+
 		});
 	
 	}

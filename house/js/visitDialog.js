@@ -690,9 +690,6 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     // Confirm checking out
     if (ckoutlist.length > 0) {
         var cnfMsg = 'Check Out:\n' + ckoutlist.join('\n');
-//        if ($('#EmptyExtend').val() === '1' && $('#extendCb').prop('checked') && ckoutlist.length >= $('#currGuests').val()) {
-//           cnfMsg += '\nand extend the visit for ' + $('#extendDays').val() + ' days';
-//        }
         if (confirm(cnfMsg + '?') === false) {
             $('#keysfees').dialog("close");
             return;
@@ -762,29 +759,8 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 return;
             }
 
-			if(data.success && data.openvisitviewer){
-				$('#pmtRcpt').dialog("close");
-				//load visit dialog
-            	let buttons = {
-            		"Show Statement": function() {
-                		window.open('ShowStatement.php?vid=' + idVisit, '_blank');
-            		},
-            		"Show Registration Form": function() {
-                		window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + visitSpan, '_blank');
-            		},
-            		"Save": function() {
-                		saveFees(idGuest, idVisit, visitSpan, false, 'register.php');
-            		},
-            		"Cancel": function() {
-                		$(this).dialog("close");
-            		}
-        		};
-         		
-         		viewVisit(idGuest, idVisit, buttons, 'Edit Visit #' + idVisit + '-' + visitSpan, '', visitSpan);
-			}else{
-            	$('#keysfees').dialog("close");
-            	$('#pmtRcpt').dialog("close");
-			}
+            $('#keysfees').dialog("close");
+
 			
             paymentRedirect(data, $('#xform'));
 
