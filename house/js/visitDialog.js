@@ -27,45 +27,6 @@ function setupVisitNotes(vid, $container) {
     return $container;
 }
 
-function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
-    
-    $rescSelector.prop('disabled', true);
-    $('#hhk-roomChsrtitle').addClass('hhk-loading');
-    $('#rmDepMessage').text('').hide();
-     
-    var parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate, selRescId:$rescSelector.val()};
-    
-    $.post('ws_ckin.php', parms,
-        function (data) {
-            var newSel;
-
-            $rescSelector.prop('disabled', false);
-            $('#hhk-roomChsrtitle').removeClass('hhk-loading');
-            
-            try {
-                data = $.parseJSON(data);
-            } catch (err) {
-                alert("Parser error - " + err.message);
-                return;
-            }
-            if (data.error) {
-                if (data.gotopage) {
-                    window.open(data.gotopage);
-                }
-                flagAlertMessage(data.error, 'error');
-                return;
-            }
-            
-            if (data.sel) {
-                newSel = $(data.sel);
-                $rescSelector.children().remove();
-
-                newSel.children().appendTo($rescSelector);
-                $rescSelector.val(data.idResc).change();
-                
-            }
-        });
-}
 
 function viewHospitalStay(idHs, idVisit, $hsDialog) {
 
@@ -257,16 +218,6 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
                 numberOfMonths: 1,
                 maxDate: 0,
                 dateFormat: 'M d, yy'//,
-               // onSelect: function() {
-               //     this.lastShown = new Date().getTime();
-               // },
-               // beforeShow: function() {
-               //     var time = new Date().getTime();
-               //     return this.lastShown === undefined || time - this.lastShown > 500;
-               // },
-               // onClose: function () {
-               //     $(this).change();
-               // }
             });
 
             $diagbox.find('.ckdateFut').datepicker({
@@ -323,7 +274,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             // Set up rate changer
             if ($('#rateChgCB').length > 0) {
 
-                var rateChangeDate = $('#chgRateDate');
+                let rateChangeDate = $('#chgRateDate');
 
                 rateChangeDate.datepicker({
                     changeMonth: true,
@@ -588,7 +539,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             setupPayments($('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
     
             // Financial Application
-            var $btnFapp = $('#btnFapp');
+            let $btnFapp = $('#btnFapp');
             if ($btnFapp.length > 0) {
                 $btnFapp.button();
                 $btnFapp.click(function () {
@@ -641,11 +592,10 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
  */
 function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     "use strict";
-    var ckoutlist = [];
-    var removeList = [];
-    var resvResc = '0';
-    var undoCheckout = false;
-    var parms = {
+    let ckoutlist = [];
+    let removeList = [];
+    let undoCheckout = false;
+    let parms = {
         cmd: 'saveFees',
         idGuest: idGuest,
         idVisit: idVisit,
@@ -656,7 +606,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     
     // Expected Checkout date
     $('input.hhk-expckout').each(function() {
-        var parts = $(this).attr('id').split('_');
+        let parts = $(this).attr('id').split('_');
         if (parts.length > 0) {
             parms[parts[0] + '[' + parts[1] + ']'] = $(this).val();
         }
@@ -664,7 +614,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
 
     // Change Check in stay dates
     $('input.hhk-stayckin').each(function() {
-        var parts = $(this).attr('id').split('_');
+        let parts = $(this).attr('id').split('_');
         if (parts.length > 0) {
             parms[parts[0] + '[' + parts[1] + ']'] = $(this).val();
         }
@@ -700,7 +650,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     $('input.hhk-ckoutCB').each(function() {
         if (this.checked) {
 
-            var parts = $(this).attr('id').split('_');
+            let parts = $(this).attr('id').split('_');
 
             if (parts.length > 0) {
 
@@ -729,7 +679,7 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     // Remove stay 
     $('input.hhk-removeCB').each(function () {
         if (this.checked) {
-            var parts = $(this).attr('id').split('_');
+            let parts = $(this).attr('id').split('_');
             if (parts.length > 0) {
                 parms[parts[0] + '[' + parts[1] + ']'] = 'on';
                 removeList.push($(this).data('nm'));
@@ -740,9 +690,6 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     // Confirm checking out
     if (ckoutlist.length > 0) {
         var cnfMsg = 'Check Out:\n' + ckoutlist.join('\n');
-        if ($('#EmptyExtend').val() === '1' && $('#extendCb').prop('checked') && ckoutlist.length >= $('#currGuests').val()) {
-           cnfMsg += '\nand extend the visit for ' + $('#extendDays').val() + ' days';
-        }
         if (confirm(cnfMsg + '?') === false) {
             $('#keysfees').dialog("close");
             return;
@@ -758,44 +705,6 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     }
 
     $('#keyDepAmt').removeClass('ui-state-highlight');
-
-    // Room Change?
-    if ($('#resvResource').length > 0) {
-
-        resvResc = $('#resvResource').val();
-
-        if (resvResc != '0') {
-            $('#resvChangeDate').removeClass('ui-state-highlight');
-            $('#chgmsg').text('');
-            var valMsg = $('<span id="chgmsg"/>');
-            if ($('#resvChangeDate').val() == '') {
-                valMsg.text("Enter a change room date.");
-                valMsg.css('color', 'red');
-                $('#moveTable').prepend($('<tr/>').append($('<td colspan="2">').append(valMsg)));
-                $('#resvChangeDate').addClass('ui-state-highlight');
-                return;
-            }
-            var chgDate = $('#resvChangeDate').datepicker("getDate");
-            if (!chgDate) {
-                valMsg.text("Something wrong with the change room date.");
-                valMsg.css('color', 'red');
-                $('#moveTable').prepend($('<tr/>').append($('<td colspan="2">').append(valMsg)));
-                $('#resvChangeDate').addClass('ui-state-highlight');
-                return;
-            }
-            if (chgDate > new Date()) {
-                valMsg.text("Change room date can't be in the future.");
-                valMsg.css('color', 'red');
-                $('#moveTable').prepend($('<tr/>').append($('<td colspan="2">').append(valMsg)));
-                $('#resvChangeDate').addClass('ui-state-highlight');
-                return;
-            }
-            if (confirm('Change Rooms?') === false) {
-                $('#keysfees').dialog("close");
-                return;
-            }
-        }
-    }
 
 	// Save Ribbon Note
 	parms['txtRibbonNote'] = $('#txtRibbonNote').val();
@@ -850,29 +759,8 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
                 return;
             }
 
-			if(data.success && data.openvisitviewer){
-				$('#pmtRcpt').dialog("close");
-				//load visit dialog
-            	var buttons = {
-            		"Show Statement": function() {
-                		window.open('ShowStatement.php?vid=' + idVisit, '_blank');
-            		},
-            		"Show Registration Form": function() {
-                		window.open('ShowRegForm.php?vid=' + idVisit + '&span=' + visitSpan, '_blank');
-            		},
-            		"Save": function() {
-                		saveFees(idGuest, idVisit, visitSpan, false, 'register.php');
-            		},
-            		"Cancel": function() {
-                		$(this).dialog("close");
-            		}
-        		};
-         		
-         		viewVisit(idGuest, idVisit, buttons, 'Edit Visit #' + idVisit + '-' + visitSpan, '', visitSpan);
-			}else{
-            	$('#keysfees').dialog("close");
-            	$('#pmtRcpt').dialog("close");
-			}
+            $('#keysfees').dialog("close");
+
 			
             paymentRedirect(data, $('#xform'));
 

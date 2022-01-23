@@ -51,22 +51,22 @@ function refreshdTables(data) {
     "use strict";
 
     if (data.curres && $('#divcurres').length > 0) {
-        var tbl = $('#curres').DataTable();
+        let tbl = $('#curres').DataTable();
         tbl.ajax.reload();
     }
     
     if (data.reservs && $('div#vresvs').length > 0) {
-        var tbl = $('#reservs').DataTable();
+        let tbl = $('#reservs').DataTable();
         tbl.ajax.reload();
     }
     
     if (data.waitlist && $('div#vwls').length > 0) {
-        var tbl = $('#waitlist').DataTable();
+        let tbl = $('#waitlist').DataTable();
         tbl.ajax.reload();
     }
     
     if (data.unreserv && $('div#vuncon').length > 0) {
-        var tbl = $('#unreserv').DataTable();
+        let tbl = $('#unreserv').DataTable();
         tbl.ajax.reload();
     }
     
@@ -139,26 +139,13 @@ function chgRoomCleanStatus(idRoom, statusCode) {
         });
     }
 }
-function payFee(gname, id, idVisit, span) {
-    var buttons = {
-        "Show Statement": function() {
-            window.open('ShowStatement.php?vid=' + idVisit, '_blank');
-        },
-        "Pay Fees": function() {
-            saveFees(id, idVisit, span, false, 'register.php');
-        },
-        "Cancel": function() {
-            $(this).dialog("close");
-        }
-    };
-    viewVisit(id, idVisit, buttons, 'Pay Fees for ' + gname, 'pf', span);
-}
+
 function editPSG(psg) {
     var buttons = {
 //        "Save PSG": function() {
 //            saveFees(id, idVisit, span, false, 'register.php');
 //        },
-        "Cancel": function() {
+        "Close": function() {
             $(this).dialog("close");
         }
     };
@@ -181,7 +168,7 @@ function editPSG(psg) {
                 }
                 flagAlertMessage(data.error, 'error');
             } else if (data.markup) {
-                var diag = $('div#keysfees');
+                let diag = $('div#keysfees');
                 diag.children().remove();
                 diag.append($('<div class="hhk-panel hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.markup)));
                 diag.dialog('option', 'buttons', buttons);
@@ -297,106 +284,18 @@ function saveStatusEvent(idResc, type) {
     });
 }
 
-        function updateRescChooser(idReservation, numberGuests, cbRs, arrivalDate, departureDate) {
 
-            var idResc, $selResource = $('#selResource');
-			var omitSelf = true;
-			
-            if ($selResource.length === 0) {
-                return;
-            }
-
-            idResc = $selResource.find('option:selected').val();
-
-            $selResource.prop('disabled', true);
-            $('#hhk-roomChsrtitle').addClass('hhk-loading');
-            $('#hhkroomMsg').text('').hide();
-
-            cbRS = {};
-
-            $('input.hhk-constraintsCB:checked').each(function () {
-                cbRS[$(this).data('cnid')] = 'ON';
-            });
-
-            $.post('ws_ckin.php',
-                {  //parameters
-                    cmd: 'newConstraint',
-                    rid: idReservation,
-                    numguests: numberGuests,
-                    expArr: arrivalDate,
-                    expDep: departureDate,
-                    idr: idResc,
-                    cbRS:cbRS,
-                    omsf: omitSelf
-                },
-                function(data) {
-                    var newSel;
-
-                    $selResource.prop('disabled', false);
-                    $('#hhk-roomChsrtitle').removeClass('hhk-loading');
-
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert("Parser error - " + err.message);
-                        return;
-                    }
-
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.location.assign(data.gotopage);
-                        }
-                        flagAlertMessage(data.error, 'error');
-                        return;
-                    }
-
-                    if (data.selectr) {
-
-                        newSel = $(data.selectr);
-                        $selResource.children().remove();
-
-                        newSel.children().appendTo($selResource);
-                        $selResource.val(data.idResource).change();
-
-                        if (data.msg && data.msg !== '') {
-                            $('#hhkroomMsg').text(data.msg).show();
-                        }
-                    }
-                    
-                    if (data.rooms) {
-                        rooms = data.rooms;
-                    }else{
-                    	rooms = {};
-                    }
-            });
-        }
-
-function cgRoom(gname, id, idVisit, span) {
-	var action = 'cr';
-	var title = 'Change Rooms for ' + gname;
-    var buttons = {
-        "Change Rooms": function() {
-        	if($('#selResource').val() > 0){
-            	saveFees(id, idVisit, span, true, 'register.php');
-            }else{
-            	$('#rmDepMessage').text('Choose a room').show();
-            }
-        },
-        "Cancel": function() {
-            $(this).dialog("close");
-        }
-    };
-    
+function showChangeRoom(gname, id, idVisit, span) {
+	// Get the change rooms dialog box
+	
     this.rooms = {};
     
     $.post('ws_ckin.php',
         {
-            cmd: 'visitFees',
+            cmd: 'showChangeRooms',
             idVisit: idVisit,
-            //idGuest: idGuest,
-            action: action,
             span: span,
-            //ckoutdt: ckoutDates
+            idGuest: id
         },
     function(data) {
         "use strict";
@@ -416,69 +315,186 @@ function cgRoom(gname, id, idVisit, span) {
                 return;
 
             }
+            
+            let sDate = new Date(data.start)
 
-            var $diagbox = $('#pmtRcpt');
+            let $diagbox = $('#chgRoomDialog');
 
             $diagbox.children().remove();
             $diagbox.append($('<div class="hhk-tdbox hhk-visitdialog" style="font-size:0.8em;"/>').append($(data.success)));
             
-            $diagbox.find('.ckdate').datepicker({
-                yearRange: '-07:+01',
+			let $selResource = $diagbox.find('#selResource');
+            let $changeDate = $('#resvChangeDate');
+            let $replaceRoom = $('input[name=rbReplaceRoom]');
+            let $cbUseDefaultRate = $('#cbUseDefaultRate');
+            
+            $changeDate.datepicker({
+                yearRange: '-05:+00',
                 changeMonth: true,
                 changeYear: true,
                 autoSize: true,
                 numberOfMonths: 1,
                 maxDate: 0,
-                dateFormat: 'M d, yy',
-                onSelect: function() {
-                    this.lastShown = new Date().getTime();
-                },
-                beforeShow: function() {
-                    var time = new Date().getTime();
-                    return this.lastShown === undefined || time - this.lastShown > 500;
-                },
-                onClose: function () {
-                	$('#rbReplaceRoomnew').attr('checked','checked');
-                    $(this).change();
-                }
+                minDate: sDate,
+                dateFormat: 'M d, yy'
             });
             
-            //init room chooser
-            updateRescChooser(data.idReservation, data.numGuests, data.cbRs, data.visitStart, data.expDep);
+            $changeDate.datepicker('setDate', new Date());
             
-            $diagbox.on('change', 'input[name=rbReplaceRoom], input[name=resvChangeDate]', function(){
-            	var startdate = '';
-            	if($(this).val() == 'rpl'){
-            		startdate = data.visitStart;
-            	}else if($(this).val() && $(this).val() != 'new'){
-            		startdate = $(this).val();
-            	}
-            	
-            	if(startdate){
-            		updateRescChooser(data.idReservation, data.numGuests, data.cbRs, startdate, data.expDep);
-            	}
-            });
+            // room changer radiobutton
+            $replaceRoom.change(function () {
+				if($(this).val() == 'new' && $changeDate.val() !== '') {
+					getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ).toUTCString(), $selResource);
+				} else if ($(this).val() == 'rpl') {
+					getVisitRoomList(idVisit, span, sDate.toUTCString(), $selResource);
+				}
+			});
             
-            $diagbox.on('change','#selResource', function(){
-            	var selResource = $(this).val();
-            	if(rooms[selResource] && data.deposit < rooms[selResource].key){
+            // Date Control
+            $changeDate.change(function (){
+				$('input[name=rbReplaceRoomnew]').prop('checked', true);
+				$replaceRoom.trigger();
+				
+			});
+            
+            //init room selector data
+            if (data.rooms) {
+                rooms = data.rooms;
+            }else{
+            	rooms = {};
+            }
+            
+			// Room selector
+            $selResource.change( function(){
+            	let selResource = $(this).val();
+            	// Deposit required message
+            	if(rooms[selResource] && data.curResc.key < rooms[selResource].key){
             		$diagbox.find('#rmDepMessage').text('Deposit required').show();
             	}else{
             		$diagbox.find('#rmDepMessage').empty().hide();
             	}
+            	
+            	// Room default rate message.
+            	if ((data.curResc.defaultRateCat == '' && rooms[selResource].defaultRateCat != '')
+            		|| (data.curResc.defaultRateCat != ''  && rooms[selResource].defaultRateCat != '' && data.curResc.defaultRateCat != rooms[selResource].defaultRateCat)) {
+	
+					$diagbox.find('#trUseDefaultRate').show();
+	
+				} else {
+					$diagbox.find('#trUseDefaultRate').hide();
+				}
             });
             
-            $diagbox.dialog('option', 'title', title);
+            $selResource.change();
+            
+			// Define dialog box buttons.
+		    let buttons = {
+		        "Change Rooms": function() {
+		        	if($('#selResource').val() > 0){
+		            	changeRooms(idVisit, span, $selResource.val(), $('input[name="rbReplaceRoom"]:checked').val(), $cbUseDefaultRate.prop('checked'), $changeDate.datepicker( "getDate" ).toUTCString());
+		            	$(this).dialog("close");
+		            }else{
+		            	$('#rmDepMessage').text('Choose a room').show();
+		            }
+		        },
+		        "Cancel": function() {
+		            $(this).dialog("close");
+		        }
+		    };
+		    
+            $diagbox.dialog('option', 'title', 'Change Rooms for ' + gname);
             $diagbox.dialog('option', 'width', '400px');
             $diagbox.dialog('option', 'buttons', buttons);
             $diagbox.dialog('open');
             
         }
-    }
-    );       
+    });
+    
+	function changeRooms(idVisit, span, idRoom, replaceRoom, useDefaultRate, changeDate) {
+		
+		let parms = {cmd: 'doChangeRooms', idVisit: idVisit, span: span, idRoom: idRoom, replaceRoom: replaceRoom, useDefault: useDefaultRate, changeDate: changeDate};
+		
+		$.post('ws_ckin.php', parms, 
+			function (data) {
+			
+	            try {
+	                data = $.parseJSON(data);
+	            } catch (err) {
+	                alert("Parser error - " + err.message);
+	                return;
+	            }
+	            if (data.error) {
+	                if (data.gotopage) {
+	                    window.open(data.gotopage);
+	                }
+	                flagAlertMessage(data.error, 'error');
+	                return;
+	            }
+	            
+	            // Open visit edit window?
+	            if (data.openvisitviewer) {
+					editVisit('', 0, idVisit, data.openvisitviewer);
+				}
+				
+	            if (data.msg && data.msg != '') {
+	                flagAlertMessage(data.msg, 'info');
+	            }
+	            
+				$('#calendar').fullCalendar('refetchEvents');
+	            refreshdTables(data);
+
+		});
+	
+	}
+
+    function getVisitRoomList(idVisit, visitSpan, changeDate, $rescSelector) {
+    
+	    $rescSelector.prop('disabled', true);
+	    $('#hhk-roomChsrtitle').addClass('hhk-loading');
+	    $('#rmDepMessage').text('').hide();
+	     
+	    let parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate, selRescId:$rescSelector.val()};
+	    
+	    $.post('ws_ckin.php', parms,
+	        function (data) {
+	            let newSel;
+	
+	            $rescSelector.prop('disabled', false);
+	            $('#hhk-roomChsrtitle').removeClass('hhk-loading');
+	            
+	            try {
+	                data = $.parseJSON(data);
+	            } catch (err) {
+	                alert("Parser error - " + err.message);
+	                return;
+	            }
+	            if (data.error) {
+	                if (data.gotopage) {
+	                    window.open(data.gotopage);
+	                }
+	                flagAlertMessage(data.error, 'error');
+	                return;
+	            }
+	            
+	            if (data.sel) {
+	                newSel = $(data.sel);
+	                $rescSelector.children().remove();
+	
+	                newSel.children().appendTo($rescSelector);
+	                $rescSelector.val(data.idResc).change();
+	                
+	            }
+	            
+	            if (data.rooms) {
+	                rooms = data.rooms;
+	            }else{
+	            	rooms = {};
+	            }
+
+        });
+	}
+
 }
-
-
 
 function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta) {
     $.post('ws_ckin.php',
@@ -488,7 +504,7 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta) {
                 span: visitSpan,
                 sdelta: startDelta,
                 edelta: endDelta
-            },
+},
     function(data) {
         if (data) {
             try {
@@ -512,6 +528,7 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta) {
         }
     });
 }
+
 function getRoomList(idResv, eid) {
     if (idResv) {
         // place "loading" icon
@@ -530,7 +547,7 @@ function getRoomList(idResv, eid) {
                 return;
             }
             if (data.container) {
-                var contr = $(data.container);
+                let contr = $(data.container);
                 $('body').append(contr);
                 contr.position({
                     my: 'top',
@@ -734,7 +751,7 @@ $(document).ready(function () {
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
-            var ul = this.menu.element;
+            let ul = this.menu.element;
             ul.outerWidth( Math.max(
                     ul.width( "" ).outerWidth() + 1,
                     this.element.outerWidth()
@@ -765,11 +782,6 @@ $(document).ready(function () {
         "deferRender": true
     });
 
-    $('#vstays').on('click', '.stpayFees', function (event) {
-        event.preventDefault();
-        $(".hhk-alert").hide();
-        payFee($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
-    });
     $('#vstays').on('click', '.applyDisc', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
@@ -793,7 +805,7 @@ $(document).ready(function () {
     $('#vstays').on('click', '.stchgrooms', function (event) {
         event.preventDefault();
         $(".hhk-alert").hide();
-        cgRoom($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
+        showChangeRoom($(this).data('name'), $(this).data('id'), $(this).data('vid'), $(this).data('spn'));
     });
     $('#vstays').on('click', '.stcleaning', function (event) {
         event.preventDefault();
@@ -830,7 +842,7 @@ $(document).ready(function () {
     });
 
     $(document).mousedown(function (event) {
-        var target = $(event.target);
+        let target = $(event.target);
         if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
             $('div#pudiv').remove();
         }
@@ -849,6 +861,12 @@ $(document).ready(function () {
         modal: true,
         title: 'Set Invoice Billing Date'
     });
+    
+    $('#chgRoomDialog').dialog({
+        autoOpen: false,
+        resizable: true,
+        modal: true
+    });
     $('#pmtRcpt').dialog({
         autoOpen: false,
         resizable: true,
@@ -857,20 +875,20 @@ $(document).ready(function () {
         title: 'Payment Receipt'
     });
     if ($('#txtactstart').val() === '') {
-        var nowdt = new Date();
+        let nowdt = new Date();
         nowdt.setTime(nowdt.getTime() - (5 * 86400000));
         $('#txtactstart').datepicker('setDate', nowdt);
     }
 
     if ($('#txtfeestart').val() === '') {
-        var nowdt = new Date();
+        let nowdt = new Date();
         nowdt.setTime(nowdt.getTime() - (3 * 86400000));
         $('#txtfeestart').datepicker('setDate', nowdt);
     }
     
     // Member search letter input box
     $('#txtsearch').keypress(function (event) {
-        var mm = $(this).val();
+        let mm = $(this).val();
         if (event.keyCode == '13') {
             if (mm === '' || !isNumber(parseInt(mm, 10))) {
                 alert("Don't press the return key unless you enter an Id.");
@@ -886,7 +904,7 @@ $(document).ready(function () {
 
     createAutoComplete($('#txtsearch'), 3, {cmd: "role",  mode: 'mo', gp:'1'}, 
         function(item) { 
-            var cid = item.id;
+            let cid = item.id;
             if (cid > 0) {
                 window.location.assign("GuestEdit.php?id=" + cid);
             }
@@ -1030,7 +1048,7 @@ $(document).ready(function () {
 
             if (resourceObj.id > 0) {
 
-                var cont = resourceObj.title 
+                let cont = resourceObj.title 
                         + (resourceObj.maxOcc == 0 ? '' : ' (' + resourceObj.maxOcc + ')');
 
                 labelTds.prop('title', cont);
@@ -1087,7 +1105,7 @@ $(document).ready(function () {
                 // Change rooms?
                 if (event.resourceId !== event.idResc) {
                 	
-                	var mssg = 'Move Reservation to a new room?';
+                	let mssg = 'Move Reservation to a new room?';
                 	
                 	if (event.resourceId == 0) {
                 		mssg = 'Move Reservation to the waitlist?'
@@ -1146,7 +1164,7 @@ $(document).ready(function () {
 
             // visit
             if (calEvent.idVisit && calEvent.idVisit > 0) {
-                var buttons = {
+                let buttons = {
                     "Show Statement": function() {
                         window.open('ShowStatement.php?vid=' + calEvent.idVisit, '_blank');
                     },
@@ -1168,7 +1186,7 @@ $(document).ready(function () {
 
             if (hindx === undefined || hindx === 0 || event.idHosp === undefined || event.idAssoc == hindx || event.idHosp == hindx) {
 
-                var resource = $('#calendar').fullCalendar('getResourceById', event.resourceId);
+                let resource = $('#calendar').fullCalendar('getResourceById', event.resourceId);
 
                 // Reservations
                 if (event.idReservation !== undefined) {
@@ -1226,7 +1244,7 @@ $(document).ready(function () {
 
     $('#btnActvtyGo').click(function () {
         $(".hhk-alert").hide();
-        var stDate = $('#txtactstart').datepicker("getDate");
+        let stDate = $('#txtactstart').datepicker("getDate");
         if (stDate === null) {
             $('#txtactstart').addClass('ui-state-highlight');
             flagAlertMessage('Enter start date', 'alert');
@@ -1234,11 +1252,11 @@ $(document).ready(function () {
         } else {
             $('#txtactstart').removeClass('ui-state-highlight');
         }
-        var edDate = $('#txtactend').datepicker("getDate");
+        let edDate = $('#txtactend').datepicker("getDate");
         if (edDate === null) {
             edDate = new Date();
         }
-        var parms = {
+        let parms = {
             cmd: 'actrpt',
             start: stDate.toLocaleDateString(),
             end: edDate.toLocaleDateString()
@@ -1273,7 +1291,7 @@ $(document).ready(function () {
                         $('.hhk-viewvisit').css('cursor', 'pointer');
                         $('#rptdiv').on('click', '.hhk-viewvisit', function () {
                             if ($(this).data('visitid')) {
-                                var parts = $(this).data('visitid').split('_');
+                                let parts = $(this).data('visitid').split('_');
                                 if (parts.length !== 2)
                                     return;
                                 var buttons = {
@@ -1297,7 +1315,7 @@ $(document).ready(function () {
 
     $('#btnFeesGo').click(function () {
         $(".hhk-alert").hide();
-        var stDate = $('#txtfeestart').datepicker("getDate");
+        let stDate = $('#txtfeestart').datepicker("getDate");
         if (stDate === null) {
             $('#txtfeestart').addClass('ui-state-highlight');
             flagAlertMessage('Enter start date', 'alert');
@@ -1305,14 +1323,14 @@ $(document).ready(function () {
         } else {
             $('#txtfeestart').removeClass('ui-state-highlight');
         }
-        var edDate = $('#txtfeeend').datepicker("getDate");
+        let edDate = $('#txtfeeend').datepicker("getDate");
         if (edDate === null) {
             edDate = new Date();
         }
-        var statuses = $('#selPayStatus').val() || [];
-        var ptypes = $('#selPayType').val() || [];
+        let statuses = $('#selPayStatus').val() || [];
+        let ptypes = $('#selPayType').val() || [];
 
-        var parms = {
+        let parms = {
             cmd: 'actrpt',
             start: stDate.toDateString(),
             end: edDate.toDateString(),
@@ -1360,8 +1378,8 @@ $(document).ready(function () {
     });
     
     $('#btnInvGo').click(function () {
-        var statuses = ['up'];
-        var parms = {
+        let statuses = ['up'];
+        let parms = {
             cmd: 'actrpt',
             st: statuses,
             inv: 'on'
@@ -1458,7 +1476,7 @@ $(document).ready(function () {
     });
 
     $('#btnRefreshDaily').button().click(function() {
-        var tbl = $('#daily').DataTable();
+        let tbl = $('#daily').DataTable();
         tbl.ajax.reload();
     });
 

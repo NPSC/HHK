@@ -69,21 +69,21 @@ class RoomRate {
         $titles = array();
 
         foreach ($rows as $r) {
-            $titles[$r['idRoom_rate']] = self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1'], 0));
+            $titles[$r['idRoom_rate']] = self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1']));
         }
 
         $titles[0] = '';
 
         return $titles;
     }
-    
+
     public static function getRateDescription(\PDO $dbh, $idRoomRate, $RateCategory) {
-        
+
         //RoomRateDefault
         $uS = Session::getInstance();
-        
+
         $rateRs = new Room_RateRS();
-        
+
         if ($idRoomRate == 0) {
             $rateRs->FA_Category->setStoredVal($RateCategory == '' ? $uS->RoomRateDefault : $RateCategory);
             $rows = EditRS::select($dbh, $rateRs, array($rateRs->FA_Category));
@@ -91,15 +91,15 @@ class RoomRate {
             $rateRs->idRoom_rate->setStoredVal($idRoomRate);
             $rows = EditRS::select($dbh, $rateRs, array($rateRs->idRoom_rate));
         }
-        
+
         if(isset($rows[0])) {
-            
+
             $r = $rows[0];
-            return self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1'], 0));
+            return self::titleAddAmount($r['Title'], $r['FA_Category'], number_format($r['Reduced_Rate_1']));
         }
-        
+
         return 'Undefined';
-        
+
     }
 
     protected static function titleAddAmount($title, $faCategory, $amt) {
