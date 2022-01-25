@@ -161,3 +161,6 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 
 ALTER TABLE `w_users`
 ADD COLUMN `idIdp` int(11) NOT NULL DEFAULT 0 AFTER `Chg_PW`;
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('samlCertPath', '/home/hhkapp/hhk-saml/certs', 's', 'a', '', 'Path to certificates for signing SAML messages', '','0');

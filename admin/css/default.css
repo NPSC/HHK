@@ -13,8 +13,9 @@
     margin: 0;
 }
 body {
-    font-size: 100%;
+	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
 }
+
 body.testbody {
     background-color: #C7EFB3; /* #DFF7FF;*/
 }
@@ -23,12 +24,29 @@ body.testbody {
   display: none;
 }
 
-.pageSpacer {
+.pageHeader {
     width: 100%;
     background-color: #459e00;
-    position:fixed;
+    color: white;
+    position:sticky;
+    margin-bottom:0.5em;
+    z-index: 1000;
     top: 0;
     left: 0;
+}
+
+div.valMsg{
+	color: red;
+	text-align: center;
+	margin-bottom: 0.5em;
+	display: none;
+}
+
+.copyright {
+	text-align:right;font-size: smaller; margin-top:5px;margin-right:.3em;
+}
+.build {
+	text-align:right;font-size: .6em;margin-right:5px;
 }
 .hhk-relations td {
     background-color: #ffffff;
@@ -110,7 +128,6 @@ div.divSubmitButtons:hover {
 }
 div#contentDiv {
     margin-left: 10px;
-    margin-top: 45px;
 }
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
 .ui-menu-item .ui-autocomplete {width:250px;font-size:.8em;}

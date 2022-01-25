@@ -64,9 +64,9 @@ $.post('index.php', parms, function (data){
     if (data.mess) {
     	if($('#OTPDialog').dialog('isOpen')){
     		$('#OTPMsg').text(data.mess);
-    		$('#valMsg').empty();
+    		$('#valMsg').empty().hide();
     	}else{
-    		$('#valMsg').text(data.mess);
+    		$('#valMsg').text(data.mess).show();
     		$('#OTPMsg').empty();
     	}
     }
@@ -93,12 +93,12 @@ $('#txtUname').focus();
 $("button").button();
 
 $(document).on('mousedown', '.showPw', function() {
-	var input = $(this).closest("td").find("input");
+	var input = $(this).parent().find("input");
 	input.prop("type", "text");
 });
 
 $(document).on('mouseup', '.showPw', function() {
-	var input = $(this).closest("td").find("input");
+	var input = $(this).parent().find("input");
 	input.prop("type", "password");
 });
 

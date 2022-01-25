@@ -352,7 +352,9 @@ foreach ($logSelRows as $r) {
 $ul = HTMLContainer::generateMarkup('ul', $li, array());
 $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'logsTabDiv'));
 
-$conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
+$conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'), NULL, array('pr'));
+
+$localAuthMkup = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'), 'pr');
 
 $labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
@@ -697,7 +699,7 @@ $('#logsTabDiv').tabs("option", "active", 1);
 						</ul>
 
 						<div id="localAuth" class="ui-tabs-hide">
-
+							<?php echo $localAuthMkup; ?>
 						</div>
 						<?php foreach($authIdpList as $idp){
 							$saml = new SAML($dbh, $idp['idIdp']);

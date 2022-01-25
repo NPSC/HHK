@@ -6,6 +6,10 @@
     background-color: #FFCC9F;
 }
 
+body {
+	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
+}
+
 .no-close .ui-dialog-titlebar-close {
   display: none;
 }
@@ -164,18 +168,35 @@ div#hideCalendar, div#hideLog {
 div#contentDiv {
     margin-left: 10px;
     margin-right: 10px;
-    margin-top: 43px;
+
 }
-.pageSpacer {
+.copyright {
+	text-align:right;font-size: smaller; margin-top:5px;margin-right:.3em;
+}
+.build {
+	text-align:right;font-size: .6em;margin-right:5px;
+}
+.pageHeader {
     width: 100%;
     background-color: #63A0CE;
-    position:fixed;
+    color: white;
+    position:sticky;
+    margin-bottom:0.5em;
+    z-index: 1000;
     top: 0;
     left: 0;
 }
 #content {
     margin: 20px 10px;
 }
+
+div.valMsg{
+	color: red;
+	text-align: center;
+	margin-bottom: 0.5em;
+	display: none;
+}
+
 h1, h2, h3 {
     padding: 3px 5px;
 }

@@ -29,7 +29,7 @@ $dbh = Login::initHhkSession(ciCFG_FILE);
 $pageTitle = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
 
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
-$copyYear = date('Y');
+$footerMarkup = Login::getFooterMarkup();
 $secureComp = new SecurityComponent(TRUE);
 
 header('X-Frame-Options: SAMEORIGIN');
@@ -47,21 +47,23 @@ if (SecurityComponent::isHTTPS()) {
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title><?php echo $pageTitle; ?></title>
         <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-        <link href='root.css' rel='stylesheet' type='text/css' />
+        <link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />
+        <link href='css/root.css' rel='stylesheet' type='text/css' />
+
     </head>
     <body>
         <div id="page">
-            <div class="topNavigation"></div>
-            <div>
-                <h2 class="hhk-title">
+            <div class='pageHeader'>
+                <h2 class="px-3 py-2">
                     <?php echo $pageTitle; ?>
                 </h2>
-            </div><div class='pageSpacer'></div>
+            </div>
             <div class="build"><?php echo $build; ?></div>
-            <div id="content" class="content">
-                <div class="innerContent">
-                    <a href="http://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
-                    <div class="divspace"></div>
+            <div id="contentDiv" class="container mx-auto">
+            	<div class="center mb-3">
+                    <a href="http://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
+                </div>
+                <div class="links center">
                     <ul>
                         <li><a href="<?php echo $secureComp->getSiteURL() . 'admin'; ?>">Administration Site</a></li>
                         <li><a href="<?php echo $secureComp->getSiteURL() . 'house'; ?>">Guest Tracking</a></li>
@@ -69,12 +71,8 @@ if (SecurityComponent::isHTTPS()) {
 	                        <li><a href="<?php echo $secureComp->getSiteURL() . 'volunteer'; ?>">Volunteers' Site</a></li>
                         <?php } ?>
                     </ul>
-                    <div class="divmorespace">
-                        <hr>
-                        <a class="nplogo" href ="https://nonprofitsoftwarecorp.org" ></a>
-                        <div class="copyright">&copy; <?php echo $copyYear; ?> Non-Profit Software Corporation</div>
-                    </div>
                 </div>
+				<?php echo $footerMarkup; ?>
             </div>
         </div>
     </body>

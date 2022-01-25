@@ -445,12 +445,12 @@ abstract class AbstractMember {
      * @throws UnexpectedValueException
      * @throws RuntimeException
      */
-    public function saveChanges(\PDO $dbh, array $post, $user = null) {
+    public function saveChanges(\PDO $dbh, array $post) {
 
         // Convenience var
         $n = $this->nameRS;
         $uS = Session::getInstance();
-        $user = ($user == null ? $uS->username : $user);
+        $user = (isset($post['auditUser']) ? $post['username']: $uS->username);
 
         // Process common
         $this->processCommon($post);
