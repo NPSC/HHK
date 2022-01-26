@@ -157,7 +157,7 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
     $rows = array();
     $firstRow = TRUE;
     $hdr = array();
-    
+
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
         $transferIds[] = $r['Id'];
@@ -166,19 +166,19 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
         if ($r['Address'] == ', ,   ') {
         	$r['Address'] = '';
         }
-        
+
         // Transfer opt-out
         if ($r['External Id'] == '') {
-        	
+
        		if ($r['Email'] !== '' || $r['Address'] !== '') {
        			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['Id'], 'type'=>'checkbox', 'checked'=>'checked'));
        		} else {
        			$r['External Id'] = HTMLInput::generateMarkup('', array('name'=>'tf_'.$r['Id'], 'class'=>'hhk-txCbox', 'data-txid'=>$r['Id'], 'type'=>'checkbox'));
         	}
         }
-            
+
         $r['Id'] = HTMLContainer::generateMarkup('a', $r['Id'], array('href'=>'GuestEdit.php?id=' . $r['Id'] . '&psg=' . $r['idPsg']));
-        
+
         $rows[] = $r;
 
     }
@@ -438,8 +438,8 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
-        
+
         <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
-        
+
     </body>
 </html>

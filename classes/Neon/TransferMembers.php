@@ -302,12 +302,17 @@ class TransferMembers {
             'method' => $method,
         );
 
-        // Log in with the web service
+        // Cludge for relationship types
+        if ($method == 'account/listRelationTypes') {
+            $request['parameters'] = array('relationTypeCategory'=>'Individual-Individual');
+        }
+
+            // Log in with the web service
         $this->openTarget($this->userId, $this->password);
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {
-            throw new RuntimeException('Method:' . $method . ', List Name: ' . $listName . ', Error Message: ' .$this->errorMessage);
+            throw new RuntimeException('Method: ' . $method . ', List Name: ' . $listName . ', Error Message: ' .$this->errorMessage);
         }
 
         if (isset($result[$listName][$listItem])) {
@@ -1034,7 +1039,8 @@ class TransferMembers {
 
         if ($parm > 0) {
 
-            $stmt = $dbh->query("Select * from vguest_data_neon where HHK_ID = $parm");
+            // Need to lift the most recent hospital stay record for the HHK_ID
+            $stmt = $dbh->query("Select * from vguest_data_neon where HHK_ID = $parm ORDER BY `hs_Timestamp` DESC LIMIT 1");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) > 1) {

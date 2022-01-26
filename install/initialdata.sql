@@ -917,7 +917,8 @@ REPLACE INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VAL
 ('account/listIndividualTypes', 'individualTypes', 'individualType', 'Vol_Type'),
 ('donation/listFunds', 'funds', 'fund', 'Fund'),
 ('common/listTenders', 'tenders', 'tender', 'Pay_Type'),
-('common/listCreditCardTypes', 'creditCardTypes', 'creditCardType', 'Charge_Cards');
+('common/listCreditCardTypes', 'creditCardTypes', 'creditCardType', 'Charge_Cards'),
+('account/listRelationTypes', 'relationTypes', 'relationType', 'Patient_Rel_Type');
 -- ;
 
 --

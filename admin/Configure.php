@@ -428,31 +428,31 @@ if (is_null($wsConfig) === FALSE) {
 
             $externals .= $nTbl->generateMarkup(array('style'=>'margin-top:5px;'), $list['List_Name']);
         }
-        
+
         // Custom fields
         $results = $transfer->listCustomFields();
         $cfTbl = new HTMLTable();
-        
+
         foreach ($results as $v) {
         	if ($wsConfig->has('custom_fields', $v['fieldName'])) {
         		$cfTbl->addBodyTr(HTMLTable::makeTd($v['fieldName']) . HTMLTable::makeTd($v['fieldId']));
         	}
         }
-        
+
         $externals .= $cfTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Custom Fields');
-        
+
         // Sources
         $results = $transfer->listSources();
         $sTbl = new HTMLTable();
-        
+
         foreach ($results as $v) {
-        	
-        	$sTbl->addBodyTr(HTMLTable::makeTd($v['id']) . HTMLTable::makeTd($v['name']));
+
+            $sTbl->addBodyTr(HTMLTable::makeTd($v['name']) . HTMLTable::makeTd($v['id']));
 
         }
-        
+
         $externals .= $sTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Sources');
-        
+
       } catch (Exception $pe) {
           $externalErrMsg = "Transfer Error: " .$pe->getMessage();
       }
@@ -490,18 +490,18 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        
+
 
 <script type="text/javascript">
 
 $(document).ready(function () {
     var tabIndex = '<?php echo $tabIndex; ?>';
     var notyMsg = JSON.parse('<?php echo json_encode((isset($notymsg) ? $notymsg:"[]")); ?>');
-    
+
     var tbs;
     var logTable = [];
     var dateFormat = $('#dateFormat').val();
-	
+
     var dtCols = [
     {
         "targets": [ 0 ],
@@ -562,7 +562,7 @@ $(document).ready(function () {
 ];
 
 	//display noty
-	
+
 	if(notyMsg.type){
 		new Noty({
 			type : notyMsg.type,
