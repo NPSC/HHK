@@ -353,10 +353,9 @@ function showChangeRoom(gname, id, idVisit, span) {
             // Date Control
             $changeDate.change(function (){
 				$('input[name=rbReplaceRoomnew]').prop('checked', true);
-				$replaceRoom.trigger();
-				
+				getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ).toUTCString(), $selResource);
 			});
-            
+
             //init room selector data
             if (data.rooms) {
                 rooms = data.rooms;

@@ -490,18 +490,19 @@ class TransferMembers {
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
 
-        $stmt = $this->loadSearchDB($dbh, $sourceIds);
-
-        if (is_null($stmt)) {
-            return array('error'=>'No local records were found.');
-        }
-
         // Load Individual types
         $stmtList = $dbh->query("Select * from neon_type_map where List_Name = 'individualTypes'");
         $invTypes = array();
 
         while ($t = $stmtList->fetch(\PDO::FETCH_ASSOC)) {
             $invTypes[] = $t;
+        }
+
+
+        $stmt = $this->loadSearchDB($dbh, $sourceIds);
+
+        if (is_null($stmt)) {
+            return array('error'=>'No local records were found.');
         }
 
 
@@ -1015,7 +1016,7 @@ class TransferMembers {
 
     public static function getSearchFields(\PDO $dbh, $tableName = 'vguest_search_neon') {
 
-        $stmt = $dbh->query("SHOW COLUMNS FROM`$tableName`;");
+        $stmt = $dbh->query("SHOW COLUMNS FROM `$tableName`;");
         $cols = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
