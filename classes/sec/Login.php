@@ -189,7 +189,7 @@ class Login {
                         $alertMsg->set_txtSpanId("alrMessage");
                         $alertMsg->set_Text("Internet Explorer 11 detected<span style='margin-top: 0.5em; display: block'>HHK may not function as intended. For the best experience, consider using a supported browser such as Edge, Chrome or Firefox. If you are required to continue using IE 11, and are having trouble with HHK, please contact NPSC.</span>");
 
-                        return HTMLContainer::generateMarkup('div', $alertMsg->createMarkup(), array('style'=>'margin-top: 1em;'));
+                        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $alertMsg->createMarkup()), array("class"=>"col-xl-10")), array("class"=>"row justify-content-center mb-3"));
                     }
                 }
             }
@@ -264,12 +264,12 @@ class Login {
 
         $valMkup = HTMLContainer::generateMarkup('div', $this->validateMsg, array('id'=>'valMsg', "class"=>"valMsg"));
 
-        $hdr = HTMLContainer::generateMarkup("div", "Login", array("class"=>"ui-widget-header ui-corner-top p-1", "style"=>"text-align: center;"));
+        $hdr = HTMLContainer::generateMarkup("div", "Login", array("class"=>"ui-widget-header ui-corner-top p-1"));
 
         $userRow = HTMLContainer::generateMarkup("div",
             HTMLContainer::generateMarkup("label", 'User Name:', array("class"=>"col-4 pr-0")) .
             HTMLContainer::generateMarkup("div",
-                HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', "style"=>"width: 100%")) .
+                HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', "class"=>"w-100")) .
                 HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg'))
             , array("class"=>"col-8"))
         , array("class"=>"row mt-3 mx-0"));
@@ -278,8 +278,8 @@ class Login {
             HTMLContainer::generateMarkup("label", 'Password:', array("class"=>"col-4 pr-0")) .
             HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("div",
-                    HTMLInput::generateMarkup("", array('id'=>'txtPW', 'type'=>"password", "style"=>"width: 100%")) .
-                    '<button class="showPw mx-1 ui-button" style="font-size: .75em;" tabindex="-1">Show</button>'
+                    HTMLInput::generateMarkup("", array('id'=>'txtPW', 'type'=>"password", "class"=>"w-100")) .
+                    '<button class="showPw mx-1 ui-button" tabindex="-1">Show</button>'
                 , array("class"=>"d-flex")) .
                 HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
             , array("class"=>"col-8"))
@@ -295,26 +295,26 @@ class Login {
         $loginRow = HTMLContainer::generateMarkup("div",
             $xfInput .
             HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button', 'class'=>'ui-button'))
-         , array("class"=>"my-3", "style"=>"text-align: center"));
+         , array("class"=>"my-3"));
 
         //Two Factor dialog
         $dialogMkup = '
-            <div id="OTPDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display: none;">
-                <div id="otpForm" style="text-align:center">
-                    <div id="OTPMsg" style="color: red"></div>
-                    <label for"txtOTP" style="display: block; margin-bottom: 1em">Enter Two Step Verification Code</label>
+            <div id="OTPDialog" class="hhk-tdbox hhk-visitdialog d-none">
+                <div id="otpForm" class="center">
+                    <div id="OTPMsg"></div>
+                    <label for"txtOTP" class="d-block mb-3">Enter Two Step Verification Code</label>
                     <input type="text" id="txtOTP" size="10">
                 </div>
             </div>
         ';
 
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $valMkup . HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $userRow . $pwRow . $loginRow, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget")), array('class'=>'col-12', 'id'=>'divLoginCtls')) . $dialogMkup, array("class"=>"row justify-content-center mb-3"));
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $valMkup . $userRow . $pwRow . $loginRow, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget center")), array('class'=>'col-12', 'id'=>'divLoginCtls')) . $dialogMkup, array("class"=>"row justify-content-center mb-3"));
 
     }
 
     public function rssWidget(string $title, string $feedurl, int $postCount) {
 
-        $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1", "style"=>"text-align: center;"));
+        $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
 
         $content = "";
         //$feedurl = "https://forum.hospitalityhousekeeper.net/rss-feed/feed/";
@@ -323,37 +323,37 @@ class Login {
             $i = 0;
             foreach ($feed->channel->item as $item){
                 $content .= HTMLContainer::generateMarkup("div",
-                    HTMLContainer::generateMarkup("h4", HTMLContainer::generateMarkup("a", $item->title, array("href"=>$item->link, "target"=>"_blank")), array("class"=>"center")) .
-                    HTMLContainer::generateMarkup("div", $item->description, array("class"=>"item-content")) .
-                    HTMLContainer::generateMarkup("div", "<a href='" . $item->link . "' target='_blank' class='ui-button ui-corner-all' style='font-size: 0.7em;'>Read More<span class='ui-icon ui-icon-extlink' style='margin-right:.3em;'></span></a>", array("style"=>"text-align: right;"))
-                , array("class"=>"item p-3", "style"=>"border-bottom:1px solid #a6c9e2"));
+                    HTMLContainer::generateMarkup("h4", HTMLContainer::generateMarkup("a", $item->title . "<span class='ui-icon ui-icon-extlink'></span>", array("href"=>$item->link, "target"=>"_blank"))) .
+                    HTMLContainer::generateMarkup("div", $item->description, array("class"=>"item-content"))
+                , array("class"=>"item p-3"));
                 $i++;
                 if($i === 3){ break;}
             }
 
         }else{
-            $content = "Unable to parse feed - " . $e->getMessage();
+            $content = "Unable to parse feed";
         }
 
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $content, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3"));
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $content, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3 rssWidget",));
 
     }
 
     public static function getLinksMarkup(Session $uS, \PDO $dbh){
         $tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
         $trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
-        $extLinkIcon = "<span class='ui-icon ui-icon-extlink' style='margin-right:.3em;'></span>";
+        $extLinkIcon = "<span class='ui-icon ui-icon-extlink'></span>";
+        $hdr = HTMLContainer::generateMarkup("div", "Links", array("class"=>"ui-widget-header ui-corner-top p-1"));
 
         $linkMkup = '';
         if ($tutorialSiteURL != '' || $trainingSiteURL != '') {
             if ($tutorialSiteURL != '') {
-                $linkMkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'User Demonstration Videos' . $extLinkIcon, array('href'=>$tutorialSiteURL, 'target'=>'_blank', "class"=>"mt-3")), array('class'=>"mt-3"));
+                $linkMkup .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'User Demonstration Videos' . $extLinkIcon, array('href'=>$tutorialSiteURL, 'target'=>'_blank', "class"=>"ui-button ui-corner-all")));
             }
 
             if ($trainingSiteURL != '') {
-                $linkMkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Training Playground' . $extLinkIcon, array('href'=>$trainingSiteURL, 'target'=>'_blank')), array('class'=>"mt-3"));
+                $linkMkup .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'HHK Training Playground' . $extLinkIcon, array('href'=>$trainingSiteURL, 'target'=>'_blank', "class"=>"ui-button ui-corner-all")), array('class'=>"mt-3"));
             }
-            $linkMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $linkMkup, array("class"=>"col-12")), array("class"=>"row justify-content-md-center my-3", "style"=>"text-align: center;"));
+            $linkMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("ul", $linkMkup, array("class"=>"list-style-none")), array("class"=>"ui-widget-content ui-corner-bottom p-3 smaller")), array("class"=>"ui-widget center")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3"));
         }
 
         return $linkMkup;
@@ -367,7 +367,7 @@ class Login {
                 "<hr>" .
                 HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("a", "", array("href"=>"https://nonprofitsoftwarecorp.org", "target"=>"_blank", "class"=>"nplogo"))) .
                 HTMLContainer::generateMarkup("div", "&copy; " . $copyYear . " Non Profit Software Corporation", array("class"=>"copyright"))
-            , array("class"=>"col-10"))
+            , array("class"=>"col-xl-10"))
         , array("class"=>"row justify-content-md-center mt-5 mb-3"));
     }
 

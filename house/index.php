@@ -86,11 +86,11 @@ $icons = array();
 foreach ($uS->siteList as $r) {
 
     if ($r["Site_Code"] != "r") {
-        $icons[$r["Site_Code"]] = "<span class='" . $r["Class"] . "' style='margin-right:.3em;'></span>";
+        $icons[$r["Site_Code"]] = "<span class='" . $r["Class"] . " mr-1'></span>";
     }
 }
 
-$siteName = HTMLContainer::generateMarkup('h3', $icons[$page->get_Site_Code()] . $labels->getString('MemberType', 'guest', 'Guest').' Tracking Site', array("style"=>"text-align:center;"));
+$siteName = HTMLContainer::generateMarkup('h2', $icons[$page->get_Site_Code()] . $labels->getString('MemberType', 'guest', 'Guest').' Tracking Site', array("class"=>"center"));
 
 $loginMkup = $login->newLoginForm();
 $samlMkup = SAML::getIdpMarkup($dbh);
@@ -101,8 +101,8 @@ $footerMkup = $login->getFooterMarkup();
 $cspURL = $page->getHostName();
 
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
+header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL unsafe-inline;"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL unsafe-inline;"); // IE 10+
 
 if (SecurityComponent::isHTTPS()) {
     header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
@@ -116,6 +116,7 @@ if (SecurityComponent::isHTTPS()) {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $uS->siteName; ?></title>
         <?php echo JQ_UI_CSS; ?>
+        <?php echo ROOT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
@@ -131,24 +132,23 @@ if (SecurityComponent::isHTTPS()) {
             </div>
             <div class="build"><?php echo $build; ?></div>
             <div id="contentDiv" class="container mx-auto">
-            	<div style="text-align:center;" class="mb-3">
-                    <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
-                </div>
-                <?php echo $siteName; ?>
-                <div class="row mb-3">
-                    <div class="col-12">
-                        <?php echo $disclaimer . $login->IEMsg(); ?>
+            	<div class="row justify-content-center mb-3">
+                	<div class="col-xl-4 col-md-6 my-auto">
+                        <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
+                    </div>
+                    <div class="col-md-6 my-auto">
+                    	<div>
+                        	<?php echo $siteName; ?>
+                        	<?php echo $disclaimer; ?>
+                        </div>
                     </div>
                 </div>
+                <?php echo $login->IEMsg(); ?>
                 <div class="row justify-content-center">
 					<div class="col-xl-4 col-md-6">
-                        <div id="formlogin">
-                            <?php echo $loginMkup; ?>
-                        </div>
-
-                        <?php echo $samlMkup . $linkMkup; ?>
+                        <?php echo $loginMkup . $samlMkup . $linkMkup; ?>
                     </div>
-                    <div class="d-none d-lg-block col-md-6">
+                    <div class="d-none d-md-block col-md-6">
 						<?php echo $announcementWidget; ?>
 					</div>
                 </div>

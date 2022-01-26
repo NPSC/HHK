@@ -63,7 +63,7 @@ if (SecurityComponent::isHTTPS()) {
             	<div class="center mb-3">
                     <a href="http://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="images/hhkLogo.png"></a>
                 </div>
-                <div class="links center">
+                <div class="siteLinks center">
                     <ul>
                         <li><a href="<?php echo $secureComp->getSiteURL() . 'admin'; ?>">Administration Site</a></li>
                         <li><a href="<?php echo $secureComp->getSiteURL() . 'house'; ?>">Guest Tracking</a></li>

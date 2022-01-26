@@ -586,6 +586,7 @@ class SAML {
     public static function getIdpMarkup(\PDO $dbh){
         $IdPs = self::getIdpList($dbh);
         $uS = Session::getInstance();
+        $container = '';
 
         if(count($IdPs) > 0){
             $contentMkup = "";
@@ -607,7 +608,7 @@ class SAML {
                 }
             }
 
-            $contentMkup = HTMLContainer::generateMarkup("ul", $contentMkup, array("style"=>"list-style:none;"));
+            $contentMkup = HTMLContainer::generateMarkup("ul", $contentMkup, array("class"=>"list-style-none"));
 
             $container = HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("div",
@@ -617,7 +618,7 @@ class SAML {
                         HTMLContainer::generateMarkup("div", $contentMkup, array("class"=>"ui-widget-content ui-corner-bottom hhk-tdbox p-3"))
                     , array("class"=>"ui-widget mt-3"))
                 , array("class"=>"col-12"))
-            , array("class"=>"row justify-content-md-center", "style"=>"text-align: center;"));
+            , array("class"=>"row justify-content-md-center mb-3 center"));
 
         }
 
