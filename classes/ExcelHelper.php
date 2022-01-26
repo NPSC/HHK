@@ -14,10 +14,10 @@ namespace HHK;
  */
 
 class ExcelHelper extends \XLSXWriter{
-    
+
     CONST hdrStyle = ['font-style'=>'bold', 'halign'=>'center', 'auto_filter'=>true, 'widths'=>[]];
     protected $filename = '';
-    
+
     /**
      * Helper class for mk-j\XLSXWriter
      *
@@ -29,7 +29,7 @@ class ExcelHelper extends \XLSXWriter{
         $this->filename = $filename;
         parent::__construct();
     }
-    
+
     /**
      * Sets download headers and sends document to stdOut
      */
@@ -40,7 +40,7 @@ class ExcelHelper extends \XLSXWriter{
         $this->writeToStdOut();
         exit();
     }
-    
+
     /**
      *
      * Decodes all html entities and removes all html tags on fields defined as string in the header
@@ -51,7 +51,7 @@ class ExcelHelper extends \XLSXWriter{
      */
     public static function convertStrings(array $header, array $row){
         $n = 0;
-        
+
         foreach($header as $val){
             if($val == "string" && isset($row[$n])){
                 $row[$n] = html_entity_decode(strval($row[$n]), ENT_QUOTES, 'UTF-8'); //decode html entities
@@ -59,10 +59,10 @@ class ExcelHelper extends \XLSXWriter{
             }
             $n++;
         }
-        
+
         return $row;
     }
-    
+
     /**
      * Gets predefined header styles and adds column widths
      *
@@ -71,18 +71,18 @@ class ExcelHelper extends \XLSXWriter{
      */
     public static function getHdrStyle(array $colWidths = []){
         $hdrStyle = self::hdrStyle;
-        
+
         foreach($colWidths as $width){
             $hdrStyle['widths'][] = $width;
         }
-        
+
         return $hdrStyle;
     }
-    
+
     public function setFilename(String $filename){
         $this->filename = $filename;
     }
-    
+
 }
 
 ?>
