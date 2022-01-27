@@ -212,56 +212,6 @@ class Login {
             unset($uS->ssoLoginError);
         }
 
-        $tbl = new HTMLTable();
-        //HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')$tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')), array('colspan'=>'2')));
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('User Name:', array('class'=>'hhk-loginLabel'))
-            .HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', 'style'=>'width: 98%')))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg')))
-        );
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Password:', array('class'=>'hhk-loginLabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'17', 'type'=>'password')) . '<button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button>')
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg')))
-        );
-
-        //pass xf to login
-        if(isset($_GET['xf'])){
-            $xfInput = HTMLInput::generateMarkup($_GET['xf'], array('name'=>'xf', 'id'=>'xf', 'type'=>'hidden'));
-        }else{
-            $xfInput = '';
-        }
-
-        $tbl->addBodyTr(HTMLTable::makeTd($xfInput . HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button', 'style'=>'margin-top: 1em;')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
-
-        //Two Factor dialog
-        $dialogMkup = '
-            <div id="OTPDialog" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display: none;">
-                <div id="otpForm" style="text-align:center">
-                    <div id="OTPMsg" style="color: red"></div>
-                    <label for"txtOTP" style="display: block; margin-bottom: 1em">Enter Two Step Verification Code</label>
-                    <input type="text" id="txtOTP" size="10">
-                </div>
-            </div>
-        ';
-
-        return HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')) . $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls')) . $dialogMkup;
-
-    }
-
-    public function newLoginForm($uname = '') {
-
-        if ($uname != '' && $this->userName == '') {
-            $this->setUserName($uname);
-        }
-
-        $uS = Session::getInstance();
-        if($uS->ssoLoginError){
-            $this->validateMsg = $uS->ssoLoginError;
-            unset($uS->ssoLoginError);
-        }
-
         $valMkup = HTMLContainer::generateMarkup('div', $this->validateMsg, array('id'=>'valMsg', "class"=>"valMsg"));
 
         $hdr = HTMLContainer::generateMarkup("div", "Login", array("class"=>"ui-widget-header ui-corner-top p-1"));
@@ -342,7 +292,7 @@ class Login {
         $tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
         $trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
         $extLinkIcon = "<span class='ui-icon ui-icon-extlink'></span>";
-        $hdr = HTMLContainer::generateMarkup("div", "Links", array("class"=>"ui-widget-header ui-corner-top p-1"));
+        $hdr = HTMLContainer::generateMarkup("div", "Useful Links", array("class"=>"ui-widget-header ui-corner-top p-1"));
 
         $linkMkup = '';
         if ($tutorialSiteURL != '' || $trainingSiteURL != '') {
@@ -353,10 +303,18 @@ class Login {
             if ($trainingSiteURL != '') {
                 $linkMkup .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'HHK Training Playground' . $extLinkIcon, array('href'=>$trainingSiteURL, 'target'=>'_blank', "class"=>"ui-button ui-corner-all")), array('class'=>"mt-3"));
             }
-            $linkMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("ul", $linkMkup, array("class"=>"list-style-none")), array("class"=>"ui-widget-content ui-corner-bottom p-3 smaller")), array("class"=>"ui-widget center")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3"));
+            $linkMkup = HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("ul", $linkMkup, array("class"=>"list-style-none")), array("class"=>"ui-widget-content ui-corner-bottom p-3 smaller")), array("class"=>"ui-widget center"));
         }
 
         return $linkMkup;
+    }
+
+    public static function getNewsletterMarkup(){
+        $hdr = HTMLContainer::generateMarkup("div", "Newsletter", array("class"=>"ui-widget-header ui-corner-top p-1"));
+
+        $content = HTMLContainer::generateMarkup("div", "", array("class"=>"ui-widget-content ui-corner-bottom p-3"));
+
+        return HTMLContainer::generateMarkup("div", $hdr . $content, array("class"=>"ui-widget center"));
     }
 
     public static function getFooterMarkup(){

@@ -107,6 +107,8 @@ if (SecurityComponent::isHTTPS()) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $uS->siteName; ?></title>
         <?php echo PUBLIC_CSS; ?>
+        <?php echo GRID_CSS; ?>
+        <?php echo ROOT_CSS; ?>
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
 

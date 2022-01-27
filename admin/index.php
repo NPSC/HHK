@@ -77,12 +77,15 @@ foreach ($uS->siteList as $r) {
     }
 }
 
-$siteName = HTMLContainer::generateMarkup('h3', $icons[$page->get_Site_Code()] . 'Administration Site', array("class"=>"center"));
+$siteName = HTMLContainer::generateMarkup('h2', $icons[$page->get_Site_Code()] . 'Administration Site', array("class"=>"center"));
 
-$loginMkup = $login->newLoginForm();
+$loginMkup = $login->loginForm();
 $samlMkup = SAML::getIdpMarkup($dbh);
 $announcementWidget = $login->rssWidget("Welcome", "https://nonprofitsoftwarecorp.org/npsc-news/feed", 3);
 $linkMkup = $login->getLinksMarkup($uS, $dbh);
+$newsletterMkup = $login->getNewsletterMarkup();
+$row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-7 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-5")),array("class"=>"row justify-content-center mb-3"));
+
 $footerMkup = $login->getFooterMarkup();
 
 $cspURL = $page->getHostName();
@@ -129,10 +132,10 @@ if (SecurityComponent::isHTTPS()) {
                 <?php echo $login->IEMsg(); ?>
                 <div class="row justify-content-center">
 					<div class="col-xl-4 col-md-6">
-                        <?php echo $loginMkup . $samlMkup . $linkMkup; ?>
+                        <?php echo $loginMkup . $samlMkup; ?>
                     </div>
                     <div class="d-none d-lg-block col-md-6">
-						<?php echo $announcementWidget; ?>
+						<?php echo $announcementWidget . $row2; ?>
 					</div>
                 </div>
                 <?php echo $footerMkup; ?>
