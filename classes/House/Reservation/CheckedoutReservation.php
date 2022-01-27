@@ -4,7 +4,6 @@ namespace HHK\House\Reservation;
 
 use HHK\sec\{SecurityComponent, Session};
 use HHK\Exception\RuntimeException;
-use HHK\HTMLControls\HTMLContainer;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Resource\AbstractResource;
 use HHK\House\Room\RoomChooser;
@@ -12,6 +11,8 @@ use HHK\House\Visit\Visit;
 use HHK\Tables\EditRS;
 use HHK\Tables\Visit\{StaysRS, VisitRS};
 use HHK\sec\Labels;
+use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
+
 
 /**
  * Description of CheckedoutReservation
@@ -85,7 +86,7 @@ class CheckedoutReservation extends CheckingIn {
             ->setArrivalDT($this->reserveData->getSpanStartDT())
             ->setDepartureDT($this->reserveData->getSpanEndDT());
 
-            $dataArray = $this->createExpDatesControl(TRUE, $this->reserveData->getSpanStartDT()->format('M j, Y'), $this->reserveData->getSpanEndDT()->format('M j, Y'));
+            $dataArray = $this->createExpDatesControl(FALSE, $this->reserveData->getSpanStartDT()->format('M j, Y'), $this->reserveData->getSpanEndDT()->format('M j, Y'));
 
         } else {
             $resvSectionHeaderPrompt = 'This room is already at its maximum occupancy.';
@@ -113,6 +114,39 @@ class CheckedoutReservation extends CheckingIn {
 
 
         return array('hdr'=>$hdr, 'rdiv'=>$dataArray);
+    }
+
+    protected function createExpDatesControl($updateOnChange = TRUE, $startDate = FALSE, $endDate = FALSE, $lastVisitMU = '') {
+
+        $uS = Session::getInstance();
+        $nowDT = new \DateTime();
+        $nowDT->setTime(0, 0, 0);
+
+        $days = '';
+        $prefix = '';
+
+
+        $cidAttr = array('name'=>$prefix.'gstDate', 'readonly'=>'readonly', 'size'=>'14', 'class'=>' ui-state-highlight');
+
+
+        if (is_null($this->reserveData->getArrivalDT()) === FALSE && is_null($this->reserveData->getDepartureDT()) === FALSE) {
+            $days = $this->reserveData->getDepartureDT()->diff($this->reserveData->getArrivalDT(), TRUE)->days;
+        }
+
+        $mkup = HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('span', 'Arrival: '.
+                HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr))
+            .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
+                HTMLInput::generateMarkup(($this->reserveData->getDepartureDateStr()), array('name'=>$prefix.'gstCoDate', 'readonly'=>'readonly', 'size'=>'14', 'class'=>' ui-state-highlight'))
+                , array('style'=>'margin-left:.7em;'))
+            .HTMLContainer::generateMarkup('span', 'Expected Days: '.
+                HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4', 'class'=>' ui-state-highlight'))
+                , array('style'=>'margin-left:.7em;'))
+            .HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'margin-left:1em; font-size:.8em;'))
+            , array('style'=>'font-size:.9em;', 'id'=>$prefix.'noPicker'));
+
+        return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays', 'updateOnChange'=>$updateOnChange, 'startDate'=>$startDate, 'endDate'=>$endDate);
+
     }
 
 

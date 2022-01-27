@@ -346,7 +346,7 @@ class VisitViewer {
 
         $includeActionHdr = FALSE;  // Checkout-All button.
         $useRemoveHdr = FALSE;      // Enable the "Remove" column in stays table.
-        $useAddGuestButton = FALSE;
+        $useAddGuestButton = TRUE;
         $ckOutTitle = '';
         $sTable = new HTMLTable();  // Table to collect each stays markup row.
         $staysDtable = array();     // results of vstays_listing.
@@ -383,8 +383,6 @@ class VisitViewer {
 
                     if ($r['On_Leave'] > 0) {
                         $useAddGuestButton = FALSE;
-                    } else {
-                        $useAddGuestButton = TRUE;
                     }
                 }
             }
@@ -426,7 +424,8 @@ class VisitViewer {
             . HTMLTable::makeTh($chkInTitle);
 
         // 'Add Guest' button
-            if ($action == '') {
+        if ($action == '') {
+
             $th .= HTMLTable::makeTh($ckOutTitle) . HTMLTable::makeTh('Nights');
 
             if ($useAddGuestButton) {

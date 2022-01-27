@@ -1243,60 +1243,62 @@ function resvManager(initData, options) {
                     enDate = data.endDate;
                 }
 
-                drp = $('#spnRangePicker').dateRangePicker({
-                    format: 'MMM D, YYYY',
-                    separator : ' to ',
-                    minDays: 1,
-                    autoClose: true,
-                    showShortcuts: true,
-                    shortcuts :
-                    {
-                            'next-days': [nextDays]
-                    },
-                    getValue: function()
-                    {
-                        if (gstDate.val() && gstCoDate.val() ) {
-                            return gstDate.val() + ' to ' + gstCoDate.val();
-                        } else {
-                            return '';
-                        }
-                    },
-                    setValue: function(s,s1,s2)
-                    {
-                        gstDate.val(s1);
-                        gstCoDate.val(s2);
-                    },
-                    startDate: stDate,
-                    endDate: enDate
-                })
-
-                if (data.updateOnChange) {
-
-                    drp.bind('datepicker-change', function(event, dates) {
-
-                        // Update the number of days display text.
-                        var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
-
-                        $('#' + data.daysEle).val(numDays);
-
-                        if ($('#spnNites').length > 0) {
-                            $('#spnNites').text(numDays);
-                        }
-
-                        $('#gstDate').removeClass('ui-state-error');
-                        $('#gstCoDate').removeClass('ui-state-error');
-
-                        if ($.isFunction(doOnDatesChange)) {
-                            doOnDatesChange(dates);
-                        }
-                    });
+				if ($('#spnRangePicker').length > 0) {
+	                drp = $('#spnRangePicker').dateRangePicker({
+	                    format: 'MMM D, YYYY',
+	                    separator : ' to ',
+	                    minDays: 1,
+	                    autoClose: true,
+	                    showShortcuts: true,
+	                    shortcuts :
+	                    {
+	                            'next-days': [nextDays]
+	                    },
+	                    getValue: function()
+	                    {
+	                        if (gstDate.val() && gstCoDate.val() ) {
+	                            return gstDate.val() + ' to ' + gstCoDate.val();
+	                        } else {
+	                            return '';
+	                        }
+	                    },
+	                    setValue: function(s,s1,s2)
+	                    {
+	                        gstDate.val(s1);
+	                        gstCoDate.val(s2);
+	                    },
+	                    startDate: stDate,
+	                    endDate: enDate
+	                })
+	
+	                if (data.updateOnChange) {
+	
+	                    drp.bind('datepicker-change', function(event, dates) {
+	
+	                        // Update the number of days display text.
+	                        var numDays = Math.ceil((dates['date2'].getTime() - dates['date1'].getTime()) / 86400000);
+	
+	                        $('#' + data.daysEle).val(numDays);
+	
+	                        if ($('#spnNites').length > 0) {
+	                            $('#spnNites').text(numDays);
+	                        }
+	
+	                        $('#gstDate').removeClass('ui-state-error');
+	                        $('#gstCoDate').removeClass('ui-state-error');
+	
+	                        if ($.isFunction(doOnDatesChange)) {
+	                            doOnDatesChange(dates);
+	                        }
+	                    });
+	                }
                 }
 
                 $dateSection.show();
 
                 // Open the dialog if the dates are not defined yet.
-                if (t.openControl) {
-                    $('#spnRangePicker').data('dateRangePicker').open();
+                if (t.openControl && $('#spnRangePicker').length > 0) {
+                    drp.open();
                 }
 
             }
