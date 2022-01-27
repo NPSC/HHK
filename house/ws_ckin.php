@@ -212,7 +212,7 @@ try {
                 $amount = filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             }
 
-            $notes = '-';
+            $notes = '';
             if (isset($_POST['notes'])) {
                 $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
             }
