@@ -1,3 +1,0 @@
-#rewrite SSO URIs to be pretty
-RewriteEngine On
-RewriteRule ^([0-9]+)/([a-zA-Z]+) ws_SSO.php?idpId=$1&cmd=$2 [QSA,L]

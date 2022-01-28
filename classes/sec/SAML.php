@@ -266,9 +266,9 @@ class SAML {
             $rootURL = $securityComponent->getRootURL();
 
             $this->SPEntityId = $rootURL . 'auth/';
-            $this->SPacsURL = $rootURL . 'auth/' . $this->IdpConfig["idIdp"] . '/acs';
-            $this->SPloginURL = $rootURL . 'auth/' . $this->IdpConfig["idIdp"] . '/login';
-            $this->SPmetadataURL = $rootURL . 'auth/' . $this->IdpConfig["idIdp"] . '/metadata';
+            $this->SPacsURL = $rootURL . 'auth/ws_SSO.php?cmd=acs&idpId=' . $this->IdpConfig["idIdp"];
+            $this->SPloginURL = $rootURL . 'auth/ws_SSO.php?cmd=login&idpId=' . $this->IdpConfig["idIdp"];
+            $this->SPmetadataURL = $rootURL . 'auth/ws_SSO.php?cmd=metadata&idpId=' . $this->IdpConfig["idIdp"];
 
             $this->SPSign = false;
 
