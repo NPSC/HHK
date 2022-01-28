@@ -753,7 +753,7 @@ class SAML {
                     $contentMkup .= HTMLContainer::generateMarkup("li",
                         HTMLContainer::generateMarkup(
                             "a", "Login with " . $IdP["Name"],
-                            array("href"=>$uS->resourceURL . "auth/" . $IdP["idIdp"] . "/login", "class"=>"ui-button ui-corner-all")
+                            array("href"=>$uS->resourceURL . "auth/ws_SSO.php?cmd=login&idpId=" . $IdP["idIdp"], "class"=>"ui-button ui-corner-all")
                         )
                     );
                 }
