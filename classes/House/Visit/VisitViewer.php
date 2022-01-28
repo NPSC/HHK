@@ -597,8 +597,8 @@ class VisitViewer {
         // Relationship
         .HTMLTable::makeTd($rel)
 
-        // Status
-        . HTMLTable::makeTd($r['On_Leave'] > 0 ? 'On Leave' : $r['Status_Title'])
+        // Status - "On LEAVE" only allowed for checked-in visits.
+        . HTMLTable::makeTd($r['On_Leave'] > 0 && $r["Visit_Status"] == VisitStatus::CheckedIn ? 'On Leave' : $r['Status_Title'])
 
         // room
         . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $r["Room"]))
