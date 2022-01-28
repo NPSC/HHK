@@ -249,7 +249,7 @@ class Login {
 
         //Two Factor dialog
         $dialogMkup = '
-            <div id="OTPDialog" class="hhk-tdbox hhk-visitdialog d-none">
+            <div id="OTPDialog" class="hhk-tdbox hhk-visitdialog">
                 <div id="otpForm" class="center">
                     <div id="OTPMsg"></div>
                     <label for"txtOTP" class="d-block mb-3">Enter Two Step Verification Code</label>

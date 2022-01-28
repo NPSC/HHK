@@ -41,6 +41,8 @@ class SAML {
 
     protected $SPacsURL;
     protected $SPEntityId;
+    protected $SPloginURL;
+    protected $SPmetadataURL;
     protected $SPSign;
     protected $SPcert;
     protected $SPkey;
@@ -264,7 +266,9 @@ class SAML {
             $rootURL = $securityComponent->getRootURL();
 
             $this->SPEntityId = $rootURL . 'auth/';
-            $this->SPacsURL = $rootURL . 'auth/ws_SSO.php?cmd=acs&idpId=' . $this->IdpConfig["idIdp"];
+            $this->SPacsURL = $rootURL . 'auth/' . $this->IdpConfig["idIdp"] . '/acs';
+            $this->SPloginURL = $rootURL . 'auth/' . $this->IdpConfig["idIdp"] . '/login';
+            $this->SPmetadataURL = $rootURL . 'auth/' . $this->IdpConfig["idIdp"] . '/metadata';
 
             $this->SPSign = false;
 
@@ -512,8 +516,6 @@ class SAML {
 
     public function getEditMarkup(){
 
-        $securityComponent = new SecurityComponent();
-        $wsURL = $securityComponent->getRootURL() . 'auth/ws_SSO.php';
         $idpCertInfo = $this->getCertificateInfo("idp");
         $spCertInfo = $this->getCertificateInfo("sp");
 
@@ -653,10 +655,80 @@ class SAML {
         $tbl->addBodyTr(
             $tbl->makeTd("SP Metadata", array("class"=>"tdlabel")).
             $tbl->makeTd(
-                HTMLContainer::generateMarkup("a", "Download SP Metadata", array("href"=>$wsURL . '?cmd=metadata&idpId=' . $this->IdpId, "download"=>"HHKmetadata.xml", "class"=>"ui-button ui-corner-all ui-widget"))
+                HTMLContainer::generateMarkup("a", "Download SP Metadata", array("href"=>$this->SPmetadataURL, "download"=>"HHKmetadata.xml", "class"=>"ui-button ui-corner-all ui-widget"))
             ) .
             $tbl->makeTd("")
             );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("", array("colspan"=>"3", "style"=>"height:1em;"))
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("Response Attributes", array("colspan"=>"3", "style"=>"font-weight:bold;border-top: solid 1px black;"))
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("Please send the following attributes in SAML responses", array("colspan"=>"3"))
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("FirstName", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                "string"
+                ) .
+            $tbl->makeTd("Required")
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("LastName", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                "String"
+                ) .
+            $tbl->makeTd("Required")
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("Email", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                "String"
+                ) .
+            $tbl->makeTd("Required")
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("Phone", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                "String"
+                ) .
+            $tbl->makeTd("Optional")
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("hhkRole", array("style"=>"text-align:right; vertical-align:top;")).
+            $tbl->makeTd(
+                "1 element array<br>" .
+                "<strong>Possible Values:</strong><br>" .
+                "hhkAdminUser<br>" .
+                "hhkWebUser"
+                ) .
+            $tbl->makeTd(
+                "Required - determines the user's role in HHK"
+                , array("style"=>"vertical-align:top;"))
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("hhkSecurityGroups", array("style"=>"vertical-align:top; text-align:right")).
+            $tbl->makeTd(
+                "Array()<br>" .
+                "<strong>Possible Values:</strong><br>" .
+                implode("<br>", $this->getSecurityGroups($this->dbh, true))
+                ) .
+            $tbl->makeTd(
+                "Required - determines the user's Security Groups in HHK"
+                , array("style"=>"vertical-align:top;"))
+            );
+
 
         return HTMLContainer::generateMarkup("div", $tbl->generateMarkup(array("style"=>"margin-bottom: 0.5em;")), array("id"=>$this->IdpId . "Auth", "class"=>"ui-tabs-hide"));
 
@@ -674,14 +746,14 @@ class SAML {
                     $contentMkup .= HTMLContainer::generateMarkup("li",
                         HTMLContainer::generateMarkup(
                             "a",'<img src="' . $uS->resourceURL . 'conf/' . $IdP["LogoPath"] . '" height="50px">',
-                            array("href"=>$uS->resourceURL . "auth/ws_SSO.php?cmd=login&idpId=" . $IdP["idIdp"], "class"=>"ui-button ui-corner-all")
+                            array("href"=>$uS->resourceURL . "auth/" . $IdP["idIdp"] . "/login", "class"=>"ui-button ui-corner-all")
                         )
                     );
                 }else{
                     $contentMkup .= HTMLContainer::generateMarkup("li",
                         HTMLContainer::generateMarkup(
                             "a", "Login with " . $IdP["Name"],
-                            array("href"=>$uS->resourceURL . "auth/ws_SSO.php?cmd=login&idpId=" . $IdP["idIdp"], "class"=>"ui-button ui-corner-all")
+                            array("href"=>$uS->resourceURL . "auth/" . $IdP["idIdp"] . "/login", "class"=>"ui-button ui-corner-all")
                         )
                     );
                 }
