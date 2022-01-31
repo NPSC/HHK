@@ -315,7 +315,7 @@ class Visit {
         }
 
         if ($this->visitRS->idResource->getStoredVal() == $resc->getIdResource()) {
-            return "Error - Change Rooms Failed: new room = old room.  ";
+            return "Error - Change Rooms: new room = old room.  ";
         }
 
         if (count($this->stays) > $resc->getMaxOccupants()) {
@@ -334,7 +334,7 @@ class Visit {
         $now = new \DateTime();
         $now->setTime(10, 0, 0);
 
-        if ($expDepDT < $now) {
+        if ($expDepDT <= $now) {
             $expDepDT = $now->add(new \DateInterval('P1D'));
         }
 

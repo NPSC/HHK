@@ -18,6 +18,7 @@ function isNumber(n) {
     "use strict";
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
+// Change reservation room.
 function setRoomTo(idResv, idResc) {
 
     $.post('ws_resv.php', {cmd: 'moveResvRoom', rid: idResv, idResc: idResc}, function(data) {
@@ -284,7 +285,7 @@ function saveStatusEvent(idResc, type) {
     });
 }
 
-
+// Change Visit's' Room
 function showChangeRoom(gname, id, idVisit, span) {
 	// Get the change rooms dialog box
 	
@@ -344,16 +345,16 @@ function showChangeRoom(gname, id, idVisit, span) {
             // room changer radiobutton
             $replaceRoom.change(function () {
 				if($(this).val() == 'new' && $changeDate.val() !== '') {
-					getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ).toUTCString(), $selResource);
+					getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource);
 				} else if ($(this).val() == 'rpl') {
-					getVisitRoomList(idVisit, span, sDate.toUTCString(), $selResource);
+					getVisitRoomList(idVisit, span, sDate, $selResource);
 				}
 			});
             
             // Date Control
             $changeDate.change(function (){
 				$('input[name=rbReplaceRoomnew]').prop('checked', true);
-				getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ).toUTCString(), $selResource);
+				getVisitRoomList(idVisit, span, $changeDate.datepicker( "getDate" ), $selResource);
 			});
 
             //init room selector data
@@ -451,8 +452,11 @@ function showChangeRoom(gname, id, idVisit, span) {
 	    $rescSelector.prop('disabled', true);
 	    $('#hhk-roomChsrtitle').addClass('hhk-loading');
 	    $('#rmDepMessage').text('').hide();
+	    
+	    d = new Date();
+	    
 	     
-	    let parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate, selRescId:$rescSelector.val()};
+	    let parms = {cmd:'chgRoomList', idVisit:idVisit, span:visitSpan, chgDate:changeDate.toDateString(), selRescId:$rescSelector.val()};
 	    
 	    $.post('ws_ckin.php', parms,
 	        function (data) {

@@ -440,12 +440,12 @@ class HouseServices {
 
                         $visit->checkOutGuest($dbh, $id, $coDT->format('Y-m-d H:i:s'), '', TRUE);
 
-                        $reply .= $visit->getInfoMessage();
-                        $warning .= $visit->getErrorMessage();
-
                         $returnCkdIn = TRUE;
 
                     }
+
+                    $reply .= $visit->getInfoMessage();
+                    $warning .= $visit->getErrorMessage();
                 }
             }
 
