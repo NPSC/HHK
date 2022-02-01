@@ -358,6 +358,12 @@ $localAuthMkup = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BAS
 
 $labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
+if(isset($_POST['idpConfig'])){
+    $idpId = array_key_first($_POST['idpConfig']);
+    $saml = new SAML($dbh, $idpId);
+    $saml->save($_POST, $_FILES);
+}
+
 $authIdpList = SAML::getIdpList($dbh, false);
 
 $externals = '';
@@ -696,15 +702,20 @@ $('#logsTabDiv').tabs("option", "active", 1);
 							<?php foreach($authIdpList as $idp){ ?>
 								<li><a href="#<?php echo $idp['idIdp']; ?>Auth"><?php echo $idp["Name"]; ?></a></li>
 							<?php } ?>
+							<li><a href="#newAuth"><span class="ui-icon ui-icon-plusthick mr-2"></span>New Auth Provider</a></li>
 						</ul>
 
 						<div id="localAuth" class="ui-tabs-hide">
 							<?php echo $localAuthMkup; ?>
 						</div>
-						<?php foreach($authIdpList as $idp){
+						<?php
+						foreach($authIdpList as $idp){
 							$saml = new SAML($dbh, $idp['idIdp']);
                             echo $saml->getEditMarkup();
-						} ?>
+						}
+						$newsaml = new SAML($dbh);
+						echo $newsaml->getEditMarkup();
+						?>
 
 					</div>
                 </div>

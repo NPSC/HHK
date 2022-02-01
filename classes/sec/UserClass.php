@@ -396,7 +396,7 @@ class UserClass
     public static function isPassExpired(\PDO $dbh, $uS)
     {
         $u = self::getUserCredentials($dbh, $uS->username);
-        if (isset($u['Chg_PW']) && $u['Chg_PW']) {
+        if (isset($u['Chg_PW']) && $u['Chg_PW']  && $u['idIdp'] == '0') {
             return true;
         }
 
@@ -432,7 +432,7 @@ class UserClass
     }
 
     public static function setPassExpired(\PDO $dbh, array $user){
-        if(isset($user['pass_rules']) && $user['pass_rules']){ //if password rules apply
+        if(isset($user['pass_rules']) && $user['pass_rules'] && $user['idIdp'] == '0'){ //if password rules apply
             $date = false;
             //use creation date if never logged in
             if($user['PW_Change_Date'] != ''){
@@ -661,7 +661,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
 
     public static function disableInactiveUser(\PDO $dbh, array $user)
     {
-        if(isset($user['pass_rules']) && $user['pass_rules']){ //if password rules apply
+        if(isset($user['pass_rules']) && $user['pass_rules'] && $user['idIdp'] == '0'){ //if password rules apply
 
             $date = false;
             //use creation date if never logged in

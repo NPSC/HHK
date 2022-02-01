@@ -376,3 +376,11 @@ outline: none;
 .dataTables_wrapper .dtBottom:after {
 	clear: both;
 }
+
+/* use white ui-icons on tabs */
+ul.ui-tabs-nav .ui-icon {
+    background-image: url(jqui/images/ui-icons_ffffff_256x240.png);
+}
+ul.ui-tabs-nav .ui-state-active .ui-icon {
+	background-image: url(jqui/images/ui-icons_8DC262_256x240.png);
+}

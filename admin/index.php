@@ -21,10 +21,10 @@ require ("AdminIncludes.php");
 $uS = Session::getInstance();
 
 //assume logout
-$uS->destroy(TRUE);
+//$uS->destroy(TRUE);
 
 // Logout command?
-/*if (isset($_GET["log"])) {
+if (isset($_GET["log"])) {
     $log = filter_var($_GET["log"], FILTER_SANITIZE_STRING);
     if ($log == "lo") {
 
@@ -33,7 +33,6 @@ $uS->destroy(TRUE);
         exit();
     }
 }
-*/
 
 try {
 
@@ -66,7 +65,7 @@ if (isset($_POST['txtUname'])) {
 // disclamer
 $disclaimer = '';
 if ($uS->mode != Mode::Live) {
-    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA compliant and not intended to be used for storing Protected Health Information.';
+    $disclaimer = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA compliant and not intended to be used for storing Protected Health Information.', array("class"=>"col-xl-10")), array("class"=>"row justify-content-center mb-3"));
 }
 
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
@@ -129,9 +128,9 @@ if (SecurityComponent::isHTTPS()) {
                     </div>
                     <div class="col-md-6 my-auto">
                         <?php echo $siteName; ?>
-                        <?php echo $disclaimer; ?>
                     </div>
                 </div>
+                <?php echo $disclaimer; ?>
                 <?php echo $login->IEMsg(); ?>
                 <div class="row justify-content-center">
 					<div class="col-xl-4 col-md-6">

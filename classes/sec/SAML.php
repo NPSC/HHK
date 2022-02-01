@@ -3,7 +3,7 @@ namespace HHK\sec;
 
 use OneLogin\Saml2\Auth;
 use OneLogin\Saml2\Error;
-use HHK\Exception\RuntimeException;
+use OneLogin\Saml2\IdPMetadataParser;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
@@ -11,12 +11,13 @@ use HHK\Member\AbstractMember;
 use HHK\Member\WebUser;
 use HHK\SysConst\MemBasis;
 use HHK\SysConst\WebRole;
-use HHK\Tables\WebSec\W_usersRS;
 use HHK\Member\Address\Phones;
 use HHK\Member\Address\Emails;
 use HHK\SysConst\GLTableNames;
 use HHK\Member\MemberSearch;
 use HHK\HTMLControls\HTMLInput;
+use HHK\Tables\WebSec\W_idpRS;
+use HHK\Tables\EditRS;
 /**
  * SAML.php
  *
@@ -50,15 +51,18 @@ class SAML {
     protected $dbh;
     protected $auditUser;
 
-    public function __construct(\PDO $dbh, $idpId){
+    public function __construct(\PDO $dbh, $idpId = 'new'){
         $this->IdpId = $idpId;
+        $this->dbh = $dbh;
+
         $this->loadConfig($dbh);
-        if($this->IdpConfig){
-            $this->dbh = $dbh;
-            $this->auth = new Auth($this->getSettings());
-            $this->auditUser = "SAML: " . $this->IdpConfig["Name"];
-        }else{
-            throw new \ErrorException("Cannot load Identity Providor configuration: Invalid IdpId");
+        if($this->IdpConfig && $this->IdpId > 0){
+            try{
+                $this->auth = new Auth($this->getSettings());
+                $this->auditUser = "SAML: " . $this->IdpConfig["Name"];
+            }catch(\Exception $e){
+
+            }
         }
     }
 
@@ -102,7 +106,16 @@ class SAML {
             if($userAr == null || (isset($userAr["idIdp"]) && $userAr["idIdp"] == $this->IdpId)){ //correct user found, set up session
                 $userAr = $this->updateUser(); //create/update user with details from IdP
                 if($u->doLogin($this->dbh, $userAr)){
-                    header('location:../' . $uS->webSite['Relative_Address'].$uS->webSite['Default_Page']);
+                    $pge = $uS->webSite['Default_Page'];
+                    if ($u->getDefaultPage() != '') {
+                        $pge = $u->getDefaultPage();
+                    }
+
+                    if (SecurityComponent::is_Authorized($pge)) {
+                        header('location:../' . $uS->webSite['Relative_Address'].$pge);
+                    } else {
+                        $error = "Unauthorized for page: " . $pge;
+                    }
                 }
 
             }else if(isset($userAr["idIdp"]) && $userAr["idIdp"] != $this->IdpId){
@@ -250,10 +263,9 @@ class SAML {
     }
 
     private function loadConfig(\PDO $dbh){
-        $query = "select * from `w_idp` where `idIdp` = :idIdp and `Status` = :status;";
+        $query = "select * from `w_idp` where `idIdp` = :idIdp";
         $stmt = $dbh->prepare($query);
         $stmt->bindValue(":idIdp", $this->IdpId);
-        $stmt->bindValue(":status", "a");
         $stmt->execute();
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -286,7 +298,17 @@ class SAML {
 
 
         }else{
-            $this->IdpConfig = [];
+            $this->IdpConfig = [
+                "idIdp"=>0,
+                "Name"=>"",
+                "LogoPath"=>"",
+                "SSO_URL"=>"",
+                "IdP_EntityId"=>"",
+                "IdP_Cert"=>"",
+                "expectIdPSigning"=>"",
+                "expectIdPEncryption"=>"",
+                "Status"=>""
+            ];
         }
     }
 
@@ -548,7 +570,7 @@ class SAML {
         $tbl->addBodyTr(
             $tbl->makeTd("Upload IdP metadata", array("class"=>"tdlabel")).
             $tbl->makeTd(
-                HTMLInput::generateMarkup("", array("type"=>"file", "name"=>"idpConfig[" . $this->IdpId . "][idpMetadata]"))
+                HTMLInput::generateMarkup("", array("type"=>"file", "accept"=>"text/xml", "name"=>"idpConfig[" . $this->IdpId . "][idpMetadata]"))
             ).
             $tbl->makeTd("Upload an XML metadata file to autofill the following IdP settings")
         );
@@ -606,7 +628,9 @@ class SAML {
             );
 
         $tbl->addBodyTr(
-            $tbl->makeTd("", array("colspan"=>"3", "style"=>"height:1em;"))
+            $tbl->makeTd(
+                HTMLInput::generateMarkup("Save", array("type"=>"submit", "class"=>"ui-button ui-corner-all ui-widget mb-5"))
+                , array("colspan"=>"3", "style"=>"text-align:right;"))
             );
 
         $tbl->addBodyTr(
@@ -730,8 +754,84 @@ class SAML {
             );
 
 
-        return HTMLContainer::generateMarkup("div", $tbl->generateMarkup(array("style"=>"margin-bottom: 0.5em;")), array("id"=>$this->IdpId . "Auth", "class"=>"ui-tabs-hide"));
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("form", $tbl->generateMarkup(array("style"=>"margin-bottom: 0.5em;")), array("id"=>"form" . $this->IdpId . "auth", "method"=>"post", "enctype"=>"multipart/form-data")), array("id"=>$this->IdpId . "Auth", "class"=>"ui-tabs-hide"));
 
+    }
+
+    public function save($post, $files){
+        if(isset($post['idpConfig'][$this->IdpId])){
+            $idpConfig = array();
+
+            $idpConfig['name'] = '';
+            if(isset($post['idpConfig'][$this->IdpId]['name'])){
+                $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_STRING);
+            }
+
+            $idpConfig['LogoPath'] = '';
+            if(isset($post['idpConfig'][$this->IdpId]['LogoPath'])){
+                $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_STRING);
+            }
+
+            if(isset($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']) && file_exists($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata'])){
+                $metadata = IdPMetadataParser::parseFileXML($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']);
+                $idpConfig['ssoUrl'] = (isset($metadata['idp']['singleSignOnService']['url']) ? $metadata['idp']['singleSignOnService']['url'] : '');
+                $idpConfig['idpEntityId'] = (isset($metadata['idp']['entityId']) ? $metadata['idp']['entityId'] : '');
+                $idpConfig['idpCert'] = (isset($metadata['idp']['x509cert']) ? "-----BEGIN CERTIFICATE-----" . PHP_EOL . $metadata['idp']['x509cert'] . PHP_EOL . "-----END CERTIFICATE-----" : "");
+            }else{
+
+                $idpConfig['ssoUrl'] = '';
+                if(isset($post['idpConfig'][$this->IdpId]['ssoUrl'])){
+                    $idpConfig['ssoUrl'] = filter_var($post['idpConfig'][$this->IdpId]['ssoUrl'], FILTER_SANITIZE_URL);
+                }
+
+                $idpConfig['idpEntityId'] = '';
+                if(isset($post['idpConfig'][$this->IdpId]['idpEntityId'])){
+                    $idpConfig['idpEntityId'] = filter_var($post['idpConfig'][$this->IdpId]['idpEntityId'], FILTER_SANITIZE_URL);
+                }
+
+                $idpConfig['idpCert'] = '';
+                if(isset($post['idpConfig'][$this->IdpId]['idpCert'])){
+                    $idpConfig['idpCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpCert'], FILTER_SANITIZE_STRING);
+                }
+            }
+
+            $idpConfig['expectIdPSigning'] = false;
+            if(isset($post['idpConfig'][$this->IdpId]['expectIdPSigning'])){
+                $idpConfig['expectIdPSigning'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['expectIdPSigning'], FILTER_VALIDATE_BOOLEAN));
+            }
+
+            $idpConfig['expectIdPEncryption'] = false;
+            if(isset($post['idpConfig'][$this->IdpId]['expectIdPEncryption'])){
+                $idpConfig['expectIdPEncryption'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['expectIdPEncryption'], FILTER_VALIDATE_BOOLEAN));
+            }
+
+            $idpConfig['status'] = 'a';
+
+            $wIdpRS = new W_idpRS();
+            EditRS::loadRow($this->IdpConfig, $wIdpRS);
+
+            $wIdpRS->Name->setNewVal($idpConfig['name']);
+            $wIdpRS->LogoPath->setNewVal($idpConfig['LogoPath']);
+            $wIdpRS->SSO_URL->setNewVal($idpConfig['ssoUrl']);
+            $wIdpRS->IdP_EntityId->setNewVal($idpConfig['idpEntityId']);
+            $wIdpRS->IdP_Cert->setNewVal($idpConfig['idpCert']);
+            $wIdpRS->expectIdPSigning->setNewVal($idpConfig['expectIdPSigning']);
+            $wIdpRS->expectIdPEncryption->setNewVal($idpConfig['expectIdPEncryption']);
+            $wIdpRS->Status->setNewVal($idpConfig['status']);
+
+            if($this->IdpId == 'new'){
+                $id = EditRS::insert($this->dbh, $wIdpRS);
+                return new SAML($this->dbh, $id);
+            }else{
+                if(EditRS::update($this->dbh, $wIdpRS, array($wIdpRS->idIdp)) == 1){
+                    return $this;
+                }else{
+                    return false;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static function getIdpMarkup(\PDO $dbh){

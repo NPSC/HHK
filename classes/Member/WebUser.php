@@ -261,7 +261,7 @@ class WebUser {
         $u = new UserClass();
         $wUserPw = $u->generateStrongPassword();
 
-        $resetNext = '1';
+        $resetNext = '0';
         if (isset($parms["resetNext"])) {
             $resetNext = filter_var($parms['resetNext'], FILTER_VALIDATE_BOOLEAN);
         }
