@@ -214,7 +214,7 @@ class Login {
 
         $valMkup = HTMLContainer::generateMarkup('div', $this->validateMsg, array('id'=>'valMsg', "class"=>"valMsg"));
 
-        $hdr = HTMLContainer::generateMarkup("div", "Login", array("class"=>"ui-widget-header ui-corner-top p-1"));
+        $hdr = HTMLContainer::generateMarkup("div", "Login", array("class"=>"ui-widget-header ui-corner-top p-1", "id"=>"loginTitle"));
 
         $userRow = HTMLContainer::generateMarkup("div",
             HTMLContainer::generateMarkup("label", 'User Name:', array("class"=>"col-4 pr-0")) .
@@ -222,7 +222,7 @@ class Login {
                 HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', "class"=>"w-100")) .
                 HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg'))
             , array("class"=>"col-8"))
-        , array("class"=>"row mt-3 mx-0"));
+        , array("class"=>"row mt-3 mx-0", "id"=>"userRow"));
 
         $pwRow = HTMLContainer::generateMarkup("div",
             HTMLContainer::generateMarkup("label", 'Password:', array("class"=>"col-4 pr-0")) .
@@ -233,7 +233,15 @@ class Login {
                 , array("class"=>"d-flex")) .
                 HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
             , array("class"=>"col-8"))
-            , array("class"=>"row mt-3 mx-0"));
+            , array("class"=>"row mt-3 mx-0", "id"=>"pwRow"));
+
+        $otpRow = HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("label", 'Two Factor Code', array("class"=>"col-6 pr-0")) .
+            HTMLContainer::generateMarkup("div",
+                HTMLInput::generateMarkup("", array('id'=>'txtOTP', "name"=>"twofactorCode", "class"=>"w-100")) .
+                HTMLContainer::generateMarkup('span', '', array('id'=>'errOTP', 'class'=>'hhk-logerrmsg'))
+                , array("class"=>"col-6"))
+            , array("class"=>"row mt-3 mx-0 d-none", "id"=>"otpRow"));
 
         //pass xf to login
         if(isset($_GET['xf'])){
@@ -244,21 +252,10 @@ class Login {
 
         $loginRow = HTMLContainer::generateMarkup("div",
             $xfInput .
-            HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button', 'class'=>'ui-button'))
+            HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'submit', 'class'=>'ui-button'))
          , array("class"=>"my-3"));
 
-        //Two Factor dialog
-        $dialogMkup = '
-            <div id="OTPDialog" class="hhk-tdbox hhk-visitdialog">
-                <div id="otpForm" class="center">
-                    <div id="OTPMsg"></div>
-                    <label for"txtOTP" class="d-block mb-3">Enter Two Step Verification Code</label>
-                    <input type="text" id="txtOTP" size="10">
-                </div>
-            </div>
-        ';
-
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $valMkup . $userRow . $pwRow . $loginRow, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget center")), array('class'=>'col-12', 'id'=>'divLoginCtls')) . $dialogMkup, array("class"=>"row justify-content-center mb-3"));
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("form", $valMkup . $userRow . $pwRow . $otpRow . $loginRow, array("class"=>"ui-widget-content ui-corner-bottom", "id"=>"hhkLogin")), array("class"=>"ui-widget center")), array('class'=>'col-12', 'id'=>'divLoginCtls')), array("class"=>"row justify-content-center mb-3"));
 
     }
 

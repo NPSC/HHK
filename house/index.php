@@ -25,9 +25,11 @@ include ("homeIncludes.php");
 // get session instance
 $uS = Session::getInstance();
 
+//assume logout
+$uS->destroy(TRUE);
 
 // Logout command?
-if (isset($_GET["log"])) {
+/*if (isset($_GET["log"])) {
 
     $log = filter_var($_GET["log"], FILTER_SANITIZE_STRING);
 
@@ -38,7 +40,7 @@ if (isset($_GET["log"])) {
         exit();
     }
 }
-
+*/
 
 // Access the login object, set session vars,
 try {

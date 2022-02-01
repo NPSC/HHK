@@ -23,98 +23,83 @@
  */
 
 function sendHhkLogin() {
-var parms = {},
-    $uname = $('#txtUname'),
-    $psw = $('#txtPW'),
-    $btn = $('#btnLogn'),
-    $chall = $('#challenge');
-    $xf = $('#xf');
-    $otp = $('#txtOTP');
-$('.hhk-logerrmsg').hide();
-$('#valMsg').text('');
-if ($uname.val() === '') {
-    $('#errUname').text('-Enter your Username').show();
-    return;
-}
-if ($psw.val() === '') {
-    $('#errPW').text('-Enter your Password').show();
-    return;
-}
-parms = {
-    //challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
-    txtUname: $uname.val(),
-    txtPass: $psw.val(),
-    xf: $xf.val(),
-    otp: $otp.val()
-};
-$.post('index.php', parms, function (data){
-    try {
-        data = $.parseJSON(data);
-    } catch (err) {
-        alert(data);
-        $('#divLoginCtls').remove();
-        return;
-    }
-    if(data.OTPRequired){
-    	$("div#OTPDialog").dialog('open');
-    }
-    if (data.page && data.page !== '') {
-        window.location.assign(data.page);
-    }
-    if (data.mess) {
-    	if($('#OTPDialog').dialog('isOpen')){
-    		$('#OTPMsg').text(data.mess);
-    		$('#valMsg').empty().hide();
-    	}else{
-    		$('#valMsg').text(data.mess).show();
-    		$('#OTPMsg').empty();
-    	}
-    }
-    if (data.chall && data.chall !== '') {
-        $chall.val(data.chall);
-    }
-    if (data.stop) {
-        $btn.css('disable', true);
-    }
-});
+	var parms = {},
+	$uname = $('#txtUname'),
+	$psw = $('#txtPW'),
+	$btn = $('#btnLogn'),
+	$chall = $('#challenge');
+	$xf = $('#xf');
+	$otp = $('#txtOTP');
+	
+	$('.hhk-logerrmsg').hide();
+	$('#valMsg').text('');
+	if ($uname.val() === '') {
+	    $('#errUname').text('Enter your Username').show();
+	    return;
+	}
+	if ($psw.val() === '') {
+	    $('#errPW').text('Enter your Password').show();
+	    return;
+	}
+	if ($otp.val() === '' && $otp.data("2fa") == "true") {
+	    $('#errOTP').text('Enter Two Factor Code').show();
+	    return;
+	}
+	
+	parms = {
+	    //challenge: hex_md5(hex_md5($psw.val()) + $chall.val()),
+	    txtUname: $uname.val(),
+	    txtPass: $psw.val(),
+	    xf: $xf.val(),
+	    otp: $otp.val()
+	};
+	$.post('index.php', parms, function (data){
+	    try {
+	        data = $.parseJSON(data);
+	    } catch (err) {
+	        alert(data);
+	        $('#divLoginCtls').remove();
+	        return;
+	    }
+	    if(data.OTPRequired){
+	    	$("#loginTitle").text("Two Factor Verification");
+	    	$('#userRow, #pwRow').hide();
+	    	$('#otpRow').removeClass("d-none");
+	    	$('#txtOTP').data("2fa", "true").focus();
+	    }
+	    if (data.page && data.page !== '') {
+	        window.location.assign(data.page);
+	    }
+	    if (data.mess) {
+	    	$('#valMsg').text(data.mess).show();    }
+	    if (data.chall && data.chall !== '') {
+	        $chall.val(data.chall);
+	    }
+	    if (data.stop) {
+	        $btn.css('disable', true);
+	    }
+	});
 }
 $(document).ready(function () {
-$('#btnLogn').button().click(function () {
-    sendHhkLogin();
-});
-$('#txtPW, #txtUname').keypress(function (event) {
-    if (event.keyCode == '13') {
-        sendHhkLogin();
-    }
-});
-$('#txtPW').val('');
-$('#txtUname').focus();
 
-$("button").button();
-
-$(document).on('mousedown', '.showPw', function() {
-	var input = $(this).parent().find("input");
-	input.prop("type", "text");
-});
-
-$(document).on('mouseup', '.showPw', function() {
-	var input = $(this).parent().find("input");
-	input.prop("type", "password");
-});
-
-$("div#OTPDialog").dialog({
-	autoOpen : false,
-	width : '315px',
-	autoResize : true,
-	resizable : true,
-	modal : true,
-	closeOnEscape : true,
-	title : "Two Step Verification",
-	buttons : {
-		"Login" : function() {
-			sendHhkLogin();
-		}
-	}
-});
+	$(document).on('submit', "#hhkLogin", function(e){
+		e.preventDefault();
+		sendHhkLogin();
+	});
+	
+	$('#txtPW').val('');
+	$('#txtUname').focus();
+	
+	$("button, input[type=submit]").button();
+	
+	$(document).on('mousedown', '.showPw', function() {
+		var input = $(this).parent().find("input");
+		input.prop("type", "text");
+	});
+	
+	$(document).on('mouseup', '.showPw', function() {
+		var input = $(this).parent().find("input");
+		input.prop("type", "password");
+	});
 
 });
