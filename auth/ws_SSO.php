@@ -73,11 +73,14 @@ try {
     }
 
 } catch (PDOException $ex) {
-    $events = array("error" => "Database Error: " . $ex->getMessage(), "File"=>$ex->getFile() . " line " . $ex->getLine(), "Trace"=>$ex->getTrace());
+    $uS->ssoLoginError = "Database Error: " . $ex->getMessage();
+    header('location:../' . $uS->webSite['Relative_Address']);
 
 } catch (Exception $ex) {
-    $events = array("error" => "Programming Error: " . $ex->getMessage());
+    $uS->ssoLoginError = $ex->getMessage();
+    header('location:../' . $uS->webSite['Relative_Address']);
 }
+
 
 
 

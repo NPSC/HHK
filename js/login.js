@@ -82,6 +82,36 @@ function sendHhkLogin() {
 }
 $(document).ready(function () {
 
+	$('.hhk-tooltip').tooltip({
+		classes : {
+			"ui-tooltip" : "ui-corner-all loginErrorTip"
+		},
+		tooltipClass: "loginErrorTip"
+	});
+	
+	$('.hhk-tooltip').on("mouseenter", function (e) {
+    	e.stopImmediatePropagation();
+	});
+
+	$('.hhk-tooltip').on("click", function (e) {
+    	$('.hhk-tooltip').tooltip("open");
+	});
+
+
+	$('.hhk-tooltip').on("mouseleave", function (e) {
+    	e.stopImmediatePropagation();
+	});
+
+
+	$(document).mouseup(function (e) {
+    	var container = $(".ui-tooltip");
+    	if (! container.is(e.target) && 
+        	container.has(e.target).length === 0)
+    	{
+        	$('.hhk-tooltip').tooltip("close");
+    	}
+	});
+
 	$(document).on('submit', "#hhkLogin", function(e){
 		e.preventDefault();
 		sendHhkLogin();

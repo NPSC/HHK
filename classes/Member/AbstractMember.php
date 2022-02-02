@@ -450,7 +450,7 @@ abstract class AbstractMember {
         // Convenience var
         $n = $this->nameRS;
         $uS = Session::getInstance();
-        $user = (isset($post['auditUser']) ? $post['username']: $uS->username);
+        $user = (isset($post['auditUser']) ? $post['auditUser']: $uS->username);
 
         // Process common
         $this->processCommon($post);

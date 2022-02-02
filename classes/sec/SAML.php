@@ -46,6 +46,7 @@ class SAML {
     protected $SPmetadataURL;
     protected $SPSign;
     protected $SPcert;
+    protected $SPRolloverCert;
     protected $SPkey;
 
     protected $dbh;
@@ -56,13 +57,11 @@ class SAML {
         $this->dbh = $dbh;
 
         $this->loadConfig($dbh);
-        if($this->IdpConfig && $this->IdpId > 0){
-            try{
-                $this->auth = new Auth($this->getSettings());
-                $this->auditUser = "SAML: " . $this->IdpConfig["Name"];
-            }catch(\Exception $e){
-
-            }
+        if($this->IdpConfig && $this->IdpConfig['idIdp'] > 0){
+            $this->auth = new Auth($this->getSettings());
+            $this->auditUser = "SAML: " . $this->IdpConfig["Name"];
+        }else if($idpId != 'new'){
+            throw new \Exception("SSO Provider not found (idpId: " . $this->IdpId . ")");
         }
     }
 
@@ -97,7 +96,8 @@ class SAML {
         }
 
         if (!$this->auth->isAuthenticated()) {
-            $error = 'Authentication Failed: ' . $error . " - " . $this->auth->getLastErrorReason();
+            $ex = $this->auth->getLastErrorException();
+            $error = 'Authentication Failed <span class="hhk-help ml-2 px-1"><span class="ui-icon ui-icon-help hhk-tooltip" title="' . $ex->getMessage() . '"></span></span>';
         }else{
             //auth success
             $u = new UserClass();
@@ -201,17 +201,17 @@ class SAML {
             $allSecurityGroups = $this->getSecurityGroups($this->dbh);
 
             //fill parms array
-            if(isset($attributes["hhkSecurityGroups"])){
-                foreach($allSecurityGroups as $secGroup){
-                    if(in_array($secGroup["Title"], $attributes["hhkSecurityGroups"])){
-                        $parms["grpSec_" . $secGroup["Code"]] = "checked";
-                    }else{
-                        $parms["grpSec_" . $secGroup["Code"]] = "unchecked";
-                    }
+            $userSecGroups = (isset($attributes["hhkSecurityGroups"]) ? $attributes["hhkSecurityGroups"] : array());
+
+            foreach($allSecurityGroups as $secGroup){
+                if(in_array($secGroup["Title"], $attributes["hhkSecurityGroups"])){
+                    $parms["grpSec_" . $secGroup["Code"]] = "checked";
+                }else{
+                    $parms["grpSec_" . $secGroup["Code"]] = "unchecked";
                 }
-                //update security groups
-                WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms, $this->auditUser);
             }
+            //update security groups
+            WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms, $this->auditUser);
         }else{
             return array("error"=>$msg);
         }
@@ -286,11 +286,22 @@ class SAML {
 
             if($uS->samlCertPath){
                 try{
-                    $this->SPcert = file_get_contents($uS->samlCertPath . "/certificate.crt");
-                    $this->SPkey = file_get_contents($uS->samlCertPath . "/privateKey.key");
+                    $this->SPcert = (file_exists($uS->samlCertPath . "/certificate.crt") ? file_get_contents($uS->samlCertPath . "/certificate.crt") : '');
+                    $this->SPRolloverCert = (file_exists($uS->samlCertPath . "/rollovercertificate.crt") ? file_get_contents($uS->samlCertPath . "/rollovercertificate.crt") : '');
+                    $this->SPkey = (file_exists($uS->samlCertPath . "/privateKey.key") ? file_get_contents($uS->samlCertPath . "/privateKey.key") : '');
 
-                    openssl_x509_read($this->SPcert);
-                    $this->SPSign = true;
+                    if($this->SPcert != ''){
+                        openssl_x509_read($this->SPcert);
+                    }
+                    if($this->SPRolloverCert != ''){
+                        openssl_x509_read($this->SPRolloverCert);
+                    }
+
+                    if($this->SPcert == '' && $this->SPRolloverCert == ''){
+                        $this->SPSign = false;
+                    }else{
+                        $this->SPSign = true;
+                    }
                 }catch(\Exception $e){
                     $this->SPSign = false;
                 }
@@ -377,6 +388,7 @@ class SAML {
                 'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
                 'x509cert' => ($this->SPcert ? $this->SPcert:''),
                 'privateKey' => ($this->SPkey ? $this->SPkey:''),
+                'x509certNew' => ($this->SPRolloverCert ? $this->SPRolloverCert:''),
             ],
             'idp' => [
                 'entityId' => $this->IdpConfig["IdP_EntityId"],
@@ -517,6 +529,8 @@ class SAML {
             $certData = $this->IdpConfig["IdP_Cert"];
         }else if($type == "sp"){
             $certData = $this->SPcert;
+        }else if($type == "sprollover"){
+            $certData = $this->SPRolloverCert;
         }else{
             return false;
         }
@@ -540,6 +554,7 @@ class SAML {
 
         $idpCertInfo = $this->getCertificateInfo("idp");
         $spCertInfo = $this->getCertificateInfo("sp");
+        $spRolloverCertInfo = $this->getCertificateInfo("sprollover");
 
         $tbl = new HTMLTable();
 
@@ -611,6 +626,11 @@ class SAML {
             array(0, 'False')
         );
 
+        $statusOpts = array(
+            array('a', 'Active'),
+            array('d', 'Disabled')
+        );
+
         $tbl->addBodyTr(
             $tbl->makeTd("Require IdP Response Signing", array("class"=>"tdlabel")).
             $tbl->makeTd(
@@ -625,6 +645,14 @@ class SAML {
                 HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($boolOpts, $this->IdpConfig['expectIdPEncryption'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][expectIdPEncryption]"))
                 ) .
             $tbl->makeTd("If true, all &lt;saml:Assertion&gt; elements received from the IdP must be encrypted.")
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("IdP Status", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($statusOpts, $this->IdpConfig['Status'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][Status]"))
+                ) .
+            $tbl->makeTd("Enable/Disable this Identity Provider")
             );
 
         $tbl->addBodyTr(
@@ -673,6 +701,21 @@ class SAML {
                 '<span style="font-weight: bold">Valid From: </span>' . $spCertInfo["validFrom"] . '</span><br>' .
                 '<span style="font-weight: bold">Expires: </span>' . $spCertInfo["expires"] . '</span>'
                 : '')
+                )
+            );
+
+        $tbl->addBodyTr(
+            $tbl->makeTd("SP Rollover Certificate", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                HTMLContainer::generateMarkup("textarea", $this->SPRolloverCert, array("readonly"=>"readonly", "rows"=>"4", "style"=>"width: 100%"))
+                ).
+            $tbl->makeTd(
+                (is_array($spRolloverCertInfo) ?
+                    '<span style="font-weight: bold">Installed Certificate</span><br>' .
+                    '<span style="font-weight: bold">Issuer: </span>' . $spRolloverCertInfo["issuer"] . '</span><br>' .
+                    '<span style="font-weight: bold">Valid From: </span>' . $spRolloverCertInfo["validFrom"] . '</span><br>' .
+                    '<span style="font-weight: bold">Expires: </span>' . $spRolloverCertInfo["expires"] . '</span>'
+                    : '')
                 )
             );
 
@@ -772,8 +815,8 @@ class SAML {
                 $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_STRING);
             }
 
-            if(isset($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']) && file_exists($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata'])){
-                $metadata = IdPMetadataParser::parseFileXML($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']);
+            if(isset($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata'])){
+                $metadata = $this->checkMetadataFiles($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']);
                 $idpConfig['ssoUrl'] = (isset($metadata['idp']['singleSignOnService']['url']) ? $metadata['idp']['singleSignOnService']['url'] : '');
                 $idpConfig['idpEntityId'] = (isset($metadata['idp']['entityId']) ? $metadata['idp']['entityId'] : '');
                 $idpConfig['idpCert'] = (isset($metadata['idp']['x509cert']) ? "-----BEGIN CERTIFICATE-----" . PHP_EOL . $metadata['idp']['x509cert'] . PHP_EOL . "-----END CERTIFICATE-----" : "");
@@ -834,6 +877,14 @@ class SAML {
         return false;
     }
 
+    private function checkMetadataFiles($file){
+        if(file_exists($file) && mime_content_type($file) == "text/xml"){
+            return IdPMetadataParser::parseFileXML($file);
+        }else{
+            throw new \ErrorException("Uploaded file is not an XML file");
+        }
+    }
+
     public static function getIdpMarkup(\PDO $dbh){
         $IdPs = self::getIdpList($dbh);
         $uS = Session::getInstance();
@@ -841,21 +892,27 @@ class SAML {
 
         if(count($IdPs) > 0){
             $contentMkup = "";
-            foreach($IdPs as $IdP){
+            foreach($IdPs as $key=>$IdP){
+                $attrs = array();
+
+                if($key !== array_key_last($IdPs)){
+                    $attrs['class'] = "mb-3";
+                }
+
                 if($IdP["LogoPath"] !=""){
                     $contentMkup .= HTMLContainer::generateMarkup("li",
                         HTMLContainer::generateMarkup(
                             "a",'<img src="' . $uS->resourceURL . 'conf/' . $IdP["LogoPath"] . '" height="50px">',
                             array("href"=>$uS->resourceURL . "auth/" . $IdP["idIdp"] . "/login", "class"=>"ui-button ui-corner-all")
                         )
-                    );
+                    , $attrs);
                 }else{
                     $contentMkup .= HTMLContainer::generateMarkup("li",
                         HTMLContainer::generateMarkup(
                             "a", "Login with " . $IdP["Name"],
                             array("href"=>$uS->resourceURL . "auth/ws_SSO.php?cmd=login&idpId=" . $IdP["idIdp"], "class"=>"ui-button ui-corner-all")
                         )
-                    );
+                    , $attrs);
                 }
             }
 

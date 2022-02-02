@@ -98,15 +98,15 @@ $samlMkup = SAML::getIdpMarkup($dbh);
 $announcementWidget = $login->rssWidget("Welcome", "https://nonprofitsoftwarecorp.org/npsc-news/feed", 3);
 $linkMkup = $login->getLinksMarkup($uS, $dbh);
 $newsletterMkup = $login->getNewsletterMarkup();
-$row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-7 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-5")),array("class"=>"row justify-content-center mb-3"));
+$row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-5 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-7")),array("class"=>"row justify-content-center mb-3"));
 
 $footerMkup = $login->getFooterMarkup();
 
 $cspURL = $page->getHostName();
 
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL unsafe-inline;"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL unsafe-inline;"); // IE 10+
+header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL cdn-images.mailchimp.com unsafe-inline;"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL cdn-images.mailchimp.com unsafe-inline;"); // IE 10+
 
 if (SecurityComponent::isHTTPS()) {
     header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12

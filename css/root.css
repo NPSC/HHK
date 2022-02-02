@@ -78,3 +78,16 @@ table {
     padding: 5px 7px;
 }
 
+.loginErrorTip {
+	max-width: min-content !important;
+	min-width: 300px;
+	-webkit-box-shadow: 0px 0px 12px #aaa;
+    box-shadow: 0px 0px 12px #aaa;
+}
+
+.hhk-help {
+	border: 1px solid #dfd9c3;
+    border-radius: 1em;
+    background-color: #fff;
+}
+
