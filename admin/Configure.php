@@ -71,7 +71,7 @@ if ($config->has('webServices', 'Service_Name') && $config->getString('webServic
     }
 }
 
-if (isset($_POST["btnSiteCnf"])) {
+if (isset($_POST["btnSiteCnf"]) || isset($_POST["btnLocalAuth"])) {
 
     addslashesextended($_POST);
 
@@ -650,7 +650,7 @@ $(document).ready(function () {
 
 $('#logsTabDiv').tabs("option", "active", 1);
 
-    $('#btnreset, #btnSiteCnf, #btnLogs, #btnSaveSQL, #btnUpdate, #btnlblreset, #btnLabelCnf, #btnPay, #btnZipGo, #zipfile').button();
+    $("input[type=submit], input[type=reset]").button();
     $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
         $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
@@ -706,7 +706,12 @@ $('#logsTabDiv').tabs("option", "active", 1);
 						</ul>
 
 						<div id="localAuth" class="ui-tabs-hide">
-							<?php echo $localAuthMkup; ?>
+							<form method="post">
+    							<?php echo $localAuthMkup; ?>
+    							<div style="text-align: right">
+    								<input type="submit" name="btnLocalAuth" id="btnLocalAuth" value="Save">
+    							</div>
+    						</form>
 						</div>
 						<?php
 						foreach($authIdpList as $idp){

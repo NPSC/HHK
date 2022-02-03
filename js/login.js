@@ -82,6 +82,33 @@ function sendHhkLogin() {
 }
 $(document).ready(function () {
 
+	//newsletter
+	var iframe = $('<iframe frameborder="0" marginwidth="0" marginheight="0"></iframe>');
+    var dialog = $("<div></div>").append(iframe).appendTo("body").dialog({
+        autoOpen: false,
+        modal: true,
+        resizable: false,
+        width: "auto",
+        height: "auto",
+        closeOnEscape: true,
+        close: function () {
+            iframe.attr("src", "");
+        }
+    });
+    $("#newsletteriframe").on("click", function (e) {
+        e.preventDefault();
+        var src = $(this).attr("href");
+        var title = $(this).attr("data-title");
+        var width = 500;
+        var height = 600;
+        iframe.attr({
+            width: +width,
+            height: +height,
+            src: src
+        });
+        dialog.dialog("option", "title", title).dialog("open");
+    });
+
 	$('.hhk-tooltip').tooltip({
 		classes : {
 			"ui-tooltip" : "ui-corner-all loginErrorTip"

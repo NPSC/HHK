@@ -171,7 +171,7 @@ class Login {
 
     }
 
-    public function IEMsg(){
+    public static function IEMsg(){
         try {
             if ($userAgentArray = get_browser(NULL, TRUE)) {
 
@@ -259,7 +259,7 @@ class Login {
 
     }
 
-    public function rssWidget(string $title, string $feedurl, int $postCount) {
+    public static function rssWidget(string $title, string $feedurl, int $postCount) {
 
         $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
 
@@ -308,55 +308,20 @@ class Login {
 
     public static function getNewsletterMarkup(){
 
-        $hdr = HTMLContainer::generateMarkup("div", "Newsletter", array("class"=>"ui-widget-header ui-corner-top p-1"));
+        $uS = Session::getInstance();
 
-        $mailchimpCode = '<!-- Begin Mailchimp Signup Form -->
-<link href="//cdn-images.mailchimp.com/embedcode/naked-10_7_dtp.css" rel="stylesheet" type="text/css">
-<div id="mc_embed_signup">
-<form action="https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe/post?u=473b86d29e0f6f7ba7434f9a2&amp;id=b986c7beaa" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" class="validate" target="_blank" novalidate>
-    <div id="mc_embed_signup_scroll">
-Subscribe to our newsletter for the latest updates
-<div class="mc-field-group row my-3">
-	<label for="mce-EMAIL" class="col-lg-6 pr-0 tdlabel">Email Address  <span class="asterisk">*</span>
-</label>
-    <div class="col-lg-6">
-	<input type="email" value="" name="EMAIL" class="required email w-100" id="mce-EMAIL">
-    </div>
-</div>
-<div class="mc-field-group row my-3">
-	<label for="mce-FNAME" class="col-lg-6 pr-0 tdlabel">First Name  <span class="asterisk">*</span>
-</label>
-    <div class="col-lg-6">
-	<input type="text" value="" name="FNAME" class="required w-100" id="mce-FNAME">
-    </div>
-</div>
-<div class="mc-field-group row my-3">
-	<label for="mce-LNAME" class="col-lg-6 pr-0 tdlabel">Last Name  <span class="asterisk">*</span>
-</label>
-    <div class="col-lg-6">
-	<input type="text" value="" name="LNAME" class="required w-100" id="mce-LNAME">
-    </div>
-</div>
-	<div id="mce-responses" class="clear foot col-12">
-		<div class="response d-none" id="mce-error-response"></div>
-		<div class="response d-none" id="mce-success-response"></div>
-	</div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
-    <div aria-hidden="true" class="d-none"><input type="text" name="b_473b86d29e0f6f7ba7434f9a2_b986c7beaa" tabindex="-1" value=""></div>
-        <div class="optionalParent">
-            <div class="clear foot">
-                <input type="submit" value="Subscribe" name="subscribe" id="mc-embedded-subscribe" class="button">
-<p class="brandingLogo"><a href="http://eepurl.com/hTMjVn" title="Mailchimp - email marketing made easy and fun"><img src="https://eep.io/mc-cdn-images/template_images/branding_logo_text_dark_dtp.svg"></a></p>
-            </div>
-        </div>
-    </div>
-</form>
-</div>
+        if($uS->NewsletterURL){
 
-<!--End mc_embed_signup-->';
+            $hdr = HTMLContainer::generateMarkup("div", "Newsletter", array("class"=>"ui-widget-header ui-corner-top p-1"));
 
-        $content = HTMLContainer::generateMarkup("div", $mailchimpCode, array("class"=>"ui-widget-content ui-corner-bottom p-3"));
+            $newsletterIframe = HTMLContainer::generateMarkup("p", "Get the latest updates from NPSC", array("class"=>"mb-3")) . HTMLContainer::generateMarkup("button", "Sign Up", array("id"=>"newsletteriframe", "href"=>$uS->NewsletterURL, "data-title"=>"Newsletter Sign Up", "class"=>"ui-button ui-corner-all"));
 
-        return HTMLContainer::generateMarkup("div", $hdr . $content, array("class"=>"ui-widget center"));
+            $content = HTMLContainer::generateMarkup("div", $newsletterIframe, array("class"=>"ui-widget-content ui-corner-bottom p-3"));
+
+            return HTMLContainer::generateMarkup("div", $hdr . $content, array("class"=>"ui-widget center"));
+        }else{
+            return "";
+        }
     }
 
     public static function getFooterMarkup(){
