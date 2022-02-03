@@ -2215,7 +2215,8 @@ select
         gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = n.Name_Suffix
             left join
         gen_lookups gv on gv.Table_Name = 'Visit_Status' and gv.Code = v.Status
-    group by v.idVisit, v.Span;
+    group by v.idVisit, v.Span
+    order by v.idVisit, v.Span;
 
 
 

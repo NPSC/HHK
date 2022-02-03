@@ -356,15 +356,30 @@ class VisitViewer {
         $chkInTitle = 'Checked In';
         $visitStatus = '';
         $guestAddButton = '';
+        $prevSpanStatus = '';
         $idV = intval($idVisit, 10);
         $idS = intval($span, 10);
 
         if ($idV > 0 && $idS > -1) {
             // load stays for this specific visit-span
-            $stmt = $dbh->query("select * from `vstays_listing` where `idVisit` = $idVisit and `Visit_Span` = $span order by `Span_Start_Date` desc;");
+            $stmt = $dbh->query("select * from `vstays_listing` where `idVisit` = $idV and `Visit_Span` = $idS order by `Span_Start_Date` desc;");
             $staysDtable = $stmt->fetchAll(\PDO::FETCH_ASSOC);
             $visitStatus = $staysDtable[0]['Visit_Status'];
             $staysDtable_rows = count($staysDtable);
+        }
+
+        // Get previous span status
+        if ($idV > 0 && $idS > 0) {
+            $idS--;
+            $stmt = $dbh->query("select `Status` from `visit` where `idVisit` = $idV and `Span` = $idS;");
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+            if(count($rows) > 0) {
+                if ($rows[0][0] == VisitStatus::ChangeRate) {
+                    $prevSpanStatus = '($)';
+                } else if ($rows[0][0] == VisitStatus::NewSpan) {
+                    $prevSpanStatus = '(rm)';
+                }
+            }
         }
 
         // cherry pick the checked in stays.
@@ -376,6 +391,8 @@ class VisitViewer {
             foreach ($staysDtable as $k => $r) {
 
                 if ($r['Status'] == VisitStatus::CheckedIn) {
+
+                    $r['Status_Title'] .= HTMLContainer::generateMarkup('span', $prevSpanStatus, array('style'=>'font-size:.8em;margin-left:10px;'));
 
                     $bodyTr = self::createStayRowMarkup($r, $staysDtable_rows, $action, $idGuest, $coDates, $idPrimaryGuest, $useRemoveHdr, $includeActionHdr, $hdrPgRb);
                     $sTable->addBody($bodyTr);
