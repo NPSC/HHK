@@ -550,7 +550,7 @@ class SAML {
         }
     }
 
-    public function getEditMarkup(){
+    public function getEditMarkup($formOnly = false){
 
         $idpCertInfo = $this->getCertificateInfo("idp");
         $spCertInfo = $this->getCertificateInfo("sp");
@@ -796,18 +796,25 @@ class SAML {
                 , array("style"=>"vertical-align:top;"))
             );
 
+        $formContent = $tbl->generateMarkup(array("style"=>"margin-bottom: 0.5em;"));
 
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("form", $tbl->generateMarkup(array("style"=>"margin-bottom: 0.5em;")), array("id"=>"form" . $this->IdpId . "auth", "method"=>"post", "enctype"=>"multipart/form-data")), array("id"=>$this->IdpId . "Auth", "class"=>"ui-tabs-hide"));
-
+        if($formOnly){
+            return $formContent;
+        }else{
+            return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("form", $formContent, array("class"=>"authForm", "id"=>"form" . $this->IdpId . "auth", "method"=>"post", "action"=>"Configure.php", "enctype"=>"multipart/form-data")), array("id"=>$this->IdpId . "Auth", "class"=>"ui-tabs-hide"));
+        }
     }
 
     public function save($post, $files){
         if(isset($post['idpConfig'][$this->IdpId])){
             $idpConfig = array();
+            $errorMsg = '';
 
             $idpConfig['name'] = '';
-            if(isset($post['idpConfig'][$this->IdpId]['name'])){
+            if(isset($post['idpConfig'][$this->IdpId]['name']) && $post['idpConfig'][$this->IdpId]['name'] != ''){
                 $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_STRING);
+            }else{
+                $errorMsg .= "<br>Name is required";
             }
 
             $idpConfig['LogoPath'] = '';
@@ -815,7 +822,7 @@ class SAML {
                 $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_STRING);
             }
 
-            if(isset($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata'])){
+            if(isset($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']) && $files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata'] != ''){
                 $metadata = $this->checkMetadataFiles($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']);
                 $idpConfig['ssoUrl'] = (isset($metadata['idp']['singleSignOnService']['url']) ? $metadata['idp']['singleSignOnService']['url'] : '');
                 $idpConfig['idpEntityId'] = (isset($metadata['idp']['entityId']) ? $metadata['idp']['entityId'] : '');
@@ -838,6 +845,16 @@ class SAML {
                 }
             }
 
+            if($idpConfig['ssoUrl'] == ''){
+                $errorMsg.= "<br>SSO URL is required";
+            }
+            if($idpConfig['idpEntityId'] == ''){
+                $errorMsg.= "<br>Idp Entity ID is required";
+            }
+            if($idpConfig['idpCert'] == ''){
+                $errorMsg.= "<br>Idp Cert is required";
+            }
+
             $idpConfig['expectIdPSigning'] = false;
             if(isset($post['idpConfig'][$this->IdpId]['expectIdPSigning'])){
                 $idpConfig['expectIdPSigning'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['expectIdPSigning'], FILTER_VALIDATE_BOOLEAN));
@@ -849,6 +866,10 @@ class SAML {
             }
 
             $idpConfig['status'] = 'a';
+
+            if($errorMsg !=''){
+                throw new \ErrorException($errorMsg);
+            }
 
             $wIdpRS = new W_idpRS();
             EditRS::loadRow($this->IdpConfig, $wIdpRS);
@@ -867,7 +888,7 @@ class SAML {
                 return new SAML($this->dbh, $id);
             }else{
                 if(EditRS::update($this->dbh, $wIdpRS, array($wIdpRS->idIdp)) == 1){
-                    return $this;
+                    return new SAML($this->dbh, $this->IdpId);
                 }else{
                     return false;
                 }
@@ -941,6 +962,14 @@ class SAML {
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         return $rows;
+    }
+
+    public function getIdIdp(){
+        return $this->IdpId;
+    }
+
+    public function getIdpName(){
+        return $this->IdpConfig["Name"];
     }
 
 }

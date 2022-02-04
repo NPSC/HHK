@@ -359,9 +359,21 @@ $localAuthMkup = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BAS
 $labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
 if(isset($_POST['idpConfig'])){
-    $idpId = array_key_first($_POST['idpConfig']);
-    $saml = new SAML($dbh, $idpId);
-    $saml->save($_POST, $_FILES);
+    $msg = array();
+    try{
+        $idpId = array_key_first($_POST['idpConfig']);
+        $saml = new SAML($dbh, $idpId);
+        $saml = $saml->save($_POST, $_FILES);
+        $msg['type'] = "success";
+        $msg['text'] = "Auth provider saved successfully";
+        $events = array('msg'=>$msg, 'idpMkup'=>$saml->getEditMarkup(true), "idpName"=>$saml->getIdpName());
+    }catch(\Exception $e){
+        $msg['type'] = 'error';
+        $msg['text'] = "Could not save Auth provider: " . $e->getMessage();
+        $events = array('msg'=>$msg);
+    }
+    echo(json_encode($events));
+    exit();
 }
 
 $authIdpList = SAML::getIdpList($dbh, false);
@@ -502,170 +514,8 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+		<script type="text/javascript" src="js/configure.js"></script>
 
-
-<script type="text/javascript">
-
-$(document).ready(function () {
-    var tabIndex = '<?php echo $tabIndex; ?>';
-    var notyMsg = JSON.parse('<?php echo json_encode((isset($notymsg) ? $notymsg:"[]")); ?>');
-
-    var tbs;
-    var authTabs;
-    var logTable = [];
-    var dateFormat = $('#dateFormat').val();
-
-    var dtCols = [
-    {
-        "targets": [ 0 ],
-        "title": "Type",
-        "searchable": false,
-        "sortable": false,
-        "data": "Log_Type"
-    },
-    {
-        "targets": [ 1 ],
-        "title": "Sub-Type",
-        "searchable": false,
-        "sortable": true,
-        "data": "Sub_Type"
-    },
-     {
-         "targets": [ 2 ],
-        "title": "User",
-        "searchable": true,
-        "sortable": true,
-        "data": "User_Name"
-    },
-    {
-        "targets": [ 3 ],
-        "title": "Id",
-        "searchable": true,
-        "sortable": true,
-        "data": "Id1"
-    },
-     {
-         "targets": [ 4 ],
-        "title": "Item",
-        "searchable": true,
-        "sortable": false,
-        "data": "Str1"
-    },
-    {
-        "targets": [ 5 ],
-        "title": "Detail",
-        "searchable": false,
-        "sortable": false,
-        "data": "Str2"
-    },
-    {
-        "targets": [ 6 ],
-        "title": "Log Text",
-        "sortable": false,
-        "data": "Log_Text"
-    },
-    {
-        "targets": [ 7 ],
-        "title": "Date",
-        'data': 'Ts',
-        render: function ( data, type ) {
-            return dateRender(data, type, dateFormat);
-        }
-    }
-];
-
-	//display noty
-
-	if(notyMsg.type){
-		new Noty({
-			type : notyMsg.type,
-			text : notyMsg.text
-		}).show();
-	}
-
-	authTabs = $('#authTabs').tabs();
-
-    tbs = $('#tabs').tabs({
-
-        // activate the first log tab, Sys Config Log.
-        beforeActivate: function (event, ui) {
-
-            var pid = 'liss';
-
-            if (ui.newTab.prop('id') === 'liLogs' && !logTable[pid]) {
-                logTable[pid] = 1;
-
-                $('#table'+pid).dataTable({
-                    "columnDefs": dtCols,
-                    "serverSide": true,
-                    "processing": true,
-                    //"deferRender": true,
-                    "language": {"sSearch": "Search Log:"},
-                    "sorting": [[7,'desc']],
-                    "displayLength": 25,
-                    "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                    "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
-                    ajax: {
-                        url: 'ws_gen.php',
-                        data: {
-                            'cmd': 'showLog',
-                            'logId': pid
-                        }
-                    }
-                });
-            }
-        }
-    });
-
-
-    $('#logsTabDiv').tabs({
-
-        beforeActivate: function (event, ui) {
-
-            var pid = ui.newTab.prop('id');
-            if (!logTable[pid]) {
-                logTable[pid] = 1;
-
-                $('#table'+pid).dataTable({
-                    "columnDefs": dtCols,
-                    "serverSide": true,
-                    "processing": true,
-                    //"deferRender": true,
-                    "language": {"sSearch": "Search Log:"},
-                    "sorting": [[7,'desc']],
-                    "displayLength": 25,
-                    "lengthMenu": [[25, 50, 100], [25, 50, 100]],
-                    "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
-                    ajax: {
-                        url: 'ws_gen.php',
-                        data: {
-                            'cmd': 'showLog',
-                            'logId': pid
-                        }
-                    }
-                });
-            }
-        }
-    });
-
-$('#logsTabDiv').tabs("option", "active", 1);
-
-    $("input[type=submit], input[type=reset]").button();
-    $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
-
-        $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
-
-        if ($('#financialRoomSubsidyId').val() != 0 && $('#financialRoomSubsidyId').val() === $('#financialReturnPayorId').val()) {
-            $('#financialRoomSubsidyId, #financialReturnPayorId').addClass('ui-state-error');
-            alert('Subsidy Id must be different than the Return Payor Id');
-        }
-    });
-    tbs.tabs("option", "active", tabIndex);
-    $('#tabs').show();
-    authTabs.tabs("option", "active", 0);
-    $('#authTabs').show();
-});
-</script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
     <?php echo $wInit->generatePageMenu(); ?>
@@ -706,7 +556,7 @@ $('#logsTabDiv').tabs("option", "active", 1);
 						</ul>
 
 						<div id="localAuth" class="ui-tabs-hide">
-							<form method="post">
+							<form method="post" action="Configure.php">
     							<?php echo $localAuthMkup; ?>
     							<div style="text-align: right">
     								<input type="submit" name="btnLocalAuth" id="btnLocalAuth" value="Save">
@@ -791,7 +641,7 @@ $('#logsTabDiv').tabs("option", "active", 1);
                     </form>
                 </div>
             </div>
-
+			<input type="hidden" id="notyMsg" value="<?php echo json_encode((isset($notymsg) ? $notymsg:[])); ?>">
         </div>
     </body>
 </html>

@@ -84,7 +84,7 @@ $(document).ready(function () {
 
 	//newsletter
 	var iframe = $('<iframe frameborder="0" marginwidth="0" marginheight="0"></iframe>');
-    var dialog = $("<div></div>").append(iframe).appendTo("body").dialog({
+    var dialog = $('<div id="newsletterDialog"></div>').append(iframe).appendTo("body").dialog({
         autoOpen: false,
         modal: true,
         resizable: false,
@@ -93,8 +93,16 @@ $(document).ready(function () {
         closeOnEscape: true,
         close: function () {
             iframe.attr("src", "");
+        },
+        classes:{
+        	"ui-dialog-titlebar": "ui-corner-top",
+        	"ui-dialog-content": "ui-corner-bottom"
         }
     });
+    
+    dialog.find(".ui-widget-header").removeClass("ui-corner-all").addClass("ui-corner-top");
+    dialog.find(".ui-widget-content").addClass("ui-corner-bottom");
+    
     $("#newsletteriframe").on("click", function (e) {
         e.preventDefault();
         var src = $(this).attr("href");
