@@ -18,6 +18,8 @@ use HHK\Member\MemberSearch;
 use HHK\HTMLControls\HTMLInput;
 use HHK\Tables\WebSec\W_idpRS;
 use HHK\Tables\EditRS;
+use HHK\Tables\WebSec\W_authRS;
+use HHK\AuditLog\NameLog;
 /**
  * SAML.php
  *
@@ -183,14 +185,37 @@ class SAML {
                 }
             }
 
-            //register Web User
-            $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', 'v', 0, " . $this->IdpId . ");";
-            if($this->dbh->exec($query) === false){
-                $err = $this->dbh->errorInfo();
-                return array("error"=>$err[0] . "; " . $err[2]);
-            }
+            if(!isset($user['Role_Id'])){
+                //register Web User
+                $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', 'v', 0, " . $this->IdpId . ");";
+                if($this->dbh->exec($query) === false){
+                    $err = $this->dbh->errorInfo();
+                    return array("error"=>$err[0] . "; " . $err[2]);
+                }
+            }else{
 
-            UserClass::insertUserLog($this->dbh, "PS", $this->auditUser);
+                // update w_auth table with new role
+                $authRS = new W_authRS();
+                $authRS->idName->setStoredVal($idName);
+                $authRows = EditRS::select($this->dbh, $authRS, array($authRS->idName));
+
+                if (count($authRows) == 1) {
+                    // update existing entry
+                    EditRS::loadRow($authRows[0], $authRS);
+
+                    $authRS->Role_Id->setNewVal($role);
+
+                    $authRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                    $authRS->Updated_By->setNewVal($this->auditUser);
+
+                    $n = EditRS::update($this->dbh, $authRS, array($authRS->idName));
+
+                    if ($n == 1) {
+
+                        NameLog::writeUpdate($this->dbh, $authRS, $idName, $this->auditUser);
+                    }
+                }
+            }
 
             $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
 
@@ -201,8 +226,6 @@ class SAML {
             $allSecurityGroups = $this->getSecurityGroups($this->dbh);
 
             //fill parms array
-            $userSecGroups = (isset($attributes["hhkSecurityGroups"]) ? $attributes["hhkSecurityGroups"] : array());
-
             foreach($allSecurityGroups as $secGroup){
                 if(in_array($secGroup["Title"], $attributes["hhkSecurityGroups"])){
                     $parms["grpSec_" . $secGroup["Code"]] = "checked";
@@ -364,7 +387,7 @@ class SAML {
                         ],
                         [
                             "name" => "Email",
-                            "isRequired" => true
+                            "isRequired" => false
                         ],
                         [
                             "name" => "Phone",
@@ -742,7 +765,7 @@ class SAML {
         $tbl->addBodyTr(
             $tbl->makeTd("FirstName", array("class"=>"tdlabel")).
             $tbl->makeTd(
-                "string"
+                "1 element array"
                 ) .
             $tbl->makeTd("Required")
             );
@@ -750,7 +773,7 @@ class SAML {
         $tbl->addBodyTr(
             $tbl->makeTd("LastName", array("class"=>"tdlabel")).
             $tbl->makeTd(
-                "String"
+                "1 element array"
                 ) .
             $tbl->makeTd("Required")
             );
@@ -758,7 +781,7 @@ class SAML {
         $tbl->addBodyTr(
             $tbl->makeTd("Email", array("class"=>"tdlabel")).
             $tbl->makeTd(
-                "String"
+                "1 element array"
                 ) .
             $tbl->makeTd("Required")
             );
@@ -766,7 +789,7 @@ class SAML {
         $tbl->addBodyTr(
             $tbl->makeTd("Phone", array("class"=>"tdlabel")).
             $tbl->makeTd(
-                "String"
+                "1 element array"
                 ) .
             $tbl->makeTd("Optional")
             );

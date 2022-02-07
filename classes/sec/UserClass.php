@@ -645,7 +645,7 @@ class UserClass
 
         $uname = str_ireplace("'", "", $username);
 
-        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'local authentication') as 'authProvider'
+        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
 left join `w_idp` idp on u.`idIdp` = idp.`idIdp`
