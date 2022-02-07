@@ -4,6 +4,7 @@ namespace HHK\sec;
 use OneLogin\Saml2\Auth;
 use OneLogin\Saml2\Error;
 use OneLogin\Saml2\IdPMetadataParser;
+use OneLogin\Saml2\Utils;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
@@ -546,7 +547,7 @@ class SAML {
         return $settings;
     }
 
-    private function getCertificateInfo($type){
+    private function getCertificateInfo($type, $certStr = ''){
 
         if($type == "idp"){
             $certData = $this->IdpConfig["IdP_Cert"];
@@ -555,7 +556,7 @@ class SAML {
         }else if($type == "sprollover"){
             $certData = $this->SPRolloverCert;
         }else{
-            return false;
+            $certData = $certStr;
         }
 
         $certInfo = openssl_x509_parse($certData);
@@ -849,7 +850,7 @@ class SAML {
                 $metadata = $this->checkMetadataFiles($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']);
                 $idpConfig['ssoUrl'] = (isset($metadata['idp']['singleSignOnService']['url']) ? $metadata['idp']['singleSignOnService']['url'] : '');
                 $idpConfig['idpEntityId'] = (isset($metadata['idp']['entityId']) ? $metadata['idp']['entityId'] : '');
-                $idpConfig['idpCert'] = (isset($metadata['idp']['x509cert']) ? "-----BEGIN CERTIFICATE-----" . PHP_EOL . $metadata['idp']['x509cert'] . PHP_EOL . "-----END CERTIFICATE-----" : "");
+                $idpConfig['idpCert'] = (isset($metadata['idp']['x509cert']) ? $metadata['idp']['x509cert'] : "");
             }else{
 
                 $idpConfig['ssoUrl'] = '';
@@ -876,6 +877,13 @@ class SAML {
             }
             if($idpConfig['idpCert'] == ''){
                 $errorMsg.= "<br>Idp Cert is required";
+            }else{
+                $formattedCert = Utils::formatCert($idpConfig['idpCert'], true);
+                if(!is_array($this->getCertificateInfo(false, $formattedCert))){
+                    $errorMsg.="<br>Idp Cert must be a valid certificate";
+                }else{
+                    $idpConfig["idpCert"] = $formattedCert;
+                }
             }
 
             $idpConfig['expectIdPSigning'] = false;
@@ -910,15 +918,12 @@ class SAML {
                 $id = EditRS::insert($this->dbh, $wIdpRS);
                 return new SAML($this->dbh, $id);
             }else{
-                if(EditRS::update($this->dbh, $wIdpRS, array($wIdpRS->idIdp)) == 1){
-                    return new SAML($this->dbh, $this->IdpId);
-                }else{
-                    return false;
-                }
+                EditRS::update($this->dbh, $wIdpRS, array($wIdpRS->idIdp));
+                return new SAML($this->dbh, $this->IdpId);
             }
         }
 
-        return false;
+        throw new \ErrorException("Error saving provider: IdP id doesn't match expected IdP id . Expected " . $this->IdpId . ", got " . array_key_first($post['idpConfig']));
     }
 
     private function checkMetadataFiles($file){
