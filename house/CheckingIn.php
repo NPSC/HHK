@@ -33,7 +33,7 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 
 $pageHdr = $wInit->pageHeading;
-$pageStyle = '';
+$bkgrdColor = '';
 
 $labels = Labels::getLabels();
 $paymentMarkup = '';
