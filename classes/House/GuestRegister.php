@@ -343,6 +343,7 @@ where ru.idResource_use is null
             $s['allDay'] = 1;
             $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
             $s['visitStatus'] = $statusText;
+            $s['vStatusCode'] = $r['Visit_Status'];
             $s['borderColor'] = $backgroundBorderColor;
             $event = new Event($s, $timezone);
             $events[] = $event->toArray();
