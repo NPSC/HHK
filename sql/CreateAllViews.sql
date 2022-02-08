@@ -836,7 +836,9 @@ CREATE OR REPLACE VIEW `vform_listing` AS
         `r`.`idReservation` AS `idResv`,
         `r`.`Status` AS `resvStatus`,
         `rs`.`Title` AS `resvStatusName`,
-        `d`.`Timestamp` AS `Timestamp`
+        `d`.`Timestamp` AS `Timestamp`,
+        `d`.`Title` AS `FormTitle`,
+        IFNULL(JSON_VALUE(`d`.`abstract`, '$.enableReservation'), 'true') AS `enableReservation`
     FROM
         (`document` `d`
         LEFT JOIN `gen_lookups` `g` ON (`d`.`Status` = `g`.`Code`

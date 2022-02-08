@@ -271,6 +271,7 @@ order by count(n.idName) DESC, LOWER(n.Name_Last), LOWER(n.Name_First);");
     na.City,
     na.State_Province as `St`,
     np.Phone_Num as Phone,
+    ms.Description as `Status`,
     ng.Relationship_Code as `Rel`,
     n2.idName as `P id`,
     n2.Name_Full as `Patient`,
@@ -295,8 +296,10 @@ from
     name n2 ON psg.idPatient = n2.idName
         left join
     registration r ON ng.idPsg = r.idPsg
+        left join
+    gen_lookups ms ON n.Member_Status = ms.Code and ms.Table_Name = 'mem_status'
 where
-    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status = 'a'");
+    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status in('a', 'd')");
 
         $stmt->execute(array(':name'=>  strtolower($name)));
 
@@ -314,6 +317,7 @@ where
     na.City,
     na.State_Province as `St`,
     np.Phone_Num as Phone,
+    ms.Description as `Status`,
     ng.idPsg,
     ng.Relationship_Code as `Rel`,
     n2.idName as `P id`,
@@ -339,8 +343,10 @@ from
     name n2 ON psg.idPatient = n2.idName
         left join
     registration r ON ng.idPsg = r.idPsg
+        left join
+    gen_lookups ms ON n.Member_Status = ms.Code and ms.Table_Name = 'mem_status'
 where
-    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status = 'a'");
+    ng.Status = 'a' and LOWER(n.Name_Full) = :name and ng.idName is not null and n.Member_Status in ('a', 'd')");
 
         $stmt->execute(array(':name'=>  strtolower($name)));
 
@@ -495,7 +501,7 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
         //$affRows = $dbh->exec("call combinePSG($sPsgId, $dPsgId);");
         $stmt = $dbh->query("call combinePSG($sPsgId, $dPsgId);");
         $rtn = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        
+
         return (isset($rtn[0])? $rtn[0]: array('error'=>'Query failed'));
 
     }
@@ -515,7 +521,7 @@ where nv.Vol_Category = 'Vol_Type' and nv.Vol_Code = '" . VolMemberType::Doctor 
 
         $stmt = $dbh->query("call remove_dup_guest($sPsgId, $dPsgId);");
         $rtn = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        
+
         return (isset($rtn[0])? $rtn[0]: array('error'=>'Query failed'));
 
     }

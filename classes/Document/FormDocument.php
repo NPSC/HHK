@@ -65,7 +65,9 @@ group by g.Code order by g.Order';
                 array( 'db' => 'status ID', 'dt'=>'idStatus'),
                 array( 'db' => 'idResv', 'dt'=>'idResv'),
                 array( 'db' => 'resvStatus', 'dt'=>'resvStatus'),
-                array( 'db' => 'resvStatusName', 'dt'=>'resvStatusName')
+                array( 'db' => 'resvStatusName', 'dt'=>'resvStatusName'),
+                array( 'db' => 'FormTitle', 'dt'=>'FormTitle'),
+                array( 'db' => 'enableReservation', 'dt'=>'enableReservation'),
             );
             if($status == 'inbox'){
                 $whereClause = '`Status ID` IN ("n", "ip")';
@@ -101,9 +103,15 @@ group by g.Code order by g.Order';
      * @param string $json
      * @return array[]|string[]|string[]
      */
-    public function saveNew(\PDO $dbh, $json){
+    public function saveNew(\PDO $dbh, $json, $templateId = 0){
 
-        $labels = Labels::getLabels();
+        $formTemplate = new FormTemplate();
+        $formTemplate->loadTemplate($dbh, $templateId);
+        $templateName = $formTemplate->getTitle();
+        $templateSettings = $formTemplate->getSettings();
+
+        $abstractJson = json_encode(["enableReservation"=>$templateSettings['enableReservation']]);
+
         $validatedDoc = $this->validateFields($json);
 
         if(count($validatedDoc['errors']) > 0){
@@ -116,8 +124,9 @@ group by g.Code order by g.Order';
         $this->doc = new Document();
         $this->doc->setType(self::JsonType);
         $this->doc->setCategory(self::formCat);
-        $this->doc->setTitle($labels->getString('GuestEdit', 'referralFormTitle', 'Referral Form'));
+        $this->doc->setTitle($templateName);
         $this->doc->setUserData($validatedFields);
+        $this->doc->setAbstract($abstractJson);
         $this->doc->setDoc($sanitizedDoc);
         $this->doc->setStatus('n');
         $this->doc->setCreatedBy('Web');

@@ -685,12 +685,17 @@ try {
                 $enableRecaptcha = filter_var($_REQUEST['enableRecaptcha'], FILTER_VALIDATE_BOOLEAN);
             }
 
+            $enableReservation = '';
+            if(isset($_REQUEST['enableReservation'])) {
+                $enableReservation = filter_var($_REQUEST['enableReservation'], FILTER_VALIDATE_BOOLEAN);
+            }
+
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             if($idDocument > 0) {
-                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $uS->username);
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $uS->username);
             }else{
-                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $uS->username);
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $uS->username);
             }
 
             break;
