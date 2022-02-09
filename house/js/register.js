@@ -1206,7 +1206,7 @@ $(document).ready(function () {
                 // visits
                 } else if (event.idVisit !== undefined) {
                     
-                    if (event.vStatusCode = 'a') {
+                    if (event.vStatusCode == 'a') {
                     	element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + ', ' + event.guests + (event.guests > 1 ? ' ' + visitorLabel + 's': ' '+ visitorLabel) + (shoHospitalName ? ', ' + hospTitle + ': ' + event.hospName : ''));
 					} else {
                     	element.prop('title', event.fullName + ', Room: ' + resource.title + ', Status: ' + event.visitStatus + (shoHospitalName ? ', ' + hospTitle + ': ' + event.hospName : ''));
