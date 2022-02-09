@@ -1442,11 +1442,11 @@ if (count($diags) > 0) {
 }
 
 if($uS->ShowDiagTB){
-    $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
+    $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 's', '20', array());
 }
 
 if($uS->InsuranceChooser){
-    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 'string', '20', array());
+    $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . " Insurance", 'Insurance', '', '', 's', '', array());
 }
 
 $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'n', '', array(), 'date');
@@ -1749,7 +1749,6 @@ if ($uS->CoTod) {
                      'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
                     }
                  ],
-                 "scrollX": true,
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',

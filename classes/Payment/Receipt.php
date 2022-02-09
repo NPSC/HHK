@@ -91,7 +91,7 @@ class Receipt {
 
         if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
             $tbl->addBodyTr(HTMLTable::makeTd( Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel', 'style'=>"vertical-align: top;"))
-                . HTMLTable::makeTd($info['Primary_Guest'] . self::getAddressTable($dbh, $idPriGuest, false)));
+                . HTMLTable::makeTd($info['Primary_Guest'] . ($uS->showAddressReceipt ? self::getAddressTable($dbh, $idPriGuest, false) : '')));
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
@@ -136,7 +136,9 @@ class Receipt {
 
     public static function createVoidMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId, $type = 'Void Sale') {
 
-       $rec = self::getHouseIconMarkup();
+        $uS = Session::getInstance();
+
+        $rec = self::getHouseIconMarkup();
 
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
 
@@ -146,13 +148,13 @@ class Receipt {
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
 
-        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
-        }
-
         $idPriGuest = 0;
         if (isset($info['idPrimaryGuest'])) {
             $idPriGuest = $info['idPrimaryGuest'];
+        }
+
+        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest'] . ($uS->showAddressReceipt ? self::getAddressTable($dbh, $idPriGuest, false) : '')));
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
@@ -185,6 +187,8 @@ class Receipt {
     // Return a Payment
     public static function createReturnMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId) {
 
+        $uS = Session::getInstance();
+
         $rec = self::getHouseIconMarkup();
 
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
@@ -196,13 +200,13 @@ class Receipt {
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
 
-        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
-        }
-
         $idPriGuest = 0;
         if (isset($info['idPrimaryGuest'])) {
             $idPriGuest = $info['idPrimaryGuest'];
+        }
+
+        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest'] . ($uS->showAddressReceipt ? self::getAddressTable($dbh, $idPriGuest, false) : '')));
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {
@@ -236,6 +240,8 @@ class Receipt {
     // Refund arbitrary Amount
     public static function createRefundAmtMarkup(\PDO $dbh, AbstractPaymentResponse $payResp, $siteName, $siteId) {
 
+        $uS = Session::getInstance();
+
         $rec = self::getHouseIconMarkup();
 
         $rec .= HTMLContainer::generateMarkup('div', self::getAddressTable($dbh, $siteId), array('style'=>'float:left;margin-bottom:10px;'));
@@ -247,13 +253,13 @@ class Receipt {
         $invoice = new Invoice($dbh, $payResp->getInvoiceNumber());
         $info = self::getVisitInfo($dbh, $invoice);
 
-        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest']));
-        }
-
         $idPriGuest = 0;
         if (isset($info['idPrimaryGuest'])) {
             $idPriGuest = $info['idPrimaryGuest'];
+        }
+
+        if (isset($info['Primary_Guest']) && $info['Primary_Guest'] != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('MemberType', 'primaryGuest', 'Primary Guest') . ": ", array('class'=>'tdlabel')) . HTMLTable::makeTd($info['Primary_Guest'] . ($uS->showAddressReceipt ? self::getAddressTable($dbh, $idPriGuest, false) : '')));
         }
 
         if ($payResp->idPayor > 0 && $payResp->idPayor != $idPriGuest) {

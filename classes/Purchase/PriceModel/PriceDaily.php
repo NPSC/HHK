@@ -25,16 +25,9 @@ class PriceDaily extends AbstractPriceModel {
 
         $uS = Session::getInstance();
 
-        $staticRate = $uS->guestLookups['Static_Room_Rate']['rb'][2];
-
-        // Short circuit for fixed rate x
-        if ($rateCategory == RoomRateCategories::Fixed_Rate_Category) {
+        // Short circuit for fixed rate x and static rate (if default is "Assigned"
+        if ($rateCategory == RoomRateCategories::Fixed_Rate_Category || ($rateCategory == RoomRateCategories::FullRateCategory && $uS->RoomRateDefault == RoomRateCategories::Fixed_Rate_Category)) {
             return $nites * $pledgedRate;
-        }
-
-        //calculate full rate as static rate if default rate is assigned
-        if($rateCategory == RoomRateCategories::FullRateCategory && $uS->RoomRateDefault = RoomRateCategories::Fixed_Rate_Category){
-            return $staticRate * $nites;
         }
 
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);

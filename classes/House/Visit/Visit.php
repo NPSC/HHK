@@ -304,7 +304,7 @@ class Visit {
         }
     }
 
-    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTime $chgDT, $isAdmin) {
+    public function changeRooms(\PDO $dbh, AbstractResource $resc, $uname, \DateTime $chgDT, $isAdmin, $newRateCategory = '') {
 
         $uS = Session::getInstance();
 
@@ -315,7 +315,7 @@ class Visit {
         }
 
         if ($this->visitRS->idResource->getStoredVal() == $resc->getIdResource()) {
-            return "Error - Change Rooms Failed: new room = old room.  ";
+            return "Error - Change Rooms: new room = old room.  ";
         }
 
         if (count($this->stays) > $resc->getMaxOccupants()) {
@@ -334,7 +334,7 @@ class Visit {
         $now = new \DateTime();
         $now->setTime(10, 0, 0);
 
-        if ($expDepDT < $now) {
+        if ($expDepDT <= $now) {
             $expDepDT = $now->add(new \DateInterval('P1D'));
         }
 
@@ -368,12 +368,26 @@ class Visit {
         $roomChangeDate = new \DateTime($chgDT->format('Y-m-d'));
         $roomChangeDate->setTime(0,0,0);
 
+        $newIdRoomRate = $this->getIdRoomRate();
+
+        if ($newRateCategory != '' && $newRateCategory != $this->getRateCategory()) {
+            $pm = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+            $rateRs = $pm->getCategoryRateRs(0, $newRateCategory);
+            $newIdRoomRate = $rateRs->idRoom_rate->getStoredVal();
+        }
+
         $houseKeepingEmail = $uS->HouseKeepingEmail;
 
         if ($spanStartDT == $roomChangeDate) {
             // Just replace the room
             $this->setIdResource($resc->getIdResource());
             $this->resource = $resc;
+
+            if ($newRateCategory != '' && $newRateCategory != $this->getRateCategory()) {
+                $this->setRateCategory($newRateCategory);
+                $this->setIdRoomRate($newIdRoomRate);
+                $rtnMessage .= 'Room Rate Changed.  ';
+            }
 
             $cnt = $this->updateVisitRecord($dbh, $uname);
             $houseKeepingEmail = '';  // Don't trigger housekeeping for replace room
@@ -407,8 +421,18 @@ class Visit {
             }
         } else {
 
+            // Set new room rate?
+            if ($newRateCategory != '' && $newRateCategory != $this->getRateCategory()) {
+                $rateCategory = $newRateCategory;
+                $idRoomRate = $newIdRoomRate;
+                $rtnMessage .= 'Room Rate Changed.  ';
+            } else {
+                $rateCategory = $this->getRateCategory();
+                $idRoomRate = $this->getIdRoomRate();
+            }
+
             // Change rooms on date given.
-            $this->createNewSpan($dbh, $resc, VisitStatus::NewSpan, $this->getRateCategory(), $this->getIdRoomRate(), $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $uname, $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
+            $this->createNewSpan($dbh, $resc, VisitStatus::NewSpan, $rateCategory, $idRoomRate, $this->getPledgedRate(), $this->visitRS->Expected_Rate->getStoredVal(), $uname, $chgDT->format('Y-m-d H:i:s'), (intval($this->visitRS->Span->getStoredVal(), 10) + 1));
             $rtnMessage .= 'Guests Changed Rooms.  ';
 
             // Change date today?
@@ -527,7 +551,7 @@ class Visit {
         return $reply;
     }
 
-    public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $uname, $chgDT, $useRateGlide = TRUE, $stayOnLeave = 0) {
+    public function changePledgedRate(\PDO $dbh, $newRateCategory, $pledgedRate, $rateAdjust, $uname, $chgDT, $useRateGlide = FALSE, $stayOnLeave = 0) {
 
         $uS = Session::getInstance();
         $this->getResource($dbh);
@@ -578,7 +602,7 @@ class Visit {
      * @param integer $idRoomRate
      * @throws RuntimeException
      */
-    protected function createNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $newSpan, $useRateGlide = TRUE, $stayOnLeave = 0) {
+    protected function createNewSpan(\PDO $dbh, AbstractResource $resc, $visitStatus, $newRateCategory, $newRateId, $pledgedRate, $rateAdjust, $uname, $changeDate, $newSpan, $useRateGlide = FALSE, $stayOnLeave = 0) {
 
         $glideDays = 0;
         $this->stays = array();
@@ -594,15 +618,6 @@ class Visit {
             EditRS::loadRow($s, $sRs);
             $this->stays[] = $sRs;
         }
-
-//         if ($useRateGlide) {
-//             // Calculate days of old span
-//             $stDT = new \DateTime($this->visitRS->Span_Start->getStoredVal());
-//             $stDT->setTime(0, 0, 0);
-//             $endDT = new \DateTime($changeDate);
-//             $endDT->setTime(0, 0, 0);
-//             $glideDays = $this->visitRS->Rate_Glide_Credit->getStoredVal() + $endDT->diff($stDT, TRUE)->days;
-//         }
 
         // End old span
         $newSpanStatus = $this->visitRS->Status->getStoredVal();
@@ -1584,6 +1599,11 @@ class Visit {
 
             // Make sure a stay was found.
             if (is_null($stayStartDT) === FALSE) {
+
+                // return date must be later than stay start date.
+                if ($stayStartDT->setTime(0,0,0) > $retDT) {
+                    return 'Cannot return before the leave start date.  ';
+                }
 
                 $leaveDays = $retDT->diff($stayStartDT->setTime(0,0,0))->days;
 

@@ -9,7 +9,6 @@ use HHK\House\Reservation\Reservation_1;
 use HHK\SysConst\VisitStatus;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\CalEventKind;
-use Mexitek\PHPColors\Color;
 
 
 /*
@@ -306,12 +305,22 @@ where ru.idResource_use is null
 
             if ($r['Visit_Status'] == VisitStatus::NewSpan) {
                 $titleText .= ' (rm)';
+            }
 
-            } else if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
+            if ($r['Visit_Status'] == VisitStatus::ChangeRate) {
                 $titleText .= ' ($)';
+            }
 
-            } else if ($extended) {
+            if ($extended) {
                 $visitExtended = TRUE;
+            }
+
+            $statusText = $r['Status_Text'];
+
+            // Check for on leave
+            if (isset($r['On_Leave']) && $r['On_Leave'] > 0) {
+                $titleText .= ' (On Leave)';
+                $statusText = 'On Leave';
             }
 
             // Set ribbon color
@@ -333,7 +342,8 @@ where ru.idResource_use is null
             $s['extended'] = $visitExtended;
             $s['allDay'] = 1;
             $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
-            $s['visitStatus'] = $r['Status_Text'];
+            $s['visitStatus'] = $statusText;
+            $s['vStatusCode'] = $r['Visit_Status'];
             $s['borderColor'] = $backgroundBorderColor;
             $event = new Event($s, $timezone);
             $events[] = $event->toArray();
@@ -878,28 +888,6 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
                     $s['backgroundColor'] = $nameColors[$r['idHospital']]['b'];
                     $s['textColor'] = $nameColors[$r['idHospital']]['t'];
                 }
-            }
-
-            if (isset($r['On_Leave']) && $r['On_Leave'] > 0) {
-                $this->adjustColor($s['backgroundColor'], $s['textColor']);
-            }
-        }
-
-    }
-
-    protected function adjustColor(&$backgroundColor, &$textColor) {
-
-        // darken or lignten based on wheather it is light or dark.
-        if($this->isHexColor($backgroundColor) && $this->isHexColor($textColor)){
-            $bgcolor = new Color($backgroundColor);
-            $tcolor = new Color($textColor);
-
-            if ($bgcolor->isDark()) {
-                $backgroundColor = '#' . $bgcolor->lighten();
-                $textColor = '#' . $tcolor->lighten();
-            } else {
-                $backgroundColor = '#' . $bgcolor->darken();
-                $textColor = '#' . $tcolor->darken();
             }
         }
     }

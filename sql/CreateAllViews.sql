@@ -1139,6 +1139,9 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         IFNULL(`na`.`Postal_Code`, '') AS `zipCode`,
         IFNULL(`ni`.`Neon_Type_Code`, '') AS `individualType.id`,
         IFNULL(`g4`.`Description`, '') AS `No_Return`,
+        IFNULL(h.Title, '') as `Hospital`,
+        IFNULL(gd.Description, '') as `Diagnosis`,
+        IFNULL(hs.Timestamp, '1900-01-01') as hs_Timestamp,
         'HHK' AS `source.name`
     FROM
         `name` `n`
@@ -1149,6 +1152,8 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         LEFT JOIN `name_phone` `np` ON `n`.`idName` = `np`.`idName`
             AND `n`.`Preferred_Phone` = `np`.`Phone_Code`
         LEFT JOIN `name_demog` `nd` ON `n`.`idName` = `nd`.`idName`
+        LEFT JOIN `hospital_stay` `hs` ON `n`.`idName` = `hs`.`idPatient` and `hs`.`Status` = 'a'
+        LEFT JOIN `hospital` `h` on `hs`.`idHospital` = `h`.`idHospital`
         LEFT JOIN `country_code` `cc` ON `na`.`Country_Code` = `cc`.`ISO_3166-1-alpha-2`
         LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
             AND `g1`.`Table_Name` = 'Name_Prefix'
@@ -1159,6 +1164,8 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
         LEFT JOIN `gen_lookups` `g5` ON `n`.`Gender` = `g5`.`Code`
             AND `n`.`Gender` IN ('m' , 'f')
             AND `g5`.`Table_Name` = 'Gender'
+		LEFT JOIN `gen_lookups` `gd` on `hs`.`Diagnosis` = `gd`.`Code`
+			AND `gd`.`Table_Name` = 'Diagnosis'
         LEFT JOIN `name_volunteer2` `nv` ON `n`.`idName` = `nv`.`idName`
             AND `nv`.`Vol_Category` = 'Vol_Type'
             AND `nv`.`Vol_Code` IN ('p' , 'g')
@@ -2208,7 +2215,8 @@ select
         gen_lookups gs on gs.Table_Name = 'Name_Suffix' and gs.Code = n.Name_Suffix
             left join
         gen_lookups gv on gv.Table_Name = 'Visit_Status' and gv.Code = v.Status
-    group by v.idVisit, v.Span;
+    group by v.idVisit, v.Span
+    order by v.idVisit, v.Span;
 
 
 

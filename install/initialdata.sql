@@ -62,7 +62,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Demographics', 'Age_Bracket', 'Age Bracket', 'y','m',5),
 ('Demographics', 'Ethnicity', 'Ethnicity', 'y','m',10),
-('Demographics', 'Gender', 'Gender', 'y','m',15),
+('Demographics', 'Gender', 'Gender Identity', 'y','m',15),
 ('Demographics', 'Income_Bracket', 'Income Bracket', 'y','m',25),
 ('Demographics', 'Education_Level', 'Education Level', 'y','m',20),
 ('Demographics', 'Special_Needs', 'Special Needs', '','m',35),
@@ -110,11 +110,14 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Email_Server', 'SMTP', 'SMTP','','',0),
 ('Email_Server', 'Mail', 'Mail','','',0),
 
-('Ethnicity','c','Caucasian','','d',0),
-('Ethnicity','f','African-American','','d',0),
-('Ethnicity','h','Hispanic','','d',0),
-('Ethnicity','k','Asia-Pacific','','d',0),
-('Ethnicity','x','Other','','d',0),
+('Ethnicity','c','Caucasian','','d',10),
+('Ethnicity','f','African American','','d',30),
+('Ethnicity','h','Hispanic','','d',20),
+('Ethnicity','k','Asian','','d',40),
+('Ethnicity','n','Native Hawaiian or other Pacific Islander','','d',50),
+('Ethnicity','a','American Indian or Alaska Native','','d',60),
+('Ethnicity','m','Middle Eastern or North African','','d',70),
+('Ethnicity','x','Other race or ethnicity not listed here','','d',80),
 ('Ethnicity','z','Unknown','','d',1000),
 
 ('E_Shell_Status','a','Active','','',0),
@@ -137,8 +140,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Fund', '1', 'External Donation', '', 'u', '100'),
 
 ('Gender','f','Female','','d',0),
-('Gender','m','Male','','d',0),
-('Gender','t','Other','','d',0),
+('Gender','m','Male','','d',10),
+('Gender','nb','Non-Binary','','d',20),
+('Gender','t','Other Gender not listed here','','d',30),
 ('Gender','z','Unknown','','d',1000),
 
 ('Guest_Survey', 'Survey_Date','', '','',0),
@@ -619,12 +623,12 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('samlCertPath', '/etc/pki/hhkapp', 's', 'a', '', 'Path to certificates for signing SAML messages', '','0'),
 ('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, 0 = never log out','',1),
 ('ShoStaysCtr','true','b','c','','Show the stays counter on the House Calendar page','',1),
+('showAddressReceipt', 'false', 'b', 'h', '', 'Show primary guest address on receipts', '','1'),
 ('ShowBirthDate','true','b','h','','Show birthdate for patients and guests','',1),
 ('ShowCreatedDate','true','b','h','','Show the Created Date in Register page tabs lists','',1),
 ('ShowDemographics','false','b','h','','Show demographics selectors on Check in and Reservation pages','',1),
 ('ShowDiagTB','false','b','h','','Show the diagnosis textbox (in addition to the diagnosis selector)','',1),
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
-('showGuestsStayingReg', 'false', 'b', 'h', '', 'When true, only show guests currently checked in on registration form', '','1'),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
 ('ShowRateDetail','false','b','f','','Show Rate detail on statements','',1),
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
@@ -916,7 +920,8 @@ REPLACE INTO `neon_lists` (`Method`, `List_Name`, `List_Item`, `HHK_Lookup`) VAL
 ('account/listIndividualTypes', 'individualTypes', 'individualType', 'Vol_Type'),
 ('donation/listFunds', 'funds', 'fund', 'Fund'),
 ('common/listTenders', 'tenders', 'tender', 'Pay_Type'),
-('common/listCreditCardTypes', 'creditCardTypes', 'creditCardType', 'Charge_Cards');
+('common/listCreditCardTypes', 'creditCardTypes', 'creditCardType', 'Charge_Cards'),
+('account/listRelationTypes', 'relationTypes', 'relationType', 'Patient_Rel_Type');
 -- ;
 
 --

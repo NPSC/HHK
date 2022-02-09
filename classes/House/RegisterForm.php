@@ -481,7 +481,12 @@ p.label {
 
         if ($idVisit > 0) {
 
-            $stayingSql = ($uS->showGuestsStayingReg ? " and s.Status = 'a' " : "");
+            // visit
+            $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, '', $span);
+            $reg = new Registration($dbh, 0, $visit->getIdRegistration());
+            $visit->getResource($dbh);
+
+            $stayingSql = ($visit->getVisitStatus() == VisitStatus::CheckedIn ? " and s.Status = 'a' " : ""); //only show current stays if visit is checked in
             $query = "select s.idName, s.Span_Start_Date, s.Expected_Co_Date, s.Span_End_Date, s.`Status`, if(s.idName = v.idPrimaryGuest, 1, 0) as `primaryGuest`
 					from stays s "
                     . " join visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span "
@@ -495,10 +500,7 @@ p.label {
             $stmt->execute();
             $stays = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-            // visit
-            $visit = new Visit($dbh, 0, $idVisit, NULL, NULL, NULL, '', $span);
-            $reg = new Registration($dbh, 0, $visit->getIdRegistration());
-            $visit->getResource($dbh);
+
 
             $depDate = $visit->getSpanEnd();
             if ($depDate == '') {

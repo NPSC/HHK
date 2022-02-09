@@ -110,6 +110,48 @@ try {
 
             break;
 
+        case 'showChangeRooms':
+
+            $span = 0;
+            if (isset($_POST['span'])) {
+                $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $events = HouseServices::showChangeRooms($dbh, $idGuest, $idVisit, $span, $guestAdmin);
+
+            break;
+
+        case 'doChangeRooms':
+
+            $span = 0;
+            if (isset($_POST['span'])) {
+                $span = intval(filter_var($_POST['span'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $idRoom = 0;
+            if (isset($_POST['idRoom'])) {
+                $idRoom = intval(filter_var($_POST['idRoom'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $useDefaultRate = FALSE;
+            if (isset($_POST['useDefault'])) {
+                $useDefaultRate = filter_var($_POST['useDefault'], FILTER_VALIDATE_BOOLEAN);
+            }
+
+            $changeDate = '';
+            if (isset($_POST['changeDate'])) {
+                $changeDate = filter_var($_POST['changeDate'], FILTER_SANITIZE_STRING);
+            }
+
+            $replaceRoom = '';
+            if (isset($_POST['replaceRoom'])) {
+                $replaceRoom = filter_var($_POST['replaceRoom'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = HouseServices::changeRooms($dbh, $idVisit, $span, $idRoom, $replaceRoom, $useDefaultRate, $changeDate);
+
+            break;
+
         case 'newConstraint':
 
             $idResv = 0;
@@ -170,7 +212,7 @@ try {
                 $amount = filter_var($_POST['amt'], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION);
             }
 
-            $notes = '-';
+            $notes = '';
             if (isset($_POST['notes'])) {
                 $notes = filter_var($_POST['notes'], FILTER_SANITIZE_STRING);
             }
@@ -188,17 +230,17 @@ try {
             if (isset($_POST['eaddr'])) {
                 $eaddr = filter_var($_POST['eaddr'], FILTER_SANITIZE_STRING);
             }
-            
+
             $ccAddr = '';
             if (isset($_POST['ccAddr'])) {
                 $ccAddr = filter_var($_POST['ccAddr'], FILTER_SANITIZE_STRING);
             }
-            
+
             $tabIndex = false;
             if (isset($_POST['tabIndex'])) {
                 $tabIndex = filter_var($_POST['tabIndex'], FILTER_SANITIZE_STRING);
             }
-            
+
             $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $tabIndex,$ccAddr);
             break;
 
@@ -396,7 +438,7 @@ try {
 
         $cod = [];
         if (isset($_POST['ckoutdt'])) {
-        	
+
         	$cod = filter_var_array($_POST['ckoutdt'], FILTER_SANITIZE_STRING);
         }
 

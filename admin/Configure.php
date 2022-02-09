@@ -470,7 +470,7 @@ if (is_null($wsConfig) === FALSE) {
 
         foreach ($results as $v) {
 
-        	$sTbl->addBodyTr(HTMLTable::makeTd($v['id']) . HTMLTable::makeTd($v['name']));
+            $sTbl->addBodyTr(HTMLTable::makeTd($v['name']) . HTMLTable::makeTd($v['id']));
 
         }
 

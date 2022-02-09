@@ -33,7 +33,7 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 
 $pageHdr = $wInit->pageHeading;
-$pageStyle = '';
+$bkgrdColor = '';
 
 $labels = Labels::getLabels();
 $paymentMarkup = '';
@@ -116,11 +116,6 @@ if ($idReserv > 0 || $idGuest > 0 || $idVisit > 0) {
 
 }
 
-if ($visitStatus != '' && $visitStatus != VisitStatus::CheckedIn) {
-    $pageHdr = 'Visit';
-    $pageStyle = 'Style="background-color:#f2f2f2"';
-}
-
 
 $resvAr = $resvObj->toArray();
 $resvAr['patBD'] = $resvObj->getPatBirthDateFlag();
@@ -136,6 +131,13 @@ $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
 $resvObjEncoded = json_encode($resvAr);
 
 $resvManagerOptions = [];
+
+if ($visitStatus != '' && $visitStatus != VisitStatus::CheckedIn) {
+    $pageHdr = 'Visit';
+    $bkgrdColor = 'background-color:#f2f2f2';
+}
+
+
 if($uS->UseIncidentReports){
 	$resvManagerOptions["UseIncidentReports"] = true;
 }else{
@@ -192,7 +194,7 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu() ?>
-        <div id="contentDiv" class="container-fluid" style="margin-left: auto;" <?php echo $pageStyle; ?>>
+        <div id="contentDiv" class="container-fluid" style="margin-left: auto; <?php echo $bkgrdColor; ?>">
             <h1><?php echo $pageHdr; ?> <span id="spnStatus" style="display:inline;"></span></h1>
 
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
