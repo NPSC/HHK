@@ -49,7 +49,7 @@ class FormTemplate {
         return $rows;
     }
 
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $username){
 
         $validationErrors = array();
 
@@ -65,8 +65,11 @@ class FormTemplate {
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
+        if($emailPatient && $notifySubject == '' && $notifyContent == ''){
+            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
+        }
 
-        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation]);
+        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent]);
 
         if(count($validationErrors) == 0){
 
@@ -93,7 +96,7 @@ class FormTemplate {
         }
     }
 
-    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $username){
 
         $validationErrors = array();
 
@@ -111,10 +114,12 @@ class FormTemplate {
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
-
+        if($emailPatient && $notifySubject == '' && $notifyContent == ''){
+            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
+        }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation]);
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent]);
 
             $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, $username);
             if($count == 1){
@@ -188,6 +193,9 @@ class FormTemplate {
             'successContent'=>htmlspecialchars_decode($abstract->successContent, ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
+            'emailPatient'=>(isset($abstract->emailPatient) ? $abstract->emailPatient : false),
+            'notifySubject'=>$abstract->notifySubject,
+            'notifyContent'=>htmlspecialchars_decode($abstract->notifyContent, ENT_QUOTES),
             'recaptchaScript'=>$recaptcha->getScriptTag()
         ];
     }

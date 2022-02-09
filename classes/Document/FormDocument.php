@@ -4,6 +4,7 @@ namespace HHK\Document;
 
 use HHK\DataTableServer\SSP;
 use HHK\sec\Labels;
+use HHK\sec\Session;
 
 /**
  * FormDocument.php
@@ -26,6 +27,7 @@ class FormDocument {
     const JsonType = "json";
 
     protected $doc;
+    protected $formTemplate;
 
     public function __construct() {
 
@@ -105,10 +107,10 @@ group by g.Code order by g.Order';
      */
     public function saveNew(\PDO $dbh, $json, $templateId = 0){
 
-        $formTemplate = new FormTemplate();
-        $formTemplate->loadTemplate($dbh, $templateId);
-        $templateName = $formTemplate->getTitle();
-        $templateSettings = $formTemplate->getSettings();
+        $this->formTemplate = new FormTemplate();
+        $this->formTemplate->loadTemplate($dbh, $templateId);
+        $templateName = $this->formTemplate->getTitle();
+        $templateSettings = $this->formTemplate->getSettings();
 
         $abstractJson = json_encode(["enableReservation"=>$templateSettings['enableReservation']]);
 
@@ -134,10 +136,46 @@ group by g.Code order by g.Order';
         $this->doc->saveNew($dbh);
 
         if($this->doc->getIdDocument() > 0){
+            $this->sendPatientEmail();
             return array("status"=>"success");
         }else{
             return array("status"=>"error");
         }
+    }
+
+    private function sendPatientEmail(){
+        $templateSettings = $this->formTemplate->getSettings();
+        $userData = json_decode($this->doc->getUserData(), true);
+        $patientEmailAddress = (isset($userData['patient']['email']) ? $userData['patient']['email'] : '');
+        $uS = Session::getInstance();
+
+        if($this->doc->getIdDocument() > 0 && $templateSettings['emailPatient'] == true && $patientEmailAddress != '' && $templateSettings['notifySubject'] !='' && $templateSettings['notifyContent'] != ''){
+            //send email
+
+            $mail = prepareEmail();
+
+            $mail->From = $uS->NoReplyAddr;
+            $mail->FromName = $uS->siteName;
+            $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
+
+            $to = filter_var(trim($patientEmailAddress), FILTER_SANITIZE_EMAIL);
+            if ($to !== FALSE && $to != '') {
+                $mail->addAddress($to);
+            }
+
+            $mail->isHTML(true);
+
+            $mail->Subject = $templateSettings['notifySubject'];
+            $mail->msgHTML($templateSettings['notifyContent']);
+
+            if ($mail->send() === FALSE) {
+                return array('error'=>$mail->ErrorInfo);
+            }else{
+                return true;
+            }
+
+        }
+
     }
 
     public function updateStatus(\PDO $dbh, $status){

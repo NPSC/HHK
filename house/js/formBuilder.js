@@ -1026,8 +1026,9 @@
 				<div id="formSettingsTabs">
     				<ul>
         				<li><a href="#tabs-1">Success Message</a></li>
-        				<li><a href="#tabs-2">Form Styles</a></li>
-        				<li><a href="#tabs-3">Miscellaneous</a></li>
+        				<li><a href="#tabs-2">Notifications</a></li>
+        				<li><a href="#tabs-3">Form Styles</a></li>
+        				<li><a href="#tabs-4">Miscellaneous</a></li>
     				</ul>
     
 				    <div id="tabs-1">
@@ -1043,6 +1044,25 @@
 				    </div>
 				    
 				    <div id="tabs-2">
+				        <div class="row">
+							<div class="col-12">
+								<p style="margin-bottom: 1em;">Notify patient by email after form submission</p>
+								<div class="mb-3">
+				        		<div>
+				        			<label for="emailPatient" style="margin-right: 0.5em;">Enable</label>
+				        			<input type="checkbox" name="emailPatient" id="emailPatient">
+				        		</div>
+				        		<small class="mb-3">Email will be sent to the email address from the Patient Details section</small>
+				        		</div>
+								<label for="notifySubject" style="display:block">Email Subject</label>
+								<input type="text" id="notifySubject" name="notifySubject" placeholder="Email Subject" style="margin-bottom: 0.5em; padding:0.4em 0.5em; width: 100%">
+								<label for="notifyContent" style="display:block">Email Content</label>
+								<textarea id="notifyContent" name="notifyContent" placeholder="Email Content" rows="5" style="padding:0.4em 0.5em; width: 100%"></textarea>
+							</div>
+						</div>
+				    </div>
+				    
+				    <div id="tabs-3">
 				        <div class="row">
 							<div class="col-8">
 								<h3>Edit Form Style</h3>
@@ -1069,7 +1089,7 @@
 						</div>
 				    </div>
 				    
-				    <div id="tabs-3">
+				    <div id="tabs-4">
 				        <div class="row mb-3">
 				        	<div class="col-12">
 				        		<div>
@@ -1175,9 +1195,11 @@
 							settingsDialog.find('input#formSuccessTitle').val(data.formSettings.successTitle).data('oldVal',data.formSettings.successTitle);
 							settingsDialog.find('textarea#formSuccessContent').val(data.formSettings.successContent).data('oldVal',data.formSettings.successContent);
 	    					settingsDialog.find('textarea#formStyle').val(data.formSettings.formStyle).data('oldVal', data.formSettings.formStyle);
-	    					console.log(data.formSettings.enableReservation);
 	    					settingsDialog.find('input#enableRecaptcha').prop('checked', data.formSettings.enableRecaptcha).data('oldval', data.formSettings.enableRecaptcha);
 	    					settingsDialog.find('input#enableReservation').prop('checked', data.formSettings.enableReservation).data('oldval', data.formSettings.enableReservation);
+	    					settingsDialog.find('input#notifySubject').val(data.formSettings.notifySubject).data('oldVal',data.formSettings.notifySubject);
+							settingsDialog.find('textarea#notifyContent').val(data.formSettings.notifyContent).data('oldVal',data.formSettings.notifyContent);
+	    					settingsDialog.find('input#emailPatient').prop('checked', data.formSettings.emailPatient).data('oldval', data.formSettings.emailPatient);
 	    					$wrapper.find('#formTitle').val(data.formTitle);
 	    				}
 	    			}
@@ -1215,11 +1237,29 @@
 			var successContent = settingsDialog.find('textarea#formSuccessContent').val();
 			var enableRecaptcha = settingsDialog.find('input#enableRecaptcha').prop('checked');
 			var enableReservation = settingsDialog.find('input#enableReservation').prop('checked');
+			var emailPatient = settingsDialog.find('input#emailPatient').prop('checked');
+			var notifySubject = settingsDialog.find('input#notifySubject').val();
+			var notifyContent = settingsDialog.find('textarea#notifyContent').val();
 			var formData = settings.formBuilder.actions.getData();
 			
 			if(typeof idDocument !== 'undefined', typeof title !== 'undefined', typeof style !== 'undefined', typeof formData !== 'undefined', typeof successTitle !== 'undefined', typeof successContent !== 'undefined'){
 				//check required fields
 				var missingFields = [];
+				var emailErrorMsg = '';
+				
+				if(emailPatient){
+					var filtered = formData.filter(x=> (x.name === 'patient.email'));
+					if(filtered.length == 0){
+						emailErrorMsg += "<br>The patient email field is required for email notifications";
+					}
+					if(notifySubject.length == 0){
+						emailErrorMsg += "<br>Email Subject cannot be blank";
+					}
+					if(notifyContent.length == 0){
+						emailErrorMsg += "<br>Email Content cannot be blank";
+					}
+				}
+				
 				settings.requiredFields.forEach(function(field){
 					var filtered = formData.filter(x=> (x.name === field && x.required === true) || x.name === 'submit');
 					if(filtered.length == 0){
@@ -1227,7 +1267,7 @@
 					}
 				});
 				
-				if(missingFields.length == 0 && title.length > 0){
+				if(missingFields.length == 0 && title.length > 0 && emailErrorMsg.length == 0){
 					$.ajax({
 		    			url : settings.serviceURL,
 		   				type: "POST",
@@ -1240,7 +1280,10 @@
 		    				"successTitle": successTitle,
 		    				"successContent": successContent,
 		    				"enableRecaptcha": enableRecaptcha,
-		    				"enableReservation": enableReservation
+		    				"enableReservation": enableReservation,
+		    				"emailPatient": emailPatient,
+		    				"notifySubject": notifySubject,
+		    				"notifyContent": notifyContent
 		    			},
 		    			dataType: "json",
 		    			success: function(data, textStatus, jqXHR)
@@ -1278,6 +1321,9 @@
 	    			var errorMsg = "<strong>Error: </strong>";
 	    			if(title.length == 0){
 	    				errorMsg += "Form title is required<br>"
+	    			}
+	    			if(emailErrorMsg.length > 0){
+	    				errorMsg+= emailErrorMsg;
 	    			}
 	    			if(missingFields.length > 0){
 	    				errorMsg += "The following fields must be included and set as required: " + missingFields.join(', ');
