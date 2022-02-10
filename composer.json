@@ -22,9 +22,7 @@
 		"phpmailer/phpmailer" : "~6.1",
 		"phelium/recaptcha" : "~1.0",
 		"phpgangsta/googleauthenticator" : "dev-master",
-		"mexitek/phpcolors" : "^1.0",
 		"chillerlan/php-qrcode" : "~4.3",
 		"onelogin/php-saml" : "~4.0"
-		"phpgangsta/googleauthenticator" : "dev-master"
 	}
 }

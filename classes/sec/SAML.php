@@ -409,7 +409,7 @@ class SAML {
                         ]
                     ]
                 ],
-                'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+                'NameIDFormat' => 'urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified',
                 'x509cert' => ($this->SPcert ? $this->SPcert:''),
                 'privateKey' => ($this->SPkey ? $this->SPkey:''),
                 'x509certNew' => ($this->SPRolloverCert ? $this->SPRolloverCert:''),
@@ -764,6 +764,14 @@ class SAML {
             );
 
         $tbl->addBodyTr(
+            $tbl->makeTd("nameId", array("class"=>"tdlabel")).
+            $tbl->makeTd(
+                ""
+                ) .
+            $tbl->makeTd("Required - nameId will be used as the username")
+            );
+
+        $tbl->addBodyTr(
             $tbl->makeTd("FirstName", array("class"=>"tdlabel")).
             $tbl->makeTd(
                 "1 element array"
@@ -784,7 +792,7 @@ class SAML {
             $tbl->makeTd(
                 "1 element array"
                 ) .
-            $tbl->makeTd("Required")
+            $tbl->makeTd("Optional")
             );
 
         $tbl->addBodyTr(
