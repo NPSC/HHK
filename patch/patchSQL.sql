@@ -7,3 +7,6 @@ DELETE FROM `sys_config` where `Key` = "showGuestsStayingReg";
 
 ALTER TABLE `trans` 
 CHANGE COLUMN `idName` `idName` INT(11) NOT NULL DEFAULT 0 ;
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1');

@@ -1026,7 +1026,7 @@
 				<div id="formSettingsTabs">
     				<ul>
         				<li><a href="#tabs-1">Success Message</a></li>
-        				<li><a href="#tabs-2">Notifications</a></li>
+        				<li class="d-none"><a href="#tabs-2">Notifications</a></li>
         				<li><a href="#tabs-3">Form Styles</a></li>
         				<li><a href="#tabs-4">Miscellaneous</a></li>
     				</ul>
@@ -1043,7 +1043,7 @@
 						</div>
 				    </div>
 				    
-				    <div id="tabs-2">
+				    <div id="tabs-2" class="d-none">
 				        <div class="row">
 							<div class="col-12">
 								<p style="margin-bottom: 1em;">Notify patient by email after form submission</p>
