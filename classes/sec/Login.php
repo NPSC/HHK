@@ -236,6 +236,7 @@ class Login {
             , array("class"=>"row mt-3 mx-0", "id"=>"pwRow"));
 
         $otpRow = HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("div", "For security, please enter the unique code found in your Authenticator app/extension", array("class"=>"col-12 pb-3")) .
             HTMLContainer::generateMarkup("label", 'Two Factor Code', array("class"=>"col-6 pr-0 tdlabel")) .
             HTMLContainer::generateMarkup("div",
                 HTMLInput::generateMarkup("", array('id'=>'txtOTP', "name"=>"twofactorCode", "class"=>"w-100")) .
@@ -259,30 +260,26 @@ class Login {
 
     }
 
-    public static function rssWidget(string $title, string $feedurl, int $postCount) {
+    public static function rssWidget($title) {
 
         $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
 
-        $content = "";
-        //$feedurl = "https://forum.hospitalityhousekeeper.net/rss-feed/feed/";
-        if(@simplexml_load_file($feedurl)){
-            $feed = simplexml_load_file($feedurl);
-            $i = 0;
-            foreach ($feed->channel->item as $item){
-                $content .= HTMLContainer::generateMarkup("div",
-                    HTMLContainer::generateMarkup("h4", HTMLContainer::generateMarkup("a", $item->title . "<span class='ui-icon ui-icon-extlink'></span>", array("href"=>$item->link, "target"=>"_blank"))) .
-                    HTMLContainer::generateMarkup("div", $item->description, array("class"=>"item-content"))
-                , array("class"=>"item p-3"));
-                $i++;
-                if($i === 3){ break;}
-            }
-
-        }else{
-            $content = "Unable to parse feed";
-        }
+        $content = '<div id="hhk-loading-spinner" class="center m-3"><img src="../images/ui-anim_basic_16x16.gif"></div>';
 
         return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $content, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3 rssWidget",));
 
+    }
+
+    public static function getRssData($feedurl) {
+        $content = @file_get_contents($feedurl);
+        if($content !== false){
+            header("Content-Type: text/xml");
+            echo $content;
+        }else{
+            http_response_code(503);
+            echo "Unable to Fetch data";
+        }
+        exit;
     }
 
     public static function getLinksMarkup(Session $uS, \PDO $dbh){

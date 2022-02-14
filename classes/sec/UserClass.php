@@ -505,8 +505,8 @@ class UserClass
                             <ol>
                                 <li>Install the Authenticator browser extension<br><a href="https://authenticator.cc/" target="_blank" class="button">Download here</a></li>
                                 <li>Click "Enable Two Step Verification" below</li>
-                                <li>Click the Authenticator icon <img src="' . $uS->resourceURL . '/conf/img/authenticator.png"> at the top right corner of your browser</li>
-                                <li>Click the Scan QR Code icon <img src="' . $uS->resourceURL . '/conf/img/authenticator-scan-qr.png"></li>
+                                <li>Click the Authenticator icon <img src="' . $uS->resourceURL . '/images/authenticator.png"> at the top right corner of your browser</li>
+                                <li>Click the Scan QR Code icon <img src="' . $uS->resourceURL . '/images/authenticator-scan-qr.png"></li>
                                 <li>Click and drag from the upper left to the lower right of the QR code generated in Step 2 to select it</li>
                                 <li>If you see a message that says "(user) has been added.", then you have successfully configured the Authenticator extension</li>
                                 <li>Click the code shown in the Authenticator extension to copy it</li>

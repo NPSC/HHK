@@ -69,7 +69,11 @@ class SAML {
     }
 
     public function login(){
-        $this->auth->login();
+        if($this->IdpConfig['Status'] == 'a'){
+            $this->auth->login();
+        }else{
+            throw new \Exception("SSO Provider not enabled");
+        }
     }
 
     /**
@@ -302,9 +306,9 @@ class SAML {
             $rootURL = $securityComponent->getRootURL();
 
             $this->SPEntityId = $rootURL . 'auth/';
-            $this->SPacsURL = $rootURL . 'auth/ws_SSO.php?cmd=acs&idpId=' . $this->IdpConfig["idIdp"];
-            $this->SPloginURL = $rootURL . 'auth/ws_SSO.php?cmd=login&idpId=' . $this->IdpConfig["idIdp"];
-            $this->SPmetadataURL = $rootURL . 'auth/ws_SSO.php?cmd=metadata&idpId=' . $this->IdpConfig["idIdp"];
+            $this->SPacsURL = $rootURL . 'auth/acs?idpId=' . $this->IdpConfig["idIdp"];
+            $this->SPloginURL = $rootURL . 'auth/login?idpId=' . $this->IdpConfig["idIdp"];
+            $this->SPmetadataURL = $rootURL . 'auth/metadata?idpId=' . $this->IdpConfig["idIdp"];
 
             $this->SPSign = false;
 
@@ -904,7 +908,7 @@ class SAML {
                 $idpConfig['expectIdPEncryption'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['expectIdPEncryption'], FILTER_VALIDATE_BOOLEAN));
             }
 
-            $idpConfig['status'] = 'a';
+            $idpConfig['status'] = filter_var($post['idpConfig'][$this->IdpId]['Status']);
 
             if($errorMsg !=''){
                 throw new \ErrorException($errorMsg);
@@ -960,14 +964,14 @@ class SAML {
                     $contentMkup .= HTMLContainer::generateMarkup("li",
                         HTMLContainer::generateMarkup(
                             "a",'<img src="' . $uS->resourceURL . 'conf/' . $IdP["LogoPath"] . '" height="50px">',
-                            array("href"=>$uS->resourceURL . "auth/" . $IdP["idIdp"] . "/login", "class"=>"ui-button ui-corner-all")
+                            array("href"=>$uS->resourceURL . "auth/login?idpId=" . $IdP["idIdp"], "class"=>"ui-button ui-corner-all")
                         )
                     , $attrs);
                 }else{
                     $contentMkup .= HTMLContainer::generateMarkup("li",
                         HTMLContainer::generateMarkup(
                             "a", "Login with " . $IdP["Name"],
-                            array("href"=>$uS->resourceURL . "auth/ws_SSO.php?cmd=login&idpId=" . $IdP["idIdp"], "class"=>"ui-button ui-corner-all")
+                            array("href"=>$uS->resourceURL . "auth/login?idpId=" . $IdP["idIdp"], "class"=>"ui-button ui-corner-all")
                         )
                     , $attrs);
                 }

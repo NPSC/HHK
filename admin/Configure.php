@@ -641,7 +641,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     </form>
                 </div>
             </div>
-			<input type="hidden" id="notyMsg" value="<?php echo json_encode((isset($notymsg) ? $notymsg:[])); ?>">
+			<input type="hidden" id="notyMsg" value='<?php echo json_encode((isset($notymsg) ? $notymsg:[])); ?>'>
         </div>
     </body>
 </html>

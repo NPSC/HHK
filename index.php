@@ -53,7 +53,11 @@ foreach ($uS->siteList as $r) {
 $pageTitle = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
 $siteName = '<h2 class="center">Hospitality Housekeeper</h2>';
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
-$announcementWidget = Login::rssWidget("Welcome", "https://nonprofitsoftwarecorp.org/npsc-news/feed", 3);
+
+if(isset($_GET["rssFeed"])){
+    Login::getRssData($uS->loginFeedURL);
+}
+$announcementWidget = Login::rssWidget("Welcome");
 $linkMkup = Login::getLinksMarkup($uS, $dbh);
 $newsletterMkup = Login::getNewsletterMarkup();
 $row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-7 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-5")),array("class"=>"row justify-content-center mb-3"));
@@ -82,6 +86,7 @@ if (SecurityComponent::isHTTPS()) {
         <link href='css/root.css' rel='stylesheet' type='text/css' />
         <script type="text/javascript" src="js/jquery-min.js"></script>
         <script type="text/javascript" src="js/jquery-ui.min.js"></script>
+        <script type="text/javascript" src="js/rssWidget.js"></script>
         <script type="text/javascript" src="js/login.js"></script>
 
     </head>

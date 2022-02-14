@@ -62,7 +62,7 @@ function sendHhkLogin() {
 	        return;
 	    }
 	    if(data.OTPRequired){
-	    	$("#loginTitle").text("Two Factor Verification");
+	    	$("#loginTitle").text("Verify Your Identity");
 	    	$('#userRow, #pwRow').hide();
 	    	$('#otpRow').removeClass("d-none");
 	    	$('#txtOTP').data("2fa", "true").focus();
@@ -115,6 +115,13 @@ $(document).ready(function () {
             src: src
         });
         dialog.dialog("option", "title", title).dialog("open");
+    });
+    
+    //RSS widget
+    $(".rssWidget .ui-widget-content").rssWidget({
+        url: "index.php?rssFeed=true",
+        title: "Welcome",
+    	postCount: 3
     });
 
 	$('.hhk-tooltip').tooltip({

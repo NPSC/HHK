@@ -95,7 +95,12 @@ $siteName = HTMLContainer::generateMarkup('h2', $icons[$page->get_Site_Code()] .
 
 $loginMkup = $login->loginForm();
 $samlMkup = SAML::getIdpMarkup($dbh);
-$announcementWidget = $login->rssWidget("Welcome", "https://nonprofitsoftwarecorp.org/npsc-news/feed", 3);
+
+if(isset($_GET["rssFeed"])){
+    $login->getRssData($uS->loginFeedURL);
+}
+
+$announcementWidget = $login->rssWidget("Welcome");
 $linkMkup = $login->getLinksMarkup($uS, $dbh);
 $newsletterMkup = $login->getNewsletterMarkup();
 $row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-7 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-5")),array("class"=>"row justify-content-center mb-3"));
@@ -127,7 +132,9 @@ if (SecurityComponent::isHTTPS()) {
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
 
+		<script type="text/javascript" src="../js/rssWidget.js"></script>
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
+
     </head>
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
         <div id="page">
