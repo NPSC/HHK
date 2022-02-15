@@ -164,11 +164,12 @@ $(document).ready(function () {
     	$submitbtn = $(this).find("input[type=submit]")
     	$submitbtn.prop("disabled", true);
     	data = new FormData($(this)[0]);
+    	data.append('cmd','saveIdP');
     	
     	$.ajax({
         	type: 'POST',
             enctype: 'multipart/form-data',
-            url: 'Configure.php',
+            url: 'ws_gen.php',
             data: data,
             processData: false,
             contentType: false,
@@ -176,10 +177,16 @@ $(document).ready(function () {
             cache: false,
             timeout: 800000,
             success: function (data) {
-            	if(data.msg){
+            	if(data.success){
 	            	new Noty({
-						type : data.msg.type,
-						text : data.msg.text
+						type : 'success',
+						text : data.success
+					}).show();
+				}
+				if(data.error){
+	            	new Noty({
+						type : 'error',
+						text : data.error
 					}).show();
 				}
 				if(data.idpMkup && data.idpName){

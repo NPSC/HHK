@@ -358,24 +358,6 @@ $localAuthMkup = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BAS
 
 $labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
-if(isset($_POST['idpConfig'])){
-    $msg = array();
-    try{
-        $idpId = array_key_first($_POST['idpConfig']);
-        $saml = new SAML($dbh, $idpId);
-        $saml = $saml->save($_POST, $_FILES);
-        $msg['type'] = "success";
-        $msg['text'] = "Auth provider saved successfully";
-        $events = array('msg'=>$msg, 'idpMkup'=>$saml->getEditMarkup(true), "idpName"=>$saml->getIdpName());
-    }catch(\Exception $e){
-        $msg['type'] = 'error';
-        $msg['text'] = "Could not save Auth provider: " . $e->getMessage();
-        $events = array('msg'=>$msg);
-    }
-    echo(json_encode($events));
-    exit();
-}
-
 $authIdpList = SAML::getIdpList($dbh, false);
 
 $externals = '';
@@ -552,7 +534,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
 							<?php foreach($authIdpList as $idp){ ?>
 								<li><a href="#<?php echo $idp['idIdp']; ?>Auth"><?php echo $idp["Name"]; ?></a></li>
 							<?php } ?>
-							<li><a href="#newAuth"><span class="ui-icon ui-icon-plusthick mr-2"></span>New Auth Provider</a></li>
+							<li><a href="#newAuth"><span class="ui-icon ui-icon-plusthick mr-2"></span>New Identity Provider</a></li>
 						</ul>
 
 						<div id="localAuth" class="ui-tabs-hide">

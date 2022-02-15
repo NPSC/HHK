@@ -61,8 +61,12 @@ class SAML {
 
         $this->loadConfig($dbh);
         if($this->IdpConfig && $this->IdpConfig['idIdp'] > 0){
-            $this->auth = new Auth($this->getSettings());
-            $this->auditUser = "SAML: " . $this->IdpConfig["Name"];
+            try{
+                $this->auth = new Auth($this->getSettings());
+                $this->auditUser = "SAML: " . $this->IdpConfig["Name"];
+            }catch(\Exception $e){
+
+            }
         }else if($idpId != 'new'){
             throw new \Exception("SSO Provider not found (idpId: " . $this->IdpId . ")");
         }
@@ -602,236 +606,239 @@ class SAML {
             $tbl->makeTd("Path to a logo image (relative to /conf/ directory) to use in place of the IdP Name on login pages")
         );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("", array("colspan"=>"3", "style"=>"height:1em;"))
+        if($this->IdpId !== 'new'){
+            $tbl->addBodyTr(
+                $tbl->makeTd("", array("colspan"=>"3", "style"=>"height:1em;"))
+                );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("Identity Provider Settings", array("colspan"=>"3", "style"=>"font-weight:bold;border-top: solid 1px black;"))
             );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("Identity Provider Settings", array("colspan"=>"3", "style"=>"font-weight:bold;border-top: solid 1px black;"))
-        );
+            $tbl->addBodyTr(
+                $tbl->makeTd("Upload IdP metadata", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLInput::generateMarkup("", array("type"=>"file", "accept"=>"text/xml", "name"=>"idpConfig[" . $this->IdpId . "][idpMetadata]"))
+                ).
+                $tbl->makeTd("Upload an XML metadata file to autofill the following IdP settings")
+            );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("Upload IdP metadata", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLInput::generateMarkup("", array("type"=>"file", "accept"=>"text/xml", "name"=>"idpConfig[" . $this->IdpId . "][idpMetadata]"))
-            ).
-            $tbl->makeTd("Upload an XML metadata file to autofill the following IdP settings")
-        );
+            $tbl->addBodyTr(
+                $tbl->makeTd("SSO URL", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLInput::generateMarkup($this->IdpConfig["SSO_URL"], array("name"=>"idpConfig[" . $this->IdpId . "][ssoUrl]", "size"=>"50"))
+                ).
+                $tbl->makeTd("Single Sign On URL")
+            );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("SSO URL", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLInput::generateMarkup($this->IdpConfig["SSO_URL"], array("name"=>"idpConfig[" . $this->IdpId . "][ssoUrl]", "size"=>"50"))
-            ).
-            $tbl->makeTd("Single Sign On URL")
-        );
+            $tbl->addBodyTr(
+                $tbl->makeTd("IdP Entity ID", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLInput::generateMarkup($this->IdpConfig["IdP_EntityId"], array("name"=>"idpConfig[" . $this->IdpId . "][idpEntityId]", "size"=>"50"))
+                ).
+                $tbl->makeTd("Entity ID for Identity Provider")
+            );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("IdP Entity ID", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLInput::generateMarkup($this->IdpConfig["IdP_EntityId"], array("name"=>"idpConfig[" . $this->IdpId . "][idpEntityId]", "size"=>"50"))
-            ).
-            $tbl->makeTd("Entity ID for Identity Provider")
-        );
+            $tbl->addBodyTr(
+                $tbl->makeTd("IdP Certificate", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_Cert"], array("name"=>"idpConfig[" . $this->IdpId . "][idpCert]", "rows"=>"4", "style"=>"width: 100%"))
+                ).
+                $tbl->makeTd(
+                    (is_array($idpCertInfo) ?
+                    '<span style="font-weight: bold">Installed Certificate</span><br>' .
+                    '<span style="font-weight: bold">Issuer: </span>' . $idpCertInfo["issuer"] . '</span><br>' .
+                    '<span style="font-weight: bold">Valid From: </span>' . $idpCertInfo["validFrom"] . '</span><br>' .
+                    '<span style="font-weight: bold">Expires: </span>' . $idpCertInfo["expires"] . '</span>'
+                    : '')
+                )
+            );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("IdP Certificate", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_Cert"], array("name"=>"idpConfig[" . $this->IdpId . "][idpCert]", "rows"=>"4", "style"=>"width: 100%"))
-            ).
-            $tbl->makeTd(
-                (is_array($idpCertInfo) ?
-                '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                '<span style="font-weight: bold">Issuer: </span>' . $idpCertInfo["issuer"] . '</span><br>' .
-                '<span style="font-weight: bold">Valid From: </span>' . $idpCertInfo["validFrom"] . '</span><br>' .
-                '<span style="font-weight: bold">Expires: </span>' . $idpCertInfo["expires"] . '</span>'
-                : '')
-            )
-        );
+            $boolOpts = array(
+                array(1, 'True'),
+                array(0, 'False')
+            );
 
-        $boolOpts = array(
-            array(1, 'True'),
-            array(0, 'False')
-        );
+            $statusOpts = array(
+                array('a', 'Active'),
+                array('d', 'Disabled')
+            );
 
-        $statusOpts = array(
-            array('a', 'Active'),
-            array('d', 'Disabled')
-        );
-
-        $tbl->addBodyTr(
-            $tbl->makeTd("Require IdP Response Signing", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($boolOpts, $this->IdpConfig['expectIdPSigning'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][expectIdPSigning]"))
-            ) .
-            $tbl->makeTd("If true, all &lt;samlp:Response&gt; elements received from the IdP must be signed.")
-        );
-
-        $tbl->addBodyTr(
-            $tbl->makeTd("Require IdP Encryption", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($boolOpts, $this->IdpConfig['expectIdPEncryption'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][expectIdPEncryption]"))
+            $tbl->addBodyTr(
+                $tbl->makeTd("Require IdP Response Signing", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($boolOpts, $this->IdpConfig['expectIdPSigning'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][expectIdPSigning]"))
                 ) .
-            $tbl->makeTd("If true, all &lt;saml:Assertion&gt; elements received from the IdP must be encrypted.")
+                $tbl->makeTd("If true, all &lt;samlp:Response&gt; elements received from the IdP must be signed.")
             );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("IdP Status", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($statusOpts, $this->IdpConfig['Status'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][Status]"))
-                ) .
-            $tbl->makeTd("Enable/Disable this Identity Provider")
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("Require IdP Encryption", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($boolOpts, $this->IdpConfig['expectIdPEncryption'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][expectIdPEncryption]"))
+                    ) .
+                $tbl->makeTd("If true, all &lt;saml:Assertion&gt; elements received from the IdP must be encrypted.")
+                );
 
+            $tbl->addBodyTr(
+                $tbl->makeTd("IdP Status", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($statusOpts, $this->IdpConfig['Status'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][Status]"))
+                    ) .
+                $tbl->makeTd("Enable/Disable this Identity Provider")
+                );
+        }
         $tbl->addBodyTr(
             $tbl->makeTd(
                 HTMLInput::generateMarkup("Save", array("type"=>"submit", "class"=>"ui-button ui-corner-all ui-widget mb-5"))
                 , array("colspan"=>"3", "style"=>"text-align:right;"))
             );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("Service Provider Information", array("colspan"=>"3", "style"=>"font-weight:bold;border-top: solid 1px black;"))
-            );
+        if($this->IdpId !== 'new'){
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("SP EntityId", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                $this->SPEntityId
-                ) .
-            $tbl->makeTd("")
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("Service Provider Information", array("colspan"=>"3", "style"=>"font-weight:bold;border-top: solid 1px black;"))
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("SP ACS URL", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                $this->SPacsURL
-                ) .
-            $tbl->makeTd("")
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("SP EntityId", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    $this->SPEntityId
+                    ) .
+                $tbl->makeTd("")
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("SP Signing", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                ($this->SPSign ? "True":"False")
-                ) .
-            $tbl->makeTd("HHK will sign all authnRequests and metadata.")
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("SP ACS URL", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    $this->SPacsURL
+                    ) .
+                $tbl->makeTd("")
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("SP Certificate", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLContainer::generateMarkup("textarea", $this->SPcert, array("readonly"=>"readonly", "rows"=>"4", "style"=>"width: 100%"))
-                ).
-            $tbl->makeTd(
-                (is_array($spCertInfo) ?
-                '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                '<span style="font-weight: bold">Issuer: </span>' . $spCertInfo["issuer"] . '</span><br>' .
-                '<span style="font-weight: bold">Valid From: </span>' . $spCertInfo["validFrom"] . '</span><br>' .
-                '<span style="font-weight: bold">Expires: </span>' . $spCertInfo["expires"] . '</span>'
-                : '')
-                )
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("SP Signing", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    ($this->SPSign ? "True":"False")
+                    ) .
+                $tbl->makeTd("HHK will sign all authnRequests and metadata.")
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("SP Rollover Certificate", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLContainer::generateMarkup("textarea", $this->SPRolloverCert, array("readonly"=>"readonly", "rows"=>"4", "style"=>"width: 100%"))
-                ).
-            $tbl->makeTd(
-                (is_array($spRolloverCertInfo) ?
+            $tbl->addBodyTr(
+                $tbl->makeTd("SP Certificate", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLContainer::generateMarkup("textarea", $this->SPcert, array("readonly"=>"readonly", "rows"=>"4", "style"=>"width: 100%"))
+                    ).
+                $tbl->makeTd(
+                    (is_array($spCertInfo) ?
                     '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                    '<span style="font-weight: bold">Issuer: </span>' . $spRolloverCertInfo["issuer"] . '</span><br>' .
-                    '<span style="font-weight: bold">Valid From: </span>' . $spRolloverCertInfo["validFrom"] . '</span><br>' .
-                    '<span style="font-weight: bold">Expires: </span>' . $spRolloverCertInfo["expires"] . '</span>'
+                    '<span style="font-weight: bold">Issuer: </span>' . $spCertInfo["issuer"] . '</span><br>' .
+                    '<span style="font-weight: bold">Valid From: </span>' . $spCertInfo["validFrom"] . '</span><br>' .
+                    '<span style="font-weight: bold">Expires: </span>' . $spCertInfo["expires"] . '</span>'
                     : '')
-                )
-            );
+                    )
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("SP Metadata", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                HTMLContainer::generateMarkup("a", "Download SP Metadata", array("href"=>$this->SPmetadataURL, "download"=>"HHKmetadata.xml", "class"=>"ui-button ui-corner-all ui-widget"))
-            ) .
-            $tbl->makeTd("")
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("SP Rollover Certificate", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLContainer::generateMarkup("textarea", $this->SPRolloverCert, array("readonly"=>"readonly", "rows"=>"4", "style"=>"width: 100%"))
+                    ).
+                $tbl->makeTd(
+                    (is_array($spRolloverCertInfo) ?
+                        '<span style="font-weight: bold">Installed Certificate</span><br>' .
+                        '<span style="font-weight: bold">Issuer: </span>' . $spRolloverCertInfo["issuer"] . '</span><br>' .
+                        '<span style="font-weight: bold">Valid From: </span>' . $spRolloverCertInfo["validFrom"] . '</span><br>' .
+                        '<span style="font-weight: bold">Expires: </span>' . $spRolloverCertInfo["expires"] . '</span>'
+                        : '')
+                    )
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("", array("colspan"=>"3", "style"=>"height:1em;"))
-            );
-
-        $tbl->addBodyTr(
-            $tbl->makeTd("Response Attributes", array("colspan"=>"3", "style"=>"font-weight:bold;border-top: solid 1px black;"))
-            );
-
-        $tbl->addBodyTr(
-            $tbl->makeTd("Please send the following attributes in SAML responses", array("colspan"=>"3"))
-            );
-
-        $tbl->addBodyTr(
-            $tbl->makeTd("nameId", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                ""
+            $tbl->addBodyTr(
+                $tbl->makeTd("SP Metadata", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLContainer::generateMarkup("a", "Download SP Metadata", array("href"=>$this->SPmetadataURL, "download"=>"HHKmetadata.xml", "class"=>"ui-button ui-corner-all ui-widget"))
                 ) .
-            $tbl->makeTd("Required - nameId will be used as the username")
-            );
+                $tbl->makeTd("")
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("FirstName", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                "1 element array"
-                ) .
-            $tbl->makeTd("Required")
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("", array("colspan"=>"3", "style"=>"height:1em;"))
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("LastName", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                "1 element array"
-                ) .
-            $tbl->makeTd("Required")
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("Response Attributes", array("colspan"=>"3", "style"=>"font-weight:bold;border-top: solid 1px black;"))
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("Email", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                "1 element array"
-                ) .
-            $tbl->makeTd("Optional")
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("Please send the following attributes in SAML responses", array("colspan"=>"3"))
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("Phone", array("class"=>"tdlabel")).
-            $tbl->makeTd(
-                "1 element array"
-                ) .
-            $tbl->makeTd("Optional")
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("nameId", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    ""
+                    ) .
+                $tbl->makeTd("Required - nameId will be used as the username")
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("hhkRole", array("style"=>"text-align:right; vertical-align:top;")).
-            $tbl->makeTd(
-                "1 element array<br>" .
-                "<strong>Possible Values:</strong><br>" .
-                "hhkAdminUser<br>" .
-                "hhkWebUser"
-                ) .
-            $tbl->makeTd(
-                "Required - determines the user's role in HHK"
-                , array("style"=>"vertical-align:top;"))
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("FirstName", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    "1 element array"
+                    ) .
+                $tbl->makeTd("Required")
+                );
 
-        $tbl->addBodyTr(
-            $tbl->makeTd("hhkSecurityGroups", array("style"=>"vertical-align:top; text-align:right")).
-            $tbl->makeTd(
-                "Array()<br>" .
-                "<strong>Possible Values:</strong><br>" .
-                implode("<br>", $this->getSecurityGroups($this->dbh, true))
-                ) .
-            $tbl->makeTd(
-                "Required - determines the user's Security Groups in HHK"
-                , array("style"=>"vertical-align:top;"))
-            );
+            $tbl->addBodyTr(
+                $tbl->makeTd("LastName", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    "1 element array"
+                    ) .
+                $tbl->makeTd("Required")
+                );
 
+            $tbl->addBodyTr(
+                $tbl->makeTd("Email", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    "1 element array"
+                    ) .
+                $tbl->makeTd("Optional")
+                );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("Phone", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    "1 element array"
+                    ) .
+                $tbl->makeTd("Optional")
+                );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("hhkRole", array("style"=>"text-align:right; vertical-align:top;")).
+                $tbl->makeTd(
+                    "1 element array<br>" .
+                    "<strong>Possible Values:</strong><br>" .
+                    "hhkAdminUser<br>" .
+                    "hhkWebUser"
+                    ) .
+                $tbl->makeTd(
+                    "Required - determines the user's role in HHK"
+                    , array("style"=>"vertical-align:top;"))
+                );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("hhkSecurityGroups", array("style"=>"vertical-align:top; text-align:right")).
+                $tbl->makeTd(
+                    "Array()<br>" .
+                    "<strong>Possible Values:</strong><br>" .
+                    implode("<br>", $this->getSecurityGroups($this->dbh, true))
+                    ) .
+                $tbl->makeTd(
+                    "Required - determines the user's Security Groups in HHK"
+                    , array("style"=>"vertical-align:top;"))
+                );
+        }
         $formContent = $tbl->generateMarkup(array("style"=>"margin-bottom: 0.5em;"));
 
         if($formOnly){
@@ -843,73 +850,79 @@ class SAML {
 
     public function save($post, $files){
         if(isset($post['idpConfig'][$this->IdpId])){
-            $idpConfig = array();
+            $idpConfig = array(
+                'name'=>'',
+                'LogoPath'=>'',
+                'ssoUrl'=>'',
+                'idpEntityId'=>'',
+                'idpCert'=>'',
+                'expectIdPSigning'=>false,
+                'expectIdPEncryption'=>false,
+                'status'=>'d'
+            );
             $errorMsg = '';
 
-            $idpConfig['name'] = '';
             if(isset($post['idpConfig'][$this->IdpId]['name']) && $post['idpConfig'][$this->IdpId]['name'] != ''){
                 $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_STRING);
             }else{
                 $errorMsg .= "<br>Name is required";
             }
 
-            $idpConfig['LogoPath'] = '';
             if(isset($post['idpConfig'][$this->IdpId]['LogoPath'])){
                 $idpConfig['LogoPath'] = filter_var($post['idpConfig'][$this->IdpId]['LogoPath'], FILTER_SANITIZE_STRING);
             }
 
-            if(isset($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']) && $files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata'] != ''){
-                $metadata = $this->checkMetadataFiles($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']);
-                $idpConfig['ssoUrl'] = (isset($metadata['idp']['singleSignOnService']['url']) ? $metadata['idp']['singleSignOnService']['url'] : '');
-                $idpConfig['idpEntityId'] = (isset($metadata['idp']['entityId']) ? $metadata['idp']['entityId'] : '');
-                $idpConfig['idpCert'] = (isset($metadata['idp']['x509cert']) ? $metadata['idp']['x509cert'] : "");
-            }else{
+            if(!isset($post['idpConfig']['new'])){
 
-                $idpConfig['ssoUrl'] = '';
-                if(isset($post['idpConfig'][$this->IdpId]['ssoUrl'])){
-                    $idpConfig['ssoUrl'] = filter_var($post['idpConfig'][$this->IdpId]['ssoUrl'], FILTER_SANITIZE_URL);
-                }
-
-                $idpConfig['idpEntityId'] = '';
-                if(isset($post['idpConfig'][$this->IdpId]['idpEntityId'])){
-                    $idpConfig['idpEntityId'] = filter_var($post['idpConfig'][$this->IdpId]['idpEntityId'], FILTER_SANITIZE_URL);
-                }
-
-                $idpConfig['idpCert'] = '';
-                if(isset($post['idpConfig'][$this->IdpId]['idpCert'])){
-                    $idpConfig['idpCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpCert'], FILTER_SANITIZE_STRING);
-                }
-            }
-
-            if($idpConfig['ssoUrl'] == ''){
-                $errorMsg.= "<br>SSO URL is required";
-            }
-            if($idpConfig['idpEntityId'] == ''){
-                $errorMsg.= "<br>Idp Entity ID is required";
-            }
-            if($idpConfig['idpCert'] == ''){
-                $errorMsg.= "<br>Idp Cert is required";
-            }else{
-                $formattedCert = Utils::formatCert($idpConfig['idpCert'], true);
-                if(!is_array($this->getCertificateInfo(false, $formattedCert))){
-                    $errorMsg.="<br>Idp Cert must be a valid certificate";
+                if(isset($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']) && $files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata'] != ''){
+                    $metadata = $this->checkMetadataFiles($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']);
+                    $idpConfig['ssoUrl'] = (isset($metadata['idp']['singleSignOnService']['url']) ? $metadata['idp']['singleSignOnService']['url'] : '');
+                    $idpConfig['idpEntityId'] = (isset($metadata['idp']['entityId']) ? $metadata['idp']['entityId'] : '');
+                    $idpConfig['idpCert'] = (isset($metadata['idp']['x509cert']) ? $metadata['idp']['x509cert'] : "");
                 }else{
-                    $idpConfig["idpCert"] = $formattedCert;
+
+                    if(isset($post['idpConfig'][$this->IdpId]['ssoUrl'])){
+                        $idpConfig['ssoUrl'] = filter_var($post['idpConfig'][$this->IdpId]['ssoUrl'], FILTER_SANITIZE_URL);
+                    }
+
+                    if(isset($post['idpConfig'][$this->IdpId]['idpEntityId'])){
+                        $idpConfig['idpEntityId'] = filter_var($post['idpConfig'][$this->IdpId]['idpEntityId'], FILTER_SANITIZE_URL);
+                    }
+
+                    if(isset($post['idpConfig'][$this->IdpId]['idpCert'])){
+                        $idpConfig['idpCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpCert'], FILTER_SANITIZE_STRING);
+                    }
+                }
+
+                if($idpConfig['ssoUrl'] == ''){
+                    $errorMsg.= "<br>SSO URL is required";
+                }
+                if($idpConfig['idpEntityId'] == ''){
+                    $errorMsg.= "<br>Idp Entity ID is required";
+                }
+                if($idpConfig['idpCert'] == ''){
+                    $errorMsg.= "<br>Idp Cert is required";
+                }else{
+                    $formattedCert = Utils::formatCert($idpConfig['idpCert'], true);
+                    if(!is_array($this->getCertificateInfo(false, $formattedCert))){
+                        $errorMsg.="<br>Idp Cert must be a valid certificate";
+                    }else{
+                        $idpConfig["idpCert"] = $formattedCert;
+                    }
+                }
+
+                if(isset($post['idpConfig'][$this->IdpId]['expectIdPSigning'])){
+                    $idpConfig['expectIdPSigning'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['expectIdPSigning'], FILTER_VALIDATE_BOOLEAN));
+                }
+
+                if(isset($post['idpConfig'][$this->IdpId]['expectIdPEncryption'])){
+                    $idpConfig['expectIdPEncryption'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['expectIdPEncryption'], FILTER_VALIDATE_BOOLEAN));
+                }
+
+                if(isset($post['idpConfig'][$this->IdpId]['Status'])){
+                    $idpConfig['status'] = filter_var($post['idpConfig'][$this->IdpId]['Status']);
                 }
             }
-
-            $idpConfig['expectIdPSigning'] = false;
-            if(isset($post['idpConfig'][$this->IdpId]['expectIdPSigning'])){
-                $idpConfig['expectIdPSigning'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['expectIdPSigning'], FILTER_VALIDATE_BOOLEAN));
-            }
-
-            $idpConfig['expectIdPEncryption'] = false;
-            if(isset($post['idpConfig'][$this->IdpId]['expectIdPEncryption'])){
-                $idpConfig['expectIdPEncryption'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['expectIdPEncryption'], FILTER_VALIDATE_BOOLEAN));
-            }
-
-            $idpConfig['status'] = filter_var($post['idpConfig'][$this->IdpId]['Status']);
-
             if($errorMsg !=''){
                 throw new \ErrorException($errorMsg);
             }

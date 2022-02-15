@@ -289,7 +289,7 @@ $(document).ready(
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
 										
-										$('div#qrcode').html('<p><strong>Secret: </strong> <span id="OTPSecret">' + data.secret + '</span></p><img src="'+ data.url + '"></p>');
+										$('div#qrcode').html('<img src="'+ data.url + '">');
 										$('div#otpForm').show();
 										$('button#genSecret').text("Regenerate QR Code");
 									}
