@@ -19,4 +19,4 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 ('samlCertPath', '/etc/pki/hhkapp', 's', 'a', '', 'Path to certificates for signing SAML messages', '','0');
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('loginFeedURL', '', 'url', 'a', '', 'RSS Feed for login pages', '','0');
+('loginFeedURL', 'https://nonprofitsoftwarecorp.org/category/hhk-tips/feed/', 'url', 'a', '', 'RSS Feed for login pages', '','0');

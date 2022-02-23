@@ -107,7 +107,7 @@ $row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div'
 
 $footerMkup = $login->getFooterMarkup();
 
-$cspURL = $page->getHostName();
+$cspURL = $page->getHostName() . " nonprofitsoftwarecorp.org";
 
 header('X-Frame-Options: DENY');
 header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.us18.list-manage.com unsafe-inline;"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+

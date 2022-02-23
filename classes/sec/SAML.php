@@ -115,7 +115,7 @@ class SAML {
             $userAr = $u->getUserCredentials($this->dbh, $this->auth->getNameId());
 
             if($userAr == null || (isset($userAr["idIdp"]) && $userAr["idIdp"] == $this->IdpId)){ //correct user found, set up session
-                $userAr = $this->updateUser(); //create/update user with details from IdP
+                $userAr = $this->provisionUser(); //create/update user with details from IdP
                 if($u->doLogin($this->dbh, $userAr)){
                     $pge = $uS->webSite['Default_Page'];
                     if ($u->getDefaultPage() != '') {
@@ -143,7 +143,7 @@ class SAML {
 
     }
 
-    public function updateUser(){
+    private function provisionUser(){
 
         $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
 
@@ -531,7 +531,7 @@ class SAML {
 
                 // ADFS URL-Encodes SAML data as lowercase, and the toolkit by default uses
                 // uppercase. Turn it True for ADFS compatibility on signature verification
-                'lowercaseUrlencoding' => false,
+                'lowercaseUrlencoding' => true,
             ],
             'contactPerson' => [
                 'technical' => [
@@ -721,7 +721,7 @@ class SAML {
                 $tbl->makeTd(
                     ($this->SPSign ? "True":"False")
                     ) .
-                $tbl->makeTd("HHK will sign all authnRequests and metadata.")
+                $tbl->makeTd("HHK will sign all authnRequests and metadata using sha-256.")
                 );
 
             $tbl->addBodyTr(
@@ -777,66 +777,66 @@ class SAML {
             $tbl->addBodyTr(
                 $tbl->makeTd("nameId", array("class"=>"tdlabel")).
                 $tbl->makeTd(
-                    ""
+                    "Required - nameId will be used as the username"
                     ) .
-                $tbl->makeTd("Required - nameId will be used as the username")
+                $tbl->makeTd("")
                 );
 
             $tbl->addBodyTr(
                 $tbl->makeTd("FirstName", array("class"=>"tdlabel")).
                 $tbl->makeTd(
-                    "1 element array"
+                    "Required"
                     ) .
-                $tbl->makeTd("Required")
+                $tbl->makeTd("")
                 );
 
             $tbl->addBodyTr(
                 $tbl->makeTd("LastName", array("class"=>"tdlabel")).
                 $tbl->makeTd(
-                    "1 element array"
+                    "Required"
                     ) .
-                $tbl->makeTd("Required")
+                $tbl->makeTd("")
                 );
 
             $tbl->addBodyTr(
                 $tbl->makeTd("Email", array("class"=>"tdlabel")).
                 $tbl->makeTd(
-                    "1 element array"
+                    "Optional"
                     ) .
-                $tbl->makeTd("Optional")
+                $tbl->makeTd("")
                 );
 
             $tbl->addBodyTr(
                 $tbl->makeTd("Phone", array("class"=>"tdlabel")).
                 $tbl->makeTd(
-                    "1 element array"
+                    "Optional"
                     ) .
-                $tbl->makeTd("Optional")
+                $tbl->makeTd("")
                 );
 
             $tbl->addBodyTr(
                 $tbl->makeTd("hhkRole", array("style"=>"text-align:right; vertical-align:top;")).
                 $tbl->makeTd(
-                    "1 element array<br>" .
+                    "Required - determines the user's role in HHK<br>" .
                     "<strong>Possible Values:</strong><br>" .
                     "hhkAdminUser<br>" .
                     "hhkWebUser"
                     ) .
                 $tbl->makeTd(
-                    "Required - determines the user's role in HHK"
+                    ""
                     , array("style"=>"vertical-align:top;"))
                 );
 
             $tbl->addBodyTr(
                 $tbl->makeTd("hhkSecurityGroups", array("style"=>"vertical-align:top; text-align:right")).
                 $tbl->makeTd(
-                    "Array()<br>" .
+                    "Required - determines the user's Security Groups in HHKMultiple values accepted<br>" .
                     "<strong>Possible Values:</strong><br>" .
                     implode("<br>", $this->getSecurityGroups($this->dbh, true))
                     ) .
                 $tbl->makeTd(
-                    "Required - determines the user's Security Groups in HHK"
-                    , array("style"=>"vertical-align:top;"))
+                    ""
+                    )
                 );
         }
         $formContent = $tbl->generateMarkup(array("style"=>"margin-bottom: 0.5em;"));

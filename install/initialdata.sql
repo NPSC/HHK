@@ -583,6 +583,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('InvoiceTerm','30','i','f','','Invoice payment terms in days','',1),
 ('KeyDeposit','true','b','hf','','Enable room or key deposit','',1),
 ('LangChooser','false','b','hf','','Enable member language chooser','',1),
+('loginFeedURL', 'https://nonprofitsoftwarecorp.org/category/hhk-tips/feed/', 'url', 'a', '', 'RSS Feed for login pages', '','0'),
 ('MajorDonation','500','i','d','','Major donator trigger amount','',1),
 ('MaxAutoEmail','100','i','h','','Maximum number of automatic email messages to send per batch','',1),
 ('MaxDonate','100000','i','d','','Maximum amount amount for a single donation','',1),
