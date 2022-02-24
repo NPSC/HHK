@@ -60,9 +60,14 @@ class RateChooser {
         $this->payAtCheckin = $uS->PayAtCkin;
         $this->openCheckin = $uS->OpenCheckin;
         $this->payVisitFee = $uS->VisitFee;
-        $this->isAdmin = SecurityComponent::is_Authorized('guestadmin');
         $this->rateGlideExtend = $uS->RateGlideExtend;
         $this->priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+
+        if ($uS->RateChangeAuth && ! SecurityComponent::is_Authorized('guestadmin')) {
+            $this->isAdmin = FALSE;
+        } else {
+            $this->isAdmin = TRUE;
+        }
 
     }
 
@@ -583,6 +588,7 @@ class RateChooser {
 
         if ($this->isAdmin === FALSE) {
             $rateSelectorAttrs['disabled'] = 'disabled';
+            $attrAdj['style'] .= ($attrAdj['style'] == '' ? 'display:none;' : '');
         }
 
         // Get taxed items

@@ -11,6 +11,7 @@ use HHK\Exception\RuntimeException;
 use HHK\House\Report\GuestReport;
 use HHK\Member\WebUser;
 use HHK\Member\Relation\AbstractRelation;
+use HHK\Neon\ConfigureNeon;
 
 /**
  * ws_gen.php
@@ -239,7 +240,7 @@ try {
         case "adchgpw":
             $adPw = '';
             $uid = 0;
-            
+
             if (isset($_POST["adpw"])) {
                 $adPw = filter_var($_POST["adpw"], FILTER_SANITIZE_STRING);
             }
@@ -247,20 +248,35 @@ try {
             if (isset($_POST['uid'])) {
                 $uid = intval(filter_var($_POST['uid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
-            
+
             if (isset($_POST["uname"])) {
                 $uname = filter_var($_POST["uname"], FILTER_SANITIZE_STRING);
             }
-            
+
             $events = adminChangePW($dbh, $adPw, $uid, $uname);
 
             break;
-            
+
         case "accesslog":
             $events = AccessLog($dbh, $_GET);
-            
+
             break;
-            
+
+        case 'shoConfNeon':
+
+            $enFile = '';
+            if (isset($_POST["servFile"])) {
+                $enFile = filter_var($_POST["servFile"], FILTER_SANITIZE_STRING);
+            }
+
+            $servFile = decryptMessage($enFile);
+
+            if ($servFile !== '') {
+                $confNeon = new ConfigureNeon($servFile);
+                $events = $confNeon->showConfig($dbh);
+            }
+            break;
+
         default:
             $events = array("error" => "Bad Command");
     }
@@ -311,11 +327,11 @@ function adminChangePW(PDO $dbh, $adminPw, $wUserId, $uname) {
     $event = array();
 
     if (SecurityComponent::is_Admin()) {
-        
+
         $u = new UserClass();
 
         $newPw = $u->generateStrongPassword();
-        
+
         if ($u->updateDbPassword($dbh, $wUserId, $adminPw, $newPw, $uname, true) === TRUE) {
             $event = array('success' => 'Password updated.', 'tempPW'=>$newPw);
         } else {
@@ -696,9 +712,9 @@ function saveUname(PDO $dbh, $vaddr, $role, $id, $status, $fbStatus, $admin, $pa
 }
 
 function AccessLog(\PDO $dbh, $get) {
-        
+
     $columns = array(
-        
+
         //array( 'db' => 'id',  'dt' => 'id' ),
         array( 'db' => 'Username',   'dt' => 'Username' ),
         array( 'db' => 'IP',     'dt' => 'IP' ),
@@ -707,6 +723,6 @@ function AccessLog(\PDO $dbh, $get) {
         array( 'db' => 'Browser', 'dt' => 'Browser' ),
         array( 'db' => 'OS', 'dt' => 'OS' )
     );
-    
+
     return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
 }

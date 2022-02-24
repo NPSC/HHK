@@ -1171,13 +1171,9 @@ CREATE OR REPLACE VIEW `vguest_data_neon` AS
             AND `nv`.`Vol_Code` IN ('p' , 'g')
         LEFT JOIN `neon_type_map` `ni` ON ni.Neon_Name = 'individualType' and `nv`.`Vol_Code` = `ni`.`HHK_Type_Code`
     WHERE
-        ((`n`.`idName` > 0)
-            AND `n`.`idName` IN (SELECT
-                `name_guest`.`idName`
-            FROM
-                `name_guest`)
-            AND (`n`.`Record_Member` = 1)
-            AND (`n`.`Member_Status` IN ('a' , 'd', 'in')));
+        `n`.`idName` > 0
+        AND (`n`.`Record_Member` = 1)
+        AND (`n`.`Member_Status` IN ('a' , 'd', 'in'));
 
 -- -----------------------------------------------------
 -- View `vguest_demog`
