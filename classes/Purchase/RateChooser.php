@@ -37,7 +37,7 @@ class RateChooser {
      * @var bool
      */
     protected $incomeRated;
-    protected $isAdmin;
+    protected $isAllowed;
     protected $payVisitFee;
     protected $openCheckin;
     protected $rateGlideExtend;
@@ -63,10 +63,10 @@ class RateChooser {
         $this->rateGlideExtend = $uS->RateGlideExtend;
         $this->priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
-        if ($uS->RateChangeAuth && ! SecurityComponent::is_Authorized('guestadmin')) {
-            $this->isAdmin = FALSE;
+        if ($uS->RateChangeAuth == TRUE) {
+            $this->isAllowed = SecurityComponent::is_Authorized('guestadmin');
         } else {
-            $this->isAdmin = TRUE;
+            $this->isAllowed = TRUE;
         }
 
     }
@@ -90,7 +90,7 @@ class RateChooser {
         return $this->priceModel;
     }
 
-    public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs, $isAdmin = FALSE) {
+    public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs) {
 
         $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');
         $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'margin-left:.5em;');
@@ -113,7 +113,7 @@ class RateChooser {
 
         $adjSel = $this->makeRateAdjustSel();
 
-        if ($isAdmin) {
+        if ($this->isAllowed) {
             // add change rate selector
 
             $rateCat = array(0=>'',1=>'');
@@ -153,6 +153,10 @@ class RateChooser {
         $uS = Session::getInstance();
         $reply = '';
         $replaceMode = '';
+
+        if ($this->isAllowed == FALSE) {
+            return 'Not allowed to change room rates';
+        }
 
         $visitRs = $visit->visitRS;
         $chRateDT = NULL;
@@ -551,9 +555,6 @@ class RateChooser {
             }
         }
 
-        // Check for rate glide
-        //$dayCredit = 0;  //self::setRateGlideDays($dbh, $resv->getIdRegistration(), $this->rateGlideExtend);
-
         $attrFixed = array('class'=>'hhk-fxFixed');
         if($uS->RoomPriceModel == ItemPriceCode::None){
             $attrAdj = array('style'=>'display:none;');
@@ -586,9 +587,8 @@ class RateChooser {
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $resv->getIdRoomRate());
         $rateSelectorAttrs = array('name'=>'selRateCategory', 'style'=>'display:table;');
 
-        if ($this->isAdmin === FALSE) {
+        if ($this->isAllowed === FALSE) {
             $rateSelectorAttrs['disabled'] = 'disabled';
-            $attrAdj['style'] .= ($attrAdj['style'] == '' ? 'display:none;' : '');
         }
 
         // Get taxed items
@@ -622,11 +622,6 @@ class RateChooser {
                 . ($tax > 0 ? HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnRcTax', 'data-tax'=>$tax)), array('style'=>'text-align:center;')) : '')
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnAmount')), array('style'=>'text-align:center;'))
                 );
-
-        // Add mention of rate glide credit days
-//         if ($dayCredit > 0) {
-//             $tbl->addBodyTr(HTMLTable::makeTd('(Estimated Total based on ' . $dayCredit . ' days of room rate glide.)', array('colspan'=>'4')));
-//         }
 
         return $tbl->generateMarkup();
 

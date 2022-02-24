@@ -263,7 +263,7 @@ class HouseServices {
         }
 
         // Change room rate
-        if ($isGuestAdmin && isset($post['rateChgCB']) && isset($post['extendCb']) === FALSE) {
+        if (isset($post['rateChgCB']) && isset($post['extendCb']) === FALSE) {
             $rateChooser = new RateChooser($dbh);
             $reply .= $rateChooser->changeRoomRate($dbh, $visit, $post);
             $returnCkdIn = TRUE;

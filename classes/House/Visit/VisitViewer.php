@@ -229,7 +229,7 @@ class VisitViewer {
             $rateChooser = new RateChooser($dbh);
             $vRs = new VisitRs();
             EditRS::loadRow($r, $vRs);
-            $rateTbl = $rateChooser->createChangeRateMarkup($dbh, $vRs, $isAdmin);
+            $rateTbl = $rateChooser->createChangeRateMarkup($dbh, $vRs);
 
             $tblMarkup .= $rateTbl->generateMarkup(array('style'=>'float:left;margin-bottom:.3em; margin-top:.3em;'));
         }
