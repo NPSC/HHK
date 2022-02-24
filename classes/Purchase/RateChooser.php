@@ -90,7 +90,7 @@ class RateChooser {
         $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');
         $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'margin-left:.5em;');
         $fixedRate = '';
-        $rateTbl = '';
+        $rateTbl = new HTMLTable();
 
         //
         if ($vRs->Rate_Category->getStoredVal() == DefaultSettings::Fixed_Rate_Category) {
@@ -120,8 +120,6 @@ class RateChooser {
             if ($vRs->Span->getStoredVal() > 0) {
                 $visitStart = 'Start of Visit Span (' . date('M d, Y', strtotime($vRs->Span_Start->getStoredVal())) . ')';
             }
-
-            $rateTbl = new HTMLTable();
 
             $rateTbl->addBodyTr(HTMLTable::makeTh(
                 HTMLContainer::generateMarkup('label', 'Change Room Rate', array('for'=>'rateChgCB', 'style'=>'margin: 2px 1px;'))
