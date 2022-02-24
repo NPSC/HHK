@@ -4,3 +4,17 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 UPDATE `gen_lookups` SET `Description` = "Gender Identity" where `Table_Name` = "Demographics" and `Code` = "Gender";
 
 DELETE FROM `sys_config` where `Key` = "showGuestsStayingReg";
+
+-- insurance fixes
+update insurance_type set idInsurance_Type = 1 where idInsurance_type in ('h', '1h');
+update insurance set Type = 1 where Type in ('h', '1h');
+update insurance_type set idInsurance_Type = 3 where idInsurance_type = 'p';
+update insurance set Type = 3 where Type = 'p';
+
+ALTER TABLE `insurance` 
+ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`,
+ADD COLUMN `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`,
+CHANGE COLUMN `Type` `idInsuranceType` INT(3) NOT NULL;
+
+ALTER TABLE `insurance_type` 
+CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
