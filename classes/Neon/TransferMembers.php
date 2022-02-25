@@ -480,6 +480,78 @@ class TransferMembers {
 
     }
 
+    public function sendVisits(\PDO $dbh, $username, $start = '', $end = '') {
+
+        $replys = array();
+        $this->memberReplies = array();
+        $idMap = array();
+        $mappedItems = array();
+        $whereClause = '';
+
+    $f['Result'] = "Not yet implemented.";
+    $replys[] = $f;
+    return $replys;
+
+        if ($start != '') {
+            $whereClause = " and DATE(`date`) >= DATE('$start') ";
+        }
+
+        if ($end != '') {
+            $whereClause .= " and DATE(`date`) <= DATE('$end') ";
+        }
+
+        // Read visits from db
+
+
+        // Log in with the web service
+        $this->openTarget($this->userId, $this->password);
+
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+
+            // Is the account defined?
+            if ($r['accountId'] == '' && isset($idMap[$r['hhkId']])) {
+                // Already made a new Neon account.
+                $r['accountId'] = $idMap[$r['hhkId']];
+
+            } else if ($r['accountId'] == '') {
+
+                // Search and create a new account if needed.
+                $acctReplys = $this->sendList($dbh, array($r['hhkId']), $username);
+
+                if (isset($acctReplys[0]['Account ID']) && $acctReplys[0]['Account ID'] != '') {
+
+                    // A new account is created.
+                    $this->memberReplies[] = $acctReplys[0];
+                    $r['accountId'] = $acctReplys[0]['Account ID'];
+                    $f['accountId'] = $acctReplys[0]['Account ID'] . '*';
+                    $idMap[$r['hhkId']] = $acctReplys[0]['Account ID'];
+
+                } else if (isset($acctReplys[0]['Result'])) {
+
+                    // Some kind of problem like multiple accounts found.
+                    $f['Result'] = $acctReplys[0]['Result'];
+                    $replys[] = $f;
+                    continue;
+
+                } else {
+                    $f['Result'] = "Undefined problem adding HHK person to Neon.";
+                    $replys[] = $f;
+                    continue;
+
+                }
+            }
+
+            // Write the visit to Neon
+
+
+            $replys[] = $f;
+        }
+
+        return $replys;
+    }
+
 
     /**
      *

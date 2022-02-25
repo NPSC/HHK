@@ -12,9 +12,15 @@ update insurance_type set idInsurance_Type = 3 where idInsurance_type = 'p';
 update insurance set Type = 3 where Type = 'p';
 
 ALTER TABLE `insurance` 
-ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`,
-ADD COLUMN `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`,
-CHANGE COLUMN `Type` `idInsuranceType` INT(3) NOT NULL;
+	ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`;
+ALTER TABLE `insurance` 
+	ADD COLUMN `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`;
+ALTER TABLE `insurance` 
+	CHANGE COLUMN `Type` `idInsuranceType` INT(3) NOT NULL;
 
 ALTER TABLE `insurance_type` 
-CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
+	CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
+
+-- Mark visits as recorded (ie, Neon)
+ALTER TABLE `visit` 
+	ADD COLUMN `Recorded` INT(1) NOT NULL DEFAULT 0 AFTER `Status`;

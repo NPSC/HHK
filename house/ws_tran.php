@@ -98,6 +98,27 @@ switch ($c) {
 
         break;
 
+    case 'visits':
+
+        $st = '';
+        if (isset($_REQUEST["st"])) {
+            $st = filter_var($_REQUEST["st"], FILTER_SANITIZE_STRING);
+        }
+        $en = '';
+        if (isset($_REQUEST["en"])) {
+            $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_STRING);
+        }
+
+        $reply = $transfer->sendVisits($dbh, $uS->username, $st, $en);
+        $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
+
+        $newMembers = $transfer->getMemberReplies();
+        if (count($newMembers) > 0) {
+            $events['members'] = CreateMarkupFromDB::generateHTML_Table($newMembers, 'tblrpt');
+        }
+
+        break;
+
     case 'sch':
 
         $arguments = array(

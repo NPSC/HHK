@@ -171,6 +171,53 @@ function transferPayments($btn, start, end) {
     });
 }
 
+function transferVisits($btn, start, end) {
+
+    var parms = {
+        cmd: 'visits',
+        st: start,
+        en: end
+    };
+
+    var posting = $.post('ws_tran.php', parms);
+
+    posting.done(function(incmg) {
+        $btn.val('Transfer Visits');
+
+        if (!incmg) {
+            alert('Bad Reply from HHK Web Server');
+            return;
+        }
+
+        try {
+            incmg = $.parseJSON(incmg);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+
+        $('div#retrieve').empty();
+
+        if (incmg.data) {
+            $('#divTable').empty().append($(incmg.data)).show();
+        }
+
+        if (incmg.members) {
+            $('#divMembers').empty().append($(incmg.members)).show();
+        }
+
+    });
+}
+
 function getRemote(item, source) {
     $('div#printArea').hide();
     $('#divPrintButton').hide();
@@ -248,7 +295,7 @@ $(document).ready(function() {
     var end = $('#hend').val();
     var dateFormat = $('#hdateFormat').val();
 
-    $('#btnHere, #btnCustFields, #btnGetPayments').button();
+    $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits').button();
 
     $('#printButton').button().click(function() {
         $("div#printArea").printArea();
@@ -258,6 +305,7 @@ $(document).ready(function() {
         $('div#printArea').show();
         $('#divPrintButton').show();
         $('#btnPay').hide();
+        $('#btnVisits').hide();
         $('#divMembers').empty();
 
         $('#tblrpt').dataTable({
@@ -292,6 +340,7 @@ $(document).ready(function() {
         $('div#printArea').show();
         $('#divPrintButton').show();
         $('#TxButton').hide();
+        $('#btnVisits').hide();
         $('#divMembers').empty();
 
         $('#tblrpt').dataTable({
@@ -314,6 +363,36 @@ $(document).ready(function() {
             $(this).val('Transferring ...');
 
             transferPayments($(this), start, end);
+        });
+        
+    } else if (makeTable === '3') {
+
+        $('div#printArea').show();
+        $('#divPrintButton').show();
+        $('#TxButton').hide();
+        $('#btnPay').hide();
+        $('#divMembers').empty();
+
+        $('#tblrpt').dataTable({
+//            'columnDefs': [
+//                {'targets': [4, 5],
+//                 'type': 'date',
+//                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+//                }
+//            ],
+            "displayLength": 50,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
+        });
+
+        $('#btnVisits').button().show().click(function () {
+
+            if ($(this).val() === 'Transferring ...') {
+                return;
+            }
+            $(this).val('Transferring ...');
+
+            transferVisits($(this), start, end);
         });
     }
 

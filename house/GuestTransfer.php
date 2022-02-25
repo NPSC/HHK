@@ -99,6 +99,49 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
 }
 
+function searchVisits(\PDO $dbh, $start, $end) {
+
+    $uS = Session::getInstance();
+    $whereClause = " DATE(`Payment Date`) >= DATE('$start') and DATE(`Payment Date`) <= DATE('$end') ";
+
+
+    $stmt = $dbh->query("SELECT
+    s.idVisit,
+	s.idName AS `HHK Id`,
+    n.Name_Full as `Name`,
+    n.External_Id AS `Account Id`,
+    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Stay Start Date`,
+    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `Stay End Date`,
+    sum((to_days(ifnull(`s`.`Span_End_Date`, now())) - to_days(`s`.`Span_Start_Date`))) AS `Visit_Nights`
+FROM
+	stays s
+		LEFT JOIN
+	visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+		LEFT JOIN
+	`name` n on s.idName = n.idName
+WHERE
+	s.Status = 'co' AND s.On_Leave = 0 AND v.Recorded = 0
+    AND DATE(s.Span_End_Date) >= DATE('$start') and DATE(s.Span_End_Date) <= DATE('$end')
+GROUP BY s.idVisit, s.idName");
+    $rows = array();
+
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+        $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], array('href'=>'GuestEdit.php?id=' . $r['HHK Id']));
+
+        if (isset($r['Payment Date']) && $r['Payment Date'] != '') {
+            $r['Payment Date'] = date('c', strtotime($r['Payment Date']));
+        }
+
+
+        $rows[] = $r;
+
+    }
+
+    return CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
+
+}
+
 function getPeopleReport(\PDO $dbh, $start, $end, $extIdFlag = FALSE) {
 
     $whExt = '';
@@ -218,7 +261,7 @@ if ($uS->fy_diff_Months == 0) {
 
 
 // Process report.
-if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
+if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST['btnGetVisits'])) {
 
     // gather input
 
@@ -327,6 +370,12 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
 
         $mkTable = 2;
 
+    } else if (isset($_POST['btnGetVisits'])) {
+
+        $dataTable = searchVisits($dbh, $start, $end);
+
+        $mkTable = 3;
+
     }
 
 }
@@ -413,6 +462,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records"/></td>
                             <td><input type="submit" name="btnGetPayments" id="btnGetPayments" value="Get HHK Payments"/></td>
+							<td><input type="submit" name="btnGetVisits" id="btnGetVisits" value="Get HHK Visits"/></td>
                         </tr>
                     </table>
                 </form>
@@ -420,16 +470,17 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
             </div>
             <div style="clear:both;"></div>
 
-            <div id="divPrintButton" style="display:none;margin-top:6px;margin-bottom:3px;">
-                <input id="printButton" value="Print" type="button" />
-                <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
-                <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
-            </div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div style="margin-bottom:.8em; float:left;"><?php echo $settingstable . $searchTabel; ?></div>
                 <div id="divTable">
                     <?php echo $dataTable; ?>
                 </div>
+                <div id="divPrintButton" style="display:none;margin-top:6px;margin-bottom:3px;">
+                    <input id="printButton" value="Print" type="button" />
+                    <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
+                    <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
+                    <input id="btnVisits" value="Transfer Visits" type="button" style="margin-left:2em;"/>
+            	</div>
                 <div id="divMembers"></div>
             </div>
         </div>
