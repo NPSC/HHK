@@ -49,9 +49,9 @@ try {
 
     $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')), $wsConfig->getSection('custom_fields'));
 
-switch ($c) {
+    switch ($c) {
 
-    case 'xfer':
+      case 'xfer':
 
         $ids = [];
 
@@ -77,7 +77,7 @@ switch ($c) {
 
         break;
 
-    case 'payments':
+      case 'payments':
 
         $st = '';
         if (isset($_REQUEST["st"])) {
@@ -98,7 +98,7 @@ switch ($c) {
 
         break;
 
-    case 'visits':
+      case 'visits':
 
         $st = '';
         if (isset($_REQUEST["st"])) {
@@ -119,7 +119,7 @@ switch ($c) {
 
         break;
 
-    case 'sch':
+      case 'sch':
 
         $arguments = array(
             'letters' => FILTER_SANITIZE_SPECIAL_CHARS,
@@ -136,7 +136,7 @@ switch ($c) {
 
         break;
 
-    case 'listCustFields':
+      case 'listCustFields':
 
         try {
             $results = $transfer->listCustomFields();
@@ -180,7 +180,12 @@ switch ($c) {
             $accountId = intval(filter_var($_POST['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        if (isset($_POST['src']) && $_POST['src'] === 'hhk') {
+        $src = '';
+        if (isset($_POST['src'])) {
+            $src = filter_var($_POST['src'], FILTER_SANITIZE_STRING);
+        }
+
+        if ($src === 'hhk') {
 
                 $row = $transfer->loadSourceDB($dbh, $accountId);
 
@@ -198,7 +203,7 @@ switch ($c) {
                     }
                 }
 
-        } else {
+        } else if ($src = 'remote') {
 
             $result = $transfer->retrieveAccount($accountId);
 
@@ -209,6 +214,8 @@ switch ($c) {
             foreach ($parms as $k => $v) {
                 $str .= $k . '=' . $v . '<br/>';
             }
+        } else {
+            $str = "Source for search not found: " . $src;
         }
 
         $events['data'] = $str;

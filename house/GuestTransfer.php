@@ -103,7 +103,7 @@ function searchVisits(\PDO $dbh, $start, $end) {
 
     $uS = Session::getInstance();
     $whereClause = " DATE(`Payment Date`) >= DATE('$start') and DATE(`Payment Date`) <= DATE('$end') ";
-
+    $rows = array();
 
     $stmt = $dbh->query("SELECT
     s.idVisit,
@@ -123,7 +123,6 @@ WHERE
 	s.Status = 'co' AND s.On_Leave = 0 AND v.Recorded = 0
     AND DATE(s.Span_End_Date) >= DATE('$start') and DATE(s.Span_End_Date) <= DATE('$end')
 GROUP BY s.idVisit, s.idName");
-    $rows = array();
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -245,7 +244,6 @@ $start = '';
 $end = '';
 $errorMessage = '';
 $calSelection = '19';
-$transferIds = [];
 
 
 $monthArray = array(
@@ -340,7 +338,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
         // Get HHK records result table.
         $results = getPeopleReport($dbh, $start, $end, FALSE);
         $dataTable = $results['mkup'];
-        $transferIds = $results['xfer'];
 
 
         // Create settings markup
@@ -485,7 +482,6 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
             </div>
         </div>
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
-        <input id='htransferIds' type="hidden" value='<?php echo json_encode($transferIds); ?>'/>
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>

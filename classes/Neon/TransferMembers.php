@@ -139,7 +139,7 @@ class TransferMembers {
      * @return string
      * @throws RuntimeException
      */
-    public function updateNeonAccount(\PDO $dbh, $accountData, $idName) {
+    public function updateNeonAccount(\PDO $dbh, $accountData, $idName, $extraSourceCols = []) {
 
         if ($idName < 1) {
             throw new RuntimeException('HHK Member Id not specified: ' . $idName);
@@ -147,7 +147,7 @@ class TransferMembers {
 
 
         // Get member data record
-        $r = $this->loadSourceDB($dbh, $idName);
+        $r = $this->loadSourceDB($dbh, $idName, $extraSourceCols);
 
 
         if (is_null($r)) {
@@ -179,7 +179,7 @@ class TransferMembers {
         $paramStr = $this->fillIndividualAccount($r);
 
         // Custom Parameters
-        $paramStr .= $this->fillCustomFields($r);
+        $paramStr .= $this->fillCustomFields($r, $unwound);
 
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
@@ -485,30 +485,42 @@ class TransferMembers {
         $replys = array();
         $this->memberReplies = array();
         $idMap = array();
-        $mappedItems = array();
-        $whereClause = '';
 
-    $f['Result'] = "Not yet implemented.";
-    $replys[] = $f;
-    return $replys;
-
-        if ($start != '') {
-            $whereClause = " and DATE(`date`) >= DATE('$start') ";
+        if ($start == '') {
+            $f['Result'] = "The start date is missing.";
+            $replys[] = $f;
+            return $replys;
         }
 
-        if ($end != '') {
-            $whereClause .= " and DATE(`date`) <= DATE('$end') ";
+        if ($end == '') {
+            $end = date('Y-m-d');
         }
-
-        // Read visits from db
-
 
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
 
 
-        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+        // Read visits from db
+        $stmt = $dbh->query("SELECT
+    s.idVisit,
+	s.idName AS `hhkId`,
+    n.External_Id AS `accountId`,
+    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Stay Start Date`,
+    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `Stay End Date`,
+    sum((to_days(ifnull(`s`.`Span_End_Date`, now())) - to_days(`s`.`Span_Start_Date`))) AS `Nite_Counter`
+FROM
+	stays s
+		LEFT JOIN
+	visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+		LEFT JOIN
+	`name` n on s.idName = n.idName
+WHERE
+	s.Status = 'co' AND s.On_Leave = 0 AND v.Recorded = 0
+    AND DATE(s.Span_End_Date) >= DATE('$start') and DATE(s.Span_End_Date) <= DATE('$end')
+GROUP BY s.idVisit, s.idName");
 
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             // Is the account defined?
             if ($r['accountId'] == '' && isset($idMap[$r['hhkId']])) {
@@ -544,12 +556,23 @@ class TransferMembers {
             }
 
             // Write the visit to Neon
+            $this->updateVisitParms($dbh, $r);
 
 
             $replys[] = $f;
         }
 
         return $replys;
+    }
+
+    protected function updateVisitParms(\PDO $dbh, $r) {
+
+        // Retrieve the Account
+        $result = $this->retrieveAccount($r['accountId']);
+
+        $updateResult = $this->updateNeonAccount($dbh, $result, $id, );
+
+
     }
 
 
@@ -947,7 +970,7 @@ class TransferMembers {
         }
     }
 
-    protected function fillCustomFields($r) {
+    protected function fillCustomFields($r, $origValues = array()) {
 
         $customParamStr = '';
         $base = 'individualAccount.customFieldDataList.customFieldData.';
@@ -955,6 +978,7 @@ class TransferMembers {
         foreach ($this->customFields as $k => $v) {
 
             if (isset($r[$k]) && $r[$k] != '') {
+                // We have this custom field.
 
                 $cparam = array(
                     $base . 'fieldId' => $v,
@@ -962,9 +986,39 @@ class TransferMembers {
                     $base . 'fieldValue' => $r[$k]
                 );
 
-                $customParamStr .= '&' . http_build_query($cparam);
+            } else {
+                // We don't have the custom field, see if one exists in Neon and if so, copy it.
+
+                // find custom field index from neon
+                $condition = TRUE;
+                $index = 0;
+                while ($condition) {
+
+                    if (isset($origValues["customFieldDataList.customFieldData.$index.fieldId"])) {
+
+                        // Is this my field Id?
+                        if ($origValues["customFieldDataList.customFieldData.$index.fieldId"] == $k) {
+                            // Found the given custom field
+                            $cparam = array(
+                                $base . 'fieldId' => $v,
+                                $base . 'fieldOptionId' => '',
+                                $base . 'fieldValue' => $origValues["customFieldDataList.customFieldData.$index.fieldValue"]
+                                );
+
+                            $condition = FALSE;
+                        }
+
+                    } else {
+                        // End of custom field value pairs
+                        $condition = FALSE;
+                    }
+
+                    $index++;
+                }
 
             }
+
+            $customParamStr .= '&' . http_build_query($cparam);
         }
 
         return $customParamStr;
@@ -1105,7 +1159,7 @@ class TransferMembers {
 
     }
 
-    public function loadSourceDB(\PDO $dbh, $idName) {
+    public function loadSourceDB(\PDO $dbh, $idName, $extraSourceCols = []) {
 
         $parm = intval($idName, 10);
 
@@ -1121,6 +1175,12 @@ class TransferMembers {
                 $rows[0]['individualType.id2'] = '';
             }   else {
                 $rows[0]['No Data'] = '';
+            }
+
+            if (count($extraSourceCols) > 0) {
+                foreach ($extraSourceCols as $k => $v) {
+                    $rows[0][$k] = $v;
+                }
             }
 
             return $rows[0];

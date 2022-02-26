@@ -124,10 +124,10 @@ function transferRemote(transferIds) {
 
 }
 
-function transferPayments($btn, start, end) {
+function transferData($btn, start, end, command) {
 
     var parms = {
-        cmd: 'payments',
+        cmd: command,
         st: start,
         en: end
     };
@@ -171,52 +171,6 @@ function transferPayments($btn, start, end) {
     });
 }
 
-function transferVisits($btn, start, end) {
-
-    var parms = {
-        cmd: 'visits',
-        st: start,
-        en: end
-    };
-
-    var posting = $.post('ws_tran.php', parms);
-
-    posting.done(function(incmg) {
-        $btn.val('Transfer Visits');
-
-        if (!incmg) {
-            alert('Bad Reply from HHK Web Server');
-            return;
-        }
-
-        try {
-            incmg = $.parseJSON(incmg);
-        } catch (err) {
-            alert('Bad JSON Encoding');
-            return;
-        }
-
-        if (incmg.error) {
-            if (incmg.gotopage) {
-                window.open(incmg.gotopage, '_self');
-            }
-            // Stop Processing and return.
-            flagAlertMessage(incmg.error, true);
-            return;
-        }
-
-        $('div#retrieve').empty();
-
-        if (incmg.data) {
-            $('#divTable').empty().append($(incmg.data)).show();
-        }
-
-        if (incmg.members) {
-            $('#divMembers').empty().append($(incmg.members)).show();
-        }
-
-    });
-}
 
 function getRemote(item, source) {
     $('div#printArea').hide();
@@ -290,7 +244,6 @@ function getRemote(item, source) {
 
 $(document).ready(function() {
     var makeTable = $('#hmkTable').val();
-    var transferIds = $.parseJSON($('#htransferIds').val());
     var start = $('#hstart').val();
     var end = $('#hend').val();
     var dateFormat = $('#hdateFormat').val();
@@ -301,6 +254,7 @@ $(document).ready(function() {
         $("div#printArea").printArea();
     });
 
+	// Retrieve HHK Records
     if (makeTable === '1') {
         $('div#printArea').show();
         $('#divPrintButton').show();
@@ -335,6 +289,7 @@ $(document).ready(function() {
             transferRemote(txIds);
         });
 
+	// Retrieve HHK Payments
     } else if (makeTable === '2') {
 
         $('div#printArea').show();
@@ -362,9 +317,10 @@ $(document).ready(function() {
             }
             $(this).val('Transferring ...');
 
-            transferPayments($(this), start, end);
+            transferData($(this), start, end, 'payments');
         });
-        
+
+    // Retrieve HHK Visits
     } else if (makeTable === '3') {
 
         $('div#printArea').show();
@@ -374,12 +330,12 @@ $(document).ready(function() {
         $('#divMembers').empty();
 
         $('#tblrpt').dataTable({
-//            'columnDefs': [
-//                {'targets': [4, 5],
-//                 'type': 'date',
-//                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-//                }
-//            ],
+            'columnDefs': [
+                {'targets': [4, 5],
+                 'type': 'date',
+                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+                }
+            ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
@@ -392,7 +348,7 @@ $(document).ready(function() {
             }
             $(this).val('Transferring ...');
 
-            transferVisits($(this), start, end);
+            transferData($(this), start, end, 'visits');
         });
     }
 
