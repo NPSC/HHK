@@ -486,6 +486,12 @@ class TransferMembers {
         $this->memberReplies = array();
         $idMap = array();
 
+// TEmporary Block.
+        $f['Result'] = "Not Implemented Yets";
+        $replys[] = $f;
+        return $replys;
+//
+
         if ($start == '') {
             $f['Result'] = "The start date is missing.";
             $replys[] = $f;
@@ -496,17 +502,13 @@ class TransferMembers {
             $end = date('Y-m-d');
         }
 
-        // Log in with the web service
-        $this->openTarget($this->userId, $this->password);
-
-
         // Read visits from db
         $stmt = $dbh->query("SELECT
     s.idVisit,
 	s.idName AS `hhkId`,
     n.External_Id AS `accountId`,
-    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Stay Start Date`,
-    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `Stay End Date`,
+    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
+    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
     sum((to_days(ifnull(`s`.`Span_End_Date`, now())) - to_days(`s`.`Span_Start_Date`))) AS `Nite_Counter`
 FROM
 	stays s
@@ -521,6 +523,7 @@ GROUP BY s.idVisit, s.idName");
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $f = array();
 
             // Is the account defined?
             if ($r['accountId'] == '' && isset($idMap[$r['hhkId']])) {
@@ -556,7 +559,7 @@ GROUP BY s.idVisit, s.idName");
             }
 
             // Write the visit to Neon
-            $this->updateVisitParms($dbh, $r);
+            $this->updateVisitParms($dbh, $r, $f);
 
 
             $replys[] = $f;
@@ -565,13 +568,77 @@ GROUP BY s.idVisit, s.idName");
         return $replys;
     }
 
-    protected function updateVisitParms(\PDO $dbh, $r) {
+    protected function updateVisitParms(\PDO $dbh, $r, &$f) {
 
         // Retrieve the Account
-        $result = $this->retrieveAccount($r['accountId']);
+        $origValues = $this->retrieveAccount($r['accountId']);
 
-        $updateResult = $this->updateNeonAccount($dbh, $result, $id, );
+        $startDT = new \DateTime($r['Start_Date']);
+        $endDT = new \DateTime($r['End_Date']);
+        $nites = $r['Nite_Counter'];
 
+        // Check for earliest visit start
+        if (isset($this->customFields['First_Visit'])) {
+
+            $earliestStart = findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['First_Visit']);
+
+            if ($earliestStart !== FALSE && $earliestStart != '') {
+
+                $earlyDT = new \DateTime($earliestStart);
+
+                if ($earlyDT > $startDT) {
+                    $codes['First_Visit'] = $startDT->format('Y-m-d');
+                } else {
+                    $codes['First_Visit'] = $earliestStart;
+                }
+            } else {
+                $codes['First_Visit'] = $startDT->format('Y-m-d');
+            }
+
+            $f['First_Visit'] = $codes['First_Visit'];
+        }
+
+        // Check for latest visit end
+        if (isset($this->customFields['Last_Visit'])) {
+
+            $latestEnd = findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['Last_Visit']);
+
+            if ($latestEnd !== FALSE && $latestEnd != '') {
+
+                $lateDT = new \DateTime($latestEnd);
+
+                if ($lateDT < $endDT) {
+                    $codes['Last_Visit'] = $endDT->format('Y-m-d');
+                }else {
+                    // No change
+                    $codes['Last_Visit'] = $latestEnd;
+                }
+            } else {
+                $codes['Last_Visit'] = $endDT->format('Y-m-d');
+            }
+
+            $f['Last_Visit'] = $codes['Last_Visit'];
+        }
+
+        // Check Nights counter
+        if (isset($this->customFields['Nite_Counter'])) {
+
+            $niteCounter = findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['Nite_Counter']);
+
+            $codes['Nite_Counter'] = $niteCounter + $nites;
+            $f['Nite_Counter'] = $codes['Nite_Counter'];
+         }
+
+
+        // Update with additional customdata.
+         $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes);
+
+        // Update Visit Recorded column in HHK
+         $idVisit = intval($r['idVisit'], 10);
+
+         if ($idVisit > 0) {
+             $dbh->exec("Update visit set Recorded = 1 where idVisit = $idVisit");
+         }
 
     }
 
@@ -644,7 +711,6 @@ GROUP BY s.idVisit, s.idName");
             }
 
 
-
             // Test results
             if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 1 ) {
 
@@ -684,7 +750,7 @@ GROUP BY s.idVisit, s.idName");
 
                 } else {
 
-                    $f['Result'] = 'Account Id is empty.';
+                    $f['Result'] = 'The search results Account Id is empty.';
                 }
 
                 $replys[] = $f;
@@ -989,33 +1055,16 @@ GROUP BY s.idVisit, s.idName");
             } else {
                 // We don't have the custom field, see if one exists in Neon and if so, copy it.
 
-                // find custom field index from neon
-                $condition = TRUE;
-                $index = 0;
-                while ($condition) {
+                $fieldValue = findCustomField($origValues, $base, $v);
 
-                    if (isset($origValues["customFieldDataList.customFieldData.$index.fieldId"])) {
+                if ($fieldValue !== FALSE) {
 
-                        // Is this my field Id?
-                        if ($origValues["customFieldDataList.customFieldData.$index.fieldId"] == $k) {
-                            // Found the given custom field
-                            $cparam = array(
-                                $base . 'fieldId' => $v,
-                                $base . 'fieldOptionId' => '',
-                                $base . 'fieldValue' => $origValues["customFieldDataList.customFieldData.$index.fieldValue"]
-                                );
-
-                            $condition = FALSE;
-                        }
-
-                    } else {
-                        // End of custom field value pairs
-                        $condition = FALSE;
-                    }
-
-                    $index++;
+                    $cparam = array(
+                        $base . 'fieldId' => $v,
+                        $base . 'fieldOptionId' => '',
+                        $base . 'fieldValue' => $fieldValue
+                    );
                 }
-
             }
 
             $customParamStr .= '&' . http_build_query($cparam);
@@ -1023,6 +1072,39 @@ GROUP BY s.idVisit, s.idName");
 
         return $customParamStr;
 
+    }
+
+    /**
+     * returns FALSE
+     */
+    protected function findCustomField($origValues, $base, $fieldId) {
+
+        // find custom field index from neon
+        $fieldValue = FALSE;
+        $condition = TRUE;
+        $index = 0;
+
+        while ($condition) {
+
+            if (isset($origValues[$base . $index ."fieldId"])) {
+
+                // Is this my field Id?
+                if ($origValues[$base . $index ."fieldId"] == $fieldId) {
+                    // Found the given custom field
+
+                    $fieldValue = $origValues[$base . $index ."fieldValue"];
+                    $condition = FALSE;
+                }
+
+            } else {
+                // End of custom field value pairs
+                $condition = FALSE;
+            }
+
+            $index++;
+        }
+
+        return $fieldValue;
     }
 
     protected function createAccount(array $r) {
@@ -1166,7 +1248,7 @@ GROUP BY s.idVisit, s.idName");
         if ($parm > 0) {
 
             // Need to lift the most recent hospital stay record for the HHK_ID
-            $stmt = $dbh->query("Select * from vguest_data_neon where HHK_ID = $parm ORDER BY `hs_Timestamp` DESC LIMIT 1");
+            $stmt = $dbh->query("Select * from vguest_data_neon where HHK_ID = $parm");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) > 1) {

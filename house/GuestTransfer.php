@@ -472,14 +472,14 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
                 <div id="divTable">
                     <?php echo $dataTable; ?>
                 </div>
-                <div id="divPrintButton" style="display:none;margin-top:6px;margin-bottom:3px;">
-                    <input id="printButton" value="Print" type="button" />
-                    <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
-                    <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
-                    <input id="btnVisits" value="Transfer Visits" type="button" style="margin-left:2em;"/>
-            	</div>
                 <div id="divMembers"></div>
             </div>
+            <div id="divPrintButton" style="display:none;margin-top:6px;margin-bottom:3px;">
+                <input id="printButton" value="Print" type="button" />
+                <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
+                <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
+                <input id="btnVisits" value="Transfer Visits" type="button" style="margin-left:2em;"/>
+        	</div>
         </div>
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>

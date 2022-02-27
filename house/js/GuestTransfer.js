@@ -1,3 +1,5 @@
+// GuestTransfer.js
+//
 function updateLocal(id) {
     var postUpdate = $.post('ws_tran.php', {cmd:'rmvAcctId', id:id});
 
@@ -135,7 +137,7 @@ function transferData($btn, start, end, command) {
     var posting = $.post('ws_tran.php', parms);
 
     posting.done(function(incmg) {
-        $btn.val('Transfer Payments');
+        $btn.val('Transfer ' + command);
 
         if (!incmg) {
             alert('Bad Reply from HHK Web Server');
@@ -256,6 +258,7 @@ $(document).ready(function() {
 
 	// Retrieve HHK Records
     if (makeTable === '1') {
+	
         $('div#printArea').show();
         $('#divPrintButton').show();
         $('#btnPay').hide();
