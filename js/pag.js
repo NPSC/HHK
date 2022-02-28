@@ -288,7 +288,7 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
-										
+										$('div#OTPSecret').text(data.secret);
 										$('div#qrcode').html('<img src="'+ data.url + '">');
 										$('div#otpForm').show();
 										$('button#genSecret').text("Regenerate QR Code");
@@ -339,8 +339,11 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
+										$("div#otpForm").hide();
+										
+										$("p#backupCodes").html(data.backupCodes.join("<br>"));
+										$("div#backupCodeDiv").show();
 										flagAlertMessage("Two Step Verification enabled successfully", 'success');
-										$('div#dchgPw').dialog('close');
 									}
 								}
 							});

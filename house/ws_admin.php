@@ -5,7 +5,8 @@ use HHK\SysConst\WebPageCode;
 use HHK\Member\MemberSearch;
 use HHK\Member\Relation\AbstractRelation;
 use HHK\sec\UserClass;
-use HHK\sec\GoogleAuthenticator;
+use HHK\sec\MFA\GoogleAuthenticator;
+use HHK\sec\MFA\Backup;
 
 
 /**
@@ -155,9 +156,9 @@ switch ($c) {
             $events = searchZip($dbh, $zip);
         }
         break;
-        
+
     case 'getcounties':
-        
+
         if(isset($_GET['state'])) {
             $state = filter_var($_GET['state'], FILTER_SANITIZE_STRING);
             $events = getCounties($dbh, $state);
@@ -181,7 +182,7 @@ switch ($c) {
 
     case "chgquestions":
         $questions = array();
-        
+
         if (isset($_POST["q1"]) && isset($_POST["a1"]) && isset($_POST["aid1"])) {
             $questions[] = [
                 'idQuestion'=>filter_var($_POST["q1"], FILTER_SANITIZE_STRING),
@@ -189,7 +190,7 @@ switch ($c) {
                 'Answer'=>filter_var($_POST["a1"], FILTER_SANITIZE_STRING)
             ];
         }
-        
+
         if (isset($_POST["q2"]) && isset($_POST["a2"]) && isset($_POST["aid2"])) {
             $questions[] = [
                 'idQuestion'=>filter_var($_POST["q2"], FILTER_SANITIZE_STRING),
@@ -197,7 +198,7 @@ switch ($c) {
                 'Answer'=>filter_var($_POST["a2"], FILTER_SANITIZE_STRING)
             ];
         }
-        
+
         if (isset($_POST["q3"]) && isset($_POST["a3"]) && isset($_POST["aid3"])) {
             $questions[] = [
                 'idQuestion'=>filter_var($_POST["q3"], FILTER_SANITIZE_STRING),
@@ -205,32 +206,32 @@ switch ($c) {
                 'Answer'=>filter_var($_POST["a3"], FILTER_SANITIZE_STRING)
             ];
         }
-        
+
         $events = changeQuestions($dbh, $questions);
-        
+
         break;
-        
+
     case "gen2fa":
         $events = generateTwoFA($uS->username);
         break;
-        
+
     case "get2fa":
         $events = getTwoFA($dbh, $uS->username);
         break;
-        
+
     case "save2fa":
-        
+
         if (isset($_POST["secret"])) {
             $secret = filter_var($_POST["secret"], FILTER_SANITIZE_STRING);
         }
-        
+
         if (isset($_POST["OTP"])) {
             $otp = filter_var($_POST["OTP"], FILTER_SANITIZE_STRING);
         }
-        
+
         $events = saveTwoFA($dbh, $secret, $otp);
         break;
-        
+
     default:
         $events = array("error" => "Bad Command");
 }
@@ -283,9 +284,9 @@ function getCounties(PDO $dbh, $state) {
     $stmt = $dbh->prepare($query);
     $stmt->execute(array(':state'=>strtoupper($state)));
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     $events = ['success'=>$rows];
-    
+
     return $events;
 }
 
@@ -355,57 +356,69 @@ function changePW(\PDO $dbh, $oldPw, $newPw, $uname, $id) {
 }
 
 function changeQuestions(\PDO $dbh, array $questions) {
-    
+
     $event = array();
-    
+
     $u = new UserClass();
-    
+
     if ($u->updateSecurityQuestions($dbh, $questions) === TRUE) {
         $event = array('success'=>'User Security Questions Updated.');
     } else {
         $event = array('warning'=>$u->logMessage);
     }
-    
+
     return $event;
 }
 
 function generateTwoFA($uname){
     try{
-        $ga = new GoogleAuthenticator();
+        $ga = new GoogleAuthenticator(array('User_Name'=>$uname, 'totpSecret'=>''));
         $uS = Session::getInstance();
-    
-        $secret = $ga->createSecret();
-        $qrCodeUrl = $ga->getQRCodeImage($uname, $secret, "HHK - " . $uS->siteName);
-        
-        $event = array('success'=>true, 'secret'=>$secret, 'url'=> $qrCodeUrl);
+
+        $ga->createSecret();
+        $qrCodeUrl = $ga->getQRCodeImage("HHK - " . $uS->siteName);
+
+        $event = array('success'=>true, 'secret'=>$ga->getSecret(), 'url'=> $qrCodeUrl);
     }catch(Exception $e){
         $event = array('status'=>"failed", 'msg'=>$e->getMessage());
     }
-    
+
     return $event;
 }
 
 function saveTwoFA(\PDO $dbh, $secret, $OTP){
-    $u = new UserClass();
-    
-    if($u->saveTwoFactorSecret($dbh, $secret, $OTP)){
-        $event = array('success'=>'Two Factor Authentication enabled');
-    } else {
-        $event = array('error'=>$u->logMessage);
+    $uS = Session::getInstance();
+
+    $ga = new GoogleAuthenticator(array('User_Name'=>$uS->username, 'totpSecret'=>$secret));
+    $backup = new Backup(array('User_Name'=>$uS->username, 'backupSecret'=>''));
+    $backup->createSecret();
+
+    if($ga->verifyCode($OTP) == false){
+        $events = array('error'=>"One Time Code is invalid");
+    }else{
+
+        try{
+            if($backup->saveSecret($dbh) && $ga->saveSecret($dbh)){
+                $events = array('success'=>'Two Factor Authentication enabled', 'backupCodes'=>$backup->getCode());
+            }else{
+                $events = array('error'=>"Unable to enable Two factor Authentication");
+            }
+        }catch(Exception $e){
+            $events = array('error'=>'Error: ' . $e->getMessage());
+        }
     }
-    
-    return $event;
+
+    return $events;
 }
 
 function getTwoFA(\PDO $dbh, $username){
-    $ga = new GoogleAuthenticator();
     $uS = Session::getInstance();
-    
+
     $u = new UserClass();
     $user = $u->getUserCredentials($dbh, $username);
-    if($user['OTP'] && isset($user['OTPcode']) && $user['OTPcode'] != ''){
-        $secret = $user['OTPcode'];
-        $qrCodeUrl = $ga->getQRCodeImage($username, $secret, "HHK - " . $uS->siteName);
+    if($user['totpSecret'] != ''){
+        $ga = new GoogleAuthenticator($user);
+        $qrCodeUrl = $ga->getQRCodeImage("HHK - " . $uS->siteName);
         $event = array('success'=>true, 'url'=>$qrCodeUrl);
     }else{
         $event = array('error'=>'Two Factor authentication not configured');

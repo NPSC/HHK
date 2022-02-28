@@ -4,6 +4,7 @@ namespace HHK\sec;
 use HHK\SysConst\WebRole;
 use HHK\Tables\WebSec\{W_auth_ipRS, W_user_answersRS};
 use HHK\Tables\EditRS;
+use HHK\sec\MFA\GoogleAuthenticator;
 
 /**
  * UserClass.php
@@ -67,14 +68,14 @@ class UserClass
                 $success = false;
 
                 //if OTP is required
-                if(!$r['OTP'] == '1' || $checkOTP == false){
+                if($r['totpSecret'] == '' || $checkOTP == false){
                     $success = true;
-                }else if($r['OTP'] && $r['OTPcode'] != '' && $otp == ''){
+                }else if($r['totpSecret'] !== '' && $otp == ''){
                     $this->logMessage = "OTPRequired";
                     return FALSE;
-                }else if($otp != '' && isset($r['OTPcode'])){
-                    $ga = new GoogleAuthenticator();
-                    if($ga->verifyCode($r['OTPcode'], $otp) == true){
+                }else if($otp != '' && $r['totpSecret'] !== ''){
+                    $ga = new GoogleAuthenticator($r);
+                    if($ga->verifyCode($otp) == true){
                         $success = true;
                     }else{
                         $success = false;
@@ -406,7 +407,7 @@ class UserClass
     public static function hasTOTP(\PDO $dbh, $uS)
     {
         $u = self::getUserCredentials($dbh, $uS->username);
-        if ($u['OTP']) {
+        if ($u['totpSecret'] !== '') {
             return true;
         }
 
@@ -522,11 +523,17 @@ class UserClass
             }
 
             $mkup .= '
+                    <div style="display:none;" id="OTPSecret"></div>
                     <div id="qrcode" style="margin: 1em 0;"></div>
                     <div id="otpForm" style="display: none;">
                         <label for"setupOTP" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
                         <input type="text" id="setupOTP" size="10">
                         <button id="submitSetupOTP" style="margin-left: 1em;">Submit Code</button>
+                    </div>
+                    <div id="backupCodeDiv" style="display: none;">
+                        <h3>Backup Codes</h3>
+                        <p>If you are ever unable to access your Authenticator app, you can use one of the following one time codes to log in. Each code can only be used once.</p>
+                        <p id="backupCodes"></p>
                     </div>
                     </div>
                     </div>
@@ -782,7 +789,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
     public function saveTwoFactorSecret(\PDO $dbh, $secret = '', $OTP = ''){
         $uS = Session::getInstance();
 
-        $ga = new GoogleAuthenticator();
+        $ga = new GoogleAuthenticator(array('User_Name'=>$uS->username, 'totpSecret'=>$secret));
 
         if($ga->verifyCode($secret, $OTP) == false){
             $this->logMessage = "One Time Code is invalid";
@@ -808,7 +815,6 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
     }
 
     public function disableTwoFactor(\PDO $dbh, $username){
-        $uS = Session::getInstance();
 
         if($username){
             $query = "update w_users set OTP = 0, OTPCode = '', Last_Updated = now() where User_Name = :username and Status='a';";
