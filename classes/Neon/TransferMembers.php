@@ -487,7 +487,7 @@ class TransferMembers {
         $idMap = array();
 
 // TEmporary Block.
-        $f['Result'] = "Not Implemented Yets";
+        $f['Result'] = "Not Implemented Yet.";
         $replys[] = $f;
         return $replys;
 //

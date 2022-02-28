@@ -63,6 +63,7 @@ $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 $labels = Labels::getLabels();
 
+
 function getPaymentReport(\PDO $dbh, $start, $end) {
 
     $uS = Session::getInstance();
@@ -78,6 +79,10 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
     $stmt = $dbh->query("Select * from `vneon_payment_display` where $whereClause");
     $rows = array();
+
+    if ($stmt->rowCount() == 0) {
+        return FALSE;
+    }
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -124,21 +129,19 @@ WHERE
     AND DATE(s.Span_End_Date) >= DATE('$start') and DATE(s.Span_End_Date) <= DATE('$end')
 GROUP BY s.idVisit, s.idName");
 
+    if ($stmt->rowCount() == 0) {
+        return FALSE;
+    }
+
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
         $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], array('href'=>'GuestEdit.php?id=' . $r['HHK Id']));
-
-        if (isset($r['Payment Date']) && $r['Payment Date'] != '') {
-            $r['Payment Date'] = date('c', strtotime($r['Payment Date']));
-        }
-
 
         $rows[] = $r;
 
     }
 
     return CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
-
 }
 
 function getPeopleReport(\PDO $dbh, $start, $end, $extIdFlag = FALSE) {
@@ -196,6 +199,10 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
 
     $stmt = $dbh->query($query);
 
+    if ($stmt->rowCount() == 0) {
+        return FALSE;
+    }
+
     $rows = array();
     $firstRow = TRUE;
     $hdr = array();
@@ -244,6 +251,7 @@ $start = '';
 $end = '';
 $errorMessage = '';
 $calSelection = '19';
+$noRecordsMsg = '';
 
 
 $monthArray = array(
@@ -337,41 +345,57 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
 
         // Get HHK records result table.
         $results = getPeopleReport($dbh, $start, $end, FALSE);
-        $dataTable = $results['mkup'];
+
+        if ($results === FALSE) {
+
+            $noRecordsMsg = "No records found.";
+
+        } else {
+
+            $dataTable = $results['mkup'];
 
 
-        // Create settings markup
-        $sTbl = new HTMLTable();
-        $sTbl->addBodyTr(HTMLTable::makeTh('Guest Transfer Timeframe', array('colspan'=>'4')));
-        $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-        $settingstable = $sTbl->generateMarkup(array('style'=>'float:left;'));
+            // Create settings markup
+            $sTbl = new HTMLTable();
+            $sTbl->addBodyTr(HTMLTable::makeTh('Guest Transfer Timeframe', array('colspan'=>'4')));
+            $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+            $settingstable = $sTbl->generateMarkup(array('style'=>'float:left;'));
 
-        // Create search criteria markup
-        $searchCriteria = TransferMembers::getSearchFields($dbh);
+            // Create search criteria markup
+            $searchCriteria = TransferMembers::getSearchFields($dbh);
 
-        $tr = '';
-        foreach ($searchCriteria as $s) {
-            $tr .= HTMLTable::makeTd($s);
+            $tr = '';
+            foreach ($searchCriteria as $s) {
+                $tr .= HTMLTable::makeTd($s);
+            }
+
+            $scTbl = new HTMLTable();
+            $scTbl->addHeaderTr(HTMLTable::makeTh($serviceName . ' Search Criteria', array('colspan'=>count($searchCriteria))));
+            $scTbl->addBodyTr($tr);
+            $searchTabel = $scTbl->generateMarkup(array('style'=>'float:left; margin-left:2em;'));
+
+            $mkTable = 1;
         }
-
-        $scTbl = new HTMLTable();
-        $scTbl->addHeaderTr(HTMLTable::makeTh($serviceName . ' Search Criteria', array('colspan'=>count($searchCriteria))));
-        $scTbl->addBodyTr($tr);
-        $searchTabel = $scTbl->generateMarkup(array('style'=>'float:left; margin-left:2em;'));
-
-        $mkTable = 1;
 
     } else if (isset($_POST['btnGetPayments'])) {
 
         $dataTable = getPaymentReport($dbh, $start, $end);
 
-        $mkTable = 2;
+        if ($dataTable === FALSE) {
+            $noRecordsMsg = "No records found.";
+        } else {
+            $mkTable = 2;
+        }
 
     } else if (isset($_POST['btnGetVisits'])) {
 
         $dataTable = searchVisits($dbh, $start, $end);
 
-        $mkTable = 3;
+        if ($dataTable === FALSE) {
+            $noRecordsMsg = "No records found.";
+        } else {
+            $mkTable = 3;
+        }
 
     }
 
@@ -421,7 +445,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
             <h2><?php echo $wInit->pageHeading; ?>  <span style="font-size: .7em;"><a href="SetupNeonCRM.htm" target="_blank">(Instructions)</a></span></h2>
             <a id='aLoginLink' href="<?php echo $wsLink; ?>" style="float:left;margin-top:15px;margin-left:5px;margin-right:5px;padding-left:5px;padding-right:5px;" title="Click to log in."><span style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></span></a>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display:none; clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
                    <table style="clear:left;float: left;">
                         <tr>
@@ -457,13 +481,13 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
                     </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records"/></td>
-                            <td><input type="submit" name="btnGetPayments" id="btnGetPayments" value="Get HHK Payments"/></td>
-							<td><input type="submit" name="btnGetVisits" id="btnGetVisits" value="Get HHK Visits"/></td>
+                            <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
+                            <input type="submit" name="btnGetPayments" id="btnGetPayments" value="Get HHK Payments" style="margin-left:20px;"/>
+							<input type="submit" name="btnGetVisits" id="btnGetVisits" value="Get HHK Visits" style="margin-left:20px;"/></td>
                         </tr>
                     </table>
                 </form>
-                <div id="retrieve"></div>
+                <div id="retrieve"><?php echo $noRecordsMsg; ?></div>
             </div>
             <div style="clear:both;"></div>
 
@@ -474,7 +498,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
                 </div>
                 <div id="divMembers"></div>
             </div>
-            <div id="divPrintButton" style="display:none;margin-top:6px;margin-bottom:3px;">
+            <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;">
                 <input id="printButton" value="Print" type="button" />
                 <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
