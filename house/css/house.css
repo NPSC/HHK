@@ -559,6 +559,10 @@ div#referralTabs ul>li.ui-state-active .ui-icon {
     background-color: #f8d7da;
 }
 
+.hhk-phemtabs {
+	min-width: 220px;
+}
+
 div.dt-buttons .dt-button:hover>span {
 	background-color: rgba(0, 0, 0, 0) !important;	
 }
@@ -567,6 +571,7 @@ div.dt-buttons .dt-button:hover>span {
 .hhk-flex {
 	display: flex;
 	align-items: flex-start;
+	flex-flow: wrap;
 }
 
 .hhk-overflow-x {
