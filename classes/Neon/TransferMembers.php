@@ -171,7 +171,12 @@ class TransferMembers {
         $this->fillPcName($r, $param, $unwound);
 
         // Address
-        $this->fillPcAddr($r, $param, $unwound);
+        if (isset($r['addressLine1']) && $r['addressLine1'] != '') {
+
+            $r['isPrimaryAddress'] = 'true';
+            $this->fillPcAddr($r, $param, $unwound);
+
+        }
 
         // Other crap
         $this->fillOther($r, $param, $unwound);
@@ -487,9 +492,9 @@ class TransferMembers {
         $idMap = array();
 
 // TEmporary Block.
-        $f['Result'] = "Not Implemented Yet.";
-        $replys[] = $f;
-        return $replys;
+//        $f['Result'] = "Not Implemented Yet.";
+//        $replys[] = $f;
+//        return $replys;
 //
 
         if ($start == '') {
@@ -523,7 +528,7 @@ GROUP BY s.idVisit, s.idName");
 
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $f = array();
+             $f = array();
 
             // Is the account defined?
             if ($r['accountId'] == '' && isset($idMap[$r['hhkId']])) {
@@ -580,7 +585,7 @@ GROUP BY s.idVisit, s.idName");
         // Check for earliest visit start
         if (isset($this->customFields['First_Visit'])) {
 
-            $earliestStart = findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['First_Visit']);
+            $earliestStart = $this->findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['First_Visit']);
 
             if ($earliestStart !== FALSE && $earliestStart != '') {
 
@@ -601,7 +606,7 @@ GROUP BY s.idVisit, s.idName");
         // Check for latest visit end
         if (isset($this->customFields['Last_Visit'])) {
 
-            $latestEnd = findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['Last_Visit']);
+            $latestEnd = $this->findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['Last_Visit']);
 
             if ($latestEnd !== FALSE && $latestEnd != '') {
 
@@ -623,7 +628,7 @@ GROUP BY s.idVisit, s.idName");
         // Check Nights counter
         if (isset($this->customFields['Nite_Counter'])) {
 
-            $niteCounter = findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['Nite_Counter']);
+            $niteCounter = $this->findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['Nite_Counter']);
 
             $codes['Nite_Counter'] = $niteCounter + $nites;
             $f['Nite_Counter'] = $codes['Nite_Counter'];
@@ -1052,10 +1057,12 @@ GROUP BY s.idVisit, s.idName");
                     $base . 'fieldValue' => $r[$k]
                 );
 
+                $customParamStr .= '&' . http_build_query($cparam);
+
             } else {
                 // We don't have the custom field, see if one exists in Neon and if so, copy it.
 
-                $fieldValue = findCustomField($origValues, $base, $v);
+                $fieldValue = $this->findCustomField($origValues, $base, $v);
 
                 if ($fieldValue !== FALSE) {
 
@@ -1064,10 +1071,10 @@ GROUP BY s.idVisit, s.idName");
                         $base . 'fieldOptionId' => '',
                         $base . 'fieldValue' => $fieldValue
                     );
+
+                    $customParamStr .= '&' . http_build_query($cparam);
                 }
             }
-
-            $customParamStr .= '&' . http_build_query($cparam);
         }
 
         return $customParamStr;

@@ -251,5 +251,9 @@ class ConfigureNeon
 
         return $count + $idTypeMap;
     }
+
+    public function getConfigObj() {
+        return $this->wsConfig;
+    }
 }
 

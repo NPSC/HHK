@@ -80,14 +80,14 @@ if (isset($_POST["btnLabelCnf"])) {
     $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }
 
-if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
+if (isset($_POST["btnExtCnf"]) && $serviceFile != '') {
 
     $tabIndex = 7;
 
-    SiteConfig::saveConfig($dbh, $wsConfig, $_POST, $uS->username);
 
     try {
-        $confNeon = new ConfigureNeon($wsConfig);
+        $confNeon = new ConfigureNeon(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
+        SiteConfig::saveConfig($dbh, $confNeon->getConfigObj(), $_POST, $uS->username);
         $confNeon->saveConfig($dbh);
 
     } catch (UploadException $ex) {
