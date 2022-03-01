@@ -2281,7 +2281,6 @@ CREATE TABLE if not exists `w_users` (
   `default2Factor` VARCHAR(4) NULL,
   `totpSecret` VARCHAR(45) NOT NULL DEFAULT '',
   `emailSecret` VARCHAR(45) NOT NULL DEFAULT '',
-  `emailCode_created_at` TIMESTAMP NULL,
   `backupSecret` VARCHAR(45) NOT NULL DEFAULT '',
   `pass_rules` BOOL NOT NULL DEFAULT true,
   `PW_Updated_By` VARCHAR(45) NOT NULL DEFAULT '',

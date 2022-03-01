@@ -2,8 +2,10 @@
 
 namespace HHK\sec\MFA;
 
+use HHK\sec\Session;
 use HHK\sec\UserClass;
 use chillerlan\QRCode\QRCode;
+use HHK\HTMLControls\HTMLContainer;
 
 /**
  * PHP Class for handling Google Authenticator 2-factor authentication.
@@ -20,7 +22,7 @@ use chillerlan\QRCode\QRCode;
 class GoogleAuthenticator extends AbstractMultiFactorAuth
 {
 
-    protected $_codeLength = 6;
+    protected $discrepancy = 1; //code validity time in 30sec increments (1 = 30sec, 10 = 5min)
 
     /**
      * @param array $userAr
@@ -40,47 +42,12 @@ class GoogleAuthenticator extends AbstractMultiFactorAuth
             ));
 
             if ($stmt->rowCount() == 1) {
-                $this->insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
+                UserClass::insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
             }
             return true;
         }else{
             return false;
         }
-    }
-
-    /**
-     * Calculate the code, with given secret and point in time.
-     *
-     * @param int|null $timeSlice
-     *
-     * @return string
-     */
-    public function getCode($timeSlice = null)
-    {
-        if ($timeSlice === null) {
-            $timeSlice = floor(time() / 30);
-        }
-
-        $secretkey = $this->_base32Decode($this->secret);
-
-        // Pack time into binary string
-        $time = chr(0) . chr(0) . chr(0) . chr(0) . pack('N*', $timeSlice);
-        // Hash it with users secret key
-        $hm = hash_hmac('SHA1', $time, $secretkey, true);
-        // Use last nipple of result as index/offset
-        $offset = ord(substr($hm, - 1)) & 0x0F;
-        // grab 4 bytes of the result
-        $hashpart = substr($hm, $offset, 4);
-
-        // Unpak binary value
-        $value = unpack('N', $hashpart);
-        $value = $value[1];
-        // Only 32 bits
-        $value = $value & 0x7FFFFFFF;
-
-        $modulo = pow(10, $this->_codeLength);
-
-        return str_pad($value % $modulo, $this->_codeLength, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -101,44 +68,63 @@ class GoogleAuthenticator extends AbstractMultiFactorAuth
         return (new QRCode)->render($data);
     }
 
-    /**
-     * Check if the code is correct.
-     *
-     * @param string $code
-     *
-     * @return bool
-     */
-    public function verifyCode($code): bool
-    {
-        $discrepancy = 1;
-        $currentTimeSlice = floor(time() / 30);
+    public function getEditMarkup(){
+        $uS = Session::getInstance();
 
-        if (strlen($code) != 6) {
-            return false;
+        $mkup = '';
+
+        if($this->secret != ''){ //if configured
+            $mkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('button', "Show QR Code", array("id"=>'getTOTPSecret')) .
+                HTMLContainer::generateMarkup('button', "Generate new QR Code", array('id'=>'genTOTPSecret'))
+            , array('class'=>'my-3', 'style'=>'text-align:center'));
+
+        }else{
+
+            $mkup = '<div id="TwoFactorHelp" style="margin: 0.5em;">
+            <h3>How it works</h3>
+            <div>
+            <p>Once set up, you will be asked for a temporary code after entering your password when logging in. This temporary code can be found in the Authenticator browser extension configured during set up. These codes change every 30 seconds, so you\'ll need a new one each time you login.</p>
+                            <p><strong>Follow these steps to configure Two Step Verification</strong></p>
+                            <ol>
+                                <li>Install the Authenticator browser extension<br><a href="https://authenticator.cc/" target="_blank" class="button">Download here</a></li>
+                                <li>Click "Enable Two Step Verification" below</li>
+                                <li>Click the Authenticator icon <img src="' . $uS->resourceURL . '/images/authenticator.png"> at the top right corner of your browser</li>
+                                <li>Click the Scan QR Code icon <img src="' . $uS->resourceURL . '/images/authenticator-scan-qr.png"></li>
+                                <li>Click and drag from the upper left to the lower right of the QR code generated in Step 2 to select it</li>
+                                <li>If you see a message that says "(user) has been added.", then you have successfully configured the Authenticator extension</li>
+                                <li>Click the code shown in the Authenticator extension to copy it</li>
+                                <li>Click inside the text box below the QR code and press Ctrl-V to paste the code.</li>
+                                <li>Click "Submit Code"</li>
+                                <li>Two Step Verification is now enabled</li>
+                            </ol>
+                        </div>
+                    </div>
+
+            ';
+
         }
 
-        for ($i = - $discrepancy; $i <= $discrepancy; ++ $i) {
-            $calculatedCode = $this->getCode($this->secret, $currentTimeSlice + $i);
-            if ($this->timingSafeEquals($calculatedCode, $code)) {
-                return true;
-            }
-        }
+        $mkup .= HTMLContainer::generateMarkup('div',
+            HTMLContainer::generateMarkup('button', "Enable Authenticator 2 Factor Verification", array('id'=>'genTOTPSecret'))
+            , array('class'=>'my-3', 'style'=>'text-align: center;'));
 
-        return false;
-    }
+        $mkup .= '
+                    <div id="qrcode" style="margin: 1em 0; text-align:center;"></div>
+                    <form class="otpForm" style="display: none;">
+                        <label for"otp" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
+                        <input type="text" name="otp" size="10">
+                        <input type="hidden" name="secret">
+                        <input type="hidden" name="cmd" value="save2fa">
+                        <input type="submit" style="margin-left: 1em;">
+                    </form>
+                    <div id="backupCodeDiv" style="display: none;">
+                        <h3>Backup Codes</h3>
+                        <p class="mx-3">If you are ever unable to access your Authenticator app, you can use one of the following one time codes to log in. Each code can only be used once.</p>
+                        <p class="mx-3" id="backupCodes"></p>
+                    </div>';
 
-    /**
-     * Set the code length, should be >=6.
-     *
-     * @param int $length
-     *
-     * @return GoogleAuthenticator
-     */
-    public function setCodeLength($length)
-    {
-        $this->_codeLength = $length;
-
-        return $this;
+        return $mkup;
     }
 
 }

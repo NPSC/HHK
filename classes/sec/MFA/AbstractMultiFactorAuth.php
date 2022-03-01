@@ -6,6 +6,8 @@ abstract class AbstractMultiFactorAuth {
 
     protected $secret;
     protected $username;
+    protected $_codeLength = 6;
+    protected $discrepancy = 1; //code validity time in 30sec increments (1 = 30sec, 10 = 5min)
 
     /**
      * Generate secret for creating OTPs
@@ -57,14 +59,40 @@ abstract class AbstractMultiFactorAuth {
      */
     public abstract function saveSecret(\PDO $dbh): bool;
 
-    /**
-     * Calculate the code, with given secret.
+        /**
+     * Calculate the code, with given secret and point in time.
      *
      * @param int|null $timeSlice
      *
-     * @return string|array
+     * @return string
      */
-    public abstract function getCode($timeSlice = null);
+    public function getCode($timeSlice = null)
+    {
+        if ($timeSlice === null) {
+            $timeSlice = floor(time() / 30);
+        }
+
+        $secretkey = $this->_base32Decode($this->secret);
+
+        // Pack time into binary string
+        $time = chr(0) . chr(0) . chr(0) . chr(0) . pack('N*', $timeSlice);
+        // Hash it with users secret key
+        $hm = hash_hmac('SHA1', $time, $secretkey, true);
+        // Use last nipple of result as index/offset
+        $offset = ord(substr($hm, - 1)) & 0x0F;
+        // grab 4 bytes of the result
+        $hashpart = substr($hm, $offset, 4);
+
+        // Unpak binary value
+        $value = unpack('N', $hashpart);
+        $value = $value[1];
+        // Only 32 bits
+        $value = $value & 0x7FFFFFFF;
+
+        $modulo = pow(10, $this->_codeLength);
+
+        return str_pad($value % $modulo, $this->_codeLength, '0', STR_PAD_LEFT);
+    }
 
     /**
      * Verify a submitted code based on the supplied secret
@@ -73,7 +101,24 @@ abstract class AbstractMultiFactorAuth {
      *
      * @return bool
      */
-    public abstract function verifyCode(string $code): bool;
+    public function verifyCode(string $code) : bool
+    {
+        $currentTimeSlice = floor(time() / 30);
+
+        if (strlen($code) != 6) {
+            return false;
+        }
+
+        for ($i = - $this->discrepancy; $i <= $this->discrepancy; ++ $i) {
+            $calculatedCode = $this->getCode($currentTimeSlice + $i);
+            if ($this->timingSafeEquals($calculatedCode, $code)) {
+                return true;
+            }
+        }
+
+        return false;
+
+    }
 
     /**
      * Helper class to decode base32.
@@ -206,6 +251,20 @@ abstract class AbstractMultiFactorAuth {
 
     public function getSecret(){
         return $this->secret;
+    }
+
+    /**
+     * Set the code length, should be >=6.
+     *
+     * @param int $length
+     *
+     * @return GoogleAuthenticator
+     */
+    public function setCodeLength($length)
+    {
+        $this->_codeLength = $length;
+
+        return $this;
     }
 
 }

@@ -52,7 +52,7 @@ class Backup extends AbstractMultiFactorAuth {
             ));
 
             if ($stmt->rowCount() == 1) {
-                $this->insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
+                UserClass::insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
             }
             return true;
         }else{

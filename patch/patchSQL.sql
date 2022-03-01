@@ -15,7 +15,6 @@ ALTER TABLE `w_users`
 ADD COLUMN `default2Factor` VARCHAR(4) NULL AFTER `idIdp`,
 ADD COLUMN `totpSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `default2Factor`,
 ADD COLUMN `emailSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `totpSecret`,
-ADD COLUMN `emailCode_created_at` TIMESTAMP NULL AFTER `emailSecret`,
 ADD COLUMN `backupSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `emailSecret`;
 
 

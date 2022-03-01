@@ -1,7 +1,6 @@
 $(document).ready(function() {
 	var usernames = JSON.parse($('#usernames').val());
 	var actions = JSON.parse($("#actions").val());
-	console.log(actions);
 /*	var actions = [
 		{'id':"L", 'title':"Login"},
 		{'id':"PS", 'title':"Set Password"},

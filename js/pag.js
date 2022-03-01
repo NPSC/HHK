@@ -266,6 +266,7 @@ $(document).ready(
 				}
 			}		
 						//two factor Auth
+						$('div#dchgPw #mfaTabs').tabs();
 						
 						$('div#dchgPw #TwoFactorHelp').accordion({
 							active: false,
@@ -273,9 +274,11 @@ $(document).ready(
 							heightStyle: 'content',
 						});
 						
-						$('div#dchgPw').on('click', 'button#genSecret', function(){
+						//generate new Authenticator secret and QR code
+						$('div#dchgPw').on('click', '#mfaAuthenticator button#genTOTPSecret', function(){
 							$.post("../house/ws_admin.php", {
-								cmd : 'gen2fa'
+								cmd : 'gen2fa',
+								method : 'authenticator'
 							}, function(data) {
 								if (data) {
 									try {
@@ -288,16 +291,17 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
-										$('div#OTPSecret').text(data.secret);
+										$('#mfaAuthenticator input[name=secret]').val(data.secret);
 										$('div#qrcode').html('<img src="'+ data.url + '">');
-										$('div#otpForm').show();
-										$('button#genSecret').text("Regenerate QR Code");
+										$('#mfaAuthenticator .otpForm').show();
+										$('button#genTOTPSecret').hide();
 									}
 								}
 							});
 						});
 						
-						$('div#dchgPw').on('click', 'button#getSecret', function(){
+						//show existing Authenticator QR code
+						$('div#dchgPw').on('click', '#mfaAuthenticator button#getTOTPSecret', function(){
 							$.post("../house/ws_admin.php", {
 								cmd : 'get2fa'
 							}, function(data) {
@@ -313,20 +317,17 @@ $(document).ready(
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
 										
-										$('div#qrcode').html('<img src="'+ data.url + '"></p>');
-										$('div#otpForm').hide();
+										$('div#qrcode').html('<img src="'+ data.url + '">');
+										$('#mfaAuthenticator div#otpForm').hide();
 									}
 								}
 							});
 						});
 						
-						$('div#dchgPw').on('click', 'button#submitSetupOTP', function(){
-							var secret = $('div#dchgPw').find("#OTPSecret").text();
-							var otp = $('#setupOTP').val();
+						$('div#dchgPw').on('click', 'button#enableEmail', function(){
 							$.post("../house/ws_admin.php", {
-								cmd : 'save2fa',
-								secret: secret,
-								OTP: otp
+								cmd : 'gen2fa',
+								method : 'email'
 							}, function(data) {
 								if (data) {
 									try {
@@ -339,10 +340,38 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
-										$("div#otpForm").hide();
+										$('div#OTPSecret').text(data.secret).show();
 										
-										$("p#backupCodes").html(data.backupCodes.join("<br>"));
-										$("div#backupCodeDiv").show();
+										$('div#otpForm').show();
+										$('button#genSecret').text("Regenerate QR Code");
+									}
+								}
+							});
+						});
+						
+						
+						//submit + verify OTP
+						$('div#dchgPw').on('submit', '.otpForm', function(e){
+							e.preventDefaults();
+							$.post("../house/ws_admin.php", $(this).serialize(), 
+								function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										console.log($(this));
+										$(".otpForm").hide();
+										if(data.backupCodes){
+											$("p#backupCodes").html(data.backupCodes.join("<br>"));
+											$("div#backupCodeDiv").show();
+										}
 										flagAlertMessage("Two Step Verification enabled successfully", 'success');
 									}
 								}

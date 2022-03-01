@@ -7,6 +7,7 @@ use HHK\Member\Relation\AbstractRelation;
 use HHK\sec\UserClass;
 use HHK\sec\MFA\GoogleAuthenticator;
 use HHK\sec\MFA\Backup;
+use HHK\sec\MFA\Email;
 
 
 /**
@@ -212,7 +213,13 @@ switch ($c) {
         break;
 
     case "gen2fa":
-        $events = generateTwoFA($uS->username);
+
+        $method = '';
+        if(isset($_POST['method'])){
+            $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
+        }
+
+        $events = generateTwoFA($dbh, $uS->username, $method);
         break;
 
     case "get2fa":
@@ -370,18 +377,36 @@ function changeQuestions(\PDO $dbh, array $questions) {
     return $event;
 }
 
-function generateTwoFA($uname){
-    try{
-        $ga = new GoogleAuthenticator(array('User_Name'=>$uname, 'totpSecret'=>''));
-        $uS = Session::getInstance();
+function generateTwoFA($dbh, $uname, string $method){
 
-        $ga->createSecret();
-        $qrCodeUrl = $ga->getQRCodeImage("HHK - " . $uS->siteName);
+    switch ($method) {
+        case "authenticator":
+            try{
+                $ga = new GoogleAuthenticator(array('User_Name'=>$uname, 'totpSecret'=>''));
+                $uS = Session::getInstance();
 
-        $event = array('success'=>true, 'secret'=>$ga->getSecret(), 'url'=> $qrCodeUrl);
-    }catch(Exception $e){
-        $event = array('status'=>"failed", 'msg'=>$e->getMessage());
+                $ga->createSecret();
+                $qrCodeUrl = $ga->getQRCodeImage("HHK - " . $uS->siteName);
+
+                $event = array('success'=>true, 'secret'=>$ga->getSecret(), 'url'=> $qrCodeUrl);
+            }catch(Exception $e){
+                $event = array('error'=>$e->getMessage());
+            }
+            break;
+        case "email":
+            try{
+                $u = new UserClass();
+                $userAr = $u->getUserCredentials($dbh, $uname);
+                $email = new Email($userAr);
+                $email->createSecret();
+                $email->sendCode($dbh);
+                $event = array('success'=>true, 'secret'=>$email->getSecret());
+            }catch(Exception $e){
+                $event = array('error'=>$e->getMessage());
+            }
     }
+
+
 
     return $event;
 }
