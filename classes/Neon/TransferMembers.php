@@ -485,92 +485,113 @@ class TransferMembers {
 
     }
 
-    public function sendVisits(\PDO $dbh, $username, $start = '', $end = '') {
+    public function sendVisits(\PDO $dbh, $username, $end = '') {
 
-        $replys = array();
+        $replys = [];
         $this->memberReplies = array();
-        $idMap = array();
+        $visitIds = [];
+        $stayIds = [];
+        $guestIds = [];
 
-// TEmporary Block.
-//        $f['Result'] = "Not Implemented Yet.";
-//        $replys[] = $f;
-//        return $replys;
-//
-
-        if ($start == '') {
-            $f['Result'] = "The start date is missing.";
-            $replys[] = $f;
-            return $replys;
-        }
 
         if ($end == '') {
             $end = date('Y-m-d');
         }
 
-        // Read visits from db
+        // Read stays from db
         $stmt = $dbh->query("SELECT
+    s.idStays,
     s.idVisit,
-	s.idName AS `hhkId`,
+    s.Visit_Span,
+    s.idName AS `hhkId`,
     n.External_Id AS `accountId`,
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
-    sum((to_days(ifnull(`s`.`Span_End_Date`, now())) - to_days(`s`.`Span_Start_Date`))) AS `Nite_Counter`
+    (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
 FROM
-	stays s
-		LEFT JOIN
-	visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-		LEFT JOIN
-	`name` n on s.idName = n.idName
+    stays s
+        LEFT JOIN
+    `name` n ON s.idName = n.idName
 WHERE
-	s.Status = 'co' AND s.On_Leave = 0 AND v.Recorded = 0
-    AND DATE(s.Span_End_Date) >= DATE('$start') and DATE(s.Span_End_Date) <= DATE('$end')
-GROUP BY s.idVisit, s.idName");
-
+    s.On_Leave = 0 AND s.`Status` != 'a' AND s.Reported = 0
+    AND s.Span_End_Date is not NULL AND DATE(s.Span_End_Date) <= DATE('$end')
+ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-             $f = array();
 
-            // Is the account defined?
-            if ($r['accountId'] == '' && isset($idMap[$r['hhkId']])) {
-                // Already made a new Neon account.
-                $r['accountId'] = $idMap[$r['hhkId']];
+            $stayIds[] = $r['idStays'];
+            $visitIds[$r['idVisit']] = $r['idVisit'];
 
-            } else if ($r['accountId'] == '') {
+            if (isset($guestIds[ $r['hhkId'] ])) {
 
-                // Search and create a new account if needed.
-                $acctReplys = $this->sendList($dbh, array($r['hhkId']), $username);
+                $startDT = new \DateTime($r['Start_Date']);
+                $endDT = new \DateTime($r['End_Date']);
 
-                if (isset($acctReplys[0]['Account ID']) && $acctReplys[0]['Account ID'] != '') {
-
-                    // A new account is created.
-                    $this->memberReplies[] = $acctReplys[0];
-                    $r['accountId'] = $acctReplys[0]['Account ID'];
-                    $f['accountId'] = $acctReplys[0]['Account ID'] . '*';
-                    $idMap[$r['hhkId']] = $acctReplys[0]['Account ID'];
-
-                } else if (isset($acctReplys[0]['Result'])) {
-
-                    // Some kind of problem like multiple accounts found.
-                    $f['Result'] = $acctReplys[0]['Result'];
-                    $replys[] = $f;
-                    continue;
-
-                } else {
-                    $f['Result'] = "Undefined problem adding HHK person to Neon.";
-                    $replys[] = $f;
-                    continue;
-
+                if ($guestIds[ $r['hhkId'] ]['Start_Date'] > $startDT ) {
+                    $guestIds[ $r['hhkId'] ]['Start_Date'] = $startDT;
                 }
+
+                if ($guestIds[ $r['hhkId'] ]['End_Date'] < $endDT ) {
+                    $guestIds[ $r['hhkId'] ]['End_Date'] = $endDT;
+                }
+
+                $guestIds[ $r['hhkId'] ]['Nite_Counter'] += $r['Nite_Counter'];
+
+
+            } else {
+
+                $guestIds[ $r['hhkId'] ] = array(
+                    'hhkId' => $r['hhkId'],
+                    'accountId' => $r['accountId'],
+                    'Start_Date' => new \DateTime($r['Start_Date']),
+                    'End_Date' => new \DateTime($r['End_Date']),
+                    'Nite_Counter' => $r['Nite_Counter'],
+                );
+
             }
-
-            // Write the visit to Neon
-            $this->updateVisitParms($dbh, $r, $f);
-
-
-            $replys[] = $f;
         }
 
-        return $replys;
+
+        // Check for and combine any missing Neon account ids.
+        foreach ($guestIds as $id => $r ) {
+
+            // Is the account defined?
+            if ($r['accountId'] == '') {
+
+                $sendIds[] = $id;
+
+            }
+        }
+
+
+        // Search and create a new Neon account if needed.
+        if (count($sendIds) > 0) {
+
+            // Write to Neon
+            $replys = $this->sendList($dbh, $sendIds, $username);
+
+            // Capture new account Id's from any new members.
+            foreach ($replys as $f) {
+
+                if (isset($f['Account ID']) && $f['Account ID'] !== '') {
+                    $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
+                }
+            }
+        }
+
+        // Fill the custom parameters for each visit.
+        foreach ($guestIds as $id => $r ) {
+
+            // Write the visit to Neon
+            $this->updateVisitParms($dbh, $r, $replys['HHK_ID']);
+
+        }
+
+        $this->updateStayRecorded($dbh, $stayIds);
+
+        $newReps = $this->sendNonVisitors($dbh, $visitIds, $username);
+
+        return array_merge($replys, $newReps);
     }
 
     protected function updateVisitParms(\PDO $dbh, $r, &$f) {
@@ -638,15 +659,68 @@ GROUP BY s.idVisit, s.idName");
         // Update with additional customdata.
          $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes);
 
-        // Update Visit Recorded column in HHK
-         $idVisit = intval($r['idVisit'], 10);
-
-         if ($idVisit > 0) {
-             $dbh->exec("Update visit set Recorded = 1 where idVisit = $idVisit");
-         }
-
     }
 
+    protected function updateStayRecorded(\PDO $dbh, $stayIds) {
+
+        // clean up the ids
+        foreach ($stayIds as $s) {
+            if (intval($s, 10) > 0){
+                $idList[] = intval($s, 10);
+            }
+        }
+
+        if (count($idList) > 0) {
+
+            $parm = "(" . implode(',', $idList) . ") ";
+            return $dbh->exec("Update stays set Recorded = 1 where idName in $parm");
+
+        }
+
+        return NULL;
+    }
+
+    protected function sendNonVisitors(\PDO $dbh, $visitIds, $username) {
+
+        $idList = [];
+        $idNames = [];
+        $replys = [];
+
+        // clean up the ids
+        foreach ($visitIds as $s) {
+            if (intval($s, 10) > 0){
+                $idList[] = intval($s, 10);
+            }
+        }
+
+        if (count($idList) > 0) {
+
+            $stmt = $dbh->query("Select
+	DISTINCT ng.idName
+from
+	visit v
+		join
+	hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        join
+	name_guest ng on hs.idPsg = ng.idPsg
+		left join
+	stays s on ng.idName = s.idName
+
+where
+	s.idName is NULL
+    AND v.idVisit in (" . implode(',', $idList) . ")");
+
+            while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+                $idNames[$r[0]] = $r[0];
+            }
+
+            // Write to Neon
+            $replys = $this->sendList($dbh, $idNames, $username);
+
+        }
+
+        return $replys;
+    }
 
     /**
      *
@@ -670,7 +744,7 @@ GROUP BY s.idVisit, s.idName");
             $invTypes[] = $t;
         }
 
-
+        // Load search parameters for each source ID
         $stmt = $this->loadSearchDB($dbh, $sourceIds);
 
         if (is_null($stmt)) {
@@ -695,7 +769,7 @@ GROUP BY s.idVisit, s.idName");
 
             if ($this->checkError($result)) {
                 $f['Result'] = $this->errorMessage;
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
                 continue;
             }
 
@@ -710,7 +784,7 @@ GROUP BY s.idVisit, s.idName");
 
                 if ($this->checkError($result)) {
                     $f['Result'] = $this->errorMessage;
-                    $replys[] = $f;
+                    $replys[$r['HHK_ID']] = $f;
                     continue;
                 }
             }
@@ -758,14 +832,14 @@ GROUP BY s.idVisit, s.idName");
                     $f['Result'] = 'The search results Account Id is empty.';
                 }
 
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
 
 
             } else if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] > 1 ) {
 
                 // We have more than one contact...
                 $f['Result'] = 'Multiple Accounts.';
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
 
 
             } else if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 0 ) {
@@ -784,7 +858,7 @@ GROUP BY s.idVisit, s.idName");
 
                 if ($this->checkError($result)) {
                     $f['Result'] = $this->errorMessage;
-                    $replys[] = $f;
+                    $replys[$r['HHK_ID']] = $f;
                     continue;
                 }
 
@@ -795,16 +869,16 @@ GROUP BY s.idVisit, s.idName");
                 if ($row['accountId'] != '') {
                     $f['Result'] = 'New NeonCRM Account';
                 } else {
-                    $f['Result'] = 'New NeonCRM Account';
+                    $f['Result'] = 'NeonCRM Account Missing';
                 }
                 $f['Account ID'] = $accountId;
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
 
             } else {
 
                 //huh?
                 $f['Result'] = 'API ERROR: The Number of returned records is not defined.';
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
             }
 
         }

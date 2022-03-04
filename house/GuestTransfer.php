@@ -107,37 +107,71 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 function searchVisits(\PDO $dbh, $start, $end) {
 
     $uS = Session::getInstance();
-    $whereClause = " DATE(`Payment Date`) >= DATE('$start') and DATE(`Payment Date`) <= DATE('$end') ";
     $rows = array();
 
     $stmt = $dbh->query("SELECT
+    s.idStays,
     s.idVisit,
-	s.idName AS `HHK Id`,
-    n.Name_Full as `Name`,
-    n.External_Id AS `Account Id`,
-    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Stay Start Date`,
-    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `Stay End Date`,
-    sum((to_days(ifnull(`s`.`Span_End_Date`, now())) - to_days(`s`.`Span_Start_Date`))) AS `Visit_Nights`
+    s.Visit_Span,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    s.idName AS `hhkId`,
+    IFNULL(n.Name_Full, '') as `Name`,
+    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
+    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
+    (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
 FROM
-	stays s
-		LEFT JOIN
-	visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-		LEFT JOIN
-	`name` n on s.idName = n.idName
+    stays s
+        LEFT JOIN
+    `name` n ON s.idName = n.idName
 WHERE
-	s.Status = 'co' AND s.On_Leave = 0 AND v.Recorded = 0
-    AND DATE(s.Span_End_Date) >= DATE('$start') and DATE(s.Span_End_Date) <= DATE('$end')
-GROUP BY s.idVisit, s.idName");
+    s.On_Leave = 0 AND s.`Status` != 'a'
+    AND DATE(s.Span_End_Date) <= DATE('$end')
+ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date");
 
     if ($stmt->rowCount() == 0) {
         return FALSE;
     }
 
+    $guestIds = [];
+
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-        $r['HHK Id'] = HTMLContainer::generateMarkup('a', $r['HHK Id'], array('href'=>'GuestEdit.php?id=' . $r['HHK Id']));
+        if (isset($guestIds[ $r['hhkId'] ])) {
 
-        $rows[] = $r;
+            $startDT = new \DateTime($r['Start_Date']);
+            $endDT = new \DateTime($r['End_Date']);
+
+            if ($guestIds[ $r['hhkId'] ]['Start Date'] > $startDT ) {
+                $guestIds[ $r['hhkId'] ]['Start Date'] = $startDT;
+            }
+
+            if ($guestIds[ $r['hhkId'] ]['End Date'] < $endDT ) {
+                $guestIds[ $r['hhkId'] ]['End Date'] = $endDT;
+            }
+
+            $guestIds[ $r['hhkId'] ]['Nights'] += $r['Nite_Counter'];
+
+
+        } else {
+
+            $guestIds[ $r['hhkId'] ] = array(
+                'Account Id' => $r['accountId'],
+                'HHK Id' => HTMLContainer::generateMarkup('a', $r['hhkId'], array('href'=>'GuestEdit.php?id=' . $r['hhkId'])),
+                'Name' => $r['Name'],
+                'Start Date' => new \DateTime($r['Start_Date']),
+                'End Date' => new \DateTime($r['End_Date']),
+                'Nights' => $r['Nite_Counter'],
+            );
+
+        }
+
+    }
+
+    foreach ($guestIds as $g) {
+
+        $g['Start Date'] = $g['Start Date']->format('M j, Y');
+        $g['End Date'] = $g['End Date']->format('M j, Y');
+        $rows[] = $g;
 
     }
 

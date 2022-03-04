@@ -24,3 +24,7 @@ ALTER TABLE `insurance_type`
 -- Mark visits as recorded (ie, Neon)
 ALTER TABLE `visit` 
 	ADD COLUMN `Recorded` INT(1) NOT NULL DEFAULT 0 AFTER `Status`;
+
+ALTER TABLE `stays` 
+ADD COLUMN `Recorded` INT(1) NOT NULL DEFAULT 0 AFTER `Status`;
+	
