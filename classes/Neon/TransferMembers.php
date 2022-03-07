@@ -32,6 +32,9 @@ class TransferMembers {
     protected $replies;
     protected $memberReplies;
 
+    // Maximum custom properties for a NEON account
+    const MAX_CUSTOM_PROPERTYS = 30;
+
     public function __construct($userId, $password, array $customFields = array()) {
 
         $this->userId = $userId;
@@ -155,11 +158,11 @@ class TransferMembers {
         }
 
         if (isset($accountData['accountId']) === FALSE) {
-            throw new RuntimeException('Remote account id not found for: ' . $r['accountId']);
+            throw new RuntimeException("Remote account id not found for " . $r['firstName'] . " " . $r['lastName'] . ": HHK Id = " . $idName . ", Account Id = " . $r['accountId']);
         }
 
         if ($r['accountId'] != $accountData['accountId']) {
-            throw new RuntimeException('Account Id mismatch: local Id = ' . $r['accountId'] . ' remote Id = ' . $accountData['accountId']);
+            throw new RuntimeException("Account Id mismatch: local account Id = " . $r['accountId'] . ", remote account Id = " . $accountData['accountId'] . ", HHK Id = " . $idName);
         }
 
         $unwound = array();
@@ -195,11 +198,12 @@ class TransferMembers {
            'customParmeters' => $paramStr
         );
 
-        $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {
             $msg = $this->errorMessage;
+        } else {
+            $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
         }
 
         return $msg;
@@ -227,7 +231,6 @@ class TransferMembers {
 
         return;
     }
-
 
     public function listCustomFields() {
 
@@ -485,14 +488,20 @@ class TransferMembers {
 
     }
 
+    /**
+     *
+     * @param \PDO $dbh
+     * @param string $username
+     * @param string $end
+     * @return array
+     */
     public function sendVisits(\PDO $dbh, $username, $end = '') {
 
-        $replys = [];
         $this->memberReplies = array();
         $visitIds = [];
         $stayIds = [];
         $guestIds = [];
-
+        $sendIds = [];
 
         if ($end == '') {
             $end = date('Y-m-d');
@@ -513,10 +522,11 @@ FROM
         LEFT JOIN
     `name` n ON s.idName = n.idName
 WHERE
-    s.On_Leave = 0 AND s.`Status` != 'a' AND s.Reported = 0
+    s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0
     AND s.Span_End_Date is not NULL AND DATE(s.Span_End_Date) <= DATE('$end')
 ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
+        // Count up guest stay dates and nights.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $stayIds[] = $r['idStays'];
@@ -537,7 +547,6 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
                 $guestIds[ $r['hhkId'] ]['Nite_Counter'] += $r['Nite_Counter'];
 
-
             } else {
 
                 $guestIds[ $r['hhkId'] ] = array(
@@ -547,7 +556,6 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                     'End_Date' => new \DateTime($r['End_Date']),
                     'Nite_Counter' => $r['Nite_Counter'],
                 );
-
             }
         }
 
@@ -568,10 +576,10 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         if (count($sendIds) > 0) {
 
             // Write to Neon
-            $replys = $this->sendList($dbh, $sendIds, $username);
+            $this->memberReplies = $this->sendList($dbh, $sendIds, $username);
 
             // Capture new account Id's from any new members.
-            foreach ($replys as $f) {
+            foreach ($this->memberReplies as $f) {
 
                 if (isset($f['Account ID']) && $f['Account ID'] !== '') {
                     $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
@@ -582,31 +590,33 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         // Fill the custom parameters for each visit.
         foreach ($guestIds as $id => $r ) {
 
-            // Write the visit to Neon
-            $this->updateVisitParms($dbh, $r, $replys['HHK_ID']);
+            // Write the visits to Neon
+            $visitReplys[] = $this->updateVisitParms($dbh, $r);
 
         }
 
+        // Mark the stays record as "Recorded".
         $this->updateStayRecorded($dbh, $stayIds);
 
-        $newReps = $this->sendNonVisitors($dbh, $visitIds, $username);
+        $this->replies = $this->sendNonVisitors($dbh, $visitIds, $username);
 
-        return array_merge($replys, $newReps);
+        return $visitReplys;
     }
 
-    protected function updateVisitParms(\PDO $dbh, $r, &$f) {
+    protected function updateVisitParms(\PDO $dbh, $r) {
 
         // Retrieve the Account
         $origValues = $this->retrieveAccount($r['accountId']);
-
-        $startDT = new \DateTime($r['Start_Date']);
-        $endDT = new \DateTime($r['End_Date']);
-        $nites = $r['Nite_Counter'];
+        $codes = [];
+        $f = array();
+        $startDT = $r['Start_Date'];
+        $endDT =$r['End_Date'];
+        $nites = intval($r['Nite_Counter'], 10);
 
         // Check for earliest visit start
         if (isset($this->customFields['First_Visit'])) {
 
-            $earliestStart = $this->findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['First_Visit']);
+            $earliestStart = $this->findCustomField($origValues, $this->customFields['First_Visit']);
 
             if ($earliestStart !== FALSE && $earliestStart != '') {
 
@@ -627,7 +637,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         // Check for latest visit end
         if (isset($this->customFields['Last_Visit'])) {
 
-            $latestEnd = $this->findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['Last_Visit']);
+            $latestEnd = $this->findCustomField($origValues, $this->customFields['Last_Visit']);
 
             if ($latestEnd !== FALSE && $latestEnd != '') {
 
@@ -649,21 +659,26 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         // Check Nights counter
         if (isset($this->customFields['Nite_Counter'])) {
 
-            $niteCounter = $this->findCustomField($origValues, 'individualAccount.customFieldDataList.customFieldData.', $this->customFields['Nite_Counter']);
+            $niteCounter = intval($this->findCustomField($origValues, $this->customFields['Nite_Counter']), 10);
 
-            $codes['Nite_Counter'] = $niteCounter + $nites;
+            $codes['Nite_Counter'] = ($niteCounter + $nites);
             $f['Nite_Counter'] = $codes['Nite_Counter'];
          }
 
 
-        // Update with additional customdata.
-         $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes);
+         // Update with additional customdata.
+         try {
+            $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes);
+         } catch (RuntimeException $e) {
+             $f['Update_Message'] = $e->getMessage();
+         }
 
+         return $f;
     }
 
     protected function updateStayRecorded(\PDO $dbh, $stayIds) {
 
-        // clean up the ids
+        // clean up the stay ids
         foreach ($stayIds as $s) {
             if (intval($s, 10) > 0){
                 $idList[] = intval($s, 10);
@@ -673,7 +688,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         if (count($idList) > 0) {
 
             $parm = "(" . implode(',', $idList) . ") ";
-            return $dbh->exec("Update stays set Recorded = 1 where idName in $parm");
+            return $dbh->exec("Update stays set Recorded = 1 where idStays in $parm");
 
         }
 
@@ -686,7 +701,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         $idNames = [];
         $replys = [];
 
-        // clean up the ids
+        // clean up the visit ids
         foreach ($visitIds as $s) {
             if (intval($s, 10) > 0){
                 $idList[] = intval($s, 10);
@@ -705,18 +720,22 @@ from
 	name_guest ng on hs.idPsg = ng.idPsg
 		left join
 	stays s on ng.idName = s.idName
+        LEFT JOIN
+    name n on n.idName = ng.idName
 
 where
-	s.idName is NULL
+	s.idName is NULL AND n.External_Id = ''
     AND v.idVisit in (" . implode(',', $idList) . ")");
 
             while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
                 $idNames[$r[0]] = $r[0];
             }
 
-            // Write to Neon
-            $replys = $this->sendList($dbh, $idNames, $username);
+            if (count($idNames) > 0) {
 
+                // Write to Neon
+                $replys = $this->sendList($dbh, $idNames, $username);
+            }
         }
 
         return $replys;
@@ -733,6 +752,11 @@ where
 
         $replys = array();
 
+        if (count($sourceIds) == 0) {
+            $replys[] = array('error'=>'No local records were found.');
+            return $replys;
+        }
+
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
 
@@ -748,7 +772,8 @@ where
         $stmt = $this->loadSearchDB($dbh, $sourceIds);
 
         if (is_null($stmt)) {
-            return array('error'=>'No local records were found.');
+            $replys[] = array('error'=>'No local records were found.');
+            return $replys;
         }
 
 
@@ -866,7 +891,7 @@ where
 
                 $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $accountId, $username);
 
-                if ($row['accountId'] != '') {
+                if ($accountId != '') {
                     $f['Result'] = 'New NeonCRM Account';
                 } else {
                     $f['Result'] = 'NeonCRM Account Missing';
@@ -1120,6 +1145,7 @@ where
         $customParamStr = '';
         $base = 'individualAccount.customFieldDataList.customFieldData.';
 
+
         foreach ($this->customFields as $k => $v) {
 
             if (isset($r[$k]) && $r[$k] != '') {
@@ -1136,7 +1162,7 @@ where
             } else {
                 // We don't have the custom field, see if one exists in Neon and if so, copy it.
 
-                $fieldValue = $this->findCustomField($origValues, $base, $v);
+                $fieldValue = $this->findCustomField($origValues, $v);
 
                 if ($fieldValue !== FALSE) {
 
@@ -1156,33 +1182,46 @@ where
     }
 
     /**
-     * returns FALSE
+     *
+     * @param array $origValues
+     * @param string $base
+     * @param mixed $fieldId
+     * @return boolean|mixed
      */
-    protected function findCustomField($origValues, $base, $fieldId) {
+    protected function findCustomField($origValues, $fieldId) {
 
         // find custom field index from neon
         $fieldValue = FALSE;
         $condition = TRUE;
         $index = 0;
 
-        while ($condition) {
+        if (isset($origValues['customFieldDataList']['customFieldData'])) {
 
-            if (isset($origValues[$base . $index ."fieldId"])) {
+            $cfValues = $origValues['customFieldDataList']['customFieldData'];
 
-                // Is this my field Id?
-                if ($origValues[$base . $index ."fieldId"] == $fieldId) {
-                    // Found the given custom field
+            while ($condition) {
 
-                    $fieldValue = $origValues[$base . $index ."fieldValue"];
+                if (isset($cfValues[$index])) {
+
+                    // Is this my field Id?
+                    if (isset($cfValues[$index]["fieldId"]) && $cfValues[$index]["fieldId"] == $fieldId) {
+                        // Found the given custom field
+
+                        $fieldValue = $cfValues[$index]["fieldValue"];
+                        $condition = FALSE;
+                    }
+
+                } else {
+                    // end of custom fields
                     $condition = FALSE;
                 }
 
-            } else {
-                // End of custom field value pairs
-                $condition = FALSE;
-            }
+                $index++;
 
-            $index++;
+                if ($index > self::MAX_CUSTOM_PROPERTYS) {
+                    $condition = FALSE;
+                }
+            }
         }
 
         return $fieldValue;

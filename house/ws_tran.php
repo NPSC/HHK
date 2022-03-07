@@ -91,9 +91,8 @@ try {
         $reply = $transfer->sendDonations($dbh, $uS->username, $st, $en);
         $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
 
-        $newMembers = $transfer->getMemberReplies();
-        if (count($newMembers) > 0) {
-            $events['members'] = CreateMarkupFromDB::generateHTML_Table($newMembers, 'tblrpt');
+        if (count($transfer->getMemberReplies()) > 0) {
+            $events['members'] = CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
         }
 
         break;
@@ -107,6 +106,15 @@ try {
 
         $reply = $transfer->sendVisits($dbh, $uS->username, $en);
         $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
+
+        if (count($transfer->getMemberReplies()) > 0) {
+            $events['members'] = CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
+        }
+
+        if (count($transfer->getReplies()) > 0) {
+            $events['strayMembers'] = CreateMarkupFromDB::generateHTML_Table($transfer->getReplies(), 'tblrpt2');
+        }
+
 
         break;
 
@@ -231,7 +239,11 @@ try {
 
             $result = $transfer->retrieveAccount($accountId);
 
-            $updateResult = $transfer->updateNeonAccount($dbh, $result, $id);
+            try{
+                $updateResult = $transfer->updateNeonAccount($dbh, $result, $id);
+            } catch (RuntimeException $e) {
+                $updateResult =  = $e->getMessage();
+            }
 
             $events = array('result'=>$updateResult);
 

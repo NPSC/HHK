@@ -124,7 +124,7 @@ FROM
         LEFT JOIN
     `name` n ON s.idName = n.idName
 WHERE
-    s.On_Leave = 0 AND s.`Status` != 'a'
+    s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0
     AND DATE(s.Span_End_Date) <= DATE('$end')
 ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date");
 
@@ -382,7 +382,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
 
         if ($results === FALSE) {
 
-            $noRecordsMsg = "No records found.";
+            $noRecordsMsg = "No HHK member records found.";
 
         } else {
 
@@ -416,7 +416,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
         $dataTable = getPaymentReport($dbh, $start, $end);
 
         if ($dataTable === FALSE) {
-            $noRecordsMsg = "No records found.";
+            $noRecordsMsg = "No payment records found.";
         } else {
             $mkTable = 2;
         }
@@ -426,7 +426,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
         $dataTable = searchVisits($dbh, $start, $end);
 
         if ($dataTable === FALSE) {
-            $noRecordsMsg = "No records found.";
+            $noRecordsMsg = "No visit records found.";
         } else {
             $mkTable = 3;
         }
@@ -435,6 +435,9 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
 
 }
 
+if ($noRecordsMsg != '') {
+    $noRecordsMsg = HTMLContainer::generateMarkup('p', $noRecordsMsg, array('style'=>'font-size:large'));
+}
 
 
 // Setups for the page.
@@ -520,7 +523,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
                         </tr>
                     </table>
                 </form>
-                <div id="retrieve"><?php echo $noRecordsMsg; ?></div>
+                <div style="margin-top: 15px; margin-left:50px;" id="retrieve"><?php echo $noRecordsMsg; ?></div>
             </div>
             <div style="clear:both;"></div>
 
@@ -530,6 +533,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
                     <?php echo $dataTable; ?>
                 </div>
                 <div id="divMembers"></div>
+                <div id="divStrayMembers"></div>
             </div>
             <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;">
                 <input id="printButton" value="Print" type="button" />

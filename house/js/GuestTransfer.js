@@ -170,6 +170,10 @@ function transferData($btn, start, end, command) {
             $('#divMembers').empty().append($(incmg.members)).show();
         }
 
+        if (incmg.strayMembers) {
+            $('#divStrayMembers').empty().append($(incmg.strayMembers)).show();
+        }
+
     });
 }
 
