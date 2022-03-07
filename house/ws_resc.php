@@ -665,7 +665,9 @@ try {
 
             $style = '';
             if(isset($_REQUEST['style'])) {
-                $style = $_REQUEST['style'];
+                $csstidy = new csstidy();
+                $csstidy->parse($_REQUEST['style']);
+                $style = $csstidy->print->plain();
             }
 
             $successTitle = '';
