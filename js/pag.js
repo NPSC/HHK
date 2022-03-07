@@ -73,7 +73,7 @@ function isIE() {
 
 function checkStrength(pwCtrl) {
 	var strongRegex = new RegExp(
-			"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})");
+			"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?!.*[<>])(?=.{8,})");
 	var rtn = true;
 	if (strongRegex.test(pwCtrl.val())) {
 		pwCtrl.removeClass("ui-state-error");
@@ -216,7 +216,7 @@ $(document).ready(
 
 						if (checkStrength(pw1) === false) {
 							pw1.addClass("ui-state-error");
-							msg.html('Password must have at least 8 characters including at least <br>one uppercase, one lower case letter, one number and one symbol.');
+							msg.html('Password must have at least 8 characters including at least <br>one uppercase, one lower case letter, one number, one symbol and cannot contain &lt or &gt.');
 							pw1.focus();
 							return;
 						}
