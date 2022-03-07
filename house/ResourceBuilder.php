@@ -2331,7 +2331,8 @@ $resultMessage = $alertMsg->createMarkup();
 					county: "<?php echo $uS->county; ?>",
 					doctor: "<?php echo $uS->Doctor; ?>",
 					referralAgent: "<?php echo $uS->ReferralAgent; ?>"
-				}
+				},
+				demogs: <?php echo json_encode(readGenLookupsPDO($dbh, 'Demographics')); ?>
 			});
 		});
 

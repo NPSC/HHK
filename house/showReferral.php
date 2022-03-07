@@ -196,6 +196,9 @@ if(isset($_GET['template'])){
                               						case 'gender':
                               							options = ajaxData.lookups.genders;
                               							break;
+                              						case 'ethnicity':
+                              							options = ajaxData.lookups.ethnicities;
+                              							break;
                               						case 'patientRelation':
                               							options = ajaxData.lookups.patientRels;
                               							break;

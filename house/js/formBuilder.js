@@ -18,6 +18,7 @@
             formBuilder: null,
             labels: {},
             fieldOptions: {},
+            demogs:{},
             fields: [
     		{
     			"type": "select",
@@ -49,6 +50,17 @@
     			"name": "hospital.location",
     			"width": "col-md-2",
     			"dataSource":"unit",
+    			"multiple": false,
+    			"values": []
+  			},
+  			{
+    			"type": "select",
+    			"label": (options.labels.patient || 'Patient') + " " + (options.demogs.Ethnicity.Description || 'Ethnicity'),
+    			"placeholder": (options.labels.patient || 'Patient') + " " + (options.demogs.Ethnicity.Description || 'Ethnicity'),
+    			"className": "form-select",
+    			"name": "patient.demographics.ethnicity",
+    			"width": "col-md-4",
+    			"dataSource":"ethnicity",
     			"multiple": false,
     			"values": []
   			},
@@ -148,6 +160,17 @@
     				"name": "patient.demographics.gender",
     				"width": "col-md-4",
     				"dataSource":"gender",
+    				"multiple": false,
+    				"values": []
+  				},
+  				{
+    				"type": "select",
+    				"label": (options.labels.patient || 'Patient') + " " + (options.demogs.Ethnicity.Description || 'Ethnicity'),
+    				"placeholder": (options.labels.patient || 'Patient') + " " + (options.demogs.Ethnicity.Description || 'Ethnicity'),
+    				"className": "form-select",
+    				"name": "patient.demographics.ethnicity",
+    				"width": "col-md-4",
+    				"dataSource":"ethnicity",
     				"multiple": false,
     				"values": []
   				},
@@ -794,6 +817,7 @@
     						'namePrefix': 'Name Prefix',
     						'nameSuffix': 'Name Suffix',
     						'gender': 'Gender',
+    						'ethnicity': (options.demogs.Ethnicity.Description || "Ethnicity"),
     						'patientRelation': 'Patient Relationship',
     						'vehicleStates': 'Vehicle States',
     						'mediaSource': 'Media Source',
@@ -943,7 +967,7 @@
   				}
 			},
 			stickyControls: {
-				enable: true,
+				enable: false,
 				offset: {
 					top: 50,
 			        bottom: 'auto',
@@ -957,6 +981,8 @@
         var $wrapper = $(this);
         
         createMarkup($wrapper, settings);
+        
+        console.log(settings.demogs);
 
 		$wrapper.find("button").button();
 		

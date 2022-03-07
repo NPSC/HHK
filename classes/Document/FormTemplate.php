@@ -196,6 +196,7 @@ class FormTemplate {
 
         $lookups['genders'] = readGenLookupsPDO($dbh, 'gender', 'Order');
         unset($lookups['genders']['z']);
+        $lookups['ethnicities'] = readGenLookupsPDO($dbh, 'ethnicity', 'Description');
         $lookups['patientRels'] = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Order');
         unset($lookups['patientRels']['slf']);
         $lookups['mediaSources'] = readGenLookupsPDO($dbh, 'Media_Source','Order');
