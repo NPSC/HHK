@@ -194,8 +194,8 @@ class FormTemplate {
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
             'emailPatient'=>(isset($abstract->emailPatient) ? $abstract->emailPatient : false),
-            'notifySubject'=>$abstract->notifySubject,
-            'notifyContent'=>htmlspecialchars_decode($abstract->notifyContent, ENT_QUOTES),
+            'notifySubject'=>(isset($abstract->notifySubject) ? $abstract->notifySubject : ''),
+            'notifyContent'=>(isset($abstract->notifyContent) ? htmlspecialchars_decode($abstract->notifyContent, ENT_QUOTES) : ''),
             'recaptchaScript'=>$recaptcha->getScriptTag()
         ];
     }
