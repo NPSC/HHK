@@ -27,4 +27,9 @@ ALTER TABLE `visit`
 
 ALTER TABLE `stays` 
 ADD COLUMN `Recorded` INT(1) NOT NULL DEFAULT 0 AFTER `Status`;
-	
+
+ALTER TABLE `trans` 
+CHANGE COLUMN `idName` `idName` INT(11) NOT NULL DEFAULT 0 ;
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1');

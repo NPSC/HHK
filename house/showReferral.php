@@ -169,7 +169,7 @@ if(isset($_GET['template'])){
                           							.append(label, field, help, validation)
                           						)
                           					);
-                          				}else if(data.type == 'date'){
+                          				}else if(data.type == 'date'){ /*
                           					$(field).attr('type','text').attr('autocomplete', 'off')
                           					if(data.name == 'patient.birthdate'){
                           						$(field).datepicker({
@@ -183,6 +183,7 @@ if(isset($_GET['template'])){
                           					}else{
                           						$(field).datepicker();
                           					}
+                          					*/
                           				}else if(data.type == 'select'){
                           					if(data.dataSource){
                               					var options = {};
@@ -308,7 +309,8 @@ if(isset($_GET['template'])){
                         	    		cmd: "submitform",
                         	    		formRenderData: JSON.stringify(formRenderData),
                         	    		csrfToken: csrfToken,
-                        	    		recaptchaToken: token
+                        	    		recaptchaToken: token,
+                        	    		template: <?php echo (isset($_GET['template']) ? $_GET['template'] : 0); ?>
                         	    	},
                         	    	dataType: "json",
                         	    	success: function(data, textStatus, jqXHR)

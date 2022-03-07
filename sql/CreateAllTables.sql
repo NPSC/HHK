@@ -2003,7 +2003,7 @@ CREATE TABLE if not exists `trans` (
   `Trans_Type` varchar(5) NOT NULL DEFAULT '',
   `Trans_Method` varchar(5) NOT NULL DEFAULT '',
   `Trans_Date` datetime DEFAULT NULL,
-  `idName` varchar(15) NOT NULL DEFAULT '',
+  `idName` int(11) NOT NULL DEFAULT 0,
   `Order_Number` varchar(45) NOT NULL DEFAULT '',
   `Invoice_Number` varchar(45) NOT NULL DEFAULT '',
   `Payment_Type` varchar(15) NOT NULL DEFAULT '',

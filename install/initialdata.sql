@@ -607,6 +607,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('receiptLogoFile','../conf/receiptlogo.png','url','f','','Path to the receipt logo file','',1),
 ('receiptLogoWidth','150','i','f','','in px','',1),
 ('ReferralAgent','true','b','hf','','Track referral agents/social workers','',1),
+('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1'),
 ('RegColors','hospital','lu','c','','Calendar page ribbon colors based on hospital or room','Reg_Colors',1),
 ('RegForm','1','i','h','',' Registration form style (1 or 2)','',1),
 ('RegFormNoRm','false','b','h','','Do not show the room number on the registration form before check-in','',1),
