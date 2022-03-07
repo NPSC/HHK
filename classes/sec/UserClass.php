@@ -5,8 +5,12 @@ use HHK\SysConst\WebRole;
 use HHK\Tables\WebSec\{W_auth_ipRS, W_user_answersRS};
 use HHK\Tables\EditRS;
 use HHK\sec\MFA\GoogleAuthenticator;
-use HHK\UserCategories;
 use HHK\sec\MFA\Email;
+use HHK\sec\MFA\Backup;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\MFA\Remember;
+use HHK\Member\IndivMember;
+use HHK\SysConst\MemBasis;
 
 /**
  * UserClass.php
@@ -37,7 +41,7 @@ class UserClass
 
     const Login_Fail = 'LF';
 
-    public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE, $checkOTP = true, $otp = '')
+    public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE, $checkOTP = true, $otpMethod = '', $otp = '')
     {
         $ssn = Session::getInstance();
 
@@ -69,15 +73,45 @@ class UserClass
             if ($match && $r['Status'] == 'a') {
                 $success = false;
 
+                $remember = new Remember($r);
+
+                $OTPRequired = ($remember->verifyToken($dbh) == false && $this->hasTOTP($dbh, $username));
+
                 //if OTP is required
-                if($r['totpSecret'] == '' || $checkOTP == false){
+                if($OTPRequired == false || $checkOTP == false){
                     $success = true;
-                }else if($r['totpSecret'] !== '' && $otp == ''){
+                }else if($OTPRequired && $otp == ''){
                     $this->logMessage = "OTPRequired";
+                    if($otpMethod == 'email'){
+                        try{
+                            $mfaObj = new Email($r);
+                            $mfaObj->sendCode($dbh);
+                        }catch(\Exception $e){
+                            $this->logMessage = "Error sending Two factor verification code: " . $e->getMessage();
+                        }
+                    }
                     return FALSE;
-                }else if($otp != '' && $r['totpSecret'] !== ''){
-                    $ga = new GoogleAuthenticator($r);
-                    if($ga->verifyCode($otp) == true){
+                }else if($OTPRequired && $otp != '' && $otpMethod){
+                    switch($otpMethod) {
+                        case "authenticator":
+                            $mfaObj = new GoogleAuthenticator($r);
+                            break;
+                        case "email":
+                            $mfaObj = new Email($r);
+                            break;
+                        case "backup":
+                            $mfaObj = new Backup($r);
+                            break;
+                        default:
+                            $success = false;
+                    }
+
+                    if($mfaObj->verifyCode($otp) == true){
+                        if($remember){
+                            $rememberObj = new Remember($r);
+                            $rememberObj->rememberMe($dbh);
+                        }
+
                         $success = true;
                     }else{
                         $success = false;
@@ -406,11 +440,26 @@ class UserClass
         return false;
     }
 
-    public static function hasTOTP(\PDO $dbh, $uS)
+    public static function hasTOTP(\PDO $dbh, $username)
     {
-        $u = self::getUserCredentials($dbh, $uS->username);
-        if ($u['totpSecret'] !== '' || $u['emailSecret'] !== '') {
+        $u = self::getUserCredentials($dbh, $username);
+
+        if($u['totpSecret'] !== '' || $u['emailSecret'] !== '') {
             return true;
+        }
+
+        return false;
+    }
+
+    public static function getDefaultOtpMethod(\PDO $dbh, $username)
+    {
+        $u = self::getUserCredentials($dbh, $username);
+        if ($u['totpSecret'] !== '' || $u['emailSecret'] !== '') {
+            return 'authenticator';
+        }elseif($u['emailSecret'] !== ''){
+            return 'email';
+        }elseif($u['backupSecret'] !== ''){
+            return 'backup';
         }
 
         return false;
@@ -465,11 +514,29 @@ class UserClass
         return $user;
     }
 
+    public static function getOtpMethodMarkup(\PDO $dbh, $username, $hiddenMethod = ''){
+        $userAr = UserClass::getUserCredentials($dbh, $username);
+        $mkup = '';
+
+        if(isset($userAr['totpSecret']) && $userAr['totpSecret'] !== '' && $hiddenMethod != 'authenticator'){
+            $mkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('button', "Authenticator app", array("class"=>"mx-1 smaller", "data-method"=>"authenticator")), array('class'=>'col-12 my-2'));
+        }
+
+        if(isset($userAr['emailSecret']) && $userAr['emailSecret'] !== '' && $hiddenMethod != 'email'){
+            $mkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('button', "Email", array("class"=>"mx-1 smaller", "data-method"=>"email")), array('class'=>'col-12 my-2'));
+        }
+
+        if(isset($userAr['backupSecret']) && $userAr['backupSecret'] !== '' && $hiddenMethod != 'backup'){
+            $mkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('button', "Backup Codes", array("class"=>"mx-1 smaller", "data-method"=>"backup")), array('class'=>'col-12 my-2'));
+        }
+
+        return $mkup;
+    }
+
     public static function createUserSettingsMarkup(\PDO $dbh)
     {
         $uS = Session::getInstance();
         $userAr = UserClass::getUserCredentials($dbh, $uS->username);
-
         $authProvider = self::getAuthProvider($dbh, $uS);
 
         $mkup = '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
@@ -494,7 +561,7 @@ class UserClass
             		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
             ';
 
-            if(self::hasTOTP($dbh, $uS)){
+            if(self::hasTOTP($dbh, $uS->username)){
                 $mkup.= '<p style="margin: 0.5em">Two Step Verification is ON</p>';
             }else{
                 $mkup.= '
@@ -504,13 +571,13 @@ class UserClass
             }
 
             $mkup .= '<div id="mfaTabs">
-            <ul>
-                <li><a href="#mfaEmail">Email</a></li>
-                <li><a href="#mfaAuthenticator">Authenticator</a></li>
-            </ul>
+            <ul>'.
+                ($userAr['idName'] > 0 ? '<li><a href="#mfaEmail">Email</a></li>' : '') .
+                '<li><a href="#mfaAuthenticator">Authenticator</a></li>
+            </ul>' .
 
-            <div id="mfaEmail">' . $email->getEditMarkup($dbh) . '</div>
-            <div id="mfaAuthenticator">' . $ga->getEditMarkup() . '</div>
+            ($userAr['idName'] > 0 ? '<div id="mfaEmail">' . $email->getEditMarkup($dbh) . '</div>' : '') .
+            '<div id="mfaAuthenticator">' . $ga->getEditMarkup() . '</div>
             </div>';
 
             $mkup .= '
@@ -518,7 +585,7 @@ class UserClass
                     </div>
                 </div>
                 </div> <!--end col-md-6 -->
-                <div class="col-md-6">
+                <div class="col-md-6" id="chgPassword">
             ';
 
             if (self::isPassExpired($dbh, $uS)){
@@ -760,55 +827,6 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
         $ssn = Session::getInstance();
         if (isset($ssn->Challtries)){
             unset($ssn->Challtries);
-        }
-    }
-
-    //two factor authentication
-
-    public function saveTwoFactorSecret(\PDO $dbh, $secret = '', $OTP = ''){
-        $uS = Session::getInstance();
-
-        $ga = new GoogleAuthenticator(array('User_Name'=>$uS->username, 'totpSecret'=>$secret));
-
-        if($ga->verifyCode($secret, $OTP) == false){
-            $this->logMessage = "One Time Code is invalid";
-            return false;
-        }
-
-        if($uS->username && $secret != ''){
-            $query = "update w_users set OTP = 1, OTPCode = :secret, Last_Updated = now() where User_Name = :username and Status='a';";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ':secret' => $secret,
-                ':username' => $uS->username
-            ));
-
-            if ($stmt->rowCount() == 1) {
-                $this->insertUserLog($dbh, UserClass::OTPSecChanged, $uS->username);
-            }
-            return true;
-        }else{
-            $this->logMessage = 'Two Step Verification Setup failed';
-            return false;
-        }
-    }
-
-    public function disableTwoFactor(\PDO $dbh, $username){
-
-        if($username){
-            $query = "update w_users set OTP = 0, OTPCode = '', Last_Updated = now() where User_Name = :username and Status='a';";
-            $stmt = $dbh->prepare($query);
-            $stmt->execute(array(
-                ':username' => $username
-            ));
-
-            if ($stmt->rowCount() == 1) {
-                $this->insertUserLog($dbh, UserClass::OTPSecChanged, $username);
-            }
-            return true;
-        }else{
-            $this->logMessage = 'Failed to disable Two Step Verification';
-            return false;
         }
     }
 

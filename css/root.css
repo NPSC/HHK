@@ -34,8 +34,16 @@ body {
 	text-align:center;
 }
 
+.right {
+	text-align: right;
+}
+
 .smaller {
 	font-size:smaller !important;
+}
+
+#changeMethod {
+	font-size:0.7em !important;
 }
 
 .showPw {

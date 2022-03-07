@@ -5,6 +5,10 @@ namespace HHK\sec\MFA;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\UserClass;
 use HHK\sec\Session;
+use HHK\Member\IndivMember;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\MemBasis;
+use HHK\Member\Address\Emails;
 
 /**
  * Email.php
@@ -22,6 +26,7 @@ class Email extends AbstractMultiFactorAuth
 
     protected $discrepancy = 10; //code validity time in 30sec increments (1 = 30sec, 10 = 5min)
     protected $emailAddr;
+    protected $idName;
 
     /**
      * @param array $userAr
@@ -29,6 +34,7 @@ class Email extends AbstractMultiFactorAuth
     public function __construct(array $userAr){
         $this->secret = $userAr['emailSecret'];
         $this->username = $userAr['User_Name'];
+        $this->idName = $userAr['idName'];
     }
 
     public function sendCode(\PDO $dbh){
@@ -102,18 +108,34 @@ where u.User_Name = :uname";
     }
 
     public function getEditMarkup(\PDO $dbh){
+        $uS = Session::getInstance();
         $this->setEmailAddress($dbh);
         $mkup = '';
 
-        if($this->secret !== null){ //if configured
+        if($this->secret !== ''){ //if configured
             $mkup = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('p', "Two factor authentication codes will be sent to " . $this->emailAddr)
             , array('class'=>'my-3 center'));
         }else{
+            $userMem = new IndivMember($dbh, MemBasis::Indivual, $this->idName);
+            $emails = new Emails($dbh, $userMem, $uS->nameLookups[GLTableNames::EmailPurpose]);
+
             $mkup = HTMLContainer::generateMarkup('div',
+                    $emails->createMarkup() .
+
                 HTMLContainer::generateMarkup('button', "Enable Email 2 Factor Verification", array('id'=>'genEmailSecret'))
-                , array('class'=>'my-3 center'));
+                , array('class'=>'my-3', 'style'=>'text-align:center;'));
         }
+
+        $mkup .= '
+                    <form class="otpForm" style="display: none; text-align: center;">
+                        <label for"otp" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
+                        <input type="text" name="otp" size="10">
+                        <input type="hidden" name="secret">
+                        <input type="hidden" name="cmd" value="save2fa">
+                        <input type="hidden" name="method" value="email">
+                        <input type="submit" style="margin-left: 1em;">
+                    </form>';
 
         return $mkup;
     }

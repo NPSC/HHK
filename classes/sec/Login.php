@@ -89,6 +89,7 @@ class Login {
 
         //get google API keys
         SysConfig::getCategory($dbh, $ssn, "'ga'", WebInit::SYS_CONFIG);
+        SysConfig::getCategory($dbh, $ssn, "'pr'", WebInit::SYS_CONFIG);
 
         return $dbh;
     }
@@ -119,6 +120,12 @@ class Login {
 
     public function checkPost(\PDO $dbh, $post, $defaultPage) {
 
+        $otpMsgs = [
+            'authenticator'=>'Enter the one-time <strong>Authenticator</strong> code',
+            'email'=>'Enter the one-time code <strong>emailed</strong> to you',
+            'backup'=>'Enter a one-time <strong>Backup</strong> code'
+        ];
+
         $this->validateMsg = '';
         $events = array();
 
@@ -141,11 +148,31 @@ class Login {
                 $otp = filter_var($post["otp"], FILTER_SANITIZE_STRING);
             }
 
+            $otpMethod = false;
+            if(isset($post["otpMethod"])){
+                $otpMethod = filter_var($post['otpMethod'], FILTER_SANITIZE_STRING);
+            }
+
+            $showMethodMkup = false;
+            if(isset($post['showMethodMkup'])){
+                $showMethodMkup = boolval(filter_var($post['showMethodMkup'], FILTER_VALIDATE_BOOLEAN));
+            }
+
+            $rememberMe = false;
+            if(isset($post['rememberMe'])){
+                $rememberMe = boolval(filter_var($post['rememberMe'], FILTER_VALIDATE_BOOLEAN));
+            }
+
             $u = new UserClass();
 
-            if ($u->_checkLogin($dbh, $this->userName, $password, false, true, $otp) === FALSE) {
+            if ($u->_checkLogin($dbh, $this->userName, $password, $rememberMe, true, $otpMethod, $otp) === FALSE) {
                 if($u->logMessage == "OTPRequired"){
                     $events['OTPRequired'] = true;
+                    $events['method'] = ($otpMethod !== '' ? $otpMethod : $u->getDefaultOtpMethod($dbh, $this->userName));
+                    $events['methodMsg'] = $otpMsgs[$events['method']];
+                    if($showMethodMkup){
+                        $events['otpMethodMkup'] = $u->getOtpMethodMarkup($dbh, $this->userName, $otpMethod);
+                    }
                 }else{
                     // Failed
                     $this->validateMsg .= $u->logMessage;
@@ -235,13 +262,27 @@ class Login {
             , array("class"=>"col-8"))
             , array("class"=>"row mt-3 mx-0", "id"=>"pwRow"));
 
+        $otpChoiceRow = HTMLContainer::generateMarkup("div",
+            '<p>Pick how you would like to receive your temporary code</p> <div id="otpChoices" class="my-3 col-12 center"></div>'
+            , array("class"=>"row mt-3 mx-0 d-none", "id"=>"otpChoiceRow"));
+
         $otpRow = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("div", "For security, please enter the unique code found in your Authenticator app/extension", array("class"=>"col-12 pb-3")) .
+            HTMLContainer::generateMarkup("div", "", array("class"=>"col-12 pb-3", "id"=>'otpMsg')) .
             HTMLContainer::generateMarkup("label", 'Two Factor Code', array("class"=>"col-6 pr-0 tdlabel")) .
             HTMLContainer::generateMarkup("div",
                 HTMLInput::generateMarkup("", array('id'=>'txtOTP', "name"=>"twofactorCode", "class"=>"w-100")) .
-                HTMLContainer::generateMarkup('span', '', array('id'=>'errOTP', 'class'=>'hhk-logerrmsg'))
-                , array("class"=>"col-6"))
+                HTMLContainer::generateMarkup('span', '', array('id'=>'errOTP', 'class'=>'hhk-logerrmsg')) .
+                HTMLInput::generateMarkup(false, array('name'=>"otpMethod", 'type'=>"hidden", 'id'=>"otpMethod"))
+                , array("class"=>"col-6")) .
+            ($uS->rememberTwoFA != '' ?
+            HTMLContainer::generateMarkup("div",
+                HTMLInput::generateMarkup(false, array("type"=>"checkbox", "name"=>"rememberMe")) .
+                HTMLContainer::generateMarkup("label", "Remember this device for " . $uS->rememberTwoFA . " days", array("for"=>"rememberMe", "class"=>"ml-1"))
+                , array("class"=>"col-12 my-3"))
+                : '') .
+            HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("button", "Use a different method...", array("id"=>"changeMethod", "data-showMkup"=>"false"))
+                , array("class"=>"col-12 mb-3 right"))
             , array("class"=>"row mt-3 mx-0 d-none", "id"=>"otpRow"));
 
         //pass xf to login
@@ -254,9 +295,9 @@ class Login {
         $loginRow = HTMLContainer::generateMarkup("div",
             $xfInput .
             HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'submit', 'class'=>'ui-button'))
-         , array("class"=>"my-3"));
+         , array("class"=>"my-3", 'id'=>'loginBtnRow'));
 
-        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("form", $valMkup . $userRow . $pwRow . $otpRow . $loginRow, array("class"=>"ui-widget-content ui-corner-bottom", "id"=>"hhkLogin")), array("class"=>"ui-widget center")), array('class'=>'col-12', 'id'=>'divLoginCtls')), array("class"=>"row justify-content-center mb-3"));
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("form", $valMkup . $userRow . $pwRow . $otpChoiceRow . $otpRow . $loginRow, array("class"=>"ui-widget-content ui-corner-bottom", "id"=>"hhkLogin")), array("class"=>"ui-widget center")), array('class'=>'col-12', 'id'=>'divLoginCtls')), array("class"=>"row justify-content-center mb-3"));
 
     }
 

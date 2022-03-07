@@ -103,25 +103,26 @@ class GoogleAuthenticator extends AbstractMultiFactorAuth
 
             ';
 
-        }
+            $mkup .= HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup('button', "Enable Authenticator 2 Factor Verification", array('id'=>'genTOTPSecret'))
+                , array('class'=>'my-3', 'style'=>'text-align: center;'));
 
-        $mkup .= HTMLContainer::generateMarkup('div',
-            HTMLContainer::generateMarkup('button', "Enable Authenticator 2 Factor Verification", array('id'=>'genTOTPSecret'))
-            , array('class'=>'my-3', 'style'=>'text-align: center;'));
+        }
 
         $mkup .= '
                     <div id="qrcode" style="margin: 1em 0; text-align:center;"></div>
-                    <form class="otpForm" style="display: none;">
+                    <form class="otpForm" style="display: none; text-align: center;">
                         <label for"otp" style="display: block; margin-bottom: 1em">Enter Verification Code</label>
                         <input type="text" name="otp" size="10">
                         <input type="hidden" name="secret">
                         <input type="hidden" name="cmd" value="save2fa">
+                        <input type="hidden" name="method" value="authenticator">
                         <input type="submit" style="margin-left: 1em;">
                     </form>
                     <div id="backupCodeDiv" style="display: none;">
-                        <h3>Backup Codes</h3>
+                        <h3 style="text-align: center;">Backup Codes</h3>
                         <p class="mx-3">If you are ever unable to access your Authenticator app, you can use one of the following one time codes to log in. Each code can only be used once.</p>
-                        <p class="mx-3" id="backupCodes"></p>
+                        <p class="mx-3" style="text-align: center;" id="backupCodes"></p>
                     </div>';
 
         return $mkup;

@@ -614,6 +614,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('RegForm','1','i','h','',' Registration form style (1 or 2)','',1),
 ('RegFormNoRm','false','b','h','','Do not show the room number on the registration form before check-in','',1),
 ('RegSubj','Volunteer Registration','s','v','','Volunteer Registration email subject line','',1),
+('rememberTwoFA','','lu','pr','','Number of days users can save a device and skip two factor authentication','dayIncrements',1),
 ('ReplyTo','','ea','g','','The reply to address for any email sent to guests.','',1),
 ('ResvEarlyArrDays','2','i','h','','Number of days before reservation to show check-in button on reservation chooser','',1),
 ('ReturnAddress','','ea','v','','Return address for automatic emails to volunteers','',1),

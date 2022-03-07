@@ -2299,7 +2299,16 @@ CREATE TABLE if not exists `w_users` (
   PRIMARY KEY (`User_Name`)
 ) ENGINE=InnoDB;
 
-
+CREATE TABLE if not exists `w_user_tokens` (
+	`idToken` INT(11) NOT NULL AUTO_INCREMENT,
+	`idName` INT(11) NOT NULL,
+    `Token` VARCHAR(100) NOT NULL DEFAULT '',
+    `Expires` INT(11) NOT NULL DEFAULT 0,
+    `IP_Address` VARCHAR(45) NOT NULL DEFAULT '',
+    `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`idToken`)
+) ENGINE=InnoDB;
+    
 
 -- -----------------------------------------------------
 -- Table `web_sites`

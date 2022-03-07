@@ -228,15 +228,22 @@ switch ($c) {
 
     case "save2fa":
 
+        $method = '';
+        if(isset($_POST['method'])){
+            $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
+        }
+
+        $secret = '';
         if (isset($_POST["secret"])) {
             $secret = filter_var($_POST["secret"], FILTER_SANITIZE_STRING);
         }
 
-        if (isset($_POST["OTP"])) {
-            $otp = filter_var($_POST["OTP"], FILTER_SANITIZE_STRING);
+        $otp = '';
+        if (isset($_POST["otp"])) {
+            $otp = filter_var($_POST["otp"], FILTER_SANITIZE_STRING);
         }
 
-        $events = saveTwoFA($dbh, $secret, $otp);
+        $events = saveTwoFA($dbh, $secret, $otp, $method);
         break;
 
     default:
@@ -411,26 +418,40 @@ function generateTwoFA($dbh, $uname, string $method){
     return $event;
 }
 
-function saveTwoFA(\PDO $dbh, $secret, $OTP){
+function saveTwoFA(\PDO $dbh, $secret, $OTP, $method){
     $uS = Session::getInstance();
 
-    $ga = new GoogleAuthenticator(array('User_Name'=>$uS->username, 'totpSecret'=>$secret));
-    $backup = new Backup(array('User_Name'=>$uS->username, 'backupSecret'=>''));
-    $backup->createSecret();
+    switch ($method) {
+        case "authenticator":
+            try{
 
-    if($ga->verifyCode($OTP) == false){
-        $events = array('error'=>"One Time Code is invalid");
-    }else{
+                $ga = new GoogleAuthenticator(array('User_Name'=>$uS->username, 'totpSecret'=>$secret));
+                $backup = new Backup(array('User_Name'=>$uS->username, 'backupSecret'=>''));
+                $backup->createSecret();
 
-        try{
-            if($backup->saveSecret($dbh) && $ga->saveSecret($dbh)){
-                $events = array('success'=>'Two Factor Authentication enabled', 'backupCodes'=>$backup->getCode());
+                if($ga->verifyCode($OTP) == false){
+                    $events = array('error'=>"One Time Code is invalid");
+                }elseif($backup->saveSecret($dbh) && $ga->saveSecret($dbh)){
+                    $events = array('success'=>'Two Factor Authentication enabled', 'backupCodes'=>$backup->getCode());
+                }else{
+                    $events = array('error'=>"Unable to enable Two factor Authentication");
+                }
+            }catch(Exception $e){
+                $events = array('error'=>'Error: ' . $e->getMessage());
+            }
+            break;
+        case "email":
+
+            $email = new Email(array('User_Name'=>$uS->username, 'emailSecret'=>$secret));
+
+            if($email->verifyCode($OTP) == false){
+                $events = array('error'=>"One Time Code is invalid");
+            }elseif($email->saveSecret($dbh)){
+                $events = array('success'=>'Two Factor Authentication enabled');
             }else{
                 $events = array('error'=>"Unable to enable Two factor Authentication");
             }
-        }catch(Exception $e){
-            $events = array('error'=>'Error: ' . $e->getMessage());
-        }
+            break;
     }
 
     return $events;

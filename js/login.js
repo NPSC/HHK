@@ -30,6 +30,9 @@ function sendHhkLogin() {
 	$chall = $('#challenge');
 	$xf = $('#xf');
 	$otp = $('#txtOTP');
+	$otpMethod = $('#otpMethod');
+	$changeMethod = $("#changeMethod");
+	$rememberMe = $("input[name=rememberMe]");
 	
 	$('.hhk-logerrmsg').hide();
 	$('#valMsg').text('');
@@ -51,7 +54,10 @@ function sendHhkLogin() {
 	    txtUname: $uname.val(),
 	    txtPass: $psw.val(),
 	    xf: $xf.val(),
-	    otp: $otp.val()
+	    otp: $otp.val(),
+	    otpMethod: $otpMethod.val(),
+	    showMethodMkup: $changeMethod.data("showMkup"),
+	    rememberMe: $rememberMe.prop('checked')
 	};
 	$.post('index.php', parms, function (data){
 	    try {
@@ -64,8 +70,21 @@ function sendHhkLogin() {
 	    if(data.OTPRequired){
 	    	$("#loginTitle").text("Verify Your Identity");
 	    	$('#userRow, #pwRow').hide();
-	    	$('#otpRow').removeClass("d-none");
-	    	$('#txtOTP').data("2fa", "true").focus();
+	    	if(data.method != '' && !data.otpMethodMkup){
+	    		$('#otpChoiceRow').addClass('d-none');
+	    		$('#otpMsg').html(data.methodMsg);
+	    		$('#otpRow, #rememberRow').removeClass("d-none");
+	    		$('#txtOTP').data("2fa", "true").focus();
+	    		$('#otpMethod').val(data.method);
+	    		$('#loginBtnRow').removeClass('d-none');
+	    	}else if(data.otpMethodMkup){
+	    		$('#otpChoices').html(data.otpMethodMkup);
+	    		$('#otpChoiceRow').removeClass('d-none');
+	    		$('#otpChoiceRow button').button();
+	    		$('#otpRow, #rememberRow').addClass("d-none");
+	    		$('#otpMethod').val('');
+	    		$('#loginBtnRow').addClass('d-none');
+	    	}
 	    }
 	    if (data.page && data.page !== '') {
 	        window.location.assign(data.page);
@@ -156,6 +175,20 @@ $(document).ready(function () {
 
 	$(document).on('submit', "#hhkLogin", function(e){
 		e.preventDefault();
+		sendHhkLogin();
+	});
+	
+	$(document).on('click', "#changeMethod", function(e){
+		e.preventDefault();
+		$(this).data('showMkup', 'true');
+		$('#txtOTP').data("2fa", "false");
+		sendHhkLogin();
+	});
+	
+	$(document).on('click', "#otpChoiceRow button", function(e){
+		e.preventDefault();
+		$("#otpMethod").val($(this).data('method'));
+		$("#changeMethod").data('showMkup', 'false');
 		sendHhkLogin();
 	});
 	

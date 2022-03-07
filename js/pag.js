@@ -292,7 +292,7 @@ $(document).ready(
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
 										$('#mfaAuthenticator input[name=secret]').val(data.secret);
-										$('div#qrcode').html('<img src="'+ data.url + '">');
+										$('div#qrcode').html('<img src="'+ data.url + '">').show();
 										$('#mfaAuthenticator .otpForm').show();
 										$('button#genTOTPSecret').hide();
 									}
@@ -324,7 +324,7 @@ $(document).ready(
 							});
 						});
 						
-						$('div#dchgPw').on('click', 'button#enableEmail', function(){
+						$('div#dchgPw').on('click', 'button#genEmailSecret', function(){
 							$.post("../house/ws_admin.php", {
 								cmd : 'gen2fa',
 								method : 'email'
@@ -340,10 +340,9 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
-										$('div#OTPSecret').text(data.secret).show();
-										
-										$('div#otpForm').show();
-										$('button#genSecret').text("Regenerate QR Code");
+										$('.otpForm input[name=secret]').val(data.secret);
+										$('.otpForm').show();
+										$('button#genEmailSecret').hide();
 									}
 								}
 							});
@@ -352,7 +351,7 @@ $(document).ready(
 						
 						//submit + verify OTP
 						$('div#dchgPw').on('submit', '.otpForm', function(e){
-							e.preventDefaults();
+							e.preventDefault();
 							$.post("../house/ws_admin.php", $(this).serialize(), 
 								function(data) {
 								if (data) {
@@ -366,10 +365,10 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
-										console.log($(this));
 										$(".otpForm").hide();
+										$("#qrcode").empty().hide();
 										if(data.backupCodes){
-											$("p#backupCodes").html(data.backupCodes.join("<br>"));
+											$("p#backupCodes").html("<br>" + data.backupCodes.join("<br><br>"));
 											$("div#backupCodeDiv").show();
 										}
 										flagAlertMessage("Two Step Verification enabled successfully", 'success');
@@ -390,10 +389,10 @@ $(document).ready(
 							$(this).dialog("close");
 						};
 						$(".PassExpDesc").hide();
-						$('div#dchgPw').find('input').removeClass("ui-state-error").val('');
+						$('div#dchgPw #chgPassword').find('input').removeClass("ui-state-error").val('');
 						$('#pwChangeErrMsg').text('');
 
-						$('div#dchgPw').find('button').button();
+						$('div#dchgPw').find('button, input[type=submit]').button();
 						$('div#dchgPw').find("#qrcode").empty();
 						$('div#dchgPw').find("#otpForm").hide();
 						$('#dchgPw').dialog("option", "title", "User Settings");

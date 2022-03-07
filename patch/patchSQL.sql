@@ -12,13 +12,12 @@ ALTER TABLE `w_users`
 ADD COLUMN `idIdp` int(11) NOT NULL DEFAULT 0 AFTER `Chg_PW`;
 
 ALTER TABLE `w_users` 
-ADD COLUMN `default2Factor` VARCHAR(4) NULL AFTER `idIdp`,
 ADD COLUMN `totpSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `default2Factor`,
 ADD COLUMN `emailSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `totpSecret`,
 ADD COLUMN `backupSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `emailSecret`;
 
-
-
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('rememberTwoFA','30','lu','pr','','Number of days users can save a device and skip two factor authentication','dayIncrements',1);
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('samlCertPath', '/etc/pki/hhkapp', 's', 'a', '', 'Path to certificates for signing SAML messages', '','0');
