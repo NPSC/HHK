@@ -129,6 +129,11 @@ class ReferralForm {
 	        $searchFor->setGender($formUserData['demographics']['gender']);
 	    }
 
+	    // ethnicity
+	    if (isset($formUserData['demographics']['ethnicity']) && $formUserData['demographics']['ethnicity'] != '') {
+	        $searchFor->setEthnicity($formUserData['demographics']['ethnicity']);
+	    }
+
 	    // Phone
 	    if (isset($formUserData['phone']) && $formUserData['phone'] != '') {
 	        $searchFor->setPhone($formUserData['phone'], (isset($searchIncludes[self::HTML_Incl_Phone]) ? TRUE : FALSE));
@@ -906,6 +911,7 @@ class ReferralForm {
 	        'selStatus'=>'a',
 	        'selMbrType'=>'ai',
 	        'sel_Gender'=>$data->getGender(),
+	        'sel_Ethnicity'=>$data->getEthnicity(),
 
 	        'txtEmrgFirst'=>$data->getEmrgFirst(),
 	        'txtEmrgLast'=>$data->getEmrgLast(),

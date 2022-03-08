@@ -177,9 +177,14 @@ try {
                 }
             }
 
+            $templateId = '';
+            if(isset($_POST['template'])){
+                $templateId = intval(filter_var($_POST['template'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
 			if($score >= 0.5){
 				$formDocument = new FormDocument();
-				$events = $formDocument->saveNew($dbh, $formRenderData);
+				$events = $formDocument->saveNew($dbh, $formRenderData, $templateId);
 				$events['recaptchaScore'] = $score;
 			}else{
 				$events = ['status'=>'error', 'errors'=>['server'=>'Recaptcha failed with score of ' . $score]];
