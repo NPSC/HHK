@@ -753,12 +753,20 @@ where
         $replys = array();
 
         if (count($sourceIds) == 0) {
-            $replys[] = array('error'=>'No local records were found.');
+            $replys[0] = array('error'=>"The list of HHK Id's to send is empty.");
             return $replys;
         }
 
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
+
+        // Load search parameters for each source ID
+        $stmt = $this->loadSearchDB($dbh, $sourceIds);
+
+        if (is_null($stmt)) {
+            $replys[0] = array('error'=>'No local records were found.');
+            return $replys;
+        }
 
         // Load Individual types
         $stmtList = $dbh->query("Select * from neon_type_map where List_Name = 'individualTypes'");
@@ -766,14 +774,6 @@ where
 
         while ($t = $stmtList->fetch(\PDO::FETCH_ASSOC)) {
             $invTypes[] = $t;
-        }
-
-        // Load search parameters for each source ID
-        $stmt = $this->loadSearchDB($dbh, $sourceIds);
-
-        if (is_null($stmt)) {
-            $replys[] = array('error'=>'No local records were found.');
-            return $replys;
         }
 
 

@@ -7,6 +7,7 @@ use HHK\Neon\TransferMembers;
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\HTMLContainer;
 
 /**
  * ws_tran.php
@@ -105,14 +106,17 @@ try {
         }
 
         $reply = $transfer->sendVisits($dbh, $uS->username, $en);
-        $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
+
+
+        $events['data'] = HTMLContainer::generateMarkup('p', "Visit Results")
+                . CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
 
         if (count($transfer->getMemberReplies()) > 0) {
-            $events['members'] = CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
+            $events['members'] = HTMLContainer::generateMarkup('p', "New Neon Members") . CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
         }
 
         if (count($transfer->getReplies()) > 0) {
-            $events['strayMembers'] = CreateMarkupFromDB::generateHTML_Table($transfer->getReplies(), 'tblrpt2');
+            $events['strayMembers'] = HTMLContainer::generateMarkup('p', "Additional PSG Members") . CreateMarkupFromDB::generateHTML_Table($transfer->getReplies(), 'tblrpt2');
         }
 
 
@@ -242,7 +246,7 @@ try {
             try{
                 $updateResult = $transfer->updateNeonAccount($dbh, $result, $id);
             } catch (RuntimeException $e) {
-                $updateResult =  = $e->getMessage();
+                $updateResult = $e->getMessage();
             }
 
             $events = array('result'=>$updateResult);

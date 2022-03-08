@@ -28,14 +28,22 @@ class CreateMarkupFromDB {
             return "<table id='$tableId'  class='display'><thead><td>No Data</td></thead><tbody><td></td></tbody></table>";
         }
 
-        // HEader row
-        $keys = array_keys($rows[0]);
+        $firstKey = array_key_first($rows);
+
+        $keys = array_keys($rows[$firstKey]);
+
+        if (is_array($keys) === FALSE) {
+            return '';
+        }
+
+        // Header row
         foreach ($keys as $k) {
 
             if ($tdClassIndicator == '' || $k != $tdClassIndicator) {
                 $thead .= "<th>$k</th>";
             }
         }
+
         if ($thead != "") {
             $thead = "<thead><tr>" . $thead . "</tr></thead>";
         }

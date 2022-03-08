@@ -137,7 +137,7 @@ function transferData($btn, start, end, command) {
     var posting = $.post('ws_tran.php', parms);
 
     posting.done(function(incmg) {
-        $btn.val('Transfer ' + command);
+        $btn.val('Transfer ' + command).hide();
 
         if (!incmg) {
             alert('Bad Reply from HHK Web Server');
