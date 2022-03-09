@@ -60,6 +60,25 @@ class Backup extends AbstractMultiFactorAuth {
         }
     }
 
+    public function disable(\PDO $dbh) : bool
+    {
+        if($this->username && $this->secret != ''){
+            $query = "update w_users set backupSecret = '', Last_Updated = now() where User_Name = :username and Status='a';";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(
+                ':username' => $this->username
+            ));
+
+            if ($stmt->rowCount() == 1) {
+                UserClass::insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
+            }
+            $this->secret = '';
+            return true;
+        }else{
+            return false;
+        }
+    }
+
 
 }
 

@@ -59,6 +59,16 @@ abstract class AbstractMultiFactorAuth {
      */
     public abstract function saveSecret(\PDO $dbh): bool;
 
+    /**
+     * Disable this two factor method
+     *
+     * @param \PDO $dbh
+     *
+     * @return bool
+     */
+    public abstract function disable(\PDO $dbh): bool;
+
+
         /**
      * Calculate the code, with given secret and point in time.
      *

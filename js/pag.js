@@ -294,7 +294,7 @@ $(document).ready(
 										$('#mfaAuthenticator input[name=secret]').val(data.secret);
 										$('div#qrcode').html('<img src="'+ data.url + '">').show();
 										$('#mfaAuthenticator .otpForm').show();
-										$('button#genTOTPSecret').hide();
+										$('#mfaAuthenticator #showqrhelp').hide();
 									}
 								}
 							});
@@ -316,9 +316,9 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
-										
 										$('div#qrcode').html('<img src="'+ data.url + '">');
-										$('#mfaAuthenticator div#otpForm').hide();
+										$('#mfaAuthenticator .otpForm').hide();
+										$('#mfaAuthenticator #showqrhelp').show();
 									}
 								}
 							});
@@ -343,6 +343,31 @@ $(document).ready(
 										$('.otpForm input[name=secret]').val(data.secret);
 										$('.otpForm').show();
 										$('button#genEmailSecret').hide();
+									}
+								}
+							});
+						});
+						
+						$('div#dchgPw').on('click', 'button.disableMFA', function(){
+							var $target = $(this);
+							
+							$.post("../house/ws_admin.php", {
+								cmd : 'disable2fa',
+								method : $(this).data("method")
+							}, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										flagAlertMessage("Two step verification method disabled.",'success');
+										$target.parents('.mfaContent').html(data.mkup).find('button').button();
 									}
 								}
 							});

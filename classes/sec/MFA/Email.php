@@ -32,9 +32,9 @@ class Email extends AbstractMultiFactorAuth
      * @param array $userAr
      */
     public function __construct(array $userAr){
-        $this->secret = $userAr['emailSecret'];
-        $this->username = $userAr['User_Name'];
-        $this->idName = $userAr['idName'];
+        $this->secret = (isset($userAr['emailSecret']) ? $userAr['emailSecret'] : '');
+        $this->username = (isset($userAr['User_Name']) ? $userAr['User_Name'] : '');
+        $this->idName = (isset($userAr['idName']) ? $userAr['idName'] : '');
     }
 
     public function sendCode(\PDO $dbh){
@@ -107,19 +107,43 @@ where u.User_Name = :uname";
         }
     }
 
-    public function getEditMarkup(\PDO $dbh){
+    public function disable(\PDO $dbh) : bool
+    {
+        if($this->username && $this->secret != ''){
+            $query = "update w_users set emailSecret = '', Last_Updated = now() where User_Name = :username and Status='a';";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(
+                ':username' => $this->username
+            ));
+
+            if ($stmt->rowCount() == 1) {
+                UserClass::insertUserLog($dbh, UserClass::OTPSecChanged, $this->username);
+            }
+            $this->secret = '';
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public function getEditMarkup(\PDO $dbh) : string {
         $uS = Session::getInstance();
         $this->setEmailAddress($dbh);
+
+        $userMem = new IndivMember($dbh, MemBasis::Indivual, $this->idName);
+        $emails = new Emails($dbh, $userMem, $uS->nameLookups[GLTableNames::EmailPurpose]);
+
         $mkup = '';
 
         if($this->secret !== ''){ //if configured
             $mkup = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('p', "Two factor authentication codes will be sent to " . $this->emailAddr)
-            , array('class'=>'my-3 center'));
+            , array('class'=>'my-3 center')) .
+            HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("button", "Disable", array('class'=>'disableMFA', 'data-method'=>'email')) .
+                HTMLContainer::generateMarkup("button", "Change Email Address")
+            , array("class"=>"hhk-flex", "style"=>"justify-content: space-around;"));
         }else{
-            $userMem = new IndivMember($dbh, MemBasis::Indivual, $this->idName);
-            $emails = new Emails($dbh, $userMem, $uS->nameLookups[GLTableNames::EmailPurpose]);
-
             $mkup = HTMLContainer::generateMarkup('div',
                     $emails->createMarkup() .
 

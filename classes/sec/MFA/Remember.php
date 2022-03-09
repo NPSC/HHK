@@ -106,12 +106,13 @@ class Remember
 
     public function getTokens(\PDO $dbh)
     {
-        $sql = "SELECT `IP_Address`, `Expires`, `Timestamp` FROM w_user_tokens where `idName` = :idName";
+        $sql = "SELECT `IP_Address`, `Expires`, `Timestamp` FROM w_user_tokens where `idName` = :idName and `Expires` > :now";
 
         $stmt = $dbh->prepare($sql);
 
         $stmt->execute(array(
-            ':idName'=>$this->userAr['idName']
+            ':idName'=>$this->userAr['idName'],
+            ':now'=>time()
         ));
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);

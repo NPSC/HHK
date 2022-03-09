@@ -562,7 +562,16 @@ class UserClass
             ';
 
             if(self::hasTOTP($dbh, $uS->username)){
+                $remember = new Remember($userAr);
+                $activeDevices = count($remember->getTokens($dbh));
+
                 $mkup.= '<p style="margin: 0.5em">Two Step Verification is ON</p>';
+
+                if($activeDevices > 0){
+                    $mkup .= '<div class="hhk-flex my-2" style="justify-content: space-between"><p style="margin: 0.5em">You have ' . $activeDevices . ' saved devices</p>
+                            <button>Delete saved devices</button></div>';
+                }
+
             }else{
                 $mkup.= '
                     <p style="margin: 0.5em">Two Step Verification is OFF</p>
@@ -576,8 +585,8 @@ class UserClass
                 '<li><a href="#mfaAuthenticator">Authenticator</a></li>
             </ul>' .
 
-            ($userAr['idName'] > 0 ? '<div id="mfaEmail">' . $email->getEditMarkup($dbh) . '</div>' : '') .
-            '<div id="mfaAuthenticator">' . $ga->getEditMarkup() . '</div>
+            ($userAr['idName'] > 0 ? '<div id="mfaEmail" class="mfaContent">' . $email->getEditMarkup($dbh) . '</div>' : '') .
+            '<div id="mfaAuthenticator" class="mfaContent">' . $ga->getEditMarkup($dbh) . '</div>
             </div>';
 
             $mkup .= '

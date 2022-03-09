@@ -8,6 +8,7 @@ use HHK\sec\UserClass;
 use HHK\sec\MFA\GoogleAuthenticator;
 use HHK\sec\MFA\Backup;
 use HHK\sec\MFA\Email;
+use HHK\sec\MFA\Remember;
 
 
 /**
@@ -246,6 +247,36 @@ switch ($c) {
         $events = saveTwoFA($dbh, $secret, $otp, $method);
         break;
 
+    case "disable2fa":
+        $method = '';
+        if(isset($_POST['method'])){
+            $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
+        }
+
+        $userAr = UserClass::getUserCredentials($dbh, $uS->username);
+
+        if($method == "email"){
+            $mfa = new Email($userAr);
+        }
+
+        if($method == "authenticator"){
+            $mfa = new GoogleAuthenticator($userAr);
+            $backup = new Backup($userAr);
+            $backup->disable($dbh);
+        }
+
+        if(isset($mfa)){
+            $success = $mfa->disable($dbh);
+            $events = array("success"=>$success, "mkup"=>$mfa->getEditMarkup($dbh));
+        }else{
+            $events = array("error"=>"Invalid method");
+        }
+        break;
+
+    case "clear2faTokens" :
+        $userAr = UserClass::getUserCredentials($dbh, $uS->username);
+        $remember = new Remember($userAr);
+        $events = array("success"=>$remember->deleteTokens($dbh, TRUE));
     default:
         $events = array("error" => "Bad Command");
 }

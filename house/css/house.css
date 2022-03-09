@@ -606,3 +606,16 @@ div.dt-buttons .dt-button:hover>span {
 	}
 	
 }
+
+/* User Settings */
+#mfaEmail table {
+	width: 100%;
+}
+
+#mfaEmail td {
+	border: none;
+}
+
+#mfaEmail input[type=text] {
+	width: 100%;
+}
