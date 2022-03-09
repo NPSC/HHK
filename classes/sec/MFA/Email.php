@@ -147,7 +147,7 @@ where u.User_Name = :uname";
             $mkup = HTMLContainer::generateMarkup('div',
                         HTMLContainer::generateMarkup('div',
                             HTMLContainer::generateMarkup("div", "Perferred Email", array("class"=>"ui-widget-header ui-corner-top p-1")) .
-                            HTMLContainer::generateMarkup("div", $emails->createMarkup(), array("class"=>"ui-widget-content ui-corner-bottom"))
+                            HTMLContainer::generateMarkup("form", $emails->createMarkup(), array("class"=>"ui-widget-content ui-corner-bottom", 'id'=>'userSettingsEmail'))
                         , array("class"=>"ui-widget")) .
                         HTMLContainer::generateMarkup('button', "Enable Email 2 Factor Verification", array('id'=>'genEmailSecret', "class"=>"mt-3"))
                 , array('class'=>'my-3', 'style'=>'text-align:center;'));

@@ -186,9 +186,9 @@ $(document).ready(
 
 					var oldpw = $('#utxtOldPw'), pw1 = $('#utxtNewPw1'), pw2 = $('#utxtNewPw2'), oldpwMD5, newpwMD5, challVar = $(
 							"#challVar").val(), msg = $('#pwChangeErrMsg'), qmsg = $('#SecQuestionErrMsg'), success = false;
-					$('div#dchgPw').find("input").prop("type",
+					$('div#chgPassword').find("input").prop("type",
 							"password");
-					$('div#dchgPw').find("button.showPw").text(
+					$('div#chgPassword').find("button.showPw").text(
 							"Show");
 					var errors = false;
 					msg.empty();
@@ -354,11 +354,9 @@ $(document).ready(
 						$('div#dchgPw').on('click', 'button#genEmailSecret', function(){
 							var $target = $(this);
 							var method = 'email';
-							
-							$.post("../house/ws_admin.php", {
-								cmd : 'gen2fa',
-								method : method
-							}, function(data) {
+							var inputdata = $('#userSettingsEmail').serialize();
+							inputdata += "&method=email&cmd=gen2fa";
+							$.post("../house/ws_admin.php", inputdata, function(data) {
 								if (data) {
 									try {
 										data = $.parseJSON(data);

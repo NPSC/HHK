@@ -9,6 +9,10 @@ use HHK\sec\MFA\GoogleAuthenticator;
 use HHK\sec\MFA\Backup;
 use HHK\sec\MFA\Email;
 use HHK\sec\MFA\Remember;
+use HHK\Member\Address\Emails;
+use HHK\Member\IndivMember;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\GLTableNames;
 
 
 /**
@@ -220,7 +224,7 @@ switch ($c) {
             $method = filter_var($_POST['method'], FILTER_SANITIZE_STRING);
         }
 
-        $events = generateTwoFA($dbh, $uS->username, $method);
+        $events = generateTwoFA($dbh, $uS->username, $method, $_POST);
         break;
 
     case "get2fa":
@@ -416,7 +420,9 @@ function changeQuestions(\PDO $dbh, array $questions) {
     return $event;
 }
 
-function generateTwoFA($dbh, $uname, string $method){
+function generateTwoFA($dbh, $uname, string $method, array $post = array()){
+
+    $uS = Session::getInstance();
 
     switch ($method) {
         case "authenticator":
@@ -436,6 +442,12 @@ function generateTwoFA($dbh, $uname, string $method){
             try{
                 $u = new UserClass();
                 $userAr = $u->getUserCredentials($dbh, $uname);
+
+                $userMem = new IndivMember($dbh, MemBasis::Indivual, $userAr['idName']);
+                $emails = new Emails($dbh, $userMem, $uS->nameLookups[GLTableNames::EmailPurpose]);
+                $emails->savePost($dbh, $post, $uS->username);
+                $userMem->saveChanges($dbh, $post);
+
                 $email = new Email($userAr);
                 $email->createSecret();
                 $email->sendCode($dbh);
