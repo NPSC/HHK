@@ -277,6 +277,7 @@ switch ($c) {
         $userAr = UserClass::getUserCredentials($dbh, $uS->username);
         $remember = new Remember($userAr);
         $events = array("success"=>$remember->deleteTokens($dbh, TRUE));
+        break;
     default:
         $events = array("error" => "Bad Command");
 }

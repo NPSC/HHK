@@ -145,9 +145,11 @@ where u.User_Name = :uname";
             , array("class"=>"hhk-flex", "style"=>"justify-content: space-around;"));
         }else{
             $mkup = HTMLContainer::generateMarkup('div',
-                    $emails->createMarkup() .
-
-                HTMLContainer::generateMarkup('button', "Enable Email 2 Factor Verification", array('id'=>'genEmailSecret'))
+                        HTMLContainer::generateMarkup('div',
+                            HTMLContainer::generateMarkup("div", "Perferred Email", array("class"=>"ui-widget-header ui-corner-top p-1")) .
+                            HTMLContainer::generateMarkup("div", $emails->createMarkup(), array("class"=>"ui-widget-content ui-corner-bottom"))
+                        , array("class"=>"ui-widget")) .
+                        HTMLContainer::generateMarkup('button', "Enable Email 2 Factor Verification", array('id'=>'genEmailSecret', "class"=>"mt-3"))
                 , array('class'=>'my-3', 'style'=>'text-align:center;'));
         }
 

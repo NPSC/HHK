@@ -41,7 +41,7 @@ class UserClass
 
     const Login_Fail = 'LF';
 
-    public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE, $checkOTP = true, $otpMethod = '', $otp = '')
+    public function _checkLogin(\PDO $dbh, $username, $password, $rememberMe = FALSE, $checkOTP = true, $otpMethod = '', $otp = '')
     {
         $ssn = Session::getInstance();
 
@@ -73,9 +73,9 @@ class UserClass
             if ($match && $r['Status'] == 'a') {
                 $success = false;
 
-                $remember = new Remember($r);
+                $rememberObj = new Remember($r);
 
-                $OTPRequired = ($remember->verifyToken($dbh) == false && $this->hasTOTP($dbh, $username));
+                $OTPRequired = ($rememberObj->verifyToken($dbh) == false && $this->hasTOTP($dbh, $username));
 
                 //if OTP is required
                 if($OTPRequired == false || $checkOTP == false){
@@ -107,8 +107,7 @@ class UserClass
                     }
 
                     if($mfaObj->verifyCode($otp) == true){
-                        if($remember){
-                            $rememberObj = new Remember($r);
+                        if($rememberMe){
                             $rememberObj->rememberMe($dbh);
                         }
 
@@ -568,8 +567,8 @@ class UserClass
                 $mkup.= '<p style="margin: 0.5em">Two Step Verification is ON</p>';
 
                 if($activeDevices > 0){
-                    $mkup .= '<div class="hhk-flex my-2" style="justify-content: space-between"><p style="margin: 0.5em">You have ' . $activeDevices . ' saved devices</p>
-                            <button>Delete saved devices</button></div>';
+                    $mkup .= '<div class="hhk-flex my-2" style="justify-content: space-between" id="savedDevices"><p style="margin: 0.5em">You have ' . $activeDevices . ' saved devices</p>
+                            <button id="clearDevices">Clear saved devices</button></div>';
                 }
 
             }else{

@@ -85,7 +85,7 @@ class Remember
         return $rowCount;
     }
 
-    public function deleteTokens(\PDO $dbh, bool $allUserTokens = false)
+    public function deleteTokens(\PDO $dbh, bool $allUserTokens = false) : int
     {
         if($allUserTokens){ //delete all user tokens
             $sql = "DELETE FROM w_user_tokens where `idName` = :idName";

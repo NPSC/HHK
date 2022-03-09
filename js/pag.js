@@ -267,11 +267,37 @@ $(document).ready(
 			}		
 						//two factor Auth
 						$('div#dchgPw #mfaTabs').tabs();
+						$('div#dchgPw button').button();
+						
+						$('div#dchgPw #mfaEmail tbody tbody').addClass('hhk-flex');
 						
 						$('div#dchgPw #TwoFactorHelp').accordion({
 							active: false,
 							collapsible:true,
 							heightStyle: 'content',
+						});
+						
+						//delete saved evices
+						$('div#dchgPw').on('click', 'button#clearDevices', function(){
+							$.post("../house/ws_admin.php", {
+								cmd : 'clear2faTokens'
+							}, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										flagAlertMessage("Saved devices cleared successfully", "success");
+										$('div#dchgPw #savedDevices').hide();
+									}
+								}
+							});
 						});
 						
 						//generate new Authenticator secret and QR code
@@ -295,6 +321,7 @@ $(document).ready(
 										$('div#qrcode').html('<img src="'+ data.url + '">').show();
 										$('#mfaAuthenticator .otpForm').show();
 										$('#mfaAuthenticator #showqrhelp').hide();
+										$('button#genTOTPSecret').hide();
 									}
 								}
 							});
@@ -325,9 +352,12 @@ $(document).ready(
 						});
 						
 						$('div#dchgPw').on('click', 'button#genEmailSecret', function(){
+							var $target = $(this);
+							var method = 'email';
+							
 							$.post("../house/ws_admin.php", {
 								cmd : 'gen2fa',
-								method : 'email'
+								method : method
 							}, function(data) {
 								if (data) {
 									try {
@@ -340,9 +370,9 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
-										$('.otpForm input[name=secret]').val(data.secret);
-										$('.otpForm').show();
-										$('button#genEmailSecret').hide();
+										$target.parents('.mfaContent').find('.otpForm input[name=secret]').val(data.secret);
+										$target.parents('.mfaContent').find('.otpForm').show();
+										$target.hide();
 									}
 								}
 							});
