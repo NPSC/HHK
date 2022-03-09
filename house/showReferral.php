@@ -405,6 +405,12 @@ if(isset($_GET['template'])){
 	       white-space: pre-wrap;
 	   }
 
+	   @media print {
+            body{
+                zoom: 85%;
+            }
+       }
+
 	</style>
 
     </head>

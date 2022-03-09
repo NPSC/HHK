@@ -233,8 +233,8 @@
 			var idResv = $(e.currentTarget).data('resvid');
 			var enableReservation = $(e.currentTarget).data('enablereservation');
 			
+			window.frames["formPreviewIframe"].resizeTo(1920, 1080);
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
-			console.log(enableReservation);
 			if(!idResv && enableReservation == 1){
 				settings.formDetailsDialogBtns["Create Reservation"] = function(){
 					window.location.href = settings.reserveURL + "?docid=" + idDocument;

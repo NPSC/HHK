@@ -152,43 +152,47 @@ group by g.Code order by g.Order';
      */
     private function sendNotifyEmail(){
         $uS = Session::getInstance();
-        $userData = $this->getUserData();
-        $content = "Hello,<br>" . PHP_EOL . "A new " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " was submitted to " . $uS->siteName . ", Log into HHK to take action.<br>" . PHP_EOL;
-
-        if(isset($userData['patient']['firstName']) && isset($userData['patient']['lastName'])){
-            $content .= PHP_EOL . "<br><strong>Summary</strong>" . PHP_EOL
-                     . "<br>Name: " . $userData['patient']['firstName'] . " " . $userData['patient']['lastName'] . PHP_EOL;
-            if($userData['checkindate'] !== false){
-                $date = new \DateTime($userData['checkindate']);
-                $content .= "<br>Expected Arrival: " . $date->format("M d, Y") . PHP_EOL;
-            }
-            if($userData['checkoutdate'] !== false){
-                $date = new \DateTime($userData['checkoutdate']);
-                $content .= "<br>Expected Departure: " . $date->format("M d, Y") . PHP_EOL;
-            }
-        }
-
-        $mail = prepareEmail();
-
-        $mail->From = $uS->NoReplyAddr;
-        $mail->FromName = $uS->siteName;
-        $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
-
         $to = filter_var(trim($uS->referralFormEmail), FILTER_SANITIZE_EMAIL);
-        if ($to !== FALSE && $to != '') {
-            $mail->addAddress($to);
-        }
 
-        $mail->isHTML(true);
+        try{
+            if ($to !== FALSE && $to != '') {
+                $userData = $this->getUserData();
+                $content = "Hello,<br>" . PHP_EOL . "A new " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " was submitted to " . $uS->siteName . ", Log into HHK to take action.<br>" . PHP_EOL;
 
-        $mail->Subject = "New " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " submitted";
-        $mail->msgHTML($content);
+                if(isset($userData['patient']['firstName']) && isset($userData['patient']['lastName'])){
+                    $content .= PHP_EOL . "<br><strong>Summary</strong>" . PHP_EOL
+                             . "<br>Name: " . $userData['patient']['firstName'] . " " . $userData['patient']['lastName'] . PHP_EOL;
+                    if($userData['checkindate'] !== false){
+                        $date = new \DateTime($userData['checkindate']);
+                        $content .= "<br>Expected Arrival: " . $date->format("M d, Y") . PHP_EOL;
+                    }
+                    if($userData['checkoutdate'] !== false){
+                        $date = new \DateTime($userData['checkoutdate']);
+                        $content .= "<br>Expected Departure: " . $date->format("M d, Y") . PHP_EOL;
+                    }
+                }
 
-        if ($mail->send() === FALSE) {
+                $mail = prepareEmail();
+
+                $mail->From = ($uS->NoReplyAddr ? $uS->NoReplyAddr : "no_reply@nonprofitsoftwarecorp.org");
+                $mail->FromName = $uS->siteName;
+                $mail->addAddress($to);
+
+                $mail->isHTML(true);
+
+                $mail->Subject = "New " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " submitted";
+                $mail->msgHTML($content);
+
+                if ($mail->send() === FALSE) {
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+        }catch(\Exception $e){
             return false;
-        }else{
-            return true;
         }
+        return false;
     }
 
     private function sendPatientEmail(){
