@@ -4,6 +4,8 @@ namespace HHK\House\Reservation;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\House\PSG;
+use HHK\SysConst\MemBasis;
+use HHK\SysConst\MemStatus;
 
 /**
  * Description of ReserveSearcher
@@ -98,13 +100,13 @@ class ReserveSearcher extends ActiveReservation {
             $patientStatus = $psg->getPatientStatus($dbh);
 
             $attrs = array('type'=>'radio', 'value'=>$psg->getIdPsg(), 'name'=>'cbselpsg', 'id'=>$psg->getIdPsg().'cbselpsg');
-            if ($firstOne && $patientStatus != 'd') {
+            if ($firstOne && $patientStatus != MemStatus::Deceased) {
                 $attrs['checked'] = 'checked';
                 $firstOne = FALSE;
             }
 
             //is deceased?
-            if($patientStatus == "d"){
+            if($patientStatus == MemStatus::Deceased){
                 $trAttrs = array('style'=>'background-color: #ffc4c4');
                 $labelAttrs = array();
                 $status = " [DECEASED]";

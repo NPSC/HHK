@@ -39,6 +39,7 @@ class ActiveReservation extends Reservation {
 
         $formUserData = NULL;
 
+        // Remote user Referral
         if ($this->reserveData->getIdReferralDoc() > 0) {
 
             $formDoc = new FormDocument();
