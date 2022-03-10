@@ -271,12 +271,6 @@ $(document).ready(
 						
 						$('div#dchgPw #mfaEmail tbody tbody').addClass('hhk-flex');
 						
-						$('div#dchgPw #TwoFactorHelp').accordion({
-							active: false,
-							collapsible:true,
-							heightStyle: 'content',
-						});
-						
 						//delete saved evices
 						$('div#dchgPw').on('click', 'button#clearDevices', function(){
 							$.post("../house/ws_admin.php", {
@@ -368,6 +362,7 @@ $(document).ready(
 									if (data.error) {
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
+										$target.parents('.mfaContent').find('button').button();
 										$target.parents('.mfaContent').find('.otpForm input[name=secret]').val(data.secret);
 										$target.parents('.mfaContent').find('.otpForm').show();
 										$target.hide();
@@ -395,7 +390,7 @@ $(document).ready(
 										flagAlertMessage(data.error,'error');
 									} else if (data.success) {
 										flagAlertMessage("Two step verification method disabled.",'success');
-										$target.parents('.mfaContent').html(data.mkup).find('button').button();
+										$target.parents('.mfaContent').html(data.mkup).find('button, input[type=submit]').button();
 									}
 								}
 							});

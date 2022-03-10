@@ -98,6 +98,7 @@ class GoogleAuthenticator extends AbstractMultiFactorAuth
         }else{
 
             $mkup = HTMLContainer::generateMarkup('div',
+                HTMLContainer::generateMarkup("p", 'Use an Authenticator app (Google Authenticator, <a href="//authenticator.cc" target="_blank">Authenticator browser extension</a>, etc) to generate 2 step verification codes', array('class'=>"mb-3")) .
                 HTMLContainer::generateMarkup('button', "Enable Authenticator 2 Factor Verification", array('id'=>'genTOTPSecret'))
                 , array('class'=>'my-3', 'style'=>'text-align: center;'));
 
