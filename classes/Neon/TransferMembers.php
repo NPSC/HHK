@@ -502,6 +502,7 @@ class TransferMembers {
         $stayIds = [];
         $guestIds = [];
         $sendIds = [];
+        $psgs = [];
 
         if ($end == '') {
             $end = date('Y-m-d');
@@ -513,14 +514,24 @@ class TransferMembers {
     s.idVisit,
     s.Visit_Span,
     s.idName AS `hhkId`,
-    n.External_Id AS `accountId`,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    IFNULL(hs.idHospital, 0) AS `idHospital`,
+    IFNULL(hs.Diagnosis, '') AS `Diagnosis_Code`,
+    IFNULL(hs.idPsg, 0) as `idPsg`,
+    IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
     (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
 FROM
     stays s
         LEFT JOIN
+    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+        LEFT JOIN
+    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        LEFT JOIN
     `name` n ON s.idName = n.idName
+		LEFT JOIN
+	name_guest ng on s.idName = ng.idName and hs.idPsg = ng.idPsg
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0
     AND s.Span_End_Date is not NULL AND DATE(s.Span_End_Date) <= DATE('$end')
@@ -531,6 +542,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
             $stayIds[] = $r['idStays'];
             $visitIds[$r['idVisit']] = $r['idVisit'];
+            $psgs[$r['idPsg']] = array('idHospital' => $r['idHospital'], 'Diagnosis_Code' => $r['Diagnosis_Code']);
 
             if (isset($guestIds[ $r['hhkId'] ])) {
 
@@ -552,6 +564,8 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                 $guestIds[ $r['hhkId'] ] = array(
                     'hhkId' => $r['hhkId'],
                     'accountId' => $r['accountId'],
+                    'idPsg' => $r['idPsg'],
+                    'Relation_Code' => $r['Relation_Code'],
                     'Start_Date' => new \DateTime($r['Start_Date']),
                     'End_Date' => new \DateTime($r['End_Date']),
                     'Nite_Counter' => $r['Nite_Counter'],
@@ -565,12 +579,9 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
             // Is the account defined?
             if ($r['accountId'] == '') {
-
                 $sendIds[] = $id;
-
             }
         }
-
 
         // Search and create a new Neon account if needed.
         if (count($sendIds) > 0) {
@@ -587,35 +598,35 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
             }
         }
 
+        // save any non-visit members of PSGs
+        $this->replies = $this->sendNonVisitors($dbh, $visitIds, $guestIds, $username);
+
+
         // Fill the custom parameters for each visit.
-        foreach ($guestIds as $id => $r ) {
+        foreach ($guestIds as $r ) {
 
             // Write the visits to Neon
-            $visitReplys[] = $this->updateVisitParms($dbh, $r);
+            $visitReplys[] = $this->updateVisitParms($dbh, $r, $psgs);
 
         }
 
         // Mark the stays record as "Recorded".
         $this->updateStayRecorded($dbh, $stayIds);
 
-        $this->replies = $this->sendNonVisitors($dbh, $visitIds, $username);
-
         return $visitReplys;
     }
 
-    protected function updateVisitParms(\PDO $dbh, $r) {
+    protected function updateVisitParms(\PDO $dbh, $r, $psgs) {
 
         // Retrieve the Account
         $origValues = $this->retrieveAccount($r['accountId']);
         $codes = [];
         $f = array();
-        $startDT = $r['Start_Date'];
-        $endDT =$r['End_Date'];
-        $nites = intval($r['Nite_Counter'], 10);
 
         // Check for earliest visit start
-        if (isset($this->customFields['First_Visit'])) {
+        if (isset($r['Start_Date']) && isset($this->customFields['First_Visit'])) {
 
+            $startDT = $r['Start_Date'];
             $earliestStart = $this->findCustomField($origValues, $this->customFields['First_Visit']);
 
             if ($earliestStart !== FALSE && $earliestStart != '') {
@@ -632,11 +643,15 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
             }
 
             $f['First_Visit'] = $codes['First_Visit'];
+
+        } else if (isset($r['Start_Date']) === FALSE) {
+            $f['First_Visit'] = '';
         }
 
         // Check for latest visit end
-        if (isset($this->customFields['Last_Visit'])) {
+        if (isset($r['End_Date']) && isset($this->customFields['Last_Visit'])) {
 
+            $endDT = $r['End_Date'];
             $latestEnd = $this->findCustomField($origValues, $this->customFields['Last_Visit']);
 
             if ($latestEnd !== FALSE && $latestEnd != '') {
@@ -654,19 +669,41 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
             }
 
             $f['Last_Visit'] = $codes['Last_Visit'];
+
+        } else if (isset($r['End_Date']) === FALSE) {
+            $f['Last_Visit'] = '';
         }
 
         // Check Nights counter
-        if (isset($this->customFields['Nite_Counter'])) {
+        if (isset($r['Nite_Counter']) && isset($this->customFields['Nite_Counter'])) {
 
+            $nites = intval($r['Nite_Counter'], 10);
             $niteCounter = intval($this->findCustomField($origValues, $this->customFields['Nite_Counter']), 10);
 
             $codes['Nite_Counter'] = ($niteCounter + $nites);
             $f['Nite_Counter'] = $codes['Nite_Counter'];
+
+        } else if (isset($r['Nite_Counter']) === FALSE) {
+            $f['Nite_Counter'] = '';
+        }
+
+         // Check Diagnosis
+         if (isset( $psgs[$r['idPsg']]['Diagnosis_Code']) && isset($this->customFields['Diagnosis'])) {
+
+             $codes['Diagnosis'] = $psgs[$r['idPsg']]['Diagnosis_Code'];
+             $f['Diagnosis'] = $codes['Diagnosis'];
+         }
+
+         // Check Hospital
+         if (isset($psgs[$r['idPsg']]['idHospital']) && isset($this->customFields['Hospital'])) {
+
+             $codes['Hospital'] = $psgs[$r['idPsg']]['idHospital'];
+             $f['Hospital'] = $codes['Hospital'];
          }
 
 
-         // Update with additional customdata.
+
+         // Update Neon with these customdata.
          try {
             $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes);
          } catch (RuntimeException $e) {
@@ -695,7 +732,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         return NULL;
     }
 
-    protected function sendNonVisitors(\PDO $dbh, $visitIds, $username) {
+    protected function sendNonVisitors(\PDO $dbh, $visitIds, &$guestIds, $username) {
 
         $idList = [];
         $idNames = [];
@@ -710,8 +747,10 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
         if (count($idList) > 0) {
 
-            $stmt = $dbh->query("Select
-	DISTINCT ng.idName
+            $stmt = $dbh->query("Select	DISTINCT
+    ng.idName,
+    hs.idPsg,
+    ng.Relationship_Code
 from
 	visit v
 		join
@@ -728,13 +767,31 @@ where
     AND v.idVisit in (" . implode(',', $idList) . ")");
 
             while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+
                 $idNames[$r[0]] = $r[0];
+
+                $guestIds[ $r[0] ] = array(
+                    'hhkId' => $r[0],
+                    'accountId' => '',
+                    'idPsg' => $r[1],
+                    'Relation_Code' => $r[2],
+                );
+
             }
 
             if (count($idNames) > 0) {
 
                 // Write to Neon
                 $replys = $this->sendList($dbh, $idNames, $username);
+
+                // Capture new account Id's from any new members.
+                foreach ($replys as $f) {
+
+                    if (isset($f['Account ID']) && $f['Account ID'] !== '') {
+                        $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
+                    }
+                }
+
             }
         }
 

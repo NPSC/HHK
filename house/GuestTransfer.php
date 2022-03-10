@@ -115,6 +115,8 @@ function searchVisits(\PDO $dbh, $start, $end) {
     s.Visit_Span,
     IFNULL(n.External_Id, '') AS `accountId`,
     s.idName AS `hhkId`,
+    IFNULL(h.Title, '') AS `Hospital`,
+    IFNULL(g.Description, '') AS `Diagnosis`,
     IFNULL(n.Name_Full, '') as `Name`,
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
@@ -122,7 +124,15 @@ function searchVisits(\PDO $dbh, $start, $end) {
 FROM
     stays s
         LEFT JOIN
+    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+        LEFT JOIN
+    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        LEFT JOIN
     `name` n ON s.idName = n.idName
+        LEFT JOIN
+    hospital h on hs.idHospital = h.idHospital
+        LEFT JOIN
+    gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0
     AND DATE(s.Span_End_Date) <= DATE('$end')
@@ -158,6 +168,8 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date");
                 'Account Id' => $r['accountId'],
                 'HHK Id' => HTMLContainer::generateMarkup('a', $r['hhkId'], array('href'=>'GuestEdit.php?id=' . $r['hhkId'])),
                 'Name' => $r['Name'],
+                'Diagnosis' => $r['Diagnosis'],
+                'Hosptial' => $r['Hospital'],
                 'Start Date' => new \DateTime($r['Start_Date']),
                 'End Date' => new \DateTime($r['End_Date']),
                 'Nights' => $r['Nite_Counter'],
