@@ -164,7 +164,7 @@ function prepareEmail()
 
     $mail = new PHPMailer(true);
 
-    if($uS->useDKIM){
+    if($uS->DKIMdomain && @file_get_contents($uS->keyPath . '/dkim/dkimPrivateKey.pem')){
         $mail->DKIM_domain = $uS->DKIMdomain;
         $mail->DKIM_private = $uS->keyPath . '/dkim/dkimPrivateKey.pem';
         $mail->DKIM_selector = "hhk";

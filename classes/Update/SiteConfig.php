@@ -553,8 +553,8 @@ class SiteConfig {
             $sctbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
 
             $dkimRecord = @file_get_contents($uS->keyPath . '/dkim/dkimRecord.txt');
-            if($r['Key'] == 'useDKIM' && $dkimRecord && $uS->DKIMdomain){
-                $sctbl->addBodyTr(HTMLTable::makeTd('DKIM Record:', array('class' => 'tdlabel')) . HTMLTable::makeTd("key: hhk._domainkey." . $uS->DKIMdomain . " value: v=DKIM1; k=rsa; p=" . $dkimRecord));
+            if($r['Key'] == 'DKIMdomain' && strlen($r['Value']) > 0 && $dkimRecord){
+                $sctbl->addBodyTr(HTMLTable::makeTd('DKIM Record:', array('class' => 'tdlabel', 'style'=>'vertical-align:top;')) . HTMLTable::makeTd("<strong>key</strong>: hhk._domainkey." . $r['Value'] . " <br><strong>Value</strong>:<br>" . HTMLContainer::generateMarkup("textarea", "v=DKIM1; k=rsa; p=" . $dkimRecord, array("readonly"=>"readonly", 'rows'=>"5", 'cols'=>"40"))));
             }
 
         }

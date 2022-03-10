@@ -655,7 +655,6 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Training_URL', 'https://hospitalityhousekeeper.net/training/', 's', 'a', '', 'HHK Training site URL', '',0),
 ('Tutorial_URL', 'https://www.youtube.com/channel/UC_Sp1kHz_c0Zet0LrO91SbQ/videos/', 's', 'a', '', 'Tutorial YouTube page', '',0),
 ('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone',1),
-('useDKIM', 'false', 'b', 'es', '', 'Whether or not to sign outgoing emails with DKIM', '',1),
 ('UseDocumentUpload','true','b','hf','','Enable Document Uploads','',1),
 ('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout','',1),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),

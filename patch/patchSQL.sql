@@ -35,9 +35,6 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 ('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1');
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('useDKIM', 'false', 'b', 'es', '', 'Whether or not to sign outgoing emails with DKIM', '','1');
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('DKIMdomain', '', 's', 'es', '', 'Domain name of sender (must match FromAddress and NoReplyAddr domains)', '','1');
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
