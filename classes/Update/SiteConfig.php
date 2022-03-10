@@ -497,6 +497,8 @@ class SiteConfig {
 
     public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL) {
 
+        $uS = Session::getInstance();
+
         // sys config table
         $sctbl = new HTMLTable();
         $cat = '';
@@ -549,6 +551,11 @@ class SiteConfig {
             }
 
             $sctbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
+
+            $dkimRecord = @file_get_contents($uS->keyPath . '/dkim/dkimRecord.txt');
+            if($r['Key'] == 'useDKIM' && $dkimRecord && $uS->DKIMdomain){
+                $sctbl->addBodyTr(HTMLTable::makeTd('DKIM Record:', array('class' => 'tdlabel')) . HTMLTable::makeTd("key: hhk._domainkey." . $uS->DKIMdomain . " value: v=DKIM1; k=rsa; p=" . $dkimRecord));
+            }
 
         }
 

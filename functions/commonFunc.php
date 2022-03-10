@@ -103,7 +103,7 @@ function syncTimeZone(\PDO $dbh)
  * @return \DateTime|\DateTimeImmutable
  */
 function justDate($dateTime) {
-    
+
     if ($dateTime instanceof \DateTime) {
         $dateTime->setTime(0,0,0);
     } else if ($dateTime instanceof \DateTimeImmutable) {
@@ -114,7 +114,7 @@ function justDate($dateTime) {
     } else {
         throw new Exception('Not a date or string date. ');
     }
-    
+
     return $dateTime;
 }
 
@@ -163,6 +163,13 @@ function prepareEmail()
     $uS = Session::getInstance();
 
     $mail = new PHPMailer(true);
+
+    if($uS->useDKIM){
+        $mail->DKIM_domain = $uS->DKIMdomain;
+        $mail->DKIM_private = $uS->keyPath . '/dkim/dkimPrivateKey.pem';
+        $mail->DKIM_selector = "hhk";
+        $mail->DKIM_identity = $mail->From;
+    }
 
     switch (strtolower($uS->EmailType)) {
 

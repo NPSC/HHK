@@ -157,7 +157,7 @@ group by g.Code order by g.Order';
         try{
             if ($to !== FALSE && $to != '') {
                 $userData = $this->getUserData();
-                $content = "Hello,<br>" . PHP_EOL . "A new " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " was submitted to " . $uS->siteName . ", Log into HHK to take action.<br>" . PHP_EOL;
+                $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ", Log into HHK to take action.<br>" . PHP_EOL;
 
                 if(isset($userData['patient']['firstName']) && isset($userData['patient']['lastName'])){
                     $content .= PHP_EOL . "<br><strong>Summary</strong>" . PHP_EOL
