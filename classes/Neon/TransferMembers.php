@@ -31,6 +31,7 @@ class TransferMembers {
     protected $pageNumber;
     protected $replies;
     protected $memberReplies;
+    protected $hhReplies;
 
     // Maximum custom properties for a NEON account
     const MAX_CUSTOM_PROPERTYS = 30;
@@ -45,6 +46,8 @@ class TransferMembers {
         $this->txMethod = '';
         $this->txParams = '';
     }
+
+
 
     /** Last name search remote
      *
@@ -315,7 +318,7 @@ class TransferMembers {
             $request['parameters'] = array('relationTypeCategory'=>'Individual-Individual');
         }
 
-            // Log in with the web service
+        // Log in with the web service
         $this->openTarget($this->userId, $this->password);
         $result = $this->webService->go($request);
 
@@ -488,7 +491,7 @@ class TransferMembers {
 
     }
 
-    /**
+    /** Sends stay information, hospital and diagnosis, and households.
      *
      * @param \PDO $dbh
      * @param string $username
@@ -497,7 +500,16 @@ class TransferMembers {
      */
     public function sendVisits(\PDO $dbh, $username, $end = '') {
 
-        $this->memberReplies = array();
+        $this->memberReplies = [];
+        $this->replies = [];
+
+        // dont allow if neon config file doesnt have the custom fileds
+        if (isset($this->customFields['First_Visit']) === FALSE) {
+            $rep = array();
+            $rep[] = array('Update_Message'=>'Vist transfer is not configured.');
+            return $rep;
+        }
+
         $visitIds = [];
         $stayIds = [];
         $guestIds = [];
@@ -514,11 +526,14 @@ class TransferMembers {
     s.idVisit,
     s.Visit_Span,
     s.idName AS `hhkId`,
+    IFNULL(v.idPrimaryGuest, 0) as `idPG`,
     IFNULL(n.External_Id, '') AS `accountId`,
     IFNULL(hs.idHospital, 0) AS `idHospital`,
     IFNULL(hs.Diagnosis, '') AS `Diagnosis_Code`,
     IFNULL(hs.idPsg, 0) as `idPsg`,
+    IFNULL(hs.idPatient, 0) as `idPatient`,
     IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address',
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
     (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
@@ -532,6 +547,8 @@ FROM
     `name` n ON s.idName = n.idName
 		LEFT JOIN
 	name_guest ng on s.idName = ng.idName and hs.idPsg = ng.idPsg
+        LEFT JOIN
+    name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0
     AND s.Span_End_Date is not NULL AND DATE(s.Span_End_Date) <= DATE('$end')
@@ -569,6 +586,9 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                     'Start_Date' => new \DateTime($r['Start_Date']),
                     'End_Date' => new \DateTime($r['End_Date']),
                     'Nite_Counter' => $r['Nite_Counter'],
+                    'idPG' => $r['idPG'],
+                    'idPatient' => $r['idPatient'],
+                    'Address' => $r['Address'],
                 );
             }
         }
@@ -613,6 +633,8 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         // Mark the stays record as "Recorded".
         $this->updateStayRecorded($dbh, $stayIds);
 
+        $this->hhReplies = $this->sendHouseholds($guestIds);
+
         return $visitReplys;
     }
 
@@ -634,12 +656,12 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                 $earlyDT = new \DateTime($earliestStart);
 
                 if ($earlyDT > $startDT) {
-                    $codes['First_Visit'] = $startDT->format('Y-m-d');
+                    $codes['First_Visit'] = $startDT->format('m/d/Y');
                 } else {
                     $codes['First_Visit'] = $earliestStart;
                 }
             } else {
-                $codes['First_Visit'] = $startDT->format('Y-m-d');
+                $codes['First_Visit'] = $startDT->format('m/d/Y');
             }
 
             $f['First_Visit'] = $codes['First_Visit'];
@@ -659,13 +681,13 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                 $lateDT = new \DateTime($latestEnd);
 
                 if ($lateDT < $endDT) {
-                    $codes['Last_Visit'] = $endDT->format('Y-m-d');
+                    $codes['Last_Visit'] = $endDT->format('m/d/Y');
                 }else {
                     // No change
                     $codes['Last_Visit'] = $latestEnd;
                 }
             } else {
-                $codes['Last_Visit'] = $endDT->format('Y-m-d');
+                $codes['Last_Visit'] = $endDT->format('m/d/Y');
             }
 
             $f['Last_Visit'] = $codes['Last_Visit'];
@@ -750,7 +772,8 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
             $stmt = $dbh->query("Select	DISTINCT
     ng.idName,
     hs.idPsg,
-    ng.Relationship_Code
+    ng.Relationship_Code,
+    hs.idPatient
 from
 	visit v
 		join
@@ -775,8 +798,8 @@ where
                     'accountId' => '',
                     'idPsg' => $r[1],
                     'Relation_Code' => $r[2],
+                    'idPatient' => $r[3],
                 );
-
             }
 
             if (count($idNames) > 0) {
@@ -798,7 +821,50 @@ where
         return $replys;
     }
 
-    /**
+    protected function sendHouseholds($guestIds) {
+
+    }
+
+    protected function createHousehold($primaryContactId, $relationId, $householdName, &$f) {
+
+        $householdId = '';
+
+        $base = 'household.';
+        $param[$base . 'name'] = $householdName;
+        $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $primaryContactId;
+        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $relationId;
+        $param[$base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact'] = 'true';
+
+        $request = array(
+            'method' => 'account/createHouseHold',
+            'parameters' => $param,
+
+        );
+
+
+        $wsResult = $this->webService->go($request);
+
+
+        if ($this->checkError($wsResult)) {
+
+            $f['Result'] = $this->errorMessage;
+
+        } else if (isset($wsResult['houseHoldId']) === FALSE) {
+
+            $f['Result'] = 'Huh?  The Household Id was not set';
+
+        } else {
+
+            $f['Result'] = 'Success';
+
+            $f['Household Id'] = $wsResult['houseHoldId'];
+            $householdId = $wsResult['houseHoldId'];
+        }
+
+        return $householdId;
+    }
+
+    /** Transfer the given source HHK ids to Neon.  Searches first, updates Neon if found.
      *
      * @param \PDO $dbh
      * @param array $sourceIds
@@ -1234,8 +1300,59 @@ where
             }
         }
 
+        // Search Neon custome fields that we don't control and copy them.
+        $customParamStr .= $this->fillOtherCustomFields($origValues);
+
         return $customParamStr;
 
+    }
+
+    protected function fillOtherCustomFields($origValues) {
+
+        $condition = TRUE;
+        $index = 0;
+        $customParamStr = '';
+        $base = 'individualAccount.customFieldDataList.customFieldData.';
+
+        if (isset($origValues['customFieldDataList']['customFieldData'])) {
+
+            // Move Neon filedId's to key position
+            $fieldCustom = array_flip($this->customFields);
+
+            $cfValues = $origValues['customFieldDataList']['customFieldData'];
+
+            while ($condition) {
+
+                if (isset($cfValues[$index])) {
+
+                    // Is this not one of my field Ids?
+                    if (isset($cfValues[$index]["fieldId"]) && isset($fieldCustom[$cfValues[$index]["fieldId"]]) === FALSE) {
+                        // Found other custom field
+
+                        $cparam = array(
+                            $base . 'fieldId' => $cfValues[$index]["fieldId"],
+                            $base . 'fieldOptionId' => $cfValues[$index]["fieldOptionId"],
+                            $base . 'fieldValue' => $cfValues[$index]["fieldValue"]
+                        );
+
+                        $customParamStr .= '&' . http_build_query($cparam);
+
+                    }
+
+                } else {
+                    // end of custom fields
+                    $condition = FALSE;
+                }
+
+                $index++;
+
+                if ($index > self::MAX_CUSTOM_PROPERTYS) {
+                    $condition = FALSE;
+                }
+            }
+        }
+
+        return $customParamStr;
     }
 
     /**

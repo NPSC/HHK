@@ -72,7 +72,7 @@ class ConfigureNeon
 
                         } else if ($list['HHK_Lookup'] == 'Pay_Type') {
 
-                            // Use Items for the Fund
+                            // Use Items for the pay type
                             $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
                             $hhkLookup = array();
 
