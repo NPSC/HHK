@@ -137,7 +137,7 @@ class TransferMembers {
         return $account;
     }
 
-    /** Update Individual Account including name, phone, address and email
+    /** Update an existing Individual Account including name, phone, address and email
      *
      * @param \PDO $dbh
      * @param array $accountData
@@ -510,7 +510,7 @@ class TransferMembers {
             return $rep;
         }
 
-        $visitIds = [];
+        $visits = [];
         $stayIds = [];
         $guestIds = [];
         $sendIds = [];
@@ -528,6 +528,7 @@ class TransferMembers {
     s.idName AS `hhkId`,
     IFNULL(v.idPrimaryGuest, 0) as `idPG`,
     IFNULL(n.External_Id, '') AS `accountId`,
+    IFNULL(n.Name_Last, '') AS `Last_Name`,
     IFNULL(hs.idHospital, 0) AS `idHospital`,
     IFNULL(hs.Diagnosis, '') AS `Diagnosis_Code`,
     IFNULL(hs.idPsg, 0) as `idPsg`,
@@ -558,8 +559,17 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             $stayIds[] = $r['idStays'];
-            $visitIds[$r['idVisit']] = $r['idVisit'];
-            $psgs[$r['idPsg']] = array('idHospital' => $r['idHospital'], 'Diagnosis_Code' => $r['Diagnosis_Code']);
+
+            $visits[$r['idVisit']] = array(
+                'idPG' => $r['idPG'],
+                'idPatient' => $r['idPatient'],
+                'idPsg' => $r['idPsg']
+            );
+
+            $psgs[$r['idPsg']] = array(
+                'idHospital' => $r['idHospital'],
+                'Diagnosis_Code' => $r['Diagnosis_Code']
+            );
 
             if (isset($guestIds[ $r['hhkId'] ])) {
 
@@ -586,9 +596,8 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                     'Start_Date' => new \DateTime($r['Start_Date']),
                     'End_Date' => new \DateTime($r['End_Date']),
                     'Nite_Counter' => $r['Nite_Counter'],
-                    'idPG' => $r['idPG'],
-                    'idPatient' => $r['idPatient'],
                     'Address' => $r['Address'],
+                    'Last_Name' => $r['Last_Name'],
                 );
             }
         }
@@ -619,7 +628,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         }
 
         // save any non-visit members of PSGs
-        $this->replies = $this->sendNonVisitors($dbh, $visitIds, $guestIds, $username);
+        $this->replies = $this->sendNonVisitors($dbh, array_keys($visits), $guestIds, $username);
 
 
         // Fill the custom parameters for each visit.
@@ -633,7 +642,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         // Mark the stays record as "Recorded".
         $this->updateStayRecorded($dbh, $stayIds);
 
-        $this->hhReplies = $this->sendHouseholds($guestIds);
+        $this->sendHouseholds($guestIds, $visits);
 
         return $visitReplys;
     }
@@ -760,6 +769,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         $idNames = [];
         $replys = [];
 
+
         // clean up the visit ids
         foreach ($visitIds as $s) {
             if (intval($s, 10) > 0){
@@ -821,10 +831,134 @@ where
         return $replys;
     }
 
-    protected function sendHouseholds($guestIds) {
+    protected function sendHouseholds($guests, $visits) {
 
+        $f = [];
+
+        foreach ($visits as $v) {
+
+            if (isset($guests[$v['idPG']])) {
+                $pgAccountId = $guests[$v['idPG']]['accountId'];
+                $householdName = $guests[$v['idPG']]['Last_Name'];
+                $pgRelationId = 1;  // Neon id for Spouse.  Doesn't matter, never shown.
+            } else {
+                // Primary guest not found in guests.
+                // We could search the DB.
+                continue;
+            }
+
+            if ($pgAccountId < 1 ) {
+                continue;
+            }
+
+            // Does primary guest have a hh?
+            $households = $this->searchHouseholds($pgAccountId);
+            $householdId = 0;
+
+            // Check for NEON not finding the household Id
+            if (isset($households['page']['totalResults'] ) && $households['page']['totalResults'] == 0) {
+
+                // Create a new household for the primary guest
+                $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
+
+            } else if (isset($households['page']['totalResults'] ) && $households['page']['totalResults'] == 1) {
+
+                // Check the primary guest is the primary household contact
+                $primanyAccountId = $this->findHhPrimaryContact($households['houseHolds']['houseHold']);
+                $householdId = $households['houseHolds']['houseHold']['houseHoldId'];
+
+                // Not Found?
+                if ($guests[$v['idPG']]['accountId'] != $primanyAccountId) {
+                    // primary guest household not found.
+
+                    // Create a new household for the primary guest
+                    $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
+                }
+
+
+            } else if (isset($households['page']['totalResults'] ) && $households['page']['totalResults'] > 1) {
+
+                // Find the household where primary guest is the primary contact.
+                foreach ($households['houseHolds'] as $hh) {
+
+                    // Check the primary guest is the primary household contact
+                    $primanyAccountId = $this->findHhPrimaryContact($hh);
+
+                    // Found?
+                    if ($guests[$v['idPG']]['accountId'] == $primanyAccountId) {
+                        // primary guest household found.
+                        $householdId = $hh['houseHoldId'];
+                        break;
+                    }
+                }
+
+                if ($householdId == 0) {
+                    // Create a new household for the primary guest
+                    $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
+                }
+            }
+
+
+            // Should have an household id
+            if ($householdId == 0) {
+                continue;
+            }
+
+            // Add guest to household.
+            $this->addToHousehold($householdId, $guests[$v['idPG']], $guests);
+
+        }  // next visit
+
+        $this->hhReplies = $f;
     }
 
+    protected function searchHouseholds($accountId, $idHousehold = 0) {
+
+        if ($idHousehold > 0) {
+            $parms = array('householdId=' . $idHousehold);
+        } else if ($accountId > 0 ) {
+            $parms = array('accountId=' . $accountId);
+        } else {
+            return [];
+        }
+
+        $request = array(
+            'method' => 'account/listHouseHolds',
+            'parameters' => $parms,
+        );
+
+        $households = $this->webService->go($request);
+
+        if ($this->checkError($households)) {
+            throw new RuntimeException($this->errorMessage);
+        }
+
+        return $households;
+    }
+
+    protected function findHhPrimaryContact($household) {
+
+        $accountId = 0;
+
+        // Check the primary guest is the primary household contact
+        foreach ($household['houseHoldContacts'] as $hc) {
+            if ($hc['isPrimaryHouseHoldContact'] == 'true') {
+                $accountId = $hc['accountId'];
+                break;
+            }
+        }
+
+        return $accountId;
+    }
+
+    /**
+     *
+     * @param int $primaryContactId
+     * @param int $relationId
+     * @param string $householdName
+     * @param array $f
+     * @return string|mixed
+     */
     protected function createHousehold($primaryContactId, $relationId, $householdName, &$f) {
 
         $householdId = '';
@@ -851,7 +985,7 @@ where
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
-            $f['Result'] = 'Huh?  The Household Id was not set';
+            $f['Result'] = 'Huh?  The Household Id was not returned';
 
         } else {
 
@@ -862,6 +996,106 @@ where
         }
 
         return $householdId;
+    }
+
+    protected function addToHousehold($householdId, $pg, $guests) {
+
+        $households = $this->searchHouseholds(0, $householdId);
+
+        if (isset($households['page']['totalResults'] ) && $households['page']['totalResults'] == 1) {
+
+            foreach ($guests as $g) {
+
+                if ($g['idPsg'] == $pg['idPsg'] && $g['hhkId'] != $pg['hhkId']) {
+
+                    // Valid guest
+                    $foundId = FALSE;
+
+                    // Search hh contacts
+                    foreach ($households['houseHolds']['houseHold']['houseHoldContacts'] as $hc) {
+                        if ($hc['accountId'] == $g['accountId']) {
+                            $foundId = TRUE;
+                            break;
+                        }
+                    }
+
+                    if ($foundId === FALSE) {
+                        // Update the household with new member
+                        $newContacts[] = $g;
+                    }
+
+                }
+            }
+
+            if (count($newContacts) > 0) {
+                $this->updateHousehold($pg, $newContacts, $households['houseHolds']['houseHold']);
+            }
+        }
+
+    }
+
+    protected function updateHousehold($pg, $newGuests, $household) {
+
+        $base = 'household.';
+        $customParamStr = '';
+
+        $param[$base . 'name'] = $household['name'];
+        $param[$base . 'householdId'] = $household['householdId'];
+
+
+        $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $pg['accountId'];
+        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = 1;
+        $param[$base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact'] = 'true';
+
+        foreach ($newGuests as $ng) {
+
+            $cparm = array(
+                $base . 'houseHoldContacts.houseHoldContact.accountId' => $ng['accountId'],
+                $base . 'houseHoldContacts.houseHoldContact.relationType.id' => 41,
+                $base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact' => 'false',
+            );
+
+            $customParamStr .= '&' . http_build_query($cparm);
+        }
+
+        $request = array(
+            'method' => 'account/updateHouseHold',
+            'parameters' => $param,
+            'customParmeters' => $customParamStr,
+        );
+
+
+        $wsResult = $this->webService->go($request);
+        $f = [];
+
+        if ($this->checkError($wsResult)) {
+
+            $f['Result'] = $this->errorMessage;
+
+        } else if (isset($wsResult['houseHoldId']) === FALSE) {
+
+            $f['Result'] = 'Huh?  The Household Id was not returned';
+
+        } else {
+
+            $f['Result'] = 'Success';
+
+        }
+
+        return $f;
+    }
+
+    public function mapNeonTypes(\PDO $dbh, $listName) {
+
+        $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $listName . "'");
+        $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
+
+        $mappedItems = array();
+        foreach ($items as $i) {
+            $mappedItems[$i['HHK_Type_Code']] = $i;
+        }
+
+        return $mappedItems;
     }
 
     /** Transfer the given source HHK ids to Neon.  Searches first, updates Neon if found.
