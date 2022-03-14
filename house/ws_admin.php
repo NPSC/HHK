@@ -473,7 +473,7 @@ function saveTwoFA(\PDO $dbh, $secret, $OTP, $method){
                 $backup = new Backup(array('User_Name'=>$uS->username, 'backupSecret'=>''));
                 $backup->createSecret();
 
-                if($ga->verifyCode($OTP) == false){
+                if($ga->verifyCode($dbh, $OTP) == false){
                     $events = array('error'=>"One Time Code is invalid");
                 }elseif($backup->saveSecret($dbh) && $ga->saveSecret($dbh)){
                     $events = array('success'=>'Two Factor Authentication enabled', 'backupCodes'=>$backup->getCode());
@@ -488,7 +488,7 @@ function saveTwoFA(\PDO $dbh, $secret, $OTP, $method){
 
             $email = new Email(array('User_Name'=>$uS->username, 'emailSecret'=>$secret));
 
-            if($email->verifyCode($OTP) == false){
+            if($email->verifyCode($dbh, $OTP) == false){
                 $events = array('error'=>"One Time Code is invalid");
             }elseif($email->saveSecret($dbh)){
                 $events = array('success'=>'Two Factor Authentication enabled');

@@ -5,6 +5,7 @@ use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer};
 use HHK\SysConst\WebPageCode;
 use HHK\SysConst\{WebSiteCode, Mode};
+use HHK\UserCategories;
 
 
 /**
@@ -359,7 +360,7 @@ class ScriptAuthClass extends SecurityComponent {
         //add user settings modal
         if($dbh && isset($uS)){
             $markup .= UserClass::createUserSettingsMarkup($dbh);
-            $markup .= '<input  type="hidden" id="isPassExpired" value="' . UserClass::isPassExpired($dbh, $uS) . '" />';
+            $markup .= '<input  type="hidden" id="showUserSettings" value="' . (UserClass::isPassExpired($dbh, $uS) || (UserClass::hasTOTP($dbh, $uS->username) == false && $uS->Enforce2fa && UserClass::isLocalUser($dbh, $uS))) . '" />';
         }
 
         return $markup;

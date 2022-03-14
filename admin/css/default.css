@@ -384,3 +384,9 @@ ul.ui-tabs-nav .ui-icon {
 ul.ui-tabs-nav .ui-state-active .ui-icon {
 	background-image: url(jqui/images/ui-icons_8DC262_256x240.png);
 }
+
+/* Add flexbox support */
+.hhk-flex {
+	display: flex;
+	align-items: flex-start;
+}

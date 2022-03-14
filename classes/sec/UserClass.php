@@ -106,7 +106,7 @@ class UserClass
                             $success = false;
                     }
 
-                    if($mfaObj->verifyCode($otp) == true){
+                    if($mfaObj->verifyCode($dbh, $otp) == true){
                         if($rememberMe){
                             $rememberObj->rememberMe($dbh);
                         }
@@ -439,7 +439,14 @@ class UserClass
         return false;
     }
 
-    public static function hasTOTP(\PDO $dbh, $username)
+    /**
+     * Does $username have two factor verification enabled?
+     *
+     * @param \PDO $dbh
+     * @param string $username
+     * @return bool
+     */
+    public static function hasTOTP(\PDO $dbh, string $username) : bool
     {
         $u = self::getUserCredentials($dbh, $username);
 
@@ -547,9 +554,29 @@ class UserClass
             $email = new Email($userAr);
 
             $mkup .= '
-                <div class="row">
-                <div class="col-md-6">
-            ';
+                <div class="row">';
+
+            if (self::isPassExpired($dbh, $uS)){
+                $mkup .= '
+                <div class="ui-widget hhk-visitdialog col-12 PassExpDesc" style="margin-bottom: 1em;">
+            		<div class="ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight" style="padding: 5px;">
+                        <p class="m-2">Your <strong>password</strong> has expired, please choose a new one below</p>
+                    </div>
+                </div>
+                ';
+            }
+
+            if ($uS->Enforce2fa && self::hasTOTP($dbh, $uS->username) == false){
+                $mkup .= '
+                <div class="ui-widget hhk-visitdialog col-12 PassExpDesc" style="margin-bottom: 1em;">
+            		<div class="ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight" style="padding: 5px;">
+                        <p class="m-2"><strong>Two Step Verification</strong> has not been enabled on this account yet, please enable it below</p>
+                    </div>
+                </div>
+                ';
+            }
+
+            $mkup .= '<div class="col-md-6">';
 
             //2 factor authentication
             $mkup .= '
@@ -595,19 +622,6 @@ class UserClass
                 </div> <!--end col-md-6 -->
                 <div class="col-md-6" id="chgPassword">
             ';
-
-            if (self::isPassExpired($dbh, $uS)){
-                $mkup .= '
-                <div class="ui-widget hhk-visitdialog hhk-row PassExpDesc" style="margin-bottom: 1em;">
-                    <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
-            			Password Expired
-            		</div>
-            		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-                        <p style="margin: 0.5em">Your password has expired, please choose a new one below</p>
-                    </div>
-                </div>
-                ';
-            }
 
             // password markup
             $mkup .= '

@@ -111,7 +111,7 @@ abstract class AbstractMultiFactorAuth {
      *
      * @return bool
      */
-    public function verifyCode(string $code) : bool
+    public function verifyCode(\PDO $dbh, string $code) : bool
     {
         $currentTimeSlice = floor(time() / 30);
 

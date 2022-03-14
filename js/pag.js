@@ -267,7 +267,8 @@ $(document).ready(
 			}		
 						//two factor Auth
 						$('div#dchgPw #mfaTabs').tabs();
-						$('div#dchgPw button').button();
+						$('div#dchgPw button, div#dchgPw input[type=submit]').button();
+						
 						
 						$('div#dchgPw #mfaEmail tbody tbody').addClass('hhk-flex');
 						
@@ -391,6 +392,7 @@ $(document).ready(
 									} else if (data.success) {
 										flagAlertMessage("Two step verification method disabled.",'success');
 										$target.parents('.mfaContent').html(data.mkup).find('button, input[type=submit]').button();
+										$('div#dchgPw #mfaEmail tbody tbody').addClass('hhk-flex');
 									}
 								}
 							});
@@ -400,6 +402,8 @@ $(document).ready(
 						//submit + verify OTP
 						$('div#dchgPw').on('submit', '.otpForm', function(e){
 							e.preventDefault();
+							var $this = $(this);
+							
 							$.post("../house/ws_admin.php", $(this).serialize(), 
 								function(data) {
 								if (data) {
@@ -420,6 +424,9 @@ $(document).ready(
 											$("div#backupCodeDiv").show();
 										}
 										flagAlertMessage("Two Step Verification enabled successfully", 'success');
+										if($this.find("input[name=method]").val() == "email"){
+											$("#dchgPw").dialog('close');
+										}
 									}
 								}
 							});
@@ -461,7 +468,7 @@ $(document).ready(
 				input.prop("type", "password");
 			});
 
-			var chgPW = $("input#isPassExpired").val();
+			var chgPW = $("input#showUserSettings").val();
 			if (chgPW) {
 				var autoOpen = true;
 			} else {

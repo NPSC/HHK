@@ -181,7 +181,7 @@ $(document).ready(function () {
 	$(document).on('click', "#changeMethod", function(e){
 		e.preventDefault();
 		$(this).data('showMkup', 'true');
-		$('#txtOTP').data("2fa", "false");
+		$('#txtOTP').data("2fa", "false").val('');
 		sendHhkLogin();
 	});
 	

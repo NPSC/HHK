@@ -20,19 +20,50 @@ class Backup extends AbstractMultiFactorAuth {
     /**
      * @param array $userAr
      */
+    protected $idName;
+
     public function __construct(array $userAr){
         $this->secret = $userAr['backupSecret'];
         $this->username = $userAr['User_Name'];
+        $this->idName = $userAr['idName'];
     }
 
-    public function verifyCode(string $code): bool
+    public function verifyCode(\PDO $dbh, string $code): bool
     {
         if(strlen($code) == 6){
             $availableCodes = $this->getCode();
-            return in_array($code, $availableCodes);
+            $isValid = in_array($code, $availableCodes);
+            $isUsed = $this->isCodeUsed($dbh, $code);
+            return ($isValid && $isUsed == 0);
         }else{
             return false;
         }
+    }
+
+    private function isCodeUsed(\PDO $dbh, string $code) : int
+    {
+        $query = "select count(*) from w_user_passwords where `idUser` = :idUser and Enc_PW = :code";
+        $stmt = $dbh->prepare($query);
+        $stmt->execute(array(
+            ':idUser'=>$this->idName,
+            ':code'=>$code
+        ));
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        $isUsed = $rows[0][0];
+
+        if($isUsed == 0){
+            //set code as used
+            $query = "insert into w_user_passwords (`idUser`, `Enc_PW`) values (:idUser, :code)";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute(array(
+                ':idUser'=>$this->idName,
+                ':code'=>$code
+            ));
+        }
+
+        return $isUsed;
     }
 
     public function getCode($timeSlice = null)

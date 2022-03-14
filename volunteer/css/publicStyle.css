@@ -358,3 +358,10 @@ outline: none;
 	margin-bottom: 0.5em;
 }
 
+/* Add flexbox support */
+.hhk-flex {
+	display: flex;
+	align-items: flex-start;
+}
+
+

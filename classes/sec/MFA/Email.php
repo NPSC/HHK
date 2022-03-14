@@ -140,8 +140,7 @@ where u.User_Name = :uname";
                 HTMLContainer::generateMarkup('p', "Two factor authentication codes will be sent to " . $this->emailAddr)
             , array('class'=>'my-3 center')) .
             HTMLContainer::generateMarkup("div",
-                HTMLContainer::generateMarkup("button", "Disable", array('class'=>'disableMFA', 'data-method'=>'email')) .
-                HTMLContainer::generateMarkup("button", "Change Email Address")
+                HTMLContainer::generateMarkup("button", "Disable", array('class'=>'disableMFA', 'data-method'=>'email'))
             , array("class"=>"hhk-flex", "style"=>"justify-content: space-around;"));
         }else{
             $mkup = HTMLContainer::generateMarkup('div',
