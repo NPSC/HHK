@@ -854,32 +854,41 @@ where
             // Does primary guest have a hh?
             $households = $this->searchHouseholds($pgAccountId);
             $householdId = 0;
+            $countHouseholds = 0;
+
+            if (isset($households['houseHolds']['houseHold'])) {
+                $countHouseholds = count($households['houseHolds']['houseHold']);
+            }
 
             // Check for NEON not finding the household Id
-            if (isset($households['page']['totalResults'] ) && $households['page']['totalResults'] == 0) {
+            if ($countHouseholds == 0) {
 
                 // Create a new household for the primary guest
                 $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
 
-            } else if (isset($households['page']['totalResults'] ) && $households['page']['totalResults'] == 1) {
+//             } else if ($countHouseholds == 1) {
 
-                // Check the primary guest is the primary household contact
-                $primanyAccountId = $this->findHhPrimaryContact($households['houseHolds']['houseHold']);
-                $householdId = $households['houseHolds']['houseHold']['houseHoldId'];
+//                 $household = $households['houseHolds']['houseHold'][0];
 
-                // Not Found?
-                if ($guests[$v['idPG']]['accountId'] != $primanyAccountId) {
-                    // primary guest household not found.
+//                 // Check the primary guest is the primary household contact
+//                 $primanyAccountId = $this->findHhPrimaryContact($household);
+//                 $householdId = $household['houseHoldId'];
 
-                    // Create a new household for the primary guest
-                    $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
-                }
+//                 // Not Found?
+//                 if ($guests[$v['idPG']]['accountId'] != $primanyAccountId) {
+//                     // primary guest household not found.
+
+//                     // Create a new household for the primary guest
+//                     $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
+//                 }
 
 
-            } else if (isset($households['page']['totalResults'] ) && $households['page']['totalResults'] > 1) {
+            } else { //if ($countHouseholds > 1) {
+
+                $hhs = $households['houseHolds']['houseHold'];
 
                 // Find the household where primary guest is the primary contact.
-                foreach ($households['houseHolds'] as $hh) {
+                foreach ($hhs as $hh) {
 
                     // Check the primary guest is the primary household contact
                     $primanyAccountId = $this->findHhPrimaryContact($hh);
@@ -912,12 +921,12 @@ where
         $this->hhReplies = $f;
     }
 
-    protected function searchHouseholds($accountId, $idHousehold = 0) {
+    public function searchHouseholds($accountId, $idHousehold = 0) {
 
         if ($idHousehold > 0) {
-            $parms = array('householdId=' . $idHousehold);
+            $parms = array('householdId' => $idHousehold);
         } else if ($accountId > 0 ) {
-            $parms = array('accountId=' . $accountId);
+            $parms = array('accountId' => $accountId);
         } else {
             return [];
         }
@@ -930,7 +939,7 @@ where
         $households = $this->webService->go($request);
 
         if ($this->checkError($households)) {
-            throw new RuntimeException($this->errorMessage);
+            $households['error'] = ($this->errorMessage);
         }
 
         return $households;
@@ -941,7 +950,7 @@ where
         $accountId = 0;
 
         // Check the primary guest is the primary household contact
-        foreach ($household['houseHoldContacts'] as $hc) {
+        foreach ($household['houseHoldContacts']['houseHoldContact'] as $hc) {
             if ($hc['isPrimaryHouseHoldContact'] == 'true') {
                 $accountId = $hc['accountId'];
                 break;
@@ -1000,9 +1009,15 @@ where
 
     protected function addToHousehold($householdId, $pg, $guests) {
 
+        $countHouseholds = 0;
+
         $households = $this->searchHouseholds(0, $householdId);
 
-        if (isset($households['page']['totalResults'] ) && $households['page']['totalResults'] == 1) {
+        if (isset($households['houseHolds']['houseHold'])) {
+            $countHouseholds = count($households['houseHolds']['houseHold']);
+        }
+
+        if ($countHouseholds == 1) {
 
             foreach ($guests as $g) {
 
@@ -1010,9 +1025,10 @@ where
 
                     // Valid guest
                     $foundId = FALSE;
+                    $hhContacts = $households['houseHolds']['houseHold'][0]['houseHoldContacts']['houseHoldContact'];
 
                     // Search hh contacts
-                    foreach ($households['houseHolds']['houseHold']['houseHoldContacts'] as $hc) {
+                    foreach ($hhContacts as $hc) {
                         if ($hc['accountId'] == $g['accountId']) {
                             $foundId = TRUE;
                             break;
@@ -1028,7 +1044,7 @@ where
             }
 
             if (count($newContacts) > 0) {
-                $this->updateHousehold($pg, $newContacts, $households['houseHolds']['houseHold']);
+                $this->updateHousehold($pg, $newContacts, $households['houseHolds']['houseHold'][0]);
             }
         }
 
@@ -1039,8 +1055,9 @@ where
         $base = 'household.';
         $customParamStr = '';
 
+
+        $param[$base . 'householdId'] = $household['houseHoldId'];
         $param[$base . 'name'] = $household['name'];
-        $param[$base . 'householdId'] = $household['householdId'];
 
 
         $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $pg['accountId'];

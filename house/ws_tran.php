@@ -219,6 +219,19 @@ try {
             foreach ($parms as $k => $v) {
                 $str .= $k . '=' . $v . '<br/>';
             }
+
+            // Househods
+            $result = $transfer->searchHouseholds($accountId);
+
+            $parms = array();
+            $transfer->unwindResponse($parms, $result);
+
+            $str .= "*Households*<br/>";
+
+            foreach ($parms as $k => $v) {
+                $str .= $k . '=' . $v . '<br/>';
+            }
+
         } else {
             $str = "Source for search not found: " . $src;
         }
