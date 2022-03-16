@@ -964,6 +964,19 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 -- ;
 
 
+-- 
+-- Dumping data for table map_relations
+--
+REPLACE INTO `demo`.`map_relations`(`idmap_relations`,`PG_Patient`,`Guest_Patient`,`Patient_PG`,`Guest_PG`)VALUES
+('1', 'sp', 'chd', 'sp', 'chd'),('2', 'sp', 'sib', 'sp', 'rltv'),('3', 'sp', 'par', 'sp', 'rltv'),('4', 'sp', 'sp', 'sp', 'sp'),('5', 'sib', 'chd', 'sib', 'rltv'),('6', 'sib', 'sib', 'sib', 'sib'),
+('7', 'sib', 'par', 'sib', 'par'),('8', 'sib', 'sp', 'sib', 'rltv'),('9', 'chd', 'chd', 'par', 'sib'),('10', 'chd', 'sib', 'par', 'rltv'),('11', 'chd', 'par', 'par', 'rltv'),('12', 'chd', 'sp', 'par', 'par'),
+('13', 'par', 'chd', 'chd', 'rltv'),('14', 'par', 'sib', 'chd', 'chd'),('15', 'par', 'par', 'chd', 'sp'),('15', 'par', 'par', 'chd', 'sp'),('16', 'par', 'sp', 'chd', 'rltv'),('17', 'slf', 'sp', 'slf', 'sp'),
+('18', 'slf', 'sib', 'slf', 'sib'),('19', 'slf', 'chd', 'slf', 'chd'),('20', 'slf', 'par', 'slf', 'par'),('21', 'sp', 'rltv', 'sp', 'rltv'),('22', 'sib', 'rltv', 'sib', 'rltv'),('23', 'chd', 'rltv', 'par', 'rltv'),
+('24', 'par', 'rltv', 'chd', 'rltv'),('25', 'sp', 'frd', 'sp', 'frd'),('26', 'sib', 'frd', 'seb', 'frd'),('27', 'chd', 'frd', 'par', 'frd'),('28', 'par', 'frd', 'chd', 'frd'),('29', 'rltv', 'sp', 'rltv', 'rltv'),
+('30', 'rltv', 'sib', 'rltv', 'rltv'),('31', 'rltv', 'chd', 'rltv', 'rltv'),('32', 'rltv', 'par', 'rltv', 'rltv'),('33', 'frd', 'sp', 'frd', 'frd'),('34', 'frd', 'sib', 'frd', 'frd'),('35', 'frd', 'chd', 'frd', 'frd'),
+('36', 'frd', 'par', 'frd', 'frd'),('37', 'pc', 'sp', 'pc', 'pc'),('38', 'pc', 'sib', 'pc', 'pc'),('39', 'pc', 'chd', 'pc', 'pc'),('40', 'pc', 'par', 'pc', 'pc'),('41', 'sp', 'pc', 'sp', 'pc'),
+('42', 'sib', 'pc', 'sib', 'pc'),('43', 'chd', 'pc', 'par', 'pc'),('44', 'par', 'pc', 'chd', 'pc'),('45', 'slf', 'frd', 'slf', 'frd'),('46', 'slf', 'rltv', 'slf', 'rltv'),('47', 'slf', 'slf', 'slf', 'slf');
+-- ;
 
 
 --

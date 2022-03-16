@@ -546,6 +546,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
                 </div>
                 <div id="divMembers"></div>
                 <div id="divStrayMembers"></div>
+                <div id="divHouseholds"></div>
             </div>
             <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;">
                 <input id="printButton" value="Print" type="button" />

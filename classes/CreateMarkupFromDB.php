@@ -32,7 +32,7 @@ class CreateMarkupFromDB {
 
         $keys = array_keys($rows[$firstKey]);
 
-        if (is_array($keys) === FALSE) {
+        if (is_array($keys) === FALSE || count($keys) == 0) {
             return '';
         }
 

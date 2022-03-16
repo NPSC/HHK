@@ -114,14 +114,19 @@ try {
 
         // Show visit results
         $events['data'] = HTMLContainer::generateMarkup('p', "Visit Results", array('style'=>'margin-top:5px;'))
-        . CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
+            . CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
 
         // Show extra members from visiting PSG's
         if (count($transfer->getReplies()) > 0) {
-            $events['strayMembers'] = HTMLContainer::generateMarkup('p', "Additional PSG Members", array('style'=>'margin-top:5px;')) . CreateMarkupFromDB::generateHTML_Table($transfer->getReplies(), 'tblrpt2');
+            $events['strayMembers'] = HTMLContainer::generateMarkup('p', "Additional PSG Members", array('style'=>'margin-top:5px;'))
+                . CreateMarkupFromDB::generateHTML_Table($transfer->getReplies(), 'tblrpt2');
         }
 
-
+        // show households
+        if (count($transfer->getHhReplies()) > 0) {
+            $events['households'] = HTMLContainer::generateMarkup('p', "Households", array('style'=>'margin-top:5px;'))
+                . CreateMarkupFromDB::generateHTML_Table($transfer->getHhReplies(), 'tblrpt3');
+        }
         break;
 
       case 'sch':
@@ -210,6 +215,7 @@ try {
 
         } else if ($src = 'remote') {
 
+            // Neon accounts
             $result = $transfer->retrieveAccount($accountId);
 
             $parms = array();
@@ -220,7 +226,7 @@ try {
                 $str .= $k . '=' . $v . '<br/>';
             }
 
-            // Househods
+            // Neon Househods
             $result = $transfer->searchHouseholds($accountId);
 
             $parms = array();

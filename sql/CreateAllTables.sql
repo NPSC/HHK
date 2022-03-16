@@ -871,6 +871,17 @@ CREATE TABLE if not exists `mail_listing` (
 ) ENGINE=MyISAM;
 
 
+-- -----------------------------------------------------
+-- Table `map_relations`
+-- -----------------------------------------------------
+CREATE TABLE `map_relations` (
+  `idmap_relations` int(11) NOT NULL AUTO_INCREMENT,
+  `PG_Patient` varchar(45) NOT NULL,
+  `Guest_Patient` varchar(45) DEFAULT NULL,
+  `Patient_PG` varchar(45) DEFAULT NULL,
+  `Guest_PG` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`idmap_relations`)
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------

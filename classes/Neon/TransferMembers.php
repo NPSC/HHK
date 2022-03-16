@@ -32,6 +32,8 @@ class TransferMembers {
     protected $replies;
     protected $memberReplies;
     protected $hhReplies;
+    protected $relationshipMapper;
+    protected $hhkToNeonRelationMap;
 
     // Maximum custom properties for a NEON account
     const MAX_CUSTOM_PROPERTYS = 30;
@@ -642,7 +644,11 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         // Mark the stays record as "Recorded".
         $this->updateStayRecorded($dbh, $stayIds);
 
-        $this->sendHouseholds($guestIds, $visits);
+        // Relationship Mapper object.
+        $this->relationshipMapper = new RelationshipMapper($dbh, $this->mapNeonTypes($dbh, 'relationTypes'));
+
+        // Create or update households.
+        $this->hhReplies = $this->sendHouseholds($guestIds, $visits);
 
         return $visitReplys;
     }
@@ -833,14 +839,18 @@ where
 
     protected function sendHouseholds($guests, $visits) {
 
-        $f = [];
+        $replies = [];
 
         foreach ($visits as $v) {
 
             if (isset($guests[$v['idPG']])) {
+
+                $this->relationshipMapper->setPGtoPatient($guests[$v['idPG']]['Relation_Code']);
+
                 $pgAccountId = $guests[$v['idPG']]['accountId'];
                 $householdName = $guests[$v['idPG']]['Last_Name'];
-                $pgRelationId = 1;  // Neon id for Spouse.  Doesn't matter, never shown.
+                $pgRelationId = $this->relationshipMapper->relateGuest($guests[$v['idPG']]['Relation_Code']);
+
             } else {
                 // Primary guest not found in guests.
                 // We could search the DB.
@@ -851,11 +861,16 @@ where
                 continue;
             }
 
+            $f = array(
+                'PG Name' => $guests[$v['idPG']]['Last_Name'],
+            );
+
             // Does primary guest have a hh?
             $households = $this->searchHouseholds($pgAccountId);
             $householdId = 0;
             $countHouseholds = 0;
 
+            // Find any households?
             if (isset($households['houseHolds']['houseHold'])) {
                 $countHouseholds = count($households['houseHolds']['houseHold']);
             }
@@ -866,24 +881,7 @@ where
                 // Create a new household for the primary guest
                 $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
 
-//             } else if ($countHouseholds == 1) {
-
-//                 $household = $households['houseHolds']['houseHold'][0];
-
-//                 // Check the primary guest is the primary household contact
-//                 $primanyAccountId = $this->findHhPrimaryContact($household);
-//                 $householdId = $household['houseHoldId'];
-
-//                 // Not Found?
-//                 if ($guests[$v['idPG']]['accountId'] != $primanyAccountId) {
-//                     // primary guest household not found.
-
-//                     // Create a new household for the primary guest
-//                     $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
-//                 }
-
-
-            } else { //if ($countHouseholds > 1) {
+            } else {
 
                 $hhs = $households['houseHolds']['houseHold'];
 
@@ -897,6 +895,7 @@ where
                     if ($guests[$v['idPG']]['accountId'] == $primanyAccountId) {
                         // primary guest household found.
                         $householdId = $hh['houseHoldId'];
+                        $f['Household Id'] = 'Existing HH: ' . $householdId;
                         break;
                     }
                 }
@@ -914,11 +913,14 @@ where
             }
 
             // Add guest to household.
-            $this->addToHousehold($householdId, $guests[$v['idPG']], $guests);
+            $this->addToHousehold($householdId, $guests[$v['idPG']], $guests, $f);
+
+            $replies[] = $f;
 
         }  // next visit
 
-        $this->hhReplies = $f;
+        return $replies;
+
     }
 
     public function searchHouseholds($accountId, $idHousehold = 0) {
@@ -998,16 +1000,15 @@ where
 
         } else {
 
-            $f['Result'] = 'Success';
 
-            $f['Household Id'] = $wsResult['houseHoldId'];
+            $f['Household Id'] = 'New HH: ' . $wsResult['houseHoldId'];
             $householdId = $wsResult['houseHoldId'];
         }
 
         return $householdId;
     }
 
-    protected function addToHousehold($householdId, $pg, $guests) {
+    protected function addToHousehold($householdId, $pg, $guests, &$f) {
 
         $countHouseholds = 0;
 
@@ -1044,13 +1045,13 @@ where
             }
 
             if (count($newContacts) > 0) {
-                $this->updateHousehold($pg, $newContacts, $households['houseHolds']['houseHold'][0]);
+                $this->updateHousehold($pg, $newContacts, $households['houseHolds']['houseHold'][0], $f);
             }
         }
 
     }
 
-    protected function updateHousehold($pg, $newGuests, $household) {
+    protected function updateHousehold($pg, $newGuests, $household, &$f) {
 
         $base = 'household.';
         $customParamStr = '';
@@ -1060,15 +1061,19 @@ where
         $param[$base . 'name'] = $household['name'];
 
 
+        $pgRelationId = $this->relationshipMapper->relateGuest($pg['Relation_Code']);
+
         $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $pg['accountId'];
-        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = 1;
+        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $pgRelationId;
         $param[$base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact'] = 'true';
 
         foreach ($newGuests as $ng) {
 
+            $ngRelationId = $this->relationshipMapper->relateGuest($ng['Relation_Code']);
+
             $cparm = array(
                 $base . 'houseHoldContacts.houseHoldContact.accountId' => $ng['accountId'],
-                $base . 'houseHoldContacts.houseHoldContact.relationType.id' => 41,
+                $base . 'houseHoldContacts.houseHoldContact.relationType.id' => $ngRelationId,
                 $base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact' => 'false',
             );
 
@@ -1083,23 +1088,19 @@ where
 
 
         $wsResult = $this->webService->go($request);
-        $f = [];
 
         if ($this->checkError($wsResult)) {
 
-            $f['Result'] = $this->errorMessage;
+            $f['Update'] = 'Udpate Household: ' . $this->errorMessage;
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
-            $f['Result'] = 'Huh?  The Household Id was not returned';
+            $f['Update'] = 'Udpate Household:  The Household Id was not returned';
 
         } else {
-
-            $f['Result'] = 'Success';
-
+            $f['Update'] = 'Success';
         }
 
-        return $f;
     }
 
     public function mapNeonTypes(\PDO $dbh, $listName) {
@@ -1109,7 +1110,7 @@ where
 
         $mappedItems = array();
         foreach ($items as $i) {
-            $mappedItems[$i['HHK_Type_Code']] = $i;
+            $mappedItems[$i['HHK_Type_Code']] = $i['Neon_Type_Code'];
         }
 
         return $mappedItems;
@@ -1858,6 +1859,10 @@ where
 
     public function getReplies() {
         return $this->replies;
+    }
+
+    public function getHhReplies() {
+        return $this->hhReplies;
     }
 
     public function getMemberReplies() {
