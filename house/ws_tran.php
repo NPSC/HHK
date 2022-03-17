@@ -105,7 +105,12 @@ try {
             $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_STRING);
         }
 
-        $reply = $transfer->sendVisits($dbh, $uS->username, $en);
+        $max = 1;
+        if (isset($_REQUEST['maxGu'])) {
+            $max = intval(filter_var($_REQUEST['maxGu'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $reply = $transfer->sendVisits($dbh, $uS->username, $en, $max);
 
         // Show new members
         if (count($transfer->getMemberReplies()) > 0) {

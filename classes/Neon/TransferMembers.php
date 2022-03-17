@@ -500,7 +500,7 @@ class TransferMembers {
      * @param string $end
      * @return array
      */
-    public function sendVisits(\PDO $dbh, $username, $end = '') {
+    public function sendVisits(\PDO $dbh, $username, $end, $maxGuests) {
 
         $this->memberReplies = [];
         $this->replies = [];
@@ -555,7 +555,8 @@ FROM
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0
     AND s.Span_End_Date is not NULL AND DATE(s.Span_End_Date) <= DATE('$end')
-ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
+ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date
+Limit 500" );
 
         // Count up guest stay dates and nights.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -590,6 +591,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
             } else {
 
+                // new guest
                 $guestIds[ $r['hhkId'] ] = array(
                     'hhkId' => $r['hhkId'],
                     'accountId' => $r['accountId'],
@@ -601,6 +603,10 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                     'Address' => $r['Address'],
                     'Last_Name' => $r['Last_Name'],
                 );
+
+                if ($maxGuests-- <= 0) {
+                    break;
+                }
             }
         }
 

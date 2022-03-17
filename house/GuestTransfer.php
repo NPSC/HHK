@@ -104,7 +104,7 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
 }
 
-function searchVisits(\PDO $dbh, $start, $end) {
+function searchVisits(\PDO $dbh, $start, $end, $maxGuests) {
 
     $uS = Session::getInstance();
     $rows = array();
@@ -136,7 +136,8 @@ FROM
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0
     AND DATE(s.Span_End_Date) <= DATE('$end')
-ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date");
+ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date
+LIMIT 500");
 
     if ($stmt->rowCount() == 0) {
         return FALSE;
@@ -175,6 +176,9 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date");
                 'Nights' => $r['Nite_Counter'],
             );
 
+            if ($maxGuests <= 0) {
+                break;
+            }
         }
 
     }
@@ -298,6 +302,7 @@ $end = '';
 $errorMessage = '';
 $calSelection = '19';
 $noRecordsMsg = '';
+$maxGuests = 15;
 
 
 $monthArray = array(
@@ -435,7 +440,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
 
     } else if (isset($_POST['btnGetVisits'])) {
 
-        $dataTable = searchVisits($dbh, $start, $end);
+        $dataTable = searchVisits($dbh, $start, $end, $maxGuests);
 
         if ($dataTable === FALSE) {
             $noRecordsMsg = "No visit records found.";
@@ -457,9 +462,6 @@ if ($noRecordsMsg != '') {
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'5','multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>count($calOpts)));
-
-$wsLogo = $wsConfig->getString('credentials', 'Logo_URI', '');
-$wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
 
 ?>
 <!DOCTYPE html>
@@ -559,7 +561,7 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
-
+		<input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
         <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
 
     </body>

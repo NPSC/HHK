@@ -126,12 +126,13 @@ function transferRemote(transferIds) {
 
 }
 
-function transferData($btn, start, end, command) {
+function transferData($btn, start, end, command, maxGu) {
 
     var parms = {
         cmd: command,
         st: start,
-        en: end
+        en: end,
+        max: maxGu
     };
 
     var posting = $.post('ws_tran.php', parms);
@@ -257,6 +258,7 @@ $(document).ready(function() {
     var start = $('#hstart').val();
     var end = $('#hend').val();
     var dateFormat = $('#hdateFormat').val();
+    var maxGuests = $('#maxGuests').val();
 
     $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits').button();
 
@@ -348,12 +350,12 @@ $(document).ready(function() {
 
         $('#btnVisits').button().show().click(function () {
 
-            if ($(this).val() === 'Transferring ...') {
+            if ($(this).val() === 'Transferring ' + maxGuests + ' Guests ...') {
                 return;
             }
-            $(this).val('Transferring ...');
+            $(this).val('Transferring ' + maxGuests + ' Guests ...');
 
-            transferData($(this), start, end, 'visits');
+            transferData($(this), start, end, 'visits', maxGuests);
         });
     }
 
