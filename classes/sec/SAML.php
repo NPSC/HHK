@@ -994,11 +994,11 @@ class SAML {
 
             $container = HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("div",
-                    HTMLContainer::generateMarkup("p", "- OR -") .
                     HTMLContainer::generateMarkup("div",
-                        HTMLContainer::generateMarkup("div", "Login with SSO", array("class"=>"ui-widget-header ui-corner-top p-1")) .
+                        HTMLContainer::generateMarkup("div", "Single Sign On", array("class"=>"ui-widget-header ui-corner-top p-1")) .
                         HTMLContainer::generateMarkup("div", $contentMkup, array("class"=>"ui-widget-content ui-corner-bottom hhk-tdbox p-3"))
-                    , array("class"=>"ui-widget mt-3"))
+                    , array("class"=>"ui-widget mb-3")) .
+                    HTMLContainer::generateMarkup("p", "- OR -")
                 , array("class"=>"col-12"))
             , array("class"=>"row justify-content-md-center mb-3 center"));
 

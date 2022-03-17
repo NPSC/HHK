@@ -305,9 +305,22 @@ class Login {
 
         $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
 
-        $content = '<div id="hhk-loading-spinner" class="center m-3"><img src="../images/ui-anim_basic_16x16.gif"></div>';
+        $content = '<div id="hhk-loading-spinner" class="center p-3"><img src="../images/ui-anim_basic_16x16.gif"></div>';
 
         return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $content, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3 rssWidget",));
+
+    }
+
+    public static function welcomeWidget($title) {
+
+        $uS = Session::getInstance();
+
+        $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
+
+        $content = '<div id="hhk-loading-spinner" class="center p-3 ui-widget-content ui-corner-bottom"><img src="../images/ui-anim_basic_16x16.gif"></div>';
+        $content .= '<iframe src="' . $uS->loginFeedURL . '" width="100%" height="320px" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" id="welcomeWidget" class="d-none ui-widget-content ui-corner-bottom"></iframe>';
+
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . $content, array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3 welcomeWidgetContainer"));
 
     }
 

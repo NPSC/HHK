@@ -136,11 +136,10 @@ $(document).ready(function () {
         dialog.dialog("option", "title", title).dialog("open");
     });
     
-    //RSS widget
-    $(".rssWidget .ui-widget-content").rssWidget({
-        url: "index.php?rssFeed=true",
-        title: "Welcome",
-    	postCount: 3
+    //welcome widget
+    $('#welcomeWidget').on('load', function(){
+        $(this).removeClass("d-none");
+        $("#hhk-loading-spinner").hide();
     });
 
 	$('.hhk-tooltip').tooltip({
