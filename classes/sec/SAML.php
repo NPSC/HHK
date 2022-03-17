@@ -316,11 +316,11 @@ class SAML {
 
             $this->SPSign = false;
 
-            if($uS->samlCertPath){
+            if($uS->keyPath){
                 try{
-                    $this->SPcert = (file_exists($uS->samlCertPath . "/certificate.crt") ? file_get_contents($uS->samlCertPath . "/certificate.crt") : '');
-                    $this->SPRolloverCert = (file_exists($uS->samlCertPath . "/rollovercertificate.crt") ? file_get_contents($uS->samlCertPath . "/rollovercertificate.crt") : '');
-                    $this->SPkey = (file_exists($uS->samlCertPath . "/privateKey.key") ? file_get_contents($uS->samlCertPath . "/privateKey.key") : '');
+                    $this->SPcert = (file_exists($uS->keyPath . "/certificate.crt") ? file_get_contents($uS->keyPath . "/certificate.crt") : '');
+                    $this->SPRolloverCert = (file_exists($uS->keyPath . "/rollovercertificate.crt") ? file_get_contents($uS->keyPath . "/rollovercertificate.crt") : '');
+                    $this->SPkey = (file_exists($uS->keyPath . "/privateKey.key") ? file_get_contents($uS->keyPath . "/privateKey.key") : '');
 
                     if($this->SPcert != ''){
                         openssl_x509_read($this->SPcert);

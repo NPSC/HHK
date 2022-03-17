@@ -622,7 +622,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('RoomRateDefault','e','s','h','','Use the Resource Builder','',1),
 ('RoomsPerPatient','2','i','h','','Number of simultaneous rooms per patient allowed','',1),
 ('Run_As_Test', 'false', 'b', 'a', '', 'Run As Test flag', '',0),
-('samlCertPath', '/etc/pki/hhkapp', 's', 'a', '', 'Path to certificates for signing SAML messages', '','0'),
+('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0'),
 ('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, 0 = never log out','',1),
 ('ShoStaysCtr','true','b','c','','Show the stays counter on the House Calendar page','',1),
 ('showAddressReceipt', 'false', 'b', 'h', '', 'Show primary guest address on receipts', '','1'),

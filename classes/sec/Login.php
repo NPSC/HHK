@@ -256,7 +256,7 @@ class Login {
             HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("div",
                     HTMLInput::generateMarkup("", array('id'=>'txtPW', 'type'=>"password", "class"=>"w-100")) .
-                    '<button class="showPw mx-1 ui-button" tabindex="-1">Show</button>'
+                    '<button type="button" class="showPw mx-1 ui-button" tabindex="-1">Show</button>'
                 , array("class"=>"d-flex")) .
                 HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
             , array("class"=>"col-8"))
@@ -282,7 +282,7 @@ class Login {
                 : '') .
             HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("button", "Use a different method...", array("id"=>"changeMethod", "data-showMkup"=>"false"))
-                , array("class"=>"col-12 mb-3 right"))
+                , array("class"=>"col-12 my-3 right"))
             , array("class"=>"row mt-3 mx-0 d-none", "id"=>"otpRow"));
 
         //pass xf to login

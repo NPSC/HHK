@@ -174,6 +174,7 @@ $(document).ready(function () {
 
 	$(document).on('submit', "#hhkLogin", function(e){
 		e.preventDefault();
+		console.log("submit triggered");
 		sendHhkLogin();
 	});
 	
@@ -196,7 +197,7 @@ $(document).ready(function () {
 	
 	$("button, input[type=submit]").button();
 	
-	$(document).on('mousedown', '.showPw', function() {
+	$(document).on('mousedown', '.showPw', function(e) {
 		var input = $(this).parent().find("input");
 		input.prop("type", "text");
 	});
