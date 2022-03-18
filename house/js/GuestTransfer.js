@@ -350,10 +350,10 @@ $(document).ready(function() {
 
         $('#btnVisits').button().show().click(function () {
 
-            if ($(this).val() === 'Transferring ' + maxGuests + ' Guests ...') {
+            if ($(this).val() === 'Transferring Guests ...') {
                 return;
             }
-            $(this).val('Transferring ' + maxGuests + ' Guests ...');
+            $(this).val('Transferring Guests ...');
 
             transferData($(this), start, end, 'visits', maxGuests);
         });

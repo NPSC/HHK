@@ -135,7 +135,7 @@ FROM
     gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0
-    AND DATE(s.Span_End_Date) <= DATE('$end')
+    AND DATE(s.Span_End_Date) < DATE('$end')
 ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date
 LIMIT 500");
 
@@ -162,7 +162,6 @@ LIMIT 500");
 
             $guestIds[ $r['hhkId'] ]['Nights'] += $r['Nite_Counter'];
 
-
         } else {
 
             $guestIds[ $r['hhkId'] ] = array(
@@ -176,7 +175,7 @@ LIMIT 500");
                 'Nights' => $r['Nite_Counter'],
             );
 
-            if ($maxGuests <= 0) {
+            if ($maxGuests-- <= 0) {
                 break;
             }
         }

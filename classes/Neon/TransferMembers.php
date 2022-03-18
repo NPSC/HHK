@@ -654,7 +654,7 @@ Limit 500" );
         $this->relationshipMapper = new RelationshipMapper($dbh, $this->mapNeonTypes($dbh, 'relationTypes'));
 
         // Create or update households.
-        $this->hhReplies = $this->sendHouseholds($guestIds, $visits);
+        $this->hhReplies = $this->sendHouseholds($dbh, $guestIds, $visits);
 
         return $visitReplys;
     }
@@ -843,32 +843,36 @@ where
         return $replys;
     }
 
-    protected function sendHouseholds($guests, $visits) {
+    protected function sendHouseholds(\PDO $dbh, $guests, $visits) {
 
         $replies = [];
 
         foreach ($visits as $v) {
 
-            if (isset($guests[$v['idPG']])) {
+            if (isset($guests[$v['idPG']]) === FALSE) {
 
-                $this->relationshipMapper->setPGtoPatient($guests[$v['idPG']]['Relation_Code']);
+                // Load Primary guest.
+                $guests[$v['idPG']] = $this->findPrimaryGuest($dbh, $v['idPG'], $v['idPsg']);
 
-                $pgAccountId = $guests[$v['idPG']]['accountId'];
-                $householdName = $guests[$v['idPG']]['Last_Name'];
-                $pgRelationId = $this->relationshipMapper->relateGuest($guests[$v['idPG']]['Relation_Code']);
+                if (count($guests[$v['idPG']]) != 1) {
+                    continue;
+                }
 
-            } else {
-                // Primary guest not found in guests.
-                // We could search the DB.
+            }
+
+
+            if ($guests[$v['idPG']]['accountId'] < 1) {
                 continue;
             }
 
-            if ($pgAccountId < 1 ) {
-                continue;
-            }
+            $this->relationshipMapper->clear()->setPGtoPatient($guests[$v['idPG']]['Relation_Code']);
+
+            $pgAccountId = $guests[$v['idPG']]['accountId'];
+            $householdName = $guests[$v['idPG']]['Last_Name'];
+            $pgRelationId = $this->relationshipMapper->relateGuest($guests[$v['idPG']]['Relation_Code']);
 
             $f = array(
-                'PG Name' => $guests[$v['idPG']]['Last_Name'],
+                'Household Name' => $guests[$v['idPG']]['Last_Name'],
             );
 
             // Does primary guest have a hh?
@@ -895,10 +899,10 @@ where
                 foreach ($hhs as $hh) {
 
                     // Check the primary guest is the primary household contact
-                    $primanyAccountId = $this->findHhPrimaryContact($hh);
+                    $pcontact = $this->findHhPrimaryContact($hh);
 
                     // Found?
-                    if ($guests[$v['idPG']]['accountId'] == $primanyAccountId) {
+                    if (isset($pcontact['accountId']) && $guests[$v['idPG']]['accountId'] == $pcontact['accountId']) {
                         // primary guest household found.
                         $householdId = $hh['houseHoldId'];
                         $f['Household Id'] = 'Existing HH: ' . $householdId;
@@ -915,6 +919,7 @@ where
 
             // Should have an household id
             if ($householdId == 0) {
+                $replies[] = $f;
                 continue;
             }
 
@@ -953,19 +958,22 @@ where
         return $households;
     }
 
-    protected function findHhPrimaryContact($household) {
+    protected function findHhPrimaryContact(array $household) {
 
-        $accountId = 0;
+        $pContact = [];
 
         // Check the primary guest is the primary household contact
         foreach ($household['houseHoldContacts']['houseHoldContact'] as $hc) {
+
             if ($hc['isPrimaryHouseHoldContact'] == 'true') {
-                $accountId = $hc['accountId'];
+
+                $pContact = $hc;
+
                 break;
             }
         }
 
-        return $accountId;
+        return $pContact;
     }
 
     /**
@@ -998,11 +1006,11 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $f['Result'] = $this->errorMessage;
+            $f['Household Id'] = $this->errorMessage;
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
-            $f['Result'] = 'Huh?  The Household Id was not returned';
+            $f['Household Id'] = 'Household Id not set';
 
         } else {
 
@@ -1014,9 +1022,11 @@ where
         return $householdId;
     }
 
-    protected function addToHousehold($householdId, $pg, $guests, &$f) {
+    protected function addToHousehold($householdId, $pg, $guests) {
 
         $countHouseholds = 0;
+        $newContacts = [];
+        $replys = [];
 
         $households = $this->searchHouseholds(0, $householdId);
 
@@ -1051,26 +1061,26 @@ where
             }
 
             if (count($newContacts) > 0) {
-                $this->updateHousehold($pg, $newContacts, $households['houseHolds']['houseHold'][0], $f);
+                $replys = $this->updateHousehold($newContacts, $households['houseHolds']['houseHold'][0]);
             }
         }
 
+        return $replys;
     }
 
-    protected function updateHousehold($pg, $newGuests, $household, &$f) {
+    protected function updateHousehold($newGuests, $household) {
 
         $base = 'household.';
         $customParamStr = '';
-
+        $replys = [];
 
         $param[$base . 'householdId'] = $household['houseHoldId'];
         $param[$base . 'name'] = $household['name'];
 
-
-        $pgRelationId = $this->relationshipMapper->relateGuest($pg['Relation_Code']);
+        $pg = $this->findHhPrimaryContact($household);
 
         $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $pg['accountId'];
-        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $pgRelationId;
+        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $pg['relation.id'];
         $param[$base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact'] = 'true';
 
         foreach ($newGuests as $ng) {
@@ -1084,6 +1094,11 @@ where
             );
 
             $customParamStr .= '&' . http_build_query($cparm);
+
+            $f[] = [
+                'accountid'=>$ng['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId)
+            ];
+
         }
 
         $request = array(
@@ -1097,30 +1112,53 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $f['Update'] = 'Udpate Household: ' . $this->errorMessage;
+            $replys['Result'] = $this->errorMessage;
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
-            $f['Update'] = 'Udpate Household:  The Household Id was not returned';
+            $replys['Result'] = 'The Household Id was not returned';
 
         } else {
-            $f['Update'] = 'Success';
+            $replys['Result'] = 'Success';
         }
 
+        return $replys;
     }
 
-    public function mapNeonTypes(\PDO $dbh, $listName) {
+    protected function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg) {
 
-        $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $listName . "'");
-        $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
+        $stmt = $dbh->query("Select
+	n.idName as `hhkId`,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    IFNULL(n.Name_Last, '') AS `Last_Name`,
+    IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address'
+from
+	name n
+		left join
+    name_guest ng on n.idName = ng.idName and ng.idPsg = $idPsg
+		LEFT JOIN
+    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+where n.idName = $idPrimaryGuest ");
 
-        $mappedItems = array();
-        foreach ($items as $i) {
-            $mappedItems[$i['HHK_Type_Code']] = $i['Neon_Type_Code'];
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) > 0) {
+            $r = $rows[0];
+        } else {
+            return [];
         }
 
-        return $mappedItems;
+        return array(
+            'hhkId' => $r['hhkId'],
+            'accountId' => $r['accountId'],
+            'idPsg' => $idPsg,
+            'Relation_Code' => $r['Relation_Code'],
+            'Address' => $r['Address'],
+            'Last_Name' => $r['Last_Name'],
+        );
     }
+
 
     /** Transfer the given source HHK ids to Neon.  Searches first, updates Neon if found.
      *

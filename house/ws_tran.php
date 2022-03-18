@@ -106,8 +106,8 @@ try {
         }
 
         $max = 1;
-        if (isset($_REQUEST['maxGu'])) {
-            $max = intval(filter_var($_REQUEST['maxGu'], FILTER_SANITIZE_NUMBER_INT), 10);
+        if (isset($_REQUEST['max'])) {
+            $max = intval(filter_var($_REQUEST['max'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
         $reply = $transfer->sendVisits($dbh, $uS->username, $en, $max);
