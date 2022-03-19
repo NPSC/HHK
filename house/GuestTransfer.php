@@ -286,6 +286,38 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
 
 }
 
+function createKeyMap(\PDO $dbh) {
+
+    // get session instance
+    $uS = Session::getInstance();
+
+    $hospitalKeyTable = new HTMLTable();
+
+    // Hospitals
+    $hospitalKeyTable->addHeaderTr(HTMLTable::makeTh("Hospital Key", array('colspan'=>'2')));
+    $hospitalKeyTable->addHeaderTr(HTMLTable::makeTh('Title').HTMLTable::makeTh("Id"));
+
+    foreach ($uS->guestLookups['Hospitals'] as $h) {
+        $hospitalKeyTable->addBodyTr(HTMLTable::makeTd($h[1]).HTMLTable::makeTd($h[0]));
+    }
+
+    // Diagnosis
+    $diagKeyTable = new HTMLTable();
+
+    $diagKeyTable->addBodyTr(HTMLTable::makeTh("Diagnosis Key", array('colspan'=>'2')));
+    $diagKeyTable->addBodyTr(HTMLTable::makeTh("Code").HTMLTable::makeTh('Title'));
+
+    $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Order');
+
+    foreach ($diags as $d) {
+        $diagKeyTable->addBodyTr(HTMLTable::makeTd($d[0]).HTMLTable::makeTd($d[1]));
+    }
+
+    $hdiv = HTMLContainer::generateMarkup('div', $hospitalKeyTable->generateMarkup(), array('style'=>'float:left; margin-left:10px;'));
+    $ddiv = HTMLContainer::generateMarkup('div', $diagKeyTable->generateMarkup(), array('style'=>'float:left;'));
+
+    return  HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys'));
+}
 
 $mkTable = '';
 $dataTable = '';
@@ -301,7 +333,7 @@ $end = '';
 $errorMessage = '';
 $calSelection = '19';
 $noRecordsMsg = '';
-$maxGuests = 15;
+$maxGuests = 15;  // maximum guests to process for each post.
 
 
 $monthArray = array(
@@ -451,6 +483,13 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
 
 }
 
+if ($wsConfig->getString('custom_fields', 'First_Visit', '') != '') {
+
+    $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', array('id'=>'btnGetKey', 'type'=>'button', 'style'=>'margin-left:3px; font-size:small;'));
+    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', array('name'=>'btnGetVisits', 'id'=>'btnGetVisits', 'type'=>'submit', 'style'=>'margin-left:20px;'));
+    $dboxMarkup = createKeyMap($dbh);
+}
+
 if ($noRecordsMsg != '') {
     $noRecordsMsg = HTMLContainer::generateMarkup('p', $noRecordsMsg, array('style'=>'font-size:large'));
 }
@@ -470,8 +509,8 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <title><?php echo $pageTitle; ?></title>
         <?php echo FAVICON; ?>
         <?php echo JQ_UI_CSS; ?>
+        <?php echo JQ_DT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
         <?php echo NOTY_CSS; ?>
         <style>
             .hhk-rowseparater { border-top: 2px #0074c7 solid !important; }
@@ -479,14 +518,13 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         </style>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
@@ -532,7 +570,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                         <tr>
                             <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
                             <input type="submit" name="btnGetPayments" id="btnGetPayments" value="Get HHK Payments" style="margin-left:20px;"/>
-							<input type="submit" name="btnGetVisits" id="btnGetVisits" value="Get HHK Visits" style="margin-left:20px;"/></td>
+							<?php echo $btnVisits . $btnGetKey; ?></td>
                         </tr>
                     </table>
                 </form>
@@ -553,15 +591,16 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <input id="printButton" value="Print" type="button" />
                 <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
-                <input id="btnVisits" value="Transfer Visits" type="button" style="margin-left:2em;"/>
+                <input id="btnVisits" value="Transfer Visits (Max. <?php echo $maxGuests; ?>)" type="button" style="margin-left:2em;"/>
         	</div>
         </div>
+        <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em;"><?php echo $dboxMarkup; ?></div>
+
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
 		<input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
-        <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
 
     </body>
 </html>

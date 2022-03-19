@@ -919,12 +919,11 @@ where
 
             // Should have an household id
             if ($householdId == 0) {
-                $replies[] = $f;
                 continue;
             }
 
             // Add guest to household.
-            $this->addToHousehold($householdId, $guests[$v['idPG']], $guests, $f);
+            $f['Members Added'] = $this->addToHousehold($householdId, $guests[$v['idPG']], $guests);
 
             $replies[] = $f;
 
@@ -1054,9 +1053,12 @@ where
 
                     if ($foundId === FALSE) {
                         // Update the household with new member
-                        $newContacts[] = $g;
-                    }
 
+                        // Only if addresses match
+                        if ($pg['Address'] == $g['Address']) {
+                            $newContacts[] = $g;
+                        }
+                    }
                 }
             }
 
@@ -1100,6 +1102,8 @@ where
             ];
 
         }
+
+        $replys['New Members'] = $f;
 
         $request = array(
             'method' => 'account/updateHouseHold',

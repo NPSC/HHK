@@ -260,7 +260,7 @@ $(document).ready(function() {
     var dateFormat = $('#hdateFormat').val();
     var maxGuests = $('#maxGuests').val();
 
-    $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits').button();
+    $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits, #btnGetKey').button();
 
     $('#printButton').button().click(function() {
         $("div#printArea").printArea();
@@ -358,7 +358,36 @@ $(document).ready(function() {
             transferData($(this), start, end, 'visits', maxGuests);
         });
     }
+    
+    var opt = {mode: 'popup',
+        popClose: true,
+        popHt      : $('#keyMapDiagBox').height(),
+        popWd      : $('#keyMapDiagBox').width(),
+        popX       : 20,
+        popY       : 20,
+        popTitle   : 'Print Visit Key'};
 
+
+
+	var kmd = $('#keyMapDiagBox').dialog({
+        autoOpen: false,
+        resizable: true,
+        modal: false,
+        minWidth: 550,
+        title: 'Neon Visit Transfer Keys',
+        buttons: {
+            "Print": function () {
+                $("div#divPrintKeys").printArea(opt);
+        	},
+            "Close": function () {
+                kmd.dialog('close');
+        	}
+        }
+    });
+    
+    $('#btnGetKey').click(function () {
+		kmd.dialog('open');
+	});
 
     $('.ckdate').datepicker({
         yearRange: '-07:+01',
