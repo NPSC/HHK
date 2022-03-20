@@ -33,7 +33,7 @@ class RelationshipMapper
 
         $this->map = $rstmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        $this->mapNeonTypes = $this->mappedNeonTypes($dbh);
+        $this->mapNeonTypes = $this->mapNeonTypes($dbh);
 
     }
 

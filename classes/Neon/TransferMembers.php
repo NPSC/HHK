@@ -651,7 +651,7 @@ Limit 500" );
         $this->updateStayRecorded($dbh, $stayIds);
 
         // Relationship Mapper object.
-        $this->relationshipMapper = new RelationshipMapper($dbh, $this->mapNeonTypes($dbh, 'relationTypes'));
+        $this->relationshipMapper = new RelationshipMapper($dbh);
 
         // Create or update households.
         $this->hhReplies = $this->sendHouseholds($dbh, $guestIds, $visits);
@@ -871,10 +871,6 @@ where
             $householdName = $guests[$v['idPG']]['Last_Name'];
             $pgRelationId = $this->relationshipMapper->relateGuest($guests[$v['idPG']]['Relation_Code']);
 
-            $f = array(
-                'Household Name' => $guests[$v['idPG']]['Last_Name'],
-            );
-
             // Does primary guest have a hh?
             $households = $this->searchHouseholds($pgAccountId);
             $householdId = 0;
@@ -889,7 +885,7 @@ where
             if ($countHouseholds == 0) {
 
                 // Create a new household for the primary guest
-                $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
+                $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName);
 
             } else {
 
@@ -905,14 +901,14 @@ where
                     if (isset($pcontact['accountId']) && $guests[$v['idPG']]['accountId'] == $pcontact['accountId']) {
                         // primary guest household found.
                         $householdId = $hh['houseHoldId'];
-                        $f['Household Id'] = 'Existing HH: ' . $householdId;
+
                         break;
                     }
                 }
 
                 if ($householdId == 0) {
                     // Create a new household for the primary guest
-                    $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName, $f);
+                    $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName);
                 }
             }
 
@@ -923,9 +919,9 @@ where
             }
 
             // Add guest to household.
-            $f['Members Added'] = $this->addToHousehold($householdId, $guests[$v['idPG']], $guests);
+            $replies[] = $this->addToHousehold($householdId, $guests[$v['idPG']], $guests);
 
-            $replies[] = $f;
+
 
         }  // next visit
 
@@ -983,7 +979,7 @@ where
      * @param array $f
      * @return string|mixed
      */
-    protected function createHousehold($primaryContactId, $relationId, $householdName, &$f) {
+    protected function createHousehold($primaryContactId, $relationId, $householdName) {
 
         $householdId = '';
 
@@ -1013,7 +1009,6 @@ where
 
         } else {
 
-
             $f['Household Id'] = 'New HH: ' . $wsResult['houseHoldId'];
             $householdId = $wsResult['houseHoldId'];
         }
@@ -1021,11 +1016,10 @@ where
         return $householdId;
     }
 
-    protected function addToHousehold($householdId, $pg, $guests) {
+    protected function addToHousehold($householdId, $pg, $guests, &$f) {
 
         $countHouseholds = 0;
         $newContacts = [];
-        $replys = [];
 
         $households = $this->searchHouseholds(0, $householdId);
 
@@ -1063,18 +1057,16 @@ where
             }
 
             if (count($newContacts) > 0) {
-                $replys = $this->updateHousehold($newContacts, $households['houseHolds']['houseHold'][0]);
+                $this->updateHousehold($newContacts, $households['houseHolds']['houseHold'][0], $f);
             }
         }
 
-        return $replys;
     }
 
-    protected function updateHousehold($newGuests, $household) {
+    protected function updateHousehold($newGuests, $household, &$f) {
 
         $base = 'household.';
         $customParamStr = '';
-        $replys = [];
 
         $param[$base . 'householdId'] = $household['houseHoldId'];
         $param[$base . 'name'] = $household['name'];
@@ -1082,7 +1074,7 @@ where
         $pg = $this->findHhPrimaryContact($household);
 
         $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $pg['accountId'];
-        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $pg['relation.id'];
+        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $pg['relationType']['id'];
         $param[$base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact'] = 'true';
 
         foreach ($newGuests as $ng) {
@@ -1097,13 +1089,13 @@ where
 
             $customParamStr .= '&' . http_build_query($cparm);
 
-            $f[] = [
+            $g[] = [
                 'accountid'=>$ng['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId)
             ];
 
         }
 
-        $replys['New Members'] = $f;
+        $f['New Members'] = $g;
 
         $request = array(
             'method' => 'account/updateHouseHold',
@@ -1116,17 +1108,16 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $replys['Result'] = $this->errorMessage;
+            $f['Result'] = $this->errorMessage;
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
-            $replys['Result'] = 'The Household Id was not returned';
+            $f['Result'] = 'The Household Id was not returned';
 
         } else {
-            $replys['Result'] = 'Success';
+            $f['Result'] = 'Success';
         }
 
-        return $replys;
     }
 
     protected function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg) {
@@ -1910,7 +1901,30 @@ where n.idName = $idPrimaryGuest ");
     }
 
     public function getHhReplies() {
-        return $this->hhReplies;
+
+        $t = [];
+        foreach ($this->hhReplies as $r) {
+
+            $f = [];
+
+            foreach ($r as $k => $v) {
+
+                if (is_array($v)) {
+
+                    foreach ($v as $vk) {
+                        foreach ($vk as $title => $value) {
+                            $f[$title] = $value;
+                        }
+
+                    }
+                } else {
+                    $f[$k] = $v;
+                }
+            }
+
+            $t[] = $f;
+        }
+        return $t;
     }
 
     public function getMemberReplies() {
