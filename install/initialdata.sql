@@ -975,7 +975,9 @@ REPLACE INTO `demo`.`map_relations`(`idmap_relations`,`PG_Patient`,`Guest_Patien
 ('24', 'par', 'rltv', 'chd', 'rltv'),('25', 'sp', 'frd', 'sp', 'frd'),('26', 'sib', 'frd', 'seb', 'frd'),('27', 'chd', 'frd', 'par', 'frd'),('28', 'par', 'frd', 'chd', 'frd'),('29', 'rltv', 'sp', 'rltv', 'rltv'),
 ('30', 'rltv', 'sib', 'rltv', 'rltv'),('31', 'rltv', 'chd', 'rltv', 'rltv'),('32', 'rltv', 'par', 'rltv', 'rltv'),('33', 'frd', 'sp', 'frd', 'frd'),('34', 'frd', 'sib', 'frd', 'frd'),('35', 'frd', 'chd', 'frd', 'frd'),
 ('36', 'frd', 'par', 'frd', 'frd'),('37', 'pc', 'sp', 'pc', 'pc'),('38', 'pc', 'sib', 'pc', 'pc'),('39', 'pc', 'chd', 'pc', 'pc'),('40', 'pc', 'par', 'pc', 'pc'),('41', 'sp', 'pc', 'sp', 'pc'),
-('42', 'sib', 'pc', 'sib', 'pc'),('43', 'chd', 'pc', 'par', 'pc'),('44', 'par', 'pc', 'chd', 'pc'),('45', 'slf', 'frd', 'slf', 'frd'),('46', 'slf', 'rltv', 'slf', 'rltv'),('47', 'slf', 'slf', 'slf', 'slf');
+('42', 'sib', 'pc', 'sib', 'pc'),('43', 'chd', 'pc', 'par', 'pc'),('44', 'par', 'pc', 'chd', 'pc'),('45', 'slf', 'frd', 'slf', 'frd'),('46', 'slf', 'rltv', 'slf', 'rltv'),
+('47', 'slf', 'slf', 'slf', 'slf'),('48', 'chd', 'slf', 'par', 'par'),('49', 'frd', 'slf', 'frd', 'frd'),('50', 'par', 'slf', 'chd', 'chd'),('51', 'sib', 'slf', 'sib', 'sib'),('52', 'sp', 'slf', 'sp', 'sp'),
+('53', 'rltv', 'slf', 'rltv', 'rltv'),('54', 'pc', 'slf', 'slf', 'pc');
 -- ;
 
 

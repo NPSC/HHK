@@ -13,6 +13,7 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLInput;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
+use HHK\Neon\RelationshipMapper;
 
 /**
  * GuestTransfer.php
@@ -115,12 +116,15 @@ function searchVisits(\PDO $dbh, $start, $end, $maxGuests) {
     s.Visit_Span,
     IFNULL(n.External_Id, '') AS `accountId`,
     s.idName AS `hhkId`,
+    ng.Relationship_Code,
     IFNULL(h.Title, '') AS `Hospital`,
     IFNULL(g.Description, '') AS `Diagnosis`,
     IFNULL(n.Name_Full, '') as `Name`,
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
-    (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
+    (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`,
+    v.idPrimaryGuest,
+    hs.idPsg
 FROM
     stays s
         LEFT JOIN
@@ -128,6 +132,8 @@ FROM
         LEFT JOIN
     hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
         LEFT JOIN
+	name_guest ng on s.idName = ng.idName and hs.idPsg = ng.idPsg
+		LEFT JOIN
     `name` n ON s.idName = n.idName
         LEFT JOIN
     hospital h on hs.idHospital = h.idHospital
@@ -144,6 +150,7 @@ LIMIT 500");
     }
 
     $guestIds = [];
+    $visits = [];
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -173,19 +180,52 @@ LIMIT 500");
                 'Start Date' => new \DateTime($r['Start_Date']),
                 'End Date' => new \DateTime($r['End_Date']),
                 'Nights' => $r['Nite_Counter'],
+                'Relation' => $r['Relationship_Code'],
+                'pgId' => $r['idPrimaryGuest']
             );
+
+            if ( $r['hhkId'] == $r['idPrimaryGuest']) {
+                $visits[$r['hhkId']] = array('relCode'=>$r['Relationship_Code'], 'idPsg'=>$r['idPsg']);
+            }
 
             if ($maxGuests-- <= 0) {
                 break;
             }
         }
 
-    }
+    }  // End of while
+
+    $rMapper = new RelationshipMapper($dbh);
+
+
 
     foreach ($guestIds as $g) {
 
         $g['Start Date'] = $g['Start Date']->format('M j, Y');
         $g['End Date'] = $g['End Date']->format('M j, Y');
+
+        $g['Relation to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$g['Relation']][1];
+
+        if (isset($visits[$g['pgId']]) === FALSE) {
+
+            // Load Primary guest.
+            $v = TransferMembers::findPrimaryGuest($dbh, $g['idPG'], $visits[$g['pgId']]['idPsg']);
+
+            if (count($v) > 0) {
+                $visits[$g[pgId]] = array('relCode'=>$v['Relation_Code'], 'idPsg'=>$v['idPsg']);
+            }
+        }
+
+        $rMapper
+            ->clear()
+            ->setPGtoPatient($visits[$g['pgId']]['relCode']);
+
+        $g['Relation to PG'] = $rMapper->mapNeonTypeName(
+            $rMapper->relateGuest($g['Relation'])
+        );
+
+        unset($g['Relation']);
+        unset($g['idPsg']);
         $rows[] = $g;
 
     }

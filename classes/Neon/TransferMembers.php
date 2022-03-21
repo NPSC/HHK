@@ -852,7 +852,7 @@ where
                 // Load Primary guest.
                 $guests[$v['idPG']] = $this->findPrimaryGuest($dbh, $v['idPG'], $v['idPsg']);
 
-                if (count($guests[$v['idPG']]) != 1) {
+                if (count($guests[$v['idPG']]) == 0) {
                     continue;
                 }
 
@@ -1108,7 +1108,7 @@ where
 
     }
 
-    protected function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg) {
+    protected static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg) {
 
         $stmt = $dbh->query("Select
 	n.idName as `hhkId`,
