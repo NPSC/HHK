@@ -56,9 +56,10 @@ function sendHhkLogin() {
 	    xf: $xf.val(),
 	    otp: $otp.val(),
 	    otpMethod: $otpMethod.val(),
-	    showMethodMkup: $changeMethod.data("showMkup"),
+	    showMethodMkup: $changeMethod.data("showmkup"),
 	    rememberMe: $rememberMe.prop('checked')
 	};
+	
 	$.post('index.php', parms, function (data){
 	    try {
 	        data = $.parseJSON(data);
@@ -77,6 +78,11 @@ function sendHhkLogin() {
 	    		$('#txtOTP').data("2fa", "true").focus();
 	    		$('#otpMethod').val(data.method);
 	    		$('#loginBtnRow').removeClass('d-none');
+	    		if(data.showMethodBtn){
+	    			$('#changeMethod').parent().removeClass('d-none');
+	    		}else{
+	    			$('#changeMethod').parent().addClass('d-none');
+	    		}
 	    	}else if(data.otpMethodMkup){
 	    		$('#otpChoices').html(data.otpMethodMkup);
 	    		$('#otpChoiceRow').removeClass('d-none');
@@ -180,7 +186,7 @@ $(document).ready(function () {
 	
 	$(document).on('click', "#changeMethod", function(e){
 		e.preventDefault();
-		$(this).data('showMkup', 'true');
+		$(this).data('showmkup', 'true');
 		$('#txtOTP').data("2fa", "false").val('');
 		sendHhkLogin();
 	});
@@ -188,7 +194,7 @@ $(document).ready(function () {
 	$(document).on('click', "#otpChoiceRow button", function(e){
 		e.preventDefault();
 		$("#otpMethod").val($(this).data('method'));
-		$("#changeMethod").data('showMkup', 'false');
+		$("#changeMethod").data('showmkup', 'false');
 		sendHhkLogin();
 	});
 	

@@ -457,10 +457,29 @@ class UserClass
         return false;
     }
 
+    public static function showDifferentMethodBtn(\PDO $dbh, string $username) : bool
+    {
+        $u = self::getUserCredentials($dbh, $username);
+
+        $numMethods = 0;
+
+        if($u['totpSecret'] !== '') {
+            $numMethods++;
+        }
+        if($u['emailSecret'] !== ''){
+            $numMethods++;
+        }
+        if($u['backupSecret'] !== ''){
+            $numMethods++;
+        }
+
+        return ($numMethods > 1);
+    }
+
     public static function getDefaultOtpMethod(\PDO $dbh, $username)
     {
         $u = self::getUserCredentials($dbh, $username);
-        if ($u['totpSecret'] !== '' || $u['emailSecret'] !== '') {
+        if ($u['totpSecret'] !== '') {
             return 'authenticator';
         }elseif($u['emailSecret'] !== ''){
             return 'email';

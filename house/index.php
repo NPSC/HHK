@@ -96,10 +96,6 @@ $siteName = HTMLContainer::generateMarkup('h2', $icons[$page->get_Site_Code()] .
 $loginMkup = $login->loginForm();
 $samlMkup = SAML::getIdpMarkup($dbh);
 
-if(isset($_GET["rssFeed"])){
-    $login->getRssData($uS->loginFeedURL);
-}
-
 $announcementWidget = $login->welcomeWidget("Tip of the Week");
 $linkMkup = $login->getLinksMarkup($uS, $dbh);
 $newsletterMkup = $login->getNewsletterMarkup();

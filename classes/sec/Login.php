@@ -174,6 +174,9 @@ class Login {
                     if($showMethodMkup){
                         $events['otpMethodMkup'] = $u->getOtpMethodMarkup($dbh, $this->userName, $otpMethod);
                     }
+                    if($u->showDifferentMethodBtn($dbh, $this->userName)){
+                        $events['showMethodBtn'] = 'true';
+                    }
                 }else{
                     // Failed
                     $this->validateMsg .= $u->logMessage;
@@ -282,7 +285,7 @@ class Login {
                 , array("class"=>"col-12 my-3"))
                 : '') .
             HTMLContainer::generateMarkup("div",
-                HTMLContainer::generateMarkup("button", "Use a different method...", array("id"=>"changeMethod", "data-showMkup"=>"false"))
+                HTMLContainer::generateMarkup("button", "Use a different method...", array("id"=>"changeMethod", "data-showMkup"=>"false", "type"=>"button"))
                 , array("class"=>"col-12 my-3 right"))
             , array("class"=>"row mt-3 mx-0 d-none", "id"=>"otpRow"));
 
