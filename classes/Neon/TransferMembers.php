@@ -654,7 +654,7 @@ Limit 500" );
         $this->relationshipMapper = new RelationshipMapper($dbh);
 
         // Create or update households.
-        $this->hhReplies = $this->sendHouseholds($dbh, $guestIds, $visits);
+        $this->sendHouseholds($dbh, $guestIds, $visits);
 
         return $visitReplys;
     }
@@ -845,8 +845,6 @@ where
 
     protected function sendHouseholds(\PDO $dbh, $guests, $visits) {
 
-        $replies = [];
-
         foreach ($visits as $v) {
 
             if (isset($guests[$v['idPG']]) === FALSE) {
@@ -859,7 +857,6 @@ where
                 }
 
             }
-
 
             if ($guests[$v['idPG']]['accountId'] < 1) {
                 continue;
@@ -919,13 +916,9 @@ where
             }
 
             // Add guest to household.
-            $replies[] = $this->addToHousehold($householdId, $guests[$v['idPG']], $guests);
-
-
+           $this->addToHousehold($householdId, $guests[$v['idPG']], $guests);
 
         }  // next visit
-
-        return $replies;
 
     }
 
@@ -981,7 +974,7 @@ where
      */
     protected function createHousehold($primaryContactId, $relationId, $householdName) {
 
-        $householdId = '';
+        $householdId = 0;
 
         $base = 'household.';
         $param[$base . 'name'] = $householdName;
@@ -992,34 +985,28 @@ where
         $request = array(
             'method' => 'account/createHouseHold',
             'parameters' => $param,
-
         );
-
 
         $wsResult = $this->webService->go($request);
 
-
         if ($this->checkError($wsResult)) {
 
-            $f['Household Id'] = $this->errorMessage;
+            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> $this->errorMessage));
 
-        } else if (isset($wsResult['houseHoldId']) === FALSE) {
+        } else if (isset($wsResult['houseHoldId'])) {
 
-            $f['Household Id'] = 'Household Id not set';
-
-        } else {
-
-            $f['Household Id'] = 'New HH: ' . $wsResult['houseHoldId'];
             $householdId = $wsResult['houseHoldId'];
+            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Success'));
         }
 
         return $householdId;
     }
 
-    protected function addToHousehold($householdId, $pg, $guests, &$f) {
+    protected function addToHousehold($householdId, $pg, $guests) {
 
         $countHouseholds = 0;
         $newContacts = [];
+
 
         $households = $this->searchHouseholds(0, $householdId);
 
@@ -1057,16 +1044,19 @@ where
             }
 
             if (count($newContacts) > 0) {
-                $this->updateHousehold($newContacts, $households['houseHolds']['houseHold'][0], $f);
+                $this->updateHousehold($newContacts, $households['houseHolds']['houseHold'][0]);
+            } else {
+                $this->setHhReplies(array('Household'=>$households['houseHolds']['houseHold'][0]['name'], 'Result'=>'Nobody Added.'));
             }
         }
 
     }
 
-    protected function updateHousehold($newGuests, $household, &$f) {
+    protected function updateHousehold($newGuests, $household) {
 
         $base = 'household.';
         $customParamStr = '';
+
 
         $param[$base . 'householdId'] = $household['houseHoldId'];
         $param[$base . 'name'] = $household['name'];
@@ -1089,13 +1079,11 @@ where
 
             $customParamStr .= '&' . http_build_query($cparm);
 
-            $g[] = [
-                'accountid'=>$ng['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId)
-            ];
+            $this->setHhReplies([
+                'Household'=>'Update '.$household['name'], 'Account Id'=>$ng['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId)
+            ]);
 
         }
-
-        $f['New Members'] = $g;
 
         $request = array(
             'method' => 'account/updateHouseHold',
@@ -1108,14 +1096,14 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $f['Result'] = $this->errorMessage;
+            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result' => $this->errorMessage));
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
-            $f['Result'] = 'The Household Id was not returned';
+            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result'=>'The Household Id was not returned'));
 
         } else {
-            $f['Result'] = 'Success';
+            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result'=>'Success'));
         }
 
     }
@@ -1901,30 +1889,40 @@ where n.idName = $idPrimaryGuest ");
     }
 
     public function getHhReplies() {
+        return $this->hhReplies;
+    }
 
-        $t = [];
-        foreach ($this->hhReplies as $r) {
+    public function setHhReplies(array $v) {
 
-            $f = [];
+        $hhReply = [];
 
-            foreach ($r as $k => $v) {
-
-                if (is_array($v)) {
-
-                    foreach ($v as $vk) {
-                        foreach ($vk as $title => $value) {
-                            $f[$title] = $value;
-                        }
-
-                    }
-                } else {
-                    $f[$k] = $v;
-                }
-            }
-
-            $t[] = $f;
+        if (isset($v['Household'])) {
+            $hhReply['Household'] = $v['Household'];
+        } else {
+            $hhReply['Household'] = '';
         }
-        return $t;
+
+        if (isset($v['Account Id'])) {
+            $hhReply['Account Id'] = $v['Account Id'];
+        } else {
+            $hhReply['Account Id'] = '';
+        }
+
+        if (isset($v['Relationship'])) {
+            $hhReply['Relationship'] = $v['Relationship'];
+        } else {
+            $hhReply['Relationship'] = '';
+        }
+
+        if (isset($v['Result'])) {
+            $hhReply['Result'] = $v['Result'];
+        } else {
+            $hhReply['Result'] = '';
+        }
+
+
+        $this->hhReplies[] = $hhReply;
+
     }
 
     public function getMemberReplies() {
