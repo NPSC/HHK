@@ -23,5 +23,6 @@
 		"phelium/recaptcha" : "~1.0",
 		"chillerlan/php-qrcode" : "~4.3",
 		"onelogin/php-saml" : "~4.0"
+		"cerdic/css-tidy" : "~2.0"
 	}
 }

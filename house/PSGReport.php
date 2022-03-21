@@ -1136,14 +1136,14 @@ $selDiag = '';
 if (count($diags) > 0) {
 
     $selDiag = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($diags, $diagSelections, TRUE),
-        array('name'=>'selDiag[]', 'multiple'=>'multiple', 'size'=>min(count($diags)+1, (count($filter->getHList())>12 ? '12' : count($filter->getHList())))));
+        array('name'=>'selDiag[]', 'multiple'=>'multiple', 'size'=>min(count($diags)+1, 13)));
 }
 
 $selLoc = '';
 if (count($locs) > 0) {
 
     $selLoc = HTMLSelector::generateMarkup( HTMLSelector::doOptionsMkup($locs, $locSelections, TRUE),
-        array('name'=>'selLoc[]', 'multiple'=>'multiple', 'size'=>min(count($locs)+1, (count($filter->getHList())>12 ? '12' : count($filter->getHList())))));
+        array('name'=>'selLoc[]', 'multiple'=>'multiple', 'size'=>min(count($locs)+1, 13)));
 }
 
 // State

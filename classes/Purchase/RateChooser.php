@@ -37,7 +37,7 @@ class RateChooser {
      * @var bool
      */
     protected $incomeRated;
-    protected $isAdmin;
+    protected $isAllowed;
     protected $payVisitFee;
     protected $openCheckin;
     protected $rateGlideExtend;
@@ -60,9 +60,14 @@ class RateChooser {
         $this->payAtCheckin = $uS->PayAtCkin;
         $this->openCheckin = $uS->OpenCheckin;
         $this->payVisitFee = $uS->VisitFee;
-        $this->isAdmin = SecurityComponent::is_Authorized('guestadmin');
         $this->rateGlideExtend = $uS->RateGlideExtend;
         $this->priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+
+        if ($uS->RateChangeAuth == TRUE) {
+            $this->isAllowed = SecurityComponent::is_Authorized('guestadmin');
+        } else {
+            $this->isAllowed = TRUE;
+        }
 
     }
 
@@ -85,12 +90,12 @@ class RateChooser {
         return $this->priceModel;
     }
 
-    public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs, $isAdmin = FALSE) {
+    public function createChangeRateMarkup(\PDO $dbh, VisitRs $vRs) {
 
         $attrFixed = array('class'=>'hhk-fxFixed', 'style'=>'margin-left:.5em; ');
         $attrAdj = array('class'=>'hhk-fxAdj', 'style'=>'margin-left:.5em;');
         $fixedRate = '';
-        $rateTbl = '';
+        $rateTbl = new HTMLTable();
 
         //
         if ($vRs->Rate_Category->getStoredVal() == DefaultSettings::Fixed_Rate_Category) {
@@ -108,7 +113,7 @@ class RateChooser {
 
         $adjSel = $this->makeRateAdjustSel();
 
-        if ($isAdmin) {
+        if ($this->isAllowed) {
             // add change rate selector
 
             $rateCat = array(0=>'',1=>'');
@@ -120,8 +125,6 @@ class RateChooser {
             if ($vRs->Span->getStoredVal() > 0) {
                 $visitStart = 'Start of Visit Span (' . date('M d, Y', strtotime($vRs->Span_Start->getStoredVal())) . ')';
             }
-
-            $rateTbl = new HTMLTable();
 
             $rateTbl->addBodyTr(HTMLTable::makeTh(
                 HTMLContainer::generateMarkup('label', 'Change Room Rate', array('for'=>'rateChgCB', 'style'=>'margin: 2px 1px;'))
@@ -150,6 +153,10 @@ class RateChooser {
         $uS = Session::getInstance();
         $reply = '';
         $replaceMode = '';
+
+        if ($this->isAllowed == FALSE) {
+            return 'Not allowed to change room rates';
+        }
 
         $visitRs = $visit->visitRS;
         $chRateDT = NULL;
@@ -548,9 +555,6 @@ class RateChooser {
             }
         }
 
-        // Check for rate glide
-        //$dayCredit = 0;  //self::setRateGlideDays($dbh, $resv->getIdRegistration(), $this->rateGlideExtend);
-
         $attrFixed = array('class'=>'hhk-fxFixed');
         if($uS->RoomPriceModel == ItemPriceCode::None){
             $attrAdj = array('style'=>'display:none;');
@@ -583,7 +587,7 @@ class RateChooser {
         $rateCategories = RoomRate::makeSelectorOptions($this->priceModel, $resv->getIdRoomRate());
         $rateSelectorAttrs = array('name'=>'selRateCategory', 'style'=>'display:table;');
 
-        if ($this->isAdmin === FALSE) {
+        if ($this->isAllowed === FALSE) {
             $rateSelectorAttrs['disabled'] = 'disabled';
         }
 
@@ -618,11 +622,6 @@ class RateChooser {
                 . ($tax > 0 ? HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnRcTax', 'data-tax'=>$tax)), array('style'=>'text-align:center;')) : '')
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('name'=>'spnAmount')), array('style'=>'text-align:center;'))
                 );
-
-        // Add mention of rate glide credit days
-//         if ($dayCredit > 0) {
-//             $tbl->addBodyTr(HTMLTable::makeTd('(Estimated Total based on ' . $dayCredit . ' days of room rate glide.)', array('colspan'=>'4')));
-//         }
 
         return $tbl->generateMarkup();
 

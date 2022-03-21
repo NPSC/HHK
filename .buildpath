@@ -12,6 +12,7 @@
 		</attributes>
 	</buildpathentry>
 	<buildpathentry kind="src" path="vendor/chillerlan/php-settings-container/src">
+	<buildpathentry kind="src" path="vendor/cerdic/css-tidy">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
 		</attributes>

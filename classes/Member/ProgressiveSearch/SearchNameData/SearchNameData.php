@@ -13,6 +13,7 @@ class SearchNameData implements SearchNameDataInterface {
     protected $suffix = '';
     protected $prefix = '';
     protected $gender = '';
+    protected $ethnicity = '';
     protected $birthDate = '';
     protected $relationship = '';
     protected $email = '';
@@ -94,6 +95,14 @@ class SearchNameData implements SearchNameDataInterface {
      */
     public function setGender($gender) {
         $this->gender = trim($gender);
+        return $this;
+    }
+
+    /**
+     * @param string $ethnicity
+     */
+    public function setEthnicity($ethnicity) {
+        $this->ethnicity = trim($ethnicity);
         return $this;
     }
 
@@ -282,6 +291,14 @@ class SearchNameData implements SearchNameDataInterface {
     /**
      * @return string
      */
+    public function getEthnicity()
+    {
+        return $this->ethnicity;
+    }
+
+    /**
+     * @return string
+     */
     public function getRelationship()
     {
         return $this->relationship;
@@ -421,6 +438,7 @@ class SearchNameData implements SearchNameDataInterface {
         ->setPrefix($r['Name_Prefix'])
         ->setSuffix($r['Name_Suffix'])
         ->setGender($r['Gender'])
+        ->setEthnicity($r['Ethnicity'])
         ->setBirthDate($r['Birthdate'])
         ->setPhone($r['Phone_Num'])
         ->setEmail($r['Email'])

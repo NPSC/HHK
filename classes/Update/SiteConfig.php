@@ -501,6 +501,8 @@ class SiteConfig {
 
     public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL, $category = NULL, array $hideCats = array()) {
 
+        $uS = Session::getInstance();
+
         // sys config table
         $sctbl = new HTMLTable();
         $cat = '';
@@ -565,6 +567,11 @@ class SiteConfig {
             }
 
             $sctbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
+
+            $dkimRecord = @file_get_contents($uS->keyPath . '/dkim/dkimRecord.txt');
+            if($r['Key'] == 'DKIMdomain' && strlen($r['Value']) > 0 && $dkimRecord){
+                $sctbl->addBodyTr(HTMLTable::makeTd('DKIM Record:', array('class' => 'tdlabel', 'style'=>'vertical-align:top;')) . HTMLTable::makeTd("<strong>key</strong>: hhk._domainkey." . $r['Value'] . " <br><strong>Value</strong>:<br>" . HTMLContainer::generateMarkup("textarea", "v=DKIM1; k=rsa; p=" . $dkimRecord, array("readonly"=>"readonly", 'rows'=>"5", 'cols'=>"40"))));
+            }
 
         }
 

@@ -63,6 +63,7 @@ $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 $labels = Labels::getLabels();
 
+
 function getPaymentReport(\PDO $dbh, $start, $end) {
 
     $uS = Session::getInstance();
@@ -78,6 +79,10 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
     $stmt = $dbh->query("Select * from `vneon_payment_display` where $whereClause");
     $rows = array();
+
+    if ($stmt->rowCount() == 0) {
+        return FALSE;
+    }
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -97,6 +102,95 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
     return CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
 
+}
+
+function searchVisits(\PDO $dbh, $start, $end, $maxGuests) {
+
+    $uS = Session::getInstance();
+    $rows = array();
+
+    $stmt = $dbh->query("SELECT
+    s.idStays,
+    s.idVisit,
+    s.Visit_Span,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    s.idName AS `hhkId`,
+    IFNULL(h.Title, '') AS `Hospital`,
+    IFNULL(g.Description, '') AS `Diagnosis`,
+    IFNULL(n.Name_Full, '') as `Name`,
+    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
+    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
+    (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
+FROM
+    stays s
+        LEFT JOIN
+    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+        LEFT JOIN
+    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        LEFT JOIN
+    `name` n ON s.idName = n.idName
+        LEFT JOIN
+    hospital h on hs.idHospital = h.idHospital
+        LEFT JOIN
+    gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
+WHERE
+    s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0
+    AND DATE(s.Span_End_Date) < DATE('$end')
+ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date
+LIMIT 500");
+
+    if ($stmt->rowCount() == 0) {
+        return FALSE;
+    }
+
+    $guestIds = [];
+
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+        if (isset($guestIds[ $r['hhkId'] ])) {
+
+            $startDT = new \DateTime($r['Start_Date']);
+            $endDT = new \DateTime($r['End_Date']);
+
+            if ($guestIds[ $r['hhkId'] ]['Start Date'] > $startDT ) {
+                $guestIds[ $r['hhkId'] ]['Start Date'] = $startDT;
+            }
+
+            if ($guestIds[ $r['hhkId'] ]['End Date'] < $endDT ) {
+                $guestIds[ $r['hhkId'] ]['End Date'] = $endDT;
+            }
+
+            $guestIds[ $r['hhkId'] ]['Nights'] += $r['Nite_Counter'];
+
+        } else {
+
+            $guestIds[ $r['hhkId'] ] = array(
+                'Account Id' => $r['accountId'],
+                'HHK Id' => HTMLContainer::generateMarkup('a', $r['hhkId'], array('href'=>'GuestEdit.php?id=' . $r['hhkId'])),
+                'Name' => $r['Name'],
+                'Diagnosis' => $r['Diagnosis'],
+                'Hosptial' => $r['Hospital'],
+                'Start Date' => new \DateTime($r['Start_Date']),
+                'End Date' => new \DateTime($r['End_Date']),
+                'Nights' => $r['Nite_Counter'],
+            );
+
+            if ($maxGuests-- <= 0) {
+                break;
+            }
+        }
+
+    }
+
+    foreach ($guestIds as $g) {
+
+        $g['Start Date'] = $g['Start Date']->format('M j, Y');
+        $g['End Date'] = $g['End Date']->format('M j, Y');
+        $rows[] = $g;
+
+    }
+
+    return CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
 }
 
 function getPeopleReport(\PDO $dbh, $start, $end, $extIdFlag = FALSE) {
@@ -154,6 +248,10 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
 
     $stmt = $dbh->query($query);
 
+    if ($stmt->rowCount() == 0) {
+        return FALSE;
+    }
+
     $rows = array();
     $firstRow = TRUE;
     $hdr = array();
@@ -188,6 +286,38 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
 
 }
 
+function createKeyMap(\PDO $dbh) {
+
+    // get session instance
+    $uS = Session::getInstance();
+
+    $hospitalKeyTable = new HTMLTable();
+
+    // Hospitals
+    $hospitalKeyTable->addHeaderTr(HTMLTable::makeTh("Hospital Key", array('colspan'=>'2')));
+    $hospitalKeyTable->addHeaderTr(HTMLTable::makeTh('Title').HTMLTable::makeTh("Id"));
+
+    foreach ($uS->guestLookups['Hospitals'] as $h) {
+        $hospitalKeyTable->addBodyTr(HTMLTable::makeTd($h[1]).HTMLTable::makeTd($h[0]));
+    }
+
+    // Diagnosis
+    $diagKeyTable = new HTMLTable();
+
+    $diagKeyTable->addBodyTr(HTMLTable::makeTh("Diagnosis Key", array('colspan'=>'2')));
+    $diagKeyTable->addBodyTr(HTMLTable::makeTh("Code").HTMLTable::makeTh('Title'));
+
+    $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Order');
+
+    foreach ($diags as $d) {
+        $diagKeyTable->addBodyTr(HTMLTable::makeTd($d[0]).HTMLTable::makeTd($d[1]));
+    }
+
+    $hdiv = HTMLContainer::generateMarkup('div', $hospitalKeyTable->generateMarkup(), array('style'=>'float:left; margin-left:10px;'));
+    $ddiv = HTMLContainer::generateMarkup('div', $diagKeyTable->generateMarkup(), array('style'=>'float:left;'));
+
+    return  HTMLContainer::generateMarkup('div', $ddiv . $hdiv, array('id'=>'divPrintKeys'));
+}
 
 $mkTable = '';
 $dataTable = '';
@@ -202,7 +332,8 @@ $start = '';
 $end = '';
 $errorMessage = '';
 $calSelection = '19';
-$transferIds = [];
+$noRecordsMsg = '';
+$maxGuests = 15;  // maximum guests to process for each post.
 
 
 $monthArray = array(
@@ -218,7 +349,7 @@ if ($uS->fy_diff_Months == 0) {
 
 
 // Process report.
-if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
+if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST['btnGetVisits'])) {
 
     // gather input
 
@@ -296,41 +427,72 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
 
         // Get HHK records result table.
         $results = getPeopleReport($dbh, $start, $end, FALSE);
-        $dataTable = $results['mkup'];
-        $transferIds = $results['xfer'];
+
+        if ($results === FALSE) {
+
+            $noRecordsMsg = "No HHK member records found.";
+
+        } else {
+
+            $dataTable = $results['mkup'];
 
 
-        // Create settings markup
-        $sTbl = new HTMLTable();
-        $sTbl->addBodyTr(HTMLTable::makeTh('Guest Transfer Timeframe', array('colspan'=>'4')));
-        $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
-        $settingstable = $sTbl->generateMarkup(array('style'=>'float:left;'));
+            // Create settings markup
+            $sTbl = new HTMLTable();
+            $sTbl->addBodyTr(HTMLTable::makeTh('Guest Transfer Timeframe', array('colspan'=>'4')));
+            $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+            $settingstable = $sTbl->generateMarkup(array('style'=>'float:left;'));
 
-        // Create search criteria markup
-        $searchCriteria = TransferMembers::getSearchFields($dbh);
+            // Create search criteria markup
+            $searchCriteria = TransferMembers::getSearchFields($dbh);
 
-        $tr = '';
-        foreach ($searchCriteria as $s) {
-            $tr .= HTMLTable::makeTd($s);
+            $tr = '';
+            foreach ($searchCriteria as $s) {
+                $tr .= HTMLTable::makeTd($s);
+            }
+
+            $scTbl = new HTMLTable();
+            $scTbl->addHeaderTr(HTMLTable::makeTh($serviceName . ' Search Criteria', array('colspan'=>count($searchCriteria))));
+            $scTbl->addBodyTr($tr);
+            $searchTabel = $scTbl->generateMarkup(array('style'=>'float:left; margin-left:2em;'));
+
+            $mkTable = 1;
         }
-
-        $scTbl = new HTMLTable();
-        $scTbl->addHeaderTr(HTMLTable::makeTh($serviceName . ' Search Criteria', array('colspan'=>count($searchCriteria))));
-        $scTbl->addBodyTr($tr);
-        $searchTabel = $scTbl->generateMarkup(array('style'=>'float:left; margin-left:2em;'));
-
-        $mkTable = 1;
 
     } else if (isset($_POST['btnGetPayments'])) {
 
         $dataTable = getPaymentReport($dbh, $start, $end);
 
-        $mkTable = 2;
+        if ($dataTable === FALSE) {
+            $noRecordsMsg = "No payment records found.";
+        } else {
+            $mkTable = 2;
+        }
+
+    } else if (isset($_POST['btnGetVisits'])) {
+
+        $dataTable = searchVisits($dbh, $start, $end, $maxGuests);
+
+        if ($dataTable === FALSE) {
+            $noRecordsMsg = "No visit records found.";
+        } else {
+            $mkTable = 3;
+        }
 
     }
 
 }
 
+if ($wsConfig->getString('custom_fields', 'First_Visit', '') != '') {
+
+    $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', array('id'=>'btnGetKey', 'type'=>'button', 'style'=>'margin-left:3px; font-size:small;'));
+    $btnVisits = HTMLInput::generateMarkup('Get HHK Visits', array('name'=>'btnGetVisits', 'id'=>'btnGetVisits', 'type'=>'submit', 'style'=>'margin-left:20px;'));
+    $dboxMarkup = createKeyMap($dbh);
+}
+
+if ($noRecordsMsg != '') {
+    $noRecordsMsg = HTMLContainer::generateMarkup('p', $noRecordsMsg, array('style'=>'font-size:large'));
+}
 
 
 // Setups for the page.
@@ -338,9 +500,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments'])) {
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'5','multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>count($calOpts)));
-
-$wsLogo = $wsConfig->getString('credentials', 'Logo_URI', '');
-$wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
 
 ?>
 <!DOCTYPE html>
@@ -350,8 +509,8 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         <title><?php echo $pageTitle; ?></title>
         <?php echo FAVICON; ?>
         <?php echo JQ_UI_CSS; ?>
+        <?php echo JQ_DT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-        <?php echo JQ_DT_CSS ?>
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
         <style>
@@ -360,23 +519,21 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
         </style>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
+        <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo ADDR_PREFS_JS ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
 
     </head>
     <body <?php if ($wInit->testVersion) { echo "class='testbody'";} ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?>  <span style="font-size: .7em;"><a href="SetupNeonCRM.htm" target="_blank">(Instructions)</a></span></h2>
-            <a id='aLoginLink' href="<?php echo $wsLink; ?>" style="float:left;margin-top:15px;margin-left:5px;margin-right:5px;padding-left:5px;padding-right:5px;" title="Click to log in."><span style="height:55px; width:130px; background: url(<?php echo $wsLogo; ?>) left top no-repeat; background-size:contain;"></span></a>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display:none; clear:left; min-width: 400px; padding:10px;">
                 <form id="fcat" action="GuestTransfer.php" method="post">
                    <table style="clear:left;float: left;">
                         <tr>
@@ -412,35 +569,39 @@ $wsLink = $wsConfig->getString('credentials', 'Login_URI', '');
                     </table>
                     <table style="width:100%; margin-top: 15px;">
                         <tr>
-                            <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records"/></td>
-                            <td><input type="submit" name="btnGetPayments" id="btnGetPayments" value="Get HHK Payments"/></td>
+                            <td><input type="submit" name="btnHere" id="btnHere" value="Get HHK Records" style="margin-left:20px;"/>
+                            <input type="submit" name="btnGetPayments" id="btnGetPayments" value="Get HHK Payments" style="margin-left:20px;"/>
+							<?php echo $btnVisits . $btnGetKey; ?></td>
                         </tr>
                     </table>
                 </form>
-                <div id="retrieve"></div>
+                <div style="margin-top: 15px; margin-left:50px;" id="retrieve"><?php echo $noRecordsMsg; ?></div>
             </div>
             <div style="clear:both;"></div>
 
-            <div id="divPrintButton" style="display:none;margin-top:6px;margin-bottom:3px;">
-                <input id="printButton" value="Print" type="button" />
-                <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
-                <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
-            </div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div style="margin-bottom:.8em; float:left;"><?php echo $settingstable . $searchTabel; ?></div>
                 <div id="divTable">
                     <?php echo $dataTable; ?>
                 </div>
                 <div id="divMembers"></div>
+                <div id="divStrayMembers"></div>
+                <div id="divHouseholds"></div>
             </div>
+            <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;">
+                <input id="printButton" value="Print" type="button" />
+                <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
+                <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
+                <input id="btnVisits" value="Transfer Visits (Max. <?php echo $maxGuests; ?>)" type="button" style="margin-left:2em;"/>
+        	</div>
         </div>
+        <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em;"><?php echo $dboxMarkup; ?></div>
+
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
-        <input id='htransferIds' type="hidden" value='<?php echo json_encode($transferIds); ?>'/>
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
         <input id='hend' type="hidden" value='<?php echo $end; ?>'/>
         <input id='hdateFormat' type="hidden" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>'/>
-
-        <script type="text/javascript" src="<?php echo GUESTTRANSFER_JS; ?>"></script>
+		<input id='maxGuests' type = 'hidden' value='<?php echo $maxGuests; ?>'/>
 
     </body>
 </html>

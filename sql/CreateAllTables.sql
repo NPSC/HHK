@@ -871,6 +871,17 @@ CREATE TABLE if not exists `mail_listing` (
 ) ENGINE=MyISAM;
 
 
+-- -----------------------------------------------------
+-- Table `map_relations`
+-- -----------------------------------------------------
+CREATE TABLE `map_relations` (
+  `idmap_relations` int(11) NOT NULL AUTO_INCREMENT,
+  `PG_Patient` varchar(45) NOT NULL,
+  `Guest_Patient` varchar(45) DEFAULT NULL,
+  `Patient_PG` varchar(45) DEFAULT NULL,
+  `Guest_PG` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`idmap_relations`)
+) ENGINE=InnoDB;
 
 
 -- -----------------------------------------------------
@@ -1929,6 +1940,7 @@ CREATE TABLE if not exists `stays` (
   `Activity_Id` int(11) NOT NULL DEFAULT '0',
   `On_Leave` int(11) NOT NULL DEFAULT '0',
   `Status` varchar(5) NOT NULL DEFAULT '',
+  `Recorded` INT(1) NOT NULL DEFAULT '0',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2002,7 +2014,7 @@ CREATE TABLE if not exists `trans` (
   `Trans_Type` varchar(5) NOT NULL DEFAULT '',
   `Trans_Method` varchar(5) NOT NULL DEFAULT '',
   `Trans_Date` datetime DEFAULT NULL,
-  `idName` varchar(15) NOT NULL DEFAULT '',
+  `idName` int(11) NOT NULL DEFAULT 0,
   `Order_Number` varchar(45) NOT NULL DEFAULT '',
   `Invoice_Number` varchar(45) NOT NULL DEFAULT '',
   `Payment_Type` varchar(15) NOT NULL DEFAULT '',
@@ -2091,6 +2103,7 @@ CREATE TABLE if not exists `visit` (
   `OverRideMaxOcc` int(1) NOT NULL DEFAULT '0',
   `Notes` text,
   `Status` varchar(5) NOT NULL DEFAULT '',
+  `Recorded` INT(1) NOT NULL DEFAULT '0',
   `Updated_By` varchar(45) NOT NULL DEFAULT '',
   `Last_Updated` datetime DEFAULT NULL,
   `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,

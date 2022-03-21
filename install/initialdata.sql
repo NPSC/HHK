@@ -551,6 +551,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('DefaultVisitFee','1','s','h','','Use the Resource Builder','',1),
 ('DefCalEventTextColor', 'black', 's', 'c', '', 'Default calendar event ribbon text color', '',1),
 ('Disclaimer','Welcome! Please remember that unauthorized use of the data made available to you as a House volunteer, including collecting user names and/or email addresses of other users for the purpose of sending unsolicited email or other unauthorized purposes, is prohibited. Thank you for all you do!','t','v','','Volunteer Site Disclaimer','',1),
+('DKIMdomain', '', 's', 'es', '', 'Domain name of sender (must match FromAddress and NoReplyAddr domains)', '',1),
 ('Doctor','true','b','hf','','Track doctors','',1),
 ('EmailBlockSize','200','i','v','','Number of email addresses per block','',1),
 ('EmailType','','lu','es','','Email protocol','Email_Server',1),
@@ -582,6 +583,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('InsuranceChooser','false','b','hf','','Enable insurance chooser','',1),
 ('InvoiceTerm','30','i','f','','Invoice payment terms in days','',1),
 ('KeyDeposit','true','b','hf','','Enable room or key deposit','',1),
+('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '',0),
 ('LangChooser','false','b','hf','','Enable member language chooser','',1),
 ('loginFeedURL', 'https://nonprofitsoftwarecorp.org/category/hhk-tips/feed/', 'url', 'a', '', 'RSS Feed for login pages', '','0'),
 ('MajorDonation','500','i','d','','Major donator trigger amount','',1),
@@ -610,6 +612,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('receiptLogoFile','../conf/receiptlogo.png','url','f','','Path to the receipt logo file','',1),
 ('receiptLogoWidth','150','i','f','','in px','',1),
 ('ReferralAgent','true','b','hf','','Track referral agents/social workers','',1),
+('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1'),
 ('RegColors','hospital','lu','c','','Calendar page ribbon colors based on hospital or room','Reg_Colors',1),
 ('RegForm','1','i','h','',' Registration form style (1 or 2)','',1),
 ('RegFormNoRm','false','b','h','','Do not show the room number on the registration form before check-in','',1),
@@ -966,6 +969,19 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 -- ;
 
 
+-- 
+-- Dumping data for table map_relations
+--
+REPLACE INTO `demo`.`map_relations`(`idmap_relations`,`PG_Patient`,`Guest_Patient`,`Patient_PG`,`Guest_PG`)VALUES
+('1', 'sp', 'chd', 'sp', 'chd'),('2', 'sp', 'sib', 'sp', 'rltv'),('3', 'sp', 'par', 'sp', 'rltv'),('4', 'sp', 'sp', 'sp', 'sp'),('5', 'sib', 'chd', 'sib', 'rltv'),('6', 'sib', 'sib', 'sib', 'sib'),
+('7', 'sib', 'par', 'sib', 'par'),('8', 'sib', 'sp', 'sib', 'rltv'),('9', 'chd', 'chd', 'par', 'sib'),('10', 'chd', 'sib', 'par', 'rltv'),('11', 'chd', 'par', 'par', 'rltv'),('12', 'chd', 'sp', 'par', 'par'),
+('13', 'par', 'chd', 'chd', 'rltv'),('14', 'par', 'sib', 'chd', 'chd'),('15', 'par', 'par', 'chd', 'sp'),('15', 'par', 'par', 'chd', 'sp'),('16', 'par', 'sp', 'chd', 'rltv'),('17', 'slf', 'sp', 'slf', 'sp'),
+('18', 'slf', 'sib', 'slf', 'sib'),('19', 'slf', 'chd', 'slf', 'chd'),('20', 'slf', 'par', 'slf', 'par'),('21', 'sp', 'rltv', 'sp', 'rltv'),('22', 'sib', 'rltv', 'sib', 'rltv'),('23', 'chd', 'rltv', 'par', 'rltv'),
+('24', 'par', 'rltv', 'chd', 'rltv'),('25', 'sp', 'frd', 'sp', 'frd'),('26', 'sib', 'frd', 'seb', 'frd'),('27', 'chd', 'frd', 'par', 'frd'),('28', 'par', 'frd', 'chd', 'frd'),('29', 'rltv', 'sp', 'rltv', 'rltv'),
+('30', 'rltv', 'sib', 'rltv', 'rltv'),('31', 'rltv', 'chd', 'rltv', 'rltv'),('32', 'rltv', 'par', 'rltv', 'rltv'),('33', 'frd', 'sp', 'frd', 'frd'),('34', 'frd', 'sib', 'frd', 'frd'),('35', 'frd', 'chd', 'frd', 'frd'),
+('36', 'frd', 'par', 'frd', 'frd'),('37', 'pc', 'sp', 'pc', 'pc'),('38', 'pc', 'sib', 'pc', 'pc'),('39', 'pc', 'chd', 'pc', 'pc'),('40', 'pc', 'par', 'pc', 'pc'),('41', 'sp', 'pc', 'sp', 'pc'),
+('42', 'sib', 'pc', 'sib', 'pc'),('43', 'chd', 'pc', 'par', 'pc'),('44', 'par', 'pc', 'chd', 'pc'),('45', 'slf', 'frd', 'slf', 'frd'),('46', 'slf', 'rltv', 'slf', 'rltv'),('47', 'slf', 'slf', 'slf', 'slf');
+-- ;
 
 
 --

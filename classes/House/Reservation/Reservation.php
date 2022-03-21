@@ -783,7 +783,7 @@ where rg.idReservation =" . $r['idReservation']);
 
     }
 
-    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, \DateTimeInterface $arrivalDT, $idPsg, \DateTimeInterface $departureDT, $idVisit = 0, $idSpan = -1) {
+    protected static function findConflictingStays(\PDO $dbh, array &$psgMembers, ?\DateTimeInterface $arrivalDT, $idPsg, ?\DateTimeInterface $departureDT, $idVisit = 0, $idSpan = -1) {
 
         $whStays = '';
         $rooms = array();

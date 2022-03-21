@@ -31,6 +31,12 @@ class TransferMembers {
     protected $pageNumber;
     protected $replies;
     protected $memberReplies;
+    protected $hhReplies;
+    protected $relationshipMapper;
+    protected $hhkToNeonRelationMap;
+
+    // Maximum custom properties for a NEON account
+    const MAX_CUSTOM_PROPERTYS = 30;
 
     public function __construct($userId, $password, array $customFields = array()) {
 
@@ -42,6 +48,8 @@ class TransferMembers {
         $this->txMethod = '';
         $this->txParams = '';
     }
+
+
 
     /** Last name search remote
      *
@@ -131,7 +139,7 @@ class TransferMembers {
         return $account;
     }
 
-    /** Update Individual Account including name, phone, address and email
+    /** Update an existing Individual Account including name, phone, address and email
      *
      * @param \PDO $dbh
      * @param array $accountData
@@ -139,7 +147,7 @@ class TransferMembers {
      * @return string
      * @throws RuntimeException
      */
-    public function updateNeonAccount(\PDO $dbh, $accountData, $idName) {
+    public function updateNeonAccount(\PDO $dbh, $accountData, $idName, $extraSourceCols = []) {
 
         if ($idName < 1) {
             throw new RuntimeException('HHK Member Id not specified: ' . $idName);
@@ -147,7 +155,7 @@ class TransferMembers {
 
 
         // Get member data record
-        $r = $this->loadSourceDB($dbh, $idName);
+        $r = $this->loadSourceDB($dbh, $idName, $extraSourceCols);
 
 
         if (is_null($r)) {
@@ -155,11 +163,11 @@ class TransferMembers {
         }
 
         if (isset($accountData['accountId']) === FALSE) {
-            throw new RuntimeException('Remote account id not found for: ' . $r['accountId']);
+            throw new RuntimeException("Remote account id not found for " . $r['firstName'] . " " . $r['lastName'] . ": HHK Id = " . $idName . ", Account Id = " . $r['accountId']);
         }
 
         if ($r['accountId'] != $accountData['accountId']) {
-            throw new RuntimeException('Account Id mismatch: local Id = ' . $r['accountId'] . ' remote Id = ' . $accountData['accountId']);
+            throw new RuntimeException("Account Id mismatch: local account Id = " . $r['accountId'] . ", remote account Id = " . $accountData['accountId'] . ", HHK Id = " . $idName);
         }
 
         $unwound = array();
@@ -171,7 +179,12 @@ class TransferMembers {
         $this->fillPcName($r, $param, $unwound);
 
         // Address
-        $this->fillPcAddr($r, $param, $unwound);
+        if (isset($r['addressLine1']) && $r['addressLine1'] != '') {
+
+            $r['isPrimaryAddress'] = 'true';
+            $this->fillPcAddr($r, $param, $unwound);
+
+        }
 
         // Other crap
         $this->fillOther($r, $param, $unwound);
@@ -179,7 +192,7 @@ class TransferMembers {
         $paramStr = $this->fillIndividualAccount($r);
 
         // Custom Parameters
-        $paramStr .= $this->fillCustomFields($r);
+        $paramStr .= $this->fillCustomFields($r, $unwound);
 
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
@@ -190,11 +203,12 @@ class TransferMembers {
            'customParmeters' => $paramStr
         );
 
-        $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
         $result = $this->webService->go($request);
 
         if ($this->checkError($result)) {
             $msg = $this->errorMessage;
+        } else {
+            $msg = 'Updated ' . $r['firstName'] . ' ' . $r['lastName'];
         }
 
         return $msg;
@@ -222,7 +236,6 @@ class TransferMembers {
 
         return;
     }
-
 
     public function listCustomFields() {
 
@@ -307,7 +320,7 @@ class TransferMembers {
             $request['parameters'] = array('relationTypeCategory'=>'Individual-Individual');
         }
 
-            // Log in with the web service
+        // Log in with the web service
         $this->openTarget($this->userId, $this->password);
         $result = $this->webService->go($request);
 
@@ -480,8 +493,669 @@ class TransferMembers {
 
     }
 
+    /** Sends stay information, hospital and diagnosis, and households.
+     *
+     * @param \PDO $dbh
+     * @param string $username
+     * @param string $end
+     * @return array
+     */
+    public function sendVisits(\PDO $dbh, $username, $end, $maxGuests) {
+
+        $this->memberReplies = [];
+        $this->replies = [];
+
+        // dont allow if neon config file doesnt have the custom fileds
+        if (isset($this->customFields['First_Visit']) === FALSE) {
+            $rep = array();
+            $rep[] = array('Update_Message'=>'Vist transfer is not configured.');
+            return $rep;
+        }
+
+        $visits = [];
+        $stayIds = [];
+        $guestIds = [];
+        $sendIds = [];
+        $psgs = [];
+
+        if ($end == '') {
+            $end = date('Y-m-d');
+        }
+
+        // Read stays from db
+        $stmt = $dbh->query("SELECT
+    s.idStays,
+    s.idVisit,
+    s.Visit_Span,
+    s.idName AS `hhkId`,
+    IFNULL(v.idPrimaryGuest, 0) as `idPG`,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    IFNULL(n.Name_Last, '') AS `Last_Name`,
+    IFNULL(hs.idHospital, 0) AS `idHospital`,
+    IFNULL(hs.Diagnosis, '') AS `Diagnosis_Code`,
+    IFNULL(hs.idPsg, 0) as `idPsg`,
+    IFNULL(hs.idPatient, 0) as `idPatient`,
+    IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address',
+    IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
+    IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
+    (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
+FROM
+    stays s
+        LEFT JOIN
+    visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
+        LEFT JOIN
+    hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        LEFT JOIN
+    `name` n ON s.idName = n.idName
+		LEFT JOIN
+	name_guest ng on s.idName = ng.idName and hs.idPsg = ng.idPsg
+        LEFT JOIN
+    name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+WHERE
+    s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0
+    AND s.Span_End_Date is not NULL AND DATE(s.Span_End_Date) <= DATE('$end')
+ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date
+Limit 500" );
+
+        // Count up guest stay dates and nights.
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            $stayIds[] = $r['idStays'];
+
+            $visits[$r['idVisit']] = array(
+                'idPG' => $r['idPG'],
+                'idPatient' => $r['idPatient'],
+                'idPsg' => $r['idPsg']
+            );
+
+            $psgs[$r['idPsg']] = array(
+                'idHospital' => $r['idHospital'],
+                'Diagnosis_Code' => $r['Diagnosis_Code']
+            );
+
+            if (isset($guestIds[ $r['hhkId'] ])) {
+
+                $startDT = new \DateTime($r['Start_Date']);
+                $endDT = new \DateTime($r['End_Date']);
+
+                if ($guestIds[ $r['hhkId'] ]['Start_Date'] > $startDT ) {
+                    $guestIds[ $r['hhkId'] ]['Start_Date'] = $startDT;
+                }
+
+                if ($guestIds[ $r['hhkId'] ]['End_Date'] < $endDT ) {
+                    $guestIds[ $r['hhkId'] ]['End_Date'] = $endDT;
+                }
+
+                $guestIds[ $r['hhkId'] ]['Nite_Counter'] += $r['Nite_Counter'];
+
+            } else {
+
+                // new guest
+                $guestIds[ $r['hhkId'] ] = array(
+                    'hhkId' => $r['hhkId'],
+                    'accountId' => $r['accountId'],
+                    'idPsg' => $r['idPsg'],
+                    'Relation_Code' => $r['Relation_Code'],
+                    'Start_Date' => new \DateTime($r['Start_Date']),
+                    'End_Date' => new \DateTime($r['End_Date']),
+                    'Nite_Counter' => $r['Nite_Counter'],
+                    'Address' => $r['Address'],
+                    'Last_Name' => $r['Last_Name'],
+                );
+
+                if ($maxGuests-- <= 0) {
+                    break;
+                }
+            }
+        }
+
+
+        // Check for and combine any missing Neon account ids.
+        foreach ($guestIds as $id => $r ) {
+
+            // Is the account defined?
+            if ($r['accountId'] == '') {
+                $sendIds[] = $id;
+            }
+        }
+
+        // Search and create a new Neon account if needed.
+        if (count($sendIds) > 0) {
+
+            // Write to Neon
+            $this->memberReplies = $this->sendList($dbh, $sendIds, $username);
+
+            // Capture new account Id's from any new members.
+            foreach ($this->memberReplies as $f) {
+
+                if (isset($f['Account ID']) && $f['Account ID'] !== '') {
+                    $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
+                }
+            }
+        }
+
+        // save any non-visit members of PSGs
+        $this->replies = $this->sendNonVisitors($dbh, array_keys($visits), $guestIds, $username);
+
+
+        // Fill the custom parameters for each visit.
+        foreach ($guestIds as $r ) {
+
+            // Write the visits to Neon
+            $visitReplys[] = $this->updateVisitParms($dbh, $r, $psgs);
+
+        }
+
+        // Mark the stays record as "Recorded".
+        $this->updateStayRecorded($dbh, $stayIds);
+
+        // Relationship Mapper object.
+        $this->relationshipMapper = new RelationshipMapper($dbh);
+
+        // Create or update households.
+        $this->hhReplies = $this->sendHouseholds($dbh, $guestIds, $visits);
+
+        return $visitReplys;
+    }
+
+    protected function updateVisitParms(\PDO $dbh, $r, $psgs) {
+
+        // Retrieve the Account
+        $origValues = $this->retrieveAccount($r['accountId']);
+        $codes = [];
+        $f = array();
+
+        // Check for earliest visit start
+        if (isset($r['Start_Date']) && isset($this->customFields['First_Visit'])) {
+
+            $startDT = $r['Start_Date'];
+            $earliestStart = $this->findCustomField($origValues, $this->customFields['First_Visit']);
+
+            if ($earliestStart !== FALSE && $earliestStart != '') {
+
+                $earlyDT = new \DateTime($earliestStart);
+
+                if ($earlyDT > $startDT) {
+                    $codes['First_Visit'] = $startDT->format('m/d/Y');
+                } else {
+                    $codes['First_Visit'] = $earliestStart;
+                }
+            } else {
+                $codes['First_Visit'] = $startDT->format('m/d/Y');
+            }
+
+            $f['First_Visit'] = $codes['First_Visit'];
+
+        } else if (isset($r['Start_Date']) === FALSE) {
+            $f['First_Visit'] = '';
+        }
+
+        // Check for latest visit end
+        if (isset($r['End_Date']) && isset($this->customFields['Last_Visit'])) {
+
+            $endDT = $r['End_Date'];
+            $latestEnd = $this->findCustomField($origValues, $this->customFields['Last_Visit']);
+
+            if ($latestEnd !== FALSE && $latestEnd != '') {
+
+                $lateDT = new \DateTime($latestEnd);
+
+                if ($lateDT < $endDT) {
+                    $codes['Last_Visit'] = $endDT->format('m/d/Y');
+                }else {
+                    // No change
+                    $codes['Last_Visit'] = $latestEnd;
+                }
+            } else {
+                $codes['Last_Visit'] = $endDT->format('m/d/Y');
+            }
+
+            $f['Last_Visit'] = $codes['Last_Visit'];
+
+        } else if (isset($r['End_Date']) === FALSE) {
+            $f['Last_Visit'] = '';
+        }
+
+        // Check Nights counter
+        if (isset($r['Nite_Counter']) && isset($this->customFields['Nite_Counter'])) {
+
+            $nites = intval($r['Nite_Counter'], 10);
+            $niteCounter = intval($this->findCustomField($origValues, $this->customFields['Nite_Counter']), 10);
+
+            $codes['Nite_Counter'] = ($niteCounter + $nites);
+            $f['Nite_Counter'] = $codes['Nite_Counter'];
+
+        } else if (isset($r['Nite_Counter']) === FALSE) {
+            $f['Nite_Counter'] = '';
+        }
+
+         // Check Diagnosis
+         if (isset( $psgs[$r['idPsg']]['Diagnosis_Code']) && isset($this->customFields['Diagnosis'])) {
+
+             $codes['Diagnosis'] = $psgs[$r['idPsg']]['Diagnosis_Code'];
+             $f['Diagnosis'] = $codes['Diagnosis'];
+         }
+
+         // Check Hospital
+         if (isset($psgs[$r['idPsg']]['idHospital']) && isset($this->customFields['Hospital'])) {
+
+             $codes['Hospital'] = $psgs[$r['idPsg']]['idHospital'];
+             $f['Hospital'] = $codes['Hospital'];
+         }
+
+
+
+         // Update Neon with these customdata.
+         try {
+            $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes);
+         } catch (RuntimeException $e) {
+             $f['Update_Message'] = $e->getMessage();
+         }
+
+         return $f;
+    }
+
+    protected function updateStayRecorded(\PDO $dbh, $stayIds) {
+
+        // clean up the stay ids
+        foreach ($stayIds as $s) {
+            if (intval($s, 10) > 0){
+                $idList[] = intval($s, 10);
+            }
+        }
+
+        if (count($idList) > 0) {
+
+            $parm = "(" . implode(',', $idList) . ") ";
+            return $dbh->exec("Update stays set Recorded = 1 where idStays in $parm");
+
+        }
+
+        return NULL;
+    }
+
+    protected function sendNonVisitors(\PDO $dbh, $visitIds, &$guestIds, $username) {
+
+        $idList = [];
+        $idNames = [];
+        $replys = [];
+
+
+        // clean up the visit ids
+        foreach ($visitIds as $s) {
+            if (intval($s, 10) > 0){
+                $idList[] = intval($s, 10);
+            }
+        }
+
+        if (count($idList) > 0) {
+
+            $stmt = $dbh->query("Select	DISTINCT
+    ng.idName,
+    hs.idPsg,
+    ng.Relationship_Code,
+    hs.idPatient
+from
+	visit v
+		join
+	hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        join
+	name_guest ng on hs.idPsg = ng.idPsg
+		left join
+	stays s on ng.idName = s.idName
+        LEFT JOIN
+    name n on n.idName = ng.idName
+
+where
+	s.idName is NULL AND n.External_Id = ''
+    AND v.idVisit in (" . implode(',', $idList) . ")");
+
+            while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+
+                $idNames[$r[0]] = $r[0];
+
+                $guestIds[ $r[0] ] = array(
+                    'hhkId' => $r[0],
+                    'accountId' => '',
+                    'idPsg' => $r[1],
+                    'Relation_Code' => $r[2],
+                    'idPatient' => $r[3],
+                );
+            }
+
+            if (count($idNames) > 0) {
+
+                // Write to Neon
+                $replys = $this->sendList($dbh, $idNames, $username);
+
+                // Capture new account Id's from any new members.
+                foreach ($replys as $f) {
+
+                    if (isset($f['Account ID']) && $f['Account ID'] !== '') {
+                        $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
+                    }
+                }
+
+            }
+        }
+
+        return $replys;
+    }
+
+    protected function sendHouseholds(\PDO $dbh, $guests, $visits) {
+
+        $replies = [];
+
+        foreach ($visits as $v) {
+
+            if (isset($guests[$v['idPG']]) === FALSE) {
+
+                // Load Primary guest.
+                $guests[$v['idPG']] = $this->findPrimaryGuest($dbh, $v['idPG'], $v['idPsg']);
+
+                if (count($guests[$v['idPG']]) != 1) {
+                    continue;
+                }
+
+            }
+
+
+            if ($guests[$v['idPG']]['accountId'] < 1) {
+                continue;
+            }
+
+            $this->relationshipMapper->clear()->setPGtoPatient($guests[$v['idPG']]['Relation_Code']);
+
+            $pgAccountId = $guests[$v['idPG']]['accountId'];
+            $householdName = $guests[$v['idPG']]['Last_Name'];
+            $pgRelationId = $this->relationshipMapper->relateGuest($guests[$v['idPG']]['Relation_Code']);
+
+            // Does primary guest have a hh?
+            $households = $this->searchHouseholds($pgAccountId);
+            $householdId = 0;
+            $countHouseholds = 0;
+
+            // Find any households?
+            if (isset($households['houseHolds']['houseHold'])) {
+                $countHouseholds = count($households['houseHolds']['houseHold']);
+            }
+
+            // Check for NEON not finding the household Id
+            if ($countHouseholds == 0) {
+
+                // Create a new household for the primary guest
+                $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName);
+
+            } else {
+
+                $hhs = $households['houseHolds']['houseHold'];
+
+                // Find the household where primary guest is the primary contact.
+                foreach ($hhs as $hh) {
+
+                    // Check the primary guest is the primary household contact
+                    $pcontact = $this->findHhPrimaryContact($hh);
+
+                    // Found?
+                    if (isset($pcontact['accountId']) && $guests[$v['idPG']]['accountId'] == $pcontact['accountId']) {
+                        // primary guest household found.
+                        $householdId = $hh['houseHoldId'];
+
+                        break;
+                    }
+                }
+
+                if ($householdId == 0) {
+                    // Create a new household for the primary guest
+                    $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName);
+                }
+            }
+
+
+            // Should have an household id
+            if ($householdId == 0) {
+                continue;
+            }
+
+            // Add guest to household.
+            $replies[] = $this->addToHousehold($householdId, $guests[$v['idPG']], $guests);
+
+
+
+        }  // next visit
+
+        return $replies;
+
+    }
+
+    public function searchHouseholds($accountId, $idHousehold = 0) {
+
+        if ($idHousehold > 0) {
+            $parms = array('householdId' => $idHousehold);
+        } else if ($accountId > 0 ) {
+            $parms = array('accountId' => $accountId);
+        } else {
+            return [];
+        }
+
+        $request = array(
+            'method' => 'account/listHouseHolds',
+            'parameters' => $parms,
+        );
+
+        $households = $this->webService->go($request);
+
+        if ($this->checkError($households)) {
+            $households['error'] = ($this->errorMessage);
+        }
+
+        return $households;
+    }
+
+    protected function findHhPrimaryContact(array $household) {
+
+        $pContact = [];
+
+        // Check the primary guest is the primary household contact
+        foreach ($household['houseHoldContacts']['houseHoldContact'] as $hc) {
+
+            if ($hc['isPrimaryHouseHoldContact'] == 'true') {
+
+                $pContact = $hc;
+
+                break;
+            }
+        }
+
+        return $pContact;
+    }
 
     /**
+     *
+     * @param int $primaryContactId
+     * @param int $relationId
+     * @param string $householdName
+     * @param array $f
+     * @return string|mixed
+     */
+    protected function createHousehold($primaryContactId, $relationId, $householdName) {
+
+        $householdId = '';
+
+        $base = 'household.';
+        $param[$base . 'name'] = $householdName;
+        $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $primaryContactId;
+        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $relationId;
+        $param[$base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact'] = 'true';
+
+        $request = array(
+            'method' => 'account/createHouseHold',
+            'parameters' => $param,
+
+        );
+
+
+        $wsResult = $this->webService->go($request);
+
+
+        if ($this->checkError($wsResult)) {
+
+            $f['Household Id'] = $this->errorMessage;
+
+        } else if (isset($wsResult['houseHoldId']) === FALSE) {
+
+            $f['Household Id'] = 'Household Id not set';
+
+        } else {
+
+            $f['Household Id'] = 'New HH: ' . $wsResult['houseHoldId'];
+            $householdId = $wsResult['houseHoldId'];
+        }
+
+        return $householdId;
+    }
+
+    protected function addToHousehold($householdId, $pg, $guests, &$f) {
+
+        $countHouseholds = 0;
+        $newContacts = [];
+
+        $households = $this->searchHouseholds(0, $householdId);
+
+        if (isset($households['houseHolds']['houseHold'])) {
+            $countHouseholds = count($households['houseHolds']['houseHold']);
+        }
+
+        if ($countHouseholds == 1) {
+
+            foreach ($guests as $g) {
+
+                if ($g['idPsg'] == $pg['idPsg'] && $g['hhkId'] != $pg['hhkId']) {
+
+                    // Valid guest
+                    $foundId = FALSE;
+                    $hhContacts = $households['houseHolds']['houseHold'][0]['houseHoldContacts']['houseHoldContact'];
+
+                    // Search hh contacts
+                    foreach ($hhContacts as $hc) {
+                        if ($hc['accountId'] == $g['accountId']) {
+                            $foundId = TRUE;
+                            break;
+                        }
+                    }
+
+                    if ($foundId === FALSE) {
+                        // Update the household with new member
+
+                        // Only if addresses match
+                        if ($pg['Address'] == $g['Address']) {
+                            $newContacts[] = $g;
+                        }
+                    }
+                }
+            }
+
+            if (count($newContacts) > 0) {
+                $this->updateHousehold($newContacts, $households['houseHolds']['houseHold'][0], $f);
+            }
+        }
+
+    }
+
+    protected function updateHousehold($newGuests, $household, &$f) {
+
+        $base = 'household.';
+        $customParamStr = '';
+
+        $param[$base . 'householdId'] = $household['houseHoldId'];
+        $param[$base . 'name'] = $household['name'];
+
+        $pg = $this->findHhPrimaryContact($household);
+
+        $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $pg['accountId'];
+        $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $pg['relationType']['id'];
+        $param[$base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact'] = 'true';
+
+        foreach ($newGuests as $ng) {
+
+            $ngRelationId = $this->relationshipMapper->relateGuest($ng['Relation_Code']);
+
+            $cparm = array(
+                $base . 'houseHoldContacts.houseHoldContact.accountId' => $ng['accountId'],
+                $base . 'houseHoldContacts.houseHoldContact.relationType.id' => $ngRelationId,
+                $base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact' => 'false',
+            );
+
+            $customParamStr .= '&' . http_build_query($cparm);
+
+            $g[] = [
+                'accountid'=>$ng['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId)
+            ];
+
+        }
+
+        $f['New Members'] = $g;
+
+        $request = array(
+            'method' => 'account/updateHouseHold',
+            'parameters' => $param,
+            'customParmeters' => $customParamStr,
+        );
+
+
+        $wsResult = $this->webService->go($request);
+
+        if ($this->checkError($wsResult)) {
+
+            $f['Result'] = $this->errorMessage;
+
+        } else if (isset($wsResult['houseHoldId']) === FALSE) {
+
+            $f['Result'] = 'The Household Id was not returned';
+
+        } else {
+            $f['Result'] = 'Success';
+        }
+
+    }
+
+    protected function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg) {
+
+        $stmt = $dbh->query("Select
+	n.idName as `hhkId`,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    IFNULL(n.Name_Last, '') AS `Last_Name`,
+    IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address'
+from
+	name n
+		left join
+    name_guest ng on n.idName = ng.idName and ng.idPsg = $idPsg
+		LEFT JOIN
+    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+where n.idName = $idPrimaryGuest ");
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        if (count($rows) > 0) {
+            $r = $rows[0];
+        } else {
+            return [];
+        }
+
+        return array(
+            'hhkId' => $r['hhkId'],
+            'accountId' => $r['accountId'],
+            'idPsg' => $idPsg,
+            'Relation_Code' => $r['Relation_Code'],
+            'Address' => $r['Address'],
+            'Last_Name' => $r['Last_Name'],
+        );
+    }
+
+
+    /** Transfer the given source HHK ids to Neon.  Searches first, updates Neon if found.
      *
      * @param \PDO $dbh
      * @param array $sourceIds
@@ -492,8 +1166,21 @@ class TransferMembers {
 
         $replys = array();
 
+        if (count($sourceIds) == 0) {
+            $replys[0] = array('error'=>"The list of HHK Id's to send is empty.");
+            return $replys;
+        }
+
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
+
+        // Load search parameters for each source ID
+        $stmt = $this->loadSearchDB($dbh, $sourceIds);
+
+        if (is_null($stmt)) {
+            $replys[0] = array('error'=>'No local records were found.');
+            return $replys;
+        }
 
         // Load Individual types
         $stmtList = $dbh->query("Select * from neon_type_map where List_Name = 'individualTypes'");
@@ -501,13 +1188,6 @@ class TransferMembers {
 
         while ($t = $stmtList->fetch(\PDO::FETCH_ASSOC)) {
             $invTypes[] = $t;
-        }
-
-
-        $stmt = $this->loadSearchDB($dbh, $sourceIds);
-
-        if (is_null($stmt)) {
-            return array('error'=>'No local records were found.');
         }
 
 
@@ -528,7 +1208,7 @@ class TransferMembers {
 
             if ($this->checkError($result)) {
                 $f['Result'] = $this->errorMessage;
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
                 continue;
             }
 
@@ -543,11 +1223,10 @@ class TransferMembers {
 
                 if ($this->checkError($result)) {
                     $f['Result'] = $this->errorMessage;
-                    $replys[] = $f;
+                    $replys[$r['HHK_ID']] = $f;
                     continue;
                 }
             }
-
 
 
             // Test results
@@ -589,17 +1268,17 @@ class TransferMembers {
 
                 } else {
 
-                    $f['Result'] = 'Account Id is empty.';
+                    $f['Result'] = 'The search results Account Id is empty.';
                 }
 
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
 
 
             } else if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] > 1 ) {
 
                 // We have more than one contact...
                 $f['Result'] = 'Multiple Accounts.';
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
 
 
             } else if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 0 ) {
@@ -618,7 +1297,7 @@ class TransferMembers {
 
                 if ($this->checkError($result)) {
                     $f['Result'] = $this->errorMessage;
-                    $replys[] = $f;
+                    $replys[$r['HHK_ID']] = $f;
                     continue;
                 }
 
@@ -626,19 +1305,19 @@ class TransferMembers {
 
                 $this->updateLocalNameRecord($dbh, $r['HHK_ID'], $accountId, $username);
 
-                if ($row['accountId'] != '') {
+                if ($accountId != '') {
                     $f['Result'] = 'New NeonCRM Account';
                 } else {
-                    $f['Result'] = 'New NeonCRM Account';
+                    $f['Result'] = 'NeonCRM Account Missing';
                 }
                 $f['Account ID'] = $accountId;
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
 
             } else {
 
                 //huh?
                 $f['Result'] = 'API ERROR: The Number of returned records is not defined.';
-                $replys[] = $f;
+                $replys[$r['HHK_ID']] = $f;
             }
 
         }
@@ -875,14 +1554,16 @@ class TransferMembers {
         }
     }
 
-    protected function fillCustomFields($r) {
+    protected function fillCustomFields($r, $origValues = array()) {
 
         $customParamStr = '';
         $base = 'individualAccount.customFieldDataList.customFieldData.';
 
+
         foreach ($this->customFields as $k => $v) {
 
             if (isset($r[$k]) && $r[$k] != '') {
+                // We have this custom field.
 
                 $cparam = array(
                     $base . 'fieldId' => $v,
@@ -892,11 +1573,123 @@ class TransferMembers {
 
                 $customParamStr .= '&' . http_build_query($cparam);
 
+            } else {
+                // We don't have the custom field, see if one exists in Neon and if so, copy it.
+
+                $fieldValue = $this->findCustomField($origValues, $v);
+
+                if ($fieldValue !== FALSE) {
+
+                    $cparam = array(
+                        $base . 'fieldId' => $v,
+                        $base . 'fieldOptionId' => '',
+                        $base . 'fieldValue' => $fieldValue
+                    );
+
+                    $customParamStr .= '&' . http_build_query($cparam);
+                }
+            }
+        }
+
+        // Search Neon custome fields that we don't control and copy them.
+        $customParamStr .= $this->fillOtherCustomFields($origValues);
+
+        return $customParamStr;
+
+    }
+
+    protected function fillOtherCustomFields($origValues) {
+
+        $condition = TRUE;
+        $index = 0;
+        $customParamStr = '';
+        $base = 'individualAccount.customFieldDataList.customFieldData.';
+
+        if (isset($origValues['customFieldDataList']['customFieldData'])) {
+
+            // Move Neon filedId's to key position
+            $fieldCustom = array_flip($this->customFields);
+
+            $cfValues = $origValues['customFieldDataList']['customFieldData'];
+
+            while ($condition) {
+
+                if (isset($cfValues[$index])) {
+
+                    // Is this not one of my field Ids?
+                    if (isset($cfValues[$index]["fieldId"]) && isset($fieldCustom[$cfValues[$index]["fieldId"]]) === FALSE) {
+                        // Found other custom field
+
+                        $cparam = array(
+                            $base . 'fieldId' => $cfValues[$index]["fieldId"],
+                            $base . 'fieldOptionId' => $cfValues[$index]["fieldOptionId"],
+                            $base . 'fieldValue' => $cfValues[$index]["fieldValue"]
+                        );
+
+                        $customParamStr .= '&' . http_build_query($cparam);
+
+                    }
+
+                } else {
+                    // end of custom fields
+                    $condition = FALSE;
+                }
+
+                $index++;
+
+                if ($index > self::MAX_CUSTOM_PROPERTYS) {
+                    $condition = FALSE;
+                }
             }
         }
 
         return $customParamStr;
+    }
 
+    /**
+     *
+     * @param array $origValues
+     * @param string $base
+     * @param mixed $fieldId
+     * @return boolean|mixed
+     */
+    protected function findCustomField($origValues, $fieldId) {
+
+        // find custom field index from neon
+        $fieldValue = FALSE;
+        $condition = TRUE;
+        $index = 0;
+
+        if (isset($origValues['customFieldDataList']['customFieldData'])) {
+
+            $cfValues = $origValues['customFieldDataList']['customFieldData'];
+
+            while ($condition) {
+
+                if (isset($cfValues[$index])) {
+
+                    // Is this my field Id?
+                    if (isset($cfValues[$index]["fieldId"]) && $cfValues[$index]["fieldId"] == $fieldId) {
+                        // Found the given custom field
+
+                        $fieldValue = $cfValues[$index]["fieldValue"];
+                        $condition = FALSE;
+                    }
+
+                } else {
+                    // end of custom fields
+                    $condition = FALSE;
+                }
+
+                $index++;
+
+                if ($index > self::MAX_CUSTOM_PROPERTYS) {
+                    $condition = FALSE;
+                }
+            }
+        }
+
+        return $fieldValue;
     }
 
     protected function createAccount(array $r) {
@@ -1033,14 +1826,14 @@ class TransferMembers {
 
     }
 
-    public function loadSourceDB(\PDO $dbh, $idName) {
+    public function loadSourceDB(\PDO $dbh, $idName, $extraSourceCols = []) {
 
         $parm = intval($idName, 10);
 
         if ($parm > 0) {
 
             // Need to lift the most recent hospital stay record for the HHK_ID
-            $stmt = $dbh->query("Select * from vguest_data_neon where HHK_ID = $parm ORDER BY `hs_Timestamp` DESC LIMIT 1");
+            $stmt = $dbh->query("Select * from vguest_data_neon where HHK_ID = $parm");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             if (count($rows) > 1) {
@@ -1049,6 +1842,12 @@ class TransferMembers {
                 $rows[0]['individualType.id2'] = '';
             }   else {
                 $rows[0]['No Data'] = '';
+            }
+
+            if (count($extraSourceCols) > 0) {
+                foreach ($extraSourceCols as $k => $v) {
+                    $rows[0][$k] = $v;
+                }
             }
 
             return $rows[0];
@@ -1099,6 +1898,33 @@ class TransferMembers {
 
     public function getReplies() {
         return $this->replies;
+    }
+
+    public function getHhReplies() {
+
+        $t = [];
+        foreach ($this->hhReplies as $r) {
+
+            $f = [];
+
+            foreach ($r as $k => $v) {
+
+                if (is_array($v)) {
+
+                    foreach ($v as $vk) {
+                        foreach ($vk as $title => $value) {
+                            $f[$title] = $value;
+                        }
+
+                    }
+                } else {
+                    $f[$k] = $v;
+                }
+            }
+
+            $t[] = $f;
+        }
+        return $t;
     }
 
     public function getMemberReplies() {

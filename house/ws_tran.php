@@ -7,6 +7,7 @@ use HHK\Neon\TransferMembers;
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Exception\RuntimeException;
+use HHK\HTMLControls\HTMLContainer;
 
 /**
  * ws_tran.php
@@ -49,9 +50,9 @@ try {
 
     $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')), $wsConfig->getSection('custom_fields'));
 
-switch ($c) {
+    switch ($c) {
 
-    case 'xfer':
+      case 'xfer':
 
         $ids = [];
 
@@ -77,7 +78,7 @@ switch ($c) {
 
         break;
 
-    case 'payments':
+      case 'payments':
 
         $st = '';
         if (isset($_REQUEST["st"])) {
@@ -91,14 +92,49 @@ switch ($c) {
         $reply = $transfer->sendDonations($dbh, $uS->username, $st, $en);
         $events['data'] = CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
 
-        $newMembers = $transfer->getMemberReplies();
-        if (count($newMembers) > 0) {
-            $events['members'] = CreateMarkupFromDB::generateHTML_Table($newMembers, 'tblrpt');
+        if (count($transfer->getMemberReplies()) > 0) {
+            $events['members'] = CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
         }
 
         break;
 
-    case 'sch':
+      case 'visits':
+
+        $en = '';
+        if (isset($_REQUEST["en"])) {
+            $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_STRING);
+        }
+
+        $max = 1;
+        if (isset($_REQUEST['max'])) {
+            $max = intval(filter_var($_REQUEST['max'], FILTER_SANITIZE_NUMBER_INT), 10);
+        }
+
+        $reply = $transfer->sendVisits($dbh, $uS->username, $en, $max);
+
+        // Show new members
+        if (count($transfer->getMemberReplies()) > 0) {
+            $events['members'] = HTMLContainer::generateMarkup('p', "New Neon Members") . CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
+        }
+
+        // Show visit results
+        $events['data'] = HTMLContainer::generateMarkup('p', "Visit Results", array('style'=>'margin-top:5px;'))
+            . CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
+
+        // Show extra members from visiting PSG's
+        if (count($transfer->getReplies()) > 0) {
+            $events['strayMembers'] = HTMLContainer::generateMarkup('p', "Additional PSG Members", array('style'=>'margin-top:5px;'))
+                . CreateMarkupFromDB::generateHTML_Table($transfer->getReplies(), 'tblrpt2');
+        }
+
+        // show households
+        if (count($transfer->getHhReplies()) > 0) {
+            $events['households'] = HTMLContainer::generateMarkup('p', "Households", array('style'=>'margin-top:5px;'))
+                . CreateMarkupFromDB::generateHTML_Table($transfer->getHhReplies(), 'tblrpt3');
+        }
+        break;
+
+      case 'sch':
 
         $arguments = array(
             'letters' => FILTER_SANITIZE_SPECIAL_CHARS,
@@ -115,7 +151,7 @@ switch ($c) {
 
         break;
 
-    case 'listCustFields':
+      case 'listCustFields':
 
         try {
             $results = $transfer->listCustomFields();
@@ -159,7 +195,12 @@ switch ($c) {
             $accountId = intval(filter_var($_POST['accountId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        if (isset($_POST['src']) && $_POST['src'] === 'hhk') {
+        $src = '';
+        if (isset($_POST['src'])) {
+            $src = filter_var($_POST['src'], FILTER_SANITIZE_STRING);
+        }
+
+        if ($src === 'hhk') {
 
                 $row = $transfer->loadSourceDB($dbh, $accountId);
 
@@ -177,8 +218,9 @@ switch ($c) {
                     }
                 }
 
-        } else {
+        } else if ($src = 'remote') {
 
+            // Neon accounts
             $result = $transfer->retrieveAccount($accountId);
 
             $parms = array();
@@ -188,6 +230,21 @@ switch ($c) {
             foreach ($parms as $k => $v) {
                 $str .= $k . '=' . $v . '<br/>';
             }
+
+            // Neon Househods
+            $result = $transfer->searchHouseholds($accountId);
+
+            $parms = array();
+            $transfer->unwindResponse($parms, $result);
+
+            $str .= "*Households*<br/>";
+
+            foreach ($parms as $k => $v) {
+                $str .= $k . '=' . $v . '<br/>';
+            }
+
+        } else {
+            $str = "Source for search not found: " . $src;
         }
 
         $events['data'] = $str;
@@ -212,7 +269,11 @@ switch ($c) {
 
             $result = $transfer->retrieveAccount($accountId);
 
-            $updateResult = $transfer->updateNeonAccount($dbh, $result, $id);
+            try{
+                $updateResult = $transfer->updateNeonAccount($dbh, $result, $id);
+            } catch (RuntimeException $e) {
+                $updateResult = $e->getMessage();
+            }
 
             $events = array('result'=>$updateResult);
 

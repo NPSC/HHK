@@ -12,12 +12,13 @@ use HHK\Exception\UploadException;
 use HHK\Neon\TransferMembers;
 use HHK\sec\Labels;
 use HHK\sec\SAML;
+use HHK\Neon\ConfigureNeon;
 
 /**
  * Configure.php
  *
   -- @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
-  -- @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+  -- @copyright 2010-2022 <nonprofitsoftwarecorp.org>
   -- @license   MIT
   -- @link      https://github.com/NPSC/HHK
  */
@@ -47,28 +48,22 @@ $tabIndex = 0;
 $resultAccumulator = '';
 $ccResultMessage = '';
 $holResultMessage = '';
-$externalErrMsg = '';
+
 $serviceName = '';
+$serviceFile = '';
 $rteFileSelection = '';
 $rteMsg = '';
 $confError = '';
 
 $config = new Config_Lite(ciCFG_FILE);
 $labl = Labels::getLabels();
-$wsConfig = NULL;
+
 
 
 if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
 
-    if (file_exists(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''))) {
-        try {
-            $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
-        } catch (\HHK\Config_Lite\Exception\Exception $ex) {
-            $wsConfig = NULL;
-        }
-
-        $serviceName = $config->getString('webServices', 'Service_Name', '');
-    }
+    $serviceFile = encryptMessage(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
+    $serviceName = $config->getString('webServices', 'Service_Name', '');
 }
 
 if (isset($_POST["btnSiteCnf"]) || isset($_POST["btnLocalAuth"])) {
@@ -86,105 +81,15 @@ if (isset($_POST["btnLabelCnf"])) {
     $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }
 
-if (isset($_POST["btnExtCnf"]) && is_null($wsConfig) === FALSE) {
+if (isset($_POST["btnExtCnf"]) && $serviceFile != '') {
 
     $tabIndex = 7;
 
-    SiteConfig::saveConfig($dbh, $wsConfig, $_POST, $uS->username);
-
-    $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
 
     try {
-        // Custom fields
-        $results = $transfer->listCustomFields();
-        $custom_fields = array();
-
-        foreach ($results as $v) {
-            if ($wsConfig->has('custom_fields', $v['fieldName'])) {
-                $custom_fields[$v['fieldName']] = $v['fieldId'];
-            }
-        }
-
-        // Write Custom Field Ids to the config file.
-        $confData = array('custom_fields' => $custom_fields);
-        SiteConfig::saveConfig($dbh, $wsConfig, $confData, $uS->username);
-
-
-        // Properties
-        $stmt = $dbh->query("Select * from neon_lists;");
-
-        while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-            $neonItems = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
-
-            if ($list['HHK_Lookup'] == 'Fund') {
-
-                // Use Items for the Fund
-                $stFund = $dbh->query("select `idItem` as `Code`, `Description`, '' as `Substitute` from item where Deleted = 0;");
-                $hhkLookup = array();
-
-                while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
-                    $hhkLookup[$row['Code']] = $row;
-                }
-
-                $hhkLookup['p'] = array('Code'=>'p', 0=>'p', 'Description' => 'Payment', 1=>'Payment', 'Substitute'=>'', 2=>'');
-
-            } else if ($list['HHK_Lookup'] == 'Pay_Type') {
-
-                // Use Items for the Fund
-                $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
-                $hhkLookup = array();
-
-                while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
-                    $hhkLookup[$row['Code']] = $row;
-                }
-
-            } else {
-                $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
-            }
-
-            $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
-            $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
-            $mappedItems = array();
-            foreach ($items as $i) {
-                $mappedItems[$i['HHK_Type_Code']] = $i;
-            }
-
-            $nTbl = new HTMLTable();
-            $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh('NeonCRM Name') . HTMLTable::makeTh('NeonCRM Id'));
-
-            foreach ($neonItems as $n => $k) {
-
-                if (isset($_POST['sel' . $list['List_Name']][$n])) {
-
-                    $hhkTypeCode = filter_var($_POST['sel' . $list['List_Name']][$n], FILTER_SANITIZE_STRING);
-
-                    if ($hhkTypeCode == '') {
-                        // delete if previously set
-                        foreach ($mappedItems as $i) {
-                            if ($i['Neon_Type_Code'] == $n && $i['HHK_Type_Code'] != '') {
-                                $dbh->exec("delete from neon_type_map  where idNeon_type_map = " .$i['idNeon_type_map']);
-                                break;
-                            }
-                        }
-
-                        continue;
-
-                    } else if (isset($hhkLookup[$hhkTypeCode]) === FALSE) {
-                        continue;
-                    }
-
-                    if (isset($mappedItems[$hhkTypeCode])) {
-                        // Update
-                        $count = $dbh->exec("update neon_type_map set Neon_Type_Code = '$n', Neon_Type_name = '$k' where HHK_Type_Code = '$hhkTypeCode' and List_Name = '" . $list['List_Name'] . "'");
-                    } else {
-                        // Insert
-                        $idTypeMap = $dbh->exec("Insert into neon_type_map (List_Name, Neon_Name, Neon_Type_Code, Neon_Type_Name, HHK_Type_Code, Updated_By, Last_Updated) "
-                                . "values ('" . $list['List_Name'] . "', '" . $list['List_Item'] . "', '" . $n . "', '" . $k . "', '" . $hhkTypeCode . "', '" . $uS->username . "', now() );");
-                    }
-                }
-            }
-        }
+        $confNeon = new ConfigureNeon(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
+        SiteConfig::saveConfig($dbh, $confNeon->getConfigObj(), $_POST, $uS->username);
+        $confNeon->saveConfig($dbh);
 
     } catch (UploadException $ex) {
         $externalErrMsg = "Transfer Error: " . $ex->getMessage();
@@ -360,111 +265,6 @@ $labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
 $authIdpList = SAML::getIdpList($dbh, false);
 
-$externals = '';
-if (is_null($wsConfig) === FALSE) {
-
-    $externals = SiteConfig::createCliteMarkup($wsConfig, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'neonTitles.cfg'))->generateMarkup();
-
-    if ($wsConfig->getString('credentials', 'User') != '' && $wsConfig->getString('credentials', 'Password') != '') {
-
-      try {
-
-        $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
-        $stmt = $dbh->query("Select * from neon_lists;");
-
-        while ($list = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-            if (isset($list['HHK_Lookup']) === FALSE) {
-                continue;
-            }
-
-            $neonItems = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
-
-            if ($list['HHK_Lookup'] == 'Fund') {
-
-                // Use Items for the Fund
-                $stFund = $dbh->query("select idItem as Code, Description, '' as `Substitute` from item where Deleted = 0;");
-                $hhkLookup = array();
-
-                while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
-                    $hhkLookup[$row["Code"]] = $row;
-                }
-
-                $hhkLookup['p'] = array('Code'=>'p', 0=>'p', 'Description' => 'Payment', 1=>'Payment', 'Substitute'=>'', 2=>'');
-
-            } else if ($list['HHK_Lookup'] == 'Pay_Type') {
-
-                // Use Items for the Fund
-                $stFund = $dbh->query("select `idPayment_method` as `Code`, `Method_Name` as `Description`, '' as `Substitute` from payment_method;");
-                $hhkLookup = array();
-
-                while ($row = $stFund->fetch(\PDO::FETCH_BOTH)) {
-                    $hhkLookup[$row['Code']] = $row;
-                }
-
-            } else {
-                $hhkLookup = removeOptionGroups(readGenLookupsPDO($dbh, $list['HHK_Lookup']));
-            }
-
-            $stmtList = $dbh->query("Select * from neon_type_map where List_Name = '" . $list['List_Name'] . "'");
-            $items = $stmtList->fetchAll(\PDO::FETCH_ASSOC);
-
-            $mappedItems = array();
-            foreach ($items as $i) {
-                $mappedItems[$i['Neon_Type_Code']] = $i;
-            }
-
-            $nTbl = new HTMLTable();
-            $nTbl->addHeaderTr(HTMLTable::makeTh('HHK Lookup') . HTMLTable::makeTh('NeonCRM Name') . HTMLTable::makeTh('NeonCRM Id'));
-
-            foreach ($neonItems as $n => $k) {
-
-                $hhkTypeCode = '';
-                if (isset($mappedItems[$n])) {
-                    $hhkTypeCode = $mappedItems[$n]['HHK_Type_Code'];
-                }
-
-                $nTbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($hhkLookup, $hhkTypeCode), array('name' => 'sel' . $list['List_Name'] . '[' . $n . ']')))
-                    . HTMLTable::makeTd($k)
-                    . HTMLTable::makeTd($n, array('style'=>'text-align:center;'))
-                );
-            }
-
-            $externals .= $nTbl->generateMarkup(array('style'=>'margin-top:5px;'), $list['List_Name']);
-        }
-
-        // Custom fields
-        $results = $transfer->listCustomFields();
-        $cfTbl = new HTMLTable();
-
-        foreach ($results as $v) {
-        	if ($wsConfig->has('custom_fields', $v['fieldName'])) {
-        		$cfTbl->addBodyTr(HTMLTable::makeTd($v['fieldName']) . HTMLTable::makeTd($v['fieldId']));
-        	}
-        }
-
-        $externals .= $cfTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Custom Fields');
-
-        // Sources
-        $results = $transfer->listSources();
-        $sTbl = new HTMLTable();
-
-        foreach ($results as $v) {
-
-            $sTbl->addBodyTr(HTMLTable::makeTd($v['name']) . HTMLTable::makeTd($v['id']));
-
-        }
-
-        $externals .= $sTbl->generateMarkup(array('style'=>'margin-top:5px;'), 'Sources');
-
-      } catch (Exception $pe) {
-          $externalErrMsg = "Transfer Error: " .$pe->getMessage();
-      }
-
-    }
-}
-
 // Alert Message
 $webAlert = new AlertMessage("webContainer");
 $webAlert->set_DisplayAttr("none");
@@ -496,8 +296,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-		<script type="text/javascript" src="js/configure.js"></script>
-
+		<script type="text/javascript" src="js/Configure.js"></script>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
     <?php echo $wInit->generatePageMenu(); ?>
@@ -514,7 +313,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels &#38; Prompts</a></li>
                     <li id="liLogs"><a href="#logs">Site Logs</a></li>
-                    <?php if ($serviceName != '') {echo '<li><a href="#external">' . $serviceName . '</a></li>';} ?>
+                    <?php if ($serviceName != '') {echo '<li id="liService"><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
                     <div style="color:#347201;font-size:1.3em;"><?php echo $confError; ?></div>
@@ -567,13 +366,11 @@ $getWebReplyMessage = $webAlert->createMarkup();
                 </div>
                     <?php if ($serviceName != '') { ?>
                         <div id="external" class="ui-tabs-hide" >
-                            <div style="color:red;font-size: large;" id="divextnlerror"><?php echo $externalErrMsg; ?></div>
                             <div style='margin: 5px;font-weight: bold;'><span ><a href="../house/SetupNeonCRM.htm" title='click me for instructions!' target="_blank">Instructions</a></span></div>
-                            <form method="post" name="formext" action="">
-                                <?php echo $externals; ?>
-                                <div style="float:right;margin-right:40px;">
-                                    <input type="submit" style='margin-right:10px;' name="btnExtIndiv" value="Reload NeonCRM Custom Id's"/>
-                                    <input type="submit" name="btnExtCnf" value="Save"/>
+                            <form method="post" id="formext" name="formext" action="">
+								<div id="serviceContent" class="hhk-tdbox"><span style="margin-left:300px;">Loading...</span></div>
+                                <div class="divSubmitButtons ui-corner-all">
+                                   <input type="submit" id="btnExtCnf" name="btnExtCnf" value="Save"/>
                                 </div>
                             </form>
                         </div>
@@ -592,7 +389,6 @@ $getWebReplyMessage = $webAlert->createMarkup();
                 </div>
                 <div id="logs" class="ui-tabs-hide hhk-tdbox" >
                         <?php echo $tabControl; ?>
-                        <input  type="hidden" id="dateFormat" value='<?php echo $labl->getString("momentFormats", "dateTime", "MMM D, YYYY"); ?>' />
                 </div>
                 <div id="patch" class="ui-tabs-hide">
                     <div class="hhk-member-detail">
@@ -624,6 +420,10 @@ $getWebReplyMessage = $webAlert->createMarkup();
                 </div>
             </div>
 			<input type="hidden" id="notyMsg" value='<?php echo json_encode((isset($notymsg) ? $notymsg:[])); ?>'>
+			<input type="hidden" id="wsServFile" value="<?php echo $serviceFile; ?>"/>
+			<input type="hidden" id="tabIndex" value="<?php echo $tabIndex; ?>"/>
+			<input type="hidden" id="notymsg" value='<?php echo (isset($notymsg) ? json_encode($notymsg) : '[]'); ?>' />
+            <input  type="hidden" id="dateFormat" value='<?php echo $labl->getString("momentFormats", "dateTime", "MMM D, YYYY"); ?>' />
         </div>
     </body>
 </html>

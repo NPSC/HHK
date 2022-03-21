@@ -49,7 +49,7 @@ class FormTemplate {
         return $rows;
     }
 
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $username){
 
         $validationErrors = array();
 
@@ -65,8 +65,11 @@ class FormTemplate {
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
+        if($emailPatient && $notifySubject == '' && $notifyContent == ''){
+            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
+        }
 
-        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha]);
+        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent]);
 
         if(count($validationErrors) == 0){
 
@@ -93,7 +96,7 @@ class FormTemplate {
         }
     }
 
-    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $username){
 
         $validationErrors = array();
 
@@ -111,10 +114,12 @@ class FormTemplate {
         if(!$successTitle){
             $validationErrors['successTitle'] = "The success title field is required.";
         }
-
+        if($emailPatient && $notifySubject == '' && $notifyContent == ''){
+            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
+        }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha]);
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent]);
 
             $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, $username);
             if($count == 1){
@@ -187,6 +192,10 @@ class FormTemplate {
             'successTitle'=>$abstract->successTitle,
             'successContent'=>htmlspecialchars_decode($abstract->successContent, ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
+            'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
+            'emailPatient'=>(isset($abstract->emailPatient) ? $abstract->emailPatient : false),
+            'notifySubject'=>(isset($abstract->notifySubject) ? $abstract->notifySubject : ''),
+            'notifyContent'=>(isset($abstract->notifyContent) ? htmlspecialchars_decode($abstract->notifyContent, ENT_QUOTES) : ''),
             'recaptchaScript'=>$recaptcha->getScriptTag()
         ];
     }
@@ -194,15 +203,16 @@ class FormTemplate {
     public static function getLookups(\PDO $dbh){
         $lookups = array();
 
-        $lookups['genders'] = readGenLookupsPDO($dbh, 'gender', 'Order');
+        $lookups['genders'] = readGenLookupsPDO($dbh, 'gender', 'Description');
         unset($lookups['genders']['z']);
-        $lookups['patientRels'] = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Order');
+        $lookups['ethnicities'] = readGenLookupsPDO($dbh, 'ethnicity', 'Description');
+        $lookups['patientRels'] = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Description');
         unset($lookups['patientRels']['slf']);
-        $lookups['mediaSources'] = readGenLookupsPDO($dbh, 'Media_Source','Order');
-        $lookups['namePrefixes'] = readGenLookupsPDO($dbh, 'Name_Prefix', 'Order');
-        $lookups['nameSuffixes'] = readGenLookupsPDO($dbh, 'Name_Suffix', 'Order');
-        $lookups['diagnosis'] = readGenLookupsPDO($dbh, 'Diagnosis', 'Order');
-        $lookups['locations'] = readGenLookupsPDO($dbh, 'Location', 'Order');
+        $lookups['mediaSources'] = readGenLookupsPDO($dbh, 'Media_Source','Description');
+        $lookups['namePrefixes'] = readGenLookupsPDO($dbh, 'Name_Prefix', 'Description');
+        $lookups['nameSuffixes'] = readGenLookupsPDO($dbh, 'Name_Suffix', 'Description');
+        $lookups['diagnosis'] = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+        $lookups['locations'] = readGenLookupsPDO($dbh, 'Location', 'Description');
         $hospitals = Hospital::loadHospitals($dbh);
         $hospitalAr = array();
         foreach($hospitals as $hospital){

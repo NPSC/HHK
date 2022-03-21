@@ -90,6 +90,7 @@ class Login {
         //get google API keys
         SysConfig::getCategory($dbh, $ssn, "'ga'", WebInit::SYS_CONFIG);
         SysConfig::getCategory($dbh, $ssn, "'pr'", WebInit::SYS_CONFIG);
+        SysConfig::getCategory($dbh, $ssn, "'ha'", WebInit::SYS_CONFIG);
 
         return $dbh;
     }

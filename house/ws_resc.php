@@ -665,7 +665,7 @@ try {
 
             $style = '';
             if(isset($_REQUEST['style'])) {
-                $csstidy = new \csstidy();
+                $csstidy = new csstidy();
                 $csstidy->parse($_REQUEST['style']);
                 $style = $csstidy->print->plain();
             }
@@ -685,12 +685,32 @@ try {
                 $enableRecaptcha = filter_var($_REQUEST['enableRecaptcha'], FILTER_VALIDATE_BOOLEAN);
             }
 
+            $enableReservation = '';
+            if(isset($_REQUEST['enableReservation'])) {
+                $enableReservation = filter_var($_REQUEST['enableReservation'], FILTER_VALIDATE_BOOLEAN);
+            }
+
+            $notifySubject = '';
+            if(isset($_REQUEST['notifySubject'])) {
+                $notifySubject = filter_var($_REQUEST['notifySubject'], FILTER_SANITIZE_STRING);
+            }
+
+            $notifyContent = '';
+            if(isset($_REQUEST['notifyContent'])) {
+                $notifyContent = filter_var($_REQUEST['notifyContent'], FILTER_SANITIZE_STRING);
+            }
+
+            $emailPatient = '';
+            if(isset($_REQUEST['emailPatient'])) {
+                $emailPatient = filter_var($_REQUEST['emailPatient'], FILTER_VALIDATE_BOOLEAN);
+            }
+
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             if($idDocument > 0) {
-                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $uS->username);
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $uS->username);
             }else{
-                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $uS->username);
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $uS->username);
             }
 
             break;

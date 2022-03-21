@@ -1,3 +1,5 @@
+// GuestTransfer.js
+//
 function updateLocal(id) {
     var postUpdate = $.post('ws_tran.php', {cmd:'rmvAcctId', id:id});
 
@@ -124,18 +126,19 @@ function transferRemote(transferIds) {
 
 }
 
-function transferPayments($btn, start, end) {
+function transferData($btn, start, end, command, maxGu) {
 
     var parms = {
-        cmd: 'payments',
+        cmd: command,
         st: start,
-        en: end
+        en: end,
+        max: maxGu
     };
 
     var posting = $.post('ws_tran.php', parms);
 
     posting.done(function(incmg) {
-        $btn.val('Transfer Payments');
+        $btn.val('Transfer ' + command).hide();
 
         if (!incmg) {
             alert('Bad Reply from HHK Web Server');
@@ -168,8 +171,17 @@ function transferPayments($btn, start, end) {
             $('#divMembers').empty().append($(incmg.members)).show();
         }
 
+        if (incmg.strayMembers) {
+            $('#divStrayMembers').empty().append($(incmg.strayMembers)).show();
+        }
+
+        if (incmg.households) {
+            $('#divHouseholds').empty().append($(incmg.households)).show();
+        }
+
     });
 }
+
 
 function getRemote(item, source) {
     $('div#printArea').hide();
@@ -243,21 +255,24 @@ function getRemote(item, source) {
 
 $(document).ready(function() {
     var makeTable = $('#hmkTable').val();
-    var transferIds = $.parseJSON($('#htransferIds').val());
     var start = $('#hstart').val();
     var end = $('#hend').val();
     var dateFormat = $('#hdateFormat').val();
+    var maxGuests = $('#maxGuests').val();
 
-    $('#btnHere, #btnCustFields, #btnGetPayments').button();
+    $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits, #btnGetKey').button();
 
     $('#printButton').button().click(function() {
         $("div#printArea").printArea();
     });
 
+	// Retrieve HHK Records
     if (makeTable === '1') {
+	
         $('div#printArea').show();
         $('#divPrintButton').show();
         $('#btnPay').hide();
+        $('#btnVisits').hide();
         $('#divMembers').empty();
 
         $('#tblrpt').dataTable({
@@ -287,11 +302,13 @@ $(document).ready(function() {
             transferRemote(txIds);
         });
 
+	// Retrieve HHK Payments
     } else if (makeTable === '2') {
 
         $('div#printArea').show();
         $('#divPrintButton').show();
         $('#TxButton').hide();
+        $('#btnVisits').hide();
         $('#divMembers').empty();
 
         $('#tblrpt').dataTable({
@@ -313,10 +330,64 @@ $(document).ready(function() {
             }
             $(this).val('Transferring ...');
 
-            transferPayments($(this), start, end);
+            transferData($(this), start, end, 'payments');
+        });
+
+    // Retrieve HHK Visits
+    } else if (makeTable === '3') {
+
+        $('div#printArea').show();
+        $('#divPrintButton').show();
+        $('#TxButton').hide();
+        $('#btnPay').hide();
+        $('#divMembers').empty();
+
+        $('#tblrpt').dataTable({
+            "displayLength": 50,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
+        });
+
+        $('#btnVisits').button().show().click(function () {
+
+            if ($(this).val() === 'Transferring Guests ...') {
+                return;
+            }
+            $(this).val('Transferring Guests ...');
+
+            transferData($(this), start, end, 'visits', maxGuests);
         });
     }
+    
+    var opt = {mode: 'popup',
+        popClose: true,
+        popHt      : $('#keyMapDiagBox').height(),
+        popWd      : $('#keyMapDiagBox').width(),
+        popX       : 20,
+        popY       : 20,
+        popTitle   : 'Print Visit Key'};
 
+
+
+	var kmd = $('#keyMapDiagBox').dialog({
+        autoOpen: false,
+        resizable: true,
+        modal: false,
+        minWidth: 550,
+        title: 'Neon Visit Transfer Keys',
+        buttons: {
+            "Print": function () {
+                $("div#divPrintKeys").printArea(opt);
+        	},
+            "Close": function () {
+                kmd.dialog('close');
+        	}
+        }
+    });
+    
+    $('#btnGetKey').click(function () {
+		kmd.dialog('open');
+	});
 
     $('.ckdate').datepicker({
         yearRange: '-07:+01',
@@ -344,4 +415,6 @@ $(document).ready(function() {
 
     createAutoComplete($('#txtRSearch'), 3, {cmd: 'sch', mode: 'name'}, function (item) {getRemote(item, 'remote');}, false, '../house/ws_tran.php');
     createAutoComplete($('#txtSearch'), 3, {cmd: 'role', mode: 'mo'}, function (item) {getRemote(item, 'hhk');}, false);
+    
+    $('#vcategory').show();
 });

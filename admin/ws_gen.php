@@ -12,6 +12,7 @@ use HHK\House\Report\GuestReport;
 use HHK\Member\WebUser;
 use HHK\Member\Relation\AbstractRelation;
 use HHK\sec\SAML;
+use HHK\Neon\ConfigureNeon;
 
 /**
  * ws_gen.php
@@ -268,6 +269,21 @@ try {
                 $saml = new SAML($dbh, $idpId);
                 $saml = $saml->save($_POST, $_FILES);
                 $events = array("success"=>'Auth provider saved successfully', 'idpMkup'=>$saml->getEditMarkup(true), "idpName"=>$saml->getIdpName());
+			}
+			break;
+			
+        case 'shoConfNeon':
+
+            $enFile = '';
+            if (isset($_POST["servFile"])) {
+                $enFile = filter_var($_POST["servFile"], FILTER_SANITIZE_STRING);
+            }
+
+            $servFile = decryptMessage($enFile);
+
+            if ($servFile !== '') {
+                $confNeon = new ConfigureNeon($servFile);
+                $events = $confNeon->showConfig($dbh);
             }
             break;
 

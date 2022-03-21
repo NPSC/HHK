@@ -39,6 +39,7 @@ class DB_Field {
      * @param mixed $defaultVal
      * @param DbFieldSanitizerInterface $sanitizer
      * @param bool $updateOnChange default: true
+     * @param bool $logMe default: true
      */
     function __construct($col, $defaultVal, DbFieldSanitizerInterface $sanitizer, $updateOnChange = TRUE, $logMe = FALSE) {
 

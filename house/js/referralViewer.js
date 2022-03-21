@@ -92,11 +92,21 @@
                             return dateRender(data, type, dateFormat);
                         }
                 },
+                {
+                "targets": [ 9 ],
+                        title: "Form Name",
+                        data: 'FormTitle',
+                        sortable: true
+                },
             ],
             formDetailsDialogBtns: 
             {
       			"Create Reservation": function(){
       			
+      			},
+      			"Print": function(){
+      				window.frames["formPreviewIframe"].focus();
+					window.frames["formPreviewIframe"].print();
       			},
         		Close: function(){
         			formDetailsDialog.dialog( "close" );
@@ -202,7 +212,7 @@
 			<ul class="gmenu" style="font-weight:normal">
 				<li>Action
 					<ul>
-						<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" data-resvid="` + row.idResv + `" title="Form Details"><div>View ` + (settings.labels.referralFormTitle || 'Referral Form') + `</div></li>` +
+						<li class="formDetails" data-docid="` + idDocument + `" data-status="` + row.idStatus + `" data-resvid="` + row.idResv + `" data-enablereservation="` + row.enableReservation + `" title="Form Details"><div>View ` + (settings.labels.referralFormTitle || 'Referral Form') + `</div></li>` +
 						(row.idResv ? `<li class="formResv"><div><a href="Reserve.php?rid=` + row.idResv + `" style="text-decoration:none;">View ` + (settings.labels.reservation || 'Reservation') + `</a></div></li>`: ``) +
 						`<li></li>` +
 						(row.idStatus == 'ip' ? `<li class="formUpdateStatus" data-docid="` + idDocument + `" data-target="n" title="Mark as Unread"><div>Mark as Unread</div></li>`:'') +
@@ -221,10 +231,11 @@
 			var idDocument = $(e.currentTarget).data('docid');
 			var idStatus = $(e.currentTarget).data('status');
 			var idResv = $(e.currentTarget).data('resvid');
+			var enableReservation = $(e.currentTarget).data('enablereservation');
 			
+			window.frames["formPreviewIframe"].resizeTo(1920, 1080);
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
-			
-			if(!idResv){
+			if(!idResv && enableReservation == 1){
 				settings.formDetailsDialogBtns["Create Reservation"] = function(){
 					window.location.href = settings.reserveURL + "?docid=" + idDocument;
 				};

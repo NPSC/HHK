@@ -4,6 +4,7 @@ namespace HHK\Document;
 
 use HHK\DataTableServer\SSP;
 use HHK\sec\Labels;
+use HHK\sec\Session;
 
 /**
  * FormDocument.php
@@ -26,6 +27,7 @@ class FormDocument {
     const JsonType = "json";
 
     protected $doc;
+    protected $formTemplate;
 
     public function __construct() {
 
@@ -65,7 +67,9 @@ group by g.Code order by g.Order';
                 array( 'db' => 'status ID', 'dt'=>'idStatus'),
                 array( 'db' => 'idResv', 'dt'=>'idResv'),
                 array( 'db' => 'resvStatus', 'dt'=>'resvStatus'),
-                array( 'db' => 'resvStatusName', 'dt'=>'resvStatusName')
+                array( 'db' => 'resvStatusName', 'dt'=>'resvStatusName'),
+                array( 'db' => 'FormTitle', 'dt'=>'FormTitle'),
+                array( 'db' => 'enableReservation', 'dt'=>'enableReservation'),
             );
             if($status == 'inbox'){
                 $whereClause = '`Status ID` IN ("n", "ip")';
@@ -101,9 +105,15 @@ group by g.Code order by g.Order';
      * @param string $json
      * @return array[]|string[]|string[]
      */
-    public function saveNew(\PDO $dbh, $json){
+    public function saveNew(\PDO $dbh, $json, $templateId = 0){
 
-        $labels = Labels::getLabels();
+        $this->formTemplate = new FormTemplate();
+        $this->formTemplate->loadTemplate($dbh, $templateId);
+        $templateName = $this->formTemplate->getTitle();
+        $templateSettings = $this->formTemplate->getSettings();
+
+        $abstractJson = json_encode(["enableReservation"=>$templateSettings['enableReservation']]);
+
         $validatedDoc = $this->validateFields($json);
 
         if(count($validatedDoc['errors']) > 0){
@@ -116,8 +126,9 @@ group by g.Code order by g.Order';
         $this->doc = new Document();
         $this->doc->setType(self::JsonType);
         $this->doc->setCategory(self::formCat);
-        $this->doc->setTitle($labels->getString('GuestEdit', 'referralFormTitle', 'Referral Form'));
+        $this->doc->setTitle($templateName);
         $this->doc->setUserData($validatedFields);
+        $this->doc->setAbstract($abstractJson);
         $this->doc->setDoc($sanitizedDoc);
         $this->doc->setStatus('n');
         $this->doc->setCreatedBy('Web');
@@ -125,10 +136,98 @@ group by g.Code order by g.Order';
         $this->doc->saveNew($dbh);
 
         if($this->doc->getIdDocument() > 0){
+            //$this->sendPatientEmail();
+            $this->sendNotifyEmail();
             return array("status"=>"success");
         }else{
             return array("status"=>"error");
         }
+    }
+
+
+    /**
+     * Notify staff of new submission
+     *
+     * @return boolean
+     */
+    private function sendNotifyEmail(){
+        $uS = Session::getInstance();
+        $to = filter_var(trim($uS->referralFormEmail), FILTER_SANITIZE_EMAIL);
+
+        try{
+            if ($to !== FALSE && $to != '') {
+                $userData = $this->getUserData();
+                $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ", Log into HHK to take action.<br>" . PHP_EOL;
+
+                if(isset($userData['patient']['firstName']) && isset($userData['patient']['lastName'])){
+                    $content .= PHP_EOL . "<br><strong>Summary</strong>" . PHP_EOL
+                             . "<br>Name: " . $userData['patient']['firstName'] . " " . $userData['patient']['lastName'] . PHP_EOL;
+                    if($userData['checkindate'] !== false){
+                        $date = new \DateTime($userData['checkindate']);
+                        $content .= "<br>Expected Arrival: " . $date->format("M d, Y") . PHP_EOL;
+                    }
+                    if($userData['checkoutdate'] !== false){
+                        $date = new \DateTime($userData['checkoutdate']);
+                        $content .= "<br>Expected Departure: " . $date->format("M d, Y") . PHP_EOL;
+                    }
+                }
+
+                $mail = prepareEmail();
+
+                $mail->From = ($uS->NoReplyAddr ? $uS->NoReplyAddr : "no_reply@nonprofitsoftwarecorp.org");
+                $mail->FromName = $uS->siteName;
+                $mail->addAddress($to);
+
+                $mail->isHTML(true);
+
+                $mail->Subject = "New " . Labels::getString("Register", "onlineReferralTitle", "Referral") . " submitted";
+                $mail->msgHTML($content);
+
+                if ($mail->send() === FALSE) {
+                    return false;
+                }else{
+                    return true;
+                }
+            }
+        }catch(\Exception $e){
+            return false;
+        }
+        return false;
+    }
+
+    private function sendPatientEmail(){
+        $templateSettings = $this->formTemplate->getSettings();
+        $userData = json_decode($this->doc->getUserData(), true);
+        $patientEmailAddress = (isset($userData['patient']['email']) ? $userData['patient']['email'] : '');
+        $uS = Session::getInstance();
+
+        if($this->doc->getIdDocument() > 0 && $templateSettings['emailPatient'] == true && $patientEmailAddress != '' && $templateSettings['notifySubject'] !='' && $templateSettings['notifyContent'] != ''){
+            //send email
+
+            $mail = prepareEmail();
+
+            $mail->From = $uS->NoReplyAddr;
+            $mail->FromName = $uS->siteName;
+            $mail->addReplyTo($uS->NoReplyAddr, $uS->siteName);
+
+            $to = filter_var(trim($patientEmailAddress), FILTER_SANITIZE_EMAIL);
+            if ($to !== FALSE && $to != '') {
+                $mail->addAddress($to);
+            }
+
+            $mail->isHTML(true);
+
+            $mail->Subject = $templateSettings['notifySubject'];
+            $mail->msgHTML($templateSettings['notifyContent']);
+
+            if ($mail->send() === FALSE) {
+                return array('error'=>$mail->ErrorInfo);
+            }else{
+                return true;
+            }
+
+        }
+
     }
 
     public function updateStatus(\PDO $dbh, $status){
