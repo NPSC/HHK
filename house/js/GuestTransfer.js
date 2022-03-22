@@ -254,6 +254,7 @@ function getRemote(item, source) {
 }
 
 $(document).ready(function() {
+	
     var makeTable = $('#hmkTable').val();
     var start = $('#hstart').val();
     var end = $('#hend').val();
@@ -342,7 +343,8 @@ $(document).ready(function() {
         $('#btnPay').hide();
         $('#divMembers').empty();
 
-        $('#tblrpt').dataTable({
+        $('#tblrpt').dataTable({ 
+	 		"order": [],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
             "dom": '<"top"ilf>rt<"bottom"lp><"clear">'

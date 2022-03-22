@@ -1036,8 +1036,13 @@ where
                         // Update the household with new member
 
                         // Only if addresses match
-                        if ($pg['Address'] == $g['Address']) {
+                        if (strtolower($pg['Address']) == strtolower($g['Address'])) {
                             $newContacts[] = $g;
+                        } else {
+                            $this->setHhReplies(array(
+                                'Household'=> $households['houseHolds']['houseHold'][0]['name'], 'Account Id'=>$g['accountId'], 'Result' => 'Address Mismatch'
+                            ));
+
                         }
                     }
                 }
@@ -1049,7 +1054,6 @@ where
                 $this->setHhReplies(array('Household'=>$households['houseHolds']['houseHold'][0]['name'], 'Result'=>'Nobody Added.'));
             }
         }
-
     }
 
     protected function updateHousehold($newGuests, $household) {
