@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <buildpath>
-	<buildpathentry kind="con" path="org.eclipse.php.core.LANGUAGE"/>
 	<buildpathentry kind="src" path="classes">
 		<attributes>
 			<attribute name="composer" value="source"/>
+		</attributes>
+	</buildpathentry>
+	<buildpathentry kind="src" path="vendor/cerdic/css-tidy">
+		<attributes>
+			<attribute name="composer" value="vendor"/>
 		</attributes>
 	</buildpathentry>
 	<buildpathentry kind="src" path="vendor/chillerlan/php-qrcode/src">
@@ -12,7 +16,6 @@
 		</attributes>
 	</buildpathentry>
 	<buildpathentry kind="src" path="vendor/chillerlan/php-settings-container/src">
-	<buildpathentry kind="src" path="vendor/cerdic/css-tidy">
 		<attributes>
 			<attribute name="composer" value="vendor"/>
 		</attributes>
