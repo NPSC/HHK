@@ -123,6 +123,7 @@ function searchVisits(\PDO $dbh, $start, $end, $maxGuests) {
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
     (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`,
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address',
     v.idPrimaryGuest,
     hs.idPsg
 FROM
@@ -139,10 +140,13 @@ FROM
     hospital h on hs.idHospital = h.idHospital
         LEFT JOIN
     gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
+        LEFT JOIN
+    name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0
     AND DATE(s.Span_End_Date) < DATE('$end')
-ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date
+HAVING Nite_Counter > 0
+ORDER BY hs.idPsg
 LIMIT 500");
 
     if ($stmt->rowCount() == 0) {
@@ -159,12 +163,12 @@ LIMIT 500");
             $startDT = new \DateTime($r['Start_Date']);
             $endDT = new \DateTime($r['End_Date']);
 
-            if ($guestIds[ $r['hhkId'] ]['Start Date'] > $startDT ) {
-                $guestIds[ $r['hhkId'] ]['Start Date'] = $startDT;
+            if ($guestIds[ $r['hhkId'] ]['Start 1st Visit'] > $startDT ) {
+                $guestIds[ $r['hhkId'] ]['Start 1st Visit'] = $startDT;
             }
 
-            if ($guestIds[ $r['hhkId'] ]['End Date'] < $endDT ) {
-                $guestIds[ $r['hhkId'] ]['End Date'] = $endDT;
+            if ($guestIds[ $r['hhkId'] ]['End Last Visit'] < $endDT ) {
+                $guestIds[ $r['hhkId'] ]['End Last Visit'] = $endDT;
             }
 
             $guestIds[ $r['hhkId'] ]['Nights'] += $r['Nite_Counter'];
@@ -177,15 +181,17 @@ LIMIT 500");
                 'Name' => $r['Name'],
                 'Diagnosis' => $r['Diagnosis'],
                 'Hosptial' => $r['Hospital'],
-                'Start Date' => new \DateTime($r['Start_Date']),
-                'End Date' => new \DateTime($r['End_Date']),
+                'Start 1st Visit' => new \DateTime($r['Start_Date']),
+                'End Last Visit' => new \DateTime($r['End_Date']),
                 'Nights' => $r['Nite_Counter'],
-                'Relation' => $r['Relationship_Code'],
-                'pgId' => $r['idPrimaryGuest']
+                'Relation_Code' => $r['Relationship_Code'],
+                'Address' => $r['Address'],
+                'PG Id' => $r['idPrimaryGuest']
             );
 
             if ( $r['hhkId'] == $r['idPrimaryGuest']) {
-                $visits[$r['hhkId']] = array('relCode'=>$r['Relationship_Code'], 'idPsg'=>$r['idPsg']);
+                $visits[$r['hhkId']] = array('Relation_Code'=>$r['Relationship_Code'], 'idPsg'=>$r['idPsg'], 'Address'=>$r['Address']);
+                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], array('style'=>'color:#ae00d1;'));
             }
 
             if ($maxGuests-- <= 0) {
@@ -198,34 +204,44 @@ LIMIT 500");
     $rMapper = new RelationshipMapper($dbh);
 
 
-
     foreach ($guestIds as $g) {
 
-        $g['Start Date'] = $g['Start Date']->format('M j, Y');
-        $g['End Date'] = $g['End Date']->format('M j, Y');
+        $g['Start 1st Visit'] = $g['Start 1st Visit']->format('M j, Y');
+        $g['End Last Visit'] = $g['End Last Visit']->format('M j, Y');
 
-        $g['Relation to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$g['Relation']][1];
+        $g['Guest to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$g['Relation_Code']][1];
 
-        if (isset($visits[$g['pgId']]) === FALSE) {
+        if (isset($visits[$g['PG Id']]) === FALSE) {
 
             // Load Primary guest.
-            $v = TransferMembers::findPrimaryGuest($dbh, $g['idPG'], $visits[$g['pgId']]['idPsg']);
+            $v = TransferMembers::findPrimaryGuest($dbh, $g['PG Id'], $visits[$g['PG Id']]['idPsg']);
 
             if (count($v) > 0) {
-                $visits[$g[pgId]] = array('relCode'=>$v['Relation_Code'], 'idPsg'=>$v['idPsg']);
+                $visits[$g['PG Id']] = $v;
             }
         }
 
-        $rMapper
-            ->clear()
-            ->setPGtoPatient($visits[$g['pgId']]['relCode']);
+        $g['PG to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$visits[$g['PG Id']]['Relation_Code']][1];
 
-        $g['Relation to PG'] = $rMapper->mapNeonTypeName(
-            $rMapper->relateGuest($g['Relation'])
-        );
+        // Address Match?
+        if (strtolower($visits[$g['PG Id']]['Address']) == strtolower($g['Address'])) {
 
-        unset($g['Relation']);
+            // Map relationship.
+            $rMapper
+                ->clear()
+                ->setPGtoPatient($visits[$g['PG Id']]['Relation_Code']);
+
+            $g['Guest to PG'] = $rMapper->mapNeonTypeName( $rMapper->relateGuest($g['Relation_Code']) );
+
+        } else {
+            // empty relationship means address mismatch
+            $g['Guest to PG'] = '';
+        }
+
+        unset($g['Address']);
+        unset($g['Relation_Code']);
         unset($g['idPsg']);
+
         $rows[] = $g;
 
     }
@@ -634,7 +650,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <input id="btnVisits" value="Transfer Visits (Max. <?php echo $maxGuests; ?>)" type="button" style="margin-left:2em;"/>
         	</div>
         </div>
-        <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em;"><?php echo $dboxMarkup; ?></div>
+        <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>
 
         <input id='hmkTable' type="hidden" value='<?php echo $mkTable; ?>'/>
         <input id='hstart' type="hidden" value='<?php echo $start; ?>'/>
