@@ -136,7 +136,16 @@ if(isset($_GET['template'])){
                             const formRender = $('#formContent').formRender({
                             	formData,
                             	layoutTemplates: {
+                            		noLabel: function(field, label, help, data){
+                            			if(data.type == 'paragraph'){
+                            				field = $(field).removeAttr('width');
+                            				return $('<div/>').addClass(data.width + ' field-container').append(field);
+                            			}else{
+                            				return $('<div/>').addClass('field-container').append(field);
+                            			}
+                            		},
                           			default: function(field, label, help, data) {
+                          				field = $(field).removeAttr('width');
                           				if(data.description){
                           					help = $('<small/>').addClass('helpText text-muted ms-2').text(data.description);
                           				}
