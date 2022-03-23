@@ -59,7 +59,7 @@ class Session
 
     public function startSession($configFileName = '')
     {
-        if ( $this->sessionState == self::SESSION_NOT_STARTED || session_status() == PHP_SESSION_NONE)
+        if ( $this->sessionState == self::SESSION_NOT_STARTED || session_status() !== PHP_SESSION_ACTIVE)
         {
             ini_set( 'session.cookie_httponly', 1 );
             session_name($this->getSessionName($configFileName));

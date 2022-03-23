@@ -390,3 +390,7 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 	display: flex;
 	align-items: flex-start;
 }
+
+.hhk-flex-wrap {
+	flex-flow: wrap;
+}

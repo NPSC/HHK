@@ -597,6 +597,9 @@ div.dt-buttons .dt-button:hover>span {
 .hhk-flex {
 	display: flex;
 	align-items: flex-start;
+}
+
+.hhk-flex-wrap {
 	flex-flow: wrap;
 }
 
