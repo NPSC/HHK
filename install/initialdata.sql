@@ -967,7 +967,7 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 -- 
 -- Dumping data for table map_relations
 --
-REPLACE INTO `demo`.`map_relations`(`idmap_relations`,`PG_Patient`,`Guest_Patient`,`Patient_PG`,`Guest_PG`)VALUES
+REPLACE INTO `map_relations`(`idmap_relations`,`PG_Patient`,`Guest_Patient`,`Patient_PG`,`Guest_PG`)VALUES
 ('1', 'sp', 'chd', 'sp', 'chd'),('2', 'sp', 'sib', 'sp', 'rltv'),('3', 'sp', 'par', 'sp', 'rltv'),('4', 'sp', 'sp', 'sp', 'sp'),('5', 'sib', 'chd', 'sib', 'rltv'),('6', 'sib', 'sib', 'sib', 'sib'),
 ('7', 'sib', 'par', 'sib', 'par'),('8', 'sib', 'sp', 'sib', 'rltv'),('9', 'chd', 'chd', 'par', 'sib'),('10', 'chd', 'sib', 'par', 'rltv'),('11', 'chd', 'par', 'par', 'rltv'),('12', 'chd', 'sp', 'par', 'par'),
 ('13', 'par', 'chd', 'chd', 'rltv'),('14', 'par', 'sib', 'chd', 'chd'),('15', 'par', 'par', 'chd', 'sp'),('15', 'par', 'par', 'chd', 'sp'),('16', 'par', 'sp', 'chd', 'rltv'),('17', 'slf', 'sp', 'slf', 'sp'),

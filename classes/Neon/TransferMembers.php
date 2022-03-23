@@ -881,6 +881,12 @@ where
             // Check for NEON not finding the household Id
             if ($countHouseholds == 0) {
 
+                // Primary Guest must have an address
+                if ($guests[$v['idPG']]['Address'] == '') {
+                    $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Blank address, Household not created.'));
+                    continue;
+                }
+
                 // Create a new household for the primary guest
                 $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName);
 
@@ -904,6 +910,13 @@ where
                 }
 
                 if ($householdId == 0) {
+
+                    // Primary Guest must have an address
+                    if ($guests[$v['idPG']]['Address'] == '') {
+                        $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Blank address, Household not created.'));
+                        continue;
+                    }
+
                     // Create a new household for the primary guest
                     $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName);
                 }
@@ -916,7 +929,7 @@ where
             }
 
             // Add guest to household.
-           $this->addToHousehold($householdId, $guests[$v['idPG']], $guests);
+           $this->addToHousehold($householdId, $guests[$v['idPG']], $guests, $v['idPatient']);
 
         }  // next visit
 
@@ -1002,7 +1015,7 @@ where
         return $householdId;
     }
 
-    protected function addToHousehold($householdId, $pg, $guests) {
+    protected function addToHousehold($householdId, $pg, $guests, $idPatient) {
 
         $countHouseholds = 0;
         $newContacts = [];
@@ -1035,8 +1048,8 @@ where
                     if ($foundId === FALSE) {
                         // Update the household with new member
 
-                        // Only if addresses match
-                        if (strtolower($pg['Address']) == strtolower($g['Address'])) {
+                        // Only if addresses match, or this is the patient and patient's address is blank.
+                        if ((strtolower($pg['Address']) == strtolower($g['Address'])) || ($g['hhkId'] == $idPatient && $g['Address'] == '')) {
                             $newContacts[] = $g;
                         } else {
                             $this->setHhReplies(array(

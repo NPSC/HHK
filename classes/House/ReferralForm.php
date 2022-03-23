@@ -20,6 +20,14 @@ use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface;
 use HHK\SysConst\ReferralFormStatus;
 use HHK\Exception\RuntimeException;
 
+/**
+ * ReferralForm.php
+ *
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @license   MIT, NCSA
+ * @link      https://github.com/NPSC/HHK
+ */
 
 class ReferralForm {
 
@@ -750,7 +758,7 @@ class ReferralForm {
 	}
 
 	/**
-	 *
+	 * Each guest markup
 	 * @param string $gindx Indexes the specific guest.
 	 * @param SearchFor $guestSearchFor
 	 * @param array $guestResults
