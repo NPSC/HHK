@@ -82,7 +82,7 @@ class UserClass
                     $success = true;
                 }else if($OTPRequired && $otp == ''){
                     $this->logMessage = "OTPRequired";
-                    if($otpMethod == 'email' || $this->getDefaultOtpMethod($dbh, $r['User_Name']) == 'email'){
+                    if($otpMethod == 'email' || $this->getDefaultOtpMethod($dbh, $username) == 'email'){
                         try{
                             $mfaObj = new Email($r);
                             $mfaObj->sendCode($dbh);

@@ -9,6 +9,7 @@ use HHK\Member\IndivMember;
 use HHK\SysConst\GLTableNames;
 use HHK\SysConst\MemBasis;
 use HHK\Member\Address\Emails;
+use HHK\sec\SysConfig;
 
 /**
  * Email.php
@@ -45,7 +46,7 @@ class Email extends AbstractMultiFactorAuth
 
         if($this->emailAddr){
             $mail = prepareEmail();
-            $mail->From = $uS->FromAddress;
+            $mail->From = SysConfig::getKeyValue($dbh, 'sys_config', "FromAddress");
             $mail->FromName = $uS->siteName;
             $mail->addAddress(filter_var($this->emailAddr, FILTER_SANITIZE_EMAIL));
 
