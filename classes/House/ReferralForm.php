@@ -305,13 +305,12 @@ class ReferralForm {
 	        return FALSE;
 	    }
 
+	    $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['patient']);
+
 	    // Figure out which SearchNameData object to use
-	    if ($idP == 0) {
+	    if ($idP > 0) {
 
-	        $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['patient']);
-	    } else {
-
-	        $searchNameData = $this->LoadMemberData($dbh, $idP, new SearchNameData());
+	        $searchNameData = $this->LoadMemberData($dbh, $idP, new SearchNameData(), $searchNameData);
 	    }
 
 	    if (is_null($searchNameData) === FALSE) {
@@ -344,17 +343,13 @@ class ReferralForm {
 	        if (isset($post['rbGuest'.$gindx])) {
 	            // Save this one
 
-	            $searchNameData = NULL;
+	            $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
 
 	            $id = intval(filter_var($post['rbGuest'.$gindx], FILTER_SANITIZE_NUMBER_INT), 10);
 
-	            if ($id == 0) {
+	            if ($id > 0) {
 
-	                $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
-
-	            } else {
-
-	                $searchNameData = $this->LoadMemberData($dbh, $id, new SearchNameData());
+	                $searchNameData = $this->LoadMemberData($dbh, $id, new SearchNameData(), $searchNameData);
 
 	                // Update Relationship
 	                if (isset($this->formUserData['guests'][$gindx]['relationship']) && $this->formUserData['guests'][$gindx]['relationship'] != '') {
@@ -401,12 +396,12 @@ class ReferralForm {
 	 * @param SearchNameDataInterface $snd The object to be loaded.
 	 * @return \HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface
 	 */
-	protected function LoadMemberData(\PDO $dbh, $id, SearchNameDataInterface $snd) {
+	protected function LoadMemberData(\PDO $dbh, $id, SearchNameDataInterface $snd, SearchNameDataInterface $formData) {
 
 	    $stmt = $dbh->query(ProgressiveSearch::getMemberQuery($id));
 
 	    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-	        $snd->loadMeFrom($r);
+	        $snd->loadMeFrom($r, $formData);
 	    }
 
 	    return $snd;

@@ -1476,7 +1476,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
 
 function paymentsTable(tableID, containerID, refreshPayments) {
     
-    $('#' + tableID).dataTable({
+    var ptbl = $('#' + tableID).dataTable({
         'columnDefs': [
             {'targets': 8,
                 'type': 'date',
@@ -1493,7 +1493,12 @@ function paymentsTable(tableID, containerID, refreshPayments) {
         'lengthMenu': [[25, 50, -1], [25, 50, "All"]]
     });
     
-    $('#' + containerID).find('input[type=button]').button();
+    ptbl.on('draw', function () {
+		$('#' + containerID).find('input[type=button]').button();
+	});
+
+	$('#' + containerID).find('input[type=button]').button();
+    
     
     $('#btnPayHistRef').button().click(function() {
     	refreshPayments();
