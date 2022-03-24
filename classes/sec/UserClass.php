@@ -9,8 +9,7 @@ use HHK\sec\MFA\Email;
 use HHK\sec\MFA\Backup;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\MFA\Remember;
-use HHK\Member\IndivMember;
-use HHK\SysConst\MemBasis;
+
 
 /**
  * UserClass.php
