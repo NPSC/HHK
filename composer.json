@@ -21,7 +21,6 @@
 		"mk-j/php_xlsxwriter" : "~0.38",
 		"phpmailer/phpmailer" : "~6.1",
 		"phelium/recaptcha" : "~1.0",
-		"phpgangsta/googleauthenticator" : "dev-master",
 		"cerdic/css-tidy" : "~2.0"
 	}
 }
