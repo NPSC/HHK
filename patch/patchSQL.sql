@@ -26,6 +26,8 @@ ALTER TABLE `insurance_type`
 ALTER TABLE `stays` 
 	ADD COLUMN `Recorded` INT(1) NOT NULL DEFAULT 0 AFTER `Status`;
 
+-- Set idName as int.
+UPDATE `trans` set `idName` = '0' where `idName` = '';
 ALTER TABLE `trans` 
 	CHANGE COLUMN `idName` `idName` INT(11) NOT NULL DEFAULT 0 ;
 

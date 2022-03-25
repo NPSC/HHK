@@ -536,7 +536,7 @@ class TransferMembers {
     IFNULL(hs.idPsg, 0) as `idPsg`,
     IFNULL(hs.idPatient, 0) as `idPatient`,
     IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address',
+    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as 'Address',
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
     (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
@@ -1125,7 +1125,7 @@ where
 
     }
 
-    protected static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg) {
+    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg) {
 
         $stmt = $dbh->query("Select
 	n.idName as `hhkId`,
