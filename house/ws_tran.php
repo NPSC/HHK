@@ -100,17 +100,13 @@ try {
 
       case 'visits':
 
-        $en = '';
-        if (isset($_REQUEST["en"])) {
-            $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_STRING);
+        $ids = [];
+
+        if (isset($_REQUEST['ids'])) {
+            $ids = filter_var_array($_REQUEST['ids'], FILTER_SANITIZE_NUMBER_INT);
         }
 
-        $max = 1;
-        if (isset($_REQUEST['max'])) {
-            $max = intval(filter_var($_REQUEST['max'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $reply = $transfer->sendVisits($dbh, $uS->username, $en, $max);
+        $reply = $transfer->sendVisits($dbh, $uS->username, $ids);
 
         // Show new members
         if (count($transfer->getMemberReplies()) > 0) {
@@ -132,6 +128,7 @@ try {
             $events['households'] = HTMLContainer::generateMarkup('p', "Households", array('style'=>'margin-top:5px;'))
                 . CreateMarkupFromDB::generateHTML_Table($transfer->getHhReplies(), 'tblrpt3');
         }
+
         break;
 
       case 'sch':

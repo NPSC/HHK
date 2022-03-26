@@ -126,13 +126,66 @@ function transferRemote(transferIds) {
 
 }
 
-function transferData($btn, start, end, command, maxGu) {
+
+function transferVisits(transferIds) {
+		
+    var parms = {
+        cmd: 'visits',
+        ids: transferIds
+    };
+
+    var posting = $.post('ws_tran.php', parms);
+    posting.done(function(incmg) {
+        $('#btnVisits').val('Transfer').hide();
+        
+        if (!incmg) {
+            alert('Bad Reply from HHK Web Server');
+            return;
+        }
+        try {
+            incmg = $.parseJSON(incmg);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+
+        $('div#retrieve').empty();
+
+        if (incmg.data) {
+            $('#divTable').empty().append($(incmg.data)).show();
+        }
+
+        if (incmg.members) {
+            $('#divMembers').empty().append($(incmg.members)).show();
+        }
+
+        if (incmg.strayMembers) {
+            $('#divStrayMembers').empty().append($(incmg.strayMembers)).show();
+        }
+
+        if (incmg.households) {
+            $('#divHouseholds').empty().append($(incmg.households)).show();
+        }
+    });
+
+}
+
+
+function transferData($btn, start, end, command) {
 
     var parms = {
         cmd: command,
         st: start,
-        en: end,
-        max: maxGu
+        en: end
     };
 
     var posting = $.post('ws_tran.php', parms);
@@ -169,14 +222,6 @@ function transferData($btn, start, end, command, maxGu) {
 
         if (incmg.members) {
             $('#divMembers').empty().append($(incmg.members)).show();
-        }
-
-        if (incmg.strayMembers) {
-            $('#divStrayMembers').empty().append($(incmg.strayMembers)).show();
-        }
-
-        if (incmg.households) {
-            $('#divHouseholds').empty().append($(incmg.households)).show();
         }
 
     });
@@ -259,7 +304,6 @@ $(document).ready(function() {
     var start = $('#hstart').val();
     var end = $('#hend').val();
     var dateFormat = $('#hdateFormat').val();
-    var maxGuests = $('#maxGuests').val();
 
     $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits, #btnGetKey').button();
 
@@ -294,7 +338,7 @@ $(document).ready(function() {
             }
             $('#TxButton').val('Working...');
             
-            txIds = {};
+            var txIds = {};
             $('.hhk-txCbox').each(function () {
             	if ($(this).prop('checked')) {
             		txIds[$(this).data('txid')] = $(this).data('txid');
@@ -343,21 +387,23 @@ $(document).ready(function() {
         $('#btnPay').hide();
         $('#divMembers').empty();
 
-        $('#tblrpt').dataTable({ 
-	 		"order": [],
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        });
 
         $('#btnVisits').button().show().click(function () {
 
-            if ($(this).val() === 'Transferring Guests ...') {
+            if ($(this).val() === 'Stop Transferring Visits') {
                 return;
             }
-            $(this).val('Transferring Guests ...');
+            $(this).val('Stop Transferring Visits');
+            
+            var psgIds = {};
+            $('.hhk-txPsgs').each(function () {
+            	if ($(this).prop('checked')) {
+            		psgIds[$(this).data('idPsg')] = $(this).data('idPsg');
+            	}
+            });
+            
 
-            transferData($(this), start, end, 'visits', maxGuests);
+            transferVisits(psgIds, $(this));
         });
     }
     

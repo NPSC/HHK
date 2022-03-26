@@ -64,6 +64,61 @@ $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
 
 $labels = Labels::getLabels();
 
+function getNonVisitors(\PDO $dbh, $visitIds) {
+
+    $idList = [];
+    $idNames = [];
+
+    // clean up the visit ids
+    foreach ($visitIds as $s) {
+        if (intval($s, 10) > 0){
+            $idList[] = intval($s, 10);
+        }
+    }
+
+    if (count($idList) == 0) {
+        return $idNames;
+    }
+
+    $stmt = $dbh->query("Select	DISTINCT
+    ng.idName AS `hhkId`,
+    IFNULL(ng.Relationship_Code, '') as `Relationship_Code`,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    IFNULL(n.Name_Full, '') AS `Name`,
+    IFNULL(h.Title, '') AS `Hospital`,
+    IFNULL(g.Description, '') AS `Diagnosis`,
+    IFNULL(hs.idPsg, 0) as `idPsg`,
+    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as `Address`,
+    v.idPrimaryGuest
+
+from
+	visit v
+		join
+	hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+        join
+	name_guest ng on hs.idPsg = ng.idPsg
+		left join
+	stays s on ng.idName = s.idName
+        LEFT JOIN
+    name n on n.idName = ng.idName
+        LEFT JOIN
+    name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+        LEFT JOIN
+    hospital h on hs.idHospital = h.idHospital
+        LEFT JOIN
+    gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
+where
+	s.idName is NULL
+    AND v.idVisit in (" . implode(',', $idList) . ")");
+
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+        $idNames[ $r['hhkId'] ] = $r;
+
+    }
+
+    return $idNames;
+}
 
 function getPaymentReport(\PDO $dbh, $start, $end) {
 
@@ -109,6 +164,11 @@ function searchVisits(\PDO $dbh, $start, $end, $maxGuests) {
 
     $uS = Session::getInstance();
     $rows = array();
+    $guestIds = [];
+    $visits = [];
+    $visitIds = [];
+    $psgs = [];
+
 
     $stmt = $dbh->query("SELECT
     s.idStays,
@@ -125,7 +185,8 @@ function searchVisits(\PDO $dbh, $start, $end, $maxGuests) {
     (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`,
     CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address',
     v.idPrimaryGuest,
-    hs.idPsg
+    hs.idPsg,
+    hs.idPatient
 FROM
     stays s
         LEFT JOIN
@@ -145,7 +206,6 @@ FROM
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0
     AND DATE(s.Span_End_Date) < DATE('$end')
-HAVING Nite_Counter > 0
 ORDER BY hs.idPsg
 LIMIT 500");
 
@@ -153,25 +213,28 @@ LIMIT 500");
         return FALSE;
     }
 
-    $guestIds = [];
-    $visits = [];
-
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+        $visitIds[$r['idVisit']] = $r['idVisit'];
+        $psgs[$r['idPsg']] = $r['idPsg'];
 
         if (isset($guestIds[ $r['hhkId'] ])) {
 
-            $startDT = new \DateTime($r['Start_Date']);
-            $endDT = new \DateTime($r['End_Date']);
+            if ($r['Nite_Counter'] > 0) {
 
-            if ($guestIds[ $r['hhkId'] ]['Start 1st Visit'] > $startDT ) {
-                $guestIds[ $r['hhkId'] ]['Start 1st Visit'] = $startDT;
+                $startDT = new \DateTime($r['Start_Date']);
+                $endDT = new \DateTime($r['End_Date']);
+
+                if ($guestIds[ $r['hhkId'] ]['Start 1st Visit'] > $startDT ) {
+                    $guestIds[ $r['hhkId'] ]['Start 1st Visit'] = $startDT;
+                }
+
+                if ($guestIds[ $r['hhkId'] ]['End Last Visit'] < $endDT ) {
+                    $guestIds[ $r['hhkId'] ]['End Last Visit'] = $endDT;
+                }
+
+                $guestIds[ $r['hhkId'] ]['Nights'] += $r['Nite_Counter'];
             }
-
-            if ($guestIds[ $r['hhkId'] ]['End Last Visit'] < $endDT ) {
-                $guestIds[ $r['hhkId'] ]['End Last Visit'] = $endDT;
-            }
-
-            $guestIds[ $r['hhkId'] ]['Nights'] += $r['Nite_Counter'];
 
         } else {
 
@@ -180,13 +243,14 @@ LIMIT 500");
                 'HHK Id' => HTMLContainer::generateMarkup('a', $r['hhkId'], array('href'=>'GuestEdit.php?id=' . $r['hhkId'])),
                 'Name' => $r['Name'],
                 'Diagnosis' => $r['Diagnosis'],
-                'Hosptial' => $r['Hospital'],
+                'Hospital' => $r['Hospital'],
                 'Start 1st Visit' => new \DateTime($r['Start_Date']),
                 'End Last Visit' => new \DateTime($r['End_Date']),
                 'Nights' => $r['Nite_Counter'],
                 'Relation_Code' => $r['Relationship_Code'],
                 'Address' => $r['Address'],
-                'PG Id' => $r['idPrimaryGuest']
+                'PG Id' => $r['idPrimaryGuest'],
+                'idPsg'=> $r['idPsg']
             );
 
             if ( $r['hhkId'] == $r['idPrimaryGuest']) {
@@ -201,13 +265,41 @@ LIMIT 500");
 
     }  // End of while
 
+    // Get non-visitors
+    $idNames = getNonVisitors($dbh, $visitIds);
+
+    if (count($idNames) > 0) {
+
+        foreach ($idNames as $r) {
+
+            // add them to the list of guests
+            $guestIds[ $r['hhkId'] ] = array(
+                'Account Id' => $r['accountId'],
+                'HHK Id' => HTMLContainer::generateMarkup('a', $r['hhkId'], array('href'=>'GuestEdit.php?id=' . $r['hhkId'])),
+                'Name' => $r['Name'],
+                'Diagnosis' => $r['Diagnosis'],
+                'Hospital' => $r['Hospital'],
+                'Start 1st Visit' => NULL,
+                'End Last Visit' => NULL,
+                'Nights' => '',
+                'Relation_Code' => $r['Relationship_Code'],
+                'Address' => $r['Address'],
+                'PG Id' => $r['idPrimaryGuest'],
+                'idPsg'=> $r['idPsg']
+            );
+        }
+    }
+
+
     $rMapper = new RelationshipMapper($dbh);
 
 
     foreach ($guestIds as $g) {
 
-        $g['Start 1st Visit'] = $g['Start 1st Visit']->format('M j, Y');
-        $g['End Last Visit'] = $g['End Last Visit']->format('M j, Y');
+        if (is_null($g['Start 1st Visit']) === FALSE) {
+            $g['Start 1st Visit'] = $g['Start 1st Visit']->format('M j, Y');
+            $g['End Last Visit'] = $g['End Last Visit']->format('M j, Y');
+        }
 
         $g['Guest to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$g['Relation_Code']][1];
 
@@ -224,7 +316,7 @@ LIMIT 500");
         $g['PG to Patient'] = $uS->guestLookups['Patient_Rel_Type'][$visits[$g['PG Id']]['Relation_Code']][1];
 
         // Address Match?
-        if (strtolower($visits[$g['PG Id']]['Address']) == strtolower($g['Address'])) {
+        if (strtolower($visits[$g['PG Id']]['Address']) == strtolower($g['Address']) && $g['Address'] != '') {
 
             // Map relationship.
             $rMapper
@@ -235,18 +327,56 @@ LIMIT 500");
 
         } else {
             // empty relationship means address mismatch
-            $g['Guest to PG'] = '';
+            $g['Guest to PG'] = '(Address)';
         }
 
         unset($g['Address']);
         unset($g['Relation_Code']);
+
+        $idPsg = $g['idPsg'];
         unset($g['idPsg']);
 
-        $rows[] = $g;
+        // Collect by the PSG Id.
+        $rows[$idPsg][] = $g;
 
     }
 
-    return CreateMarkupFromDB::generateHTML_Table($rows, 'tblrpt');
+    // Show table
+    $tbl = new HTMLTable();
+    $tbl->addHeaderTr(HTMLTable::makeTh('PSG').HTMLTable::makeTh('HHK Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Diagnosis').HTMLTable::makeTh('Hospital').HTMLTable::makeTh('Start 1st Visit')
+        .HTMLTable::makeTh('End Last Visit').HTMLTable::makeTh('Nights').HTMLTable::makeTh('PG Id').HTMLTable::makeTh('Guest to Patient').HTMLTable::makeTh('PG to Patient').HTMLTable::makeTh('Guest to PG'));
+
+    foreach ($rows as $idp => $r) {
+
+        $first = TRUE;
+        foreach ($r as $g) {
+
+            if ($first) {
+                $first = FALSE;
+                $td = HTMLTable::makeTd( HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'style'=>'margin-right:5px;'))
+                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idPsg'=>$idp)));
+            } else {
+                $td = HTMLTable::makeTd('');
+            }
+
+            $tbl->addBodyTr($td
+                .HTMLTable::makeTd($g['HHK Id'])
+                .HTMLTable::makeTd($g['Name'])
+                .HTMLTable::makeTd($g['Diagnosis'])
+                .HTMLTable::makeTd($g['Hospital'])
+                .HTMLTable::makeTd($g['Start 1st Visit'])
+                .HTMLTable::makeTd($g['End Last Visit'])
+                .HTMLTable::makeTd($g['Nights'])
+                .HTMLTable::makeTd($g['PG Id'])
+                .HTMLTable::makeTd($g['Guest to Patient'])
+                .HTMLTable::makeTd($g['PG to Patient'])
+                .HTMLTable::makeTd($g['Guest to PG'])
+                , array('class'=>'hhk-'.$idp));
+        }
+
+    }
+
+    return $tbl->generateMarkup(array('name'=>'tblrpt'));
 }
 
 function getPeopleReport(\PDO $dbh, $start, $end, $extIdFlag = FALSE) {
@@ -575,6 +705,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -647,7 +778,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <input id="printButton" value="Print" type="button" />
                 <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
-                <input id="btnVisits" value="Transfer Visits (Max. <?php echo $maxGuests; ?>)" type="button" style="margin-left:2em;"/>
+                <input id="btnVisits" value="Transfer Visits" type="button" style="margin-left:2em;"/>
         	</div>
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>

@@ -536,7 +536,7 @@ class TransferMembers {
     IFNULL(hs.idPsg, 0) as `idPsg`,
     IFNULL(hs.idPatient, 0) as `idPatient`,
     IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
-    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as 'Address',
+    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as `Address`,
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
     (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
@@ -775,15 +775,13 @@ Limit 500" );
         return NULL;
     }
 
-    protected function sendNonVisitors(\PDO $dbh, $visitIds, &$guestIds, $username) {
+    public static function getNonVisitors(\PDO $dbh, $visits) {
 
         $idList = [];
         $idNames = [];
-        $replys = [];
-
 
         // clean up the visit ids
-        foreach ($visitIds as $s) {
+        foreach ($visits as $s) {
             if (intval($s, 10) > 0){
                 $idList[] = intval($s, 10);
             }
@@ -792,10 +790,12 @@ Limit 500" );
         if (count($idList) > 0) {
 
             $stmt = $dbh->query("Select	DISTINCT
-    ng.idName,
-    hs.idPsg,
-    ng.Relationship_Code,
-    hs.idPatient
+    ng.idName AS `hhkId`,
+    IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
+    IFNULL(n.External_Id, '') AS `accountId`,
+    IFNULL(n.Name_Last, '') AS `Last_Name`,
+    IFNULL(hs.idPsg, 0) as `idPsg`,
+    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as `Address`
 from
 	visit v
 		join
@@ -806,37 +806,45 @@ from
 	stays s on ng.idName = s.idName
         LEFT JOIN
     name n on n.idName = ng.idName
-
+        LEFT JOIN
+    name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 where
-	s.idName is NULL AND n.External_Id = ''
+	s.idName is NULL
     AND v.idVisit in (" . implode(',', $idList) . ")");
 
-            while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
-                $idNames[$r[0]] = $r[0];
+                $idNames[ $r['hhkId'] ] = $r;
 
-                $guestIds[ $r[0] ] = array(
-                    'hhkId' => $r[0],
-                    'accountId' => '',
-                    'idPsg' => $r[1],
-                    'Relation_Code' => $r[2],
-                    'idPatient' => $r[3],
-                );
+            }
+        }
+
+        return $idNames;
+    }
+
+    protected function sendNonVisitors(\PDO $dbh, $visitIds, &$guestIds, $username) {
+
+        $replys = [];
+
+        $idNames = $this->getNonVisitors($dbh, $visitIds);
+
+
+        if (count($idNames) > 0) {
+
+            foreach ($idNames as $r) {
+                // add them to the list of guests
+                $guestIds[ $r['hhkId'] ] = $r;
             }
 
-            if (count($idNames) > 0) {
+            // Write to Neon
+            $replys = $this->sendList($dbh, $idNames, $username);
 
-                // Write to Neon
-                $replys = $this->sendList($dbh, $idNames, $username);
+            // Capture new account Id's from any new members.
+            foreach ($replys as $f) {
 
-                // Capture new account Id's from any new members.
-                foreach ($replys as $f) {
-
-                    if (isset($f['Account ID']) && $f['Account ID'] !== '') {
-                        $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
-                    }
+                if (isset($f['Account ID']) && $f['Account ID'] !== '') {
+                    $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
                 }
-
             }
         }
 
@@ -1217,20 +1225,15 @@ where n.idName = $idPrimaryGuest ");
                 continue;
             }
 
+
             // Check for NEON not finding the account Id
             if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 0 && $r['Account Id'] != '') {
 
-                // search again without the Neon Acct Id
-                $r['Account Id'] = '';
+                // Account was deleted from the Neon side.
+                $f['Result'] = 'Account Deleted at Neon';
+                $replys[$r['HHK_ID']] = $f;
+                continue;
 
-                // Search target system
-                $result = $this->searchTarget($r);
-
-                if ($this->checkError($result)) {
-                    $f['Result'] = $this->errorMessage;
-                    $replys[$r['HHK_ID']] = $f;
-                    continue;
-                }
             }
 
 
