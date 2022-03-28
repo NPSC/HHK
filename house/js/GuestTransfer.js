@@ -135,8 +135,8 @@ function transferVisits(transferIds) {
     };
 
     var posting = $.post('ws_tran.php', parms);
+    
     posting.done(function(incmg) {
-        $('#btnVisits').val('Transfer').hide();
         
         if (!incmg) {
             alert('Bad Reply from HHK Web Server');
@@ -168,15 +168,16 @@ function transferVisits(transferIds) {
             $('#divMembers').empty().append($(incmg.members)).show();
         }
 
-        if (incmg.strayMembers) {
-            $('#divStrayMembers').empty().append($(incmg.strayMembers)).show();
-        }
-
         if (incmg.households) {
             $('#divHouseholds').empty().append($(incmg.households)).show();
         }
     });
 
+}
+
+function visitSend(ids, $button) {
+	
+	
 }
 
 
@@ -390,9 +391,6 @@ $(document).ready(function() {
 
         $('#btnVisits').button().show().click(function () {
 
-            if ($(this).val() === 'Stop Transferring Visits') {
-                return;
-            }
             $(this).val('Stop Transferring Visits');
             
             var psgIds = {};
@@ -402,7 +400,6 @@ $(document).ready(function() {
             	}
             });
             
-
             transferVisits(psgIds, $(this));
         });
     }

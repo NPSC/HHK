@@ -5,10 +5,6 @@ UPDATE `gen_lookups` SET `Description` = "Gender Identity" where `Table_Name` = 
 
 DELETE FROM `sys_config` where `Key` = "showGuestsStayingReg";
 
--- insurance fixes
-update insurance set Type = 1 where Type in ('h', '1h');
-update insurance set Type = 3 where Type = 'p';
-
 ALTER TABLE `insurance` 
 	ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`;
 ALTER TABLE `insurance` 
