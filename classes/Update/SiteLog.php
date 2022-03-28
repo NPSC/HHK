@@ -43,6 +43,10 @@ class SiteLog {
 
         $encodedText = addslashes($logText);
 
+        if(strlen($encodedText) > 255){
+            $encodedText = substr($encodedText, 0, 252) . '...';
+        }
+
         // get session instance
         $uS = Session::getInstance();
 

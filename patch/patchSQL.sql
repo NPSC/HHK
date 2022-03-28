@@ -6,26 +6,26 @@ UPDATE `gen_lookups` SET `Description` = "Gender Identity" where `Table_Name` = 
 DELETE FROM `sys_config` where `Key` = "showGuestsStayingReg";
 
 ALTER TABLE `insurance` 
-	ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`;
+	ADD COLUMN IF NOT EXISTS `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`;
 ALTER TABLE `insurance` 
-	ADD COLUMN `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`;
+	ADD COLUMN IF NOT EXISTS `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`;
 ALTER TABLE `insurance` 
-	CHANGE COLUMN `Type` `idInsuranceType` INT(3) NOT NULL;
+	CHANGE COLUMN IF EXISTS `Type` `idInsuranceType` INT(3) NOT NULL;
 
 ALTER TABLE `insurance_type` 
-	CHANGE COLUMN `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
+	CHANGE COLUMN IF EXISTS `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
 	
 ALTER TABLE `insurance_type` 
-	ADD COLUMN `Status` VARCHAR(1) NOT NULL DEFAULT 'a';
+	ADD COLUMN IF NOT EXISTS `Status` VARCHAR(1) NOT NULL DEFAULT 'a';
 
 -- Mark visits as recorded (ie, Neon)
 ALTER TABLE `stays` 
-	ADD COLUMN `Recorded` INT(1) NOT NULL DEFAULT 0 AFTER `Status`;
+	ADD COLUMN IF NOT EXISTS `Recorded` INT(1) NOT NULL DEFAULT 0 AFTER `Status`;
 
 -- Set idName as int.
-UPDATE `trans` set `idName` = '0' where `idName` = '';
+UPDATE `trans` set `idName` = '0' where not `idName` REGEXP '^[0-9]+$';
 ALTER TABLE `trans` 
-	CHANGE COLUMN `idName` `idName` INT(11) NOT NULL DEFAULT 0 ;
+	CHANGE COLUMN IF EXISTS `idName` `idName` INT(11) NOT NULL DEFAULT 0 ;
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1');
