@@ -183,6 +183,8 @@ class Login {
                 }
             } else {
 
+                WebInit::resetSessionIdle(); //extend idle session to prevent double login
+
                 if ($u->getDefaultPage() != '') {
                     $pge = $u->getDefaultPage();
                 }
