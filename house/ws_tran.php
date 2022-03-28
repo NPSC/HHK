@@ -110,23 +110,16 @@ try {
 
         // Show new members
         if (count($transfer->getMemberReplies()) > 0) {
-            $events['members'] = HTMLContainer::generateMarkup('p', "New Neon Members") . CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
+            $events['members'] = $transfer->getMemberReplies();
         }
 
         // Show visit results
-        $events['data'] = HTMLContainer::generateMarkup('p', "Visit Results", array('style'=>'margin-top:5px;'))
-            . CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
+        $events['visits'] = $reply;
 
-        // Show extra members from visiting PSG's
-        if (count($transfer->getReplies()) > 0) {
-            $events['strayMembers'] = HTMLContainer::generateMarkup('p', "Additional PSG Members", array('style'=>'margin-top:5px;'))
-                . CreateMarkupFromDB::generateHTML_Table($transfer->getReplies(), 'tblrpt2');
-        }
 
         // show households
         if (count($transfer->getHhReplies()) > 0) {
-            $events['households'] = HTMLContainer::generateMarkup('p', "Households", array('style'=>'margin-top:5px;'))
-                . CreateMarkupFromDB::generateHTML_Table($transfer->getHhReplies(), 'tblrpt3');
+            $events['households'] = $transfer->getHhReplies();
         }
 
         break;

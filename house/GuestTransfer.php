@@ -236,6 +236,11 @@ LIMIT 500");
                 $guestIds[ $r['hhkId'] ]['Nights'] += $r['Nite_Counter'];
             }
 
+            if ( $r['hhkId'] == $r['idPrimaryGuest']) {
+                $visits[$r['hhkId']] = array('Relation_Code'=>$r['Relationship_Code'], 'idPsg'=>$r['idPsg'], 'Address'=>$r['Address']);
+                $guestIds[ $r['hhkId'] ]['Name'] = HTMLContainer::generateMarkup('span', $guestIds[ $r['hhkId'] ]['Name'], array('style'=>'color:#ae00d1;'));
+            }
+
         } else {
 
             $guestIds[ $r['hhkId'] ] = array(
@@ -306,7 +311,7 @@ LIMIT 500");
         if (isset($visits[$g['PG Id']]) === FALSE) {
 
             // Load Primary guest.
-            $v = TransferMembers::findPrimaryGuest($dbh, $g['PG Id'], $visits[$g['PG Id']]['idPsg']);
+            $v = TransferMembers::findPrimaryGuest($dbh, $g['PG Id'], $g['idPsg']);
 
             if (count($v) > 0) {
                 $visits[$g['PG Id']] = $v;
@@ -776,7 +781,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 <input id="printButton" value="Print" type="button" />
                 <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>
-                <input id="btnVisits" value="Transfer Visits" type="button" style="margin-left:2em;"/>
+                <input id="btnVisits" value="" type="button" style="margin-left:2em;"/>
         	</div>
         </div>
         <div id="keyMapDiagBox" class="hhk-tdbox hhk-visitdialog" style="font-size: .85em; display:none;"><?php echo $dboxMarkup; ?></div>

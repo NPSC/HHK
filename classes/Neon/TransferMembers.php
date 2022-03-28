@@ -500,7 +500,7 @@ class TransferMembers {
      * @param string $end
      * @return array
      */
-    public function sendVisits(\PDO $dbh, $username, $end, $maxGuests) {
+    public function sendVisits(\PDO $dbh, $username, $idPsgs) {
 
         $this->memberReplies = [];
         $this->replies = [];
@@ -517,9 +517,13 @@ class TransferMembers {
         $guestIds = [];
         $sendIds = [];
         $psgs = [];
+        $psgList = [];
 
-        if ($end == '') {
-            $end = date('Y-m-d');
+        // clean up the visit ids
+        foreach ($idPsgs as $s) {
+            if (intval($s, 10) > 0){
+                $psgList[] = intval($s, 10);
+            }
         }
 
         // Read stays from db
@@ -554,9 +558,8 @@ FROM
     name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0
-    AND s.Span_End_Date is not NULL AND DATE(s.Span_End_Date) <= DATE('$end')
-ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date
-Limit 500" );
+    AND s.Span_End_Date is not NULL AND hs.idPsg in (" . implode(',', $psgList) . ")
+ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
         // Count up guest stay dates and nights.
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -584,7 +587,14 @@ Limit 500" );
                 }
 
                 if ($guestIds[ $r['hhkId'] ]['End_Date'] < $endDT ) {
+
                     $guestIds[ $r['hhkId'] ]['End_Date'] = $endDT;
+
+                    // Always use latest hospital stay
+                    $psgs[$r['idPsg']] = array(
+                        'idHospital' => $r['idHospital'],
+                        'Diagnosis_Code' => $r['Diagnosis_Code']
+                    );
                 }
 
                 $guestIds[ $r['hhkId'] ]['Nite_Counter'] += $r['Nite_Counter'];
@@ -604,12 +614,11 @@ Limit 500" );
                     'Last_Name' => $r['Last_Name'],
                 );
 
-                if ($maxGuests-- <= 0) {
-                    break;
-                }
             }
         }
 
+        // Adds any non visitors to the list of guests.
+        $this->getNonVisitors($dbh, array_keys($visits), $guestIds);
 
         // Check for and combine any missing Neon account ids.
         foreach ($guestIds as $id => $r ) {
@@ -634,10 +643,6 @@ Limit 500" );
                 }
             }
         }
-
-        // save any non-visit members of PSGs
-        $this->replies = $this->sendNonVisitors($dbh, array_keys($visits), $guestIds, $username);
-
 
         // Fill the custom parameters for each visit.
         foreach ($guestIds as $r ) {
@@ -775,7 +780,7 @@ Limit 500" );
         return NULL;
     }
 
-    public static function getNonVisitors(\PDO $dbh, $visits) {
+    public static function getNonVisitors(\PDO $dbh, $visits, &$guestIds) {
 
         $idList = [];
         $idNames = [];
@@ -819,42 +824,23 @@ where
             }
         }
 
-        return $idNames;
-    }
-
-    protected function sendNonVisitors(\PDO $dbh, $visitIds, &$guestIds, $username) {
-
-        $replys = [];
-
-        $idNames = $this->getNonVisitors($dbh, $visitIds);
-
-
         if (count($idNames) > 0) {
 
             foreach ($idNames as $r) {
                 // add them to the list of guests
-                $guestIds[ $r['hhkId'] ] = $r;
-            }
-
-            // Write to Neon
-            $replys = $this->sendList($dbh, $idNames, $username);
-
-            // Capture new account Id's from any new members.
-            foreach ($replys as $f) {
-
-                if (isset($f['Account ID']) && $f['Account ID'] !== '') {
-                    $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
+                if (isset($guestIds[ $r['hhkId'] ]) === FALSE) {
+                    $guestIds[ $r['hhkId'] ] = $r;
                 }
             }
         }
 
-        return $replys;
     }
 
     protected function sendHouseholds(\PDO $dbh, $guests, $visits) {
 
         foreach ($visits as $v) {
 
+            // Primary guest defined?
             if (isset($guests[$v['idPG']]) === FALSE) {
 
                 // Load Primary guest.
@@ -863,21 +849,18 @@ where
                 if (count($guests[$v['idPG']]) == 0) {
                     continue;
                 }
-
             }
 
+            // Primary guest have an Neon Account Id?
             if ($guests[$v['idPG']]['accountId'] < 1) {
                 continue;
             }
 
+            // Set Relationship mapper.
             $this->relationshipMapper->clear()->setPGtoPatient($guests[$v['idPG']]['Relation_Code']);
 
-            $pgAccountId = $guests[$v['idPG']]['accountId'];
-            $householdName = $guests[$v['idPG']]['Last_Name'];
-            $pgRelationId = $this->relationshipMapper->relateGuest($guests[$v['idPG']]['Relation_Code']);
-
             // Does primary guest have a hh?
-            $households = $this->searchHouseholds($pgAccountId);
+            $households = $this->searchHouseholds($guests[$v['idPG']]['accountId']);
             $householdId = 0;
             $countHouseholds = 0;
 
@@ -889,14 +872,8 @@ where
             // Check for NEON not finding the household Id
             if ($countHouseholds == 0) {
 
-                // Primary Guest must have an address
-                if ($guests[$v['idPG']]['Address'] == '') {
-                    $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Blank address, Household not created.'));
-                    continue;
-                }
-
                 // Create a new household for the primary guest
-                $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName);
+                $householdId = $this->createHousehold($guests[$v['idPG']]);
 
             } else {
 
@@ -905,7 +882,7 @@ where
                 // Find the household where primary guest is the primary contact.
                 foreach ($hhs as $hh) {
 
-                    // Check the primary guest is the primary household contact
+                    // Get the primary household contact
                     $pcontact = $this->findHhPrimaryContact($hh);
 
                     // Found?
@@ -917,16 +894,11 @@ where
                     }
                 }
 
+                // Create a new household if none found.
                 if ($householdId == 0) {
 
-                    // Primary Guest must have an address
-                    if ($guests[$v['idPG']]['Address'] == '') {
-                        $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Blank address, Household not created.'));
-                        continue;
-                    }
-
                     // Create a new household for the primary guest
-                    $householdId = $this->createHousehold($pgAccountId, $pgRelationId, $householdName);
+                    $householdId = $this->createHousehold($guests[$v['idPG']]);
                 }
             }
 
@@ -993,13 +965,28 @@ where
      * @param array $f
      * @return string|mixed
      */
-    protected function createHousehold($primaryContactId, $relationId, $householdName) {
+    protected function createHousehold($primaryGuest) {
 
         $householdId = 0;
+        $householdName = $primaryGuest['Last_Name'];
+
+        if ($householdName == '') {
+            $this->setHhReplies(array('Household'=>'Create ', 'Result'=> 'Blank household name, Household not created.'));
+            return $householdId;
+        }
+
+        // Primary Guest must have an address
+        if ($primaryGuest['Address'] == '') {
+            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Blank address, Household not created.'));
+            return $householdId;
+        }
+
+        $relationId = $this->relationshipMapper->relateGuest($primaryGuest['Relation_Code']);
+
 
         $base = 'household.';
         $param[$base . 'name'] = $householdName;
-        $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $primaryContactId;
+        $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $primaryGuest['accountId'];
         $param[$base . 'houseHoldContacts.houseHoldContact.relationType.id'] = $relationId;
         $param[$base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact'] = 'true';
 
@@ -1012,12 +999,12 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> $this->errorMessage));
+            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Failed: ' . $this->errorMessage));
 
         } else if (isset($wsResult['houseHoldId'])) {
 
             $householdId = $wsResult['houseHoldId'];
-            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Success'));
+            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Success HH Id = '. $householdId));
         }
 
         return $householdId;
@@ -1121,11 +1108,11 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result' => $this->errorMessage));
+            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result' => 'Failed: '.$this->errorMessage));
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
-            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result'=>'The Household Id was not returned'));
+            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result'=>'Failed: Household Id not returned'));
 
         } else {
             $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result'=>'Success'));

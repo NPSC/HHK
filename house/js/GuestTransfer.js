@@ -127,17 +127,19 @@ function transferRemote(transferIds) {
 }
 
 
-function transferVisits(transferIds) {
-		
+function transferVisits($psgCB) {
+	
     var parms = {
         cmd: 'visits',
-        ids: transferIds
+        ids: $psgCB.data('idPsg')
     };
+    
+    $psgCB.parents('tr').css('background-color', 'lightgray');
 
     var posting = $.post('ws_tran.php', parms);
     
     posting.done(function(incmg) {
-        
+
         if (!incmg) {
             alert('Bad Reply from HHK Web Server');
             return;
@@ -158,26 +160,99 @@ function transferVisits(transferIds) {
             return;
         }
 
-        $('div#retrieve').empty();
+        $psgCB.parents('tr').css('background-color', 'lightgreen');
+        
+		let tr = '';
+		let $vTbl= $('#vTbl');
+		let $mTbl = $('#mTbl');
+		let $hTbl = $('#hTbl');
+		
+        if (incmg.visits) {
+            
+			if ($vTbl.length == 0) {
+				
+				// Create header row
+				$vTbl = $('<table id="vTbl" style="margin-top:5px;"/>');
+				
+				tr += '<thead><tr>';
+				for (let key in incmg.visits[0]) {
+					tr += '<th>' + key + '</th>';
+				}
+				tr += '</tr></thead><tbody></tbody>';
+				$vTbl.append(tr);
+				
+				$('#divMembers').append($vTbl).show();
+			}
 
-        if (incmg.data) {
-            $('#divTable').empty().append($(incmg.data)).show();
+			for (let i = 0; i < incmg.visits.length; i++) {
+				
+				tr += '<tr>';
+				for (let key in incmg.visits[i]) {
+					tr += '<td>' + incmg.visits[i][key] + '</td>';
+				}
+				tr += '</tr>';
+			}
+
+			$vTbl.find('tbody').append(tr);
         }
 
         if (incmg.members) {
-            $('#divMembers').empty().append($(incmg.members)).show();
+            
+			if ($mTbl.length == 0) {
+				
+				// Create header row
+				$mTbl = $('<table id="mTbl" style="margin-top:5px;"/>');
+				
+				tr += '<thead><tr>';
+				for (let key in incmg.visits[0]) {
+					tr += '<th>' + key + '</th>';
+				}
+				tr += '</tr></thead><tbody></tbody>';
+				$('#divMembers').append($mTbl).show();
+			}
+			
+			for (let i = 0; i < incmg.visits.length; i++) {
+				
+				tr += '<tr>';
+				for (let key in incmg.visits[i]) {
+					tr += '<td>' + incmg.visits[i][key] + '</td>';
+				}
+				tr += '</tr>';
+			}
+			
+			$mTbl.find('tbody').append(tr);
         }
 
         if (incmg.households) {
-            $('#divHouseholds').empty().append($(incmg.households)).show();
+            
+			if ($hTbl.length == 0) {
+				
+				// Create header row
+				$vTbl = $('<table id="hTbl" style="margin-top:5px;"/>');
+				
+				tr += '<thead><tr>';
+				for (let key in incmg.households[0]) {
+					tr += '<th>' + key + '</th>';
+				}
+				tr += '</tr></thead><tbody></tbody>';
+				$('#divMembers').append($hTbl).show();
+			}
+			
+			for (let i = 0; i < incmg.households.length; i++) {
+				
+				tr += '<tr>';
+				for (let key in incmg.households[i]) {
+					tr += '<td>' + incmg.households[i][key] + '</td>';
+				}
+				tr += '</tr>';
+			}
+			
+			$hTbl.find('tbody').append(tr);
         }
+        
+        $('#btnVisits').click();
     });
 
-}
-
-function visitSend(ids, $button) {
-	
-	
 }
 
 
@@ -339,7 +414,7 @@ $(document).ready(function() {
             }
             $('#TxButton').val('Working...');
             
-            var txIds = {};
+            let txIds = {};
             $('.hhk-txCbox').each(function () {
             	if ($(this).prop('checked')) {
             		txIds[$(this).data('txid')] = $(this).data('txid');
@@ -389,19 +464,24 @@ $(document).ready(function() {
         $('#divMembers').empty();
 
 
-        $('#btnVisits').button().show().click(function () {
+        $('#btnVisits')
+        	.button()
+        	.val('Start Visit Transfers')
+        	.show()
+        	.click(function () {
 
-            $(this).val('Stop Transferring Visits');
-            
-            var psgIds = {};
-            $('.hhk-txPsgs').each(function () {
-            	if ($(this).prop('checked')) {
-            		psgIds[$(this).data('idPsg')] = $(this).data('idPsg');
-            	}
-            });
-            
-            transferVisits(psgIds, $(this));
-        });
+	            $(this).hide();
+	            $('div#retrieve').empty();
+	
+	            $('.hhk-txPsgs').each(function () {
+	            	if ($(this).prop('checked')) {
+						$(this).parents('tr').prop('checked', false);
+	            		transferVisits($(this));
+	            		return false;
+	            	}
+	            });
+	
+	        });
     }
     
     var opt = {mode: 'popup',
