@@ -126,15 +126,56 @@ function transferRemote(transferIds) {
 
 }
 
+var stopTransfer;
+var $visitButton;
+var $psgCBs;
 
-function transferVisits($psgCB) {
+
+function throttleVisits() {
+	
+	if (stopTransfer) {
+		$visitButton.val('Resume Visit Transfers');
+		return;
+	}
+	
+	let donut = true;
+	
+	// Do one at a time.
+    $psgCBs.each(function () {
+	
+    	if ($(this).prop('checked')) {
+	
+    		donut = false;
+    		let props = {'checked':false, 'disabled':true};
+    		
+			$(this).prop(props).parents('tr').css('background-color', 'lightgray').end();
+			
+    		let posting = transferVisits($(this).data('idpsg'));
+    		
+    		posting.done(function () {
+				$(this).parents('tr').css('background-color', 'lightgreen');
+			});
+    		
+    		posting.fail(function () {
+				$(this).parents('tr').css('background-color', 'lightred');
+			});
+    		
+    		return false;  // leave each
+    	}
+    });
+    
+    if (donut) {
+		stopTransfer = true;
+		$visitButton.val('Start Visit Transfers');		
+	}
+}
+
+function transferVisits(idPsg) {
 	
     var parms = {
         cmd: 'visits',
-        ids: $psgCB.data('idPsg')
+        psgId: idPsg
     };
-    
-    $psgCB.parents('tr').css('background-color', 'lightgray');
 
     var posting = $.post('ws_tran.php', parms);
     
@@ -160,7 +201,6 @@ function transferVisits($psgCB) {
             return;
         }
 
-        $psgCB.parents('tr').css('background-color', 'lightgreen');
         
 		let tr = '';
 		let $vTbl= $('#vTbl');
@@ -174,16 +214,18 @@ function transferVisits($psgCB) {
 				// Create header row
 				$vTbl = $('<table id="vTbl" style="margin-top:5px;"/>');
 				
-				tr += '<thead><tr>';
+				tr = '<thead><tr>';
 				for (let key in incmg.visits[0]) {
 					tr += '<th>' + key + '</th>';
 				}
 				tr += '</tr></thead><tbody></tbody>';
+				
 				$vTbl.append(tr);
 				
 				$('#divMembers').append($vTbl).show();
 			}
 
+			tr = '';
 			for (let i = 0; i < incmg.visits.length; i++) {
 				
 				tr += '<tr>';
@@ -197,27 +239,34 @@ function transferVisits($psgCB) {
         }
 
         if (incmg.members) {
-            
+	            
 			if ($mTbl.length == 0) {
 				
 				// Create header row
 				$mTbl = $('<table id="mTbl" style="margin-top:5px;"/>');
 				
-				tr += '<thead><tr>';
-				for (let key in incmg.visits[0]) {
-					tr += '<th>' + key + '</th>';
+				tr = '<thead><tr>';
+				for (let id in incmg.members) {
+					for (let key in incmg.members[id]) {
+						tr += '<th>' + key + '</th>';
+					}
+					tr += '</tr></thead><tbody></tbody>';
+					break;
 				}
-				tr += '</tr></thead><tbody></tbody>';
+				
+				$mTbl.append(tr);
 				$('#divMembers').append($mTbl).show();
 			}
 			
-			for (let i = 0; i < incmg.visits.length; i++) {
+			tr = '';
+			for (let id in incmg.members) {
 				
 				tr += '<tr>';
-				for (let key in incmg.visits[i]) {
-					tr += '<td>' + incmg.visits[i][key] + '</td>';
+				for (let key in incmg.members[id]) {
+					tr += '<td>' + incmg.members[id][key] + '</td>';
 				}
 				tr += '</tr>';
+
 			}
 			
 			$mTbl.find('tbody').append(tr);
@@ -228,16 +277,19 @@ function transferVisits($psgCB) {
 			if ($hTbl.length == 0) {
 				
 				// Create header row
-				$vTbl = $('<table id="hTbl" style="margin-top:5px;"/>');
+				$hTbl = $('<table id="hTbl" style="margin-top:5px;"/>');
 				
-				tr += '<thead><tr>';
+				tr = '<thead><tr>';
 				for (let key in incmg.households[0]) {
 					tr += '<th>' + key + '</th>';
 				}
 				tr += '</tr></thead><tbody></tbody>';
+				
+				$hTbl.append(tr);
 				$('#divMembers').append($hTbl).show();
 			}
 			
+			tr = '';
 			for (let i = 0; i < incmg.households.length; i++) {
 				
 				tr += '<tr>';
@@ -250,9 +302,10 @@ function transferVisits($psgCB) {
 			$hTbl.find('tbody').append(tr);
         }
         
-        $('#btnVisits').click();
+        throttleVisits();
     });
 
+	return posting;
 }
 
 
@@ -463,27 +516,38 @@ $(document).ready(function() {
         $('#btnPay').hide();
         $('#divMembers').empty();
 
+		stopTransfer = true;
 
-        $('#btnVisits')
+		$visitButton = $('#btnVisits');
+		$psgCBs = $('.hhk-txPsgs');
+
+        $visitButton
         	.button()
         	.val('Start Visit Transfers')
         	.show()
         	.click(function () {
 
-	            $(this).hide();
 	            $('div#retrieve').empty();
-	
-	            $('.hhk-txPsgs').each(function () {
-	            	if ($(this).prop('checked')) {
-						$(this).parents('tr').prop('checked', false);
-	            		transferVisits($(this));
-	            		return false;
-	            	}
-	            });
-	
+
+				// Switch transfer control
+				if (stopTransfer) {
+					stopTransfer = false;
+				} else {
+					stopTransfer = true;
+				}
+
+				// UPdate controls
+				if (stopTransfer) {
+					// Stop
+					$(this).val('Stopping ...');
+				} else {
+					// start
+					$(this).val('Stop Transfers');
+					throttleVisits($visitButton, $psgCBs);
+				}
 	        });
     }
-    
+
     var opt = {mode: 'popup',
         popClose: true,
         popHt      : $('#keyMapDiagBox').height(),
@@ -491,8 +555,6 @@ $(document).ready(function() {
         popX       : 20,
         popY       : 20,
         popTitle   : 'Print Visit Key'};
-
-
 
 	var kmd = $('#keyMapDiagBox').dialog({
         autoOpen: false,

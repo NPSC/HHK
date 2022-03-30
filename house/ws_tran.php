@@ -100,24 +100,21 @@ try {
 
       case 'visits':
 
-        $ids = [];
+        $idPsg = 0;
 
-        if (isset($_REQUEST['ids'])) {
-            $ids = filter_var_array($_REQUEST['ids'], FILTER_SANITIZE_NUMBER_INT);
+        if (isset($_REQUEST['psgId'])) {
+            $idPsg = intval(filter_var($_REQUEST['psgId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $reply = $transfer->sendVisits($dbh, $uS->username, $ids);
+        // Visit results
+        $events['visits'] = $transfer->sendVisits($dbh, $uS->username, $idPsg);
 
-        // Show new members
+        // New members
         if (count($transfer->getMemberReplies()) > 0) {
             $events['members'] = $transfer->getMemberReplies();
         }
 
-        // Show visit results
-        $events['visits'] = $reply;
-
-
-        // show households
+        // Households
         if (count($transfer->getHhReplies()) > 0) {
             $events['households'] = $transfer->getHhReplies();
         }

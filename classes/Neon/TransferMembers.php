@@ -500,7 +500,7 @@ class TransferMembers {
      * @param string $end
      * @return array
      */
-    public function sendVisits(\PDO $dbh, $username, $idPsgs) {
+    public function sendVisits(\PDO $dbh, $username, $idPsg) {
 
         $this->memberReplies = [];
         $this->replies = [];
@@ -517,14 +517,7 @@ class TransferMembers {
         $guestIds = [];
         $sendIds = [];
         $psgs = [];
-        $psgList = [];
 
-        // clean up the visit ids
-        foreach ($idPsgs as $s) {
-            if (intval($s, 10) > 0){
-                $psgList[] = intval($s, 10);
-            }
-        }
 
         // Read stays from db
         $stmt = $dbh->query("SELECT
@@ -558,7 +551,7 @@ FROM
     name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0
-    AND s.Span_End_Date is not NULL AND hs.idPsg in (" . implode(',', $psgList) . ")
+    AND s.Span_End_Date is not NULL AND hs.idPsg = $idPsg
 ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
         // Count up guest stay dates and nights.
@@ -762,6 +755,8 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
     }
 
     protected function updateStayRecorded(\PDO $dbh, $stayIds) {
+
+        $idList = [];
 
         // clean up the stay ids
         foreach ($stayIds as $s) {
@@ -969,19 +964,28 @@ where
 
         $householdId = 0;
         $householdName = $primaryGuest['Last_Name'];
+        $relationId = $this->relationshipMapper->relateGuest($primaryGuest['Relation_Code']);
 
         if ($householdName == '') {
-            $this->setHhReplies(array('Household'=>'Create ', 'Result'=> 'Blank household name, Household not created.'));
+            $this->setHhReplies(array(
+                'Action'=>'Create',
+                'Account Id'=>$primaryGuest['accountId'],
+                'Result'=> 'Blank last name, Household not created.',
+                'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId)));
             return $householdId;
         }
 
         // Primary Guest must have an address
         if ($primaryGuest['Address'] == '') {
-            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Blank address, Household not created.'));
+            $this->setHhReplies(array(
+                'Action'=>'Create',
+                'Household'=>$householdName,
+                'Account Id'=>$primaryGuest['accountId'],
+                'Result'=> 'Blank address, Household not created.',
+                'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId)));
             return $householdId;
         }
 
-        $relationId = $this->relationshipMapper->relateGuest($primaryGuest['Relation_Code']);
 
 
         $base = 'household.';
@@ -999,12 +1003,12 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Failed: ' . $this->errorMessage));
+            $this->setHhReplies(array('Household'=>$householdName, 'Account Id'=>$primaryGuest['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId), 'Action'=>'Create', 'Result'=> 'Failed: ' . $this->errorMessage));
 
         } else if (isset($wsResult['houseHoldId'])) {
 
             $householdId = $wsResult['houseHoldId'];
-            $this->setHhReplies(array('Household'=>'Create '.$householdName, 'Result'=> 'Success HH Id = '. $householdId));
+            $this->setHhReplies(array('HH Id'=>$householdId, 'Household'=>$householdName, 'Account Id'=>$primaryGuest['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId), 'Action'=>'Create', 'Result'=> 'Success'));
         }
 
         return $householdId;
@@ -1092,7 +1096,10 @@ where
             $customParamStr .= '&' . http_build_query($cparm);
 
             $this->setHhReplies([
-                'Household'=>'Update '.$household['name'], 'Account Id'=>$ng['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId)
+                'HH Id'=>$household['houseHoldId'],
+                'Action'=>'Add', 'Household'=>$household['name'],
+                'Account Id'=>$ng['accountId'],
+                'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId)
             ]);
 
         }
@@ -1108,14 +1115,14 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result' => 'Failed: '.$this->errorMessage));
+            $this->setHhReplies(array('HH Id'=>$household['houseHoldId'], 'Household'=>$household['name'], 'Action'=>'Update', 'Result' => 'Failed: '.$this->errorMessage));
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
-            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result'=>'Failed: Household Id not returned'));
+            $this->setHhReplies(array('Household'=>$household['name'], 'Action'=>'Update', 'Result'=>'Failed: Household Id not returned'));
 
         } else {
-            $this->setHhReplies(array('Household'=>'Update '.$household['name'], 'Result'=>'Success'));
+            $this->setHhReplies(array('HH Id'=>$wsResult['houseHoldId'], 'Household'=>$household['name'], 'Action'=>'Update', 'Result'=>'Success'));
         }
 
     }
@@ -1903,6 +1910,12 @@ where n.idName = $idPrimaryGuest ");
 
         $hhReply = [];
 
+        if (isset($v['HH Id'])) {
+            $hhReply['HH Id'] = $v['HH Id'];
+        } else {
+            $hhReply['HH Id'] = '';
+        }
+
         if (isset($v['Household'])) {
             $hhReply['Household'] = $v['Household'];
         } else {
@@ -1925,6 +1938,12 @@ where n.idName = $idPrimaryGuest ");
             $hhReply['Result'] = $v['Result'];
         } else {
             $hhReply['Result'] = '';
+        }
+
+        if (isset($v['Action'])) {
+            $hhReply['Action'] = $v['Action'];
+        } else {
+            $hhReply['Action'] = '';
         }
 
 

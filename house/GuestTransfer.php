@@ -359,7 +359,7 @@ LIMIT 500");
             if ($first) {
                 $first = FALSE;
                 $td = HTMLTable::makeTd( HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'style'=>'margin-right:5px;'))
-                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idPsg'=>$idp)));
+                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp)));
             } else {
                 $td = HTMLTable::makeTd('');
             }
