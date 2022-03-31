@@ -221,8 +221,8 @@ function transferVisits(idPsg) {
 				tr += '</tr></thead><tbody></tbody>';
 				
 				$vTbl.append(tr);
-				
-				$('#divMembers').append($vTbl).show();
+				let title = $('<h3 style="margin-top:7px;">Visit Information</h3>');
+				$('#divMembers').append(title).append($vTbl).show();
 			}
 
 			tr = '';
@@ -255,7 +255,8 @@ function transferVisits(idPsg) {
 				}
 				
 				$mTbl.append(tr);
-				$('#divMembers').append($mTbl).show();
+				let title = $('<h3 style="margin-top:7px;">New Neon Members</h3>');
+				$('#divMembers').append(title).append($mTbl).show();
 			}
 			
 			tr = '';
@@ -286,7 +287,8 @@ function transferVisits(idPsg) {
 				tr += '</tr></thead><tbody></tbody>';
 				
 				$hTbl.append(tr);
-				$('#divMembers').append($hTbl).show();
+				let title = $('<h3 style="margin-top:7px;">Households</h3>');
+				$('#divMembers').append(title).append($hTbl).show();
 			}
 			
 			tr = '';

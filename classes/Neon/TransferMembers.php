@@ -528,6 +528,7 @@ class TransferMembers {
     IFNULL(v.idPrimaryGuest, 0) as `idPG`,
     IFNULL(n.External_Id, '') AS `accountId`,
     IFNULL(n.Name_Last, '') AS `Last_Name`,
+    IFNULL(n.Name_Full, '') AS `Full_Name`,
     IFNULL(hs.idHospital, 0) AS `idHospital`,
     IFNULL(hs.Diagnosis, '') AS `Diagnosis_Code`,
     IFNULL(hs.idPsg, 0) as `idPsg`,
@@ -605,6 +606,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                     'Nite_Counter' => $r['Nite_Counter'],
                     'Address' => $r['Address'],
                     'Last_Name' => $r['Last_Name'],
+                    'Full_Name' => $r['Full_Name'],
                 );
 
             }
@@ -742,6 +744,12 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
              $f['Hospital'] = $codes['Hospital'];
          }
 
+         // Check PSG id
+         if (isset($r['idPsg']) && isset($this->customFields['PSG_Number'])) {
+
+             $codes['PSG_Number'] = $r['idPsg'];
+             $f['PSG_Number'] = $codes['PSG_Number'];
+         }
 
 
          // Update Neon with these customdata.
@@ -794,6 +802,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
     IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
     IFNULL(n.External_Id, '') AS `accountId`,
     IFNULL(n.Name_Last, '') AS `Last_Name`,
+    IFNULL(n.Name_Full, '') AS `Full_Name`,
     IFNULL(hs.idPsg, 0) as `idPsg`,
     IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as `Address`
 from
@@ -971,6 +980,7 @@ where
                 'Action'=>'Create',
                 'Account Id'=>$primaryGuest['accountId'],
                 'Result'=> 'Blank last name, Household not created.',
+                'Name' => $primaryGuest['Full_Name'],
                 'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId)));
             return $householdId;
         }
@@ -982,6 +992,7 @@ where
                 'Household'=>$householdName,
                 'Account Id'=>$primaryGuest['accountId'],
                 'Result'=> 'Blank address, Household not created.',
+                'Name' => $primaryGuest['Full_Name'],
                 'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId)));
             return $householdId;
         }
@@ -1003,12 +1014,25 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $this->setHhReplies(array('Household'=>$householdName, 'Account Id'=>$primaryGuest['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId), 'Action'=>'Create', 'Result'=> 'Failed: ' . $this->errorMessage));
+            $this->setHhReplies(array(
+                'Household'=>$householdName,
+                'Account Id'=>$primaryGuest['accountId'],
+                'Name' => $primaryGuest['Full_Name'],
+                'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId),
+                'Action'=>'Create',
+                'Result'=> 'Failed: ' . $this->errorMessage));
 
         } else if (isset($wsResult['houseHoldId'])) {
 
             $householdId = $wsResult['houseHoldId'];
-            $this->setHhReplies(array('HH Id'=>$householdId, 'Household'=>$householdName, 'Account Id'=>$primaryGuest['accountId'], 'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId), 'Action'=>'Create', 'Result'=> 'Success'));
+            $this->setHhReplies(array(
+                'HH Id'=>$householdId,
+                'Household'=>$householdName,
+                'Account Id'=>$primaryGuest['accountId'],
+                'Name' => $primaryGuest['Full_Name'],
+                'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId),
+                'Action'=>'Create',
+                'Result'=> 'Success'));
         }
 
         return $householdId;
@@ -1052,7 +1076,12 @@ where
                             $newContacts[] = $g;
                         } else {
                             $this->setHhReplies(array(
-                                'Household'=> $households['houseHolds']['houseHold'][0]['name'], 'Account Id'=>$g['accountId'], 'Result' => 'Address Mismatch'
+                                'Household'=> $households['houseHolds']['houseHold'][0]['name'],
+                                'HH Id'=>$households['houseHolds']['houseHold'][0]['houseHoldId'],
+                                'Account Id'=>$g['accountId'],
+                                'Name' => $g['Full_Name'],
+                                'Action'=>'Join',
+                                'Result' => 'Address Mismatch'
                             ));
 
                         }
@@ -1063,7 +1092,13 @@ where
             if (count($newContacts) > 0) {
                 $this->updateHousehold($newContacts, $households['houseHolds']['houseHold'][0]);
             } else {
-                $this->setHhReplies(array('Household'=>$households['houseHolds']['houseHold'][0]['name'], 'Result'=>'Nobody Added.'));
+                $this->setHhReplies(array(
+                    'Household'=>$households['houseHolds']['houseHold'][0]['name'],
+                    'HH Id'=>$households['houseHolds']['houseHold'][0]['houseHoldId'],
+                    'Action'=>'Join',
+                    'Account Id'=>'-',
+                    'Name' => '-',
+                    'Result'=>'Nobody Added.'));
             }
         }
     }
@@ -1097,9 +1132,11 @@ where
 
             $this->setHhReplies([
                 'HH Id'=>$household['houseHoldId'],
-                'Action'=>'Add', 'Household'=>$household['name'],
+                'Action'=>'Join',
+                'Household'=>$household['name'],
                 'Account Id'=>$ng['accountId'],
-                'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId)
+                'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId),
+                'Name'=>$ng['Full_Name']
             ]);
 
         }
@@ -1115,14 +1152,32 @@ where
 
         if ($this->checkError($wsResult)) {
 
-            $this->setHhReplies(array('HH Id'=>$household['houseHoldId'], 'Household'=>$household['name'], 'Action'=>'Update', 'Result' => 'Failed: '.$this->errorMessage));
+            $this->setHhReplies(array(
+                'HH Id'=>$household['houseHoldId'],
+                'Household'=>$household['name'],
+                'Action'=>'Update',
+                'Account Id'=>'-',
+                'Name'=>'-',
+                'Result' => 'Failed: '.$this->errorMessage
+
+            ));
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
-            $this->setHhReplies(array('Household'=>$household['name'], 'Action'=>'Update', 'Result'=>'Failed: Household Id not returned'));
+            $this->setHhReplies(array(
+                'Household'=>$household['name'],
+                'Action'=>'Update',
+                'Result'=>'Failed: Household Id not returned'));
 
         } else {
-            $this->setHhReplies(array('HH Id'=>$wsResult['houseHoldId'], 'Household'=>$household['name'], 'Action'=>'Update', 'Result'=>'Success'));
+            $this->setHhReplies(array(
+                'HH Id'=>$wsResult['houseHoldId'],
+                'Household'=>$household['name'],
+                'Action'=>'Update',
+                'Result'=>'Success',
+                'Name'=>'-',
+                'Account Id'=>'-',
+            ));
         }
 
     }
@@ -1181,20 +1236,20 @@ where n.idName = $idPrimaryGuest ");
         // Log in with the web service
         $this->openTarget($this->userId, $this->password);
 
-        // Load search parameters for each source ID
-        $stmt = $this->loadSearchDB($dbh, $sourceIds);
-
-        if (is_null($stmt)) {
-            $replys[0] = array('error'=>'No local records were found.');
-            return $replys;
-        }
-
         // Load Individual types
         $stmtList = $dbh->query("Select * from neon_type_map where List_Name = 'individualTypes'");
         $invTypes = array();
 
         while ($t = $stmtList->fetch(\PDO::FETCH_ASSOC)) {
             $invTypes[] = $t;
+        }
+
+        // Load search parameters for each source ID
+        $stmt = $this->loadSearchDB($dbh, $sourceIds);
+
+        if (is_null($stmt)) {
+            $replys[0] = array('error'=>'No local records were found.');
+            return $replys;
         }
 
 
@@ -1928,22 +1983,28 @@ where n.idName = $idPrimaryGuest ");
             $hhReply['Account Id'] = '';
         }
 
+        if (isset($v['Name'])) {
+            $hhReply['Name'] = $v['Name'];
+        } else {
+            $hhReply['Name'] = '';
+        }
+
         if (isset($v['Relationship'])) {
             $hhReply['Relationship'] = $v['Relationship'];
         } else {
             $hhReply['Relationship'] = '';
         }
 
-        if (isset($v['Result'])) {
-            $hhReply['Result'] = $v['Result'];
-        } else {
-            $hhReply['Result'] = '';
-        }
-
         if (isset($v['Action'])) {
             $hhReply['Action'] = $v['Action'];
         } else {
             $hhReply['Action'] = '';
+        }
+
+        if (isset($v['Result'])) {
+            $hhReply['Result'] = $v['Result'];
+        } else {
+            $hhReply['Result'] = '';
         }
 
 
