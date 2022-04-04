@@ -635,16 +635,39 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
                 if (isset($f['Account ID']) && $f['Account ID'] !== '') {
                     $guestIds[$f['HHK_ID']]['accountId'] = $f['Account ID'];
+                } else if (isset($f['Result']) && $f['Result'] == 'Account Deleted at Neon') {
+                    // no further processing
+                    unset($guestIds[$f['HHK_ID']]);
                 }
             }
         }
+
+        $badUpdateIds = [];
 
         // Fill the custom parameters for each visit.
         foreach ($guestIds as $r ) {
 
             // Write the visits to Neon
-            $visitReplys[] = $this->updateVisitParms($dbh, $r, $psgs);
+            try {
+                $visitReplys[] = $this->updateVisitParms($dbh, $r, $psgs);
+            } catch (\Exception $e) {
+                $visitReplys[] = array(
+                    'First_Visit'=>'',
+                    'Last_Visit'=>'',
+                    'Nite_Counter'=>'',
+                    'Diagnosis'=>'',
+                    'Hospital'=>'',
+                    'PSG_Number'=>$r['idPsg'],
+                    'Update_Message'=>'Remote account id not found for ' . $r['Name'] . ': HHK Id = ' . $r['hhkId'] . ' Account Id = '. $r['accountId']
+                );
+                $badUpdateIds[] = $r['hhkId'];
+            }
 
+        }
+
+        // Remove bad updates
+        foreach ($badUpdateIds as $b) {
+            unset($guestIds[$b]);
         }
 
         // Mark the stays record as "Recorded".
@@ -753,11 +776,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
 
          // Update Neon with these customdata.
-         try {
-            $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes);
-         } catch (RuntimeException $e) {
-             $f['Update_Message'] = $e->getMessage();
-         }
+         $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes);
 
          return $f;
     }
@@ -1052,6 +1071,8 @@ where
 
         if ($countHouseholds == 1) {
 
+            $notJoined = 0;
+
             foreach ($guests as $g) {
 
                 if ($g['idPsg'] == $pg['idPsg'] && $g['hhkId'] != $pg['hhkId']) {
@@ -1084,6 +1105,7 @@ where
                                 'Result' => 'Address Mismatch'
                             ));
 
+                            $notJoined++;
                         }
                     }
                 }
@@ -1091,14 +1113,14 @@ where
 
             if (count($newContacts) > 0) {
                 $this->updateHousehold($newContacts, $households['houseHolds']['houseHold'][0]);
-            } else {
+            } else if ($notJoined > 0) {
                 $this->setHhReplies(array(
                     'Household'=>$households['houseHolds']['houseHold'][0]['name'],
                     'HH Id'=>$households['houseHolds']['houseHold'][0]['houseHoldId'],
-                    'Action'=>'Join',
+                    'Action'=>'Update',
                     'Account Id'=>'-',
                     'Name' => '-',
-                    'Result'=>'Nobody Added.'));
+                    'Result'=>'Nobody joined this household.'));
             }
         }
     }
@@ -1107,7 +1129,6 @@ where
 
         $base = 'household.';
         $customParamStr = '';
-
 
         $param[$base . 'householdId'] = $household['houseHoldId'];
         $param[$base . 'name'] = $household['name'];
@@ -1159,8 +1180,20 @@ where
                 'Account Id'=>'-',
                 'Name'=>'-',
                 'Result' => 'Failed: '.$this->errorMessage
-
             ));
+
+            // Check for special error codes.
+            foreach ($wsResult['errors'] as $errors) {
+
+                foreach ($errors as $e) {
+
+                    // Check for "Given Household account is already a primary contact in another houseHold."
+                    if ($e['errorCode'] == '10158') {
+                        $this->deleteHousehold($household, $pg['accountId']);
+                        break;
+                    }
+                }
+            }
 
         } else if (isset($wsResult['houseHoldId']) === FALSE) {
 
@@ -1182,12 +1215,43 @@ where
 
     }
 
+    protected function deleteHousehold($household, $accountId) {
+
+        $request = array(
+            'method' => 'account/deleteHouseHold',
+            'parameters' => array('houseHoldId' => $household['houseHoldId'])
+        );
+
+        $wsResult = $this->webService->go($request);
+
+        if ($this->checkError($wsResult)) {
+
+            $this->setHhReplies(array(
+                'HH Id'=>$household['houseHoldId'],
+                'Household'=>$household['name'],
+                'Account Id'=>$accountId,
+                'Action'=>'Delete',
+                'Result'=> 'Failed: ' . $this->errorMessage));
+
+        } else {
+
+            $this->setHhReplies(array(
+                'HH Id'=>$household['houseHoldId'],
+                'Household'=>$household['name'],
+                'Account Id'=>$accountId,
+                'Action'=>'Delete',
+                'Result'=> 'Success: HouseHold deleted.'));
+        }
+    }
+
+
     public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg) {
 
         $stmt = $dbh->query("Select
 	n.idName as `hhkId`,
     IFNULL(n.External_Id, '') AS `accountId`,
     IFNULL(n.Name_Last, '') AS `Last_Name`,
+    IFNULL(n.Name_Full, '') AS 'Full_Name`,
     IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
     CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address'
 from
@@ -1213,6 +1277,7 @@ where n.idName = $idPrimaryGuest ");
             'Relation_Code' => $r['Relation_Code'],
             'Address' => $r['Address'],
             'Last_Name' => $r['Last_Name'],
+            'Full_Name' => $r['Full_Name']
         );
     }
 
@@ -1279,7 +1344,7 @@ where n.idName = $idPrimaryGuest ");
             if ( isset($result['page']['totalResults'] ) && $result['page']['totalResults'] == 0 && $r['Account Id'] != '') {
 
                 // Account was deleted from the Neon side.
-                $f['Result'] = 'Account Deleted at Neon';
+                $f['Result'] = 'Account Deleted at Neon';   // procedure sendVisits() depends upon the exact wording of the quoted text. circa line 638
                 $replys[$r['HHK_ID']] = $f;
                 continue;
 

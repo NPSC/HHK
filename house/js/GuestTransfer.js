@@ -150,15 +150,7 @@ function throttleVisits() {
     		
 			$(this).prop(props).parents('tr').css('background-color', 'lightgray').end();
 			
-    		let posting = transferVisits($(this).data('idpsg'));
-    		
-    		posting.done(function () {
-				$(this).parents('tr').css('background-color', 'lightgreen');
-			});
-    		
-    		posting.fail(function () {
-				$(this).parents('tr').css('background-color', 'lightred');
-			});
+    		transferVisits($(this).data('idpsg'));
     		
     		return false;  // leave each
     	}
@@ -172,12 +164,12 @@ function throttleVisits() {
 
 function transferVisits(idPsg) {
 	
-    var parms = {
+    let parms = {
         cmd: 'visits',
         psgId: idPsg
     };
 
-    var posting = $.post('ws_tran.php', parms);
+    let posting = $.post('ws_tran.php', parms);
     
     posting.done(function(incmg) {
 
@@ -200,50 +192,18 @@ function transferVisits(idPsg) {
             flagAlertMessage(incmg.error, true);
             return;
         }
-
         
 		let tr = '';
 		let $vTbl= $('#vTbl');
 		let $mTbl = $('#mTbl');
 		let $hTbl = $('#hTbl');
 		
-        if (incmg.visits) {
-            
-			if ($vTbl.length == 0) {
-				
-				// Create header row
-				$vTbl = $('<table id="vTbl" style="margin-top:5px;"/>');
-				
-				tr = '<thead><tr>';
-				for (let key in incmg.visits[0]) {
-					tr += '<th>' + key + '</th>';
-				}
-				tr += '</tr></thead><tbody></tbody>';
-				
-				$vTbl.append(tr);
-				let title = $('<h3 style="margin-top:7px;">Visit Information</h3>');
-				$('#divMembers').append(title).append($vTbl).show();
-			}
-
-			tr = '';
-			for (let i = 0; i < incmg.visits.length; i++) {
-				
-				tr += '<tr>';
-				for (let key in incmg.visits[i]) {
-					tr += '<td>' + incmg.visits[i][key] + '</td>';
-				}
-				tr += '</tr>';
-			}
-
-			$vTbl.find('tbody').append(tr);
-        }
-
         if (incmg.members) {
 	            
 			if ($mTbl.length == 0) {
 				
 				// Create header row
-				$mTbl = $('<table id="mTbl" style="margin-top:5px;"/>');
+				$mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
 				
 				tr = '<thead><tr>';
 				for (let id in incmg.members) {
@@ -273,12 +233,43 @@ function transferVisits(idPsg) {
 			$mTbl.find('tbody').append(tr);
         }
 
+        if (incmg.visits) {
+            
+			if ($vTbl.length == 0) {
+				
+				// Create header row
+				$vTbl = $('<table id="vTbl" style="margin-top:2px;"/>');
+				
+				tr = '<thead><tr>';
+				for (let key in incmg.visits[0]) {
+					tr += '<th>' + key + '</th>';
+				}
+				tr += '</tr></thead><tbody></tbody>';
+				
+				$vTbl.append(tr);
+				let title = $('<h3 style="margin-top:7px;">Visit Information</h3>');
+				$('#divMembers').append(title).append($vTbl).show();
+			}
+
+			tr = '';
+			for (let i = 0; i < incmg.visits.length; i++) {
+				
+				tr += '<tr>';
+				for (let key in incmg.visits[i]) {
+					tr += '<td>' + incmg.visits[i][key] + '</td>';
+				}
+				tr += '</tr>';
+			}
+
+			$vTbl.find('tbody').append(tr);
+        }
+
         if (incmg.households) {
             
 			if ($hTbl.length == 0) {
 				
 				// Create header row
-				$hTbl = $('<table id="hTbl" style="margin-top:5px;"/>');
+				$hTbl = $('<table id="hTbl" style="margin-top:2px;"/>');
 				
 				tr = '<thead><tr>';
 				for (let key in incmg.households[0]) {
@@ -307,7 +298,7 @@ function transferVisits(idPsg) {
         throttleVisits();
     });
 
-	return posting;
+	return;
 }
 
 
