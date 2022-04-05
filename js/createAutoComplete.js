@@ -56,11 +56,11 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
     var cache = {};
     var _source = function (request, response, cache, shoNew, inputParms, $basisCtrl, minChars, searchURL) {
     
-        var term = request.term.substr(0,minChars);
+        var term = request.term.toString().substr(0,minChars);
         if ( term in cache ) {
 
             var bldr, 
-                terms = request.term.replace(',', '').split(" "),
+                terms = request.term.toString().replace(',', '').split(" "),
                 matcher,
                 filtered;
 
@@ -68,7 +68,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
                 bldr = '\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ')'
                         + '|\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ')';
             } else {
-                bldr = '\\b(' + $.ui.autocomplete.escapeRegex( request.term ) + ')';
+                bldr = '\\b(' + $.ui.autocomplete.escapeRegex( request.term.toString() ) + ')';
             }
 
             matcher = new RegExp( bldr , "i" );
