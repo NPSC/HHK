@@ -88,7 +88,7 @@ function getNonVisitors(\PDO $dbh, $visitIds) {
     IFNULL(h.Title, '') AS `Hospital`,
     IFNULL(g.Description, '') AS `Diagnosis`,
     IFNULL(hs.idPsg, 0) as `idPsg`,
-    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as `Address`,
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`,
     v.idPrimaryGuest
 
 from
@@ -102,7 +102,7 @@ from
         LEFT JOIN
     name n on n.idName = ng.idName
         LEFT JOIN
-    name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
         LEFT JOIN
     hospital h on hs.idHospital = h.idHospital
         LEFT JOIN
@@ -183,7 +183,7 @@ function searchVisits(\PDO $dbh, $start, $end, $maxGuests) {
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
     (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address',
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`,
     v.idPrimaryGuest,
     hs.idPsg,
     hs.idPatient
@@ -202,7 +202,7 @@ FROM
         LEFT JOIN
     gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
         LEFT JOIN
-    name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
     s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0
     AND DATE(s.Span_End_Date) < DATE('$end')
@@ -335,7 +335,6 @@ LIMIT 500");
             $g['Guest to PG'] = '(Address)';
         }
 
-        unset($g['Address']);
         unset($g['Relation_Code']);
 
         $idPsg = $g['idPsg'];
@@ -348,7 +347,7 @@ LIMIT 500");
 
     // Show table
     $tbl = new HTMLTable();
-    $tbl->addHeaderTr(HTMLTable::makeTh('PSG').HTMLTable::makeTh('HHK Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Diagnosis').HTMLTable::makeTh('Hospital').HTMLTable::makeTh('Start 1st Visit')
+    $tbl->addHeaderTr(HTMLTable::makeTh('PSG').HTMLTable::makeTh('HHK Id').HTMLTable::makeTh('Name').HTMLTable::makeTh('Address').HTMLTable::makeTh('Diagnosis').HTMLTable::makeTh('Hospital').HTMLTable::makeTh('Start 1st Visit')
         .HTMLTable::makeTh('End Last Visit').HTMLTable::makeTh('Nights').HTMLTable::makeTh('PG Id').HTMLTable::makeTh('Guest to Patient').HTMLTable::makeTh('PG to Patient').HTMLTable::makeTh('Guest to PG'));
 
     foreach ($rows as $idp => $r) {
@@ -368,6 +367,7 @@ LIMIT 500");
             $tbl->addBodyTr($td
                 .HTMLTable::makeTd($g['HHK Id'])
                 .HTMLTable::makeTd($g['Name'])
+                .HTMLTable::makeTd($g['Address'])
                 .HTMLTable::makeTd($g['Diagnosis'])
                 .HTMLTable::makeTd($g['Hospital'])
                 .HTMLTable::makeTd($g['Start 1st Visit'])

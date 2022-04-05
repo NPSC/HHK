@@ -148,7 +148,9 @@ function throttleVisits() {
     		donut = false;
     		let props = {'checked':false, 'disabled':true};
     		
-			$(this).prop(props).parents('tr').css('background-color', 'lightgray').end();
+    		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray')
+    		
+			$(this).prop(props).end();
 			
     		transferVisits($(this).data('idpsg'));
     		
