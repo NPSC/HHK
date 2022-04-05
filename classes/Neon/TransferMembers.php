@@ -47,6 +47,9 @@ class TransferMembers {
         $this->pageNumber = 1;
         $this->txMethod = '';
         $this->txParams = '';
+        $this->hhReplies = [];
+        $this->memberReplies = [];
+        $this->replies = [];
     }
 
 
@@ -658,26 +661,26 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                     'Diagnosis'=>'',
                     'Hospital'=>'',
                     'PSG_Number'=>$r['idPsg'],
-                    'Update_Message'=>'Remote account id not found for ' . $r['Name'] . ': HHK Id = ' . $r['hhkId'] . ' Account Id = '. $r['accountId']
+                    'Update_Message'=>'Neon account id not found for ' . $r['Full_Name'] . ': HHK Id = ' . $r['hhkId'] . ' Account Id = '. $r['accountId']
                 );
-                $badUpdateIds[] = $r['hhkId'];
+                $badUpdateIds[$r['hhkId']] = $r['hhkId'];
             }
 
         }
+
+        // Mark the stays record as "Recorded".
+        $this->updateStayRecorded($dbh, $stayIds);
 
         // Remove bad updates
         foreach ($badUpdateIds as $b) {
             unset($guestIds[$b]);
         }
 
-        // Mark the stays record as "Recorded".
-        $this->updateStayRecorded($dbh, $stayIds);
-
         // Relationship Mapper object.
         $this->relationshipMapper = new RelationshipMapper($dbh);
 
         // Create or update households.
-        $this->sendHouseholds($dbh, $guestIds, $visits);
+        $this->sendHouseholds($dbh, $guestIds, $visits, $badUpdateIds);
 
         return $visitReplys;
     }
@@ -859,7 +862,7 @@ where
 
     }
 
-    protected function sendHouseholds(\PDO $dbh, $guests, $visits) {
+    protected function sendHouseholds(\PDO $dbh, $guests, $visits, $badUpdateIds) {
 
         foreach ($visits as $v) {
 
@@ -876,6 +879,11 @@ where
 
             // Primary guest have an Neon Account Id?
             if ($guests[$v['idPG']]['accountId'] < 1) {
+                continue;
+            }
+
+            // Bad account ID
+            if (isset($badUpdateIds[$guests[$v['idPG']]['hhkId']])) {
                 continue;
             }
 
@@ -1251,13 +1259,13 @@ where
 	n.idName as `hhkId`,
     IFNULL(n.External_Id, '') AS `accountId`,
     IFNULL(n.Name_Last, '') AS `Last_Name`,
-    IFNULL(n.Name_Full, '') AS 'Full_Name`,
+    IFNULL(n.Name_Full, '') AS `Full_Name`,
     IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
-    CONCAT_WS(' ', na.Address_1, na.Address_2) as 'Address'
-from
-	name n
-		left join
-    name_guest ng on n.idName = ng.idName and ng.idPsg = $idPsg
+    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as `Address`
+FROM
+	`name` n
+		LEFT JOIN
+    `name_guest` ng on n.idName = ng.idName and ng.idPsg = $idPsg
 		LEFT JOIN
     name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 where n.idName = $idPrimaryGuest ");
