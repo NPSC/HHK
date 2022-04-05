@@ -271,16 +271,16 @@ abstract class AbstractRole {
 
         // Also set patient member type if guest is the patient.
         if ($this->patientRelationshipCode == RelLinkType::Self) {
-        	
+
             $message .= $this->getRoleMember()->saveMemberType($dbh, $uname, VolMemberType::Patient);
-            
+
             // Also set guest type if patient is staying
             if ($isStaying) {
             	$message .= $this->getRoleMember()->saveMemberType($dbh, $uname, VolMemberType::Guest);
             }
-            
+
         }
-        
+
 
         // Phone
         $message .= $this->getPhonesObj()->savePost($dbh, $post, $uname, $idPrefix);
@@ -326,11 +326,11 @@ abstract class AbstractRole {
 from stays s join visit v on s.idVisit = v.idVisit
 	left join registration r on v.idRegistration = r.idRegistration
 where r.idPsg = $idPsg and s.idName = " . $id;
-            
+
             if ($ignoreZeroDayStays) {
             	$query .= " and (s.Span_End_Date is NULL or DATEDIFF(s.Span_End_Date, s.Span_Start_Date) > 0)";
             }
-            	
+
             $stmt = $dbh->query($query);
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
