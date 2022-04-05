@@ -359,9 +359,10 @@ LIMIT 500");
             if ($first) {
                 $first = FALSE;
                 $td = HTMLTable::makeTd( HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'style'=>'margin-right:5px;'))
-                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp)));
+                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp))
+                    , array('rowspan'=>count($rows[$idp]), 'style'=>'vertical-align:top;'));
             } else {
-                $td = HTMLTable::makeTd('');
+                $td = '';
             }
 
             $tbl->addBodyTr($td
@@ -674,6 +675,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
 
 }
 
+// Get Hospitals and Diagnosis button.
 if ($wsConfig->getString('custom_fields', 'First_Visit', '') != '') {
 
     $btnGetKey = HTMLInput::generateMarkup('Show Diagnosis & Hospitals Key', array('id'=>'btnGetKey', 'type'=>'button', 'style'=>'margin-left:3px; font-size:small;'));
@@ -687,7 +689,6 @@ if ($noRecordsMsg != '') {
 
 
 // Setups for the page.
-
 $monthSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($monthArray, $months, FALSE), array('name' => 'selIntMonth[]', 'size'=>'5','multiple'=>'multiple'));
 $yearSelector = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, '2010', $uS->fy_diff_Months, FALSE), array('name' => 'selIntYear', 'size'=>'5'));
 $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts, $calSelection, FALSE), array('name' => 'selCalendar', 'size'=>count($calOpts)));
