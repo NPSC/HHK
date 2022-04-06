@@ -204,7 +204,7 @@ FROM
         LEFT JOIN
     name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
-    s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0
+    s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0 AND n.External_Id != '" . self::EXCLUDE_TERM . "'
     AND DATE(s.Span_End_Date) < DATE('$end')
 ORDER BY hs.idPsg
 LIMIT 500");
@@ -357,8 +357,11 @@ LIMIT 500");
 
             if ($first) {
                 $first = FALSE;
-                $td = HTMLTable::makeTd( HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'style'=>'margin-right:5px;'))
-                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp))
+                $td = HTMLTable::makeTd( HTMLContainer::generateMarkup('label', $idp, array('for'=>'cbIdPSG'.$idp, 'style'=>'margin-right:3px;'))
+                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-txPsgs', 'name'=>'cbIdPSG'.$idp, 'checked'=>'checked', 'data-idpsg'=>$idp, 'title'=>'Check to include in the transfer.'))
+                    .'&#32;&#124;&#32;'
+                    .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-exPsg', 'name'=>'cbExPSG'.$idp, 'data-idpsg'=>$idp, 'style'=>'margin-right:3px;', 'title'=>'Check to permanently exclude from Neon.'))
+                    .HTMLContainer::generateMarkup('label', 'Excld', array('for'=>'cbExPSG'.$idp))
                     , array('rowspan'=>count($rows[$idp]), 'style'=>'vertical-align:top;'));
             } else {
                 $td = '';
@@ -377,7 +380,7 @@ LIMIT 500");
                 .HTMLTable::makeTd($g['Guest to Patient'])
                 .HTMLTable::makeTd($g['PG to Patient'])
                 .HTMLTable::makeTd($g['Guest to PG'])
-                , array('class'=>'hhk-'.$idp));
+                , array('id'=>'hhk-'.$idp));
         }
 
     }

@@ -121,6 +121,20 @@ try {
 
         break;
 
+      case 'excludes':
+
+          $idPsgs = [];
+
+          if (isset($_REQUEST['psgIds'])) {
+              $idPsgs = filter_var_array($_REQUEST['psgIds'], FILTER_SANITIZE_NUMBER_INT);
+          }
+
+          // Neon Exclude results
+          $events['excludes'] = $transfer->sendExcludes($dbh, $idPsgs, $uS->username);
+
+
+          break;
+
       case 'sch':
 
         $arguments = array(

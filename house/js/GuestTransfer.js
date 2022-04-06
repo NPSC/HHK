@@ -126,16 +126,36 @@ function transferRemote(transferIds) {
 
 }
 
-var stopTransfer;
-var $visitButton;
-var $psgCBs;
-
+var stopTransfer,
+	$visitButton,
+	$psgCBs,
+	$excCBs;
 
 function throttleVisits() {
 	
 	if (stopTransfer) {
 		$visitButton.val('Resume Visit Transfers');
 		return;
+	}
+	
+	let psgs = [];
+	
+	// do the excludes
+	$excCBs.each(function () {
+		
+    	if ($(this).prop('checked')) {
+	
+			psgs.push($(this).data('idpsg'));
+    		
+    		$('#hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+    		
+			$(this).prop({'checked':false, 'disabled':true});
+			
+		}
+	});
+	
+	if (psgs.length > 0) {
+		transferExcludes(psgs);
 	}
 	
 	let donut = true;
@@ -148,7 +168,7 @@ function throttleVisits() {
     		donut = false;
     		let props = {'checked':false, 'disabled':true};
     		
-    		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray')
+    		$('#hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
     		
 			$(this).prop(props).end();
 			
@@ -162,6 +182,74 @@ function throttleVisits() {
 		stopTransfer = true;
 		$visitButton.val('Start Visit Transfers');		
 	}
+}
+
+function transferExcludes(psgs) {
+	
+    let parms = {
+        cmd: 'excludes',
+        psgIds: psgs
+    };
+
+    let posting = $.post('ws_tran.php', parms);
+    
+    posting.done(function(incmg) {
+	
+        if (!incmg) {
+            alert('Bad Reply from HHK Web Server');
+            return;
+        }
+        try {
+            incmg = $.parseJSON(incmg);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+        
+		let tr = '';
+		let $eTbl= $('#eTbl');
+		
+        if (incmg.excludes) {
+	            
+			if ($eTbl.length == 0) {
+				
+				// Create header row
+				$eTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+				
+				tr = '<thead><tr>';
+				for (let key in incmg.excludes[0]) {
+					tr += '<th>' + key + '</th>';
+				}
+				tr += '</tr></thead><tbody></tbody>';
+				
+				$eTbl.append(tr);
+				let title = $('<h3 style="margin-top:7px;">Excluded from Neon</h3>');
+				$('#divMembers').append(title).append($eTbl).show();
+			}
+			
+			tr = '';
+			for (let i = 0; i < incmg.excludes.length; i++) {
+				
+				tr += '<tr>';
+				for (let key in incmg.excludes[i]) {
+					tr += '<td>' + incmg.excludes[i][key] + '</td>';
+				}
+				tr += '</tr>';
+			}
+			
+			$eTbl.find('tbody').append(tr);
+        }
+
+	});
 }
 
 function transferVisits(idPsg) {
@@ -515,6 +603,24 @@ $(document).ready(function() {
 
 		$visitButton = $('#btnVisits');
 		$psgCBs = $('.hhk-txPsgs');
+		$excCBs = $('.hhk-exPsg');
+		
+		$excCBs.change(function () {
+			
+			let $cbPsg = $('#cbIdPSG'+$(this).data('idpsg'));
+			
+			if ($(this).prop('checked')) {
+				
+				let props = {'checked':false, 'disabled':true};
+				$cbPsg.prop(props);
+				$('#hhk-' + $(this).data('idpsg')).css('background-color', 'lightpink');
+
+				
+			} else {
+				$cbPsg.prop('disabled', false);
+				$('#hhk-' + $(this).data('idpsg')).css('background-color', 'transparent');
+			}
+		});
 
         $visitButton
         	.button()
@@ -538,7 +644,7 @@ $(document).ready(function() {
 				} else {
 					// start
 					$(this).val('Stop Transfers');
-					throttleVisits($visitButton, $psgCBs);
+					throttleVisits();
 				}
 	        });
     }
