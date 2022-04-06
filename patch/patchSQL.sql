@@ -35,3 +35,5 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0');
+
+UPDATE `hospital_stay` SET `MRN` = REPLACE(REPLACE(REPLACE(TRIM(`MRN`), '/', ''), '-',''), '_', ''); -- remove whitespace, /,-,_ from MRNs

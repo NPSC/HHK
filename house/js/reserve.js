@@ -267,6 +267,9 @@ $(document).ready(function() {
 
         createAutoComplete($guestSearch, 3, {cmd: 'role', gp:'1'}, getGuest);
 
+        // MRN search
+        createAutoComplete($('#gstMRNSearch'), 3, {cmd: 'role', gp:'1', mrn:'1'}, getGuest);
+        
         // Phone number search
         createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
 

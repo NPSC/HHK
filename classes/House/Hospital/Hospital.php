@@ -555,7 +555,9 @@ $(document).ready(function () {
         	$hstay->setRoom(filter_var($post['psgRoom'], FILTER_SANITIZE_STRING));
         }
         if (isset($post['psgMrn'])) {
-        	$hstay->setMrn(filter_var($post['psgMrn'], FILTER_SANITIZE_STRING));
+            $MRN = filter_var($post['psgMrn'], FILTER_SANITIZE_STRING);
+            $MRN = str_replace(["/", "-","_"], "", trim($MRN));
+            $hstay->setMrn($MRN);
         }
         if (isset($post['txtEntryDate'])) {
             $dateStr = filter_var($post['txtEntryDate'], FILTER_SANITIZE_STRING);

@@ -56,6 +56,9 @@ $(document).ready(function() {
     createAutoComplete($('#phSearch'), 5, {cmd: 'role', gp:'1'}, function (item) {
         window.open('Reserve.php?id=' + item.id + '&title=c', '_self');
     });
+    createAutoComplete($('#MRNSearch'), 3, {cmd: 'role', gp:'1', mrn:'1'}, function (item) {
+        window.open('Reserve.php?id=' + item.id + '&title=c', '_self');
+    });
     $('#Search').keypress(function(event) {
         $(this).removeClass('ui-state-highlight');
     });

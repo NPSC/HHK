@@ -75,17 +75,24 @@ abstract class AbstractRole {
      * @param string $title
      * @return array Multiple pieces of the search header.
      */
-    public static function createSearchHeaderMkup($prefix = "", $title = "", $showPhoneSearch = TRUE) {
+    public static function createSearchHeaderMkup($prefix = "", $title = "", $showPhoneSearch = TRUE, $showMRNSearch = TRUE) {
 
         $phoneSearchMkup = '';
+        $MRNSearchMkup = '';
 
         if ($showPhoneSearch) {
             $phoneSearchMkup = HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch', 'style'=>'margin-left:1em; '))
                     .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'14', 'title'=>'Enter at least 5 numbers to invoke search'));
         }
 
+        if ($showMRNSearch) {
+            $MRNSearchMkup = HTMLContainer::generateMarkup('label', 'MRN Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>'margin-left:1em; '))
+            .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'MRNSearch', 'size'=>'14', 'title'=>'Enter at least 3 characters to invoke search'));
+        }
+
         $frst = HTMLContainer::generateMarkup('span', HTMLContainer::generateMarkup('span', $title, array('id'=>$prefix.'prompt'))
         		.HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'Search', 'size'=>'25', 'title'=>'Enter at least 3 characters to invoke search'))
+                .$MRNSearchMkup
                 .$phoneSearchMkup
                 , array('id'=>$prefix . 'span'))
                 .HTMLContainer::generateMarkup('span', 'Room Full', array('id'=>$prefix.'fullspan', 'style'=>'display:none;'));

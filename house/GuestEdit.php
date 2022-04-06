@@ -738,15 +738,23 @@ $uS->guestId = $id;
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-        	<div class="pageHeader">
-                <div style="display:inline-block; margin-right: 90px; margin-top:5px;">
+        	<div class="pageHeader hhk-flex">
+                <div style="margin-top:5px;">
                     <?php echo $guestName; ?>
                 </div>
-                <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px; display:inline-block;">
-                    <span>Name Search </span>
-                    <input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
-                    <span>Phone Search </span>
-                    <input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-flex" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px;">
+                    <div style="margin-right: 0.5em;">
+                    	<label for="txtsearch">Name Search</label>
+                    	<input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                    </div>
+                    <div style="margin-right: 0.5em;">
+                    	<span>MRN Search </span>
+                    	<input type="search" class="allSearch" id="txtMRNsearch" size="15" title="Enter at least 3 characters to invoke search" />
+                    </div>
+                    <div>
+                    	<span>Phone Search </span>
+                    	<input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
+                	</div>
                 </div>
             </div>
             <?php if ($alertMessage != '') { ?>
