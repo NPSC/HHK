@@ -38,6 +38,8 @@ class TransferMembers {
     // Maximum custom properties for a NEON account
     const MAX_CUSTOM_PROPERTYS = 30;
 
+    const EXCLUDE_TERM = 'excld';
+
     public function __construct($userId, $password, array $customFields = array()) {
 
         $this->userId = $userId;
@@ -537,7 +539,7 @@ class TransferMembers {
     IFNULL(hs.idPsg, 0) as `idPsg`,
     IFNULL(hs.idPatient, 0) as `idPatient`,
     IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
-    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as `Address`,
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`,
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
     (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
@@ -552,9 +554,9 @@ FROM
 		LEFT JOIN
 	name_guest ng on s.idName = ng.idName and hs.idPsg = ng.idPsg
         LEFT JOIN
-    name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
-    s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0
+    s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0  AND n.External_Id != '" . self::EXCLUDE_TERM . "'
     AND s.Span_End_Date is not NULL AND hs.idPsg = $idPsg
 ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
@@ -826,7 +828,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
     IFNULL(n.Name_Last, '') AS `Last_Name`,
     IFNULL(n.Name_Full, '') AS `Full_Name`,
     IFNULL(hs.idPsg, 0) as `idPsg`,
-    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as `Address`
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`
 from
 	visit v
 		join
@@ -838,9 +840,9 @@ from
         LEFT JOIN
     name n on n.idName = ng.idName
         LEFT JOIN
-    name_address na on s.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
+    name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 where
-	s.idName is NULL
+	s.idName is NULL AND n.External_Id != '" . self::EXCLUDE_TERM . "'
     AND v.idVisit in (" . implode(',', $idList) . ")");
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1261,14 +1263,14 @@ where
     IFNULL(n.Name_Last, '') AS `Last_Name`,
     IFNULL(n.Name_Full, '') AS `Full_Name`,
     IFNULL(ng.Relationship_Code, '') as `Relation_Code`,
-    IFNULL(CONCAT_WS(' ', na.Address_1, na.Address_2), '') as `Address`
+    CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`
 FROM
 	`name` n
 		LEFT JOIN
     `name_guest` ng on n.idName = ng.idName and ng.idPsg = $idPsg
 		LEFT JOIN
     name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-where n.idName = $idPrimaryGuest ");
+where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.idName = $idPrimaryGuest ");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -1289,6 +1291,40 @@ where n.idName = $idPrimaryGuest ");
         );
     }
 
+    public static function sendExcludes(\PDO $dbh, $idPsgs, $username) {
+
+        $idList = [];
+        $idNames = [];
+
+        // clean up the visit ids
+        foreach ($idPsgs as $s) {
+            if (intval($s, 10) > 0){
+                $idList[] = intval($s, 10);
+            }
+        }
+
+        if (count($idList) > 0) {
+
+            // Collect the names for return message
+            $stmt = $dbh->query("select DISTINCT n.idName AS `HHK Id`, n.Name_Full as `Full Name` from
+                name_guest ng join `name` n on ng.idName = n.idName
+                where ng.idPsg in (" . implode(',', $idList) . ");");
+
+            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+                $idNames[] = $r;
+
+            }
+
+            // Update the External Id's
+            $rowcount = $dbh->exec("update name_guest ng join name n on ng.idName = n.idName set n.External_Id = 'excld'
+                where ng.idPsg in (" . implode(',', $idList) . ");");
+
+            $idNames[] = array('HHK Id'=>'', 'Full Name'=>$rowcount . ' members updated.');
+        }
+
+        return $idNames;
+    }
 
     /** Transfer the given source HHK ids to Neon.  Searches first, updates Neon if found.
      *
