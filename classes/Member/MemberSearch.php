@@ -644,7 +644,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
-    public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE) {
+    public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE, $MRN = FALSE) {
 
         $operation = 'OR';
         if ($this->twoParts) {
@@ -658,7 +658,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
                 . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
-                . " ifnull(gr.Description, '') as `No_Return` , hs.MRN as `MRN` "
+                . " ifnull(gr.Description, '') as `No_Return` " . ", hs.MRN as `MRN` "
             . " from `name` n "
                 . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
                 . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
@@ -670,10 +670,10 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
                 . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 $filterGP "
-                . " and (LOWER(n.Name_Last) like '" . $this->Name_Last . "' "
+                . ($MRN ? "" : " and (LOWER(n.Name_Last) like '" . $this->Name_Last . "' "
                 . " $operation (LOWER(n.Name_First) like '" . $this->Name_First . "' OR LOWER(n.Name_NickName) like '" . $this->Name_First . "')) "
-                . " OR np.Phone_Search like '" . $this->Name_First . "' "
-                . " OR hs.MRN like '" . $this->MRN . "' "
+                . " OR np.Phone_Search like '" . $this->Name_First . "' ")
+                . ($MRN ? " and hs.MRN like '" . $this->MRN . "' " : "")
             . " order by n.Name_Last, n.Name_First;";
 
         $stmt = $dbh->query($query);

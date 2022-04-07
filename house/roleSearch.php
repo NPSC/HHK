@@ -101,8 +101,13 @@ switch ($c) {
             $gp = TRUE;
         }
 
+        $mrn = FALSE;
+        if (isset($_GET['mrn']) && $_GET['mrn'] == '1') {
+            $mrn = TRUE;
+        }
+
         $memberSearch = new MemberSearch($letters);
-        $events = $memberSearch->roleSearch($dbh, $mode, $gp);
+        $events = $memberSearch->roleSearch($dbh, $mode, $gp, $mrn);
 
         break;
 
