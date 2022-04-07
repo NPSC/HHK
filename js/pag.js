@@ -73,7 +73,7 @@ function isIE() {
 
 function checkStrength(pwCtrl) {
 	var strongRegex = new RegExp(
-			"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?=.{8,})");
+			"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?!.*[<>])(?=.{8,})");
 	var rtn = true;
 	if (strongRegex.test(pwCtrl.val())) {
 		pwCtrl.removeClass("ui-state-error");
