@@ -239,22 +239,30 @@ if (isset($_REQUEST['cmd'])) {
         } else {
 
             try{
+
                 $mail = prepareEmail();
-    
+
                 $mail->From = $uS->FromAddress;
                 $mail->FromName = $uS->siteName;
                 $mail->addAddress($emAddr);     // Add a recipient
                 $mail->addReplyTo($uS->ReplyTo);
-    
+
+                $bccs = explode(',', $uS->BccAddress);
+                foreach ($bccs as $bcc) {
+                    if ($bcc != '') {
+                        $mail->addBCC(filter_var($bcc, FILTER_SANITIZE_EMAIL));
+                    }
+                }
+
                 $mail->isHTML(true);
-    
+
                 $mail->Subject = $emSubject;
                 $mail->msgHTML($stmtMarkup);
-    
-    
+
+
                 $mail->send();
                 $msg .= "Email sent.  ";
-                
+
             }catch (\Exception $e){
                 $msg .= "Email failed! " . $mail->ErrorInfo;
             }
