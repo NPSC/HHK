@@ -47,13 +47,19 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $config = new Config_Lite(ciCFG_FILE);
 
-$serviceName = $config->getString('webServices', 'Service_Name', '');
-$webServices = $config->getString('webServices', 'ContactManager', '');
+if ($uS->ContactManager == 'neon') {
 
-if ($serviceName != '' && $webServices != '') {
-    $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
+    $serviceName = $config->getString('webServices', 'Service_Name', '');
+    $webServices = $config->getString('webServices', 'ContactManager', '');
+
+    if ($serviceName != '' && $webServices != '') {
+        $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
+    } else {
+        exit('<h4>HHK configuration error:  Copntact Manager configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h4>');
+    }
+
 } else {
-    exit('<h4>HHK configuration error:  Web Services Configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h4>');
+    exit('<h4>The Contact Manager is not configured. </h4>');
 }
 
 if (function_exists('curl_version') === FALSE) {
@@ -108,7 +114,7 @@ from
         LEFT JOIN
     gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
 where
-	s.idName is NULL
+	s.idName is NULL AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
     AND v.idVisit in (" . implode(',', $idList) . ")");
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -204,7 +210,7 @@ FROM
         LEFT JOIN
     name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
-    s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0 AND n.External_Id != '" . self::EXCLUDE_TERM . "'
+    s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0 AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
     AND DATE(s.Span_End_Date) < DATE('$end')
 ORDER BY hs.idPsg
 LIMIT 500");
@@ -380,7 +386,7 @@ LIMIT 500");
                 .HTMLTable::makeTd($g['Guest to Patient'])
                 .HTMLTable::makeTd($g['PG to Patient'])
                 .HTMLTable::makeTd($g['Guest to PG'])
-                , array('id'=>'hhk-'.$idp));
+                , array('class'=>'hhk-'.$idp));
         }
 
     }
@@ -781,7 +787,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 </div>
                 <div id="divMembers"></div>
             </div>
-            <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;">
+            <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;font-size:0.9em;">
                 <input id="printButton" value="Print" type="button" />
                 <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>

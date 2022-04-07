@@ -10,6 +10,7 @@ use HHK\Tables\Name\{NameDemogRS, NameRS};
 use HHK\sec\Session;
 use HHK\AuditLog\NameLog;
 use HHK\Exception\{RuntimeException, MemberException, UnexpectedValueException, InvalidArgumentException};
+use HHK\Neon\TransferMembers;
 
 /**
  * AbstractMember.php
@@ -315,6 +316,8 @@ abstract class AbstractMember {
     }
 
     public function createExcludesPanel() {
+
+        $uS = Session::getInstance();
         $tabIcon = "";
         $insertTabIcon = FALSE;
 
@@ -388,6 +391,25 @@ abstract class AbstractMember {
                         )
                 );
 
+        // Exclude Neon
+        if ($uS->ContactManager == 'neon') {
+            $exNeonAttr = array('name'=>'exNeon', 'type'=>'checkbox', 'class'=>'hhk-ex', 'title'=>'Check to exclude Neon Transfers');
+            if ($this->get_ExternalId() == TransferMembers::EXCLUDE_TERM) {
+                $exNeonAttr['checked'] = 'checked';
+                $insertTabIcon = TRUE;
+            }
+            $table->addBodyTr(
+                HTMLTable::makeTd(HTMLContainer::generateMarkup('label', 'Exclude Neon', array('for'=>'exNeon')), array('class'=>'tdlabel'))
+                . HTMLTable::makeTd(
+                    HTMLInput::generateMarkup(
+                        '',
+                        $exNeonAttr
+                        ),
+                    array('style'=>'vertical-align: middle;display:table-cell;')
+                    )
+                );
+        }
+
         $table->addBodyTr(
                 HTMLTable::makeTd(
                         HTMLInput::generateMarkup(
@@ -398,7 +420,7 @@ abstract class AbstractMember {
                                 array('type'=>'button', 'id'=>'exNone', 'class'=>'hhk-check-button ignrSave', 'style'=>'margin-left:0.4em;'))
                         . HTMLInput::generateMarkup('yes', array('type'=>'hidden', 'name'=>'excludesHere')),
                         array('colspan'=>'2'))
-                );
+             );
 
     // <span class='ui-icon ui-icon-check' style='float: left; margin-right: .3em;'></span>
 
@@ -658,22 +680,22 @@ abstract class AbstractMember {
 
         // Background Check checkbox
         if (isset($post[$idPrefix.'cbMarker_background_check'])) {
-            
+
             if (isset($post[$idPrefix.'cbbackgroundcheck'])) {
                 // Member background check completed
                 if (isset($post[$idPrefix.'txtBackgroundCheckDate']) && $post[$idPrefix.'txtBackgroundCheckDate'] != '' && $this->demogRS->Background_Check_Date->getStoredVal() != $post[$idPrefix.'txtBackgroundCheckDate']) {
                     $dbc = filter_var($post[$idPrefix.'txtBackgroundCheckDate'], FILTER_SANITIZE_STRING);
                     $this->demogRS->Background_Check_Date->setNewVal($dbc);
                 }
-                
+
             } else {
-                
+
                 if ($this->demogRS->Background_Check_Date->getStoredVal() != NULL) {
                     $this->demogRS->Background_Check_Date->setNewVal('');
                 }
             }
         }
-        
+
 
         //  Excludes
         // Excludes section includes a hidden input that we check to see if the excludes are included on the page.
@@ -683,6 +705,7 @@ abstract class AbstractMember {
             $n->Exclude_Email->setNewVal(isset($post[$idPrefix."exEmail"]) ? 1 : 0);
             $n->Exclude_Mail->setNewVal(isset($post[$idPrefix."exMail"]) ? 1 : 0);
             $n->Exclude_Phone->setNewVal(isset($post[$idPrefix."exPhone"]) ? 1 : 0);
+            $n->External_Id->setNewVal(isset($post[$idPrefix."exNeon"]) ? TransferMembers::EXCLUDE_TERM : '');
         }
 
         //  Prefered Mail Address
@@ -851,6 +874,10 @@ abstract class AbstractMember {
     // return the default donor for the donor list
     public function getDefaultDonor(array $rel) {
         return '';
+    }
+
+    public function get_ExternalId() {
+        return $this->nameRS->External_Id->getStoredVal();
     }
 
 
@@ -1092,7 +1119,7 @@ abstract class AbstractMember {
     public function get_DateDeceased() {
         return $this->nameRS->Date_Deceased->getStoredVal();
     }
-    
+
     public function get_DateBackgroundCheck() {
         return $this->demogRS->Background_Check_Date->getStoredVal();
     }

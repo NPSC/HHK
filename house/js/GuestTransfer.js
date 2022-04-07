@@ -147,7 +147,7 @@ function throttleVisits() {
 	
 			psgs.push($(this).data('idpsg'));
     		
-    		$('#hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+    		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
     		
 			$(this).prop({'checked':false, 'disabled':true});
 			
@@ -168,7 +168,7 @@ function throttleVisits() {
     		donut = false;
     		let props = {'checked':false, 'disabled':true};
     		
-    		$('#hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+    		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
     		
 			$(this).prop(props).end();
 			
@@ -232,7 +232,7 @@ function transferExcludes(psgs) {
 				tr += '</tr></thead><tbody></tbody>';
 				
 				$eTbl.append(tr);
-				let title = $('<h3 style="margin-top:7px;">Excluded from Neon</h3>');
+				let title = $('<h3 style="margin-top:7px;">Members Excluded from Neon</h3>');
 				$('#divMembers').append(title).append($eTbl).show();
 			}
 			
@@ -613,12 +613,12 @@ $(document).ready(function() {
 				
 				let props = {'checked':false, 'disabled':true};
 				$cbPsg.prop(props);
-				$('#hhk-' + $(this).data('idpsg')).css('background-color', 'lightpink');
+				$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightpink');
 
 				
 			} else {
 				$cbPsg.prop('disabled', false);
-				$('#hhk-' + $(this).data('idpsg')).css('background-color', 'transparent');
+				$('.hhk-' + $(this).data('idpsg')).css('background-color', 'transparent');
 			}
 		});
 

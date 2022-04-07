@@ -128,6 +128,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('ExcessPays', 'i', 'Ignore','','u',0),
 ('ExcessPays', 'r', 'Refund','','u',0),
 
+('ExternalCrm', '', '(none)','','',0),
+('ExternalCrm', 'neon', 'Neon CRM','','',0),
+
 ('FB_Status','a','Active','','',0),
 ('FB_Status','d','Disabled','','',0),
 ('FB_Status','w','Waiting','','',0),
@@ -540,7 +543,8 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('CheckInTime','16','i','h','','Normal House Check in time of day in 24-hour format, hh','',1),
 ('CheckOutTime','10','i','h','','Normal House Checkout time of day in 24-hour format, hh','',1),
 ('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true','',1),
-('CoTod','false','b','h','','Edit the time of day of a checkout','',1),
+('ContactManager','','lu','h','','Integrate an External CRM/Fund Raiser App','ExternalCrm',1),
+('CoTod','false','b','hf','','Edit the time of day of a checkout','',1),
 ('county','true','b','h','','Include the County for addresses','',1),
 ('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', '', 'CSS validator service', '',0),
 ('DefaultCalEventColor', '', 's', 'c', '', 'Default event ribbon color for the calendar', '',1),
