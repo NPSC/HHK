@@ -505,7 +505,7 @@ class TransferMembers {
      * @param string $end
      * @return array
      */
-    public function sendVisits(\PDO $dbh, $username, $idPsg) {
+    public function sendVisits(\PDO $dbh, $username, $idPsg, $rels) {
 
         $this->memberReplies = [];
         $this->replies = [];
@@ -612,13 +612,14 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
                     'Address' => $r['Address'],
                     'Last_Name' => $r['Last_Name'],
                     'Full_Name' => $r['Full_Name'],
+                    'Neon_Rel_Code' => (isset($rels[$r['hhkId']]) ? $rels[$r['hhkId']] : ''),
                 );
 
             }
         }
 
         // Adds any non visitors to the list of guests.
-        $this->getNonVisitors($dbh, array_keys($visits), $guestIds);
+        $this->getNonVisitors($dbh, array_keys($visits), $guestIds, $rels);
 
         // Check for and combine any missing Neon account ids.
         foreach ($guestIds as $id => $r ) {
@@ -679,10 +680,10 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         }
 
         // Relationship Mapper object.
-        $this->relationshipMapper = new RelationshipMapper($dbh);
+//        $this->relationshipMapper = new RelationshipMapper($dbh);
 
         // Create or update households.
-        $this->sendHouseholds($dbh, $guestIds, $visits, $badUpdateIds);
+        $this->sendHouseholds($dbh, $guestIds, $visits, $rels, $badUpdateIds);
 
         return $visitReplys;
     }
@@ -807,7 +808,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         return NULL;
     }
 
-    public static function getNonVisitors(\PDO $dbh, $visits, &$guestIds) {
+    public static function getNonVisitors(\PDO $dbh, $visits, &$guestIds, $rels) {
 
         $idList = [];
         $idNames = [];
@@ -857,6 +858,9 @@ where
             foreach ($idNames as $r) {
                 // add them to the list of guests
                 if (isset($guestIds[ $r['hhkId'] ]) === FALSE) {
+
+                    $r['Neon_Rel_Code'] = (isset($rels[$r['hhkId']]) ? $rels[$r['hhkId']] : '');
+
                     $guestIds[ $r['hhkId'] ] = $r;
                 }
             }
@@ -864,7 +868,7 @@ where
 
     }
 
-    protected function sendHouseholds(\PDO $dbh, $guests, $visits, $badUpdateIds) {
+    protected function sendHouseholds(\PDO $dbh, $guests, $visits, $rels, $badUpdateIds) {
 
         foreach ($visits as $v) {
 
@@ -872,7 +876,7 @@ where
             if (isset($guests[$v['idPG']]) === FALSE) {
 
                 // Load Primary guest.
-                $guests[$v['idPG']] = $this->findPrimaryGuest($dbh, $v['idPG'], $v['idPsg']);
+                $guests[$v['idPG']] = $this->findPrimaryGuest($dbh, $v['idPG'], $v['idPsg'], $this->relationshipMapper);
 
                 if (count($guests[$v['idPG']]) == 0) {
                     continue;
@@ -1002,13 +1006,24 @@ where
 
         $householdId = 0;
         $householdName = $primaryGuest['Last_Name'];
-        $relationId = $this->relationshipMapper->relateGuest($primaryGuest['Relation_Code']);
+//        $relationId = $this->relationshipMapper->relateGuest($primaryGuest['Relation_Code']);
+        $relationId = $primaryGuest['Neon_Rel_Code'];
 
         if ($householdName == '') {
             $this->setHhReplies(array(
                 'Action'=>'Create',
                 'Account Id'=>$primaryGuest['accountId'],
                 'Result'=> 'Blank last name, Household not created.',
+                'Name' => $primaryGuest['Full_Name'],
+                'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId)));
+            return $householdId;
+        }
+
+        if ($relationId == '') {
+            $this->setHhReplies(array(
+                'Action'=>'Create',
+                'Account Id'=>$primaryGuest['accountId'],
+                'Result'=> 'Relationship is undefined, Household not created.',
                 'Name' => $primaryGuest['Full_Name'],
                 'Relationship' => $this->relationshipMapper->mapNeonTypeName($relationId)));
             return $householdId;
@@ -1027,7 +1042,7 @@ where
         }
 
 
-
+        // Finally, make a new household in Neon.
         $base = 'household.';
         $param[$base . 'name'] = $householdName;
         $param[$base . 'houseHoldContacts.houseHoldContact.accountId'] = $primaryGuest['accountId'];
@@ -1122,8 +1137,11 @@ where
             }
 
             if (count($newContacts) > 0) {
+
                 $this->updateHousehold($newContacts, $households['houseHolds']['houseHold'][0]);
+
             } else if ($notJoined > 0) {
+
                 $this->setHhReplies(array(
                     'Household'=>$households['houseHolds']['houseHold'][0]['name'],
                     'HH Id'=>$households['houseHolds']['houseHold'][0]['houseHoldId'],
@@ -1151,24 +1169,39 @@ where
 
         foreach ($newGuests as $ng) {
 
-            $ngRelationId = $this->relationshipMapper->relateGuest($ng['Relation_Code']);
+            $ngRelationId = $ng['Neon_Rel_Code'];  //$this->relationshipMapper->relateGuest($ng['Relation_Code']);
 
-            $cparm = array(
-                $base . 'houseHoldContacts.houseHoldContact.accountId' => $ng['accountId'],
-                $base . 'houseHoldContacts.houseHoldContact.relationType.id' => $ngRelationId,
-                $base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact' => 'false',
-            );
+            if ($ngRelationId != '') {
 
-            $customParamStr .= '&' . http_build_query($cparm);
+                $cparm = array(
+                    $base . 'houseHoldContacts.houseHoldContact.accountId' => $ng['accountId'],
+                    $base . 'houseHoldContacts.houseHoldContact.relationType.id' => $ngRelationId,
+                    $base . 'houseHoldContacts.houseHoldContact.isPrimaryHouseHoldContact' => 'false',
+                );
 
-            $this->setHhReplies([
-                'HH Id'=>$household['houseHoldId'],
-                'Action'=>'Join',
-                'Household'=>$household['name'],
-                'Account Id'=>$ng['accountId'],
-                'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId),
-                'Name'=>$ng['Full_Name']
-            ]);
+                $customParamStr .= '&' . http_build_query($cparm);
+
+                $this->setHhReplies([
+                    'HH Id'=>$household['houseHoldId'],
+                    'Action'=>'Join',
+                    'Household'=>$household['name'],
+                    'Account Id'=>$ng['accountId'],
+                    'Relationship' => $this->relationshipMapper->mapNeonTypeName($ngRelationId),
+                    'Name'=>$ng['Full_Name']
+                ]);
+
+            } else {
+
+                $this->setHhReplies(array(
+                    'HH Id'=>$household['houseHoldId'],
+                    'Household'=>$household['name'],
+                    'Action'=>'Join',
+                    'Account Id'=>$ng['accountId'],
+                    'Relationship' => $ngRelationId,
+                    'Name'=>$ng['Full_Name'],
+                    'Result' => 'Failed: Relationship Missing.'
+                ));
+            }
 
         }
 
@@ -1255,7 +1288,7 @@ where
     }
 
 
-    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg) {
+    public static function findPrimaryGuest(\PDO $dbh, $idPrimaryGuest, $idPsg, RelationshipMapper $rMapper) {
 
         $stmt = $dbh->query("Select
 	n.idName as `hhkId`,
@@ -1280,6 +1313,9 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.idName = $idPrimaryGue
             return [];
         }
 
+        $rMapper->clear()->setPGtoPatient($r['Relation_Code']);
+        $relId = $rMapper->relateGuest($r['Relation_Code']);
+
         return array(
             'hhkId' => $r['hhkId'],
             'accountId' => $r['accountId'],
@@ -1287,7 +1323,8 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.idName = $idPrimaryGue
             'Relation_Code' => $r['Relation_Code'],
             'Address' => $r['Address'],
             'Last_Name' => $r['Last_Name'],
-            'Full_Name' => $r['Full_Name']
+            'Full_Name' => $r['Full_Name'],
+            'Neon_Rel_Code' => $relId
         );
     }
 

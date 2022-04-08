@@ -129,7 +129,8 @@ function transferRemote(transferIds) {
 var stopTransfer,
 	$visitButton,
 	$psgCBs,
-	$excCBs;
+	$excCBs,
+	$relSels;
 
 function throttleVisits() {
 	
@@ -167,12 +168,18 @@ function throttleVisits() {
 	
     		donut = false;
     		let props = {'checked':false, 'disabled':true};
+    		let rels;
     		
     		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
     		
 			$(this).prop(props).end();
 			
-    		transferVisits($(this).data('idpsg'));
+			// Prepare relationship assignments.
+			$('.hhk-selRel'+$(this).data('idpsg')).each(function () {
+				rels[$(this).data('idName')] = $(this).val();
+			});
+			
+    		transferVisits($(this).data('idpsg'), rels);
     		
     		return false;  // leave each
     	}
@@ -252,11 +259,12 @@ function transferExcludes(psgs) {
 	});
 }
 
-function transferVisits(idPsg) {
+function transferVisits(idPsg, rels) {
 	
     let parms = {
         cmd: 'visits',
-        psgId: idPsg
+        psgId: idPsg,
+        rels: rels
     };
 
     let posting = $.post('ws_tran.php', parms);
@@ -604,6 +612,7 @@ $(document).ready(function() {
 		$visitButton = $('#btnVisits');
 		$psgCBs = $('.hhk-txPsgs');
 		$excCBs = $('.hhk-exPsg');
+		$relSels = $('.hhk-selRel');
 		
 		$excCBs.change(function () {
 			

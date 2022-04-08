@@ -46,6 +46,7 @@ $uS = Session::getInstance();
 $menuMarkup = $wInit->generatePageMenu();
 
 $config = new Config_Lite(ciCFG_FILE);
+$wsConfig = null;
 
 if ($uS->ContactManager == 'neon') {
 
@@ -166,7 +167,7 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
 }
 
-function searchVisits(\PDO $dbh, $start, $end, $maxGuests) {
+function searchVisits(\PDO $dbh, $start, $end, $maxGuests, $wsConfig) {
 
     $uS = Session::getInstance();
     $rows = array();
@@ -304,6 +305,10 @@ LIMIT 500");
 
     $rMapper = new RelationshipMapper($dbh);
 
+    // Get Neon relationship code list
+    $nstmt = $dbh->query("Select * from neon_lists where `Method` = 'account/listRelationTypes';");
+    $method = $nstmt->fetchAll(PDO::FETCH_ASSOC);
+    $neonRelList = getNeonTypes($wsConfig, $method[0]);
 
     foreach ($guestIds as $g) {
 
@@ -317,7 +322,7 @@ LIMIT 500");
         if (isset($visits[$g['PG Id']]) === FALSE) {
 
             // Load Primary guest.
-            $v = TransferMembers::findPrimaryGuest($dbh, $g['PG Id'], $g['idPsg']);
+            $v = TransferMembers::findPrimaryGuest($dbh, $g['PG Id'], $g['idPsg'], $rMapper);
 
             if (count($v) > 0) {
                 $visits[$g['PG Id']] = $v;
@@ -334,11 +339,11 @@ LIMIT 500");
                 ->clear()
                 ->setPGtoPatient($visits[$g['PG Id']]['Relation_Code']);
 
-            $g['Guest to PG'] = $rMapper->mapNeonTypeName( $rMapper->relateGuest($g['Relation_Code']) );
+            $g['Guest to PG'] = $rMapper->relateGuest($g['Relation_Code']);
 
         } else {
             // empty relationship means address mismatch
-            $g['Guest to PG'] = '(Address)';
+            $g['Guest to PG'] = '';
         }
 
         unset($g['Relation_Code']);
@@ -385,7 +390,7 @@ LIMIT 500");
                 .HTMLTable::makeTd($g['PG Id'])
                 .HTMLTable::makeTd($g['Guest to Patient'])
                 .HTMLTable::makeTd($g['PG to Patient'])
-                .HTMLTable::makeTd($g['Guest to PG'])
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($neonRelList, $g['Guest to PG'], TRUE), array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idName'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp)))
                 , array('class'=>'hhk-'.$idp));
         }
 
@@ -487,6 +492,24 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
 
 }
 
+function getNeonTypes($wsConfig, $list) {
+
+    $neonList = [];
+
+    if ($wsConfig->getString('credentials', 'User') != '' && $wsConfig->getString('credentials', 'Password') != '') {
+
+        $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+        $rawList = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
+
+        foreach ($rawList as $k => $v) {
+            $neonList[$k] = array(0=>$k, 1=>$v);
+        }
+
+    }
+
+    return $neonList;
+}
+
 function createKeyMap(\PDO $dbh) {
 
     // get session instance
@@ -535,6 +558,9 @@ $errorMessage = '';
 $calSelection = '19';
 $noRecordsMsg = '';
 $maxGuests = 15;  // maximum guests to process for each post.
+$btnVisits = '';
+$btnGetKey = '';
+$dboxMarkup = '';
 
 
 $monthArray = array(
@@ -672,7 +698,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
 
     } else if (isset($_POST['btnGetVisits'])) {
 
-        $dataTable = searchVisits($dbh, $start, $end, $maxGuests);
+        $dataTable = searchVisits($dbh, $start, $end, $maxGuests, $wsConfig);
 
         if ($dataTable === FALSE) {
             $noRecordsMsg = "No visit records found.";
