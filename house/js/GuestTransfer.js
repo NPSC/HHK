@@ -167,8 +167,8 @@ function throttleVisits() {
     	if ($(this).prop('checked')) {
 	
     		donut = false;
-    		let props = {'checked':false, 'disabled':true};
-    		let rels;
+    		const props = {'checked':false, 'disabled':true};
+    		const rels = [];
     		
     		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
     		
@@ -176,7 +176,8 @@ function throttleVisits() {
 			
 			// Prepare relationship assignments.
 			$('.hhk-selRel'+$(this).data('idpsg')).each(function () {
-				rels[$(this).data('idName')] = $(this).val();
+				const rel = {'id':$(this).data('idname'), 'rel':$(this).val()};
+				rels.push(rel);
 			});
 			
     		transferVisits($(this).data('idpsg'), rels);

@@ -680,7 +680,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
         }
 
         // Relationship Mapper object.
-//        $this->relationshipMapper = new RelationshipMapper($dbh);
+        $this->relationshipMapper = new RelationshipMapper($dbh);
 
         // Create or update households.
         $this->sendHouseholds($dbh, $guestIds, $visits, $rels, $badUpdateIds);

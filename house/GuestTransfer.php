@@ -252,7 +252,7 @@ LIMIT 500");
 
             $guestIds[ $r['hhkId'] ] = array(
                 'Account Id' => $r['accountId'],
-                'HHK Id' => HTMLContainer::generateMarkup('a', $r['hhkId'], array('href'=>'GuestEdit.php?id=' . $r['hhkId'])),
+                'HHK Id' => $r['hhkId'],
                 'Name' => $r['Name'],
                 'Diagnosis' => $r['Diagnosis'],
                 'Hospital' => $r['Hospital'],
@@ -287,7 +287,7 @@ LIMIT 500");
             // add them to the list of guests
             $guestIds[ $r['hhkId'] ] = array(
                 'Account Id' => $r['accountId'],
-                'HHK Id' => HTMLContainer::generateMarkup('a', $r['hhkId'], array('href'=>'GuestEdit.php?id=' . $r['hhkId'])),
+                'HHK Id' => $r['hhkId'],
                 'Name' => $r['Name'],
                 'Diagnosis' => $r['Diagnosis'],
                 'Hospital' => $r['Hospital'],
@@ -379,7 +379,7 @@ LIMIT 500");
             }
 
             $tbl->addBodyTr($td
-                .HTMLTable::makeTd($g['HHK Id'])
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $g['HHK Id'], array('href'=>'GuestEdit.php?id=' . $g['HHK Id'])))
                 .HTMLTable::makeTd($g['Name'])
                 .HTMLTable::makeTd($g['Address'])
                 .HTMLTable::makeTd($g['Diagnosis'])
@@ -390,7 +390,10 @@ LIMIT 500");
                 .HTMLTable::makeTd($g['PG Id'])
                 .HTMLTable::makeTd($g['Guest to Patient'])
                 .HTMLTable::makeTd($g['PG to Patient'])
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($neonRelList, $g['Guest to PG'], TRUE), array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idName'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp)))
+                .HTMLTable::makeTd(
+                    HTMLSelector::generateMarkup(
+                        HTMLSelector::doOptionsMkup($neonRelList, $g['Guest to PG'], TRUE),
+                        array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idname'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp)))
                 , array('class'=>'hhk-'.$idp));
         }
 

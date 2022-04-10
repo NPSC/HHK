@@ -106,10 +106,15 @@ try {
             $idPsg = intval(filter_var($_REQUEST['psgId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $rels = [];
+        $raw = [];
 
         if (isset($_REQUEST['rels'])) {
-            $rels = filter_var_array($_REQUEST['rels'], FILTER_SANITIZE_NUMBER_INT);
+            $raw = filter_var_array($_REQUEST['rels'], FILTER_SANITIZE_NUMBER_INT);
+        }
+
+        $rels = [];
+        foreach ($raw as $v) {
+            $rels[$v['id']] = $v['rel'];
         }
 
 
