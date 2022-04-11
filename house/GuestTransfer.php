@@ -46,14 +46,21 @@ $uS = Session::getInstance();
 $menuMarkup = $wInit->generatePageMenu();
 
 $config = new Config_Lite(ciCFG_FILE);
+$wsConfig = null;
 
-$serviceName = $config->getString('webServices', 'Service_Name', '');
-$webServices = $config->getString('webServices', 'ContactManager', '');
+if ($uS->ContactManager == 'neon') {
 
-if ($serviceName != '' && $webServices != '') {
-    $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
+    $serviceName = $config->getString('webServices', 'Service_Name', '');
+    $webServices = $config->getString('webServices', 'ContactManager', '');
+
+    if ($serviceName != '' && $webServices != '') {
+        $wsConfig = new Config_Lite(REL_BASE_DIR . 'conf' . DS .  $webServices);
+    } else {
+        exit('<h4>HHK configuration error:  Copntact Manager configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h4>');
+    }
+
 } else {
-    exit('<h4>HHK configuration error:  Web Services Configuration file is missing. Trying to open file name: ' . REL_BASE_DIR . 'conf' . DS .  $webServices . '</h4>');
+    exit('<h4>The Contact Manager is not configured. </h4>');
 }
 
 if (function_exists('curl_version') === FALSE) {
@@ -108,7 +115,7 @@ from
         LEFT JOIN
     gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
 where
-	s.idName is NULL
+	s.idName is NULL AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
     AND v.idVisit in (" . implode(',', $idList) . ")");
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -160,7 +167,7 @@ function getPaymentReport(\PDO $dbh, $start, $end) {
 
 }
 
-function searchVisits(\PDO $dbh, $start, $end, $maxGuests) {
+function searchVisits(\PDO $dbh, $start, $end, $maxGuests, $wsConfig) {
 
     $uS = Session::getInstance();
     $rows = array();
@@ -204,7 +211,7 @@ FROM
         LEFT JOIN
     name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
-    s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0 AND n.External_Id != '" . self::EXCLUDE_TERM . "'
+    s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0 AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
     AND DATE(s.Span_End_Date) < DATE('$end')
 ORDER BY hs.idPsg
 LIMIT 500");
@@ -245,7 +252,7 @@ LIMIT 500");
 
             $guestIds[ $r['hhkId'] ] = array(
                 'Account Id' => $r['accountId'],
-                'HHK Id' => HTMLContainer::generateMarkup('a', $r['hhkId'], array('href'=>'GuestEdit.php?id=' . $r['hhkId'])),
+                'HHK Id' => $r['hhkId'],
                 'Name' => $r['Name'],
                 'Diagnosis' => $r['Diagnosis'],
                 'Hospital' => $r['Hospital'],
@@ -280,7 +287,7 @@ LIMIT 500");
             // add them to the list of guests
             $guestIds[ $r['hhkId'] ] = array(
                 'Account Id' => $r['accountId'],
-                'HHK Id' => HTMLContainer::generateMarkup('a', $r['hhkId'], array('href'=>'GuestEdit.php?id=' . $r['hhkId'])),
+                'HHK Id' => $r['hhkId'],
                 'Name' => $r['Name'],
                 'Diagnosis' => $r['Diagnosis'],
                 'Hospital' => $r['Hospital'],
@@ -298,6 +305,10 @@ LIMIT 500");
 
     $rMapper = new RelationshipMapper($dbh);
 
+    // Get Neon relationship code list
+    $nstmt = $dbh->query("Select * from neon_lists where `Method` = 'account/listRelationTypes';");
+    $method = $nstmt->fetchAll(PDO::FETCH_ASSOC);
+    $neonRelList = getNeonTypes($wsConfig, $method[0]);
 
     foreach ($guestIds as $g) {
 
@@ -311,7 +322,7 @@ LIMIT 500");
         if (isset($visits[$g['PG Id']]) === FALSE) {
 
             // Load Primary guest.
-            $v = TransferMembers::findPrimaryGuest($dbh, $g['PG Id'], $g['idPsg']);
+            $v = TransferMembers::findPrimaryGuest($dbh, $g['PG Id'], $g['idPsg'], $rMapper);
 
             if (count($v) > 0) {
                 $visits[$g['PG Id']] = $v;
@@ -328,11 +339,11 @@ LIMIT 500");
                 ->clear()
                 ->setPGtoPatient($visits[$g['PG Id']]['Relation_Code']);
 
-            $g['Guest to PG'] = $rMapper->mapNeonTypeName( $rMapper->relateGuest($g['Relation_Code']) );
+            $g['Guest to PG'] = $rMapper->relateGuest($g['Relation_Code']);
 
         } else {
             // empty relationship means address mismatch
-            $g['Guest to PG'] = '(Address)';
+            $g['Guest to PG'] = '';
         }
 
         unset($g['Relation_Code']);
@@ -368,7 +379,7 @@ LIMIT 500");
             }
 
             $tbl->addBodyTr($td
-                .HTMLTable::makeTd($g['HHK Id'])
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $g['HHK Id'], array('href'=>'GuestEdit.php?id=' . $g['HHK Id'])))
                 .HTMLTable::makeTd($g['Name'])
                 .HTMLTable::makeTd($g['Address'])
                 .HTMLTable::makeTd($g['Diagnosis'])
@@ -379,8 +390,11 @@ LIMIT 500");
                 .HTMLTable::makeTd($g['PG Id'])
                 .HTMLTable::makeTd($g['Guest to Patient'])
                 .HTMLTable::makeTd($g['PG to Patient'])
-                .HTMLTable::makeTd($g['Guest to PG'])
-                , array('id'=>'hhk-'.$idp));
+                .HTMLTable::makeTd(
+                    HTMLSelector::generateMarkup(
+                        HTMLSelector::doOptionsMkup($neonRelList, $g['Guest to PG'], TRUE),
+                        array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idname'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp)))
+                , array('class'=>'hhk-'.$idp));
         }
 
     }
@@ -481,6 +495,24 @@ GROUP BY vg.Id ORDER BY vg.idPsg";
 
 }
 
+function getNeonTypes($wsConfig, $list) {
+
+    $neonList = [];
+
+    if ($wsConfig->getString('credentials', 'User') != '' && $wsConfig->getString('credentials', 'Password') != '') {
+
+        $transfer = new TransferMembers($wsConfig->getString('credentials', 'User'), decryptMessage($wsConfig->getString('credentials', 'Password')));
+        $rawList = $transfer->listNeonType($list['Method'], $list['List_Name'], $list['List_Item']);
+
+        foreach ($rawList as $k => $v) {
+            $neonList[$k] = array(0=>$k, 1=>$v);
+        }
+
+    }
+
+    return $neonList;
+}
+
 function createKeyMap(\PDO $dbh) {
 
     // get session instance
@@ -529,6 +561,9 @@ $errorMessage = '';
 $calSelection = '19';
 $noRecordsMsg = '';
 $maxGuests = 15;  // maximum guests to process for each post.
+$btnVisits = '';
+$btnGetKey = '';
+$dboxMarkup = '';
 
 
 $monthArray = array(
@@ -666,7 +701,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnGetPayments']) || isset($_POST[
 
     } else if (isset($_POST['btnGetVisits'])) {
 
-        $dataTable = searchVisits($dbh, $start, $end, $maxGuests);
+        $dataTable = searchVisits($dbh, $start, $end, $maxGuests, $wsConfig);
 
         if ($dataTable === FALSE) {
             $noRecordsMsg = "No visit records found.";
@@ -781,7 +816,7 @@ $calSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($calOpts
                 </div>
                 <div id="divMembers"></div>
             </div>
-            <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;">
+            <div id="divPrintButton" style="clear:both; display:none;margin-top:6px;margin-left:20px;font-size:0.9em;">
                 <input id="printButton" value="Print" type="button" />
                 <input id="TxButton" value="Transfer Guests" type="button" style="margin-left:2em;"/>
                 <input id="btnPay" value="Transfer Payments" type="button" style="margin-left:2em;"/>

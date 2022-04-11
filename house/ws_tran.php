@@ -106,8 +106,20 @@ try {
             $idPsg = intval(filter_var($_REQUEST['psgId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
+        $raw = [];
+
+        if (isset($_REQUEST['rels'])) {
+            $raw = filter_var_array($_REQUEST['rels'], FILTER_SANITIZE_NUMBER_INT);
+        }
+
+        $rels = [];
+        foreach ($raw as $v) {
+            $rels[$v['id']] = $v['rel'];
+        }
+
+
         // Visit results
-        $events['visits'] = $transfer->sendVisits($dbh, $uS->username, $idPsg);
+        $events['visits'] = $transfer->sendVisits($dbh, $uS->username, $idPsg, $rels);
 
         // New members
         if (count($transfer->getMemberReplies()) > 0) {

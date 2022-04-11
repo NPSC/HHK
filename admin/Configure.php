@@ -58,11 +58,13 @@ $config = new Config_Lite(ciCFG_FILE);
 $labl = Labels::getLabels();
 
 
+if ($uS->ContactManager == 'neon') {
 
-if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
+    if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
 
-    $serviceFile = encryptMessage(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
-    $serviceName = $config->getString('webServices', 'Service_Name', '');
+        $serviceFile = encryptMessage(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
+        $serviceName = $config->getString('webServices', 'Service_Name', '');
+    }
 }
 
 if (isset($_POST["btnSiteCnf"])) {
@@ -307,7 +309,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels &#38; Prompts</a></li>
                     <li id="liLogs"><a href="#logs">Site Logs</a></li>
-                    <?php if ($serviceName != '') {echo '<li id="liService"><a href="#external">' . $serviceName . '</a></li>';} ?>
+                    <?php if ($uS->ContactManager != '') {echo '<li id="liService"><a href="#external">' . $serviceName . '</a></li>';} ?>
                 </ul>
                 <div id="config" class="ui-tabs-hide" >
                     <div style="color:#347201;font-size:1.3em;"><?php echo $confError; ?></div>
@@ -329,7 +331,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                         </div>
                     </form>
                 </div>
-                    <?php if ($serviceName != '') { ?>
+                    <?php if ($uS->ContactManager != '') { ?>
                         <div id="external" class="ui-tabs-hide" >
                             <div style='margin: 5px;font-weight: bold;'><span ><a href="../house/SetupNeonCRM.htm" title='click me for instructions!' target="_blank">Instructions</a></span></div>
                             <form method="post" id="formext" name="formext" action="">

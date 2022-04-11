@@ -129,7 +129,8 @@ function transferRemote(transferIds) {
 var stopTransfer,
 	$visitButton,
 	$psgCBs,
-	$excCBs;
+	$excCBs,
+	$relSels;
 
 function throttleVisits() {
 	
@@ -147,7 +148,7 @@ function throttleVisits() {
 	
 			psgs.push($(this).data('idpsg'));
     		
-    		$('#hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+    		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
     		
 			$(this).prop({'checked':false, 'disabled':true});
 			
@@ -166,13 +167,20 @@ function throttleVisits() {
     	if ($(this).prop('checked')) {
 	
     		donut = false;
-    		let props = {'checked':false, 'disabled':true};
+    		const props = {'checked':false, 'disabled':true};
+    		const rels = [];
     		
-    		$('#hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+    		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
     		
 			$(this).prop(props).end();
 			
-    		transferVisits($(this).data('idpsg'));
+			// Prepare relationship assignments.
+			$('.hhk-selRel'+$(this).data('idpsg')).each(function () {
+				const rel = {'id':$(this).data('idname'), 'rel':$(this).val()};
+				rels.push(rel);
+			});
+			
+    		transferVisits($(this).data('idpsg'), rels);
     		
     		return false;  // leave each
     	}
@@ -232,7 +240,7 @@ function transferExcludes(psgs) {
 				tr += '</tr></thead><tbody></tbody>';
 				
 				$eTbl.append(tr);
-				let title = $('<h3 style="margin-top:7px;">Excluded from Neon</h3>');
+				let title = $('<h3 style="margin-top:7px;">Members Excluded from Neon</h3>');
 				$('#divMembers').append(title).append($eTbl).show();
 			}
 			
@@ -252,11 +260,12 @@ function transferExcludes(psgs) {
 	});
 }
 
-function transferVisits(idPsg) {
+function transferVisits(idPsg, rels) {
 	
     let parms = {
         cmd: 'visits',
-        psgId: idPsg
+        psgId: idPsg,
+        rels: rels
     };
 
     let posting = $.post('ws_tran.php', parms);
@@ -604,6 +613,7 @@ $(document).ready(function() {
 		$visitButton = $('#btnVisits');
 		$psgCBs = $('.hhk-txPsgs');
 		$excCBs = $('.hhk-exPsg');
+		$relSels = $('.hhk-selRel');
 		
 		$excCBs.change(function () {
 			
@@ -613,12 +623,12 @@ $(document).ready(function() {
 				
 				let props = {'checked':false, 'disabled':true};
 				$cbPsg.prop(props);
-				$('#hhk-' + $(this).data('idpsg')).css('background-color', 'lightpink');
+				$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightpink');
 
 				
 			} else {
 				$cbPsg.prop('disabled', false);
-				$('#hhk-' + $(this).data('idpsg')).css('background-color', 'transparent');
+				$('.hhk-' + $(this).data('idpsg')).css('background-color', 'transparent');
 			}
 		});
 
