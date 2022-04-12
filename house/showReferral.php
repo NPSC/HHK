@@ -111,6 +111,10 @@ if(isset($_GET['template'])){
 
             	var previewFormData = JSON.stringify(<?php echo json_encode($formData); ?>);
 
+				var guestGroup = [];
+				var addGuestPosition = 0;
+				var formRender = false;
+
 				$.ajax({
 					url: 'ws_forms.php',
 					method: '<?php echo $method; ?>',
@@ -133,7 +137,15 @@ if(isset($_GET['template'])){
 								$("head").append(ajaxData.formSettings.recaptchaScript);
 							}
 
-                            const formRender = $('#formContent').formRender({
+							$.each(JSON.parse(ajaxData.formData), function(key, element){
+								if(element.group == 'guest'){
+									guestGroup.push(element);
+								}
+							});
+
+							console.log(guestGroup);
+
+                            formRender = $('#formContent').formRender({
                             	formData,
                             	layoutTemplates: {
                             		noLabel: function(field, label, help, data){
@@ -263,8 +275,8 @@ if(isset($_GET['template'])){
                         	var siteKey = '<?php echo $recaptcha->getSiteKey(); ?>';
                         	var recaptchaEnabled = ajaxData.formSettings.enableRecaptcha;
 
-                        	var $renderedForm = $(document).find('.rendered-form');
-                        	$renderedForm.addClass('row');
+                        	var $renderedForm = $(document).find('#formContent');
+                        	$renderedForm.find('.rendered-form').addClass('row');
 
                         	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', 'patient\\.address\\.').data('hhkindex','');
 
@@ -304,6 +316,73 @@ if(isset($_GET['template'])){
                         			submitForm();
                         		}
                         	});
+
+							var guestIndex = 0;
+                        	$renderedForm.on('click', '#addGuest', function(){
+                        		guestIndex++;
+                				var userData = formRender.userData;
+                				var thisGuestGroup = [];
+
+                				$.each(userData, function(key, element){
+    								if(element.name == 'addGuest'){
+    									addGuestPosition = key;
+    								}
+    							});
+
+    							$.each(guestGroup, function(key, element){
+    								var newElement = JSON.parse(JSON.stringify(element)); //deep copy object (prevent reference/pointer issues)
+    								if(newElement.name){
+    									newElement.name = newElement.name.replace(/\.g([0-9]+)\./ig, ".g" + guestIndex + ".");
+    								}
+    								thisGuestGroup.push(newElement);
+    							});
+
+                				Array.prototype.splice.apply(userData, [addGuestPosition, 0].concat(thisGuestGroup));
+                				$renderedForm.formRender('render', userData);
+
+
+
+                            	$renderedForm.find('.rendered-form').addClass('row');
+
+                            	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', 'patient\\.address\\.').data('hhkindex','');
+
+                            	// set country and state selectors
+                                $renderedForm.find('select.bfh-countries').each(function() {
+                                    var $countries = $(this);
+                                    $countries.bfhcountries($countries.data()).val($countries.attr('user-data'));
+                                });
+                                $renderedForm.find('select.bfh-states').each(function() {
+                                    var $states = $(this);
+                                    $states.bfhstates($states.data()).val($states.attr('user-data'));
+                                });
+
+                            	//zip code search
+                            	$renderedForm.find('input.hhk-zipsearch').each(function() {
+                                    var lastXhr;
+                                    createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
+                                });
+
+                                $renderedForm.find('.address').prop('autocomplete', 'search');
+
+                                //phone format
+                                verifyAddrs($renderedForm);
+
+                        		$('input.form-control').blur(function(){
+                        			var val = $(this).val().replaceAll('"', "'");
+                        			$(this).val(val);
+                        		});
+
+                        		$(document).on('submit', 'form', function(e){
+                            		e.preventDefault();
+                            		if(recaptchaEnabled){
+                            		    grecaptcha.execute(siteKey, {action: 'submit'}).then(function(token){
+                            		    	submitForm(token);
+                            		    });
+                            		}else{
+                            			submitForm();
+                            		}
+                            	});
+            				});
 
                         	function submitForm(token = ''){
                         		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");
@@ -382,19 +461,12 @@ if(isset($_GET['template'])){
     					}
                 	}
 				});
+				console.log(guestGroup);
                 //add guest button
                 //var elements = $renderedForm.find('input[group=guest], select[group=guest]').parents('.field-container').remove();
                 //console.log(elements);
                 //index = 0;
-                //$renderedForm.on('click', '#addGuest', function(){
-	    		//	elements.each(function(){
-	    		//		formgroup = $(this).clone();
-	    		//		var fieldname = formgroup.find('input, select').prop('name')
-	    		//		formgroup.find('input, select').prop('name', 'guests.g' + index + '.' + fieldname);
-	    		//		formgroup.insertBefore('.field-addGuest');
-	    		//	});
-	    		//	index++;
-            	//});
+
 
 
             });
