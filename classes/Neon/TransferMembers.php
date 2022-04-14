@@ -1341,10 +1341,17 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
         );
     }
 
+    /**
+     * @param \PDO $dbh
+     * @param array $idPsgs
+     * @param string $username
+     * @return array
+     */
     public static function sendExcludes(\PDO $dbh, $idPsgs, $username) {
 
         $idList = [];
         $idNames = [];
+        $numUpdates = 0;
 
         // clean up the visit ids
         foreach ($idPsgs as $s) {
@@ -1355,22 +1362,47 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . M
 
         if (count($idList) > 0) {
 
-            // Collect the names for return message
-            $stmt = $dbh->query("select DISTINCT n.idName AS `HHK Id`, n.Name_Full as `Full Name` from
-                name_guest ng join `name` n on ng.idName = n.idName
-                where ng.idPsg in (" . implode(',', $idList) . ");");
+            // Remove Exclude status when an excluded member checks in.
+            $stmt = $dbh->query("select DISTINCT n.idName AS `HHK Id`, n.Name_Full as `Full Name` from `name` n join name_guest ng on n.idName = ng.idName
+                where ng.idPsg in (" . implode(',', $idList) . ");" );
 
+            // Reset each external Id, and log it.
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
                 $idNames[] = $r;
 
+                $n = new NameRS();
+                $n->idName->setStoredVal($r['HHK Id']);
+                $names = EditRS::select($dbh, $n, array($n->idName));
+                EditRS::loadRow($names[0], $n);
+
+                $n->External_Id->setNewVal(self::EXCLUDE_TERM);
+                $numRows = EditRS::update($dbh, $n, array($n->idName));
+
+                if ($numRows > 0) {
+                    // Log it.
+                    NameLog::writeUpdate($dbh, $n, $n->idName->getStoredVal(), $username);
+                    $numUpdates++;
+                }
             }
 
-            // Update the External Id's
-            $rowcount = $dbh->exec("update name_guest ng join name n on ng.idName = n.idName set n.External_Id = 'excld'
-                where ng.idPsg in (" . implode(',', $idList) . ");");
 
-            $idNames[] = array('HHK Id'=>'', 'Full Name'=>$rowcount . ' members updated.');
+//                 // Collect the names for return message
+//             $stmt = $dbh->query("select DISTINCT n.idName AS `HHK Id`, n.Name_Full as `Full Name` from
+//                 name_guest ng join `name` n on ng.idName = n.idName
+//                 where ng.idPsg in (" . implode(',', $idList) . ");");
+
+//             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+//                 $idNames[] = $r;
+
+//             }
+
+//             // Update the External Id's
+//             $rowcount = $dbh->exec("update name_guest ng join name n on ng.idName = n.idName set n.External_Id = 'excld'
+//                 where ng.idPsg in (" . implode(',', $idList) . ");");
+
+            $idNames[] = array('HHK Id'=>'', 'Full Name'=>$numUpdates . ' members updated.');
         }
 
         return $idNames;

@@ -2,6 +2,7 @@
 
 namespace HHK\House\Reservation;
 
+use HHK\AuditLog\NameLog;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Family\{Family, FamilyAddGuest};
@@ -20,6 +21,8 @@ use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\ReservationRS;
 use HHK\Exception\NotFoundException;
+use HHK\Neon\TransferMembers;
+use HHK\Tables\Name\NameRS;
 
 /**
  * Description of CheckingIn
@@ -333,6 +336,36 @@ FROM reservation r
         $resv->setNumberGuests(count($this->getStayingMembers()));
         $resv->setIdResource($resc->getIdResource());
         $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
+
+        // Neon transfer kludge
+        if ($uS->ContactManager != '') {
+            // Remove Exclude status when an excluded member checks in.
+            $stmt = $dbh->query("select DISTINCT n.idName from `name` n join name_guest ng on n.idName = ng.idName
+                where n.External_Id = '" . TransferMembers::EXCLUDE_TERM . "' AND ng.idPsg = " . $this->reserveData->getIdPsg() );
+
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+            // Reset each external Id, and log it.
+            foreach ($rows as $r) {
+
+                $n = new NameRS();
+                $n->idName->setStoredVal($r[0]);
+                $names = EditRS::select($dbh, $n, array($n->idName));
+                EditRS::loadRow($names[0], $n);
+
+                if ($n->External_Id->getStoredVal() == TransferMembers::EXCLUDE_TERM) {
+
+                    $n->External_Id->setNewVal('');
+                    $numRows = EditRS::update($dbh, $n, array($n->idName));
+
+                    if ($numRows > 0) {
+                        // Log it.
+                        NameLog::writeUpdate($dbh, $n, $n->idName->getStoredVal(), $uS->username);
+
+                    }
+                }
+            }
+        }
 
         //
         // Payment
