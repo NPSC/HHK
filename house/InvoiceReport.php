@@ -120,13 +120,14 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
 
 
     $g['Amount'] = number_format($r['Amount'], 2);
-        
+
     // Show Delete Icon?
     if (($r['Amount'] == 0 || $r['Item_Id'] == ItemId::Discount) && $r['Deleted'] != 1) {
         $g['Amount'] .= HTMLContainer::generateMarkup('span','', array('class'=>'ui-icon ui-icon-trash invAction', 'id'=>'invdel'.$r['idInvoice'], 'data-inv'=>$r['Invoice_Number'], 'data-iid'=>$r['idInvoice'], 'data-stat'=>'del', 'style'=>'cursor:pointer;float:left;', 'title'=>'Delete This Invoice'));
     }
 
     $g['County'] = $r['County'];
+    $g['Zip'] = $r['Zip'];
     $g['Title'] = $r['Title'];
     $g['hospital'] = $hospital;
     $g['Balance'] = number_format($r['Balance'], 2);
@@ -153,7 +154,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $hospital, $statusTxt, &$tbl, &
         $g['payments'] = $r['Amount'] - $r['Balance'];
         $g['Amount'] = $r['Amount'];
         $g['Balance'] = $r['Balance'];
-        
+
         $n = 0;
         $flds = array();
 
@@ -264,6 +265,8 @@ if ($uS->county) {
     $cFields[] = array($labels->getString('MemberType', 'patient', 'Patient') . ' County', 'County', '', '', 'string', '20', array());
 }
 
+$cFields[] = array("Zip Code", 'Zip', '', '', 'string', '10', array());
+
 // Old number format - '_("$"* #,##0.00_);_("$"* \(#,##0.00\);_("$"* "-"??_);_(@_)'
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
 $cFields[] = array("Payments", 'payments', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
@@ -333,14 +336,14 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
     $filter->loadSelectedHospitals();
     $start = $filter->getReportStart();
     $end = $filter->getReportEnd();
-    
+
     if ($invNum != '') {
 
         $whDates = " i.Invoice_Number = '$invNum' ";
         $headerTable->addBodyTr(HTMLTable::makeTd('For Invoice Number: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($invNum));
 
     } else {
-        
+
         $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start)) . ' thru ' . date('M j, Y', strtotime($end))));
 
         if ($useVisitDates) {
@@ -377,7 +380,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
         if ($whAssoc != '') {
             $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
         }
-        
+
         $hdrHosps = $filter->getSelectedHospitalsString();
         $hdrAssocs = $filter->getSelectedAssocString();
 
@@ -451,6 +454,7 @@ n.Name_Full as Sold_To_Name,
 n.Company,
 ifnull(np.Name_Full, '') as Patient_Name,
 ifnull(nap.County, '') as `County`,
+ifnull(nap.Postal_Code, '') as `Zip`,
 ifnull(re.Title, '') as `Title`,
 ifnull(hs.idHospital, 0) as `idHospital`,
 ifnull(hs.idAssociation, 0) as `idAssociation`,
@@ -489,7 +493,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
     $fltrdFields = $colSelector->getFilteredFields();
 
     $hdr = array();
-    
+
     if ($local) {
         $tbl = new HTMLTable();
         $th = '';
@@ -508,7 +512,7 @@ where $whDeleted $whDates $whHosp $whAssoc  $whStatus $whBillAgent ";
         $writer = new ExcelHelper($fileName);
         $writer->setAuthor($uS->username);
         $writer->setTitle("Invoice Report");
-        
+
         // build header
         $colWidths = array();
         $n = 0;
@@ -615,63 +619,63 @@ $glyear = 0;
 $bytesWritten = '';
 
 if ($useGlReport) {
-	
+
 	$glParm = new GLParameters($dbh, 'Gl_Code');
 	$glPrefix = 'gl_';
-	
+
 	// Check for new parameters
 	if (isset($_POST['btnSaveGlParms'])) {
 		$glParm->saveParameters($dbh, $_POST, $glPrefix);
 		$tabReturn = 2;
 	}
-	
+
 	$glMonth = date('m');
-	
+
 	// Output report
 	if (isset($_POST['btnGlGo']) || isset($_POST['btnGlTx']) || isset($_POST['btnGlcsv'])) {
-		
+
 		$tabReturn = 2;
-		
+
 		if (isset($_POST['selGlMonth'])) {
 			$glMonth = filter_var($_POST['selGlMonth'], FILTER_SANITIZE_NUMBER_INT);
 		}
-		
+
 		if (isset($_POST['selGlYear'])) {
 			$glyear = intval(filter_var($_POST['selGlYear'], FILTER_SANITIZE_NUMBER_INT), 10);
 		}
-		
+
 		$glCodes = new GLCodes($dbh, $glMonth, $glyear, $glParm, new GLTemplateRecord());
 
 		if (isset($_POST['btnGlTx'])) {
-			
+
 			$bytesWritten = $glCodes->mapRecords(FALSE)
 					->transferRecords();
-			
+
 			$etbl = new HTMLTable();
-			
+
 			foreach ($glCodes->getErrors() as $e) {
 				$etbl->addBodyTr(HTMLTable::makeTd($e));
 			}
-			
+
 			if ($bytesWritten != '') {
 				$etbl->addBodyTr(HTMLTable::makeTd("Bytes Written: ".$bytesWritten));
 			}
-			
+
 			$glInvoices = $etbl->generateMarkup() . $glInvoices;
-					
+
 		} else if (isset($_POST['btnGlcsv'])) {
-			
+
 			// Comma delemeted file.
 			$glCodes->mapRecords(TRUE);
-				
+
 			foreach ($glCodes->getLines() as $l) {
-				
+
 				$glInvoices .= implode(',', $l) . "\r\n";
-				
+
 			}
 
 		} else {
-			
+
 			$tbl = new HTMLTable();
 
 			$invHdr = '';
@@ -679,19 +683,19 @@ if ($useGlReport) {
 				$invHdr .= "<td>" . ($h == '' ? ' ' : $h) . "</td>";
 			}
 			$tbl->addBodyTr($invHdr);
-			
+
 			$pmtHdr = '';
 			foreach ($glCodes->paymentHeader() as $h) {
 				$pmtHdr .= "<td style='color:blue;'>" . ($h == '' ? ' ' : $h) . "</td>";
 			}
 			$tbl->addBodyTr($pmtHdr);
-			
+
 			$lineHdr = '';
 			foreach ($glCodes->lineHeader() as $h) {
 				$lineHdr .= "<td style='color:green;'>" . ($h == '' ? ' ' : $h) . "</td>";
 			}
 			$tbl->addBodyTr($lineHdr);
-			
+
 			// Get payment methods (types) labels.
 			$pmstmt = $dbh->query("Select idPayment_method, Method_Name from payment_method;");
 			$pmRows = $pmstmt->fetchAll(\PDO::FETCH_NUM);
@@ -699,36 +703,36 @@ if ($useGlReport) {
 			foreach ($pmRows as $r) {
 				$pmtMethods[$r[0]] = $r[1];
 			}
-			
+
 			$recordCtr = 0;
-			
+
 			foreach ($glCodes->getInvoices() as $r) {
-				
+
 				if ($recordCtr++ > 16) {
 					$tbl->addBodyTr($invHdr);
 					$tbl->addBodyTr($pmtHdr);
 					$tbl->addBodyTr($lineHdr);
 					$recordCtr = 0;
 				}
-				
+
 				$mkupRow = '';
-				
+
 				foreach ($r['i'] as $k=> $col) {
-					
+
 					if ($k == 'iStatus' && $col == 'p') {
 						$col = 'paid';
 					}
-					
+
 					$mkupRow .= "<td>" . ($col == '' ? ' ' : $col) . "</td>";
 				}
 				$tbl->addBodyTr($mkupRow);
-				
+
 				if (isset($r['p'])) {
-					
+
 					foreach ($r['p'] as $p) {
 						$mkupRow = '<td> </td>';
 						foreach ($p as $k => $col) {
-							
+
 							if ($k == 'pTimestamp') {
 								$col = date('Y/m/d', strtotime($col));
 							} else if ($k == 'pMethod') {
@@ -738,53 +742,53 @@ if ($useGlReport) {
 							} else if ($k == 'pStatus' && $col == 'r') {
 								$col = "return";
 							}
-							
+
 							$mkupRow .= "<td style='color:blue;'>" . ($col == '' ? ' ' : $col) . "</td>";
-							
+
 						}
 						$tbl->addBodyTr($mkupRow);
-						
+
 					}
 				}
-				
+
 				if (isset($r['l'])) {
 					foreach ($r['l'] as $h) {
 						$mkupRow = '<td> </td><td> </td>';
 						foreach ($h as $k => $col) {
-							
+
 							if ($k == 'il_Amount') {
 								$col = number_format($col, 2);
 							}
-							
+
 							$mkupRow .= "<td style='color:green;'>" . ($col == '' ? ' ' : $col) . "</td>";
-							
+
 						}
 						$tbl->addBodyTr($mkupRow);
-						
+
 					}
 				}
 			}
-			
+
 			$glInvoices = $tbl->generateMarkup();
-			
+
 			// Comma delemeted file.
 			$glCodes->mapRecords(TRUE);
-			
+
 			$tbl = new HTMLTable();
-			
+
 			foreach ($glCodes->getLines() as $l) {
-				
+
 				$tbl->addBodyTr(HTMLTable::makeTd(implode(',', $l), array('style'=>'font-size:0.8em')));
-				
+
 			}
-			
+
 			if ($glCodes->getStopoAtInvoice() != '') {
 				$tbl->addBodyTr(HTMLTable::makeTd('Stop at Invoice number ' . $glCodes->getStopoAtInvoice(), array()));
 			}
-			
+
 
 			$glInvoices .= "<p style='margin-top:20px;'>Total Credits = " . number_format($glCodes->getTotalCredit(), 2) . " Total Debits = " . number_format($glCodes->getTotalDebit(), 2) . "</p>" .$tbl->generateMarkup();
-			
+
 			if (count($glCodes->getErrors()) > 0) {
 				$etbl = new HTMLTable();
 				foreach ($glCodes->getErrors() as $e) {
@@ -794,14 +798,14 @@ if ($useGlReport) {
 			}
 		}
 	}
-	
+
 	// GL Parms chooser markup
 	$glChooser = $glParm->getChooserMarkup($dbh, $glPrefix);
-	
+
 	//Month and Year chooser
 	$glMonthSelr = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($filter->getMonths(), $glMonth, FALSE), array('name' => 'selGlMonth', 'size'=>12));
 	$glYearSelr = HTMLSelector::generateMarkup(getYearOptionsMarkup($year, ($uS->StartYear ? $uS->StartYear : "2013"), 0, FALSE), array('name' => 'selGlYear', 'size'=>'12'));
-	
+
 }
 
 // Setups for the page.
@@ -871,13 +875,13 @@ $(document).ready(function() {
     var tabReturn = '<?php echo $tabReturn; ?>';
 
     $('#btnHere, #btnExcel,  #cbColClearAll, #cbColSelAll, #btnInvGo, #btnSaveGlParms, #btnGlGo, #btnGlTx, #btnGlcsv').button();
-    
+
     $( "form[name=glform] input[type=checkbox]" ).checkboxradio({
       icon: true
     });
-    
+
     $("form[name=glform] .ui-checkboxradio-icon").removeClass('ui-state-hover');
-    
+
     $('.ckdate').datepicker({
         yearRange: '-05:+01',
         changeMonth: true,
@@ -955,7 +959,7 @@ $(document).ready(function() {
     });
 
     $('#mainTabs').tabs("option", "active", tabReturn);
-    
+
 
     $('#btnInvGo').click(function () {
         var statuses = ['up'];
@@ -1077,11 +1081,11 @@ $(document).ready(function() {
             event.preventDefault();
             invSetBill($(this).data('inb'), $(this).data('name'), 'div#setBillDate', '#trBillDate' + $(this).data('inb'), $('#trBillDate' + $(this).data('inb')).text(), $('#divInvNotes' + $(this).data('inb')).text(), '#divInvNotes' + $(this).data('inb'));
         });
-        
+
     }
 
     $('#mainTabs').show();
-    
+
     $('#includeFields').fieldSets({'reportName': 'invoice', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
 });
  </script>

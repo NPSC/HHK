@@ -296,6 +296,7 @@ function transferVisits(idPsg, rels) {
 		let $vTbl= $('#vTbl');
 		let $mTbl = $('#mTbl');
 		let $hTbl = $('#hTbl');
+		let first = true;
 		
         if (incmg.members) {
 	            
@@ -319,16 +320,19 @@ function transferVisits(idPsg, rels) {
 			}
 			
 			tr = '';
+			first = 'style="border-top: 2px solid #2E99DD;"';
 			for (let id in incmg.members) {
 				
-				tr += '<tr>';
+				tr = '<tr ' + first + '>';
+				first = '';
+							
 				for (let key in incmg.members[id]) {
 					tr += '<td>' + incmg.members[id][key] + '</td>';
 				}
 				tr += '</tr>';
 
 			}
-			
+						
 			$mTbl.find('tbody').append(tr);
         }
 
@@ -351,9 +355,16 @@ function transferVisits(idPsg, rels) {
 			}
 
 			tr = '';
+			first = true;
 			for (let i = 0; i < incmg.visits.length; i++) {
 				
-				tr += '<tr>';
+				if (first) {
+					first = false;
+					tr += '<tr style="border-top: 2px solid #2E99DD;">';
+				} else {
+					tr += '<tr>';
+				}
+				
 				for (let key in incmg.visits[i]) {
 					tr += '<td>' + incmg.visits[i][key] + '</td>';
 				}
@@ -380,11 +391,18 @@ function transferVisits(idPsg, rels) {
 				let title = $('<h3 style="margin-top:7px;">Households</h3>');
 				$('#divMembers').append(title).append($hTbl).show();
 			}
-			
+
 			tr = '';
+			first = true;
 			for (let i = 0; i < incmg.households.length; i++) {
 				
-				tr += '<tr>';
+				if (first) {
+					first = false;
+					tr += '<tr style="border-top: 2px solid #2E99DD;">';
+				} else {
+					tr += '<tr>';
+				}
+				
 				for (let key in incmg.households[i]) {
 					tr += '<td>' + incmg.households[i][key] + '</td>';
 				}

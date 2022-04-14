@@ -7,6 +7,7 @@ use HHK\Exception\{RuntimeException, UploadException};
 use HHK\Member\MemberSearch;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
+use HHK\SysConst\MemStatus;
 
 /*
  * TransferMembers.php
@@ -152,7 +153,7 @@ class TransferMembers {
      * @return string
      * @throws RuntimeException
      */
-    public function updateNeonAccount(\PDO $dbh, $accountData, $idName, $extraSourceCols = []) {
+    public function updateNeonAccount(\PDO $dbh, $accountData, $idName, $extraSourceCols = [], $updateAddr = TRUE) {
 
         if ($idName < 1) {
             throw new RuntimeException('HHK Member Id not specified: ' . $idName);
@@ -186,8 +187,13 @@ class TransferMembers {
         // Address
         if (isset($r['addressLine1']) && $r['addressLine1'] != '') {
 
-            $r['isPrimaryAddress'] = 'true';
-            $this->fillPcAddr($r, $param, $unwound);
+            if ($updateAddr) {
+                $r['isPrimaryAddress'] = 'true';
+                $this->fillPcAddr($r, $param, $unwound);
+            } else {
+                // dont update address from HHK.
+                $this->fillPcAddr(array(), $param, $unwound);
+            }
 
         }
 
@@ -542,7 +548,7 @@ class TransferMembers {
     CONCAT_WS(' ', na.Address_1, na.Address_2) as `Address`,
     IFNULL(DATE_FORMAT(s.Span_Start_Date, '%Y-%m-%d'), '') AS `Start_Date`,
     IFNULL(DATE_FORMAT(s.Span_End_Date, '%Y-%m-%d'), '') AS `End_Date`,
-    (TO_DAYS(`s`.`Span_End_Date`) - TO_DAYS(`s`.`Span_Start_Date`)) AS `Nite_Counter`
+    datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) AS `Nite_Counter`
 FROM
     stays s
         LEFT JOIN
@@ -556,8 +562,14 @@ FROM
         LEFT JOIN
     name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
-    s.On_Leave = 0 AND s.`Status` != 'a' AND s.Recorded = 0  AND n.External_Id != '" . self::EXCLUDE_TERM . "'
-    AND s.Span_End_Date is not NULL AND hs.idPsg = $idPsg
+    s.On_Leave = 0
+    AND s.`Status` != 'a'
+    AND s.Recorded = 0
+    AND n.External_Id != '" . self::EXCLUDE_TERM . "'
+    AND n.Member_Status = '" . MemStatus::Active ."'
+    AND s.Span_End_Date is not NULL
+    AND datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) > 0
+    AND hs.idPsg = $idPsg
 ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
         // Count up guest stay dates and nights.
@@ -782,7 +794,7 @@ ORDER BY s.idVisit , s.Visit_Span , s.idName , s.Span_Start_Date" );
 
 
          // Update Neon with these customdata.
-         $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes);
+         $f['Update_Message'] = $this->updateNeonAccount($dbh, $origValues, $r['hhkId'], $codes, FALSE);
 
          return $f;
     }
@@ -843,7 +855,9 @@ from
         LEFT JOIN
     name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 where
-	s.idName is NULL AND n.External_Id != '" . self::EXCLUDE_TERM . "'
+	s.idName is NULL
+    AND n.External_Id != '" . self::EXCLUDE_TERM . "'
+    AND n.Member_Status = '" . MemStatus::Active ."'
     AND v.idVisit in (" . implode(',', $idList) . ")");
 
             while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -1005,8 +1019,7 @@ where
     protected function createHousehold($primaryGuest) {
 
         $householdId = 0;
-        $householdName = $primaryGuest['Last_Name'];
-//        $relationId = $this->relationshipMapper->relateGuest($primaryGuest['Relation_Code']);
+        $householdName = $this->unencodeHTML($primaryGuest['Last_Name']);
         $relationId = $primaryGuest['Neon_Rel_Code'];
 
         if ($householdName == '') {
@@ -1303,7 +1316,7 @@ FROM
     `name_guest` ng on n.idName = ng.idName and ng.idPsg = $idPsg
 		LEFT JOIN
     name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.idName = $idPrimaryGuest ");
+where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.Member_Status = '" . MemStatus::Active ."' AND n.idName = $idPrimaryGuest ");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -2035,7 +2048,7 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.idName = $idPrimaryGue
 
         if ($parm > 0) {
 
-            // Need to lift the most recent hospital stay record for the HHK_ID
+
             $stmt = $dbh->query("Select * from vguest_data_neon where HHK_ID = $parm");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -2052,6 +2065,11 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.idName = $idPrimaryGue
                     $rows[0][$k] = $v;
                 }
             }
+
+            $rows[0]['firstName'] = $this->unencodeHTML($rows[0]['firstName']);
+            $rows[0]['middleName'] = $this->unencodeHTML($rows[0]['middleName']);
+            $rows[0]['lastName'] = $this->unencodeHTML($rows[0]['lastName']);
+            $rows[0]['preferredName'] = $this->unencodeHTML($rows[0]['preferredName']);
 
             return $rows[0];
 
@@ -2089,6 +2107,18 @@ where n.External_Id != '" . self::EXCLUDE_TERM . "' AND n.idName = $idPrimaryGue
         $this->webService->go( array( 'method' => 'common/logout' ) );
         $this->webService->setSession('');
 
+    }
+
+    public function unencodeHTML($text) {
+
+        $txt = preg_replace_callback("/(&#[0-9]+;)/",
+            function($m) {
+                return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+            },
+            $text
+            );
+
+        return $txt;
     }
 
     public function getTxMethod() {

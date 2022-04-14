@@ -1,5 +1,6 @@
 <?php
 use HHK\SysConst\WebPageCode;
+use HHK\SysConst\MemStatus;
 use HHK\sec\WebInit;
 use HHK\sec\Session;
 use HHK\AlertControl\AlertMessage;
@@ -115,7 +116,9 @@ from
         LEFT JOIN
     gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
 where
-	s.idName is NULL AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
+	s.idName is NULL
+    AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
+    AND n.Member_Status = '" . MemStatus::Active ."'
     AND v.idVisit in (" . implode(',', $idList) . ")");
 
     while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -211,8 +214,13 @@ FROM
         LEFT JOIN
     name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
 WHERE
-    s.On_Leave = 0 AND s.`Status` != 'a' AND s.`Recorded` = 0 AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
+    s.On_Leave = 0
+    AND s.`Status` != 'a'
+    AND s.`Recorded` = 0
+    AND n.External_Id != '" . TransferMembers::EXCLUDE_TERM . "'
+    AND n.Member_Status = '" . MemStatus::Active ."'
     AND DATE(s.Span_End_Date) < DATE('$end')
+    AND datediff(DATE(`s`.`Span_End_Date`), DATE(`s`.`Span_Start_Date`)) > 0
 ORDER BY hs.idPsg
 LIMIT 500");
 
@@ -374,8 +382,11 @@ LIMIT 500");
                     .HTMLInput::generateMarkup($idp, array('type'=>'checkbox', 'class'=>'hhk-exPsg', 'name'=>'cbExPSG'.$idp, 'data-idpsg'=>$idp, 'style'=>'margin-right:3px;', 'title'=>'Check to permanently exclude from Neon.'))
                     .HTMLContainer::generateMarkup('label', 'Excld', array('for'=>'cbExPSG'.$idp))
                     , array('rowspan'=>count($rows[$idp]), 'style'=>'vertical-align:top;'));
+
+                $rowStyle = "border-top: 2px solid #2E99DD;";
             } else {
                 $td = '';
+                $rowStyle = '';
             }
 
             $tbl->addBodyTr($td
@@ -394,7 +405,7 @@ LIMIT 500");
                     HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup($neonRelList, $g['Guest to PG'], TRUE),
                         array('name'=>'selNeonRel' . $g['HHK Id'], 'data-idname'=>$g['HHK Id'], 'class'=>'hhk-selRel'.$idp)))
-                , array('class'=>'hhk-'.$idp));
+                , array('class'=>'hhk-'.$idp, 'style'=>$rowStyle));
         }
 
     }
