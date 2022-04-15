@@ -127,7 +127,7 @@ if(isset($_GET['template'])){
 					dataType:'json',
 					success: function(ajaxData){
 						if(ajaxData.formData && ajaxData.formSettings){
-    						formData = ajaxData.formData;
+    						formData = JSON.parse(ajaxData.formData);
     						formSuccessTitle = ajaxData.formSettings.successTitle;
     						formSuccessContent = ajaxData.formSettings.successContent;
 
@@ -137,13 +137,18 @@ if(isset($_GET['template'])){
 								$("head").append(ajaxData.formSettings.recaptchaScript);
 							}
 
-							$.each(JSON.parse(ajaxData.formData), function(key, element){
-								if(element.group == 'guest'){
-									guestGroup.push(element);
+							$.each(formData, function(key, element){
+								var elementCopy = JSON.parse(JSON.stringify(element)); // force deep copy
+								if(elementCopy.group == 'guest'){
+									guestGroup.push(elementCopy);
 								}
+
+								if(elementCopy.className == 'guestHeader'){
+    								formData[key].label = elementCopy.label.replace("${guestNum}", "1");
+    							}
 							});
 
-							console.log(guestGroup);
+							formData = JSON.stringify(formData);
 
                             formRender = $('#formContent').formRender({
                             	formData,
@@ -318,6 +323,7 @@ if(isset($_GET['template'])){
                         	});
 
 							var guestIndex = 0;
+
                         	$renderedForm.on('click', '#addGuest', function(){
                         		guestIndex++;
                 				var userData = formRender.userData;
@@ -334,6 +340,14 @@ if(isset($_GET['template'])){
     								if(newElement.name){
     									newElement.name = newElement.name.replace(/\.g([0-9]+)\./ig, ".g" + guestIndex + ".");
     								}
+
+    								if(newElement.className == "guestHeader"){
+    									guestNum = guestIndex+1;
+    									newElement.label = newElement.label.replace("${guestNum}", guestNum) + '<button type="button" class="removeGuest btn btn-danger ml-3" data-guestIndex="' + guestIndex + '">Remove</button>';
+    								}
+
+									newElement.guestIndex = guestIndex;
+
     								thisGuestGroup.push(newElement);
     							});
 
@@ -383,6 +397,19 @@ if(isset($_GET['template'])){
                             		}
                             	});
             				});
+
+							$renderedForm.on('click', '.removeGuest', function(){
+								var guestIndex = $(this).data('guestindex');
+								var userData = formRender.userData;
+								console.log($renderedForm);
+								$.each(userData, function(index,element){
+									if(element.guestIndex == guestIndex){
+										delete userData[index];
+									}
+								});
+								console.log(userData);
+								$renderedForm.formRender('render', userData);
+							});
 
                         	function submitForm(token = ''){
                         		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");
@@ -461,13 +488,6 @@ if(isset($_GET['template'])){
     					}
                 	}
 				});
-				console.log(guestGroup);
-                //add guest button
-                //var elements = $renderedForm.find('input[group=guest], select[group=guest]').parents('.field-container').remove();
-                //console.log(elements);
-                //index = 0;
-
-
 
             });
 	</script>

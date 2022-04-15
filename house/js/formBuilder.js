@@ -12,6 +12,9 @@
 
   $.fn.hhkFormBuilder = function (options) {
 
+		setUpDemogFields(options);
+		setUpDataSources(options);
+
 	    var defaults = {    
             serviceURL: 'ws_resc.php',
             previewURL: 'showReferral.php',
@@ -152,36 +155,7 @@
     				"width": "col-md-4",
     				"validation": "lessThanToday"
   				},
-  				{
-    				"type": "number",
-    				"label": "Age",
-    				"placeholder": "Age",
-    				"className": "form-control",
-    				"name": "patient.demographics.age",
-    				"width": "col-md-3"
-    			},
-  				{
-    				"type": "select",
-    				"label": (options.labels.patient || 'Patient') + " Gender",
-    				"placeholder": (options.labels.patient || 'Patient') + " Gender",
-    				"className": "form-select",
-    				"name": "patient.demographics.gender",
-    				"width": "col-md-4",
-    				"dataSource":"gender",
-    				"multiple": false,
-    				"values": []
-  				},
-  				{
-    				"type": "select",
-    				"label": (options.labels.patient || 'Patient') + " " + (options.demogs.Ethnicity.Description || 'Ethnicity'),
-    				"placeholder": (options.labels.patient || 'Patient') + " " + (options.demogs.Ethnicity.Description || 'Ethnicity'),
-    				"className": "form-select",
-    				"name": "patient.demographics.ethnicity",
-    				"width": "col-md-4",
-    				"dataSource":"ethnicity",
-    				"multiple": false,
-    				"values": []
-  				},
+  				... (options.patientDemogFields ? options.patientDemogFields:[]),
     			{
     				"type": "text",
     				"subtype": "tel",
@@ -375,89 +349,6 @@
     			]
   			},
   			{
-        		label: 'Guest Address',
-        		name: 'guest-address',
-        		showHeader: true,
-        		fields: [
-				{
-					"type": "text",
-    				"label": "Street",
-    				"placeholder": "Street",
-    				"className": "form-control",
-    				"name": "guests.g0.address.street",
-    				"width": "col-md-12"
-  				},
-  				{
-    				"type": "text",
-    				"label": "Zip Code",
-    				"placeholder": "Zip Code",
-    				"className": "form-control address ckzip hhk-zipsearch ui-autocomplete-input",
-    				"name": "guests.g0.address.adrzip",
-    				"width": "col-md-2"
-    			},
-  				{
-  					"type": "text",
-    				"label": "City",
-    				"placeholder": "City",
-    				"className": "form-control address",
-    				"name": "guests.g0.address.adrcity",
-    				"width": "col-md-5"
-  				},
-  				... (options.fieldOptions.county ?
-  				[{
-  					"type": "text",
-    				"label": "County",
-    				"placeholder": "County",
-    				"className": "form-control address",
-    				"name": "guests.g0.address.adrcounty",
-    				"width": "col-md-5"
-  				}]:[]),
-  				{
-    				"type": "select",
-    				"label": "State",
-    				"placeholder": "State",
-    				"className": "form-select bfh-states address",
-    				"name": "guests.g0.address.adrstate",
-    				"width": "col-md-2",
-    				"values":[]
-  				},
-    			{
-    				"type": "select",
-    				"label": "Country",
-    				"placeholder": "Country",
-    				"className": "form-select bfh-countries address",
-    				"name": "guests.g0.address.adrcountry",
-    				"width": "col-md-3",
-    				"values":[]
-    			}
-    			]
-  			},
-  			{
-        		label: 'Stay Dates',
-        		name: 'stay-dates',
-        		showHeader: true,
-        		fields: [
-				{
-					"type": "date",
-					"required": true,
-    				"label": "Checkin Date",
-					"placeholder": "Checkin Date",
-    				"className": "form-control",
-    				"name": "checkindate",
-    				"width": "col-md-6"
-  				},
-  				{
-					"type": "date",
-					"required": true,
-    				"label": "Checkout Date",
-					"placeholder": "Checkout Date",
-    				"className": "form-control",
-    				"name": "checkoutdate",
-    				"width": "col-md-6"
-  				}
-  				]
-  			},
-  			{
         		label: (options.labels.guest || 'Guest') + 's',
         		name: 'guests',
         		showHeader: true,
@@ -465,7 +356,9 @@
         		{
         			"type": "header",
         			"subtype": "h3",
-        			"label": "Guest #1"
+        			"label": "Guest ${guestNum}",
+        			"group": "guest",
+        			"className": "guestHeader"
     			},
 				{
 					"type": "text",
@@ -495,39 +388,7 @@
     				"width": "col-md-3",
     				"group": "guest"
     			},
-    			{
-    				"type": "number",
-    				"label": "Age",
-    				"placeholder": "Age",
-    				"className": "form-control",
-    				"name": "guests.g0.demographics.age",
-    				"width": "col-md-3",
-    				"group": "guest"
-    			},
-    			{
-    				"type": "select",
-    				"label": "Gender",
-    				"placeholder": "Gender",
-    				"className": "form-select",
-    				"name": "guests.g0..demographics.gender",
-    				"width": "col-md-4",
-    				"group": "guest",
-    				"dataSource":"gender",
-    				"multiple": false,
-    				"values": []
-  				},
-    			{
-	    			"type": "select",
-	    			"label": (options.demogs.Ethnicity.Description || 'Ethnicity'),
-	    			"placeholder": (options.demogs.Ethnicity.Description || 'Ethnicity'),
-	    			"className": "form-select",
-	    			"name": "guests.g0.demographics.ethnicity",
-	    			"width": "col-md-4",
-	    			"group":"guest",
-	    			"dataSource":"ethnicity",
-	    			"multiple": false,
-	    			"values": []
-	  			},
+    			... (options.guestDemogFields ? options.guestDemogFields:[]),
     			{
   					"type": "select",
     				"label": "Relationship to " + (options.labels.patient || 'Patient'),
@@ -547,9 +408,104 @@
     				]
   				},
   				{
+  					"type": "paragraph",
+  					"label": "<hr>",
+  					"group": "guest"
+  				},
+  				{
   					"type": "button",
   					"name": 'addGuest',
   					"label": "Add " + (options.labels.guest || 'Guest')
+  				}
+  				]
+  			},
+  			{
+        		label: 'Guest Address',
+        		name: 'guest-address',
+        		showHeader: true,
+        		fields: [
+				{
+					"type": "text",
+    				"label": "Street",
+    				"placeholder": "Street",
+    				"className": "form-control",
+    				"name": "guests.g0.address.street",
+    				"width": "col-md-12",
+    				"group": "guest"
+    				
+  				},
+  				{
+    				"type": "text",
+    				"label": "Zip Code",
+    				"placeholder": "Zip Code",
+    				"className": "form-control address ckzip hhk-zipsearch ui-autocomplete-input",
+    				"name": "guests.g0.address.adrzip",
+    				"width": "col-md-2",
+    				"group": "guest"
+    			},
+  				{
+  					"type": "text",
+    				"label": "City",
+    				"placeholder": "City",
+    				"className": "form-control address",
+    				"name": "guests.g0.address.adrcity",
+    				"width": "col-md-5",
+    				"group": "guest"
+  				},
+  				... (options.fieldOptions.county ?
+  				[{
+  					"type": "text",
+    				"label": "County",
+    				"placeholder": "County",
+    				"className": "form-control address",
+    				"name": "guests.g0.address.adrcounty",
+    				"width": "col-md-5",
+    				"group": "guest"
+  				}]:[]),
+  				{
+    				"type": "select",
+    				"label": "State",
+    				"placeholder": "State",
+    				"className": "form-select bfh-states address",
+    				"name": "guests.g0.address.adrstate",
+    				"width": "col-md-2",
+    				"values":[],
+    				"group": "guest"
+  				},
+    			{
+    				"type": "select",
+    				"label": "Country",
+    				"placeholder": "Country",
+    				"className": "form-select bfh-countries address",
+    				"name": "guests.g0.address.adrcountry",
+    				"width": "col-md-3",
+    				"values":[],
+    				"group": "guest"
+    			}
+    			]
+  			},
+  			{
+        		label: 'Stay Dates',
+        		name: 'stay-dates',
+        		showHeader: true,
+        		fields: [
+				{
+					"type": "date",
+					"required": true,
+    				"label": "Checkin Date",
+					"placeholder": "Checkin Date",
+    				"className": "form-control",
+    				"name": "checkindate",
+    				"width": "col-md-6"
+  				},
+  				{
+					"type": "date",
+					"required": true,
+    				"label": "Checkout Date",
+					"placeholder": "Checkout Date",
+    				"className": "form-control",
+    				"name": "checkoutdate",
+    				"width": "col-md-6"
   				}
   				]
   			},
@@ -712,7 +668,12 @@
   			typeUserAttrs: {
   				header: {
   					group: {
-  						label: 'Group'
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
   					}
   				},
   				text: {
@@ -736,8 +697,13 @@
       					value: 'col-md-12'
     				},
     				group: {
-    					label: 'Group'
-    				}
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+  					}
     			},
   				number: {
     				width: {
@@ -760,8 +726,13 @@
       					value: 'col-md-12'
     				},
     				group: {
-    					label: 'Group'
-    				}
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+  					}
     			},
   				select: {
     				width: {
@@ -786,23 +757,16 @@
     				dataSource: {
     					label: 'Data Source',
     					multiple: false,
-    					options: {
-    						'':'',
-    						'namePrefix': 'Name Prefix',
-    						'nameSuffix': 'Name Suffix',
-    						'gender': 'Gender',
-    						'ethnicity': (options.demogs.Ethnicity.Description || "Ethnicity"),
-    						'patientRelation': 'Patient Relationship',
-    						'vehicleStates': 'Vehicle States',
-    						'mediaSource': 'Media Source',
-    						'hospitals': 'Hospital',
-    						'diagnosis': 'Diagnosis',
-    						'unit': 'Unit'
-    					}
+    					options: options.dataSources
     				},
     				group: {
-    					label: 'Group'
-    				}
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+  					}
   				},
   				date: {
     				width: {
@@ -825,8 +789,13 @@
       					value: 'col-md-12'
     				},
     				group: {
-    					label: 'Group'
-    				},
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+  					},
     				validation: {
     					label: 'Validation Rule',
     					multiple: false,
@@ -842,24 +811,29 @@
       					label: 'Field Width',
       					multiple: false,
       					options: {
-        					'col-md-12': '12 Columns',
-        					'col-md-11': '11 Columns',
-        					'col-md-10': '10 Columns',
-        					'col-md-9': '9 Columns',
-        					'col-md-8': '8 Columns',
-        					'col-md-7': '7 Columns',
-        					'col-md-6': '6 Columns',
-        					'col-md-5': '5 Columns',
-        					'col-md-4': '4 Columns',
-        					'col-md-3': '3 Columns',
-        					'col-md-2': '2 Columns',
-        					'col-md-1': '1 Column',
+        					'col-md-12': '12 Columns (100%)',
+        					'col-md-11': '11 Columns (91%)',
+        					'col-md-10': '10 Columns (83%)',
+        					'col-md-9': '9 Columns (75%)',
+        					'col-md-8': '8 Columns (66%)',
+        					'col-md-7': '7 Columns (58%)',
+        					'col-md-6': '6 Columns (50%)',
+        					'col-md-5': '5 Columns (41%)',
+        					'col-md-4': '4 Columns (33%)',
+        					'col-md-3': '3 Columns (25%)',
+        					'col-md-2': '2 Columns (16%)',
+        					'col-md-1': '1 Column (8%)',
       					},
       					value: 'col-md-12'
     				},
     				group: {
-    					label: 'Group'
-    				}
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+  					}
   				},
   				textarea: {
     				width: {
@@ -882,8 +856,13 @@
       					value: 'col-md-12'
     				},
     				group: {
-    					label: 'Group'
-    				}
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+  					}
   				},
   				"radio-group": {
     				width: {
@@ -906,8 +885,13 @@
       					value: 'col-md-12'
     				},
     				group: {
-    					label: 'Group'
-    				}
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+  					}
   				},
   				"checkbox-group": {
     				width: {
@@ -930,8 +914,13 @@
       					value: 'col-md-12'
     				},
     				group: {
-    					label: 'Group'
-    				}
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+  					}
   				}
 			},
 			disabledActionButtons: ['data', 'save', 'clear'],
@@ -1004,6 +993,57 @@
 		actions($wrapper, settings, settingsDialog, formPreviewDialog);
 		
 		return this;
+	}
+	
+	function setUpDemogFields(options){
+		var patientDemogFields = [];
+		var guestDemogFields = [];
+		
+		$.each(options.demogs, function(index, demog){
+			
+			patientDemogFields.push({
+	  			"type": "select",
+	    		"label": (options.labels.patient || 'Patient') + " " + (demog.Description || ''),
+	    		"placeholder": (options.labels.patient || 'Patient') + " " + (demog.Description || ''),
+	    		"className": "form-select",
+	    		"name": "patient.demographics." + index,
+	    		"width": "col-md-3",
+	    		"dataSource":index,
+	  		});
+	  		
+	  		guestDemogFields.push({
+	  			"type": "select",
+	    		"label": (options.labels.guest || 'Guest') + " " + (demog.Description || ''),
+	    		"placeholder": (options.labels.guest || 'Guest') + " " + (demog.Description || ''),
+	    		"className": "form-select",
+	    		"name": "guests.g0.demographics." + index,
+	    		"width": "col-md-3",
+	    		"group": "guest",
+	    		"dataSource":index,
+	  		});
+	  	});
+	  	
+	  	options.patientDemogFields = patientDemogFields;
+	  	options.guestDemogFields = guestDemogFields;
+	  	
+	}
+	
+	function setUpDataSources(options){
+		var dataSources = {
+    		'':'',
+    		'namePrefix': 'Name Prefix',
+    		'nameSuffix': 'Name Suffix',
+    		'patientRelation': 'Patient Relationship',
+    		'vehicleStates': 'Vehicle States',
+    		'hospitals': 'Hospital',
+    		'diagnosis': 'Diagnosis',
+    		'unit': 'Unit'
+    	}
+    	
+    	$.each(options.demogs, function(index, demog){
+    		dataSources[index] = demog.Description;
+    	});
+    	options.dataSources = dataSources;
 	}
 	
 	function createMarkup($wrapper, settings){
@@ -1107,6 +1147,19 @@
 				        			<input type="checkbox" name="enableReservation" id="enableReservation" checked="checked">
 				        		</div>
 				        		<small>When checked, this form can be turned into a reservation/referral</small>
+				        	</div>
+				        </div>
+				        <div class="row mb-3">
+				        	<div class="col-12">
+				        		<div class="ui-widget">
+				        			<div class="ui-widget-header ui-corner-top">Additional Guests</div>
+				        			<div class="ui-widget-content">
+				        				<label for="initialGuests">Initial Guests:</label>
+				        				<input type="number" name="initialGuests" min="0">
+				        				<label for="maxGuests">Max Guests</label>
+				        				<input type="number" name="maxGuests" min="0">
+				        			</div>
+				        		</div>
 				        	</div>
 				        </div>
 				    </div>
