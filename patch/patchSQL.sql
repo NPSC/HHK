@@ -47,3 +47,7 @@ Insert IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`
 
 UPDATE `hospital_stay` SET `MRN` = REPLACE(REPLACE(REPLACE(TRIM(`MRN`), '/', ''), '-',''), '_', ''); -- remove whitespace, /,-,_ from MRNs
 
+-- 122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'
+-- add new Apppointment Grid page
+Call new_webpage('AppointGrid.php', 31, 'Appointments', 1, 'h', 95, 'c', 'p', '', '', CURRENT_TIMESTAMP, 'ga');
+Call new_webpage('AppointGrid.php', 31, 'Appointments', 1, 'h', 95, 'c', 'p', '', '', CURRENT_TIMESTAMP, 'g');

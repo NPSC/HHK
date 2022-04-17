@@ -66,6 +66,10 @@
     margin-top:5px;
     display:inline-block;
 }
+.hhk-apptEvent {
+    background-color: #d0e5f5;
+	
+}
 
 .dataTables_info {
     padding-right: 1em;

@@ -3,6 +3,7 @@ use HHK\Exception\InvalidArgumentException;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\WebInit;
 use HHK\House\GuestRegister;
+use HHK\House\TimeGrid;
 
 /**
  * ws_calendar.php
@@ -58,11 +59,11 @@ try {
             if (isset($_REQUEST["view"])) {
             	$view = filter_var(urldecode($_REQUEST["view"]), FILTER_SANITIZE_STRING);
             }
-            
+
             if (isset($_REQUEST["gpby"])) {
             	$groupBy = filter_var(urldecode($_REQUEST["gpby"]), FILTER_SANITIZE_STRING);
             }
-            
+
             if (isset($_REQUEST["timezone"])) {
                 $timezone = filter_var(urldecode($_REQUEST["timezone"]), FILTER_SANITIZE_STRING);
             }
@@ -89,6 +90,26 @@ try {
 
             $guestRegister = new GuestRegister();
             $events = $guestRegister->getRegister($dbh, $start, $end, $timezone);
+            break;
+
+        case 'timeGrid':
+
+            $startStr = '';
+            $endStr = '';
+            $timezone = '';
+
+            if (isset($_REQUEST["start"])) {
+                $startStr = filter_var(urldecode($_REQUEST["start"]), FILTER_SANITIZE_STRING);
+            }
+            if (isset($_REQUEST["end"])) {
+                $endStr = filter_var(urldecode($_REQUEST["end"]), FILTER_SANITIZE_STRING);
+            }
+
+            if (isset($_REQUEST["timezone"])) {
+                $timezone = filter_var(urldecode($_REQUEST["timezone"]), FILTER_SANITIZE_STRING);
+            }
+
+            $events = TimeGrid::getTimeGrid($dbh, $startStr, $endStr, $timezone);
             break;
 
         default:

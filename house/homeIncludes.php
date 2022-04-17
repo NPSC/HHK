@@ -21,6 +21,7 @@ define('DOC_UPLOAD_JS', 'js/documentUpload.min.js' . JSV);
 define('GUESTLOAD_JS', 'js/guestload-min.js' . JSV);
 define('REGISTER_JS', 'js/register-min.js' . JSV);
 define('RESV_JS', "js/resv.js" . JSV);
+define('APPOINTGRID_JS', "js/apptGrid.js" . JSV);
 define('INVOICE_JS', "js/invoice.js" . JSV);
 define('REPORTFIELDSETS_JS', "js/reportfieldSets.js" . JSV);
 define('REFERRAL_VIEWER_JS', "js/referralViewer.js" . JSV);

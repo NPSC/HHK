@@ -42,6 +42,41 @@ CREATE TABLE if not exists `activity` (
 ) ENGINE=InnoDB AUTO_INCREMENT=10;
 
 
+-- -----------------------------------------------------
+-- Table `appointment`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `appointment` (
+  `idAppointment` INT NOT NULL AUTO_INCREMENT,
+  `Date_Appt` DATE NOT NULL,
+  `Time_Appt` TIME NOT NULL,
+  `Reservation_Id` INT NOT NULL,
+  `Status` VARCHAR(4) NOT NULL,
+  `Type` VARCHAR(4) NOT NULL,
+  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
+  `Last_Updated` DATETIME NULL,
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idAppointment`)
+  ) ENGINE=InnoDB AUTO_INCREMENT=1;
+
+
+-- -----------------------------------------------------
+-- Table `appointment_template`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `appointment_template` (
+  `idAppointment_template` INT NOT NULL AUTO_INCREMENT,
+  `Holiday_Index` VARCHAR(3) NOT NULL DEFAULT '',
+  `Weekday_Index` VARCHAR(3) NOT NULL DEFAULT '',
+  `Start_ToD` TIME NULL,
+  `End_ToD` TIME NULL,
+  `Timeslot_Duration` INT NOT NULL DEFAULT 30,
+  `Max_Ts_Appointments` INT NOT NULL DEFAULT 2,
+  `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
+  `Last_Updated` DATETIME NULL,
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idAppointment_template`)
+  )
+  
+
 
 -- -----------------------------------------------------
 -- Table `attribute`
