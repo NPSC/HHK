@@ -23,6 +23,7 @@ function resvManager(initData, options) {
     var span = initData.span;
     var arrival = initData.arrival;
     var insistPayFilledIn = initData.insistPayFilledIn;
+    var UseCkinAppts = initData.UseCkinAppts;
 
     var insistCkinDemog = false;
     var rooms = [];

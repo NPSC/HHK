@@ -17,6 +17,7 @@ use HHK\Tables\EditRS;
 use HHK\Tables\Reservation\{Reservation_GuestRS, ReservationRS};
 use HHK\sec\{Labels, SecurityComponent, Session};
 use HHK\Exception\{RuntimeException, NotFoundException};
+use HHK\House\Appointment\AppointmentChooser;
 
 
 
@@ -502,7 +503,14 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $roomChooser = new RoomChooser($dbh, $resv, 1, $resv->getExpectedArrival(), $resv->getExpectedDeparture());
             $rateChooser = new RateChooser($dbh);
 
-            $dataArray['rChooser'] = $roomChooser->CreateResvMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
+            $apptChooserMkup = '';
+            if ($uS->UseCheckinAppts) {
+                $apptChooser = new AppointmentChooser($dbh, $resv->getExpectedArrival());
+                $apptChooserMkup = $apptChooser->createMarkup($resv->getIdReservation());
+            }
+
+
+            $dataArray['rChooser'] = $apptChooserMkup . $roomChooser->CreateResvMarkup($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
 
             // Rooms array
             $dataArray['rooms'] = $roomChooser->makeRoomsArray();

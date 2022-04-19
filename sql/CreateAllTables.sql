@@ -2354,7 +2354,10 @@ CREATE TABLE if not exists `web_sites` (
 
 ALTER TABLE `activity`
     ADD INDEX IF NOT EXISTS `Index_idName` (`idName` ASC);
-    
+
+ALTER TABLE `appointment` 
+	ADD INDEX IF NOT EXISTS `Index_Reservation_Id` (`Reservation_Id` ASC);
+
 ALTER TABLE `campaign`
 	ADD UNIQUE KEY IF NOT EXISTS `Campaign_Code_UNIQUE` (`Campaign_Code`);
 

@@ -45,12 +45,12 @@ document.addEventListener('DOMContentLoaded', function() {
     defaultTimedEventDuration: slotDuration,
     eventDurationEditable: false,
     editable: true,
-    displayEventTime: false,
+    displayEventTime: true,
     
     headerToolbar: {
       right: 'prev,next today',
       center: 'title',
-      left: 'timeGridFourDay,timeGridDay'
+      left: 'timeGridDay,timeGridFourDay,timeGridSevenDay,listWeek,dayGridWeek'
     },
     
     views: {
@@ -58,6 +58,11 @@ document.addEventListener('DOMContentLoaded', function() {
         type: 'timeGrid',
         duration: { days: 4 },
         buttonText: '4 day'
+      },
+      timeGridSevenDay: {
+        type: 'timeGrid',
+        duration: { days: 7 },
+        buttonText: '7 day'
       }
     },
     

@@ -47,7 +47,12 @@ Insert IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`
 
 UPDATE `hospital_stay` SET `MRN` = REPLACE(REPLACE(REPLACE(TRIM(`MRN`), '/', ''), '-',''), '_', ''); -- remove whitespace, /,-,_ from MRNs
 
--- 122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'
 -- add new Apppointment Grid page
-Call new_webpage('AppointGrid.php', 31, 'Appointments', 1, 'h', 95, 'c', 'p', '', '', CURRENT_TIMESTAMP, 'ga');
-Call new_webpage('AppointGrid.php', 31, 'Appointments', 1, 'h', 95, 'c', 'p', '', '', CURRENT_TIMESTAMP, 'g');
+Call new_webpage('AppointGrid.php', 31, 'Check-In Appointments', 1, 'h', 95, 'c', 'p', '', '', CURRENT_TIMESTAMP, 'ga');
+Call new_webpage('AppointGrid.php', 31, 'Check-In Appointments', 1, 'h', 95, 'c', 'p', '', '', CURRENT_TIMESTAMP, 'g');
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('UseCheckinAppts', 'false', 'b', 'hf', '', 'Enable guest check-in appointments', '','1');
+
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Appointment_Type', 'b', 'Blocker', 'h', '0');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Appointment_Type', 'r', 'Reservation', 'h', '0');

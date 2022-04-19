@@ -1,7 +1,8 @@
 <?php
-namespace HHK\House;
+namespace HHK\House\Appointment;
 
 use HHK\sec\Session;
+use HHK\House\Event;
 
 
 /*
@@ -21,7 +22,7 @@ class TimeGrid {
 
         $s = array(
             'id' => 1,
-            'start' => '2022-04-17T15:30:00-05:00',
+            'start' => '2022-04-18T15:30:00-05:00',
             'title' => 'Ireland',
             'color' => 'yellow',
             'textColor' => 'black'
@@ -32,10 +33,10 @@ class TimeGrid {
 
         $s = array(
             'id' => 2,
-            'start' => '2022-04-17T15:30:00-05:00',
+            'start' => '2022-04-18T15:30:00-05:00',
             'title' => 'Crane',
             'color' => 'green',
-            'textColor' => 'black'
+            'textColor' => '#fff'
         );
 
         $event = new Event($s, $timezone);
@@ -43,7 +44,7 @@ class TimeGrid {
 
         $s = array(
             'id' => 3,
-            'start' => '2022-04-17T15:30:00-05:00',
+            'start' => '2022-04-19T15:30:00-05:00',
             'title' => 'VanderMeer',
             'color' => 'tan',
             'textColor' => 'black'
@@ -54,5 +55,7 @@ class TimeGrid {
 
         return $events;
     }
+
+
 }
 

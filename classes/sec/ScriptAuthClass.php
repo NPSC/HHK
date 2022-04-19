@@ -277,6 +277,7 @@ class ScriptAuthClass extends SecurityComponent {
         $uS = Session::getInstance();
         $pageAnchors = array();
 
+
         foreach ($uS->webPages as $fn => $r) {
 
             if ($r['Type'] != WebPageCode::Page) {
@@ -322,6 +323,7 @@ class ScriptAuthClass extends SecurityComponent {
 
                         $myClass = '';
 
+                        // Browser on this page?
                         if ($pageAnchors[$chld]["File_Name"] == $this->getFileName()) {
                             $myClass = " class='hhk-myPage' ";
                             $cls = ' hhk-myMenuTop';
@@ -335,15 +337,30 @@ class ScriptAuthClass extends SecurityComponent {
                     $chd = "<ul>" . $chd . "</ul>";
                 }
 
-                $markup .= "<li class='dropdown$cls'><a href='#'>" . $pageAnchors[$item]["Title"] . "</a>" . $chd;
+                // If there is a filename, then make this a direct menu item as well as header.
+                $href = '#';
+                if ($pageAnchors[$item]["File_Name"] != '') {
+
+                    $href = $pageAnchors[$item]["File_Name"];
+
+                    // Browser on this page?
+                    if ($pageAnchors[$item]["File_Name"] == $this->getFileName()) {
+                        $cls = ' hhk-myMenuTop';
+                    }
+                }
+
+                $markup .= "<li class='dropdown$cls'><a href='".$href."'>" . $pageAnchors[$item]["Title"] . "</a>" . $chd;
 
             } else {
                 $clss = '';
+                // Browser on this page?
                 if ($pageAnchors[$item]["File_Name"] == $this->getFileName()) {
                     $clss = " class='hhk-myMenuTop' ";
                 }
+
                 $markup .= "<li$clss><a href='".$pageAnchors[$item]["File_Name"]."'>" . $pageAnchors[$item]["Title"] . "</a>";
             }
+
             $markup .= "</li></ul>";
         }
 

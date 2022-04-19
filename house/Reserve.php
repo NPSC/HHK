@@ -150,6 +150,7 @@ $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
+$resvAr['UseCkinAppts'] = $uS->UseCheckinAppts;
 
 $resvManagerOptions = [];
 if($uS->UseIncidentReports){

@@ -3,7 +3,7 @@ use HHK\Exception\InvalidArgumentException;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\WebInit;
 use HHK\House\GuestRegister;
-use HHK\House\TimeGrid;
+use HHK\House\Appointment\TimeGrid;
 
 /**
  * ws_calendar.php

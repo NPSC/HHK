@@ -19,6 +19,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('anomalyTypes','sa','Bad Street Address','`Street Address`=\'\'','',0),
 ('anomalyTypes','z','Bad Zip Code','Zip=\'\' or Zip=\'0\' or LENGTH(Zip)<5','',0),
 
+('Appointment_Type', 'b', 'Blocker','', 'h', '0'),
+('Appointment_Type', 'r', 'Reservation','', 'h', '0'),
+
 ('Attribute_Type', '1', 'Room', '','',0),
 ('Attribute_Type', '2', 'Hospital', '','',0),
 
@@ -593,7 +596,8 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('MaxExpected','260','i','h','','Maximum Expected days out for a visit','',1),
 ('MaxRepeatEvent','53','i','v','','Maximum number of times to repeat a calendar event','',1),
 ('MemberImageSizePx','75','i','h','','Guest image thumbnail size','',1),
-('merchantReceipt', 'false', 'b', 'f', '', 'Print customer and merchant receipt on single page','',1),
+('merchantReceipt', 'false', 'b', 'f', '', 'Print customer and merchant receipt on single page','',1);
+REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`, `Show`) VALUES 
 ('mode', 'demo', 'lu', 'a', '', 'Site Operational Mode', 'Site_Mode',1),
 ('NightsCounter','calYear','s','c','','Count nights by year (calYear) or by grand total','',1),
 ('NoReplyAddr','','ea','ha','','No reply email address','',1),
@@ -659,6 +663,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Training_URL', 'https://hospitalityhousekeeper.net/training/', 's', 'a', '', 'HHK Training site URL', '',0),
 ('Tutorial_URL', 'https://www.youtube.com/channel/UC_Sp1kHz_c0Zet0LrO91SbQ/videos/', 's', 'a', '', 'Tutorial YouTube page', '',0),
 ('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone',1),
+('UseCheckinAppts', 'false', 'b', 'hf', '', 'Enable guest check-in appointments', '','1');
 ('UseDocumentUpload','true','b','hf','','Enable Document Uploads','',1),
 ('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout','',1),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),
@@ -1054,7 +1059,7 @@ REPLACE INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`
 (110,'VisitInterval.php',31,'Visit Interval Report','',0,'h','102','c','p'),(111,'GuestView.php',31,'Guests & Vehicles','',0,'h','79','v','p'),(113,'DRaHospReport.php',31,'Doctors, Hospitals','',0,'h','102','l','p'),(114,'ShowInvoice.php',31,'Show Invoice','',0,'h','','','p'),(115,'InvoiceReport.php',31,'Invoice Report','',0,'h','102','n','p'),(116,'ShowHsKpg.php',31,'Housekeeping','',0,'h','','','p'),(117,'PrtRegForm.php',31,'Print Registration Forms','',0,'h','','','p'),(118,'occDemo.php',31,'Guest Demographics','',0,'h','102','g','p'),(119,'ItemReport.php',31,'Item Report','',0,'h','102','s','p'),
 (120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p'),(121,'GuestTransfer.php',31,'Guest Transfer','',1,'h','79','x','p'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p'),(127,'Help.php',31,'Help','',1,'h','71','f','p'),(128,'ws_calendar.php',31,'','',0,'h','','','s'),(129,'ws_update.php',2,'','',0,'a','','','s'),
 (130,'DiagnosisBuilder.php',31,'Diagnosis Builder','',1,'h','79','n','p'),(131,'CheckingIn.php',31,'Checking In','',0,'h','','','p'),
-(132,'IncmStmt.php',31,'Income Statement','',0,'h','102','t','p'),(133,'ws_forms.php',31,'','',0,'h','','','s'),(134,'showReferral.php',31,'Referral Form','',0,'h','','','p'),(135,'GuestReferral.php',31,'Guest Referral','',0,'h','','','p'),(136,'ws_reportFilter.php',31,'','',0,'h','','','s')(137, 'AppointGrid.php', 31, 'Appointments', '',1,'h','95','c','p');
+(132,'IncmStmt.php',31,'Income Statement','',0,'h','102','t','p'),(133,'ws_forms.php',31,'','',0,'h','','','s'),(134,'showReferral.php',31,'Referral Form','',0,'h','','','p'),(135,'GuestReferral.php',31,'Guest Referral','',0,'h','','','p'),(136,'ws_reportFilter.php',31,'','',0,'h','','','s')(137, 'AppointGrid.php', 31, 'Check-In Appointments', '',1,'h','95','c','p');
 -- ;
 
 UNLOCK TABLES;
