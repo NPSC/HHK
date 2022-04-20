@@ -238,6 +238,10 @@ group by g.Code order by g.Order';
         }
     }
 
+    public function updateUserData(\PDO $dbh, $userData){
+        return $this->doc->updateUserData($dbh, $userData);
+    }
+
     public function getStatus() {
         return $this->doc->getStatus();
     }
@@ -248,7 +252,7 @@ group by g.Code order by g.Order';
         $fields = json_decode($doc);
         $fieldData = [];
 
-        foreach($fields as $field){
+        foreach($fields as $key=>$field){
             if(isset($field->name) && isset($field->required)){ //filter out non input fields
                 if($field->required && (!isset($field->userData[0]) || $field->userData[0] == '')){ //if field is required but user didn't fill field
                     $response["errors"][] = ['field'=>$field->name, 'error'=>$field->label . ' is required.'];
@@ -304,9 +308,14 @@ group by g.Code order by g.Order';
                 }
 
             }
+
+            //remove buttons
+            if($field->type == "button"){
+                unset($fields[$key]);
+            }
         }
         $response['fields'] = $fieldData;
-        $response['sanitizedDoc'] = $fields;
+        $response['sanitizedDoc'] = array_values($fields);
         return $response;
     }
 

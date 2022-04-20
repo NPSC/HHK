@@ -239,6 +239,27 @@ class Document {
         return $counter;
     }
 
+    public function updateUserData(\PDO $dbh, $userData) {
+
+        $counter = 0;
+
+        if(is_array($userData)){
+            $userData = json_encode($userData);
+        }
+
+        if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
+            $uS = Session::getInstance();
+            $this->documentRS->UserData->setNewVal($userData);
+            $this->documentRS->Updated_By->setNewVal($uS->username);
+            $this->documentRS->Last_Updated->setNewVal(date("Y-m-d H:i:s"));
+
+            $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+            EditRS::updateStoredVals($this->documentRS);
+        }
+
+        return $counter;
+    }
+
     /**
      *
      * @param \PDO $dbh

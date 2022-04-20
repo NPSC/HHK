@@ -63,7 +63,7 @@ class ReferralForm {
 	const HTML_Incl_Phone = 'cbPIncludePhone';
 	const HTML_Incl_Email = 'cbPIncludeEmail';
 
-    const MAX_GUESTS = 4;
+    const MAX_GUESTS = 20;
 
     /**
      * Open the referral and pull in the user data.
@@ -361,9 +361,12 @@ class ReferralForm {
 	            if (is_null($searchNameData) === FALSE) {
 	                $guest = $this->saveGuest($dbh, $id, $psg, $searchNameData, $uS->username);
                     $guests[] = $guest->getIdName();
+                    $this->formUserData['guests'][$gindx]['idName'] = $guest->getIdName();
 	           }
 	       }
 	   }
+
+	   $this->formDoc->updateUserData($dbh, $this->formUserData);
 
 	   return $guests;
 	}

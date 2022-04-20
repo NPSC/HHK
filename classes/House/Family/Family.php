@@ -346,12 +346,17 @@ class Family {
 
     }
 
-    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData, $patientUserData = []) {
+    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData, $formUserData = []) {
 
         $rowClass = 'odd';
         $mk1 = '';
         $trs = array();
         $familyName = '';
+        $patientUserData = [];
+
+        if(isset($formUserData['patient'])){
+            $patientUserData = $formUserData['patient'];
+        }
 
         $AdrCopyDownIcon = HTMLContainer::generateMarkup('ul'
                     ,  HTMLContainer::generateMarkup('li',
@@ -451,8 +456,14 @@ class Family {
                 }
 
                 if ($this->showDemographics) {
+                    $guestDemos = [];
+                    foreach($formUserData['guests'] as $guestUserData){ //find matching guest
+                        if($role->getIdName() == (isset($guestUserData['idName'])?$guestUserData['idName']:0)){
+                            $guestDemos = $guestUserData['demographics'];
+                        }
+                    }
                     // Demographics
-                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role, $guestDemos);
                 }
 
                 $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
