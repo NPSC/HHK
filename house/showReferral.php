@@ -146,6 +146,10 @@ if(isset($_GET['template'])){
 								if(elementCopy.className == 'guestHeader'){
     								formData[key].label = elementCopy.label.replace("${guestNum}", "1");
     							}
+
+    							if(elementCopy.name == "addGuest" && ajaxData.formSettings.maxGuests == ajaxData.formSettings.initialGuests){
+    								delete formData[key];
+    							}
 							});
 
 							formData = JSON.stringify(formData);
@@ -195,58 +199,11 @@ if(isset($_GET['template'])){
                           							.append(label, field, help, validation)
                           						)
                           					);
-                          				}else if(data.type == 'date'){ /*
-                          					$(field).attr('type','text').attr('autocomplete', 'off')
-                          					if(data.name == 'patient.birthdate'){
-                          						$(field).datepicker({
-                                                    yearRange: '-99:+00',
-                                                    changeMonth: true,
-                                                    changeYear: true,
-                                                    autoSize: true,
-                                                    maxDate:0,
-                                                    dateFormat: 'M d, yy'
-                                                });
-                          					}else{
-                          						$(field).datepicker();
-                          					}
-                          					*/
                           				}else if(data.type == 'select'){
-                          					if(data.dataSource){
+                          					if(data.dataSource && ajaxData.lookups[data.dataSource]){
                               					var options = {};
-                              					switch(data.dataSource){
-                              						case 'namePrefix':
-                              							options = ajaxData.lookups.namePrefixes;
-                              							break;
-                              						case 'nameSuffix':
-                              							options = ajaxData.lookups.nameSuffixes;
-                              							break;
-                              						case 'gender':
-                              							options = ajaxData.lookups.genders;
-                              							break;
-                              						case 'ethnicity':
-                              							options = ajaxData.lookups.ethnicities;
-                              							break;
-                              						case 'patientRelation':
-                              							options = ajaxData.lookups.patientRels;
-                              							break;
-                              						case 'mediaSource':
-                              							options = ajaxData.lookups.mediaSources;
-                              							break;
-                              						case 'vehicleStates':
-                              							options = ajaxData.lookups.vehicleStates;
-                              							break;
-                              						case 'hospitals':
-                              							options = ajaxData.lookups.hospitals;
-                              							break;
-                              						case 'diagnosis':
-                              							options = ajaxData.lookups.diagnosis;
-                              							break;
-                              						case 'unit':
-                              							options = ajaxData.lookups.locations;
-                              							break;
-                              						default:
-                              							options = {};
-                              					}
+                              					options = ajaxData.lookups[data.dataSource];
+
                               					$(field).html('<option disabled selected>' + data.placeholder + '</option>');
                               					for(i in options){
                               						if(typeof data.userData != 'undefined' && options[i].Code == data.userData[0]){
@@ -283,7 +240,12 @@ if(isset($_GET['template'])){
                         	var $renderedForm = $(document).find('#formContent');
                         	$renderedForm.find('.rendered-form').addClass('row');
 
-                        	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', 'patient\\.address\\.').data('hhkindex','');
+                        	$renderedForm.find('input.hhk-zipsearch').each(function(){
+    								var hhkprefix = $(this).attr('id').replace("adrzip", "").replaceAll(".", '\\.');
+                            		$(this).data('hhkprefix', hhkprefix).data('hhkindex','');
+                            		console.log(hhkprefix);
+                            		console.log($(this).attr('id'));
+    							});
 
                         	// set country and state selectors
                             $renderedForm.find('select.bfh-countries').each(function() {
@@ -299,6 +261,7 @@ if(isset($_GET['template'])){
                         	$renderedForm.find('input.hhk-zipsearch').each(function() {
                                 var lastXhr;
                                 createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
+                                console.log($(document).find("#patient\\.address\\.adrcity"));
                             });
 
                             $renderedForm.find('.address').prop('autocomplete', 'search');
@@ -323,7 +286,6 @@ if(isset($_GET['template'])){
                         	});
 
 							var guestIndex = 0;
-
                         	$renderedForm.on('click', '#addGuest', function(){
                         		guestIndex++;
                 				var userData = formRender.userData;
@@ -343,7 +305,7 @@ if(isset($_GET['template'])){
 
     								if(newElement.className == "guestHeader"){
     									guestNum = guestIndex+1;
-    									newElement.label = newElement.label.replace("${guestNum}", guestNum) + '<button type="button" class="removeGuest btn btn-danger ml-3" data-guestIndex="' + guestIndex + '">Remove</button>';
+    									newElement.label = newElement.label.replace("${guestNum}", guestNum);
     								}
 
 									newElement.guestIndex = guestIndex;
@@ -355,10 +317,14 @@ if(isset($_GET['template'])){
                 				$renderedForm.formRender('render', userData);
 
 
-
                             	$renderedForm.find('.rendered-form').addClass('row');
 
-                            	$renderedForm.find('input.hhk-zipsearch').data('hhkprefix', 'patient\\.address\\.').data('hhkindex','');
+                            	$renderedForm.find('input.hhk-zipsearch').each(function(){
+    								var hhkprefix = $(this).attr('id').replace("adrzip", "").replaceAll(".", '\\.');
+                            		$(this).data('hhkprefix', hhkprefix).data('hhkindex','');
+                            		console.log(hhkprefix);
+                            		console.log($(this).attr('id'));
+    							});
 
                             	// set country and state selectors
                                 $renderedForm.find('select.bfh-countries').each(function() {
@@ -396,20 +362,15 @@ if(isset($_GET['template'])){
                             			submitForm();
                             		}
                             	});
+
+                            	if(guestIndex+1 >= ajaxData.formSettings.maxGuests){
+                            		$renderedForm.find('#addGuest').attr('disabled','disabled').parents(".field-container").addClass("d-none");
+                            	}
             				});
 
-							$renderedForm.on('click', '.removeGuest', function(){
-								var guestIndex = $(this).data('guestindex');
-								var userData = formRender.userData;
-								console.log($renderedForm);
-								$.each(userData, function(index,element){
-									if(element.guestIndex == guestIndex){
-										delete userData[index];
-									}
-								});
-								console.log(userData);
-								$renderedForm.formRender('render', userData);
-							});
+							while(guestIndex+1 < ajaxData.formSettings.initialGuests){
+								$renderedForm.find('#addGuest').trigger("click");
+							}
 
                         	function submitForm(token = ''){
                         		var spinner = $('<span/>').addClass("spinner-border spinner-border-sm");

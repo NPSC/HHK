@@ -52,7 +52,7 @@
     			"className": "form-select",
     			"name": "hospital.location",
     			"width": "col-md-2",
-    			"dataSource":"unit",
+    			"dataSource":"location",
     			"multiple": false,
     			"values": []
   			},
@@ -1037,7 +1037,7 @@
     		'vehicleStates': 'Vehicle States',
     		'hospitals': 'Hospital',
     		'diagnosis': 'Diagnosis',
-    		'unit': 'Unit'
+    		'location': 'Unit'
     	}
     	
     	$.each(options.demogs, function(index, demog){
@@ -1069,6 +1069,7 @@
         				<li><a href="#tabs-1">Success Message</a></li>
         				<li class="d-none"><a href="#tabs-2">Notifications</a></li>
         				<li><a href="#tabs-3">Form Styles</a></li>
+        				<li><a href="#tabs-5">Guests</a></li>
         				<li><a href="#tabs-4">Miscellaneous</a></li>
     				</ul>
     
@@ -1149,19 +1150,26 @@
 				        		<small>When checked, this form can be turned into a reservation/referral</small>
 				        	</div>
 				        </div>
-				        <div class="row mb-3">
-				        	<div class="col-12">
-				        		<div class="ui-widget">
-				        			<div class="ui-widget-header ui-corner-top">Additional Guests</div>
-				        			<div class="ui-widget-content">
-				        				<label for="initialGuests">Initial Guests:</label>
-				        				<input type="number" name="initialGuests" min="0">
-				        				<label for="maxGuests">Max Guests</label>
-				        				<input type="number" name="maxGuests" min="0">
-				        			</div>
-				        		</div>
-				        	</div>
-				        </div>
+				    </div>
+				    
+				    <div id="tabs-5">
+				    	<div class="row mb-3">
+				    		<div class="col-12">
+				    			<p>These settings affect the behavior of the Add Guest button.</p>
+				    		</div>
+				    	</div>
+				    	<div class="row mb-3">
+				    		<div class="col-12">
+				    			<label for="initialGuests">Initial Guests:</label>
+				        		<input type="number" name="initialGuests" min="1" style="width: 5em;">
+				    		</div>
+				    	</div>
+				    	<div class="row mb-3">
+				    		<div class="col-12">
+				    			<label for="maxGuests">Max Guests:</label>
+				        		<input type="number" name="maxGuests" min="1" style="width: 5em;">
+				    		</div>
+				    	</div>
 				    </div>
     
 				</div>
@@ -1254,6 +1262,8 @@
 	    					settingsDialog.find('input#notifySubject').val(data.formSettings.notifySubject).data('oldVal',data.formSettings.notifySubject);
 							settingsDialog.find('textarea#notifyContent').val(data.formSettings.notifyContent).data('oldVal',data.formSettings.notifyContent);
 	    					settingsDialog.find('input#emailPatient').prop('checked', data.formSettings.emailPatient).data('oldval', data.formSettings.emailPatient);
+	    					settingsDialog.find('input[name=initialGuests]').val(data.formSettings.initialGuests).data('oldVal',data.formSettings.initialGuests);
+	    					settingsDialog.find('input[name=maxGuests]').val(data.formSettings.maxGuests).data('oldVal',data.formSettings.maxGuests);
 	    					$wrapper.find('#formTitle').val(data.formTitle);
 	    				}
 	    			}
@@ -1294,6 +1304,8 @@
 			var emailPatient = settingsDialog.find('input#emailPatient').prop('checked');
 			var notifySubject = settingsDialog.find('input#notifySubject').val();
 			var notifyContent = settingsDialog.find('textarea#notifyContent').val();
+			var initialGuests = settingsDialog.find('input[name=initialGuests]').val();
+			var maxGuests = settingsDialog.find('input[name=maxGuests]').val();
 			var formData = settings.formBuilder.actions.getData();
 			
 			if(typeof idDocument !== 'undefined', typeof title !== 'undefined', typeof style !== 'undefined', typeof formData !== 'undefined', typeof successTitle !== 'undefined', typeof successContent !== 'undefined'){
@@ -1337,7 +1349,9 @@
 		    				"enableReservation": enableReservation,
 		    				"emailPatient": emailPatient,
 		    				"notifySubject": notifySubject,
-		    				"notifyContent": notifyContent
+		    				"notifyContent": notifyContent,
+		    				"initialGuests": initialGuests,
+		    				"maxGuests": maxGuests
 		    			},
 		    			dataType: "json",
 		    			success: function(data, textStatus, jqXHR)
