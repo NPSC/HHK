@@ -1161,13 +1161,13 @@
 				    	<div class="row mb-3">
 				    		<div class="col-12">
 				    			<label for="initialGuests">Initial Guests:</label>
-				        		<input type="number" name="initialGuests" min="1" style="width: 5em;">
+				        		<input type="number" name="initialGuests" min="1" max="20" style="width: 5em;">
 				    		</div>
 				    	</div>
 				    	<div class="row mb-3">
 				    		<div class="col-12">
 				    			<label for="maxGuests">Max Guests:</label>
-				        		<input type="number" name="maxGuests" min="1" style="width: 5em;">
+				        		<input type="number" name="maxGuests" min="1" max="20" style="width: 5em;">
 				    		</div>
 				    	</div>
 				    </div>

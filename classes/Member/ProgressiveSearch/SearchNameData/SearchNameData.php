@@ -428,7 +428,7 @@ class SearchNameData implements SearchNameDataInterface {
      *
      * @param array $r
      */
-    public function loadMeFrom(array $r, SearchNameDataInterface $formData) {
+    public function loadMeFrom(array $r, SearchNameDataInterface $formData = null) {
 
         $this->setId($r['idName'])
             ->setNameFirst($this->setIfNew($r["Name_First"], $formData->getNameFirst()))

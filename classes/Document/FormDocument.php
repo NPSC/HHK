@@ -238,6 +238,10 @@ group by g.Code order by g.Order';
         }
     }
 
+    public function updateUserData(\PDO $dbh, $userData){
+        return $this->doc->updateUserData($dbh, $userData);
+    }
+
     public function getStatus() {
         return $this->doc->getStatus();
     }
