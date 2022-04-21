@@ -218,6 +218,16 @@ class FormTemplate {
         $lookups['nameSuffix'] = readGenLookupsPDO($dbh, 'Name_Suffix', 'Description');
         $lookups['diagnosis'] = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
         $lookups['location'] = readGenLookupsPDO($dbh, 'Location', 'Description');
+
+        //backwards compatibility
+        $lookups['genders'] = $lookups['Gender'];
+        $lookups['ethnicities'] = $lookups['Ethnicity'];
+        $lookups['patientRels'] = $lookups['patientRelation'];
+        $lookups['mediaSources'] = $lookups['Media_Source'];
+        $lookups['namePrefixes'] = $lookups['namePrefix'];
+        $lookups['nameSuffixes'] = $lookups['nameSuffix'];
+        $lookups['locations'] = $lookups['location'];
+
         $hospitals = Hospital::loadHospitals($dbh);
         $hospitalAr = array();
         foreach($hospitals as $hospital){
