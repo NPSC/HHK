@@ -118,6 +118,14 @@ class FormTemplate {
             $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
         }
 
+        if($initialGuests > 20){
+            $initialGuests = 20;
+        }
+
+        if($maxGuests > 20){
+            $maxGuests = 20;
+        }
+
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
             $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests]);
 
@@ -208,7 +216,7 @@ class FormTemplate {
         $demos = readGenLookupsPDO($dbh, 'Demographics', 'Order');
 
         foreach ($demos as $d) {
-            $lookups[$d[0]] = readGenLookupsPDO($dbh, $d[0], 'Description');
+            $lookups[$d[0]] = readGenLookupsPDO($dbh, $d[0], 'Order');
         }
 
         unset($lookups['Gender']['z']);
