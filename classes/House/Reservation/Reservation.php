@@ -332,6 +332,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $this->reserveData->addError('This reservation violates your House\'s maximum number of simutaneous rooms per patient (' .$uS->RoomsPerPatient . ').  ');
             return;
         }
+
     }
 
     public function save(\PDO $dbh, $post) {

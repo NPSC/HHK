@@ -11,7 +11,7 @@ namespace HHK\SysConst;
  */
 
 class AppointmentType {
-    const BLock = 'bc';
+    const Block = 'b';
     const Reservation = 'r';
 
 }

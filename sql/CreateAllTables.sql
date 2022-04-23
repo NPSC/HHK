@@ -49,7 +49,8 @@ CREATE TABLE if not exists `appointment` (
   `idAppointment` INT NOT NULL AUTO_INCREMENT,
   `Date_Appt` DATE NOT NULL,
   `Time_Appt` TIME NOT NULL,
-  `Reservation_Id` INT NOT NULL,
+  `Duration` INT NOT NULL DEFAULT 0,
+  `Reservation_Id` INT NOT NULL DEFAULT 0,
   `Status` VARCHAR(4) NOT NULL,
   `Type` VARCHAR(4) NOT NULL,
   `Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
@@ -75,7 +76,6 @@ CREATE TABLE if not exists `appointment_template` (
   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idAppointment_template`)
   )
-  
 
 
 -- -----------------------------------------------------

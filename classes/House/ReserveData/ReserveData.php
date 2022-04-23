@@ -97,6 +97,7 @@ class ReserveData {
     protected $insistCkinDemog;
     protected $searchTerm;
     protected $resvStatusCode;
+    protected $apptTime = '';
 
     function __construct($post, $reservationTitle = '') {
 
@@ -138,6 +139,10 @@ class ReserveData {
 
         if (isset($post['gstCoDate'])) {
         	$this->setDepartureDateStr(filter_var($post['gstCoDate'], FILTER_SANITIZE_STRING));
+        }
+
+        if (isset($post['selCkinAppt'])) {
+            $this->setApptTime($post['selCkinAppt']);
         }
 
         if (isset($post['schTerm'])) {
@@ -407,6 +412,11 @@ class ReserveData {
         return $this->arrivalDT;
     }
 
+    public function getApptTime($t) {
+        return $this->apptTime;
+    }
+
+
     public function getArrivalDateStr($format = ReserveData::DATE_FORMAT) {
 
         if ($this->arrivalDT !== NULL) {
@@ -597,6 +607,11 @@ class ReserveData {
 
     public function setAddPerson($p) {
         $this->addPerson = $p;
+        return $this;
+    }
+
+    public function setApptTime($t) {
+        $this->apptTime = $t;
         return $this;
     }
 

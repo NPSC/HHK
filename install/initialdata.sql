@@ -19,8 +19,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('anomalyTypes','sa','Bad Street Address','`Street Address`=\'\'','',0),
 ('anomalyTypes','z','Bad Zip Code','Zip=\'\' or Zip=\'0\' or LENGTH(Zip)<5','',0),
 
-('Appointment_Type', 'b', 'Blocker','', 'h', '0'),
-('Appointment_Type', 'r', 'Reservation','', 'h', '0'),
+('Appointment_Type', 'b', 'Blocker','', 'h', '10'),
+('Appointment_Type', 'r', 'Reservation','', 'h', '30'),
 
 ('Attribute_Type', '1', 'Room', '','',0),
 ('Attribute_Type', '2', 'Hospital', '','',0),

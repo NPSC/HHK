@@ -54,5 +54,5 @@ Call new_webpage('AppointGrid.php', 31, 'Check-In Appointments', 1, 'h', 95, 'c'
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('UseCheckinAppts', 'false', 'b', 'hf', '', 'Enable guest check-in appointments', '','1');
 
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Appointment_Type', 'b', 'Blocker', 'h', '0');
-INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Appointment_Type', 'r', 'Reservation', 'h', '0');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Appointment_Type', 'b', 'Blocker', 'h', '10');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Appointment_Type', 'r', 'Reservation', 'h', '30');

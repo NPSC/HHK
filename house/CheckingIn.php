@@ -127,6 +127,7 @@ $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 $resvAr['emergencyContact'] = isset($uS->EmergContactFill) ? $uS->EmergContactFill : FALSE;
 $resvAr['isCheckin'] = TRUE;
 $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
+$resvAr['UseCkinAppts'] = $uS->UseCheckinAppts;
 
 $resvObjEncoded = json_encode($resvAr);
 

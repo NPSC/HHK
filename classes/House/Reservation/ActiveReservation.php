@@ -9,6 +9,7 @@ use HHK\Note\{LinkNote, Note};
 use HHK\SysConst\ReservationStatus;
 use HHK\sec\Session;
 use HHK\Document\FormDocument;
+use HHK\House\Appointment\AppointmentChooser;
 
 
 
@@ -185,6 +186,14 @@ class ActiveReservation extends Reservation {
         if ($reservStatus == ReservationStatus::Waitlist) {
             $resv->setIdResource(0);
         }
+
+        if ($uS->UseCheckinAppts) {
+
+            if ($this->reserveData->get)
+            $apptChooser = new AppointmentChooser($dbh, $resv->getExpectedArrival());
+            $apptChooserMkup = $apptChooser->createMarkup($resv->getIdReservation());
+        }
+
 
         // Room number chosen
         $idRescPosted = 0;

@@ -79,16 +79,27 @@ document.addEventListener('DOMContentLoaded', function() {
 	},
 	
 	eventClick: function(info) {
+		info.jsEvent.preventDefault(); // don't let the browser navigate
 		
-		 alert('Event: ' + info.event.title);
+		// no action for blocked appts
+		if (info.event.extendedProps.tpe == 'b') {
+			return;
+		}
+		
+		if (info.event.url) {
+	      window.open(info.event.url);
+	    }
+	    
 	},
 	
 	eventDrop: function(info) {
 		
+		// no action for blocked appts
+		if (info.event.extendedProps.tpe == 'b') {
+			info.revert();
+			return;
+		}
 		
-	    if (!confirm("Are you sure about this change?")) {
-	      info.revert();
-	    }
 
 	}
   });

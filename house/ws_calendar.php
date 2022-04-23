@@ -109,7 +109,7 @@ try {
                 $timezone = filter_var(urldecode($_REQUEST["timezone"]), FILTER_SANITIZE_STRING);
             }
 
-            $events = TimeGrid::getTimeGrid($dbh, $startStr, $endStr, $timezone);
+            $events = TimeGrid::getTimeGrid($dbh, $startStr, $endStr, $timezone, 'Reserve.php');
             break;
 
         default:

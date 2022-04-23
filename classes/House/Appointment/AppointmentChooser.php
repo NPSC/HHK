@@ -5,6 +5,9 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLSelector;
 use \HHK\SysConst\AppointmentType;
+use HHK\Exception\UnexpectedValueException;
+use HHK\Exception\NotFoundException;
+
 /*
  * AppointmentChooser.php
  *
@@ -17,32 +20,13 @@ class AppointmentChooser
 {
 
     protected $apptDate;
-    protected $dayOfWeekIndex;
-    protected $timeslots;
-    protected $appointments;
+    protected $apptDay;
+    protected $errorLog;
 
+    public function __construct(\PDO $dbh, $date) {
 
-    /**
-     */
-    public function __construct(\PDO $dbh, $startDate) {
-
-        $this->setApptDate($startDate);
-
-        // Make time slots
-        $stmt = $dbh->query("select Start_ToD, End_Tod, Timeslot_Duration, Max_Ts_Appointments from appointment_template where Weekday_Index = ".$this->dayOfWeekIndex );
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-
-        if (count($rows) > 0) {
-
-            $this->makeTimeslots($rows[0]['Start_ToD'], $rows[0]['End_Tod'], $rows[0]['Timeslot_Duration'], $rows[0]['Max_Ts_Appointments']);
-
-            // Fill in Appointments
-            $this->fillInAppointments($dbh);
-
-        } else {
-            // Appt Template not defined?
-        }
-
+        $this->apptDate = new \DateTime($date);
+        $this->apptDay = new AppointmentDay($dbh, $this->apptDate);
     }
 
     public function createMarkup($resvId) {
@@ -52,8 +36,13 @@ class AppointmentChooser
         $tbl = new HTMLTable();
         $tbl->addHeaderTr(HTMLTable::makeTh('Appointment', array('id'=>'hhk-roomAppttitle')));
 
+        $selectedOption = '';
+        if (is_null($this->apptDay->getAppointmentTime($resvId)) === FALSE) {
+            $selectedOption = $this->apptDay->getAppointmentTime($resvId)->format('H:i:s');
+        }
+
         $tbl->addBodyTr(
-            HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->makeApptSelector($this->makeApptSelectorOptions(), $this->appointments[$resvId])))
+            HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->makeApptSelector($this->makeApptSelectorOptions(), $selectedOption)))
         );
 
         // set up error message area
@@ -80,7 +69,6 @@ class AppointmentChooser
         return $mk1;
     }
 
-
     protected function makeApptSelector($options, $optionChosen) {
 
         return HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, $optionChosen, FALSE), array('name'=>'selCkinAppt'));
@@ -89,13 +77,12 @@ class AppointmentChooser
     protected function makeApptSelectorOptions() {
 
         $options[] = array('', '-None-');
+        $timeslots = $this->apptDay->getTimeslots();
 
-        foreach ( $this->timeslots as $k => $t) {
+        foreach ($timeslots as $ts) {
 
-            foreach ($t as $a) {
-                if ($a['id'] == 0) {
-                    $options[$k] = array($k, $k);
-                }
+            if ($ts->getOpenAppts() > 0) {
+                $options[] = array($ts->getStartDT()->format('H:i:s'), $ts->getStartDT()->format('g:ia') . ' (' . $ts->getOpenAppts() . ')');
             }
         }
 
@@ -103,114 +90,11 @@ class AppointmentChooser
     }
 
 
-    protected function makeTimeslots($startTime, $endTime, $duration, $maxTsAppts) {
 
-        $interval = new \DateInterval('PT'.$duration.'M');
-        $startDT = new \DateTime($startTime);
-        $endDT = new \DateTime($endTime);
+    protected function addErrorMessage($mess, $idAppointment, $timeslot = '') {
 
-        $period = new \DatePeriod($startDT, $interval, $endDT);
-
-        foreach ($period as $dt) {
-
-            $appts = [];
-
-            for ($a = 1; $a <= $maxTsAppts; $a++) {
-                $appts[$a] = ['id'=>0, 'tp'=>'', 'rid'=>0];
-            }
-
-            $this->timeslots[$dt->format('H:i:s')] = $appts;
-        }
-
+        $this->errorLog[] = ['idAppointment'=>$idAppointment, 'errorMsg'=> $mess, 'timeslot' => $timeslot];
 
     }
-
-    protected function fillInAppointments(\PDO $dbh) {
-
-        $stmt = $dbh->query("select idAppointment, Time_Appt, Reservation_Id, `Type` from appointment where `Date_Appt` = DATE('" . $this->getApptDate()->format('Y-m_d') . "') AND `Status` = 'a';");
-
-        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-            $this->appointments[$r['Reservation_Id']] = $r['Time_Appt'];
-
-            $indx = 0;
-
-            foreach ( $this->timeslots[$r['Time_Appt']] as $k => $t) {
-
-                if ($t['id'] == 0) {
-                    $indx = $k;
-                    break;
-                }
-            }
-
-            if ($indx > 0) {
-
-                $this->timeslots[$r['Time_Appt']][$indx]['id'] = $r['idAppointment'];
-                $this->timeslots[$r['Time_Appt']][$indx]['tp'] = $r['Type'];
-                $this->timeslots[$r['Time_Appt']][$indx]['rid'] = $r['Reservation_Id'];
-
-            } else {
-                // timeslot appointments are all filled up!
-            }
-        }
-    }
-
-
-    /**
-     * @return \DateTime
-     */
-    public function getApptDate()
-    {
-        return $this->apptDate;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDayOfWeekIndex()
-    {
-        return $this->dayOfWeekIndex;
-    }
-
-    /**
-     * @return array
-     */
-    public function getOpenTimes()
-    {
-        return $this->openTimes;
-    }
-
-    /**
-     * @param $apptDate
-     */
-    public function setApptDate($apptDate)
-    {
-        if (gettype($apptDate) == 'string') {
-            $this->apptDate = new \DateTimeImmutable($apptDate);
-        } else {
-            $this->apptDate = $apptDate;
-        }
-
-        $this->setDayOfWeekIndex($this->apptDate->format('w'));
-
-    }
-
-    /**
-     * @param int $dayOfWeekIndex
-     */
-    protected function setDayOfWeekIndex($dayOfWeekIndex)
-    {
-        $this->dayOfWeekIndex = intval($dayOfWeekIndex, 10);
-    }
-
-    /**
-     * @param array $openTimes
-     */
-    protected function setOpenTimes(array $openTimes)
-    {
-        $this->openTimes = $openTimes;
-    }
-
-
 }
 
