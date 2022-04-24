@@ -29,6 +29,25 @@ class AppointmentChooser
         $this->apptDay = new AppointmentDay($dbh, $this->apptDate);
     }
 
+    public function saveAppointment(\PDO $dbh, $resvId, $apptTime) {
+
+        // Find existing reservation appointment.
+        $appointment = new ReservationAppointment(0);
+
+        if ($appointment->findApppointment($dbh, $resvId)) {
+
+            // update existing appointment record
+
+        } else {
+
+            // Set a new appointment
+        }
+
+
+
+
+    }
+
     public function createMarkup($resvId) {
 
         $errorMessage = '';

@@ -20,12 +20,14 @@ abstract class AbstractAppointment {
     protected $duration;
     protected $status;
     protected $type;
+    protected $appointmentRs;
 
 
 
     public function __construct($idAppointment) {
 
         $this->idAppointment = $idAppointment;
+
     }
 
     public static function factory($appointmentType, $idAppointment) {
@@ -47,27 +49,31 @@ abstract class AbstractAppointment {
         }
     }
 
-    public function setApptDateTime($apptDateTime) {
+    public function hasSameDataTime() {
 
-        if (gettype($apptDateTime) == 'string') {
-            $this->dateAppt = new \DateTime($apptDateTime);
-        } else {
-            $this->dateAppt = $apptDateTime;
-        }
-
-        $this->timeAppt = $this->dateAppt->format('H:i:s');
-    }
-
-    /**
-     *
-     * @param string $apptTime 'HH:mm:ss'
-     */
-    public function updateApptTime($apptTime) {
-        $this->timeAppt = $apptTime;
-        $this->dateAppt = new \Datetime($this->dateAppt->format('Y-m-d') . ' ' . $this->timeAppt);
     }
 
     public function getApptDateTime() {
+
+        if ($this->dateAppt != '' && $this->timeAppt != '') {
+            return new \DateTimeImmutable($this->dateAppt . ' ' . $this->timeAppt);
+        }
+
+    }
+
+    public function getTimeAppt() {
+        return $this->timeAppt;
+    }
+
+    public function setTimeAppt($strTime) {
+        $this->timeAppt = $strTime;
+    }
+
+    public function setDateAppt($strDate) {
+        $this->dateAppt = $strDate;
+    }
+
+    public function getDateAppt() {
         return $this->dateAppt;
     }
 
@@ -79,8 +85,16 @@ abstract class AbstractAppointment {
         return $this->status;
     }
 
+    public function setStatus($status) {
+        $this->status = $status;
+    }
+
     public function getType() {
         return $this->type;
+    }
+
+    public function setType($type) {
+        $this->type = $type;
     }
 
     public function getIdAppt() {

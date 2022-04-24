@@ -47,7 +47,7 @@ CREATE TABLE if not exists `activity` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `appointment` (
   `idAppointment` INT NOT NULL AUTO_INCREMENT,
-  `Date_Appt` DATE NOT NULL,
+  `Date_Appt` DATE NULL,
   `Time_Appt` TIME NOT NULL,
   `Duration` INT NOT NULL DEFAULT 0,
   `Reservation_Id` INT NOT NULL DEFAULT 0,

@@ -8,7 +8,7 @@ use HHK\Exception\UnexpectedValueException;
 
 
 /*
- * TimeGrid.php
+ * AppointmentRegister.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2022 <nonprofitsoftwarecorp.org>
@@ -16,8 +16,78 @@ use HHK\Exception\UnexpectedValueException;
  * @link      https://github.com/NPSC/HHK
  */
 
-class TimeGrid {
+class AppointmentRegister {
 
+
+    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $view, $rescGroupBy) {
+
+        $timeslots = array();
+
+        $tsStartTime = NULL;
+        $tsEndTime = NULL;
+        $tsDuration = NULL;
+        $first = TRUE;
+
+        // get timeslots, used as resources
+        // Get indicated appointment template
+        $stmt = $dbh->query("select
+            Start_ToD,
+            End_ToD,
+            Timeslot_Duration
+          from appointment_template
+          where Weekday_Index >= '0' AND Weekday_Index < '7';" );
+
+        while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+            $startTod = new \DateTimeImmutable($r['Start_ToD']);
+            $endTod = new \DateTimeImmutable($r['End_ToD']);
+            $duration = new \DateInterval('PT' . $r['Timeslot_Duration'] . 'M');
+
+            if ($first) {
+
+                $first = FALSE;
+                $tsStartTime = $startTod;
+                $tsEndTime = $endTod;
+                $tsDuration = $duration;
+
+            } else {
+
+                if ($startTod < $tsStartTime) {
+                    $tsStartTime = $startTod;
+                }
+
+                if ($endTod > $tsEndTime) {
+                    $tsEndTime = $endTod;
+                }
+
+                if ($duration->i < $tsDuration->i) {
+                    $tsDuration = $duration;
+                }
+            }
+
+        }
+
+        // Generate timeslots
+        $period = new \DatePeriod($tsStartTime, $tsDuration, $tsEndTime);
+
+        foreach ($period as $dt) {
+
+            $timeslots[] = [
+                'id' => $dt->format('H:i:s'),
+                'title' => $dt->format('g:ia'),
+                'duration' => $tsDuration->i
+            ];
+        }
+
+        // add one timeslot for loose reservations
+        $timeslots[] = [
+            'id' => 0,
+            'title' => 'Unassigned',
+            'duration' => 0
+        ];
+
+        return $timeslots;
+    }
 
     /**
      * @param \PDO $dbh
@@ -67,8 +137,11 @@ WHERE
 
             $s = array(
                 'id' => $r['idAppointment'],
-                'start' => $apptDate->format('Y-m-d\TH:i:00'),
+                'start' => $apptDate->format('Y-m-d\T00:20:00'),
+                'end' => $apptDate->format('Y-m-d\T23:30:00'),
                 'tpe' => $r['Type'],
+                'resourceId' => $apptDate->format('H:i:00'),
+                'startEditable' => FALSE,
             );
 
             // Type
@@ -80,6 +153,7 @@ WHERE
                     $s['color'] = 'lightgray';
                     $s['textColor'] = 'black';
                     $s['editable'] = FALSE;
+                    $s['resourceEditable'] = FALSE;
                     break;
 
                 case AppointmentType::Reservation:

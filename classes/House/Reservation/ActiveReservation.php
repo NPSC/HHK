@@ -189,9 +189,10 @@ class ActiveReservation extends Reservation {
 
         if ($uS->UseCheckinAppts) {
 
-            if ($this->reserveData->get)
-            $apptChooser = new AppointmentChooser($dbh, $resv->getExpectedArrival());
-            $apptChooserMkup = $apptChooser->createMarkup($resv->getIdReservation());
+            if ($this->reserveData->getgetApptTime() != '') {
+                $apptChooser = new AppointmentChooser($dbh, $resv->getExpectedArrival());
+                $apptChooser->saveAppointment($resv->getIdReservation(), $this->reserveData->getgetApptTime());
+            }
         }
 
 

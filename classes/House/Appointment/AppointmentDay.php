@@ -1,8 +1,6 @@
 <?php
 namespace HHK\House\Appointment;
 
-
-use HHK\Exception\UnexpectedValueException;
 use HHK\Exception\NotFoundException;
 
 /*

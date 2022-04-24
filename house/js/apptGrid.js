@@ -11,66 +11,79 @@
  */
  
  var defaultView,
-    defaultEventColor,
-    defCalEventTextColor,
     isGuestAdmin,
-    patientLabel,
-    guestLabel,
-    visitorLabel,
     reservationLabel,
     dateFormat,
-    slotDuration = '00:30:00',
-    slotStartTime = "14:00:00",
-    slotEndTime = "20:00:00";
+    slotDuration,
+    slotStartTime,
+    slotEndTime;
 
 
 var winHieght = window.innerHeight - 170;
 
 document.addEventListener('DOMContentLoaded', function() {
+	
+	defaultView = $('#defaultView').val();
+	
   var calendarEl = document.getElementById('calendar');
 
   var calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'timeGridFourDay',
+	schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
+    initialView: defaultView,
     timeZone: 'local',
     initialDate: new Date(),
-    expandRows: true,
+	editable: true,
     height: winHieght,
     allDaySlot: false,
     nowIndicator: true,
-    slotDuration: slotDuration,
-    slotMinTime: slotStartTime,
-    slotMaxTime: slotEndTime,
-    slotLabelInterval: slotDuration,
-    forceEventDuration: true,
-    defaultTimedEventDuration: slotDuration,
     eventDurationEditable: false,
-    editable: true,
-    displayEventTime: true,
+    displayEventTime: false,
+    slotDuration: '24:00:00',
+    resourceAreaHeaderContent: 'Time Slots',
+    resourceAreaWidth: '8%',
+    
+    slotLabelFormat: [
+		{ month: 'long', day:'numeric', year: 'numeric' },
+		{ weekday: 'short' }
+	],
     
     headerToolbar: {
       right: 'prev,next today',
       center: 'title',
-      left: 'timeGridDay,timeGridFourDay,timeGridSevenDay,listWeek,dayGridWeek'
+      left: 'resourceTimelineFourDays,resourceTimelineSevenDays,resourceTimelineWeek'
     },
     
     views: {
-      timeGridFourDay: {
-        type: 'timeGrid',
+      resourceTimelineFourDays: {
+        type: 'resourceTimeline',
         duration: { days: 4 },
         buttonText: '4 day'
       },
-      timeGridSevenDay: {
-        type: 'timeGrid',
+      resourceTimelineSevenDays: {
+        type: 'resourceTimeline',
         duration: { days: 7 },
         buttonText: '7 day'
       }
     },
     
+    resources: {
+	   url: 'ws_calendar.php',
+	    method: 'GET',
+	    extraParams: {
+	      cmd: 'apptRecs'
+	    },
+	    failure: function() {
+	      $('#pCalError').text('Error getting resources: ' + errorThrown).show();
+	    }
+
+	},
+	
+
     events: {
 	   url: 'ws_calendar.php',
 	    method: 'GET',
 	    extraParams: {
-	      cmd: 'timeGrid'
+	      cmd: 'apptEvents'
 	    },
 	    failure: function() {
 	      $('#pCalError').text('Error getting events: ' + errorThrown).show();

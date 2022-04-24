@@ -29,18 +29,18 @@ $uS = Session::getInstance();
 // Get labels
 $labels = Labels::getLabels();
 $isGuestAdmin = SecurityComponent::is_Authorized('guestadmin');
+$defaultView = 'resourceTimelineFourDays';
 
-$defaultView = 'timeGridWeek';
 
 ?>
 <!DOCTYPE html>
-<html>
+<html lang='en'>
     <head>
         <meta charset="UTF-8">
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo HOUSE_CSS; ?>
-        <link href='css/fullcalendar5.11.0-min.css'  rel='stylesheet' type='text/css' />
+        <link href='css/fullcalendar5.11.0.min.css'  rel='stylesheet' type='text/css' />
         <?php echo JQ_UI_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
@@ -52,7 +52,7 @@ $defaultView = 'timeGridWeek';
             }
         </style>
 
-        <script type="text/javascript" src="js/fullcalendar5.11.0-min.js"></script>
+        <script type="text/javascript" src="js/fullcalendar5.11.0.min.js"></script>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -69,10 +69,7 @@ $defaultView = 'timeGridWeek';
 
         </div>
 
-        <input  type="hidden" id="defaultEventColor" value='<?php echo $uS->DefaultCalEventColor; ?>' />
-        <input  type="hidden" id="defCalEventTextColor" value='<?php echo $uS->DefCalEventTextColor; ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
-        <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
         <input  type="hidden" id="isGuestAdmin" value='<?php echo $isGuestAdmin; ?>' />
 
         <script type="text/javascript" src="<?php echo APPOINTGRID_JS; ?>"></script>

@@ -3,7 +3,7 @@ use HHK\Exception\InvalidArgumentException;
 use HHK\SysConst\WebPageCode;
 use HHK\sec\WebInit;
 use HHK\House\GuestRegister;
-use HHK\House\Appointment\TimeGrid;
+use HHK\House\Appointment\AppointmentRegister;
 
 /**
  * ws_calendar.php
@@ -92,7 +92,7 @@ try {
             $events = $guestRegister->getRegister($dbh, $start, $end, $timezone);
             break;
 
-        case 'timeGrid':
+        case 'apptEvents':
 
             $startStr = '';
             $endStr = '';
@@ -109,7 +109,37 @@ try {
                 $timezone = filter_var(urldecode($_REQUEST["timezone"]), FILTER_SANITIZE_STRING);
             }
 
-            $events = TimeGrid::getTimeGrid($dbh, $startStr, $endStr, $timezone, 'Reserve.php');
+            $events = AppointmentRegister::getTimeGrid($dbh, $startStr, $endStr, $timezone, 'Reserve.php');
+            break;
+
+        case 'apptRecs':
+
+            $start = '';
+            $end = '';
+            $timezone = '';
+            $view = 'timeGridFourDay';
+            $groupBy = '';
+
+            if (isset($_REQUEST["start"])) {
+                $start = filter_var(urldecode($_REQUEST["start"]), FILTER_SANITIZE_STRING);
+            }
+            if (isset($_REQUEST["end"])) {
+                $end = filter_var(urldecode($_REQUEST["end"]), FILTER_SANITIZE_STRING);
+            }
+
+            if (isset($_REQUEST["view"])) {
+                $view = filter_var(urldecode($_REQUEST["view"]), FILTER_SANITIZE_STRING);
+            }
+
+            if (isset($_REQUEST["gpby"])) {
+                $groupBy = filter_var(urldecode($_REQUEST["gpby"]), FILTER_SANITIZE_STRING);
+            }
+
+            if (isset($_REQUEST["timezone"])) {
+                $timezone = filter_var(urldecode($_REQUEST["timezone"]), FILTER_SANITIZE_STRING);
+            }
+
+            $events = AppointmentRegister::getCalendarRescs($dbh, $start, $end, $timezone, $view, $groupBy);
             break;
 
         default:
