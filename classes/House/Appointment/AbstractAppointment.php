@@ -2,6 +2,7 @@
 namespace HHK\House\Appointment;
 
 use \HHK\SysConst\AppointmentType;
+use HHK\Tables\Appointment\AppointmentRS;
 use HHK\Exception\UnexpectedValueException;
 
 /*
@@ -15,6 +16,7 @@ use HHK\Exception\UnexpectedValueException;
 abstract class AbstractAppointment {
 
     protected $idAppointment;
+    protected $reservationId;
     protected $dateAppt;
     protected $timeAppt;
     protected $duration;
@@ -50,6 +52,24 @@ abstract class AbstractAppointment {
     }
 
     public function hasSameDataTime() {
+
+    }
+
+    protected function loadAppointment(AppointmentRS $apptRs) {
+
+        $this->appointmentRs = $apptRs;
+        $this->idAppointment = $apptRs->idAppointment->getStoredVal();
+        $this->reservationId = $apptRs->Reservation_Id->getStoredVal();
+        $this->timeAppt = $apptRs->Time_Appt->getStoredVal();
+        $this->dateAppt = $apptRs->Date_Appt->getStoredVal();
+        $this->duration = $apptRs->Duration->getStoredVal();
+        $this->status = $apptRs->Status->getStoredVal();
+        $this->type = $apptRs->Type->getStoredVal();
+
+    }
+
+    public function saveAppointment(\PDO $dbh) {
+
 
     }
 
@@ -100,5 +120,15 @@ abstract class AbstractAppointment {
     public function getIdAppt() {
         return $this->idAppointment;
     }
+
+    public function setReservationId($id) {
+        $this->reservationId = intval($id);
+        return $this;
+    }
+
+    public function getReservationId() {
+        return $this->reservationId;
+    }
+
 }
 

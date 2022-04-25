@@ -3,6 +3,8 @@ namespace HHK\House\Appointment;
 
 use HHK\SysConst\AppointmentType;
 use HHK\Exception\InvalidArgumentException;
+use HHK\Tables\Appointment\AppointmentRS;
+use HHK\Tables\EditRS;
 
 /*
  * ReservationAppointment.php
@@ -14,7 +16,6 @@ use HHK\Exception\InvalidArgumentException;
  */
 class ReservationAppointment extends AbstractAppointment {
 
-    protected $reservationId;
 
     public function __construct($idAppointment) {
 
@@ -31,35 +32,25 @@ class ReservationAppointment extends AbstractAppointment {
             return FALSE;
         }
 
-        $stmt = $dbh->query("select * from appointment where Reservation_Id = " . $this->getReservationId());
+        $apptRs = new AppointmentRS();
+        $apptRs->Reservation_Id->setStoredVal($reservationId);
 
-        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $rows = EditRS::select($dbh, $apptRs, array($apptRs->Reservation_Id));
 
         if (count($rows) !== 1) {
             return FALSE;
         }
 
-        if ($r['Type'] != AppointmentType::Reservation) {
+        EditRS::loadRow($rows[0], $apptRs);
+
+        if ($apptRs->Type->getStoredVal() != AppointmentType::Reservation) {
             throw new InvalidArgumentException('Reservation Appointment has the wrong type. ');
         }
 
-        $this->dateAppt = $rows[0]['Date_Appt'];
-        $this->duration = $rows[0]['Duration'];
-        $this->timeAppt = $rows[0]['Time_Appt'];
-        $this->reservationId = $rows[0]['Reservation_Id'];
-        $this->idAppointment = $rows[0]['idAppointment'];
-        $this->status = $rows[0]['Status'];
+        $this->loadAppointment($apptRs);
 
         return TRUE;
     }
 
-    public function setReservationId($id) {
-        $this->reservationId = intval($id);
-        return $this;
-    }
-
-    public function getReservationId() {
-        return $this->reservationId;
-    }
 }
 

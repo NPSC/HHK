@@ -37,7 +37,7 @@ class AppointmentChooser
         if ($appointment->findApppointment($dbh, $resvId)) {
 
             // update existing appointment record
-
+            $appointment->setTimeAppt($this->apptDate->format('h:i:s'));
         } else {
 
             // Set a new appointment

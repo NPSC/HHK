@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     allDaySlot: false,
     nowIndicator: true,
     eventDurationEditable: false,
-    displayEventTime: false,
+    displayEventTime: true,
     slotDuration: '24:00:00',
     resourceAreaHeaderContent: 'Time Slots',
     resourceAreaWidth: '8%',
