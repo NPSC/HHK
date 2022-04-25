@@ -69,6 +69,18 @@ class FormTemplate {
             $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
         }
 
+        if($initialGuests > 20){
+            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20";
+        }
+
+        if($maxGuests > 20){
+            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than 20";
+        }
+
+        if($initialGuests > $maxGuests){
+            $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests";
+        }
+
         $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests]);
 
         if(count($validationErrors) == 0){
@@ -119,11 +131,15 @@ class FormTemplate {
         }
 
         if($initialGuests > 20){
-            $initialGuests = 20;
+            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20";
         }
 
         if($maxGuests > 20){
-            $maxGuests = 20;
+            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than 20";
+        }
+
+        if($initialGuests > $maxGuests){
+            $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests";
         }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){

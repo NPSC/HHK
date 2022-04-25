@@ -1170,6 +1170,9 @@
 				        		<input type="number" name="maxGuests" min="1" max="20" style="width: 5em;">
 				    		</div>
 				    	</div>
+				    	<div class="ui-state-highlight ui-corner-all p-1" id="guestErrorMsg" style="display:none;">
+				    		
+				    	</div>
 				    </div>
     
 				</div>
@@ -1288,8 +1291,33 @@
 		$wrapper.on('blur', '[contenteditable]', function(){
 			var val = $(this).html().replaceAll('"', "'");
 			$(this).html(val);
-//			console.log(val);
-//			console.log($(this).html());
+//			//console.log(val);
+//			//console.log($(this).html());
+		});
+		
+		settingsDialog.on('blur', 'input[name=initialGuests], input[name=maxGuests]', function(){
+			var min = parseInt($(this).attr('min'));
+			var max = parseInt($(this).attr('max'));
+			var val = parseInt($(this).val());
+			
+			if(val < min){
+				$(this).val(min);
+			}
+			
+			if(val > max){
+				$(this).val(max);
+			}
+			
+			//check if initial is less than max
+			var initial = parseInt($("input[name=initialGuests]").val());
+			var max = parseInt($("input[name=maxGuests]").val());
+			if(initial > max){
+				console.log("initial>max true");
+				settingsDialog.find("#guestErrorMsg").text("Initial guests cannot be greater than max guests").show();
+			}else{
+				console.log("initial>max false");
+				settingsDialog.find("#guestErrorMsg").text("").hide();
+			}
 		});
 		
 		var onSave = function(event, formData){

@@ -146,10 +146,6 @@ if(isset($_GET['template'])){
 								if(elementCopy.className == 'guestHeader'){
     								formData[key].label = elementCopy.label.replace("${guestNum}", "1");
     							}
-
-    							if(elementCopy.name == "addGuest" && ajaxData.formSettings.maxGuests == ajaxData.formSettings.initialGuests){
-    								delete formData[key];
-    							}
 							});
 
 							formData = JSON.stringify(formData);
@@ -243,8 +239,6 @@ if(isset($_GET['template'])){
                         	$renderedForm.find('input.hhk-zipsearch').each(function(){
     								var hhkprefix = $(this).attr('id').replace("adrzip", "").replaceAll(".", '\\.');
                             		$(this).data('hhkprefix', hhkprefix).data('hhkindex','');
-                            		console.log(hhkprefix);
-                            		console.log($(this).attr('id'));
     							});
 
                         	// set country and state selectors
@@ -261,7 +255,6 @@ if(isset($_GET['template'])){
                         	$renderedForm.find('input.hhk-zipsearch').each(function() {
                                 var lastXhr;
                                 createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
-                                console.log($(document).find("#patient\\.address\\.adrcity"));
                             });
 
                             $renderedForm.find('.address').prop('autocomplete', 'search');
@@ -322,8 +315,6 @@ if(isset($_GET['template'])){
                             	$renderedForm.find('input.hhk-zipsearch').each(function(){
     								var hhkprefix = $(this).attr('id').replace("adrzip", "").replaceAll(".", '\\.');
                             		$(this).data('hhkprefix', hhkprefix).data('hhkindex','');
-                            		console.log(hhkprefix);
-                            		console.log($(this).attr('id'));
     							});
 
                             	// set country and state selectors
