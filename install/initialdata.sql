@@ -128,6 +128,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('ExcessPays', 'i', 'Ignore','','u',0),
 ('ExcessPays', 'r', 'Refund','','u',0),
 
+('ExternalCrm', '', '(none)','','',0),
+('ExternalCrm', 'neon', 'Neon CRM','','',0),
+
 ('FB_Status','a','Active','','',0),
 ('FB_Status','d','Disabled','','',0),
 ('FB_Status','w','Waiting','','',0),
@@ -541,7 +544,8 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('CheckInTime','16','i','h','','Normal House Check in time of day in 24-hour format, hh','',1),
 ('CheckOutTime','10','i','h','','Normal House Checkout time of day in 24-hour format, hh','',1),
 ('ConcatVisitNotes','true','b','h','','Show notes combined from all previous visits when true','',1),
-('CoTod','false','b','h','','Edit the time of day of a checkout','',1),
+('ContactManager','','lu','h','','Integrate an External CRM/Fund Raiser App','ExternalCrm',1),
+('CoTod','false','b','hf','','Edit the time of day of a checkout','',1),
 ('county','true','b','h','','Include the County for addresses','',1),
 ('CssValidationService', 'https://jigsaw.w3.org/css-validator/validator?output=soap12&text=', 'url', 'a', '', 'CSS validator service', '',0),
 ('DefaultCalEventColor', '', 's', 'c', '', 'Default event ribbon color for the calendar', '',1),
@@ -972,7 +976,7 @@ REPLACE INTO `secondary_unit_desig` (`Common`,`Standard`,`Range_Required`,`Title
 -- 
 -- Dumping data for table map_relations
 --
-REPLACE INTO `demo`.`map_relations`(`idmap_relations`,`PG_Patient`,`Guest_Patient`,`Patient_PG`,`Guest_PG`)VALUES
+REPLACE INTO `map_relations`(`idmap_relations`,`PG_Patient`,`Guest_Patient`,`Patient_PG`,`Guest_PG`)VALUES
 ('1', 'sp', 'chd', 'sp', 'chd'),('2', 'sp', 'sib', 'sp', 'rltv'),('3', 'sp', 'par', 'sp', 'rltv'),('4', 'sp', 'sp', 'sp', 'sp'),('5', 'sib', 'chd', 'sib', 'rltv'),('6', 'sib', 'sib', 'sib', 'sib'),
 ('7', 'sib', 'par', 'sib', 'par'),('8', 'sib', 'sp', 'sib', 'rltv'),('9', 'chd', 'chd', 'par', 'sib'),('10', 'chd', 'sib', 'par', 'rltv'),('11', 'chd', 'par', 'par', 'rltv'),('12', 'chd', 'sp', 'par', 'par'),
 ('13', 'par', 'chd', 'chd', 'rltv'),('14', 'par', 'sib', 'chd', 'chd'),('15', 'par', 'par', 'chd', 'sp'),('15', 'par', 'par', 'chd', 'sp'),('16', 'par', 'sp', 'chd', 'rltv'),('17', 'slf', 'sp', 'slf', 'sp'),
@@ -980,7 +984,9 @@ REPLACE INTO `demo`.`map_relations`(`idmap_relations`,`PG_Patient`,`Guest_Patien
 ('24', 'par', 'rltv', 'chd', 'rltv'),('25', 'sp', 'frd', 'sp', 'frd'),('26', 'sib', 'frd', 'seb', 'frd'),('27', 'chd', 'frd', 'par', 'frd'),('28', 'par', 'frd', 'chd', 'frd'),('29', 'rltv', 'sp', 'rltv', 'rltv'),
 ('30', 'rltv', 'sib', 'rltv', 'rltv'),('31', 'rltv', 'chd', 'rltv', 'rltv'),('32', 'rltv', 'par', 'rltv', 'rltv'),('33', 'frd', 'sp', 'frd', 'frd'),('34', 'frd', 'sib', 'frd', 'frd'),('35', 'frd', 'chd', 'frd', 'frd'),
 ('36', 'frd', 'par', 'frd', 'frd'),('37', 'pc', 'sp', 'pc', 'pc'),('38', 'pc', 'sib', 'pc', 'pc'),('39', 'pc', 'chd', 'pc', 'pc'),('40', 'pc', 'par', 'pc', 'pc'),('41', 'sp', 'pc', 'sp', 'pc'),
-('42', 'sib', 'pc', 'sib', 'pc'),('43', 'chd', 'pc', 'par', 'pc'),('44', 'par', 'pc', 'chd', 'pc'),('45', 'slf', 'frd', 'slf', 'frd'),('46', 'slf', 'rltv', 'slf', 'rltv'),('47', 'slf', 'slf', 'slf', 'slf');
+('42', 'sib', 'pc', 'sib', 'pc'),('43', 'chd', 'pc', 'par', 'pc'),('44', 'par', 'pc', 'chd', 'pc'),('45', 'slf', 'frd', 'slf', 'frd'),('46', 'slf', 'rltv', 'slf', 'rltv'),
+('47', 'slf', 'slf', 'slf', 'slf'),('48', 'chd', 'slf', 'par', 'par'),('49', 'frd', 'slf', 'frd', 'frd'),('50', 'par', 'slf', 'chd', 'chd'),('51', 'sib', 'slf', 'sib', 'sib'),('52', 'sp', 'slf', 'sp', 'sp'),
+('53', 'rltv', 'slf', 'rltv', 'rltv'),('54', 'pc', 'slf', 'slf', 'pc');
 -- ;
 
 
@@ -1042,7 +1048,7 @@ REPLACE INTO `page` (`idPage`,`File_Name`,`Login_Page_Id`,`Title`,`Product_Code`
 (110,'VisitInterval.php',31,'Visit Interval Report','',0,'h','102','c','p'),(111,'GuestView.php',31,'Guests & Vehicles','',0,'h','79','v','p'),(113,'DRaHospReport.php',31,'Doctors, Hospitals','',0,'h','102','l','p'),(114,'ShowInvoice.php',31,'Show Invoice','',0,'h','','','p'),(115,'InvoiceReport.php',31,'Invoice Report','',0,'h','102','n','p'),(116,'ShowHsKpg.php',31,'Housekeeping','',0,'h','','','p'),(117,'PrtRegForm.php',31,'Print Registration Forms','',0,'h','','','p'),(118,'occDemo.php',31,'Guest Demographics','',0,'h','102','g','p'),(119,'ItemReport.php',31,'Item Report','',0,'h','102','s','p'),
 (120,'AccessLog.php',2,'User Access Log','',0,'a','35','d','p'),(121,'GuestTransfer.php',31,'Guest Transfer','',1,'h','79','x','p'),(122,'NewGuest.php',31,'New Guests','',0,'h','102','i','p'),(123,'PrtWaitList.php',31,'Wait Listing','',0,'h','','','p'),(126,'DailyReport.php',31,'Daily Report','',0,'h','102','p','p'),(127,'Help.php',31,'Help','',1,'h','71','f','p'),(128,'ws_calendar.php',31,'','',0,'h','','','s'),(129,'ws_update.php',2,'','',0,'a','','','s'),
 (130,'DiagnosisBuilder.php',31,'Diagnosis Builder','',1,'h','79','n','p'),(131,'CheckingIn.php',31,'Checking In','',0,'h','','','p'),
-(132,'IncmStmt.php',31,'Income Statement','',0,'h','102','t','p'),(133,'ws_forms.php',31,'','',0,'h','','','s'),(134,'showReferral.php',31,'Referral Form','',0,'h','','','p'),(135,'GuestReferral.php',31,'Guest Referral','',0,'h','','','p');
+(132,'IncmStmt.php',31,'Income Statement','',0,'h','102','t','p'),(133,'ws_forms.php',31,'','',0,'h','','','s'),(134,'showReferral.php',31,'Referral Form','',0,'h','','','p'),(135,'GuestReferral.php',31,'Guest Referral','',0,'h','','','p'),(136,'ws_reportFilter.php',31,'','',0,'h','','','s');
 -- ;
 
 UNLOCK TABLES;
@@ -1059,7 +1065,7 @@ REPLACE INTO `page_securitygroup` (`idPage`,`Group_Code`) VALUES
 (76,'g'),(76,'ga'),(79,'g'),(79,'ga'),(81,'ga'),(82,'g'),(82,'ga'),(83,'ga'),(84,'g'),(84,'ga'),(88,'db'),(89,'db'),(92,'ga'),(93,'g'),(93,'ga'),(94,'g'),(94,'ga'),
 (95,'g'),(95,'ga'),(96,'g'),(96,'ga'),(99,'g'),(99,'ga'),(100,'g'),(100,'ga'),(101,'g'),(101,'ga'),(102,'ga'),(104,'ga'),(105,'db'),(106,'mm'),(107,'ga'),(109,'ga'),
 (110,'ga'),(111,'g'),(111,'ga'),(113,'ga'),(114,'g'),(114,'ga'),(115,'ga'),(116,'g'),(116,'ga'),(117,'g'),(117,'ga'),(118,'ga'),(119,'ga'),(120,'mm'),(121,'ga'),
-(122,'ga'),(123,'g'),(123,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga'), (132,'ga'),(133,'g'),(133,'ga'),(133,'gr'),(134,'g'),(134,'ga'),(135,'g'),(135,'ga');
+(122,'ga'),(123,'g'),(123,'ga'),(126,'ga'),(127,'g'),(127,'ga'),(128,'g'),(128,'ga'),(129,'db'),(130,'ga'),(131,'g'),(131,'ga'), (132,'ga'),(133,'pub'),(134,'pub'),(135,'g'),(135,'ga'),(136,'ga'),(136,'gr');
 -- ;
 UNLOCK TABLES;
 

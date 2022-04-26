@@ -455,6 +455,13 @@ $(document).ready(function () {
                 window.location.assign("GuestEdit.php?id=" + item.id);
             }
         });
+        
+    createAutoComplete($('#txtMRNsearch'), 3, {cmd: 'role', mode: 'mo', gp:'1', mrn:'1'},
+        function (item) {
+            if (item.id > 0) {
+                window.location.assign("GuestEdit.php?id=" + item.id);
+            }
+        });
 
     createAutoComplete($('#txtPhsearch'), 5, {cmd: 'role', mode: 'mo', gp:'1'},
         function (item) {

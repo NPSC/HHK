@@ -48,7 +48,8 @@ function testDb(parms) {
 }
 
 function checkStrength(pwTxt) {
-    var strongRegex = /^.*(?=.{8,50})(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\!\@\#\$\%\^\&\*\(\)\-\=\_\+\~\.\,\<\>\/\?\;\:\'\"\\\|\[\]\{\}]).*$/g;
+    var strongRegex = new RegExp(
+			"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?!.*[<>])(?=.{8,50})");
     var rtn = true;
     if(strongRegex.test(pwTxt)) {
         rtn = true;

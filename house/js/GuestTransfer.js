@@ -126,13 +126,305 @@ function transferRemote(transferIds) {
 
 }
 
-function transferData($btn, start, end, command, maxGu) {
+var stopTransfer,
+	$visitButton,
+	$psgCBs,
+	$excCBs,
+	$relSels;
+
+function throttleVisits() {
+	
+	if (stopTransfer) {
+		$visitButton.val('Resume Visit Transfers');
+		return;
+	}
+	
+	let psgs = [];
+	
+	// do the excludes
+	$excCBs.each(function () {
+		
+    	if ($(this).prop('checked')) {
+	
+			psgs.push($(this).data('idpsg'));
+    		
+    		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+    		
+			$(this).prop({'checked':false, 'disabled':true});
+			
+		}
+	});
+	
+	if (psgs.length > 0) {
+		transferExcludes(psgs);
+	}
+	
+	let donut = true;
+	
+	// Do one at a time.
+    $psgCBs.each(function () {
+	
+    	if ($(this).prop('checked')) {
+	
+    		donut = false;
+    		const props = {'checked':false, 'disabled':true};
+    		const rels = [];
+    		
+    		$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightgray');
+    		
+			$(this).prop(props).end();
+			
+			// Prepare relationship assignments.
+			$('.hhk-selRel'+$(this).data('idpsg')).each(function () {
+				const rel = {'id':$(this).data('idname'), 'rel':$(this).val()};
+				rels.push(rel);
+			});
+			
+    		transferVisits($(this).data('idpsg'), rels);
+    		
+    		return false;  // leave each
+    	}
+    });
+    
+    if (donut) {
+		stopTransfer = true;
+		$visitButton.val('Start Visit Transfers');		
+	}
+}
+
+function transferExcludes(psgs) {
+	
+    let parms = {
+        cmd: 'excludes',
+        psgIds: psgs
+    };
+
+    let posting = $.post('ws_tran.php', parms);
+    
+    posting.done(function(incmg) {
+	
+        if (!incmg) {
+            alert('Bad Reply from HHK Web Server');
+            return;
+        }
+        try {
+            incmg = $.parseJSON(incmg);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+        
+		let tr = '';
+		let $eTbl= $('#eTbl');
+		
+        if (incmg.excludes) {
+	            
+			if ($eTbl.length == 0) {
+				
+				// Create header row
+				$eTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+				
+				tr = '<thead><tr>';
+				for (let key in incmg.excludes[0]) {
+					tr += '<th>' + key + '</th>';
+				}
+				tr += '</tr></thead><tbody></tbody>';
+				
+				$eTbl.append(tr);
+				let title = $('<h3 style="margin-top:7px;">Members Excluded from Neon</h3>');
+				$('#divMembers').append(title).append($eTbl).show();
+			}
+			
+			tr = '';
+			for (let i = 0; i < incmg.excludes.length; i++) {
+				
+				tr += '<tr>';
+				for (let key in incmg.excludes[i]) {
+					tr += '<td>' + incmg.excludes[i][key] + '</td>';
+				}
+				tr += '</tr>';
+			}
+			
+			$eTbl.find('tbody').append(tr);
+        }
+
+	});
+}
+
+function transferVisits(idPsg, rels) {
+	
+    let parms = {
+        cmd: 'visits',
+        psgId: idPsg,
+        rels: rels
+    };
+
+    let posting = $.post('ws_tran.php', parms);
+    
+    posting.done(function(incmg) {
+
+        if (!incmg) {
+            alert('Bad Reply from HHK Web Server');
+            return;
+        }
+        try {
+            incmg = $.parseJSON(incmg);
+        } catch (err) {
+            alert('Bad JSON Encoding');
+            return;
+        }
+
+        if (incmg.error) {
+            if (incmg.gotopage) {
+                window.open(incmg.gotopage, '_self');
+            }
+            // Stop Processing and return.
+            flagAlertMessage(incmg.error, true);
+            return;
+        }
+        
+		let tr = '';
+		let $vTbl= $('#vTbl');
+		let $mTbl = $('#mTbl');
+		let $hTbl = $('#hTbl');
+		let first = true;
+		
+        if (incmg.members) {
+	            
+			if ($mTbl.length == 0) {
+				
+				// Create header row
+				$mTbl = $('<table id="mTbl" style="margin-top:2px;"/>');
+				
+				tr = '<thead><tr>';
+				for (let id in incmg.members) {
+					for (let key in incmg.members[id]) {
+						tr += '<th>' + key + '</th>';
+					}
+					tr += '</tr></thead><tbody></tbody>';
+					break;
+				}
+				
+				$mTbl.append(tr);
+				let title = $('<h3 style="margin-top:7px;">New Neon Members</h3>');
+				$('#divMembers').append(title).append($mTbl).show();
+			}
+			
+			tr = '';
+			first = 'style="border-top: 2px solid #2E99DD;"';
+			for (let id in incmg.members) {
+				
+				tr = '<tr ' + first + '>';
+				first = '';
+							
+				for (let key in incmg.members[id]) {
+					tr += '<td>' + incmg.members[id][key] + '</td>';
+				}
+				tr += '</tr>';
+
+			}
+						
+			$mTbl.find('tbody').append(tr);
+        }
+
+        if (incmg.visits) {
+            
+			if ($vTbl.length == 0) {
+				
+				// Create header row
+				$vTbl = $('<table id="vTbl" style="margin-top:2px;"/>');
+				
+				tr = '<thead><tr>';
+				for (let key in incmg.visits[0]) {
+					tr += '<th>' + key + '</th>';
+				}
+				tr += '</tr></thead><tbody></tbody>';
+				
+				$vTbl.append(tr);
+				let title = $('<h3 style="margin-top:7px;">Visit Information</h3>');
+				$('#divMembers').append(title).append($vTbl).show();
+			}
+
+			tr = '';
+			first = true;
+			for (let i = 0; i < incmg.visits.length; i++) {
+				
+				if (first) {
+					first = false;
+					tr += '<tr style="border-top: 2px solid #2E99DD;">';
+				} else {
+					tr += '<tr>';
+				}
+				
+				for (let key in incmg.visits[i]) {
+					tr += '<td>' + incmg.visits[i][key] + '</td>';
+				}
+				tr += '</tr>';
+			}
+
+			$vTbl.find('tbody').append(tr);
+        }
+
+        if (incmg.households) {
+            
+			if ($hTbl.length == 0) {
+				
+				// Create header row
+				$hTbl = $('<table id="hTbl" style="margin-top:2px;"/>');
+				
+				tr = '<thead><tr>';
+				for (let key in incmg.households[0]) {
+					tr += '<th>' + key + '</th>';
+				}
+				tr += '</tr></thead><tbody></tbody>';
+				
+				$hTbl.append(tr);
+				let title = $('<h3 style="margin-top:7px;">Households</h3>');
+				$('#divMembers').append(title).append($hTbl).show();
+			}
+
+			tr = '';
+			first = true;
+			for (let i = 0; i < incmg.households.length; i++) {
+				
+				if (first) {
+					first = false;
+					tr += '<tr style="border-top: 2px solid #2E99DD;">';
+				} else {
+					tr += '<tr>';
+				}
+				
+				for (let key in incmg.households[i]) {
+					tr += '<td>' + incmg.households[i][key] + '</td>';
+				}
+				tr += '</tr>';
+			}
+			
+			$hTbl.find('tbody').append(tr);
+        }
+        
+        throttleVisits();
+    });
+
+	return;
+}
+
+
+function transferData($btn, start, end, command) {
 
     var parms = {
         cmd: command,
         st: start,
-        en: end,
-        max: maxGu
+        en: end
     };
 
     var posting = $.post('ws_tran.php', parms);
@@ -169,14 +461,6 @@ function transferData($btn, start, end, command, maxGu) {
 
         if (incmg.members) {
             $('#divMembers').empty().append($(incmg.members)).show();
-        }
-
-        if (incmg.strayMembers) {
-            $('#divStrayMembers').empty().append($(incmg.strayMembers)).show();
-        }
-
-        if (incmg.households) {
-            $('#divHouseholds').empty().append($(incmg.households)).show();
         }
 
     });
@@ -254,11 +538,11 @@ function getRemote(item, source) {
 }
 
 $(document).ready(function() {
+	
     var makeTable = $('#hmkTable').val();
     var start = $('#hstart').val();
     var end = $('#hend').val();
     var dateFormat = $('#hdateFormat').val();
-    var maxGuests = $('#maxGuests').val();
 
     $('#btnHere, #btnCustFields, #btnGetPayments, #btnGetVisits, #btnGetKey').button();
 
@@ -293,7 +577,7 @@ $(document).ready(function() {
             }
             $('#TxButton').val('Working...');
             
-            txIds = {};
+            let txIds = {};
             $('.hhk-txCbox').each(function () {
             	if ($(this).prop('checked')) {
             		txIds[$(this).data('txid')] = $(this).data('txid');
@@ -342,23 +626,57 @@ $(document).ready(function() {
         $('#btnPay').hide();
         $('#divMembers').empty();
 
-        $('#tblrpt').dataTable({
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top"ilf>rt<"bottom"lp><"clear">'
-        });
+		stopTransfer = true;
 
-        $('#btnVisits').button().show().click(function () {
+		$visitButton = $('#btnVisits');
+		$psgCBs = $('.hhk-txPsgs');
+		$excCBs = $('.hhk-exPsg');
+		$relSels = $('.hhk-selRel');
+		
+		$excCBs.change(function () {
+			
+			let $cbPsg = $('#cbIdPSG'+$(this).data('idpsg'));
+			
+			if ($(this).prop('checked')) {
+				
+				let props = {'checked':false, 'disabled':true};
+				$cbPsg.prop(props);
+				$('.hhk-' + $(this).data('idpsg')).css('background-color', 'lightpink');
 
-            if ($(this).val() === 'Transferring Guests ...') {
-                return;
-            }
-            $(this).val('Transferring Guests ...');
+				
+			} else {
+				$cbPsg.prop('disabled', false);
+				$('.hhk-' + $(this).data('idpsg')).css('background-color', 'transparent');
+			}
+		});
 
-            transferData($(this), start, end, 'visits', maxGuests);
-        });
+        $visitButton
+        	.button()
+        	.val('Start Visit Transfers')
+        	.show()
+        	.click(function () {
+
+	            $('div#retrieve').empty();
+
+				// Switch transfer control
+				if (stopTransfer) {
+					stopTransfer = false;
+				} else {
+					stopTransfer = true;
+				}
+
+				// UPdate controls
+				if (stopTransfer) {
+					// Stop
+					$(this).val('Stopping ...');
+				} else {
+					// start
+					$(this).val('Stop Transfers');
+					throttleVisits();
+				}
+	        });
     }
-    
+
     var opt = {mode: 'popup',
         popClose: true,
         popHt      : $('#keyMapDiagBox').height(),
@@ -366,8 +684,6 @@ $(document).ready(function() {
         popX       : 20,
         popY       : 20,
         popTitle   : 'Print Visit Key'};
-
-
 
 	var kmd = $('#keyMapDiagBox').dialog({
         autoOpen: false,

@@ -153,7 +153,7 @@ if ($id > 0) {
             }
 
         } else {
-        	$alertMessage = "This person is not a ".$labels->getString('MemberType', 'patient', 'Patient')." or ".$labels->getString('MemberType', 'guest', 'Guest') . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
+        	$alertMessage = "This person is not a ".$labels->getString('MemberType', 'patient', 'Patient')." or ".$labels->getString('MemberType', 'guest', 'Guest') . (isset($uS->groupcodes['mm']) || $wInit->page->is_Admin() ? " " . HTMLContainer::generateMarkup('a', 'Go to Member Edit', array('href'=>'../admin/NameEdit.php?id='.$id)) : '');
             $showSearchOnly = TRUE;
         }
     }
@@ -739,19 +739,30 @@ $uS->guestId = $id;
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-            <div style="float:left; margin-right: 90px; margin-top:5px;">
-                <?php echo $guestName; ?>
+        	<div class="pageHeader hhk-flex">
+                <div style="margin-top:5px;">
+                    <?php echo $guestName; ?>
+                </div>
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-flex" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px;">
+                    <div style="margin-right: 0.5em;">
+                    	<label for="txtsearch">Name Search</label>
+                    	<input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                    </div>
+                    <div style="margin-right: 0.5em;">
+                    	<span>MRN Search </span>
+                    	<input type="search" class="allSearch" id="txtMRNsearch" size="15" title="Enter at least 3 characters to invoke search" />
+                    </div>
+                    <div>
+                    	<span>Phone Search </span>
+                    	<input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
+                	</div>
+                </div>
             </div>
-            <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px; float: left;">
-                <span>Name Search </span>
-                <input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
-                <span>Phone Search </span>
-                <input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
-            </div>
-            <div style="clear:both;"></div>
             <?php if ($alertMessage != '') { ?>
-            <div id="alertMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; " class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
-                <?php echo $alertMessage; ?>
+            <div class="alertContainer">
+                <div id="alertMessage" style="display:inline-block; margin-top:5px;margin-bottom:5px; " class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
+                    <?php echo $alertMessage; ?>
+                </div>
             </div>
             <?php } ?>
             <?php if ($showSearchOnly === FALSE) { ?>

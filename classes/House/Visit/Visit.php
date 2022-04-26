@@ -1665,7 +1665,7 @@ class Visit {
         $today = new \DateTime();
         $today->setTime(0, 0, 0);
 
-        if ($retDT > $today) {
+        if ($retDT >= $today) {
             // Extend leave
 
             if ($retDT->diff($today)->days > 7) {

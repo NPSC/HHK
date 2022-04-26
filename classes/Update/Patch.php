@@ -65,20 +65,22 @@ class Patch {
 
         $qParts = explode($splitAt, $query);
 
-        foreach ($qParts as $q) {
+        try{
+            $dbh->beginTransaction();
 
-            $q = trim($q);
-            if ($q == '' || $q == $delimiter || $q == 'DELIMITER') {
-                continue;
-            }
+            foreach ($qParts as $q) {
 
-            try {
-                if ($dbh->exec($q) === FALSE) {
-                    $msg[] = array('error'=>$dbh->errorInfo(), 'errno'=> $dbh->errorCode(), 'query'=> $q );
+                $q = trim($q);
+                if ($q == '' || $q == $delimiter || $q == 'DELIMITER') {
+                    continue;
                 }
-            } catch (\PDOException $pex) {
-                // do nothing
+
+                $dbh->exec($q);
             }
+            $dbh->commit();
+        }catch(\Exception $e){
+            $dbh->rollBack();
+            $msg[] = array('error'=>$e->getMessage(), 'errno'=>$e->getCode(), 'query'=>$q);
         }
 
         return $msg;

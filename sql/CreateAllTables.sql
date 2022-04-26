@@ -874,7 +874,7 @@ CREATE TABLE if not exists `mail_listing` (
 -- -----------------------------------------------------
 -- Table `map_relations`
 -- -----------------------------------------------------
-CREATE TABLE `map_relations` (
+CREATE TABLE if not exists `map_relations` (
   `idmap_relations` int(11) NOT NULL AUTO_INCREMENT,
   `PG_Patient` varchar(45) NOT NULL,
   `Guest_Patient` varchar(45) DEFAULT NULL,

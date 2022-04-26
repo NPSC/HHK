@@ -568,9 +568,9 @@ class SiteConfig {
 
             $sctbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
 
-            $dkimRecord = @file_get_contents($uS->keyPath . '/dkim/dkimRecord.txt');
-            if($r['Key'] == 'DKIMdomain' && strlen($r['Value']) > 0 && $dkimRecord){
-                $sctbl->addBodyTr(HTMLTable::makeTd('DKIM Record:', array('class' => 'tdlabel', 'style'=>'vertical-align:top;')) . HTMLTable::makeTd("<strong>key</strong>: hhk._domainkey." . $r['Value'] . " <br><strong>Value</strong>:<br>" . HTMLContainer::generateMarkup("textarea", "v=DKIM1; k=rsa; p=" . $dkimRecord, array("readonly"=>"readonly", 'rows'=>"5", 'cols'=>"40"))));
+            if($r['Key'] == 'DKIMdomain' && strlen($r['Value']) > 0){
+                $sctbl->addBodyTr(HTMLTable::makeTd('DKIM CNAME Record:', array('class' => 'tdlabel', 'style'=>'vertical-align:top;')) . HTMLTable::makeTd("<strong>key</strong>: hhk._domainkey." . $r['Value'] . " <br><strong>Value</strong>: hhk.dkim.nonprofitsoftwarecorp.org"));
+                $sctbl->addBodyTr(HTMLTable::makeTd('DKIM CNAME Record:', array('class' => 'tdlabel', 'style'=>'vertical-align:top;')) . HTMLTable::makeTd("<strong>key</strong>: hhk2._domainkey." . $r['Value'] . " <br><strong>Value</strong>: hhk2.dkim.nonprofitsoftwarecorp.org"));
             }
 
         }

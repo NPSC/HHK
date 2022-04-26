@@ -2050,7 +2050,12 @@ $alertMsg->set_Text("uh-oh");
 
 $resultMessage = $alertMsg->createMarkup();
 
-
+$demogs = readGenLookupsPDO($dbh, 'Demographics');
+foreach($demogs as $key=>$demog){
+    if($demog["Substitute"] == ""){ //remove disabled demogs
+        unset($demogs[$key]);
+    }
+}
 
 ?>
 <!DOCTYPE html>
@@ -2073,7 +2078,7 @@ $resultMessage = $alertMsg->createMarkup();
 	<script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 	<script type="text/javascript" src="../js/formBuilder/form-builder.min.js"></script>
-	<script type="text/javascript" src="js/formBuilder.js"></script>
+	<script type="text/javascript" src="<?php echo FORMBUILDER_JS; ?>"></script>
 	<script type="text/javascript" src="<?php echo RESCBUILDER_JS; ?>"></script>
 </head>
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
@@ -2332,7 +2337,7 @@ $resultMessage = $alertMsg->createMarkup();
 					doctor: "<?php echo $uS->Doctor; ?>",
 					referralAgent: "<?php echo $uS->ReferralAgent; ?>"
 				},
-				demogs: <?php echo json_encode(readGenLookupsPDO($dbh, 'Demographics')); ?>
+				demogs: <?php echo json_encode($demogs); ?>
 			});
 		});
 

@@ -100,39 +100,52 @@ try {
 
       case 'visits':
 
-        $en = '';
-        if (isset($_REQUEST["en"])) {
-            $en = filter_var($_REQUEST["en"], FILTER_SANITIZE_STRING);
+        $idPsg = 0;
+
+        if (isset($_REQUEST['psgId'])) {
+            $idPsg = intval(filter_var($_REQUEST['psgId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $max = 1;
-        if (isset($_REQUEST['max'])) {
-            $max = intval(filter_var($_REQUEST['max'], FILTER_SANITIZE_NUMBER_INT), 10);
+        $raw = [];
+
+        if (isset($_REQUEST['rels'])) {
+            $raw = filter_var_array($_REQUEST['rels'], FILTER_SANITIZE_NUMBER_INT);
         }
 
-        $reply = $transfer->sendVisits($dbh, $uS->username, $en, $max);
+        $rels = [];
+        foreach ($raw as $v) {
+            $rels[$v['id']] = $v['rel'];
+        }
 
-        // Show new members
+
+        // Visit results
+        $events['visits'] = $transfer->sendVisits($dbh, $uS->username, $idPsg, $rels);
+
+        // New members
         if (count($transfer->getMemberReplies()) > 0) {
-            $events['members'] = HTMLContainer::generateMarkup('p', "New Neon Members") . CreateMarkupFromDB::generateHTML_Table($transfer->getMemberReplies(), 'tblrpt');
+            $events['members'] = $transfer->getMemberReplies();
         }
 
-        // Show visit results
-        $events['data'] = HTMLContainer::generateMarkup('p', "Visit Results", array('style'=>'margin-top:5px;'))
-            . CreateMarkupFromDB::generateHTML_Table($reply, 'tblpmt');
-
-        // Show extra members from visiting PSG's
-        if (count($transfer->getReplies()) > 0) {
-            $events['strayMembers'] = HTMLContainer::generateMarkup('p', "Additional PSG Members", array('style'=>'margin-top:5px;'))
-                . CreateMarkupFromDB::generateHTML_Table($transfer->getReplies(), 'tblrpt2');
-        }
-
-        // show households
+        // Households
         if (count($transfer->getHhReplies()) > 0) {
-            $events['households'] = HTMLContainer::generateMarkup('p', "Households", array('style'=>'margin-top:5px;'))
-                . CreateMarkupFromDB::generateHTML_Table($transfer->getHhReplies(), 'tblrpt3');
+            $events['households'] = $transfer->getHhReplies();
         }
+
         break;
+
+      case 'excludes':
+
+          $idPsgs = [];
+
+          if (isset($_REQUEST['psgIds'])) {
+              $idPsgs = filter_var_array($_REQUEST['psgIds'], FILTER_SANITIZE_NUMBER_INT);
+          }
+
+          // Neon Exclude results
+          $events['excludes'] = $transfer->sendExcludes($dbh, $idPsgs, $uS->username);
+
+
+          break;
 
       case 'sch':
 

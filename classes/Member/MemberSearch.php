@@ -30,6 +30,7 @@ class MemberSearch {
     protected $Name_Last;
     protected $Phone;
     protected $Company;
+    protected $MRN;
     protected $twoParts;
 
     public function __construct($letters) {
@@ -38,11 +39,11 @@ class MemberSearch {
     }
 
     public function prepareLetters($letters) {
-    	
+
     	$parts = explode(' ', strtolower(trim($letters)));
-    	
+
     	if (count($parts) > 1) {
-    		
+
     		// first or last name?
     		if (stristr($parts[0], ',') === FALSE) {
     			//first name first
@@ -53,20 +54,21 @@ class MemberSearch {
     			$this->Name_First = $parts[1] . '%';
     			$this->Name_Last = str_replace(',', '', $parts[0]) . '%';
     		}
-    		
+
     		$this->twoParts = TRUE;
     		$this->Company = strtolower(trim($letters)) . '%';
-    		
+
     	} else {
-    		
+
     		$this->Name_First = $parts[0] . '%';
     		$this->Name_Last = $parts[0] . '%';
     		$this->Company = $parts[0] . '%';
+    		$this->MRN = $parts[0] . '%';
     		$this->twoParts = FALSE;
     	}
-    	
+
     }
-    
+
     public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '') {
         $events = array();
 
@@ -75,7 +77,7 @@ class MemberSearch {
             $operation = 'AND';
         }
 
-        
+
         if ($basis == "m") {
 
             $prts = explode("|", $fltr);
@@ -131,8 +133,8 @@ class MemberSearch {
                 $events[] = array("error" => "Bad filter: " . $fltr);
             }
 
-            
-            
+
+
         // Referral Agent & Doctor
         } else if ($basis == VolMemberType::ReferralAgent || $basis == VolMemberType::Doctor) {
 
@@ -187,7 +189,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             $events[] = array('id' => 0, 'value' => ($basis == VolMemberType::Doctor ? 'New Doctor' : 'New ' . $labels->getString('hospital', 'referralAgent', 'Referral Agent')));
 
 
-            
+
 
         // Third party billing agent?
         } else if ($basis == VolMemberType::BillingAgent) {
@@ -248,7 +250,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             }
 
 
-            
+
 
        // Guest or Patient as Guest
         } else if ($basis == VolMemberType::Guest || $basis == 'g,p') {
@@ -307,8 +309,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
 
 
-            
-            
+
+
         } else if ($basis == VolMemberType::Patient) {
             // Search patient
 
@@ -642,7 +644,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         return $events;
     }
 
-    public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE) {
+    public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE, $MRN = FALSE) {
 
         $operation = 'OR';
         if ($this->twoParts) {
@@ -656,7 +658,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
                 . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
-                . " ifnull(gr.Description, '') as `No_Return` "
+                . " ifnull(gr.Description, '') as `No_Return` " . ", hs.MRN as `MRN` "
             . " from `name` n "
                 . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
                 . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
@@ -666,10 +668,12 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
                 . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
                 . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
+                . " left join hospital_stay hs on n.idName = hs.idPatient"
             . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 $filterGP "
-                . " and (LOWER(n.Name_Last) like '" . $this->Name_Last . "' "
+                . ($MRN ? "" : " and (LOWER(n.Name_Last) like '" . $this->Name_Last . "' "
                 . " $operation (LOWER(n.Name_First) like '" . $this->Name_First . "' OR LOWER(n.Name_NickName) like '" . $this->Name_First . "')) "
-                . " OR np.Phone_Search like '" . $this->Name_First . "' "
+                . " OR np.Phone_Search like '" . $this->Name_First . "' ")
+                . ($MRN ? " and hs.MRN like '" . $this->MRN . "' " : "")
             . " order by n.Name_Last, n.Name_First;";
 
         $stmt = $dbh->query($query);
@@ -697,7 +701,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                     },
                     $row2["Name_Nickname"]
             );
-            
+
             $strBirthDate = '';
             if ($row2['BirthDate'] != '') {
             	$birthDate = new \DateTime($row2['BirthDate']);
@@ -719,7 +723,8 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . ($strBirthDate != '' ? ' (' . $strBirthDate . ')' : '' )
                 . ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . ']' : '')
                 . ($row2['City'] != '' ? '; ' . $row2['City'] : '')
-                . ($row2['State'] != '' ? ', ' . $row2['State'] : '');
+                . ($row2['State'] != '' ? ', ' . $row2['State'] : '')
+                . ($row2['MRN'] != '' ? " MRN: " . $row2['MRN'] : '');
 
             $events[] = $namArray;
         }

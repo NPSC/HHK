@@ -20,6 +20,14 @@ use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface;
 use HHK\SysConst\ReferralFormStatus;
 use HHK\Exception\RuntimeException;
 
+/**
+ * ReferralForm.php
+ *
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @license   MIT, NCSA
+ * @link      https://github.com/NPSC/HHK
+ */
 
 class ReferralForm {
 
@@ -55,7 +63,7 @@ class ReferralForm {
 	const HTML_Incl_Phone = 'cbPIncludePhone';
 	const HTML_Incl_Email = 'cbPIncludeEmail';
 
-    const MAX_GUESTS = 4;
+    const MAX_GUESTS = 20;
 
     /**
      * Open the referral and pull in the user data.
@@ -297,13 +305,12 @@ class ReferralForm {
 	        return FALSE;
 	    }
 
+	    $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['patient']);
+
 	    // Figure out which SearchNameData object to use
-	    if ($idP == 0) {
+	    if ($idP > 0) {
 
-	        $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['patient']);
-	    } else {
-
-	        $searchNameData = $this->LoadMemberData($dbh, $idP, new SearchNameData());
+	        $searchNameData = $this->LoadMemberData($dbh, $idP, new SearchNameData(), $searchNameData);
 	    }
 
 	    if (is_null($searchNameData) === FALSE) {
@@ -336,17 +343,13 @@ class ReferralForm {
 	        if (isset($post['rbGuest'.$gindx])) {
 	            // Save this one
 
-	            $searchNameData = NULL;
+	            $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
 
 	            $id = intval(filter_var($post['rbGuest'.$gindx], FILTER_SANITIZE_NUMBER_INT), 10);
 
-	            if ($id == 0) {
+	            if ($id > 0) {
 
-	                $searchNameData = $this->loadSearchFor($dbh, $this->formUserData['guests'][$gindx]);
-
-	            } else {
-
-	                $searchNameData = $this->LoadMemberData($dbh, $id, new SearchNameData());
+	                $searchNameData = $this->LoadMemberData($dbh, $id, new SearchNameData(), $searchNameData);
 
 	                // Update Relationship
 	                if (isset($this->formUserData['guests'][$gindx]['relationship']) && $this->formUserData['guests'][$gindx]['relationship'] != '') {
@@ -358,9 +361,12 @@ class ReferralForm {
 	            if (is_null($searchNameData) === FALSE) {
 	                $guest = $this->saveGuest($dbh, $id, $psg, $searchNameData, $uS->username);
                     $guests[] = $guest->getIdName();
+                    $this->formUserData['guests'][$gindx]['idName'] = $guest->getIdName();
 	           }
 	       }
 	   }
+
+	   $this->formDoc->updateUserData($dbh, $this->formUserData);
 
 	   return $guests;
 	}
@@ -393,12 +399,12 @@ class ReferralForm {
 	 * @param SearchNameDataInterface $snd The object to be loaded.
 	 * @return \HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface
 	 */
-	protected function LoadMemberData(\PDO $dbh, $id, SearchNameDataInterface $snd) {
+	protected function LoadMemberData(\PDO $dbh, $id, SearchNameDataInterface $snd, SearchNameDataInterface $formData) {
 
 	    $stmt = $dbh->query(ProgressiveSearch::getMemberQuery($id));
 
 	    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-	        $snd->loadMeFrom($r);
+	        $snd->loadMeFrom($r, $formData);
 	    }
 
 	    return $snd;
@@ -750,7 +756,7 @@ class ReferralForm {
 	}
 
 	/**
-	 *
+	 * Each guest markup
 	 * @param string $gindx Indexes the specific guest.
 	 * @param SearchFor $guestSearchFor
 	 * @param array $guestResults

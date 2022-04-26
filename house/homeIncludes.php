@@ -8,7 +8,7 @@
  * @link      https://github.com/NPSC/HHK
  */
 
-define('JSV', '?v=22');
+define('JSV', '?v=24');
 
 define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
@@ -24,6 +24,7 @@ define('RESV_JS', "js/resv.js" . JSV);
 define('INVOICE_JS', "js/invoice.js" . JSV);
 define('REPORTFIELDSETS_JS', "js/reportfieldSets.js" . JSV);
 define('REFERRAL_VIEWER_JS', "js/referralViewer.js" . JSV);
+define('FORMBUILDER_JS', "js/formBuilder.js" . JSV);
 define('RESERVE_JS', 'js/reserve.js' . JSV);
 define('CHECKIN_JS', 'js/checkin.js' . JSV);
 define('CHECKINGIN_JS', 'js/checkingIn.js' . JSV);

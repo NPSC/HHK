@@ -88,7 +88,7 @@ class UpdateSite {
 //                         continue;
 //                     }
 
-                    $this->errorMsg .= 'Update Patch SQL Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
+                    $this->errorMsg .= 'Update Patch SQL Error: ' . $err['error'] . '; Query=' . $err['query'] . '<br/>**SQL not updated**<br>';
                     $errorCount++;
                 }
             }
@@ -103,7 +103,7 @@ class UpdateSite {
 
                     $this->errorMsg .= 'Update Views Error: ' . $err['error'] . ', ' . $err['errno'] . '; Query=' . $err['query'] . '<br/>';
                 }
-                
+
             } else {
 
                 $this->errorMsg .= '**Views not updated**  ';

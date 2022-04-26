@@ -428,31 +428,29 @@ class SearchNameData implements SearchNameDataInterface {
      *
      * @param array $r
      */
-    public function loadMeFrom(array $r) {
+    public function loadMeFrom(array $r, SearchNameDataInterface $formData = null) {
 
         $this->setId($r['idName'])
-        ->setNameFirst($r["Name_First"])
-        ->setNameLast($r["Name_Last"])
-        ->setNickname($r["Name_Nickname"])
-        ->setNameMiddle($r["Name_Middle"])
-        ->setPrefix($r['Name_Prefix'])
-        ->setSuffix($r['Name_Suffix'])
-        ->setGender($r['Gender'])
-        ->setEthnicity($r['Ethnicity'])
-        ->setBirthDate($r['Birthdate'])
-        ->setPhone($r['Phone_Num'])
-        ->setEmail($r['Email'])
-        ->setAddressStreet1($r['Address1'])
-        ->setAddressStreet2($r['Address2'])
-        ->setAddressCity($r['City'])
-        ->setAddressState($r['State_Province'])
-        ->setAddressZip($r['Postal_Code'])
-        ->setAddressCountry($r['Country_Code'])
-        ->setNoReturn($r['No_Return']);
+            ->setNameFirst($this->setIfNew($r["Name_First"], $formData->getNameFirst()))
+            ->setNameLast($this->setIfNew($r["Name_Last"], $formData->getNameFirst()))
+            ->setNickname($this->setIfNew($r["Name_Nickname"], $formData->getNameFirst()))
+            ->setNameMiddle($this->setIfNew($r["Name_Middle"], $formData->getNameFirst()))
+            ->setPrefix($this->setIfNew($r["Name_Prefix"], $formData->getNameFirst()))
+            ->setSuffix($this->setIfNew($r["Name_Suffix"], $formData->getNameFirst()))
+            ->setGender($this->setIfNew($r["Gender"], $formData->getNameFirst()))
+            ->setEthnicity($this->setIfNew($r["Ethnicity"], $formData->getNameFirst()))
+            ->setBirthDate($this->setIfNew($r["Birthdate"], $formData->getNameFirst()))
+            ->setPhone($this->setIfNew($r["Phone_Num"], $formData->getNameFirst()))
+            ->setEmail($this->setIfNew($r["Email"], $formData->getNameFirst()))
+            ->setAddressStreet1($this->setIfNew($r["Address1"], $formData->getNameFirst()))
+            ->setAddressStreet2($this->setIfNew($r["Address2"], $formData->getNameFirst()))
+            ->setAddressCity($this->setIfNew($r["City"], $formData->getNameFirst()))
+            ->setAddressState($this->setIfNew($r["State_Province"], $formData->getNameFirst()))
+            ->setAddressZip($this->setIfNew($r["Postal_Code"], $formData->getNameFirst()))
+            ->setAddressCountry($this->setIfNew($r["Country_Code"], $formData->getNameFirst()))
+            ->setNoReturn($this->setIfNew($r["No_Return"], $formData->getNameFirst()))
+            ->setRelationship($this->setIfNew($r["Relationship"], $formData->getNameFirst()));
 
-        if (isset($r['Relationship'])) {
-            $this->setRelationship($r['Relationship']);
-        }
     }
 
     public function setNoReturn($v)
@@ -466,7 +464,14 @@ class SearchNameData implements SearchNameDataInterface {
         return $this->noReturn;
     }
 
+    protected function setIfNew($old, $new) {
 
+        if ($new != '') {
+            return $new;
+        }
+
+        return $old;
+    }
 
 
 }
