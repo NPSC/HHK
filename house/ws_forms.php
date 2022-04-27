@@ -49,11 +49,11 @@ try {
     $login = new Login();
     $dbh = $login->initHhkSession(ciCFG_FILE);
 
-	$csrfToken = '';
-	if(isset($_REQUEST['csrfToken'])){
-		$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_STRING);
-	}
-	$login->verifyCSRF($csrfToken);
+	//$csrfToken = '';
+	//if(isset($_REQUEST['csrfToken'])){
+		//$csrfToken = filter_var($_REQUEST['csrfToken'], FILTER_SANITIZE_STRING);
+	//}
+	//$login->verifyCSRF($csrfToken);
 
 } catch (InvalidArgumentException $pex) {
     exit ("<h3>Database Access Error.   <a href='index.php'>Continue</a></h3>");

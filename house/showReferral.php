@@ -107,7 +107,6 @@ if(isset($_GET['template'])){
 
         <script type='text/javascript'>
             $(document).ready(function() {
-            	var csrfToken = '<?php echo $login->generateCSRF(); ?>';
 
             	var previewFormData = JSON.stringify(<?php echo json_encode($formData); ?>);
 
@@ -121,8 +120,7 @@ if(isset($_GET['template'])){
 					data: {
 						cmd: '<?php echo $cmd; ?>',
 						id: '<?php echo $id; ?>',
-						formData: previewFormData,
-						csrfToken: csrfToken
+						formData: previewFormData
 					},
 					dataType:'json',
 					success: function(ajaxData){
@@ -254,7 +252,7 @@ if(isset($_GET['template'])){
                         	//zip code search
                         	$renderedForm.find('input.hhk-zipsearch').each(function() {
                                 var lastXhr;
-                                createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
+                                createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null);
                             });
 
                             $renderedForm.find('.address').prop('autocomplete', 'search');
@@ -330,7 +328,7 @@ if(isset($_GET['template'])){
                             	//zip code search
                             	$renderedForm.find('input.hhk-zipsearch').each(function() {
                                     var lastXhr;
-                                    createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null, csrfToken);
+                                    createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null);
                                 });
 
                                 $renderedForm.find('.address').prop('autocomplete', 'search');
@@ -375,7 +373,6 @@ if(isset($_GET['template'])){
                         	    	data : {
                         	    		cmd: "submitform",
                         	    		formRenderData: JSON.stringify(formRenderData),
-                        	    		csrfToken: csrfToken,
                         	    		recaptchaToken: token,
                         	    		template: <?php echo (isset($_GET['template']) ? $_GET['template'] : 0); ?>
                         	    	},
