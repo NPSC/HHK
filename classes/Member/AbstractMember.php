@@ -624,24 +624,32 @@ abstract class AbstractMember {
 
         //  Basis
         if (isset($post[$idPrefix."selMbrType"])) {
-            $n->Member_Type->setNewVal(filter_var($post[$idPrefix.'selMbrType'], FILTER_SANITIZE_STRING));
-            // additional info if changed
-            if ($n->Member_Type->getStoredVal() != $n->Member_Type->getNewVal()) {
-                $n->Prev_MT_Change_Date->setNewVal(date("Y-m-d H:i:s"));
-                $n->Previous_Member_Type->setNewVal($n->Member_Type->getStoredVal());
+
+            $mt = filter_var($post[$idPrefix.'selMbrType'], FILTER_SANITIZE_STRING);
+
+            if (isset($uS->nameLookups['Member_Basis'][$mt])) {
+
+                $n->Member_Type->setNewVal($mt);
+                // additional info if changed
+                if ($n->Member_Type->getStoredVal() != $n->Member_Type->getNewVal()) {
+                    $n->Prev_MT_Change_Date->setNewVal(date("Y-m-d H:i:s"));
+                    $n->Previous_Member_Type->setNewVal($n->Member_Type->getStoredVal());
+                }
             }
-        } else {
-            $n->Member_Type->setNewVal($n->Member_Type->getStoredVal());
         }
 
         //  Status
         if (isset($post[$idPrefix.'selStatus'])) {
 
-            $n->Member_Status->setNewVal(filter_var($post[$idPrefix.'selStatus'], FILTER_SANITIZE_STRING));
+            $mt = filter_var($post[$idPrefix.'selStatus'], FILTER_SANITIZE_STRING);
 
-            // Aditional Info if changed
-            if ($n->Member_Status->getStoredVal() != $n->Member_Status->getNewVal()) {
-                $n->Member_Status_Date->setNewVal(date("Y-m-d H:i:s"));
+            if (isset($uS->nameLookups['mem_status'][$mt]) === TRUE) {
+                $n->Member_Status->setNewVal($mt);
+
+                // Aditional Info if changed
+                if ($n->Member_Status->getStoredVal() != $n->Member_Status->getNewVal()) {
+                    $n->Member_Status_Date->setNewVal(date("Y-m-d H:i:s"));
+                }
             }
 
         } else {

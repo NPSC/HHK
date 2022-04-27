@@ -704,16 +704,38 @@ ORDER BY `List_Order`");
             $middle = $n->Name_Middle->getNewVal();
         }
 
-        $prefix = $n->Name_Prefix->getStoredVal();
+        $prefix = '';
+        // Check existing value
+        if (isset($uS->nameLookups[GLTableNames::NamePrefix][$n->Name_Prefix->getStoredVal()])) {
+            $prefix = $n->Name_Prefix->getStoredVal();
+        } else {
+            $n->Name_Prefix->setNewVal($prefix);
+        }
         if (isset($post[$idPrefix.'selPrefix'])) {
-            $n->Name_Prefix->setNewVal(filter_var($post[$idPrefix.'selPrefix'], FILTER_SANITIZE_STRING));
-            $prefix = $n->Name_Prefix->getNewVal();
+            // Check new value
+            $pre = filter_var($post[$idPrefix.'selPrefix'], FILTER_SANITIZE_STRING);
+
+            if (isset($uS->nameLookups[GLTableNames::NamePrefix][$pre])) {
+                $prefix = $pre;
+                $n->Name_Prefix->setNewVal($prefix);
+            }
         }
 
-        $suffix = $n->Name_Suffix->getStoredVal();
+        $suffix = '';
+        // Check existing value
+        if (isset($uS->nameLookups[GLTableNames::NameSuffix][$n->Name_Suffix->getStoredVal()])) {
+            $suffix = $n->Name_Suffix->getStoredVal();
+        } else {
+            $n->Name_Suffix->setNewVal($suffix);
+        }
         if (isset($post[$idPrefix.'selSuffix'])) {
-            $n->Name_Suffix->setNewVal(filter_var($post[$idPrefix.'selSuffix'], FILTER_SANITIZE_STRING));
-            $suffix = $n->Name_Suffix->getNewVal();
+            // Check new value
+            $suf = filter_var($post[$idPrefix.'selSuffix'], FILTER_SANITIZE_STRING);
+
+            if (isset($uS->nameLookups[GLTableNames::NameSuffix][$suf])) {
+                $suffix = $suf;
+                $n->Name_Suffix->setNewVal($suffix);
+            }
         }
 
         // Minimum requirements for saving a record.
