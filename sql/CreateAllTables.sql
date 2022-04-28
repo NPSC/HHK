@@ -969,7 +969,7 @@ CREATE TABLE if not exists `name` (
   `Exclude_Email` bit(1) NOT NULL DEFAULT b'0',
   `Exclude_Phone` bit(1) NOT NULL DEFAULT b'0',
   `Date_Added` datetime DEFAULT NULL,
-  `Gender` varchar(2) NOT NULL DEFAULT '',
+  `Gender` varchar(5) NOT NULL DEFAULT '',
   `BirthDate` datetime DEFAULT NULL,
   `Member_Status_Date` datetime DEFAULT NULL,
   `Date_Deceased` DATETIME NULL DEFAULT NULL,
