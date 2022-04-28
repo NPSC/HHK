@@ -2,7 +2,6 @@
 
 namespace HHK\sec\MFA;
 
-use HHK\sec\Session;
 use HHK\sec\UserClass;
 use chillerlan\QRCode\QRCode;
 use HHK\HTMLControls\HTMLContainer;

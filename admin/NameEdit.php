@@ -8,6 +8,7 @@ use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, SalutationCodes};
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\Volunteer\VolunteerCategory;
 use HHK\Member\Address\{Address, Phones, Emails, Addresses};
+use HHK\sec\SAML;
 
 /**
  * NameEdit.php
@@ -351,7 +352,12 @@ $wUserRS = WebUser::loadWebUserRS($dbh, $id);
 $userName = $wUserRS->User_Name->getStoredVal();
 $memberData['webUserName'] = $userName;
 if($wUserRS->idIdp->getStoredVal() > 0){
-    $editSecGroups = false;
+    $saml = new SAML($dbh, $wUserRS->idIdp->getStoredVal());
+    if($saml->getIdpManageRoles() == 1){
+        $editSecGroups = false;
+    }else{
+        $editSecGroups = $maintFlag;
+    }
 }else{
     $editSecGroups = $maintFlag;
 }

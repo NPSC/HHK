@@ -235,6 +235,17 @@ if (count($rows) > 0 && $rows[0][0] != '') {
     $zipLoadDate = '';
 }
 
+// save SSO
+if(isset($_POST['saveIdP']) && isset($_POST['idpConfig'])){
+    $idpId = array_key_first($_POST['idpConfig']);
+    $saml = new SAML($dbh, $idpId);
+    $saml = $saml->save($_POST, $_FILES);
+    $events = array("success"=>'Auth provider saved successfully', 'idpMkup'=>$saml->getEditMarkup(true), "idpName"=>$saml->getIdpName());
+
+    echo (json_encode($events));
+    exit();
+}
+
 // Patch tab markup
 $patchMarkup = Patch::patchTabMu();
 

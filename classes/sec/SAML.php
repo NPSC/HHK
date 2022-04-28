@@ -115,7 +115,11 @@ class SAML {
             $userAr = $u->getUserCredentials($this->dbh, $this->auth->getNameId());
 
             if($userAr == null || (isset($userAr["idIdp"]) && $userAr["idIdp"] == $this->IdpId)){ //correct user found, set up session
-                $userAr = $this->provisionUser(); //create/update user with details from IdP
+
+                if($userAr == null || $this->IdpConfig["IdP_ManageRoles"] == 1){ //if user is new and IdP is responsible for Roles/Security Groups
+                    $userAr = $this->provisionUser(); //create/update user with details from IdP
+                }
+
                 if($u->doLogin($this->dbh, $userAr)){
                     $pge = $uS->webSite['Default_Page'];
                     if ($u->getDefaultPage() != '') {
@@ -162,10 +166,20 @@ class SAML {
         $phones = new Phones($this->dbh, $name, $uS->nameLookups[GLTableNames::PhonePurpose]);
         $emails = new Emails($this->dbh, $name, $uS->nameLookups[GLTableNames::EmailPurpose]);
 
+        //parse name attributes
+        if(isset($this->auth->getAttribute("FullName")[0])){
+            $nameAr = $this->parseFullName($this->auth->getAttribute("FullName")[0]);
+            $firstName = $nameAr[0];
+            $lastName = $nameAr[1];
+        }else{
+            $firstName = (isset($this->auth->getAttribute("FirstName")[0]) ? $this->auth->getAttribute("FirstName")[0]: "");
+            $lastName = (isset($this->auth->getAttribute("LastName")[0]) ? $this->auth->getAttribute("LastName")[0]: "");
+        }
+
         $post = array();
         $post["auditUser"] = $this->auditUser;
-        $post["txtFirstName"] = (isset($this->auth->getAttribute("FirstName")[0]) ? $this->auth->getAttribute("FirstName")[0]: "");
-        $post["txtLastName"] = (isset($this->auth->getAttribute("LastName")[0]) ? $this->auth->getAttribute("LastName")[0]: "");
+        $post["txtFirstName"] = $firstName;
+        $post["txtLastName"] = $lastName;
         $post["txtEmail"][1] = (isset($this->auth->getAttribute("Email")[0]) ? $this->auth->getAttribute("Email")[0]: "");
         $post["rbEmPref"] = "1";
         $post["txtPhone"]["dh"] = (isset($this->auth->getAttribute("Phone")[0]) ? $this->auth->getAttribute("Phone")[0]: "");
@@ -249,6 +263,17 @@ class SAML {
         }
 
         return $user;
+    }
+
+    private function parseFullName(string $fullName){
+
+        $nameAr = explode(" ", $fullName, 2);
+        if(count($nameAr) == 2){
+            return $nameAr;
+        }else{
+            return [$fullName, $fullName];
+        }
+
     }
 
     private function searchName(){
@@ -347,9 +372,11 @@ class SAML {
                 "LogoPath"=>"",
                 "SSO_URL"=>"",
                 "IdP_EntityId"=>"",
-                "IdP_Cert"=>"",
+                "IdP_SigningCert"=>"",
+                "IdP_EncryptionCert"=>"",
                 "expectIdPSigning"=>"",
                 "expectIdPEncryption"=>"",
+                "IdP_ManageRoles"=>"",
                 "Status"=>""
             ];
         }
@@ -428,7 +455,14 @@ class SAML {
                     'url' => $this->IdpConfig["SSO_URL"],
                     'binding' => 'urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect',
                 ],
-                'x509cert' => $this->IdpConfig["IdP_Cert"],
+                'x509certMulti' => array(
+                    'signing' => array(
+                        0 => $this->IdpConfig["IdP_SigningCert"],
+                    ),
+                    'encryption' => array(
+                        0 => $this->IdpConfig["IdP_EncryptionCert"],
+                    )
+                )
             ],
             'security' => [
 
@@ -557,8 +591,10 @@ class SAML {
 
     private function getCertificateInfo($type, $certStr = ''){
 
-        if($type == "idp"){
-            $certData = $this->IdpConfig["IdP_Cert"];
+        if($type == "idpSign"){
+            $certData = $this->IdpConfig["IdP_SigningCert"];
+        }else if($type == "idpEncryption"){
+            $certData = $this->IdpConfig["IdP_EncryptionCert"];
         }else if($type == "sp"){
             $certData = $this->SPcert;
         }else if($type == "sprollover"){
@@ -584,7 +620,8 @@ class SAML {
 
     public function getEditMarkup($formOnly = false){
 
-        $idpCertInfo = $this->getCertificateInfo("idp");
+        $idpSigningCertInfo = $this->getCertificateInfo("idpSign");
+        $idpEncryptionCertInfo = $this->getCertificateInfo("idpEncryption");
         $spCertInfo = $this->getCertificateInfo("sp");
         $spRolloverCertInfo = $this->getCertificateInfo("sprollover");
 
@@ -640,19 +677,34 @@ class SAML {
             );
 
             $tbl->addBodyTr(
-                $tbl->makeTd("IdP Certificate", array("class"=>"tdlabel")).
+                $tbl->makeTd("IdP Signing Certificate", array("class"=>"tdlabel")).
                 $tbl->makeTd(
-                    HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_Cert"], array("name"=>"idpConfig[" . $this->IdpId . "][idpCert]", "rows"=>"4", "style"=>"width: 100%"))
+                    HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_SigningCert"], array("name"=>"idpConfig[" . $this->IdpId . "][idpSigningCert]", "rows"=>"4", "style"=>"width: 100%"))
                 ).
                 $tbl->makeTd(
-                    (is_array($idpCertInfo) ?
+                    (is_array($idpSigningCertInfo) ?
                     '<span style="font-weight: bold">Installed Certificate</span><br>' .
-                    '<span style="font-weight: bold">Issuer: </span>' . $idpCertInfo["issuer"] . '</span><br>' .
-                    '<span style="font-weight: bold">Valid From: </span>' . $idpCertInfo["validFrom"] . '</span><br>' .
-                    '<span style="font-weight: bold">Expires: </span>' . $idpCertInfo["expires"] . '</span>'
+                    '<span style="font-weight: bold">Issuer: </span>' . $idpSigningCertInfo["issuer"] . '</span><br>' .
+                    '<span style="font-weight: bold">Valid From: </span>' . $idpSigningCertInfo["validFrom"] . '</span><br>' .
+                    '<span style="font-weight: bold">Expires: </span>' . $idpSigningCertInfo["expires"] . '</span>'
                     : '')
                 )
             );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("IdP Encryption Certificate", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_EncryptionCert"], array("name"=>"idpConfig[" . $this->IdpId . "][idpEncryptionCert]", "rows"=>"4", "style"=>"width: 100%"))
+                    ).
+                $tbl->makeTd(
+                    (is_array($idpEncryptionCertInfo) ?
+                        '<span style="font-weight: bold">Installed Certificate</span><br>' .
+                        '<span style="font-weight: bold">Issuer: </span>' . $idpEncryptionCertInfo["issuer"] . '</span><br>' .
+                        '<span style="font-weight: bold">Valid From: </span>' . $idpEncryptionCertInfo["validFrom"] . '</span><br>' .
+                        '<span style="font-weight: bold">Expires: </span>' . $idpEncryptionCertInfo["expires"] . '</span>'
+                        : '')
+                    )
+                );
 
             $boolOpts = array(
                 array(1, 'True'),
@@ -678,6 +730,14 @@ class SAML {
                     HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($boolOpts, $this->IdpConfig['expectIdPEncryption'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][expectIdPEncryption]"))
                     ) .
                 $tbl->makeTd("If true, all &lt;saml:Assertion&gt; elements received from the IdP must be encrypted.")
+                );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("Require IdP to manage Roles", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($boolOpts, $this->IdpConfig['IdP_ManageRoles'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][IdP_ManageRoles]"))
+                    ) .
+                $tbl->makeTd("If true, HHK Roles and Security Groups must be defined by the IdP as attributes. If false, HHK admins manage Roles and Security Groups")
                 );
 
             $tbl->addBodyTr(
@@ -783,9 +843,17 @@ class SAML {
                 );
 
             $tbl->addBodyTr(
+                $tbl->makeTd("FullName", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    "Optional"
+                    ) .
+                $tbl->makeTd("")
+                );
+
+            $tbl->addBodyTr(
                 $tbl->makeTd("FirstName", array("class"=>"tdlabel")).
                 $tbl->makeTd(
-                    "Required"
+                    "Required if FullName is empty"
                     ) .
                 $tbl->makeTd("")
                 );
@@ -793,7 +861,7 @@ class SAML {
             $tbl->addBodyTr(
                 $tbl->makeTd("LastName", array("class"=>"tdlabel")).
                 $tbl->makeTd(
-                    "Required"
+                    "Required if FullName is empty"
                     ) .
                 $tbl->makeTd("")
                 );
@@ -855,9 +923,11 @@ class SAML {
                 'LogoPath'=>'',
                 'ssoUrl'=>'',
                 'idpEntityId'=>'',
-                'idpCert'=>'',
+                'idpSigningCert'=>'',
+                'idpEncryptionCert'=>'',
                 'expectIdPSigning'=>false,
                 'expectIdPEncryption'=>false,
+                'IdP_ManageRoles'=>true,
                 'status'=>'d'
             );
             $errorMsg = '';
@@ -878,7 +948,8 @@ class SAML {
                     $metadata = $this->checkMetadataFiles($files['idpConfig']['tmp_name'][$this->IdpId]['idpMetadata']);
                     $idpConfig['ssoUrl'] = (isset($metadata['idp']['singleSignOnService']['url']) ? $metadata['idp']['singleSignOnService']['url'] : '');
                     $idpConfig['idpEntityId'] = (isset($metadata['idp']['entityId']) ? $metadata['idp']['entityId'] : '');
-                    $idpConfig['idpCert'] = (isset($metadata['idp']['x509cert']) ? $metadata['idp']['x509cert'] : "");
+                    $idpConfig['idpSigningCert'] = (isset($metadata['idp']['x509cert']) ? $metadata['idp']['x509cert'] : (isset($metadata['idp']['x509certMulti']['signing'][0]) ? $metadata['idp']['x509certMulti']['signing'][0]: ""));
+                    $idpConfig['idpEncryptionCert'] = (isset($metadata['idp']['x509cert']) ? $metadata['idp']['x509cert'] : (isset($metadata['idp']['x509certMulti']['encryption'][0]) ? $metadata['idp']['x509certMulti']['encryption'][0]: ""));
                 }else{
 
                     if(isset($post['idpConfig'][$this->IdpId]['ssoUrl'])){
@@ -889,8 +960,12 @@ class SAML {
                         $idpConfig['idpEntityId'] = filter_var($post['idpConfig'][$this->IdpId]['idpEntityId'], FILTER_SANITIZE_URL);
                     }
 
-                    if(isset($post['idpConfig'][$this->IdpId]['idpCert'])){
-                        $idpConfig['idpCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpCert'], FILTER_SANITIZE_STRING);
+                    if(isset($post['idpConfig'][$this->IdpId]['idpSigningCert'])){
+                        $idpConfig['idpSigningCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert'], FILTER_SANITIZE_STRING);
+                    }
+
+                    if(isset($post['idpConfig'][$this->IdpId]['idpEncryptionCert'])){
+                        $idpConfig['idpEncryptionCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert'], FILTER_SANITIZE_STRING);
                     }
                 }
 
@@ -900,14 +975,24 @@ class SAML {
                 if($idpConfig['idpEntityId'] == ''){
                     $errorMsg.= "<br>Idp Entity ID is required";
                 }
-                if($idpConfig['idpCert'] == ''){
-                    $errorMsg.= "<br>Idp Cert is required";
+                if($idpConfig['idpSigningCert'] == ''){
+                    $errorMsg.= "<br>Idp Signing Cert is required";
                 }else{
-                    $formattedCert = Utils::formatCert($idpConfig['idpCert'], true);
+                    $formattedCert = Utils::formatCert($idpConfig['idpSigningCert'], true);
                     if(!is_array($this->getCertificateInfo(false, $formattedCert))){
-                        $errorMsg.="<br>Idp Cert must be a valid certificate";
+                        $errorMsg.="<br>Idp Signing Cert must be a valid certificate";
                     }else{
-                        $idpConfig["idpCert"] = $formattedCert;
+                        $idpConfig["idpSigningCert"] = $formattedCert;
+                    }
+                }
+                if($idpConfig['idpEncryptionCert'] == ''){
+                    $errorMsg.= "<br>Idp Encryption Cert is required";
+                }else{
+                    $formattedCert = Utils::formatCert($idpConfig['idpEncryptionCert'], true);
+                    if(!is_array($this->getCertificateInfo(false, $formattedCert))){
+                        $errorMsg.="<br>Idp Encryption Cert must be a valid certificate";
+                    }else{
+                        $idpConfig["idpEncryptionCert"] = $formattedCert;
                     }
                 }
 
@@ -917,6 +1002,10 @@ class SAML {
 
                 if(isset($post['idpConfig'][$this->IdpId]['expectIdPEncryption'])){
                     $idpConfig['expectIdPEncryption'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['expectIdPEncryption'], FILTER_VALIDATE_BOOLEAN));
+                }
+
+                if(isset($post['idpConfig'][$this->IdpId]['IdP_ManageRoles'])){
+                    $idpConfig['IdP_ManageRoles'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['IdP_ManageRoles'], FILTER_VALIDATE_BOOLEAN));
                 }
 
                 if(isset($post['idpConfig'][$this->IdpId]['Status'])){
@@ -934,9 +1023,11 @@ class SAML {
             $wIdpRS->LogoPath->setNewVal($idpConfig['LogoPath']);
             $wIdpRS->SSO_URL->setNewVal($idpConfig['ssoUrl']);
             $wIdpRS->IdP_EntityId->setNewVal($idpConfig['idpEntityId']);
-            $wIdpRS->IdP_Cert->setNewVal($idpConfig['idpCert']);
+            $wIdpRS->IdP_SigningCert->setNewVal($idpConfig['idpSigningCert']);
+            $wIdpRS->IdP_EncryptionCert->setNewVal($idpConfig['idpEncryptionCert']);
             $wIdpRS->expectIdPSigning->setNewVal($idpConfig['expectIdPSigning']);
             $wIdpRS->expectIdPEncryption->setNewVal($idpConfig['expectIdPEncryption']);
+            $wIdpRS->IdP_ManageRoles->setNewVal($idpConfig['IdP_ManageRoles']);
             $wIdpRS->Status->setNewVal($idpConfig['status']);
 
             if($this->IdpId == 'new'){
@@ -1023,6 +1114,10 @@ class SAML {
 
     public function getIdpName(){
         return $this->IdpConfig["Name"];
+    }
+
+    public function getIdpManageRoles(){
+        return $this->IdpConfig["IdP_ManageRoles"];
     }
 
 }

@@ -2248,13 +2248,16 @@ CREATE TABLE IF NOT EXISTS `w_idp` (
     `LogoPath` VARCHAR(500),
     `SSO_URL` VARCHAR(500),
     `IdP_EntityId` VARCHAR(500),
-    `IdP_Cert` BLOB,
+    `IdP_SigningCert` BLOB,
+    `IdP_EncryptionCert` BLOB,
     `expectIdPSigning` BOOL DEFAULT 1,
     `expectIdPEncryption` BOOL DEFAULT 1,
     `enableSPSigning` BOOL DEFAULT 1,
+    `IdP_ManageRoles` BOOL DEFAULT 1,
     `Status` VARCHAR(2) NOT NULL DEFAULT 'a',
     PRIMARY KEY (`idIdp`)
 ) ENGINE=InnoDB;
+
 
 -- -----------------------------------------------------
 -- Table `w_user_log`

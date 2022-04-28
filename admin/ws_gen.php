@@ -263,15 +263,6 @@ try {
 
             break;
 
-        case "saveIdP":
-            if(isset($_POST['idpConfig'])){
-                $idpId = array_key_first($_POST['idpConfig']);
-                $saml = new SAML($dbh, $idpId);
-                $saml = $saml->save($_POST, $_FILES);
-                $events = array("success"=>'Auth provider saved successfully', 'idpMkup'=>$saml->getEditMarkup(true), "idpName"=>$saml->getIdpName());
-			}
-			break;
-			
         case 'shoConfNeon':
 
             $enFile = '';

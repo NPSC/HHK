@@ -175,12 +175,12 @@ $('#tabs').show();
     	$submitbtn = $(this).find("input[type=submit]")
     	$submitbtn.prop("disabled", true);
     	data = new FormData($(this)[0]);
-    	data.append('cmd','saveIdP');
+    	data.append('saveIdP','true');
     	
     	$.ajax({
         	type: 'POST',
             enctype: 'multipart/form-data',
-            url: 'ws_gen.php',
+            url: 'Configure.php',
             data: data,
             processData: false,
             contentType: false,

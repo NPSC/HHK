@@ -213,7 +213,7 @@ class WebUser {
             $alertMsg->set_iconId("alrIcon");
             $alertMsg->set_styleId("alrResponse");
             $alertMsg->set_txtSpanId("alrMessage");
-            $alertMsg->set_Text("This user is managed by " . $authProvider . ". <br>To update Security Groups, Role or Web Status, please contact " . $authProvider);
+            $alertMsg->set_Text("This user is managed by " . $authProvider . ".");
 
             return HTMLContainer::generateMarkup("div", $alertMsg->createMarkup(), array("style"=>"margin-bottom: 0.5em;"));
         }else{
