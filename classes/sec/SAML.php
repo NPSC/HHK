@@ -21,6 +21,7 @@ use HHK\Tables\WebSec\W_idpRS;
 use HHK\Tables\EditRS;
 use HHK\Tables\WebSec\W_authRS;
 use HHK\AuditLog\NameLog;
+use HHK\Tables\WebSec\W_idp_secgroupsRS;
 /**
  * SAML.php
  *
@@ -247,10 +248,16 @@ class SAML {
             $parms = array();
             $attributes = $this->auth->getAttributes();
             $allSecurityGroups = $this->getSecurityGroups($this->dbh);
+            $selSecurityGroups = array();
 
             //fill parms array
+            if(isset($attributes["hhkSecurityGroups"])){
+                $selectedSecurityGroups = $attributes['hhkSecurityGroups'];
+            }else{
+                $selectedSecurityGroups = $this->IdpConfig['defaultGroups'];
+            }
             foreach($allSecurityGroups as $secGroup){
-                if(in_array($secGroup["Title"], $attributes["hhkSecurityGroups"])){
+                if(in_array($secGroup["Title"], $selectedSecurityGroups)){
                     $parms["grpSec_" . $secGroup["Code"]] = "checked";
                 }else{
                     $parms["grpSec_" . $secGroup["Code"]] = "unchecked";
@@ -329,6 +336,13 @@ class SAML {
         if(count($rows) == 1){
             $this->IdpConfig = $rows[0];
 
+            $stmt = $this->dbh->query("select idSecGroup as Code from w_idp_secgroups where idIdp = " . $this->IdpId);
+            $defaultGroups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            foreach($defaultGroups as $g){
+                $this->IdpConfig['defaultGroups'][] = $g["Code"];
+            }
+
             $uS = Session::getInstance();
 
             $securityComponent = new SecurityComponent();
@@ -384,7 +398,7 @@ class SAML {
 
     public function getSecurityGroups(\PDO $dbh, $titlesOnly = false){
         $stmt = $dbh->query("select Group_Code as Code, Title from w_groups");
-        $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $groups = $stmt->fetchAll(\PDO::FETCH_BOTH);
 
         if($titlesOnly){ //list titles
             foreach ($groups as $g) {
@@ -741,6 +755,14 @@ class SAML {
                 );
 
             $tbl->addBodyTr(
+                $tbl->makeTd("Default Security Groups", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->getSecurityGroups($this->dbh), $this->IdpConfig["defaultGroups"], true), array('multiple'=>'multiple', 'size'=>'10', 'name' => "idpConfig[" . $this->IdpId . "][defaultSecurityGroups][]"))
+                    ) .
+                $tbl->makeTd("If the IdP doesn't define any security groups, new users will be provisioned with these.")
+                );
+
+            $tbl->addBodyTr(
                 $tbl->makeTd("IdP Status", array("class"=>"tdlabel")).
                 $tbl->makeTd(
                     HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($statusOpts, $this->IdpConfig['Status'], FALSE), array('name' => "idpConfig[" . $this->IdpId . "][Status]"))
@@ -1030,6 +1052,9 @@ class SAML {
             $wIdpRS->IdP_ManageRoles->setNewVal($idpConfig['IdP_ManageRoles']);
             $wIdpRS->Status->setNewVal($idpConfig['status']);
 
+            //save default security groups
+            $this->updateDefaultSecurityGroups($post['idpConfig'][$this->IdpId]['defaultSecurityGroups']);
+
             if($this->IdpId == 'new'){
                 $id = EditRS::insert($this->dbh, $wIdpRS);
                 return new SAML($this->dbh, $id);
@@ -1096,6 +1121,56 @@ class SAML {
         }
 
         return $container;
+    }
+
+    private function updateDefaultSecurityGroups(array $parms){
+        // Group Code security table
+        //$sArray = readGenLookups($dbh, "Group_Code");
+        $stmt = $this->dbh->query("select Group_Code as Code, Description from w_groups");
+        $groups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($groups as $g) {
+            $sArray[$g['Code']] = $g;
+        }
+
+
+
+        $secRS = new W_idp_secgroupsRS();
+        $secRS->idIdp->setStoredVal($this->IdpId);
+        $rows = EditRS::select($this->dbh, $secRS, array($secRS->idIdp));
+
+        foreach ($rows as $r) {
+            $sArray[$r['Group_Code']]["exist"] = "t";
+        }
+
+        $updtd = FALSE;
+
+        foreach ($sArray as $g) {
+
+            if (!isset($g["exist"]) && in_array($g["Code"], $parms)) {
+
+                // new group code to put into the database
+                $secRS = new W_idp_secgroupsRS();
+                $secRS->idIdp->setNewVal($this->IdpId);
+                $secRS->idSecGroup->setNewVal($g["Code"]);
+                $n = EditRS::insert($this->dbh, $secRS);
+
+                $updtd = TRUE;
+
+            } else if (isset($g["exist"]) && !in_array($g["Code"], $parms)) {
+
+                // group code to delete from the database.
+                $secRS = new W_idp_secgroupsRS();
+                $secRS->idIdp->setStoredVal($this->IdpId);
+                $secRS->idSecGroup->setStoredVal($g["Code"]);
+                $n = EditRS::delete($this->dbh, $secRS, array($secRS->idIdp, $secRS->idSecGroup));
+
+                if ($n == 1) {
+                    $updtd = TRUE;
+                }
+            }
+        }
+        return $updtd;
     }
 
     public static function getIdpList(\PDO $dbh, $onlyActive = true){

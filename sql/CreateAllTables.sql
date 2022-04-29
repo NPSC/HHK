@@ -2258,6 +2258,15 @@ CREATE TABLE IF NOT EXISTS `w_idp` (
     PRIMARY KEY (`idIdp`)
 ) ENGINE=InnoDB;
 
+-- -----------------------------------------------------
+-- Table `w_idp_secgroups`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `w_idp_secgroups` (
+	`idIdpSecGroup` INT(11) NOT NULL AUTO_INCREMENT,
+    `idIdp` INT(11) NOT NULL DEFAULT 0,
+    `idSecGroup` VARCHAR(5) NOT NULL DEFAULT '',
+    PRIMARY KEY (`idIdpSecGroup`)
+) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `w_user_log`

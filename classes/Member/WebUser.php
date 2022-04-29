@@ -131,7 +131,7 @@ class WebUser {
                 );
 
         $attr = array('id'=>'selwRole', 'class'=>'ignrSave', 'style'=>'width: 100%');
-        if ($maintFlag === FALSE || $isLocal === false) {
+        if ($maintFlag === FALSE) {
             $attr['disabled'] = 'disabled';
         }
 
