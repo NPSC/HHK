@@ -252,12 +252,12 @@ class SAML {
 
             //fill parms array
             if(isset($attributes["hhkSecurityGroups"])){
-                $selectedSecurityGroups = $attributes['hhkSecurityGroups'];
+                $selSecurityGroups = $attributes['hhkSecurityGroups'];
             }else{
-                $selectedSecurityGroups = $this->IdpConfig['defaultGroups'];
+                $selSecurityGroups = $this->IdpConfig['defaultGroups'];
             }
             foreach($allSecurityGroups as $secGroup){
-                if(in_array($secGroup["Title"], $selectedSecurityGroups)){
+                if(in_array($secGroup["Title"], $selSecurityGroups)){
                     $parms["grpSec_" . $secGroup["Code"]] = "checked";
                 }else{
                     $parms["grpSec_" . $secGroup["Code"]] = "unchecked";
@@ -472,9 +472,11 @@ class SAML {
                 'x509certMulti' => array(
                     'signing' => array(
                         0 => $this->IdpConfig["IdP_SigningCert"],
+                        1 => $this->IdpConfig["IdP_SigningCert2"], //rollover cert
                     ),
                     'encryption' => array(
                         0 => $this->IdpConfig["IdP_EncryptionCert"],
+                        1 => $this->IdpConfig["IdP_EncryptionCert2"], //rollover cert
                     )
                 )
             ],
@@ -607,8 +609,12 @@ class SAML {
 
         if($type == "idpSign"){
             $certData = $this->IdpConfig["IdP_SigningCert"];
+        }else if($type == "idpSign2"){
+                $certData = $this->IdpConfig["IdP_SigningCert2"];
         }else if($type == "idpEncryption"){
             $certData = $this->IdpConfig["IdP_EncryptionCert"];
+        }else if($type == "idpEncryption2"){
+                $certData = $this->IdpConfig["IdP_EncryptionCert2"];
         }else if($type == "sp"){
             $certData = $this->SPcert;
         }else if($type == "sprollover"){
@@ -635,7 +641,9 @@ class SAML {
     public function getEditMarkup($formOnly = false){
 
         $idpSigningCertInfo = $this->getCertificateInfo("idpSign");
+        $idpRolloverSigningCertInfo = $this->getCertificateInfo("idpSign2");
         $idpEncryptionCertInfo = $this->getCertificateInfo("idpEncryption");
+        $idpRolloverEncryptionCertInfo = $this->getCertificateInfo("idpEncryption2");
         $spCertInfo = $this->getCertificateInfo("sp");
         $spRolloverCertInfo = $this->getCertificateInfo("sprollover");
 
@@ -706,6 +714,21 @@ class SAML {
             );
 
             $tbl->addBodyTr(
+                $tbl->makeTd("IdP Rollover Signing Certificate", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_SigningCert2"], array("name"=>"idpConfig[" . $this->IdpId . "][idpSigningCert2]", "rows"=>"4", "style"=>"width: 100%"))
+                    ).
+                $tbl->makeTd(
+                    (is_array($idpRolloverSigningCertInfo) ?
+                        '<span style="font-weight: bold">Installed Certificate</span><br>' .
+                        '<span style="font-weight: bold">Issuer: </span>' . $idpRolloverSigningCertInfo["issuer"] . '</span><br>' .
+                        '<span style="font-weight: bold">Valid From: </span>' . $idpRolloverSigningCertInfo["validFrom"] . '</span><br>' .
+                        '<span style="font-weight: bold">Expires: </span>' . $idpRolloverSigningCertInfo["expires"] . '</span>'
+                        : '')
+                    )
+                );
+
+            $tbl->addBodyTr(
                 $tbl->makeTd("IdP Encryption Certificate", array("class"=>"tdlabel")).
                 $tbl->makeTd(
                     HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_EncryptionCert"], array("name"=>"idpConfig[" . $this->IdpId . "][idpEncryptionCert]", "rows"=>"4", "style"=>"width: 100%"))
@@ -716,6 +739,21 @@ class SAML {
                         '<span style="font-weight: bold">Issuer: </span>' . $idpEncryptionCertInfo["issuer"] . '</span><br>' .
                         '<span style="font-weight: bold">Valid From: </span>' . $idpEncryptionCertInfo["validFrom"] . '</span><br>' .
                         '<span style="font-weight: bold">Expires: </span>' . $idpEncryptionCertInfo["expires"] . '</span>'
+                        : '')
+                    )
+                );
+
+            $tbl->addBodyTr(
+                $tbl->makeTd("IdP Rollover Encryption Certificate", array("class"=>"tdlabel")).
+                $tbl->makeTd(
+                    HTMLContainer::generateMarkup("textarea", $this->IdpConfig["IdP_EncryptionCert2"], array("name"=>"idpConfig[" . $this->IdpId . "][idpEncryptionCert2]", "rows"=>"4", "style"=>"width: 100%"))
+                    ).
+                $tbl->makeTd(
+                    (is_array($idpRolloverEncryptionCertInfo) ?
+                        '<span style="font-weight: bold">Installed Certificate</span><br>' .
+                        '<span style="font-weight: bold">Issuer: </span>' . $idpRolloverEncryptionCertInfo["issuer"] . '</span><br>' .
+                        '<span style="font-weight: bold">Valid From: </span>' . $idpRolloverEncryptionCertInfo["validFrom"] . '</span><br>' .
+                        '<span style="font-weight: bold">Expires: </span>' . $idpRolloverEncryptionCertInfo["expires"] . '</span>'
                         : '')
                     )
                 );
@@ -946,7 +984,9 @@ class SAML {
                 'ssoUrl'=>'',
                 'idpEntityId'=>'',
                 'idpSigningCert'=>'',
+                'idpSigningCert2'=>'',
                 'idpEncryptionCert'=>'',
+                'idpEncryptionCert2'=>'',
                 'expectIdPSigning'=>false,
                 'expectIdPEncryption'=>false,
                 'IdP_ManageRoles'=>true,
@@ -971,7 +1011,9 @@ class SAML {
                     $idpConfig['ssoUrl'] = (isset($metadata['idp']['singleSignOnService']['url']) ? $metadata['idp']['singleSignOnService']['url'] : '');
                     $idpConfig['idpEntityId'] = (isset($metadata['idp']['entityId']) ? $metadata['idp']['entityId'] : '');
                     $idpConfig['idpSigningCert'] = (isset($metadata['idp']['x509cert']) ? $metadata['idp']['x509cert'] : (isset($metadata['idp']['x509certMulti']['signing'][0]) ? $metadata['idp']['x509certMulti']['signing'][0]: ""));
+                    $idpConfig['idpSigningCert2'] = (isset($metadata['idp']['x509certMulti']['signing'][1]) ? $metadata['idp']['x509certMulti']['signing'][1] :'');
                     $idpConfig['idpEncryptionCert'] = (isset($metadata['idp']['x509cert']) ? $metadata['idp']['x509cert'] : (isset($metadata['idp']['x509certMulti']['encryption'][0]) ? $metadata['idp']['x509certMulti']['encryption'][0]: ""));
+                    $idpConfig['idpEncryptionCert2'] = (isset($metadata['idp']['x509certMulti']['encryption'][1]) ? $metadata['idp']['x509certMulti']['encryption'][1] :'');
                 }else{
 
                     if(isset($post['idpConfig'][$this->IdpId]['ssoUrl'])){
@@ -986,8 +1028,16 @@ class SAML {
                         $idpConfig['idpSigningCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert'], FILTER_SANITIZE_STRING);
                     }
 
+                    if(isset($post['idpConfig'][$this->IdpId]['idpSigningCert2'])){
+                        $idpConfig['idpSigningCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpSigningCert2'], FILTER_SANITIZE_STRING);
+                    }
+
                     if(isset($post['idpConfig'][$this->IdpId]['idpEncryptionCert'])){
                         $idpConfig['idpEncryptionCert'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert'], FILTER_SANITIZE_STRING);
+                    }
+
+                    if(isset($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'])){
+                        $idpConfig['idpEncryptionCert2'] = filter_var($post['idpConfig'][$this->IdpId]['idpEncryptionCert2'], FILTER_SANITIZE_STRING);
                     }
                 }
 
@@ -1007,6 +1057,14 @@ class SAML {
                         $idpConfig["idpSigningCert"] = $formattedCert;
                     }
                 }
+                if($idpConfig['idpSigningCert2'] != ''){
+                    $formattedCert = Utils::formatCert($idpConfig['idpSigningCert'], true);
+                    if(!is_array($this->getCertificateInfo(false, $formattedCert))){
+                        $errorMsg.="<br>Idp Rollover Signing Cert must be a valid certificate";
+                    }else{
+                        $idpConfig["idpSigningCert2"] = $formattedCert;
+                    }
+                }
                 if($idpConfig['idpEncryptionCert'] == ''){
                     $errorMsg.= "<br>Idp Encryption Cert is required";
                 }else{
@@ -1015,6 +1073,14 @@ class SAML {
                         $errorMsg.="<br>Idp Encryption Cert must be a valid certificate";
                     }else{
                         $idpConfig["idpEncryptionCert"] = $formattedCert;
+                    }
+                }
+                if($idpConfig['idpEncryptionCert2'] != ''){
+                    $formattedCert = Utils::formatCert($idpConfig['idpEncryptionCert'], true);
+                    if(!is_array($this->getCertificateInfo(false, $formattedCert))){
+                        $errorMsg.="<br>Idp Rollover Encryption Cert must be a valid certificate";
+                    }else{
+                        $idpConfig["idpEncryptionCert2"] = $formattedCert;
                     }
                 }
 
@@ -1046,7 +1112,9 @@ class SAML {
             $wIdpRS->SSO_URL->setNewVal($idpConfig['ssoUrl']);
             $wIdpRS->IdP_EntityId->setNewVal($idpConfig['idpEntityId']);
             $wIdpRS->IdP_SigningCert->setNewVal($idpConfig['idpSigningCert']);
+            $wIdpRS->IdP_SigningCert2->setNewVal($idpConfig['idpSigningCert2']);
             $wIdpRS->IdP_EncryptionCert->setNewVal($idpConfig['idpEncryptionCert']);
+            $wIdpRS->IdP_EncryptionCert2->setNewVal($idpConfig['idpEncryptionCert2']);
             $wIdpRS->expectIdPSigning->setNewVal($idpConfig['expectIdPSigning']);
             $wIdpRS->expectIdPEncryption->setNewVal($idpConfig['expectIdPEncryption']);
             $wIdpRS->IdP_ManageRoles->setNewVal($idpConfig['IdP_ManageRoles']);

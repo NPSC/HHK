@@ -23,7 +23,9 @@ class W_idpRS extends AbstractTableRS {
     public $SSO_URL; // varchar(500)
     public $IdP_EntityId;  // varchar(500),
     public $IdP_SigningCert; // BLOB,
+    public $IdP_SigningCert2; // BLOB,
     public $IdP_EncryptionCert; // BLOB,
+    public $IdP_EncryptionCert2; // BLOB,
     public $expectIdPSigning; // BOOL DEFAULT 1,
     public $expectIdPEncryption; // BOOL DEFAULT 1,
     public $IdP_ManageRoles; // BOOL DEFAULT 1,
@@ -36,7 +38,9 @@ class W_idpRS extends AbstractTableRS {
         $this->SSO_URL = new DB_Field("SSO_URL", "", new DbStrSanitizer(500));
         $this->IdP_EntityId = new DB_Field("IdP_EntityId", "", new DbStrSanitizer(500));
         $this->IdP_SigningCert = new DB_Field("IdP_SigningCert", "", new DbBlobSanitizer());
+        $this->IdP_SigningCert2 = new DB_Field("IdP_SigningCert2", "", new DbBlobSanitizer());
         $this->IdP_EncryptionCert = new DB_Field("IdP_EncryptionCert", "", new DbBlobSanitizer());
+        $this->IdP_EncryptionCert2 = new DB_Field("IdP_EncryptionCert2", "", new DbBlobSanitizer());
         $this->expectIdPSigning = new DB_Field("expectIdPSigning", "1", new DbBitSanitizer());
         $this->expectIdPEncryption = new DB_Field("expectIdPEncryption", "1", new DbBitSanitizer());
         $this->IdP_ManageRoles = new DB_Field("IdP_ManageRoles", "1", new DbBitSanitizer());
