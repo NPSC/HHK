@@ -686,16 +686,22 @@ ORDER BY `List_Order`");
         $idPrefix = $this->getIdPrefix();
 
         //  Name
+        $last = trim($n->Name_Last->getStoredVal());
+        if (isset($post[$idPrefix.'txtLastName'])) {
+            $last = ucfirst(trim(filter_var($post[$idPrefix.'txtLastName'], FILTER_SANITIZE_STRING)));
+            $n->Name_Last->setNewVal($last);
+        }
+
+        // Minimum requirements for saving a record.
+        if ($last == '') {
+            throw new RuntimeException("The Last Name cannot be blank.");
+        }
+
+
         $first = $n->Name_First->getStoredVal();
         if (isset($post[$idPrefix.'txtFirstName'])) {
             $n->Name_First->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtFirstName'], FILTER_SANITIZE_STRING))));
             $first = $n->Name_First->getNewVal();
-        }
-
-        $last = $n->Name_Last->getStoredVal();
-        if (isset($post[$idPrefix.'txtLastName'])) {
-            $n->Name_Last->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtLastName'], FILTER_SANITIZE_STRING))));
-            $last = $n->Name_Last->getNewVal();
         }
 
         $middle = $n->Name_Middle->getStoredVal();
@@ -736,11 +742,6 @@ ORDER BY `List_Order`");
                 $suffix = $suf;
                 $n->Name_Suffix->setNewVal($suffix);
             }
-        }
-
-        // Minimum requirements for saving a record.
-        if ($n->Name_Last->getStoredVal() == '' && $n->Name_Last->getNewVal() == '') {
-            throw new RuntimeException("The Last Name cannot be blank.");
         }
 
         // Name Last-First

@@ -529,7 +529,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
         }
 
         $mk = $nameRS->Name_First->getStoredVal() . ' ' . $nameRS->Name_Last->getStoredVal()
-        . ( is_null($uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()] || $uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()] == '') ? '' : ' ' . $uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()][1]);
+            . ( isset($uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()]) && $uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()] != '' ? ' ' . $uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()][1] : '');
         return $mk;
     }
 

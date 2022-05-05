@@ -463,8 +463,8 @@ class Family {
                 if ($this->showDemographics) {
                     $guestDemos = [];
                     foreach($guestUserData as $userData){ //find matching guest
-                        if($role->getIdName() == (isset($userData['idName'])?$userData['idName']:0)){
-                            $guestDemos = $guestUserData['demographics'];
+                        if($role->getIdName() == (isset($userData['idName']) ? $userData['idName'] : 0)){
+                            $guestDemos = $userData['demographics'];
                         }
                     }
                     // Demographics

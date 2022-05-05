@@ -76,10 +76,16 @@ abstract class AbstractMember {
 
         if ($nid == 0) {
 
-            // preset special fields for new member
-            $this->nameRS->Member_Status->setStoredVal(MemStatus::Active);
-            $this->nameRS->Member_Type->setStoredVal($defaultMemberBasis);
-            $this->newMember = TRUE;
+            if (isset($uS->nameLookups[GLTableNames::MemberBasis][$defaultMemberBasis])) {
+
+                // preset special fields for new member
+                $this->nameRS->Member_Status->setStoredVal(MemStatus::Active);
+                $this->nameRS->Member_Type->setStoredVal($defaultMemberBasis);
+                $this->newMember = TRUE;
+
+            } else {
+                throw new MemberException("Undefined member Basis for new member: " . $defaultMemberBasis);
+            }
 
         } else {
 
@@ -87,10 +93,11 @@ abstract class AbstractMember {
             if (isset($uS->nameLookups[GLTableNames::MemberBasis][$this->nameRS->Member_Type->getStoredVal()])) {
 
                 if ($this->getMemberDesignation() != $uS->nameLookups[GLTableNames::MemberBasis][$this->nameRS->Member_Type->getStoredVal()][AbstractMember::SUBT]) {
-                    throw new MemberException("Wrong member Designation for this member object.");
+                    throw new MemberException("Wrong member Designation for this member object.  idName = " . $nid);
                 }
+
             } else {
-                throw new MemberException("Undefined member Basis.");
+                throw new MemberException("Undefined member Basis for idName = " . $nid);
             }
 
             // Get demography data
@@ -136,7 +143,7 @@ abstract class AbstractMember {
                 $desig = $uS->nameLookups[GLTableNames::MemberBasis][$nRS->Member_Type->getStoredVal()][AbstractMember::SUBT];
 
             } else {
-                throw new RuntimeException("This member has an Undefined Member Basis: " . $nRS->Member_Type->getStoredVal() . ".");
+                throw new RuntimeException("This member (" . $nid . ") has an Undefined Member Basis: " . $nRS->Member_Type->getStoredVal() . ".");
             }
 
         } else {
@@ -636,6 +643,8 @@ abstract class AbstractMember {
                     $n->Previous_Member_Type->setNewVal($n->Member_Type->getStoredVal());
                 }
             }
+        } else {
+            $n->Member_Type->setNewVal($n->Member_Type->getStoredVal());
         }
 
         //  Status
