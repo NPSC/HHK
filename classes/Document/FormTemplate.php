@@ -245,7 +245,7 @@ class FormTemplate {
             'recaptchaScript'=>$recaptcha->getScriptTag(),
             'maxGuests'=>(isset($abstract->maxGuests) ? $abstract->maxGuests : 4),
             'initialGuests'=>(isset($abstract->initialGuests) ? $abstract->initialGuests : 1),
-            'fontImport'=>(isset($abstract->fontImport) && strlen($abstract->fontImport) > 0 ? "@import url('" . $abstract->fontImport . "');" : false)
+            'fontImport'=>(isset($abstract->fontImport) && strlen($abstract->fontImport) > 0 ? "@import url('" . $abstract->fontImport . "');" : '')
         ];
     }
 
