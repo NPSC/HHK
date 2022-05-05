@@ -67,6 +67,7 @@ $enableRecaptcha = false;
 $error = '';
 $cmd = '';
 $method = '';
+$fontImport = false;
 
 if(isset($_GET['template'])){
     $cmd = 'gettemplate';
@@ -76,11 +77,12 @@ if(isset($_GET['template'])){
     $cmd = 'getform';
     $method = 'get';
     $id = filter_var($_GET["form"], FILTER_SANITIZE_NUMBER_INT);
-}else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style'])){
+}else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style']) && isset($_POST['fontImport'])){
     $cmd = 'previewform';
     $method = 'post';
     $formData = json_decode($_POST['formData']);
     $style = $_POST['style'];
+    $fontImport = $_POST['fontImport'];
 }else{
     $error = "Missing required parameters";
 }
@@ -93,10 +95,38 @@ if(isset($_GET['template'])){
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Referral Form</title>
+
+		<style id="fontImport">
+		  <?php echo ($fontImport ? $fontImport : ''); ?>
+		</style>
+
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo BOOTSTRAP_CSS; ?>
         <?php echo FAVICON; ?>
+
+        <style id="mainStyle">
+    	   <?php echo $style; ?>
+
+    	   fieldset[disabled=disabled] button {
+    	       display: none;
+    	   }
+
+    	   .msg, .errmsg {
+    	       margin: 1em;
+    	   }
+    	   .msg p.successmsg {
+    	       white-space: pre-wrap;
+    	   }
+
+    	   @media print {
+                body{
+                    zoom: 85%;
+                }
+           }
+
+    	</style>
+
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
@@ -129,7 +159,10 @@ if(isset($_GET['template'])){
     						formSuccessTitle = ajaxData.formSettings.successTitle;
     						formSuccessContent = ajaxData.formSettings.successContent;
 
-							$("style").append(ajaxData.formSettings.formStyle);
+							$("style#mainStyle").append(ajaxData.formSettings.formStyle);
+							if(ajaxData.formSettings.fontImport){
+								$("style#fontImport").text(ajaxData.formSettings.fontImport);
+							}
 
 							if(ajaxData.formSettings.enableRecaptcha){
 								$("head").append(ajaxData.formSettings.recaptchaScript);
@@ -441,27 +474,7 @@ if(isset($_GET['template'])){
             });
 	</script>
 
-	<style>
-	   <?php echo $style; ?>
 
-	   fieldset[disabled=disabled] button {
-	       display: none;
-	   }
-
-	   .msg, .errmsg {
-	       margin: 1em;
-	   }
-	   .msg p.successmsg {
-	       white-space: pre-wrap;
-	   }
-
-	   @media print {
-            body{
-                zoom: 85%;
-            }
-       }
-
-	</style>
 
     </head>
     <body>

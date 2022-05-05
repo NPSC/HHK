@@ -645,6 +645,7 @@
     					f.append('<input type="hidden" name="cmd" value="preview">');
     					f.append('<textarea name="formData" style="display:none">' + JSON.stringify(formData) + '</textarea>');
     					f.append('<input type="hidden" name="style" value="' + settingsDialog.find("textarea#formStyle").val() + '">');
+    					f.append('<input type="hidden" name="fontImport" value="' + settingsDialog.find("textarea#fontImport").val() + '">');
     					f.submit();
     					f.remove();
 	    				
@@ -1111,8 +1112,11 @@
 								<textarea id="formStyle" name="formStyle" style="width: 100%; height: 600px;"></textarea>
 							</div>
 							<div class="col-4">
+								<h3>Import Fonts</h3>
+								<p class="my-3">Use <a href="https://fonts.google.com" target="_blank">Google Fonts</a> to select the fonts for the page. Paste the final @import statement below.</p>
+								<textarea id="fontImport" style="width: 100%; height: 200px;" class="mb-3"></textarea>
 								<h3>Style Guide</h3>
-								<p>Forms use Bootstrap 5.0 with .form-floating and the Jquery UI datepicker</p>
+								<p>Forms use Bootstrap 5.0 with .form-floating</p>
 								<h3>Available Styles</h3>
 								<ul class="styleList">
 									<li>h1</li>
@@ -1120,13 +1124,13 @@
 									<li>h3</li>
 									<li>label</li>
 									<li>.submit-btn</li>
-									<li>.ui-datepicker (and all associated jquery UI datepicker classes)</li>
 									<li>.form-control</li>
 									<li>.form-select</li>
 									<li>.msg - the success message, which uses bootstrap's alert-success class</li>
 									<li>.errmsg - the error message, uses bootstrap's alert-danger class</li>
 									
 								</ul>
+								
 							</div>
 						</div>
 				    </div>
@@ -1267,6 +1271,7 @@
 	    					settingsDialog.find('input#emailPatient').prop('checked', data.formSettings.emailPatient).data('oldval', data.formSettings.emailPatient);
 	    					settingsDialog.find('input[name=initialGuests]').val(data.formSettings.initialGuests).data('oldVal',data.formSettings.initialGuests);
 	    					settingsDialog.find('input[name=maxGuests]').val(data.formSettings.maxGuests).data('oldVal',data.formSettings.maxGuests);
+	    					settingsDialog.find('textarea#fontImport').val(data.formSettings.fontImport).data('oldVal',data.formSettings.fontImport);
 	    					$wrapper.find('#formTitle').val(data.formTitle);
 	    				}
 	    			}
@@ -1334,6 +1339,7 @@
 			var notifyContent = settingsDialog.find('textarea#notifyContent').val();
 			var initialGuests = settingsDialog.find('input[name=initialGuests]').val();
 			var maxGuests = settingsDialog.find('input[name=maxGuests]').val();
+			var fontImport = settingsDialog.find('textarea#fontImport').val();
 			var formData = settings.formBuilder.actions.getData();
 			
 			if(typeof idDocument !== 'undefined', typeof title !== 'undefined', typeof style !== 'undefined', typeof formData !== 'undefined', typeof successTitle !== 'undefined', typeof successContent !== 'undefined'){
@@ -1379,7 +1385,8 @@
 		    				"notifySubject": notifySubject,
 		    				"notifyContent": notifyContent,
 		    				"initialGuests": initialGuests,
-		    				"maxGuests": maxGuests
+		    				"maxGuests": maxGuests,
+		    				"fontImport": fontImport,
 		    			},
 		    			dataType: "json",
 		    			success: function(data, textStatus, jqXHR)
