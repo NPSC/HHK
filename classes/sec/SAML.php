@@ -115,29 +115,22 @@ class SAML {
             $u = new UserClass();
             $userAr = $u->getUserCredentials($this->dbh, $this->auth->getNameId());
 
-            if($userAr == null || (isset($userAr["idIdp"]) && $userAr["idIdp"] == $this->IdpId)){ //correct user found, set up session
 
-                if($userAr == null || $this->IdpConfig["IdP_ManageRoles"] == 1){ //if user is new and IdP is responsible for Roles/Security Groups
-                    $userAr = $this->provisionUser(); //create/update user with details from IdP
+            if($userAr == null || $this->IdpConfig["IdP_ManageRoles"] == 1 || $userAr['idIdp'] != $this->getIdIdp()){ //if user is new and IdP is responsible for Roles/Security Groups
+                $userAr = $this->provisionUser(); //create/update user with details from IdP
+            }
+
+            if($u->doLogin($this->dbh, $userAr)){
+                $pge = $uS->webSite['Default_Page'];
+                if ($u->getDefaultPage() != '') {
+                    $pge = $u->getDefaultPage();
                 }
 
-                if($u->doLogin($this->dbh, $userAr)){
-                    $pge = $uS->webSite['Default_Page'];
-                    if ($u->getDefaultPage() != '') {
-                        $pge = $u->getDefaultPage();
-                    }
-
-                    if (SecurityComponent::is_Authorized($pge)) {
-                        header('location:../' . $uS->webSite['Relative_Address'].$pge);
-                    } else {
-                        $error = "Unauthorized for page: " . $pge;
-                    }
+                if (SecurityComponent::is_Authorized($pge)) {
+                    header('location:../' . $uS->webSite['Relative_Address'].$pge);
+                } else {
+                    $error = "Unauthorized for page: " . $pge;
                 }
-
-            }else if(isset($userAr["idIdp"]) && $userAr["idIdp"] != $this->IdpId){
-                $error = 'User found, but is not associated with ' . $this->IdpConfig["Name"] . '. Please login via ' . $userAr['authProvider'];
-            }else{
-                $error = 'User authenticated at ' . $this->IdpConfig["Name"] . ', but an error occurred during login or user provisioning';
             }
         }
 
@@ -209,7 +202,7 @@ class SAML {
                 }
             }
 
-            if(!isset($user['Role_Id'])){
+            if(!isset($user['Role_Id']) || (isset($user['idIdp']) && $user['idIdp'] != $this->IdpId)){
                 //register Web User
                 $query = "call register_web_user(" . $idName . ", '', '" . $this->auth->getNameId() . "', '" . $this->auditUser . "', 'p', '" . $role . "', '', 'v', 0, " . $this->IdpId . ");";
                 if($this->dbh->exec($query) === false){
@@ -241,30 +234,35 @@ class SAML {
                 }
             }
 
-            $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
-
-
-            //make parms array for group update
-            $parms = array();
             $attributes = $this->auth->getAttributes();
-            $allSecurityGroups = $this->getSecurityGroups($this->dbh);
-            $selSecurityGroups = array();
-
-            //fill parms array
-            if(isset($attributes["hhkSecurityGroups"])){
-                $selSecurityGroups = $attributes['hhkSecurityGroups'];
+            if(isset($user['idIdp']) && $user['idIdp'] != $this->IdpId && !isset($attributes["hhkSecurityGroups"])){
+                //skip security group update if user has different idp id and IdP has not sent security groups
             }else{
-                $selSecurityGroups = $this->IdpConfig['defaultGroups'];
-            }
-            foreach($allSecurityGroups as $secGroup){
-                if(in_array($secGroup["Title"], $selSecurityGroups)){
-                    $parms["grpSec_" . $secGroup["Code"]] = "checked";
+
+                $user = UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
+
+                //make parms array for group update
+                $parms = array();
+
+                $allSecurityGroups = $this->getSecurityGroups($this->dbh);
+                $selSecurityGroups = array();
+
+                //fill parms array
+                if(isset($attributes["hhkSecurityGroups"])){
+                    $selSecurityGroups = $attributes['hhkSecurityGroups'];
                 }else{
-                    $parms["grpSec_" . $secGroup["Code"]] = "unchecked";
+                    $selSecurityGroups = $this->IdpConfig['defaultGroups'];
                 }
+                foreach($allSecurityGroups as $secGroup){
+                    if(in_array($secGroup["Title"], $selSecurityGroups)){
+                        $parms["grpSec_" . $secGroup["Code"]] = "checked";
+                    }else{
+                        $parms["grpSec_" . $secGroup["Code"]] = "unchecked";
+                    }
+                }
+                //update security groups
+                WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms, $this->auditUser);
             }
-            //update security groups
-            WebUser::updateSecurityGroups($this->dbh, $user["idName"], $parms, $this->auditUser);
         }else{
             return array("error"=>$msg);
         }
