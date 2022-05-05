@@ -658,7 +658,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
                 . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
-                . " ifnull(gr.Description, '') as `No_Return` " . ", hs.MRN as `MRN` "
+                . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
             . " from `name` n "
                 . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
                 . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
@@ -674,7 +674,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 . " $operation (LOWER(n.Name_First) like '" . $this->Name_First . "' OR LOWER(n.Name_NickName) like '" . $this->Name_First . "')) "
                 . " OR np.Phone_Search like '" . $this->Name_First . "' ")
                 . ($MRN ? " and hs.MRN like '" . $this->MRN . "' " : "")
-            . " order by n.Name_Last, n.Name_First;";
+            . " group by n.idName order by n.Name_Last, n.Name_First";
 
         $stmt = $dbh->query($query);
 

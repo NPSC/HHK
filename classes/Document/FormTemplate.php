@@ -49,7 +49,7 @@ class FormTemplate {
         return $rows;
     }
 
-    public function saveNew(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $username){
+    public function saveNew(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -57,6 +57,17 @@ class FormTemplate {
         $cssValidation = $this->validateCSS($style);
         if($cssValidation['valid'] == "false"){
             $validationErrors['css'] = $cssValidation;
+        }
+
+        //validate font import
+        if(strlen($fontImport) > 0){
+            $matches = array();
+            preg_match('/^@import url\(\&#39;(https:\/\/fonts.googleapis.com\/css2\?.*)\&#39;\);$/', $fontImport, $matches);
+            if(count($matches) == 2){
+                $fontImport = $matches[1];
+            }else{
+                $validationErrors['fontImport'] = "The font import must be a Google Font @import statement";
+            }
         }
 
         if(!$title){
@@ -81,7 +92,7 @@ class FormTemplate {
             $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests";
         }
 
-        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests]);
+        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImport]);
 
         if(count($validationErrors) == 0){
 
@@ -108,7 +119,7 @@ class FormTemplate {
         }
     }
 
-    public function save(\PDO $dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $username){
+    public function save(\PDO $dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $username){
 
         $validationErrors = array();
 
@@ -118,6 +129,17 @@ class FormTemplate {
             $validationErrors['cssserver'] = $cssValidation['error'];
         }else if(isset($cssValidation['valid']) && $cssValidation['valid'] == "false"){
             $validationErrors['css'] = $cssValidation;
+        }
+
+        //validate font import
+        if(strlen($fontImport) > 0){
+            $matches = array();
+            preg_match('/^@import url\(\&#39;(https:\/\/fonts.googleapis.com\/css2\?.*)\&#39;\);$/', $fontImport, $matches);
+            if(count($matches) == 2){
+                $fontImport = $matches[1];
+            }else{
+                $validationErrors['fontImport'] = "The font import must be a Google Font @import statement";
+            }
         }
 
         if(!$title){
@@ -143,7 +165,7 @@ class FormTemplate {
         }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests]);
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImport]);
 
             $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, $username);
             if($count == 1){
@@ -222,7 +244,8 @@ class FormTemplate {
             'notifyContent'=>(isset($abstract->notifyContent) ? htmlspecialchars_decode($abstract->notifyContent, ENT_QUOTES) : ''),
             'recaptchaScript'=>$recaptcha->getScriptTag(),
             'maxGuests'=>(isset($abstract->maxGuests) ? $abstract->maxGuests : 4),
-            'initialGuests'=>(isset($abstract->initialGuests) ? $abstract->initialGuests : 1)
+            'initialGuests'=>(isset($abstract->initialGuests) ? $abstract->initialGuests : 1),
+            'fontImport'=>(isset($abstract->fontImport) && strlen($abstract->fontImport) > 0 ? "@import url('" . $abstract->fontImport . "');" : '')
         ];
     }
 

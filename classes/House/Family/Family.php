@@ -353,9 +353,14 @@ class Family {
         $trs = array();
         $familyName = '';
         $patientUserData = [];
+        $guestUserData = [];
 
         if(isset($formUserData['patient'])){
             $patientUserData = $formUserData['patient'];
+        }
+
+        if(isset($formUserData['guests'])){
+            $guestUserData = $formUserData['guests'];
         }
 
         $AdrCopyDownIcon = HTMLContainer::generateMarkup('ul'
@@ -457,9 +462,9 @@ class Family {
 
                 if ($this->showDemographics) {
                     $guestDemos = [];
-                    foreach($formUserData['guests'] as $guestUserData){ //find matching guest
-                        if($role->getIdName() == (isset($guestUserData['idName'])?$guestUserData['idName']:0)){
-                            $guestDemos = $guestUserData['demographics'];
+                    foreach($guestUserData as $userData){ //find matching guest
+                        if($role->getIdName() == (isset($userData['idName']) ? $userData['idName'] : 0)){
+                            $guestDemos = $userData['demographics'];
                         }
                     }
                     // Demographics

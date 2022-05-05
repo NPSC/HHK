@@ -528,7 +528,9 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             }
         }
 
-        return $nameRS->Name_First->getStoredVal() . ' ' . $nameRS->Name_Last->getStoredVal() . ($nameRS->Name_Suffix->getStoredVal() == '' ? '' : ' ' . $uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()][1]);
+        $mk = $nameRS->Name_First->getStoredVal() . ' ' . $nameRS->Name_Last->getStoredVal()
+            . ( isset($uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()]) && $uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()] != '' ? ' ' . $uS->nameLookups['Name_Suffix'][$nameRS->Name_Suffix->getStoredVal()][1] : '');
+        return $mk;
     }
 
     public function getPatientStatus(\PDO $dbh) {

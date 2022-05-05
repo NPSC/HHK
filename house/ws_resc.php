@@ -715,12 +715,17 @@ try {
                 $emailPatient = filter_var($_REQUEST['emailPatient'], FILTER_VALIDATE_BOOLEAN);
             }
 
+            $fontImport = '';
+            if(isset($_REQUEST['fontImport'])) {
+                $fontImport = filter_var($_REQUEST['fontImport'], FILTER_SANITIZE_STRING);
+            }
+
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             if($idDocument > 0) {
-                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
             }else{
-                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
             }
 
             break;

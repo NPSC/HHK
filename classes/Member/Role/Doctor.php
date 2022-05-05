@@ -34,7 +34,7 @@ class Doctor extends AbstractRole{
         $this->roleMember->setIdPrefix($idPrefix);
 
         if ($this->roleMember->getMemberDesignation() != MemDesignation::Individual) {
-            throw new RuntimeException("Must be individuals, not organizations");
+            throw new RuntimeException("Doctors Must be individuals, not organizations");
         }
 
     }

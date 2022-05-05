@@ -71,3 +71,6 @@ Insert IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`
 
 UPDATE `hospital_stay` SET `MRN` = REPLACE(REPLACE(REPLACE(TRIM(`MRN`), '/', ''), '-',''), '_', ''); -- remove whitespace, /,-,_ from MRNs
 
+-- fix gender code for gen_lookups
+ALTER TABLE `name` 
+CHANGE COLUMN `Gender` `Gender` VARCHAR(5) NOT NULL DEFAULT '' ;

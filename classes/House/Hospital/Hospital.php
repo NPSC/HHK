@@ -596,8 +596,8 @@ $(document).ready(function () {
         // Doctor
         if (isset($post['d_idName'])) {
             $aId = intval(filter_var($post['d_idName'], FILTER_SANITIZE_NUMBER_INT), 10);
-
             $doc = new Doctor($dbh, 'd_', $aId);
+
             try{
                 $doc->save($dbh, $post, $uS->username);
             } catch (RuntimeException $ex) {

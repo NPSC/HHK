@@ -46,7 +46,7 @@ $patMkup = '';
 $guestMkup = '';
 $chosen = ' Search';
 $continueLink = HTMLContainer::generateMarkup('a', 'Continue', array('href'=>'register.php'));
-
+$numGuests = 0;
 $datesMkup = '';
 $displayGuest = 'display:none;';
 $final = '';
@@ -124,6 +124,7 @@ if ($idDoc > 0) {
 
         	        // Guests are listed.
             	    $guestMkup .= $refForm->guestsMarkup();
+            	    $numGuests = $refForm->getGuestCount();
 
             	    // Unhide guest section
             	    $displayGuest = '';
@@ -210,7 +211,7 @@ if ($idDoc > 0) {
                 </div>
                 <div id="GuestSection" style="font-size: .9em; min-width: 810px;<?php echo $displayGuest; ?>"  class="ui-widget hhk-visitdialog mb-3">
                     <div id="GuestHeader" class="ui-widget ui-widget-header ui-state-default ui-corner-top hhk-panel">
-                    	<?php echo $labels->getString('MemberType', 'guest', 'Guest') . 's (' . $refForm->getGuestCount() . ')'; ?>
+                    	<?php echo $labels->getString('MemberType', 'guest', 'Guest') . 's (' . $numGuests . ')'; ?>
                     </div>
                     <div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding:5px;">
                     	<?php echo $guestMkup; ?>

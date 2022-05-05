@@ -686,16 +686,22 @@ ORDER BY `List_Order`");
         $idPrefix = $this->getIdPrefix();
 
         //  Name
+        $last = trim($n->Name_Last->getStoredVal());
+        if (isset($post[$idPrefix.'txtLastName'])) {
+            $last = ucfirst(trim(filter_var($post[$idPrefix.'txtLastName'], FILTER_SANITIZE_STRING)));
+            $n->Name_Last->setNewVal($last);
+        }
+
+        // Minimum requirements for saving a record.
+        if ($last == '') {
+            throw new RuntimeException("The Last Name cannot be blank.");
+        }
+
+
         $first = $n->Name_First->getStoredVal();
         if (isset($post[$idPrefix.'txtFirstName'])) {
             $n->Name_First->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtFirstName'], FILTER_SANITIZE_STRING))));
             $first = $n->Name_First->getNewVal();
-        }
-
-        $last = $n->Name_Last->getStoredVal();
-        if (isset($post[$idPrefix.'txtLastName'])) {
-            $n->Name_Last->setNewVal(ucfirst(trim(filter_var($post[$idPrefix.'txtLastName'], FILTER_SANITIZE_STRING))));
-            $last = $n->Name_Last->getNewVal();
         }
 
         $middle = $n->Name_Middle->getStoredVal();
@@ -704,21 +710,38 @@ ORDER BY `List_Order`");
             $middle = $n->Name_Middle->getNewVal();
         }
 
-        $prefix = $n->Name_Prefix->getStoredVal();
+        $prefix = '';
+        // Check existing value
+        if (isset($uS->nameLookups[GLTableNames::NamePrefix][$n->Name_Prefix->getStoredVal()])) {
+            $prefix = $n->Name_Prefix->getStoredVal();
+        } else {
+            $n->Name_Prefix->setNewVal($prefix);
+        }
         if (isset($post[$idPrefix.'selPrefix'])) {
-            $n->Name_Prefix->setNewVal(filter_var($post[$idPrefix.'selPrefix'], FILTER_SANITIZE_STRING));
-            $prefix = $n->Name_Prefix->getNewVal();
+            // Check new value
+            $pre = filter_var($post[$idPrefix.'selPrefix'], FILTER_SANITIZE_STRING);
+
+            if (isset($uS->nameLookups[GLTableNames::NamePrefix][$pre])) {
+                $prefix = $pre;
+                $n->Name_Prefix->setNewVal($prefix);
+            }
         }
 
-        $suffix = $n->Name_Suffix->getStoredVal();
+        $suffix = '';
+        // Check existing value
+        if (isset($uS->nameLookups[GLTableNames::NameSuffix][$n->Name_Suffix->getStoredVal()])) {
+            $suffix = $n->Name_Suffix->getStoredVal();
+        } else {
+            $n->Name_Suffix->setNewVal($suffix);
+        }
         if (isset($post[$idPrefix.'selSuffix'])) {
-            $n->Name_Suffix->setNewVal(filter_var($post[$idPrefix.'selSuffix'], FILTER_SANITIZE_STRING));
-            $suffix = $n->Name_Suffix->getNewVal();
-        }
+            // Check new value
+            $suf = filter_var($post[$idPrefix.'selSuffix'], FILTER_SANITIZE_STRING);
 
-        // Minimum requirements for saving a record.
-        if ($n->Name_Last->getStoredVal() == '' && $n->Name_Last->getNewVal() == '') {
-            throw new RuntimeException("The Last Name cannot be blank.");
+            if (isset($uS->nameLookups[GLTableNames::NameSuffix][$suf])) {
+                $suffix = $suf;
+                $n->Name_Suffix->setNewVal($suffix);
+            }
         }
 
         // Name Last-First
