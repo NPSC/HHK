@@ -298,7 +298,7 @@ if(isset($_GET['template'])){
                     			$(this).val(val);
                     		});
 
-                    		$(document).on('submit', 'form', function(e){
+                    		$(document).on('submit', 'form#renderedForm', function(e){
                         		e.preventDefault();
                         		if(recaptchaEnabled){
                         		    grecaptcha.execute(siteKey, {action: 'submit'}).then(function(token){
@@ -340,7 +340,6 @@ if(isset($_GET['template'])){
                 				Array.prototype.splice.apply(userData, [addGuestPosition, 0].concat(thisGuestGroup));
                 				$renderedForm.formRender('render', userData);
 
-
                             	$renderedForm.find('.rendered-form').addClass('row');
 
                             	$renderedForm.find('input.hhk-zipsearch').each(function(){
@@ -373,17 +372,6 @@ if(isset($_GET['template'])){
                         			var val = $(this).val().replaceAll('"', "'");
                         			$(this).val(val);
                         		});
-
-                        		$(document).on('submit', 'form', function(e){
-                            		e.preventDefault();
-                            		if(recaptchaEnabled){
-                            		    grecaptcha.execute(siteKey, {action: 'submit'}).then(function(token){
-                            		    	submitForm(token);
-                            		    });
-                            		}else{
-                            			submitForm();
-                            		}
-                            	});
 
                             	if(guestIndex+1 >= ajaxData.formSettings.maxGuests){
                             		$renderedForm.find('#addGuest').attr('disabled','disabled').parents(".field-container").addClass("d-none");
@@ -483,7 +471,7 @@ if(isset($_GET['template'])){
     	<?php if(isset($_GET['form'])){ ?>
     	<fieldset disabled="disabled">
     	<?php }else{ ?>
-    	<form action="#" method="POST" novalidate>
+    	<form action="#" method="POST" novalidate id="renderedForm">
     	<?php } ?>
         <div id="formContent" class="container-fluid">
 			<div id="formError" style="text-align: center"></div>
