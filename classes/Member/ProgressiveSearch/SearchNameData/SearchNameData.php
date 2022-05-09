@@ -448,8 +448,11 @@ class SearchNameData implements SearchNameDataInterface {
             ->setAddressState($this->setIfNew($r["State_Province"], $formData->getAddressState()))
             ->setAddressZip($this->setIfNew($r["Postal_Code"], $formData->getAddressZip()))
             ->setAddressCountry($this->setIfNew($r["Country_Code"], $formData->getAddressCountry()))
-            ->setNoReturn($this->setIfNew($r["No_Return"], $formData->getNoReturn()))
-            ->setRelationship($this->setIfNew($r["Relationship"], $formData->getRelationship()));
+            ->setNoReturn($this->setIfNew($r["No_Return"], $formData->getNoReturn()));
+
+        if (isset($r["Relationship"])) {
+            $this->setRelationship($this->setIfNew($r["Relationship"], $formData->getRelationship()));
+        }
 
     }
 
