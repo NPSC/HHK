@@ -60,14 +60,13 @@ class FormTemplate {
         }
 
         //validate font import
-        if(strlen($fontImport) > 0){
-            $matches = array();
-            preg_match('/^@import url\(\&#39;(https:\/\/fonts.googleapis.com\/css2\?.*)\&#39;\);$/', $fontImport, $matches);
-            if(count($matches) == 2){
-                $fontImport = $matches[1];
-            }else{
-                $validationErrors['fontImport'] = "The font import must be a Google Font @import statement";
+        $fontImportStr = '';
+        if(is_array($fontImport)){
+            $fontImportStr = "https://fonts.googleapis.com/css2?";
+            foreach($fontImport as $font){
+                $fontImportStr .= "family=" . $font . "&";
             }
+            $fontImportStr .= "display=swap";
         }
 
         if(!$title){
@@ -92,7 +91,7 @@ class FormTemplate {
             $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests";
         }
 
-        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImport]);
+        $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
 
         if(count($validationErrors) == 0){
 
@@ -132,14 +131,13 @@ class FormTemplate {
         }
 
         //validate font import
-        if(strlen($fontImport) > 0){
-            $matches = array();
-            preg_match('/^@import url\(\&#39;(https:\/\/fonts.googleapis.com\/css2\?.*)\&#39;\);$/', $fontImport, $matches);
-            if(count($matches) == 2){
-                $fontImport = $matches[1];
-            }else{
-                $validationErrors['fontImport'] = "The font import must be a Google Font @import statement";
+        $fontImportStr = '';
+        if(is_array($fontImport)){
+            $fontImportStr = "https://fonts.googleapis.com/css2?";
+            foreach($fontImport as $font){
+                $fontImportStr .= "family=" . $font . "&";
             }
+            $fontImportStr .= "display=swap";
         }
 
         if(!$title){
@@ -165,7 +163,7 @@ class FormTemplate {
         }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
-            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImport]);
+            $abstractJson = json_encode(['successTitle'=>$successTitle, 'successContent'=>$successContent, 'enableRecaptcha'=>$enableRecaptcha, 'enableReservation'=>$enableReservation, 'emailPatient'=>$emailPatient, 'notifySubject'=>$notifySubject, 'notifyContent'=>$notifyContent, 'initialGuests'=>$initialGuests, 'maxGuests'=>$maxGuests, 'fontImport'=>$fontImportStr]);
 
             $count = $this->doc->save($dbh, $title, $doc, $style, $abstractJson, $username);
             if($count == 1){

@@ -388,6 +388,16 @@
     				"width": "col-md-3",
     				"group": "guest"
     			},
+    			{
+    				"type": "text",
+    				"subtype": "email",
+    				"label": "Email",
+    				"placeholder": "Email",
+    				"className": "form-control",
+    				"name": "guests.g0.email",
+    				"width": "col-md-3",
+    				"group": "guest"
+    			},
     			... (options.guestDemogFields ? options.guestDemogFields:[]),
     			{
   					"type": "select",
@@ -645,7 +655,6 @@
     					f.append('<input type="hidden" name="cmd" value="preview">');
     					f.append('<textarea name="formData" style="display:none">' + JSON.stringify(formData) + '</textarea>');
     					f.append('<input type="hidden" name="style" value="' + settingsDialog.find("textarea#formStyle").val() + '">');
-    					f.append('<input type="hidden" name="fontImport" value="' + settingsDialog.find("textarea#fontImport").val() + '">');
     					f.submit();
     					f.remove();
 	    				
@@ -1366,6 +1375,16 @@
 						missingFields.push(field);
 					}
 				});
+				
+				//format font import
+				matches = fontImport.match(/@import url\('https:\/\/fonts.googleapis.com\/css2(\?.*)\'\);/);
+				if(Array.isArray(matches) && matches[1] != null){
+					queryString = matches[1];
+					urlparams = new URLSearchParams(queryString);
+  					fontImport = urlparams.getAll("family");
+				}else{
+					settingsDialog.find('textarea#fontImport').val('');
+				}
 				
 				if(missingFields.length == 0 && title.length > 0 && emailErrorMsg.length == 0){
 					$.ajax({
