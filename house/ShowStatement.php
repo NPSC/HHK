@@ -9,6 +9,9 @@ use HHK\House\Visit\Visit;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
+use HHK\Note\Note;
+use HHK\Note\LinkNote;
+use HHK\House\Registration;
 
 /**
  * ShowStatement.php
@@ -263,6 +266,16 @@ if (isset($_REQUEST['cmd'])) {
                 $mail->send();
                 $msg .= "Email sent.  ";
 
+                // Make a note in the visit or PSG
+                if($idVisit > 0){
+                    $noteText = 'Visit Statement email sent to ' . $emAddr;
+                    LinkNote::save($dbh, $noteText, $idVisit, Note::VisitLink, $uS->username, $uS->ConcatVisitNotes);
+                }elseif($idRegistration > 0){
+                    $noteText = 'Comprehensive Statement email sent to ' . $emAddr;
+                    $reg = new Registration($dbh, 0, $idRegistration);
+                    $idPsg = $reg->getIdPsg();
+                    LinkNote::save($dbh, $noteText, $idRegistration, Note::PsgLink, $uS->username, $uS->ConcatVisitNotes);
+                }
             }catch (\Exception $e){
                 $msg .= "Email failed! " . $mail->ErrorInfo;
             }
