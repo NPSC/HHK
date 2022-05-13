@@ -50,3 +50,6 @@ UPDATE `hospital_stay` SET `MRN` = REPLACE(REPLACE(REPLACE(TRIM(`MRN`), '/', '')
 -- fix gender code for gen_lookups
 ALTER TABLE `name` 
 CHANGE COLUMN `Gender` `Gender` VARCHAR(5) NOT NULL DEFAULT '' ;
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('useMRN', 'true', 'b', 'hf', '', 'Track MRN in Hospital Stay', '','1');

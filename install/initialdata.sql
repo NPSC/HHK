@@ -662,6 +662,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('UseDocumentUpload','true','b','hf','','Enable Document Uploads','',1),
 ('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout','',1),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),
+('useMRN', 'true', 'b', 'hf', '', 'Track MRN in Hospital Stay', '',1),
 ('userInactiveDays','365','lu','pr','','Number of days of inactivity before user becomes disabled','dayIncrements',1),
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
