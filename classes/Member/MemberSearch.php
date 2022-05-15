@@ -657,11 +657,12 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         }
 
         $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
-                . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
+                . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(ne.Email, '') as `Email`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
                 . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
             . " from `name` n "
                 . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
                 . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
+                . " left join name_email ne on n.idName = ne.idName and n.Preferred_Email = ne.Purpose"
                 . " left join name_demog nd on n.idName = nd.idName"
                 . " left join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'"
                 . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = n.Name_Suffix"
@@ -712,6 +713,10 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             $namArray['id'] = $row2["idName"];
             $namArray['fullName'] = $firstName . ' ' . $lastName;
+            $namArray['first'] = $firstName;
+            $namArray['last'] = $lastName;
+            $namArray['email'] = $row2['Email'];
+            $namArray['phone'] = $phone;
             $namArray['No_Return'] = $row2['No_Return'];
             $namArray['value'] =
                 ($row2['No_Return'] != '' ? $row2['No_Return'] . '; ' : '')

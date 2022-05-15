@@ -22,6 +22,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Attribute_Type', '1', 'Room', '','',0),
 ('Attribute_Type', '2', 'Hospital', '','',0),
 
+('bkgrndCkVendr', '', '(None)', '', '', 0),
+('bkgrndCkVendr', 'Alliance', 'Alliance','','',0),
+
 ('Cal_Event_Status','a','Active','','',0),
 ('Cal_Event_Status','d','Deleted','','',0),
 ('Cal_Event_Status','t','Logged','','',0),
@@ -659,6 +662,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Training_URL', 'https://hospitalityhousekeeper.net/training/', 's', 'a', '', 'HHK Training site URL', '',0),
 ('Tutorial_URL', 'https://www.youtube.com/channel/UC_Sp1kHz_c0Zet0LrO91SbQ/videos/', 's', 'a', '', 'Tutorial YouTube page', '',0),
 ('tz','America/Chicago','lu','a','','House Time Zone','Time_Zone',1),
+('UseBackgroundChecks', '', 'lu', 'hf','', 'Enable, choose vendor for the guest background-check feature', 'bkgrndCkVendr', '1'),
 ('UseDocumentUpload','true','b','hf','','Enable Document Uploads','',1),
 ('UseHouseWaive','true','b','hf','','Show the house waive checkbox on checkout','',1),
 ('UseIncidentReports','true','b','hf','','Enable the Incident Reports feature','',1),
