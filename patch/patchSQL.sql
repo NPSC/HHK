@@ -52,4 +52,4 @@ ALTER TABLE `name`
 CHANGE COLUMN `Gender` `Gender` VARCHAR(5) NOT NULL DEFAULT '' ;
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('useMRN', 'true', 'b', 'hf', '', 'Track MRN in Hospital Stay', '','1');
+('searchMRN', 'true', 'b', 'hf', '', 'Allow search by MRN', '','1');

@@ -63,14 +63,13 @@ class Hospital {
 
         $table = new HTMLTable();
 
-        $useMRN = $uS->useMRN;
         $mrn = $labels->getString('hospital', 'MRN', '');
 
         $table->addHeaderTr(
                 (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
         		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
-        		.($useMRN ? HTMLTable::makeTh($mrn): '')
+                .($mrn == '' ? '' : HTMLTable::makeTh($mrn))
             );
 
         $table->addBodyTr(
@@ -92,12 +91,12 @@ class Hospital {
         						array('name'=>'psgRoom', 'size'=>'8', 'class'=>'ignrSave hospital-stay')
         						)
         				)
-        		. ($useMRN ? HTMLTable::makeTd(
+        		. ($mrn == '' ? '' : HTMLTable::makeTd(
         				HTMLInput::generateMarkup(
         				    (isset($referralHospitalData['mrn']) && $referralHospitalData['mrn'] != '' ? $referralHospitalData['mrn'] : $hstay->getMrn()),
         						array('name'=>'psgMrn', 'size'=>'14', 'class'=>'ignrSave hospital-stay')
         						)
-        				) : '')
+        				))
         );
 
         $hospMkup = $table->generateMarkup(array('style'=>'display:inline-table'));

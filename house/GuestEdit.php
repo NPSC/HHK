@@ -747,7 +747,7 @@ $uS->guestId = $id;
                     	<label for="txtsearch">Name Search</label>
                     	<input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
                     </div>
-                    <?php if($uS->useMRN){ ?>
+                    <?php if($uS->searchMRN){ ?>
                     <div style="margin-right: 0.5em;">
                     	<span>MRN Search </span>
                     	<input type="search" class="allSearch" id="txtMRNsearch" size="15" title="Enter at least 3 characters to invoke search" />
