@@ -56,7 +56,8 @@
     			"multiple": false,
     			"values": []
   			},
-  			{
+  			... (options.demogs.Ethnicity ?
+  				[{
     			"type": "select",
     			"label": (options.labels.patient || 'Patient') + " " + (options.demogs.Ethnicity.Description || 'Ethnicity'),
     			"placeholder": (options.labels.patient || 'Patient') + " " + (options.demogs.Ethnicity.Description || 'Ethnicity'),
@@ -66,7 +67,7 @@
     			"dataSource":"ethnicity",
     			"multiple": false,
     			"values": []
-  			},
+  			}]:[]),
     		{
     			label: "Submit",
     			type: "button",
