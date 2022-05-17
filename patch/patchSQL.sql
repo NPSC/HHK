@@ -23,10 +23,6 @@ ADD COLUMN IF NOT EXISTS `backupSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `e
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('rememberTwoFA','30','lu','pr','','Number of days users can save a device and skip two factor authentication','dayIncrements',1);
 
--- insurance fixes
-update insurance set Type = 1 where Type in ('h', '1h');
-update insurance set Type = 3 where Type = 'p';
-
 ALTER TABLE `insurance` 
 	ADD COLUMN IF NOT EXISTS `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`;
 ALTER TABLE `insurance` 
