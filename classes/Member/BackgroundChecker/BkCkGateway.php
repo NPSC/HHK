@@ -42,7 +42,7 @@ class BkCkGateway
 <placeOrder number="' . $orderNumber . '">
     <preselect_all_included_products/>
     <IncludeDefaultProducts />
-    <package>Package Name</package>
+    <package>GUEST SAFEGAURD</package>
     <subject>
         <portalfromapplicant>Y</portalfromapplicant>
         <name_first>' . $subject->getFirst() . '</name_first>

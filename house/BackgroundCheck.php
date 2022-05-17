@@ -70,7 +70,7 @@ $xmlfile = '';
 $dataTable = '';
 $errorMessage = '';
 $noRecordsMsg = '';
-$url = 'https://alliance.bgsecured.acciodata.com/c/p/researcherxml';
+$url = 'https://alliance.bgsecured.com/c/p/researcherxml';
 
 if (isset($_POST['btnNewOrder'])) {
 
