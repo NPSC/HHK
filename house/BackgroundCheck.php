@@ -70,6 +70,7 @@ $xmlfile = '';
 $dataTable = '';
 $errorMessage = '';
 $noRecordsMsg = '';
+$url = 'https://alliance.bgsecured.acciodata.com/c/p/researcherxml';
 
 if (isset($_POST['btnNewOrder'])) {
 
@@ -90,17 +91,17 @@ if (isset($_POST['btnNewOrder'])) {
 
     $xmlfile = $gw->newOrder($subject, $subject->getId());
 
-    $dataTable = $gw->curlGateway('https://acciodata.com/c/p/researcherxml', $xmlfile, $username, $password);
+    $dataTable = $gw->curlGateway($url, $xmlfile, $username, $password);
 
 }
 
 
 $inputTable = new HTMLTable();
 
-$inputTable->addBodyTr(HTMLTable::makeTd('Account') . HTMLTable::makeTd(HTMLInput::generateMarkup('test', array('name'=>'account', 'type'=>'text'))));
-$inputTable->addBodyTr(HTMLTable::makeTd('Username') . HTMLTable::makeTd(HTMLInput::generateMarkup('eric', array('name'=>'username', 'type'=>'text'))));
-$inputTable->addBodyTr(HTMLTable::makeTd('Password') . HTMLTable::makeTd(HTMLInput::generateMarkup('j88ert##oFg0', array('name'=>'password', 'type'=>'text'))));
-
+$inputTable->addBodyTr(HTMLTable::makeTd('Account') . HTMLTable::makeTd(HTMLInput::generateMarkup('npsctest00', array('name'=>'account', 'type'=>'text'))));
+$inputTable->addBodyTr(HTMLTable::makeTd('Username') . HTMLTable::makeTd(HTMLInput::generateMarkup('admin', array('name'=>'username', 'type'=>'text'))));
+$inputTable->addBodyTr(HTMLTable::makeTd('Password') . HTMLTable::makeTd(HTMLInput::generateMarkup('kMp,f?Mf2@(i7HG5.yRX', array('name'=>'password', 'type'=>'password'))));
+$inputTable->addBodyTr(HTMLTable::makeTd('URL') . HTMLTable::makeTd($url));
 
 $inputTable->addBodyTr(HTMLTable::makeTd('id') . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'subjId', 'type'=>'text'))));
 $inputTable->addBodyTr(HTMLTable::makeTd('First') . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'subjFirst', 'type'=>'text'))));
