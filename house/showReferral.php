@@ -77,12 +77,11 @@ if(isset($_GET['template'])){
     $cmd = 'getform';
     $method = 'get';
     $id = filter_var($_GET["form"], FILTER_SANITIZE_NUMBER_INT);
-}else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style']) && isset($_POST['fontImport'])){
+}else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style'])){
     $cmd = 'previewform';
     $method = 'post';
     $formData = json_decode($_POST['formData']);
     $style = $_POST['style'];
-    $fontImport = $_POST['fontImport'];
 }else{
     $error = "Missing required parameters";
 }
@@ -96,9 +95,7 @@ if(isset($_GET['template'])){
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Referral Form</title>
 
-		<style id="fontImport">
-		  <?php echo ($fontImport ? $fontImport : ''); ?>
-		</style>
+		<style id="fontImport"></style>
 
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
@@ -298,7 +295,7 @@ if(isset($_GET['template'])){
                     			$(this).val(val);
                     		});
 
-                    		$(document).on('submit', 'form', function(e){
+                    		$(document).on('submit', 'form#renderedForm', function(e){
                         		e.preventDefault();
                         		if(recaptchaEnabled){
                         		    grecaptcha.execute(siteKey, {action: 'submit'}).then(function(token){
@@ -340,7 +337,6 @@ if(isset($_GET['template'])){
                 				Array.prototype.splice.apply(userData, [addGuestPosition, 0].concat(thisGuestGroup));
                 				$renderedForm.formRender('render', userData);
 
-
                             	$renderedForm.find('.rendered-form').addClass('row');
 
                             	$renderedForm.find('input.hhk-zipsearch').each(function(){
@@ -373,17 +369,6 @@ if(isset($_GET['template'])){
                         			var val = $(this).val().replaceAll('"', "'");
                         			$(this).val(val);
                         		});
-
-                        		$(document).on('submit', 'form', function(e){
-                            		e.preventDefault();
-                            		if(recaptchaEnabled){
-                            		    grecaptcha.execute(siteKey, {action: 'submit'}).then(function(token){
-                            		    	submitForm(token);
-                            		    });
-                            		}else{
-                            			submitForm();
-                            		}
-                            	});
 
                             	if(guestIndex+1 >= ajaxData.formSettings.maxGuests){
                             		$renderedForm.find('#addGuest').attr('disabled','disabled').parents(".field-container").addClass("d-none");
@@ -483,7 +468,7 @@ if(isset($_GET['template'])){
     	<?php if(isset($_GET['form'])){ ?>
     	<fieldset disabled="disabled">
     	<?php }else{ ?>
-    	<form action="#" method="POST" novalidate>
+    	<form action="#" method="POST" novalidate id="renderedForm">
     	<?php } ?>
         <div id="formContent" class="container-fluid">
 			<div id="formError" style="text-align: center"></div>

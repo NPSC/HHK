@@ -432,24 +432,27 @@ class SearchNameData implements SearchNameDataInterface {
 
         $this->setId($r['idName'])
             ->setNameFirst($this->setIfNew($r["Name_First"], $formData->getNameFirst()))
-            ->setNameLast($this->setIfNew($r["Name_Last"], $formData->getNameFirst()))
-            ->setNickname($this->setIfNew($r["Name_Nickname"], $formData->getNameFirst()))
-            ->setNameMiddle($this->setIfNew($r["Name_Middle"], $formData->getNameFirst()))
-            ->setPrefix($this->setIfNew($r["Name_Prefix"], $formData->getNameFirst()))
-            ->setSuffix($this->setIfNew($r["Name_Suffix"], $formData->getNameFirst()))
-            ->setGender($this->setIfNew($r["Gender"], $formData->getNameFirst()))
-            ->setEthnicity($this->setIfNew($r["Ethnicity"], $formData->getNameFirst()))
-            ->setBirthDate($this->setIfNew($r["Birthdate"], $formData->getNameFirst()))
-            ->setPhone($this->setIfNew($r["Phone_Num"], $formData->getNameFirst()))
-            ->setEmail($this->setIfNew($r["Email"], $formData->getNameFirst()))
-            ->setAddressStreet1($this->setIfNew($r["Address1"], $formData->getNameFirst()))
-            ->setAddressStreet2($this->setIfNew($r["Address2"], $formData->getNameFirst()))
-            ->setAddressCity($this->setIfNew($r["City"], $formData->getNameFirst()))
-            ->setAddressState($this->setIfNew($r["State_Province"], $formData->getNameFirst()))
-            ->setAddressZip($this->setIfNew($r["Postal_Code"], $formData->getNameFirst()))
-            ->setAddressCountry($this->setIfNew($r["Country_Code"], $formData->getNameFirst()))
-            ->setNoReturn($this->setIfNew($r["No_Return"], $formData->getNameFirst()))
-            ->setRelationship($this->setIfNew($r["Relationship"], $formData->getNameFirst()));
+            ->setNameLast($this->setIfNew($r["Name_Last"], $formData->getNameLast()))
+            ->setNickname($this->setIfNew($r["Name_Nickname"], $formData->getNickname()))
+            ->setNameMiddle($this->setIfNew($r["Name_Middle"], $formData->getNameMiddle()))
+            ->setPrefix($this->setIfNew($r["Name_Prefix"], $formData->getPrefix()))
+            ->setSuffix($this->setIfNew($r["Name_Suffix"], $formData->getSuffix()))
+            ->setGender($this->setIfNew($r["Gender"], $formData->getGender()))
+            ->setEthnicity($this->setIfNew($r["Ethnicity"], ''))
+            ->setBirthDate($this->setIfNew($r["Birthdate"], $formData->getBirthDate()))
+            ->setPhone($this->setIfNew($r["Phone_Num"], $formData->getPhone()))
+            ->setEmail($this->setIfNew($r["Email"], $formData->getEmail()))
+            ->setAddressStreet1($this->setIfNew($r["Address1"], $formData->getAddressStreet1()))
+            ->setAddressStreet2($this->setIfNew($r["Address2"], $formData->getAddressStreet2()))
+            ->setAddressCity($this->setIfNew($r["City"], $formData->getAddressCity()))
+            ->setAddressState($this->setIfNew($r["State_Province"], $formData->getAddressState()))
+            ->setAddressZip($this->setIfNew($r["Postal_Code"], $formData->getAddressZip()))
+            ->setAddressCountry($this->setIfNew($r["Country_Code"], $formData->getAddressCountry()))
+            ->setNoReturn($this->setIfNew($r["No_Return"], $formData->getNoReturn()));
+
+        if (isset($r["Relationship"])) {
+            $this->setRelationship($this->setIfNew($r["Relationship"], $formData->getRelationship()));
+        }
 
     }
 

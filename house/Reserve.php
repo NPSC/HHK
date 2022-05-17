@@ -137,7 +137,7 @@ if ($idReserv > 0 || $idGuest >= 0) {
 } else {
 
     // Guest Search markup
-	$gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ");
+	$gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ", $uS->searchMRN);
     $mk1 = $gMk['hdr'];
 
 }
