@@ -83,7 +83,6 @@ if (SecurityComponent::isHTTPS()) {
         <link href='css/root.css' rel='stylesheet' type='text/css' />
         <script type="text/javascript" src="js/jquery-min.js"></script>
         <script type="text/javascript" src="js/jquery-ui.min.js"></script>
-        <script type="text/javascript" src="js/rssWidget.js"></script>
         <script type="text/javascript" src="js/login.js"></script>
 
     </head>

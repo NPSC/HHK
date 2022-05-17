@@ -739,7 +739,7 @@ $uS->guestId = $id;
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-        	<div class="pageHeader hhk-flex">
+        	<div class="hhk-flex">
                 <div style="margin-top:5px;">
                     <?php echo $guestName; ?>
                 </div>
