@@ -73,3 +73,6 @@ CHANGE COLUMN `Gender` `Gender` VARCHAR(5) NOT NULL DEFAULT '' ;
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('searchMRN', 'true', 'b', 'hf', '', 'Allow search by MRN', '','1');
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('NewsletterURL', 'https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe/post?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa', 'url', 'a','', 'Newsletter iframe URL', '', 0);

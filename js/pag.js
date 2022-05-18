@@ -193,7 +193,7 @@ $(document).ready(
 					var errors = false;
 					msg.empty();
 
-					if (oldpw.val() == "") {
+					if (oldpw.val() == "" && (pw1.val() != "" || pw2.val() != "")) {
 						msg.text("Old password is required");
 						return;
 					}
@@ -263,6 +263,7 @@ $(document).ready(
 							}
 						});
 					}
+					$("#dchgPw").dialog('close');
 				}
 			}		
 						//two factor Auth

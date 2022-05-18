@@ -111,7 +111,7 @@ if ($cd !== $uS->databaseName) {
 // Log in
 $user = new UserClass();
 
-if($user->_checkLogin($dbh, $un, $so)){
+if($user->_checkLogin($dbh, $un, $so, false, false)){
 
 	// Must be THE ADMIN
 	if ($page->is_TheAdmin()) {

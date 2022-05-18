@@ -731,21 +731,35 @@ class UserClass
 
     public static function getUserCredentials(\PDO $dbh, $username)
     {
+        $uS = Session::getInstance();
+
         if (! is_string($username) || trim($username) == '') {
             return NULL;
         }
 
         $uname = str_ireplace("'", "", $username);
 
-        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
+        $stmt = $dbh->query("select count(*) from information_schema.TABLES where (table_schema = '" . $uS->databaseName . "') and (table_name = 'w_idp')");
+
+        if ($stmt->rowCount() === 1) {
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+            if($rows[0][0] == 1){ //w_idp table exists
+                $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
 left join `w_idp` idp on u.`idIdp` = idp.`idIdp`
 WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = '$uname'");
+            }else{ //w_idp table does not exist
+                $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, 'Unknown Provider' as 'authProvider'
+FROM w_users u join w_auth a on u.idName = a.idName
+join `name` n on n.idName = u.idName
+WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = '$uname'");
+            }
 
-        if ($stmt->rowCount() === 1) {
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            return $rows[0];
+            if ($stmt->rowCount() === 1) {
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                return $rows[0];
+            }
         }
 
         return NULL;

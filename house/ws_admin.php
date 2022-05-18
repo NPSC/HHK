@@ -470,7 +470,7 @@ function saveTwoFA(\PDO $dbh, $secret, $OTP, $method){
             try{
 
                 $ga = new GoogleAuthenticator(array('User_Name'=>$uS->username, 'totpSecret'=>$secret));
-                $backup = new Backup(array('User_Name'=>$uS->username, 'backupSecret'=>''));
+                $backup = new Backup(array('idName'=>$uS->uid, 'User_Name'=>$uS->username, 'backupSecret'=>''));
                 $backup->createSecret();
 
                 if($ga->verifyCode($dbh, $OTP) == false){

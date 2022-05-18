@@ -336,6 +336,7 @@ class SAML {
 
             $stmt = $this->dbh->query("select idSecGroup as Code from w_idp_secgroups where idIdp = " . $this->IdpId);
             $defaultGroups = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $this->IdpConfig['defaultGroups'] = [];
 
             foreach($defaultGroups as $g){
                 $this->IdpConfig['defaultGroups'][] = $g["Code"];
@@ -385,7 +386,9 @@ class SAML {
                 "SSO_URL"=>"",
                 "IdP_EntityId"=>"",
                 "IdP_SigningCert"=>"",
+                "IdP_SigningCert2"=>"",
                 "IdP_EncryptionCert"=>"",
+                "IdP_EncryptionCert2"=>"",
                 "expectIdPSigning"=>"",
                 "expectIdPEncryption"=>"",
                 "IdP_ManageRoles"=>"",
