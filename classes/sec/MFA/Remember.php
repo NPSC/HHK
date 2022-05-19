@@ -30,7 +30,7 @@ class Remember
 
             $this->generateToken();
 
-            setcookie($this->cookieName, $this->token, $this->defaultExpSeconds);
+            setcookie($this->cookieName, $this->token, $this->defaultExpSeconds, '/');
 
             return $this->saveToken($dbh);
         }

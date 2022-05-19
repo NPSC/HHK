@@ -19,6 +19,9 @@ class W_usersRS extends AbstractTableRS {
     public $User_Name;  // varchar(100) NOT NULL DEFAULT '',
     public $Enc_PW;  // varchar(100) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
     public $idIdp;  // int(11) NOT NULL DEFAULT 0,
+    public $totpSecret; //varchar(45) NOT NULL DEFAULT '',
+    public $emailSecret; //varchar(45) NOT NULL DEFAULT '',
+    public $backupSecret; //varchar(45) NOT NULL DEFAULT '',
     public $Certificate;  // varchar(145) NOT NULL DEFAULT '',
     //public $Cookie;  // char(32) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
     //public $Session;  // char(32) CHARACTER SET latin1 COLLATE latin1_bin NOT NULL DEFAULT '',
@@ -38,6 +41,9 @@ class W_usersRS extends AbstractTableRS {
         $this->User_Name = new DB_Field("User_Name", "", new DbStrSanitizer(100), TRUE, TRUE);
         $this->Enc_PW = new DB_Field("Enc_PW", "", new DbStrSanitizer(100), TRUE, TRUE);
         $this->idIdp = new DB_Field("idIdp", 0, new DbIntSanitizer(11), TRUE, TRUE);
+        $this->totpSecret = new DB_Field("totpSecret", '', new DbStrSanitizer(45), TRUE, TRUE);
+        $this->emailSecret = new DB_Field("emailSecret", '', new DbStrSanitizer(45), TRUE, TRUE);
+        $this->backupSecret = new DB_Field("backupSecret", '', new DbStrSanitizer(45), TRUE, TRUE);
         $this->Certificate = new DB_Field("Certificate", "", new DbStrSanitizer(145), TRUE, TRUE);
         $this->Default_Page = new DB_Field("Default_Page", "", new DbStrSanitizer(100), TRUE, TRUE);
         $this->Ip = new DB_Field("Ip", "", new DbStrSanitizer(15), TRUE, TRUE);

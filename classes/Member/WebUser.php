@@ -99,6 +99,7 @@ class WebUser {
             }else if($isLocal){ //&& $isLoggedUserLocal
                 $tbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Reset Password... ', array('id'=>"chgPW", 'type'=>'button')), array('colspan'=>'2')));
                 $tbl->addBodyTr(HTMLTable::makeTd('Require password change:' . '<span class="ui-icon ui-icon-help"></span>', ['class'=>'hhk-tooltip', 'title'=>'If selected, user will be prompted to change their password next time they log in with their current password']). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetNew', 'type'=>'checkbox', 'class'=>'ignrSave'))));
+                $tbl->addBodyTr(HTMLTable::makeTd('Clear Two Factor Config:' . '<span class="ui-icon ui-icon-help"></span>', ['class'=>'hhk-tooltip', 'title'=>'If selected, any Two Factor configurations for the user will be disabled.']). HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'resetMfa', 'type'=>'checkbox', 'class'=>'ignrSave'))));
             }
         }
 
@@ -269,6 +270,11 @@ class WebUser {
             $resetNext = filter_var($parms['resetNext'], FILTER_VALIDATE_BOOLEAN);
         }
 
+        $resetMfa = '0'; // clear two factor
+        if (isset($parms["resetMfa"])) {
+            $resetMfa = filter_var($parms['resetMfa'], FILTER_VALIDATE_BOOLEAN);
+        }
+
         if ($role == '') {
             $role = WebRole::WebUser;
         }
@@ -295,6 +301,13 @@ class WebUser {
             $usersRS->Updated_By->setNewVal($admin);
             $usersRS->Default_Page->setNewVal($defaultPage);
             $usersRS->Chg_PW->setNewVal($resetNext);
+
+            if($resetMfa){
+                $usersRS->totpSecret->setNewVal('');
+                $usersRS->emailSecret->setNewVal('');
+                $usersRS->backupSecret->setNewVal('');
+
+            }
 
             $n = EditRS::update($dbh, $usersRS, array($usersRS->idName));
 

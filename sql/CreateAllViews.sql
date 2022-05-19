@@ -2925,6 +2925,11 @@ select
             THEN DATE_FORMAT((`u`.`Timestamp` + INTERVAL `sc`.`Value` DAY),'%m/%d/%Y')
         ELSE ''
     END AS `Password Expires`,
+    CASE
+		WHEN `u`.`idIdp` > 0 THEN 'N/A'
+        WHEN (`u`.`totpSecret` = '' AND `u`.`emailSecret` = '' AND `u`.`backupSecret` = '') THEN 'No'
+        ELSE 'Yes'
+	END AS `Two Factor Enabled`,
     u.Updated_By AS `Updated By`,
     DATE_FORMAT(u.Last_Updated, '%m/%d/%Y') AS `Last Updated`
 from

@@ -330,6 +330,7 @@ $(document).ready(function () {
                 parms['admin'] = userData.userName;
                 parms['vaddr'] = $('#selwVerify').val();
                 parms['resetNext'] = $('#resetNew').prop('checked');
+                parms['resetMfa'] = $('#resetMfa').prop('checked');
 
                 //$('div.ui-dialog-buttonset').css("display", "none");
                 $.post("ws_gen.php", {cmd: 'save', parms : parms}, function (rdata) {
