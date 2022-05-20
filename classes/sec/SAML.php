@@ -154,6 +154,11 @@ class SAML {
         }else{
             //search for existing name record
             $idName = $this->searchName();
+            $stmt = $this->dbh->query("Select * from w_users where idName = " . $idName . ";");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            if(count($rows) == 1){
+                $user = $rows[0];
+            }
         }
 
         $name = AbstractMember::GetDesignatedMember($this->dbh, $idName, MemBasis::Indivual);
@@ -446,7 +451,7 @@ class SAML {
                         ],
                         [
                             "name" => "hhkRole",
-                            "isRequired" => true,
+                            "isRequired" => false,
                             "attributeValue"=>[
                                 "hhkAdminUser",
                                 "hhkWebUser"
@@ -454,7 +459,7 @@ class SAML {
                         ],
                         [
                             "name" => "hhkSecurityGroups",
-                            "isRequired" => true,
+                            "isRequired" => false,
                             "attributeValue"=>$this->getSecurityGroups($this->dbh, true)
                         ]
                     ]
@@ -946,7 +951,7 @@ class SAML {
             $tbl->addBodyTr(
                 $tbl->makeTd("hhkRole", array("style"=>"text-align:right; vertical-align:top;")).
                 $tbl->makeTd(
-                    "Required - determines the user's role in HHK<br>" .
+                    "Required if \"Require IdP to manage Roles\" is true - determines the user's role in HHK<br>" .
                     "<strong>Possible Values:</strong><br>" .
                     "hhkAdminUser<br>" .
                     "hhkWebUser"
@@ -959,7 +964,7 @@ class SAML {
             $tbl->addBodyTr(
                 $tbl->makeTd("hhkSecurityGroups", array("style"=>"vertical-align:top; text-align:right")).
                 $tbl->makeTd(
-                    "Required - determines the user's Security Groups in HHKMultiple values accepted<br>" .
+                    "Required if \"Require IdP to manage Roles\" is true - determines the user's Security Groups in HHKMultiple values accepted<br>" .
                     "<strong>Possible Values:</strong><br>" .
                     implode("<br>", $this->getSecurityGroups($this->dbh, true))
                     ) .
@@ -994,6 +999,7 @@ class SAML {
                 'status'=>'d'
             );
             $errorMsg = '';
+            $defaultSecurityGroups = array();
 
             if(isset($post['idpConfig'][$this->IdpId]['name']) && $post['idpConfig'][$this->IdpId]['name'] != ''){
                 $idpConfig['name'] = filter_var($post['idpConfig'][$this->IdpId]['name'], FILTER_SANITIZE_STRING);
@@ -1097,6 +1103,10 @@ class SAML {
                     $idpConfig['IdP_ManageRoles'] = boolval(filter_var($post['idpConfig'][$this->IdpId]['IdP_ManageRoles'], FILTER_VALIDATE_BOOLEAN));
                 }
 
+                if(isset($post['idpConfig'][$this->IdpId]['defaultSecurityGroups']) && is_array($post['idpConfig'][$this->IdpId]['defaultSecurityGroups'])){
+                    $defaultSecurityGroups = $post['idpConfig'][$this->IdpId]['defaultSecurityGroups'];
+                }
+
                 if(isset($post['idpConfig'][$this->IdpId]['Status'])){
                     $idpConfig['status'] = filter_var($post['idpConfig'][$this->IdpId]['Status']);
                 }
@@ -1122,7 +1132,7 @@ class SAML {
             $wIdpRS->Status->setNewVal($idpConfig['status']);
 
             //save default security groups
-            $this->updateDefaultSecurityGroups($post['idpConfig'][$this->IdpId]['defaultSecurityGroups']);
+            $this->updateDefaultSecurityGroups($defaultSecurityGroups);
 
             if($this->IdpId == 'new'){
                 $id = EditRS::insert($this->dbh, $wIdpRS);
