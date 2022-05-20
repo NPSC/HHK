@@ -964,7 +964,7 @@ WHERE
 
                 $fin = new FinAssistance($dbh, $reg->getIdRegistration());
 
-                if ($fin->hasApplied() && $fin->getFaCategory() != '') {
+                if ($fin->isApproved() && $fin->getFaCategory() != '') {
                     $rateCategory = $fin->getFaCategory();
                 }
             }
