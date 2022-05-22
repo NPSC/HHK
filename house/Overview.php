@@ -35,7 +35,7 @@ function houseTable() {
         PDO::ATTR_EMULATE_PREPARES   => TRUE,
     ];
 
-    $obh = new PDO($dsn, 'overview', 'QfK=0}$<7[qffPIATTS%', $options);
+    $obh = new PDO($dsn, 'overview', '', $options);
     $obh->exec("SET SESSION wait_timeout = 3600;");
 
     $sites = new HTMLTable();
@@ -92,7 +92,7 @@ function DocTable() {
         PDO::ATTR_EMULATE_PREPARES   => TRUE,
     ];
 
-    $obh = new PDO($dsn, 'overview', 'QfK=0}$<7[qffPIATTS%', $options);
+    $obh = new PDO($dsn, 'overview', '', $options);
     $obh->exec("SET SESSION wait_timeout = 3600;");
 
     $sites = new HTMLTable();
