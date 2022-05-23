@@ -168,6 +168,7 @@ try {
                 ignoreTimezone: false
             }]
         });
+        $("#btnRefresh button").button();
         $("#btnRefresh").click( function () {
             $('#calendar').fullCalendar( 'refetchEvents');
         });
