@@ -569,6 +569,7 @@ BEGIN
 
     -- does idName exist in the fbx table?
     declare n int;
+    declare u int;
     declare m varchar(250);
     set n= -1;
 
@@ -583,6 +584,10 @@ BEGIN
     -- now check w_users table
     set n = 0;
     select count(*) into n from w_users where idName = id;
+    
+    -- check if username is taken
+    set u = 0;
+    select count(*) into u from w_users where User_Name = uname;
 
     if n >0  then
     -- update
@@ -599,6 +604,9 @@ BEGIN
             Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
                 values (Now(), 'audit', 'update', 'sp_reg_web_user', id, concat('w_auth: -> status=a, role_id=',roleId));
         end if;
+        
+	elseif u >0 then
+		SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = '1062', MESSAGE_TEXT='Username is already taken';
 
     else
     -- insert new record

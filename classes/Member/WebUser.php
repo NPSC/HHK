@@ -329,9 +329,11 @@ class WebUser {
             // Register the user as a Volunteer (Group_Code = v)(Verify_address = y)
             $query = "call register_web_user($id, '', '$wUserName', '$admin', 'p', '$role', '$pwHash', 'v', 1, 0);";
 
-            if ($dbh->exec($query) === false) {
+            try{
+                $dbh->exec($query);
+            }catch(\PDOException $e){
                 $err = $dbh->errorInfo();
-                return array("error", $err[0] . "; " . $err[2]);
+                return array("error"=>$err[2]);
             }
 
             UserClass::insertUserLog($dbh, "PS", $wUserName);
@@ -340,7 +342,7 @@ class WebUser {
             $reply['tempPW'] = $wUserPw;
 
         } else {
-            return array("error", "W-Users Record not found");
+            return array("error"=>"W-Users Record not found");
         }
 
 
