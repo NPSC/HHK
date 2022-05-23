@@ -168,6 +168,7 @@ try {
                 ignoreTimezone: false
             }]
         });
+        $(".fc-icon-wrap").append("\u00A0"); //fix short icon buttons
         $("#btnRefresh button").button();
         $("#btnRefresh").click( function () {
             $('#calendar').fullCalendar( 'refetchEvents');

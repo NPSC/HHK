@@ -190,6 +190,10 @@ html .fc,
 	*top: -50%;
 	}
 	
+.fc-button .ui-icon {
+	background-image: url(jqui/images/ui-icons_ffffff_256x240.png); //force white icons
+}
+	
 /* gloss effect */
 	
 .fc-state-default .fc-button-effect {

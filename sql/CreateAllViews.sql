@@ -513,7 +513,7 @@ from reservation r
     left join `gen_lookups` ib on `d`.`Income_Bracket` = `ib`.`Code` and `ib`.`Table_Name` = "Income_Bracket"
     left join `gen_lookups` ab on `d`.`Age_Bracket` = `ab`.`Code` and `ab`.`Table_Name` = "Age_Bracket"
     left join `name` ra on `hs`.`idReferralAgent` = `ra`.`idName`
-where `r`.`Status` = 'w';
+where `r`.`Status` = 'w' and `hs`.`idHospital` not in (2);
 
 -- -----------------------------------------------------
 -- View `vdonation_view`
