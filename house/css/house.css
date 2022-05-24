@@ -623,3 +623,15 @@ div.dt-buttons .dt-button:hover>span {
 #mfaEmail td {
 	border: none;
 }
+
+
+/* fullcalendar variables */
+.fc {
+	--fc-button-bg-color: #5c9ccc;
+	--fc-button-hover-bg-color: #3E6D8F;
+	--fc-button-active-bg-color: #3E6D8F;
+}
+
+.fc .fc-toolbar{
+	flex-wrap: wrap;
+}

@@ -347,7 +347,7 @@ if($uS->useOnlineReferral){
                 </ul>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>
-                    <div id="divGoto" style="position:absolute;">
+                    <div id="divGoto" class="hideMobile" style="position:absolute;">
                         <span id="spnGotoDate" >Go to Date: <input id="txtGotoDate" type="text" class="ckdate" value="" /></span>
                         <span id="pCalLoad" style="font-weight:bold;">Loading...</span>
                     </div>

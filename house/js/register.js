@@ -930,6 +930,13 @@ $(document).ready(function () {
 
     let winHieght = window.innerHeight;
 
+	//change default view on mobile + tablet
+	if(window.innerWidth < 576){ //mobile
+		defaultView = 'timeline4days';
+	}else if(window.innerWidth <= 768){ //tablet
+		defaultView = 'timeline1weeks';
+	}
+
 	let calendarEl = document.getElementById('calendar');
 	
     calendar = new FullCalendar.Calendar(calendarEl, { 
@@ -980,6 +987,13 @@ $(document).ready(function () {
 		},
 
         views: {
+        	timeline4days: {
+                type: 'resourceTimeline',
+                slotDuration: {days: 1},
+                slotLabelFormat: {weekday: 'short', day: 'numeric'},
+                duration: {days: 4 },
+                buttonText: '4 Days'
+            },
             timeline1weeks: {
                 type: 'resourceTimeline',
                 slotDuration: {days: 1},
