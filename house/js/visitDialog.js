@@ -776,8 +776,8 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
             if (data.success && data.success !== '') {
                 flagAlertMessage(data.success, 'success');
 
-                if ($('#calendar').length > 0) {
-                    $('#calendar').fullCalendar('refetchEvents');
+                if (calendar) {
+                    calendar.refetchEvents();
                 }
             }
 

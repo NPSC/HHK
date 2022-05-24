@@ -359,7 +359,8 @@ class Family {
             $patientUserData = $formUserData['patient'];
         }
 
-        if(isset($formUserData['guests'])){
+
+        if (isset($formUserData['guests'])) {
             $guestUserData = $formUserData['guests'];
         }
 
@@ -467,6 +468,7 @@ class Family {
                             $guestDemos = (isset($userData['demographics']) ? $userData['demographics'] : []);
                         }
                     }
+
                     // Demographics
                     $demoMu .= $this->getDemographicsMarkup($dbh, $role, $guestDemos);
                 }
