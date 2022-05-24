@@ -156,8 +156,8 @@ class SAML {
             $idName = $this->searchName();
             $stmt = $this->dbh->query("Select * from w_users where idName = " . $idName . ";");
             $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            if(count($rows) == 1){
-                $user = $rows[0];
+            if(count($rows) == 1 && isset($rows[0]['User_Name'])){
+                $user = UserClass::getUserCredentials($this->dbh, $rows[0]['User_Name']);
             }
         }
 
@@ -205,6 +205,8 @@ class SAML {
                         $role = WebRole::WebUser;
                         break;
                 }
+            }else if(isset($user['Role_Id']) && $user['Role_Id'] > 0){ //If IdP didn't send a role, and the existing user already has one, keep the role
+                $role = $user['Role_Id'];
             }
 
             if(!isset($user['Role_Id']) || (isset($user['idIdp']) && $user['idIdp'] != $this->IdpId)){
@@ -272,7 +274,7 @@ class SAML {
             return array("error"=>$msg);
         }
 
-        return $user;
+        return UserClass::getUserCredentials($this->dbh, $this->auth->getNameId());
     }
 
     private function parseFullName(string $fullName){
