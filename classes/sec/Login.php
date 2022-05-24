@@ -89,6 +89,7 @@ class Login {
 
         //get google API keys
         SysConfig::getCategory($dbh, $ssn, "'ga'", WebInit::SYS_CONFIG);
+        SysConfig::getCategory($dbh, $ssn, "'pr'", WebInit::SYS_CONFIG);
         SysConfig::getCategory($dbh, $ssn, "'ha'", WebInit::SYS_CONFIG);
 
         return $dbh;
@@ -120,6 +121,12 @@ class Login {
 
     public function checkPost(\PDO $dbh, $post, $defaultPage) {
 
+        $otpMsgs = [
+            'authenticator'=>'Enter the one-time <strong>Authenticator</strong> code',
+            'email'=>'Enter the one-time code <strong>emailed</strong> to you',
+            'backup'=>'Enter a one-time <strong>Backup</strong> code'
+        ];
+
         $this->validateMsg = '';
         $events = array();
 
@@ -131,20 +138,52 @@ class Login {
         }
 
 
-        if (isset($post["txtUname"]) && isset($post["challenge"])) {
+        if (isset($post["txtUname"]) && isset($post["txtPass"])) {
 
             $this->userName = strtolower(filter_var(substr($post["txtUname"], 0, 100), FILTER_SANITIZE_STRING));
 
-            $password = filter_var($post["challenge"], FILTER_SANITIZE_STRING);
+            $password = filter_var($post["txtPass"], FILTER_SANITIZE_STRING);
+
+            $otp = '';
+            if(isset($post["otp"])){
+                $otp = filter_var($post["otp"], FILTER_SANITIZE_STRING);
+            }
+
+            $otpMethod = false;
+            if(isset($post["otpMethod"])){
+                $otpMethod = filter_var($post['otpMethod'], FILTER_SANITIZE_STRING);
+            }
+
+            $showMethodMkup = false;
+            if(isset($post['showMethodMkup'])){
+                $showMethodMkup = boolval(filter_var($post['showMethodMkup'], FILTER_VALIDATE_BOOLEAN));
+            }
+
+            $rememberMe = false;
+            if(isset($post['rememberMe'])){
+                $rememberMe = boolval(filter_var($post['rememberMe'], FILTER_VALIDATE_BOOLEAN));
+            }
 
             $u = new UserClass();
 
-            if ($u->_checkLogin($dbh, $this->userName, $password, false) === FALSE) {
-
-                // Failed
-                $this->validateMsg .= $u->logMessage;
-
+            if ($u->_checkLogin($dbh, $this->userName, $password, $rememberMe, true, $otpMethod, $otp) === FALSE) {
+                if($u->logMessage == "OTPRequired"){
+                    $events['OTPRequired'] = true;
+                    $events['method'] = ($otpMethod !== '' ? $otpMethod : $u->getDefaultOtpMethod($dbh, $this->userName));
+                    $events['methodMsg'] = $otpMsgs[$events['method']];
+                    if($showMethodMkup){
+                        $events['otpMethodMkup'] = $u->getOtpMethodMarkup($dbh, $this->userName, $otpMethod);
+                    }
+                    if($u->showDifferentMethodBtn($dbh, $this->userName)){
+                        $events['showMethodBtn'] = 'true';
+                    }
+                }else{
+                    // Failed
+                    $this->validateMsg .= $u->logMessage;
+                }
             } else {
+
+                WebInit::resetSessionIdle(); //extend idle session to prevent double login
 
                 if ($u->getDefaultPage() != '') {
                     $pge = $u->getDefaultPage();
@@ -165,7 +204,7 @@ class Login {
 
     }
 
-    public function IEMsg(){
+    public static function IEMsg(){
         try {
             if ($userAgentArray = get_browser(NULL, TRUE)) {
 
@@ -183,7 +222,7 @@ class Login {
                         $alertMsg->set_txtSpanId("alrMessage");
                         $alertMsg->set_Text("Internet Explorer 11 detected<span style='margin-top: 0.5em; display: block'>HHK may not function as intended. For the best experience, consider using a supported browser such as Edge, Chrome or Firefox. If you are required to continue using IE 11, and are having trouble with HHK, please contact NPSC.</span>");
 
-                        return HTMLContainer::generateMarkup('div', $alertMsg->createMarkup(), array('style'=>'margin-top: 1em;'));
+                        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $alertMsg->createMarkup()), array("class"=>"col-xl-10")), array("class"=>"row justify-content-center mb-3"));
                     }
                 }
             }
@@ -200,19 +239,57 @@ class Login {
             $this->setUserName($uname);
         }
 
-        $tbl = new HTMLTable();
-        $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $this->validateMsg, array('id'=>'valMsg', 'style'=>'color:red;')), array('colspan'=>'2')));
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('User Name:', array('class'=>'hhk-loginLabel'))
-            .HTMLTable::makeTd(
-                    HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', 'style'=>'width: 98%')))
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg')))
-        );
-        $tbl->addBodyTr(
-            HTMLTable::makeTh('Password:', array('class'=>'hhk-loginLabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'txtPW', 'size'=>'17', 'type'=>'password')) . '<button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button>')
-            .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg')))
-        );
+        $uS = Session::getInstance();
+        if($uS->ssoLoginError){
+            $this->validateMsg = $uS->ssoLoginError;
+            unset($uS->ssoLoginError);
+        }
+
+        $valMkup = HTMLContainer::generateMarkup('div', $this->validateMsg, array('id'=>'valMsg', "class"=>"valMsg"));
+
+        $hdr = HTMLContainer::generateMarkup("div", "Login", array("class"=>"ui-widget-header ui-corner-top p-1", "id"=>"loginTitle"));
+
+        $userRow = HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("label", 'User Name:', array("class"=>"col-4 pr-0 tdlabel")) .
+            HTMLContainer::generateMarkup("div",
+                HTMLInput::generateMarkup($this->userName, array('id'=>'txtUname', "class"=>"w-100")) .
+                HTMLContainer::generateMarkup('span', '', array('id'=>'errUname', 'class'=>'hhk-logerrmsg'))
+            , array("class"=>"col-8"))
+        , array("class"=>"row mt-3 mx-0", "id"=>"userRow"));
+
+        $pwRow = HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("label", 'Password:', array("class"=>"col-4 pr-0 tdlabel")) .
+            HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("div",
+                    HTMLInput::generateMarkup("", array('id'=>'txtPW', 'type'=>"password", "class"=>"w-100")) .
+                    '<button type="button" class="showPw mx-1 ui-button" tabindex="-1">Show</button>'
+                , array("class"=>"d-flex")) .
+                HTMLContainer::generateMarkup('span', '', array('id'=>'errPW', 'class'=>'hhk-logerrmsg'))
+            , array("class"=>"col-8"))
+            , array("class"=>"row mt-3 mx-0", "id"=>"pwRow"));
+
+        $otpChoiceRow = HTMLContainer::generateMarkup("div",
+            '<p>Pick how you would like to receive your temporary code</p> <div id="otpChoices" class="my-3 col-12 center"></div>'
+            , array("class"=>"row mt-3 mx-0 d-none", "id"=>"otpChoiceRow"));
+
+        $otpRow = HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("div", "", array("class"=>"col-12 pb-3", "id"=>'otpMsg')) .
+            HTMLContainer::generateMarkup("label", 'Two Factor Code', array("class"=>"col-6 pr-0 tdlabel")) .
+            HTMLContainer::generateMarkup("div",
+                HTMLInput::generateMarkup("", array('id'=>'txtOTP', "name"=>"twofactorCode", "class"=>"w-100")) .
+                HTMLContainer::generateMarkup('span', '', array('id'=>'errOTP', 'class'=>'hhk-logerrmsg')) .
+                HTMLInput::generateMarkup(false, array('name'=>"otpMethod", 'type'=>"hidden", 'id'=>"otpMethod"))
+                , array("class"=>"col-6")) .
+            ($uS->rememberTwoFA != '' ?
+            HTMLContainer::generateMarkup("div",
+                HTMLInput::generateMarkup(false, array("type"=>"checkbox", "name"=>"rememberMe")) .
+                HTMLContainer::generateMarkup("label", "Remember this device for " . $uS->rememberTwoFA . " days", array("for"=>"rememberMe", "class"=>"ml-1"))
+                , array("class"=>"col-12 my-3"))
+                : '') .
+            HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("button", "Use a different method...", array("id"=>"changeMethod", "data-showMkup"=>"false", "type"=>"button"))
+                , array("class"=>"col-12 my-3 right"))
+            , array("class"=>"row mt-3 mx-0 d-none", "id"=>"otpRow"));
 
         //pass xf to login
         if(isset($_GET['xf'])){
@@ -221,11 +298,99 @@ class Login {
             $xfInput = '';
         }
 
-        $tbl->addBodyTr(HTMLTable::makeTd($xfInput . HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'button', 'style'=>'margin-top: 1em;')), array('colspan'=>'2', 'class'=>'hhk-loginLabel')));
+        $loginRow = HTMLContainer::generateMarkup("div",
+            $xfInput .
+            HTMLInput::generateMarkup('Login', array('id'=>'btnLogn', 'type'=>'submit', 'class'=>'ui-button'))
+         , array("class"=>"my-3", 'id'=>'loginBtnRow'));
 
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("form", $valMkup . $userRow . $pwRow . $otpChoiceRow . $otpRow . $loginRow, array("class"=>"ui-widget-content ui-corner-bottom", "id"=>"hhkLogin")), array("class"=>"ui-widget center")), array('class'=>'col-12', 'id'=>'divLoginCtls')), array("class"=>"row justify-content-center mb-3"));
 
-        return HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('style'=>'margin:25px', 'id'=>'divLoginCtls'));
+    }
 
+    public static function rssWidget($title) {
+
+        $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
+
+        $content = '<div id="hhk-loading-spinner" class="center p-3"><img src="../images/ui-anim_basic_16x16.gif"></div>';
+
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", $content, array("class"=>"ui-widget-content ui-corner-bottom")), array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3 rssWidget",));
+
+    }
+
+    public static function welcomeWidget($title, $rootURL = '..') {
+
+        $uS = Session::getInstance();
+
+        $hdr = HTMLContainer::generateMarkup("div", $title, array("class"=>"ui-widget-header ui-corner-top p-1 center"));
+
+        $content = '<div id="hhk-loading-spinner" class="center p-3 ui-widget-content ui-corner-bottom"><img src="' . $rootURL . '/images/ui-anim_basic_16x16.gif"></div>';
+        $content .= '<iframe src="' . $uS->loginFeedURL . '" width="100%" height="320px" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" id="welcomeWidget" class="d-none ui-widget-content ui-corner-bottom"></iframe>';
+
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $hdr . $content, array("class"=>"ui-widget")), array('class'=>'col-12')), array("class"=>"row justify-content-center mb-3 welcomeWidgetContainer"));
+
+    }
+
+    public static function getRssData($feedurl) {
+        $content = @file_get_contents($feedurl);
+        if($content !== false){
+            header("Content-Type: text/xml");
+            echo $content;
+        }else{
+            http_response_code(503);
+            echo "Unable to Fetch data";
+        }
+        exit;
+    }
+
+    public static function getLinksMarkup(Session $uS, \PDO $dbh){
+        $tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
+        $trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
+        $extLinkIcon = "<span class='ui-icon ui-icon-extlink'></span>";
+        $hdr = HTMLContainer::generateMarkup("div", "Useful Links", array("class"=>"ui-widget-header ui-corner-top p-1"));
+
+        $linkMkup = '';
+        if ($tutorialSiteURL != '' || $trainingSiteURL != '') {
+            if ($tutorialSiteURL != '') {
+                $linkMkup .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'User Demonstration Videos' . $extLinkIcon, array('href'=>$tutorialSiteURL, 'target'=>'_blank', "class"=>"ui-button ui-corner-all")));
+            }
+
+            if ($trainingSiteURL != '') {
+                $linkMkup .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'HHK Training Playground' . $extLinkIcon, array('href'=>$trainingSiteURL, 'target'=>'_blank', "class"=>"ui-button ui-corner-all")), array('class'=>"mt-3"));
+            }
+            $linkMkup = HTMLContainer::generateMarkup("div", $hdr . HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("ul", $linkMkup, array("class"=>"list-style-none")), array("class"=>"ui-widget-content ui-corner-bottom p-3 smaller")), array("class"=>"ui-widget center"));
+        }
+
+        return $linkMkup;
+    }
+
+    public static function getNewsletterMarkup(){
+
+        $uS = Session::getInstance();
+
+        if($uS->NewsletterURL){
+
+            $hdr = HTMLContainer::generateMarkup("div", "Newsletter", array("class"=>"ui-widget-header ui-corner-top p-1"));
+
+            $newsletterIframe = HTMLContainer::generateMarkup("p", "Get the latest updates from NPSC", array("class"=>"mb-3")) . HTMLContainer::generateMarkup("button", "Sign Up", array("id"=>"newsletteriframe", "href"=>$uS->NewsletterURL, "data-title"=>"Newsletter Sign Up", "class"=>"ui-button ui-corner-all"));
+
+            $content = HTMLContainer::generateMarkup("div", $newsletterIframe, array("class"=>"ui-widget-content ui-corner-bottom p-3"));
+
+            return HTMLContainer::generateMarkup("div", $hdr . $content, array("class"=>"ui-widget center"));
+        }else{
+            return "";
+        }
+    }
+
+    public static function getFooterMarkup(){
+        $copyYear = date('Y');
+
+        return HTMLContainer::generateMarkup("div",
+            HTMLContainer::generateMarkup("div",
+                "<hr>" .
+                HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("a", "", array("href"=>"https://nonprofitsoftwarecorp.org", "target"=>"_blank", "class"=>"nplogo"))) .
+                HTMLContainer::generateMarkup("div", "&copy; " . $copyYear . " Non Profit Software Corporation", array("class"=>"copyright"))
+            , array("class"=>"col-xl-10"))
+        , array("class"=>"row justify-content-md-center mt-5 mb-3"));
     }
 
     public function generateCSRF(){

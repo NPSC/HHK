@@ -11,6 +11,7 @@ use HHK\Tables\House\Desig_HolidaysRS;
 use HHK\sec\{Session, SysConfig};
 use HHK\US_Holidays;
 use HHK\sec\Labels;
+use HHK\sec\SecurityComponent;
 
 /**
  * SiteConfig.php
@@ -451,6 +452,9 @@ class SiteConfig {
 
         if(count($cats) > 0){
             $uS = Session::getInstance();
+            if(!is_array($uS->labels)){
+                Labels::initLabels($dbh);
+            }
             foreach ($uS->labels as $section => $name) {
                 if (($onlySection == '' || $onlySection == $section)) {
 
@@ -495,7 +499,7 @@ class SiteConfig {
         return $tbl;
     }
 
-    public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL) {
+    public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL, $category = NULL, array $hideCats = array()) {
 
         $uS = Session::getInstance();
 
@@ -503,7 +507,19 @@ class SiteConfig {
         $sctbl = new HTMLTable();
         $cat = '';
 
-        $stmt = $dbh->query("select s.*, g.`Description` as `Cat` from sys_config s left join gen_lookups g on s.Category = g.Code and g.Table_Name = 'Sys_Config_Category' where s.Show = 1 order by g.`Order`, s.`Key`");
+        $categorySql = '';
+        if($category !== NULL){
+            $categorySql = "and `s`.`Category` = '" . $category . "' ";
+        }
+
+        if(count($hideCats) > 0){
+            foreach($hideCats as $i=>$cat){
+                $hideCats[$i] = "'" . $cat . "'";
+            }
+            $categorySql = "and `s`.`Category` NOT IN (" . implode(",", $hideCats) . ") ";
+        }
+
+        $stmt = $dbh->query("select s.*, g.`Description` as `Cat` from sys_config s left join gen_lookups g on s.Category = g.Code and g.Table_Name = 'Sys_Config_Category' where s.Show = 1 " . $categorySql . "order by g.`Order`, s.`Key`");
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -559,10 +575,14 @@ class SiteConfig {
 
         }
 
-        // site.cfg entries
-        $tbl = self::createCliteMarkup($config, $titles);
+        if(SecurityComponent::is_TheAdmin() && $category == NULL){
+            // site.cfg entries
+            $tblMkup = self::createCliteMarkup($config, $titles)->generateMarkup();
+        }else{
+            $tblMkup = '';
+        }
 
-        return $sctbl->generateMarkup() . $tbl->generateMarkup();
+        return $sctbl->generateMarkup() . $tblMkup;
     }
 
     public static function saveConfig($dbh, Config_Lite $config, array $post, $userName = '') {

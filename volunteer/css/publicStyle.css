@@ -346,3 +346,22 @@ li.hhk-myMenuTop {
     margin: 0 4px;
 }
 
+*:focus {
+outline: none;
+}
+
+#TwoFactorHelp p {
+	margin-bottom: 1em;
+}
+
+#TwoFactorHelp li {
+	margin-bottom: 0.5em;
+}
+
+/* Add flexbox support */
+.hhk-flex {
+	display: flex;
+	align-items: flex-start;
+}
+
+

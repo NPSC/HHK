@@ -1,0 +1,116 @@
+* {
+    margin: 0px;
+    padding: 0px;
+}
+body {
+	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
+}
+
+.nplogo {
+      background-image: url("../images/NPSClogoSm.png");
+      background-repeat: no-repeat;
+      width: 258px;
+      height: 55px;
+      margin-top:5px;
+      display:inline-block;
+}
+.copyright {
+	text-align:right;font-size: smaller; margin-top:5px;margin-right:.3em;
+}
+.pageHeader {
+    width: 100%;
+    background-color: #63A0CE;
+    color: white;
+    position:sticky;
+    margin-bottom:0.5em;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+}
+.build {
+	text-align:right;font-size: .6em;margin-right:5px;
+}
+.center {
+	text-align:center;
+}
+
+.right {
+	text-align: right;
+}
+
+.smaller {
+	font-size:smaller !important;
+}
+
+#changeMethod {
+	font-size:0.7em !important;
+}
+
+.showPw {
+	font-size: 0.75em !important;
+}
+
+.ui-icon-extlink {
+	margin-left: 0.3em;
+}
+
+#OTPMsg {
+	color: red;
+}
+
+.list-style-none {
+	list-style: none;
+}
+
+.w-100 {
+	width: 100%;
+}
+
+div.valMsg{
+	color: red;
+	text-align: center;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.siteLinks ul {
+	margin: 20px; line-height: 1.9em; list-style: none;
+}
+table {
+    border-collapse:collapse;
+}
+
+.hhk-tdbox td, .hhk-tdbox th {
+    border: 1px solid #D4CCB0;
+    vertical-align: middle;
+    padding: 5px 7px;
+}
+
+.loginErrorTip {
+	max-width: min-content !important;
+	min-width: 300px;
+	-webkit-box-shadow: 0px 0px 12px #aaa;
+    box-shadow: 0px 0px 12px #aaa;
+}
+
+.hhk-help {
+	border: 1px solid #dfd9c3;
+    border-radius: 1em;
+    background-color: #fff;
+}
+
+#newsletterDialog {
+	background-color: #63A0CE;
+}
+
+.rssWidget .item {
+	border-bottom:1px solid #a6c9e2;
+}
+
+.welcomeWidgetContainer #hhk-loading-spinner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 320px;
+	width: 100%;
+}

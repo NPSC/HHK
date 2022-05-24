@@ -10,6 +10,7 @@ use HHK\SysConst\CodeVersion;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\SecurityComponent;
 use HHK\sec\SysConfig;
+use HHK\sec\SAML;
 
 /**
  * Index.php
@@ -24,6 +25,8 @@ include ("homeIncludes.php");
 // get session instance
 $uS = Session::getInstance();
 
+//assume logout
+//$uS->destroy(TRUE);
 
 // Logout command?
 if (isset($_GET["log"])) {
@@ -37,7 +40,6 @@ if (isset($_GET["log"])) {
         exit();
     }
 }
-
 
 // Access the login object, set session vars,
 try {
@@ -73,15 +75,11 @@ if (isset($_POST['txtUname'])) {
 $labels = Labels::getLabels();
 
 // disclamer
-$disclaimer = $uS->Disclaimer;
-
+$disclaimer = '';
 if ($uS->mode != Mode::Live) {
-    $disclaimer = 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA compliant and not intended to be used for storing Protected Health Information.';
+    $disclaimer = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", 'Welcome to this demonstration version of Hospitality HouseKeeper! Do NOT use real guest or patient names.  This demonstration web site is not HIPAA compliant and not intended to be used for storing Protected Health Information.', array("class"=>"col-xl-10")), array("class"=>"row justify-content-center mb-3"));
 }
 
-
-$tutorialSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Tutorial_URL');
-$trainingSiteURL = SysConfig::getKeyValue($dbh, 'sys_config', 'Training_URL');
 $build = 'Build:' . CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
 $icons = array();
@@ -89,35 +87,27 @@ $icons = array();
 foreach ($uS->siteList as $r) {
 
     if ($r["Site_Code"] != "r") {
-        $icons[$r["Site_Code"]] = "<span class='" . $r["Class"] . "' style='float: left; margin-left:.3em;margin-top:2px;'></span>";
+        $icons[$r["Site_Code"]] = "<span class='" . $r["Class"] . " mr-1'></span>";
     }
 }
 
-$siteName = HTMLContainer::generateMarkup('h3', $labels->getString('MemberType', 'guest', 'Guest').' Tracking Site' . $icons[$page->get_Site_Code()]);
-
-$extLinkIcon = "<span class='ui-icon ui-icon-extlink' style='float: right; margin-right:.3em;margin-top:2px;'></span>";
-
-$linkMkup = '';
-
-if ($tutorialSiteURL != '') {
-    $linkMkup .=
-            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'User Demonstration Videos' . $extLinkIcon, array('href'=>$tutorialSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:25px;float:left;"));
-}
-
-if ($trainingSiteURL != '') {
-    $linkMkup .=
-            HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('a', 'HHK Training Playground' . $extLinkIcon, array('href'=>$trainingSiteURL, 'target'=>'_blank')), array('style'=>"margin-top:25px;clear:left;float:left"));
-}
-
-$copyYear = date('Y');
+$siteName = HTMLContainer::generateMarkup('h2', $icons[$page->get_Site_Code()] . $labels->getString('MemberType', 'guest', 'Guest').' Tracking Site', array("class"=>"center"));
 
 $loginMkup = $login->loginForm();
+$samlMkup = SAML::getIdpMarkup($dbh);
 
-$cspURL = $page->getHostName();
+$announcementWidget = $login->welcomeWidget("Tip of the Week");
+$linkMkup = $login->getLinksMarkup($uS, $dbh);
+$newsletterMkup = $login->getNewsletterMarkup();
+$row2 = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', $linkMkup, array("class"=>"col-lg-7 mb-3")) . HTMLContainer::generateMarkup("div", $newsletterMkup, array("class"=>"col-lg-5")),array("class"=>"row justify-content-center mb-3"));
+
+$footerMkup = $login->getFooterMarkup();
+
+$cspURL = $page->getHostName() . " nonprofitsoftwarecorp.org";
 
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL 'unsafe-inline';"); // IE 10+
+header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com unsafe-inline;"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com unsafe-inline;"); // IE 10+
 
 if (SecurityComponent::isHTTPS()) {
     header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
@@ -128,41 +118,48 @@ if (SecurityComponent::isHTTPS()) {
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $uS->siteName; ?></title>
         <?php echo JQ_UI_CSS; ?>
+        <?php echo ROOT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo LOGIN_JS; ?>"></script>
+
     </head>
     <body <?php if ($uS->testVersion) { echo "class='testbody'"; } ?>>
         <div id="page">
-            <div class='pageSpacer'>
-                <h2 style="color:white"><?php echo $uS->siteName; ?></h2>
+            <div class='pageHeader'>
+                <h2 class="px-3 py-2"><?php echo $uS->siteName; ?></h2>
             </div>
-            <div style="float:right;font-size: .6em;margin-right:5px;"><?php echo $build; ?></div>
-            <div id="contentDiv">
-                    <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
-                    <div style="clear:left; margin-bottom: 20px;"></div>
-                <div id="formlogin" style="float:left;" >
-                    <div><?php echo $siteName; ?>
-                        <div style="margin-left:6px; width: 65%;">
-                        	<?php echo $disclaimer . $login->IEMsg(); ?>
+            <div class="build"><?php echo $build; ?></div>
+            <div id="contentDiv" class="container mx-auto">
+            	<div class="row justify-content-center mb-3">
+                	<div class="col-xl-4 col-md-6 my-auto">
+                        <a href="https://nonprofitsoftwarecorp.org/products-services/hospitality-housekeeper-software/" target="_blank"><img width="250" alt='Hospitality HouseKeeper Logo' src="../images/hhkLogo.png"></a>
+                    </div>
+                    <div class="col-md-6 my-auto">
+                    	<div>
+                        	<?php echo $siteName; ?>
                         </div>
                     </div>
-                    <?php echo $loginMkup; ?>
                 </div>
-                <div style="clear:left;">
-                    <?php echo $linkMkup; ?>
+               	<?php echo $disclaimer; ?>
+                <?php echo $login->IEMsg(); ?>
+                <div class="row justify-content-center">
+					<div class="col-xl-4 col-md-6">
+                        <?php echo $samlMkup . $loginMkup; ?>
+                    </div>
+                    <div class="d-none d-md-block col-md-6">
+						<?php echo $announcementWidget . $row2; ?>
+					</div>
                 </div>
-                <div style="margin-top: 90px;width:500px;">
-                    <hr>
-                    <div><a href ="https://nonprofitsoftwarecorp.org" class="nplogo"></a></div>
-                    <div style="float:right;font-size: smaller; margin-top:5px;margin-right:.3em;">&copy; <?php echo $copyYear; ?> Non Profit Software Corporation</div>
-                </div>
-            </div>
+                <?php echo $footerMkup; ?>
+        	</div>
         </div>
     </body>
 </html>

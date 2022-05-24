@@ -1966,7 +1966,7 @@ CREATE TABLE if not exists `street_suffix` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `sys_config` (
   `Key` varchar(25) NOT NULL,
-  `Value` varchar(500) NOT NULL DEFAULT '',
+  `Value` varchar(5000) NOT NULL DEFAULT '',
   `Type` varchar(15) NOT NULL DEFAULT '',
   `Category` varchar(5) NOT NULL DEFAULT '',
   `Header` VARCHAR(5) NOT NULL DEFAULT '',
@@ -2238,6 +2238,38 @@ CREATE TABLE if not exists `w_group_ip` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB;
 
+
+-- -----------------------------------------------------
+-- Table `w_idp`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `w_idp` (
+	`idIdp` INT(11) NOT NULL AUTO_INCREMENT,
+    `Name` VARCHAR(100) NOT NULL,
+    `LogoPath` VARCHAR(500),
+    `SSO_URL` VARCHAR(500),
+    `IdP_EntityId` VARCHAR(500),
+    `IdP_SigningCert` BLOB,
+    `IdP_SigningCert2` BLOB,
+    `IdP_EncryptionCert` BLOB,
+    `IdP_EncryptionCert2` BLOB,
+    `expectIdPSigning` BOOL DEFAULT 1,
+    `expectIdPEncryption` BOOL DEFAULT 1,
+    `enableSPSigning` BOOL DEFAULT 1,
+    `IdP_ManageRoles` BOOL DEFAULT 1,
+    `Status` VARCHAR(2) NOT NULL DEFAULT 'a',
+    PRIMARY KEY (`idIdp`)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `w_idp_secgroups`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `w_idp_secgroups` (
+	`idIdpSecGroup` INT(11) NOT NULL AUTO_INCREMENT,
+    `idIdp` INT(11) NOT NULL DEFAULT 0,
+    `idSecGroup` VARCHAR(5) NOT NULL DEFAULT '',
+    PRIMARY KEY (`idIdpSecGroup`)
+) ENGINE=InnoDB;
+
 -- -----------------------------------------------------
 -- Table `w_user_log`
 -- -----------------------------------------------------
@@ -2272,6 +2304,11 @@ CREATE TABLE if not exists `w_users` (
   `Enc_PW` varchar(100) NOT NULL DEFAULT '',
   `PW_Change_Date` DATETIME DEFAULT NULL,
   `Chg_PW` BOOL NOT NULL DEFAULT true,
+  `idIdp` int(11) NOT NULL DEFAULT 0,
+  `default2Factor` VARCHAR(4) NULL,
+  `totpSecret` VARCHAR(45) NOT NULL DEFAULT '',
+  `emailSecret` VARCHAR(45) NOT NULL DEFAULT '',
+  `backupSecret` VARCHAR(45) NOT NULL DEFAULT '',
   `pass_rules` BOOL NOT NULL DEFAULT true,
   `PW_Updated_By` VARCHAR(45) NOT NULL DEFAULT '',
   `Status` varchar(4) NOT NULL DEFAULT '',
@@ -2289,7 +2326,16 @@ CREATE TABLE if not exists `w_users` (
   PRIMARY KEY (`User_Name`)
 ) ENGINE=InnoDB;
 
-
+CREATE TABLE if not exists `w_user_tokens` (
+	`idToken` INT(11) NOT NULL AUTO_INCREMENT,
+	`idName` INT(11) NOT NULL,
+    `Token` VARCHAR(100) NOT NULL DEFAULT '',
+    `Expires` INT(11) NOT NULL DEFAULT 0,
+    `IP_Address` VARCHAR(45) NOT NULL DEFAULT '',
+    `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`idToken`)
+) ENGINE=InnoDB;
+    
 
 -- -----------------------------------------------------
 -- Table `web_sites`

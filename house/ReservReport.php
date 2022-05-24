@@ -456,6 +456,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>

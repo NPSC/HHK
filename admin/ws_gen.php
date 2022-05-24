@@ -11,6 +11,7 @@ use HHK\Exception\RuntimeException;
 use HHK\House\Report\GuestReport;
 use HHK\Member\WebUser;
 use HHK\Member\Relation\AbstractRelation;
+use HHK\sec\SAML;
 use HHK\Neon\ConfigureNeon;
 
 /**
@@ -280,6 +281,10 @@ try {
         default:
             $events = array("error" => "Bad Command");
     }
+
+} catch (\ErrorException $ex) {
+
+    $events = array("error" => "<strong>Error</strong> " . $ex->getMessage());
 } catch (PDOException $ex) {
 
     $events = array("error" => "Database Error" . $ex->getMessage());

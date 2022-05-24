@@ -175,7 +175,7 @@ class SecurityComponent {
 
             $this->hhkSiteDir = $parts[count($parts) - 1] . '/';
 
-            if ($this->hhkSiteDir != 'admin/' && $this->hhkSiteDir != 'house/' && $this->hhkSiteDir != 'volunteer/') {
+            if ($this->hhkSiteDir != 'admin/' && $this->hhkSiteDir != 'house/' && $this->hhkSiteDir != 'volunteer/' && $this->hhkSiteDir != 'auth/') {
                 // assume the root path.
                 $this->hhkSiteDir = '/';
                 $this->rootPath = $this->getPath();

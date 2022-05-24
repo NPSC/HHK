@@ -158,11 +158,10 @@ class WebInit {
 
     }
 
-    public function reloadGenLkUps($uS) {
-
+    public static function loadNameLookups(\PDO $dbh, $uS){
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Address_Purpose','Email_Purpose','rel_type', 'NoReturnReason', 'Member_Basis','mem_status','Name_Prefix','Name_Suffix','Phone_Type', 'Pay_Type', 'Salutation', 'Role_Codes', 'Referral_Form_Status') order by `Table_Name`, `Code`;";
-        $stmt = $this->dbh->query($query);
+        $stmt = $dbh->query($query);
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $nameLookups = array();
@@ -172,11 +171,11 @@ class WebInit {
         }
 
         // Demographics
-        $demos = readGenLookupsPDO($this->dbh, 'Demographics', 'Order');
+        $demos = readGenLookupsPDO($dbh, 'Demographics', 'Order');
 
         foreach ($demos as $d) {
 
-            $entries = readGenLookupsPDO($this->dbh, $d[0], 'Order');
+            $entries = readGenLookupsPDO($dbh, $d[0], 'Order');
 
             foreach ($entries as $e) {
                 $nameLookups[$d[0]][$e['Code']] = array($e['Code'],$e['Description'],$e['Substitute']);
@@ -184,6 +183,12 @@ class WebInit {
         }
 
         $uS->nameLookups = $nameLookups;
+
+    }
+
+    public function reloadGenLkUps($uS) {
+
+        $this->loadNameLookups($this->dbh, $uS);
 
         SysConfig::getCategory($this->dbh, $uS, "'a'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'d'", webInit::SYS_CONFIG);
@@ -224,7 +229,7 @@ class WebInit {
         SysConfig::getCategory($this->dbh, $uS, "'g'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'p'", webInit::SYS_CONFIG);
         SysConfig::getCategory($this->dbh, $uS, "'ga'", webInit::SYS_CONFIG);
-        
+
         $query = "select `Table_Name`, `Code`, `Description`, `Substitute` from `gen_lookups`
             where `Table_Name` in ('Patient_Rel_Type', 'Key_Deposit_Code', 'Room_Category', 'Static_Room_Rate', 'Room_Rate_Adjustment', 'Room_Type', 'Resource_Type', 'Resource_Status', 'Room_Status', 'Visit_Status')
             UNION select `Category` as `Table_Name`, `Code`, `Title` as `Description`, `Other` as `Substitute` from `lookups` where `Show` = 'y'
@@ -237,16 +242,16 @@ class WebInit {
         foreach ($rows as $r) {
             $nameLookups[$r['Table_Name']][$r['Code']] = array($r['Code'],$r['Description'],$r['Substitute']);
         }
-        
+
         //get hospitals with status
         $query = "select idHospital, IF(`status`='r', concat(`Title`, ' (Retired)'), `Title`) as `Title`, `Type`, `Status`, `Reservation_Style`, `Stay_Style` from hospital where `Status` in ('a','r') order by `Status` asc, `Title` asc";
         $stmt = $this->dbh->query($query);
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-        
+
         foreach ($rows as $r) {
         	$nameLookups["Hospitals"][$r['idHospital']] = array($r['idHospital'],$r['Title'],$r['Type'], $r['Status'], $r['Reservation_Style'], $r['Stay_Style']);
         }
-        
+
         $uS->guestLookups = $nameLookups;
 
         return $uS->guestLookups;
@@ -288,7 +293,17 @@ class WebInit {
         return $uS->volLookups;
 
     }
-    
+
+    public static function resetSessionIdle():void
+    {
+        $uS = Session::getInstance();
+        if(isset($uS->SessionTimeout)){
+            $uS->timeout_idle = time() + ($uS->SessionTimeout * 60);
+        }else{
+            $uS->timeout_idle = time() + (30 * 60);
+        }
+    }
+
 }
 
 ?>

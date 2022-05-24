@@ -3,6 +3,7 @@ $(document).ready(function () {
     var tabIndex = $('#tabIndex').val();
 	var servFile = $('#wsServFile').val();
     var tbs;
+    var authTabs;
     var logTable = [];
     var dateFormat = $('#dateFormat').val();
     var notyMsg = $('#notymsg').val();
@@ -149,7 +150,7 @@ $(document).ready(function () {
 
 $('#logsTabDiv').tabs("option", "active", 1);
 
-$('#btnreset, #btnSiteCnf, #btnLogs, #btnSaveSQL, #btnUpdate, #btnlblreset, #btnLabelCnf, #btnPay, #btnZipGo, #zipfile, #btnExtCnf').button();
+$("input[type=submit], input[type=reset]").button();
 $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
         $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');
@@ -162,4 +163,57 @@ $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
 tbs.tabs("option", "active", tabIndex);
 $('#tabs').show();
+
+	//authentication tab
+	authTabs = $('#authTabs').tabs();
+	authTabs.tabs("option", "active", 0);
+    $('#authTabs').show();
+    
+    $(document).on("submit", "form.authForm", function(e){
+    	e.preventDefault();
+    	$this = $(this);
+    	$submitbtn = $(this).find("input[type=submit]")
+    	$submitbtn.prop("disabled", true);
+    	data = new FormData($(this)[0]);
+    	data.append('saveIdP','true');
+    	
+    	$.ajax({
+        	type: 'POST',
+            enctype: 'multipart/form-data',
+            url: 'Configure.php',
+            data: data,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            cache: false,
+            timeout: 800000,
+            success: function (data) {
+            	if(data.success){
+	            	new Noty({
+						type : 'success',
+						text : data.success
+					}).show();
+				}
+				if(data.error){
+	            	new Noty({
+						type : 'error',
+						text : data.error
+					}).show();
+				}
+				if(data.idpMkup && data.idpName){
+					$this.empty().html(data.idpMkup);
+					$("#authTabs ul li.ui-tabs-active a").text(data.idpName);
+				}
+				
+				$submitbtn.prop("disabled", false);
+            },
+            error: function (e) {
+            	new Noty({
+					type : 'error',
+					text : e.responseText
+				}).show();
+                $submitbtn.prop("disabled", false);
+            }
+        });
+    });
 });

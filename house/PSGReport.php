@@ -1204,7 +1204,9 @@ if ($uS->UseIncidentReports) {
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
+        <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
+		
         <style>.hhk-rowseparater { border-top: 2px #0074c7 solid !important; }</style>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>

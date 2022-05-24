@@ -5,6 +5,24 @@ UPDATE `gen_lookups` SET `Description` = "Gender Identity" where `Table_Name` = 
 
 DELETE FROM `sys_config` where `Key` = "showGuestsStayingReg";
 
+INSERT IGNORE INTO `sys_config` VALUES
+('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication', '', 1);
+
+ALTER TABLE `w_users`
+ADD COLUMN IF NOT EXISTS `idIdp` int(11) NOT NULL DEFAULT 0 AFTER `Chg_PW`;
+
+ALTER TABLE `w_users` 
+ADD COLUMN IF NOT EXISTS `totpSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `idIdp`;
+
+ALTER TABLE `w_users` 
+ADD COLUMN IF NOT EXISTS `emailSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `totpSecret`;
+
+ALTER TABLE `w_users` 
+ADD COLUMN IF NOT EXISTS `backupSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `emailSecret`;
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('rememberTwoFA','30','lu','pr','','Number of days users can save a device and skip two factor authentication','dayIncrements',1);
+
 ALTER TABLE `insurance` 
 	ADD COLUMN IF NOT EXISTS `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`;
 ALTER TABLE `insurance` 
@@ -36,6 +54,8 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0');
 
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('loginFeedURL', 'https://nonprofitsoftwarecorp.org/hhk-tips-latest', 'url', 'a', '', 'Feed for login pages', '','0');
 
 -- Neon 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
@@ -53,3 +73,6 @@ CHANGE COLUMN `Gender` `Gender` VARCHAR(5) NOT NULL DEFAULT '' ;
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('searchMRN', 'true', 'b', 'hf', '', 'Allow search by MRN', '','1');
+
+INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
+('NewsletterURL', 'https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe/post?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa', 'url', 'a','', 'Newsletter iframe URL', '', 0);

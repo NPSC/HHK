@@ -4,6 +4,12 @@ namespace HHK\sec;
 use HHK\SysConst\WebRole;
 use HHK\Tables\WebSec\{W_auth_ipRS, W_user_answersRS};
 use HHK\Tables\EditRS;
+use HHK\sec\MFA\GoogleAuthenticator;
+use HHK\sec\MFA\Email;
+use HHK\sec\MFA\Backup;
+use HHK\HTMLControls\HTMLContainer;
+use HHK\sec\MFA\Remember;
+
 
 /**
  * UserClass.php
@@ -28,11 +34,13 @@ class UserClass
 
     const Lockout = 'PL';
 
+    const OTPSecChanged = 'OTPC';
+
     const Expired = 'E';
 
     const Login_Fail = 'LF';
 
-    public function _checkLogin(\PDO $dbh, $username, $password, $remember = FALSE)
+    public function _checkLogin(\PDO $dbh, $username, $password, $rememberMe = FALSE, $checkOTP = true, $otpMethod = '', $otp = '')
     {
         $ssn = Session::getInstance();
 
@@ -41,61 +49,117 @@ class UserClass
             return FALSE;
         }
 
-        $this->incrementTries();
-
         $r = self::getUserCredentials($dbh, $username);
 
-        // disable user if inactive || force password reset
-        if ($r != NULL) {
-            $r = self::disableInactiveUser($dbh, $r); // returns updated user array
-            $r = self::setPassExpired($dbh, $r);
-        }
-
-        //check PW
-        $match = false;
-        //new method
-        if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
-            $match = true;
-        }else if ($r != NULL && $r['Enc_PW'] == md5($password)) { //old method
-            $match = true;
-        }
-
-        if ($match && $r['Status'] == 'a') {
-
-            // Regenerate session ID to prevent session fixation attacks
-            $ssn = Session::getInstance();
-            $ssn->regenSessionId();
-
-            //reset login tries
-            $this->resetTries();
-
-            // Get magic PC cookie
-            $housePc = FALSE;
-            if (filter_has_var(INPUT_COOKIE, 'housepc')) {
-
-                $remoteIp = self::getRemoteIp();
-
-                if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
-                    $housePc = TRUE;
-                }
+        if(isset($r['idIdp']) && $r['idIdp'] > 0) { //is SSO user, kick out
+            $this->logMessage = "Account is managed by " . $r["authProvider"] . ". Please login with " . $r["authProvider"] . ".";
+        }else{ //local authentication
+            // disable user if inactive || force password reset
+            if ($r != NULL) {
+                $r = self::disableInactiveUser($dbh, $r); // returns updated user array
+                $r = self::setPassExpired($dbh, $r);
             }
 
-            $this->setSession($dbh, $ssn, $r);
+            //check PW
+            $match = false;
+            //new method
+            if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
+                $match = true;
+            }else if ($r != NULL && $r['Enc_PW'] == md5($password)) { //old method
+                $match = true;
+            }
 
-            $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+            if ($match && $r['Status'] == 'a') {
+                $success = false;
 
-            $this->defaultPage = $r['Default_Page'];
+                $rememberObj = new Remember($r);
 
-            return TRUE;
+                $OTPRequired = ($rememberObj->verifyToken($dbh) == false && $this->hasTOTP($dbh, $username));
 
-        } else if ($match && $r['Status'] == 'd') { // is user disabled?
-            $this->logMessage = "Account disabled, please contact your administrator. ";
-        } else {
-            $this->logMessage = "Bad username or password.  ";
-            $this->insertUserLog($dbh, UserClass::Login_Fail, $username);
+                //if OTP is required
+                if($OTPRequired == false || $checkOTP == false){
+                    $success = true;
+                }else if($OTPRequired && $otp == ''){
+                    $this->logMessage = "OTPRequired";
+                    if($otpMethod == 'email' || $this->getDefaultOtpMethod($dbh, $username) == 'email'){
+                        try{
+                            $mfaObj = new Email($r);
+                            $mfaObj->sendCode($dbh);
+                        }catch(\Exception $e){
+                            $this->logMessage = "Error sending Two factor verification code: " . $e->getMessage();
+                        }
+                    }
+                    return FALSE;
+                }else if($OTPRequired && $otp != '' && $otpMethod){
+                    switch($otpMethod) {
+                        case "authenticator":
+                            $mfaObj = new GoogleAuthenticator($r);
+                            break;
+                        case "email":
+                            $mfaObj = new Email($r);
+                            break;
+                        case "backup":
+                            $mfaObj = new Backup($r);
+                            break;
+                        default:
+                            $success = false;
+                    }
+
+                    if($mfaObj->verifyCode($dbh, $otp) == true){
+                        if($rememberMe){
+                            $rememberObj->rememberMe($dbh);
+                        }
+
+                        $success = true;
+                    }else{
+                        $success = false;
+    				}
+    			}
+
+                if($success){
+                    return $this->doLogin($dbh, $r);
+                }else{
+                    $this->incrementTries();
+                    $this->logMessage = "Two Step Code invalid";
+                }
+            } else if ($match && $r['Status'] == 'd') { // is user disabled?
+                $this->logMessage = "Account disabled, please contact your administrator. ";
+            } else {
+                $this->incrementTries();
+                $this->logMessage = "Bad username or password.  ";
+                $this->insertUserLog($dbh, UserClass::Login_Fail, $username);
+            }
         }
 
         return FALSE;
+    }
+
+    public function doLogin(\PDO $dbh, array $r){
+        // Regenerate session ID to prevent session fixation attacks
+        $ssn = Session::getInstance();
+        $ssn->regenSessionId();
+
+        //reset login tries
+        $this->resetTries();
+
+        // Get magic PC cookie
+        $housePc = FALSE;
+        if (filter_has_var(INPUT_COOKIE, 'housepc')) {
+
+            $remoteIp = self::getRemoteIp();
+
+            if (decryptMessage(filter_var($_COOKIE['housepc'], FILTER_SANITIZE_STRING)) == $remoteIp . 'eric') {
+                $housePc = TRUE;
+            }
+        }
+
+        $this->setSession($dbh, $ssn, $r);
+
+        $ssn->groupcodes = self::setSecurityGroups($dbh, $r['idName'], $housePc);
+
+        $this->defaultPage = $r['Default_Page'];
+
+        return TRUE;
     }
 
     public function getDefaultPage($site = 'h')
@@ -284,7 +348,7 @@ class UserClass
         }
 
         // Are we legit?
-        $success = $this->_checkLogin($dbh, $ssn->username, $oldPw);
+        $success = $this->_checkLogin($dbh, $ssn->username, $oldPw, false, false);
 
         if ($success) {
             $query = "update w_users set PW_Change_Date = now(), PW_Updated_By = :uname, Enc_PW = :newPw, Chg_PW = :reset where idName = :id and Status='a';";
@@ -367,15 +431,84 @@ class UserClass
     public static function isPassExpired(\PDO $dbh, $uS)
     {
         $u = self::getUserCredentials($dbh, $uS->username);
-        if (isset($u['Chg_PW']) && $u['Chg_PW']) {
+        if (isset($u['Chg_PW']) && $u['Chg_PW']  && $u['idIdp'] == '0') {
             return true;
         }
 
         return false;
     }
 
+    /**
+     * Does $username have two factor verification enabled?
+     *
+     * @param \PDO $dbh
+     * @param string $username
+     * @return bool
+     */
+    public static function hasTOTP(\PDO $dbh, string $username) : bool
+    {
+        $u = self::getUserCredentials($dbh, $username);
+
+        if($u['totpSecret'] !== '' || $u['emailSecret'] !== '') {
+            return true;
+        }
+
+        return false;
+    }
+
+    public static function showDifferentMethodBtn(\PDO $dbh, string $username) : bool
+    {
+        $u = self::getUserCredentials($dbh, $username);
+
+        $numMethods = 0;
+
+        if($u['totpSecret'] !== '') {
+            $numMethods++;
+        }
+        if($u['emailSecret'] !== ''){
+            $numMethods++;
+        }
+        if($u['backupSecret'] !== ''){
+            $numMethods++;
+        }
+
+        return ($numMethods > 1);
+    }
+
+    public static function getDefaultOtpMethod(\PDO $dbh, $username)
+    {
+        $u = self::getUserCredentials($dbh, $username);
+        if ($u['totpSecret'] !== '') {
+            return 'authenticator';
+        }elseif($u['emailSecret'] !== ''){
+            return 'email';
+        }elseif($u['backupSecret'] !== ''){
+            return 'backup';
+        }
+
+        return false;
+    }
+
+    public static function getAuthProvider(\PDO $dbh, $uS, $username = false)
+    {
+        if($username === false){
+            $username = $uS->username;
+        }
+        $u = self::getUserCredentials($dbh, $username);
+        return (isset($u['authProvider']) ? $u['authProvider'] : "local");
+    }
+
+    public static function isLocalUser(\PDO $dbh, $uS, $username = false)
+    {
+        if($username === false){
+            $username = $uS->username;
+        }
+        $u = self::getUserCredentials($dbh, $username);
+        return (isset($u['idIdp']) && $u['idIdp'] > 0 ? false : true);
+    }
+
     public static function setPassExpired(\PDO $dbh, array $user){
-        if(isset($user['pass_rules']) && $user['pass_rules']){ //if password rules apply
+        if(isset($user['pass_rules']) && $user['pass_rules'] && $user['idIdp'] == '0'){ //if password rules apply
             $date = false;
             //use creation date if never logged in
             if($user['PW_Change_Date'] != ''){
@@ -405,50 +538,140 @@ class UserClass
         return $user;
     }
 
+    public static function getOtpMethodMarkup(\PDO $dbh, $username, $hiddenMethod = ''){
+        $userAr = UserClass::getUserCredentials($dbh, $username);
+        $mkup = '';
+
+        if(isset($userAr['totpSecret']) && $userAr['totpSecret'] !== '' && $hiddenMethod != 'authenticator'){
+            $mkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('button', "Authenticator app", array("class"=>"mx-1 smaller", "data-method"=>"authenticator")), array('class'=>'col-12 my-2'));
+        }
+
+        if(isset($userAr['emailSecret']) && $userAr['emailSecret'] !== '' && $hiddenMethod != 'email'){
+            $mkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('button', "Email", array("class"=>"mx-1 smaller", "data-method"=>"email")), array('class'=>'col-12 my-2'));
+        }
+
+        if(isset($userAr['backupSecret']) && $userAr['backupSecret'] !== '' && $hiddenMethod != 'backup'){
+            $mkup .= HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('button', "Backup Codes", array("class"=>"mx-1 smaller", "data-method"=>"backup")), array('class'=>'col-12 my-2'));
+        }
+
+        return $mkup;
+    }
+
     public static function createUserSettingsMarkup(\PDO $dbh)
     {
         $uS = Session::getInstance();
+        $userAr = UserClass::getUserCredentials($dbh, $uS->username);
+        $authProvider = self::getAuthProvider($dbh, $uS);
 
         $mkup = '<div id="dchgPw" class="hhk-tdbox hhk-visitdialog" style="font-size: .9em; display:none;">';
         $passwordTitle = 'Change your Password';
 
-        if (self::isPassExpired($dbh, $uS)){
+        if(self::isLocalUser($dbh, $uS)){
+
+            $ga = new GoogleAuthenticator($userAr);
+            $email = new Email($userAr);
+
             $mkup .= '
-            <div class="ui-widget hhk-visitdialog hhk-row PassExpDesc" style="margin-bottom: 1em;">
-                <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
-        			Password Expired
-        		</div>
-        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
-                    <p style="margin: 0.5em">Your password has expired, please choose a new one below</p>
+                <div class="row">';
+
+            if (self::isPassExpired($dbh, $uS)){
+                $mkup .= '
+                <div class="ui-widget hhk-visitdialog col-12 PassExpDesc" style="margin-bottom: 1em;">
+            		<div class="ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight" style="padding: 5px;">
+                        <p class="m-2">Your <strong>password</strong> has expired, please choose a new one below</p>
+                    </div>
                 </div>
-            </div>
+                ';
+            }
+
+            if ($uS->Enforce2fa && self::hasTOTP($dbh, $uS->username) == false){
+                $mkup .= '
+                <div class="ui-widget hhk-visitdialog col-12 PassExpDesc" style="margin-bottom: 1em;">
+            		<div class="ui-corner-all hhk-tdbox ui-widget-content ui-state-highlight" style="padding: 5px;">
+                        <p class="m-2"><strong>Two Step Verification</strong> has not been enabled on this account yet, please enable it below</p>
+                    </div>
+                </div>
+                ';
+            }
+
+            $mkup .= '<div class="col-md-6">';
+
+            //2 factor authentication
+            $mkup .= '
+                <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+                    <div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">
+            			Two Step Verification
+            		</div>
+            		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
             ';
-        }
 
-        // password markup
-        $mkup .= '
-            <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
-        		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
-        		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+            if(self::hasTOTP($dbh, $uS->username)){
+                $remember = new Remember($userAr);
+                $activeDevices = count($remember->getTokens($dbh));
 
-                    <table style="width: 100%"><tr>
-                            <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
-                        </tr><tr>
-                            <td class="tdlabel">Enter Old Password:</td><td style="display: flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td class="tdlabel">Enter New Password:</td><td style="display: flex"><input style="width: 100%" id="utxtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td class="tdlabel">New Password Again:</td><td style="display: flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
-                        </tr><tr>
-                            <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter,<br> 1 lowercase letter, a number and a symbol. Do not use names or dictionary words</span></td>
-                        </tr><tr>
-                            <td colspan ="2" style="text-align: center;padding-top:10px;"><span id="pwChangeErrMsg" style="color:red;"></span></td>
-                        </tr>
-                    </table>
-                </div>
+                $mkup.= '<p style="margin: 0.5em">Two Step Verification is ON</p>';
+
+                if($activeDevices > 0){
+                    $mkup .= '<div class="hhk-flex my-2" style="justify-content: space-between" id="savedDevices"><p style="margin: 0.5em">You have ' . $activeDevices . ' saved devices</p>
+                            <button id="clearDevices">Clear saved devices</button></div>';
+                }
+
+            }else{
+                $mkup.= '
+                    <p style="margin: 0.5em">Two Step Verification is OFF</p>
+                    <p style="margin: 0.5em">Two step verification adds a second layer of security to your account by requiring you to enter a temporary code in addition to your password when logging in.</p>
+                ';
+            }
+
+            $mkup .= '<div id="mfaTabs">
+            <ul>'.
+                ($userAr['idName'] > 0 ? '<li><a href="#mfaEmail">Email</a></li>' : '') .
+                '<li><a href="#mfaAuthenticator">Authenticator</a></li>
+            </ul>' .
+
+            ($userAr['idName'] > 0 ? '<div id="mfaEmail" class="mfaContent">' . $email->getEditMarkup($dbh) . '</div>' : '') .
+            '<div id="mfaAuthenticator" class="mfaContent">' . $ga->getEditMarkup($dbh) . '</div>
             </div>';
 
-        $mkup .= "</div>";
+            $mkup .= '
+
+                    </div>
+                </div>
+                </div> <!--end col-md-6 -->
+                <div class="col-md-6" id="chgPassword">
+            ';
+
+            // password markup
+            $mkup .= '
+                <div class="ui-widget hhk-visitdialog hhk-row" style="margin-bottom: 1em;">
+            		<div class="ui-widget-header ui-state-default ui-corner-top" style="padding: 5px;">' . $passwordTitle . '</div>
+            		<div class="ui-corner-bottom hhk-tdbox ui-widget-content" style="padding: 5px;">
+
+                        <table style="width: 100%"><tr>
+                                <td class="tdlabel">User Name:</td><td style="background-color: white;"><span id="utxtUserName">' . $uS->username . '</span></td>
+                            </tr><tr>
+                                <td class="tdlabel">Enter Old Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtOldPw" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            </tr><tr>
+                                <td class="tdlabel">Enter New Password:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw1" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            </tr><tr>
+                                <td class="tdlabel">New Password Again:</td><td class="hhk-flex"><input style="width: 100%" id="utxtNewPw2" type="password" value=""  /><button class="showPw" style="font-size: .75em; margin-left: 1em;" tabindex="-1">Show</button></td>
+                            </tr><tr>
+                                <td colspan ="2"><span style="font-size: smaller;">Passwords must have at least 8 characters with at least 1 uppercase letter, 1 lowercase letter, a number and a symbol. It cannot include &lt; or &gt;. Do not use names or dictionary words</span></td>
+                            </tr>
+                        </table>
+                        <div id="pwChangeErrMsg" style="color:red; text-align:center;" class="mt-1"></div>
+                    </div>
+                </div>
+                </div> <!--end col-md-6 -->
+                </div> <!--end row -->';
+
+            $mkup .= "</div>";
+        }else{
+            $mkup .= '
+                <p>Your account is managed by ' . $authProvider . ', please reach out to them for help with your account</p>
+                </div>
+            ';
+        }
         return $mkup;
     }
 
@@ -508,20 +731,35 @@ class UserClass
 
     public static function getUserCredentials(\PDO $dbh, $username)
     {
+        $uS = Session::getInstance();
+
         if (! is_string($username) || trim($username) == '') {
             return NULL;
         }
 
         $uname = str_ireplace("'", "", $username);
 
-        $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id
+        $stmt = $dbh->query("select count(*) from information_schema.TABLES where (table_schema = '" . $uS->databaseName . "') and (table_name = 'w_idp')");
+
+        if ($stmt->rowCount() === 1) {
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+            if($rows[0][0] == 1){ //w_idp table exists
+                $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
+FROM w_users u join w_auth a on u.idName = a.idName
+join `name` n on n.idName = u.idName
+left join `w_idp` idp on u.`idIdp` = idp.`idIdp`
+WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = '$uname'");
+            }else{ //w_idp table does not exist
+                $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, 'Unknown Provider' as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
 WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = '$uname'");
+            }
 
-        if ($stmt->rowCount() === 1) {
-            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
-            return $rows[0];
+            if ($stmt->rowCount() === 1) {
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                return $rows[0];
+            }
         }
 
         return NULL;
@@ -529,7 +767,7 @@ WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a
 
     public static function disableInactiveUser(\PDO $dbh, array $user)
     {
-        if(isset($user['pass_rules']) && $user['pass_rules']){ //if password rules apply
+        if(isset($user['pass_rules']) && $user['pass_rules'] && $user['idIdp'] == '0'){ //if password rules apply
 
             $date = false;
             //use creation date if never logged in

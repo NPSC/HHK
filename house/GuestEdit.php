@@ -698,6 +698,7 @@ $uS->guestId = $id;
         <?php echo INCIDENT_CSS; ?>
         <?php echo UPPLOAD_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -738,7 +739,7 @@ $uS->guestId = $id;
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-        	<div class="pageHeader hhk-flex">
+        	<div class="hhk-flex">
                 <div style="margin-top:5px;">
                     <?php echo $guestName; ?>
                 </div>
