@@ -322,7 +322,7 @@ div#global-title {
     font-size: 1.5em;
 }
 #global-nav {
-    position: fixed;
+    position: sticky;
     top: 0;
     width: 100%;
     z-index: 20;
@@ -605,6 +605,12 @@ div.dt-buttons .dt-button:hover>span {
 
 .hhk-overflow-x {
 	overflow-x: auto;
+}
+
+/* flex tabs */
+.hhk-flex.ui-tabs-nav{
+	overflow-x: auto;
+	overflow-y: hidden;
 }
 
 @media only screen and (max-width: 1024px){

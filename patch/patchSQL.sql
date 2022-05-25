@@ -76,3 +76,5 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 
 INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
 ('NewsletterURL', 'https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe/post?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa', 'url', 'a','', 'Newsletter iframe URL', '', 0);
+
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('namePrefix', 'Prefix', 's', 'mt', 'Default: Prefix');

@@ -258,6 +258,7 @@ if($uS->useOnlineReferral){
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <!--<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">-->
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
@@ -326,7 +327,7 @@ if($uS->useOnlineReferral){
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
             <div id="mainTabs" style="display:none; font-size:.9em;">
-                <ul>
+                <ul class="hhk-flex">
                     <li id="liCal"><a href="#vcal">Calendar</a></li>
                     <li><a href="#vstays">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s (<span id="spnNumCurrent"></span>)</a></li>
                     <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?> (<span id="spnNumConfirmed"></span>)</a></li>

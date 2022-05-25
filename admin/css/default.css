@@ -218,7 +218,7 @@ div#global-title {
 #global-nav {
 	display: flex;
 	flex-wrap: wrap;
-    position: fixed;
+    position: sticky;
     top: 0;
     width: 100%;
     z-index: 20;

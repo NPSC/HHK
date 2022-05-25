@@ -13,6 +13,7 @@ use HHK\Exception\RuntimeException;
 use HHK\Exception\InvalidArgumentException;
 use HHK\Member\Relation\Siblings;
 use HHK\Member\Relation\Relatives;
+use HHK\sec\Labels;
 
 /**
  * IndivMember.php
@@ -92,7 +93,7 @@ class IndivMember extends AbstractMember {
         $table = new HTMLTable();
         $table->addHeaderTr(
                 HTMLContainer::generateMarkup('th', 'Id')
-                . HTMLContainer::generateMarkup('th', 'Prefix')
+                . HTMLContainer::generateMarkup('th', Labels::getString("MemberType", "namePrefix", "Prefix"))
                 . HTMLContainer::generateMarkup('th', 'First Name')
                 . HTMLContainer::generateMarkup('th', 'Middle')
                 . HTMLContainer::generateMarkup('th', 'Last Name')

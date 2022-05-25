@@ -177,8 +177,8 @@ $(document).ready(
 			$(this).removeClass("ui-state-hover");
 		});
 
-		$('#contentDiv').css('margin-top',
-				$('#global-nav').css('height'));
+		//$('#contentDiv').css('margin-top',
+		//		$('#global-nav').css('height'));
 
 		if ($('#dchgPw').length > 0) {
 			var chPwButtons = {
