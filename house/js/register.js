@@ -1576,13 +1576,7 @@ $(document).ready(function () {
     $('#mainTabs').show();
 
     // Calendar date goto button.
-    $('#divGoto').position({
-            my: 'center top',
-            at: 'center-130 top+8',
-            of: '#calendar',
-            within: '#calendar'
-    });
-
+    $('#calendar .fc-header-toolbar .fc-toolbar-chunk:nth-child(2)').html($('#divGoto').show());
 
 	//referralViewer
 	$.ajax({

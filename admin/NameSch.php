@@ -201,9 +201,13 @@ try {
             <div id="historyTabs" class="hhk-member-detail" style="margin-bottom: 10px; display:none;">
                 <ul>
                     <li><a href="#memHistory">Member History</a></li>
-                    <?php if ($guestHistory != 'f') echo "<li><a href='" . "#resHistory" . "'>Current Guests</a></li>"; ?>
-                    <?php if ($volHistory != 'f') echo "<li><a href='" . "#volHistory" . "'>Recent Event history</a></li>"; ?>
-                    <li><a href="#important">Today's Events</a></li>
+                    <?php
+                        if ($guestHistory != 'f'){echo "<li><a href='" . "#resHistory" . "'>Current Guests</a></li>";}
+                        if ($volHistory != 'f'){
+                            echo "<li><a href='" . "#volHistory" . "'>Recent Event history</a></li>"
+                                ."<li><a href='#important'>Today's Events</a></li>";
+                        }
+                    ?>
                 </ul>
                 <div id="memHistory" class="hhk-tdbox">
                     <h3>Member History</h3>
@@ -217,7 +221,7 @@ try {
                 <?php if ($volHistory != 'f') { ?>
                 <div id="volHistory" class="ui-widget">
                     <?php echo $volHistory ?>
-                </div> <?php }; ?>
+                </div>
                 <div id="important">
                     <div style="margin-bottom:7px; padding:3px; min-width:800px;">
                         <div id="btnRefresh" style="font-size: 0.9em; float: left;">
@@ -232,7 +236,7 @@ try {
                         <div style="clear: both;"></div>
                         <div id="calendar"></div>
                     </div>
-                </div>
+                </div> <?php }; ?>
             </div>
         </div>  <!-- div id="page"-->
     </body>
