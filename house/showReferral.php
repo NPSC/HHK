@@ -122,6 +122,8 @@ if(isset($_GET['template'])){
                 }
            }
 
+           input{ touch-action: pan-x pan-y; }
+
     	</style>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
