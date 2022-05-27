@@ -2091,6 +2091,7 @@ CREATE TABLE if not exists `visit` (
   `Span_Start` datetime DEFAULT NULL,
   `Span_End` datetime DEFAULT NULL,
   `Return_Date` datetime DEFAULT NULL,
+  `Notice_to_Checkout` DATETIME NULL DEFAULT NULL,
   `Expected_Rate` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Pledged_Rate` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Amount_Per_Guest` decimal(10,2) NOT NULL DEFAULT '0.00',

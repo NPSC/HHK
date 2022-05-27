@@ -1,80 +1,9 @@
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('showAddressReceipt', 'false', 'b', 'h', '', 'Show primary guest address on receipts', '','1');
-
-UPDATE `gen_lookups` SET `Description` = "Gender Identity" where `Table_Name` = "Demographics" and `Code` = "Gender";
-
-DELETE FROM `sys_config` where `Key` = "showGuestsStayingReg";
-
-INSERT IGNORE INTO `sys_config` VALUES
-('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication', '', 1);
-
-ALTER TABLE `w_users`
-ADD COLUMN IF NOT EXISTS `idIdp` int(11) NOT NULL DEFAULT 0 AFTER `Chg_PW`;
-
-ALTER TABLE `w_users` 
-ADD COLUMN IF NOT EXISTS `totpSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `idIdp`;
-
-ALTER TABLE `w_users` 
-ADD COLUMN IF NOT EXISTS `emailSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `totpSecret`;
-
-ALTER TABLE `w_users` 
-ADD COLUMN IF NOT EXISTS `backupSecret` VARCHAR(45) NOT NULL DEFAULT '' AFTER `emailSecret`;
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('rememberTwoFA','30','lu','pr','','Number of days users can save a device and skip two factor authentication','dayIncrements',1);
-
-ALTER TABLE `insurance` 
-	ADD COLUMN IF NOT EXISTS `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`;
-ALTER TABLE `insurance` 
-	ADD COLUMN IF NOT EXISTS `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`;
-ALTER TABLE `insurance` 
-	CHANGE COLUMN IF EXISTS `Type` `idInsuranceType` INT(3) NOT NULL;
-
-ALTER TABLE `insurance_type` 
-	CHANGE COLUMN IF EXISTS `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
-	
-ALTER TABLE `insurance_type` 
-	ADD COLUMN IF NOT EXISTS `Status` VARCHAR(1) NOT NULL DEFAULT 'a';
-
--- Mark visits as recorded (ie, Neon)
-ALTER TABLE `stays` 
-	ADD COLUMN IF NOT EXISTS `Recorded` INT(1) NOT NULL DEFAULT 0 AFTER `Status`;
-
--- Set idName as int.
-UPDATE `trans` set `idName` = '0' where not `idName` REGEXP '^[0-9]+$';
-ALTER TABLE `trans` 
-	CHANGE COLUMN IF EXISTS `idName` `idName` INT(11) NOT NULL DEFAULT 0 ;
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1');
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('DKIMdomain', '', 's', 'es', '', 'Domain name of sender (must match FromAddress and NoReplyAddr domains)', '','1');
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0');
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('loginFeedURL', 'https://nonprofitsoftwarecorp.org/hhk-tips-latest', 'url', 'a', '', 'Feed for login pages', '','0');
-
--- Neon 
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('ContactManager', '', 'lu', 'hf', '', 'Integrate an External CRM/Fund Raiser App', 'ExternalCrm','1');
-
-Insert IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`,`Type`,`Order`) VALUES
-('ExternalCrm', '', '(None)', '', '', 0),
-('ExternalCrm', 'neon', 'NeonCRM','','',0);
-
-UPDATE `hospital_stay` SET `MRN` = REPLACE(REPLACE(REPLACE(TRIM(`MRN`), '/', ''), '-',''), '_', ''); -- remove whitespace, /,-,_ from MRNs
-
--- fix gender code for gen_lookups
-ALTER TABLE `name` 
-CHANGE COLUMN `Gender` `Gender` VARCHAR(5) NOT NULL DEFAULT '' ;
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('searchMRN', 'true', 'b', 'hf', '', 'Allow search by MRN', '','1');
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('NewsletterURL', 'https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe/post?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa', 'url', 'a','', 'Newsletter iframe URL', '', 0);
-
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('namePrefix', 'Prefix', 's', 'mt', 'Default: Prefix');
+
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('labels_category', 'vi', 'Visit', '', '', 25);
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('noticeToCheckout', 'Notice to Checkout', 's', 'vi', 'Default: Notice to Checkout');
+
+ALTER TABLE `visit` 
+ADD COLUMN IF NOT EXISTS `Notice_to_Checkout` DATETIME NULL DEFAULT NULL AFTER `Return_Date`;
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('noticetoCheckout', 'false', 'b', 'h', 'Show Notice to Checkout date box on visits', '1');

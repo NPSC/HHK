@@ -713,6 +713,11 @@ function saveFees(idGuest, idVisit, visitSpan, rtnTbl, postbackPage) {
     if ($('#taNewVNote').length > 0 && $('#taNewVNote').val() !== '') {
         parms['taNewVNote'] = $('#taNewVNote').val();
     }
+    
+    // Notice to Checkout
+    if ($('#noticeToCheckout').length > 0 && $('#noticeToCheckout').val() !== '') {
+        parms['noticeToCheckout'] = $('#noticeToCheckout').val();
+    }
 
     // Fees and Keys
     $('.hhk-feeskeys').each(function() {

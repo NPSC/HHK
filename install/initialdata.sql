@@ -204,6 +204,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('labels_category', 'rg', 'Register', '', '', 10),
 ('labels_category', 'rf', 'Referral', '', '', 20),
+('labels_category', 'vi', 'Visit', '', '', 25),
 ('labels_category', 'h', 'Hospital', '', '', 30),
 ('labels_category', 'mf', 'MomentFormats', '', '', 40),
 ('labels_category', 'ck', 'Checkin', '', '', 50),
@@ -601,6 +602,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('NewsletterURL', 'https://nonprofitsoftwarecorp.us18.list-manage.com/subscribe/post?u=473b86d29e0f6f7ba7434f9a2&id=b986c7beaa', 'url', 'a','', 'Newsletter iframe URL', '', 0),
 ('NightsCounter','calYear','s','c','','Count nights by year (calYear) or by grand total','',1),
 ('NoReplyAddr','','ea','ha','','No reply email address','',1),
+('noticetoCheckout', 'false', 'b', 'h', '', 'Show Notice to Checkout date box on visits','',1),
 ('NotificationAddress','','ea','f','','Gets financial data upload notifications','',1),
 ('OpenCheckin','true','b','h','','Allow walk-ups to check in','',1),
 ('passResetDays','365','lu','pr','','Number of days between automatic password resets','dayIncrements',1),
@@ -704,6 +706,8 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('agreementTitle','Agreement','s','rf','','Default: Agreement'),
 ('Survey_Subject','Checkout Survey','s','rf','','Default: Checkout Survey'),
 ('VisitFeeConfirmLabel','Cleaning Fee:','s','rf','','Default: Cleaning Fee:'),
+
+('noticeToCheckout', 'Notice to Checkout', 's', 'vi', 'Default: Notice to Checkout'),
 
 ('referralAgent','Referral Agent','s','h','','Default: Referral Agent'),
 ('diagnosis','Diagnosis','s','h','','Default: Diagnosis'),

@@ -40,6 +40,7 @@ class VisitRS extends AbstractTableRS {
     public $OverRideMaxOcc;  // int(1) NOT NULL DEFAULT '0',
     public $Span_Start;  // datetime DEFAULT NULL,
     public $Span_End;  // datetime DEFAULT NULL,
+    public $Notice_to_Checkout; //datetime DEFAULT NULL,
     public $Expected_Rate;   // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Pledged_Rate;   // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Amount_Per_Guest;  // decimal(10,2) NOT NULL DEFAULT '0.00',
@@ -75,6 +76,7 @@ class VisitRS extends AbstractTableRS {
         $this->Actual_Departure = new DB_Field("Actual_Departure", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Span_Start = new DB_Field("Span_Start", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Span_End = new DB_Field("Span_End", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
+        $this->Notice_to_Checkout = new DB_Field("Notice_to_Checkout", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Return_Date = new DB_Field("Return_Date", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Key_Dep_Disposition = new DB_Field("Key_Dep_Disposition", "", new DbStrSanitizer(4), TRUE, TRUE);
         $this->DepositPayType = new DB_Field("DepositPayType", "", new DbStrSanitizer(5), TRUE, TRUE);

@@ -2638,6 +2638,7 @@ CREATE or replace VIEW `vspan_listing` AS
         (to_days(ifnull(`v`.`Span_End`, now())) - to_days(`v`.`Span_Start`)) AS `Actual_Span_Nights`,
         (to_days(`v`.`Expected_Departure`) - to_days(`v`.`Span_Start`)) AS `Expected_Span_Nights`,
         `v`.`Return_Date`,
+        `v`.`Notice_to_Checkout`,
         `v`.`Ext_Phone_Installed`,
         `v`.`OverRideMaxOcc`,
         '' as `Visit_Notes`,
