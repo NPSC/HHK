@@ -725,6 +725,8 @@ ORDER BY `List_Order`");
             if (isset($uS->nameLookups[GLTableNames::NamePrefix][$pre])) {
                 $prefix = $pre;
                 $n->Name_Prefix->setNewVal($prefix);
+            }else{
+                $n->Name_Prefix->setNewVal('');
             }
         }
 
@@ -742,6 +744,8 @@ ORDER BY `List_Order`");
             if (isset($uS->nameLookups[GLTableNames::NameSuffix][$suf])) {
                 $suffix = $suf;
                 $n->Name_Suffix->setNewVal($suffix);
+            }else{
+                $n->Name_Suffix->setNewVal('');
             }
         }
 
