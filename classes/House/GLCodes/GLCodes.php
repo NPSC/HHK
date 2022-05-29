@@ -84,6 +84,7 @@ class GLCodes {
 
 			$payments = array();
 
+			// Remove declined, reverse, void.
 			foreach ($r['p'] as $p) {
 
 				if ($p['pStatus'] == PaymentStatusCode::Reverse || $p['pStatus'] == PaymentStatusCode::VoidSale || $p['pStatus'] == PaymentStatusCode::Declined) {
@@ -94,12 +95,7 @@ class GLCodes {
 
 			}
 
-			// any payments left?
-			if (count($payments) == 0) {
-				continue;
-			}
-
-
+			// Process the payments
 			foreach ($payments as $pay) {
 				$this->mapPayment($r, $pay);
 			}
@@ -320,6 +316,10 @@ class GLCodes {
 					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, (0 - $dbit), 0, $pDate, $this->glParm->getJournalCat());
 
 				} else {
+
+				    // Intermediate transaction for counties
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, 0, $dbit, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $dbit, 0, $pDate, $this->glParm->getJournalCat());
 
 					// make a debit line for hte difference
 					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, $dbit, 0, $pDate, $this->glParm->getJournalCat());
