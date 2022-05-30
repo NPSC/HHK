@@ -25,6 +25,7 @@ $dbh = $wInit->dbh;
 $guestAdmin = SecurityComponent::is_Authorized("guestadmin");
 addslashesextended($_REQUEST);
 $c = "";
+$overviewPw = '';
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
@@ -41,9 +42,6 @@ try {
     switch ($c) {
         case 'arrTOD':
 
-//             $source = new ChartDataSource();
-//             $query = Google\Visualization\DataSource\DataSourceHelper::parseQuery($_REQUEST["cmd"]);
-//             $dataTable = $source->generateDataTable($query, $dbh);
 
 
             break;
@@ -56,7 +54,7 @@ try {
                 PDO::ATTR_EMULATE_PREPARES   => TRUE,
             ];
 
-            $obh = new PDO($dsn, 'overview', 'QfK=0}$<7[qffPIATTS%', $options);
+            $obh = new PDO($dsn, 'overview', $overviewPw, $options);
             $obh->exec("SET SESSION wait_timeout = 3600;");
 
 
@@ -82,7 +80,7 @@ try {
                 PDO::ATTR_EMULATE_PREPARES   => TRUE,
             ];
 
-            $obh = new PDO($dsn, 'overview', 'QfK=0}$<7[qffPIATTS%', $options);
+            $obh = new PDO($dsn, 'overview', $overviewPw, $options);
             $obh->exec("SET SESSION wait_timeout = 3600;");
 
 
@@ -107,7 +105,7 @@ try {
                 PDO::ATTR_EMULATE_PREPARES   => TRUE,
             ];
 
-            $obh = new PDO($dsn, 'overview', 'QfK=0}$<7[qffPIATTS%', $options);
+            $obh = new PDO($dsn, 'overview', $overviewPw, $options);
             $obh->exec("SET SESSION wait_timeout = 3600;");
 
 
@@ -161,7 +159,7 @@ try {
                 PDO::ATTR_EMULATE_PREPARES   => TRUE,
             ];
 
-            $obh = new \PDO($dsn, 'overview', 'QfK=0}$<7[qffPIATTS%', $options);
+            $obh = new \PDO($dsn, 'overview', $overviewPw, $options);
             $obh->exec("SET SESSION wait_timeout = 3600;");
 
 
@@ -225,6 +223,141 @@ if (is_array($events)) {
 }
 
 exit();
+
+
+function houseTable() {
+
+    $dsn = "mysql:host=10.138.0.21;dbname=overview;charset=utf8mb4";
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_EMULATE_PREPARES   => TRUE,
+    ];
+
+    $obh = new PDO($dsn, 'overview', $overviewPw, $options);
+    $obh->exec("SET SESSION wait_timeout = 3600;");
+
+    $sites = new HTMLTable();
+
+    $stmt = $obh->query("Select * from site order by Start_Date;");
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($rows as $r) {
+
+        $schema = $r['Db_Schema'];
+
+        $stmt = $obh->query("select count(idRoom) from `$schema`.`room`;");
+        $rws = $stmt->fetchAll(PDO::FETCH_NUM);
+        $rooms = $rws[0][0];
+
+        $tr = HTMLTable::makeTd($r['Title'])
+        .HTMLTable::makeTd($r['Start_Date'] == '' ? '' : date('M j, Y', strtotime($r['Start_Date'])))
+        .HTMLTable::makeTd(number_format($r['Rate'], 2), array('style'=>'text-align:right;'))
+        .HTMLTable::makeTd(number_format($r['Rate'] * $r['Contracted_Rooms'], 2), array('style'=>'text-align:right;'))
+        .HTMLTable::makeTd($r['Contracted_Rooms'], array('style'=>'text-align:center;'))
+        .HTMLTable::makeTd($rooms, array('style'=>'text-align:center;'));
+
+        $stmt = $obh->query("CALL `$schema`.sum_visit_days(2021);");
+        $gts = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        $cnt = $gts[0][0];
+
+
+        $tr .=  HTMLTable::makeTd(number_format($cnt, 0, ".", ","), array('style'=>'text-align:center;'));
+
+        $sites->addBodyTr($tr);
+    }
+
+    $sites->addHeaderTr(
+        HTMLTable::makeTh('House')
+        .HTMLTable::makeTh('Start')
+        .HTMLTable::makeTh('Rate')
+        .HTMLTable::makeTh('Monthly Charge')
+        .HTMLTable::makeTh('Contracted Rooms')
+        .HTMLTable::makeTh('Current Rooms')
+        .HTMLTable::makeTh('2021 Nights')
+        );
+
+    return $sites->generateMarkup();
+
+}
+
+
+function DocTable() {
+
+    $dsn = "mysql:host=10.138.0.21;dbname=overview;charset=utf8mb4";
+    $options = [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_EMULATE_PREPARES   => TRUE,
+    ];
+
+    $obh = new PDO($dsn, 'overview', $overviewPw, $options);
+    $obh->exec("SET SESSION wait_timeout = 3600;");
+
+    $sites = new HTMLTable();
+
+    $stmt = $obh->query("Select * from site order by Start_Date;");
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $hhkMBytes = 0;
+
+    // Each house
+    foreach ($rows as $r) {
+
+        $schema = $r['Db_Schema'];
+        $schemaBytes = 0;
+
+        $stmt = $obh->query("SELECT
+  TABLE_NAME AS `Table`,
+  TABLE_ROWS,
+  DATA_LENGTH,
+  INDEX_LENGTH,
+  ROUND((DATA_LENGTH + INDEX_LENGTH) / 1024 / 1024) AS `Size`
+FROM
+  information_schema.TABLES
+WHERE
+  TABLE_TYPE != 'VIEW' AND
+  TABLE_NAME = 'document' AND
+--  (DATA_LENGTH + INDEX_LENGTH) > 5000000 AND
+  TABLE_SCHEMA = '$schema'
+ORDER BY
+  (DATA_LENGTH + INDEX_LENGTH) DESC;");
+
+        // Each house table
+        while ($h = $stmt->fetch(PDO::FETCH_ASSOC)) {
+
+            $tr = HTMLTable::makeTd($r['Title'])
+            .HTMLTable::makeTd($h['Table'])
+            .HTMLTable::makeTd(number_format($h['TABLE_ROWS'], 0), array('style'=>'text-align:right;'))
+            .HTMLTable::makeTd(number_format($h['DATA_LENGTH'], 0), array('style'=>'text-align:right;'))
+            .HTMLTable::makeTd(number_format($h['INDEX_LENGTH'], 0), array('style'=>'text-align:right;'))
+            .HTMLTable::makeTd(number_format($h['Size'], 0), array('style'=>'text-align:right;'));
+
+            $sites->addBodyTr($tr);
+
+            $schemaBytes += ($h['DATA_LENGTH'] + $h['INDEX_LENGTH']);
+        }
+
+        $sites->addBodyTr(HTMLTable::makeTd($r['Title'] . ' Total:', array('colspan'=>'5', 'style'=>'text-align:right;')) . HTMLTable::makeTd(number_format($schemaBytes, 0), array('style'=>'text-align:right;')) );
+
+        $hhkMBytes += $schemaBytes;
+    }
+
+    $sites->addBodyTr(HTMLTable::makeTd('Overall Total:', array('colspan'=>'5', 'style'=>'text-align:right;')) . HTMLTable::makeTd(number_format($hhkMBytes, 0), array('style'=>'text-align:right;')) );
+
+
+    $sites->addHeaderTr(
+        HTMLTable::makeTh('House')
+        .HTMLTable::makeTh('Table')
+        .HTMLTable::makeTh('Rows')
+        .HTMLTable::makeTh('Data')
+        .HTMLTable::makeTh('Index')
+        .HTMLTable::makeTh('Combined (MB)')
+        );
+
+    return $sites->generateMarkup();
+
+}
+
 
 function roomRates($rows) {
     $dataTable = new DataTable();
