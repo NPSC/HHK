@@ -173,7 +173,7 @@ class NewGuest
     IFNULL(na.State_Province, '') AS `State_Province`,
     IFNULL(na.Postal_Code, '') AS `Postal_Code`,
     IFNULL(na.Country_Code, '') AS `Country`,
-	IFNULL(np.Phone_Num, '') AS `Phone`,
+	CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone' ELSE IFNULL(np.Phone_Num, '') END AS `Phone`,
 	IFNULL(ne.Email, '') AS `Email`,
     IFNULL(g3.Description, '') AS `Relationship`,
     IFNULL(ng.idPsg, 0) as `idPsg`,

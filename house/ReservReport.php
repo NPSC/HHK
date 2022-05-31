@@ -209,7 +209,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     ifnull(na.State_Province, '') as gState,
     ifnull(na.Country_Code, '') as gCountry,
     ifnull(na.Postal_Code, '') as gZip,
-    np.Phone_Num,
+    CASE WHEN np.Phone_Code = 'no' THEN 'No Phone' ELSE np.Phone_Num END as Phone_Num,
     ne.Email,
     rm.Phone,
     ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,

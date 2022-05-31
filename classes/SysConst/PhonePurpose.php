@@ -17,5 +17,6 @@ class PhonePurpose {
     const Cell2 = 'mc2';
     const Fax = 'xf';
     const Office = 'hw';
+    const NoPhone = 'no';
 }
 ?>

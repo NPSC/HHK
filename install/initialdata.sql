@@ -328,6 +328,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Phone_Type','hw','Office','o','',30),
 ('Phone_Type','mc','Cell','i','',40),
 ('Phone_Type','xf','Fax','o','',50),
+('Phone_Type','no','No Phone','i','', '100'),
 
 ('Photo_Permission', 'yes', 'Yes', '', 'd', '100'),
 ('Photo_Permission', 'no', 'No', '', 'd', '110'),

@@ -98,7 +98,7 @@ class Phones extends AbstractContactPoint {
 
         $adrRS = $this->get_recordSet($code);
 
-        if (is_null($adrRS) || $adrRS->Phone_Num->getStoredVal() == '') {
+        if (is_null($adrRS) || ($code !== PhonePurpose::NoPhone && $adrRS->Phone_Num->getStoredVal() == '')) {
             return FALSE;
         } else {
             return TRUE;
@@ -117,9 +117,9 @@ class Phones extends AbstractContactPoint {
             $table->addBodyTr($trContents);
         }
 
-        if ($room) {
-            $table->addBodyTr($this->createHousePhoneMarkup('yr', $idPrefix, $roomPhoneCkd));
-        }
+//         if ($room) {
+//             $table->addBodyTr($this->createHousePhoneMarkup('yr', $idPrefix, $roomPhoneCkd));
+//         }
 
         return $table->generateMarkup();
     }
@@ -149,29 +149,33 @@ class Phones extends AbstractContactPoint {
         // Start the row
         $trContents = HTMLTable::MakeTd($tdContents, array('class'=>'tdlabel '.$p[2]));
 
-        // PHone number
-        $attr = array();
-        $attr['id'] = $idPrefix.'txtPhone' . $p[0];
-        $attr['name'] = $idPrefix.'txtPhone[' . $p[0] . ']';
-        $attr['title'] = 'Enter a phone number';
-        $attr['class'] = 'hhk-phoneInput ' . $inputClass;
-        $attr['size'] = '16';
+        if ($p[0] == PhonePurpose::NoPhone) {
+            $tdContents = '';
+        } else {
+            // PHone number
+            $attr = array();
+            $attr['id'] = $idPrefix.'txtPhone' . $p[0];
+            $attr['name'] = $idPrefix.'txtPhone[' . $p[0] . ']';
+            $attr['title'] = 'Enter a phone number';
+            $attr['class'] = 'hhk-phoneInput ' . $inputClass;
+            $attr['size'] = '16';
 
-        $tdContents = HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Num->getStoredVal(), $attr);
+            $tdContents = HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Num->getStoredVal(), $attr);
 
-        if ($p[0] != PhonePurpose::Cell && $p[0] != PhonePurpose::Cell2) {
-            // Extension
-            $attr['id'] = $idPrefix.'txtExtn' . $p[0];
-            $attr['name'] = $idPrefix.'txtExtn[' . $p[0] . ']';
-            $attr['title'] = 'If needed, enter an Extension here';
-            $attr['size'] = '5';
+            if ($p[0] != PhonePurpose::Cell && $p[0] != PhonePurpose::Cell2) {
+                // Extension
+                $attr['id'] = $idPrefix.'txtExtn' . $p[0];
+                $attr['name'] = $idPrefix.'txtExtn[' . $p[0] . ']';
+                $attr['title'] = 'If needed, enter an Extension here';
+                $attr['size'] = '5';
 
-            if ($inputClass != '') {
-                $attr['class'] = $inputClass;
-            } else {
-                unset($attr['class']);
+                if ($inputClass != '') {
+                    $attr['class'] = $inputClass;
+                } else {
+                    unset($attr['class']);
+                }
+                $tdContents .=  'x'.HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Extension->getStoredVal(), $attr);
             }
-            $tdContents .=  'x'.HTMLInput::generateMarkup($this->rSs[$p[0]]->Phone_Extension->getStoredVal(), $attr);
         }
 
         // Wrapup the this td
@@ -227,8 +231,10 @@ class Phones extends AbstractContactPoint {
 
     public function SavePhoneNumber(\PDO $dbh, $post, $purpose, $user, $idPrefix = "") {
 
-        if (isset($post[$idPrefix.'txtPhone'][$purpose[0]]) === FALSE) {
-            return;
+        $postedPhone = '';
+
+        if (isset($post[$idPrefix.'txtPhone'][$purpose[0]])) {
+            $postedPhone = $post[$idPrefix.'txtPhone'][$purpose[0]];
         }
 
         $id = $this->name->get_idName();
@@ -240,7 +246,7 @@ class Phones extends AbstractContactPoint {
         if ($a->idName->getStoredVal() > 0) {
             // Phone Number exists in the DB
 
-            if ($post[$idPrefix.'txtPhone'][$purpose[0]] == '') {
+            if ($postedPhone == '' && $purpose[0] !== PhonePurpose::NoPhone) {
 
                 // Delete the Phone Number record
                 if (EditRS::delete($dbh, $a, array($a->idName, $a->Phone_Code)) === FALSE) {
@@ -265,7 +271,7 @@ class Phones extends AbstractContactPoint {
         } else {
             // Phone Number does not exist inthe DB.
             // Did the user fill in this Phone Number panel?
-            if ($post[$idPrefix.'txtPhone'][$purpose[0]] != '') {
+            if ($postedPhone != '' || $purpose[0] === PhonePurpose::NoPhone) {
 
                 // Insert a new Phone Number
                 $this->loadPostData($a, $post, $purpose[0], $user, $idPrefix);
@@ -287,11 +293,21 @@ class Phones extends AbstractContactPoint {
 
     private function loadPostData(NamePhoneRS $a, array $p, $typeCode, $uname, $idPrefix = '') {
 
-        $ph = trim(filter_var($p[$idPrefix.'txtPhone'][$typeCode], FILTER_SANITIZE_STRING));
-        $a->Phone_Num->setNewVal($ph);
-        if (isset($p[$idPrefix.'txtExtn'][$typeCode])) {
-            $a->Phone_Extension->setNewVal(trim(filter_var($p[$idPrefix.'txtExtn'][$typeCode], FILTER_SANITIZE_STRING)));
+        $ph = '';
+        $extn = '';
+
+        if (isset($p[$idPrefix.'txtPhone'][$typeCode])) {
+            $ph = trim(filter_var($p[$idPrefix.'txtPhone'][$typeCode], FILTER_SANITIZE_STRING));
         }
+
+        $a->Phone_Num->setNewVal($ph);
+
+        if (isset($p[$idPrefix.'txtExtn'][$typeCode])) {
+            $extn = trim(filter_var($p[$idPrefix.'txtExtn'][$typeCode], FILTER_SANITIZE_STRING));
+        }
+
+        $a->Phone_Extension->setNewVal($extn);
+
         // phone search - use only the numberals for efficient phone number search
         $ary = array('+', '-');
         $a->Phone_Search->setNewVal(str_replace($ary, '', filter_var($ph, FILTER_SANITIZE_NUMBER_INT)));

@@ -89,7 +89,7 @@ $todData = json_encode(todTable($dbh));
         var chart = new google.visualization.ColumnChart(document.getElementById('roomPie'));
         let options = {
         	height:550,
-        	width:1000,
+        	width:1200,
         	title:"HHK Check-in Time of Day Distribution",
         	legend: {position: 'top'},
         	vAxis: {title: 'Number of Check-ins'}

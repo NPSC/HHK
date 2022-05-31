@@ -3,6 +3,7 @@
 namespace HHK\Member\Address;
 
 use HHK\HTMLControls\HTMLTable;
+use HHK\SysConst\PhonePurpose;
 
 /**
  * Addresses.php
@@ -40,13 +41,14 @@ class Addresses {
                 HTMLTable::makeTh("Preferred Phone"));
 
         // Make phone number
-        $phoneMkup = '';
-        if ($useHousePhone) {
-            $phoneMkup = "House Phone";
+        $phData = $phone->get_Data();
+
+        if ($phData['Preferred_Phone'] == PhonePurpose::NoPhone) {
+            $phoneMkup = 'No Phone';
         } else {
-            $phData = $phone->get_Data();
             $phoneMkup = $phData["Phone_Num"] . ($phData["Phone_Extension"] == "" ? "" : " x".$phData["Phone_Extension"]);
         }
+
 
 
         $table->addBodyTr(

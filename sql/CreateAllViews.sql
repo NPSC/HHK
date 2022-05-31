@@ -16,7 +16,7 @@ select `n`.`idName` AS `Id`,
 `n`.`Name_Nickname` AS `Name_Nickname`,
 ifnull(`g1`.`Description`,'') AS `Name_Prefix`,
 ifnull(`g2`.`Description`,'') AS `Name_Suffix`,
-(case when (`n`.`Exclude_Phone` = 1) then '' else (case when (ifnull(`np`.`Phone_Extension`,'') = '')
+(case when (`n`.`Exclude_Phone` = 1) then '' when (n.Preferred_Phone = 'no') then 'No Phone' else (case when (ifnull(`np`.`Phone_Extension`,'') = '')
   then ifnull(`np`.`Phone_Num`,'') else concat_ws('x',`np`.`Phone_Num`,`np`.`Phone_Extension`) end) end) AS `Preferred_Phone`,
 (case when (`n`.`Exclude_Mail` = 1) then '' else ifnull(`na`.`Address_1`,'') end) AS `Address_1`,
 (case when (`n`.`Exclude_Mail` = 1) then '' else ifnull(`na`.`Address_2`,'') end) AS `Address_2`,
@@ -85,7 +85,7 @@ select `n`.`idName` AS `Id`,
 `n`.`Name_Nickname` AS `Name_Nickname`,
 ifnull(`g1`.`Description`,'') AS `Name_Prefix`,
 ifnull(`g2`.`Description`,'') AS `Name_Suffix`,
-(case when (ifnull(`np`.`Phone_Extension`,'') = '')
+(case  when (n.Preferred_Phone = 'no') then 'No Phone'  when (ifnull(`np`.`Phone_Extension`,'') = '')
   then ifnull(`np`.`Phone_Num`,'') else concat_ws('x',`np`.`Phone_Num`,`np`.`Phone_Extension`) end) AS `Preferred_Phone`,
 (case when (`n`.`Exclude_Mail` = 1 && n.Company_CareOf <> 'y') then '' else ifnull(`na`.`Address_1`,'') end) AS `Address_1`,
 (case when (`n`.`Exclude_Mail` = 1 && n.Company_CareOf <> 'y') then '' else ifnull(`na`.`Address_2`,'') end) AS `Address_2`,
@@ -424,7 +424,7 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
         (CASE WHEN (`m`.`Name_Suffix` = '') THEN `m`.`Name_Last`
               ELSE CONCAT(`m`.`Name_Last`, ', ', IFNULL(g.Description, ''))
               END) as `Guest Last`,
-        IFNULL(`np`.`Phone_Num`, '') AS `Phone`,
+		(case when (`m`.`Preferred_Phone` = 'no') then 'No Phone' else  IFNULL(`np`.`Phone_Num`, '') END) AS `Phone`,
         (CASE
             WHEN (`v`.`Ext_Phone_Installed` = 1) THEN 'Y'
             ELSE ''
@@ -469,6 +469,7 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
     WHERE
         (`s`.`Status` = 'a')
     ORDER BY `v`.`idVisit`;
+
 
 -- -----------------------------------------------------
 -- View `v_docs`
@@ -748,7 +749,7 @@ where (`n`.`idName` > 0);
 CREATE or replace VIEW `vdump_phone` AS
 select `p`.`idName` AS `Id`,
 `gc`.`Description` AS `Purpose`,
-`p`.`Phone_Num` AS `Number`,
+CASE WHEN `p`.`Phone_Code` = 'no' then 'No Phone' else `p`.`Phone_Num` END AS `Number`,
 `p`.`Phone_Extension` AS `Extn`,
 (case when (`p`.`Status` = 'a') then 'Active' else '' end) AS `Status`,
 `p`.`Last_Updated` AS `Last_Updated`,
@@ -999,7 +1000,7 @@ CREATE OR REPLACE VIEW `vguest_listing` AS
         `n`.`Name_Middle` AS `Middle`,
         `n`.`Name_Last` AS `Last`,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
-        (CASE
+        (CASE WHEN n.Preferred_Phone = 'no' THEN 'No Phone' 
             WHEN (IFNULL(`np`.`Phone_Extension`, '') = '') THEN IFNULL(`np`.`Phone_Num`, '')
             ELSE CONCAT_WS('x',
                     `np`.`Phone_Num`,
@@ -1062,17 +1063,15 @@ CREATE OR REPLACE VIEW `vguest_search_neon` AS
         IFNULL(`na`.`City`, '') AS `City`,
         IFNULL(`na`.`Postal_Code`, '') AS `Zip Code`
     FROM
-        (((((`name` `n`
-        LEFT JOIN `name_address` `na` ON (((`n`.`idName` = `na`.`idName`)
-            AND (`n`.`Preferred_Mail_Address` = `na`.`Purpose`))))
-        LEFT JOIN `name_email` `ne` ON (((`n`.`idName` = `ne`.`idName`)
-            AND (`n`.`Preferred_Email` = `ne`.`Purpose`))))
-        LEFT JOIN `name_phone` `np` ON (((`n`.`idName` = `np`.`idName`)
-            AND (`n`.`Preferred_Phone` = `np`.`Phone_Code`))))
-        LEFT JOIN `gen_lookups` `g1` ON (((`n`.`Name_Prefix` = `g1`.`Code`)
-            AND (`g1`.`Table_Name` = 'Name_Prefix'))))
-        LEFT JOIN `gen_lookups` `g2` ON (((`n`.`Name_Suffix` = `g2`.`Code`)
-            AND (`g2`.`Table_Name` = 'Name_Suffix'))))
+        `name` `n`
+        LEFT JOIN `name_address` `na` ON `n`.`idName` = `na`.`idName`
+            AND `n`.`Preferred_Mail_Address` = `na`.`Purpose`
+        LEFT JOIN `name_email` `ne` ON `n`.`idName` = `ne`.`idName`
+            AND `n`.`Preferred_Email` = `ne`.`Purpose`
+        LEFT JOIN `gen_lookups` `g1` ON `n`.`Name_Prefix` = `g1`.`Code`
+            AND `g1`.`Table_Name` = 'Name_Prefix'
+        LEFT JOIN `gen_lookups` `g2` ON `n`.`Name_Suffix` = `g2`.`Code`
+            AND `g2`.`Table_Name` = 'Name_Suffix'
     WHERE
         ((`n`.`idName` > 0)
             AND `n`.`idName` IN (SELECT
@@ -1300,7 +1299,7 @@ CREATE OR REPLACE VIEW `vguest_view` AS
                 '') AS `Last Name`,
         IFNULL(`n`.`Name_First`, '') AS `First Name`,
         IFNULL(`rm`.`Title`, '') AS `Room`,
-        IFNULL(`np`.`Phone_Num`, '') AS `Phone`,
+        CASE WHEN np.Phone_Code = 'no' THEN 'No Phone' else IFNULL(`np`.`Phone_Num`, '') END AS `Phone`,
         `s`.`Checkin_Date` AS `Arrival`,
         CASE
             WHEN `s`.`Expected_Co_Date` < CURRENT_TIMESTAMP() THEN CURRENT_TIMESTAMP()
@@ -1887,7 +1886,7 @@ create or replace view `vname_list` as
         `n`.`Name_Middle` AS `Middle`,
         `n`.`Name_Last` AS `Last`,
         IFNULL(`g2`.`Description`, '') AS `Suffix`,
-        (CASE
+        (CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone'
             WHEN (IFNULL(`np`.`Phone_Extension`, '') = '') THEN IFNULL(`np`.`Phone_Num`, '')
             ELSE CONCAT_WS('x',
                     `np`.`Phone_Num`,
@@ -2298,7 +2297,7 @@ CREATE or Replace VIEW `vreservation_events` AS
         ifnull(`n`.`Name_Full`, '') AS `Guest Name`,
         ifnull(`n`.`Name_First`, '') AS `Guest First`,
         ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', gs.Description) end), '') AS `Guest Last`,
-        ifnull(np.Phone_Num, '') as `Phone`,
+        CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone' ELSE ifnull(np.Phone_Num, '') END as `Phone`,
         ifnull((case when n2.Name_Suffix = '' then `n2`.`Name_Last_First` else concat(`n2`.`Name_Last_First`, ', ', gs2.Description) end), '') AS `Patient Name`,
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         case when ifnull(hs.idAssociation, 0) > 0 and h.Title = '(None)' then 0 else ifnull(hs.idAssociation, 0) end
@@ -2383,18 +2382,26 @@ where s.`Status` = 'a';
 -- View `vreservation_guests`
 -- -----------------------------------------------------
 create or replace view `vreservation_guests` as
-select
-    r.idReservation, r.idGuest, ng.idPsg, n.Name_Full, np.Phone_Num, r.`Primary_Guest`, g.Description as `Relationship_Code`
-from
+SELECT 
+    r.idReservation,
+    r.idGuest,
+    ng.idPsg,
+    n.Name_Full,
+    CASE WHEN (np.Phone_Code = 'no') THEN 'No Phone' ELSE ifnull(np.phone_Num, '') END as `Phone_Num`,
+    r.`Primary_Guest`,
+    g.Description AS `Relationship_Code`
+FROM
     reservation_guest r
-        left join
+        LEFT JOIN
     `name` n ON r.idGuest = n.idName
-        left join
-    `name_phone` np ON r.idGuest = np.idName and n.Preferred_Phone = np.Phone_Code
-        left join
-    name_guest ng on r.idGuest = ng.idName
-        left join
-    gen_lookups g on g.Table_Name = 'Patient_Rel_Type' and g.Code = ng.Relationship_Code;
+        LEFT JOIN
+    `name_phone` np ON r.idGuest = np.idName
+        AND n.Preferred_Phone = np.Phone_Code
+        LEFT JOIN
+    name_guest ng ON r.idGuest = ng.idName
+        LEFT JOIN
+    gen_lookups g ON g.Table_Name = 'Patient_Rel_Type'
+        AND g.Code = ng.Relationship_Code;
 
 
 
