@@ -65,7 +65,7 @@ function sendHhkLogin() {
 	        data = $.parseJSON(data);
 	    } catch (err) {
 	        alert(data);
-	        $('#divLoginCtls').remove();
+	        //$('#divLoginCtls').remove();
 	        return;
 	    }
 	    if(data.OTPRequired){
@@ -103,6 +103,8 @@ function sendHhkLogin() {
 	    if (data.stop) {
 	        $btn.css('disable', true);
 	    }
+	}).fail(function(data, textStatus, xhr){
+		$('#valMsg').text("A server error occurred, please check your username/password and try again").show();
 	});
 }
 $(document).ready(function () {

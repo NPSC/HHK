@@ -694,9 +694,10 @@ class UserClass
         }
 
         if ($date) {
-            $timestamp = "'" . $date . "'"; // add quotes to date
-        } else {
-            $timestamp = "now()";
+            $timestamp = $date;
+        } else { //use now
+            $now = new \DateTime();
+            $timestamp = $now->format('Y-m-d H:i:s');
         }
 
         $ssn = Session::getInstance();
@@ -722,10 +723,12 @@ class UserClass
         }
 
         try{
-            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`, `Browser`, `OS`) values ('" . $username . "', $timestamp , '$remoteIp', '$action', '$browserName', '$osName')");
+            $stmt = $dbh->prepare("insert into w_user_log (`Username`, `Access_Date`, `IP`, `Action`, `Browser`, `OS`) values (:username, :timestamp , :remoteIp, :action, :browserName, :osName)");
+            $stmt->execute(array(':username'=>$username, ':timestamp'=>$timestamp, ':remoteIp'=>$remoteIp, ':action'=>$action, ':browserName'=>$browserName, ':osName'=>$osName));
         }catch (\Exception $e){
             //Browser/OS fields not in DB - skip user agent
-            $dbh->exec("insert into w_user_log (Username, Access_Date, IP, `Action`) values ('" . $username . "', $timestamp , '$remoteIp', '$action')");
+            $stmt = $dbh->prepare("insert into w_user_log (`Username`, `Access_Date`, `IP`, `Action`) values (:username, :timestamp , :remoteIp, :action)");
+            $stmt->execute(array(':username'=>$username, ':timestamp'=>$timestamp, ':remoteIp'=>$remoteIp, ':action'=>$action));
         }
     }
 
@@ -744,20 +747,22 @@ class UserClass
         if ($stmt->rowCount() === 1) {
             $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
             if($rows[0][0] == 1){ //w_idp table exists
-                $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
+                $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, ifnull(idp.Name, 'Unknown Provider') as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
 left join `w_idp` idp on u.`idIdp` = idp.`idIdp`
-WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = '$uname'");
+WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = :uname");
             }else{ //w_idp table does not exist
-                $stmt = $dbh->query("SELECT u.*, a.Role_Id as Role_Id, 'Unknown Provider' as 'authProvider'
+                $stmt = $dbh->prepare("SELECT u.*, a.Role_Id as Role_Id, 'Unknown Provider' as 'authProvider'
 FROM w_users u join w_auth a on u.idName = a.idName
 join `name` n on n.idName = u.idName
-WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = '$uname'");
+WHERE n.idName is not null and u.Status IN ('a', 'd') and n.`Member_Status` = 'a' and u.User_Name = :uname");
             }
 
-            if ($stmt->rowCount() === 1) {
-                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            $stmt->execute(array(':uname'=>$uname));
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (count($rows) == 1) {
                 return $rows[0];
             }
         }
