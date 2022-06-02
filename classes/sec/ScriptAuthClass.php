@@ -303,16 +303,15 @@ class ScriptAuthClass extends SecurityComponent {
         }
 
 
-        $markup = "<header id='global-nav'>" . $this->getSiteIcons($uS->siteList);
-        $markup .= "<div id='global-title'>$pageHeader</div><div id='navContainer'><div id='nav'>";
+        $markup = "<header class='navbar navbar-expand-lg'><div class='container-fluid'><div class='navbar-brand'>" . $this->getSiteIcons($uS->siteList);
+        $markup .= "<div id='global-title'>$pageHeader</div></div><button class='navbar-toggler' type='button' data-bs-toggle='collapse' data-bs-target='#navbarNavDropdown' aria-controls='navbarNavDropdown' aria-expanded='false' aria-label='Toggle navigation'>
+      <span class='navbar-toggler-icon'></span>
+    </button><div class='collapse navbar-collapse nav-menu-right' id='navbarNavDropdown'><ul class='navbar-nav' id='nav'>";
 
         // process
         foreach ($menu["0"] as $item) {
 
-            $markup .= "<ul class='links'>";
-
-            if (isset($menu[$item])) {
-
+            if (isset($menu[$item])) { //if dropdown
                 // children to capture
                 $chd = '';
                 $cls = '';
@@ -324,28 +323,28 @@ class ScriptAuthClass extends SecurityComponent {
                         $myClass = '';
 
                         if ($pageAnchors[$chld]["File_Name"] == $this->getFileName()) {
-                            $myClass = " class='hhk-myPage' ";
+                            $myClass = " hhk-myPage";
                             $cls = ' hhk-myMenuTop';
                         }
 
-                        $chd .= "<li$myClass><a href='".$pageAnchors[$chld]["File_Name"]."'>" . $pageAnchors[$chld]["Title"] . "</a></li>";
+                        $chd .= "<li class='" . $myClass . "'><a href='".$pageAnchors[$chld]["File_Name"]."' class='dropdown-item'>" . $pageAnchors[$chld]["Title"] . "</a></li>";
                     }
                 }
 
                 if ($chd != '') {
-                    $chd = "<ul>" . $chd . "</ul>";
+                    $chd = "<ul class='dropdown-menu' aria-labelledby='dropdownLink" . $k . "'>" . $chd . "</ul>";
                 }
 
-                $markup .= "<li class='dropdown$cls'><a href='#'>" . $pageAnchors[$item]["Title"] . "</a>" . $chd;
+                $markup .= "<li class='nav-item dropdown$cls'><a href='#' class='nav-link dropdown-toggle' id='dropdownLink" . $k . "' role='button' data-bs-toggle='dropdown' aria-expanded='false'>" . $pageAnchors[$item]["Title"] . "</a>" . $chd;
 
             } else {
                 $clss = '';
                 if ($pageAnchors[$item]["File_Name"] == $this->getFileName()) {
-                    $clss = " class='hhk-myMenuTop' ";
+                    $clss = " active";
                 }
-                $markup .= "<li$clss><a href='".$pageAnchors[$item]["File_Name"]."'>" . $pageAnchors[$item]["Title"] . "</a>";
+                $markup .= "<li class='nav-item" . $clss . "'><a href='".$pageAnchors[$item]["File_Name"]."' class='nav-link'>" . $pageAnchors[$item]["Title"] . "</a>";
             }
-            $markup .= "</li></ul>";
+            $markup .= "</li></li>";
         }
 
         $disclaimer = '';
@@ -354,7 +353,7 @@ class ScriptAuthClass extends SecurityComponent {
         }
         //$markup .= "</div></div></header>
         //    <div id='version'>$disclaimer User:" . $uS->username . ", Build:" . $uS->ver . "</div>";
-        $markup .= "</div></div></header>
+        $markup .= "</ul></div></header>
             <div id='version'>$disclaimer Build:" . $uS->ver . "  <button id='userSettingsBtn' style='margin-left: .5em' class='ui-button ui-corner-all ui-widget'>Hello, " . $uS->username . "</button></div>";
 
         //add user settings modal
@@ -368,7 +367,7 @@ class ScriptAuthClass extends SecurityComponent {
 
     protected function getSiteIcons($siteList) {
 
-        $mu = "<ul id='ulIcons' style='float:left;padding-top:5px;' class='ui-widget ui-helper-clearfix hhk-ui-icons'>";
+        $mu = "<ul id='ulIcons' class='ui-widget hhk-ui-icons'>";
         $siteCount = 0;
         $siteMu = '';
         $uS = Session::getInstance();

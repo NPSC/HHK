@@ -33,12 +33,13 @@ define('MISSINGDEMOG_JS', 'js/missingDemog.js' . JSV);
 define('GUESTTRANSFER_JS', 'js/GuestTransfer.js' . JSV);
 define('INS_EMBED_JS', '<script src="https://instamedprd.cachefly.net/Content/Js/embed.js" data-displaymode="embedded" data-hostname="https://online.instamed.com/providers" data-mobiledisplaymode="embedded"></script>');
 define('GUEST_REFERRAL_JS', '<script src="js/guestReferral.js"></script>');
-define('BOOTSTRAP_JS', 'js/bootstrap.min.js');
+define('BOOTSTRAP_JS', '../js/bootstrap5.1.3.min.js');
 define('FULLCALENDAR_JS', "../js/fullcalendar5.11.0.min.js");
 
 define('FULLCALENDAR_CSS', '<link href="css/fullcalendar5.11.0.min.css"  rel="stylesheet" type="text/css" />');
 define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
 define('BOOTSTRAP_CSS', "<link href='css/bootstrap.min.css' rel='stylesheet' type='text/css' /><link href='css/bootstrap-print-fix.css' rel='stylesheet' type='text/css' />");
+define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css' rel='stylesheet' type='text/css' />");
 /**
  * Includes
  */
