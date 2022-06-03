@@ -255,10 +255,15 @@ class WebUser {
 
         $wUserName = "";
         if (isset($parms["wuname"])) {
+
+            if(!preg_match('/^([a-z,A-Z,0-9,@,\.]{6,35})$/', $parms["wuname"])){
+                return array("error"=>"User name can only contain lowercase letters, uppercase letters, numbers, '@', or '.' and must be 6-35 characters");
+            }
+
             $wUserName = filter_var($parms["wuname"], FILTER_SANITIZE_STRING);
 
             if (strtolower($wUserName) == 'admin') {
-                return array("error", "'Admin' cannot be used as a user name.");
+                return array("error"=>"'Admin' cannot be used as a user name.");
             }
         }
 
