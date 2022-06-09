@@ -6,6 +6,9 @@ use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode};
 use HHK\SFTPConnection;
 use HHK\SysConst\ItemType;
 
+/**
+ * This runs Gorecki House special monthly financial report.  Not intended for any other house.
+ */
 class GLCodes {
 
 	// General GL codes
@@ -188,10 +191,12 @@ class GLCodes {
 			if ($pUpDate >= $this->startDate && $pUpDate < $this->endDate) {
 				// It is a return in this period.
 
-					// Special handling for county payments
+				// Special handling for county payments
 				$this->mapCountyPayments($glCode, TRUE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $pUpDate);
 
-				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
+				if ($p['pAmount'] != 0) {
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $pUpDate, $this->glParm->getJournalCat());
+				}
 
 				foreach($invLines as $l) {
 
@@ -213,7 +218,9 @@ class GLCodes {
 				// Special handling for county payments
 				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
 
-				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+				if ($p['pAmount'] != 0) {
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+				}
 
 				foreach($invLines as $l) {
 
@@ -243,10 +250,12 @@ class GLCodes {
 			// Payment is in this period?
 			if ($this->paymentDate >= $this->startDate && $this->paymentDate < $this->endDate) {
 
-				// Special handling for county payments
+			    // Special handling for county payments; May edit $p['pAmount']
 				$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
 
-				$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+				if ($p['pAmount'] != 0) {
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $p['pAmount'], 0, $this->paymentDate, $this->glParm->getJournalCat());
+				}
 
 				foreach($invLines as $l) {
 
@@ -264,7 +273,9 @@ class GLCodes {
 			// Special handling for county payments
 			$this->mapCountyPayments($glCode, FALSE, $invLines, $p, ($r['i']['Pledged'] == 0 ? $r['i']['Rate'] : $r['i']['Pledged']), $this->paymentDate);
 
-			$this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->glParm->getJournalCat());
+			if ($p['pAmount'] != 0) {
+			    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, (0 - abs($p['pAmount'])), 0, $this->paymentDate, $this->glParm->getJournalCat());
+			}
 
 			foreach($invLines as $l) {
 
@@ -291,7 +302,7 @@ class GLCodes {
 
 		foreach ($invLines as $l) {
 
-			if ($l['il_Item_Id'] == ItemId::Lodging) {
+		    if ($l['il_Item_Id'] == ItemId::Lodging || $l['il_Type_Id'] == ItemType::Tax) {
 				$lodgingCharge += $l['il_Amount'];
 			}
 
@@ -299,30 +310,25 @@ class GLCodes {
 
 		if ($rate != 0 && $lodgingCharge != 0) {
 
-			$days = $lodgingCharge / $rate;
 
-			$county = round($days * $this->glParm->getCountyPayment(), 2);
-
-			if ($county > 0 && $p['pAmount'] > 0 && $p['pAmount'] > $county) {
-
-				$dbit = $p['pAmount'] - $county;
+		    if ($lodgingCharge > 0 && $p['pAmount'] >= $lodgingCharge) {
 
 				// Reduce original payment line by the above amount.
-				$p['pAmount'] = $county;
+		        $p['pAmount'] -= $lodgingCharge;
 
 				if ($isReturn) {
 
 					// make a debit line for hte difference
-					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, (0 - $dbit), 0, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, (0 - $lodgingCharge), 0, $pDate, $this->glParm->getJournalCat());
 
 				} else {
 
 				    // Intermediate transaction for counties
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, 0, $dbit, $pDate, $this->glParm->getJournalCat());
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $dbit, 0, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, 0, $lodgingCharge, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $lodgingCharge, 0, $pDate, $this->glParm->getJournalCat());
 
 					// make a debit line for hte difference
-					$this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, $dbit, 0, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, $lodgingCharge, 0, $pDate, $this->glParm->getJournalCat());
 
 				}
 			}
