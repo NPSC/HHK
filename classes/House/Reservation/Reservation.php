@@ -779,7 +779,7 @@ where rg.idReservation =" . $r['idReservation']);
         // Confirmation button
         $mk2 = '';
         if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::Waitlist) {
-            $mk2 .= HTMLInput::generateMarkup('Create Confirmation...', array('type'=>'button', 'id'=>'btnShowCnfrm', 'style'=>'margin:.3em;float:right;', 'data-rid'=>$resv->getIdReservation()));
+            $mk2 .= HTMLInput::generateMarkup('Send Confirmation...', array('type'=>'button', 'id'=>'btnShowCnfrm', 'style'=>'margin:.3em;float:right;', 'data-rid'=>$resv->getIdReservation()));
         }
 
         // fieldset wrapper
@@ -973,7 +973,7 @@ WHERE
 
                 $fin = new FinAssistance($dbh, $reg->getIdRegistration());
 
-                if ($fin->hasApplied() && $fin->getFaCategory() != '') {
+                if ($fin->isApproved() && $fin->getFaCategory() != '') {
                     $rateCategory = $fin->getFaCategory();
                 }
             }

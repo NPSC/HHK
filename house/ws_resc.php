@@ -700,17 +700,35 @@ try {
                 $notifyContent = filter_var($_REQUEST['notifyContent'], FILTER_SANITIZE_STRING);
             }
 
+            $initialGuests = '';
+            if(isset($_REQUEST['initialGuests'])) {
+                $initialGuests = intval(filter_var($_REQUEST['initialGuests'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $maxGuests = '';
+            if(isset($_REQUEST['maxGuests'])) {
+                $maxGuests = intval(filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
             $emailPatient = '';
             if(isset($_REQUEST['emailPatient'])) {
                 $emailPatient = filter_var($_REQUEST['emailPatient'], FILTER_VALIDATE_BOOLEAN);
             }
 
+            $fontImport = '';
+            if(isset($_REQUEST['fontImport']) && is_array($_REQUEST['fontImport'])) {
+                $fontImport = array();
+                foreach($_REQUEST['fontImport'] as $font){
+                    $fontImport[] = filter_var($font, FILTER_SANITIZE_STRING);
+                }
+            }
+
             $formTemplate = new FormTemplate();
             $formTemplate->loadTemplate($dbh, $idDocument);
             if($idDocument > 0) {
-                $events = $formTemplate->save($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $uS->username);
+                $events = $formTemplate->save($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
             }else{
-                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $uS->username);
+                $events = $formTemplate->saveNew($dbh, $title, $doc, $style, $fontImport, $successTitle, $successContent, $enableRecaptcha, $enableReservation, $emailPatient, $notifySubject, $notifyContent, $initialGuests, $maxGuests, $uS->username);
             }
 
             break;

@@ -11,6 +11,7 @@ use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
 use HHK\Exception\UploadException;
 use HHK\Neon\TransferMembers;
 use HHK\sec\Labels;
+use HHK\sec\SAML;
 use HHK\Neon\ConfigureNeon;
 
 /**
@@ -67,7 +68,7 @@ if ($uS->ContactManager == 'neon') {
     }
 }
 
-if (isset($_POST["btnSiteCnf"])) {
+if (isset($_POST["btnSiteCnf"]) || isset($_POST["btnLocalAuth"])) {
 
     addslashesextended($_POST);
 
@@ -234,6 +235,21 @@ if (count($rows) > 0 && $rows[0][0] != '') {
     $zipLoadDate = '';
 }
 
+// save SSO
+if(isset($_POST['saveIdP']) && isset($_POST['idpConfig'])){
+    try{
+        $idpId = array_key_first($_POST['idpConfig']);
+        $saml = new SAML($dbh, $idpId);
+        $saml = $saml->save($_POST, $_FILES);
+        $events = array("success"=>'Auth provider saved successfully', 'idpMkup'=>$saml->getEditMarkup(true), "idpName"=>$saml->getIdpName());
+    }catch(\Exception $e){
+        $events = array("error"=>"<strong>Error saving Identity Provider:</strong>" . $e->getMessage());
+    }
+
+    echo (json_encode($events));
+    exit();
+}
+
 // Patch tab markup
 $patchMarkup = Patch::patchTabMu();
 
@@ -258,10 +274,13 @@ foreach ($logSelRows as $r) {
 $ul = HTMLContainer::generateMarkup('ul', $li, array());
 $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'logsTabDiv'));
 
-$conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'));
+$conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'), NULL, array('pr'));
+
+$localAuthMkup = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'), 'pr');
 
 $labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
 
+$authIdpList = SAML::getIdpList($dbh, false);
 
 // Alert Message
 $webAlert = new AlertMessage("webContainer");
@@ -284,6 +303,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <?php echo DEFAULT_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo GRID_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -305,6 +325,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     <li><a href="#config">Site Configuration</a></li>
                     <li><a href="#patch">Patch</a></li>
                     <li><a href="#pay">Credit Card Processor</a></li>
+                    <li><a href="#auth">Authentication</a></li>
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels &#38; Prompts</a></li>
@@ -321,6 +342,35 @@ $getWebReplyMessage = $webAlert->createMarkup();
                             <input type="submit" name="btnSiteCnf" id="btnSiteCnf" value="Save Site Configuration"/>
                         </div>
                     </form>
+                </div>
+                <div id="auth" class="ui-tabs-hide">
+                	<div id="authTabs" class="hhk-member-detail" style="display:none; width: 100%;">
+						<ul>
+							<li><a href="#localAuth">Local</a></li>
+							<?php foreach($authIdpList as $idp){ ?>
+								<li><a href="#<?php echo $idp['idIdp']; ?>Auth"><?php echo $idp["Name"]; ?></a></li>
+							<?php } ?>
+							<li><a href="#newAuth"><span class="ui-icon ui-icon-plusthick mr-2"></span>New Identity Provider</a></li>
+						</ul>
+
+						<div id="localAuth" class="ui-tabs-hide">
+							<form method="post" action="Configure.php">
+    							<?php echo $localAuthMkup; ?>
+    							<div style="text-align: right">
+    								<input type="submit" name="btnLocalAuth" id="btnLocalAuth" value="Save">
+    							</div>
+    						</form>
+						</div>
+						<?php
+						foreach($authIdpList as $idp){
+							$saml = new SAML($dbh, $idp['idIdp']);
+                            echo $saml->getEditMarkup();
+						}
+						$newsaml = new SAML($dbh);
+						echo $newsaml->getEditMarkup();
+						?>
+
+					</div>
                 </div>
                 <div id="labels" class="ui-tabs-hide" >
                     <form method="post" name="form5" action="">
@@ -386,6 +436,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     </form>
                 </div>
             </div>
+			<input type="hidden" id="notyMsg" value='<?php echo json_encode((isset($notymsg) ? $notymsg:[])); ?>'>
 			<input type="hidden" id="wsServFile" value="<?php echo $serviceFile; ?>"/>
 			<input type="hidden" id="tabIndex" value="<?php echo $tabIndex; ?>"/>
 			<input type="hidden" id="notymsg" value='<?php echo (isset($notymsg) ? json_encode($notymsg) : '[]'); ?>' />

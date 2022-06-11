@@ -539,18 +539,18 @@ order by r.Title;");
         }
         if (isset($post['selRateCode'])) {
             $code = filter_var($post['selRateCode'], FILTER_SANITIZE_STRING);
-            
+
             $roomRs->Rate_Code->setNewVal($code);
-            
+
         }
-        
+
         if (isset($post['selRateCat'])) {
             $code = filter_var($post['selRateCat'], FILTER_SANITIZE_STRING);
-            
+
             $roomRs->Default_Rate_Category->setNewVal($code);
-            
+
         }
-        
+
         if (isset($post['selLocId'])) {
             $idLoc = intval(filter_var($post['selLocId'], FILTER_SANITIZE_NUMBER_INT));
             $roomRs->idLocation->setNewVal($idLoc);
@@ -722,9 +722,9 @@ order by r.Title;");
         $cleaningCodes = readGenLookupsPDO($dbh, 'Room_Cleaning_Days');
 
         $room = new Room($dbh, 0, $roomRs);
-        
+
         $rateCategories = RoomRate::makeSelectorOptions(AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
-        
+
 
         $cls = 'rmSave' . $room->getIdRoom();
 
@@ -743,7 +743,7 @@ order by r.Title;");
             . HTMLTable::makeTd(HTMLInput::generateMarkup($room->getMaxOccupants(), array('id'=>'txtMax', 'class'=>$cls, 'size'=>'3')), array('style'=>'padding-right:0;padding-left:0;'))
             . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Floor->getStoredVal(), array('id'=>'txtFloor', 'class'=>$cls, 'size'=>'4')), array('style'=>'padding-right:0;padding-left:0;'))
             // phone
-            . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Phone->getStoredVal(), array('id'=>'txtPhone', 'class'=>$cls . ' hhk-phoneInput', 'size'=>'10')), array('style'=>'padding-right:0;padding-left:0;'))
+        . HTMLTable::makeTd(HTMLInput::generateMarkup($roomRs->Phone->getStoredVal(), array('id'=>'txtPhone', 'name'=>'txtPhone', 'type'=>'text', 'autocomplete'=>"off", 'class'=>$cls . ' hhk-phoneInput', 'size'=>'10')), array('style'=>'padding-right:0;padding-left:0;'))
             // Static rate
             . HTMLTable::makeTd(HTMLSelector::generateMarkup(
                     HTMLSelector::doOptionsMkup(removeOptionGroups($rateCodes), $room->getRateCode(), FALSE), array('id'=>'selRateCode', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
@@ -933,26 +933,26 @@ from
 
         //Resource grouping controls
         $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
-        
+
         $rescGroupBy = '';
         $genJoin = '';
         $orderBy = 'r.Util_Priority';
-        
+
         if (isset($rescGroups[$uS->CalResourceGroupBy])) {
             $rescGroupBy = $uS->CalResourceGroupBy;
         }
-        
-        
+
+
         foreach ($rescGroups as $g) {
-            
+
             if ($rescGroupBy === $g[0]) {
-                
+
                 $genJoin = " left join `gen_lookups` gr on gr.`Table_Name` = '" . $g[2] . "' and gr.`Code` = r." . $g[0] . " ";
                 $orderBy = "gr.`Order`, " . $orderBy;
                 break;
             }
         }
-        
+
         $stmt = $dbh->query("select
     r.idRoom,
     ifnull(v.idVisit, 0) as idVisit,
@@ -994,7 +994,7 @@ ORDER BY $orderBy;");
                     !($r['Status'] == RoomState::Dirty || $r['Status'] == RoomState::TurnOver || ($uS->HouseKeepingSteps > 1 && $r['Status'] == RoomState::Clean && $r['idVisit'] == 0))) {
                 continue;
             }
-            
+
 
             $expDeparture = $r['Expected_Departure'];
             $arrival = $r['Arrival'];

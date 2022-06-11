@@ -214,6 +214,7 @@ order by h.idPsg, na.Address_1, na.Address_2";
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
 
         <?php echo FAVICON; ?>

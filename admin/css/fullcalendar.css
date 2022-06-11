@@ -71,6 +71,7 @@ html .fc,
 .fc-header .fc-button {
 	margin-bottom: 1em;
 	vertical-align: top;
+	padding: .4em 1em;
 	}
 	
 /* buttons edges butting together */
@@ -188,6 +189,10 @@ html .fc,
 	*margin-top: 0;
 	*top: -50%;
 	}
+	
+.fc-button .ui-icon {
+	background-image: url(jqui/images/ui-icons_ffffff_256x240.png); //force white icons
+}
 	
 /* gloss effect */
 	

@@ -4,6 +4,7 @@ namespace HHK\Member\ProgressiveSearch;
 
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchFor;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchResults;
+use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameData;
 
 class ProgressiveSearch {
 
@@ -18,7 +19,7 @@ class ProgressiveSearch {
 
 	        $searchResults = new SearchResults();
 
-	        $searchResults->loadMeFrom($r);
+	        $searchResults->loadMeFrom($r, new SearchNameData());
 
 	        $results[] = $searchResults;
 	    }
@@ -82,6 +83,8 @@ WHERE n.idName = $id ";
 
             $selRel = " IFNULL(ng.Relationship_Code, '') as Relationship, ";
             $joinRel = " LEFT JOIN name_guest ng on n.idName = ng.idName and ng.idPsg = " . $searchFor->getPsgId() . " ";
+        }else{
+            $selRel = " '' as Relationship, ";
         }
 
 	    return "SELECT

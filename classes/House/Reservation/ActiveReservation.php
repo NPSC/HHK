@@ -38,7 +38,7 @@ class ActiveReservation extends Reservation {
         // Get any previous settings and set primary guest if blank.
         $oldResvId = $this->copyOldReservation($dbh);
 
-        $formUserData = NULL;
+        $formUserData = [];
 
         // Remote user Referral
         if ($this->reserveData->getIdReferralDoc() > 0) {
@@ -54,7 +54,7 @@ class ActiveReservation extends Reservation {
         // Add the family, hospital, etc sections.
         $this->createDatesMarkup();
         $this->createHospitalMarkup($dbh, (isset($formUserData['hospital'])?$formUserData['hospital']:[]));
-        $this->createFamilyMarkup($dbh, (isset($formUserData['patient'])?$formUserData['patient']:[]));
+        $this->createFamilyMarkup($dbh, $formUserData);
 
         // Add the reservation section.
         $this->reserveData->setResvSection($this->createResvMarkup($dbh, $oldResvId, '', (isset($formUserData['vehicle'])?$formUserData['vehicle']:[])));

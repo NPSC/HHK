@@ -6,6 +6,10 @@
     background-color: #FFCC9F;
 }
 
+body {
+	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
+}
+
 .no-close .ui-dialog-titlebar-close {
   display: none;
 }
@@ -168,18 +172,33 @@ div#hideCalendar, div#hideLog {
 div#contentDiv {
     margin-left: 10px;
     margin-right: 10px;
-    margin-top: 43px;
+
 }
-.pageSpacer {
+.copyright {
+	text-align:right;font-size: smaller; margin-top:5px;margin-right:.3em;
+}
+.build {
+	text-align:right;font-size: .6em;margin-right:5px;
+}
+
+.rssWidget .item {
+	border-bottom:1px solid #a6c9e2;
+}
+
+.pageHeader {
     width: 100%;
     background-color: #63A0CE;
-    position:fixed;
+    color: white;
+    position:sticky;
+    margin-bottom:0.5em;
+    z-index: 1000;
     top: 0;
     left: 0;
 }
 #content {
     margin: 20px 10px;
 }
+
 h1, h2, h3 {
     padding: 3px 5px;
 }
@@ -307,7 +326,7 @@ div#global-title {
     font-size: 1.5em;
 }
 #global-nav {
-    position: fixed;
+    position: sticky;
     top: 0;
     width: 100%;
     z-index: 20;
@@ -438,6 +457,13 @@ li.hhk-myMenuTop {
 	float: left;
 }*/
 
+#TwoFactorHelp p {
+	margin-bottom: 1em;
+}
+
+#TwoFactorHelp li {
+	margin-bottom: 0.5em;
+}
 
 /* Report Filter tables */
 .filters table td {
@@ -575,11 +601,20 @@ div.dt-buttons .dt-button:hover>span {
 .hhk-flex {
 	display: flex;
 	align-items: flex-start;
+}
+
+.hhk-flex-wrap {
 	flex-flow: wrap;
 }
 
 .hhk-overflow-x {
 	overflow-x: auto;
+}
+
+/* flex tabs */
+.hhk-flex.ui-tabs-nav{
+	overflow-x: auto;
+	overflow-y: hidden;
 }
 
 @media only screen and (max-width: 1024px){
@@ -588,4 +623,25 @@ div.dt-buttons .dt-button:hover>span {
 		display: none;
 	}
 	
+}
+
+/* User Settings */
+#mfaEmail table {
+	width: 100%;
+}
+
+#mfaEmail td {
+	border: none;
+}
+
+
+/* fullcalendar variables */
+.fc {
+	--fc-button-bg-color: #5c9ccc;
+	--fc-button-hover-bg-color: #3E6D8F;
+	--fc-button-active-bg-color: #3E6D8F;
+}
+
+.fc .fc-toolbar{
+	flex-wrap: wrap;
 }

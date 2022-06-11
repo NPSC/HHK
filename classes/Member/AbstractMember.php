@@ -76,10 +76,16 @@ abstract class AbstractMember {
 
         if ($nid == 0) {
 
-            // preset special fields for new member
-            $this->nameRS->Member_Status->setStoredVal(MemStatus::Active);
-            $this->nameRS->Member_Type->setStoredVal($defaultMemberBasis);
-            $this->newMember = TRUE;
+            if (isset($uS->nameLookups[GLTableNames::MemberBasis][$defaultMemberBasis])) {
+
+                // preset special fields for new member
+                $this->nameRS->Member_Status->setStoredVal(MemStatus::Active);
+                $this->nameRS->Member_Type->setStoredVal($defaultMemberBasis);
+                $this->newMember = TRUE;
+
+            } else {
+                throw new MemberException("Undefined member Basis for new member: " . $defaultMemberBasis);
+            }
 
         } else {
 
@@ -87,10 +93,11 @@ abstract class AbstractMember {
             if (isset($uS->nameLookups[GLTableNames::MemberBasis][$this->nameRS->Member_Type->getStoredVal()])) {
 
                 if ($this->getMemberDesignation() != $uS->nameLookups[GLTableNames::MemberBasis][$this->nameRS->Member_Type->getStoredVal()][AbstractMember::SUBT]) {
-                    throw new MemberException("Wrong member Designation for this member object.");
+                    throw new MemberException("Wrong member Designation for this member object.  idName = " . $nid);
                 }
+
             } else {
-                throw new MemberException("Undefined member Basis.");
+                throw new MemberException("Undefined member Basis for idName = " . $nid);
             }
 
             // Get demography data
@@ -136,7 +143,7 @@ abstract class AbstractMember {
                 $desig = $uS->nameLookups[GLTableNames::MemberBasis][$nRS->Member_Type->getStoredVal()][AbstractMember::SUBT];
 
             } else {
-                throw new RuntimeException("This member has an Undefined Member Basis: " . $nRS->Member_Type->getStoredVal() . ".");
+                throw new RuntimeException("This member (" . $nid . ") has an Undefined Member Basis: " . $nRS->Member_Type->getStoredVal() . ".");
             }
 
         } else {
@@ -472,7 +479,7 @@ abstract class AbstractMember {
         // Convenience var
         $n = $this->nameRS;
         $uS = Session::getInstance();
-        $user = $uS->username;
+        $user = (isset($post['auditUser']) ? $post['auditUser']: $uS->username);
 
         // Process common
         $this->processCommon($post);
@@ -624,11 +631,17 @@ abstract class AbstractMember {
 
         //  Basis
         if (isset($post[$idPrefix."selMbrType"])) {
-            $n->Member_Type->setNewVal(filter_var($post[$idPrefix.'selMbrType'], FILTER_SANITIZE_STRING));
-            // additional info if changed
-            if ($n->Member_Type->getStoredVal() != $n->Member_Type->getNewVal()) {
-                $n->Prev_MT_Change_Date->setNewVal(date("Y-m-d H:i:s"));
-                $n->Previous_Member_Type->setNewVal($n->Member_Type->getStoredVal());
+
+            $mt = filter_var($post[$idPrefix.'selMbrType'], FILTER_SANITIZE_STRING);
+
+            if (isset($uS->nameLookups['Member_Basis'][$mt])) {
+
+                $n->Member_Type->setNewVal($mt);
+                // additional info if changed
+                if ($n->Member_Type->getStoredVal() != $n->Member_Type->getNewVal()) {
+                    $n->Prev_MT_Change_Date->setNewVal(date("Y-m-d H:i:s"));
+                    $n->Previous_Member_Type->setNewVal($n->Member_Type->getStoredVal());
+                }
             }
         } else {
             $n->Member_Type->setNewVal($n->Member_Type->getStoredVal());
@@ -637,11 +650,15 @@ abstract class AbstractMember {
         //  Status
         if (isset($post[$idPrefix.'selStatus'])) {
 
-            $n->Member_Status->setNewVal(filter_var($post[$idPrefix.'selStatus'], FILTER_SANITIZE_STRING));
+            $mt = filter_var($post[$idPrefix.'selStatus'], FILTER_SANITIZE_STRING);
 
-            // Aditional Info if changed
-            if ($n->Member_Status->getStoredVal() != $n->Member_Status->getNewVal()) {
-                $n->Member_Status_Date->setNewVal(date("Y-m-d H:i:s"));
+            if (isset($uS->nameLookups['mem_status'][$mt]) === TRUE) {
+                $n->Member_Status->setNewVal($mt);
+
+                // Aditional Info if changed
+                if ($n->Member_Status->getStoredVal() != $n->Member_Status->getNewVal()) {
+                    $n->Member_Status_Date->setNewVal(date("Y-m-d H:i:s"));
+                }
             }
 
         } else {

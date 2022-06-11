@@ -53,8 +53,8 @@ class RoomRS extends AbstractTableRS {
     function __construct($TableName = "room") {
 
         $this->idRoom = new DB_Field("idRoom", 0, new DbIntSanitizer());
-        $this->idHouse = new DB_Field("idHouse", 0, new DbIntSanitizer());
-        $this->Item_Id = new DB_Field("Item_Id", 0, new DbIntSanitizer());
+        $this->idHouse = new DB_Field("idHouse", 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Item_Id = new DB_Field("Item_Id", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Title = new DB_Field("Title", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Description = new DB_Field("Description", "", new DbStrSanitizer(2000), TRUE, TRUE);
         $this->Type = new DB_Field("Type", "", new DbStrSanitizer(15), TRUE, TRUE);

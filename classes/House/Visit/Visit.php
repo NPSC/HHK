@@ -2108,6 +2108,14 @@ class Visit {
         return is_null($this->visitRS->Notes->getStoredVal()) ? '' : $this->visitRS->Notes->getStoredVal();
     }
 
+    public function setNoticeToCheckout($v) {
+        $this->visitRS->Notice_to_Checkout->setNewVal($v);
+    }
+
+    public function getNoticeToCheckout() {
+        return $this->visitRS->Notice_to_Checkout->getStoredVal();
+    }
+
     public function setRateAdjust($v) {
         $this->visitRS->Expected_Rate->setNewVal($v);
     }

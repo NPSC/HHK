@@ -85,7 +85,7 @@ abstract class AbstractRoleMember extends IndivMember {
         }
 
         $tr =
-             HTMLTable::makeTh('Prefix')
+        HTMLTable::makeTh(Labels::getString("MemberType", "namePrefix", "Prefixe"))
             . HTMLTable::makeTh('First Name')
             . HTMLTable::makeTh('Middle')
             . HTMLTable::makeTh($lnCopyDownIcon)

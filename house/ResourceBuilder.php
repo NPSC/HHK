@@ -2050,7 +2050,12 @@ $alertMsg->set_Text("uh-oh");
 
 $resultMessage = $alertMsg->createMarkup();
 
-
+$demogs = readGenLookupsPDO($dbh, 'Demographics');
+foreach($demogs as $key=>$demog){
+    if($demog["Substitute"] == ""){ //remove disabled demogs
+        unset($demogs[$key]);
+    }
+}
 
 ?>
 <!DOCTYPE html>
@@ -2332,7 +2337,7 @@ $resultMessage = $alertMsg->createMarkup();
 					doctor: "<?php echo $uS->Doctor; ?>",
 					referralAgent: "<?php echo $uS->ReferralAgent; ?>"
 				},
-				demogs: <?php echo json_encode(readGenLookupsPDO($dbh, 'Demographics')); ?>
+				demogs: <?php echo json_encode($demogs); ?>
 			});
 		});
 

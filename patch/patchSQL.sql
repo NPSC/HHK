@@ -1,51 +1,12 @@
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('showAddressReceipt', 'false', 'b', 'h', '', 'Show primary guest address on receipts', '','1');
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('namePrefix', 'Prefix', 's', 'mt', 'Default: Prefix');
 
-UPDATE `gen_lookups` SET `Description` = "Gender Identity" where `Table_Name` = "Demographics" and `Code` = "Gender";
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES ('labels_category', 'vi', 'Visit', '', '', 25);
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('noticeToCheckout', 'Notice to Checkout', 's', 'vi', 'Default: Notice to Checkout');
 
-DELETE FROM `sys_config` where `Key` = "showGuestsStayingReg";
+ALTER TABLE `visit` 
+ADD COLUMN IF NOT EXISTS `Notice_to_Checkout` DATETIME NULL DEFAULT NULL AFTER `Return_Date`;
 
-ALTER TABLE `insurance` 
-	ADD COLUMN IF NOT EXISTS `Status` VARCHAR(1) NOT NULL DEFAULT 'a' AFTER `Opens_Type`;
-ALTER TABLE `insurance` 
-	ADD COLUMN IF NOT EXISTS `Order` INT(3) NOT NULL DEFAULT 0 AFTER `Title`;
-ALTER TABLE `insurance` 
-	CHANGE COLUMN IF EXISTS `Type` `idInsuranceType` INT(3) NOT NULL;
-
-ALTER TABLE `insurance_type` 
-	CHANGE COLUMN IF EXISTS `idInsurance_type` `idInsurance_type` INT(3) NOT NULL ;
-	
-ALTER TABLE `insurance_type` 
-	ADD COLUMN IF NOT EXISTS `Status` VARCHAR(1) NOT NULL DEFAULT 'a';
-
--- Mark visits as recorded (ie, Neon)
-ALTER TABLE `stays` 
-	ADD COLUMN IF NOT EXISTS `Recorded` INT(1) NOT NULL DEFAULT 0 AFTER `Status`;
-
--- Set idName as int.
-UPDATE `trans` set `idName` = '0' where not `idName` REGEXP '^[0-9]+$';
-ALTER TABLE `trans` 
-	CHANGE COLUMN IF EXISTS `idName` `idName` INT(11) NOT NULL DEFAULT 0 ;
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1');
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('DKIMdomain', '', 's', 'es', '', 'Domain name of sender (must match FromAddress and NoReplyAddr domains)', '','1');
-
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0');
-
-
--- Neon 
-INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`,`Show`) values
-('ContactManager', '', 'lu', 'hf', '', 'Integrate an External CRM/Fund Raiser App', 'ExternalCrm','1');
-
-Insert IGNORE INTO `gen_lookups` (`Table_Name`,`Code`,`Description`,`Substitute`,`Type`,`Order`) VALUES
-('ExternalCrm', '', '(None)', '', '', 0),
-('ExternalCrm', 'neon', 'NeonCRM','','',0);
-
-UPDATE `hospital_stay` SET `MRN` = REPLACE(REPLACE(REPLACE(TRIM(`MRN`), '/', ''), '-',''), '_', ''); -- remove whitespace, /,-,_ from MRNs
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('noticetoCheckout', 'false', 'b', 'h', 'Show Notice to Checkout date box on visits', '1');
 
 -- add new Apppointment Grid page
 Call new_webpage('AppointGrid.php', 31, 'Check-In Appointments', 1, 'h', 95, 'c', 'p', '', '', CURRENT_TIMESTAMP, 'ga');
@@ -56,3 +17,5 @@ INSERT IGNORE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Descr
 
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Appointment_Type', 'b', 'Blocker', 'h', '10');
 INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Order`) VALUES ('Appointment_Type', 'r', 'Reservation', 'h', '30');
+
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES ('Phone_Type', 'no', 'No Phone', 'i', '100');

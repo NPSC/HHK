@@ -69,7 +69,7 @@ class Hospital {
                 (count($aList) > 0 ? HTMLTable::makeTh('Association') : '')
                 .HTMLTable::makeTh($labels->getString('hospital', 'hospital', 'Hospital'))
         		.HTMLTable::makeTh($labels->getString('hospital', 'roomNumber', 'Room'))
-        		.($mrn == '' ? '' : HTMLTable::makeTh($mrn))
+                .($mrn == '' ? '' : HTMLTable::makeTh($mrn))
             );
 
         $table->addBodyTr(
@@ -596,8 +596,8 @@ $(document).ready(function () {
         // Doctor
         if (isset($post['d_idName'])) {
             $aId = intval(filter_var($post['d_idName'], FILTER_SANITIZE_NUMBER_INT), 10);
-
             $doc = new Doctor($dbh, 'd_', $aId);
+
             try{
                 $doc->save($dbh, $post, $uS->username);
             } catch (RuntimeException $ex) {

@@ -300,7 +300,7 @@ $(document).ready(function () {
                 var parms = {},
                     tipmsg = $('#hhk-wuprompt');
 
-                $("#webContainer").hide();
+                $("#webContainer").hide().parent().hide();
 
                 $('.grpSec').each(function (index) {
                     if ($(this).prop("checked")) {
@@ -310,11 +310,11 @@ $(document).ready(function () {
                     }
                 });
                 if ($('#txtwUserName').length > 0) {
-                    if (!checkLength($('#txtwUserName'), 'User Name', 6, 35, tipmsg)) {
+                    if (!checkLength($('#txtwUserName'), 'User Name', 6, 35, tipmsg, tipmsg.parent())) {
                         return;
                     }
 //                    if (!checkStrength($('#txtwUserPW'))) {
-//                        updateTips(tipmsg, 'Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.');
+//                        updateTips(tipmsg, 'Password must have 8 or more characters including at least one uppercase and one lower case letter, one number and one symbol.', tipmsg.parent());
 //                        return;
 //                    }
                     parms['wuname'] = $('#txtwUserName').val();
@@ -330,6 +330,7 @@ $(document).ready(function () {
                 parms['admin'] = userData.userName;
                 parms['vaddr'] = $('#selwVerify').val();
                 parms['resetNext'] = $('#resetNew').prop('checked');
+                parms['resetMfa'] = $('#resetMfa').prop('checked');
 
                 //$('div.ui-dialog-buttonset').css("display", "none");
                 $.post("ws_gen.php", {cmd: 'save', parms : parms}, function (rdata) {
@@ -369,6 +370,7 @@ $(document).ready(function () {
 
                     if (mess !== '') {
                         $('#webMessage').html(mess);
+                        $("#webContainer").parent().show();
                         $("#webContainer").show("pulsate");
                     }
 

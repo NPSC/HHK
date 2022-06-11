@@ -94,7 +94,7 @@ class NameRS extends AbstractTableRS {
         $this->Exclude_Mail = new DB_Field("Exclude_Mail", 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->Exclude_Email = new DB_Field("Exclude_Email", 0, new DbBitSanitizer(), TRUE, TRUE);
         $this->Exclude_Phone = new DB_Field("Exclude_Phone", 0, new DbBitSanitizer(), TRUE, TRUE);
-        $this->Gender = new DB_Field("Gender", "", new DbStrSanitizer(2), TRUE, TRUE);
+        $this->Gender = new DB_Field("Gender", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Name_Suffix = new DB_Field("Name_Suffix", "", new DbStrSanitizer(10), TRUE, TRUE);
         $this->Name_Prefix = new DB_Field("Name_Prefix", "", new DbStrSanitizer(25), TRUE, TRUE);
         $this->Name_Last_First = new DB_Field("Name_Last_First", "", new DbStrSanitizer(90));

@@ -346,12 +346,23 @@ class Family {
 
     }
 
-    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData, $patientUserData = []) {
+    public function createFamilyMarkup(\PDO $dbh, ReserveData $rData, $formUserData = []) {
 
         $rowClass = 'odd';
         $mk1 = '';
         $trs = array();
         $familyName = '';
+        $patientUserData = [];
+        $guestUserData = [];
+
+        if(isset($formUserData['patient'])){
+            $patientUserData = $formUserData['patient'];
+        }
+
+
+        if (isset($formUserData['guests'])) {
+            $guestUserData = $formUserData['guests'];
+        }
 
         $AdrCopyDownIcon = HTMLContainer::generateMarkup('ul'
                     ,  HTMLContainer::generateMarkup('li',
@@ -398,7 +409,7 @@ class Family {
                     $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
 
-                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex"));
+                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap"));
 
                 $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
@@ -451,13 +462,20 @@ class Family {
                 }
 
                 if ($this->showDemographics) {
+                    $guestDemos = [];
+                    foreach($guestUserData as $userData){ //find matching guest
+                        if($role->getIdName() == (isset($userData['idName']) ? $userData['idName'] : 0)){
+                            $guestDemos = (isset($userData['demographics']) ? $userData['demographics'] : []);
+                        }
+                    }
+
                     // Demographics
-                    $demoMu .= $this->getDemographicsMarkup($dbh, $role);
+                    $demoMu .= $this->getDemographicsMarkup($dbh, $role, $guestDemos);
                 }
 
                 $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
                     HTMLTable::makeTd('')
-                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex")), array('colspan'=>'11'))
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap")), array('colspan'=>'11'))
                     , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }
