@@ -162,11 +162,11 @@ group by g.Code order by g.Order';
                 if(isset($userData['patient']['firstName']) && isset($userData['patient']['lastName'])){
                     $content .= PHP_EOL . "<br><strong>Summary</strong>" . PHP_EOL
                              . "<br>Name: " . $userData['patient']['firstName'] . " " . $userData['patient']['lastName'] . PHP_EOL;
-                    if($userData['checkindate'] !== false){
+                    if(isset($userData['checkindate']) && $userData['checkindate'] != ''){
                         $date = new \DateTime($userData['checkindate']);
                         $content .= "<br>Expected Arrival: " . $date->format("M d, Y") . PHP_EOL;
                     }
-                    if($userData['checkoutdate'] !== false){
+                    if(isset($userData['checkoutdate']) && $userData['checkoutdate'] != ''){
                         $date = new \DateTime($userData['checkoutdate']);
                         $content .= "<br>Expected Departure: " . $date->format("M d, Y") . PHP_EOL;
                     }

@@ -359,7 +359,8 @@ class Family {
             $patientUserData = $formUserData['patient'];
         }
 
-        if(isset($formUserData['guests'])){
+
+        if (isset($formUserData['guests'])) {
             $guestUserData = $formUserData['guests'];
         }
 
@@ -408,7 +409,7 @@ class Family {
                     $demoMu .= $this->getInsuranceMarkup($dbh, $role);
                 }
 
-                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex"));
+                $container = HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap"));
 
                 $trs[1] = HTMLContainer::generateMarkup('tr', HTMLTable::makeTd('') . HTMLTable::makeTd($container, array('colspan'=>'11')), array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
@@ -467,13 +468,14 @@ class Family {
                             $guestDemos = (isset($userData['demographics']) ? $userData['demographics'] : []);
                         }
                     }
+
                     // Demographics
                     $demoMu .= $this->getDemographicsMarkup($dbh, $role, $guestDemos);
                 }
 
                 $trs[$trsCounter++] = HTMLContainer::generateMarkup('tr',
                     HTMLTable::makeTd('')
-                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex")), array('colspan'=>'11'))
+                    . HTMLTable::makeTd(HTMLContainer::generateMarkup("div", $role->createAddsBLock() . $demoMu, array("class"=>"hhk-flex hhk-flex-wrap")), array('colspan'=>'11'))
                     , array('id'=>$role->getIdName() . 'a', 'class'=>$rowClass . ' hhk-addrRow'));
             }
         }

@@ -716,8 +716,11 @@ try {
             }
 
             $fontImport = '';
-            if(isset($_REQUEST['fontImport'])) {
-                $fontImport = filter_var($_REQUEST['fontImport'], FILTER_SANITIZE_STRING);
+            if(isset($_REQUEST['fontImport']) && is_array($_REQUEST['fontImport'])) {
+                $fontImport = array();
+                foreach($_REQUEST['fontImport'] as $font){
+                    $fontImport[] = filter_var($font, FILTER_SANITIZE_STRING);
+                }
             }
 
             $formTemplate = new FormTemplate();

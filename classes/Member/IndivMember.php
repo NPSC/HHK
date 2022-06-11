@@ -13,6 +13,7 @@ use HHK\Exception\RuntimeException;
 use HHK\Exception\InvalidArgumentException;
 use HHK\Member\Relation\Siblings;
 use HHK\Member\Relation\Relatives;
+use HHK\sec\Labels;
 
 /**
  * IndivMember.php
@@ -92,7 +93,7 @@ class IndivMember extends AbstractMember {
         $table = new HTMLTable();
         $table->addHeaderTr(
                 HTMLContainer::generateMarkup('th', 'Id')
-                . HTMLContainer::generateMarkup('th', 'Prefix')
+                . HTMLContainer::generateMarkup('th', Labels::getString("MemberType", "namePrefix", "Prefix"))
                 . HTMLContainer::generateMarkup('th', 'First Name')
                 . HTMLContainer::generateMarkup('th', 'Middle')
                 . HTMLContainer::generateMarkup('th', 'Last Name')
@@ -381,7 +382,7 @@ class IndivMember extends AbstractMember {
                 'Date: ' . HTMLInput::generateMarkup(($this->get_DateBackgroundCheck() == '' ? '' : date('M j, Y', strtotime($this->get_DateBackgroundCheck()))), array('name'=>$idPrefix.'txtBackgroundCheckDate', 'class'=>'ckbdate')), $bcdateAttr))
             );
 
-        return HTMLContainer::generateMarkup("div", $table->generateMarkup(array('style'=>'margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'margin-right:10px;')) . $insuranceMarkup, array("class"=>"hhk-flex"));
+        return HTMLContainer::generateMarkup("div", $table->generateMarkup(array('style'=>'margin-right:10px;')) . $tbl2->generateMarkup(array('style'=>'margin-right:10px;')) . $insuranceMarkup, array("class"=>"hhk-flex hhk-flex-wrap"));
 
     }
 
@@ -724,6 +725,8 @@ ORDER BY `List_Order`");
             if (isset($uS->nameLookups[GLTableNames::NamePrefix][$pre])) {
                 $prefix = $pre;
                 $n->Name_Prefix->setNewVal($prefix);
+            }else{
+                $n->Name_Prefix->setNewVal('');
             }
         }
 
@@ -741,6 +744,8 @@ ORDER BY `List_Order`");
             if (isset($uS->nameLookups[GLTableNames::NameSuffix][$suf])) {
                 $suffix = $suf;
                 $n->Name_Suffix->setNewVal($suffix);
+            }else{
+                $n->Name_Suffix->setNewVal('');
             }
         }
 

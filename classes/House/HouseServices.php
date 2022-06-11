@@ -262,6 +262,32 @@ class HouseServices {
             }
         }
 
+        // Notice to Check out
+        if (isset($post["noticeToCheckout"])){
+            $noticeToCheckout = filter_var($post["noticeToCheckout"], FILTER_SANITIZE_STRING);
+            try{
+                $vacateDT = new \DateTime($noticeToCheckout);
+                $vacateDT->setTime(0, 0, 0);
+            }catch(\Exception $e){
+                throw new \ErrorException("The " . Labels::getString("Visit", "noticeToCheckout", "Notice to Checkout") . " field must be a valid date");
+            }
+            $oldNotice = $visit->getNoticeToCheckout();
+            $visit->setNoticeToCheckout($vacateDT->format("Y-m-d 00:00:00"));
+            $visit->updateVisitRecord($dbh, $uS->username);
+
+            if($oldNotice != $visit->getNoticeToCheckout()){
+                $reply .= " " . Labels::getString("Visit", "noticeToCheckout", "Notice to Checkout") . " updated.";
+            }
+        }else{
+            $oldNotice = $visit->getNoticeToCheckout();
+            $visit->setNoticeToCheckout("");
+            $visit->updateVisitRecord($dbh, $uS->username);
+
+            if($oldNotice != $visit->getNoticeToCheckout()){
+                $reply .= " " . Labels::getString("Visit", "noticeToCheckout", "Notice to Checkout") . " updated.";
+            }
+        }
+
         // Change room rate
         if (isset($post['rateChgCB']) && isset($post['extendCb']) === FALSE) {
             $rateChooser = new RateChooser($dbh);

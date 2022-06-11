@@ -94,6 +94,12 @@ class VisitViewer {
         $tr = HTMLTable::makeTd(HTMLContainer::generateMarkup('span', date('M j, Y', strtotime($r['Arrival_Date'])), array('id'=>'spanvArrDate')));
         $th = HTMLTable::makeTh('First Arrival');
 
+        if($uS->noticetoCheckout){
+            $noticeToCheckout = ($r['Notice_to_Checkout'] ? date('M j, Y', strtotime($r['Notice_to_Checkout'])) : '');
+            $tr .= HTMLTable::makeTd(HTMLInput::generateMarkup($noticeToCheckout, array('class'=>'ckdate', 'id'=>'noticeToCheckout','name'=>'noticeToCheckout', 'size'=>'12')));
+            $th .= HTMLTable::makeTh(Labels::getString("Visit", "noticeToCheckout", "Notice to Checkout"));
+        }
+
         $departureText = "";
         $days = "";
 

@@ -177,8 +177,8 @@ $(document).ready(
 			$(this).removeClass("ui-state-hover");
 		});
 
-		$('#contentDiv').css('margin-top',
-				$('#global-nav').css('height'));
+		//$('#contentDiv').css('margin-top',
+		//		$('#global-nav').css('height'));
 
 		if ($('#dchgPw').length > 0) {
 			var chPwButtons = {
@@ -186,14 +186,14 @@ $(document).ready(
 
 					var oldpw = $('#utxtOldPw'), pw1 = $('#utxtNewPw1'), pw2 = $('#utxtNewPw2'), oldpwMD5, newpwMD5, challVar = $(
 							"#challVar").val(), msg = $('#pwChangeErrMsg'), qmsg = $('#SecQuestionErrMsg'), success = false;
-					$('div#dchgPw').find("input").prop("type",
+					$('div#chgPassword').find("input").prop("type",
 							"password");
-					$('div#dchgPw').find("button.showPw").text(
+					$('div#chgPassword').find("button.showPw").text(
 							"Show");
 					var errors = false;
 					msg.empty();
 
-					if (oldpw.val() == "") {
+					if (oldpw.val() == "" && (pw1.val() != "" || pw2.val() != "")) {
 						msg.text("Old password is required");
 						return;
 					}
@@ -216,7 +216,7 @@ $(document).ready(
 
 						if (checkStrength(pw1) === false) {
 							pw1.addClass("ui-state-error");
-							msg.html('Password must have at least 8 characters including at least <br>one uppercase, one lower case letter, one number and one symbol.');
+							msg.html('Password must have at least 8 characters including at least <br>one uppercase, one lower case letter, one number, one symbol and cannot contain &lt or &gt.');
 							pw1.focus();
 							return;
 						}
@@ -248,8 +248,7 @@ $(document).ready(
 										window.open(data.gotopage,
 												'_self');
 									}
-									flagAlertMessage(data.error,
-											'error');
+									flagAlertMessage(data.error, 'error');
 
 								} else if (data.success) {
 
@@ -264,9 +263,175 @@ $(document).ready(
 							}
 						});
 					}
-					;
+					$("#dchgPw").dialog('close');
 				}
-			};
+			}		
+						//two factor Auth
+						$('div#dchgPw #mfaTabs').tabs();
+						$('div#dchgPw button, div#dchgPw input[type=submit]').button();
+						
+						
+						$('div#dchgPw #mfaEmail tbody tbody').addClass('hhk-flex');
+						
+						//delete saved evices
+						$('div#dchgPw').on('click', 'button#clearDevices', function(){
+							$.post("../house/ws_admin.php", {
+								cmd : 'clear2faTokens'
+							}, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										flagAlertMessage("Saved devices cleared successfully", "success");
+										$('div#dchgPw #savedDevices').hide();
+									}
+								}
+							});
+						});
+						
+						//generate new Authenticator secret and QR code
+						$('div#dchgPw').on('click', '#mfaAuthenticator button#genTOTPSecret', function(){
+							$.post("../house/ws_admin.php", {
+								cmd : 'gen2fa',
+								method : 'authenticator'
+							}, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										$('#mfaAuthenticator input[name=secret]').val(data.secret);
+										$('div#qrcode').html('<img src="'+ data.url + '">').show();
+										$('#mfaAuthenticator .otpForm').show();
+										$('#mfaAuthenticator #showqrhelp').hide();
+										$('button#genTOTPSecret').hide();
+									}
+								}
+							});
+						});
+						
+						//show existing Authenticator QR code
+						$('div#dchgPw').on('click', '#mfaAuthenticator button#getTOTPSecret', function(){
+							$.post("../house/ws_admin.php", {
+								cmd : 'get2fa'
+							}, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										$('div#qrcode').html('<img src="'+ data.url + '">');
+										$('#mfaAuthenticator .otpForm').hide();
+										$('#mfaAuthenticator #showqrhelp').show();
+									}
+								}
+							});
+						});
+						
+						$('div#dchgPw').on('click', 'button#genEmailSecret', function(){
+							var $target = $(this);
+							var method = 'email';
+							var inputdata = $('#userSettingsEmail').serialize();
+							inputdata += "&method=email&cmd=gen2fa";
+							$.post("../house/ws_admin.php", inputdata, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										$target.parents('.mfaContent').find('button').button();
+										$target.parents('.mfaContent').find('.otpForm input[name=secret]').val(data.secret);
+										$target.parents('.mfaContent').find('.otpForm').show();
+										$target.hide();
+									}
+								}
+							});
+						});
+						
+						$('div#dchgPw').on('click', 'button.disableMFA', function(){
+							var $target = $(this);
+							
+							$.post("../house/ws_admin.php", {
+								cmd : 'disable2fa',
+								method : $(this).data("method")
+							}, function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										flagAlertMessage("Two step verification method disabled.",'success');
+										$target.parents('.mfaContent').html(data.mkup).find('button, input[type=submit]').button();
+										$('div#dchgPw #mfaEmail tbody tbody').addClass('hhk-flex');
+									}
+								}
+							});
+						});
+						
+						
+						//submit + verify OTP
+						$('div#dchgPw').on('submit', '.otpForm', function(e){
+							e.preventDefault();
+							var $this = $(this);
+							
+							$.post("../house/ws_admin.php", $(this).serialize(), 
+								function(data) {
+								if (data) {
+									try {
+										data = $.parseJSON(data);
+									} catch (err) {
+										alert("Parser error - "
+												+ err.message);
+										return;
+									}
+									if (data.error) {
+										flagAlertMessage(data.error,'error');
+									} else if (data.success) {
+										$(".otpForm").hide();
+										$("#qrcode").empty().hide();
+										if(data.backupCodes){
+											$("p#backupCodes").html("<br>" + data.backupCodes.join("<br><br>"));
+											$("div#backupCodeDiv").show();
+										}
+										flagAlertMessage("Two Step Verification enabled successfully", 'success');
+										if($this.find("input[name=method]").val() == "email"){
+											$("#dchgPw").dialog('close');
+										}
+									}
+								}
+							});
+						});
 
 			$('.hhk-tooltip').tooltip({
 				classes : {
@@ -280,19 +445,16 @@ $(document).ready(
 							$(this).dialog("close");
 						};
 						$(".PassExpDesc").hide();
-						$('div#dchgPw').find('input').removeClass(
-								"ui-state-error").val('');
+						$('div#dchgPw #chgPassword').find('input').removeClass("ui-state-error").val('');
 						$('#pwChangeErrMsg').text('');
 
-						$('div#dchgPw').find('button').button();
-						$('#dchgPw').dialog("option", "title",
-								"User Settings");
-						$('#dchgPw').dialog("option",
-								"closeOnEscape", true);
-						$('#dchgPw').dialog("option",
-								"dialogClass", '');
-						$('#dchgPw').dialog("option", "buttons",
-								chPwButtons);
+						$('div#dchgPw').find('button, input[type=submit]').button();
+						$('div#dchgPw').find("#qrcode").empty();
+						$('div#dchgPw').find("#otpForm").hide();
+						$('#dchgPw').dialog("option", "title", "User Settings");
+						$('#dchgPw').dialog("option", "closeOnEscape", true);
+						$('#dchgPw').dialog("option", "dialogClass", '');
+						$('#dchgPw').dialog("option", "buttons", chPwButtons);
 						$('#dchgPw').dialog('open');
 						$('#txtOldPw').focus();
 					});
@@ -307,7 +469,7 @@ $(document).ready(
 				input.prop("type", "password");
 			});
 
-			var chgPW = $("input#isPassExpired").val();
+			var chgPW = $("input#showUserSettings").val();
 			if (chgPW) {
 				var autoOpen = true;
 			} else {
@@ -328,7 +490,7 @@ $(document).ready(
 
 			$('#dchgPw').dialog({
 				autoOpen : autoOpen,
-				width : 'auto',
+				width : '1000',
 				autoResize : true,
 				resizable : true,
 				modal : true,

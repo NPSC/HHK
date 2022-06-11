@@ -45,7 +45,6 @@ try {
             $start = '';
             $end = '';
             $timezone = '';
-            $view = 'timeline3weeks';
             $groupBy = 'Type';
 
             if (isset($_REQUEST["start"])) {
@@ -55,19 +54,15 @@ try {
                 $end = filter_var(urldecode($_REQUEST["end"]), FILTER_SANITIZE_STRING);
             }
 
-            if (isset($_REQUEST["view"])) {
-            	$view = filter_var(urldecode($_REQUEST["view"]), FILTER_SANITIZE_STRING);
-            }
-            
             if (isset($_REQUEST["gpby"])) {
             	$groupBy = filter_var(urldecode($_REQUEST["gpby"]), FILTER_SANITIZE_STRING);
             }
-            
+
             if (isset($_REQUEST["timezone"])) {
                 $timezone = filter_var(urldecode($_REQUEST["timezone"]), FILTER_SANITIZE_STRING);
             }
 
-            $events = GuestRegister::getCalendarRescs($dbh, $start, $end, $timezone, $view, $groupBy);
+            $events = GuestRegister::getCalendarRescs($dbh, $start, $end, $timezone, $groupBy);
             break;
 
         case 'eventlist':

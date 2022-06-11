@@ -17,11 +17,12 @@ use HHK\sec\SecurityComponent;
  * @link      https://github.com/ecrane57/Hospitality-HouseKeeper
  */
 require ('VolIncludes.php');
-//require(SEC . 'Login.php');
-
 
 // get session instance
 $uS = Session::getInstance();
+
+//assume logout
+//$uS->destroy(TRUE);
 
 // Logout command?
 if (isset($_GET["log"])) {
@@ -109,6 +110,8 @@ if (SecurityComponent::isHTTPS()) {
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <title><?php echo $uS->siteName; ?></title>
         <?php echo PUBLIC_CSS; ?>
+        <?php echo GRID_CSS; ?>
+        <?php echo ROOT_CSS; ?>
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
 

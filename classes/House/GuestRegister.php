@@ -23,8 +23,9 @@ use HHK\SysConst\CalEventKind;
 class GuestRegister {
 
     protected $noAssocId;
+    const WAITLIST_RESC_ID = '9999';
 
-    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $view, $rescGroupBy) {
+    public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $rescGroupBy) {
 
         $uS = Session::getInstance();
         $rescs = array();
@@ -41,28 +42,7 @@ class GuestRegister {
 
         if ($endDate != '') {
             $endDT = self::parseDateTime($endDate, new \DateTimeZone($timezone));
-        } else if ($view != '') {
 
-            $endDT = self::parseDateTime($startDate, new \DateTimeZone($timezone));
-
-            switch ($view) {
-                case 'timeline1weeks':
-                    $endDT->add(new \DateInterval('P1W'));
-                    break;
-
-                case 'timeline2weeks':
-                    $endDT->add(new \DateInterval('P2W'));
-                    break;
-
-                case 'timeline3weeks':
-                    $endDT->add(new \DateInterval('P3W'));
-                    break;
-
-                case 'timeline4weeks':
-                    $endDT->add(new \DateInterval('P26W'));
-                    break;
-
-            }
         }
 
         //Resource grouping controls
@@ -73,6 +53,7 @@ class GuestRegister {
         $genTableName = '';
         $orderBy = 'r.Util_Priority';
 
+
         foreach ($rescGroups as $g) {
 
         	if ($rescGroupBy === $g[0]) {
@@ -80,6 +61,7 @@ class GuestRegister {
         		$genJoin = " left join `gen_lookups` g on g.`Table_Name` = '" . $g[2] . "' and g.`Code` = rm." . $g[0] . " ";
         		$orderBy = "g.`Order`, " . $orderBy;
         		$genTableName = $g[2];
+
         		break;
         	}
         }
@@ -96,7 +78,8 @@ class GuestRegister {
 	rm.`Status`,
 	rm.`Category`,
 	rm.`Report_Category`,
-    rm.`Floor`
+    rm.`Floor`,
+    r.Util_Priority
 from resource r
 	left join
 resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDT->format('Y-m-d') . "')
@@ -173,16 +156,16 @@ where ru.idResource_use is null
 
         // Add waitlist
         $rescs[] = array(
-                'id' => 0,
+                'id' => self::WAITLIST_RESC_ID,
         		'title' => ($genTableName != '' ? ' ' : 'Waitlist'),
-                'bgColor' => '#333',
+                'bgColor' => '#555',
                 //'textColor' => '#fff',
                 'maxOcc' => 0,
                 'Type' => 'Waitlist',
                 'Floor' => 'Waitlist',
                 'roomStatus' => '',
                 'Category' => 'Waitlist',
-                'Report_Category' => 'Waitlist'
+                'Report_Category' => 'Waitlist',
             );
 
         return $rescs;
@@ -292,7 +275,7 @@ where ru.idResource_use is null
                 $this->addVisitBlackouts($events, $myHolidays, $dtendDate, $timezone, $r["idResource"], $nonClean);
             }
 
-            $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $uS->RegColors, $events);
+            $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->RegColors);
 
             // show event on first day of calendar
             if ($endDT->format('Y-m-d') == $beginDate->format('Y-m-d') && $extended) {
@@ -344,7 +327,8 @@ where ru.idResource_use is null
             $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
             $s['visitStatus'] = $statusText;
             $s['vStatusCode'] = $r['Visit_Status'];
-            $s['borderColor'] = $backgroundBorderColor;
+            $s['backBorderColor'] = $backgroundBorderColor;
+            $s['resourceEditable'] = 0;
             $event = new Event($s, $timezone);
             $events[] = $event->toArray();
 
@@ -364,7 +348,7 @@ where ru.idResource_use is null
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
             if ($r['Status'] == ReservationStatus::Waitlist) {
-                $r["idResource"] = 0;
+                $r["idResource"] = SELF::WAITLIST_RESC_ID;
 
             }
 
@@ -568,12 +552,12 @@ where ru.idResource_use is null
 
             // Waitlist omit background event.
             if ($r['idResource'] != 0 && $r['idHospital'] > 0) {
-                $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $uS->RegColors, $events);
+                $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->RegColors);
             }
 
             $s['id'] = 'r' . $eventId++;
             $s['idReservation'] = $r['idReservation'];
-            $s['className'] = 'hhk-schrm';
+//            $s['className'] = 'hhk-schrm';
             $s['borderColor'] = '#111';
 
             // Set ribbon color  htmlspecialchars_decode($r['title'], ENT_QUOTES);
@@ -581,7 +565,7 @@ where ru.idResource_use is null
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $s['title'] = '<span id="' . $r['idReservation'] . '" class="hhk-schrm ui-icon ui-icon-arrowthick-2-n-s" style="background-color:white; border:1px solid black;  margin-right:.3em;"></span>' . htmlspecialchars_decode($r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note']: ''), ENT_QUOTES);
+            $s['title'] =  htmlspecialchars_decode($r['Guest Last'] . ($r['Ribbon_Note'] ? " - " . $r['Ribbon_Note']: ''), ENT_QUOTES);
             $s['hospName'] = htmlspecialchars_decode($hospitals[$r['idHospital']]['Title'], ENT_QUOTES);
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
@@ -624,44 +608,23 @@ where ru.idResource_use is null
     }
 
 
-    protected function addBackgroundEvent($r, $hospitals, $startDT, $endDT, $timezone, $regColors, &$events) {
+    protected function addBackgroundEvent($r, $hospitals, $regColors) {
+
         $backgroundBorderColor = '';
 
             // Use Association colors?
         if (strtolower($regColors) == 'hospital') {
 
-            $h = array();
-
-            // Background Event
-            $h['rendering'] = 'background';
-            $h['kind'] = CalEventKind::BAK;
-            $h['editable'] = FALSE;
-            $h['id'] = 'b' . (isset($r['id']) ? $r['id'] : $r['idReservation']);
-            $h['idHosp'] = $r['idHospital'];
-            $h['idAssoc'] = $r['idAssociation'];
-            $h['resourceId'] = $r["idResource"];
-
-            $h['start'] = $startDT->format('Y-m-d\TH:i:00');
-            $h['end'] = $endDT->format('Y-m-d\TH:i:00');
-            $h['title'] = '';
-            $h['allDay'] = 1;
-
-
             if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
 
             	if (isset($hospitals[$r['idAssociation']])) {
-                	$h['backgroundColor'] = $hospitals[$r['idAssociation']]['Background_Color'];
+            	    $backgroundBorderColor = $hospitals[$r['idAssociation']]['Background_Color'];
             	}
 
             } else if (isset($hospitals[$r['idHospital']])) {
-                $h['backgroundColor'] = $hospitals[$r['idHospital']]['Background_Color'];
+                $backgroundBorderColor = $hospitals[$r['idHospital']]['Background_Color'];
             }
 
-            $h['borderColor'] = $h['backgroundColor'];
-            $backgroundBorderColor = $h['borderColor'];
-
-            $hEvent = new Event($h, $timezone);
-            $events[] = $hEvent->toArray();
         }
 
         return $backgroundBorderColor;
@@ -792,6 +755,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
                 'id' => 'RR' . $idCounter++,
                 'kind' => CalEventKind::OOS,
                 'resourceId' => $r["idResource"],
+                'idResc' => $r["idResource"],
                 'reason' => $r['reasonTitle'],
             		'start' => $stDateDT->format('Y-m-d\TH:i:00'),
             		'end' => $enDateDT->format('Y-m-d\TH:i:00'),
@@ -920,7 +884,10 @@ class Event {
   // You can optionally force the timezone of the parsed dates.
   public function __construct($array, $timezone=null) {
 
-    $this->title = $array['title'];
+      $this->title = '';;
+      if (isset($array['title'])) {
+           $this->title = $array['title'];
+      }
 
     if (isset($array['allDay'])) {
       // allDay has been explicitly specified
@@ -930,6 +897,10 @@ class Event {
       // Guess allDay based off of ISO8601 date strings
       $this->allDay = preg_match(self::ALL_DAY_REGEX, $array['start']) &&
         (!isset($array['end']) || preg_match(self::ALL_DAY_REGEX, $array['end']));
+    }
+
+    if (is_string($timezone)) {
+        $timezone = new \DateTimeZone($timezone);
     }
 
     if ($this->allDay) {

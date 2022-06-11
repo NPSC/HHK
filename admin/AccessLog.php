@@ -42,6 +42,7 @@ if ($stmt->rowCount() > 0) {
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo FAVICON; ?>

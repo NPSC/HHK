@@ -1,6 +1,12 @@
-function updateTips(tips, t) {
-    "use strict";
+function updateTips(tips, t, container = false) {
     tips.text(t).addClass("ui-state-highlight");
+    if(container instanceof jQuery){
+    	if(t.length > 0){
+    		container.show();
+    	}else{
+    		container.hide();
+    	}
+    }
 //    setTimeout(function() {
 //        tips.removeClass( "ui-state-highlight", 360000 );
 //    }, 500 );
@@ -17,18 +23,17 @@ function errorOnZero(o, n, tips) {
     }
 }
 
-function checkLength(o, n, min, max, tips) {
-    "use strict";
+function checkLength(o, n, min, max, tips, container = false) {
     if (o.val().length > max || o.val().length < min) {
         o.addClass("ui-state-error");
         if (o.val().length == 0) {
-            updateTips(tips, "Fill in the " + n);
+            updateTips(tips, "Fill in the " + n, container);
         } else if (min == max) {
-            updateTips(tips, "The " + n + " must be " + max + " characters.");
+            updateTips(tips, "The " + n + " must be " + max + " characters.", container);
         } else if (o.val().length > max) {
-            updateTips(tips, "The " + n + " length is to long");
+            updateTips(tips, "The " + n + " length is to long", container);
         } else {
-            updateTips(tips, "The " + n + " length must be between " + min + " and " + max + ".");
+            updateTips(tips, "The " + n + " length must be between " + min + " and " + max + ".", container);
         }
         return false;
     } else {

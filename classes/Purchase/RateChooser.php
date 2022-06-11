@@ -549,7 +549,7 @@ class RateChooser {
 
                 $fin = new FinAssistance($dbh, $idRegistration);
 
-                if ($fin->hasApplied() && $fin->getFaCategory() != '') {
+                if ($fin->isApproved() && $fin->getFaCategory() != '') {
                     $roomRateCategory = $fin->getFaCategory();
                 }
             }

@@ -429,9 +429,9 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
                 $flds[$n++] = html_entity_decode(strval($r[$f[1]]), ENT_QUOTES, 'UTF-8');
             }
         }
+		
         $row = ExcelHelper::convertStrings($header, $flds);
         $sml->writeSheetRow('Sheet1',$row);
-
     }
 }
 
@@ -1650,6 +1650,7 @@ if ($uS->CoTod) {
         <?php echo JQ_DT_CSS ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>

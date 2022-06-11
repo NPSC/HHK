@@ -205,6 +205,7 @@ foreach ($rescGroups as $g) {
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo HOUSE_CSS; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
 
         <style type="text/css"  media="print">

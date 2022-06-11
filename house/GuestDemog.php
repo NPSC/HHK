@@ -188,6 +188,7 @@ if ($cmd){
         <?php echo JQ_UI_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
 		<?php echo MULTISELECT_CSS; ?>
 

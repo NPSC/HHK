@@ -77,12 +77,11 @@ if(isset($_GET['template'])){
     $cmd = 'getform';
     $method = 'get';
     $id = filter_var($_GET["form"], FILTER_SANITIZE_NUMBER_INT);
-}else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style']) && isset($_POST['fontImport'])){
+}else if(isset($_POST['cmd']) && $_POST['cmd'] == "preview" && isset($_POST['formData']) && isset($_POST['style'])){
     $cmd = 'previewform';
     $method = 'post';
     $formData = json_decode($_POST['formData']);
     $style = $_POST['style'];
-    $fontImport = $_POST['fontImport'];
 }else{
     $error = "Missing required parameters";
 }
@@ -96,9 +95,7 @@ if(isset($_GET['template'])){
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Referral Form</title>
 
-		<style id="fontImport">
-		  <?php echo ($fontImport ? $fontImport : ''); ?>
-		</style>
+		<style id="fontImport"></style>
 
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
@@ -124,6 +121,8 @@ if(isset($_GET['template'])){
                     zoom: 85%;
                 }
            }
+
+           input{ touch-action: pan-x pan-y; }
 
     	</style>
 

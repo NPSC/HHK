@@ -562,12 +562,14 @@ CREATE PROCEDURE `register_web_user`
     IN roleId varchar(3),
     IN pw varchar(100),
     IN groupcode varchar(5),
-    IN resetpw varchar(1)
+    IN resetpw varchar(1),
+    IN idpId int
 )
 BEGIN
 
     -- does idName exist in the fbx table?
     declare n int;
+    declare u int;
     declare m varchar(250);
     set n= -1;
 
@@ -582,10 +584,14 @@ BEGIN
     -- now check w_users table
     set n = 0;
     select count(*) into n from w_users where idName = id;
+    
+    -- check if username is taken
+    set u = 0;
+    select count(*) into u from w_users where User_Name = uname;
 
     if n >0  then
     -- update
-        update w_users set Status='a', User_Name = uname, Verify_address = 'y', Enc_PW=pw, Updated_By=appr, Last_Updated=now() where idName = id;
+        update w_users set Status='a', User_Name = uname, Verify_address = 'y', Enc_PW=pw, idIdp=idpId, Updated_By=appr, Last_Updated=now() where idName = id;
         if  ROW_COUNT() > 0 then
             Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
                 values (Now(), 'audit', 'update', 'sp_reg_web_user', id, concat('w_users: -> status=a, uname=',uname));
@@ -598,11 +604,14 @@ BEGIN
             Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
                 values (Now(), 'audit', 'update', 'sp_reg_web_user', id, concat('w_auth: -> status=a, role_id=',roleId));
         end if;
+        
+	elseif u >0 then
+		SIGNAL SQLSTATE '23000' SET MYSQL_ERRNO = '1062', MESSAGE_TEXT='Username is already taken';
 
     else
     -- insert new record
-        insert into w_users (idName, User_Name, Enc_PW, Chg_PW, Status, Verify_Address, Updated_By, Last_Updated)
-            values ( id, uname, pw, resetpw, 'a', 'y', appr, now() );
+        insert into w_users (idName, User_Name, Enc_PW, Chg_PW, idIdp, Status, Verify_Address, Updated_By, Last_Updated)
+            values ( id, uname, pw, resetpw, idpId, 'a', 'y', appr, now() );
         Insert into name_log (Date_Time, Log_Type, Sub_Type, WP_User_Id, idName, Log_Text)
             values (Now(), 'audit', 'new', 'sp_Reg_Web_User', id, concat('w_users: -> status=a, uname=',uname));
 

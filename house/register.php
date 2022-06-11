@@ -258,21 +258,22 @@ if($uS->useOnlineReferral){
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <!--<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">-->
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
-        <link href='css/fullcalendar.min.css'  rel='stylesheet' type='text/css' />
-        <link href='css/scheduler.min.css'  rel='stylesheet' type='text/css' />
+        <?php echo FULLCALENDAR_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
-        <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
-        <script type="text/javascript" src="js/fullcalendar.min.js"></script>
-        <script type="text/javascript" src="js/scheduler-min.js"></script>
+        <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo FULLCALENDAR_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo STATE_COUNTRY_JS; ?>"></script>
@@ -291,25 +292,23 @@ if($uS->useOnlineReferral){
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
 
         <style>
-.hhk-justify-r {
-    text-align: right;
-}
-.hhk-justify-c {
-    text-align: center;
-}
-.ui-menu-item-wrapper {min-width: 130px;}
-.fc-bgevent {opacity: .9;}
-.hhk-fc-title::after {
-    /* generic arrow */
-    content: "";
-    position: absolute;
-    top: 50%;
-    margin-top: -5px;
-    border: 5px solid #000;
-    border-top-color: transparent;
-    border-bottom-color: transparent;
-    opacity: .9;
-}
+            .hhk-justify-r {
+                text-align: right;
+            }
+            .hhk-justify-c {
+                text-align: center;
+            }
+            .fc .fc-toolbar.fc-header-toolbar {
+                margin-bottom: 1em;
+                font-size: .9em;
+            }
+            .hhk-fc-slot-title {
+                background-color: #E3EFF9;
+            }
+            .hhk-fcslot-today {
+                background-color: #fff7c4;
+                opacity: .5;
+            }
         </style>
     </head>
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";}?> >
@@ -328,7 +327,7 @@ if($uS->useOnlineReferral){
             <div style="clear:both;"></div>
             <form name="frmdownload" action="#" method="post">
             <div id="mainTabs" style="display:none; font-size:.9em;">
-                <ul>
+                <ul class="hhk-flex">
                     <li id="liCal"><a href="#vcal">Calendar</a></li>
                     <li><a href="#vstays">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s (<span id="spnNumCurrent"></span>)</a></li>
                     <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?> (<span id="spnNumConfirmed"></span>)</a></li>
@@ -349,7 +348,7 @@ if($uS->useOnlineReferral){
                 </ul>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>
-                    <div id="divGoto" style="position:absolute;">
+                    <div id="divGoto" class="hideMobile" style="display: none;">
                         <span id="spnGotoDate" >Go to Date: <input id="txtGotoDate" type="text" class="ckdate" value="" /></span>
                         <span id="pCalLoad" style="font-weight:bold;">Loading...</span>
                     </div>
@@ -467,22 +466,16 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="pmtMkup" value='<?php echo $paymentMarkup; ?>' />
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />
         <input  type="hidden" id="defaultTab" value='<?php echo $defaultRegisterTab; ?>' />
-        <input  type="hidden" id="defaultEventColor" value='<?php echo $uS->DefaultCalEventColor; ?>' />
-        <input  type="hidden" id="defCalEventTextColor" value='<?php echo $uS->DefCalEventTextColor; ?>' />
-        <input  type="hidden" id="resourceGroupBy" value='<?php echo $resourceGroupBy; ?>' />
-        <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="patientLabel" value='<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>' />
         <input  type="hidden" id="guestLabel" value='<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' />
         <input  type="hidden" id="visitorLabel" value='<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>' />
         <input  type="hidden" id="referralFormTitleLabel" value='<?php echo $labels->getString('Register', 'onlineReferralTitle'); ?>' />
         <input  type="hidden" id="reservationLabel" value='<?php echo $labels->getString('GuestEdit', 'reservationTitle'); ?>' />
-        <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
         <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
         <input  type="hidden" id="resvPageName" value='<?php echo 'Reserve.php'; ?>' />
         <input  type="hidden" id="showCreatedDate" value='<?php echo $uS->ShowCreatedDate; ?>' />
-        <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
         <input  type="hidden" id="shoHospitalName" value='<?php echo $shoHosptialName; ?>' />
         <input  type="hidden" id="showRateCol" value='<?php echo $showRateCol; ?>' />
         <input  type="hidden" id="hospTitle" value='<?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>' />
@@ -493,6 +486,13 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="showWlNotes" value='<?php echo $showWlNotes ?>' />
         <input  type="hidden" id="wlTitle" value='<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>' />
         <input  type="hidden" id="showCharges" value='<?php echo $showCharges ?>' />
+
+        <input  type="hidden" id="defaultEventColor" value='<?php echo $uS->DefaultCalEventColor; ?>' />
+        <input  type="hidden" id="defCalEventTextColor" value='<?php echo $uS->DefCalEventTextColor; ?>' />
+        <input  type="hidden" id="resourceGroupBy" value='<?php echo $resourceGroupBy; ?>' />
+        <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
+        <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
+        <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REGISTER_JS; ?>"></script>

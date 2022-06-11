@@ -8,6 +8,7 @@ use HHK\SysConst\{GLTableNames, MemBasis, MemDesignation, SalutationCodes};
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\Volunteer\VolunteerCategory;
 use HHK\Member\Address\{Address, Phones, Emails, Addresses};
+use HHK\sec\SAML;
 
 /**
  * NameEdit.php
@@ -350,7 +351,17 @@ $memberData = array();
 $wUserRS = WebUser::loadWebUserRS($dbh, $id);
 $userName = $wUserRS->User_Name->getStoredVal();
 $memberData['webUserName'] = $userName;
-$webUserDialogMarkup = WebUser::getSecurityGroupMarkup($dbh, $id, $maintFlag) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS);
+if($wUserRS->idIdp->getStoredVal() > 0){
+    $saml = new SAML($dbh, $wUserRS->idIdp->getStoredVal());
+    if($saml->getIdpManageRoles() == 1){
+        $editSecGroups = false;
+    }else{
+        $editSecGroups = $maintFlag;
+    }
+}else{
+    $editSecGroups = $maintFlag;
+}
+$webUserDialogMarkup = WebUser::getSSOMsg($dbh, $id) . WebUser::getSecurityGroupMarkup($dbh, $id, $editSecGroups) . WebUser::getWebUserMarkup($dbh, $id, $maintFlag, $wUserRS);
 
 
 $memberData["id"] = $id;
@@ -399,6 +410,7 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
+        <?php echo GRID_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -543,7 +555,7 @@ $alertMessage = $alertMsg->createMarkup();
                     <tr><td colspan="3" id="placeList"></td></tr>
                 </table>
             </div>
-            <div id="vwebUser" class="hhk-member-detail " style="display:none;">
+            <div id="vwebUser" style="display:none; font-size: 0.9em;">
                 <?php echo $webUserDialogMarkup; ?>
             </div>
         </div>  <!-- div id="page"-->
