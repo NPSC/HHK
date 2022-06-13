@@ -34,6 +34,9 @@ class NewGuest
     protected $numberNewPSGs;
     protected $numberReturnPSGs;
 
+    protected $newGuestIds;
+    protected $newPSGIds;
+
 
     /**
      */
@@ -45,6 +48,8 @@ class NewGuest
         $this->numberReturnGuests = 0;
         $this->numberNewPSGs = 0;
         $this->numberReturnPSGs = 0;
+        $this->newGuestIds = [];
+        $this->newPSGIds = [];
     }
 
     public function doNewGuestReport(\PDO $dbh, ColumnSelectors $colSelector, $whereStr, $local, Labels $labels) {
@@ -114,6 +119,7 @@ class NewGuest
             unset($r['idAssociation']);
 
             $arrivalDT = new \DateTime($r['First Stay']);
+            $this->newGuestIds[$r['idName']] = $r['idName'];
 
             if ($local) {
 
@@ -224,7 +230,7 @@ ORDER BY `First Stay`";
         $query = "SELECT
                 s.idName,
                 IFNULL(hs.idPsg, 0) as `idPsg`,
-                MIN(s.Span_Start_Date) AS `First Stay`
+                s.Span_Start_Date
             FROM
                 stays s
                     JOIN
@@ -237,10 +243,14 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
-                AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "') AND DATE(ifnull(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')
-            GROUP BY s.idName
-            HAVING  DATE(`First Stay`) < DATE('" . $this->getStartDT()->format('Y-m-d') . "')
-            ORDER BY `First Stay`;";
+                AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
+                AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
+
+            	if (count($this->newGuestIds) > 0) {
+            	    $query .= "AND s.idName not in (" . implode(',', $this->newGuestIds) . ")";
+            	}
+
+            	$query .= "GROUP BY s.idName;";
 
     	$stmt = $dbh->query($query);
     	$this->numberReturnGuests = $stmt->rowCount();
@@ -265,10 +275,14 @@ ORDER BY `First Stay`";
                 n.Member_Status != 'TBD'
             	AND n.Record_Member = 1
             	$whereStr
-                AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "') AND DATE(ifnull(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')
-            GROUP BY hs.idPsg
-                HAVING  DATE(`First Stay`) < DATE('" . $this->getStartDT()->format('Y-m-d') . "')
-            ORDER BY `First Stay`;";
+                AND DATE(s.Span_Start_Date) < DATE('" . $this->getEndDT()->format('Y-m-d') . "')
+                AND DATE(s.Span_Start_Date) >= DATE('" . $this->getStartDT()->format('Y-m-d') . "')";
+
+            	if (count($this->newPSGIds) > 0) {
+            	    $query .= "AND IFNULL(hs.idPsg, 0) not in (" . implode(',', $this->newPSGIds) . ")";
+            	}
+
+            	$query .= "GROUP BY hs.idPsg";
 
 
     	$stmt = $dbh->query($query);
@@ -301,6 +315,10 @@ ORDER BY `First Stay`";
 
     	$stmt = $dbh->query($query);
     	$this->numberNewPSGs = $stmt->rowCount();
+
+    	While ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+    	    $this->newPSGIds[$r['idPsg']] = $r['idPsg'];
+    	}
 
     }
 
