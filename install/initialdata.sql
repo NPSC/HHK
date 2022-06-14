@@ -683,7 +683,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Volunteers','true','b','a','','Enable the HHK Volunteer Manager site','',1),
 ('Zip_Code','60115','s','a','','Organization zip code, used for distance calculations','',1),
 ('googleProjectID', 'helical-clock-316420', 's', 'ga', '', 'Google API Project ID', '',0),
-('recaptchaApiKey', 'AIzaSyDwMdFwC4mKidWXykt5b8LSAWjIADqraCc', 's', 'ga', '', 'Google API Key for Recaptcha', '',0),
+('recaptchaApiKey', 'bTVWSFUyRXBQU3RHRTlCV0M4WkhGcnh6RC9tbTk5eXp1c3B1NU9JYm1zMVRTcytsemRJSjhtS2w5dnNkZWZKVw==', 's', 'ga', '', 'Google API Key for Recaptcha', '',0),
 ('recaptchaSiteKey', '6LemLyQbAAAAAKKaz91-FZCSI8cRs-l9DCYmEadO', 's', 'ga', '', 'Google API Site Key for Recaptcha', '',0);
 -- ;
 
