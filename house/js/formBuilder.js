@@ -80,6 +80,7 @@
   				'patient.firstName',
   				'patient.lastName',
   				'checkindate',
+  				'checkoutdate',
   				'hospital.idHospital',
   				'submit'
   			],
