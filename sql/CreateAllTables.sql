@@ -227,6 +227,34 @@ CREATE TABLE if not exists `country_code` (
   PRIMARY KEY (`ISO_3166-1-alpha-2`)
 ) ENGINE=InnoDB;
 
+-- -----------------------------------------------------
+-- Table `cron_log`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `cron_log` (
+  `idLog` INT NOT NULL AUTO_INCREMENT,
+  `idJob` INT NOT NULL DEFAULT 0,
+  `Log_Text` VARCHAR(255) NULL,
+  `Status` VARCHAR(45) NULL,
+  `timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idLog`)
+  ) ENGINE=InnoDB;
+  
+  -- -----------------------------------------------------
+-- Table `cronjobs`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `cronjobs` (
+  `idJob` INT NOT NULL AUTO_INCREMENT,
+  `Title` VARCHAR(45) NOT NULL DEFAULT '',
+  `Code` VARCHAR(45) NOT NULL DEFAULT '',
+  `Interval` VARCHAR(45) NOT NULL DEFAULT '',
+  `Time` VARCHAR(45) NOT NULL DEFAULT '',
+  `Status` VARCHAR(45) NOT NULL DEFAULT '',
+  `LastRun` TIMESTAMP NULL,
+  `timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`idJob`)
+  ) ENGINE=InnoDB;
+
+
 
 -- -----------------------------------------------------
 -- Table `desig_holidays`

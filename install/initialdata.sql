@@ -1,3 +1,6 @@
+REPLACE INTO `cronjobs` (`Title`, `Code`,`Interval`, `Time`, `Status`) VALUES
+("Send Survey Email", "EmailCheckedoutJob", "daily", "08:00", "d");
+
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
 ('Address_Purpose','1','Home','i','',10),
 ('Address_Purpose','2','Work','i','',20),

@@ -117,6 +117,157 @@ $(document).ready(function () {
         }
     });
 
+//cron tab
+$("#cronTabs").tabs();
+
+var dtCronCols = [
+    {
+        "targets": [ 0 ],
+        "title": "ID",
+        "searchable": false,
+        "sortable": false,
+        "data": "ID"
+    },
+    {
+        "targets": [ 1 ],
+        "title": "Title",
+        "searchable": false,
+        "sortable": true,
+        "data": "Title"
+    },
+     {
+         "targets": [ 2 ],
+        "title": "Interval",
+        "searchable": true,
+        "sortable": true,
+        "data": "Interval",
+        render: function ( data, type ) {
+        	return data.charAt(0).toUpperCase() + data.slice(1)
+        }
+    },
+    {
+        "targets": [ 3 ],
+        "title": "Time",
+        "searchable": false,
+        "sortable": true,
+        "data": "Time"
+    },
+     {
+         "targets": [ 4 ],
+        "title": "Status",
+        "searchable": true,
+        "sortable": true,
+        "data": "Status",
+        render: function ( data, type ) {
+            switch (data){
+            	case 'a':
+            		return "Active";
+            	break;
+            	case 'd':
+            		return "Disabled";
+            	break;
+            	default:
+            		return "";
+            };
+        }
+    },
+    {
+        "targets": [ 5 ],
+        "title": "Last Run",
+        'data': 'Last Run',
+        render: function ( data, type ) {
+            return dateRender(data, type, dateFormat);
+        }
+    }
+];
+
+
+$('table#cronJobs').dataTable({
+	"columnDefs": dtCronCols,
+    "serverSide": true,
+    "processing": true,
+    "language": {"sSearch": "Search Jobs:"},
+    "sorting": [[1,'desc']],
+    "displayLength": 25,
+    "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+    "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+    ajax: {
+        url: 'ws_gen.php',
+        data: {
+            'cmd': 'showCron',
+        }
+    }
+});
+
+var dtCronLogCols = [
+    {
+        "targets": [ 0 ],
+        "title": "Job ID",
+        "searchable": false,
+        "sortable": false,
+        "data": "Job ID"
+    },
+    {
+        "targets": [ 1 ],
+        "title": "Job",
+        "searchable": false,
+        "sortable": true,
+        "data": "Job"
+    },
+     {
+         "targets": [ 2 ],
+        "title": "Log Text",
+        "searchable": true,
+        "sortable": true,
+        "data": "Log Text",
+    },
+     {
+         "targets": [ 3 ],
+        "title": "Status",
+        "searchable": true,
+        "sortable": true,
+        "data": "Status",
+        render: function ( data, type ) {
+            switch (data){
+            	case 's':
+            		return "Success";
+            	break;
+            	case 'f':
+            		return "Fail";
+            	break;
+            	default:
+            		return "";
+            };
+        }
+    },
+    {
+        "targets": [ 4 ],
+        "title": "Run Time",
+        'data': 'Run Time',
+        render: function ( data, type ) {
+            return dateRender(data, type, dateFormat);
+        }
+    }
+];
+
+
+$('table#cronLog').dataTable({
+	"columnDefs": dtCronLogCols,
+    "serverSide": true,
+    "processing": true,
+    "language": {"sSearch": "Search Jobs:"},
+    "sorting": [[4,'desc']],
+    "displayLength": 25,
+    "lengthMenu": [[25, 50, 100], [25, 50, 100]],
+    "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+    ajax: {
+        url: 'ws_gen.php',
+        data: {
+            'cmd': 'showCronLog',
+        }
+    }
+});
+
 
     $('#logsTabDiv').tabs({
 

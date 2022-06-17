@@ -13,6 +13,7 @@ use HHK\Member\WebUser;
 use HHK\Member\Relation\AbstractRelation;
 use HHK\sec\SAML;
 use HHK\Neon\ConfigureNeon;
+use HHK\Cron\JobFactory;
 
 /**
  * ws_gen.php
@@ -159,6 +160,50 @@ try {
             }
 
             $events = SSP::complex ( $_GET, $dbh, $dbView, $priKey, $columns, null, $where );
+
+            break;
+
+        case "showCron":
+
+            $columns = array(
+            array( 'db' => 'idJob',  'dt' => 'ID' ),
+            array( 'db' => 'Title',   'dt' => 'Title' ),
+            array( 'db' => 'Interval', 'dt' => 'Interval'),
+            array( 'db' => 'Time', 'dt' => 'Time'),
+            array( 'db' => 'Status', 'dt' => 'Status'),
+            array( 'db' => 'LastRun', 'dt' => 'Last Run'),
+            );
+            $events = SSP::complex ( $_GET, $dbh, "cronjobs", "idJob", $columns, null, null );
+
+            break;
+
+        case "showCronLog":
+
+            $columns = array(
+            array( 'db' => 'idJob',  'dt' => 'Job ID' ),
+            array( 'db' => 'Job',   'dt' => 'Job' ),
+            array( 'db' => 'Log_Text', 'dt' => 'Log Text'),
+            array( 'db' => 'Status', 'dt' => 'Status'),
+            array( 'db' => 'timestamp', 'dt' => 'Run Time'),
+            );
+            $events = SSP::complex ( $_GET, $dbh, "vcron_log", "idLog", $columns, null, null );
+
+            break;
+
+        case "forceRunCron":
+            $idJob = 0;
+            if (isset($_REQUEST['idJob'])) {
+                $idJob = intval(filter_var($_REQUEST['idJob'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $dryRun = true;
+            if (isset($_REQUEST['dryRun'])) {
+                $dryRun = boolval(filter_var($_REQUEST['dryRun'], FILTER_SANITIZE_NUMBER_INT));
+            }
+
+            $job = JobFactory::make($dbh, $idJob, $dryRun);
+            $job->run();
+            $events = ["idJob"=>$idJob, 'Status'=>$job->status, 'logMsg'=>$job->logMsg];
 
             break;
 

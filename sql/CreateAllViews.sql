@@ -403,6 +403,21 @@ CREATE OR REPLACE VIEW `vcredit_payments` AS
 
 
 -- -----------------------------------------------------
+-- View `vcron_log`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vcron_log` AS
+	SELECT
+		`l`.`idLog`,
+		`l`.`idJob`,
+        `c`.`Title` as "Job",
+        `l`.`Log_Text`,
+        `l`.`Status`,
+        `l`.`timestamp`
+	FROM
+		`cron_log` l
+	LEFT JOIN `cronjobs` `c` ON `l`.`idJob` = `c`.`idJob`;
+
+-- -----------------------------------------------------
 -- View `vcurrent_residents`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vcurrent_residents` AS

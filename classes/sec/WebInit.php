@@ -30,6 +30,9 @@ class WebInit {
     public $siteName;
     public $testVersion;
 
+    /**
+     * @var \PDO
+     */
     public $dbh;
 
     function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
