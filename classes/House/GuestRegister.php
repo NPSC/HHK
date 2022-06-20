@@ -151,6 +151,11 @@ where ru.idResource_use is null
             // Fix room title
             $r['title'] = htmlspecialchars_decode($r['title'], ENT_QUOTES);
 
+            if ($uS->Room_Colors == FALSE) {
+                $r['bgColor'] =  '';
+                $r['textColor'] = '';
+            }
+
             $rescs[] = $r;
         }
 
@@ -275,7 +280,7 @@ where ru.idResource_use is null
                 $this->addVisitBlackouts($events, $myHolidays, $dtendDate, $timezone, $r["idResource"], $nonClean);
             }
 
-            $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->RegColors);
+            $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->HospitalColorBar);
 
             // show event on first day of calendar
             if ($endDT->format('Y-m-d') == $beginDate->format('Y-m-d') && $extended) {
@@ -327,7 +332,7 @@ where ru.idResource_use is null
             $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
             $s['visitStatus'] = $statusText;
             $s['vStatusCode'] = $r['Visit_Status'];
-            $s['backBorderColor'] = $backgroundBorderColor;
+            $s['backBorderColor'] = $this->addBackgroundEvent($r, $hospitals, $uS->HospitalColorBar);
             $s['resourceEditable'] = 0;
             $event = new Event($s, $timezone);
             $events[] = $event->toArray();
@@ -548,19 +553,16 @@ where ru.idResource_use is null
                 $clDate->setTime(10, 0, 0);
             }
 
-            //$endDT->sub(new \DateInterval("P1D"));
-
             // Waitlist omit background event.
             if ($r['idResource'] != 0 && $r['idHospital'] > 0) {
-                $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->RegColors);
+                $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->HospitalColorBar);
             }
 
             $s['id'] = 'r' . $eventId++;
             $s['idReservation'] = $r['idReservation'];
-//            $s['className'] = 'hhk-schrm';
             $s['borderColor'] = '#111';
 
-            // Set ribbon color  htmlspecialchars_decode($r['title'], ENT_QUOTES);
+            // Set ribbon color
             $this->setRibbonColors($uS->GuestNameColor, $r, $s, $nameColors);
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
@@ -575,6 +577,7 @@ where ru.idResource_use is null
             $s['resvStatus'] = $r['Status_Text'];
             $s['status'] = $r['Status'];
             $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
+            $s['backBorderColor'] = $this->addBackgroundEvent($r, $hospitals, $uS->HospitalColorBar);
 
             $event = new Event($s, $timezone);
             $events[] = $event->toArray();
@@ -608,12 +611,12 @@ where ru.idResource_use is null
     }
 
 
-    protected function addBackgroundEvent($r, $hospitals, $regColors) {
+    protected function addBackgroundEvent($r, $hospitals, $hospitalColors) {
 
         $backgroundBorderColor = '';
 
             // Use Association colors?
-        if (strtolower($regColors) == 'hospital') {
+        if ($hospitalColors) {
 
             if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
 

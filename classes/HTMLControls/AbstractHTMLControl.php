@@ -13,6 +13,8 @@ namespace HHK\HTMLControls;
 
 abstract class AbstractHTMLControl {
 
+    // Updated 6/2022 EKC: handle new form of disabled, readonly, etc
+
     protected static function getAttrMarkup(array $attr) {
         $attributes = '';
 
@@ -21,7 +23,47 @@ abstract class AbstractHTMLControl {
         }
 
         foreach ($attr as $k => $v) {
-            $attributes .= ' ' . $k . '="' .$v . '"';
+
+            if (empty($k)) {
+                continue;
+            }
+
+            $k = strtolower($k);
+
+            switch ($k) {
+
+                case 'disabled':
+                    $attributes .= ' ' . $k;
+                    break;
+
+                case 'readonly':
+                    $attributes .= ' ' . $k;
+                    break;
+
+                case 'checked':
+                    $attributes .= ' ' . $k;
+                    break;
+
+                case 'required':
+                    $attributes .= ' ' . $k;
+                    break;
+
+                case 'autofocus':
+                    $attributes .= ' ' . $k;
+                    break;
+
+                case 'multiple':
+                    $attributes .= ' ' . $k;
+                    break;
+
+                case 'formnovalidate':
+                    $attributes .= ' ' . $k;
+                    break;
+
+                default:
+                    $attributes .= ' ' . $k . '="' .$v . '"';
+            }
+
         }
 
         return $attributes;

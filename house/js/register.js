@@ -1242,6 +1242,12 @@ $(document).ready(function () {
                         info.el.style.padding = '1px 0';
                     }
 
+                    //2nd ribbon color
+                    if (info.event.extendedProps.backBorderColor != '') {
+                    	
+                    	info.el.style.cssText += 'border-bottom: 9px solid ' + info.event.extendedProps.backBorderColor;
+                    }
+                    
                 // visits
                 } else if (info.event.extendedProps.idVisit !== undefined) {
                     
