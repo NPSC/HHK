@@ -506,9 +506,9 @@ if (isset($_POST['table'])) {
                     $gluRs = new GenLookupsRS();
                     EditRS::loadRow($rw[0], $gluRs);
 
-                    $use = '';
-                    if (isset($_POST['cbDiagDel'][$c])) {
-                        $use = 'y';
+                    $desc = '';
+                    if (isset($_POST['txtDiag'][$c])) {
+                        $desc = filter_var($_POST['txtDiag'][$c], FILTER_SANITIZE_STRING);
                     }
 
                     $orderNumber = 0;
@@ -516,9 +516,13 @@ if (isset($_POST['table'])) {
                         $orderNumber = intval(filter_var($_POST['txtDOrder'][$c], FILTER_SANITIZE_NUMBER_INT), 10);
                     }
 
-                    $desc = '';
-                    if (isset($_POST['txtDiag'][$c])) {
-                        $desc = filter_var($_POST['txtDiag'][$c], FILTER_SANITIZE_STRING);
+                    $use = '';
+                    if (isset($_POST['cbDiagDel'][$c])) {
+                        $use = 'y';
+                        $on = $orderNumber + 100;
+                        $dbh->exec("Insert Ignore into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) values ('RibbonColors', '$c', '$desc', '$on');");
+                    } else {
+                        $dbh->exec("DELETE FROM `gen_lookups` where `Table_Name` = 'Ribbon_Colors' and `Code` = '$c';");
                     }
 
                     $gluRs->Description->setNewVal($desc);
@@ -535,6 +539,8 @@ if (isset($_POST['table'])) {
                         $logText = HouseLog::getUpdateText($gluRs);
                         HouseLog::logGenLookups($dbh, $tableName, $c, $logText, "update", $uS->username);
                     }
+
+
                 }
             }
         } else if (isset($_POST['selmisc'])) {

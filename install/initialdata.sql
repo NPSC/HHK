@@ -375,9 +375,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Resource_Status','oos','Out of Service','','',0),
 ('Resource_Status','un','Unavailable','','',0),
 
-
 ('Resource_Type','rmtroom','Remote Room','','',0),
 ('Resource_Type','room','Room','','',0),
+
+('RibbonColors', '','None', '', '', 0),
+('RibbonColors', 'hospital','Hospital', '', '', 1),
 
 ('Role_Codes','10','Admin User','','',0),
 ('Role_Codes','100','Web User','','',0),
@@ -569,10 +571,8 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Guest_Register_Email','','ea','ha','','If present, a guest register is sent here once a day (also must edit the cron job)','',1),
 ('Guest_Track_Address','','ea','ha','','If present, these addresess receive all notices of check-in, out, room change, etc.','',1),
 ('GuestAddr','true','b','g','','Enable guest address','',1),
-('GuestNameColor','','s','c','','Enable Guest demographic to drive guest name background color','Demographics',1),
 ('HHK_Secret_Key','T3VqSDRZc3FrNlRHMDkxQXBMNzg4THRCTm4vOXlUOGkyeG9ZbHpWT2Y0K0F5elQvZDYyUXFTNWFTRWZyL2pQUg==','op','v','','Recapcha Secret Key (obfruscated)','',0),
 ('HHK_Site_Key','6Lfc-U4UAAAAAEiXQX1-KCyGz4JAYLglQsj5g4Dh','s','v','','Recapcha Site Key','',0),
-('HospitalColorBar', 'false', 'b', 'c', '', 'Show Hospital Color Bar under Calendar ribbon', '', '1'),
 ('HouseKeepingEmail','','ea','ha','','This address receives all room turn-over notices','',1),
 ('HouseKeepingSteps','1','lu','hf','','Number of steps to cleaning/preparing rooms for new guests','HouseKpgSteps',1),
 ('HUF_URL', 'https://forum.hospitalityhousekeeper.net/', 's', 'a', '', 'HHK Users Form', '',0),
@@ -625,6 +625,8 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ReplyTo','','ea','g','','The reply to address for any email sent to guests.','',1),
 ('ResvEarlyArrDays','2','i','h','','Number of days before reservation to show check-in button on reservation chooser','',1),
 ('ReturnAddress','','ea','v','','Return address for automatic emails to volunteers','',1),
+('RibbonBottomColor', '', 'lu', 'c', '', 'Ribbon bottom-bar color source', 'RibbonColors', '1'),
+('RibbonColor','hospital','lu','c','','Ribbon Background color source','RibbonColors',1),
 ('Room_colors', 'false', 'b', 'c','', 'Use Room Color for Rooms column on calendar', '', '1'),
 ('RoomPriceModel','d','lu','h','','Room rate price model - Do not change!','Price_Model',0),
 ('RoomRateDefault','e','s','h','','Use the Resource Builder','',1),
