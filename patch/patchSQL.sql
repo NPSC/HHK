@@ -29,21 +29,21 @@ ALTER TABLE `room_rate`
 UPDATE `room_rate` set `Rate_Breakpoint_Category` = `FA_Category` where `FA_Category` in ('a','b','c','d');
 
 -- copy values from old fa_category table to new rate_breakpoint table
-Insert into rate_breakpoint (idrate_breakpoint, Household_Size, Rate_Category, Breakpoint) 
+Insert IGNORE into rate_breakpoint (idrate_breakpoint, Household_Size, Rate_Category, Breakpoint) 
 	select `HouseHoldSize`, `HouseHoldSize`, 'a', Income_A from fa_category;
-Insert into rate_breakpoint (idrate_breakpoint, Household_Size, Rate_Category, Breakpoint) 
+Insert IGNORE into rate_breakpoint (idrate_breakpoint, Household_Size, Rate_Category, Breakpoint) 
 	select `HouseHoldSize`+8, `HouseHoldSize`, 'b', Income_B from fa_category;
-Insert into rate_breakpoint (idrate_breakpoint, Household_Size, Rate_Category, Breakpoint) 
+Insert IGNORE into rate_breakpoint (idrate_breakpoint, Household_Size, Rate_Category, Breakpoint) 
 	select `HouseHoldSize`+16, `HouseHoldSize`, 'c', Income_C from fa_category;
-Insert into rate_breakpoint (idrate_breakpoint, Household_Size, Rate_Category, Breakpoint) 
+Insert IGNORE into rate_breakpoint (idrate_breakpoint, Household_Size, Rate_Category, Breakpoint) 
 	select `HouseHoldSize`+24, `HouseHoldSize`, 'd', Income_D from fa_category;
 -- End of Financial Assistance Updates
 
 -- Begin Bug 467:  Update Visit Ribbon color parameters.
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) 
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) 
 	VALUES ('Room_colors', 'false', 'b', 'c', 'Use Room Color for Rooms column on calendar', '1');
 
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) 
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) 
 	VALUES ('RibbonBottomColor', '', 'lu', 'c', 'Ribbon bottom-bar color source', 'RibbonColors', '1');
 
 UPDATE `sys_config` SET `Key` = 'RibbonColor', `Type` = 'lu', `Description` = 'Ribbon Background color source', `GenLookup` = 'RibbonColors' WHERE (`Key` = 'GuestNameColor');
@@ -55,6 +55,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`)
 	VALUES ('RibbonColors', '','None', 0);
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 	VALUES ('RibbonColors', 'hospital','Hospital', 1);
-	
-
 -- End Bug 467
+
+-- Add Juneteenth Holiday
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) 
+	VALUES ('Holiday', '14', 'Juneteenth');
+
+

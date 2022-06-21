@@ -154,6 +154,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Holiday', '1', 'Martin Luther King Birthday','','',0),
 ('Holiday', '2', 'Washington Birthday','','',0),
 ('Holiday', '3', 'Memorial Day','','',0),
+('Holiday', '14', 'Juneteenth', '','',0),
 ('Holiday', '4', 'Independance Day','','',0),
 ('Holiday', '5', 'Labor Day','','',0),
 ('Holiday', '6', 'Columbus Day','','',0),

@@ -32,20 +32,6 @@ class SiteConfig {
 
     public static function createHolidaysMarkup(\PDO $dbh, $resultMessage) {
 
-//        $stmt = $dbh->query("Select dh1, dh2, dh3, dh4, dh5 from desig_holidays where Year = ".$this->year);
-//        $dhs = $stmt->fetchall(PDO::FETCH_ASSOC);
-//
-//        if (count($dhs) == 0) {
-//            throw new Hk_Exception_Runtime('Designated holidays are not set up for year '.$this->year);
-//        }
-//
-//        $stmt = $dbh->query("Select Code, Substitute from gen_lookups where Table_Name = 'Holiday'");
-//        $hols = $stmt->fetchall(PDO::FETCH_ASSOC);
-//
-//        if (count($hols) == 0) {
-//            throw new Hk_Exception_Runtime('Holidays are not defined.  ');
-//        }
-
         $gArray = array( 1 => array(1, 'Jan'),
             2 => array(2, 'Feb'),
             3 => array(3, 'Mar'), 4 => array(4, 'Apr'), 5 => array(5, 'May'), 6 => array(6, 'Jun'),
