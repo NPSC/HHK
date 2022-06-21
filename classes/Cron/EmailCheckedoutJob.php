@@ -2,6 +2,8 @@
 
 namespace HHK\Cron;
 
+use HHK\Note\LinkNote;
+use HHK\Note\Note;
 use HHK\SysConst\WebRole;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -27,7 +29,7 @@ use HHK\Exception\RuntimeException;
 
 class EmailCheckedoutJob extends AbstractJob implements JobInterface{
 
-    public function tasks():void{
+    public function tasks():void {
 
         $sendEmail = ($this->dryRun ? FALSE : TRUE);
 
@@ -133,7 +135,6 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
         }
 
         $badAddresses = 0;
-        $resultsRegister = '';
         $deparatureDT = new \DateTime();
         $deparatureDT->sub(new \DateInterval('P' . $delayDays . 'D'));
 
@@ -156,6 +157,10 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
 
             $form = $sForm->createForm($sForm->makeReplacements($r));
 
+            if($sForm->getSubjectLine() != ""){
+                $subjectLine = $sForm->getSubjectLine();
+            }
+
             if ($sendEmail) {
 
                 $mail->clearAddresses();
@@ -166,42 +171,49 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
 
                 if ($mail->send() === FALSE) {
                     echo $mail->ErrorInfo . '<br/>';
-                    $resultsRegister .= "<p>Email send error: " . $mail->ErrorInfo . '</p>';
+                    $this->logMsg .= "Email Address: " . $r['Email'] . " - Email send error: " . $mail->ErrorInfo . '<br>';
                 }
 
-                $resultsRegister .= "<p>Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . "</p>";
+                $this->logMsg .= "Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . "<br>";
+
+                //Add Visit note
+                $noteText = "Survey Email sent to " . $r['Email'] . " with subject: " . $subjectLine;
+                LinkNote::save($this->dbh, $noteText, $r['idVisit'], Note::VisitLink, $uS->username, $uS->ConcatVisitNotes);
 
             } else {
-                echo "===========================<br/>(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>" . $subjectLine . "<br/>" . $form . "<br/>";
+                $this->logMsg .= "(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>";
             }
-
-            // Log in Visit Log?
 
         }
 
         $copyEmail = filter_var(SysConfig::getKeyValue($this->dbh, 'sys_config', 'Auto_Email_Address'), FILTER_VALIDATE_EMAIL);
 
-        if ($sendEmail && $copyEmail && $copyEmail != '') {
+        if ($sendEmail) {
+            if($copyEmail && $copyEmail != ''){
+                $mail->clearAddresses();
+                $mail->addAddress($copyEmail);
+                $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'MemberType', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
 
-            $mail->clearAddresses();
-            $mail->addAddress($copyEmail);
-            $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'MemberType', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
+                $messg = "<p>Today's date: " . date('M j, Y');
+                $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
+                $messg .= "<p>Subject Line: </p>" . $subjectLine;
+                $messg .= "<p>Template Text: </p>" . $sForm->template . "<br/>";
+                $messg .= "<p>Results:</p>" . $this->logMsg;
 
-            $messg = "<p>Today's date: " . date('M j, Y');
-            $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
-            $messg .= "<p>Subject Line: </p>" . $subjectLine;
-            $messg .= "<p>Template Text: </p>" . $sForm->template . "<br/>";
-            $messg .= "<p>Results:</p>" . $resultsRegister;
+                $mail->msgHTML($messg);
 
-            $mail->msgHTML($messg);
+                $mail->send();
+            }
 
-            $mail->send();
+            $this->logMsg .= "<hr/>Auto Email Results: " . $numRecipients . " messages were sent";
+            $this->logMsg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y');
+            $this->logMsg .= "<br/> Subject Line: " . $subjectLine;
 
         } else if (!$sendEmail) {
-            echo "<br/><br/><hr/>Auto Email Results: " . $numRecipients . " messages would be sent. Bad: ".$badAddresses;
-            echo "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y');
-            echo "<br/> Subject Line: " . $subjectLine;
-            echo "<br/>Body Template:<br/>" . $sForm->template;
+            $this->logMsg .= "<hr/>Auto Email Results: " . $numRecipients . " messages would be sent. Bad addresses: ".$badAddresses;
+            $this->logMsg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y');
+            $this->logMsg .= "<br/> Subject Line: " . $subjectLine;
+            //echo "<br/>Body Template:<br/>" . $sForm->template;
         }
 
 

@@ -2,6 +2,8 @@
 
 namespace HHK\House\TemplateForm;
 
+use HHK\sec\Session;
+
 /**
  * AbstractTemplateForm.php
  *
@@ -21,27 +23,36 @@ abstract class AbstractTemplateForm {
     public $docId;
     public $template;
     public $replacedTemplate;
-       
+    public $subjectLine;
+
    /**
     * @param \PDO $dbh
     * @param integer $docId
     */
    function __construct(\PDO $dbh, $docId){
-       
        if(intval($docId) > 0 && $dbh){
-           $stmt = $dbh->query("Select `Doc` from `document` where `idDocument` = $docId");
+           $stmt = $dbh->query("Select `Doc`,`Abstract` from `document` where `idDocument` = $docId");
            $docRow = $stmt->fetch(\PDO::FETCH_ASSOC);
            if(isset($docRow['Doc'])){
                $this->template = $docRow['Doc'];
            }else{
                $this->template = "";
            }
+
+           try{
+                $abstract = json_decode($docRow['Abstract'], true);
+                $this->subjectLine = (isset($abstract["subjectLine"]) ? $abstract["subjectLine"] : "");
+           }catch(\Exception $e){
+               $this->subjectLine = "";
+           }
+
        }else{
            $this->template = "";
+           $this->subjectLine = "";
        }
-       
+
    }
-    
+
     public function createForm($replacements) {
 
         $this->replacedTemplate = $this->template;
@@ -55,6 +66,10 @@ abstract class AbstractTemplateForm {
         }
 
         return str_replace('  ', ' ', $this->replacedTemplate);
+    }
+
+    public function getSubjectLine(){
+        return $this->subjectLine;
     }
 
     protected function setValue($search, $replace) {

@@ -42,6 +42,7 @@ abstract class AbstractJob implements JobInterface {
         $this->dbh = $dbh;
         $this->idJob = $idJob;
         $this->dryRun = $dryRun;
+        $this->status = "notDue";
     }
 
     /**
@@ -67,7 +68,7 @@ abstract class AbstractJob implements JobInterface {
         $stmt = $this->dbh->prepare('INSERT INTO `cron_log` (`idJob`, `Log_Text`, `Status`) VALUES (:idJob, :LogText, :Status)');
         $stmt->execute([
                 ':idJob'=>$this->idJob,
-                ':LogText'=>($this->dryRun ? "Dry Run: " : '') . $this->logMsg,
+                ':LogText'=>($this->dryRun ? "<strong>Dry Run: </strong>" : '') . $this->logMsg,
                 ':Status'=>($success ? AbstractJob::SUCCESS:AbstractJob::FAIL)
             ]);
 
@@ -77,7 +78,7 @@ abstract class AbstractJob implements JobInterface {
             $stmt = $this->dbh->prepare('UPDATE `cronjobs` SET `LastRun` = :lastRun where `idJob` = :idJob');
             $stmt->execute([
                 ':idJob'=>$this->idJob,
-                ':lastRun'=>$now->format("Y-m-d h:i:s")
+                ':lastRun'=>$now->format("Y-m-d H:i:s")
             ]);
         }
     }

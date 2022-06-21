@@ -251,7 +251,8 @@ CREATE TABLE if not exists `cronjobs` (
   `Status` VARCHAR(45) NOT NULL DEFAULT '',
   `LastRun` TIMESTAMP NULL,
   `timestamp` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idJob`)
+  PRIMARY KEY (`idJob`),
+  UNIQUE KEY (`Code`)
   ) ENGINE=InnoDB;
 
 

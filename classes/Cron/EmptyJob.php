@@ -2,6 +2,8 @@
 
 namespace HHK\Cron;
 
+use HHK\Exception\RuntimeException;
+
 /**
  * FakeJob.php
  *
@@ -20,7 +22,7 @@ namespace HHK\Cron;
 class EmptyJob extends AbstractJob implements JobInterface {
 
     public function tasks(): void {
-        $this->logMsg = "EmptyJob";
+        throw new RuntimeException("This is an empty job, make sure you set your Job Code correctly");
     }
 
 }

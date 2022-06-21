@@ -320,13 +320,13 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <?php echo $getWebReplyMessage; ?>
-            <div id="tabs" class="hhk-member-detail" style="display:none;">
+            <div id="tabs" style="display:none; font-size: 0.9em;">
                 <ul>
                     <li><a href="#config">Site Configuration</a></li>
                     <li><a href="#patch">Patch</a></li>
                     <li><a href="#pay">Credit Card Processor</a></li>
                     <li><a href="#auth">Authentication</a></li>
-                    <li><a href="#cron">Job Scheduler</a></li>
+                    <li id="liCron"><a href="#cron">Job Scheduler</a></li>
                     <li><a href="#holidays">Set Holidays</a></li>
                     <li><a href="#loadZip">Load Zip Codes</a></li>
                     <li><a href="#labels">Labels &#38; Prompts</a></li>
@@ -377,8 +377,8 @@ $getWebReplyMessage = $webAlert->createMarkup();
                 	<h2>Job Scheduler</h2>
                 	<div id="cronTabs">
                 		<ul>
-                    		<li><a href="#jobs">Jobs</a></li>
-                    		<li><a href="#cronLog">Log</a></li>
+                    		<li id="liJobs"><a href="#jobs">Jobs</a></li>
+                    		<li id="liCronLog"><a href="#cronLog">Log</a></li>
                     	</ul>
 						<div id="jobs">
 							<table id="cronJobs" style="width: 100%"></table>

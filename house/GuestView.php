@@ -9,6 +9,7 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\sec\Labels;
 use HHK\House\Report\{ReportFilter, ReportFieldSet};
 use HHK\ColumnSelectors;
+use HHK\House\Report\GuestVehicleReport;
 
 /**
  * GuestView.php
@@ -38,246 +39,60 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $labels = Labels::getLabels();
 
+$guestVehicleReport = new GuestVehicleReport($dbh);
+
+$columnSelector = $guestVehicleReport->setupGuestFields();
 
 $resultMessage = "";
 
-$filter = new ReportFilter();
+$guestReportMkup = '';
 
-// Guest listing
-
-// Report column selector
-// array: title, ColumnName, checked, fixed, Excel Type, Excel Style
-$cFields[] = array('Last Name', 'Last Name', 'checked', '', 'string', '20');
-$cFields[] = array("First Name", 'First Name', 'checked', '', 'string', '20');
-$cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
-$cFields[] = array("Phone", 'Phone', 'checked', '', 'string', '15');
-$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-$cFields[] = array("Expected Departure", 'Expected Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-if ($uS->EmptyExtendLimit > 0) {
-    $cFields[] = array("On Leave", 'On_Leave', 'checked', '', 'string', '15');
+if (isset($_POST['btnHere'])){
+    $guestReportMkup = $guestVehicleReport->getGuestMkup();
 }
-$cFields[] = array("Nights", 'Nights', '', '', 'integer', '10');
-$cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', '', '', 'string', '20');
 
-$eFields = array('EC Name', 'EC Phone Home', 'EC Phone Alternate');
-$eTitles = array('Emergency Contact', 'Emergency Contact Home Phone', 'Emergency Contact Alternate Phone');
-
-$cFields[] = array($eTitles, $eFields, '', '', 's', '', array());
-
+//vehicle report
+$vehicleReportMkup = '';
 if ($uS->TrackAuto) {
-    $cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');
-    $cFields[] = array('Model', 'Model', 'checked', '', 'string', '20');
-    $cFields[] = array('Color', 'Color', 'checked', '', 'string', '20');
-    $cFields[] = array('State Reg.', 'State Reg.', 'checked', '', 'string', '20');
-    $cFields[] = array($labels->getString('referral', 'licensePlate', 'License Plate'), 'License Plate', 'checked', '', 'string', '20');
-    $cFields[] = array('Notes', 'Note', 'checked', '', 'string', '20');
+    $vehicleReportMkup = $guestVehicleReport->getVehicleMkup();
 }
 
-$fieldSets = ReportFieldSet::listFieldSets($dbh, 'GuestView', true);
-$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
-$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
-$defaultFields = array();
-foreach($cFields as $field){
-    if($field[2] == 'checked'){
-        $defaultFields[] = $field[1];
-    }
-}
-
-$guestTable = false;
-
-if (isset($_POST['btnHere']) || isset($_POST['btnEmail'])){
-    $guests = array();
-    $colSelector->setColumnSelectors($_POST);
-    $fltrdTitles = $colSelector->getFilteredTitles();
-    $fltrdFields = $colSelector->getFilteredFields();
-
-    $stmt = $dbh->query("select * from vguest_view");
-
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-        $g = array();
-        foreach ($fltrdFields as $f) {
-            if(isset($f[7]) && $f[7] == "date"){
-                $g[$f[0]] = date('c', strtotime($r[$f[1]]));
-            }else{
-                $g[$f[0]] = $r[$f[1]];
-            }
-        }
-        $guests[] = $g;
-    }
-
-    if (count($guests) > 0) {
-        $guestTable = CreateMarkupFromDB::generateHTML_Table($guests, 'tblList');
-    } else {
-        $guestTable = HTMLContainer::generateMarkup('h2', 'House is Empty.');
-    }
-}
-
-/* $guests = array();
-$stmt = $dbh->query("select * from vguest_view");
-
-while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
-
-    $g = array(
-        'Last Name' => $r['Last Name'],
-        'First Name' => $r['First Name'],
-        'Room' => $r['Room'],
-        'Phone' => $r['Phone'],
-        'Arrival' => date('c', strtotime($r['Arrival'])),
-        'Expected Departure' =>  date('c', strtotime($r['Expected Departure']))
-    );
-
-    if ($uS->EmptyExtendLimit > 0) {
-        if ($r['On_Leave'] > 0) {
-            $g['On Leave'] = 'On Leave';
-        } else {
-            $g['On Leave'] = '';
-        }
-    }
-
-    $g['Nights'] = $r['Nights'];
-    $g['Hospital'] = $r['Hospital'];
-
-    if ($uS->TrackAuto) {
-        $g['Make'] = $r['Make'];
-        $g['Model'] = $r['Model'];
-        $g['Color'] = $r['Color'];
-        $g['State Reg.'] = $r['State Reg.'];
-        $g[$labels->getString('referral', 'licensePlate', 'License Plate')] = $r['License Plate'];
-        $g['Notes'] = $r['Note'];
-    }
-
-    $guests[] = $g;
-
-}
-
-if (count($guests) > 0) {
-    $guestTable = CreateMarkupFromDB::generateHTML_Table($guests, 'tblList');
-} else {
-    $guestTable = HTMLContainer::generateMarkup('h2', 'House is Empty.');
-} */
-
-$vehicleTable = '';
-
-if ($uS->TrackAuto) {
-    // Vehicle listing
-    $vstmt = $dbh->query("SELECT
-    ifnull((case when n.Name_Suffix = '' then n.Name_Last else concat(n.Name_Last, ' ', g.`Description`) end), '') as `Last Name`,
-    ifnull(n.Name_First, '') as `First Name`,
-    ifnull(rm.Title, '')as `Room`,
-    ifnull(np.Phone_Num, '') as `Phone`,
-    ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
-    case when r.Expected_Departure < now() then now() else r.Expected_Departure end as `Expected Departure`,
-	l.Title as `Status`,
-    ifnull(v.Make, '') as `Make`,
-    ifnull(v.Model, '') as `Model`,
-    ifnull(v.Color, '') as `Color`,
-    ifnull(v.State_Reg, '') as `State Reg.`,
-    ifnull(v.License_Number, '') as `" . $labels->getString('referral', 'licensePlate', 'License Plate') . "`,
-	ifnull(v.Note, '') as `Note`
-from
-	vehicle v join reservation r on v.idRegistration = r.idRegistration
-        left join
-    `name` n ON n.idName = r.idGuest
-        left join
-    name_phone np ON n.idName = np.idName
-        and n.Preferred_Phone = np.Phone_Code
-        left join
-    resource rm ON r.idResource = rm.idResource
-        left join
-    gen_lookups g on g.`Table_Name` = 'Name_Suffix' and g.`Code` = n.Name_Suffix
-		left join
-	lookups l on l.Category = 'ReservStatus' and l.`Code` = r.`Status`
-where r.`Status` in ('a', 's', 'uc')
-order by l.Title, `Arrival`");
-
-    $vrows = $vstmt->fetchAll(PDO::FETCH_ASSOC);
-
-    for ($i = 0; $i < count($vrows); $i++) {
-
-        $vrows[$i]['Arrival'] = date('c', strtotime($vrows[$i]['Arrival']));
-        $vrows[$i]['Expected Departure'] =  date('c', strtotime($vrows[$i]['Expected Departure']));
-    }
-
-    if (count($vrows) > 0) {
-        $vehicleTable = CreateMarkupFromDB::generateHTML_Table($vrows, 'tblListv');
-    } else {
-        $vehicleTable = HTMLContainer::generateMarkup('h2', 'No vehicles present.');
-    }
-
-}
-
-$title = HTMLContainer::generateMarkup('h3', $uS->siteName . " Resident ".$labels->getString('MemberType', 'visitor', 'Guest'). "s for " . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
 
 $guestMessage = '';
 $vehicleMessage = '';
 $emtableMarkupv = '';
 $tab = 0;
 
-if (isset($_POST['btnEmail']) || isset($_POST['btnEmailv'])) {
+if(isset($_POST['btnEmailv'])){
+    $emailAddress = '';
+    $subject = '';
 
-    $emAddr = '';
+    if (isset($_POST['txtEmailv'])) {
+        $emailAddress = filter_var($_POST['txtEmailv'], FILTER_SANITIZE_EMAIL);
+    }
+
+    if (isset($_POST['txtSubjectv'])) {
+        $subject = filter_var($_POST['txtSubjectv'], FILTER_SANITIZE_STRING);
+    }
+
+    $vehicleMessage = $guestVehicleReport->sendEmail("vehicles", $subject, $emailAddress);
+    $tab = 1;
+}
+
+if (isset($_POST['btnEmail'])) {
+
+    $emailAddress = '';
     $subject = '';
 
     if (isset($_POST['txtEmail'])) {
-    	$emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_STRING);
-    }
-
-    if (isset($_POST['txtEmailv'])) {
-    	$emAddr = filter_var($_POST['txtEmailv'], FILTER_SANITIZE_STRING);
+    	$emailAddress = filter_var($_POST['txtEmail'], FILTER_SANITIZE_STRING);
     }
 
     if (isset($_POST['txtSubject'])) {
     	$subject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
     }
-    if (isset($_POST['txtSubjectv'])) {
-    	$subject = filter_var($_POST['txtSubjectv'], FILTER_SANITIZE_STRING);
-    }
 
-    if ($emAddr != '' && $subject != '') {
-
-        try{
-            $mail = prepareEmail();
-
-            $mail->From = $uS->NoReplyAddr;
-            $mail->FromName = $uS->siteName;
-
-            $tos = explode(',', $emAddr);
-            foreach ($tos as $t) {
-                $bcc = filter_var($t, FILTER_SANITIZE_EMAIL);
-                if ($bcc !== FALSE && $bcc != '') {
-                    $mail->addAddress($bcc);
-                }
-            }
-
-            $mail->isHTML(true);
-
-            $mail->Subject = $subject;
-
-            if (isset($_POST['btnEmail'])) {
-                $body = $guestTable;
-            } else {
-                $body = $vehicleTable;
-            }
-
-            $mail->msgHTML($title . $body);
-            $mail->send();
-            $resultMessage .= "Email sent.  ";
-        }catch(\Exception $e){
-            $resultMessage .= "Email failed!  " . $mail->ErrorInfo;
-        }
-
-    } else {
-        $resultMessage = 'Fill in both email address and subject.';
-    }
-
-    if (isset($_POST['btnEmail'])) {
-        $guestMessage = $resultMessage;
-    } else {
-        $vehicleMessage = $resultMessage;
-        $tab = 1;
-    }
-
+    $guestMessage = $guestVehicleReport->sendEmail("guests", $subject, $emailAddress);
 }
 
 // create send guest email table
@@ -293,7 +108,7 @@ $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', arra
 $emtableMarkup = $emTbl->generateMarkup(array('style'=>'margin-bottom: 0.5em;'));
 
 if ($uS->TrackAuto) {
-    // create send guest email table
+    // create send vehicle email table
     $emTblv = new HTMLTable();
     $emTblv->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup('Vehicle Report', array('name' => 'txtSubjectv', 'size' => '70'))));
     $emTblv->addBodyTr(HTMLTable::makeTd(
@@ -304,9 +119,6 @@ if ($uS->TrackAuto) {
 
     $emtableMarkupv = $emTblv->generateMarkup(array(), 'Email the Vehicle Report');
 }
-
-$columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'margin-bottom:0.5em', 'id'=>'includeFields'));
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -334,7 +146,7 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
         <script type="text/javascript">
     $(document).ready(function () {
         "use strict";
-        $('#includeFields').fieldSets({'reportName': 'GuestView', 'defaultFields': <?php echo json_encode($defaultFields) ?>});
+        $('#includeFields').fieldSets({'reportName': 'GuestView', 'defaultFields': <?php echo json_encode($guestVehicleReport->defaultFields) ?>});
 
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
 
@@ -352,7 +164,7 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
 
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var tabReturn = '<?php echo $tab; ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+        var columnDefs = $.parseJSON('<?php echo json_encode($guestVehicleReport->colSelector->getColumnDefs()); ?>');
 
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
         $('#tblList').dataTable({
@@ -452,14 +264,14 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
                 				</div>
                 			</div>
                 		</div>
-                    	<?php if($guestTable !== false) { ?>
+                    	<?php if($guestReportMkup !== false) { ?>
                     	<div class="guestRptContent">
                             <div id="formEm">
                                 <?php echo $emtableMarkup; ?>
                             </div>
                             <input type="button" value="Print" id='btnPrint' name='btnPrint' style="margin-right:.3em;"/>
                             <div class="PrintArea">
-                                <?php echo $title . $guestTable; ?>
+                                <?php echo $guestReportMkup; ?>
                             </div>
                         </div>
                         <?php } ?>
@@ -471,7 +283,7 @@ $columnSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('s
                     </form>
                     <input type="button" value="Print" id='btnPrintv' name='btnPrintv' style="margin-right:.3em;"/>
                     <div class="PrintAreav">
-                        <?php echo $title . $vehicleTable; ?>
+                        <?php echo $vehicleReportMkup; ?>
                     </div>
                 </div>
                 <div id="tabsrch" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">

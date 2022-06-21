@@ -394,3 +394,7 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 .hhk-flex-wrap {
 	flex-flow: wrap;
 }
+
+#tabs.ui-tabs{
+	display: inline-block;
+}

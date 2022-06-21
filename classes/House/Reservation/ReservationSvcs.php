@@ -109,6 +109,7 @@ class ReservationSvcs
 
                 $docs[$d['Code']] = array(
                     'doc' => $confirmForm->createForm($confirmForm->makeReplacements($dbh, $reserv, $guest, $amount, $formNotes)),
+                    'subjectLine' => ($confirmForm->getSubjectLine() != "" ? $confirmForm->getSubjectLine() : Labels::getString('referral', 'Res_Confirmation_Subject', htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation')),
                     'style' => RegisterForm::getStyling(),
                     'tabIndex' => $d['Code'],
                     'tabTitle' => $d['Description'],
@@ -119,6 +120,7 @@ class ReservationSvcs
 
             $docs[] = array(
                 'doc' => 'The confirmation document is missing.',
+                'subjectLine' => Labels::getString('referral', 'Res_Confirmation_Subject', htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation'),
                 'style' => RegisterForm::getStyling(),
                 'tabIndex' => 'en',
                 'tabTitle' => 'English',
@@ -183,13 +185,13 @@ class ReservationSvcs
 
                     $mail->isHTML(true);
 
-                    $mail->Subject = Labels::getString('referral', 'Res_Confirmation_Subject', htmlspecialchars_decode($uS->siteName, ENT_QUOTES) . ' Reservation Confirmation');
+                    $mail->Subject = $docs[$docCode]['subjectLine'];
                     $mail->msgHTML($docs[$docCode]['doc']);
 
                     $mail->send();
 
                     // Make a note in the reservation.
-                    $noteText = (isset($docs[$docCode]['tabTitle']) ? $docs[$docCode]['tabTitle'] . ' ' : '') . 'Confirmation Email sent to ' . $emailAddr;
+                    $noteText = (isset($docs[$docCode]['tabTitle']) ? $docs[$docCode]['tabTitle'] . ' ' : '') . 'Confirmation Email sent to ' . $emailAddr .  " with subject: " . $docs[$docCode]["subjectLine"];
                     if($ccEmailAddr != '' && count($ccs) > 0){
                         $noteText .= '; CC\'d to ';
                         foreach ($ccs as $cc){

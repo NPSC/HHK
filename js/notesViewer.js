@@ -50,7 +50,7 @@
                         data: 'Date',
                         sortable: true,
                         render: function (data, type) {
-                            return dateRender(data, type, dateFormat);
+                            return dateRender(data, type, 'MMM D YYYY h:mm a');
                         }
                 },
                 {

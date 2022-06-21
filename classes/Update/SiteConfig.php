@@ -453,7 +453,7 @@ class SiteConfig {
         if(count($cats) > 0){
             $uS = Session::getInstance();
             if(!is_array($uS->labels)){
-                Labels::initLabels($dbh);
+                $uS->labels = Labels::initLabels($dbh);
             }
             foreach ($uS->labels as $section => $name) {
                 if (($onlySection == '' || $onlySection == $section)) {

@@ -203,7 +203,7 @@ try {
 
             $job = JobFactory::make($dbh, $idJob, $dryRun);
             $job->run();
-            $events = ["idJob"=>$idJob, 'Status'=>$job->status, 'logMsg'=>$job->logMsg];
+            $events = ["idJob"=>$idJob, 'status'=>$job->status, 'logMsg'=>($dryRun ? "<strong>Dry Run: </strong>": "") . $job->logMsg];
 
             break;
 

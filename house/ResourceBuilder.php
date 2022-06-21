@@ -1123,7 +1123,7 @@ if (isset($_POST['ldfm'])) {
         $dbh->exec("UPDATE `gen_lookups` SET `Substitute` = '$formDef' WHERE `Table_Name` = 'Form_Upload' AND `Code` = '$formType'");
     }
 
-    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef' order by g.Order asc");
+    $formstmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc`, d.idDocument, d.Abstract from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = '$formDef' order by g.Order asc");
     $docRows = $formstmt->fetchAll();
 
     $li = '';
@@ -1134,17 +1134,34 @@ if (isset($_POST['ldfm'])) {
 
     foreach ($docRows as $r) {
 
+        //subject line
+        $subjectLine = "";
+        try{
+            $abstract = json_decode($r["Abstract"], true);
+            if(isset($abstract['subjectLine'])){
+                $subjectLine = $abstract['subjectLine'];
+            }
+        }catch(\Exception $e){
+
+        }
+
         $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', $r['Description'], array(
             'href' => '#' . $r['Code']
         )), array('class'=>'hhk-sortable', 'data-code'=>$r['Code']));
 
         $tabContent .= HTMLContainer::generateMarkup('div',  $help .($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
             'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3 user-agent-spacing')): '') .
-            '<div class="row"><div class="col-10 uploadFormDiv ui-widget-content" style="display: none;"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" class="d-inline-block" style="padding: 5px 7px;">
-<input type="hidden" name="docId" value="' . $r['idDocument'] . '"/><input type="hidden" name="filefrmtype" value="' . $formType . '"/><input type="hidden" name="docUpload" value="true">
-Upload new HTML file: <input name="formfile" type="file" required accept="text/html" />
-<input type="submit" value="Save Form" />
-</form><form action="ResourceBuilder.php" method="POST" class="d-inline-block"><input type="hidden" name="docCode" value="' . $r['Code'] . '"><input type="hidden" name="formDef" value="' . $formDef . '"><input type="hidden" name="docfrmtype" value="' . $formType . '"/><input type="hidden" name="delfm" value="true"><button type="submit" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button></form></div><div class="col-2" style="text-align: center;"><button class="replaceForm" style="margin: 6px 0;">Replace Form</button></div></div>', array(
+            '<div><div class="d-inline-block p-3 uploadFormDiv ui-widget-content ui-corner-all"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" style="padding: 5px 7px;">
+<input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>' .
+            '<div class="form-group mb-3"><label for="emailSubjectLine">Email Subject Line: </label><input type="text" name="emailSubjectLine" placeholder="Email Subject Line" value="' . $subjectLine . '" size="35"></div>' .
+            '<input type="hidden" name="filefrmtype" value="' . $formType . '"/>' .
+            '<input type="hidden" name="docUpload" value="true">' .
+            '<div class="form-group mb-3"><label for="formfile">Upload new HTML file: </label><input name="formfile" type="file" required accept="text/html" /></div>' .
+            '<div class="hhk-flex" style="justify-content: space-evenly">' .
+            '<button type="submit"><span class="ui-icon ui-icon-disk"></span>Save Form</button>' .
+            '<button type="submit" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button>' .
+            '</div>' .
+            '</form></div></div>', array(
             'id' => $r['Code']
         ));
     }

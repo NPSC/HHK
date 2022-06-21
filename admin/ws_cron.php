@@ -5,6 +5,10 @@ use HHK\Cron\EmailCheckedoutJob;
 use HHK\Cron\AbstractJob;
 use HHK\Cron\JobFactory;
 use HHK\Cron\JobInterface;
+use HHK\SysConst\WebPageCode;
+use HHK\sec\Login;
+use HHK\sec\UserClass;
+use HHK\sec\Session;
 /**
  * ws_cron.php
  *
@@ -15,12 +19,42 @@ use HHK\Cron\JobInterface;
  */
 require ("AdminIncludes.php");
 
-$wInit = new webInit(WebPageCode::Service);
+try {
 
-$dbh = $wInit->dbh;
+    $login = new Login();
+    $login->initHhkSession(ciCFG_FILE);
+
+} catch (InvalidArgumentException $pex) {
+    exit ("Database Access Error.");
+
+} catch (Exception $ex) {
+    exit ($ex->getMessage());
+}
+
+try {
+    $dbh = initPDO(TRUE);
+} catch (RuntimeException $hex) {
+    exit( $hex->getMessage());
+}
+
+$u = new UserClass();
+if(!$u->isCron()){
+    // Authenticate user
+    $user = isset($_SERVER['PHP_AUTH_USER']) ? $_SERVER['PHP_AUTH_USER'] : '';
+    $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
+
+    if (($user == '' && $pass == '') || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE) === FALSE) {
+
+        header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
+        header('HTTP/1.0 401 Unauthorized');
+        exit("Not authorized");
+
+    }
+}
 
 $uS = Session::getInstance();
 $scheduler = new Scheduler();
+$allowedIntervals = array("hourly", "daily");
 
 //Get jobs from DB
 $stmt = $dbh->query("select * from cronjobs");
@@ -32,10 +66,14 @@ $results = array();
 foreach($jobs as $job){
     if($job['Status'] == 'a'){
         $jobObj = JobFactory::make($dbh, $job['idJob']);
+        $interval = $job["Interval"];
 
-        if($jobObj instanceof JobInterface){
+        if($jobObj instanceof JobInterface && in_array($interval, $allowedIntervals)){
             $jobObjs[] = $jobObj;
-            $scheduler->call($jobObj->run())->daily($job['Time']); // $job['time'] must be in format hh:mm
+            $scheduler->call(function($jobObj){
+                    $jobObj->run();
+                },array("jobObj"=>$jobObj))
+            ->$interval($job['Time']); // $job['time'] must be in format hh:mm
         }
     }
 }
