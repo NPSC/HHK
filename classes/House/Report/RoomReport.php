@@ -31,18 +31,14 @@ use HHK\sec\Session;
  */
 class RoomReport {
 
-    protected static function getGlobalNightsCount(\PDO $dbh, $year = '') {
+    protected static function getGlobalNightsCount(\PDO $dbh, $year = '', $fyDiffMonths = 0) {
 
         $niteCount = 0;
 
         if ($year != '') {
-            // Filter out one year
-//            $query = "SELECT SUM(DATEDIFF(
-//IFNULL(s.Span_End_Date, NOW()),
-//case when year(s.Span_Start_Date) < $year then DATE('$year-01-01') else Date(s.Span_Start_Date) end)) AS `Nights`
-//FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE('$year-12-31') and Date(ifnull(s.Span_End_Date, now())) >= DATE('$year-01-01') ";
 
-            $stmt = $dbh->query("CALL sum_stay_Days('$year')");
+
+            $stmt = $dbh->query("CALL sum_visit_days_fy('$year', '$fyDiffMonths')");
 
             while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
                 $niteCount = $r[0];
@@ -66,11 +62,11 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $niteCount;
     }
 
-    protected static function getGlobalStaysCount(\PDO $dbh, $year = '') {
+    protected static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths) {
 
         $whClause = '';
         if ($year != '') {
-            $whClause = " and DATE(Span_Start_Date) <= DATE('$year-12-31') and Date(Span_End_Date) >= DATE('$year-01-01')";
+            $whClause = " and DATE(Span_Start_Date) <= fiscal_year(DATE('$year-12-31'), '-$fiscalYearMonths') and Date(Span_End_Date) >= fiscal_year(DATE('$year-01-01'), '-$fiscalYearMonths')";
         }
 
         $query = "select count(*) from stays where `On_Leave` = 0 and `Status` = 'co' and DATEDIFF(Span_End_Date, Span_Start_Date) > 0" . $whClause;
@@ -89,7 +85,11 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         $comment = '.';
 
         if ($uS->NightsCounter != '') {
-            $comment = " this calendar year.";
+            if ($uS->fy_diff_Months !== 0){
+                $comment = " this fiscal year.";
+            } else {
+                $comment = " this calendar year.";
+            }
         }
 
         if (isset($uS->gnc) === FALSE) {
@@ -103,7 +103,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
 
             }
 
-            $uS->gnc = intval((self::getGlobalNightsCount($dbh, $year) + $previousCount) / 10);
+            $uS->gnc = intval((self::getGlobalNightsCount($dbh, $year, $uS->fy_diff_Months) + $previousCount) / 10);
         }
 
         $span = HTMLContainer::generateMarkup('span', 'More than <b>' . number_format($uS->gnc * 10) . '</b> nights of rest' . $comment, array('style'=>'margin-left:10px; font-size:.6em;font-weight:normal;', "class"=>"hideMobile"));
@@ -121,7 +121,11 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         }
 
         if ($uS->NightsCounter != '') {
-            $comment = " this calendar year.";
+            if ($uS->fy_diff_Months !== 0){
+                $comment = " this fiscal year.";
+            } else {
+                $comment = " this calendar year.";
+            }
         }
 
         if (isset($uS->gsc) === FALSE) {
@@ -134,7 +138,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
                 $year = $now->format('Y');
             }
 
-            $uS->gsc = intval((self::getGlobalStaysCount($dbh, $year) + $previousCount), 10);
+            $uS->gsc = intval((self::getGlobalStaysCount($dbh, $year, $uS->fy_diff_Months) + $previousCount), 10);
         }
 
         $span = HTMLContainer::generateMarkup('span', number_format($uS->gsc) . ' Stays' . $comment, array('style'=>'margin-left:10px;font-size:.6em;font-weight:normal;', "class"=>"hideMobile"));

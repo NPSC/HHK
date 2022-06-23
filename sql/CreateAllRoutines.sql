@@ -160,6 +160,37 @@ BEGIN
 END -- ;
 
 
+
+-- --------------------------------------------------------
+--
+-- Procedure `sum_visit_Days_fy`
+--
+DROP procedure IF EXISTS `sum_visit_Days_fy`;  -- ;
+
+CREATE PROCEDURE `sum_visit_Days_fy` (
+    IN targetYear int,
+    IN fy_month int
+)
+BEGIN
+	Declare startDate datetime;
+	Declare endDate datetime;
+	
+	Select date_sub(str_to_Date(concat_ws('-', (targetYear), '01', '01'), '%Y-%m-%d'), INTERVAL fy_month MONTH) into startDate;
+	select date_sub(str_to_Date(concat_ws('-', (targetYear + 1), '01', '01'), '%Y-%m-%d'), INTERVAL fy_month MONTH) into endDate;
+	
+	select sum(
+		datediff(
+	             case when DATE(ifnull(Span_End, NOW())) > DATE(endDate) then DATE(endDate) else DATE(ifnull(Span_End, NOW())) end
+	            , case when  DATE(Span_Start) < DATE(startDate) then DATE(startDate) else  DATE(Span_Start) end
+                )
+	    )
+	    as numNites
+	from visit
+	Where DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
+
+END -- ;
+
+
 -- --------------------------------------------------------
 --
 -- Procedure `updt_visit_hospstay`
