@@ -61,4 +61,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`)
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) 
 	VALUES ('Holiday', '14', 'Juneteenth');
 
+-- Show diagnosis on statements
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) 
+	VALUES ('ShowDiagOnStmt', 'false', 'b', 'h', 'Show the patient diagnoses on the statements', '1');
 

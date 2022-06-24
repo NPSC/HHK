@@ -640,6 +640,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowBirthDate','true','b','h','','Show birthdate for patients and guests','',1),
 ('ShowCreatedDate','true','b','h','','Show the Created Date in Register page tabs lists','',1),
 ('ShowDemographics','false','b','h','','Show demographics selectors on Check in and Reservation pages','',1),
+('ShowDiagOnStmt', 'false', 'b', 'h', '', 'Show the patient diagnoses on the statements', '', '1'),
 ('ShowDiagTB','false','b','h','','Show the diagnosis textbox (in addition to the diagnosis selector)','',1),
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
