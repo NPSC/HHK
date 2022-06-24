@@ -38,7 +38,7 @@ class RoomReport {
         if ($year != '') {
 
 
-            $stmt = $dbh->query("CALL sum_visit_days_fy('$year', '$fyDiffMonths')");
+            $stmt = $dbh->query("CALL sum_stay_days('$year', '$fyDiffMonths')");
 
             while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
                 $niteCount = $r[0];

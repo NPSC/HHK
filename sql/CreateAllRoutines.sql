@@ -213,25 +213,26 @@ END -- ;
 
 -- --------------------------------------------------------
 --
--- Procedure `sum_stay_Days`
+-- Procedure `sum_stay_days`
 --
-DROP procedure IF EXISTS `sum_stay_Days`; -- ;
+DROP procedure IF EXISTS `sum_stay_days`; -- ;
 
-CREATE PROCEDURE `sum_stay_Days`(
-	IN targetYear int
+CREATE PROCEDURE `sum_stay_days`(
+	IN targetYear int,
+    IN fy_month int
 )
 BEGIN
 
 	Declare startDate varchar(12);
 	Declare endDate varchar(12);
 
-	Select concat_ws('-', (targetYear + 1), '01', '01') into endDate;
-	Select concat_ws('-', (targetYear), '01', '01') into startDate;
+	Select date_sub(str_to_Date(concat_ws('-', (targetYear), '01', '01'), '%Y-%m-%d'), INTERVAL fy_month MONTH) into startDate;
+	select date_sub(str_to_Date(concat_ws('-', (targetYear + 1), '01', '01'), '%Y-%m-%d'), INTERVAL fy_month MONTH) into endDate;
 
 	select sum(
 		datediff(
-                    case when DATE(IFNULL(Span_End_Date, NOW())) >= DATE(endDate) then DATE(endDate) else DATE(IFNULL(Span_End_Date, NOW())) end
-                   , case when  DATE(Span_Start_Date) < DATE(startDate) then DATE(startDate) else  DATE(IFNULL(Span_Start_Date, NOW())) end)
+             case when DATE(IFNULL(Span_End_Date, NOW())) > DATE(endDate) then DATE(endDate) else DATE(IFNULL(Span_End_Date, NOW())) end
+             , case when  DATE(Span_Start_Date) < DATE(startDate) then DATE(startDate) else  DATE(IFNULL(Span_Start_Date, NOW())) end)
         )
         as numNites
 	from stays
