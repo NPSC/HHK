@@ -1146,7 +1146,8 @@ if (isset($_POST['ldfm'])) {
         }
 
         $li .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', $r['Description'], array(
-            'href' => '#' . $r['Code']
+            'href' => '#' . $r['Code'],
+            'id' => "docTab-" . $r['Code']
         )), array('class'=>'hhk-sortable', 'data-code'=>$r['Code']));
 
         $tabContent .= HTMLContainer::generateMarkup('div',  $help .($r['Doc'] ? HTMLContainer::generateMarkup('fieldset', '<legend style="font-weight: bold;">Current Form</legend>' . $r['Doc'], array(
@@ -1155,11 +1156,13 @@ if (isset($_POST['ldfm'])) {
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>' .
             '<div class="form-group mb-3"><label for="emailSubjectLine">Email Subject Line: </label><input type="text" name="emailSubjectLine" placeholder="Email Subject Line" value="' . $subjectLine . '" size="35"></div>' .
             '<input type="hidden" name="filefrmtype" value="' . $formType . '"/>' .
-            '<input type="hidden" name="docUpload" value="true">' .
-            '<div class="form-group mb-3"><label for="formfile">Upload new HTML file: </label><input name="formfile" type="file" required accept="text/html" /></div>' .
+            '<input type="hidden" name="docAction">' .
+            '<input type="hidden" name="formDef" value="' . $formDef . '">' .
+            '<input type="hidden" name="docCode" value="' . $r["Code"] . '">' .
+            '<div class="form-group mb-3"><label for="formfile">Upload new HTML file: </label><input name="formfile" type="file" accept="text/html" /></div>' .
             '<div class="hhk-flex" style="justify-content: space-evenly">' .
-            '<button type="submit"><span class="ui-icon ui-icon-disk"></span>Save Form</button>' .
-            '<button type="submit" value="Delete Form"><span class="ui-icon ui-icon-trash"></span>Delete Form</button>' .
+            '<button type="submit" id="docDelFm"><span class="ui-icon ui-icon-trash"></span>Delete Form</button>' .
+            '<button type="submit" id="docSaveFm"><span class="ui-icon ui-icon-disk"></span>Save Form</button>' .
             '</div>' .
             '</form></div></div>', array(
             'id' => $r['Code']
@@ -1198,50 +1201,88 @@ if (isset($_POST['ldfm'])) {
 }
 
 // Upload a new form
-if (isset($_POST['docUpload'])) {
+if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
 
-    $tabIndex = 8;
+    try{
+        $tabIndex = 8;
 
-    if (isset($_POST['filefrmtype'])) {
-    	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
-    }
-
-    $mimetype = mime_content_type($_FILES['formfile']['tmp_name']);
-
-    if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
+        $uName = $uS->username;
 
         $docId = - 1;
         if (isset($_POST['docId'])) {
             $docId = intval(filter_var($_POST['docId'], FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        // Get the file and convert it.
-        $file = file_get_contents($_FILES['formfile']['tmp_name']);
-        $doc = iconv('Windows-1252', 'UTF-8', $file);
-        $uName = $uS->username;
+        $docCode = '';
+        if(isset($_POST['docCode'])){
+            $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
+        }
 
-        $ustmt = $dbh->prepare("update document set Doc = ?, Updated_By = ?, Last_Updated = now() where idDocument = ?");
-        $ustmt->bindParam(1, $doc, PDO::PARAM_LOB);
-        $ustmt->bindParam(2, $uName);
-        $ustmt->bindParam(3, $docId);
+        $formType = "";
+        if (isset($_POST['filefrmtype'])) {
+        	$formType = filter_var($_POST['filefrmtype'], FILTER_SANITIZE_STRING);
+        }
+
+        $subjectLine = "";
+        $abstract = array();
+        if(isset($_POST["emailSubjectLine"])){
+            $subjectLine = filter_var($_POST["emailSubjectLine"], FILTER_SANITIZE_STRING);
+            $abstract["subjectLine"] = $subjectLine;
+        }
+        $abstract = json_encode($abstract);
+
+        $mimetype = "";
+        if(! empty($_FILES['formfile']['tmp_name'])){
+            $mimetype = mime_content_type($_FILES['formfile']['tmp_name']);
+        }
+
+        $sql = "UPDATE `document` SET Abstract = :abstract, ";
+        if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
+            // Get the file and convert it.
+            $file = file_get_contents($_FILES['formfile']['tmp_name']);
+            $doc = iconv('Windows-1252', 'UTF-8', $file);
+            $sql .= "Doc = :doc, ";
+        }
+        $sql .= "Updated_By = :updatedBy, Last_Updated = now() where idDocument = :idDoc";
+        $ustmt = $dbh->prepare($sql);
+
+        if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
+            $ustmt->bindParam(":doc", $doc, PDO::PARAM_LOB);
+        }
+        $ustmt->bindParam(":abstract", $abstract);
+        $ustmt->bindParam(":updatedBy", $uName);
+        $ustmt->bindParam(":idDoc", $docId);
         $dbh->beginTransaction();
         $ustmt->execute();
         $dbh->commit();
+
+        echo json_encode(array("docCode"=>$docCode, "success"=>"Form saved successfully"));
+        exit();
+    }catch(\Exception $e){
+        echo json_encode(array("error"=>"Could not save form: " . $e->getMessage()));
+        exit();
     }
 }
 
-if (isset($_POST['delfm']) && isset($_POST['docCode']) && isset($_POST['formDef'])) {
+if (isset($_POST['docAction']) && $_POST['docAction'] == "docDelete" && isset($_POST['docCode']) && isset($_POST['formDef'])) {
+    try{
+        $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
+        $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_STRING);
 
-    $docCode = filter_var($_POST['docCode'], FILTER_SANITIZE_STRING);
-    $formDef = filter_var($_POST['formDef'], FILTER_SANITIZE_STRING);
+        $tabIndex = 8;
 
-    $tabIndex = 8;
+        $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
+        $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
 
-    $dbh->exec("UPDATE `document` d JOIN `gen_lookups` g ON g.`Table_Name` = '$formDef' AND g.`Code` = '$docCode' SET d.`status` = 'd' WHERE `idDocument` = g.`Substitute`");
-    $dbh->exec("DELETE FROM gen_lookups where `Table_Name` = '$formDef' AND `Code` = '$docCode'");
+        if (isset($_POST['docfrmtype'])) {
+        	$formType = filter_var($_POST['docfrmtype'], FILTER_SANITIZE_STRING);
+        }
 
-    if (isset($_POST['docfrmtype'])) {
-    	$formType = filter_var($_POST['docfrmtype'], FILTER_SANITIZE_STRING);
+        echo json_encode(array("success"=>"Form deleted successfully"));
+        exit();
+    }catch(\Exception $e){
+        echo json_encode(array("error"=>"Could not delete form: " . $e->getMessage()));
+        exit();
     }
 
 }

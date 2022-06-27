@@ -263,7 +263,7 @@ $(document).ready(
 							}
 						});
 					}
-					$("#dchgPw").dialog('close');
+					//$("#dchgPw").dialog('close');
 				}
 			}		
 						//two factor Auth

@@ -320,8 +320,8 @@ $(document).ready(function () {
     $('#btnNewForm').button().click(function () {
     	$('#divNewForm').dialog('open');
     });
-    $('#selFormUpload').change(function () {
-
+    $('#selFormUpload').change(function (e, changeEventData) {
+		
         $('#hdnFormType').val('');
         
         if ($(this).val() == '') {
@@ -380,21 +380,43 @@ $(document).ready(function () {
 
                     $('#divUploadForm button').button();
                     $('#divUploadForm input[type=submit]').button();
+                    if(changeEventData && changeEventData.docCode){
+                    	console.log('#docTab-' + changeEventData.docCode);
+                    	$('#regTabDiv').find('#docTab-' + changeEventData.docCode).click();
+                    }
                 }
             });
     });
     $('#selFormUpload').change();
 
+	$(document).on("click", ".uploadFormDiv form #docDelFm", function(e){
+		$(".uploadFormDiv form input[name=docAction]").val("docDelete");
+	});
+	
+	$(document).on("click", ".uploadFormDiv form #docSaveFm", function(e){
+		$(".uploadFormDiv form input[name=docAction]").val("docUpload");
+	});
+
 	$(document).on("submit", ".uploadFormDiv form, #formFormNew", function(e) {
 	    e.preventDefault();
-	    var formData = new FormData(this);    
+	    var formData = new FormData(this);
 	
 		$.ajax({
 	        url: $(this).attr("action"),
 	        type: 'POST',
 	        data: formData,
+	        dataType: "json",
 	        success: function (data) {
-	            $('#selFormUpload').change();
+	        	if(data.success){
+	        		flagAlertMessage(data.success, false);
+	        	}else if(data.error){
+	        		flagAlertMessage(data.error, true);
+	        	}
+	            if(data.docCode){
+	            	$('#selFormUpload').trigger('change', [{"docCode":data.docCode}]);
+	            }else{
+	            	$('#selFormUpload').change();
+	            }
 	        },
 	        cache: false,
 	        contentType: false,

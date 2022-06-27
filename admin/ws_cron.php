@@ -54,7 +54,7 @@ if(!$u->isCron()){
 
 $uS = Session::getInstance();
 $scheduler = new Scheduler();
-$allowedIntervals = array("hourly", "daily");
+$allowedIntervals = AbstractJob::AllowedIntervals;
 
 //Get jobs from DB
 $stmt = $dbh->query("select * from cronjobs");
@@ -67,13 +67,24 @@ foreach($jobs as $job){
     if($job['Status'] == 'a'){
         $jobObj = JobFactory::make($dbh, $job['idJob']);
         $interval = $job["Interval"];
+        $time = $job["Time"];
 
         if($jobObj instanceof JobInterface && in_array($interval, $allowedIntervals)){
+
+            //convert monthly interval to ->at("m h dom mon dow")
+            if($interval == "monthly"){
+                $interval = "at";
+                $timeAr = explode(':', $time);
+                if(count($timeAr) == 3){
+                    $time = $timeAr[2] . " " . $timeAr[1] . " " . $timeAr[0] . " * ?";
+                }
+            }
+
             $jobObjs[] = $jobObj;
             $scheduler->call(function($jobObj){
                     $jobObj->run();
                 },array("jobObj"=>$jobObj))
-            ->$interval($job['Time']); // $job['time'] must be in format hh:mm
+                ->$interval($time); // $time must be in format hh:mm or mm or "m h dom mon dow"
         }
     }
 }

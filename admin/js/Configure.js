@@ -137,6 +137,9 @@ $(document).ready(function () {
 							}
 						}
 					});
+					
+					cronActions($('table#cronJobs'), cronTable);
+					
 				}else{
 					cronTable.ajax.reload();
 				}
@@ -188,7 +191,8 @@ var dtCronCols = [
         "searchable": false,
         "sortable": true,
         "data": "Title",
-        "width": 200
+        "width": 200,
+        "className":"jobTitle"
     },
      {
          "targets": [ 2 ],
@@ -199,7 +203,8 @@ var dtCronCols = [
         render: function ( data, type ) {
         	return data.charAt(0).toUpperCase() + data.slice(1)
         },
-        "width":50
+        "width":50,
+        "className":"jobInterval"
     },
     {
         "targets": [ 3 ],
@@ -207,7 +212,8 @@ var dtCronCols = [
         "searchable": false,
         "sortable": true,
         "data": "Time",
-        "width":50
+        "width":50,
+        "className":"jobTime"
     },
      {
          "targets": [ 4 ],
@@ -227,7 +233,8 @@ var dtCronCols = [
             		return "";
             };
         },
-        "width":50
+        "width":50,
+        "className":"jobStatus"
     },
     {
         "targets": [ 5 ],
@@ -242,14 +249,15 @@ var dtCronCols = [
         "targets": [ 6 ],
         "title": "Actions",
         'data': 'ID',
-        render: function ( data, type ) {
-            return '<div class="hhk-flex" style="justify-content:space-around">'
-            		+ '<button type="button" class="editCron ui-button ui-corner-all" data-job="' + data + '">Edit</button>'
+        render: function ( data, type, row) {
+            return '<div class="cronActions">'
+            		+ ($('#canEditCron').val() == true ? '<button type="button" class="editCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-interval="' + row.Interval + '" data-time="' + row.Time + '">Edit</button>' : '')
             		+ '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="1">Dry Run</button>'
-            		+ '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="0">Run Now</button>'
+            		+ ($('#canForceRunCron').val() == true ? '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="0">Run Now</button>': '')
+            		+ '<button type="button" class="saveCron ui-button ui-corner-all" data-job="' + data + '" style="display:none;">Save</button>'
+            		+ '<button type="button" class="cancelCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-interval="' + row.Interval + '" data-time="' + row.Time + '" style="display:none;">Cancel</button>'
             	+ '</div>';
         },
-        "width":300
     }
 ];
 
@@ -281,6 +289,244 @@ $('table#cronJobs').on('click', '.runCron', function(event){
 		}
 	});
 });
+
+	
+
+	function cronActions($wrapper, cronTable) {
+        
+        //Show Edit mode
+        $wrapper.on('click', '.editCron', function(e){
+            e.preventDefault();
+            var $editBtn = $(this);
+            var jobIntervalMkup = '';
+            var jobIntervals = new Array("hourly","daily","monthly");
+            var jobStatuses = {"a":"Active", "d":"Disabled"};
+            
+            jobIntervalMkup += '<select id="editJobInterval">';
+            $.each(jobIntervals, function(k,interval){
+            	if($editBtn.data('interval') == interval){
+            		jobIntervalMkup += '<option value="' + interval + '" selected="selected">' + interval.charAt(0).toUpperCase() + interval.slice(1) + '</option>';
+            	}else{
+            		jobIntervalMkup += '<option value="' + interval + '">' + interval.charAt(0).toUpperCase() + interval.slice(1) + '</option>';
+            	}
+            });
+            jobIntervalMkup += '</select>';
+            
+            var jobDay = $editBtn.data("day");
+            var jobTime = $editBtn.data("time").split(":");
+            
+            var jobTimeMkup = '';
+            	jobTimeMkup += '<div class="hhk-flex">'
+            	jobTimeMkup +='<div id="jobDay" class="hhk-flex">Day <select id="editJobDay" class="mx-1"><option disabled="disabled">Day</option>';
+        			for (var d = 1; d < 32; d++){
+        				d = d.toLocaleString('en-US', {
+      						minimumIntegerDigits: 2,
+      						useGrouping: false
+    					})
+        				if(jobDay == d){
+        					jobTimeMkup += '<option value="' + d + '" selected="selected">' + d +'</option>';
+        				}else{
+        					jobTimeMkup += '<option value="' + d + '">' + d +'</option>';
+        				}
+        			}
+        		jobTimeMkup += '</select> at </div>';
+            	
+            	jobTimeMkup +='<div id="jobHour" class="hhk-flex"><select id="editJobHour" class="mx-1"><option disabled="disabled">Hour</option>';
+        			for (var h = 0; h < 24; h++){
+        				h = h.toLocaleString('en-US', {
+      						minimumIntegerDigits: 2,
+      						useGrouping: false
+    					})
+        				if(jobTime[0] == h){
+        					jobTimeMkup += '<option value="' + h + '" selected="selected">' + h +'</option>';
+        				}else{
+        					jobTimeMkup += '<option value="' + h + '">' + h +'</option>';
+        				}
+        			}
+        		jobTimeMkup += '</select> : </div>';
+        		jobTimeMkup += '<select id="editJobMinute" class="ml-1"><option disabled="disabled">Minute</option>';
+        			for (var m = 0; m < 60; m++){
+        				m = m.toLocaleString('en-US', {
+      						minimumIntegerDigits: 2,
+      						useGrouping: false
+    					})
+        				if(jobTime[1] == m){
+        					jobTimeMkup += '<option value="' + m + '" selected="selected">' + m +'</option>';
+        				}else{
+        					jobTimeMkup += '<option value="' + m + '">' + m +'</option>';
+        				}
+        			}
+        		jobTimeMkup += '</select></div>';
+        		
+        		var jobStatusMkup = '';
+        		var jobStatus = $editBtn.data('status');
+            	jobStatusMkup += '<select id="editJobStatus">';
+        			$.each(jobStatuses, function(k,v){
+        				if(jobStatus == k){
+        					jobStatusMkup += '<option value="' + k + '" selected="selected">' + v +'</option>';
+        				}else{
+        					jobStatusMkup += '<option value="' + k + '">' + v +'</option>';
+        				}
+        			});
+        		jobStatusMkup += '</select>';
+        		
+            $(this).closest('tr').find('.jobInterval').html(jobIntervalMkup);
+        	$(this).closest('tr').find('.jobTime').html(jobTimeMkup);
+        	$(this).closest('tr').find('.jobStatus').html(jobStatusMkup);
+        	$(this).closest('tr').find('.runCron, .editCron').hide();
+        	$(this).closest('tr').find('.saveCron, .cancelCron').show();
+        	
+        	$(this).closest('tr').on('change', '#editJobInterval', function(e){
+        		var interval = $(e.target).val();
+        		
+        		switch(interval){
+        			case "hourly":
+        				$(this).closest('tr').find('#jobDay, #jobHour').hide();
+        				break;
+        			case "daily":
+        				$(this).closest('tr').find('#jobDay').hide();
+        				$(this).closest('tr').find('#jobHour').show();
+        				break;
+        			case "monthly":
+        				$(this).closest('tr').find('#jobDay, #jobHour').show();
+        				break;
+        		}
+        		
+        	});
+        	$(this).closest('tr').find('#editJobInterval').trigger('change');
+        });
+        //End Show Edit mode
+        
+        //Edit Job
+        $wrapper.on('click', '.saveCron', function(e){
+            e.preventDefault();
+            var row = $(this).closest("tr");
+            var jobId = $(this).data('job');
+            var interval = row.find('#editJobInterval').val();
+            var day = row.find("#editJobDay").val();
+            var hour = row.find("#editJobHour").val();
+            var minute = row.find("#editJobMinute").val();
+            var status = row.find("#editJobStatus").val();
+            if(hour != ""){
+            	time = hour + ":" + minute;
+            }else{
+            	time = minute;
+            }
+
+            if(jobId != ""){
+                $.ajax({
+                    url: 'ws_gen.php',
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                            cmd: 'updateCronJob',
+                            idJob: jobId,
+                            interval: interval,
+                            day: day,
+                            time: time,
+                            status: status,
+                            
+                    },
+                    success: function( data ){
+                            if(data.job && data.job.idJob > 0){
+                                var rowdata = cronTable.row(row).data();
+                                rowdata["Interval"] = data.job.Interval;
+                                rowdata["Time"] = data.job.Time;
+                                rowdata["Status"] = data.job.Status;
+                                
+								cronTable.row(row).data(rowdata);
+                            }else{
+                                if(data.error){
+                                    settings.alertMessage.call(data.error, 'alert');
+                                }else{
+                                    settings.alertMessage.call('An unknown error occurred.', 'alert');
+                                }
+                            }
+                    }
+                });
+            }
+        });
+        //End Edit Job
+        
+        //Cancel Edit Job
+        $wrapper.on('click', '.cancelCron', function(e){
+            e.preventDefault();
+            var data = cronTable.row($(this).parents('tr')).data();
+            cronTable.row($(this).parents('tr')).data(data);
+
+        });
+        //End Cancel Edit Job
+        
+        //Delete Note
+        $wrapper.on('click', '.note-delete', function(e){
+            var idnote = $(this).data("noteid");
+            var row = $(this).closest('tr');
+            e.preventDefault();
+            if($table.row(row).data()["Flag"] == "1"){
+	            var confirmed = confirm("This Note is flagged, are you sure you want to delete it?");
+	            if(!confirmed){
+		            return;
+	            }
+            }
+            $.ajax({
+                    url: settings.serviceURL,
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                        cmd: 'deleteNote',
+                        idNote: idnote
+                    },
+                    success: function( data ){
+                        if(data.idNote > 0){
+                            row.find("td:not(.actionBtns)").css("opacity", "0.3");
+                            var noteText = row.find('#editNoteText').val();
+                                    row.find('.noteText').html(noteText);
+                                    row.find('.note-action').hide();
+                                    row.find('.note-delete').hide();
+                                    row.find('.note-edit').hide();
+                                    row.find('.note-undodelete').show();
+                            $("#noteText").val("");
+                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                        }else{
+                            settings.alertMessage.call(data.error, 'error');
+                        }
+                    }
+                });
+
+        });
+        //End Delete Note
+        
+        //Undo Delete Note
+        $wrapper.on('click', '.note-undodelete', function(e){
+            var idnote = $(this).data("noteid");
+			var row = $(this).parents("tr");
+            e.preventDefault();
+            $.ajax({
+                    url: settings.serviceURL,
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                        cmd: 'undoDeleteNote',
+                        idNote: idnote
+                    },
+                    success: function( data ){
+                        if(data.idNote > 0){
+                            //$table.ajax.reload();
+                            var rowdata = $table.row(row).data();
+                            $table.row(row).data(rowdata);
+                            row.find("td").css("opacity", "1");
+                            row.find("input.flag").checkboxradio({icon:false});
+                            $("#noteText").val("");
+                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                        }else{
+                            settings.alertMessage.call(data.error, 'error');
+                        }
+                    }
+                });
+
+        });
+        //End Undo Delete Note
+    }
 
 var dtCronLogCols = [
     {

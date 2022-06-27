@@ -20,6 +20,7 @@ abstract class AbstractJob implements JobInterface {
 
     const SUCCESS = 's';
     const FAIL = 'f';
+    const AllowedIntervals = array("hourly", "daily", "monthly");
 
     /**
      * Put any log message here

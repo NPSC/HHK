@@ -14,6 +14,7 @@ use HHK\Member\Relation\AbstractRelation;
 use HHK\sec\SAML;
 use HHK\Neon\ConfigureNeon;
 use HHK\Cron\JobFactory;
+use HHK\Tables\CronRS;
 
 /**
  * ws_gen.php
@@ -205,6 +206,30 @@ try {
             $job->run();
             $events = ["idJob"=>$idJob, 'status'=>$job->status, 'logMsg'=>($dryRun ? "<strong>Dry Run: </strong>": "") . $job->logMsg];
 
+            break;
+
+        case "updateCronJob":
+            $idJob = 0;
+            if (isset($_REQUEST['idJob'])) {
+                $idJob = intval(filter_var($_REQUEST['idJob'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $interval = '';
+            if (isset($_REQUEST['interval'])) {
+                $interval = filter_var($_REQUEST['interval'], FILTER_SANITIZE_STRING);
+            }
+
+            $time = '';
+            if (isset($_REQUEST['time'])) {
+                $time = filter_var($_REQUEST['time'], FILTER_SANITIZE_STRING);
+            }
+
+            $status = '';
+            if (isset($_REQUEST['status'])) {
+                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+            }
+
+            $events = updateCronJob($dbh, $idJob, $interval, $time, $status);
             break;
 
         case "delRel":
@@ -775,4 +800,31 @@ function AccessLog(\PDO $dbh, $get) {
     );
 
     return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
+}
+
+function updateCronJob(\PDO $dbh, $idJob, $interval, $time, $status){
+
+    $validIntervals = array('hourly','daily','monthly');
+    $validStatuses = array('a','d');
+
+    if($idJob > 0 && in_array($interval, $validIntervals) && strlen($time) <=5 && in_array($status, $validStatuses)){
+
+        $cronRS = new CronRS();
+        $cronRS->idJob->setStoredVal($idJob);
+
+        $rows = EditRS::select($dbh, $cronRS, array($cronRS->idJob));
+        if (count($rows) == 1) {
+            EditRS::loadRow($rows[0], $cronRS);
+
+            $cronRS->Interval->setNewVal($interval);
+            $cronRS->Time->setNewVal($time);
+            $cronRS->Status->setNewVal($status);
+
+            $rowCount = EditRS::update($dbh, $cronRS, array($cronRS->idJob));
+            if($rowCount == 1){
+                return array("status"=>"success", "msg"=>"Job " . $cronRS->Title->getStoredVal() . " updated successfully", "job"=>array("idJob"=>$cronRS->idJob->getStoredVal(), "Interval"=>$cronRS->Interval->getNewVal(), "Time"=>$cronRS->Time->getNewVal(), "Status"=>$cronRS->Status->getNewVal()));
+            }
+        }
+    }
+    return array("error"=>"Unable to update job, please check your values and try again.");
 }

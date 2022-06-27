@@ -372,6 +372,8 @@ class UserClass
 
                 return TRUE;
             }
+        }else{
+            $this->logMessage = "Your old password is incorrect";
         }
         return FALSE;
     }

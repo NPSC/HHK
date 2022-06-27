@@ -456,7 +456,9 @@ $getWebReplyMessage = $webAlert->createMarkup();
 			<input type="hidden" id="wsServFile" value="<?php echo $serviceFile; ?>"/>
 			<input type="hidden" id="tabIndex" value="<?php echo $tabIndex; ?>"/>
 			<input type="hidden" id="notymsg" value='<?php echo (isset($notymsg) ? json_encode($notymsg) : '[]'); ?>' />
-            <input  type="hidden" id="dateFormat" value='<?php echo $labl->getString("momentFormats", "dateTime", "MMM D, YYYY"); ?>' />
+            <input type="hidden" id="dateFormat" value='<?php echo $labl->getString("momentFormats", "dateTime", "MMM D, YYYY"); ?>' />
+            <input type="hidden" id="canEditCron" value='<?php echo SecurityComponent::is_TheAdmin(); ?>' />
+            <input type="hidden" id="canForceRunCron" value='<?php echo ($uS->mode != "live" ? true: false); ?>' />
         </div>
     </body>
 </html>

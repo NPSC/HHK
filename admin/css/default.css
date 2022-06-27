@@ -398,3 +398,8 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 #tabs.ui-tabs{
 	display: inline-block;
 }
+
+.cronActions button {
+	margin-left: 0.5em;
+	margin-right: 0.5em;
+}
