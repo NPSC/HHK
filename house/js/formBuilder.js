@@ -1233,6 +1233,8 @@
 				typeUserAttrs: settings.typeUserAttrs,
 				layoutTemplates: settings.layoutTemplates,
 				onSave: onSave,
+				onAddField:onAddField,
+				onCloseFieldEdit:onCloseFieldEdit,
 				stickyControls: settings.stickyControls,
 				"i18n":{
 					"location":"../js/formBuilder"
@@ -1265,6 +1267,8 @@
 								typeUserAttrs: settings.typeUserAttrs,
 								layoutTemplates: settings.layoutTemplates,
 								onSave: onSave,
+								onAddField:onAddField,
+								onCloseFieldEdit:onCloseFieldEdit,
 								stickyControls: settings.stickyControls,
 								"i18n":{
 									"location":"../js/formBuilder"
@@ -1328,15 +1332,37 @@
 			var initial = parseInt($("input[name=initialGuests]").val());
 			var max = parseInt($("input[name=maxGuests]").val());
 			if(initial > max){
-				console.log("initial>max true");
+				//console.log("initial>max true");
 				settingsDialog.find("#guestErrorMsg").text("Initial guests cannot be greater than max guests").show();
 			}else{
-				console.log("initial>max false");
+				//console.log("initial>max false");
 				settingsDialog.find("#guestErrorMsg").text("").hide();
 			}
 		});
 		
+		var onAddField = function(fieldId, field){
+			var formData = (settings.formBuilder.actions.getData instanceof Function) ? settings.formBuilder.actions.getData() : [];
+			var filtered = formData.filter(x=> (x.name === field.name)); //check for duplicate field
+			
+			if(filtered.length > 1 && field.name && field.label){
+				var msg = "<strong>" + field.label + " (" + field.name + ")</strong> already exists on the form, duplicate field removed";
+				flagAlertMessage(msg, true);
+				settings.formBuilder.actions.removeField(fieldId);
+			}
+		};
+		
+		var onCloseFieldEdit = function(editPanel){
+			var group = $(editPanel).find('select[name=group]').val();
+			var fieldName = $(editPanel).find('input[name=name]').val();
+			
+			if(group == 'guest' && !fieldName.startsWith("guests.g")){
+				flagAlertMessage('The "Guest" group can only be used with Guest fields', true);
+				$(editPanel).find('select[name=group]').val("");
+			}
+		};
+		
 		var onSave = function(event, formData){
+			settings.formBuilder.actions.closeAllFieldEdit();
 			
 			var idDocument = $wrapper.find('#selectform').val();
 			var title = $wrapper.find('#formTitle').val();
@@ -1357,6 +1383,14 @@
 				//check required fields
 				var missingFields = [];
 				var emailErrorMsg = '';
+				
+				//check field group
+				formData.forEach(function(field){
+					if(field.group == 'guest' && field.name && !field.name.startsWith("guests.g")){
+						field.group = '';
+						flagAlertMessage('The "Guest" group can only be used with Guest fields, group has been removed', true);
+					}
+				});
 				
 				if(emailPatient){
 					var filtered = formData.filter(x=> (x.name === 'patient.email'));
@@ -1424,7 +1458,6 @@
 		    				}else if(data.status == "error" && data.errors){
 		    					var errors  = "<ul>";
 		    					for(i in data.errors){
-		    						console.log(data.errors[i]);
 		    						if(data.errors[i].errors){
 		    							for(k in data.errors[i].errors){
 		    								errors += "<li>Styles: Line:" + data.errors[i].errors[k].line[0] + ":" + data.errors[i].errors[k].message[0] + "</li>";
