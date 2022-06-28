@@ -74,7 +74,7 @@ abstract class AbstractJob implements JobInterface {
             ]);
 
         //Set last successful run time
-        if($success == AbstractJob::SUCCESS){
+        if($success == AbstractJob::SUCCESS && $this->dryRun == FALSE){
             $now = new \DateTime();
             $stmt = $this->dbh->prepare('UPDATE `cronjobs` SET `LastRun` = :lastRun where `idJob` = :idJob');
             $stmt->execute([

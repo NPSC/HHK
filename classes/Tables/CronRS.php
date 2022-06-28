@@ -18,7 +18,9 @@ class CronRS extends AbstractTableRS {
     public $Title;  // VARCHAR(45) NOT NULL,
     public $Code; //VARCHAR(45) NOT NULL UNIQUE,
     public $Interval;  // VARCHAR(45) NOT NULL DEFAULT '',
-    public $Time;  // VARCHAR(45) NOT NULL DEFAULT '', -limit to 5 characters
+    public $Day;
+    public $Hour; //VARCHAR(2) NOT NULL DEFAULT '';
+    public $Minute; //VARCHAR(2) NOT NULL DEFAULT '';
     public $Status; // VARCHAR(45) NOT NULL DEFAULT '', -limit to 1 character ('a','d')
     public $LastRun; // TIMESTAMP NULL DEFAULT NULL,
 
@@ -30,7 +32,9 @@ class CronRS extends AbstractTableRS {
         $this->Title = new DB_Field("Title", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Code = new DB_Field("Code", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Interval = new DB_Field("Interval", "", new DbStrSanitizer(45), TRUE, TRUE);
-        $this->Time = new DB_Field("Time", "", new DbStrSanitizer(5), TRUE, TRUE);
+        $this->Day = new DB_Field("Day", "", new DbStrSanitizer(10), TRUE, TRUE);
+        $this->Hour = new DB_Field("Hour", "", new DbStrSanitizer(2), TRUE, TRUE);
+        $this->Minute = new DB_Field("Minute", "", new DbStrSanitizer(2), TRUE, TRUE);
         $this->Status = new DB_Field("Status", "", new DbStrSanitizer(1), TRUE, TRUE);
         $this->LastRun = new DB_Field("LastRun", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("timestamp", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

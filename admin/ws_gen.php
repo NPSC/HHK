@@ -170,7 +170,9 @@ try {
             array( 'db' => 'idJob',  'dt' => 'ID' ),
             array( 'db' => 'Title',   'dt' => 'Title' ),
             array( 'db' => 'Interval', 'dt' => 'Interval'),
-            array( 'db' => 'Time', 'dt' => 'Time'),
+            array( 'db' => 'Day', 'dt' => 'Day'),
+            array( 'db' => 'Hour', 'dt' => 'Hour'),
+            array( 'db' => 'Minute', 'dt' => 'Minute'),
             array( 'db' => 'Status', 'dt' => 'Status'),
             array( 'db' => 'LastRun', 'dt' => 'Last Run'),
             );
@@ -219,9 +221,19 @@ try {
                 $interval = filter_var($_REQUEST['interval'], FILTER_SANITIZE_STRING);
             }
 
-            $time = '';
-            if (isset($_REQUEST['time'])) {
-                $time = filter_var($_REQUEST['time'], FILTER_SANITIZE_STRING);
+            $day = '';
+            if (isset($_REQUEST['day'])) {
+                $day = filter_var($_REQUEST['day'], FILTER_SANITIZE_STRING);
+            }
+
+            $hour = '';
+            if (isset($_REQUEST['hour'])) {
+                $hour = filter_var($_REQUEST['hour'], FILTER_SANITIZE_STRING);
+            }
+
+            $minute = '';
+            if (isset($_REQUEST['minute'])) {
+                $minute = filter_var($_REQUEST['minute'], FILTER_SANITIZE_STRING);
             }
 
             $status = '';
@@ -229,7 +241,7 @@ try {
                 $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
             }
 
-            $events = updateCronJob($dbh, $idJob, $interval, $time, $status);
+            $events = updateCronJob($dbh, $idJob, $interval, $day, $hour, $minute, $status);
             break;
 
         case "delRel":
@@ -802,29 +814,52 @@ function AccessLog(\PDO $dbh, $get) {
     return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
 }
 
-function updateCronJob(\PDO $dbh, $idJob, $interval, $time, $status){
+function updateCronJob(\PDO $dbh, $idJob, $interval, $day, $hour, $minute, $status){
 
     $validIntervals = array('hourly','daily','monthly');
     $validStatuses = array('a','d');
+    $errors = array();
+    if($idJob <= 0){
+        $errors[] = "Job ID is invalid";
+    }
+    if(!in_array($interval, $validIntervals)){
+        $errors[] = "Interval must be Hourly, Daily or Monthly";
+    }
+    if(!in_array($status, $validStatuses)){
+        $errors[] = "Status must be Active or Disabled";
+    }
 
-    if($idJob > 0 && in_array($interval, $validIntervals) && strlen($time) <=5 && in_array($status, $validStatuses)){
+    if(count($errors) == 0){
+
+        switch ($interval){
+            case 'hourly':
+                $day = '';
+                $hour = '';
+                break;
+            case 'daily':
+                $day = '';
+                break;
+            default:
+                break;
+        }
 
         $cronRS = new CronRS();
         $cronRS->idJob->setStoredVal($idJob);
 
         $rows = EditRS::select($dbh, $cronRS, array($cronRS->idJob));
         if (count($rows) == 1) {
+
             EditRS::loadRow($rows[0], $cronRS);
 
             $cronRS->Interval->setNewVal($interval);
-            $cronRS->Time->setNewVal($time);
+            $cronRS->Day->setNewVal($day);
+            $cronRS->Hour->setNewVal($hour);
+            $cronRS->Minute->setNewVal($minute);
             $cronRS->Status->setNewVal($status);
 
-            $rowCount = EditRS::update($dbh, $cronRS, array($cronRS->idJob));
-            if($rowCount == 1){
-                return array("status"=>"success", "msg"=>"Job " . $cronRS->Title->getStoredVal() . " updated successfully", "job"=>array("idJob"=>$cronRS->idJob->getStoredVal(), "Interval"=>$cronRS->Interval->getNewVal(), "Time"=>$cronRS->Time->getNewVal(), "Status"=>$cronRS->Status->getNewVal()));
-            }
+            EditRS::update($dbh, $cronRS, array($cronRS->idJob));
+            return array("status"=>"success", "msg"=>"Job " . $cronRS->Title->getStoredVal() . " updated successfully", "job"=>array("idJob"=>$cronRS->idJob->getStoredVal(), "Interval"=>$cronRS->Interval->getNewVal(), "Day"=>$cronRS->Day->getNewVal(), "Hour"=>$cronRS->Hour->getNewVal(), "Minute"=>$cronRS->Minute->getNewVal(), "Status"=>$cronRS->Status->getNewVal()));
         }
     }
-    return array("error"=>"Unable to update job, please check your values and try again.");
+    return array("error"=>"<strong>Error</strong><br>" . implode("<br>", $errors));
 }

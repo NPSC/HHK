@@ -1,6 +1,6 @@
-REPLACE INTO `cronjobs` (`Title`, `Code`,`Interval`, `Time`, `Status`) VALUES
-("Send Survey Email", "EmailCheckedoutJob", "daily", "08:00", "d"),
-("Send Vehicle Report Email", "EmailVehiclesJob", "daily", "08:00", "d");
+REPLACE INTO `cronjobs` (`Title`, `Code`,`Interval`, `Day`, `Hour`, `Minute`, `Status`) VALUES
+("Send Survey Email", "EmailCheckedoutJob", "daily", "", "08", "00", "d"),
+("Send Vehicle Report Email", "EmailVehiclesJob", "daily", "", "08", "00", "d");
 
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Type`, `Order`) VALUES
 ('Address_Purpose','1','Home','i','',10),

@@ -12,10 +12,10 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 
 update sys_config set `Value` = 'bTVWSFUyRXBQU3RHRTlCV0M4WkhGcnh6RC9tbTk5eXp1c3B1NU9JYm1zMVRTcytsemRJSjhtS2w5dnNkZWZKVw==' where `Key` = 'recaptchaApiKey';
 
-INSERT IGNORE INTO `cronjobs` (`Title`, `Code`,`Interval`, `Time`, `Status`) VALUES
-("Send Survey Email", "EmailCheckedoutJob", "daily", "08:00", "d");
+INSERT IGNORE INTO `cronjobs` (`Title`, `Code`,`Interval`, `Day`, `Hour`,`Minute`, `Status`) VALUES
+("Send Survey Email", "EmailCheckedoutJob", "daily", "", "08", "00", "d");
 
-INSERT IGNORE INTO `cronjobs` (`Title`, `Code`,`Interval`, `Time`, `Status`) VALUES
-("Send Vehicle Report Email", "EmailVehiclesJob", "daily", "08:00", "d");
+INSERT IGNORE INTO `cronjobs` (`Title`, `Code`,`Interval`, `Day`, `Hour`, `Minute`, `Status`) VALUES
+("Send Vehicle Report Email", "EmailVehiclesJob", "daily", "", "08", "00", "d");
 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('vehicleReportEmail', '', 'ea', 'ha', 'Notified of Vehicle Report (configured in Job Scheduler)', '1');

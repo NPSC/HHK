@@ -208,15 +208,33 @@ var dtCronCols = [
     },
     {
         "targets": [ 3 ],
-        "title": "Time",
+        "title": "Day",
         "searchable": false,
         "sortable": true,
-        "data": "Time",
+        "data": "Day",
         "width":50,
-        "className":"jobTime"
+        "className":"jobDay"
+    },
+    {
+        "targets": [ 4 ],
+        "title": "Hour",
+        "searchable": false,
+        "sortable": true,
+        "data": "Hour",
+        "width":50,
+        "className":"jobHour"
+    },
+    {
+        "targets": [ 5 ],
+        "title": "Minute",
+        "searchable": false,
+        "sortable": true,
+        "data": "Minute",
+        "width":50,
+        "className":"jobMinute"
     },
      {
-         "targets": [ 4 ],
+         "targets": [ 6 ],
         "title": "Status",
         "searchable": true,
         "sortable": true,
@@ -237,7 +255,7 @@ var dtCronCols = [
         "className":"jobStatus"
     },
     {
-        "targets": [ 5 ],
+        "targets": [ 7 ],
         "title": "Last Run",
         'data': 'Last Run',
         render: function ( data, type ) {
@@ -246,16 +264,16 @@ var dtCronCols = [
         "width":150
     },
     {
-        "targets": [ 6 ],
+        "targets": [ 8 ],
         "title": "Actions",
         'data': 'ID',
         render: function ( data, type, row) {
             return '<div class="cronActions">'
-            		+ ($('#canEditCron').val() == true ? '<button type="button" class="editCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-interval="' + row.Interval + '" data-time="' + row.Time + '">Edit</button>' : '')
+            		+ ($('#canEditCron').val() == true ? '<button type="button" class="editCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-interval="' + row.Interval + '" data-day="' + row.Day + '" data-hour="' + row.Hour + '" data-minute="' + row.Minute + '" data-status="' + row.Status + '">Edit</button>' : '')
             		+ '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="1">Dry Run</button>'
             		+ ($('#canForceRunCron').val() == true ? '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="0">Run Now</button>': '')
             		+ '<button type="button" class="saveCron ui-button ui-corner-all" data-job="' + data + '" style="display:none;">Save</button>'
-            		+ '<button type="button" class="cancelCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-interval="' + row.Interval + '" data-time="' + row.Time + '" style="display:none;">Cancel</button>'
+            		+ '<button type="button" class="cancelCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-interval="' + row.Interval + '" data-day="' + row.Day + '" data-hour="' + row.Hour + '" data-minute="' + row.Minute + '" data-status="' + row.Status + '" style="display:none;">Cancel</button>'
             	+ '</div>';
         },
     }
@@ -313,50 +331,50 @@ $('table#cronJobs').on('click', '.runCron', function(event){
             jobIntervalMkup += '</select>';
             
             var jobDay = $editBtn.data("day");
-            var jobTime = $editBtn.data("time").split(":");
+            var jobHour = $editBtn.data("hour");
+            var jobMinute = $editBtn.data("minute");
             
-            var jobTimeMkup = '';
-            	jobTimeMkup += '<div class="hhk-flex">'
-            	jobTimeMkup +='<div id="jobDay" class="hhk-flex">Day <select id="editJobDay" class="mx-1"><option disabled="disabled">Day</option>';
+            var jobDayMkup ='<select id="editJobDay"><option disabled="disabled">Day</option>';
         			for (var d = 1; d < 32; d++){
         				d = d.toLocaleString('en-US', {
       						minimumIntegerDigits: 2,
       						useGrouping: false
     					})
         				if(jobDay == d){
-        					jobTimeMkup += '<option value="' + d + '" selected="selected">' + d +'</option>';
+        					jobDayMkup += '<option value="' + d + '" selected="selected">' + d +'</option>';
         				}else{
-        					jobTimeMkup += '<option value="' + d + '">' + d +'</option>';
+        					jobDayMkup += '<option value="' + d + '">' + d +'</option>';
         				}
         			}
-        		jobTimeMkup += '</select> at </div>';
+        		jobDayMkup += '</select>';
             	
-            	jobTimeMkup +='<div id="jobHour" class="hhk-flex"><select id="editJobHour" class="mx-1"><option disabled="disabled">Hour</option>';
+            	var jobHourMkup ='<select id="editJobHour"><option disabled="disabled">Hour</option>';
         			for (var h = 0; h < 24; h++){
         				h = h.toLocaleString('en-US', {
       						minimumIntegerDigits: 2,
       						useGrouping: false
     					})
-        				if(jobTime[0] == h){
-        					jobTimeMkup += '<option value="' + h + '" selected="selected">' + h +'</option>';
+        				if(jobHour == h){
+        					jobHourMkup += '<option value="' + h + '" selected="selected">' + h +'</option>';
         				}else{
-        					jobTimeMkup += '<option value="' + h + '">' + h +'</option>';
+        					jobHourMkup += '<option value="' + h + '">' + h +'</option>';
         				}
         			}
-        		jobTimeMkup += '</select> : </div>';
-        		jobTimeMkup += '<select id="editJobMinute" class="ml-1"><option disabled="disabled">Minute</option>';
+        		jobHourMkup += '</select>';
+        		
+        		var jobMinuteMkup = '<select id="editJobMinute"><option disabled="disabled">Minute</option>';
         			for (var m = 0; m < 60; m++){
         				m = m.toLocaleString('en-US', {
       						minimumIntegerDigits: 2,
       						useGrouping: false
     					})
-        				if(jobTime[1] == m){
-        					jobTimeMkup += '<option value="' + m + '" selected="selected">' + m +'</option>';
+        				if(jobMinute == m){
+        					jobMinuteMkup += '<option value="' + m + '" selected="selected">' + m +'</option>';
         				}else{
-        					jobTimeMkup += '<option value="' + m + '">' + m +'</option>';
+        					jobMinuteMkup += '<option value="' + m + '">' + m +'</option>';
         				}
         			}
-        		jobTimeMkup += '</select></div>';
+        		jobMinuteMkup += '</select>';
         		
         		var jobStatusMkup = '';
         		var jobStatus = $editBtn.data('status');
@@ -371,7 +389,9 @@ $('table#cronJobs').on('click', '.runCron', function(event){
         		jobStatusMkup += '</select>';
         		
             $(this).closest('tr').find('.jobInterval').html(jobIntervalMkup);
-        	$(this).closest('tr').find('.jobTime').html(jobTimeMkup);
+        	$(this).closest('tr').find('.jobDay').html(jobDayMkup);
+        	$(this).closest('tr').find('.jobHour').html(jobHourMkup);
+        	$(this).closest('tr').find('.jobMinute').html(jobMinuteMkup);
         	$(this).closest('tr').find('.jobStatus').html(jobStatusMkup);
         	$(this).closest('tr').find('.runCron, .editCron').hide();
         	$(this).closest('tr').find('.saveCron, .cancelCron').show();
@@ -381,14 +401,14 @@ $('table#cronJobs').on('click', '.runCron', function(event){
         		
         		switch(interval){
         			case "hourly":
-        				$(this).closest('tr').find('#jobDay, #jobHour').hide();
+        				$(this).closest('tr').find('#editJobDay, #editJobHour').hide();
         				break;
         			case "daily":
-        				$(this).closest('tr').find('#jobDay').hide();
-        				$(this).closest('tr').find('#jobHour').show();
+        				$(this).closest('tr').find('#editJobDay').hide();
+        				$(this).closest('tr').find('#editJobHour').show();
         				break;
         			case "monthly":
-        				$(this).closest('tr').find('#jobDay, #jobHour').show();
+        				$(this).closest('tr').find('#editJobDay, #editJobHour').show();
         				break;
         		}
         		
@@ -407,11 +427,6 @@ $('table#cronJobs').on('click', '.runCron', function(event){
             var hour = row.find("#editJobHour").val();
             var minute = row.find("#editJobMinute").val();
             var status = row.find("#editJobStatus").val();
-            if(hour != ""){
-            	time = hour + ":" + minute;
-            }else{
-            	time = minute;
-            }
 
             if(jobId != ""){
                 $.ajax({
@@ -423,7 +438,8 @@ $('table#cronJobs').on('click', '.runCron', function(event){
                             idJob: jobId,
                             interval: interval,
                             day: day,
-                            time: time,
+                            hour: hour,
+                            minute: minute,
                             status: status,
                             
                     },
@@ -431,15 +447,17 @@ $('table#cronJobs').on('click', '.runCron', function(event){
                             if(data.job && data.job.idJob > 0){
                                 var rowdata = cronTable.row(row).data();
                                 rowdata["Interval"] = data.job.Interval;
-                                rowdata["Time"] = data.job.Time;
+                                rowdata["Day"] = data.job.Day;
+                                rowdata["Hour"] = data.job.Hour;
+                                rowdata["Minute"] = data.job.Minute;
                                 rowdata["Status"] = data.job.Status;
                                 
 								cronTable.row(row).data(rowdata);
                             }else{
                                 if(data.error){
-                                    settings.alertMessage.call(data.error, 'alert');
+                                    flagAlertMessage(data.error, true);
                                 }else{
-                                    settings.alertMessage.call('An unknown error occurred.', 'alert');
+                                    flagAlertMessage('An unknown error occurred.', true);
                                 }
                             }
                     }

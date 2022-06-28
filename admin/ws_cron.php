@@ -67,17 +67,27 @@ foreach($jobs as $job){
     if($job['Status'] == 'a'){
         $jobObj = JobFactory::make($dbh, $job['idJob']);
         $interval = $job["Interval"];
-        $time = $job["Time"];
+        $day = $job["Day"];
+        $hour = $job["Hour"];
+        $minute = $job["Minute"];
 
         if($jobObj instanceof JobInterface && in_array($interval, $allowedIntervals)){
 
-            //convert monthly interval to ->at("m h dom mon dow")
-            if($interval == "monthly"){
-                $interval = "at";
-                $timeAr = explode(':', $time);
-                if(count($timeAr) == 3){
-                    $time = $timeAr[2] . " " . $timeAr[1] . " " . $timeAr[0] . " * ?";
-                }
+            //format day/time for scheduler
+            switch($interval){
+                case "monthly":
+                    // ->at("m h dom mon dow")
+                    $interval = "at";
+                    $time = $minute . " " . $hour . " " . $day . " * ?";
+                    break;
+                case "daily":
+                    // ->daily("hh:mm")
+                    $time = $hour . ":" . $minute;
+                    break;
+                case "hourly":
+                    // ->hourly("mm")
+                    $time = $minute;
+                    break;
             }
 
             $jobObjs[] = $jobObj;
