@@ -113,7 +113,7 @@ if ($uS->TrackAuto) {
     $emTblv->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup('Vehicle Report', array('name' => 'txtSubjectv', 'size' => '70'))));
     $emTblv->addBodyTr(HTMLTable::makeTd(
             'Email: '
-            . HTMLInput::generateMarkup('', array('name' => 'txtEmailv', 'size' => '70'))));
+        . HTMLInput::generateMarkup('', array('name' => 'txtEmailv', 'value'=>$uS->vehicleReportEmail, 'size' => '70'))));
 
     $emTblv->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmailv', 'type' => 'submit')) . HTMLContainer::generateMarkup('span', $vehicleMessage, array('style'=>'color:red;margin-left:.5em;'))));
 

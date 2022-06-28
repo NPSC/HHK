@@ -412,7 +412,7 @@ class UserClass
 
             if ($stmt->rowCount() == 1) {
 
-                $this->insertUserLog($dbh, UserClass::PW_New);
+                $this->insertUserLog($dbh, UserClass::PW_New, 'install');
                 return TRUE;
             }
         }

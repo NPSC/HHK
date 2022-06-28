@@ -680,6 +680,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),
+('vehicleReportEmail', '', 'ea', 'ha', '', 'Notified of Vehicle Report (configured in Job Scheduler)','', 1),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry','',1),
 ('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays',1),
 ('VisitFee','false','b','hf','','Enable the visit fee (cleaning fee) feature','',1),
@@ -712,7 +713,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('Survey_Subject','Checkout Survey','s','rf','','Default: Checkout Survey'),
 ('VisitFeeConfirmLabel','Cleaning Fee:','s','rf','','Default: Cleaning Fee:'),
 
-('noticeToCheckout', 'Notice to Checkout', 's', 'vi', 'Default: Notice to Checkout'),
+('noticeToCheckout', 'Notice to Checkout', 's', 'vi', '', 'Default: Notice to Checkout'),
 
 ('referralAgent','Referral Agent','s','h','','Default: Referral Agent'),
 ('diagnosis','Diagnosis','s','h','','Default: Diagnosis'),

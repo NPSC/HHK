@@ -15,6 +15,7 @@ use HHK\sec\SAML;
 use HHK\Neon\ConfigureNeon;
 use HHK\Cron\JobFactory;
 use HHK\Tables\CronRS;
+use HHK\Cron\AbstractJob;
 
 /**
  * ws_gen.php
@@ -816,7 +817,7 @@ function AccessLog(\PDO $dbh, $get) {
 
 function updateCronJob(\PDO $dbh, $idJob, $interval, $day, $hour, $minute, $status){
 
-    $validIntervals = array('hourly','daily','monthly');
+    $validIntervals = AbstractJob::AllowedIntervals;
     $validStatuses = array('a','d');
     $errors = array();
     if($idJob <= 0){

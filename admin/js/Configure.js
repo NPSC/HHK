@@ -300,7 +300,6 @@ $('table#cronJobs').on('click', '.runCron', function(event){
 				flagAlertMessage(data.logMsg, true);
 			}
 			cronTable.ajax.reload();
-			cronLogTable.ajax.reload();
 		},
 		error: function (xhr, textStatus, errorThrown){
 			flagAlertMessage("Cron error: " + errorThrown, true);

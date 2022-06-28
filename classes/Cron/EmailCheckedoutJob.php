@@ -4,7 +4,6 @@ namespace HHK\Cron;
 
 use HHK\Note\LinkNote;
 use HHK\Note\Note;
-use HHK\SysConst\WebRole;
 use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\sec\SysConfig;
@@ -36,16 +35,6 @@ class EmailCheckedoutJob extends AbstractJob implements JobInterface{
         $labels = Labels::getLabels();
 
         $uS = Session::getInstance();
-
-        // Check for user logged in.
-        if (!$uS->logged) {
-            throw new RuntimeException('Not Logged in.');
-        }
-
-        // Check user authorization
-        if ($uS->rolecode > WebRole::WebUser) {
-            throw new RuntimeException('Unauthorized.');
-        }
 
         $siteName = SysConfig::getKeyValue($this->dbh, 'sys_config', 'siteName');
         $from = SysConfig::getKeyValue($this->dbh, 'sys_config', 'NoReplyAddr');      // Email address message will show as coming from.
@@ -134,6 +123,10 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
             throw new RuntimeException("Cannot find Survey document");
         }
 
+        if($sForm->getSubjectLine() != ""){
+            $subjectLine = $sForm->getSubjectLine();
+        }
+
         $badAddresses = 0;
         $deparatureDT = new \DateTime();
         $deparatureDT->sub(new \DateInterval('P' . $delayDays . 'D'));
@@ -156,10 +149,6 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
             }
 
             $form = $sForm->createForm($sForm->makeReplacements($r));
-
-            if($sForm->getSubjectLine() != ""){
-                $subjectLine = $sForm->getSubjectLine();
-            }
 
             if ($sendEmail) {
 
@@ -194,11 +183,11 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
                 $mail->addAddress($copyEmail);
                 $mail->Subject = "Auto Email Results for ".$labels->getString('MemberType', 'visitor', 'MemberType', 'Guest') . "s leaving " . $deparatureDT->format('M j, Y');
 
-                $messg = "<p>Today's date: " . date('M j, Y');
+                $messg = "<p><strong>Today's date:</strong> " . date('M j, Y');
                 $messg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y') . ', ' . $numRecipients . " messages were sent. Bad Emails: " . $badAddresses . "</p>";
-                $messg .= "<p>Subject Line: </p>" . $subjectLine;
-                $messg .= "<p>Template Text: </p>" . $sForm->template . "<br/>";
-                $messg .= "<p>Results:</p>" . $this->logMsg;
+                $messg .= "<p><strong>Subject Line:</strong> " . $subjectLine . "</p>";
+                $messg .= "<p><strong>Template Text:</strong> </p>" . $sForm->template . "<br/>";
+                $messg .= "<p><strong>Results:</strong></p>" . $this->logMsg;
 
                 $mail->msgHTML($messg);
 

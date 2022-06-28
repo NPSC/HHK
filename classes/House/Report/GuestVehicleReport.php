@@ -114,7 +114,7 @@ class GuestVehicleReport {
         return $this->title . $guestTable;
     }
 
-    public function getVehicleMkup(){
+    public function getVehicleMkup(bool $emailMkup = false){
 
         $vehicleTable = '';
         $uS = Session::getInstance();
@@ -155,9 +155,13 @@ order by l.Title, `Arrival`");
             $vrows = $vstmt->fetchAll(\PDO::FETCH_ASSOC);
 
             for ($i = 0; $i < count($vrows); $i++) {
-
-                $vrows[$i]['Arrival'] = date('c', strtotime($vrows[$i]['Arrival']));
-                $vrows[$i]['Expected Departure'] =  date('c', strtotime($vrows[$i]['Expected Departure']));
+                if($emailMkup){
+                    $vrows[$i]['Arrival'] = date('M j, Y', strtotime($vrows[$i]['Arrival']));
+                    $vrows[$i]['Expected Departure'] =  date('M j, Y', strtotime($vrows[$i]['Expected Departure']));
+                }else{
+                    $vrows[$i]['Arrival'] = date('c', strtotime($vrows[$i]['Arrival']));
+                    $vrows[$i]['Expected Departure'] =  date('c', strtotime($vrows[$i]['Expected Departure']));
+                }
             }
 
             if (count($vrows) > 0) {
@@ -175,7 +179,7 @@ order by l.Title, `Arrival`");
         $uS = Session::getInstance();
         switch ($reportName){
             case "vehicles":
-                $body = $this->getVehicleMkup();
+                $body = $this->getVehicleMkup(true);
                 break;
             case "guests":
                 $body = $this->getGuestMkup();

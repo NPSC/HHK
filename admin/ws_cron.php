@@ -53,6 +53,9 @@ if(!$u->isCron()){
 }
 
 $uS = Session::getInstance();
+$uS->logged = true;
+$uS->username = "JobScheduler";
+
 $scheduler = new Scheduler();
 $allowedIntervals = AbstractJob::AllowedIntervals;
 
