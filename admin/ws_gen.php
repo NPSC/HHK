@@ -227,6 +227,11 @@ try {
                 $day = filter_var($_REQUEST['day'], FILTER_SANITIZE_STRING);
             }
 
+            $weekday = '';
+            if (isset($_REQUEST['weekday'])) {
+                $weekday = filter_var($_REQUEST['weekday'], FILTER_SANITIZE_STRING);
+            }
+
             $hour = '';
             if (isset($_REQUEST['hour'])) {
                 $hour = filter_var($_REQUEST['hour'], FILTER_SANITIZE_STRING);
@@ -242,7 +247,7 @@ try {
                 $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
             }
 
-            $events = updateCronJob($dbh, $idJob, $interval, $day, $hour, $minute, $status);
+            $events = updateCronJob($dbh, $idJob, $interval, $day, $weekday, $hour, $minute, $status);
             break;
 
         case "delRel":
@@ -815,7 +820,7 @@ function AccessLog(\PDO $dbh, $get) {
     return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
 }
 
-function updateCronJob(\PDO $dbh, $idJob, $interval, $day, $hour, $minute, $status){
+function updateCronJob(\PDO $dbh, $idJob, $interval, $day, $weekday, $hour, $minute, $status){
 
     $validIntervals = AbstractJob::AllowedIntervals;
     $validStatuses = array('a','d');
@@ -824,8 +829,22 @@ function updateCronJob(\PDO $dbh, $idJob, $interval, $day, $hour, $minute, $stat
         $errors[] = "Job ID is invalid";
     }
     if(!in_array($interval, $validIntervals)){
-        $errors[] = "Interval must be Hourly, Daily or Monthly";
+        $errors[] = "Interval must be Hourly, Daily, Weekly or Monthly";
     }
+
+    switch($interval){
+        case 'weekly':
+            if($day > 7){
+                $errors[] = "Day must be Sunday - Saturday";
+            }
+            break;
+        case 'monthly':
+            if($day > 31){
+                $errors[] = "Day must be 1 - 31";
+            }
+            break;
+    }
+
     if(!in_array($status, $validStatuses)){
         $errors[] = "Status must be Active or Disabled";
     }
@@ -840,6 +859,8 @@ function updateCronJob(\PDO $dbh, $idJob, $interval, $day, $hour, $minute, $stat
             case 'daily':
                 $day = '';
                 break;
+            case 'weekly':
+                $day = $weekday;
             default:
                 break;
         }

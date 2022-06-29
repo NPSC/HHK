@@ -176,6 +176,7 @@ $("#cronTabs").tabs({
     }
 });
 
+var jobWeekdays = new Array("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday");
 var dtCronCols = [
     {
         "targets": [ 0 ],
@@ -213,7 +214,14 @@ var dtCronCols = [
         "sortable": true,
         "data": "Day",
         "width":50,
-        "className":"jobDay"
+        "className":"jobDay",
+        render: function (data, type, row ) {
+        	if(row.Interval == 'weekly' && jobWeekdays[data] !== undefined){
+        		return jobWeekdays[data];
+        	}else{
+        		return data;
+        	}
+        }
     },
     {
         "targets": [ 4 ],
@@ -316,7 +324,7 @@ $('table#cronJobs').on('click', '.runCron', function(event){
             e.preventDefault();
             var $editBtn = $(this);
             var jobIntervalMkup = '';
-            var jobIntervals = new Array("hourly","daily","monthly");
+            var jobIntervals = new Array("hourly","daily","weekly","monthly");
             var jobStatuses = {"a":"Active", "d":"Disabled"};
             
             jobIntervalMkup += '<select id="editJobInterval">';
@@ -346,6 +354,17 @@ $('table#cronJobs').on('click', '.runCron', function(event){
         				}
         			}
         		jobDayMkup += '</select>';
+        		
+        		var jobWeekdayMkup ='<select id="editJobWeekday"><option disabled="disabled">Day</option>';
+        			jobWeekdays.forEach(function (item, index){
+        				if(jobDay == index){
+        					jobWeekdayMkup += '<option value="' + index + '" selected="selected">' + item +'</option>';
+        				}else{
+        					jobWeekdayMkup += '<option value="' + index + '">' + item +'</option>';
+        				}
+        			});
+        		jobWeekdayMkup += '</select>';
+        		
             	
             	var jobHourMkup ='<select id="editJobHour"><option disabled="disabled">Hour</option>';
         			for (var h = 0; h < 24; h++){
@@ -388,7 +407,7 @@ $('table#cronJobs').on('click', '.runCron', function(event){
         		jobStatusMkup += '</select>';
         		
             $(this).closest('tr').find('.jobInterval').html(jobIntervalMkup);
-        	$(this).closest('tr').find('.jobDay').html(jobDayMkup);
+        	$(this).closest('tr').find('.jobDay').html(jobWeekdayMkup + jobDayMkup);
         	$(this).closest('tr').find('.jobHour').html(jobHourMkup);
         	$(this).closest('tr').find('.jobMinute').html(jobMinuteMkup);
         	$(this).closest('tr').find('.jobStatus').html(jobStatusMkup);
@@ -400,14 +419,19 @@ $('table#cronJobs').on('click', '.runCron', function(event){
         		
         		switch(interval){
         			case "hourly":
-        				$(this).closest('tr').find('#editJobDay, #editJobHour').hide();
+        				$(this).closest('tr').find('#editJobDay, #editJobWeekday, #editJobHour').hide();
         				break;
         			case "daily":
-        				$(this).closest('tr').find('#editJobDay').hide();
+        				$(this).closest('tr').find('#editJobDay, #editJobWeekday').hide();
         				$(this).closest('tr').find('#editJobHour').show();
+        				break;
+        			case "weekly":
+        				$(this).closest('tr').find('#editJobWeekday, #editJobHour').show();
+        				$(this).closest('tr').find('#editJobDay').hide();
         				break;
         			case "monthly":
         				$(this).closest('tr').find('#editJobDay, #editJobHour').show();
+        				$(this).closest('tr').find('#editJobWeekday').hide();
         				break;
         		}
         		
@@ -423,6 +447,7 @@ $('table#cronJobs').on('click', '.runCron', function(event){
             var jobId = $(this).data('job');
             var interval = row.find('#editJobInterval').val();
             var day = row.find("#editJobDay").val();
+            var weekday = row.find("#editJobWeekday").val();
             var hour = row.find("#editJobHour").val();
             var minute = row.find("#editJobMinute").val();
             var status = row.find("#editJobStatus").val();
@@ -437,6 +462,7 @@ $('table#cronJobs').on('click', '.runCron', function(event){
                             idJob: jobId,
                             interval: interval,
                             day: day,
+                            weekday: weekday,
                             hour: hour,
                             minute: minute,
                             status: status,

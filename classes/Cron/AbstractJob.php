@@ -20,7 +20,7 @@ abstract class AbstractJob implements JobInterface {
 
     const SUCCESS = 's';
     const FAIL = 'f';
-    const AllowedIntervals = array("hourly", "daily", "monthly");
+    const AllowedIntervals = array("hourly", "daily","weekly", "monthly");
 
     /**
      * Put any log message here
@@ -69,7 +69,7 @@ abstract class AbstractJob implements JobInterface {
         $stmt = $this->dbh->prepare('INSERT INTO `cron_log` (`idJob`, `Log_Text`, `Status`) VALUES (:idJob, :LogText, :Status)');
         $stmt->execute([
                 ':idJob'=>$this->idJob,
-                ':LogText'=>($this->dryRun ? "<strong>Dry Run: </strong>" : '') . $this->logMsg,
+                ':LogText'=>($this->dryRun ? "<strong>Dry Run: </strong>" : '') . substr($this->logMsg, 0,229), // 229 character max length (255 including dry run text)
                 ':Status'=>($success ? AbstractJob::SUCCESS:AbstractJob::FAIL)
             ]);
 

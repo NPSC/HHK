@@ -83,6 +83,11 @@ foreach($jobs as $job){
                     $interval = "at";
                     $time = $minute . " " . $hour . " " . $day . " * ?";
                     break;
+                case "weekly":
+                    // ->at("m h dom mon dow")
+                    $interval = "at";
+                    $time = $minute . " " . $hour . " ? * " . $day;
+                    break;
                 case "daily":
                     // ->daily("hh:mm")
                     $time = $hour . ":" . $minute;
