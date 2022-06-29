@@ -170,6 +170,7 @@ try {
             $columns = array(
             array( 'db' => 'idJob',  'dt' => 'ID' ),
             array( 'db' => 'Title',   'dt' => 'Title' ),
+            array( 'db' => 'Params', 'dt' => 'Params'),
             array( 'db' => 'Interval', 'dt' => 'Interval'),
             array( 'db' => 'Day', 'dt' => 'Day'),
             array( 'db' => 'Hour', 'dt' => 'Hour'),

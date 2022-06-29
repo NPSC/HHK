@@ -31,17 +31,20 @@ abstract class AbstractJob implements JobInterface {
 
     protected \PDO $dbh;
     public int $idJob;
+    public array $params;
     public string $status;
     protected bool $dryRun;
 
     /**
      * @param \PDO $dbh
      * @param int $idJob
+     * @param array $params
      * @param bool $dryRun
      */
-    public function __construct(\PDO $dbh, int $idJob, bool $dryRun = false){
+    public function __construct(\PDO $dbh, int $idJob, array $params = [], bool $dryRun = false){
         $this->dbh = $dbh;
         $this->idJob = $idJob;
+        $this->params = $params;
         $this->dryRun = $dryRun;
         $this->status = "notDue";
     }

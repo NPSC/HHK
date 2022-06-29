@@ -195,8 +195,25 @@ var dtCronCols = [
         "width": 200,
         "className":"jobTitle"
     },
+    {
+        "targets": [ 2 ],
+        "title": "Parameters",
+        "searchable": false,
+        "sortable": true,
+        "data": "Params",
+        "width": 200,
+        "className":"jobParams",
+        render: function ( data, type ) {
+        	data = JSON.parse(data);
+        	var mkup = '';
+        	$.each(data, function (key, value){
+        		mkup += '<div class="hhk-flex"><span class="mr-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) +"</strong>: </span><span>" + value + "</span></div>";
+        	});
+        	return mkup;
+        }
+    },
      {
-         "targets": [ 2 ],
+         "targets": [ 3],
         "title": "Interval",
         "searchable": true,
         "sortable": true,
@@ -208,7 +225,7 @@ var dtCronCols = [
         "className":"jobInterval"
     },
     {
-        "targets": [ 3 ],
+        "targets": [ 4 ],
         "title": "Day",
         "searchable": false,
         "sortable": true,
@@ -224,7 +241,7 @@ var dtCronCols = [
         }
     },
     {
-        "targets": [ 4 ],
+        "targets": [ 5 ],
         "title": "Hour",
         "searchable": false,
         "sortable": true,
@@ -233,7 +250,7 @@ var dtCronCols = [
         "className":"jobHour"
     },
     {
-        "targets": [ 5 ],
+        "targets": [ 6 ],
         "title": "Minute",
         "searchable": false,
         "sortable": true,
@@ -242,7 +259,7 @@ var dtCronCols = [
         "className":"jobMinute"
     },
      {
-         "targets": [ 6 ],
+         "targets": [ 7 ],
         "title": "Status",
         "searchable": true,
         "sortable": true,
@@ -263,7 +280,7 @@ var dtCronCols = [
         "className":"jobStatus"
     },
     {
-        "targets": [ 7 ],
+        "targets": [ 8 ],
         "title": "Last Run",
         'data': 'Last Run',
         render: function ( data, type ) {
@@ -272,7 +289,7 @@ var dtCronCols = [
         "width":150
     },
     {
-        "targets": [ 8 ],
+        "targets": [ 9 ],
         "title": "Actions",
         'data': 'ID',
         render: function ( data, type, row) {

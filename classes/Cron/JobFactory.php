@@ -32,7 +32,8 @@ class JobFactory {
         if(isset($row['Code'])){
             try{
                 $class = '\HHK\Cron\\' . $row['Code'];
-                return new $class($dbh, $idJob, $dryRun);
+                $params = json_decode($row['Params'], true);
+                return new $class($dbh, $idJob, $params, $dryRun);
             }catch(\Exception $e){
                 return new EmptyJob($dbh, $idJob);
             }

@@ -15,7 +15,5 @@ update sys_config set `Value` = 'bTVWSFUyRXBQU3RHRTlCV0M4WkhGcnh6RC9tbTk5eXp1c3B
 INSERT IGNORE INTO `cronjobs` (`Title`, `Code`,`Interval`, `Day`, `Hour`,`Minute`, `Status`) VALUES
 ("Send Survey Email", "EmailCheckedoutJob", "daily", "", "08", "00", "d");
 
-INSERT IGNORE INTO `cronjobs` (`Title`, `Code`,`Interval`, `Day`, `Hour`, `Minute`, `Status`) VALUES
-("Send Vehicle Report Email", "EmailVehiclesJob", "daily", "", "08", "00", "d");
-
-INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('vehicleReportEmail', '', 'ea', 'ha', 'Notified of Vehicle Report (configured in Job Scheduler)', '1');
+INSERT IGNORE INTO `cronjobs` (`Title`, `Code`,`Params`, `Interval`, `Day`, `Hour`, `Minute`, `Status`) VALUES
+("Send Vehicle Report Email", "EmailReportJob", "{'report':'vehicles', 'emailAddress':''}", "daily", "", "08", "00", "d");
