@@ -170,6 +170,7 @@ try {
             $columns = array(
             array( 'db' => 'idJob',  'dt' => 'ID' ),
             array( 'db' => 'Title',   'dt' => 'Title' ),
+            array( 'db' => 'Code', 'dt' => 'Type'),
             array( 'db' => 'Params', 'dt' => 'Params'),
             array( 'db' => 'Interval', 'dt' => 'Interval'),
             array( 'db' => 'Day', 'dt' => 'Day'),
@@ -212,10 +213,32 @@ try {
 
             break;
 
+        case "getCronParamMkup":
+            $idJob = 0;
+            if (isset($_REQUEST['idJob'])) {
+                $idJob = intval(filter_var($_REQUEST['idJob'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $job = JobFactory::make($dbh, $idJob);
+            $events = ["idJob"=>$idJob, "paramMkup"=>$job->getParamEditMkup()];
+            break;
+
         case "updateCronJob":
             $idJob = 0;
             if (isset($_REQUEST['idJob'])) {
                 $idJob = intval(filter_var($_REQUEST['idJob'], FILTER_SANITIZE_NUMBER_INT), 10);
+            }
+
+            $title = "";
+            if (isset($_REQUEST['title'])) {
+                $title = substr(filter_var($_REQUEST['title'], FILTER_SANITIZE_STRING), 0, 45);
+            }
+
+            $params = array();
+            if (isset($_REQUEST['params']) && is_array($_REQUEST['params'])) {
+                foreach($_REQUEST['params'] as $key=>$val){
+                    $params[$key] = filter_var($val, FILTER_SANITIZE_STRING);
+                }
             }
 
             $interval = '';
@@ -248,7 +271,7 @@ try {
                 $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
             }
 
-            $events = updateCronJob($dbh, $idJob, $interval, $day, $weekday, $hour, $minute, $status);
+            $events = updateCronJob($dbh, $idJob, $title, $params, $interval, $day, $weekday, $hour, $minute, $status);
             break;
 
         case "delRel":
@@ -821,7 +844,7 @@ function AccessLog(\PDO $dbh, $get) {
     return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
 }
 
-function updateCronJob(\PDO $dbh, $idJob, $interval, $day, $weekday, $hour, $minute, $status){
+function updateCronJob(\PDO $dbh, $idJob, $title, array $params, $interval, $day, $weekday, $hour, $minute, $status){
 
     $validIntervals = AbstractJob::AllowedIntervals;
     $validStatuses = array('a','d');
@@ -874,6 +897,8 @@ function updateCronJob(\PDO $dbh, $idJob, $interval, $day, $weekday, $hour, $min
 
             EditRS::loadRow($rows[0], $cronRS);
 
+            $cronRS->Title->setNewVal($title);
+            $cronRS->Params->setNewVal(json_encode($params));
             $cronRS->Interval->setNewVal($interval);
             $cronRS->Day->setNewVal($day);
             $cronRS->Hour->setNewVal($hour);
@@ -881,7 +906,7 @@ function updateCronJob(\PDO $dbh, $idJob, $interval, $day, $weekday, $hour, $min
             $cronRS->Status->setNewVal($status);
 
             EditRS::update($dbh, $cronRS, array($cronRS->idJob));
-            return array("status"=>"success", "msg"=>"Job " . $cronRS->Title->getStoredVal() . " updated successfully", "job"=>array("idJob"=>$cronRS->idJob->getStoredVal(), "Interval"=>$cronRS->Interval->getNewVal(), "Day"=>$cronRS->Day->getNewVal(), "Hour"=>$cronRS->Hour->getNewVal(), "Minute"=>$cronRS->Minute->getNewVal(), "Status"=>$cronRS->Status->getNewVal()));
+            return array("status"=>"success", "msg"=>"Job " . $cronRS->Title->getNewVal() . " updated successfully", "job"=>array("idJob"=>$cronRS->idJob->getStoredVal(), "Title"=>$cronRS->Title->getNewVal(), "Params"=> $cronRS->Params->getNewVal(), "Interval"=>$cronRS->Interval->getNewVal(), "Day"=>$cronRS->Day->getNewVal(), "Hour"=>$cronRS->Hour->getNewVal(), "Minute"=>$cronRS->Minute->getNewVal(), "Status"=>$cronRS->Status->getNewVal()));
         }
     }
     return array("error"=>"<strong>Error</strong><br>" . implode("<br>", $errors));

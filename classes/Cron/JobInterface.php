@@ -19,6 +19,23 @@ namespace HHK\Cron;
 Interface JobInterface {
 
     /**
+     * Build your parameter template here for editing in the Job Scheduler
+     *
+     * Use this format:
+     * array(
+     *  "<key>"=>[
+     *      "label"=>"<label>",
+     *      "type"=>"<fieldType (string, email, select)>",
+     *      "values"=>"<values formatted for HTMLSelector::doOptionsMkup()>",
+     *      "required"=>bool
+     *  ],
+     *  ...
+     * )
+     * @property array $paramTemplate
+     */
+
+
+    /**
      * Define the job tasks here
      *
      * Check $dryRun to determine if tasks should actually be completed (for testing/debugging)
@@ -26,5 +43,7 @@ Interface JobInterface {
      *
      */
     function tasks():void;
+
+    function getParamEditMkup():string;
 }
 ?>

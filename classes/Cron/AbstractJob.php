@@ -1,6 +1,11 @@
 <?php
 namespace HHK\Cron;
 
+use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
+use HHK\HTMLControls\HTMLSelector;
+
 /**
  * AbstractJob.php
  *
@@ -36,6 +41,24 @@ abstract class AbstractJob implements JobInterface {
     protected bool $dryRun;
 
     /**
+     * Build your parameter template here for editing in the Job Scheduler
+     *
+     * Use this format:
+     * array(
+     *  "<key>"=>[
+     *      "label"=>"<label>",
+     *      "type"=>"<fieldType (string, email, select)>",
+     *      "values"=>"<values formatted for HTMLSelector::doOptionsMkup()>",
+     *      "required"=>bool
+     *  ],
+     *  ...
+     * )
+     *
+     * @var array
+     */
+    public array $paramTemplate;
+
+    /**
      * @param \PDO $dbh
      * @param int $idJob
      * @param array $params
@@ -61,6 +84,32 @@ abstract class AbstractJob implements JobInterface {
             $this->log(false);
         }
     }
+
+    public function getParamEditMkup():string{
+        $tbl = new HTMLTable();
+
+        foreach($this->paramTemplate as $name=>$attrs){
+            $val = (isset($this->params[$name]) ? $this->params[$name] : "");
+            $required = (isset($attrs['required']) && $attrs['required'] ? "required" : "");
+
+            switch($attrs['type']){
+                case "string":
+                    $input = HTMLInput::generateMarkup("", array("type"=>"text","value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));
+                    break;
+                case "email":
+                    $input = HTMLInput::generateMarkup("", array("type"=>"email", "value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));
+                    break;
+                case "select":
+                    $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrs['values'], $val), array("style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, "required"=>$required));
+                    break;
+                default:
+                    $input = "";
+            }
+            $tbl->addBodyTr(HTMLTable::makeTd($attrs['label']) . HTMLTable::makeTd($input));
+        }
+        return $tbl->generateMarkup();
+    }
+
 
     /**
      * Logs cron results

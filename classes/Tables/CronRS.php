@@ -2,6 +2,7 @@
 namespace HHK\Tables;
 
 use HHK\Tables\Fields\{DB_Field, DbIntSanitizer, DbStrSanitizer, DbDateSanitizer};
+use HHK\Tables\Fields\DbBlobSanitizer;
 
 /**
  * CronRS.php
@@ -17,6 +18,7 @@ class CronRS extends AbstractTableRS {
     public $idJob;  // INT NOT NULL AUTO_INCREMENT,
     public $Title;  // VARCHAR(45) NOT NULL,
     public $Code; //VARCHAR(45) NOT NULL UNIQUE,
+    public $Params;
     public $Interval;  // VARCHAR(45) NOT NULL DEFAULT '',
     public $Day;
     public $Hour; //VARCHAR(2) NOT NULL DEFAULT '';
@@ -31,6 +33,7 @@ class CronRS extends AbstractTableRS {
         $this->idJob = new DB_Field("idJob", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Title = new DB_Field("Title", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Code = new DB_Field("Code", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->Params = new DB_Field("Params", "{}", new DbBlobSanitizer(), TRUE, TRUE);
         $this->Interval = new DB_Field("Interval", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Day = new DB_Field("Day", "", new DbStrSanitizer(10), TRUE, TRUE);
         $this->Hour = new DB_Field("Hour", "", new DbStrSanitizer(2), TRUE, TRUE);

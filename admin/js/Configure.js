@@ -197,6 +197,14 @@ var dtCronCols = [
     },
     {
         "targets": [ 2 ],
+        "title": "Type",
+        "searchable": false,
+        "sortable": true,
+        "data": "Type",
+        "className":"jobType"
+    },
+    {
+        "targets": [ 3 ],
         "title": "Parameters",
         "searchable": false,
         "sortable": true,
@@ -213,7 +221,7 @@ var dtCronCols = [
         }
     },
      {
-         "targets": [ 3],
+         "targets": [ 4 ],
         "title": "Interval",
         "searchable": true,
         "sortable": true,
@@ -225,7 +233,7 @@ var dtCronCols = [
         "className":"jobInterval"
     },
     {
-        "targets": [ 4 ],
+        "targets": [ 5 ],
         "title": "Day",
         "searchable": false,
         "sortable": true,
@@ -241,7 +249,7 @@ var dtCronCols = [
         }
     },
     {
-        "targets": [ 5 ],
+        "targets": [ 6 ],
         "title": "Hour",
         "searchable": false,
         "sortable": true,
@@ -250,7 +258,7 @@ var dtCronCols = [
         "className":"jobHour"
     },
     {
-        "targets": [ 6 ],
+        "targets": [ 7 ],
         "title": "Minute",
         "searchable": false,
         "sortable": true,
@@ -259,7 +267,7 @@ var dtCronCols = [
         "className":"jobMinute"
     },
      {
-         "targets": [ 7 ],
+         "targets": [ 8 ],
         "title": "Status",
         "searchable": true,
         "sortable": true,
@@ -280,7 +288,7 @@ var dtCronCols = [
         "className":"jobStatus"
     },
     {
-        "targets": [ 8 ],
+        "targets": [ 9 ],
         "title": "Last Run",
         'data': 'Last Run',
         render: function ( data, type ) {
@@ -289,7 +297,7 @@ var dtCronCols = [
         "width":150
     },
     {
-        "targets": [ 9 ],
+        "targets": [ 10 ],
         "title": "Actions",
         'data': 'ID',
         render: function ( data, type, row) {
@@ -340,9 +348,12 @@ $('table#cronJobs').on('click', '.runCron', function(event){
         $wrapper.on('click', '.editCron', function(e){
             e.preventDefault();
             var $editBtn = $(this);
+            var $row = $(this).closest('tr')
             var jobIntervalMkup = '';
             var jobIntervals = new Array("hourly","daily","weekly","monthly");
             var jobStatuses = {"a":"Active", "d":"Disabled"};
+            
+            var jobTitleMkup = '<input type="text" id="editJobTitle" style="width: 100%" value="' + $editBtn.data('jobtitle') + '">';
             
             jobIntervalMkup += '<select id="editJobInterval">';
             $.each(jobIntervals, function(k,interval){
@@ -423,15 +434,32 @@ $('table#cronJobs').on('click', '.runCron', function(event){
         			});
         		jobStatusMkup += '</select>';
         		
-            $(this).closest('tr').find('.jobInterval').html(jobIntervalMkup);
-        	$(this).closest('tr').find('.jobDay').html(jobWeekdayMkup + jobDayMkup);
-        	$(this).closest('tr').find('.jobHour').html(jobHourMkup);
-        	$(this).closest('tr').find('.jobMinute').html(jobMinuteMkup);
-        	$(this).closest('tr').find('.jobStatus').html(jobStatusMkup);
-        	$(this).closest('tr').find('.runCron, .editCron').hide();
-        	$(this).closest('tr').find('.saveCron, .cancelCron').show();
+        		//get params mkup
+        		$.ajax({
+                    url: 'ws_gen.php',
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: {
+                        cmd: 'getCronParamMkup',
+                        idJob: $editBtn.data('job'),
+                    },
+                    success: function( data ){
+                        if(data.paramMkup){
+                            $row.find(".jobParams").html(data.paramMkup);
+                        }
+                    }
+                });
+        		
+        	$row.find('.jobTitle').html(jobTitleMkup);
+            $row.find('.jobInterval').html(jobIntervalMkup);
+        	$row.find('.jobDay').html(jobWeekdayMkup + jobDayMkup);
+        	$row.find('.jobHour').html(jobHourMkup);
+        	$row.find('.jobMinute').html(jobMinuteMkup);
+        	$row.find('.jobStatus').html(jobStatusMkup);
+        	$row.find('.runCron, .editCron').hide();
+        	$row.find('.saveCron, .cancelCron').show();
         	
-        	$(this).closest('tr').on('change', '#editJobInterval', function(e){
+        	$row.on('change', '#editJobInterval', function(e){
         		var interval = $(e.target).val();
         		
         		switch(interval){
@@ -462,21 +490,19 @@ $('table#cronJobs').on('click', '.runCron', function(event){
             e.preventDefault();
             var row = $(this).closest("tr");
             var jobId = $(this).data('job');
+            var title = row.find("#editJobTitle").val();
             var interval = row.find('#editJobInterval').val();
             var day = row.find("#editJobDay").val();
             var weekday = row.find("#editJobWeekday").val();
             var hour = row.find("#editJobHour").val();
             var minute = row.find("#editJobMinute").val();
             var status = row.find("#editJobStatus").val();
-
-            if(jobId != ""){
-                $.ajax({
-                    url: 'ws_gen.php',
-                    dataType: 'JSON',
-                    type: 'post',
-                    data: {
+            
+            var data = {
                             cmd: 'updateCronJob',
                             idJob: jobId,
+                            title: title,
+                            params: {},
                             interval: interval,
                             day: day,
                             weekday: weekday,
@@ -484,11 +510,25 @@ $('table#cronJobs').on('click', '.runCron', function(event){
                             minute: minute,
                             status: status,
                             
-                    },
+                    }
+            
+            //get params
+            row.find(".jobParams .editParam").each(function(){
+            	data.params[$(this).data('name')] = $(this).val();
+            });
+
+            if(jobId != ""){
+                $.ajax({
+                    url: 'ws_gen.php',
+                    dataType: 'JSON',
+                    type: 'post',
+                    data: data,
                     success: function( data ){
                             if(data.job && data.job.idJob > 0){
                                 var rowdata = cronTable.row(row).data();
+                                rowdata["Title"] = data.job.Title;
                                 rowdata["Interval"] = data.job.Interval;
+                                rowdata["Params"] = data.job.Params;
                                 rowdata["Day"] = data.job.Day;
                                 rowdata["Hour"] = data.job.Hour;
                                 rowdata["Minute"] = data.job.Minute;
