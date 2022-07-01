@@ -16,6 +16,7 @@ use HHK\Neon\ConfigureNeon;
 use HHK\Cron\JobFactory;
 use HHK\Tables\CronRS;
 use HHK\Cron\AbstractJob;
+use HHK\Cron\EmptyJob;
 
 /**
  * ws_gen.php
@@ -219,7 +220,12 @@ try {
                 $idJob = intval(filter_var($_REQUEST['idJob'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
 
-            $job = JobFactory::make($dbh, $idJob);
+            $jobType = '';
+            if (isset($_REQUEST['jobType'])) {
+                $jobType = filter_var($_REQUEST['jobType'], FILTER_SANITIZE_STRING);
+            }
+
+            $job = JobFactory::make($dbh, $idJob, false, $jobType);
             $events = ["idJob"=>$idJob, "paramMkup"=>$job->getParamEditMkup()];
             break;
 
@@ -232,6 +238,11 @@ try {
             $title = "";
             if (isset($_REQUEST['title'])) {
                 $title = substr(filter_var($_REQUEST['title'], FILTER_SANITIZE_STRING), 0, 45);
+            }
+
+            $jobType = "";
+            if (isset($_REQUEST['jobType'])) {
+                $jobType = substr(filter_var($_REQUEST['jobType'], FILTER_SANITIZE_STRING), 0, 45);
             }
 
             $params = array();
@@ -271,7 +282,7 @@ try {
                 $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
             }
 
-            $events = updateCronJob($dbh, $idJob, $title, $params, $interval, $day, $weekday, $hour, $minute, $status);
+            $events = updateCronJob($dbh, $idJob, $title, $jobType, $params, $interval, $day, $weekday, $hour, $minute, $status);
             break;
 
         case "delRel":
@@ -844,12 +855,15 @@ function AccessLog(\PDO $dbh, $get) {
     return SSP::simple($get, $dbh, "w_user_log", 'Username', $columns);
 }
 
-function updateCronJob(\PDO $dbh, $idJob, $title, array $params, $interval, $day, $weekday, $hour, $minute, $status){
+function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interval, $day, $weekday, $hour, $minute, $status){
 
     $validIntervals = AbstractJob::AllowedIntervals;
     $validStatuses = array('a','d');
     $errors = array();
-    if($idJob <= 0){
+    if(strlen($title) == 0){
+        $errors[] = "Title is required";
+    }
+    if($idJob != -1 && $idJob <= 0){
         $errors[] = "Job ID is invalid";
     }
     if(!in_array($interval, $validIntervals)){
@@ -890,23 +904,31 @@ function updateCronJob(\PDO $dbh, $idJob, $title, array $params, $interval, $day
         }
 
         $cronRS = new CronRS();
-        $cronRS->idJob->setStoredVal($idJob);
+        $rows = [];
+        if($idJob > 0){
+            $cronRS->idJob->setStoredVal($idJob);
 
-        $rows = EditRS::select($dbh, $cronRS, array($cronRS->idJob));
-        if (count($rows) == 1) {
+            $rows = EditRS::select($dbh, $cronRS, array($cronRS->idJob));
+            if (count($rows) == 1) {
+                EditRS::loadRow($rows[0], $cronRS);
+            }
+        }
+        $cronRS->Title->setNewVal($title);
+        $cronRS->Params->setNewVal(json_encode($params));
+        $cronRS->Interval->setNewVal($interval);
+        $cronRS->Day->setNewVal($day);
+        $cronRS->Hour->setNewVal($hour);
+        $cronRS->Minute->setNewVal($minute);
+        $cronRS->Status->setNewVal($status);
 
-            EditRS::loadRow($rows[0], $cronRS);
-
-            $cronRS->Title->setNewVal($title);
-            $cronRS->Params->setNewVal(json_encode($params));
-            $cronRS->Interval->setNewVal($interval);
-            $cronRS->Day->setNewVal($day);
-            $cronRS->Hour->setNewVal($hour);
-            $cronRS->Minute->setNewVal($minute);
-            $cronRS->Status->setNewVal($status);
-
+        if(count($rows) == 1){
             EditRS::update($dbh, $cronRS, array($cronRS->idJob));
             return array("status"=>"success", "msg"=>"Job " . $cronRS->Title->getNewVal() . " updated successfully", "job"=>array("idJob"=>$cronRS->idJob->getStoredVal(), "Title"=>$cronRS->Title->getNewVal(), "Params"=> $cronRS->Params->getNewVal(), "Interval"=>$cronRS->Interval->getNewVal(), "Day"=>$cronRS->Day->getNewVal(), "Hour"=>$cronRS->Hour->getNewVal(), "Minute"=>$cronRS->Minute->getNewVal(), "Status"=>$cronRS->Status->getNewVal()));
+        }else{
+            $cronRS->Code->setNewVal($type);
+            $idJob = EditRS::insert($dbh, $cronRS);
+            return array("status"=>"success", "msg"=>"Job " . $cronRS->Title->getNewVal() . " created successfully", "job"=>array("idJob"=>$idJob, "Title"=>$cronRS->Title->getNewVal(), "Params"=> $cronRS->Params->getNewVal(), "Interval"=>$cronRS->Interval->getNewVal(), "Day"=>$cronRS->Day->getNewVal(), "Hour"=>$cronRS->Hour->getNewVal(), "Minute"=>$cronRS->Minute->getNewVal(), "Status"=>$cronRS->Status->getNewVal()));
+
         }
     }
     return array("error"=>"<strong>Error</strong><br>" . implode("<br>", $errors));

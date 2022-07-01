@@ -225,11 +225,11 @@ class EditRS {
     public static function isChanged(TableRSInterface $rs){
         $changesToUpdate = false;
         foreach ($rs as $dbF) {
-            
+
             if($dbF instanceof DB_Field){
-                
+
                 if (!is_null($dbF->getNewVal()) && $dbF->getNewVal() != $dbF->getStoredVal()) {
-                    
+
                     if ($dbF->getUpdateOnChange()) {
                         $changesToUpdate = TRUE;
                     }
@@ -244,7 +244,7 @@ class EditRS {
      *
      * @param \PDO $dbh
      * @param TableRSInterface $rs
-     * @return int
+     * @return int $id Last insert ID
      */
     public static function insert(\PDO $dbh, TableRSInterface $rs) {
         $colList = "";

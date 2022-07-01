@@ -23,12 +23,18 @@ class JobFactory {
      * @param \PDO $dbh
      * @param int $idJob
      * @param bool $dryRun
+     * @param string $jobType
      * @return \HHK\Cron\JobInterface
      */
-    public static function make(\PDO $dbh, int $idJob, bool $dryRun = false):JobInterface {
-        $stmt = $dbh->prepare("select * from cronjobs where idJob = :idJob");
-        $stmt->execute([":idJob"=>$idJob]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+    public static function make(\PDO $dbh, int $idJob, bool $dryRun = false, string $jobType = ""):JobInterface {
+        if($idJob > 0){
+            $stmt = $dbh->prepare("select * from cronjobs where idJob = :idJob");
+            $stmt->execute([":idJob"=>$idJob]);
+            $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        }else{
+            $row = ['Code'=>$jobType, 'Params'=>"{}"];
+        }
+
         if(isset($row['Code'])){
             try{
                 $class = '\HHK\Cron\\' . $row['Code'];

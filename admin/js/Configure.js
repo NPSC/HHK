@@ -123,10 +123,10 @@ $(document).ready(function () {
 	            	cronLoaded = true;
 	            	cronTable = $('table#cronJobs').DataTable({
 						"columnDefs": dtCronCols,
-						"serverSide": true,
+						"serverSide": false,
 						"processing": true,
 						"language": {"sSearch": "Search Jobs:"},
-						"sorting": [[1,'desc']],
+						"sorting": [[0,'asc']],
 						"displayLength": 25,
 						"lengthMenu": [[25, 50, 100], [25, 50, 100]],
 						"dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
@@ -302,7 +302,7 @@ var dtCronCols = [
         'data': 'ID',
         render: function ( data, type, row) {
             return '<div class="cronActions">'
-            		+ ($('#canEditCron').val() == true ? '<button type="button" class="editCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-interval="' + row.Interval + '" data-day="' + row.Day + '" data-hour="' + row.Hour + '" data-minute="' + row.Minute + '" data-status="' + row.Status + '">Edit</button>' : '')
+            		+ ($('#canEditCron').val() == true ? '<button type="button" class="editCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-type="' + row.Type + '" data-interval="' + row.Interval + '" data-day="' + row.Day + '" data-hour="' + row.Hour + '" data-minute="' + row.Minute + '" data-status="' + row.Status + '">Edit</button>' : '')
             		+ '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="1">Dry Run</button>'
             		+ ($('#canForceRunCron').val() == true ? '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="0">Run Now</button>': '')
             		+ '<button type="button" class="saveCron ui-button ui-corner-all" data-job="' + data + '" style="display:none;">Save</button>'
@@ -340,7 +340,27 @@ $('table#cronJobs').on('click', '.runCron', function(event){
 	});
 });
 
-	
+$('#newJob').on('click', '#addJob', function(event){
+	var jobType = $('#newJob #newJobType').val();
+	if(jobType){
+		var row = {
+			'ID':-1,
+			'Title':'',
+			'Type':jobType,
+			'Params':'{}',
+			'Interval':'',
+			'Day':'',
+			'Hour':'',
+			'Minute':'',
+			'Status':'d',
+			'Last Run':'',
+			'Actions':-1
+		};
+		cronTable.row.add(row).draw();
+		$('#cronJobs').find(".editCron[data-job='-1']").click();
+		$('#newJob #newJobType').val('');
+	}
+});
 
 	function cronActions($wrapper, cronTable) {
         
@@ -442,6 +462,7 @@ $('table#cronJobs').on('click', '.runCron', function(event){
                     data: {
                         cmd: 'getCronParamMkup',
                         idJob: $editBtn.data('job'),
+                        jobType: $editBtn.data('type'),
                     },
                     success: function( data ){
                         if(data.paramMkup){
@@ -491,6 +512,7 @@ $('table#cronJobs').on('click', '.runCron', function(event){
             var row = $(this).closest("tr");
             var jobId = $(this).data('job');
             var title = row.find("#editJobTitle").val();
+            var jobType = row.find(".jobType").text();
             var interval = row.find('#editJobInterval').val();
             var day = row.find("#editJobDay").val();
             var weekday = row.find("#editJobWeekday").val();
@@ -502,6 +524,7 @@ $('table#cronJobs').on('click', '.runCron', function(event){
                             cmd: 'updateCronJob',
                             idJob: jobId,
                             title: title,
+                            jobType: jobType,
                             params: {},
                             interval: interval,
                             day: day,
@@ -526,6 +549,7 @@ $('table#cronJobs').on('click', '.runCron', function(event){
                     success: function( data ){
                             if(data.job && data.job.idJob > 0){
                                 var rowdata = cronTable.row(row).data();
+                                rowdata["ID"] = data.job.idJob;
                                 rowdata["Title"] = data.job.Title;
                                 rowdata["Interval"] = data.job.Interval;
                                 rowdata["Params"] = data.job.Params;
@@ -533,6 +557,7 @@ $('table#cronJobs').on('click', '.runCron', function(event){
                                 rowdata["Hour"] = data.job.Hour;
                                 rowdata["Minute"] = data.job.Minute;
                                 rowdata["Status"] = data.job.Status;
+                                rowdata["Actions"] = data.job.idJob;
                                 
 								cronTable.row(row).data(rowdata);
                             }else{
@@ -711,7 +736,7 @@ var dtCronLogCols = [
 
 $('#logsTabDiv').tabs("option", "active", 1);
 
-$("input[type=submit], input[type=reset]").button();
+$("input[type=submit], input[type=reset], button").button();
 $('#financialRoomSubsidyId, #financialReturnPayorId').change(function () {
 
         $('#financialRoomSubsidyId, #financialReturnPayorId').removeClass('ui-state-error');

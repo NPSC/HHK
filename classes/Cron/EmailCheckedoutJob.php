@@ -28,6 +28,8 @@ use HHK\Exception\RuntimeException;
 
 class EmailCheckedoutJob extends AbstractJob implements JobInterface{
 
+    public array $paramTemplate = [];
+
     public function tasks():void {
 
         $sendEmail = ($this->dryRun ? FALSE : TRUE);
