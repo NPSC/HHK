@@ -30,6 +30,7 @@ class Note {
     const PsgLink = 'psg';
     const RoomLink = 'room';
     const MemberLink = 'member';
+    const DocumentLink = 'document';
 
     // Note Type
     const TextType = 'text';

@@ -37,7 +37,7 @@ class ListNotes {
         $whereClause = '';
         $priKey = 'Note_Id';
         $idPsg = LinkNote::findIdPsg($dbh, $linkType, $linkId);
-        
+
         if ($concatNotes) {
 
             if ($idPsg > 0) {
@@ -72,10 +72,16 @@ class ListNotes {
                 $whereField = 'Psg_Id';
                 $whereClause = "$whereField = $linkId";
                 break;
-                
+
             case "concat":
                 $dbView = 'vpsg_notes_concat';
                 $whereField = 'Psg_Id';
+                $whereClause = "$whereField = $linkId";
+                break;
+
+            case Note::DocumentLink:
+                $dbView = 'vdoc_notes';
+                $whereField = 'Doc_Id';
                 $whereClause = "$whereField = $linkId";
                 break;
 

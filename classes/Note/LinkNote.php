@@ -115,6 +115,12 @@ WHERE
                     $field = 'Psg_Id';
                     break;
 
+                case Note::DocumentLink:
+
+                    $table = 'doc_note';
+                    $field = 'Doc_Id';
+                    break;
+
                 case Note::MemberLink:
 
                     //break;

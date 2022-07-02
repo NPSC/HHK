@@ -89,6 +89,7 @@
                         data: 'Date',
                         sortable: true,
                         render: function (data, type) {
+                        	console.log(type);
                             return dateRender(data, type, dateFormat);
                         }
                 },
@@ -103,6 +104,17 @@
             {
       			"Create Reservation": function(){
       			
+      			},
+      			"View Notes" : function (){
+      				formNotesDialog.dialog("open");
+      				formNotesDialog.find(".docNotesWrapper").notesViewer({
+				        linkId: $("#formNotesDialog").data("iddocument"),
+				        linkType: 'document',
+				        newNoteAttrs: {id:'docNewNote', name:'docNewNote'},
+				        alertMessage: function(text, type) {
+				            flagAlertMessage(text, type);
+				        }
+				    });
       			},
       			"Print": function(){
       				window.frames["formPreviewIframe"].focus();
@@ -130,6 +142,23 @@
       		modal: true,
       		buttons: settings.formDetailsDialogBtns
     	});
+    	
+    	var formNotesDialog = $wrapper.find('#formNotesDialog')
+    	formNotesDialog.dialog({
+      		autoOpen: false,
+      		height: "auto",
+      		width: 1200,
+      		modal: true,
+      		close: function (event, ui){
+      			formNotesDialog.find("#note-newNote").trigger('click');
+      			formNotesDialog.find(".docNotesWrapper").empty();
+      		},
+      		buttons: {
+      			"Close": function(){
+      				formNotesDialog.dialog("close");
+      			}
+      		}
+    	});
 	
 		actions($wrapper, settings, formDetailsDialog);
 		
@@ -150,6 +179,9 @@
 			</div>
 			<div id="formDetailsDialog" title="Details">
 				<iframe id="formDetailsIframe" name="formPreviewIframe" width="1024" height="768" style="border: 0"></iframe>
+			</div>
+			<div id="formNotesDialog" title="Notes">
+				<div class="docNotesWrapper"></div>
 			</div>
 		`
 		);
@@ -233,6 +265,9 @@
 			var idResv = $(e.currentTarget).data('resvid');
 			var enableReservation = $(e.currentTarget).data('enablereservation');
 			
+			var rowdata = settings.dtTable.row($(this).closest('tr')).data();
+			var dialogTitle = " for " + rowdata["Patient First Name"] + " " + rowdata["Patient Last Name"] + (rowdata["Expected Checkin"] != "" ? " expected " + dateRender(rowdata["Expected Checkin"], "display", dateFormat):"");
+			
 			window.frames["formPreviewIframe"].resizeTo(1920, 1080);
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
 			if(!idResv && enableReservation == 1){
@@ -244,6 +279,10 @@
 			};
 			
 			formDetailsDialog.dialog('option', 'buttons', settings.formDetailsDialogBtns);
+			formDetailsDialog.dialog('option', 'title', "Details" + dialogTitle);
+			
+			$("#formNotesDialog").data("iddocument", idDocument);
+			$("#formNotesDialog").dialog('option', 'title', "Notes" + dialogTitle);
 			
 			if(idStatus == 'n'){
 				$.ajax({

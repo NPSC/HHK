@@ -300,6 +300,15 @@ CREATE TABLE if not exists `document` (
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
+-- Table `doc_note`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `doc_note` (
+  `Doc_Id` INT NOT NULL,
+  `Note_Id` INT NOT NULL,
+  PRIMARY KEY (`Doc_Id`, `Note_Id`)
+) ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table `link_doc`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `link_doc` (

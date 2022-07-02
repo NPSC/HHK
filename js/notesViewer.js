@@ -49,8 +49,9 @@
                         title: "Date",
                         data: 'Date',
                         sortable: true,
+                        width: "10%",
                         render: function (data, type) {
-                            return dateRender(data, type, 'MMM D YYYY h:mm a');
+                            return dateRender(data, type, 'MMM D, YYYY h:mm a');
                         }
                 },
                 {

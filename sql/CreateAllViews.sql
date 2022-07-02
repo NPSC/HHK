@@ -128,7 +128,25 @@ left join `relationship` `r` on `r`.`Relation_Type` = 'sp' and `r`.`Status` = 'a
 where `n`.`idName` > 0 and `n`.`Member_Status` in ('a','d','in');
 
 
-
+-- -----------------------------------------------------
+-- View `vdoc_notes`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vdoc_notes` AS
+    SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        dn.Doc_Id,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        doc_note dn ON n.idNote = dn.Note_Id
+    WHERE
+        dn.Doc_Id > 0 && n.`Status` = 'a';
 
 -- -----------------------------------------------------
 -- View `vadditional_guests`
