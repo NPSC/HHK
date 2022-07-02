@@ -38,7 +38,7 @@ class CronRS extends AbstractTableRS {
         $this->Day = new DB_Field("Day", "", new DbStrSanitizer(10), TRUE, TRUE);
         $this->Hour = new DB_Field("Hour", "", new DbStrSanitizer(2), TRUE, TRUE);
         $this->Minute = new DB_Field("Minute", "", new DbStrSanitizer(2), TRUE, TRUE);
-        $this->Status = new DB_Field("Status", "", new DbStrSanitizer(1), TRUE, TRUE);
+        $this->Status = new DB_Field("Status", "", new DbStrSanitizer(3), TRUE, TRUE);
         $this->LastRun = new DB_Field("LastRun", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("timestamp", null, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
 

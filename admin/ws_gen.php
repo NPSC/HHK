@@ -180,7 +180,7 @@ try {
             array( 'db' => 'Status', 'dt' => 'Status'),
             array( 'db' => 'LastRun', 'dt' => 'Last Run'),
             );
-            $events = SSP::complex ( $_GET, $dbh, "cronjobs", "idJob", $columns, null, null );
+            $events = SSP::complex ( $_GET, $dbh, "cronjobs", "idJob", $columns, null, '`Status` in ("a","d")' );
 
             break;
 
@@ -858,7 +858,7 @@ function AccessLog(\PDO $dbh, $get) {
 function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interval, $day, $weekday, $hour, $minute, $status){
 
     $validIntervals = AbstractJob::AllowedIntervals;
-    $validStatuses = array('a','d');
+    $validStatuses = array('a','d', 'del');
     $errors = array();
     if(strlen($title) == 0){
         $errors[] = "Title is required";

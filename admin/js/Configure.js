@@ -306,6 +306,7 @@ var dtCronCols = [
             		+ '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="1">Dry Run</button>'
             		+ ($('#canForceRunCron').val() == true ? '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="0">Run Now</button>': '')
             		+ '<button type="button" class="saveCron ui-button ui-corner-all" data-job="' + data + '" style="display:none;">Save</button>'
+            		+ '<button type="button" class="deleteCron ui-button ui-corner-all" data-job="' + data + '" style="display:none;">Delete</button>'
             		+ '<button type="button" class="cancelCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-interval="' + row.Interval + '" data-day="' + row.Day + '" data-hour="' + row.Hour + '" data-minute="' + row.Minute + '" data-status="' + row.Status + '" style="display:none;">Cancel</button>'
             	+ '</div>';
         },
@@ -478,7 +479,7 @@ $('#newJob').on('click', '#addJob', function(event){
         	$row.find('.jobMinute').html(jobMinuteMkup);
         	$row.find('.jobStatus').html(jobStatusMkup);
         	$row.find('.runCron, .editCron').hide();
-        	$row.find('.saveCron, .cancelCron').show();
+        	$row.find('.saveCron, .deleteCron, .cancelCron').show();
         	
         	$row.on('change', '#editJobInterval', function(e){
         		var interval = $(e.target).val();
@@ -577,80 +578,23 @@ $('#newJob').on('click', '#addJob', function(event){
         $wrapper.on('click', '.cancelCron', function(e){
             e.preventDefault();
             var data = cronTable.row($(this).parents('tr')).data();
-            cronTable.row($(this).parents('tr')).data(data);
-
+            if(data.ID == '-1'){
+            	cronTable.row($(this).parents('tr')).remove().draw();
+            }else{
+            	cronTable.row($(this).parents('tr')).data(data);
+			}
         });
         //End Cancel Edit Job
         
-        //Delete Note
-        $wrapper.on('click', '.note-delete', function(e){
-            var idnote = $(this).data("noteid");
-            var row = $(this).closest('tr');
-            e.preventDefault();
-            if($table.row(row).data()["Flag"] == "1"){
-	            var confirmed = confirm("This Note is flagged, are you sure you want to delete it?");
-	            if(!confirmed){
-		            return;
-	            }
-            }
-            $.ajax({
-                    url: settings.serviceURL,
-                    dataType: 'JSON',
-                    type: 'post',
-                    data: {
-                        cmd: 'deleteNote',
-                        idNote: idnote
-                    },
-                    success: function( data ){
-                        if(data.idNote > 0){
-                            row.find("td:not(.actionBtns)").css("opacity", "0.3");
-                            var noteText = row.find('#editNoteText').val();
-                                    row.find('.noteText').html(noteText);
-                                    row.find('.note-action').hide();
-                                    row.find('.note-delete').hide();
-                                    row.find('.note-edit').hide();
-                                    row.find('.note-undodelete').show();
-                            $("#noteText").val("");
-                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
-                        }else{
-                            settings.alertMessage.call(data.error, 'error');
-                        }
-                    }
-                });
-
+        //Delete Cron Job
+        $wrapper.on('click', '.deleteCron', function(e){
+			e.preventDefault();
+            var row = $(this).closest("tr");
+            row.find("#editJobStatus").append('<option value="del"></option>').val('del');
+            row.find(".saveCron").trigger('click');
+            cronTable.row(row).remove().draw();
         });
-        //End Delete Note
-        
-        //Undo Delete Note
-        $wrapper.on('click', '.note-undodelete', function(e){
-            var idnote = $(this).data("noteid");
-			var row = $(this).parents("tr");
-            e.preventDefault();
-            $.ajax({
-                    url: settings.serviceURL,
-                    dataType: 'JSON',
-                    type: 'post',
-                    data: {
-                        cmd: 'undoDeleteNote',
-                        idNote: idnote
-                    },
-                    success: function( data ){
-                        if(data.idNote > 0){
-                            //$table.ajax.reload();
-                            var rowdata = $table.row(row).data();
-                            $table.row(row).data(rowdata);
-                            row.find("td").css("opacity", "1");
-                            row.find("input.flag").checkboxradio({icon:false});
-                            $("#noteText").val("");
-                            $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
-                        }else{
-                            settings.alertMessage.call(data.error, 'error');
-                        }
-                    }
-                });
-
-        });
-        //End Undo Delete Note
+        //End Delete Cron Job
     }
 
 var dtCronLogCols = [
