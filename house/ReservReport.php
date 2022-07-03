@@ -13,6 +13,7 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
 use HHK\House\Report\ReportFieldSet;
+use HHK\House\Report\ReservationReport;
 
 /**
  * ReservReport.php
@@ -47,91 +48,8 @@ $headerTable = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Reservation
         . HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 $dataTable = '';
 
-$statusSelections = array();
 
-$filter = new ReportFilter();
-$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
-$filter->createHospitals();
-
-// Report column selector
-// array: title, ColumnName, checked, fixed, Excel Type, Excel Style
-$cFields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'string', '10');
-$cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
-
-if ((count($filter->getAList()) + count($filter->getHList())) > 1) {
-
-    $cFields[] = array($labels->getString('hospital', 'hospital', 'Hospital'), 'Hospital', 'checked', '', 'string', '20');
-
-    if (count($filter->getAList()) > 0) {
-        $cFields[] = array("Association", 'Assoc', 'checked', '', 'string', '20');
-    }
-}
-
-$locations = readGenLookupsPDO($dbh, 'Location');
-if (count($locations) > 0) {
-    $cFields[] = array($labels->getString('hospital', 'location', 'Location'), 'Location', 'checked', '', 'string', '20', array());
-}
-
-$diags = readGenLookupsPDO($dbh, 'Diagnosis');
-if (count($diags) > 0) {
-    $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', 'checked', '', 'string', '20', array());
-}
-
-if($uS->ShowDiagTB){
-    $cFields[] = array($labels->getString('hospital', 'diagnosisDetail', 'Diagnosis Details'), 'Diagnosis2', 'checked', '', 'string', '20', array());
-}
-
-// Reservation statuses
-$statusList = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
-
-if ($uS->Doctor) {
-    $cFields[] = array("Doctor", 'Name_Doctor', '', '', 'string', '20');
-}
-
-if ($uS->ReferralAgent) {
-    $cFields[] = array($labels->getString('hospital', 'referralAgent', 'Referral Agent'), 'Name_Agent', '', '', 'string', '20');
-}
-
-$cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
-$cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
-
-// Address.
-$pFields = array('gAddr', 'gCity');
-$pTitles = array('Address', 'City');
-
-if ($uS->county) {
-    $pFields[] = 'gCounty';
-    $pTitles[] = 'County';
-}
-
-$pFields = array_merge($pFields, array('gState', 'gCountry', 'gZip'));
-$pTitles = array_merge($pTitles, array('State', 'Country', 'Zip'));
-
-$cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
-
-
-$cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
-$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
-$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
-$cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-$cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-$cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
-$cFields[] = array("Days", 'Days', '', '', 'integer', '10');
-$cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
-$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest').'s', 'numGuests', 'checked', '', 'integer', '10');
-$cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
-$cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
-$cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', array(), 'date');
-
-$fieldSets = ReportFieldSet::listFieldSets($dbh, 'reserv', true);
-$fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
-$colSelector = new ColumnSelectors($cFields, 'selFld', true, $fieldSets, $fieldSetSelection);
-$defaultFields = array();
-foreach($cFields as $field){
-    if($field[2] == 'checked'){
-        $defaultFields[] = $field[1];
-    }
-}
+$reservationReport = new ReservationReport($dbh, $_REQUEST);
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
@@ -142,146 +60,13 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         $local = FALSE;
     }
 
-    // set the column selectors
-    $colSelector->setColumnSelectors($_POST);
-    $filter->loadSelectedTimePeriod();
-    $filter->loadSelectedHospitals();
-
-
-    $whDates = " r.Expected_Arrival <= '" . $filter->getReportEnd() . "' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '" . $filter->getReportStart() . "' ";
-
-    if (isset($_POST['selResvStatus'])) {
-        $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);
-    }
-
-    // Hospitals
-    $whHosp = '';
-    foreach ($filter->getSelectedHosptials() as $a) {
-        if ($a != '') {
-            if ($whHosp == '') {
-                $whHosp .= $a;
-            } else {
-                $whHosp .= ",". $a;
-            }
-        }
-    }
-
-    $whAssoc = '';
-    foreach ($filter->getSelectedAssocs() as $a) {
-        if ($a != '') {
-            if ($whAssoc == '') {
-                $whAssoc .= $a;
-            } else {
-                $whAssoc .= ",". $a;
-            }
-        }
-    }
-    if ($whHosp != '') {
-        $whHosp = " and hs.idHospital in (".$whHosp.") ";
-    }
-
-    if ($whAssoc != '') {
-        $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
-    }
-
-    // Visit status selections
-    $whStatus = '';
-    foreach ($statusSelections as $s) {
-        if ($s != '') {
-            if ($whStatus == '') {
-                $whStatus = "'" . $s . "'";
-            } else {
-                $whStatus .= ",'".$s . "'";
-            }
-        }
-    }
-    if ($whStatus != '') {
-        $whStatus = "and r.Status in (" . $whStatus . ") ";
-    }
-
-
-    $query = "select
-    r.idReservation,
-    r.idGuest,
-    concat(ifnull(na.Address_1, ''), '', ifnull(na.Address_2, ''))  as gAddr,
-    ifnull(na.City, '') as gCity,
-    ifnull(na.County, '') as gCounty,
-    ifnull(na.State_Province, '') as gState,
-    ifnull(na.Country_Code, '') as gCountry,
-    ifnull(na.Postal_Code, '') as gZip,
-    CASE WHEN np.Phone_Code = 'no' THEN 'No Phone' ELSE np.Phone_Num END as Phone_Num,
-    ne.Email,
-    rm.Phone,
-    ifnull(r.Actual_Arrival, r.Expected_Arrival) as `Arrival`,
-    ifnull(r.Actual_Departure, r.Expected_Departure) as `Departure`,
-    r.Fixed_Room_Rate,
-    r.`Status` as `ResvStatus`,
-    DATEDIFF(ifnull(r.Actual_Departure, r.Expected_Departure), ifnull(r.Actual_Arrival, r.Expected_Arrival)) as `Nights`,
-    ifnull(n.Name_Last, '') as Name_Last,
-    ifnull(n.Name_First, '') as Name_First,
-    re.Title as `Room`,
-    re.`Type`,
-    re.`Status` as `RescStatus`,
-    re.`Category`,
-    rr.`Title` as `Rate`,
-    rr.FA_Category,
-    g.Title as 'Status_Title',
-    hs.idPsg,
-    hs.idHospital,
-    hs.idAssociation,
-    nd.Name_Full as `Name_Doctor`,
-    nr.Name_Full as `Name_Agent`,
-    ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
-    hs.Diagnosis2,
-    ifnull(g2.`Description`, '') as `Location`,
-    r.`Timestamp` as `Created_Date`,
-    r.Last_Updated,
-	CASE WHEN r.Status not in ('s','co','im') THEN count(rg.idReservation) ELSE '' END as `numGuests`
-
-from
-    reservation r
-        left join
-	reservation_guest rg on r.idReservation = rg.idReservation
-		left join
-    resource re ON re.idResource = r.idResource
-        left join
-    name n ON r.idGuest = n.idName
-        left join
-    name_address na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
-        left join
-    name_phone np ON n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
-        left join
-    name_email ne ON n.idName = ne.idName and n.Preferred_Email = ne.Purpose
-        left join
-    hospital_stay hs ON r.idHospital_Stay = hs.idHospital_stay
-        left join
-    name nd ON hs.idDoctor = nd.idName
-        left join
-    name nr ON hs.idReferralAgent = nr.idName
-        left join
-    room_rate rr ON r.idRoom_rate = rr.idRoom_rate
-        left join resource_room rer on r.idResource = rer.idResource
-        left join room rm on rer.idRoom = rm.idRoom
-        left join
-    lookups g ON g.Category = 'ReservStatus'
-        and g.`Code` = r.`Status`
-        left join
-    gen_lookups gl ON gl.Table_Name = 'Diagnosis'
-        and gl.`Code` = hs.Diagnosis
-        LEFT JOIN
-    gen_lookups g2 ON g2.Table_Name = 'Location'
-        and g2.`Code` = hs.`Location`
-where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration";
-
-
-    $fltrdTitles = $colSelector->getFilteredTitles();
-    $fltrdFields = $colSelector->getFilteredFields();
+    $resultSet = $reservationReport->getResultSet();
 
     if ($local) {
         $tbl = new HTMLTable();
         $th = '';
 
-        foreach ($fltrdTitles as $t) {
+        foreach ($reservationReport->filteredTitles as $t) {
             $th .= HTMLTable::makeTh($t);
         }
         $tbl->addHeaderTr($th);
@@ -299,7 +84,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         $colWidths = array();
 
 
-        foreach($fltrdFields as $field){
+        foreach($reservationReport->filteredFields as $field){
             $hdr[$field[0]] = $field[4]; //set column header name and type;
             $colWidths[] = $field[5]; //set column width
         }
@@ -312,9 +97,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
     $curRoom = '';
     $curRate = '';
 
-    $stmt = $dbh->query($query);
-
-    while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    foreach($resultSet as $r) {
 
         if ($curVisit != $r['idReservation']) {
             $curVisit = $r['idReservation'];
@@ -390,17 +173,17 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 
         $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display'));
         $mkTable = 1;
-        $headerTable .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd())));
+        $headerTable .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($reservationReport->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($reservationReport->filter->getReportEnd())));
 
         $hospitalTitles = '';
-        $hospList = $filter->getHospitals();
+        $hospList = $reservationReport->filter->getHospitals();
 
-        foreach ($filter->getSelectedAssocs() as $h) {
+        foreach ($reservationReport->filter->getSelectedAssocs() as $h) {
             if (isset($hospList[$h])) {
                 $hospitalTitles .= $hospList[$h][1] . ', ';
             }
         }
-        foreach ($filter->getSelectedHosptials() as $h) {
+        foreach ($reservationReport->filter->getSelectedHosptials() as $h) {
             if (isset($hospList[$h])) {
                 $hospitalTitles .= $hospList[$h][1] . ', ';
             }
@@ -415,7 +198,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         }
 
         $statusTitles = '';
-        foreach ($statusSelections as $s) {
+        foreach ($reservationReport->selectedResvStatuses as $s) {
             if (isset($statusList[$s])) {
                 $statusTitles .= $statusList[$s][1] . ', ';
             }
@@ -435,16 +218,6 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
     }
 
 }
-
-// Setups for the page.
-
-$statusSelector = HTMLSelector::generateMarkup(
-        HTMLSelector::doOptionsMkup($statusList, $statusSelections), array('name' => 'selResvStatus[]', 'size'=>'6', 'multiple'=>'multiple'));
-
-$columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left;margin-left:5px', 'id'=>'includeFields'));
-
-$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
-$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 ?>
 <!DOCTYPE html>
@@ -473,11 +246,11 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
 <script type="text/javascript">
     $(document).ready(function() {
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
+        var columnDefs = $.parseJSON('<?php echo json_encode($reservationReport->colSelector->getColumnDefs()); ?>');
         var makeTable = '<?php echo $mkTable; ?>';
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
 
-        <?php echo $filter->getTimePeriodScript(); ?>;
+        <?php echo $reservationReport->filter->getTimePeriodScript(); ?>;
         $('#cbColClearAll').click(function () {
             $('#selFld option').each(function () {
                 $(this).prop('selected', false);
@@ -510,7 +283,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
             });
         }
 
-        $('#includeFields').fieldSets({'reportName': 'reserv', 'defaultFields': <?php echo json_encode($defaultFields) ?>});
+        $('#includeFields').fieldSets({'reportName': 'reserv', 'defaultFields': <?php echo json_encode($reservationReport->getDefaultFields()) ?>});
     });
  </script>
     </head>
@@ -518,33 +291,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="font-size: 0.9em; display: inline-block; min-width: 400px; padding:10px;">
-                <form id="fcat" action="ReservReport.php" method="post">
-                	<div class="ui-helper-clearfix">
-                    <?php echo $timePeriodMarkup; ?>
-                    <table style="float: left; margin-left:5px;">
-                        <thead>
-                        	<tr>
-                            	<th>Status</th>
-                        	</tr>
-                        </thead>
-                        <tbody>
-                        	<tr>
-                            	<td><?php echo $statusSelector; ?></td>
-                        	</tr>
-                        </tbody>
-                    </table>
-                    <?php if (count($filter->getHospitals()) > 1) {
-                            echo $hospitalMarkup;
-                        }
-                        echo $columSelector; ?>
-                    </div>
-                    <div style="text-align:center; margin-top: 10px;">
-                    	<input type="submit" name="btnHere" id="btnHere" value="Run Here" style="margin-right: 1em;"/>
-                    	<input type="submit" name="btnExcel" id="btnExcel" value="Download to Excel"/>
-                    </div>
-                </form>
-            </div>
+            <?php echo $reservationReport->getFilterMarkup(); ?>
             <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
                 <div><input id="printButton" value="Print" type="button"/></div>
                 <?php echo $headerTable; ?>
