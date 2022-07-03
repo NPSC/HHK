@@ -149,6 +149,25 @@ CREATE OR REPLACE VIEW `vdoc_notes` AS
         dn.Doc_Id > 0 && n.`Status` = 'a';
 
 -- -----------------------------------------------------
+-- View `vstaff_notes`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vstaff_notes` AS
+    SELECT
+        n.idNote AS `Note_Id`,
+        n.idNote AS `Action`,
+        n.flag,
+        n.User_Name,
+        n.Title,
+        n.Note_Text,
+        n.`Timestamp`
+    FROM
+        note n
+            JOIN
+        staff_note sn ON n.idNote = sn.Note_Id
+    WHERE
+        n.`Status` = 'a';
+        
+-- -----------------------------------------------------
 -- View `vadditional_guests`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vadditional_guests` AS

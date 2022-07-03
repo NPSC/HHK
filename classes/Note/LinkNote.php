@@ -20,7 +20,7 @@ class LinkNote {
 
     public static function save(\PDO $dbh, $noteText, $linkId, $linkType, $userName, $concatNotes = FALSE) {
 
-        if ($linkType == '' || $linkId < 1) {
+        if ($linkType == '' || $linkId < 0) {
             return array('error'=>'The Link Type is missing.');
         }
 
@@ -119,6 +119,12 @@ WHERE
 
                     $table = 'doc_note';
                     $field = 'Doc_Id';
+                    break;
+
+                case Note::StaffLink:
+
+                    $table = 'staff_note';
+                    $field = 'Link_Id';
                     break;
 
                 case Note::MemberLink:

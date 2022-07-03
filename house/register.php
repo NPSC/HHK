@@ -345,6 +345,7 @@ if($uS->useOnlineReferral){
                         <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
                     <?php } } ?>
                     <li id="liDaylog"><a href="#vdaily">Daily Log</a></li>
+                    <li id="liStaffNotes"><a href="#vStaffNotes">Staff Notes</a></li>
                 </ul>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>
@@ -430,6 +431,9 @@ if($uS->useOnlineReferral){
                       <div id="rptInvdiv" class="hhk-visitdialog"></div>
                 </div>
                 <?php } ?>
+                <div id="vStaffNotes" class="hhk-tdbox hhk-visitdialog" style="display: none">
+                	<div class="staffNotesDiv" class="hhk-visitdialog"></div>
+                </div>
             </div>
         </form>
         </div>  <!-- div id="contentDiv"-->

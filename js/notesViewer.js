@@ -109,7 +109,7 @@
                 
         $div = $('<div style="margin-top:5px;" class="hhk-panel" />').append($ta);
         
-        if (settings.linkId > 0) {
+        if (settings.linkId >= 0) {
             
             $button = $('<button class=" ui-button ui-corner-all ui-widget" id="note-newNote" style="vertical-align: top; margin:7px;">Save New Note</button>')
                 .click(function (e) {
@@ -117,7 +117,7 @@
                     var noteTextarea = $('#' + settings.newNoteAttrs.id);
                     var noteData = noteTextarea.val();
 
-                    if (settings.linkId == 0) {
+                    if (settings.linkId < 0) {
                         settings.alertMessage.call('Link Id is not set.  ', 'alert');
                         return;
                     }
@@ -391,7 +391,7 @@
 
     function createViewer($wrapper, settings) {
         
-        if (settings.linkId > 0) {
+        if (settings.linkId >= 0) {
             var $table = $('<table />').attr(settings.tableAttrs).appendTo($wrapper);
 
             var dtTable = $table.DataTable({

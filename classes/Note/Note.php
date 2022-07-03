@@ -31,6 +31,7 @@ class Note {
     const RoomLink = 'room';
     const MemberLink = 'member';
     const DocumentLink = 'document';
+    const StaffLink = 'staff';
 
     // Note Type
     const TextType = 'text';

@@ -127,20 +127,20 @@ try {
         break;
 
     case 'viewHS':
-    	
+
     	$idHs = 0;
     	if (isset($_POST['idhs'])) {
     		$idHs = intval(filter_input(INPUT_POST, 'idhs', FILTER_SANITIZE_NUMBER_INT), 10);
     	}
-    	
+
     	$hArray = Hospital::createReferralMarkup($dbh, new HospitalStay($dbh, 0, $idHs), FALSE);
-    	
+
     	$events = array('success'=>$hArray['div'], 'title'=>$hArray['title']);
-    	
+
     	break;
-    	
+
     case 'saveHS':
-    	
+
     	$idHs = 0;
     	if (isset($_POST['idhs'])) {
     		$idHs = intval(filter_input(INPUT_POST, 'idhs', FILTER_SANITIZE_NUMBER_INT), 10);
@@ -149,26 +149,26 @@ try {
     	if (isset($_POST['idv'])) {
     		$idVisit = intval(filter_input(INPUT_POST, 'idv', FILTER_SANITIZE_NUMBER_INT), 10);
     	}
-    	
+
     	if ($idHs > 0 && $idVisit > 0) {
 
     		$hstay = new HospitalStay($dbh, 0, $idHs, FALSE);
 
     		$newHsId = Hospital::saveReferralMarkup($dbh, new PSG($dbh, 0, $hstay->getIdPatient()), $hstay, $_POST);
-    		
+
     		if ($newHsId != $idHs) {
     			// Update visit and reservation
     			$dbh->exec("call updt_visit_hospstay($idVisit, $newHsId);");
     		}
-    	
+
     		$events = array('success'=>'Hospital Saved');
-    		
+
     	} else {
     		$events = array('error'=>'Missing ids. ');
     	}
-    	
+
     	break;
-    	
+
     case 'getNoteList':
 
         $linkType = '';
@@ -181,8 +181,6 @@ try {
         if (isset($_GET['linkId'])) {
             $idLink = intval(filter_input(INPUT_GET, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
-
-        //require(CLASSES . 'DataTableServer.php');
 
         $events = ListNotes::loadList($dbh, $idLink, $linkType, $_GET, $uS->ConcatVisitNotes);
 
@@ -282,7 +280,7 @@ try {
         if (isset($_POST['idNote'])) {
             $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
         }
-        
+
         if (isset($_POST['flag'])) {
             $flag = intval(filter_input(INPUT_POST, 'flag', FILTER_SANITIZE_NUMBER_INT), 10);
         }
@@ -331,7 +329,7 @@ try {
         if (isset($_GET['guestId'])) {
             $guestId = intval(filter_input(INPUT_GET, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
-        
+
         if (isset($_GET['rid'])) {
             $rid = intval(filter_input(INPUT_GET, 'rid', FILTER_SANITIZE_NUMBER_INT), 10);
             $stmt = $dbh->query("SELECT reg.idPsg FROM reservation res
@@ -350,17 +348,17 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         break;
 
 	case 'getincidentreport':
-        
+
         	$idReport = 0;
             if (isset($_POST['repid'])) {
                 $idReport = intval(filter_var($_POST['repid'], FILTER_SANITIZE_NUMBER_INT), 10);
             }
-            
+
             $report = new Report($idReport);
 			$report->loadReport($dbh);
 			$idGuest = $report->getGuestId();
 			$reportAr = $report->toArray();
-            
+
             if(isset($_POST['print'])){
 	            $stmt = $dbh->query("SELECT * from `vguest_listing` where id = $idGuest limit 1");
 	            $guestAr = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -368,12 +366,12 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 	            $reportAr['description'] = nl2br($reportAr['description']);
 	            $reportAr['resolution'] = nl2br($reportAr['resolution']);
             }
-            
+
             $events = $reportAr;
         	break;
-        	
+
     case 'saveIncident':
-		
+
 		$guestId = 0;
 		$psgId = 0;
 		$incidentTitle = '';
@@ -384,7 +382,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 		$resolutionDate = '';
 		$signature = '';
 		$signatureDate = '';
-		
+
 		if (isset($_POST['guestId'])) {
             $guestId = $_POST['guestId'];
         }
@@ -415,7 +413,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         if (isset($_POST['signatureDate'])) {
             $signatureDate = $_POST['signatureDate'];
         }
-        
+
         $report = Report::createNew($incidentTitle, $incidentDate, $incidentDescription, $uS->username, $incidentStatus, $incidentResolution, $resolutionDate, $signature, $signatureDate, $guestId, $psgId);
 		$report->saveNew($dbh);
 
@@ -434,7 +432,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
 		$resolutionDate = '';
 		$signature = '';
 		$signatureDate = '';
-		
+
 		if (isset($_POST['repId'])) {
             $repId = $_POST['repId'];
         }
@@ -462,7 +460,7 @@ WHERE res.`idReservation` = " . $rid . " LIMIT 1;");
         if (isset($_POST['signatureDate'])) {
             $signatureDate = $_POST['signatureDate'];
         }
-        
+
         $report = new Report($repId);
         $report->updateContents($dbh, $incidentTitle, $incidentDate, $resolutionDate, $incidentDescription, $incidentResolution,$signature, $signatureDate, $incidentStatus, $uS->username);
 

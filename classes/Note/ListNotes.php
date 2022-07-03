@@ -85,6 +85,10 @@ class ListNotes {
                 $whereClause = "$whereField = $linkId";
                 break;
 
+            case Note::StaffLink:
+                $dbView = 'vstaff_notes';
+                $whereClause = "";
+                break;
             case Note::MemberLink:
 
                 //break;

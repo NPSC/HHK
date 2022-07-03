@@ -1568,6 +1568,15 @@ $(document).ready(function () {
                   }
                 });
             }
+            if(ui.newTab.prop('id') === 'liStaffNotes'){
+            	$('.staffNotesDiv').empty().notesViewer({
+					linkType: 'staff',
+					newNoteAttrs: {id:'staffNewNote', name:'staffNewNote'},
+					alertMessage: function(text, type) {
+					    flagAlertMessage(text, type);
+					}
+			    });
+            }
         },
         
         active: defaultTab
