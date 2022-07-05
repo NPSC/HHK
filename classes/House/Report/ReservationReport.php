@@ -6,6 +6,8 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\HTMLControls\HTMLTable;
+use HHK\SysConst\GLTableNames;
+use HHK\SysConst\RoomRateCategories;
 
 /**
  * ReservationReport.php
@@ -123,12 +125,14 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     re.`Type`,
     re.`Status` as `RescStatus`,
     re.`Category`,
-    rr.`Title` as `Rate`,
+    IF(rr.FA_Category='f', r.Fixed_Room_Rate, rr.`Title`) as `Rate`,
     rr.FA_Category,
     g.Title as 'Status_Title',
     hs.idPsg,
     hs.idHospital,
+    ifnull(h.Title, '') as 'Hospital',
     hs.idAssociation,
+    ifnull(a.Title, '') as 'Assoc',
     nd.Name_Full as `Name_Doctor`,
     nr.Name_Full as `Name_Agent`,
     ifnull(gl.`Description`, hs.Diagnosis) as `Diagnosis`,
@@ -171,9 +175,10 @@ from
         LEFT JOIN
     gen_lookups g2 ON g2.Table_Name = 'Location'
         and g2.`Code` = hs.`Location`
+    LEFT JOIN hospital h on hs.idHospital = h.idHospital and h.Type = 'h'
+    LEFT JOIN hospital a on hs.idAssociation = a.idHospital and a.Type = 'a'
 where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration";
     }
-
 
     protected function setFilterMkup():void{
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
@@ -267,6 +272,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 
         return $cFields;
     }
+
 
 }
 ?>

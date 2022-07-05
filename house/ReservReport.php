@@ -51,7 +51,12 @@ $dataTable = '';
 
 $reservationReport = new ReservationReport($dbh, $_REQUEST);
 
-if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
+if (isset($_POST['btnExcel'])) {
+    $reservationReport->getResultSet();
+    $reservationReport->downloadExcel("reservReport", "Reservation Report");
+}
+
+if (isset($_POST['btnHere'])) {
 
     ini_set('memory_limit', "280M");
 
@@ -111,23 +116,6 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             continue;
         }
 
-        if ($r['FA_Category'] == RoomRateCategories::Fixed_Rate_Category) {
-            $rate = $r['Fixed_Room_Rate'];
-        } else {
-            $rate = $r['Rate'];
-        }
-
-
-        $r['Assoc'] = '';
-        if ($r['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1] != '(None)') {
-            $r['Assoc'] = $uS->guestLookups[GLTableNames::Hospital][$r['idAssociation']][1];
-        }
-        if ($r['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$r['idHospital']])) {
-            $r['Hospital'] = $uS->guestLookups[GLTableNames::Hospital][$r['idHospital']][1];
-        }
-
-
-
         $arrivalDT = new DateTime($r['Arrival']);
         $departureDT = new DateTime($r['Departure']);
         $statusDT = new DateTime($r['Created_Date']);
@@ -147,7 +135,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             $r['FA_Category'] = $rate;
 
             $tr = '';
-            foreach ($fltrdFields as $f) {
+            foreach ($reservationReport->filteredFields as $f) {
                 $tr .= HTMLTable::makeTd($r[$f[1]]);
             }
 
@@ -159,7 +147,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
             $flds = array();
 
-            foreach ($fltrdFields as $f) {
+            foreach ($reservationReport->filteredFields as $f) {
                 $flds[] = $r[$f[1]];
             }
 

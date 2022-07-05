@@ -6,6 +6,8 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\HTMLInput;
 use HHK\sec\Session;
+use HHK\HTMLControls\HTMLTable;
+use HHK\ExcelHelper;
 
 /**
  * AbtractReport.php
@@ -36,6 +38,12 @@ abstract class AbstractReport {
     public string $filterMkup = "";
     protected $request;
 
+    /**
+     * @param \PDO $dbh
+     * @param string $report - used to build fieldset list (ReportFieldSet::listFieldSets())
+     * @param array $cFields
+     * @param array $request
+     */
     public function __construct(\PDO $dbh, string $report = "", array $cFields = [], array $request = []){
         $uS= Session::getInstance();
 
@@ -61,6 +69,11 @@ abstract class AbstractReport {
         $this->setFilterMkup();
     }
 
+    /**
+     * Builds entire filters markup + submit buttons + wrapper div
+     *
+     * @return string
+     */
     public function getFilterMarkup(){
         $this->filterMkup = HTMLContainer::generateMarkup("div", $this->filterMkup, array("id"=>"filterSelectors", "class"=>"hhk-flex"));
         $btnMkup = HTMLContainer::generateMarkup("div",
@@ -76,23 +89,17 @@ abstract class AbstractReport {
             , array("class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper"));
     }
 
+    /**
+     * Run the report query and return result set based on selected fields
+     *
+     * @return array $resultSet
+     */
     public function getResultSet():array {
         $this->buildQuery();
         if($this->query != ''){
             $stmt = $this->dbh->query($this->query);
 
-            while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-
-                $g = array();
-                foreach ($this->filteredFields as $f) {
-                    if(isset($f[7]) && $f[7] == "date"){
-                        $g[$f[0]] = date('c', strtotime($r[$f[1]]));
-                    }else{
-                        $g[$f[0]] = $r[$f[1]];
-                    }
-                }
-                $this->resultSet[] = $g;
-            }
+            $this->resultSet = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }else{
             $this->resultSet = [];
         }
@@ -100,13 +107,54 @@ abstract class AbstractReport {
     }
 
     public function generateMarkup():string {
-        $mkup = "";
 
-        return $mkup;
+        $tbl = new HTMLTable();
+        $th = '';
+
+        foreach ($this->filteredTitles as $t) {
+            $th .= HTMLTable::makeTh($t);
+        }
+        $tbl->addHeaderTr($th);
+
+
+
+        return $tbl;
     }
 
-    public function downloadExcel():void {
+    public function downloadExcel(string $fileName = "HHKReport", string $reportTitle = ""):void {
 
+        $uS = Session::getInstance();
+        $writer = new ExcelHelper($fileName);
+        $writer->setAuthor($uS->username);
+        $writer->setTitle($reportTitle);
+
+        // build header
+        $hdr = array();
+        $flds = array();
+        $colWidths = array();
+
+
+        foreach($this->filteredFields as $field){
+            $hdr[$field[0]] = $field[4]; //set column header name and type;
+            $colWidths[] = $field[5]; //set column width
+        }
+
+        $hdrStyle = $writer->getHdrStyle($colWidths);
+        $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
+
+        foreach($this->resultSet as $r){
+
+            $flds = array();
+
+            foreach ($this->filteredFields as $f) {
+                $flds[] = $r[$f[1]];
+            }
+
+            $row = $writer->convertStrings($hdr, $flds);
+            $writer->writeSheetRow("Sheet1", $row);
+        }
+
+        $writer->download();
     }
 
     public function getDefaultFields(){
