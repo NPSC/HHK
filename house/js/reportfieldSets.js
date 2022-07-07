@@ -94,6 +94,18 @@
 			}
 		});
 		
+		$wrapper.find('#cbColClearAll').on('click', function () {
+            $wrapper.find('#selFld option').each(function () {
+                $(this).prop('selected', false);
+            });
+        });
+
+        $wrapper.find('#cbColSelAll').on('click', function () {
+            $('#selFld option').each(function () {
+                $(this).prop('selected', true);
+            });
+        });
+		
 		$wrapper.on("click", "#filterSetBtns button", function(e){
 			e.preventDefault();
 			var id = $(this).attr('id');

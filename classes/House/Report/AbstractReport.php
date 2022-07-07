@@ -44,7 +44,7 @@ abstract class AbstractReport {
      * @param array $cFields
      * @param array $request
      */
-    public function __construct(\PDO $dbh, string $report = "", array $cFields = [], array $request = []){
+    public function __construct(\PDO $dbh, string $report = "", array $request = []){
         $uS= Session::getInstance();
 
         $this->dbh = $dbh;
@@ -56,8 +56,15 @@ abstract class AbstractReport {
         $this->cFields = $this->makeCFields();
 
         $this->fieldSets = ReportFieldSet::listFieldSets($this->dbh, $report, true);
-        $fieldSetSelection = (isset($_REQUEST['fieldset']) ? $_REQUEST['fieldset']: '');
+        $fieldSetSelection = (isset($request['fieldset']) ? $request['fieldset']: '');
         $this->colSelector = new ColumnSelectors($this->cFields, 'selFld', true, $this->fieldSets, $fieldSetSelection);
+
+        // set the selected filters
+        $this->colSelector->setColumnSelectors($request);
+        $this->filter->loadSelectedTimePeriod();
+        $this->filter->loadSelectedHospitals();
+        $this->filteredTitles = $this->colSelector->getFilteredTitles();
+        $this->filteredFields = $this->colSelector->getFilteredFields();
 
         //default fields
         foreach($this->cFields as $field){
@@ -65,8 +72,6 @@ abstract class AbstractReport {
                 $this->defaultFields[] = $field[1];
             }
         }
-
-        $this->setFilterMkup();
     }
 
     /**
@@ -74,11 +79,13 @@ abstract class AbstractReport {
      *
      * @return string
      */
-    public function getFilterMarkup(){
+    public function generateFilterMarkup(){
+        $this->makeFilterMkup();
+
         $this->filterMkup = HTMLContainer::generateMarkup("div", $this->filterMkup, array("id"=>"filterSelectors", "class"=>"hhk-flex"));
         $btnMkup = HTMLContainer::generateMarkup("div",
-            HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere", "id"=>"btnHere")) .
-            HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel", "id"=>"btnExcel"))
+            HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere", "id"=>"btnHere", "class"=>"ui-button ui-corner-all ui-widget")) .
+            HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel", "id"=>"btnExcel", "class"=>"ui-button ui-corner-all ui-widget"))
         , array("id"=>"filterBtns"));
 
         //wrap in ui-widget + form
@@ -95,7 +102,7 @@ abstract class AbstractReport {
      * @return array $resultSet
      */
     public function getResultSet():array {
-        $this->buildQuery();
+        $this->makeQuery();
         if($this->query != ''){
             $stmt = $this->dbh->query($this->query);
 
@@ -106,7 +113,9 @@ abstract class AbstractReport {
         return $this->resultSet;
     }
 
-    public function generateMarkup():string {
+    public function generateMarkup() {
+
+        $this->getResultSet();
 
         $tbl = new HTMLTable();
         $th = '';
@@ -116,9 +125,26 @@ abstract class AbstractReport {
         }
         $tbl->addHeaderTr($th);
 
+        foreach($this->resultSet as $r){
+            $tr = '';
+            foreach ($this->filteredFields as $f) {
+                $tr .= HTMLTable::makeTd($r[$f[1]]);
+            }
 
+            $tbl->addBodyTr($tr);
+        }
 
-        return $tbl;
+        return HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper'));
+    }
+
+    public function generateSummaryMkup():string {
+
+        $summaryMkupAr = $this->makeSummaryMkup();
+
+        $titleMkup = HTMLContainer::generateMarkup('h3', $summaryMkupAr['reportTitle'], array('class'=>'mt-2'));
+        $bodyMkup = HTMLContainer::generateMarkup("div", $summaryMkupAr['content'], array('id'=>'repSummary', 'class'=>'ml-2'));
+        return $titleMkup . $bodyMkup;
+
     }
 
     public function downloadExcel(string $fileName = "HHKReport", string $reportTitle = ""):void {
@@ -141,6 +167,8 @@ abstract class AbstractReport {
 
         $hdrStyle = $writer->getHdrStyle($colWidths);
         $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
+
+        $this->getResultSet();
 
         foreach($this->resultSet as $r){
 

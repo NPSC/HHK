@@ -2,12 +2,11 @@
 
 namespace HHK\House\Report;
 
+use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\HTMLControls\HTMLTable;
-use HHK\SysConst\GLTableNames;
-use HHK\SysConst\RoomRateCategories;
 
 /**
  * ReservationReport.php
@@ -44,41 +43,15 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         }
 
         parent::__construct($dbh, "reserv", $request);
-
     }
 
-    public function buildQuery(): void{
-        // set the column selectors
-        $this->colSelector->setColumnSelectors($this->request);
-        $this->filter->loadSelectedTimePeriod();
-        $this->filter->loadSelectedHospitals();
-        $this->filteredTitles = $this->colSelector->getFilteredTitles();
-        $this->filteredFields = $this->colSelector->getFilteredFields();
-
+    public function makeQuery(): void{
         $whDates = " r.Expected_Arrival <= '" . $this->filter->getReportEnd() . "' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '" . $this->filter->getReportStart() . "' ";
 
         // Hospitals
-        $whHosp = '';
-        foreach ($this->filter->getSelectedHosptials() as $a) {
-            if ($a != '') {
-                if ($whHosp == '') {
-                    $whHosp .= $a;
-                } else {
-                    $whHosp .= ",". $a;
-                }
-            }
-        }
+        $whHosp = implode(",", $this->filter->getSelectedHosptials());
+        $whAssoc = implode(",", $this->filter->getSelectedAssocs());
 
-        $whAssoc = '';
-        foreach ($this->filter->getSelectedAssocs() as $a) {
-            if ($a != '') {
-                if ($whAssoc == '') {
-                    $whAssoc .= $a;
-                } else {
-                    $whAssoc .= ",". $a;
-                }
-            }
-        }
         if ($whHosp != '') {
             $whHosp = " and hs.idHospital in (".$whHosp.") ";
         }
@@ -88,16 +61,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         }
 
         // Reservation status selections
-        $whStatus = '';
-        foreach ($this->selectedResvStatuses as $s) {
-            if ($s != '') {
-                if ($whStatus == '') {
-                    $whStatus = "'" . $s . "'";
-                } else {
-                    $whStatus .= ",'".$s . "'";
-                }
-            }
-        }
+        $whStatus = implode(",", preg_filter(["/^(?!($))/", "/(?!(^))$/"], ["'", "'"], $this->selectedResvStatuses)); //add quotes to selected non empty statuses and build comma delimited string
+
         if ($whStatus != '') {
             $whStatus = "and r.Status in (" . $whStatus . ") ";
         }
@@ -119,14 +84,15 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     r.Fixed_Room_Rate,
     r.`Status` as `ResvStatus`,
     DATEDIFF(ifnull(r.Actual_Departure, r.Expected_Departure), ifnull(r.Actual_Arrival, r.Expected_Arrival)) as `Nights`,
+    (DATEDIFF(ifnull(r.Actual_Departure, r.Expected_Departure), ifnull(r.Actual_Arrival, r.Expected_Arrival))+1) as `Days`,
     ifnull(n.Name_Last, '') as Name_Last,
     ifnull(n.Name_First, '') as Name_First,
     re.Title as `Room`,
     re.`Type`,
     re.`Status` as `RescStatus`,
     re.`Category`,
-    IF(rr.FA_Category='f', r.Fixed_Room_Rate, rr.`Title`) as `Rate`,
-    rr.FA_Category,
+    IF(rr.FA_Category='f', r.Fixed_Room_Rate, rr.`Title`) as `FA_Category`,
+    rr.`Title` as `Rate`,
     g.Title as 'Status_Title',
     hs.idPsg,
     hs.idHospital,
@@ -180,7 +146,7 @@ from
 where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration";
     }
 
-    protected function setFilterMkup():void{
+    public function makeFilterMkup():void{
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
         $this->filterMkup .= $this->getResvStatusMkup()->generateMarkup();
         $this->filterMkup .= $this->filter->hospitalMarkup()->generateMarkup();
@@ -273,6 +239,65 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         return $cFields;
     }
 
+    public function makeSummaryMkup():array {
 
+        $uS = Session::getInstance();
+
+        $title = $uS->siteName . ' Reservation Report';
+
+        $mkup = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
+
+        $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())));
+
+        $hospitalTitles = '';
+        $hospList = $this->filter->getHospitals();
+
+        foreach ($this->filter->getSelectedAssocs() as $h) {
+            if (isset($hospList[$h])) {
+                $hospitalTitles .= $hospList[$h][1] . ', ';
+            }
+        }
+        foreach ($this->filter->getSelectedHosptials() as $h) {
+            if (isset($hospList[$h])) {
+                $hospitalTitles .= $hospList[$h][1] . ', ';
+            }
+        }
+
+        if ($hospitalTitles != '') {
+            $h = trim($hospitalTitles);
+            $hospitalTitles = substr($h, 0, strlen($h) - 1);
+            $mkup .= HTMLContainer::generateMarkup('p', Labels::getString('hospital', 'hospital', 'Hospital').'s: ' . $hospitalTitles);
+        } else {
+            $mkup .= HTMLContainer::generateMarkup('p', 'All '. Labels::getString('hospital', 'hospital', 'Hospital').'s');
+        }
+
+        $statusTitles = '';
+        foreach ($this->selectedResvStatuses as $s) {
+            if (isset($this->resvStatuses[$s])) {
+                $statusTitles .= $this->resvStatuses[$s][1] . ', ';
+            }
+        }
+
+        if ($statusTitles != '') {
+            $s = trim($statusTitles);
+            $statusTitles = substr($s, 0, strlen($s) - 1);
+            $mkup .= HTMLContainer::generateMarkup('p', 'Statuses: ' . $statusTitles);
+        } else {
+            $mkup .= HTMLContainer::generateMarkup('p', 'All Statuses');
+        }
+
+        return ['reportTitle'=>$title, 'content'=>$mkup];
+
+    }
+
+    public function generateMarkup(){
+
+        foreach($this->resultSet as &$r) {
+            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>'Reserve.php?rid=' . $r['idReservation']));
+            $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+        }
+
+        return parent::generateMarkup();
+    }
 }
 ?>

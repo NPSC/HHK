@@ -102,7 +102,7 @@ class ReportFilter {
 
         $this->selectedYear = $defaultYear;
         $this->selectedCalendar = $defaultCalendarOption;
-        $this->selectedMonths = date('m');
+        $this->selectedMonths = array(date('m'));
         $this->fyDiffMonths = $fiscalYearDiffMonths;
     }
 
@@ -239,7 +239,7 @@ $ckdate";
                 $this->reportEnd = $startDT->format('Y-m-d');
             }
 
-        } else {
+        } else if ($this->selectedCalendar == self::MONTHS){
             // Months
             $interval = 'P' . count($this->selectedMonths) . 'M';
             $month = $this->selectedMonths[0];
