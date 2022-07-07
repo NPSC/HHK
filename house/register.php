@@ -163,7 +163,7 @@ $shoHosptialName = FALSE;
 $colorKey = '';
 $stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
 
-if ($stmth->rowCount() > 1 && (strtolower($uS->RegColors) == 'hospital' || (strtolower($uS->GuestNameColor) == 'hospital'))) {
+if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' || strtolower($uS->RibbonColor) == 'hospital')) {
 
     $shoHosptialName = TRUE;
 

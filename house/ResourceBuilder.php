@@ -35,6 +35,9 @@ use HHK\sec\Labels;
 use HHK\Document\FormTemplate;
 use HHK\House\Insurance\InsuranceType;
 use HHK\House\Insurance\Insurance;
+use HHK\Tables\House\Rate_BreakpointRS;
+use HHK\Tables\House\Room_RateRS;
+use HHK\SysConst\RateStatus;
 
 /**
  * ResourceBuilder.php
@@ -51,6 +54,9 @@ const DIAGNOSIS_TABLE_NAME = 'Diagnosis';
 const LOCATION_TABLE_NAME = 'Location';
 
 const RESERV_STATUS_TABLE_NAME = 'lookups';
+
+const MAX_FINANCIAL_RATE_CATEGORIES = 16;
+const MAX_FINANCIAL_HOUSEHOLDS = 20;
 
 try {
     $wInit = new webInit();
@@ -190,7 +196,7 @@ Order by `t`.`List_Order`;");
     $tbl = new HTMLTable();
 
     $hdrTr =
-    HTMLTable::makeTh(count($diags) . ' Entries') . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Order') : '') . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '') . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '') . ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '') . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
+    HTMLTable::makeTh(count($diags) . ' Entries') . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Order') : '') . ($type == GlTypeCodes::CA ? HTMLTable::makeTh('Amount') : '') . ($type == GlTypeCodes::HA ? HTMLTable::makeTh('Days') : '') . ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName) ? HTMLTable::makeTh('Colors (font, bkgrnd)') : '') . ($type == GlTypeCodes::U ? '' : ($type == GlTypeCodes::m || $tableName == RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTh('Use') : HTMLTable::makeTh('Delete') . HTMLTable::makeTh('Replace With')));
 
     $tbl->addHeaderTr($hdrTr);
 
@@ -233,7 +239,7 @@ Order by `t`.`List_Order`;");
         ))) . ($tableName != RESERV_STATUS_TABLE_NAME ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[4], array(
             'name' => 'txtDOrder[' . $d[0] . ']',
             'size' => '3'
-        ))) : '') . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && $uS->GuestNameColor == $tableName) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array(
+        ))) : '') . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA || ($type == GlTypeCodes::Demographics && ($uS->RibbonColor == $tableName || $uS->RibbonBottomColor == $tableName)) ? HTMLTable::makeTd(HTMLInput::generateMarkup($d[2], array(
             'size' => '10',
             'style' => 'text-align:right;',
             'name' => 'txtDiagAmt[' . $d[0] . ']'
@@ -281,6 +287,8 @@ $rateTableErrorMessage = '';
 $itemMessage = '';
 $formType = '';
 $demoMessage = '';
+$breakpointMessage = '';
+
 
 // Get labels
 $labels = Labels::getLabels();
@@ -498,9 +506,9 @@ if (isset($_POST['table'])) {
                     $gluRs = new GenLookupsRS();
                     EditRS::loadRow($rw[0], $gluRs);
 
-                    $use = '';
-                    if (isset($_POST['cbDiagDel'][$c])) {
-                        $use = 'y';
+                    $desc = '';
+                    if (isset($_POST['txtDiag'][$c])) {
+                        $desc = filter_var($_POST['txtDiag'][$c], FILTER_SANITIZE_STRING);
                     }
 
                     $orderNumber = 0;
@@ -508,9 +516,13 @@ if (isset($_POST['table'])) {
                         $orderNumber = intval(filter_var($_POST['txtDOrder'][$c], FILTER_SANITIZE_NUMBER_INT), 10);
                     }
 
-                    $desc = '';
-                    if (isset($_POST['txtDiag'][$c])) {
-                        $desc = filter_var($_POST['txtDiag'][$c], FILTER_SANITIZE_STRING);
+                    $use = '';
+                    if (isset($_POST['cbDiagDel'][$c])) {
+                        $use = 'y';
+                        $on = $orderNumber + 100;
+                        $dbh->exec("Insert Ignore into `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) values ('RibbonColors', '$c', '$desc', '$on');");
+                    } else {
+                        $dbh->exec("DELETE FROM `gen_lookups` where `Table_Name` = 'Ribbon_Colors' and `Code` = '$c';");
                     }
 
                     $gluRs->Description->setNewVal($desc);
@@ -527,6 +539,8 @@ if (isset($_POST['table'])) {
                         $logText = HouseLog::getUpdateText($gluRs);
                         HouseLog::logGenLookups($dbh, $tableName, $c, $logText, "update", $uS->username);
                     }
+
+
                 }
             }
         } else if (isset($_POST['selmisc'])) {
@@ -737,32 +751,181 @@ if (isset($_POST['btnkfSave'])) {
         saveGenLk($dbh, 'ExcessPays', $_POST['epdesc'], array(), NULL);
     }
 
+
     // Financial Asst. Break points.
-    if (isset($_POST['faIa'])) {
+    if ($uS->IncomeRated) {
 
-        $faIa = filter_var_array($_POST['faIa'], FILTER_SANITIZE_NUMBER_INT);
-        $faIb = filter_var_array($_POST['faIb'], FILTER_SANITIZE_NUMBER_INT);
-        $faIc = filter_var_array($_POST['faIc'], FILTER_SANITIZE_NUMBER_INT);
+        $letters = array('a', 'b','c','d','e','f','g','h','j','k','m','n','p','r','s', 't');
 
-        $faRs = new Fa_CategoryRS();
-        $faRows = EditRS::select($dbh, $faRs, array());
+        $newHhSize = 0;
+        $newRateSize = 0;
+        $currentHhSize = 0;
+        $ratCats = [];
 
-        foreach ($faRows as $r) {
-            $faRs = new Fa_CategoryRs();
-            EditRS::loadRow($r, $faRs);
+        $stmt = $dbh->query("Select max(`Household_Size`) from rate_breakpoint;");
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-            $idFa = $faRs->idFa_category->getStoredVal();
+        if (count($rows) === 1) {
+            $currentHhSize = $rows[0][0];
+        }
 
-            $faRs->Income_A->setNewVal(str_replace(',', '', str_replace('$', '', $faIa[$idFa])));
-            $faRs->Income_B->setNewVal(str_replace(',', '', str_replace('$', '', $faIb[$idFa])));
-            $faRs->Income_C->setNewVal(str_replace(',', '', str_replace('$', '', $faIc[$idFa])));
-            $faRs->Income_D->setNewVal((str_replace(',', '', str_replace('$', '', $faIc[$idFa] + 1))));
-            $faRs->Updated_By->setNewVal($uS->username);
-            $faRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+        $stmt = $dbh->query("Select DISTINCT(`Rate_Category`) from rate_breakpoint;");
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
-            EditRS::update($dbh, $faRs, array(
-                $faRs->idFa_category
-            ));
+        foreach ($rows as $r) {
+            $ratCats[] = $r[0];
+        }
+
+
+        // New Household Size
+        if (isset($_POST['incrHhSize'])) {
+            $newHhSize = intval(filter_input(INPUT_POST, 'incrHhSize', FILTER_SANITIZE_NUMBER_INT), 10);
+
+            if ($newHhSize > MAX_FINANCIAL_HOUSEHOLDS) {
+                $newHhSize = MAX_FINANCIAL_HOUSEHOLDS;
+            }
+        }
+
+        // New rate category size
+        if (isset($_POST['incrRateCat'])) {
+            $newRateSize = intval(filter_input(INPUT_POST, 'incrRateCat', FILTER_SANITIZE_NUMBER_INT), 10);
+
+            if ($newRateSize > MAX_FINANCIAL_RATE_CATEGORIES) {
+                $newRateSize = MAX_FINANCIAL_RATE_CATEGORIES;
+            }
+        }
+
+        // Update Household Size
+        if ($newHhSize > $currentHhSize) {
+            // Add additional household records.
+
+            $idRow = 0;
+
+            for ($i = $currentHhSize + 1; $i <= $newHhSize; $i++) {
+
+                foreach ($ratCats as $c) {
+                    // Insert new sizes
+                    $rbRs = new Rate_BreakpointRS();
+
+                    $rbRs->Household_Size->setNewVal($i);
+                    $rbRs->Rate_Category->setNewVal($c);
+
+                    $idRow = EditRS::insert($dbh, $rbRs);
+
+                }
+            }
+
+            // Log new size
+            $logText = 'Household Size increased to '.$newHhSize;
+            HouseLog::logFinAssist($dbh, 'insert', $idRow, $logText,  $uS->username);
+
+            $currentHhSize = $newHhSize;
+
+        } else if ($newHhSize > 0 && $newHhSize < $currentHhSize) {
+
+            // Delete the extra size rows
+            $numDeleted = $dbh->exec("delete from `rate_breakpoint` where Household_Size > $newHhSize");
+
+            if ($numDeleted > 0) {
+                $logText = 'Deleted household sizes greater than ' . $newHhSize;
+                HouseLog::logFinAssist($dbh, 'delete', 0, $logText,  $uS->username);
+            }
+
+            $currentHhSize = $newHhSize;
+        }
+
+        // Update number of rate categories
+        if ($newRateSize > count($ratCats)) {
+
+            $idRow = 0;
+
+            for ($r = 1; $r <= $currentHhSize; $r++) {
+
+                for ($i=count($ratCats); $i < $newRateSize; $i++) {
+
+                    $rbRs = new Rate_BreakpointRS();
+
+                    $rbRs->Household_Size->setNewVal($r);
+                    $rbRs->Rate_Category->setNewVal($letters[$i]);
+
+                    $idRow = EditRS::insert($dbh, $rbRs);
+                }
+
+            }
+
+            // Log change
+            $logText = 'Adding ' . ($newRateSize - count($ratCats)) . ' new rate categor' . (($newRateSize - count($ratCats)) > 1 ? 'ies' : 'y') . ' to each household size.';
+            HouseLog::logFinAssist($dbh, 'insert', $idRow, $logText,  $uS->username);
+
+
+            // Add new room rates to room_rate table
+            for ($i=count($ratCats); $i < $newRateSize; $i++) {
+
+                $rpRs = new Room_RateRS();
+
+                $rpRs->Reduced_Rate_1->setNewVal(10.00);
+                $rpRs->Reduced_Rate_2->setNewVal(12.00);
+                $rpRs->Reduced_Rate_3->setNewVal(15.00);
+                $rpRs->Min_Rate->setNewVal(5.00);
+                $rpRs->FA_Category->setNewVal($priceModel->getNewRateCategory());
+                $rpRs->Rate_Breakpoint_Category->setNewVal($letters[$i]);
+                $rpRs->PriceModel->setNewVal($priceModel->getPriceModelCode());
+                $rpRs->Title->setNewVal('Rate ' . strtoupper($letters[$i]));
+                $rpRs->Updated_By->setNewVal($uS->username);
+                $rpRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                $rpRs->Status->setNewVal(RateStatus::Active);
+
+                $idRoomRate = EditRS::insert($dbh, $rpRs);
+
+                // Log action.
+                HouseLog::logRoomRate($dbh, 'insert', $idRoomRate, HouseLog::getInsertText($rpRs), $uS->username);
+            }
+        } else if ($newRateSize > 0 && $newRateSize < count($ratCats)) {
+            // remove rate categories
+            $lastCat = $ratCats[$newRateSize-1];
+
+            // Delete the extra size rows
+            $numDeleted = $dbh->exec("delete from `rate_breakpoint` where Rate_Category > '$lastCat';");
+
+            if ($numDeleted > 0) {
+                $logText = 'Deleted Rate Categories over ' . $lastCat;
+                HouseLog::logFinAssist($dbh, 'delete', 0, $logText,  $uS->username);
+
+                $dbh->exec("update `room_rate` set `Status` = '" . RateStatus::NotActive . "' where Rate_Breakpoint_Category > '$lastCat';");
+            }
+        }
+
+        $lastBreakpoints = [];
+
+        // Update breakpoints from POST
+        foreach ($letters as $l) {
+
+            if (isset($_POST['rateBp'.$l])) {
+
+                if ($l == $ratCats[count($ratCats)-1]) {
+                    $breakPoints = $lastBreakpoints;
+                } else {
+                    $breakPoints = filter_var_array($_POST['rateBp'.$l], FILTER_SANITIZE_NUMBER_INT);
+
+                }
+
+                foreach ($breakPoints as $index => $bpVal) {
+
+                    $rbRs = new Rate_BreakpointRS();
+                    $rbRs->Household_Size->setStoredVal($index + 1);
+                    $rbRs->Rate_Category->setStoredVal($l);
+                    $rbRs->Breakpoint->setNewVal($bpVal);
+
+                    $rowCount = EditRS::update($dbh, $rbRs, [$rbRs->Household_Size, $rbRs->Rate_Category]);
+
+                    if ($rowCount > 0) {
+                        $logText = HouseLog::getInsertText($rbRs);
+                        HouseLog::logFinAssist($dbh, 'update', $rowCount, $logText,  $uS->username);
+                    }
+                }
+
+                $lastBreakpoints = $breakPoints;
+            }
         }
     }
 }
@@ -1576,28 +1739,108 @@ $faMarkup = '';
 
 if ($uS->IncomeRated) {
 
-    $faTbl = new HTMLTable();
-    $faRs = new Fa_CategoryRs();
-    $faRows = EditRS::select($dbh, $faRs, array());
+    $ratCats = [];
+    $hhs = [];
 
-    $faTbl->addHeaderTr(HTMLTable::makeTh('Household Size') . HTMLTable::makeTh('A') . HTMLTable::makeTh('B') . HTMLTable::makeTh('C') . HTMLTable::makeTh('D'));
-    foreach ($faRows as $r) {
-        $faTbl->addBodyTr(HTMLTable::makeTd($r['HouseHoldSize'], array(
-            'style' => 'text-align:center;'
-        )) . HTMLTable::makeTd('< $' . HTMLInput::generateMarkup(number_format($r['Income_A']), array(
-            'name' => 'faIa[' . $r['idFa_category'] . ']',
-            'size' => '4'
-        ))) . HTMLTable::makeTd('<= $' . HTMLInput::generateMarkup(number_format($r['Income_B']), array(
-            'name' => 'faIb[' . $r['idFa_category'] . ']',
-            'size' => '4'
-        ))) . HTMLTable::makeTd('<= $' . HTMLInput::generateMarkup(number_format($r['Income_C']), array(
-            'name' => 'faIc[' . $r['idFa_category'] . ']',
-            'size' => '4'
-        ))) . HTMLTable::makeTd('> ' . number_format($r['Income_C'])));
+    $faTbl = new HTMLTable();
+    $headerTr = HTMLTable::makeTh('Household Size');
+
+    // preload all rate categories and make header row
+    $stmt = $dbh->query("select distinct Rate_Category from rate_breakpoint ORDER BY `Rate_Category`");
+
+    while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+        $ratCats[] = $r[0];
+        $headerTr .= HTMLTable::makeTh(strtoupper($r[0]));
     }
 
-    $faTbl->addBodyTr(HTMLTable::makeTd('Key:  "<=" means Income Amount is Less Than or Equal To', array(
-        'colspan' => '5'
+    $faTbl->addHeaderTr($headerTr);
+
+    $rbRs = new Rate_BreakpointRS();
+    $rbRows = EditRS::select($dbh, $rbRs, array(), 'and', array($rbRs->Household_Size, $rbRs->Rate_Category));
+
+    $hhSize = 1;
+    $tr = '';
+    $valueCheck = 0;
+    $lastBreakpoint = 0;
+
+    // Breakpoints table
+    foreach ($rbRows as $r) {
+
+        EditRS::loadRow($r, $rbRs);
+
+        if ($hhSize != $rbRs->Household_Size->getStoredVal()) {
+
+            $faTbl->addBodyTr(HTMLTable::makeTd($hhSize, array('style' => 'text-align:center;')) . $tr);
+            $tr = '';
+            $valueCheck = 0;
+            $lastBreakpoint = 0;
+        }
+
+        $attr = '';
+
+        if ($rbRs->Rate_Category->getStoredVal() == $ratCats[count($ratCats)-1]) {
+            // Last Rate
+            $symb = '> $';
+
+            if ($lastBreakpoint == $rbRs->Breakpoint->getStoredVal()) {
+                $bpStyle = '';
+                $attr = 'readonly';
+            } else {
+                $breakpointMessage = "Bad breakpoint value(s). ";
+                $bpStyle = 'color:red;';
+                $attr = 'readonly';
+            }
+
+        } else if ($rbRs->Rate_Category->getStoredVal() == $ratCats[0]) {
+            // First Rate
+            $symb = '< $';
+
+            if ($valueCheck < $rbRs->Breakpoint->getStoredVal()) {
+                $bpStyle = '';
+            } else {
+                $breakpointMessage = "Bad breakpoint value(s). ";
+                $bpStyle = 'color:red;';
+            }
+
+        } else {
+            // Inbetween rates
+            $symb = '<= $';
+
+            if ($valueCheck <= $rbRs->Breakpoint->getStoredVal()) {
+                $bpStyle = '';
+            } else {
+                $breakpointMessage = "Bad breakpoint value(s). ";
+                $bpStyle = 'color:red;';
+            }
+
+        }
+
+        $valueCheck = $rbRs->Breakpoint->getStoredVal();
+        $lastBreakpoint = $rbRs->Breakpoint->getStoredVal();
+
+        $tr .= HTMLTable::makeTd($symb . HTMLInput::generateMarkup($rbRs->Breakpoint->getStoredVal() == 0 ? '' : number_format($rbRs->Breakpoint->getStoredVal()),
+            array('name' => 'rateBp' . $rbRs->Rate_Category->getStoredVal() . '[]', 'size' => '6', 'style' => $bpStyle, $attr => '')));
+
+        $hhSize = $rbRs->Household_Size->getStoredVal();
+
+    }
+
+    // Last one
+    $faTbl->addBodyTr(HTMLTable::makeTd($hhSize, array('style' => 'text-align:center;')) . $tr);
+
+    // breakpoint error message
+    if ($breakpointMessage != '') {
+        $faTbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $breakpointMessage, array('style'=>'color:red;')), array('style'=>'text-align:center;', 'colspan' => (count($ratCats) + 1))));
+    }
+
+    // Increase Household size
+    $faTbl->addBodyTr(HTMLTable::makeTd('Set the total Household Size to: ' . HTMLInput::generateMarkup('', array('name'=>'incrHhSize', 'size'=>'3')), array(
+        'colspan' => (count($ratCats) + 1)
+    )));
+
+    // Increase Rate Categories
+    $faTbl->addBodyTr(HTMLTable::makeTd('Set the total number of rate categories (currently at ' . count($ratCats) . ') to: ' . HTMLInput::generateMarkup('', array('name'=>'incrRateCat', 'size'=>'3')), array(
+        'colspan' => (count($ratCats) + 1)
     )));
 
     // fa calculator
@@ -2372,7 +2615,8 @@ foreach($demogs as $key=>$demog){
 		</div>
 		<div id="statEvents" class="hhk-tdbox hhk-visitdialog"
 			style="font-size: .9em;"></div>
-		<input type="hidden" id='fixedRate' value="<?php RoomRateCategories::Fixed_Rate_Category;?>" />
+		<input type="hidden" id='fixedRate' value="<?php echo(RoomRateCategories::Fixed_Rate_Category); ?>" />
+		<input type="hidden" id='tabIndex' value="<?php echo($tabIndex); ?>" />
 	</div>
 	<!-- div id="contentDiv"-->
 	<script type="text/javascript">

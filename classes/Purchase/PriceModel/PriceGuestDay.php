@@ -271,7 +271,7 @@ GROUP BY s.Visit_Span");
             }
 
             $cbRetire = '';
-            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate) {
+            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate && $r->Rate_Breakpoint_Category->getStoredVal() == '') {
 
                 $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
 
@@ -314,16 +314,16 @@ GROUP BY s.Visit_Span");
         $modelCode = ItemPriceCode::PerGuestDaily;
 
         if ($incomeRated) {
-        	$dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-        			. "(1,'Rate A','','a','$modelCode',5.00,3.00,1.00,0,'a'),"
-        			. "(2,'Rate B','','b','$modelCode',10.00,7.00,3.00,0,'a'),"
-        			. "(3,'Rate C','','c','$modelCode',20.00,15.00,10.00,0,'a'),"
-        			. "(4,'Rate D','','d','$modelCode',25.00,20.00,10.00,0,'a');");
+            $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`, Rate_Breakpoint_Category,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
+                . "(1,'Rate A','a','a','$modelCode',5.00,3.00,1.00,0,'a'),"
+                . "(2,'Rate B','b','b','$modelCode',10.00,7.00,3.00,0,'a'),"
+                . "(3,'Rate C','c','c','$modelCode',20.00,15.00,10.00,0,'a'),"
+                . "(4,'Rate D','d','d','$modelCode',25.00,20.00,10.00,0,'a');");
         }
 
-        $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-        		. "(5,'Flat Rate','','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,0,0,10,'a'), "
-        		. "(6,'Assigned','','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
+        $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
+            . "(5,'Flat Rate','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+            . "(6,'Assigned','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }
 ?>

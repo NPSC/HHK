@@ -47,14 +47,8 @@ class US_Holidays {
             throw new RuntimeException('Holidays are not defined.  ');
         }
 
-        $this->set_list();
-
-        // Insert designated holidays
-        foreach ($dhs[0] as $k => $dh) {
-
-            $this->list[] = array('name'=>strtoupper($k), 'timestamp'=>($dh == '' ? 0 :strtotime($dh)), 'type'=>self::Designated, 'use'=>'1');
-
-        }
+        // Make the list.
+        $this->set_list($dhs[0]);
 
         // Remove unobserved holidays
         foreach ($hols as $h) {
@@ -78,51 +72,61 @@ class US_Holidays {
         return $timestamp;
     }
 
-    private function set_list()
+    private function set_list($dhs)
     {
+        $dhNames = array_keys($dhs);
+
         $this->list = array
         (
-            array
+            0 => array
             (
                 "name" => "New Year's Day",
                         // January 1st, if not Saturday/Sunday
                 "timestamp" => $this->adjust_fixed_holiday(strtotime("first day of january $this->year")),
                  "type" => self::Federal,
                 'use' => '1'
-                ),
-            array
+            ),
+            1 => array
             (
                 "name" => "Birthday of Martin Luther King, Jr.",
                         // 3rd Monday of January
                 "timestamp" => strtotime("third monday ofjanuary $this->year"),
                  "type" => self::Federal,
                 'use' => '1'
-                ),
-            array
+            ),
+            2 => array
             (
                 "name" => "Wasthington's Birthday",
                         // 3rd Monday of February
                 "timestamp" => strtotime("third monday of february $this->year"),
                  "type" => self::Federal,
                 'use' => '1'
-                ),
-            array
+            ),
+            3 => array
             (
                 "name" => "Memorial Day ",
                         // last Monday of May
                 "timestamp" => strtotime("last monday of may $this->year"),
                  "type" => self::Federal,
                 'use' => '1'
-                ),
-            array
+            ),
+            14 => array
+            (
+                "name" => "Juneteenth ",
+                // June 19th, if not Saturday/Sunday
+                "timestamp" => $this->adjust_fixed_holiday(strtotime("june 19 $this->year")),
+                "type" => self::Federal,
+                'use' => '1'
+            ),
+            4 => array
             (
                 "name" => "Independence day ",
                         // July 4, if not Saturday/Sunday
                 "timestamp" => $this->adjust_fixed_holiday(strtotime("july 4 $this->year")),
                  "type" => self::Federal,
                 'use' => '1'
-                ),
-            array
+            ),
+            5 => array
             (
                 "name" => "Labor Day ",
                         // 1st Monday of September
@@ -130,7 +134,7 @@ class US_Holidays {
                  "type" => self::Federal,
                 'use' => '1'
                 ),
-            array
+            6 => array
             (
                 "name" => "Columbus Day ",
                         // 2nd Monday of October
@@ -138,7 +142,7 @@ class US_Holidays {
                  "type" => self::Federal,
                 'use' => '1'
                 ),
-            array
+            7 => array
             (
                 "name" => "Veteran's Day ",
                         // November 11, if not Saturday/Sunday
@@ -146,7 +150,7 @@ class US_Holidays {
                  "type" => self::Federal,
                 'use' => '1'
                 ),
-            array
+            8 => array
             (
                 "name" => "Thanksgiving Day ",
                         // 4th Thursday of November
@@ -154,12 +158,44 @@ class US_Holidays {
                  "type" => self::Federal,
                 'use' => '1'
                 ),
-            array
+            9 => array
             (
                 "name" => "Christmas ",
                         // December 25 every year, if not Saturday/Sunday
                 "timestamp" => $this->adjust_fixed_holiday(strtotime("december 25 $this->year")),
                  "type" => self::Federal,
+                'use' => '1'
+            ),
+            10 => array
+            (
+                "name" => $dhNames[0],
+                // December 25 every year, if not Saturday/Sunday
+                "timestamp" => ($dhs[$dhNames[0]] == '' ? 0 :strtotime($dhs[$dhNames[0]])),
+                "type" => self::Designated,
+                'use' => '1'
+            ),
+            11 => array
+            (
+                "name" => $dhNames[1],
+                // December 25 every year, if not Saturday/Sunday
+                "timestamp" => ($dhs[$dhNames[1]] == '' ? 0 :strtotime($dhs[$dhNames[1]])),
+                "type" => self::Designated,
+                'use' => '1'
+            ),
+            12 => array
+            (
+                "name" => $dhNames[2],
+                // December 25 every year, if not Saturday/Sunday
+                "timestamp" => ($dhs[$dhNames[2]] == '' ? 0 :strtotime($dhs[$dhNames[2]])),
+                "type" => self::Designated,
+                'use' => '1'
+            ),
+            13 => array
+            (
+                "name" => $dhNames[3],
+                // December 25 every year, if not Saturday/Sunday
+                "timestamp" => ($dhs[$dhNames[3]] == '' ? 0 :strtotime($dhs[$dhNames[3]])),
+                "type" => self::Designated,
                 'use' => '1'
             )
         );

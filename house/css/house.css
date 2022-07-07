@@ -168,6 +168,7 @@ div#hideCalendar, div#hideLog {
 div#contentDiv {
     margin-left: 10px;
     margin-right: 10px;
+    margin-bottom: 10px;
 
 }
 .copyright {
@@ -640,4 +641,56 @@ div.dt-buttons .dt-button:hover>span {
 
 .fc .fc-toolbar{
 	flex-wrap: wrap;
+}
+
+#filterSelectors>*:not(:first-child) {
+	margin-left:5px
+}
+
+#filterSelectors option {
+	padding-left:5px;
+	padding-right: 10px;
+}
+
+#filterBtns {
+	text-align: center;
+}
+
+#filterBtns>*:not(:first-child) {
+	margin-left:5px
+}
+
+.filterWrapper {
+	font-size: 0.9em;
+	display: inline-block;
+	padding:10px;
+	min-width: 400px;
+}
+
+/* dataTables table print view */
+.dt-print-view table.display.dataTable td {
+	border-right: 1px solid #ddd;
+}
+
+.dt-print-view table.display.dataTable td:first-child {
+	border-right: 1px solid #ddd;
+	border-left: 1px solid #ddd;
+}
+
+.dt-print-view table.display.dataTable th {
+	border-right: 1px solid #ddd;
+	border-top: 1px solid #ddd;
+	border-bottom: 2px solid #111;
+}
+
+.dt-print-view table.display.dataTable th:first-child {
+	border-right: 1px solid #ddd;
+	border-left: 1px solid #ddd;
+}
+
+/* report data wrapper */
+#hhk-reportWrapper{
+	font-size: .9em;
+	padding: 5px;
+	margin: 10px 0 25px 0;
 }

@@ -415,26 +415,6 @@ CREATE TABLE if not exists `emergency_contact` (
 
 
 -- -----------------------------------------------------
--- Table `fa_category`
--- -----------------------------------------------------
-CREATE TABLE if not exists `fa_category` (
-  `idFa_category` int(11) NOT NULL AUTO_INCREMENT,
-  `idHouse` int(11) NOT NULL DEFAULT '0',
-  `HouseHoldSize` int(11) NOT NULL DEFAULT '0',
-  `Income_A` int(11) NOT NULL DEFAULT '0',
-  `Income_B` int(11) NOT NULL DEFAULT '0',
-  `Income_C` int(11) NOT NULL DEFAULT '0',
-  `Income_D` int(11) NOT NULL DEFAULT '0',
-  `Status` varchar(5) NOT NULL DEFAULT '',
-  `Updated_By` varchar(45) NOT NULL DEFAULT '',
-  `Last_Updated` datetime DEFAULT NULL,
-  `Timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`idFa_category`)
-) ENGINE=InnoDB;
-
-
-
--- -----------------------------------------------------
 -- Table `fbx`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `fbx` (
@@ -469,15 +449,10 @@ CREATE TABLE if not exists `fbx` (
 -- -----------------------------------------------------
 CREATE TABLE if not exists `fin_application` (
   `idFin_application` int(11) NOT NULL AUTO_INCREMENT,
-  `idGuest` int(11) NOT NULL DEFAULT '0',
-  `idReservation` int(11) NOT NULL DEFAULT '0',
   `idRegistration` int(11) NOT NULL DEFAULT '0',
   `Monthly_Income` int(11) NOT NULL DEFAULT '0',
   `HH_Size` int(11) NOT NULL DEFAULT '0',
   `FA_Category` varchar(5) NOT NULL DEFAULT '',
-  `Est_Amount` int(11) NOT NULL DEFAULT '0',
-  `Estimated_Arrival` datetime DEFAULT NULL,
-  `Estimated_Departure` datetime DEFAULT NULL,
   `Approved_Id` varchar(45) NOT NULL DEFAULT '',
   `Notes` text,
   `FA_Applied` varchar(2) NOT NULL DEFAULT '',
@@ -1597,6 +1572,20 @@ ENGINE = InnoDB AUTO_INCREMENT = 10;
 
 
 -- -----------------------------------------------------
+-- Table `rate_breakpoint`
+-- -----------------------------------------------------
+CREATE TABLE if not exists `rate_breakpoint` (
+  `idrate_breakpoint` INT NOT NULL AUTO_INCREMENT,
+  `Household_Size` INT(4) NOT NULL,
+  `Rate_Category` VARCHAR(4) NOT NULL,
+  `Breakpoint` INT NOT NULL DEFAULT 0,
+  `Timestamp` TIMESTAMP NOT NULL DEFAULT Current_Timestamp,
+  PRIMARY KEY (`idrate_breakpoint`))
+ENGINE = InnoDB AUTO_INCREMENT = 10;
+
+
+
+-- -----------------------------------------------------
 -- Table `registration`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `registration` (
@@ -1892,6 +1881,7 @@ CREATE TABLE if not exists `room_rate` (
   `Title` varchar(45) NOT NULL DEFAULT '',
   `Description` varchar(245) NOT NULL DEFAULT '',
   `FA_Category` varchar(2) NOT NULL DEFAULT '',
+  `Rate_Breakpoint_Category` varchar(4) NOT NULL DEFAULT '',
   `PriceModel` VARCHAR(5) NOT NULL DEFAULT '',
   `Reduced_Rate_1` decimal(10,2) NOT NULL DEFAULT '0.00',
   `Reduced_Rate_2` decimal(10,2) NOT NULL DEFAULT '0.00',
@@ -2429,7 +2419,7 @@ ALTER TABLE `emergency_contact`
     ADD INDEX IF NOT EXISTS `Index_idName` (`idName` ASC);
 
 ALTER TABLE `fin_application`
-    ADD INDEX IF NOT EXISTS `Index_idGuest` (`idGuest` ASC);
+    ADD INDEX IF NOT EXISTS `Index_idRegistration` (`idRegistration` ASC);
 
 ALTER TABLE `guest_token`
     ADD INDEX IF NOT EXISTS `Index_idRegistration` (`idRegistration` ASC);
@@ -2572,3 +2562,16 @@ CREATE FUNCTION `datedefaultnow` (dt DateTime)
 RETURNS DATETIME
 DETERMINISTIC NO SQL
 RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end  -- ;
+
+
+--
+-- function `fiscal_year`
+--
+DROP function IF EXISTS `fiscal_year`; --;
+
+CREATE FUNCTION `fiscal_year` (dt DateTime, adjust int)
+RETURNS Datetime
+NO SQL DETERMINISTIC
+RETURN DATE_ADD(dt, INTERVAL adjust MONTH)  --;
+
+

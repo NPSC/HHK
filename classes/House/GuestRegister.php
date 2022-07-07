@@ -23,6 +23,8 @@ use HHK\SysConst\CalEventKind;
 class GuestRegister {
 
     protected $noAssocId;
+    protected $ribbonColors;
+    protected $robbonBottomColors;
     const WAITLIST_RESC_ID = '9999';
 
     public static function getCalendarRescs(\PDO $dbh, $startDate, $endDate, $timezone, $rescGroupBy) {
@@ -151,6 +153,12 @@ where ru.idResource_use is null
             // Fix room title
             $r['title'] = htmlspecialchars_decode($r['title'], ENT_QUOTES);
 
+            // Room color
+            if ($uS->Room_Colors == FALSE) {
+                $r['bgColor'] =  '';
+                $r['textColor'] = '';
+            }
+
             $rescs[] = $r;
         }
 
@@ -202,13 +210,11 @@ where ru.idResource_use is null
         // get list of hospital colors
         $hospitals = $this->getHospitals($dbh);
 
-        $nameColors = $this->getGuestColors($dbh, $uS->GuestNameColor, $hospitals);
+        $this->getRibbonColors($dbh, $hospitals);
 
         // Get cleaning holidays for the current year(s)
         $beginHolidays = new US_Holidays($dbh, $beginDate->format('Y'));
         $endHolidays = new US_Holidays($dbh, $endDate->format('Y'));
-
-
         $nonClean = Reservation_1::loadNonCleaningDays($dbh);
 
 
@@ -275,7 +281,6 @@ where ru.idResource_use is null
                 $this->addVisitBlackouts($events, $myHolidays, $dtendDate, $timezone, $r["idResource"], $nonClean);
             }
 
-            $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->RegColors);
 
             // show event on first day of calendar
             if ($endDT->format('Y-m-d') == $beginDate->format('Y-m-d') && $extended) {
@@ -307,7 +312,7 @@ where ru.idResource_use is null
             }
 
             // Set ribbon color
-            $this->setRibbonColors($uS->GuestNameColor, $r, $s, $nameColors);
+            $this->setRibbonColors($r, $s);
 
             //
             $s['id'] = 'v' . $r['id'];
@@ -327,7 +332,6 @@ where ru.idResource_use is null
             $s['fullName'] = htmlspecialchars_decode($r['Name_Full'], ENT_QUOTES);
             $s['visitStatus'] = $statusText;
             $s['vStatusCode'] = $r['Visit_Status'];
-            $s['backBorderColor'] = $backgroundBorderColor;
             $s['resourceEditable'] = 0;
             $event = new Event($s, $timezone);
             $events[] = $event->toArray();
@@ -548,20 +552,17 @@ where ru.idResource_use is null
                 $clDate->setTime(10, 0, 0);
             }
 
-            //$endDT->sub(new \DateInterval("P1D"));
-
             // Waitlist omit background event.
-            if ($r['idResource'] != 0 && $r['idHospital'] > 0) {
-                $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->RegColors);
-            }
+//            if ($r['idResource'] != 0 && $r['idHospital'] > 0) {
+//                $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->HospitalColorBar);
+//            }
 
             $s['id'] = 'r' . $eventId++;
             $s['idReservation'] = $r['idReservation'];
-//            $s['className'] = 'hhk-schrm';
             $s['borderColor'] = '#111';
 
-            // Set ribbon color  htmlspecialchars_decode($r['title'], ENT_QUOTES);
-            $this->setRibbonColors($uS->GuestNameColor, $r, $s, $nameColors);
+            // Set ribbon color
+            $this->setRibbonColors($r, $s);
 
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
@@ -608,27 +609,30 @@ where ru.idResource_use is null
     }
 
 
-    protected function addBackgroundEvent($r, $hospitals, $regColors) {
+//     protected function addBackgroundEvent($r, $hospitals, $hospitalColors) {
 
-        $backgroundBorderColor = '';
+//         $uS = Session::getInstance();
+//         $backgroundBorderColor = '';
 
-            // Use Association colors?
-        if (strtolower($regColors) == 'hospital') {
+//         $hospitalColors = $uS->RibbonBottomColor || strtolower($uS->GuestNameColor) == 'hospital';
 
-            if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
+//             // Use Association colors?
+//         if ($hospitalColors) {
 
-            	if (isset($hospitals[$r['idAssociation']])) {
-            	    $backgroundBorderColor = $hospitals[$r['idAssociation']]['Background_Color'];
-            	}
+//             if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0) {
 
-            } else if (isset($hospitals[$r['idHospital']])) {
-                $backgroundBorderColor = $hospitals[$r['idHospital']]['Background_Color'];
-            }
+//             	if (isset($hospitals[$r['idAssociation']])) {
+//             	    $backgroundBorderColor = $hospitals[$r['idAssociation']]['Background_Color'];
+//             	}
 
-        }
+//             } else if (isset($hospitals[$r['idHospital']])) {
+//                 $backgroundBorderColor = $hospitals[$r['idHospital']]['Background_Color'];
+//             }
 
-        return $backgroundBorderColor;
-    }
+//         }
+
+//         return $backgroundBorderColor;
+//     }
 
     protected function addVisitBlackouts(&$events, $myHolidays, $dtendDate, $timezone, $idResc, $nonClean) {
 
@@ -772,24 +776,28 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
         }
     }
 
-    protected function getGuestColors(\PDO $dbh, $guestDemographic, $hospitals) {
+    protected function getRibbonColors(\PDO $dbh, $hospitals) {
 
-        $nameColors = array();
+        $uS = Session::getInstance();
+        $this->ribbonColors = array();
+        $this->robbonBottomColors = [];
 
-        if (strtolower($guestDemographic) == 'hospital') {
+        // Ribbon backgrounds
+        $demogs = readGenLookupsPDO($dbh, $uS->RibbonColor);
+
+        if (strtolower($uS->RibbonColor) == 'hospital') {
 
             foreach($hospitals as $h) {
 
-                $nameColors[$h['idHospital']] = array(
+                $this->ribbonColors[$h['idHospital']] = array(
                     't' => trim(strtolower($h['Text_Color'])),
                     'b' => trim(strtolower($h['Background_Color']))
+
                 );
             }
 
-        // Get guest name colorings
-        } else if ($guestDemographic != '') {
-
-            $demogs = readGenLookupsPDO($dbh, $guestDemographic);
+            // Get guest name colorings
+        } else if ($uS->RibbonColor != '') {
 
             foreach ($demogs as $d) {
 
@@ -798,7 +806,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
                     // Split colors out of CDL
                     $splits = explode(',', $d[2]);
 
-                    $nameColors[$d[0]] = array(
+                    $this->ribbonColors[$d[0]] = array(
                         't' => trim(strtolower($splits[0])),
                         'b' => isset($splits[1]) ? trim(strtolower($splits[1])) : 'transparent'
                     );
@@ -806,7 +814,33 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
             }
         }
 
-        return $nameColors;
+
+        // Ribbon bottom-bars
+        $demogs = readGenLookupsPDO($dbh, $uS->RibbonBottomColor);
+
+        if (strtolower($uS->RibbonBottomColor) == 'hospital') {
+
+            foreach($hospitals as $h) {
+
+                $this->robbonBottomColors[$h['idHospital']] = trim(strtolower($h['Background_Color']));
+
+            }
+
+            // Get guest name colorings
+        } else if ($uS->RibbonBottomColor != '') {
+
+            foreach ($demogs as $d) {
+
+                if ($d[2] != '') {
+
+                    // Split colors out of CDL
+                    $splits = explode(',', $d[2]);
+
+                    $this->robbonBottomColors[$d[0]] = isset($splits[1]) ? trim(strtolower($splits[1])) : '';
+
+                }
+            }
+        }
 
     }
 
@@ -830,30 +864,53 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
         return $hospitals;
     }
 
-    protected function setRibbonColors($colorIndex, $r, &$s, $nameColors) {
+    protected function setRibbonColors($r, &$s) {
+
+        $uS = Session::getInstance();        //$s['backBorderColor'] = $this->addBackgroundEvent($r, $hospitals);
 
         // Set ribbon color
-        if ($colorIndex != '') {
+        if ($uS->RibbonColor != '') {
 
-            if (isset($r[$colorIndex]) && isset($nameColors[$r[$colorIndex]])){
+            if (isset($r[$uS->RibbonColor]) && isset($this->ribbonColors[$r[$uS->RibbonColor]])){
 
                 // Use Demographics colors
-                $s['backgroundColor'] = $nameColors[$r[$colorIndex]]['b'];
-                $s['textColor'] = $nameColors[$r[$colorIndex]]['t'];
+                $s['backgroundColor'] = $this->ribbonColors[$r[$uS->RibbonColor]]['b'];
+                $s['textColor'] = $this->ribbonColors[$r[$uS->RibbonColor]]['t'];
 
-            } else if (isset($nameColors[$r['idHospital']])) {
+            } else if (isset($this->ribbonColors[$r['idHospital']])) {
 
                 // Use Hospital colors
-                if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0 && isset($nameColors[$r['idAssociation']])) {
+                if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0 && isset($this->ribbonColors[$r['idAssociation']])) {
                     // Association color overrides the hospital color.
-                    $s['backgroundColor'] = $nameColors[$r['idAssociation']]['b'];
-                    $s['textColor'] = $nameColors[$r['idAssociation']]['t'];
+                    $s['backgroundColor'] = $this->ribbonColors[$r['idAssociation']]['b'];
+                    $s['textColor'] = $this->ribbonColors[$r['idAssociation']]['t'];
                 } else {
-                    $s['backgroundColor'] = $nameColors[$r['idHospital']]['b'];
-                    $s['textColor'] = $nameColors[$r['idHospital']]['t'];
+                    $s['backgroundColor'] = $this->ribbonColors[$r['idHospital']]['b'];
+                    $s['textColor'] = $this->ribbonColors[$r['idHospital']]['t'];
                 }
             }
         }
+
+        // Set ribbon-bar color
+        if ($uS->RibbonBottomColor != '') {
+
+            if (isset($r[$uS->RibbonBottomColor]) && isset($this->robbonBottomColors[$r[$uS->RibbonBottomColor]])){
+
+                // Use Demographics colors
+                $s['backBorderColor'] = $this->robbonBottomColors[$r[$uS->RibbonBottomColor]];
+
+            } else if (isset($this->robbonBottomColors[$r['idHospital']])) {
+
+                // Use Hospital colors
+                if ($r['idAssociation'] != $this->noAssocId && $r['idAssociation'] > 0 && isset($this->robbonBottomColors[$r['idAssociation']])) {
+                    // Association color overrides the hospital color.
+                    $s['backBorderColor'] = $this->robbonBottomColors[$r['idAssociation']];
+                } else {
+                    $s['backBorderColor'] = $this->robbonBottomColors[$r['idHospital']];
+                }
+            }
+        }
+
     }
 
     protected function isHexColor(string $color){

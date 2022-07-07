@@ -63,8 +63,7 @@ class ResourceView {
     ifnull(rm.Title, '') as `Room`,
     r.Util_Priority as `Priority`,
     r.Background_Color as `Bkgrd Color`,
-    r.Text_Color as `Text Color`,
-    r.Border_Color as `Border Color`
+    r.Text_Color as `Text Color`
 from
     resource r
         left join
@@ -119,7 +118,6 @@ order by r.Title;");
             'Priority' => '',
             'Bkgrd Color' => '',
             'Text Color' => '',
-            'Border Color' => '',
             'status' => ''
             );
 
@@ -838,7 +836,6 @@ order by r.Title;");
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getUtilPriority(), array('id'=>'txtRePriority', 'class'=>$cls, 'size'=>'7')), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Background_Color->getStoredVal(), array('id'=>'txtReBgc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Text_Color->getStoredVal(), array('id'=>'txtReTc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Border_Color->getStoredVal(), array('id'=>'txtReBc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
                 . $partition . $stat;
 
         $rescAttr = new ResourceAttribute($dbh, $resc->getIdResource());

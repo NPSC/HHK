@@ -51,6 +51,7 @@ class CurrentAccount {
     protected $unpaidMOA = 0;
     protected $curentTaxItems = array();
     protected $taxExemptRoomFees = 0;
+    protected $roomFeesToCharge = 0;
 
     // Visit Fee Balance
     protected $vfeeBal = 0;
@@ -90,6 +91,8 @@ class CurrentAccount {
         $this->setVisitFeeCharged($visitCharge->getVisitFeeCharged());
         $this->setAdditionalCharge($visitCharge->getItemInvCharges(ItemId::AddnlCharge));
         $this->setUnpaidMOA($visitCharge->getItemInvPending(ItemId::LodgingMOA));
+
+        $this->setRoomFeesToCharge($visitCharge->getFeesToPay());
 
         // Reimburse vat?
         foreach($vat->getTimedoutTaxItems(ItemId::Lodging, $visitCharge->getIdVisit(), $visitCharge->getNightsStayed()) as $t) {
@@ -182,8 +185,14 @@ class CurrentAccount {
         return $this->unpaidMOA;
     }
 
+    public function getRoomFeesToCharge() {
+        return $this->roomFeesToCharge;
+    }
+
+
+
     public function getTotalCharged() {
-		
+
         return $this->getRoomCharge() + $this->getItemTaxAmt(ItemId::Lodging, $this->getRoomFeeBalance())
                 + $this->getAdditionalCharge() + $this->getAdditionalChargeTax()
                 + $this->getUnpaidMOA()
@@ -321,6 +330,11 @@ class CurrentAccount {
 
     public function setAddnlGuestNites($addnlGuestNites) {
         $this->addnlGuestNites = $addnlGuestNites;
+        return $this;
+    }
+
+    public function setRoomFeesToCharge($toCharge) {
+        $this->roomFeesToCharge = $toCharge;
         return $this;
     }
 

@@ -74,18 +74,22 @@ if (isset($_POST["btnSiteCnf"]) || isset($_POST["btnLocalAuth"])) {
 
     $notymsg = SiteConfig::saveSysConfig($dbh, $_POST);
 
+    if (isset($_POST["btnLocalAuth"])) {
+        $tabIndex = 3;
+
+    }
 }
 
 if (isset($_POST["btnLabelCnf"])) {
 
-    $tabIndex = 5;
+    $tabIndex = 6;
 
     $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }
 
 if (isset($_POST["btnExtCnf"]) && $serviceFile != '') {
 
-    $tabIndex = 7;
+    $tabIndex = 8;
 
 
     try {
@@ -116,7 +120,7 @@ if (isset($_POST['btnUpdate'])) {
 
 // Zip code file
 if (isset($_FILES['zipfile'])) {
-    $tabIndex = 4;
+    $tabIndex = 5;
 
     try {
 
@@ -126,7 +130,7 @@ if (isset($_FILES['zipfile'])) {
 
         SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Loaded. ' . $resultMsg, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
 
-    } catch (Exception $hex) {
+    } catch (\Exception $hex) {
         $resultMsg .= $hex->getMessage();
         SiteLog::writeLog($dbh, 'Zip', 'Zip Code File Failed. ' . $resultMsg, CodeVersion::VERSION . '.' . CodeVersion::BUILD);
     }
@@ -212,7 +216,7 @@ try {
 }
 
 if (isset($_POST['btnHoliday'])) {
-    $tabIndex = 3;
+    $tabIndex = 4;
     $holResultMessage = SiteConfig::saveHolidays($dbh, $_POST, $uS->username);
 }
 

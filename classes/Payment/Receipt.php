@@ -1487,6 +1487,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
 
         // Find patient name
         $patientName = '';
+        $diags = [];
         if ($idPsg > 0){
 
             $pstmt = $dbh->query("select n.Name_First, n.Name_Last from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
@@ -1513,7 +1514,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $rec .= HTMLContainer::generateMarkup('h2', 'Comprehensive Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
 
 
-        $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $idPsg, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
+        $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
 
         $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'), array('style'=>'margin-top:25px;'));
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox'));
@@ -1597,12 +1598,28 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
         // Find patient name
         $patientName = '';
+        $diags = [];
         if ($idPsg > 0){
 
-            $pstmt = $dbh->query("select n.Name_First, n.Name_Last from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
+            $pstmt = $dbh->query("SELECT
+    n.Name_First, n.Name_Last, ifnull(g.Description, '') as Diagnosis, ifnull(g2.Description, '') as Diagnosis2
+FROM
+	visit v
+        LEFT JOIN
+    hospital_stay hs ON v.idHospital_stay = hs.idHospital_stay
+		LEFT JOIN
+    name n on hs.idPatient = n.idName
+		LEFT JOIN
+	gen_lookups g on g.Table_Name = 'Diagnosis' and g.Code = hs.Diagnosis
+		LEFT JOIN
+	gen_lookups g2 on g2.Table_Name = 'Diagnosis' and g2.Code = hs.Diagnosis2
+WHERE
+    v.idVisit = $idVisit");
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
+                $diags[1] = $rows[0]['Diagnosis'];
+                $diags[2] = $rows[0]['Diagnosis2'];
             }
         }
 
@@ -1623,7 +1640,7 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
         $rec .= HTMLContainer::generateMarkup('h2', 'Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
 
-        $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $idPsg, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
+        $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
 
         $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'), array('style'=>'clear:both;margin-top:25px;'));
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox'));
@@ -1644,13 +1661,23 @@ where i.Deleted = 0 and i.Order_Number = $idVisit order by il.Invoice_Id, ilt.Or
 
     }
 
-    protected static function makeSummaryDiv($guestName, $patientName, $hospital, $idPsg, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $totalNights) {
+    protected static function makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, $MOABalance, $totalNights) {
 
+        $uS = Session::getInstance();
         $tbl = new HTMLTable();
 
         $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('memberType', 'visitor', 'Guest') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($guestName));
         $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientName));
-        //$tbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'psgLabel', 'Patient Support Group') . ' Id: ' . $idPsg, array('colspan'=>'2', 'style'=>'font-size:.8em;')));
+
+        // Show diagnosis
+        if ($uS->ShowDiagOnStmt && count($diags) > 0 && $diags[1] != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('statement', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($diags[1]));
+
+            if (count($diags) > 1 && $diags[2] != '') {
+                $tbl->addBodyTr(HTMLTable::makeTd('2nd '.$labels->getString('statement', 'diagnosis', 'Diagnosis') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($diags[2]));
+            }
+        }
+
         $tbl->addBodyTr(HTMLTable::makeTd('Provider:', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospital));
 
         // Set up balance prompt ..

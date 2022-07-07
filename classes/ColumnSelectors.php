@@ -177,8 +177,8 @@ class ColumnSelectors {
     public function getRanges() {
 
         return HTMLContainer::generateMarkup('div',
-            HTMLInput::generateMarkup('Select All', array('type'=>'button', 'id'=>'cbColSelAll', 'style'=>'margin-right:10px;'))
-          . HTMLInput::generateMarkup('Clear All', array('type'=>'button', 'id'=>'cbColClearAll'))
+            HTMLInput::generateMarkup('Select All', array('type'=>'button', 'id'=>'cbColSelAll', 'style'=>'margin-right:10px;', 'class'=>"ui-button ui-corner-all ui-widget"))
+          . HTMLInput::generateMarkup('Clear All', array('type'=>'button', 'id'=>'cbColClearAll', 'class'=>'ui-button ui-corner-all ui-widget'))
         , ['style'=>'margin-top: 1em']);
     }
 

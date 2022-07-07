@@ -322,31 +322,61 @@ class FinAssistance {
 
     public static function getAssistanceCategory(\PDO $dbh, $income, $hhSize) {
 
-        if ($hhSize > 8) {
-            $hhSize = 8;;
+        $maxHhSize = 1;
+        $ratCats = [];
+
+        $stmt = $dbh->query("Select max(Household_Size) from rate_breakpoint;");
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        if (count($rows) > 0) {
+            $maxHhSize = $rows[0][0];
         }
 
-        $query = "Select Income_A, Income_B, Income_C from fa_category where HouseHoldSize = :size";
+        if ($hhSize > $maxHhSize) {
+            $hhSize = $maxHhSize;
+        }
+
+        // preload all rate categories
+        $stmt = $dbh->query("select distinct Rate_Category from rate_breakpoint ORDER BY `Rate_Category`");
+
+        while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
+            $ratCats[] = $r[0];
+        }
+
+
+        $query = "Select * from rate_breakpoint where Household_Size = :size order by Rate_Category";
         $stmt = $dbh->prepare($query);
         $stmt->execute(array(':size'=>$hhSize));
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $bpCat = '';
         $cat = '';
 
-        if (count($rows) == 1) {
-            $r = $rows[0];
+        foreach ($rows as $r) {
 
-            if ($income < $r['Income_A']) {
-                $cat = 'a';
-            } else if ($income <= $r['Income_B']) {
-                $cat = 'b';
-            } else if ($income <= $r['Income_C']) {
-                $cat = 'c';
-            } else {
-                $cat = 'd';
+            if ($ratCats[0] == $r['Rate_Category'] && $income < $r['Breakpoint']) {
+                // first rate category
+                $bpCat = $r['Rate_Category'];
+                break;
+            } else if ($ratCats[count($ratCats)-1] == $r['Rate_Category'] && $income > $r['Breakpoint']) {
+                // Last rate category
+                $bpCat = $r['Rate_Category'];
+                break;
+            } else if ($income <= $r['Breakpoint']) {
+                // All the rest
+                $bpCat = $r['Rate_Category'];
+                break;
             }
-        } else {
-            throw new RuntimeException('Financial Assistance level not found.');
+        }
+
+        if ($bpCat != '') {
+
+            $stmt = $dbh->query("SELECT `FA_Category` FROM `room_rate` WHERE `Status` = 'a' AND Rate_Breakpoint_Category = '$bpCat'");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            if (count($rows) > 0) {
+                $cat = $rows[0]['FA_Category'];
+            }
         }
 
         return $cat;

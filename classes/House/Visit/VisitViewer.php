@@ -915,7 +915,7 @@ class VisitViewer {
 
 
         // Special class for current balance.
-        $balAttr = array('style'=>'border-top: solid 3px #2E99DD;text-align:right;');
+        $balAttr = array();
         $feesTitle = "";
 
         if ($curAccount->getDueToday() > 0) {
@@ -955,7 +955,19 @@ class VisitViewer {
                             'data-vfee'=>number_format($curAccount->getVfeeBal(), 2, '.', ''),
                             'data-totbal'=>number_format($curAccount->getDueToday(), 2, '.', '')))
                         , $balAttr)
+            , array('style'=>'border: solid 2px #2E99DD;text-align:right;')
         );
+
+        // Total Due at end of visit
+        if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn) {
+
+            $finalCharge = $curAccount->getTotalCharged() + $curAccount->getRoomFeesToCharge() - $curAccount->getTotalPaid();
+
+            $tbl2->addBodyTr(
+                HTMLTable::makeTd('Exp\'d payment at checkout:', array('class'=>'tdlabel'))
+                . HTMLTable::makeTd('$' . HTMLContainer::generateMarkup('span', number_format($finalCharge, 2)))
+            );
+        }
 
         return $tbl2->generateMarkup() ;
 

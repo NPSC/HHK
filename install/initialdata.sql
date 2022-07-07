@@ -161,6 +161,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Holiday', '1', 'Martin Luther King Birthday','','',0),
 ('Holiday', '2', 'Washington Birthday','','',0),
 ('Holiday', '3', 'Memorial Day','','',0),
+('Holiday', '14', 'Juneteenth', '','',0),
 ('Holiday', '4', 'Independance Day','','',0),
 ('Holiday', '5', 'Labor Day','','',0),
 ('Holiday', '6', 'Columbus Day','','',0),
@@ -364,10 +365,6 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 
 ('Reg_Agreement', 'en', 'English', '1','',0),
 
-('Reg_Colors', 'r', 'Room','','',0),
-('Reg_Colors', 'hospital', 'Hospital','','',0),
-('Reg_Colors', '', 'Default','','',0),
-
 ('registration', 'Sig_Card', 'Signature', 'y', 'm', 10),
 ('registration', 'Pamphlet', 'Pamphlet', 'y', 'm', 20),
 ('registration', 'Referral', 'Referral', 'y', 'm', 310),
@@ -386,9 +383,11 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Resource_Status','oos','Out of Service','','',0),
 ('Resource_Status','un','Unavailable','','',0),
 
-
 ('Resource_Type','rmtroom','Remote Room','','',0),
 ('Resource_Type','room','Room','','',0),
+
+('RibbonColors', '','None', '', '', 0),
+('RibbonColors', 'hospital','Hospital', '', '', 1),
 
 ('Role_Codes','10','Admin User','','',0),
 ('Role_Codes','100','Web User','','',0),
@@ -580,7 +579,6 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('Guest_Register_Email','','ea','ha','','If present, a guest register is sent here once a day (also must edit the cron job)','',1),
 ('Guest_Track_Address','','ea','ha','','If present, these addresess receive all notices of check-in, out, room change, etc.','',1),
 ('GuestAddr','true','b','g','','Enable guest address','',1),
-('GuestNameColor','','s','c','','Enable Guest demographic to drive guest name background color','Demographics',1),
 ('HHK_Secret_Key','T3VqSDRZc3FrNlRHMDkxQXBMNzg4THRCTm4vOXlUOGkyeG9ZbHpWT2Y0K0F5elQvZDYyUXFTNWFTRWZyL2pQUg==','op','v','','Recapcha Secret Key (obfruscated)','',0),
 ('HHK_Site_Key','6Lfc-U4UAAAAAEiXQX1-KCyGz4JAYLglQsj5g4Dh','s','v','','Recapcha Site Key','',0),
 ('HouseKeepingEmail','','ea','ha','','This address receives all room turn-over notices','',1),
@@ -628,7 +626,6 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('receiptLogoWidth','150','i','f','','in px','',1),
 ('ReferralAgent','true','b','hf','','Track referral agents/social workers','',1),
 ('referralFormEmail', '', 's', 'ha', '', 'Notify this address when a new referral form is submitted', '','1'),
-('RegColors','hospital','lu','c','','Calendar page ribbon colors based on hospital or room','Reg_Colors',1),
 ('RegForm','1','i','h','',' Registration form style (1 or 2)','',1),
 ('RegFormNoRm','false','b','h','','Do not show the room number on the registration form before check-in','',1),
 ('RegSubj','Volunteer Registration','s','v','','Volunteer Registration email subject line','',1),
@@ -636,6 +633,9 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ReplyTo','','ea','g','','The reply to address for any email sent to guests.','',1),
 ('ResvEarlyArrDays','2','i','h','','Number of days before reservation to show check-in button on reservation chooser','',1),
 ('ReturnAddress','','ea','v','','Return address for automatic emails to volunteers','',1),
+('RibbonBottomColor', '', 'lu', 'c', '', 'Ribbon bottom-bar color source', 'RibbonColors', '1'),
+('RibbonColor','hospital','lu','c','','Ribbon Background color source','RibbonColors',1),
+('Room_colors', 'false', 'b', 'c','', 'Use Room Color for Rooms column on calendar', '', '1'),
 ('RoomPriceModel','d','lu','h','','Room rate price model - Do not change!','Price_Model',0),
 ('RoomRateDefault','e','s','h','','Use the Resource Builder','',1),
 ('RoomsPerPatient','2','i','h','','Number of simultaneous rooms per patient allowed','',1),
@@ -647,6 +647,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowBirthDate','true','b','h','','Show birthdate for patients and guests','',1),
 ('ShowCreatedDate','true','b','h','','Show the Created Date in Register page tabs lists','',1),
 ('ShowDemographics','false','b','h','','Show demographics selectors on Check in and Reservation pages','',1),
+('ShowDiagOnStmt', 'false', 'b', 'h', '', 'Show the patient diagnoses on the statements', '', '1'),
 ('ShowDiagTB','false','b','h','','Show the diagnosis textbox (in addition to the diagnosis selector)','',1),
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
@@ -1016,19 +1017,42 @@ REPLACE INTO `hospital` (`idHospital`,`Title`,`Type`,`Status`) values
 
 
 --
--- Dumping data for table `fa_category`
+-- Dumping data for table `rate_breakpoint`
 --
-REPLACE INTO `fa_category` (`idFa_category`, `HouseHoldSize`, `Income_A`, `Income_B`, `Income_C`, `Income_D`, `Status`) VALUES
-('1', '1', '959', '1724', '2584', '2585', 'a'),
-('2', '2', '1294', '2327', '3489', '3490', 'a'),
-('3', '3', '1953', '3091', '4393', '3394', 'a'),
-('4', '4', '2355', '3728', '5298', '5299', 'a'),
-('5', '5', '2757', '4365', '6202', '6203', 'a'),
-('6', '6', '3159', '5001', '7107', '7108', 'a'),
-('7', '7', '3561', '5637', '7716', '8012', 'a'),
-('8', '8', '3983', '6274', '8587', '8917', 'a');
+Replace INTO `rate_breakpoint` (`idrate_breakpoint`, `Household_Size`, `Rate_Category`, `Breakpoint`, `Timestamp`) VALUES
+	(1, 1, 'a', 959, '2022-06-16 10:38:43'),
+	(2, 1, 'b', 1724, '2022-06-16 10:40:02'),
+	(3, 1, 'c', 2584, '2022-06-16 10:40:02'),
+	(4, 1, 'd', 2584, '2022-06-16 10:40:02'),
+	(5, 2, 'a', 1294, '2022-06-16 10:48:14'),
+	(6, 2, 'b', 2327, '2022-06-16 10:48:14'),
+	(7, 2, 'c', 3449, '2022-06-16 10:48:14'),
+	(8, 2, 'd', 3449, '2022-06-16 10:48:14'),
+	(9, 3, 'a', 1953, '2022-06-16 10:48:14'),
+	(10, 3, 'b', 3091, '2022-06-16 10:48:14'),
+	(11, 3, 'c', 4393, '2022-06-16 10:48:14'),
+	(12, 3, 'd', 4393, '2022-06-16 10:48:14'),
+	(13, 4, 'a', 2355, '2022-06-16 10:48:14'),
+	(14, 4, 'b', 3728, '2022-06-16 10:48:14'),
+	(15, 4, 'c', 5298, '2022-06-16 10:48:14'),
+	(16, 4, 'd', 5298, '2022-06-16 10:48:14'),
+	(17, 5, 'a', 2757, '2022-06-16 10:48:14'),
+	(18, 5, 'b', 4365, '2022-06-16 10:48:14'),
+	(19, 5, 'c', 6202, '2022-06-16 10:48:14'),
+	(20, 5, 'd', 6202, '2022-06-16 10:48:14'),
+	(21, 6, 'a', 3159, '2022-06-16 10:48:14'),
+	(22, 6, 'b', 5001, '2022-06-16 10:48:14'),
+	(23, 6, 'c', 7107, '2022-06-16 10:48:14'),
+	(24, 6, 'd', 7107, '2022-06-16 10:48:14'),
+	(25, 7, 'a', 3561, '2022-06-16 10:48:14'),
+	(26, 7, 'b', 5637, '2022-06-16 10:48:14'),
+	(27, 7, 'c', 7716, '2022-06-16 10:48:14'),
+	(28, 7, 'd', 7716, '2022-06-16 10:48:14'),
+	(29, 8, 'a', 3983, '2022-06-16 10:48:14'),
+	(30, 8, 'b', 6274, '2022-06-16 10:48:14'),
+	(31, 8, 'c', 8587, '2022-06-16 10:48:14'),
+	(32, 8, 'd', 8587, '2022-06-16 10:48:14');
 -- ;
-
 
 
 --

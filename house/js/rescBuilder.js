@@ -234,10 +234,11 @@ function saveResource(idresc, type, clas) {
         }
     });
 }
+
 $(document).ready(function () {
     "use strict";
 
-    var tabIndex = parseInt('<?php echo $tabIndex; ?>');
+    var tabIndex = parseInt($('#tabIndex').val());
     $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
 
     $('#txtFaIncome, #txtFaSize').change(function () {

@@ -46,15 +46,15 @@ class PriceBasic extends AbstractPriceModel {
 
         $modelCode = ItemPriceCode::Basic;
 
-        $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`Description`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-                . "(6,'Assigned','','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
+        $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
+                . "(6,'Assigned','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 
     protected function newRateMarkup(&$fTbl) {
 
         // New rate
         // No new rates are possible
-        return;
+        return '';
     }
 
     public function saveEditMarkup(\PDO $dbh, $post, $username) {

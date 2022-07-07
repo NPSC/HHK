@@ -19,6 +19,7 @@ class Room_RateRS extends AbstractTableRS {
     public $Title;    // varchar(45) NOT NULL DEFAULT '',
     public $Description;    // varchar(245) NOT NULL DEFAULT '',
     public $FA_Category;    // varchar(2) NOT NULL DEFAULT '',
+    public $Rate_Breakpoint_Category;  // varchar(4) NOT NULL DEFAULT '',
     public $PriceModel;  // VARCHAR(5) NOT NULL DEFAULT ''
     public $Reduced_Rate_1;    // decimal(10,2) NOT NULL DEFAULT '0.00',
     public $Reduced_Rate_2;    // decimal(10,2) NOT NULL DEFAULT '0.00',
@@ -34,6 +35,7 @@ class Room_RateRS extends AbstractTableRS {
         $this->Title = new DB_Field('Title', '', new DbStrSanitizer(45), TRUE, TRUE);
         $this->Description = new DB_Field('Description', '', new DbStrSanitizer(245), TRUE, TRUE);
         $this->FA_Category = new DB_Field('FA_Category', '', new DbStrSanitizer(2), TRUE, TRUE);
+        $this->Rate_Breakpoint_Category = new DB_Field('Rate_Breakpoint_Category', '', new DbStrSanitizer(4), TRUE, TRUE);
         $this->PriceModel = new DB_Field('PriceModel', '', new DbStrSanitizer(5), TRUE, TRUE);
         $this->Reduced_Rate_1 = new DB_Field('Reduced_Rate_1', 0, new DbDecimalSanitizer(), TRUE, TRUE);
         $this->Reduced_Rate_2 = new DB_Field('Reduced_Rate_2', 0, new DbDecimalSanitizer(), TRUE, TRUE);

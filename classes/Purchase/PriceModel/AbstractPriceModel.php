@@ -194,11 +194,11 @@ abstract class AbstractPriceModel {
     public function tiersDetailMarkup($r, &$tbl, $tiers, $startDT, $separator, $totalGuestNites) {
 
     	$sDate = new \DateTime($startDT->format('Y-m-d'));
-    	
+
     	foreach ($tiers as $t) {
-    		
+
     		$days = $t['days'];
-    		   		
+
     		while ($days > 0) {
 	    		$tbl->addBodyTr(
 	    				HTMLTable::makeTd($r['vid'] . '-' . $r['span'], array('style'=>'text-align:center;' . $separator))
@@ -209,7 +209,7 @@ abstract class AbstractPriceModel {
 
 	    		$separator = '';
 	    		$sDate->add(new \DateInterval('P1D'));
-	    		
+
 	    		$days--;
     		}
     	}
@@ -218,15 +218,15 @@ abstract class AbstractPriceModel {
     }
 
     public function itemDetailMarkup($r, &$tbl) {
-    	
+
     	$tbl->addBodyTr(
     			HTMLTable::makeTd($r['orderNum'], array('style'=>'text-align:center;'))
     			.HTMLTable::makeTd($r['desc'], array('style'=>'text-align:right;'))
     			.HTMLTable::makeTd($r['date'])
     			.HTMLTable::makeTd($r['amt'], array('style'=>'text-align:right;')));
-    	
+
     }
-    
+
     public function itemMarkup($r, &$tbl) {
 
         $tbl->addBodyTr(
@@ -247,18 +247,18 @@ abstract class AbstractPriceModel {
     			.HTMLTable::makeTh($labels->getString('statement', 'rateHeader', 'Rate'))
     			.HTMLTable::makeTh('Nights')
     			.HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
-    	
+
     }
-    
+
     public function rateDetailHeaderMarkup(&$tbl, $labels) {
     	$tbl->addHeaderTr(
     			HTMLTable::makeTh('Visit Id')
     			.HTMLTable::makeTh('Room')
     			.HTMLTable::makeTh('Start')
     			.HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
-    	
+
     }
-    
+
     public function rateTotalMarkup(&$tbl, $label, $numberNites, $totalAmt, $guestNites) {
 
         // Room Fee totals
@@ -338,10 +338,14 @@ abstract class AbstractPriceModel {
     protected static function getModelRoomRates(\PDO $dbh, $priceModelCode) {
 
         // Room rates
-        $rpRs = new Room_RateRS();
+        $stmt = $dbh->query("SELECT `idRoom_rate`,`Title`, `Description`, `FA_Category`, `Rate_Breakpoint_Category`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`
+FROM `room_rate`
+where PriceModel = '$priceModelCode' and Rate_Breakpoint_Category != ''
+union
+SELECT `idRoom_rate`,`Title`, `Description`, `FA_Category`, `Rate_Breakpoint_Category`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`
+FROM `room_rate` where PriceModel = '$priceModelCode' and Rate_Breakpoint_Category = '';");
 
-        $rpRs->PriceModel->setStoredVal($priceModelCode);
-        $rows = EditRS::select($dbh, $rpRs, array($rpRs->PriceModel), 'and', array($rpRs->FA_Category));
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $rrates = array();
 
         foreach ($rows as $r) {
@@ -388,7 +392,7 @@ abstract class AbstractPriceModel {
             }
 
             $cbRetire = '';
-            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate) {  //RoomRateCategories::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategories::FlatRateCategory) {
+            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate && $r->Rate_Breakpoint_Category->getStoredVal() == '') {  //RoomRateCategories::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategories::FlatRateCategory) {
 
                 $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
 
@@ -474,14 +478,13 @@ abstract class AbstractPriceModel {
                     $rpRs = new Room_RateRS();
 
                     $rpRs->FA_Category->setNewVal($oldRs->FA_Category->getStoredVal());
+                    $rpRs->Rate_Breakpoint_Category->setNewVal($oldRs->Rate_Breakpoint_Category->getStoredVal());
 
                     // Retired?  Can't be the default rate.
-                    if (isset($retires[$idRoomRate]) && $defaultRate != $oldRs->FA_Category->getStoredVal()
-                    		&& $oldRs->FA_Category->getStoredVal() != 'a'
-                    		&& $oldRs->FA_Category->getStoredVal() != 'b'
-                    		&& $oldRs->FA_Category->getStoredVal() != 'c'
-                    		&& $oldRs->FA_Category->getStoredVal() != 'd') {
-                    			
+                    if (isset($retires[$idRoomRate]) &&
+                        $defaultRate != $oldRs->FA_Category->getStoredVal() &&
+                        $oldRs->Rate_Breakpoint_Category->getStoredVal() == '') {
+
                         // update
                         $oldRs->Status->setNewVal(RateStatus::Retired);
                         $oldRs->Updated_By->setNewVal($username);
@@ -493,6 +496,7 @@ abstract class AbstractPriceModel {
                         continue;
 
                     } else if (isset($retires[$idRoomRate]) === FALSE && $oldRs->Status->getStoredVal() == RateStatus::Retired) {
+                        // Un-retire the rate.
                         $oldRs->Status->setNewVal(RateStatus::Active);
                     }
 
@@ -597,7 +601,7 @@ abstract class AbstractPriceModel {
 
                 $rpRs->FA_Category->setNewVal($this->getNewRateCategory());
                 $rpRs->PriceModel->setNewVal($this->getPriceModelCode());
-
+                $rpRs->Rate_Breakpoint_Category->setNewVal('');     // Only ResourceBuilder can make a new Breakpoint rate category.
                 $rpRs->Title->setNewVal($titles['0']);
                 $rpRs->Updated_By->setNewVal($username);
                 $rpRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
@@ -613,7 +617,7 @@ abstract class AbstractPriceModel {
         return $defaultRate;
     }
 
-    protected function getNewRateCategory() {
+    public function getNewRateCategory() {
 
         $newCats = array('ra','rb','rc','rd','re','rf','rg','rh','ri','rj','rk','rl','rm','rn','ro','rp','rq','rr','rs','rt','ru','rv','rw','rx','ry','rz');
         $flpnew = array_flip($newCats);
@@ -633,7 +637,7 @@ abstract class AbstractPriceModel {
         }
     }
 
-    protected function getPriceModelCode() {
+    public function getPriceModelCode() {
         return $this->priceModelCode;
     }
 
