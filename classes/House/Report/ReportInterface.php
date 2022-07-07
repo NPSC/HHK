@@ -27,9 +27,9 @@ interface ReportInterface {
     /**
      * Build your summary content
      *
-     * @return array ['reportTitle'=>'', 'content'=>'']
+     * @return string
      */
-    public function makeSummaryMkup():array;
+    public function makeSummaryMkup():string;
 
 }
 ?>

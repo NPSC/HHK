@@ -32,6 +32,9 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 
 
     public function __construct(\PDO $dbh, array $request = []){
+        $uS = Session::getInstance();
+
+        $this->reportTitle = $uS->siteName . ' Reservation Report';
         $this->locations = readGenLookupsPDO($dbh, 'Location');
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
         $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
@@ -239,11 +242,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         return $cFields;
     }
 
-    public function makeSummaryMkup():array {
-
-        $uS = Session::getInstance();
-
-        $title = $uS->siteName . ' Reservation Report';
+    public function makeSummaryMkup():string {
 
         $mkup = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 
@@ -286,7 +285,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
             $mkup .= HTMLContainer::generateMarkup('p', 'All Statuses');
         }
 
-        return ['reportTitle'=>$title, 'content'=>$mkup];
+        return $mkup;
 
     }
 

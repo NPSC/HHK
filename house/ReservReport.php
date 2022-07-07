@@ -53,7 +53,7 @@ if (isset($_POST['btnHere'])) {
 
 if (isset($_POST['btnExcel'])) {
     ini_set('memory_limit', "280M");
-    $reservationReport->downloadExcel("reservReport", "Reservation Report");
+    $reservationReport->downloadExcel("reservReport");
 }
 
 ?>

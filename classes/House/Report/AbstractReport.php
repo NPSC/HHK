@@ -37,6 +37,7 @@ abstract class AbstractReport {
     protected string $query = "";
     public string $filterMkup = "";
     protected $request;
+    protected string $reportTitle = "";
 
     /**
      * @param \PDO $dbh
@@ -139,20 +140,20 @@ abstract class AbstractReport {
 
     public function generateSummaryMkup():string {
 
-        $summaryMkupAr = $this->makeSummaryMkup();
+        $summaryMkup = $this->makeSummaryMkup();
 
-        $titleMkup = HTMLContainer::generateMarkup('h3', $summaryMkupAr['reportTitle'], array('class'=>'mt-2'));
-        $bodyMkup = HTMLContainer::generateMarkup("div", $summaryMkupAr['content'], array('id'=>'repSummary', 'class'=>'ml-2'));
+        $titleMkup = HTMLContainer::generateMarkup('h3', $this->reportTitle, array('class'=>'mt-2'));
+        $bodyMkup = HTMLContainer::generateMarkup("div", $summaryMkup, array('id'=>'repSummary', 'class'=>'ml-2'));
         return $titleMkup . $bodyMkup;
 
     }
 
-    public function downloadExcel(string $fileName = "HHKReport", string $reportTitle = ""):void {
+    public function downloadExcel(string $fileName = "HHKReport"):void {
 
         $uS = Session::getInstance();
         $writer = new ExcelHelper($fileName);
         $writer->setAuthor($uS->username);
-        $writer->setTitle($reportTitle);
+        $writer->setTitle($this->reportTitle);
 
         // build header
         $hdr = array();
@@ -183,6 +184,54 @@ abstract class AbstractReport {
         }
 
         $writer->download();
+    }
+
+    public function generateEmailForm(){
+
+    }
+
+    public function sendEmail(string $emailAddress = "", string $subject = "", bool $cronDryRun = false){
+        $uS = Session::getInstance();
+
+        $body = $this->generateMarkup();
+
+        if ($emailAddress == ''){
+            return array("error"=>"Email Address is required");
+        }elseif($subject == ''){
+            return array("error"=>"Subject is required");
+        }elseif($emailAddress != '' && $subject != '' && $body !=''){
+
+            try{
+                $mail = prepareEmail();
+
+                $mail->From = $uS->NoReplyAddr;
+                $mail->FromName = $uS->siteName;
+
+                $tos = explode(',', $emailAddress);
+                foreach ($tos as $t) {
+                    $bcc = filter_var($t, FILTER_SANITIZE_EMAIL);
+                    if ($bcc !== FALSE && $bcc != '') {
+                        $mail->addAddress($bcc);
+                    }
+                }
+
+                $mail->isHTML(true);
+
+                $mail->Subject = $subject;
+
+                $mail->msgHTML($body);
+                if($cronDryRun == false){
+                    $mail->send();
+                    return array("success"=>"Email sent to " . $emailAddress . " successfully");
+                }else{
+                    return array("success"=>"Email would be sent to " . $emailAddress);
+                }
+
+            }catch(\Exception $e){
+                return array("error"=>"Email failed!  " . $mail->ErrorInfo);
+            }
+
+        }
     }
 
     public function getDefaultFields(){
