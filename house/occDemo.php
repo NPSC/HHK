@@ -4,7 +4,7 @@ use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\sec\{Session, WebInit};
 use HHK\House\Report\ReportFilter;
-use HHK\House\Report\GuestReport;
+use HHK\House\Report\GuestDemogReport;
 use HHK\sec\Labels;
 
 /**
@@ -121,7 +121,7 @@ if (isset($_POST['btnSmt'])) {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
 
-    $report = GuestReport::demogReport($dbh, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $whAssoc, $whichGuests, $zip);
+    $report = GuestDemogReport::demogReport($dbh, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $whAssoc, $whichGuests, $zip);
 
     $title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' ' . $labels->getString('MemberType', 'visitor', 'Guest'). ' Demographics compiled on ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
 

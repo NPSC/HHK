@@ -1,7 +1,6 @@
 <?php
 namespace HHK\Cron;
 
-use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLSelector;
@@ -95,6 +94,9 @@ abstract class AbstractJob implements JobInterface {
             switch($attrs['type']){
                 case "string":
                     $input = HTMLInput::generateMarkup("", array("type"=>"text","value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));
+                    break;
+                case "number":
+                    $input = HTMLInput::generateMarkup("", array("type"=>"number","value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));
                     break;
                 case "email":
                     $input = HTMLInput::generateMarkup("", array("type"=>"email", "value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));

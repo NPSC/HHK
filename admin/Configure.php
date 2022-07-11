@@ -385,13 +385,16 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     		<li id="liCronLog"><a href="#cronLog">Log</a></li>
                     	</ul>
 						<div id="jobs">
+							<?php if(SecurityComponent::is_TheAdmin()){ ?>
 							<div id="newJob" class="ui-widget ui-widget-content ui-corner-all p-2 d-inline-block">
 								<label for="newJobType"><strong>Add New Job:</strong></label>
 								<select id="newJobType" class="mr-2">
-									<?php echo HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, "cronJobTypes", "Description"), ''); ?>
+									<option value="" selected disabled>Select Job Type</option>
+									<?php echo HTMLSelector::doOptionsMkup(readGenLookupsPDO($dbh, "cronJobTypes", "Description"), '', false); ?>
 								</select>
-								<button type="button" id="addJob"><span class="ui-icon ui-icon-plusthick"></span>Add Job</button>
+								<button type="button" id="addJob">Add Job</button>
 							</div>
+							<?php } ?>
 							<table id="cronJobs" style="width: 100%"></table>
 						</div>
 						<div id="cronLog" class="ui-tabs-hide">

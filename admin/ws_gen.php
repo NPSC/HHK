@@ -8,7 +8,7 @@ use HHK\Tables\WebSec\{Id_SecurityGroupRS, W_authRS, W_usersRS};
 use HHK\AuditLog\NameLog;
 use HHK\DataTableServer\SSP;
 use HHK\Exception\RuntimeException;
-use HHK\House\Report\GuestReport;
+use HHK\House\Report\GuestDemogReport;
 use HHK\Member\WebUser;
 use HHK\Member\Relation\AbstractRelation;
 use HHK\sec\SAML;
@@ -63,7 +63,7 @@ try {
             }
 
             try{
-                $events['success'] = number_format(GuestReport::calcZipDistance($dbh, $zipf, $zipt), 0);
+                $events['success'] = number_format(GuestDemogReport::calcZipDistance($dbh, $zipf, $zipt), 0);
             } catch (RuntimeException $hex) {
                 $events['error'] = "Zip code not found.  ";
             }
@@ -860,6 +860,7 @@ function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interva
     $validIntervals = AbstractJob::AllowedIntervals;
     $validStatuses = array('a','d', 'del');
     $errors = array();
+
     if(strlen($title) == 0){
         $errors[] = "Title is required";
     }

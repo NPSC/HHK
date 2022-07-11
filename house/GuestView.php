@@ -9,8 +9,9 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\sec\Labels;
 use HHK\House\Report\{ReportFilter, ReportFieldSet};
 use HHK\ColumnSelectors;
-use HHK\House\Report\GuestVehiclesReport;
+use HHK\House\Report\CurrentGuestReport;
 use HHK\House\Report\GuestVehicleReportOld;
+use HHK\House\Report\VehiclesReport;
 
 /**
  * GuestView.php
@@ -40,25 +41,25 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $labels = Labels::getLabels();
 
-$guestVehicleReport = new GuestVehiclesReport($dbh, $_REQUEST);
-$vehicleReport = new GuestVehicleReportOld($dbh);
+$currentGuestReport = new CurrentGuestReport($dbh, $_REQUEST);
+$vehicleReport = new VehiclesReport($dbh, $_REQUEST);
 
 $resultMessage = "";
 
 $guestReportMkup = '';
 
 if (isset($_POST['btnHere'])){
-    $guestReportMkup = $guestVehicleReport->generateMarkup();
+    $guestReportMkup = $currentGuestReport->generateMarkup();
 }
 
 if (isset($_POST['btnExcel'])) {
-    $guestVehicleReport->downloadExcel("GuestsReport");
+    $currentGuestReport->downloadExcel("CurrentGuestsReport");
 }
 
 //vehicle report
 $vehicleReportMkup = '';
 if ($uS->TrackAuto) {
-    $vehicleReportMkup = $vehicleReport->getVehicleMkup();
+    $vehicleReportMkup = $vehicleReport->generateMarkup() . $vehicleReport->generateEmailDialog();
 }
 
 
@@ -66,45 +67,8 @@ $vehicleMessage = '';
 $emtableMarkupv = '';
 $tab = 0;
 
-if(isset($_POST['btnEmailv'])){
-    $emailAddress = '';
-    $subject = '';
-
-    if (isset($_POST['txtEmailv'])) {
-        $emailAddress = filter_var($_POST['txtEmailv'], FILTER_SANITIZE_EMAIL);
-    }
-
-    if (isset($_POST['txtSubjectv'])) {
-        $subject = filter_var($_POST['txtSubjectv'], FILTER_SANITIZE_STRING);
-    }
-
-    $vehicleMessage = $guestVehicleReport->sendEmail("vehicles", $subject, $emailAddress);
-    $tab = 1;
-}
-
-// create send guest email table
-$emTbl = new HTMLTable();
-$emTbl->addHeaderTr(HTMLTable::makeTh('Email the Current ' .$labels->getString('MemberType', 'visitor', 'Guest') . ' Report'));
-$emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup("Current ".$labels->getString('MemberType', 'visitor', 'Guest')."s Report", array('name' => 'txtSubject', 'size' => '70'))));
-$emTbl->addBodyTr(HTMLTable::makeTd(
-        'Email: '
-        . HTMLInput::generateMarkup('', array('name' => 'txtEmail', 'size' => '70'))));
-
-$emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit')) . HTMLContainer::generateMarkup('span', $guestMessage, array('style'=>'color:red;margin-left:.5em;'))));
-
-$emtableMarkup = $emTbl->generateMarkup(array('style'=>'margin-bottom: 0.5em;'));
-
 if ($uS->TrackAuto) {
-    // create send vehicle email table
-    $emTblv = new HTMLTable();
-    $emTblv->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup('Vehicle Report', array('name' => 'txtSubjectv', 'size' => '70'))));
-    $emTblv->addBodyTr(HTMLTable::makeTd(
-            'Email: '
-        . HTMLInput::generateMarkup('', array('name' => 'txtEmailv', 'value'=>$uS->vehicleReportEmail, 'size' => '70'))));
 
-    $emTblv->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmailv', 'type' => 'submit')) . HTMLContainer::generateMarkup('span', $vehicleMessage, array('style'=>'color:red;margin-left:.5em;'))));
-
-    $emtableMarkupv = $emTblv->generateMarkup(array(), 'Email the Vehicle Report');
 }
 ?>
 <!DOCTYPE html>
@@ -133,30 +97,15 @@ if ($uS->TrackAuto) {
         <script type="text/javascript">
     $(document).ready(function () {
         "use strict";
-        $('#includeFields').fieldSets({'reportName': 'GuestView', 'defaultFields': <?php echo json_encode($guestVehicleReport->getDefaultFields()) ?>});
+        $('#includeFields').fieldSets({'reportName': 'GuestView', 'defaultFields': <?php echo json_encode($currentGuestReport->getDefaultFields()) ?>});
 
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var tabReturn = '<?php echo $tab; ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($guestVehicleReport->colSelector->getColumnDefs()); ?>');
 
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
 
-        <?php echo $guestVehicleReport->generateReportScript(); ?>
-
-        $('#tblListv').dataTable({
-            "displayLength": 50,
-            "dom": '<"top"if>rt<"bottom"lp><"clear">',
-            "order": [[0, 'asc']],
-            'columnDefs': [
-                {'targets': [4,5],
-                 'type': 'date',
-                 'render': function ( data, type ) {return dateRender(data, type, dateFormat);}
-                }
-            ]
-        });
-        $('#btnPrintv').click(function() {
-            $("div.PrintAreav").printArea();
-        });
+        <?php echo $currentGuestReport->generateReportScript() .
+                $vehicleReport->generateReportScript() ?>
 
         function dispVehicle(item) {
 
@@ -214,16 +163,10 @@ if ($uS->TrackAuto) {
                     <?php } ?>
                 </ul>
                 <div id="tabGuest" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
-                	<?php echo $guestVehicleReport->generateFilterMarkup() . $guestReportMkup; ?>
+                	<?php echo $currentGuestReport->generateFilterMarkup() . $guestReportMkup; ?>
                 </div>
                 <div id="tabVeh" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
-                    <form name="formEmv" method="Post" action="GuestView.php">
-                        <?php echo $emtableMarkupv; ?>
-                    </form>
-                    <input type="button" value="Print" id='btnPrintv' name='btnPrintv' style="margin-right:.3em;"/>
-                    <div class="PrintAreav">
-                        <?php echo $vehicleReportMkup; ?>
-                    </div>
+                    <?php echo $vehicleReportMkup; ?>
                 </div>
                 <div id="tabsrch" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     Search <?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?>:

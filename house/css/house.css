@@ -697,16 +697,16 @@ div.dt-buttons .dt-button:hover>span {
 
 /* report email dialog */
 
-#emRptDialog table {
+.emRptDialog table {
 	width: 100%;
 }
 
-#emRptDialog table tr:not(:last-child) td {
+.emRptDialog table tr:not(:last-child) td {
 	padding-bottom:1em;
 }
 
 /* text label */
-#emRptDialog table tr td:first-child {
+.emRptDialog table tr td:first-child {
 	text-align:right;
 	padding-right: 5px;
 	width: 50px;

@@ -26,9 +26,15 @@ use HHK\Exception\RuntimeException;
  * @author Will Ireland
  */
 
-class EmailCheckedoutJob extends AbstractJob implements JobInterface{
+class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
-    public array $paramTemplate = [];
+    public array $paramTemplate = [
+        "solicitBuffer"=>[
+            "label"=>"SolicitBuffer (days)",
+            "type"=>"number",
+            "required"=>true
+        ],
+    ];
 
     public function tasks():void {
 

@@ -13,7 +13,7 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 update sys_config set `Value` = 'bTVWSFUyRXBQU3RHRTlCV0M4WkhGcnh6RC9tbTk5eXp1c3B1NU9JYm1zMVRTcytsemRJSjhtS2w5dnNkZWZKVw==' where `Key` = 'recaptchaApiKey';
 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES
-('cronJobTypes', 'EmailCheckedoutJob', 'Send Checkout Email', '', '0');
+('cronJobTypes', 'SendPostCheckoutEmailJob', 'Send Post Checkout Email', '', '0');
 
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES
 ('cronJobTypes', 'EmailReportJob', 'Send Report Email', '', '0');

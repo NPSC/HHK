@@ -54,7 +54,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '3', 'Discover','DCVR', '',0),
 ('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
 
-('cronJobTypes', 'EmailCheckedoutJob', 'Send Checkout Email', '', 0),
+('cronJobTypes', 'SendPostCheckoutEmailJob', 'Send Post Checkout Email', '', 0),
 ('cronJobTypes', 'EmailReportJob', 'Send Report Email', '', 0),
 
 ('dayIncrements', '', 'Never', '','', '6'),

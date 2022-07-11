@@ -21,7 +21,7 @@ use HHK\sec\Labels;
  * @author Will
  */
 
-class GuestVehiclesReport extends AbstractReport implements ReportInterface {
+class CurrentGuestReport extends AbstractReport implements ReportInterface {
 
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();

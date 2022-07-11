@@ -343,7 +343,8 @@ $('table#cronJobs').on('click', '.runCron', function(event){
 
 $('#newJob').on('click', '#addJob', function(event){
 	var jobType = $('#newJob #newJobType').val();
-	if(jobType){
+	var fresh = ($('table#cronJobs').find('button[data-job=-1]').length > 0 ? false: true);
+	if(jobType && fresh){
 		var row = {
 			'ID':-1,
 			'Title':'',
@@ -480,7 +481,7 @@ $('#newJob').on('click', '#addJob', function(event){
         	$row.find('.jobStatus').html(jobStatusMkup);
         	$row.find('.runCron, .editCron').hide();
         	$row.find('.saveCron, .deleteCron, .cancelCron').show();
-        	
+        	$row.find('.editParam[data-name=report]').trigger('change');
         	$row.on('change', '#editJobInterval', function(e){
         		var interval = $(e.target).val();
         		
@@ -504,6 +505,28 @@ $('#newJob').on('click', '#addJob', function(event){
         		
         	});
         	$(this).closest('tr').find('#editJobInterval').trigger('change');
+        	
+        	$row.on('change', '.editParam[data-name=report]', function(e){
+        		$.ajax({
+					url: '../house/ws_reportFilter.php',
+					method: 'post',
+					data: {
+						'cmd':'getFieldSetOptMkup',
+						'report':$row.find('.editParam[data-name=report]').val(),
+						'selection':"",
+					},
+					dataType:'json',
+					success: function(data){
+						if(data.fieldSetOptMkup){
+							$row.find('.editParam[data-name=inputSet]').html(data.fieldSetOptMkup);
+						}
+					},
+					error: function (xhr, textStatus, errorThrown){
+						flagAlertMessage("Cron error: " + errorThrown, true);
+					}
+				});
+        	});
+        	
         });
         //End Show Edit mode
         
@@ -590,9 +613,13 @@ $('#newJob').on('click', '#addJob', function(event){
         $wrapper.on('click', '.deleteCron', function(e){
 			e.preventDefault();
             var row = $(this).closest("tr");
-            row.find("#editJobStatus").append('<option value="del"></option>').val('del');
-            row.find(".saveCron").trigger('click');
-            cronTable.row(row).remove().draw();
+            if($(this).data('job') == '-1'){
+            	row.find(".cancelCron").trigger('click');
+            }else{
+            	row.find("#editJobStatus").append('<option value="del"></option>').val('del');
+            	row.find(".saveCron").trigger('click');
+            	cronTable.row(row).remove().draw();
+            }
         });
         //End Delete Cron Job
     }

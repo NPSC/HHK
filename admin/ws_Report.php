@@ -1,7 +1,7 @@
 <?php
 
 use HHK\sec\{WebInit};
-use HHK\House\Report\GuestReport;
+use HHK\House\Report\GuestDemogReport;
 use HHK\SysConst\WebPageCode;
 
 /**
@@ -344,7 +344,7 @@ switch ($c) {
         }
 
         // Don't JSON encode this.
-        return GuestReport::demogReport($dbh, $interval, $startDate, $endDate, $sourceZip);
+        return GuestDemogReport::demogReport($dbh, $interval, $startDate, $endDate, $sourceZip);
 
         break;
 

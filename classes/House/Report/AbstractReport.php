@@ -5,7 +5,6 @@ namespace HHK\House\Report;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\HTMLInput;
-use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\ExcelHelper;
@@ -100,7 +99,7 @@ abstract class AbstractReport {
         return HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("form",
                     $this->filterMkup . $btnMkup . $emDialog
-                , array("method"=>"POST", "action"=>htmlspecialchars($_SERVER["PHP_SELF"]), "id"=>"rptFilterForm"))
+                , array("method"=>"POST", "action"=>htmlspecialchars($_SERVER["PHP_SELF"]), "id"=>"rpt" . $this->inputSetReportName . "FilterForm"))
             , array("class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper"));
     }
 
@@ -154,7 +153,7 @@ abstract class AbstractReport {
             $tbl->addBodyTr($tr);
         }
 
-        return HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper'));
+        return HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper'));
     }
 
     public function generateSummaryMkup():string {
@@ -169,10 +168,12 @@ abstract class AbstractReport {
     }
 
     public function generateReportScript(){
+        $jsonColumnDefs = json_encode($this->colSelector->getColumnDefs());
+
         return '
-        $("#tblrpt").dataTable({
+        $("#tbl' . $this->inputSetReportName . 'rpt").dataTable({
             "columnDefs": [
-            {"targets": columnDefs,
+            {"targets": ' . $jsonColumnDefs . ',
             "type": "date",
             "render": function ( data, type, row ) {return dateRender(data, type, dateFormat);}
             }
@@ -196,21 +197,21 @@ abstract class AbstractReport {
                 text: "Email",
                 className: "ui-corner-all",
                 action: function (e) {
-                    $("#emRptDialog").dialog("open");
+                    $("#em' . $this->inputSetReportName . 'RptDialog").dialog("open");
                 }
             },
             ],
         });
 
-        $("#emRptDialog").dialog({
+        $("#em' . $this->inputSetReportName . 'RptDialog").dialog({
             autoOpen:false,
             modal:true,
             title: "Email ' . $this->reportTitle . '",
             width: "auto",
             buttons: {
                 "Send":function(){
-                    var data = $("#rptFilterForm").serializeArray();
-                        data.push({"name":"btnEmail", "value":"true"});
+                    var data = $("#' . $this->inputSetReportName . 'rptFilterForm").serializeArray();
+                        data.push({"name":"btn' . $this->inputSetReportName . 'Email", "value":"true"});
                         data.push({"name":"txtSubject", "value":$(this).find("#txtSubject").val()});
                         data.push({"name":"txtEmail", "value":$(this).find("#txtEmail").val()});
                     $.ajax({
@@ -220,7 +221,7 @@ abstract class AbstractReport {
                         success: function(data){
                             if(data.success){
                                 flagAlertMessage(data.success,false);
-                                $("#emRptDialog").dialog("close");
+                                $("#em' . $this->inputSetReportName . 'RptDialog").dialog("close");
                             }else if(data.error){
                                 flagAlertMessage(data.error, true);
                             }else{
@@ -258,16 +259,16 @@ abstract class AbstractReport {
         float:right;
     }
 
-    table#tblrpt {
+    table#tbl' . $this->inputSetReportName . 'rpt {
         border-collapse: collapse;
     }
 
-    table#tblrpt td {
+    table#tbl' . $this->inputSetReportName . 'rpt td {
         border:1px solid #c1c1c1;
         padding: 10px;
     }
 
-    table#tblrpt thead th {
+    table#tbl' . $this->inputSetReportName . 'rpt thead th {
         padding:10px;
         border-bottom: 2px solid #111
     }
@@ -320,7 +321,7 @@ abstract class AbstractReport {
         $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ') . HTMLTable::makeTd(HTMLInput::generateMarkup($this->reportTitle, array('name' => 'txtSubject', "style"=>"width: 100%"))));
         $emTbl->addBodyTr(HTMLTable::makeTd('Email: ') . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtEmail', 'style'=>'width: 100%')) . HTMLInput::generateMarkup('', array('type'=>"hidden", "name"=>"btnEmail"))));
 
-        return HTMLContainer::generateMarkup("div", $emTbl->generateMarkup(), array("id"=>"emRptDialog", "style"=>"display:none;"));
+        return HTMLContainer::generateMarkup("div", $emTbl->generateMarkup(), array("id"=>"em" . $this->inputSetReportName . "RptDialog", "class"=>"emRptDialog", "style"=>"display:none;"));
     }
 
     public function sendEmail(string $emailAddress = "", string $subject = "", bool $cronDryRun = false){
@@ -370,7 +371,7 @@ abstract class AbstractReport {
     protected function actions(array $request):void{
         $result = array();
 
-        if (isset($this->request['btnEmail']) && $this->request['btnEmail'] == 'true') {
+        if (isset($this->request['btn' . $this->inputSetReportName . 'Email']) && $this->request['btn' . $this->inputSetReportName . 'Email'] == 'true') {
 
             $emailAddress = '';
             $subject = '';
