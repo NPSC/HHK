@@ -5,6 +5,7 @@ namespace HHK\House\Report;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\HTMLInput;
+use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\ExcelHelper;
@@ -38,6 +39,7 @@ abstract class AbstractReport {
     public string $filterMkup = "";
     protected $request;
     protected string $reportTitle = "";
+    protected string $inputSetReportName = "";
 
     /**
      * @param \PDO $dbh
@@ -73,6 +75,9 @@ abstract class AbstractReport {
                 $this->defaultFields[] = $field[1];
             }
         }
+
+        //register actions
+        $this->actions($request);
     }
 
     /**
@@ -87,13 +92,15 @@ abstract class AbstractReport {
         $btnMkup = HTMLContainer::generateMarkup("div",
             HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere", "id"=>"btnHere", "class"=>"ui-button ui-corner-all ui-widget")) .
             HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel", "id"=>"btnExcel", "class"=>"ui-button ui-corner-all ui-widget"))
-        , array("id"=>"filterBtns"));
+        , array("id"=>"filterBtns", "class"=>"mt-3"));
+
+        $emDialog = $this->generateEmailDialog();
 
         //wrap in ui-widget + form
         return HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("form",
-                    $this->filterMkup . $btnMkup
-                , array("method"=>"POST", "action"=>htmlspecialchars($_SERVER["PHP_SELF"])))
+                    $this->filterMkup . $btnMkup . $emDialog
+                , array("method"=>"POST", "action"=>htmlspecialchars($_SERVER["PHP_SELF"]), "id"=>"rptFilterForm"))
             , array("class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper"));
     }
 
@@ -114,9 +121,17 @@ abstract class AbstractReport {
         return $this->resultSet;
     }
 
-    public function generateMarkup() {
+    /**
+     * Generate HTML markup
+     *
+     * @param string $outputType if sending email, set to "email" to format fields for email
+     * @return string
+     */
+    public function generateMarkup(string $outputType = "") {
 
-        $this->getResultSet();
+        if(count($this->resultSet) == 0){
+            $this->getResultSet();
+        }
 
         $tbl = new HTMLTable();
         $th = '';
@@ -129,6 +144,10 @@ abstract class AbstractReport {
         foreach($this->resultSet as $r){
             $tr = '';
             foreach ($this->filteredFields as $f) {
+                if($outputType == "email" && isset($f[7]) && $f[7] == "date"){
+                    $fieldDT = new \DateTime($r[$f[1]]);
+                    $r[$f[1]] = $fieldDT->format("M j, Y");
+                }
                 $tr .= HTMLTable::makeTd($r[$f[1]]);
             }
 
@@ -140,12 +159,122 @@ abstract class AbstractReport {
 
     public function generateSummaryMkup():string {
 
+        $uS = Session::getInstance();
         $summaryMkup = $this->makeSummaryMkup();
 
         $titleMkup = HTMLContainer::generateMarkup('h3', $this->reportTitle, array('class'=>'mt-2'));
-        $bodyMkup = HTMLContainer::generateMarkup("div", $summaryMkup, array('id'=>'repSummary', 'class'=>'ml-2'));
+        $bodyMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $summaryMkup, array('class'=>'ml-2')) . HTMLContainer::generateMarkup("img", "", array('src'=> $uS->resourceURL . "conf/receiptlogo.png")), array('id'=>'repSummary', 'class'=>'hhk-flex mb-3', 'style'=>'justify-content: space-between'));
         return $titleMkup . $bodyMkup;
 
+    }
+
+    public function generateReportScript(){
+        return '
+        $("#tblrpt").dataTable({
+            "columnDefs": [
+            {"targets": columnDefs,
+            "type": "date",
+            "render": function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+            }
+            ],
+            "displayLength": 50,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bilf>rt<\"bottom ui-toolbar ui-helper-clearfix\"lp>",
+            "buttons": [
+            {
+                extend: "print",
+                className: "ui-corner-all",
+                autoPrint: true,
+                title: function(){
+                    return "' . $this->reportTitle . '";
+                },
+                messageTop: function(){
+                    return document.getElementById("repSummary").outerHTML;
+                },
+            },
+            {
+                text: "Email",
+                className: "ui-corner-all",
+                action: function (e) {
+                    $("#emRptDialog").dialog("open");
+                }
+            },
+            ],
+        });
+
+        $("#emRptDialog").dialog({
+            autoOpen:false,
+            modal:true,
+            title: "Email ' . $this->reportTitle . '",
+            width: "auto",
+            buttons: {
+                "Send":function(){
+                    var data = $("#rptFilterForm").serializeArray();
+                        data.push({"name":"btnEmail", "value":"true"});
+                        data.push({"name":"txtSubject", "value":$(this).find("#txtSubject").val()});
+                        data.push({"name":"txtEmail", "value":$(this).find("#txtEmail").val()});
+                    $.ajax({
+                        type:"post",
+                        data:data,
+                        dataType: "json",
+                        success: function(data){
+                            if(data.success){
+                                flagAlertMessage(data.success,false);
+                                $("#emRptDialog").dialog("close");
+                            }else if(data.error){
+                                flagAlertMessage(data.error, true);
+                            }else{
+                                flagAlertMessage("An unknown error occurred", true);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+';
+    }
+
+    public function generateEmailStyles():string {
+        return '
+<style>
+    p{
+        margin:0;
+        padding:0;
+    }
+
+    #hhk-reportWrapper {
+        width: max-content;
+    }
+
+    #repSummary{
+        margin-bottom: 1rem;
+    }
+
+    #repSummary>div {
+        display:inline-block;
+    }
+
+    #repSummary>img {
+        float:right;
+    }
+
+    table#tblrpt {
+        border-collapse: collapse;
+    }
+
+    table#tblrpt td {
+        border:1px solid #c1c1c1;
+        padding: 10px;
+    }
+
+    table#tblrpt thead th {
+        padding:10px;
+        border-bottom: 2px solid #111
+    }
+
+</style
+
+';
     }
 
     public function downloadExcel(string $fileName = "HHKReport"):void {
@@ -186,14 +315,18 @@ abstract class AbstractReport {
         $writer->download();
     }
 
-    public function generateEmailForm(){
+    public function generateEmailDialog(){
+        $emTbl = new HTMLTable();
+        $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ') . HTMLTable::makeTd(HTMLInput::generateMarkup($this->reportTitle, array('name' => 'txtSubject', "style"=>"width: 100%"))));
+        $emTbl->addBodyTr(HTMLTable::makeTd('Email: ') . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => 'txtEmail', 'style'=>'width: 100%')) . HTMLInput::generateMarkup('', array('type'=>"hidden", "name"=>"btnEmail"))));
 
+        return HTMLContainer::generateMarkup("div", $emTbl->generateMarkup(), array("id"=>"emRptDialog", "style"=>"display:none;"));
     }
 
     public function sendEmail(string $emailAddress = "", string $subject = "", bool $cronDryRun = false){
         $uS = Session::getInstance();
 
-        $body = $this->generateMarkup();
+        $body = "<html><head>" . $this->generateEmailStyles() . "</head><body>" . $this->generateMarkup("email") . "</body></html>";
 
         if ($emailAddress == ''){
             return array("error"=>"Email Address is required");
@@ -234,8 +367,38 @@ abstract class AbstractReport {
         }
     }
 
+    protected function actions(array $request):void{
+        $result = array();
+
+        if (isset($this->request['btnEmail']) && $this->request['btnEmail'] == 'true') {
+
+            $emailAddress = '';
+            $subject = '';
+
+            if (isset($this->request['txtEmail'])) {
+                $emailAddress = filter_var($_POST['txtEmail'], FILTER_SANITIZE_STRING);
+            }
+
+            if (isset($this->request['txtSubject'])) {
+                $subject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
+            }
+
+            $result = $this->sendEmail($emailAddress, $subject);
+        }
+
+        if(count($result) > 0){
+            echo json_encode($result);
+            exit();
+        }
+
+    }
+
     public function getDefaultFields(){
         return $this->defaultFields;
+    }
+
+    public function getInputSetReportName(){
+        return $this->inputSetReportName;
     }
 
 }

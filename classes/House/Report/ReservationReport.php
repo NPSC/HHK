@@ -35,6 +35,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         $uS = Session::getInstance();
 
         $this->reportTitle = $uS->siteName . ' Reservation Report';
+        $this->inputSetReportName = "reserv";
         $this->locations = readGenLookupsPDO($dbh, 'Location');
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');
         $this->resvStatuses = removeOptionGroups(readLookups($dbh, "ReservStatus", "Code", FALSE));
@@ -45,7 +46,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
             $this->selectedResvStatuses = [];
         }
 
-        parent::__construct($dbh, "reserv", $request);
+        parent::__construct($dbh, $this->inputSetReportName, $request);
     }
 
     public function makeQuery(): void{
@@ -289,14 +290,16 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
 
     }
 
-    public function generateMarkup(){
+    public function generateMarkup(string $outputType = ""){
+        $this->getResultSet();
+        $uS = Session::getInstance();
 
-        foreach($this->resultSet as &$r) {
-            $r['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>'Reserve.php?rid=' . $r['idReservation']));
-            $r['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>'GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+        foreach($this->resultSet as $k=>$r) {
+            $this->resultSet[$k]['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
+            $this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
         }
 
-        return parent::generateMarkup();
+        return parent::generateMarkup($outputType);
     }
 }
 ?>

@@ -9,7 +9,8 @@ use HHK\HTMLControls\HTMLTable;
 use HHK\sec\Labels;
 use HHK\House\Report\{ReportFilter, ReportFieldSet};
 use HHK\ColumnSelectors;
-use HHK\House\Report\GuestVehicleReport;
+use HHK\House\Report\GuestVehiclesReport;
+use HHK\House\Report\GuestVehicleReportOld;
 
 /**
  * GuestView.php
@@ -39,26 +40,28 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $labels = Labels::getLabels();
 
-$guestVehicleReport = new GuestVehicleReport($dbh);
-
-$columnSelector = $guestVehicleReport->setupGuestFields();
+$guestVehicleReport = new GuestVehiclesReport($dbh, $_REQUEST);
+$vehicleReport = new GuestVehicleReportOld($dbh);
 
 $resultMessage = "";
 
 $guestReportMkup = '';
 
 if (isset($_POST['btnHere'])){
-    $guestReportMkup = $guestVehicleReport->getGuestMkup();
+    $guestReportMkup = $guestVehicleReport->generateMarkup();
+}
+
+if (isset($_POST['btnExcel'])) {
+    $guestVehicleReport->downloadExcel("GuestsReport");
 }
 
 //vehicle report
 $vehicleReportMkup = '';
 if ($uS->TrackAuto) {
-    $vehicleReportMkup = $guestVehicleReport->getVehicleMkup();
+    $vehicleReportMkup = $vehicleReport->getVehicleMkup();
 }
 
 
-$guestMessage = '';
 $vehicleMessage = '';
 $emtableMarkupv = '';
 $tab = 0;
@@ -77,22 +80,6 @@ if(isset($_POST['btnEmailv'])){
 
     $vehicleMessage = $guestVehicleReport->sendEmail("vehicles", $subject, $emailAddress);
     $tab = 1;
-}
-
-if (isset($_POST['btnEmail'])) {
-
-    $emailAddress = '';
-    $subject = '';
-
-    if (isset($_POST['txtEmail'])) {
-    	$emailAddress = filter_var($_POST['txtEmail'], FILTER_SANITIZE_STRING);
-    }
-
-    if (isset($_POST['txtSubject'])) {
-    	$subject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
-    }
-
-    $guestMessage = $guestVehicleReport->sendEmail("guests", $subject, $emailAddress);
 }
 
 // create send guest email table
@@ -146,38 +133,16 @@ if ($uS->TrackAuto) {
         <script type="text/javascript">
     $(document).ready(function () {
         "use strict";
-        $('#includeFields').fieldSets({'reportName': 'GuestView', 'defaultFields': <?php echo json_encode($guestVehicleReport->defaultFields) ?>});
-
-        $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
-
-        $('#cbColClearAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', false);
-            });
-        });
-
-        $('#cbColSelAll').click(function () {
-            $('#selFld option').each(function () {
-                $(this).prop('selected', true);
-            });
-        });
+        $('#includeFields').fieldSets({'reportName': 'GuestView', 'defaultFields': <?php echo json_encode($guestVehicleReport->getDefaultFields()) ?>});
 
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var tabReturn = '<?php echo $tab; ?>';
         var columnDefs = $.parseJSON('<?php echo json_encode($guestVehicleReport->colSelector->getColumnDefs()); ?>');
 
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
-        $('#tblList').dataTable({
-            "displayLength": 50,
-            "dom": '<"top"if>rt<"bottom"lp><"clear">',
-            "order": [[0, 'asc']],
-            'columnDefs': [
-                {'targets': columnDefs,
-                 'type': 'date',
-                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                }
-             ]
-        });
+
+        <?php echo $guestVehicleReport->generateReportScript(); ?>
+
         $('#tblListv').dataTable({
             "displayLength": 50,
             "dom": '<"top"if>rt<"bottom"lp><"clear">',
@@ -188,9 +153,6 @@ if ($uS->TrackAuto) {
                  'render': function ( data, type ) {return dateRender(data, type, dateFormat);}
                 }
             ]
-        });
-        $('#btnPrint').click(function() {
-            $("div.PrintArea").printArea();
         });
         $('#btnPrintv').click(function() {
             $("div.PrintAreav").printArea();
@@ -241,11 +203,8 @@ if ($uS->TrackAuto) {
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div style="float:left; margin-right: 100px; margin-top:10px;">
-                <h2><?php echo $wInit->pageHeading; ?></h2>
-            </div>
+            <h2><?php echo $wInit->pageHeading; ?></h2>
 
-            <div style="clear:both;"></div>
             <div id="mainTabs" style="display:none;font-size: .9em;">
                 <ul>
                     <li><a href="#tabGuest">Resident <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
@@ -255,27 +214,7 @@ if ($uS->TrackAuto) {
                     <?php } ?>
                 </ul>
                 <div id="tabGuest" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
-                	<form method="post" action="GuestView.php">
-                		<div id="guestFilters" style="margin-bottom: 0.5em">
-                			<div style="display: inline-block;">
-                				<?php echo $columnSelector; ?>
-                				<div id="actions" style="text-align: right;">
-                					<input type="submit" name="btnHere" id="btnHere" value="Run Here">
-                				</div>
-                			</div>
-                		</div>
-                    	<?php if($guestReportMkup !== false) { ?>
-                    	<div class="guestRptContent">
-                            <div id="formEm">
-                                <?php echo $emtableMarkup; ?>
-                            </div>
-                            <input type="button" value="Print" id='btnPrint' name='btnPrint' style="margin-right:.3em;"/>
-                            <div class="PrintArea">
-                                <?php echo $guestReportMkup; ?>
-                            </div>
-                        </div>
-                        <?php } ?>
-                    </form>
+                	<?php echo $guestVehicleReport->generateFilterMarkup() . $guestReportMkup; ?>
                 </div>
                 <div id="tabVeh" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     <form name="formEmv" method="Post" action="GuestView.php">

@@ -12,12 +12,6 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 
 update sys_config set `Value` = 'bTVWSFUyRXBQU3RHRTlCV0M4WkhGcnh6RC9tbTk5eXp1c3B1NU9JYm1zMVRTcytsemRJSjhtS2w5dnNkZWZKVw==' where `Key` = 'recaptchaApiKey';
 
-INSERT IGNORE INTO `cronjobs` (`Title`, `Code`, `Params`, `Interval`, `Day`, `Hour`,`Minute`, `Status`) VALUES
-("Send Survey Email", "EmailCheckedoutJob", "{}", "daily", "", "08", "00", "d");
-
-INSERT IGNORE INTO `cronjobs` (`Title`, `Code`,`Params`, `Interval`, `Day`, `Hour`, `Minute`, `Status`) VALUES
-("Send Vehicle Report Email", "EmailReportJob", '{"report":"vehicles", "emailAddress":""}', "daily", "", "08", "00", "d");
-
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `Order`) VALUES
 ('cronJobTypes', 'EmailCheckedoutJob', 'Send Checkout Email', '', '0');
 
@@ -26,12 +20,12 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitu
 
 -- Begin Financial Assistance Updates
 ALTER TABLE `fin_application` 
-	DROP COLUMN `Estimated_Departure`,
-	DROP COLUMN `Estimated_Arrival`,
-	DROP COLUMN `Est_Amount`,
-	DROP COLUMN `idReservation`,
-	DROP COLUMN `idGuest`,
-	DROP INDEX `Index_idGuest` ;
+	DROP COLUMN IF EXISTS `Estimated_Departure`,
+	DROP COLUMN IF EXISTS `Estimated_Arrival`,
+	DROP COLUMN IF EXISTS `Est_Amount`,
+	DROP COLUMN IF EXISTS `idReservation`,
+	DROP COLUMN IF EXISTS `idGuest`,
+	DROP INDEX IF EXISTS `Index_idGuest` ;
 
 update fa_category set Income_D = Income_C;  -- fix errors in initial data
 
@@ -74,6 +68,9 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`)
 	VALUES ('Holiday', '14', 'Juneteenth');
 
 -- Show diagnosis on statements
-INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) 
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) 
 	VALUES ('ShowDiagOnStmt', 'false', 'b', 'h', 'Show the patient diagnoses on the statements', '1');
-
+    
+-- move resourceURL into DB (set via $secureComp->setResourceURL())
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) 
+	VALUES ('resourceURL', '', 'url', 'a', 'URL to HHK root', '0');

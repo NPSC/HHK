@@ -656,8 +656,8 @@ div.dt-buttons .dt-button:hover>span {
 	text-align: center;
 }
 
-#filterBtns>*:not(:first-child) {
-	margin-left:5px
+#filterBtns>* {
+	margin: 0.5em;
 }
 
 .filterWrapper {
@@ -693,4 +693,21 @@ div.dt-buttons .dt-button:hover>span {
 	font-size: .9em;
 	padding: 5px;
 	margin: 10px 0 25px 0;
+}
+
+/* report email dialog */
+
+#emRptDialog table {
+	width: 100%;
+}
+
+#emRptDialog table tr:not(:last-child) td {
+	padding-bottom:1em;
+}
+
+/* text label */
+#emRptDialog table tr td:first-child {
+	text-align:right;
+	padding-right: 5px;
+	width: 50px;
 }

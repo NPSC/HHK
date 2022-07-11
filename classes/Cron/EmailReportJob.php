@@ -6,6 +6,7 @@ namespace HHK\Cron;
 use HHK\House\Report\GuestVehicleReport;
 use HHK\Exception\RuntimeException;
 use HHK\sec\Session;
+use HHK\House\Report\ReservationReport;
 
 /**
  * EmailReportJob.php
@@ -26,7 +27,7 @@ use HHK\sec\Session;
 
 class EmailReportJob extends AbstractJob implements JobInterface{
 
-    const AVAILABLE_REPORTS = array("vehicles"=>["vehicles","Vehicles"]);
+    const AVAILABLE_REPORTS = array("vehicles"=>["vehicles","Vehicles"],"reservation"=>["reservation","Reservations"]);
 
     public array $paramTemplate = [
         "report"=>[
@@ -40,6 +41,11 @@ class EmailReportJob extends AbstractJob implements JobInterface{
             "type" =>"email",
             "required"=>true
         ],
+        "subject"=>[
+            "label"=>"Subject",
+            "type"=>"string",
+            "required"=>true
+        ],
         "inputSet"=>[
             "label"=>"Input Set",
             "type"=>"select",
@@ -51,9 +57,10 @@ class EmailReportJob extends AbstractJob implements JobInterface{
     public function tasks(): void{
         $uS = Session::getInstance();
         $emailAddress = (isset($this->params['emailAddress']) ? $this->params['emailAddress'] : '');
+        $subject = (isset($this->params['subject']) ? $this->params['subject'] : '');
         $result = [];
 
-        if(isset($this->params["report"]) && in_array($this->params["report"], EmailReportJob::AVAILABLE_REPORTS)){
+        if(isset($this->params["report"]) && isset(EmailReportJob::AVAILABLE_REPORTS[$this->params["report"]])){
 
             switch($this->params["report"]){
                 case 'vehicles':
@@ -62,6 +69,11 @@ class EmailReportJob extends AbstractJob implements JobInterface{
                     $subject = $uS->siteName . " Vehicle Report";
 
                     $result = $guestVehiclesReport->sendEmail("vehicles", $subject, $emailAddress, $this->dryRun);
+                    break;
+
+                case 'reservation':
+                    $reservationsReport = new ReservationReport($this->dbh);
+                    $result = $reservationsReport->sendEmail($emailAddress, $subject, $this->dryRun);
                     break;
                 default:
                     $result['error'] = $this->params["report"] . " is not a valid report option";

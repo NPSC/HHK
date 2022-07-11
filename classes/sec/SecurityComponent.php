@@ -215,6 +215,17 @@ class SecurityComponent {
 
     }
 
+    public function setResourceURL(\PDO $dbh){
+        try{
+            if(SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL') == ''){
+                SysConfig::saveKeyValue($dbh, "sys_config", "resourceURL", $this->getRootURL());
+            }
+            return SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL', '');
+        }catch(\Exception $e){
+            return $this->getRootURL();
+        }
+    }
+
     public static function is_Admin() {
         $tokn = false;
         $ssn = Session::getInstance();

@@ -23,7 +23,7 @@ use HHK\ColumnSelectors;
  * @author Will
  * @author Eric
  */
-class GuestVehicleReport {
+class GuestVehicleReportOld {
 
     protected $title;
     protected \PDO $dbh;

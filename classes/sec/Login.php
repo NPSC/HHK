@@ -79,7 +79,7 @@ class Login {
 
         $ssn->mode = strtolower(SysConfig::getKeyValue($dbh, 'sys_config', 'mode', 'demo'));
         $ssn->testVersion = SysConfig::getKeyValue($dbh, 'sys_config', 'Run_As_Test', false);
-        $ssn->resourceURL = $secureComp->getRootURL();
+        $ssn->resourceURL = $secureComp->setResourceURL($dbh);
         $ssn->ver = CodeVersion::VERSION . '.' . CodeVersion::BUILD;
 
         // Initialize role code

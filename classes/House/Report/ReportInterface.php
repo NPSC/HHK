@@ -4,9 +4,7 @@ namespace HHK\House\Report;
 interface ReportInterface {
 
     /**
-     * Build the report query
-     *
-     * Be sure to set $this->query
+     * Build the report query string, set $this->query
      */
     public function makeQuery():void;
 
@@ -25,7 +23,7 @@ interface ReportInterface {
     public function makeFilterMkup():void;
 
     /**
-     * Build your summary content
+     * Build your summary content, (wrapper + logo will be added by AbstractReport::generateSummaryMkup())
      *
      * @return string
      */

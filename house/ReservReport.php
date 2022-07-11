@@ -79,42 +79,17 @@ if (isset($_POST['btnExcel'])) {
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
 
-<script type="text/javascript">
-    $(document).ready(function() {
-        var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
-        var columnDefs = $.parseJSON('<?php echo json_encode($reservationReport->colSelector->getColumnDefs()); ?>');
+        <script type="text/javascript">
+            $(document).ready(function() {
+                var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>';
+                var columnDefs = $.parseJSON('<?php echo json_encode($reservationReport->colSelector->getColumnDefs()); ?>');
 
-        <?php echo $reservationReport->filter->getTimePeriodScript(); ?>;
+                <?php echo $reservationReport->filter->getTimePeriodScript(); ?>;
+                <?php echo $reservationReport->generateReportScript(); ?>
 
-        $('#tblrpt').dataTable({
-            'columnDefs': [
-                {'targets': columnDefs,
-                 'type': 'date',
-                 'render': function ( data, type, row ) {return dateRender(data, type, dateFormat);}
-                }
-            ],
-            "displayLength": 50,
-            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": '<"top ui-toolbar ui-helper-clearfix"Bilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
-            "buttons": [
-                {
-                	extend: 'print',
-                	className: 'ui-corner-all',
-                	autoPrint: true,
-                	title: function(){
-                		var siteName = '<?php echo $uS->siteName; ?>';
-                    	return siteName + '\r\nReservation Report';
-                	},
-                	messageTop: function(){
-                		return '<div class="hhk-flex mb-3" style="justify-content: space-between;"><div>' + $('#repSummary').html() + '</div><img src="../conf/receiptlogo.png"></div>';
-                	},
-                }
-            ],
-        });
-
-        $('#includeFields').fieldSets({'reportName': 'reserv', 'defaultFields': <?php echo json_encode($reservationReport->getDefaultFields()) ?>});
-    });
- </script>
+                $('#includeFields').fieldSets({'reportName': 'reserv', 'defaultFields': <?php echo json_encode($reservationReport->getDefaultFields()) ?>});
+            });
+         </script>
     </head>
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
