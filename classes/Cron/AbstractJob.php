@@ -91,6 +91,11 @@ abstract class AbstractJob implements JobInterface {
             $val = (isset($this->params[$name]) ? $this->params[$name] : "");
             $required = (isset($attrs['required']) && $attrs['required'] ? "required" : "");
 
+            //set default value
+            if($this->idJob == -1 && $val == "" && isset($attrs['defaultVal'])){
+                $val = $attrs['defaultVal'];
+            }
+
             switch($attrs['type']){
                 case "string":
                     $input = HTMLInput::generateMarkup("", array("type"=>"text","value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));
@@ -102,7 +107,7 @@ abstract class AbstractJob implements JobInterface {
                     $input = HTMLInput::generateMarkup("", array("type"=>"email", "value"=>$val, "class"=>"editParam", "data-name"=>$name, "required"=>$required));
                     break;
                 case "select":
-                    $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrs['values'], $val), array("style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, "required"=>$required));
+                    $input = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($attrs['values'], $val), array("style"=>"width: 100%", "class"=>"editParam", "data-name"=>$name, "data-curval"=>$val, "required"=>$required));
                     break;
                 default:
                     $input = "";

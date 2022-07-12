@@ -227,6 +227,19 @@ try {
             $events = ["idJob"=>$idJob, "paramMkup"=>$job->getParamEditMkup()];
             break;
 
+        case "getInputSetTitle":
+            $idInputSet = 0;
+            if(isset($_REQUEST["inputSet"])){
+                $idInputSet = intval(filter_var($_REQUEST['inputSet'], FILTER_SANITIZE_NUMBER_INT),10);
+            }
+
+            $query = "select `idFieldSet`, `Title` from `report_field_sets` where `idFieldSet` = :idfieldset limit 1";
+            $stmt = $dbh->prepare($query);
+            $stmt->execute([":idfieldset"=>$idInputSet]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $events = $row;
+            break;
+
         case "updateCronJob":
             $idJob = 0;
             if (isset($_REQUEST['idJob'])) {
@@ -869,7 +882,7 @@ function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interva
     //$param validation
     if(count($params) > 0){
         try{
-            $job = JobFactory::make($dbh, $idJob);
+            $job = JobFactory::make($dbh, $idJob, true, $type);
             $paramTemplate = $job->paramTemplate;
 
             foreach($params as $k=>$v){
@@ -880,7 +893,7 @@ function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interva
                     if(!empty($v)){
                         switch($paramTemplate[$k]['type']){
                             case 'select':
-                                if(!array_key_exists($v, $paramTemplate[$k]['values'])){
+                                if(count($paramTemplate[$k]['values']) > 0 && !array_key_exists($v, $paramTemplate[$k]['values'])){
                                     $errors[] = $v . " is not a valid option for " . $paramTemplate[$k]['label'];
                                 }
                                 break;

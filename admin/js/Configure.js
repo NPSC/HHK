@@ -215,7 +215,25 @@ var dtCronCols = [
         	data = JSON.parse(data);
         	var mkup = '';
         	$.each(data, function (key, value){
-        		mkup += '<div class="hhk-flex"><span class="mr-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) +"</strong>: </span><span>" + value + "</span></div>";
+        		if(key == "inputSet" && value.length > 0){
+        			$.ajax({
+        				url:'ws_gen.php',
+        				async:false,
+        				dataType:'json',
+        				data:{
+        					"cmd":"getInputSetTitle",
+        					"inputSet":value
+        				},
+        				success:function(data){
+        					if(data.Title){
+        						value = data.Title;
+        					}
+        					mkup += '<div class="hhk-flex"><span class="mr-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) +"</strong>: </span><span>" + value + "</span></div>";
+        				}
+        			});
+        		}else{
+        			mkup += '<div class="hhk-flex"><span class="mr-2"><strong>' + key.charAt(0).toUpperCase() + key.slice(1) +"</strong>: </span><span>" + value + "</span></div>";
+        		}
         	});
         	return mkup;
         }
@@ -461,6 +479,7 @@ $('#newJob').on('click', '#addJob', function(event){
                     url: 'ws_gen.php',
                     dataType: 'JSON',
                     type: 'post',
+                    async: false,
                     data: {
                         cmd: 'getCronParamMkup',
                         idJob: $editBtn.data('job'),
@@ -481,7 +500,6 @@ $('#newJob').on('click', '#addJob', function(event){
         	$row.find('.jobStatus').html(jobStatusMkup);
         	$row.find('.runCron, .editCron').hide();
         	$row.find('.saveCron, .deleteCron, .cancelCron').show();
-        	$row.find('.editParam[data-name=report]').trigger('change');
         	$row.on('change', '#editJobInterval', function(e){
         		var interval = $(e.target).val();
         		
@@ -513,7 +531,7 @@ $('#newJob').on('click', '#addJob', function(event){
 					data: {
 						'cmd':'getFieldSetOptMkup',
 						'report':$row.find('.editParam[data-name=report]').val(),
-						'selection':"",
+						'selection':$row.find('.editParam[data-name=inputSet]').data('curval'),
 					},
 					dataType:'json',
 					success: function(data){
@@ -526,6 +544,7 @@ $('#newJob').on('click', '#addJob', function(event){
 					}
 				});
         	});
+        	$row.find('.editParam[data-name=report]').trigger('change');
         	
         });
         //End Show Edit mode

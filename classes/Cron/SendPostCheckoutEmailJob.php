@@ -32,10 +32,17 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
         "solicitBuffer"=>[
             "label"=>"SolicitBuffer (days)",
             "type"=>"number",
+            "defaultVal" =>"",
             "min"=>1,
             "required"=>true
         ],
     ];
+
+    public function __construct(\PDO $dbh, int $idJob, array $params=[], bool $dryRun=false){
+        $uS = Session::getInstance();
+        $this->paramTemplate["solicitBuffer"]["defaultVal"] = $uS->SolicitBuffer;
+        parent::__construct($dbh, $idJob, $params, $dryRun);
+    }
 
     public function tasks():void {
 
