@@ -32,6 +32,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
         "solicitBuffer"=>[
             "label"=>"SolicitBuffer (days)",
             "type"=>"number",
+            "min"=>1,
             "required"=>true
         ],
     ];

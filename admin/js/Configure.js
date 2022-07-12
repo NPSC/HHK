@@ -616,9 +616,11 @@ $('#newJob').on('click', '#addJob', function(event){
             if($(this).data('job') == '-1'){
             	row.find(".cancelCron").trigger('click');
             }else{
-            	row.find("#editJobStatus").append('<option value="del"></option>').val('del');
-            	row.find(".saveCron").trigger('click');
-            	cronTable.row(row).remove().draw();
+            	if(confirm("Are you sure you want to delete " + row.find("#editJobTitle").val() + "?")){
+            		row.find("#editJobStatus").append('<option value="del"></option>').val('del');
+            		row.find(".saveCron").trigger('click');
+            		cronTable.row(row).remove().draw();
+            	}
             }
         });
         //End Delete Cron Job

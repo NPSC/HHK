@@ -17,6 +17,7 @@ use HHK\Cron\JobFactory;
 use HHK\Tables\CronRS;
 use HHK\Cron\AbstractJob;
 use HHK\Cron\EmptyJob;
+use HHK\Cron\EmailReportJob;
 
 /**
  * ws_gen.php
@@ -27,9 +28,6 @@ use HHK\Cron\EmptyJob;
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-
-
-
 
 $wInit = new webInit(WebPageCode::Service);
 
@@ -867,6 +865,58 @@ function updateCronJob(\PDO $dbh, $idJob, $title, $type, array $params, $interva
     if($idJob != -1 && $idJob <= 0){
         $errors[] = "Job ID is invalid";
     }
+
+    //$param validation
+    if(count($params) > 0){
+        try{
+            $job = JobFactory::make($dbh, $idJob);
+            $paramTemplate = $job->paramTemplate;
+
+            foreach($params as $k=>$v){
+                if(isset($paramTemplate[$k])){
+                    if($paramTemplate[$k]['required'] && empty($v)){
+                        $errors[] = $paramTemplate[$k]['label'] . " is required";
+                    }
+                    if(!empty($v)){
+                        switch($paramTemplate[$k]['type']){
+                            case 'select':
+                                if(!array_key_exists($v, $paramTemplate[$k]['values'])){
+                                    $errors[] = $v . " is not a valid option for " . $paramTemplate[$k]['label'];
+                                }
+                                break;
+                            case 'email':
+                                $addresses = explode(',', $v);
+                                foreach($addresses as $key=>$address){
+                                    $addresses[$key] = trim($address);
+                                    if(!filter_var(trim($address), FILTER_VALIDATE_EMAIL)){
+                                        $errors[] = $paramTemplate[$k]['label'] . " value " . $address . " must be an email address";
+                                    }
+                                }
+                                $params[$k] = implode(",", $addresses);
+                                break;
+                            case "number":
+                                if(!filter_var($v, FILTER_VALIDATE_INT)){
+                                    $errors[] = $paramTemplate[$k]['label'] . " must be a number";
+                                }
+
+                                if(isset($paramTemplate[$k]['min']) && $v < $paramTemplate[$k]['min']){
+                                    $errors[] = $paramTemplate[$k]['label'] . " must be greater than or equal to " . $paramTemplate[$k]['min'];
+                                }
+
+                                if(isset($paramTemplate[$k]['max']) && $v > $paramTemplate[$k]['max']){
+                                    $errors[] = $paramTemplate[$k]['label'] . " must be less than or equal to " . $paramTemplate[$k]['min'];
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+
+        }catch(\Exception $e){
+            $errors[] = $e->getMessage();
+        }
+    }
+
     if(!in_array($interval, $validIntervals)){
         $errors[] = "Interval must be Hourly, Daily, Weekly or Monthly";
     }
