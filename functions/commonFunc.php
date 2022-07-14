@@ -83,7 +83,7 @@ function initPDO($override = FALSE)
 
 function syncTimeZone(\PDO $dbh)
 {
-    $tz = SysConfig::getKeyValue($dbh, 'sys_config', 'tz', false);
+    $tz = SysConfig::getKeyValue($dbh, 'sys_config', 'tz', 'utc');
     date_default_timezone_set($tz);
     $now = new \DateTime();
     $tmins = $now->getOffset() / 60;
