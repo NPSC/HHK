@@ -502,7 +502,7 @@ foreach ($rescGroups as $g) {
                                     },
                                     "columnDefs": dtColDefs,
                                     "deferRender": true,
-                                    "order": [[6, 'desc']]
+                                    "order": [[7, 'desc']]
                                 });
                             }
                         }
