@@ -214,16 +214,21 @@ var dtCronCols = [
         render: function ( data, type ) {
         	data = JSON.parse(data);
         	var mkup = '';
+        	var lookupFields = ["fieldSet", "EmailTemplate"];
+        	var submitdata = {};
         	$.each(data, function (key, value){
-        		if(key == "inputSet" && value.length > 0){
+        		if(lookupFields.includes(key) && value.length > 0){
+        			if(key == "fieldSet"){
+        				submitdata = {"cmd":"getInputSetTitle", "inputSet":value};
+        			}else if(key == "EmailTemplate"){
+        				submitdata = {"cmd":"getDocTitle", "idDoc":value};
+        			}
+        			
         			$.ajax({
         				url:'ws_gen.php',
         				async:false,
         				dataType:'json',
-        				data:{
-        					"cmd":"getInputSetTitle",
-        					"inputSet":value
-        				},
+        				data:submitdata,
         				success:function(data){
         					if(data.Title){
         						value = data.Title;
@@ -318,8 +323,9 @@ var dtCronCols = [
         "targets": [ 10 ],
         "title": "Actions",
         'data': 'ID',
+        "width": 275,
         render: function ( data, type, row) {
-            return '<div class="cronActions">'
+            return '<div class="cronActions hhk-flex">'
             		+ ($('#canEditCron').val() == true ? '<button type="button" class="editCron ui-button ui-corner-all" data-job="' + data + '" data-jobtitle="' + row.Title + '" data-type="' + row.Type + '" data-interval="' + row.Interval + '" data-day="' + row.Day + '" data-hour="' + row.Hour + '" data-minute="' + row.Minute + '" data-status="' + row.Status + '">Edit</button>' : '')
             		+ '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="1">Dry Run</button>'
             		+ ($('#canForceRunCron').val() == true ? '<button type="button" class="runCron ui-button ui-corner-all" data-job="' + data + '" data-dryRun="0">Run Now</button>': '')
@@ -531,12 +537,12 @@ $('#newJob').on('click', '#addJob', function(event){
 					data: {
 						'cmd':'getFieldSetOptMkup',
 						'report':$row.find('.editParam[data-name=report]').val(),
-						'selection':$row.find('.editParam[data-name=inputSet]').data('curval'),
+						'selection':$row.find('.editParam[data-name=fieldSet]').data('curval'),
 					},
 					dataType:'json',
 					success: function(data){
 						if(data.fieldSetOptMkup){
-							$row.find('.editParam[data-name=inputSet]').html(data.fieldSetOptMkup);
+							$row.find('.editParam[data-name=fieldSet]').html(data.fieldSetOptMkup);
 						}
 					},
 					error: function (xhr, textStatus, errorThrown){

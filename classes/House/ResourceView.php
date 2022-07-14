@@ -963,6 +963,7 @@ from
     ifnull(v.Arrival_Date, '') as `Arrival`,
     ifnull(v.Expected_Departure, '') as `Expected_Departure`,
     r.Last_Cleaned,
+    r.Last_Deep_Clean,
     r.Notes
 from
     room r
@@ -996,6 +997,7 @@ ORDER BY $orderBy;");
             $expDeparture = $r['Expected_Departure'];
             $arrival = $r['Arrival'];
             $lastCleaned = $r['Last_Cleaned'];
+            $lastDeepClean = $r['Last_Deep_Clean'];
             $notes = '';
             $action = '';
 
@@ -1035,6 +1037,8 @@ ORDER BY $orderBy;");
                 }
             }
 
+            $lastDeepClean = $r['Last_Deep_Clean'] == '' ? '' : date('M d, Y', strtotime($r['Last_Deep_Clean']));
+
             if ($printOnly) {
 
                 $stat = strip_tags($stat);
@@ -1049,6 +1053,7 @@ ORDER BY $orderBy;");
 
             } else {
                 $notes = Notes::markupShell($r['Notes'], $filter.'taNotes[' . $r['idRoom'] . ']');
+                $lastDeepClean = HTMLInput::generateMarkup($lastDeepClean, array("type"=>"text", "class"=>"ckdate","name"=>$filter . 'deepCleanDate[' . $r['idRoom'] . ']'));
 
                 if ($isDirty) {
                     $action = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'class'=>'hhk-hkcb', 'name'=>$filter.'cbClean[' . $r['idRoom'] . ']', 'id'=>$filter.'cbClean' . $r['idRoom']))
@@ -1078,6 +1083,7 @@ ORDER BY $orderBy;");
             $fixedRows['Checked_In'] = $arrival;
             $fixedRows['Expected_Checkout'] = $expDeparture;
             $fixedRows['Last_Cleaned'] = $lastCleaned;
+            $fixedRows['Last_Deep_Clean'] = $lastDeepClean;
             $fixedRows['Notes'] = $notes;
 
             $returnRows[] = $fixedRows;
@@ -1185,6 +1191,7 @@ ORDER BY $orderBy;");
             array( 'db' => 'Type',   'dt' => 'Type' ),
             array( 'db' => 'Status_Text',     'dt' => 'Status' ),
             array( 'db'  => 'Last_Cleaned', 'dt' => 'Last Cleaned' ),
+            array( 'db'  => 'Last_Deep_Clean', 'dt' => 'Last Deep Clean' ),
             array( 'db' => 'Notes',   'dt' => 'Notes' ),
             array( 'db' => 'Username',     'dt' => 'User' ),
             array( 'db' => 'Timestamp', 'dt' => 'Timestamp')

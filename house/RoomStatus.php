@@ -121,6 +121,27 @@ if (isset($_POST['btnSubmitTable']) or isset($_POST['btnSubmitClean'])) {
         }
     }
 
+    // Set deep clean date
+    if (isset($_POST[$prefix . 'deepCleanDate'])) {
+
+        foreach ($_POST[$prefix . 'deepCleanDate'] as $key => $p) {
+
+            $idRoom = intval(filter_var($key, FILTER_SANITIZE_NUMBER_INT), 10);
+            $deepCleanDate = filter_var($p, FILTER_SANITIZE_STRING);
+            if ($idRoom == 0) {
+                continue;
+            }
+
+            if (isset($rooms[$idRoom])) {
+                $room = $rooms[$idRoom];
+            } else {
+                $room = new Room($dbh, $idRoom);
+                $rooms[$idRoom] = $room;
+            }
+
+            $room->setLastDeepCleanDate($deepCleanDate);
+        }
+    }
 
     // Delete notes
     if ($guestAdmin && isset($_POST[$prefix . 'cbDeln'])) {
@@ -186,9 +207,9 @@ if (isset($rescGroups[$uS->CalResourceGroupBy])) {
 }
 
 foreach ($rescGroups as $g) {
-    
+
     if ($rescGroupBy === $g[0]) {
-        
+
         $groupingTitle = $g[1];
         break;
     }
@@ -282,6 +303,13 @@ foreach ($rescGroups as $g) {
                     render: function (data, type, row) {
                         return dateRender(data, type, dateFormat);
                     },
+                    'searchable': true,
+                    'sortable': true
+                },
+                {
+                    'data': 'Last_Deep_Clean',
+                    'title': 'Last Deep Clean',
+                    'type': 'date',
                     'searchable': true,
                     'sortable': true
                 },
@@ -416,21 +444,29 @@ foreach ($rescGroups as $g) {
                     }
                 },
                 {
-                    'targets': [4],
+                    "targets": [4],
+                    'data': 'Last Deep Clean',
+                    'title': 'Last Deep Clean',
+                    render: function (data, type, row) {
+                        return dateRender(data, type, dateFormat);
+                    }
+                },
+                {
+                    'targets': [5],
                     'data': 'Notes',
                     'title': 'Notes',
                     'searchable': true,
                     'sortable': false
                 },
                 {
-                    'targets': [5],
+                    'targets': [6],
                     'data': 'User',
                     'title': 'User',
                     'sortable': true,
                     'searchable': true
                 },
                 {
-                    "targets": [6],
+                    "targets": [7],
                     'data': 'Timestamp',
                     'title': 'Timestamp',
                     render: function (data, type, row) {
@@ -548,7 +584,18 @@ foreach ($rescGroups as $g) {
                     },
                     "deferRender": true,
                     "columns": cgCols,
-                    rowGroup: {dataSrc: 'Group_Title'}
+                    rowGroup: {dataSrc: 'Group_Title'},
+                    "initComplete": function(settings, json){
+                    	$('.ckdate').datepicker({
+                            yearRange: '-07:+01',
+                            changeMonth: true,
+                            changeYear: true,
+                            autoSize: true,
+                            numberOfMonths: 1,
+                            maxDate: 0,
+                            dateFormat: 'M d, yy'
+                        });
+                    }
                 });
 
                 $('#dirtyTable').dataTable({
@@ -558,7 +605,18 @@ foreach ($rescGroups as $g) {
                     },
                     "deferRender": true,
                     "columns": cgCols,
-                    rowGroup: {dataSrc: 'Group_Title'}
+                    rowGroup: {dataSrc: 'Group_Title'},
+                    "initComplete": function(settings, json){
+                    	$('.ckdate').datepicker({
+                            yearRange: '-07:+01',
+                            changeMonth: true,
+                            changeYear: true,
+                            autoSize: true,
+                            numberOfMonths: 1,
+                            maxDate: 0,
+                            dateFormat: 'M d, yy'
+                        });
+                    }
                 });
 
                 $('#outTable').dataTable({
@@ -605,7 +663,7 @@ foreach ($rescGroups as $g) {
 				$('#prtClnToday').click(function () {
                     window.open('ShowHsKpg.php?tbl=notReady', '_blank');
                 });
-                
+
 				$('#prtCkIn').click(function () {
                     $('div#ckin').printArea(opt);
                 });

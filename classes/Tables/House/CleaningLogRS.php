@@ -21,6 +21,7 @@ class CleaningLogRS extends AbstractTableRS {
     public $Status;   // varchar(5) NOT NULL DEFAULT '',
     public $Notes;
     public $Last_Cleaned;   // datetime DEFAULT NULL,
+    public $Last_Deep_Clean;   // datetime DEFAULT NULL,
     public $Username;   // varchar(45) NOT NULL DEFAULT ''
     public $Timestamp;   // TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 
@@ -32,6 +33,7 @@ class CleaningLogRS extends AbstractTableRS {
         $this->Notes = new DB_Field('Notes', '', new DbStrSanitizer(2000));
         $this->Username = new DB_Field('Username', '', new DbStrSanitizer(45));
         $this->Last_Cleaned = new DB_Field('Last_Cleaned', NULL, new DbDateSanitizer("Y-m-d H:i:s"));
+        $this->Last_Deep_Clean = new DB_Field('Last_Deep_Clean', NULL, new DbDateSanitizer("Y-m-d H:i:s"));
         $this->Timestamp = new DB_Field('Timestamp', NULL, new DbDateSanitizer("Y-m-d H:i:s"));
 
         // This line stays at the end of the function.

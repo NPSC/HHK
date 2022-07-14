@@ -7,6 +7,7 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\HTMLInput;
 
 /**
  * ReservationReport.php
@@ -71,9 +72,16 @@ class ReservationReport extends AbstractReport implements ReportInterface {
             $whStatus = "and r.Status in (" . $whStatus . ") ";
         }
 
+        //show all guests?
+        if(isset($this->request["cbShowAll"])){
+            $groupBy = " Group By rg.idReservation, rg.idGuest";
+        }else{
+            $groupBy = " and rg.Primary_Guest = 1 Group By rg.idReservation";
+        }
+
         $this->query = "select
     r.idReservation,
-    r.idGuest,
+    rg.idGuest,
     concat(ifnull(na.Address_1, ''), '', ifnull(na.Address_2, ''))  as gAddr,
     ifnull(na.City, '') as gCity,
     ifnull(na.County, '') as gCounty,
@@ -91,6 +99,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     (DATEDIFF(ifnull(r.Actual_Departure, r.Expected_Departure), ifnull(r.Actual_Arrival, r.Expected_Arrival))+1) as `Days`,
     ifnull(n.Name_Last, '') as Name_Last,
     ifnull(n.Name_First, '') as Name_First,
+    ifnull(n.BirthDate, '') as BirthDate,
     re.Title as `Room`,
     re.`Type`,
     re.`Status` as `RescStatus`,
@@ -109,17 +118,17 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     hs.Diagnosis2,
     ifnull(g2.`Description`, '') as `Location`,
     r.`Timestamp` as `Created_Date`,
-    r.Last_Updated,
-	CASE WHEN r.Status not in ('s','co','im') THEN count(rg.idReservation) ELSE '' END as `numGuests`
+    r.Last_Updated " .
+	//CASE WHEN r.Status not in ('s','co','im') THEN count(rg.idReservation) ELSE '' END as `numGuests`
 
-from
+"from
     reservation r
         left join
 	reservation_guest rg on r.idReservation = rg.idReservation
 		left join
     resource re ON re.idResource = r.idResource
         left join
-    name n ON r.idGuest = n.idName
+    name n ON rg.idGuest = n.idName
         left join
     name_address na ON n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose
         left join
@@ -147,7 +156,7 @@ from
         and g2.`Code` = hs.`Location`
     LEFT JOIN hospital h on hs.idHospital = h.idHospital and h.Type = 'h'
     LEFT JOIN hospital a on hs.idAssociation = a.idHospital and a.Type = 'a'
-where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservation order by r.idRegistration";
+where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.idRegistration";
     }
 
     public function makeFilterMkup():void{
@@ -157,9 +166,22 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         $this->filterMkup .= $this->colSelector->makeSelectorTable(TRUE)->generateMarkup(array('id'=>'includeFields'));
     }
 
+    public function makeFilterOptsMkup():void{
+        $showAllAttrs = array("type"=>"checkbox", "id"=>"cbShowAll", "name"=>"cbShowAll");
+        if(isset($this->request["cbShowAll"])){
+            $showAllAttrs['checked'] = 'checked';
+        }
+
+        $this->filterOptsMkup .= HTMLContainer::generateMarkup("div",
+            HTMLInput::generateMarkup("", $showAllAttrs) .
+            HTMLContainer::generateMarkup("label", "Show all " . Labels::getString('MemberType', 'visitor', 'Guest') . 's', array("for"=>"cbShowAll"))
+        );
+
+    }
+
     protected function getResvStatusMkup(){
 
-        $resvStatusSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->resvStatuses, $this->selectedResvStatuses), array('name' => 'selResvStatus[]', 'size'=>'6', 'multiple'=>'multiple'));
+        $resvStatusSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($this->resvStatuses, $this->selectedResvStatuses), array('name' => 'selResvStatus[]', 'size'=>(count($this->resvStatuses) < 13 ? count($this->resvStatuses) + 1 : '13'), 'multiple'=>'multiple'));
 
         $tbl = new HTMLTable();
         $tr = '';
@@ -230,12 +252,13 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
         $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
         $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
+        $cFields[] = array("Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
         $cFields[] = array("Days", 'Days', '', '', 'integer', '10');
         $cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
-        $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest').'s', 'numGuests', 'checked', '', 'integer', '10');
+        //$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest').'s', 'numGuests', 'checked', '', 'integer', '10');
         $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
         $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', array(), 'date');
@@ -248,6 +271,12 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . " Group By rg.idReservatio
         $mkup = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 
         $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())));
+
+        if(isset($this->request["cbShowAll"])){
+            $mkup .= HTMLContainer::generateMarkup("p", "Showing All Guests");
+        }else{
+            $mkup .= HTMLContainer::generateMarkup("p", "Showing Primary Guests Only");
+        }
 
         $hospitalTitles = '';
         $hospList = $this->filter->getHospitals();

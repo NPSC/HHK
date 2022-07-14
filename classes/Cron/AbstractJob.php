@@ -78,7 +78,7 @@ abstract class AbstractJob implements JobInterface {
         try{
             $this->tasks();
             $this->log(true);
-        }catch(\Exception $e){
+        }catch(\Throwable $e){
             $this->logMsg = "Job Failed: " . $e->getMessage();
             $this->log(false);
         }

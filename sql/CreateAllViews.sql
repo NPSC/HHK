@@ -400,6 +400,7 @@ CREATE OR REPLACE VIEW `vcleaning_log` AS
         `c`.`Type` AS `Type`,
         `c`.`Status` AS `Status`,
         `c`.`Last_Cleaned` AS `Last_Cleaned`,
+		`c`.`Last_Deep_Clean` as `Last_Deep_Clean`,
         `c`.`Notes` AS `Notes`,
         IFNULL(`g`.`Description`, '') AS `Status_Text`,
         `c`.`Username` AS `Username`,

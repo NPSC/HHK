@@ -5,6 +5,7 @@ namespace HHK\House\Report;
 use HHK\HTMLControls\HTMLTable;
 use HHK\Exception\RuntimeException;
 use HHK\sec\Labels;
+use HHK\sec\Session;
 
 /**
  * GuestReport.php
@@ -31,6 +32,8 @@ class GuestDemogReport {
         if ($endDate == '') {
             $endDate = date('Y-m-01');
         }
+
+        $uS = Session::getInstance();
 
         $stDT = new \DateTime($startDate);
         $stDT->setTime(0, 0, 0);
@@ -127,6 +130,10 @@ class GuestDemogReport {
 
         $accum['Total']['Distance'] = self::makeCounters(removeOptionGroups(readGenLookupsPDO($dbh, 'Distance_Range', 'Substitute')));
 
+        if($uS->county){
+            $accum['Total']['County'][''] = ['title'=>"Not Indicated", 'cnt'=>0];
+        }
+
         $th .= HTMLTable::makeTh("Total");
 
         if ($whichGuests == 'new') {
@@ -139,6 +146,8 @@ class GuestDemogReport {
 
         $query .= "na.Postal_Code,
         $fields
+        na.County,
+        na.State_Province,
         hs.idPsg,
         hs.idHospital,
         hs.idAssociation
@@ -223,7 +232,51 @@ class GuestDemogReport {
                 $accum['Total']['Distance']['']['cnt']++;
 
             }
+
+            if($uS->county){
+                $countyTitle = ($r["County"] != "" ? $r["County"] . ", " . $r['State_Province'] : "Not Indicated");
+                $countyKey = ($r["County"] != "" ? $r['State_Province'] . " " . $r["County"] : ""); // used for sorting/grouping counties
+
+                if($whichGuests != 'allStayed'){
+                    if(!isset($accum[$startPeriod]['County'][$countyKey])){
+                        $accum[$startPeriod]['County'][$countyKey]['title'] = $countyTitle;
+                        $accum[$startPeriod]['County'][$countyKey]['cnt'] = 1;
+                    }else{
+                        $accum[$startPeriod]['County'][$countyKey]['cnt']++;
+                    }
+                }
+
+                if(!isset($accum['Total']['County'][$countyKey])){
+                    $accum['Total']['County'][$countyKey]['title'] = $countyTitle;
+                    $accum['Total']['County'][$countyKey]['cnt'] = 1;
+                }else{
+                    $accum['Total']['County'][$countyKey]['cnt']++;
+                }
+            }
             //$totalPSGs[$r['idPsg']] = 'y';
+        }
+
+        if($uS->county){
+            //fill in missing cells
+            foreach($periods as $period){
+                foreach($accum['Total']['County'] as $county=>$ar){
+                    if(!isset($accum[$period]['County'][$county])){
+                        $accum[$period]['County'][$county] = ['title'=>($county !="" ? $county : "Not Indicated"), 'cnt'=>0];
+                    }
+                }
+            }
+
+            //reorder counties
+            foreach($accum as $period=>$ar){
+                if(isset($accum[$period]['County'])){
+                    //sort ascending by state, county
+                    ksort($accum[$period]['County']);
+                    //push Not Indicated to end
+                    $notIndicated = $accum[$period]['County'][""];
+                    unset($accum[$period]['County'][""]);
+                    $accum[$period]['County'][""] = $notIndicated;
+                }
+            }
         }
 
         $trs = array();

@@ -45,8 +45,8 @@ class EmailReportJob extends AbstractJob implements JobInterface{
             "type"=>"string",
             "required"=>true
         ],
-        "inputSet"=>[
-            "label"=>"Input Set",
+        "fieldSet"=>[
+            "label"=>"Field Set",
             "type"=>"select",
             "values"=>[],
             "required"=>false
@@ -59,8 +59,8 @@ class EmailReportJob extends AbstractJob implements JobInterface{
         $result = [];
 
         $request = [];
-        if(isset($this->params['inputSet'])){
-            $fields = $this->getFields($this->params['inputSet']);
+        if(isset($this->params['fieldSet']) && $this->params['fieldSet'] != ''){
+            $fields = $this->getFields($this->params['fieldSet']);
             if(is_array($fields)){
                 $request['selFld'] = $fields;
             }

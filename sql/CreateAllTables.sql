@@ -157,6 +157,7 @@ CREATE TABLE if not exists `cleaning_log` (
   `Status` varchar(5) NOT NULL DEFAULT '',
   `Notes` TEXT NULL ,
   `Last_Cleaned` datetime DEFAULT NULL,
+  `Last_Deep_Clean` datetime DEFAULT NULL,
   `Username` varchar(45) NOT NULL DEFAULT '',
   `Timestamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=MyISAM ;
@@ -1838,6 +1839,7 @@ CREATE TABLE if not exists `room` (
   `idLocation` int(11) NOT NULL DEFAULT '1',
   `Owner_Id` int(11) NOT NULL DEFAULT '0',
   `Last_Cleaned` datetime DEFAULT NULL,
+  `Last_Deep_Clean` datetime DEFAULT NULL,
   `Visit_Fee_Code` varchar(5) NOT NULL DEFAULT '',
   `Rate_Code` varchar(5) NOT NULL DEFAULT '',
   `Default_Rate_Category` VARCHAR(5) NOT NULL DEFAULT '',

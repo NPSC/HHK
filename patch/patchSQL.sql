@@ -74,3 +74,9 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 -- move resourceURL into DB (set via $secureComp->setResourceURL())
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) 
 	VALUES ('resourceURL', '', 'url', 'a', 'URL to HHK root', '0');
+    
+-- Add deep clean to housekeeping
+ALTER TABLE `room` 
+ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Last_Cleaned`;
+ALTER TABLE `Cleaning_Log`
+ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Last_Cleaned`;

@@ -213,6 +213,10 @@ class Room {
         return $response;
     }
 
+    public function setLastDeepCleanDate($date = ''){
+        $this->roomRS->Last_Deep_Clean->setNewVal($date);
+    }
+
     public function setStatus($roomState) {
 
         $this->roomRS->Status->setNewVal($roomState);
@@ -281,7 +285,7 @@ class Room {
             if ($num > 0) {
 
                 if ($cleaning) {
-                    RoomLog::logCleaning($dbh, 0, $this->roomRS->idRoom->getStoredVal(), $cleanType, $this->roomRS->Status->getStoredVal(), $this->roomRS->Notes->getStoredVal(), $this->roomRS->Last_Cleaned->getStoredVal(), $username);
+                    RoomLog::logCleaning($dbh, 0, $this->roomRS->idRoom->getStoredVal(), $cleanType, $this->roomRS->Status->getStoredVal(), $this->roomRS->Notes->getStoredVal(), $this->roomRS->Last_Cleaned->getStoredVal(), $this->roomRS->Last_Deep_Clean->getStoredVal(), $username);
                 } else {
                     $logText = RoomLog::getUpdateText($this->roomRS);
                     RoomLog::logRoom($dbh, $this->roomRS->idRoom->getStoredVal(), $logText, "update", $username);

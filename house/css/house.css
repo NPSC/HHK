@@ -653,11 +653,17 @@ div.dt-buttons .dt-button:hover>span {
 }
 
 #filterBtns {
-	text-align: center;
+	display: flex;
+	justify-content:center;
+	align-items: center;
 }
 
-#filterBtns>* {
+#filterBtns>*, #filterBtns>#filterOpts>* {
 	margin: 0.5em;
+}
+
+#filterBtns>#filterOpts label {
+	margin-left: 0.25em;
 }
 
 .filterWrapper {

@@ -36,11 +36,19 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
             "min"=>1,
             "required"=>true
         ],
+        "EmailTemplate"=>[
+            "label"=>"EmailTemplate",
+            "type"=>"select",
+            "values"=>[],
+            "required"=>true
+        ],
     ];
 
     public function __construct(\PDO $dbh, int $idJob, array $params=[], bool $dryRun=false){
         $uS = Session::getInstance();
         $this->paramTemplate["solicitBuffer"]["defaultVal"] = $uS->SolicitBuffer;
+        $this->paramTemplate["EmailTemplate"]["values"] = $this->getSurveyDocList($dbh);
+
         parent::__construct($dbh, $idJob, $params, $dryRun);
     }
 
@@ -66,7 +74,7 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
             throw new RuntimeException("From/Reply To address is missing.  Go to System Configuration, House, NoReply.");
         }
 
-        $buffer = SysConfig::getKeyValue($this->dbh, 'sys_config', 'SolicitBuffer');
+        $buffer = (isset($this->params["solicitBuffer"]) && $this->params["solicitBuffer"] > 0 ? $this->params["solicitBuffer"] : SysConfig::getKeyValue($this->dbh, 'sys_config', 'SolicitBuffer'));
 
 
         if (strtolower($buffer) === 'off') {
@@ -131,10 +139,8 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
         $mail->isHTML(true);
         $mail->Subject = $subjectLine;
 
-        $stmt = $this->dbh->query("Select d.`idDocument`, g.`Code`, g.`Description` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 's' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
-        $docRow = $stmt->fetch();
-        if($docRow){
-            $sForm = new SurveyForm($this->dbh, $docRow['idDocument']);
+        if($this->params["EmailTemplate"] > 0){
+            $sForm = new SurveyForm($this->dbh, $this->params['EmailTemplate']);
         }else{
             throw new RuntimeException("Cannot find Survey document");
         }
@@ -222,6 +228,18 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
         }
 
 
+    }
+
+    protected function getSurveyDocList(\PDO $dbh){
+        $stmt = $dbh->query("Select d.`idDocument`,concat(d.`Title`, ': ', g.`Description`) as `Title` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` join gen_lookups fu on fu.`Substitute` = g.`Table_Name` where fu.`Code` = 's' AND fu.`Table_Name` = 'Form_Upload' order by g.`Order`");
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        $result = [];
+        foreach($rows as $row){
+            $result[$row[0]] = $row;
+        }
+
+        return $result;
     }
 
 }

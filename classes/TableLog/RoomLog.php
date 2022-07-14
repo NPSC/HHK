@@ -60,7 +60,7 @@ class RoomLog extends AbstractTableLog {
 
     }
 
-    public static function logCleaning(\PDO $dbh, $idResource, $idRoom, $type, $status, $notes, $lastCleaned, $username) {
+    public static function logCleaning(\PDO $dbh, $idResource, $idRoom, $type, $status, $notes, $lastCleaned, $lastDeepClean, $username) {
 
         if ($idResource > 0 || $idRoom > 0) {
 
@@ -71,6 +71,7 @@ class RoomLog extends AbstractTableLog {
             $logRs->Status->setNewVal($status);
             $logRs->Notes->setNewVal($notes);
             $logRs->Last_Cleaned->setNewVal($lastCleaned);
+            $logRs->Last_Deep_Clean->setNewVal($lastDeepClean);
             $logRs->Username->setNewVal($username);
             $logRs->Timestamp->setNewVal(date("Y-m-d H:i:s"));
 

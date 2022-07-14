@@ -36,6 +36,7 @@ abstract class AbstractReport {
     public array $resultSet = [];
     protected string $query = "";
     public string $filterMkup = "";
+    public string $filterOptsMkup = "";
     protected $request;
     protected string $reportTitle = "";
     protected string $inputSetReportName = "";
@@ -86,9 +87,16 @@ abstract class AbstractReport {
      */
     public function generateFilterMarkup(){
         $this->makeFilterMkup();
+        $this->makeFilterOptsMkup();
+        $filterOptsMkup = "";
+
+        if($this->filterOptsMkup != ""){
+            $filterOptsMkup = HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $this->filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts"));
+        }
 
         $this->filterMkup = HTMLContainer::generateMarkup("div", $this->filterMkup, array("id"=>"filterSelectors", "class"=>"hhk-flex"));
         $btnMkup = HTMLContainer::generateMarkup("div",
+            $filterOptsMkup .
             HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere", "id"=>"btnHere", "class"=>"ui-button ui-corner-all ui-widget")) .
             HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel", "id"=>"btnExcel", "class"=>"ui-button ui-corner-all ui-widget"))
         , array("id"=>"filterBtns", "class"=>"mt-3"));
@@ -421,6 +429,10 @@ abstract class AbstractReport {
 
     public function getDefaultFields(){
         return $this->defaultFields;
+    }
+
+    public function makeFilterOptsMkup(){
+
     }
 
     public function getInputSetReportName(){

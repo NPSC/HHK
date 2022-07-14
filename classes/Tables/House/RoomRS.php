@@ -38,6 +38,7 @@ class RoomRS extends AbstractTableRS {
     public $idLocation;   // int(11) NOT NULL DEFAULT '0',
     public $Owner_Id;   // int(11) NOT NULL DEFAULT '0',
     public $Last_Cleaned;  // datetime DEFAULT NULL,
+    public $Last_Deep_Clean;  // datetime DEFAULT NULL,
     public $Default_Rate_Category;  // VARCHAR(5) NOT NULL DEFAULT ''
     public $Rate_Code;   // varchar(5) NOT NULL DEFAULT '',     Static Rate lookup code to gen_lookups
     public $Visit_Fee_Code;   // varchar(5) NOT NULL DEFAULT '',
@@ -75,6 +76,7 @@ class RoomRS extends AbstractTableRS {
         $this->idLocation = new DB_Field("idLocation", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Owner_Id = new DB_Field("Owner_Id", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Last_Cleaned = new DB_Field("Last_Cleaned", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
+        $this->Last_Deep_Clean = new DB_Field("Last_Deep_Clean", NULL, new DbDateSanitizer("Y-m-d H:i:s"), TRUE, TRUE);
         $this->Default_Rate_Category = new DB_Field("Default_Rate_Category", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Rate_Code = new DB_Field("Rate_Code", "", new DbStrSanitizer(5), TRUE, TRUE);
         $this->Visit_Fee_Code = new DB_Field("Visit_Fee_Code", "", new DbStrSanitizer(5), TRUE, TRUE);
