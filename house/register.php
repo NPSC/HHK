@@ -259,7 +259,7 @@ if($uS->useOnlineReferral){
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        <!--<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">-->
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
         <?php echo JQ_UI_CSS; ?>
@@ -269,6 +269,7 @@ if($uS->useOnlineReferral){
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -288,6 +289,7 @@ if($uS->useOnlineReferral){
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REFERRAL_VIEWER_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
@@ -316,10 +318,12 @@ if($uS->useOnlineReferral){
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <div>
-                <h2 class="hhk-flex" style="justify-content: space-between;align-items: baseline;"><?php echo $wInit->pageHeading; echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); echo RoomReport::getGlobalStaysCounter($dbh); ?>
-                <span style="margin-right:20px; font-size: .65em; background:#DEEDF8; padding:2px;">Name Search:
-                    <input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
-                </span>
+                <h2 class="hhk-flex" id="page-title-row">
+                	<span class="mb-3 mb-md-0"><?php echo $wInit->pageHeading;?></span>
+                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); echo RoomReport::getGlobalStaysCounter($dbh); ?>
+                	<span id="name-search">Name Search:
+                    	<input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
+                	</span>
                 </h2>
             </div>
 

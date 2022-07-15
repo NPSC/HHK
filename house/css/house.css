@@ -317,13 +317,11 @@ span.class_history {
 }
 
 div#global-title {
-    float:left;
     color: white;
-    padding: 5px 10px;
     font-size: 1.5em;
 }
 #global-nav {
-    position: sticky;
+    /* position: sticky; */
     top: 0;
     width: 100%;
     z-index: 20;
@@ -338,11 +336,11 @@ div#global-title {
     border-left: 1px solid rgba(97, 159, 205, 0.35);
     border-right: 1px solid rgba(255, 255, 255, 0.098);
     display: inline;
-    float: left;
     list-style: none outside none;
     margin: 0;
     text-align: left;
 }
+
 #global-nav #nav ul.links {
     float: left;
 }
@@ -413,21 +411,46 @@ div#global-title {
 li.hhk-myMenuTop {
     background-color: #3E6D8F;
 }
+
+#global-nav #navContainer.mobileNav-open {
+	width: 100%;
+}
+
+#global-nav #navContainer.mobileNav-open  #nav{
+	display: flex;
+    flex-flow: column;
+    width: 100%;
+    align-items: center;
+}
+
+#global-nav #navContainer.mobileNav-open #nav ul li:hover ul {
+    display: block;
+    position:relative;
+    opacity: 1;
+    visibility: visible;
+}
+
 .hhk-ui-icons {
     margin: 0;
     padding: 0;
+    padding-right:0.5em;
 }
 .hhk-ui-icons li {
     margin: 2px;
     position: relative;
-    padding: 4px 0;
+/*     padding: 4px 0; */
     cursor: pointer;
-    float: left;
+/*     float: left; */
     list-style: none;
+    display:inline-block;
 }
 .hhk-ui-icons span.ui-icon {
-    float: left;
+/*     float: left; */
     margin: 0 4px;
+}
+
+#divNavIcons {
+	display: inline-block;
 }
 
 /* uppload styles */
@@ -643,6 +666,7 @@ div.dt-buttons .dt-button:hover>span {
 	flex-wrap: wrap;
 }
 
+
 #filterSelectors>*:not(:first-child) {
 	margin-left:5px
 }
@@ -766,4 +790,21 @@ div.dt-buttons .dt-button:hover>span {
 	text-decoration: underline;
 	text-decoration-thickness: 2px;
 	text-underline-offset:3px;
+}
+
+#page-title-row {
+	justify-content: space-between;
+	align-items: baseline;
+	flex-wrap: wrap;
+}
+
+#page-title-row #name-search {
+	margin-right:20px;
+	font-size: .65em; 
+	background:#DEEDF8; 
+	padding:2px;
+}
+
+.navbar-toggler {
+	cursor:pointer;
 }
