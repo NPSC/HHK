@@ -2,7 +2,7 @@
 
 namespace HHK\House\Report;
 
-use HHK\HTMLControls\HTMLTable;
+use HHK\HTMLControls\{HTMLTable, HTMLContainer, HTMLInput};
 use HHK\Exception\RuntimeException;
 use HHK\sec\Labels;
 use HHK\sec\Session;
@@ -335,6 +335,43 @@ class GuestDemogReport {
         }
 
         return $tbl->generateMarkup(array('class'=>'hhk-tdbox'));
+    }
+
+    public static function generateFilterBtnMarkup(string $whichGuests = ""){
+        $labels = Labels::getLabels();
+        $newGuestsAttrs = ["type"=>"radio", "name"=>"rbAllGuests", "id"=>"rbnewG"];
+        $allStartedAttrs = ["type"=>"radio", "name"=>"rbAllGuests", "id"=>"rbAllStartStay"];
+        $allStayedAttrs = ["type"=>"radio", "name"=>"rbAllGuests", "id"=>"rbAllGStay"];
+
+        switch ($whichGuests){
+            case "allStarted":
+                $allStartedAttrs["checked"] = "checked";
+                break;
+            case "allStayed":
+                $allStayedAttrs["checked"] = "checked";
+                break;
+            default:
+                $newGuestsAttrs["checked"] = "checked";
+        }
+
+        $filterOptsMkup = HTMLContainer::generateMarkup("div",
+            HTMLInput::generateMarkup("new", $newGuestsAttrs) .
+            HTMLContainer::generateMarkup("label", "First Time " . $labels->getString('MemberType', 'visitor', 'Guest') . "s Only", ["for"=>"rbnewG"])
+        );
+
+        $filterOptsMkup .= HTMLContainer::generateMarkup("div",
+            HTMLInput::generateMarkup("new", $allStartedAttrs) .
+            HTMLContainer::generateMarkup("label", "All " . $labels->getString('MemberType', 'visitor', 'Guest') . "s who started stay", ["for"=>"rbAllStartStay"])
+        );
+
+        $filterOptsMkup .= HTMLContainer::generateMarkup("div",
+            HTMLInput::generateMarkup("allStayed", $allStayedAttrs) .
+            HTMLContainer::generateMarkup("label", "All " . $labels->getString('MemberType', 'visitor', 'Guest') . "s who stayed", ["for"=>"rbAllGStay"])
+        );
+
+        $btnSubmit = HTMLInput::generateMarkup("Run Report", ["type"=>"submit", "id"=>"btnSmt", "name"=>"btnSmt", "class"=>"ui-button ui-corner-all ui-widget"]);
+
+        return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts")) . $btnSubmit, ["id"=>"filterBtns", "class"=>"mt-3"]);
     }
 
     public static function calcZipDistance(\PDO $dbh, $sourceZip, $destZip) {

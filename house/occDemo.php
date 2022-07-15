@@ -41,9 +41,6 @@ $labels = Labels::getLabels();
 $hospitalSelections = array('');
 $assocSelections = array('');
 $calSelection = '22';
-$newGuestsChecked = 'checked="checked"';
-$allGuestsStartedChecked = '';
-$allGuestsStayedChecked = '';
 $whichGuests = 'new';
 $title = '';
 
@@ -61,31 +58,16 @@ $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months, array(ReportFilter::DATES));
 $filter->createHospitals();
 
+if (isset($_POST['rbAllGuests'])) {
+    $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_STRING);
+}
+$filterBtnMkup = GuestDemogReport::generateFilterBtnMarkup($whichGuests);
 
 // Run Selected year Report?
 if (isset($_POST['btnSmt'])) {
 
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
-
-
-    if (isset($_POST['rbAllGuests'])) {
-        $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_STRING);
-
-        if ($whichGuests == 'allStarted') {
-            $newGuestsChecked = '';
-            $allGuestsStartedChecked = 'checked="checked"';
-        }else if($whichGuests == 'allStayed') {
-            $newGuestsChecked = '';
-            $allGuestsStartedChecked = '';
-            $allGuestsStayedChecked = 'checked="checked"';
-        } else {
-            $whichGuests = 'new';
-        }
-    }
-
-
-
 
     // Hospitals
     $whHosp = '';
@@ -129,8 +111,8 @@ if (isset($_POST['btnSmt'])) {
 
 
 // Setups for the page.
-$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
-$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
+$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
+$hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
 
 ?>
 <!DOCTYPE html>
@@ -157,7 +139,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript">
-    // Init j-query and the page blocker.
+    // Init jQuery and the page blocker.
     $(document).ready(function() {
         $('#btnSmt, #btnCkZip').button();
         $('#btnCkZip').click(function() {
@@ -178,15 +160,14 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
                     return;
                 }
                 if (data.error) {
-                    $('#zipDistAnswer').text('Zip Code not found.');
+                    $('#zipDistAnswer').text('Zip Code not found.').closest('tr').show();
                     return;
                 } else if (data.success) {
-                    $('#zipDistAnswer').text(data.success + ' miles');
+                    $('#zipDistAnswer').text(data.success + ' miles').closest('tr').show();
                 }
             });
         });
         <?php echo $filter->getTimePeriodScript(); ?>;
-        $('#vreport').show();
     });
         </script>
     </head>
@@ -194,43 +175,34 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'floa
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?> Demography Report</h2>
-            <div id="vreport" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="display:none; clear:left; min-width: 400px; padding:10px;">
+            <div id="vreport" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper">
                 <form action="occDemo.php" method="post">
-                    <?php
-                        echo $timePeriodMarkup;
+                	<div class="hhk-flex" id="filterSelectors">
+                        <?php
+                            echo $timePeriodMarkup;
 
-                        if (count($filter->getHospitals()) > 1) {
-                            echo $hospitalMarkup;
-                        }
-                    ?>
+                            if (count($filter->getHospitals()) > 1) {
+                                echo $hospitalMarkup;
+                            }
+                        ?>
 
-                    <div style="float:right;margin-left:130px;">
-                        <fieldset class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"><legend>Distance Calculator</legend>
-                        <table>
-                        <tr><th>From</th><th>To</th></tr>
-                        <tr><td><input type="text" id="txtZipFrom" value="<?php echo $zip ?>" size="5"/></td><td><input type="text" id="txtZipTo" value="" size="5"/></td></tr>
-                        <tr><td colspan="2"><span id="zipDistAnswer"></span></td></tr><tr><td colspan="2"><input type="button" id="btnCkZip" value="Get Zip Distance"/></td></tr>
-                    </table></fieldset>
+                        <div style="margin-left:130px;">
+                            <fieldset class="ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox"><legend>Distance Calculator</legend>
+                            <table>
+                            <tr><th>From</th><th>To</th></tr>
+                            <tr><td><input type="text" id="txtZipFrom" value="<?php echo $zip ?>" size="5"/></td><td><input type="text" id="txtZipTo" value="" size="5"/></td></tr>
+                            <tr style="display:none"><td colspan="2"><span id="zipDistAnswer"></span></td></tr><tr><td colspan="2"><input type="button" id="btnCkZip" value="Get Zip Distance" class="ui-button ui-corner-all ui-widget"/></td></tr>
+                        </table></fieldset>
+                        </div>
                     </div>
-                    <div style="clear:both;"></div>
-                    <table style="margin-top:10px; width: 100%;">
-                        <tr>
-                            <td>
-                                <input type="radio" name="rbAllGuests" id="rbnewG" value="new" <?php echo $newGuestsChecked; ?> style="margin-right:.3em;" /><label for="rbnewG" style="margin-right:.5em;">First Time <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s Only </label>
-                                <input type="radio" name="rbAllGuests" id="rbAllGStartStay" value="allStarted" <?php echo $allGuestsStartedChecked; ?> style="margin-right:.3em;" /><label for="rbAllGStartStay" style="margin-right:.5em;">All <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s who started stay </label>
-                                <input type="radio" name="rbAllGuests" id="rbAllGStay" value="allStayed" <?php echo $allGuestsStayedChecked; ?> style="margin-right:.3em;" /><label for="rbAllGStay">All <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s who stayed </label>
-                            </td>
-                            <td>
-                                <input type="submit" id="btnSmt" name="btnSmt" value="Run Report" />
-                            </td>
-                        </tr>
-                    </table>
+					<?php echo $filterBtnMkup; ?>
                 </form>
             </div>
-            <div style="clear:both;"></div>
-            <div id="printArea" style="margin-top:10px;margin-bottom:10px;font-size: .9em;">
+            <?php if($report != ""){ ?>
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" id="hhk-reportWrapper">
                 <?php echo $title . $report; ?>
             </div>
+            <?php } ?>
         </div>
     </body>
 </html>
