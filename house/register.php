@@ -167,20 +167,21 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
 
     $shoHosptialName = TRUE;
 
-    $colorKey = HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'hospital', 'Hospital') . ': ');
+    $hospLabel = HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'hospital', 'Hospital') . ': ');
     // All button
-    $colorKey .= HTMLContainer::generateMarkup('span', 'All', array('class'=>'spnHosp', 'data-id'=>0, 'style' => 'border:solid 3px black;font-size:120%;background-color:fff;color:000;'));
+    $colorKey = HTMLContainer::generateMarkup('button', 'All', array('class'=>'btnHosp hospActive', 'data-id'=>0));
 
     while ($r = $stmth->fetch(\PDO::FETCH_ASSOC)) {
 
     	if (strtolower($r['Reservation_Style']) != 'transparent') {
 
-	        $attrs = array('class'=>'spnHosp', 'data-id'=>$r['idHospital']);
+	        $attrs = array('class'=>'btnHosp', 'data-id'=>$r['idHospital']);
 	        $attrs['style'] = 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';';
 
-	        $colorKey .= HTMLContainer::generateMarkup('span', $r['Title'], $attrs);
+	        $colorKey .= HTMLContainer::generateMarkup('button', $r['Title'], $attrs);
     	}
     }
+    $colorKey = HTMLContainer::generateMarkup("div", $hospLabel . HTMLContainer::generateMarkup("div", $colorKey, array("id"=>"hospBtns")), array("id"=>"hospBtnWrapper"));
 }
 
 

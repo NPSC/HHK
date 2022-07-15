@@ -1290,15 +1290,17 @@ $(document).ready(function () {
         }
     });
 
-    if ($('.spnHosp').length > 0) {
-        $('.spnHosp').click(function () {
+    if ($('.btnHosp').length > 0) {
+        $('.btnHosp').click(function (e) {
+        	e.preventDefault();
             $(".hhk-alert").hide();
-            $('.spnHosp').css('border', 'solid 1px black').css('font-size', '100%');
+            $('.btnHosp').removeClass("hospActive");
+            $(this).addClass("hospActive");
             hindx = parseInt($(this).data('id'), 10);
             if (isNaN(hindx))
                 hindx = 0;
             calendar.refetchEvents();
-            $(this).css('border', 'solid 3px black').css('font-size', '120%');
+            //$(this).css('border', 'solid 3px black').css('font-size', '120%');
         });
     }
 
