@@ -221,6 +221,7 @@ foreach ($rescGroups as $g) {
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
         <?php echo JQ_UI_CSS; ?>
@@ -228,6 +229,7 @@ foreach ($rescGroups as $g) {
         <?php echo HOUSE_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <style type="text/css"  media="print">
             #ckout {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -245,6 +247,7 @@ foreach ($rescGroups as $g) {
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript">
             var dateFormat = '<?php echo "ddd MMM D, YYYY"; ?>';
             var groupingTitle = $('#groupingTitle').val();

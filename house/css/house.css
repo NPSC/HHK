@@ -808,3 +808,15 @@ div.dt-buttons .dt-button:hover>span {
 .navbar-toggler {
 	cursor:pointer;
 }
+
+ul.dropdown-menu.show {
+    background-color: #5c9ccc;
+}
+
+.dropdown-item {
+	color: #fff !important;
+}
+
+.dropdown-item:hover {
+	background-color: #3E6D8F !important;
+}}

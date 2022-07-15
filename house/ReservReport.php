@@ -61,6 +61,7 @@ if (isset($_POST['btnExcel'])) {
 <html>
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
@@ -68,6 +69,7 @@ if (isset($_POST['btnExcel'])) {
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -78,6 +80,7 @@ if (isset($_POST['btnExcel'])) {
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
         <script type="text/javascript">
             $(document).ready(function() {

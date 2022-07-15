@@ -121,7 +121,7 @@ order by h.idPsg, na.Address_1, na.Address_2";
         $writer = new ExcelHelper("GuestSurvey");
         $writer->setAuthor($uS->username);
         $writer->setTitle("Guest Survey");
-        
+
         // build header
         $hdr = array(
             "Depart"=>"string",
@@ -211,11 +211,13 @@ order by h.idPsg, na.Address_1, na.Address_2";
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>

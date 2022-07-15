@@ -119,10 +119,12 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
         <style>
             .hhk-tdTitle {
                 background-color: #F2F2F2;
@@ -138,6 +140,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript">
     // Init jQuery and the page blocker.
     $(document).ready(function() {

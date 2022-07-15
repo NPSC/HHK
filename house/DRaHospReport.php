@@ -77,22 +77,22 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
         $fileName = 'DoctorReport';
         $sheetName = 'Sheet1';
-        
+
         // build header
         $hdr = array();
         $colWidths = array();
-        
+
         // Header row
         $colWidths = array(10, 20, 20, 15);
         $hdr['Id'] = "string";
         $hdr[$colNameTitle] = "string";
         $hdr[$labels->getString('hospital', 'hospital', 'Hospital')] = "string";
         $hdr[$labels->getString('MemberType', 'patient', 'Patient')] = "integer";
-        
+
         $writer = new ExcelHelper($fileName);
-        
+
         $hdrStyle = $writer->getHdrStyle($colWidths);
-        
+
         $writer->writeSheetHeader($sheetName, $hdr, $hdrStyle);
 
     }
@@ -273,7 +273,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
-    
+
     $start = $filter->getReportStart();
     $end = $filter->getReportEnd();
 
@@ -302,11 +302,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if ($whHosp != '') {
         $whHosp = " and hs.idHospital in (".$whHosp.") ";
     }
-    
+
     if ($whAssoc != '') {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
-    
+
     $whHosp .= $whAssoc;
 
     if (isset($_POST['rbReport'])) {
@@ -355,7 +355,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         $hospitalTitles = $filter->getSelectedHospitalsString();
         $assocTitles = $filter->getSelectedAssocString();
-        
+
 
         $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
         $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospitalTitles) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($assocTitles));
@@ -374,12 +374,14 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'disp
 <html>
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -388,6 +390,7 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'disp
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
 <script type="text/javascript">
     $(document).ready(function() {

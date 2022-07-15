@@ -62,15 +62,18 @@ $todData = json_encode(todTable($dbh));
 <html>
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
 
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
-                <?php echo FAVICON; ?>
+        <?php echo FAVICON; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
         <script src="https://www.gstatic.com/charts/loader.js"></script>
 

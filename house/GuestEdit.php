@@ -687,9 +687,9 @@ $uS->guestId = $id;
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <meta http-equiv="x-ua-compatible" content="IE=edge">
-		<meta name="viewport" content="width=device-width, initial-scale=1"/>
         <?php echo JQ_UI_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo HOUSE_CSS; ?>
@@ -699,6 +699,7 @@ $uS->guestId = $id;
         <?php echo UPPLOAD_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
@@ -720,6 +721,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
@@ -739,14 +741,14 @@ $uS->guestId = $id;
     <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-        	<div class="hhk-flex">
+        	<div class="hhk-flex hhk-flex-wrap">
                 <div style="margin-top:5px;">
                     <?php echo $guestName; ?>
                 </div>
-                <div class="ui-widget ui-widget-content ui-corner-all hhk-flex" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px;">
-                    <div style="margin-right: 0.5em;">
-                    	<label for="txtsearch">Name Search</label>
-                    	<input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-flex hhk-flex-wrap" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px;">
+                    <div style="margin-right: 0.5em;" class="hhk-flex">
+                    	<label for="txtsearch" style="min-width:fit-content">Name Search </label>
+                    	<input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" style="width: 100%" />
                     </div>
                     <?php if($uS->searchMRN){ ?>
                     <div style="margin-right: 0.5em;">

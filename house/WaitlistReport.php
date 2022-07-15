@@ -63,12 +63,14 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
 <html>
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
@@ -79,6 +81,7 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 <script type="text/javascript">
     $(document).ready(function() {
         var patientLabel = '<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>';
@@ -148,25 +151,25 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
                     },
                     customize: function(doc){
                     	//doc.content[1].layout = "lightHorizontalLines";
-                    	
+
                     	// Get the row data in in table order and search applied
                           var table = $table;
                           var rowData = table.rows( {order: 'applied', search:'applied'} ).data();
                           var headerLines = 0;  // Offset for accessing rowData array
-                
+
                           var newBody = []; // this will become our new body (an array of arrays(lines))
                           //Loop over all lines in the table
                           doc.content[1].table.body.forEach(function(line, i){
-                
+
                             // Remove detail-control column
                             newBody.push(
                               [line[0],line[1],line[2],line[3],line[4],line[5],line[6],line[7],line[8],line[9]]
                             );
-                
+
                             if (line[0].style !== 'tableHeader' && line[0].style !== 'tableFooter') {
-                
+
                               var data = rowData[i - headerLines];
-                
+
                 			  if(data["Waitlist Notes"] !== ''){
                                   // Append child data, matching number of columns in table
                                   newBody.push(
@@ -175,22 +178,22 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
                                     ]
                                   );
                               };
-                
+
                             } else {
                               headerLines++;
                             }
-                
+
                           });
-                          
+
                           doc.content[1].table.body = newBody;
-                          
+
                     }
                 }
             ]
         });
-        
+
         $('#vcategory').append($table.buttons().container());
-        
+
     });
  </script>
     </head>

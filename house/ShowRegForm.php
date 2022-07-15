@@ -147,12 +147,13 @@ unset($reservArray);
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
-        
+
         <style type="text/css" media="print">
             #PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             @page { margin: .5cm; }
@@ -183,7 +184,7 @@ $(document).ready(function() {
         popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' + ' Registration Form'};
 
     $('#mainTabs').tabs();
-    
+
     $('.btnPrint').click(function() {
         opt.popHt = $('div#PrintArea' + $(this).data('tab')).height();
         $('div#PrintArea' + $(this).data('tab')).printArea(opt);
