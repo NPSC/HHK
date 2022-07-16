@@ -61,7 +61,7 @@ class VisitViewer {
         // Notes
         $notesContainer = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Notes', array('style'=>'font-weight:bold;'))
-                , array('id'=>'visitNoteViewer', 'style'=>'clear:left; float:left; width:90%;', 'class'=>'hhk-panel'));
+                , array('id'=>'visitNoteViewer', 'class'=>'hhk-panel'));
 
 
         // Key Deposit
@@ -229,6 +229,8 @@ class VisitViewer {
         $table->addHeaderTr($th);
         $tblMarkup = $table->generateMarkup(array('id' => 'tblActiveVisit', 'style'=>'width:99%;'));
 
+        $weekendRowMkup = "";
+
         // Change Rate markup
         if ($uS->RoomPriceModel != ItemPriceCode::None && $action != 'ref') {
 
@@ -237,7 +239,7 @@ class VisitViewer {
             EditRS::loadRow($r, $vRs);
             $rateTbl = $rateChooser->createChangeRateMarkup($dbh, $vRs);
 
-            $tblMarkup .= $rateTbl->generateMarkup(array('style'=>'float:left;margin-bottom:.3em; margin-top:.3em;'));
+            $weekendRowMkup .= $rateTbl->generateMarkup();
         }
 
         // Weekender button
@@ -291,13 +293,17 @@ class VisitViewer {
                 $etbl->addBodyTr($ths);
             }
 
-            $tblMarkup .= $etbl->generateMarkup(array('style'=>'float:left;margin-left:.5em;margin-bottom:.3em; margin-top:.3em;'));
+            $weekendRowMkup .= $etbl->generateMarkup(array('style'=>'margin-left:.5em;'));
+        }
+
+        if($weekendRowMkup != ""){
+            $tblMarkup .= HTMLContainer::generateMarkup("div", $weekendRowMkup, array("class"=>'hhk-flex my-2'));
         }
 
         //Ribbon note
         $ribbonTbl = new HTMLTable();
         $ribbonTbl->addHeaderTr(HTMLTable::makeTh("Ribbon Note", array('title'=>'This note shows on the visit ribbon on the calemdar page')) . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Notes'], array('name'=>'txtRibbonNote', 'size'=>'25', 'maxlength'=>'20', 'title'=>'Maximun 20 characters'))));
-        $ribbonTblMarkup = $ribbonTbl->generateMarkup(array('style'=>'float:left; clear:left; margin-bottom: 0.3em; margin-top: 0.3em;'));
+        $ribbonTblMarkup = $ribbonTbl->generateMarkup(array("class"=>"my-2"));
 
         $tblMarkup .= $ribbonTblMarkup . $notesContainer;
 

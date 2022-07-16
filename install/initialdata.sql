@@ -545,7 +545,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('BccAddress','','ea','g','','Any email addresses listed here (comma delimited) will get a BCC of any receipts mailed to valid guest email accounts.','',1),
 ('CalDateIncrement','1','i','c','','Number of weeks to increment Calendar view, auto = calViewWeeks','',1),
 ('CalExpandResources','true','b','c','','Initially expand room categories on the calendar','',1),
-('CalRescColWidth','8%','s','c','','The width of the rooms column on the calendar page as percent of the overall width','',1),
+('CalRescColWidth','105px','s','c','','The width of the rooms column on the calendar page as percent of the overall width or pixels','',1),
 ('CalResourceGroupBy','Type','lu','c','','Calendar resource grouping parameter','Room_Group',1),
 ('CalViewWeeks','3','i','c','','Number of weeks showing in the calendar view','',1),
 ('CCAgentConf', 'false', 'b','h','','CC referral agent on reservation confirmation email','',1),

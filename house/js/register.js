@@ -770,7 +770,7 @@ $(document).ready(function () {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
     
-    $(':input[type="button"], :input[type="submit"]').button();
+    $('input[type="button"], input[type="submit"]').button();
 
     $.datepicker.setDefaults({
         yearRange: '-10:+02',
@@ -1594,6 +1594,9 @@ $(document).ready(function () {
 
     // Calendar date goto button.
     $('#calendar .fc-header-toolbar .fc-toolbar-chunk:nth-child(2)').html($('#divGoto').show());
+    
+    //hide week buttons on mobile
+    $('#calendar .fc-header-toolbar .fc-toolbar-chunk:nth-child(3) .fc-button-group:nth-child(1)').addClass('hideMobile');
 
 	//referralViewer
 	$.ajax({

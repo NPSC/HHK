@@ -721,7 +721,7 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+        <!--  <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script> -->
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';

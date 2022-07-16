@@ -179,7 +179,7 @@ class HouseServices {
                 $action,
                 $coDate,
                 $showAdjust)
-            , array('style' => 'clear:left;margin-top:10px;'));
+            , array('style' => 'margin-top:10px;'));
 
         $mkup = HTMLContainer::generateMarkup('div',
         		VisitViewer::createStaysMarkup($dbh, $r['idReservation'], $idVisit, $span, $r['idPrimaryGuest'], $isAdmin, $idGuest, $labels, $action, $coStayDates)
