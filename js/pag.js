@@ -176,6 +176,13 @@ $(document).ready(
 		}, function() {
 			$(this).removeClass("ui-state-hover");
 		});
+		
+		//hover on bootstrap nav dropdowns
+		$('.navbar-nav .dropdown').hover(function(){ 
+			$(this).find(".dropdown-toggle").dropdown('show');
+		}, function(){
+			$(this).find(".dropdown-toggle").dropdown('hide');
+		});
 
 		//$('#contentDiv').css('margin-top',
 		//		$('#global-nav').css('height'));

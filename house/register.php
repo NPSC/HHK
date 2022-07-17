@@ -271,7 +271,8 @@ if($uS->useOnlineReferral){
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
 
-        <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo FULLCALENDAR_JS; ?>"></script>
@@ -289,7 +290,6 @@ if($uS->useOnlineReferral){
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REFERRAL_VIEWER_JS; ?>"></script>
-        <!--  <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script> -->
 
         <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <?php if ($uS->PaymentGateway == AbstractPaymentGateway::INSTAMED) {echo INS_EMBED_JS;} ?>
