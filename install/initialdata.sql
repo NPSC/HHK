@@ -709,7 +709,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('Survey_Subject','Checkout Survey','s','rf','','Default: Checkout Survey'),
 ('VisitFeeConfirmLabel','Cleaning Fee:','s','rf','','Default: Cleaning Fee:'),
 
-('noticeToCheckout', 'Notice to Checkout', 's', 'vi', 'Default: Notice to Checkout'),
+('noticeToCheckout', 'Notice to Checkout', 's', 'vi', '', 'Default: Notice to Checkout'),
 
 ('referralAgent','Referral Agent','s','h','','Default: Referral Agent'),
 ('diagnosis','Diagnosis','s','h','','Default: Diagnosis'),
