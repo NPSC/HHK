@@ -235,13 +235,13 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
     $reportTitle = "Address Exception Report";
 
     $txtIntro = '';
-    
+
     if ($isExcel) {
         $file = "AddrExceptions";
         $writer = new ExcelHelper($file);
         $writer->setAuthor($uname);
         $writer->setTitle("Address Exception Report");
-        
+
     } else {
         $txtIntro .= "<table style='margin-bottom:5px;'><tr><th colspan='2'>" . $reportTitle . "</th></tr>";
         foreach ($sumaryRows as $key => $val) {
@@ -323,7 +323,7 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 
 
     if ($isExcel) {
-        
+
         //Summary table
         /* $sHdr = array(
             "Filter"=>"string",
@@ -333,17 +333,17 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
             '50',
             '50'
         );
-        
+
         $sHdrStyle = $writer->getHdrStyle($sColWidths);
-        
+
         $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
-        
+
         $flds = array();
         foreach ($sumaryRows as $key=>$val){
             $flds[] = array($key, $val);
         }
         $writer->writeSheet($flds, "Constraints"); */
-        
+
         $writer->download();
 
     } else {
@@ -358,28 +358,31 @@ function doReports(PDO $dbh, chkBoxCtrl $cbMemStatus, chkBoxCtrl $cbRptType, $is
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        
+
         <script type="text/javascript">
             // Init j-query
             $(document).ready(function() {
-            
+
             	$("input[type=submit], input[type=button]").button();
-            
+
                 var useTable = '<?php echo $divDisp; ?>';
                 if (useTable === 'block') {
                     try {

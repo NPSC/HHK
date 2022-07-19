@@ -158,12 +158,11 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
 
     public function createEditMarkup(\PDO $dbh, $relList, Labels $labels, $pageName = 'GuestEdit.php', $id = 0, $shoChgLog = FALSE) {
 
-        $pTable = '';
 
         // Notes section
         $notesContainer = HTMLContainer::generateMarkup('fieldset',
             HTMLContainer::generateMarkup('legend', $labels->getString('guestEdit', 'psgTab', 'Patient Support Group').' Notes', array('style'=>'font-weight:bold;'))
-            , array('id'=>'psgNoteViewer', 'style'=>'clear:left; float:left; width:90%;', 'class'=>'hhk-panel'));
+            , array('id'=>'psgNoteViewer', 'class'=>'hhk-panel'));
 
         // Members section
         $relListLessSlf = $relList;
@@ -236,7 +235,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                         HTMLContainer::generateMarkup('legend','Members', array('style'=>'font-weight:bold;'))
                         . $mTable->generateMarkup(),
                         array('class'=>'hhk-panel')),
-                array('style'=>'float:left;'));
+                );
 
         $lastConfDate = $this->psgRS->Info_Last_Confirmed->getStoredVal();
         if ($lastConfDate != '') {
@@ -251,7 +250,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
                     . HTMLInput::generateMarkup('', array('name'=>'cbLastConfirmed', 'type'=>'checkbox','style'=>'margin-left:.3em;'))
                     . HTMLInput::generateMarkup($lastConfDate, array('name'=>'txtLastConfirmed', 'class'=>'ckdate','style'=>'margin-left:1em;'))
                     , array('class'=>'hhk-panel')),
-            array('style'=>'float:left;'));
+            );
 
 
         // Change log
@@ -291,10 +290,7 @@ where r.idPsg = :idPsg and s.idName = :idGuest and DATEDIFF(s.Span_End_Date, s.S
             $v = HTMLContainer::generateMarkup('div', $lTable->generateMarkup(), array('id'=>'divPsgLog', 'style'=>'display:none; clear:left;'));
         }
 
-        $editDiv = $pTable
-               // .$table
-                . $memMkup
-                . $lastConfirmed
+        $editDiv = HTMLContainer::generateMarkup("div", $memMkup . $lastConfirmed, array("class"=>"hhk-flex hhk-flex-wrap"))
                 . $notesContainer //$nTable->generateMarkup(array('style'=>'clear:left;width:700px;float:left;'))
                 . $c . $v;
 

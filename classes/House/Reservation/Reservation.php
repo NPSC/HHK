@@ -467,15 +467,15 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         $mkup = HTMLContainer::generateMarkup('div',
                 HTMLContainer::generateMarkup('span', 'Arrival: '.
-                    HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr))
+                    HTMLInput::generateMarkup(($this->reserveData->getArrivalDateStr()), $cidAttr), array("class"=>"mb-2 mb-md-0 mr-3"))
                 .HTMLContainer::generateMarkup('span', 'Expected Departure: '.
                     HTMLInput::generateMarkup(($this->reserveData->getDepartureDateStr()), array('name'=>$prefix.'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
-                    , array('style'=>'margin-left:.7em;'))
+                    , array('class'=>'mb-2 mb-md-0 mr-3'))
                 .HTMLContainer::generateMarkup('span', 'Expected Days: '.
                     HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4'))
-                    , array('style'=>'margin-left:.7em;'))
-        		.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'margin-left:1em; font-size:.8em;'))
-        		, array('style'=>'font-size:.9em;', 'id'=>$prefix.'spnRangePicker'))
+                    , array('class'=>'mb-2 mb-md-0 mr-3'))
+        		.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'font-size:.8em;'))
+        		, array('style'=>'font-size:.9em; align-items: center;', 'id'=>$prefix.'spnRangePicker', "class"=>"hhk-flex hhk-flex-wrap"))
         		.$repetr;
 
         return array('mu'=>$mkup, 'defdays'=>$uS->DefaultDays, 'daysEle'=>$prefix.'gstDays', 'updateOnChange'=>$updateOnChange, 'startDate'=>$startDate, 'endDate'=>$endDate);
@@ -584,7 +584,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $labels->getString('referral', 'notesLabel', 'Reservation Notes'), array('style'=>'font-weight:bold;'))
-                , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%; font-size:0.9em;', 'class'=>'hhk-panel'));
+                , array('id'=>'hhk-noteViewer', 'style'=>'width: 100%; font-size:0.9em;', 'class'=>'hhk-panel'));
 
 
         $dataArray['wlnotes'] = '';

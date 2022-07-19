@@ -22,21 +22,6 @@ use HHK\Member\Address\Addresses;
  */
 require ("VolIncludes.php");
 
-/* require (DB_TABLES . 'nameRS.php');
-
-require (MEMBER . 'Member.php');
-require (MEMBER . 'IndivMember.php');
-require (MEMBER . 'OrgMember.php');
-require (MEMBER . "Addresses.php");
-
-require (CLASSES . 'volunteer.php');
-require (CLASSES . 'selCtrl.php');
-require (CLASSES . 'Relation.php');
-require (CLASSES . 'CleanAddress.php');
-require (CLASSES . 'AuditLog.php');
-
-require (CLASSES . 'UserCategories.php'); */
-
 $wInit = new WebInit();
 $dbh = $wInit->dbh;
 
@@ -201,15 +186,18 @@ $pwAlertJSON = json_encode(AlertControl::makeJsonPackage('pw'));
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo PUBLIC_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>

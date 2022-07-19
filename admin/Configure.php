@@ -301,6 +301,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo FAVICON; ?>
@@ -308,9 +309,11 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <?php echo JQ_DT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS ?>"></script>

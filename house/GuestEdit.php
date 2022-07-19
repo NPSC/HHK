@@ -772,36 +772,39 @@ $uS->guestId = $id;
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
                 <div id="paymentMessage" style="margin-top:5px;margin-bottom:5px; display:none; width: fit-content" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
-                <div style="margin-bottom: 10px;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox  hhk-member-detail hhk-visitdialog hhk-flex">
+                <div class="mb-2 ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog hhk-flex hhk-widget-mobile">
 	                <?php echo $guestPhotoMarkup; ?>
 	                <div class="hhk-panel">
                         <?php echo $nameMarkup; ?>
                        <?php echo $contactLastUpdated; ?>
 	                </div>
                 </div>
-                <div style="clear:both;"></div>
                 <div class="hhk-showonload hhk-tdbox" style="display:none;" >
-                <div id="divNametabs" class="hhk-tdbox hhk-member-detail" style="min-width: 850px;">
-                    <ul>
-                        <li><a href="#nameTab" title="Addresses, Phone Numbers, Email Addresses">Contact Info</a></li>
-                        <li><a href="#demoTab" title="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?> Demographics">Demographics</a></li>
-                        <li><a href="#exclTab" title="Exclude Addresses"><?php echo $ta['tabIcon']; ?> Exclude</a></li>
-                        <?php if ($memberFlag) {  ?>
-                        <li id="visitLog"><a href="#vvisitLog">Activity Log</a></li>
-                        <?php } ?>
-                        <li id="chglog"><a href="#vchangelog">Change Log</a></li>
-                    </ul>
-                    <div id="demoTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail hhk-flex">
+                <div id="divNametabs" class="hhk-tdbox hhk-mobile-tabs">
+                    <div class="hhk-flex ui-widget-header ui-corner-all">
+                    	<div class="d-md-none d-flex"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
+                        <ul class="hhk-flex">
+                            <li><a href="#nameTab" title="Addresses, Phone Numbers, Email Addresses">Contact Info</a></li>
+                            <li><a href="#demoTab" title="<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?> Demographics">Demographics</a></li>
+                            <li><a href="#exclTab" title="Exclude Addresses"><?php echo $ta['tabIcon']; ?> Exclude</a></li>
+                            <?php if ($memberFlag) {  ?>
+                            <li id="visitLog"><a href="#vvisitLog">Activity Log</a></li>
+                            <?php } ?>
+                            <li id="chglog"><a href="#vchangelog">Change Log</a></li>
+                        </ul>
+                        <div class="d-md-none d-flex"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
+                    </div>
+                    <div id="demoTab"  class="ui-tabs-hide  hhk-visitdialog hhk-flex">
                         <?php echo $demogTab; ?>
                     </div>
                     <div id="vchangelog" class="ignrSave">
                       <table style="width:100%;" id="dataTbl"></table>
                     </div>
-                    <div id="exclTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
+                    <div id="exclTab"  class="ui-tabs-hide  hhk-visitdialog" style="display:none;">
                         <?php echo $ExcludeTab; ?>
                     </div>
                     <?php if ($memberFlag) {  ?>
-                    <div id="vvisitLog"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail ignrSave" style="display:none;">
+                    <div id="vvisitLog"  class="ui-tabs-hide  hhk-visitdialog ignrSave" style="display:none;">
                         <table><tr>
                             <th>Reports</th><th>Dates</th>
                         </tr><tr>
@@ -820,9 +823,9 @@ $uS->guestId = $id;
                         <div id="activityLog" class="hhk-visitdialog"></div>
                     </div>
                     <?php } ?>
-                    <div id="nameTab"  class="ui-tabs-hide  hhk-visitdialog hhk-member-detail" style="display:none;">
-                        <div class="hhk-showonload hhk-tdbox hhk-flex" style="display:none;" >
-                            <div id="phEmlTabs" class="hhk-member-detail" style="margin-right:10px;">
+                    <div id="nameTab"  class="ui-tabs-hide  hhk-visitdialog" style="display:none;">
+                        <div class="hhk-showonload hhk-tdbox hhk-flex hhk-flex-wrap" style="display:none;" >
+                            <div id="phEmlTabs" class="mr-3">
                                     <ul class="hhk-flex">
                                         <li><a href="#prefTab" title="Show only preferred phone and Email">Summary</a></li>
                                         <li><a href="#phonesTab" title="Edit the Phone Numbers and designate the preferred number">Phone</a></li>
@@ -838,44 +841,46 @@ $uS->guestId = $id;
                                         <?php echo $emailMkup; ?>
                                     </div>
                             </div>
-                            <div id="addrsTabs" class="ui-tabs-hide hhk-member-detail ignrSave" style="margin-right: 10px;">
+                            <div id="addrsTabs" class="ui-tabs-hide ignrSave mr-3">
                                 <?php echo $addrPanelMkup; ?>
                             </div>
-                            <div id="emergTabs"  style="float:left;" class="ui-tabs-hide hhk-member-detail" >
+                            <div id="emergTabs" class="ui-tabs-hide" >
                                 <ul><li><a href="#vemerg">Emergency Contact</a></li></ul>
                                 <div id="vemerg" class="ui-tabs-hide">
                                     <?php echo $emergencyTabMarkup; ?>
                                 </div>
                             </div>
-                            <div style="clear:both;"></div>
                         </div>
                     </div>
                 </div>
                 </div>
-                <div style="clear:both;"></div>
                 <?php if ($id > 0) {  ?>
-                <div id="psgList" class="hhk-showonload hhk-tdbox hhk-member-detail hhk-visitdialog" style="display:none; margin:10px 0;">
-                    <ul class="hhk-flex">
-                        <li><a href="#vVisits">Visits</a></li>
-                        <li id="lipsg"><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
-                        <li><a href="#vregister">Registration/Credit</a></li>
-                        <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>
-                        <?php if ($uS->IncomeRated && $showCharges) {  ?>
-                        <li id="fin"><a href="#vfin">Financial Assistance...</a></li>
-                        <?php } if ($showCharges) {  ?>
-                        <li id="pmtsTable"><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
-                        <?php } ?>
-                        <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>
-                        <?php if ($uS->TrackAuto) { ?>
-                        <li><a href="#vvehicle">Vehicles</a></li>
-                        <?php } ?>
-                        <?php if ($uS->UseIncidentReports) { ?>
-                        <li><a href="#vincidents">Incidents</a></li>
-                        <?php } ?>
-                        <?php if ($uS->UseDocumentUpload) { ?>
-                        <li><a href="#vDocs">Documents</a></li>
-                        <?php } ?>
-                    </ul>
+                <div id="psgList" class="hhk-showonload hhk-tdbox hhk-visitdialog hhk-mobile-tabs" style="display:none; margin:10px 0;">
+                    <div class="hhk-flex ui-widget-header ui-corner-all">
+                    	<div class="d-xl-none d-flex"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
+                        <ul class="hhk-flex">
+                            <li><a href="#vVisits">Visits</a></li>
+                            <li id="lipsg"><a href="#vpsg"><?php echo $labels->getString('guestEdit', 'psgTab', 'Patient Support Group'); ?></a></li>
+                            <li><a href="#vregister">Registration/Credit</a></li>
+                            <li><a href="#vreserv"><?php echo $labels->getString('guestEdit', 'reservationTab', 'Reservations'); ?></a></li>
+                            <?php if ($uS->IncomeRated && $showCharges) {  ?>
+                            <li id="fin"><a href="#vfin">Financial Assistance...</a></li>
+                            <?php } if ($showCharges) {  ?>
+                            <li id="pmtsTable"><a href="ws_resc.php?cmd=payRpt&id=<?php echo $registration->getIdRegistration(); ?>" title="Payment History">Payments</a></li>
+                            <?php } ?>
+                            <li><a href="ShowStatement.php?cmd=show&reg=<?php echo $idReg; ?>" title="Comprehensive Statement">Statement</a></li>
+                            <?php if ($uS->TrackAuto) { ?>
+                            <li><a href="#vvehicle">Vehicles</a></li>
+                            <?php } ?>
+                            <?php if ($uS->UseIncidentReports) { ?>
+                            <li><a href="#vincidents">Incidents</a></li>
+                            <?php } ?>
+                            <?php if ($uS->UseDocumentUpload) { ?>
+                            <li><a href="#vDocs">Documents</a></li>
+                            <?php } ?>
+                        </ul>
+                        <div class="d-xl-none d-flex"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
+                    </div>
                     <div id="vpsg" class="ui-tabs-hide"  style="display:none;">
                         <div id="divPSGContainer"><?php echo $psgTabMarkup; ?></div>
                     </div>
@@ -894,8 +899,8 @@ $uS->guestId = $id;
                       <table style="width:100%;" id="dataTbl" ></table>
                     </div>
                     <div id="vfin"></div>
-                    <div id="vVisits" class="ui-tabs-hide" style="min-width: 600px; display:none">
-                        <div id="visitAccordion">
+                    <div id="vVisits" class="ui-tabs-hide">
+                        <div id="visitAccordion" style="min-width: max-content">
                         <?php echo $visitList; ?>
                         </div>
                     </div>
@@ -911,7 +916,6 @@ $uS->guestId = $id;
                     <?php } ?>
                 </div>
                 <?php } ?>
-                <div style="clear:both;"></div>
                 <!-- End of Tabs Control -->
                 <div id="submitButtons" class="ui-corner-all" style="font-size:0.9em;">
                     <input type="submit" name="btnSubmit" value="Save" id="btnSubmit" />
@@ -920,8 +924,8 @@ $uS->guestId = $id;
                 <input type='hidden' name='hdnpsg' id='hdnpsg' value='<?php echo $idPsg; ?>'/>
             </form>
             <?php } ?>
-            <div id="divFuncTabs" class="hhk-member-detail" style="display:none; margin-bottom: 50px;" >
-                <ul>
+            <div id="divFuncTabs" class="hhk-mobile-tabs" style="display:none; margin-bottom: 50px;" >
+                <ul class="hhk-flex">
                     <li><a href="#vckin">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
                     <li><a href="#vhistory">Recently Viewed <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
                 </ul>

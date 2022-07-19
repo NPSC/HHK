@@ -39,7 +39,7 @@ define('SEC', CLASSES . 'sec' . DS);
 define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
-define('CJSV', '?eG=91');
+define('CJSV', '?eG=92');
 
 // Page header links and scripts
 define('JQ_UI_CSS', '<link href="css/jqui/jquery-ui.min.css" rel="stylesheet" type="text/css" />');
@@ -60,6 +60,7 @@ define('NOTY_JS', '../js/noty-min.js');
 define('NOTY_SETTINGS_JS', 'js/notySettings.js');  //These are local
 define('DIRRTY_JS', '../js/jquery.dirrty.js');
 define('JSIGNATURE_JS', '../js/jSignature.min.js');
+define('BOOTSTRAP_JS', '../js/bootstrap5.1.3.min.js');
 
 define('PRINT_AREA_JS', '../js/jquery.PrintArea.js');
 define('CREATE_AUTO_COMPLETE_JS', '../js/createAutoComplete.js');

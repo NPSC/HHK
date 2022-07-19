@@ -179,7 +179,7 @@ $(document).ready(function () {
     $("#faDialog").dialog({
         autoOpen: false,
         resizable: true,
-        width: 650,
+        width: getDialogWidth(600),
         modal: true,
         title: 'Income Chooser'
     });

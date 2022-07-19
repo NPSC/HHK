@@ -108,6 +108,7 @@ if (SecurityComponent::isHTTPS()) {
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $uS->siteName; ?></title>
         <?php echo PUBLIC_CSS; ?>
         <?php echo GRID_CSS; ?>

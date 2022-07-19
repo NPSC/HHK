@@ -402,6 +402,7 @@ $alertMessage = $alertMsg->createMarkup();
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
 
         <?php echo JQ_UI_CSS; ?>
@@ -411,10 +412,12 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo NOTY_CSS; ?>
         <?php echo MULTISELECT_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo MOMENT_JS; ?>"></script>

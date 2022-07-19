@@ -81,24 +81,22 @@ abstract class AbstractRole {
         $MRNSearchMkup = '';
 
         if ($showPhoneSearch) {
-            $phoneSearchMkup = HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch', 'style'=>'margin-left:1em; '))
-                    .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'14', 'title'=>'Enter at least 5 numbers to invoke search'));
+            $phoneSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch'))
+                    .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'14', 'title'=>'Enter at least 5 numbers to invoke search')), array());
         }
 
         if ($showMRNSearch) {
-            $MRNSearchMkup = HTMLContainer::generateMarkup('label', 'MRN Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>'margin-left:1em; '))
-            .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'MRNSearch', 'size'=>'14', 'title'=>'Enter at least 3 characters to invoke search'));
+            $MRNSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'MRN Search: ', array('for'=>$prefix.'MRNSearch'))
+            .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'MRNSearch', 'size'=>'14', 'title'=>'Enter at least 3 characters to invoke search')), array("class"=>"mb-2 mb-md-0 mr-3"));
         }
 
-        $frst = HTMLContainer::generateMarkup('span', HTMLContainer::generateMarkup('span', $title, array('id'=>$prefix.'prompt'))
-        		.HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'Search', 'size'=>'25', 'title'=>'Enter at least 3 characters to invoke search'))
-                .$MRNSearchMkup
-                .$phoneSearchMkup
-                , array('id'=>$prefix . 'span'))
-                .HTMLContainer::generateMarkup('span', 'Room Full', array('id'=>$prefix.'fullspan', 'style'=>'display:none;'));
+        $gstSearch = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('span', $title, array('id'=>$prefix.'prompt'))
+            .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'Search', 'size'=>'25', 'title'=>'Enter at least 3 characters to invoke search')), array("class"=>"mb-2 mb-md-0 mr-3"));
+
+        $full = HTMLContainer::generateMarkup('span', 'Room Full', array('id'=>$prefix.'fullspan', 'style'=>'display:none;'));
 
         $rtn = array();
-        $rtn['hdr'] = HTMLContainer::generateMarkup('div', $frst, array('id'=>'h2srch'.$prefix, 'style'=>"padding:4px;", 'class'=>$prefix.'Slot ui-widget ui-widget-header ui-state-default ui-corner-all'));
+        $rtn['hdr'] = HTMLContainer::generateMarkup('div', $gstSearch . $MRNSearchMkup . $phoneSearchMkup . $full, array('id'=>'h2srch'.$prefix, 'style'=>"padding:4px;", 'class'=>$prefix.'Slot ui-widget ui-widget-header ui-state-default ui-corner-all hhk-flex hhk-flex-wrap'));
         $rtn['idPrefix'] = $prefix;
         return  $rtn;
     }

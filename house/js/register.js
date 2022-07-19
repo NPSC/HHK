@@ -1590,13 +1590,15 @@ $(document).ready(function () {
         active: defaultTab
     });
     
-    $('#mainTabs').show();
 
     // Calendar date goto button.
     $('#calendar .fc-header-toolbar .fc-toolbar-chunk:nth-child(2)').html($('#divGoto').show());
     
     //hide week buttons on mobile
     $('#calendar .fc-header-toolbar .fc-toolbar-chunk:nth-child(3) .fc-button-group:nth-child(1)').addClass('hideMobile');
+
+	$('#hhk-loading-spinner').hide();
+	$('#mainTabs').show();
 
 	//referralViewer
 	$.ajax({

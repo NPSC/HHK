@@ -213,7 +213,7 @@ if (isset($_POST['g-recaptcha-response'])) {
         }else{
             $data['pw'] = md5($_POST['pw']);
         }
-        
+
         $web = new fbUserClass("");
         $web->loadFromArray($data);
 
@@ -285,6 +285,7 @@ if (SecurityComponent::isHTTPS()) {
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo PUBLIC_CSS; ?>

@@ -510,6 +510,7 @@ $selLookups = getGenLookups($dbh);
 <html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
@@ -517,9 +518,11 @@ $selLookups = getGenLookups($dbh);
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
-        
+        <?php echo NAVBAR_CSS; ?>
+
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 

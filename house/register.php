@@ -327,31 +327,36 @@ if($uS->useOnlineReferral){
                 </h2>
             </div>
 
+            <div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div>
+
             <?php echo $guestAddMessage; ?>
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
-            <div style="clear:both;"></div>
+            <div id="paymentMessage" style="margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
             <form name="frmdownload" action="#" method="post">
             <div id="mainTabs" style="display:none; font-size:.9em;">
-                <ul class="hhk-flex">
-                    <li id="liCal"><a href="#vcal">Calendar</a></li>
-                    <li><a href="#vstays">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s (<span id="spnNumCurrent"></span>)</a></li>
-                    <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?> (<span id="spnNumConfirmed"></span>)</a></li>
-                    <?php if ($uS->ShowUncfrmdStatusTab) { ?>
-                    <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>
-                    <?php } ?>
-                    <li><a href="#vwls">Wait List (<span id="spnNumWaitlist"></span>)</a></li>
-                    <?php if($uS->useOnlineReferral){ ?>
-                    <li><a href="#vreferrals"><?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?> (<span id="spnNumReferral"></span>)</a></li>
-                    <?php } ?>
-                    <?php if ($isGuestAdmin) { ?>
-                        <li><a href="#vactivity">Recent Activity</a></li>
-                        <?php if ($showCharges) { ?>
-                        <li><a href="#vfees"><?php echo $labels->getString('register', 'recentPayTab', 'Recent Payments'); ?></a></li>
-                        <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
-                    <?php } } ?>
-                    <li id="liDaylog"><a href="#vdaily">Daily Log</a></li>
-                    <li id="liStaffNotes"><a href="#vStaffNotes">Staff Notes</a></li>
-                </ul>
+            	<div class="hhk-flex ui-widget-header ui-corner-all" style="align-items:normal;">
+            		<div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
+                    <ul class="hhk-flex" style="border:none;">
+                        <li id="liCal"><a href="#vcal">Calendar</a></li>
+                        <li><a href="#vstays">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s (<span id="spnNumCurrent"></span>)</a></li>
+                        <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?> (<span id="spnNumConfirmed"></span>)</a></li>
+                        <?php if ($uS->ShowUncfrmdStatusTab) { ?>
+                        <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>
+                        <?php } ?>
+                        <li><a href="#vwls">Wait List (<span id="spnNumWaitlist"></span>)</a></li>
+                        <?php if($uS->useOnlineReferral){ ?>
+                        <li><a href="#vreferrals"><?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?> (<span id="spnNumReferral"></span>)</a></li>
+                        <?php } ?>
+                        <?php if ($isGuestAdmin) { ?>
+                            <li><a href="#vactivity">Recent Activity</a></li>
+                            <?php if ($showCharges) { ?>
+                            <li><a href="#vfees"><?php echo $labels->getString('register', 'recentPayTab', 'Recent Payments'); ?></a></li>
+                            <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
+                        <?php } } ?>
+                        <li id="liDaylog"><a href="#vdaily">Daily Log</a></li>
+                        <li id="liStaffNotes"><a href="#vStaffNotes">Staff Notes</a></li>
+                    </ul>
+                    <div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>
+                </div>
                 <div id="vcal" style="clear:left; padding: .6em 1em; display:none;">
                     <?php echo $colorKey; ?>
                     <div id="divGoto" class="hideMobile" style="display: none;">

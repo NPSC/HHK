@@ -95,15 +95,18 @@ $mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, ''
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $wInit->pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <?php echo FAVICON; ?>
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
@@ -115,7 +118,7 @@ $mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, ''
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="searchSel" style="margin: 1em 0"><?php echo 'Search for: ' . $mtypeSel; ?></div>
-            
+
             <div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="display: none; margin-right: 1em; font-size:.85em;"></div>
             <div id="divExpansion" style="display:none;font-size:.85em;text-align:center;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail"></div>
         </div>

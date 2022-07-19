@@ -83,6 +83,7 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo DEFAULT_CSS; ?>
@@ -90,16 +91,18 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        
+
         <script type="text/javascript">
             function basisType(ctrl) {
                 if (ctrl.value == 'ai') {
@@ -135,9 +138,9 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
             }
             // Init j-query
             $(document).ready(function() {
-            
+
             	$("input[type=submit], input[type=button]").button();
-            
+
                 $('#selDirType').change( function() {
                     dirType(this);
                 });
@@ -152,7 +155,7 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
                 $('input.hhk-dirBasis').change(function () {
                     basisType(this);
                 });
-                
+
                 try {
                     $('#tblDirectory').dataTable({
                         "displayLength": 50,
@@ -162,7 +165,7 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
                     });
                 }
                 catch (err) {console.log(err)}
-                
+
             });
         </script>
     </head>

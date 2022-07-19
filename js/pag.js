@@ -167,6 +167,17 @@ function logoutTimer(){
 	resetTimer();
 }
 
+/* set dialog width based on screen size */
+function getDialogWidth(defaultWidth){
+	var winWidth = $(window).width();
+	var dialogWidth = defaultWidth;
+	
+	if(typeof defaultWidth == "number" && winWidth < defaultWidth - 30){
+		dialogWidth = winWidth - 30;
+	}
+	return dialogWidth;
+}
+
 $(document).ready(
 	function() {
 		"use strict";
@@ -495,9 +506,10 @@ $(document).ready(
 				$('#pwChangeErrMsg').text('');
 			});
 
+			
 			$('#dchgPw').dialog({
 				autoOpen : autoOpen,
-				width : '1000',
+				width : getDialogWidth(1000),
 				autoResize : true,
 				resizable : true,
 				modal : true,

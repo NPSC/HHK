@@ -85,10 +85,12 @@ class FinAssistance {
 
         $calcTbl->addBodyTr(
             HTMLTable::makeTd(
-                    HTMLContainer::generateMarkup('span', '(Before Taxes)', array('style'=>'margin-right:35px;')).
-                    '$'.HTMLInput::generateMarkup($this->getMontylyIncome() == 0 ? '' : number_format($this->getMontylyIncome()), array('name'=>'txtFaIncome', 'size'=>'5'))
-                    , array('style'=>'text-align:center;', 'colspan'=>'2'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup($this->getHhSize(), array('name'=>'txtFaSize', 'size'=>'3')), array('style'=>'text-align:center;'))
+                    HTMLContainer::generateMarkup("div",
+                        HTMLContainer::generateMarkup('span', '(Before Taxes)').
+                        HTMLContainer::generateMarkup("span", '$ '.HTMLInput::generateMarkup($this->getMontylyIncome() == 0 ? '' : number_format($this->getMontylyIncome()), array('type'=>'number','name'=>'txtFaIncome', 'style'=>'width:5em')))
+                    , array("class"=>"hhk-flex hhk-flex-wrap", "style"=>"justify-content:space-evenly;"))
+                , array('style'=>'text-align:center;', 'colspan'=>'2'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup($this->getHhSize(), array('type'=>'number','name'=>'txtFaSize', 'style'=>"width:3em")), array('style'=>'text-align:center;'))
             .HTMLTable::makeTd(HTMLContainer::generateMarkup('span', $rateCodeTitle, array('id'=>'spnFaCatTitle'))
                     .HTMLInput::generateMarkup($this->getFaCategory(), array('name'=>'hdnRateCat', 'type'=>'hidden'))
                     , array('style'=>'text-align:center;'))
@@ -105,8 +107,8 @@ class FinAssistance {
         // Wrap up the calculator
         $calcMarkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
             HTMLContainer::generateMarkup('legend', 'Financial Assistance Calculator', array('style'=>'font-weight:bold;'))
-            . $calcTbl->generateMarkup(), array('class'=>'hhk-panel')),
-            array('style'=>'margin-bottom:.85em;float:left;', 'class'=>'ignrSave'));
+            . $calcTbl->generateMarkup(array("style"=>"width:100%")), array('class'=>'hhk-panel')),
+            array('class'=>'mb-3 ignrSave'));
 
 
         // Category assignment table.
@@ -114,13 +116,13 @@ class FinAssistance {
         $tbl->addBodyTr(HTMLTable::makeTh('Status') . HTMLTable::makeTh('Status Date') . HTMLTable::makeTh('Approved By', array('colspan'=>'2')));
         $tbl->addBodyTr(
                 HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($uS->guestLookups['FinAppStatus']), $this->getFaStatus(), TRUE), array('name'=>'SelFaStatus')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getFaStatusDate() == '' ? '' : date('M j, Y', strtotime($this->getFaStatusDate()))), array('name'=>'txtFaStatusDate', 'readonly'=>'readonly')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup(($this->getFaStatusDate() == '' ? '' : date('M j, Y', strtotime($this->getFaStatusDate()))), array('name'=>'txtFaStatusDate', 'readonly'=>'readonly', 'style'=>'width: 100%; border: none; text-align:center;')))
                 .HTMLTable::makeTd($this->getApprovedId(), array('style'=>'text-align:center;'))
                 );
 
         $tbl->addBodyTr(
                 HTMLTable::makeTd('Reason:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($this->getFaReason(), array('type'=>'textbox', 'name'=>'txtFaReason', 'size'=>'55')) , array('colspan'=>'2'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($this->getFaReason(), array('type'=>'textbox', 'name'=>'txtFaReason', 'size'=>'55', 'style'=>"width: 100%")) , array('colspan'=>'2'))
                 );
 
         $tbl->addBodyTr(
@@ -129,7 +131,7 @@ class FinAssistance {
 
         $tbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('span', '', array('id'=>'spnFaErrorMsg')), array('colspan'=>'3')));
 
-        $markup = $calcMarkup . $tbl->generateMarkup(array('style'=>'clear:left;'));
+        $markup = $calcMarkup . $tbl->generateMarkup(array('style'=>'width: 100%'));
 
         return $markup;
     }

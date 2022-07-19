@@ -102,7 +102,8 @@ if (isset($_GET['vstatus'])) {
 
 if ($idReserv > 0 || $idGuest > 0 || $idVisit > 0) {
 
-    $mk1 = "<h2>Loading...</h2>";
+    //$mk1 = "<h2>Loading...</h2>";
+    $mk1 = '<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div>';
     $resvObj->setIdResv($idReserv);
     $resvObj->setId($idGuest);
     $resvObj->setIdPsg($idPsg);
@@ -203,14 +204,14 @@ $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
             <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
                 <?php echo $paymentMarkup; ?>
             </div>
-            <div id="guestSearch" style="padding-left:0;padding-top:0; margin-bottom:1.5em; clear:left; float:left;">
+            <div id="guestSearch" class="mb-3">
                 <?php echo $mk1; ?>
             </div>
             <form action="CheckingIn.php" method="post"  id="form1">
                 <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"></div>
-                <div id="famSection" style="font-size: .9em; display:none; min-width: 810px;" class="ui-widget hhk-visitdialog mb-3"></div>
-                <div id="hospitalSection" style="font-size: .9em; display:none; min-width: 810px;"  class="ui-widget hhk-visitdialog mb-3"></div>
-                <div id="resvSection" style="font-size:.9em; display:none; min-width: 810px; margin-bottom: 70px;" class="ui-widget hhk-visitdialog"></div>
+                <div id="famSection" style="font-size: .9em; display:none; max-width: 100%;" class="ui-widget hhk-visitdialog mb-3"></div>
+                <div id="hospitalSection" style="font-size: .9em; display:none;"  class="ui-widget hhk-visitdialog mb-3"></div>
+                <div id="resvSection" style="font-size:.9em; display:none; margin-bottom: 70px;" class="ui-widget hhk-visitdialog"></div>
                 <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
                     <table >
                         <tr><td>

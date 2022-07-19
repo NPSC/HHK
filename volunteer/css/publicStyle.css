@@ -2,6 +2,13 @@
     padding: 0;
     margin: 0;
 }
+
+.navbar {
+	--nav-bg-color: #fece2f;
+	--nav-active-color: #DFB629;
+	--nav-text-color: #4C3000;
+}
+
 body {
     background: url('../../conf/vol_bg.jpg') repeat #CEC9B5;
     font-family: Arial, Helvetica, sans-serif;
@@ -62,7 +69,8 @@ h5 {
 }
 div#page {
     margin-left: 10px;
-    margin-top:85px;
+    margin-right: 10px;
+    margin-top:40px;
 }
 .hhk-welcomeVol {
 	font-family: Arial, Helvetica, sans-serif;
@@ -119,12 +127,11 @@ table.hhk-badAddress {
 
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
 #version {
-    height: 25px;
-    position: absolute;
+    position: relative;
     right: 2px;
-    top: 47px;
-    font-size: .8em;
-    padding: 0 6px;
+    font-size: .6em;
+    padding: 7px 6px;
+    float: right;
 }
 #content {
     margin: 20px 10px;
@@ -237,9 +244,7 @@ input.ro {
 
 
 div#global-title {
-    float:left;
     color: #4C3000;
-    padding: 5px 10px;
     font-size: 1.5em;
 }
 #global-nav {
@@ -329,10 +334,7 @@ div#global-title {
 li.hhk-myMenuTop {
     background-color: #DFB629;
 }
-#divNavIcons #ulIcons {
-    margin: 0;
-    padding: 0;
-}
+
 #divNavIcons #ulIcons li {
     margin: 2px;
     position: relative;

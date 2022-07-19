@@ -303,7 +303,7 @@ class ScriptAuthClass extends SecurityComponent {
         }
 
 
-        $markup = "<header class='navbar navbar-expand-lg'><div class='container-fluid'><div class='navbar-brand'>" . $this->getSiteIcons($uS->siteList);
+        $markup = "<header class='navbar navbar-expand-xl sticky-top'><div class='container-fluid'><div class='navbar-brand'>" . $this->getSiteIcons($uS->siteList);
         $markup .= "<div id='global-title'>$pageHeader</div></div><button class='navbar-toggler' type='button' data-bs-toggle='collapse' data-bs-target='#navbarNavDropdown' aria-controls='navbarNavDropdown' aria-expanded='false' aria-label='Toggle navigation'>
       <span class='navbar-toggler-icon'></span>
     </button><div class='collapse navbar-collapse nav-menu-right' id='navbarNavDropdown'><ul class='navbar-nav' id='nav'>";
@@ -393,7 +393,7 @@ class ScriptAuthClass extends SecurityComponent {
 
         // Tutorial site
         if ($tutorialURL != '') {
-            $mu .= "<a href='" . $tutorialURL . "' target='blank'>"
+            $mu .= "<a href='" . $tutorialURL . "' target='_blank' class='hideMobile'>"
                   . "<li class='ui-widget-header ui-corner-all' title='Tutorial Site'>"
                   . "<span class='ui-icon ui-icon-video' ></span>"
                   . "</li></a>";
@@ -401,7 +401,7 @@ class ScriptAuthClass extends SecurityComponent {
 
         // HHK Users Forum
         if ($hufURL != '') {
-            $mu .= "<a href='" . $hufURL . "' target='blank'>"
+            $mu .= "<a href='" . $hufURL . "' target='_blank' class='hideMobile'>"
                   . "<li class='ui-widget-header ui-corner-all' title='HHK Users Forum' >"
                   . "<span class='ui-icon ui-icon-flag' ></span>"
                   . "</li></a>";

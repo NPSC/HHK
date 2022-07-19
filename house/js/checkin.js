@@ -23,7 +23,7 @@ $(document).ready(function() {
             ) * 1.1 );
         }
     });
-    $(':input[type="button"]').button();
+    $('input[type="button"]').button();
     $.extend($.fn.dataTable.defaults, {
         "dom": '<"top"if>rt<"bottom"lp><"clear">',
         "displayLength": 25,

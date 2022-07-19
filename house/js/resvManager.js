@@ -593,7 +593,7 @@ function resvManager(initData, options) {
             if(idPsg){
                 var iSection, iHdr, iDiv;
 
-                iSection = $('<div style="font-size: 0.9em; min-width: 810px; margin-bottom: 0.5em; margin-top: 0.5em; display: none;"/>').addClass('ui-widget hhk-visitdialog hhk-row').prop('id', 'incidentsSection');
+                iSection = $('<div style="font-size: 0.9em; max-width: 100%; margin-bottom: 0.5em; margin-top: 0.5em; display: none;"/>').addClass('ui-widget hhk-visitdialog hhk-row').prop('id', 'incidentsSection');
 
                 iHdr = $('<div style="padding:2px; cursor:pointer;"/>').addClass('ui-widget-header ui-state-default ui-corner-all hhk-incidentHdr');
                 iDiv = $('<div style="padding: 5px;"/>').addClass("ui-corner-bottom hhk-tdbox ui-widget-content").prop('id', 'incidentContent').hide();
@@ -1722,7 +1722,7 @@ function resvManager(initData, options) {
                 $("#faDialog").dialog({
                     autoOpen: false,
                     resizable: true,
-                    width: 680,
+                    width: getDialogWidth(680),
                     modal: true,
                     title: 'Income Chooser',
                     close: function () {$('div#submitButtons').show();},
@@ -1861,7 +1861,7 @@ function resvManager(initData, options) {
 
         function setUp(data) {
 
-            $rDiv = $('<div/>').addClass(' hhk-tdbox ui-corner-bottom hhk-tdbox ui-widget-content').prop('id', 'divResvDetail').css({'padding':'5px', 'display':'flex', 'flex-wrap':'wrap'});
+            $rDiv = $('<div/>').addClass(' hhk-tdbox ui-corner-bottom hhk-tdbox ui-widget-content hhk-flex hhk-flex-wrap hhk-overflow-x').prop('id', 'divResvDetail').css({'padding':'5px'});
 
             // Room Chooser section
             if (data.resv.rdiv.rChooser !== undefined) {

@@ -18,6 +18,8 @@ define('ROOT_CSS', "<link href='../css/root.css' rel='stylesheet' type='text/css
 
 define('GRID_CSS', "<link href='css/bootstrap-grid.min.css' rel='stylesheet' type='text/css' />");
 
+define('NAVBAR_CSS', "<link href='../css/bootstrapNavbar.css' rel='stylesheet' type='text/css' />");
+
 require ('../functions/commonDefines.php');
 require (FUNCTIONS . 'commonFunc.php');
 require (THIRD_PARTY . '/autoload.php');

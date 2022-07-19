@@ -55,7 +55,7 @@ $letterSalSelector->set_value(TRUE, SalutationCodes::FirstOnly);
 if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
 #--------------------------------------------------------------
     require_once("functions" . DS . "donorReportManager.php");
-    
+
     //$selectedTab = "2";
     $makeTable = 2;
 
@@ -110,6 +110,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
         <?php echo JQ_DT_CSS; ?>
@@ -117,16 +118,18 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PRINT_AREA_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
-        
+
         <script type="text/javascript">
             var listTable;
             var makeTable = <?php echo $makeTable; ?>;
@@ -144,9 +147,9 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                 return x1 + x2;
             }
             $(document).ready(function() {
-            
+
             	$("input[type=submit], input[type=button]").button();
-            
+
                 var rollup = '<?php echo $rollup; ?>';
 
                 if (makeTable == 2) {
