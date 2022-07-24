@@ -77,10 +77,17 @@ class Patch {
 
                 $dbh->exec($q);
             }
-            $dbh->commit();
+
+            if ($dbh->inTransaction()) {
+                $dbh->commit();
+            }
+
         }catch(\Exception $e){
-            $dbh->rollBack();
+
             $msg[] = array('error'=>$e->getMessage(), 'errno'=>$e->getCode(), 'query'=>$q);
+
+            $dbh->rollBack();
+
         }
 
         return $msg;
