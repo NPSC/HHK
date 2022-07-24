@@ -10,6 +10,7 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameDemogRS;
 use HHK\sec\Session;
+use HHK\SysConst\ItemId;
 
 class GLParameters {
 
@@ -51,16 +52,18 @@ class GLParameters {
 
         $this->glParms = readGenLookupsPDO($dbh, $this->tableName, 'Order');
 
-        $this->setHost($this->glParms['Host'][1]);
-        $this->setJournalCat($this->glParms['JournalCategory'][1]);
-        $this->setStartDay($this->glParms['StartDay'][1]);
-        $this->setRemoteFilePath($this->glParms['RemoteFilePath'][1]);
-        $this->setPort($this->glParms['Port'][1]);
-        $this->setUsername($this->glParms['Username'][1]);
-        $this->setPassword($this->glParms['Password'][1]);
-        $this->setCountyPayment($this->glParms['CountyPayment'][1]);
-        $this->setCountyLiability($this->glParms['CountyLiability'][1]);
-        $this->setFoundation($this->glParms['Foundation'][1]);
+        if (count($this->glParms) > 0) {
+            $this->setHost($this->glParms['Host'][1]);
+            $this->setJournalCat($this->glParms['JournalCategory'][1]);
+            $this->setStartDay($this->glParms['StartDay'][1]);
+            $this->setRemoteFilePath($this->glParms['RemoteFilePath'][1]);
+            $this->setPort($this->glParms['Port'][1]);
+            $this->setUsername($this->glParms['Username'][1]);
+            $this->setPassword($this->glParms['Password'][1]);
+            $this->setCountyPayment($this->glParms['CountyPayment'][1]);
+            $this->setCountyLiability($this->glParms['CountyLiability'][1]);
+            $this->setFoundation($this->glParms['Foundation'][1]);
+        }
 
     }
 
@@ -138,6 +141,26 @@ class GLParameters {
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($g[1], array('name'=>$prefix.$g[0])))
                 );
         }
+
+        // Items
+        $sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage, i.Last_Order_Id
+    from item i left join item_type_map itm on itm.Item_Id = i.idItem");
+        $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
+
+        foreach ($items as $d) {
+
+            if ($d['idItem'] == ItemId::AddnlCharge) {
+                $des = '(Additional Charges)';
+            } else {
+                $des = $d['Description'];
+            }
+
+            $glTbl->addBodyTr(
+                HTMLTable::makeTh($des, array('class'=>'tdlabel'))
+                . HTMLTable::makeTd($d['Gl_Code'])
+                );
+        }
+
 
         $glTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Value'));
 
