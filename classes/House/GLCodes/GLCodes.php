@@ -5,6 +5,7 @@ namespace HHK\House\GLCodes;
 use HHK\SysConst\{InvoiceStatus, ItemId, PaymentStatusCode};
 use HHK\SFTPConnection;
 use HHK\SysConst\ItemType;
+use HHK\SysConst\PayType;
 
 /**
  * This runs Gorecki House special monthly financial report.  Not intended for any other house.
@@ -26,6 +27,7 @@ class GLCodes {
 	protected $paymentDate;
 	protected $glLineMapper;
 	protected $stopAtInvoice;
+	protected $payTypeGlCodes;
 
 
 	public function __construct(\PDO $dbh, $month, $year, $glParm, GLTemplateRecord $mapperTemplate) {
@@ -59,6 +61,8 @@ class GLCodes {
 		$mapperTemplate->setPeriodEndDate($periodEndDate);
 
 		$this->glLineMapper = $mapperTemplate;
+
+		$this->payTypeGlCodes = $this->getPayTypeGlCodes($dbh);
 	}
 
 	/**
@@ -324,8 +328,8 @@ class GLCodes {
 				} else {
 
 				    // Intermediate transaction for counties
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, 0, $lodgingCharge, $pDate, $this->glParm->getJournalCat());
-				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, $lodgingCharge, 0, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $glCode, 0, $lodgingCharge, $pDate, $this->glParm->getJournalCat());
+				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, $this->payTypeGlCodes[PayType::Cash], $lodgingCharge, 0, $pDate, $this->glParm->getJournalCat());
 
 					// make a debit line for hte difference
 				    $this->lines[] = $this->glLineMapper->makeLine($this->fileId, GLCodes::ALL_GROSS_SALES, $lodgingCharge, 0, $pDate, $this->glParm->getJournalCat());
@@ -558,6 +562,29 @@ class GLCodes {
 		return $bytesWritten;
 	}
 
+	protected function getPayTypeGlCodes(\PDO $dbh) {
+
+	    // Pay Types
+	    $payMethods = array();
+	    $payCodes = [];
+
+	    $stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+	    while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
+	        $payMethods[$t[0]] = $t[1];
+	    }
+
+
+	    $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+
+	    foreach ($payTypes as $r) {
+	        if ($r[2] != '') {
+	           $payCodes[$r[0]] = $payMethods[$r[2]];
+	        }
+	    }
+
+	    return $payCodes;
+
+	}
 	public static function invoiceHeader() {
 
 		return array('Inv #', 'Delegated', 'Status', 'Amt', 'Deleted', 'Pledged', 'Rate');

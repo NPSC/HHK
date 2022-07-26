@@ -77,14 +77,17 @@ class GLParameters {
 
                 $desc = filter_var($post[$prefix . $g[0]], FILTER_SANITIZE_STRING);
 
-                if (strtolower($g[0]) == 'password' && $desc != '' && $desc != $g[1]) {
-                    $desc = encryptMessage($desc);
+                if (strtolower($g[0]) == 'password') {
+                    // Process password
+                    if ($desc != '' && $desc != $g[1] && $desc != '********') {
+                        $desc = encryptMessage($desc);
+                        $dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = '" .$this->tableName . "' and `Code` = '" . $g[0] . "'");
+                    }
+
                 } else {
                     $desc = addslashes($desc);
+                    $dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = '" .$this->tableName . "' and `Code` = '" . $g[0] . "'");
                 }
-
-                $dbh->exec("update `gen_lookups` set `Description` = '$desc' where `Table_Name` = '" .$this->tableName . "' and `Code` = '" . $g[0] . "'");
-
             }
         }
 
@@ -133,12 +136,13 @@ class GLParameters {
 
         // GL Parms chooser markup
         $glTbl = new HTMLTable();
+        $glTbl->addBodyTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Gl Code'));
 
         foreach ($this->getParmsArray() as $g) {
 
             $glTbl->addBodyTr(
                 HTMLTable::makeTh($g[0], array('class'=>'tdlabel'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($g[1], array('name'=>$prefix.$g[0])))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup((strtolower($g[0]) == 'password' ? '********' : $g[1]), array('name'=>$prefix.$g[0], 'size'=>'23')))
                 );
         }
 
@@ -146,6 +150,9 @@ class GLParameters {
         $sitems = $dbh->query("Select  i.idItem, itm.Type_Id, i.Description, i.Gl_Code, i.Percentage, i.Last_Order_Id
     from item i left join item_type_map itm on itm.Item_Id = i.idItem");
         $items = $sitems->fetchAll(\PDO::FETCH_ASSOC);
+
+        $glTbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
+        $glTbl->addBodyTr(HTMLTable::makeTh('Item') . HTMLTable::makeTh('Gl Code'));
 
         foreach ($items as $d) {
 
@@ -161,9 +168,30 @@ class GLParameters {
                 );
         }
 
+        // Pay Types
+        $payMethods = array();
+        $stmtp = $dbh->query("select idPayment_method, Gl_Code from payment_method");
+        while ($t = $stmtp->fetch(\PDO::FETCH_NUM)) {
+            $payMethods[$t[0]] = $t[1];
+        }
+        $payMethods[''] = '';
 
-        $glTbl->addHeaderTr(HTMLTable::makeTh('Parameter') . HTMLTable::makeTh('Value'));
 
+        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+        $glTbl->addBodyTr(HTMLTable::makeTd('', array('colspan'=>'2')));
+        $glTbl->addBodyTr(HTMLTable::makeTh('Pay Type') . HTMLTable::makeTh('Gl Code'));
+
+        foreach ($payTypes as $r) {
+
+
+            $glTbl->addBodyTr(
+                HTMLTable::makeTh($r[1])
+                . HTMLTable::makeTd($payMethods[$r[2]])
+                );
+        }
+
+
+        // The rest
         $tbl = new HTMLTable();
         $tbl->addBodyTr(
             HTMLTable::makeTd($glTbl->generateMarkup(), array('style'=>'vertical-align:top;'))
@@ -210,8 +238,8 @@ class GLParameters {
             $glTbl->addBodyTr(
                 HTMLTable::makeTh($entry, array('class'=>'tdlabel'))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('label', "", array('for'=>$prefix. '['.$r['idName'] . '][taxExempt]', 'class'=>'')) . HTMLInput::generateMarkup('', $taxExemptCbAttrs), array('style'=>'text-align: center;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Debit'], array('name'=>$prefix.'['.$r['idName'] . '][debit]', 'size'=>'25')))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Credit'], array('name'=>$prefix.'['.$r['idName'] . '][credit]', 'size'=>'25')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Debit'], array('name'=>$prefix.'['.$r['idName'] . '][debit]', 'size'=>'24')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($r['Gl_Code_Credit'], array('name'=>$prefix.'['.$r['idName'] . '][credit]', 'size'=>'24')))
                 );
         }
 

@@ -192,7 +192,7 @@ $showDeleted = FALSE;
 $useVisitDates = FALSE;
 $cFields = array();
 
-$useGlReport = stristr($uS->siteName, 'gorecki');
+$useGlReport = stristr(strtolower($uS->siteName), 'gorecki');
 
 // Hosted payment return
 try {
@@ -1171,7 +1171,7 @@ $(document).ready(function() {
                     <td colspan=2>
                     <input type="submit" id="btnGlcsv" name="btnGlcsv" value="csv" style="margin-right:.5em;"/>
                     <input type="submit" id="btnGlGo" name="btnGlGo" value="Show" style="margin-right:.5em;"/>
-                    <input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer"/></td>
+                    <input type="submit" id="btnGlTx" name="btnGlTx" value="Transfer to CentraCare"/></td>
                     </tr>
                     </table>
                 </form>
