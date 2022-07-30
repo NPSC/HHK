@@ -102,7 +102,7 @@ $gwstmt = $dbh->query("Select cc_name from cc_hosted_gateway where Gateway_Name 
 $gwRows = $gwstmt->fetchAll(PDO::FETCH_NUM);
 
 if (count($gwRows) > 1) {
-	
+
 	foreach ($gwRows as $g) {
 		$gwList[$g[0]] = array(0=>$g[0], 1=>ucfirst($g[0]));
 	}
@@ -154,7 +154,7 @@ foreach($cFields as $field){
 }
 
 if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
-	
+
 	$tabReturn = 0;
 
     $headerTable = new HTMLTable();
@@ -180,22 +180,22 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if (isset($_POST['selPayType'])) {
     	// Payment Types
     	$reqs = $_POST['selPayType'];
-    	
+
     	if (is_array($reqs)) {
     		$payTypeSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
     	}
     }
-    
+
     if (isset($_POST['selGateway'])) {
     	// Payment Types
     	$reqs = $_POST['selGateway'];
-    	
+
     	if (is_array($reqs)) {
     		$gwSelections = filter_var_array($reqs, FILTER_SANITIZE_STRING);
     	}
     }
 
-    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) < DATE('" . $filter->getReportEnd() . "') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $filter->getReportStart() . "') ";
+    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) <= DATE('" . $filter->getReportEnd() . "') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $filter->getReportStart() . "') ";
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));
@@ -213,7 +213,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
             }
         }
     }
-    
+
     $whAssoc = '';
     foreach ($filter->getSelectedAssocs() as $a) {
         if ($a != '') {
@@ -227,7 +227,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if ($whHosp != '') {
         $whHosp = " and hs.idHospital in (".$whHosp.") ";
     }
-    
+
     if ($whAssoc != '') {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
@@ -235,7 +235,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $hdrHosps = $filter->getSelectedHospitalsString();
     $hdrAssocs = $filter->getSelectedAssocString();
     $hospList = $filter->getHospitals();
-    
+
     if(count($hospList) > 0){
         $headerTable->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($hdrHosps));
     }
@@ -323,24 +323,24 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     		} else {
     			$whGw .= ", '" . $s . "' ";
     		}
-    		
+
     		if ($gwText == '') {
     			$gwText .= (isset($gwList[$s][1]) ? $gwList[$s][1] : '');
     		} else {
-    			
+
     			$gwText .= (isset($gwList[$s][1]) ? ', ' .$gwList[$s][1] : '');
     		}
     	}
     }
-    
+
     if ($whGw != '') {
     	$whGw = " and lp.`Merchant` in (" . $whGw . ") ";
     } else {
     	$gwText = 'All';
     }
-    
+
     $headerTable->addBodyTr(HTMLTable::makeTd('Locations: ', array('class'=>'tdlabel')) . HTMLTable::makeTd($gwText));
-    
+
     $query = "Select
     lp.*,
     ifnull(n.Name_First, '') as `First`,
@@ -390,15 +390,15 @@ where lp.idPayment > 0
 
         $reportRows = 1;
         $file = 'PaymentReport';
-        
+
         $writer = new ExcelHelper($file);
         $writer->setAuthor($uS->username);
         $writer->setTitle("Payment Report");
-        
+
         // build header
         $hdr = array();
         $colWidths = array();
-        
+
 
         $hdr["Payor Id"] = "string";
         $hdr["Company"] = 'string';
@@ -419,7 +419,7 @@ where lp.idPayment > 0
     $uS->nameLookups = $name_lk;
     $total = 0;
 
-    
+
     // Now the data ...
     $stmt = $dbh->query($query);
     $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idHospital', 'idAssociation', 'Patient_Last', 'Patient_First', 'Hosp_Arrival'));
@@ -508,7 +508,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 	function delCofEntry(gtId) {
         $.post('PaymentReport.php', {cmd: 'delcof', 'gtId':gtId},
             function (data) {
-                
+
                 if (data) {
 
                     try {
@@ -556,7 +556,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
                     $.post('PaymentReport.php', {cmd: 'cof'},
                         function (data) {
-                        
+
                         if (data) {
 
                             try {
@@ -575,7 +575,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
                             } else if (data.coflist) {
 								$('#cofDiv').empty().append($(data.coflist));
-								
+
 								$('#cofDiv').on('change', '.'+delCofClass, function (){
 									var gid = $(this).val();
 									deleteThisTr = $(this).parents('tr');
@@ -584,12 +584,12 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                             }
                         }
                     });
-                
+
                 }
         	}
         });
         $('#mainTabs').tabs("option", "active", tabReturn);
-        
+
         $('#selCalendar').change(function () {
             if ($(this).val() && $(this).val() != '19') {
                 $('#selIntMonth').hide();
@@ -647,7 +647,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                 invoiceAction($(this).data('iid'), 'view', event.target.id, '', true);
             });
         }
-        
+
         $('#includeFields').fieldSets({'reportName': 'payment', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
     });
  </script>
@@ -669,7 +669,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                     <div class="ui-helper-clearfix">
                     <?php
                         echo $timePeriodMarkup;
-                        
+
                     	if (count($filter->getHospitals()) > 1) {
                             echo $hospitalMarkup;
                         }
