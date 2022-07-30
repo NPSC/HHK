@@ -142,7 +142,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
 
         $row = $writer->convertStrings($hdr, $flds);
         $writer->writeSheetRow("Sheet1", $row);
-        
+
     }
 
 }
@@ -271,7 +271,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $filter->loadSelectedTimePeriod();
     $start = $filter->getReportStart();
     $end = $filter->getReportEnd();
-    
+
     $local = TRUE;
     if (isset($_POST['btnExcel'])) {
         $local = FALSE;
@@ -468,7 +468,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
         $writer = new ExcelHelper($file);
         $writer->setAuthor($uS->username);
         $writer->setTitle('Item Report');
-        
+
         // build header
         $hdr = array();
         $colWidths = array();
@@ -478,7 +478,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
             $hdr[$field[0]] = $field[4]; //set column header name and type;
             $colWidths[] = $field[5]; //set column width
         }
-        
+
         $hdrStyle = $writer->getHdrStyle($colWidths);
         $writer->writeSheetHeader("Sheet1", $hdr, $hdrStyle);
         $reportRows++;
@@ -550,7 +550,7 @@ if ($showDeleted) {
 $shoDeletedCb = HTMLInput::generateMarkup('', $dAttrs)
         . HTMLContainer::generateMarkup('label', 'Show Deleted Invoices', array('for'=>'cbShoDel'));
 
-$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
+$timePeriodMarkup = $filter->timePeriodMarkup("Invoice")->generateMarkup();
 
 $selDiag = '';
 if (count($diags) > 0) {
@@ -572,7 +572,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <?php echo FAVICON; ?>
-        <?php echo GRID_CSS; ?>s
+        <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
@@ -585,7 +585,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REPORTFIELDSETS_JS; ?>"></script>
-        
+
 <script type="text/javascript">
 function invoiceAction(idInvoice, action, eid, container, show) {
     $.post('ws_resc.php', {cmd: 'invAct', iid: idInvoice, x:eid, action: action, 'sbt':show},
@@ -667,7 +667,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 $('div#pudiv').remove();
             }
         });
-        
+
         if (makeTable === '1') {
             $('div#printArea').css('display', 'block');
             $('#tblrpt').dataTable({
@@ -690,9 +690,9 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 invoiceAction($(this).data('iid'), 'view', event.target.id, '', true);
             });
         }
-        
+
         $('#includeFields').fieldSets({'reportName': 'item', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
-        
+
     });
  </script>
     </head>

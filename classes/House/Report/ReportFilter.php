@@ -106,7 +106,7 @@ class ReportFilter {
         $this->fyDiffMonths = $fiscalYearDiffMonths;
     }
 
-    public function timePeriodMarkup() {
+    public function timePeriodMarkup($prefix = '') {
 
         $uS = Session::getInstance();
 
@@ -116,7 +116,7 @@ class ReportFilter {
 
         $tbl = new HTMLTable();
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('Time Period', array('colspan'=>'3')));
+        $tbl->addHeaderTr(HTMLTable::makeTh(($prefix == '' ? '' : $prefix . ' ') . 'Time Period', array('colspan'=>'3')));
 
         $tbl->addHeaderTr(
                 HTMLTable::makeTh('Interval')
