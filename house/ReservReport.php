@@ -148,7 +148,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $filter->loadSelectedHospitals();
 
 
-    $whDates = " r.Expected_Arrival <= '" . $filter->getReportEnd() . "' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '" . $filter->getReportStart() . "' ";
+    $whDates = " r.Expected_Arrival < '" . $filter->getQueryEnd() . "' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '" . $filter->getReportStart() . "' ";
 
     if (isset($_POST['selResvStatus'])) {
         $statusSelections = filter_var_array($_POST['selResvStatus'], FILTER_SANITIZE_STRING);

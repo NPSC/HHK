@@ -140,7 +140,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         $mkTable = 1;
 
-        $newGuest = new NewGuest($filter->getReportStart(), $filter->getReportEnd());
+        $newGuest = new NewGuest($filter->getReportStart(), $filter->getQueryEnd());
 
         $dataTable = $newGuest->doNewGuestReport($dbh, $colSelector, $whHosp, $local, $labels);
 

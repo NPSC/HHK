@@ -51,7 +51,7 @@ $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
 $filter->createHospitals();
 
-function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, $hospitals, $start, $end, $labels) {
+function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, ReportFilter $filter, $labels) {
 
     if ($type == VolMemberType::Doctor) {
         $Id = 'idDoctor';
@@ -63,7 +63,7 @@ function getRecords(\PDO $dbh, $local, $type, $colNameTitle, $whClause, $hospita
 from hospital_stay hs left join `name` n  ON hs.$Id = n.idName
 left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
 where rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
- . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) > DATE('$start') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('$end')  $whClause
+ . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."')  $whClause
 group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
         $stmt = $dbh->query($query);
@@ -77,22 +77,22 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
         $fileName = 'DoctorReport';
         $sheetName = 'Sheet1';
-        
+
         // build header
         $hdr = array();
         $colWidths = array();
-        
+
         // Header row
         $colWidths = array(10, 20, 20, 15);
         $hdr['Id'] = "string";
         $hdr[$colNameTitle] = "string";
         $hdr[$labels->getString('hospital', 'hospital', 'Hospital')] = "string";
         $hdr[$labels->getString('MemberType', 'patient', 'Patient')] = "integer";
-        
+
         $writer = new ExcelHelper($fileName);
-        
+
         $hdrStyle = $writer->getHdrStyle($colWidths);
-        
+
         $writer->writeSheetHeader($sheetName, $hdr, $hdrStyle);
 
     }
@@ -100,6 +100,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
     $numRows = $stmt->rowCount();
     $rowCounter = 1;
     $lastId = '';
+//    $hospitals = $filter->getHospitals();
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
@@ -123,8 +124,8 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
             $hosp = '';
             $harray = array();
-            if (isset($hospitals[$r['Hospital']])) {
-                $hosp = $hospitals[$r['Hospital']][1];
+            if (isset($filter->getHospitals()[$r['Hospital']])) {
+                $hosp = $filter->getHospitals()[$r['Hospital']][1];
             } else if ($r['Hospital'] == 'Sub Total') {
                 $harray['style'] = 'text-align:right;';
                 if ($rowCounter == $numRows) {
@@ -159,9 +160,9 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 
             $hosp = '';
 
-            if (isset($hospitals[$r['Hospital']])) {
+            if (isset($filter->getHospitals()[$r['Hospital']])) {
 
-                $hosp = $hospitals[$r['Hospital']][1];
+                $hosp = $filter->getHospitals()[$r['Hospital']][1];
 
             } else if ($r['Hospital'] == 'Sub Total') {
 
@@ -194,7 +195,7 @@ group by concat(n.Name_Last, ', ', n.Name_First), hs.idHospital with rollup";
 }
 
 
-function blanksOnly(\PDO $dbh, $type, $whClause, $hospitals, $start, $end, $labels) {
+function blanksOnly(\PDO $dbh, $type, $whClause, ReportFilter $filter, $labels) {
 
     $class = '';
     $htmlId = '';
@@ -217,7 +218,7 @@ function blanksOnly(\PDO $dbh, $type, $whClause, $hospitals, $start, $end, $labe
 from hospital_stay hs left join `name` n on hs.idPatient = n.idName
 left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
 where hs.$Id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
- . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) > DATE('$start') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('$end') $whClause";
+ . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."') $whClause";
 
     $stmt = $dbh->query($query);
 
@@ -273,9 +274,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
-    
-    $start = $filter->getReportStart();
-    $end = $filter->getReportEnd();
+
 
     // Hospitals
     $whHosp = '';
@@ -302,11 +301,11 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     if ($whHosp != '') {
         $whHosp = " and hs.idHospital in (".$whHosp.") ";
     }
-    
+
     if ($whAssoc != '') {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
-    
+
     $whHosp .= $whAssoc;
 
     if (isset($_POST['rbReport'])) {
@@ -345,19 +344,19 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
         if ($blanksOnly) {
 
-            $dataTable = blanksOnly($dbh, $type, $whHosp, $filter->getHospitals(), $start, $end, $labels);
+            $dataTable = blanksOnly($dbh, $type, $whHosp, $filter, $labels);
             $sTbl->addBodyTr(HTMLTable::makeTh('Missing ' . $colTitle . ' Assignments', array('colspan'=>'4')));
 
         } else {
 
-            $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $filter->getHospitals(), $start, $end, $labels);
+            $dataTable = getRecords($dbh, $local, $type, $colTitle, $whHosp, $filter, $labels);
         }
 
         $hospitalTitles = $filter->getSelectedHospitalsString();
         $assocTitles = $filter->getSelectedAssocString();
-        
 
-        $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
+
+        $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart()))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportEnd()))));
         $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital') . 's', array('class'=>'tdlabel')) . HTMLTable::makeTd($hospitalTitles) . HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($assocTitles));
         $settingstable = $sTbl->generateMarkup();
 

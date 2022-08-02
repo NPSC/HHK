@@ -67,6 +67,7 @@ class ReportFilter {
 
     protected $reportStart;
     protected $reportEnd;
+    protected $queryEnd;
 
     public function __construct() {
         $this->selectedAssocs = array();
@@ -104,6 +105,7 @@ class ReportFilter {
         $this->selectedCalendar = $defaultCalendarOption;
         $this->selectedMonths = date('m');
         $this->fyDiffMonths = $fiscalYearDiffMonths;
+        return $this;
     }
 
     public function timePeriodMarkup($prefix = '') {
@@ -148,7 +150,7 @@ class ReportFilter {
 
         if (isset($this->calendarOptions[self::DATES])) {
             $ckdate = "$('.ckdate').datepicker({
-yearRange: '-05:+02',
+yearRange: '-07:+02',
 changeMonth: true,
 changeYear: true,
 autoSize: true,
@@ -208,35 +210,46 @@ $ckdate";
             $this->reportStart = $startDT->format('Y-m-d');
 
             $endDT = new \DateTime(($this->selectedYear + 1) . '-01-01');
-            $this->reportEnd = $endDT->sub($adjustPeriod)->format('Y-m-d');
+
+            $this->queryEnd = $endDT->sub($adjustPeriod)->format('Y-m-d');
+
+            $this->reportEnd = $endDT->sub(new \DateInterval('P1D'))->format('Y-m-d');
 
         } else if ($this->selectedCalendar == self::CAL_YEAR) {
             // Calendar year
             $startDT = new \DateTime($this->selectedYear . '-01-01');
             $this->reportStart = $startDT->format('Y-m-d');
 
-            $this->reportEnd = ($this->selectedYear + 1) . '-01-01';
+            $this->queryEnd = $startDT->add(new \DateInterval('P1Y'))->format('Y-m-d');
+
+            $this->reportEnd = $startDT->sub(new \DateInterval('P1D'))->format('Y-m-d');
 
         } else if ($this->selectedCalendar == self::YEAR_2_DATE) {
             // Year to date
             $this->reportStart = date('Y') . '-01-01';
 
             $endDT = new \DateTime();
-            //$endDT->add(new \DateInterval('P1D'));
             $this->reportEnd = $endDT->format('Y-m-d');
+
+            $this->queryEnd = $endDT->add(new \DateInterval('P1D'))->format('Y-m-d');
+
 
         } else if ($this->selectedCalendar == self::DATES) {
             // selected dates.
             $startDT = new \DateTime($this->selectedStart);
             $endDT = new \DateTime($this->selectedEnd);
-            //$endDT->add(new \DateInterval('P1D'));
+
+            // Add a day to the end date so all SQL can simply say "< $endDate"
+
 
             if ($startDT <= $endDT) {
                 $this->reportEnd = $endDT->format('Y-m-d');
+                $this->queryEnd = $endDT->add(new \DateInterval('P1D'))->format('Y-m-d');
                 $this->reportStart = $startDT->format('Y-m-d');
             } else {
                 $this->reportStart = $endDT->format('Y-m-d');
                 $this->reportEnd = $startDT->format('Y-m-d');
+                $this->queryEnd = $startDT->add(new \DateInterval('P1D'))->format('Y-m-d');
             }
 
         } else {
@@ -257,9 +270,11 @@ $ckdate";
             $endDT = new \DateTime($this->reportStart);
             $endDT->add(new \DateInterval($interval));
 
-            $this->reportEnd = $endDT->format('Y-m-d');
+            $this->queryEnd = $endDT->format('Y-m-d');
+            $this->reportEnd = $endDT->sub(new \DateInterval('P1D'))->format('Y-m-d');
         }
 
+        return $this;
     }
 
     public function createHospitals() {
@@ -281,6 +296,7 @@ $ckdate";
             }
         }
 
+        return $this;
     }
 
     public function hospitalMarkup() {
@@ -327,6 +343,7 @@ $ckdate";
             }
         }
 
+        return $this;
     }
 
     public function createResoourceGroups($rescGroups, $defaultGroupBy) {
@@ -338,6 +355,7 @@ $ckdate";
         }
 
         $this->resourceGroups = removeOptionGroups($rescGroups);
+        return $this;
     }
 
     public function loadSelectedResourceGroups() {
@@ -345,6 +363,7 @@ $ckdate";
         if (isset($_POST['selRoomGroup'])) {
             $this->selectedResourceGroups = filter_var($_POST['selRoomGroup'], FILTER_SANITIZE_STRING);
         }
+        return $this;
     }
 
     public function resourceGroupsMarkup() {
@@ -456,5 +475,8 @@ $ckdate";
         return $this->reportEnd;
     }
 
+    public function getQueryEnd() {
+        return $this->queryEnd;
+    }
 
 }

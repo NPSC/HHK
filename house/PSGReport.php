@@ -155,7 +155,7 @@ function getPeopleReport(\PDO $dbh, $local, $showRelationship, $whClause, $start
     room_rate rr on v.idRoom_rate = rr.idRoom_rate
     	JOIN
     room r on s.idRoom = r.idRoom
-where  DATE(ifnull(s.Span_End_Date, now())) > DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
+where  DATE(ifnull(s.Span_End_Date, now())) >= DATE('$start') and DATE(s.Span_Start_Date) < DATE('$end') and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 $whClause";
 
     if ($showUnique) {
         $query .= " GROUP BY hs.idPsg, s.idName";
@@ -408,7 +408,7 @@ from
         left join
     gen_lookups g1 on g1.`Table_Name` = 'Location' and g1.`Code` = hs.Location
 
-where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) > DATE('$start') and DATE(v.Span_Start) < DATE('$end')
+where n.Member_Status != 'TBD' and DATE(ifnull(v.Span_End, now())) >= DATE('$start') and DATE(v.Span_Start) < DATE('$end')
  $whFields
 order by ng.idPsg, `ispat`, `Id`";
 
@@ -1048,7 +1048,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         switch ($rptSetting) {
 
         	case 'psg':
-        		$rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $end, $uS->guestLookups['Patient_Rel_Type'], $uS->guestLookups[GLTableNames::Hospital], $labels, $showAssoc, $showDiag, $uS->ShowDiagTB, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest, $uS->county);
+        	    $rptArry = getPsgReport($dbh, $local, $whHosp . $whDiags, $start, $filter->getQueryEnd(), $uS->guestLookups['Patient_Rel_Type'], $uS->guestLookups[GLTableNames::Hospital], $labels, $showAssoc, $showDiag, $uS->ShowDiagTB, $showLocation, $uS->ShowBirthDate, $uS->PatientAsGuest, $uS->county);
                 $dataTable = $rptArry['table'];
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $labels->getString('statement', 'psgLabel', 'PSG') . ' Report', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
@@ -1068,7 +1068,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
 
 
             case 'p':
-                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and s.idName = hs.idPatient ", $start, $end, $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
+                $dataTable = getPeopleReport($dbh, $local, FALSE, $whPeople . " and s.idName = hs.idPatient ", $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' Just '.$patTitle, array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdAssoc) : ''));
@@ -1087,7 +1087,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
                 break;
 
             case 'g':
-                $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $end, $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
+                $dataTable = getPeopleReport($dbh, $local, TRUE, $whPeople, $start, $filter->getQueryEnd(), $showAddr, $showFullName, $showNoReturn, $showUnique, $showAssoc, $labels, $showDiag, $showLocation);
                 $sTbl->addBodyTr(HTMLTable::makeTh($uS->siteName . ' ' . $patTitle.' & '.$labels->getString('MemberType', 'guest', 'Guest').'s', array('colspan'=>'4')));
                 $sTbl->addBodyTr(HTMLTable::makeTd('From', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start))) . HTMLTable::makeTd('Thru', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($end))));
                 $sTbl->addBodyTr(HTMLTable::makeTd($labels->getString('hospital', 'hospital', 'Hospital').'s', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdHosp) . ($showAssoc ? HTMLTable::makeTd('Associations', array('class'=>'tdlabel')) . HTMLTable::makeTd($tdAssoc) : ''));
@@ -1206,7 +1206,7 @@ if ($uS->UseIncidentReports) {
         <?php echo JQ_DT_CSS ?>
         <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
-		
+
         <style>.hhk-rowseparater { border-top: 2px #0074c7 solid !important; }</style>
 
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>

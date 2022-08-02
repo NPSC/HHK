@@ -332,10 +332,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
     $whBillAgent = '';
     $whDeleted = '';
 
-    $filter->loadSelectedTimePeriod();
-    $filter->loadSelectedHospitals();
-    $start = $filter->getReportStart();
-    $end = $filter->getReportEnd();
+    $filter->loadSelectedTimePeriod()
+        ->loadSelectedHospitals();
 
     if ($invNum != '') {
 
@@ -344,12 +342,12 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || $invNum != '') {
 
     } else {
 
-        $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start)) . ' thru ' . date('M j, Y', strtotime($end))));
+        $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd()))));
 
         if ($useVisitDates) {
-            $whDates = " and DATE(v.Arrival_Date) <= DATE('$end') and ifnull(DATE(v.Actual_Departure), DATE(v.Expected_Departure)) >= DATE('$start') ";
+            $whDates = " and DATE(v.Arrival_Date) < DATE('".$filter->getQueryEnd()."') and ifnull(DATE(v.Actual_Departure), DATE(v.Expected_Departure)) >= DATE('".$filter->getReportStart()."') ";
         } else {
-            $whDates = " and DATE(`i`.`Invoice_Date`) <= DATE('$end') and DATE(`i`.`Invoice_Date`) >= DATE('$start') ";
+            $whDates = " and DATE(`i`.`Invoice_Date`) < DATE('".$filter->getQueryEnd()."') and DATE(`i`.`Invoice_Date`) >= DATE('".$filter->getReportStart()."') ";
         }
 
 

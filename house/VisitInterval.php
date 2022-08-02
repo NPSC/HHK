@@ -429,7 +429,7 @@ function doMarkup($fltrdFields, $r, $visit, $paid, $unpaid, \DateTime $departure
                 $flds[$n++] = html_entity_decode(strval($r[$f[1]]), ENT_QUOTES, 'UTF-8');
             }
         }
-		
+
         $row = ExcelHelper::convertStrings($header, $flds);
         $sml->writeSheetRow('Sheet1',$row);
     }
@@ -686,7 +686,7 @@ where
             visit
         where
             `Status` <> 'p'
-                and DATE(Arrival_Date) <= DATE('$end')
+                and DATE(Arrival_Date) < DATE('$end')
                 and DATE(ifnull(Span_End,
                     case
                         when now() > Expected_Departure then now()
@@ -1589,7 +1589,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel']) || isset($_POST['btnSt
 
     if ($filter->getReportStart() != '' && $filter->getReportEnd() != '') {
 
-        $tblArray = doReport($dbh, $colSelector, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $whAssoc, count($filter->getAList()), $local, $uS->VisitFee, $statsOnly, $rescGroups[$filter->getSelectedResourceGroups()],$labels);
+        $tblArray = doReport($dbh, $colSelector, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, count($filter->getAList()), $local, $uS->VisitFee, $statsOnly, $rescGroups[$filter->getSelectedResourceGroups()],$labels);
 
         $dataTable = $tblArray['data'];
         $statsTable = $tblArray['stats'];

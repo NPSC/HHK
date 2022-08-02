@@ -269,8 +269,8 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     $colSelector->setColumnSelectors($_POST);
 
     $filter->loadSelectedTimePeriod();
-    $start = $filter->getReportStart();
-    $end = $filter->getReportEnd();
+//    $start = $filter->getReportStart();
+//    $end = $filter->getReportEnd();
 
     $local = TRUE;
     if (isset($_POST['btnExcel'])) {
@@ -304,12 +304,12 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
         }
     }
 
-    $whDates = " and DATE(i.Invoice_Date) < DATE('$end') and DATE(i.Invoice_Date) >= DATE('$start') ";
+    $whDates = " and DATE(i.Invoice_Date) < DATE('".$filter->getQueryEnd()."') and DATE(i.Invoice_Date) >= DATE('".$filter->getReportStart()."') ";
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));
 
-    $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($start)) . ' thru ' . date('M j, Y', strtotime($end))));
+    $headerTable->addBodyTr(HTMLTable::makeTd('Reporting Period: ', array('class'=>'tdlabel')) . HTMLTable::makeTd(date('M j, Y', strtotime($filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($filter->getReportEnd()))));
 
 
 
