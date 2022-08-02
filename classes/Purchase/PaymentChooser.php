@@ -472,7 +472,7 @@ class PaymentChooser {
             $buttons .= HTMLContainer::generateMarkup('label', 'Discount', array('for'=>'cbAdjustPmt1'))
             . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt1', 'data-sho'=>'houseDisc', 'data-hid'=>'addnlChg', 'data-item'=>ItemId::Discount));
 
-            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($discounts), '', TRUE), array('name'=>'selHouseDisc', 'class'=>'houseDisc', 'data-amts'=>'disc'));
+            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($discounts), '', TRUE), array('name'=>'selHouseDisc', 'class'=>'houseDisc', 'data-amts'=>'disc', "style"=>"width:100%"));
 
         }
 
@@ -481,7 +481,7 @@ class PaymentChooser {
             $buttons .= HTMLContainer::generateMarkup('label', 'Additional Charge', array('for'=>'cbAdjustPmt2'))
                 . HTMLInput::generateMarkup('', array('type'=>'radio', 'name'=>'cbAdjustPmt', 'id'=>'cbAdjustPmt2', 'data-hid'=>'houseDisc', 'data-sho'=>'addnlChg', 'data-item'=>ItemId::AddnlCharge));
 
-            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($addnls), '', TRUE), array('name'=>'selAddnlChg', 'class'=>'addnlChg', 'data-amts'=>'addnl'));
+            $select .= HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($addnls), '', TRUE), array('name'=>'selAddnlChg', 'class'=>'addnlChg', 'data-amts'=>'addnl', "style"=>"width:100%"));
 
         }
 
@@ -512,11 +512,11 @@ class PaymentChooser {
 
         $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Date:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'housePaymentDate', 'class'=>'ckdate', 'data-vid'=>$idVisit))));
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'housePaymentDate', 'class'=>'ckdate', 'data-vid'=>$idVisit, "style"=>"width:100%"))));
 
         $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Notes:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'housePaymentNote', 'rows'=>'2', 'cols'=>'40', 'data-vid'=>$idVisit))));
+                .HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'housePaymentNote', 'rows'=>'2', 'data-vid'=>$idVisit, "style"=>"width:100%"))));
 
         $javaScript = '<script type="text/javascript">'
                 . '$("#housePaymentDate").datepicker({'
@@ -533,7 +533,7 @@ dateFormat: "M d, yy" ';
 
         $javaScript .= ' }); $("#housePaymentDate").datepicker("setDate", new Date());</script>';
 
-        return $feesTbl->generateMarkup(array('style'=>'clear:left;margin-bottom:7px;')) . $javaScript;
+        return $feesTbl->generateMarkup(array('style'=>'margin-bottom:7px;width:100%')) . $javaScript;
 
     }
 

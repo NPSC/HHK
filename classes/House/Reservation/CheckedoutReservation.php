@@ -103,7 +103,7 @@ class CheckedoutReservation extends CheckingIn {
         // Reservation notes
         $dataArray['notes'] = HTMLContainer::generateMarkup('fieldset',
             HTMLContainer::generateMarkup('legend', 'Visit Notes', array('style'=>'font-weight:bold;'))
-            , array('id'=>'hhk-noteViewer', 'style'=>'clear:left; float:left; width:90%; font-size: 0.9em;', 'class'=>'hhk-panel'));
+            , array('id'=>'hhk-noteViewer', 'class'=>'hhk-panel'));
 
 
         // Collapsing header

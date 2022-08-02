@@ -37,7 +37,7 @@ $(document).ready(function() {
     $('#confirmDialog').dialog({
         autoOpen: false,
         resizable: true,
-        width: 850,
+        width: getDialogWidth(1200),
         modal: true,
         title: 'Confirmation Form',
         close: function () {$('div#submitButtons').show(); $("#frmConfirm").children().remove();},
@@ -97,7 +97,7 @@ $(document).ready(function() {
     $("#activityDialog").dialog({
         autoOpen: false,
         resizable: true,
-        width: 900,
+        width: getDialogWidth(900),
         modal: true,
         title: 'Reservation Activity Log',
         close: function () {$('div#submitButtons').show();},
@@ -112,7 +112,7 @@ $(document).ready(function() {
     $("#psgDialog").dialog({
         autoOpen: false,
         resizable: true,
-        width: 500,
+        width: getDialogWidth(500),
         modal: true,
         title: resv.patLabel + ' Chooser',
         close: function (event, ui) {$('div#submitButtons').show();},
@@ -129,7 +129,7 @@ $(document).ready(function() {
     $('#pmtRcpt').dialog({
         autoOpen: false,
         resizable: true,
-        width: 530,
+        width: getDialogWidth(530),
         modal: true,
         title: 'Payment Receipt'
     });

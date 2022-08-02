@@ -115,7 +115,7 @@ if ($stayingMarkup == '') {
             </div>
             <form  action="CheckIn.php" method="post"  id="form1">
                 <div id="guestSearchWrapper" style="display: none;">
-                    <div id="guestSearch" style="clear:left;float:left;padding-left:0;<?php echo $gSearchDisplay; ?>" class="hhk-panel">
+                    <div id="guestSearch" style="margin-left:10px;margin-right:10px; <?php echo $gSearchDisplay; ?>" class="my-3 hhk-panel row">
                         <?php echo $mk1; ?>
                     </div>
                 </div>

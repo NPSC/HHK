@@ -64,6 +64,8 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         }
         $cFields[] = array("Nights", 'Nights', '', '', 'integer', '10');
         $cFields[] = array(Labels::getString('hospital', 'hospital', 'Hospital'), 'Hospital', '', '', 'string', '20');
+        $cFields[] = array(Labels::getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 'string', '20');
+        $cFields[] = array(Labels::getString('hospital', 'location', 'Location'), 'Location', '', '', 'string', '20');
 
         $eFields = array('EC Name', 'EC Phone Home', 'EC Phone Alternate');
         $eTitles = array('Emergency Contact', 'Emergency Contact Home Phone', 'Emergency Contact Alternate Phone');

@@ -595,7 +595,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             $dataArray['wlnotes'] = HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', $this->reserveData->getWlNotesLabel(), array('style'=>'font-weight:bold;'))
                 . HTMLContainer::generateMarkup('textarea', $resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'2', 'style'=>'width:100%'))
-                , array('class'=>'hhk-panel', 'style'=>'float:left; width:50%;'));
+                , array('class'=>'hhk-panel', "style"=>"width:100%"));
         }
 
         // Collapsing header

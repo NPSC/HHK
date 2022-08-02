@@ -284,14 +284,14 @@ $(document).ready(function () {
     $('#statEvents').dialog({
         autoOpen: false,
         resizable: true,
-        width: 800,
+        width: getDialogWidth(800),
         modal: true,
         title: 'Manage Status Events'
     });
     $('#divNewForm').dialog({
         autoOpen: false,
         resizable: true,
-        width: 425,
+        width: getDialogWidth(425),
         modal: true,
         title: 'Create New Form',
         buttons: {

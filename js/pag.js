@@ -91,7 +91,7 @@ function openiframe(src, width, height, title, buttons) {
 	$("#contentDiv").append($dialog);
 
 	$dialog.dialog({
-		width : width,
+		width : getDialogWidth(width),
 		height : height,
 		modal : true,
 		title : title,
@@ -140,7 +140,7 @@ function logoutTimer(){
 	$('#contentDiv').append($dialog);
 	
 	$dialog.dialog({
-		width : 400,
+		width : getDialogWidth(400),
 		height : 225,
 		modal : true,
 		autoOpen: false,

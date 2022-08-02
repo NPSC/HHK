@@ -1707,14 +1707,14 @@ if ($uS->CoTod) {
         $('#pmtRcpt').dialog({
             autoOpen: false,
             resizable: true,
-            width: 530,
+            width: getDialogWidth(530),
             modal: true,
             title: 'Payment Receipt'
         });
         $("#faDialog").dialog({
             autoOpen: false,
             resizable: true,
-            width: 650,
+            width: getDialogWidth(650),
             modal: true,
             title: 'Income Chooser'
         });
@@ -1831,7 +1831,7 @@ if ($uS->CoTod) {
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+            <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
 
             <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="min-width: 400px; padding:10px;">
                 <form id="fcat" action="VisitInterval.php" method="post">

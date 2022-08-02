@@ -129,14 +129,14 @@ $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divcurres'));
 
 // make registration form print button
-$regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', array('id'=>'regckindate', 'class'=>'ckdate hhk-prtRegForm'))
-        . HTMLInput::generateMarkup('Print Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm', 'style'=>'margin-left:.3em; font-size:0.86em;'))
-        , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
+$regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', array('id'=>'regckindate', 'class'=>'ckdate hhk-prtRegForm ml-2 mr-3'))
+        . HTMLInput::generateMarkup('Print Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm mt-3 mt-md-0', 'style'=>'font-size:0.86em;'))
+        , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;',"class"=>"hhk-flex hhk-flex-wrap my-3 my-lg-0 ml-lg-5"));
 
 $currentReservations = HTMLContainer::generateMarkup('h3',
         $labels->getString('register', 'reservationTab', 'Confirmed Reservations') .
-        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'margin-left:5em;font-size:.9em;')) . $regButton
-        , array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'font-size:.9em;', 'class'=>"ml-5")) . $regButton
+        , array('style' => 'background-color:#D3D3D3; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap p-3"))
         . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%; 'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divreservs'));
 
 if ($uS->ShowUncfrmdStatusTab) {
@@ -146,15 +146,15 @@ if ($uS->ShowUncfrmdStatusTab) {
 
 
 // make waitlist print button
-$wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL'))
-        . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL', 'style'=>'margin-left:.3em;font-size:.85em;'))
-        , array('style'=>'margin-left:5em;padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5'));
+$wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL ml-2 mr-3'))
+        . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL mt-3 mt-md-0', 'style'=>'font-size:.85em;'))
+        , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap my-3 my-md-0 ml-md-5"));
 
 
 $waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' .
-        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'margin-left:5em;font-size:.9em;'))
+        HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'font-size:.9em;', "class"=>"ml-5"))
         .$wlButton
-        , array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        , array('style' => 'background-color:#D3D3D3; align-items:baseline;','class'=>'hhk-flex hhk-flex-wrap p-3'))
         . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divwaitlist'));
 
 
@@ -321,7 +321,7 @@ if($uS->useOnlineReferral){
                 <h2 class="hhk-flex" id="page-title-row">
                 	<span class="mb-3 mb-md-0"><?php echo $wInit->pageHeading;?></span>
                 	<?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); echo RoomReport::getGlobalStaysCounter($dbh); ?>
-                	<span id="name-search">Name Search:
+                	<span id="name-search" class="d-none d-md-inline">Name Search:
                     	<input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
                 	</span>
                 </h2>
@@ -330,7 +330,7 @@ if($uS->useOnlineReferral){
             <div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div>
 
             <?php echo $guestAddMessage; ?>
-            <div id="paymentMessage" style="margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+            <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
             <form name="frmdownload" action="#" method="post">
             <div id="mainTabs" style="display:none; font-size:.9em;">
             	<div class="hhk-flex ui-widget-header ui-corner-all" style="align-items:normal;">

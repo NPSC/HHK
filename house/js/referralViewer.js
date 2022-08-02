@@ -147,7 +147,7 @@
     	formNotesDialog.dialog({
       		autoOpen: false,
       		height: "auto",
-      		width: 1200,
+      		width: getDialogWidth(1200),
       		modal: true,
       		close: function (event, ui){
       			formNotesDialog.find("#note-newNote").trigger('click');

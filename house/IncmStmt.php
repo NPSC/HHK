@@ -543,7 +543,7 @@ var pmtMkup,
         $('#pmtRcpt').dialog({
             autoOpen: false,
             resizable: true,
-            width: 530,
+            width: getDialogWidth(530),
             modal: true,
             title: 'Payment Receipt'
         });
@@ -563,8 +563,8 @@ var pmtMkup,
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
 
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; min-width: 400px; padding:10px;">
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="hhk-alert ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="min-width: 400px; padding:10px;">
+            <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
                 <form id="fcat" action="IncmStmt.php" method="post">
 
                 	<table style="float:left;">

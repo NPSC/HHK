@@ -68,7 +68,7 @@ $(document).ready(function() {
     $("#activityDialog").dialog({
         autoOpen: false,
         resizable: true,
-        width: 900,
+        width: getDialogWidth(900),
         modal: true,
         title: 'Reservation Activity Log',
         close: function () {$('div#submitButtons').show();},
@@ -90,7 +90,7 @@ $(document).ready(function() {
     $('#pmtRcpt').dialog({
         autoOpen: false,
         resizable: true,
-        width: 530,
+        width: getDialogWidth(530),
         modal: true,
         title: 'Payment Receipt'
     });
@@ -98,7 +98,7 @@ $(document).ready(function() {
     $("#ecSearch").dialog({
         autoOpen: false,
         resizable: false,
-        width: 300,
+        width: getDialogWidth(300),
         title: 'Emergency Contact',
         modal: true,
         buttons: {

@@ -220,17 +220,6 @@ div#global-title {
     font-size: 1.5em;
 }
 
-#divNavIcons #ulIcons li {
-    margin: 2px;
-    position: relative;
-    padding: 4px 0;
-    cursor: pointer;
-    list-style: none;
-}
-#divNavIcons #ulIcons span.ui-icon {
-    margin: 0 4px;
-}
-
 .hhk-tooltip .ui-icon-help {
 	border: 1px solid #dfd9c3;
     border-radius: 1em;
@@ -316,12 +305,6 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 
 	.hideMobile {
 		display: none!important;
-	}
-	
-	/* Add space for fat fingers */
-	a.fc-event {
-		padding-top: 0.5rem !important;
-		padding-bottom: 0.5rem !important;
 	}
 	
 }

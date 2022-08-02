@@ -163,7 +163,7 @@ function buildPage($error, $success = false) {
                 <h1>Uh oh, something's not right!</h1>
                 <div class="container">
                     <div class="col-6" style="text-align: center;">
-                        <img src="/training/images/hhkLogo.png">
+                        <img src="//training.hospitalityhousekeeper.net/images/hhkLogo.png">
                         <div class="logo-text">
                             <p>Sometimes errors happen, help us stop them in their digital tracks by submitting a bug report.</p>
                         </div>

@@ -14,9 +14,6 @@ use HHK\SysConst\{WebSiteCode};
  * @link      https://github.com/NPSC/HHK
  */
 require ("AdminIncludes.php");
-// require (CLASSES . 'CreateMarkupFromDB.php');
-// require (CLASSES . 'Purchase/RoomRate.php');
-// require (CLASSES . 'History.php');
 
 $wInit = new webInit();
 
@@ -241,6 +238,6 @@ try {
                     </div>
                 </div> <?php }; ?>
             </div>
-        </div>  <!-- div id="page"-->
+        </div> <!-- div id="page"-->
     </body>
 </html>

@@ -689,7 +689,7 @@ $(document).ready(function() {
         autoOpen: false,
         resizable: true,
         modal: false,
-        minWidth: 550,
+        minWidth: getDialogWidth(550),
         title: 'Neon Visit Transfer Keys',
         buttons: {
             "Print": function () {

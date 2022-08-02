@@ -152,7 +152,7 @@ $(document).ready(function () {
     $("#submit").dialog({
         autoOpen: false,
         resizable: false,
-        width: 300,
+        width: getDialogWidth(300),
         modal: true,
         buttons: {
             "Exit": function () {

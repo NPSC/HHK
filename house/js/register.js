@@ -831,7 +831,7 @@ $(document).ready(function () {
     $('#statEvents').dialog({
         autoOpen: false,
         resizable: true,
-        width: 830,
+        width: getDialogWidth(830),
         modal: true,
         title: 'Manage Status Events'
     });
@@ -859,7 +859,7 @@ $(document).ready(function () {
     $("#faDialog").dialog({
         autoOpen: false,
         resizable: true,
-        width: 650,
+        width: getDialogWidth(650),
         modal: true,
         title: 'Income Chooser'
     });
@@ -878,7 +878,7 @@ $(document).ready(function () {
     $('#pmtRcpt').dialog({
         autoOpen: false,
         resizable: true,
-        width: 530,
+        width: getDialogWidth(530),
         modal: true,
         title: 'Payment Receipt'
     });

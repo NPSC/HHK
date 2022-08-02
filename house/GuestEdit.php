@@ -702,6 +702,7 @@ $uS->guestId = $id;
         <?php echo NAVBAR_CSS; ?>
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MOMENT_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_DT_JS; ?>"></script>
@@ -721,7 +722,6 @@ $uS->guestId = $id;
         <script type="text/javascript" src="<?php echo DIRRTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo INCIDENT_REP_JS; ?>"></script>
-        <!--  <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script> -->
 
         <?php if ($uS->UseDocumentUpload || $uS->ShowGuestPhoto) {
             echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
@@ -745,20 +745,20 @@ $uS->guestId = $id;
                 <div style="margin-top:5px;">
                     <?php echo $guestName; ?>
                 </div>
-                <div class="ui-widget ui-widget-content ui-corner-all hhk-flex hhk-flex-wrap" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px;">
-                    <div style="margin-right: 0.5em;" class="hhk-flex">
-                    	<label for="txtsearch" style="min-width:fit-content">Name Search </label>
+                <div class="ui-widget ui-widget-content ui-corner-all row" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px;">
+                    <div class="col-12 col-md mb-2 mb-md-0 hhk-flex">
+                    	<label for="txtsearch" style="min-width:fit-content" class="mr-2">Name Search </label>
                     	<input type="search" class="allSearch" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" style="width: 100%" />
                     </div>
                     <?php if($uS->searchMRN){ ?>
-                    <div style="margin-right: 0.5em;">
-                    	<span>MRN Search </span>
-                    	<input type="search" class="allSearch" id="txtMRNsearch" size="15" title="Enter at least 3 characters to invoke search" />
+                    <div class="col-12 col-md mb-2 mb-md-0 hhk-flex">
+                    	<label for="txtMRNsearch" style="min-width:fit-content" class="mr-2">MRN Search </label>
+                    	<input type="search" class="allSearch" id="txtMRNsearch" size="15" title="Enter at least 3 characters to invoke search" style="width: 100%" />
                     </div>
                     <?php } ?>
-                    <div>
-                    	<span>Phone Search </span>
-                    	<input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" />
+                    <div class="col-12 col-md mb-2 mb-md-0 hhk-flex">
+                    	<label for="txtPhsearch" style="min-width:fit-content" class="mr-2">Phone Search </label>
+                    	<input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" style="width: 100%" />
                 	</div>
                 </div>
             </div>
@@ -771,7 +771,7 @@ $uS->guestId = $id;
             <?php } ?>
             <?php if ($showSearchOnly === FALSE) { ?>
             <form action="GuestEdit.php" method="post" id="form1" name="form1" >
-                <div id="paymentMessage" style="margin-top:5px;margin-bottom:5px; display:none; width: fit-content" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox"></div>
+                <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
                 <div class="mb-2 ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog hhk-flex hhk-widget-mobile">
 	                <?php echo $guestPhotoMarkup; ?>
 	                <div class="hhk-panel">

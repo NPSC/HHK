@@ -234,10 +234,10 @@ $resvObjEncoded = json_encode($resvAr);
         <?php echo $wInit->generatePageMenu() ?>
         <div id="contentDiv" class="container-fluid" style="margin-left: auto;">
             <h1><?php echo $title; ?> <span id="spnStatus" style="display:inline;"></span></h1>
-            <div id="paymentMessage" style="clear:left;float:left; margin-top:5px;margin-bottom:5px; display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
+            <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2">
                 <?php echo $paymentMarkup; ?>
             </div>
-            <div id="guestSearch" class="mb-3">
+            <div id="guestSearch" class="mb-3 hhk-panel row" style="margin-left:10px; margin-right:10px;">
                 <?php echo $mk1; ?>
             </div>
             <form action="Reserve.php" method="post"  id="form1">

@@ -965,7 +965,7 @@
 		var settingsDialog = $wrapper.find('#settingsDialog').dialog({
       		autoOpen: false,
       		height: 800,
-      		width: 900,
+      		width: getDialogWidth(900),
       		modal: true,
       		buttons: {
         		"Revert Changes": function() {

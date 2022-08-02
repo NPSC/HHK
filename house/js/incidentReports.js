@@ -592,7 +592,7 @@
             $wrapper.incidentdialog.dialog({
                 autoOpen: false,
                 modal: true,
-                width: 800,
+                width: getDialogWidth(800),
                 buttons: {
                     Cancel: function () {
                         $wrapper.incidentdialog.dialog("close");

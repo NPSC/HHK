@@ -201,7 +201,7 @@ $(document).ready(function() {
     $('#pmtRcpt').dialog({
         autoOpen: false,
         resizable: true,
-        width: 530,
+        width: getDialogWidth(530),
         modal: true,
         title: 'Payment Receipt'
     });
@@ -230,7 +230,7 @@ $(document).ready(function() {
     <body>
  <?php echo $menuMarkup; ?>
         <div id="contentDiv" >
-            <div id="paymentMessage" style="float:left; margin-top:15px;margin-bottom:5px;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
+            <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2">
                 <?php echo $paymentMarkup; ?>
             </div>
 

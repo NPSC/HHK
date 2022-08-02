@@ -355,7 +355,7 @@ function showRegDialog(markup, idReg) {
     //container.append(regDialog);
     $('#regDialog').dialog({
         autoOpen: true,
-        width: 360,
+        width: getDialogWidth(360),
         resizable: true,
         modal: true,
         title: 'Registration Info',
