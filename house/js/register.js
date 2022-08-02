@@ -1585,6 +1585,10 @@ $(document).ready(function () {
 					}
 			    });
             }
+            
+            if(ui.newTab.prop('id') === 'liCal'){
+            	calendar.refetchEvents();
+            }
         },
         
         active: defaultTab

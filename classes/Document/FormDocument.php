@@ -157,20 +157,7 @@ group by g.Code order by g.Order';
         try{
             if ($to !== FALSE && $to != '') {
                 $userData = $this->getUserData();
-                $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ", Log into HHK to take action.<br>" . PHP_EOL;
-
-                if(isset($userData['patient']['firstName']) && isset($userData['patient']['lastName'])){
-                    $content .= PHP_EOL . "<br><strong>Summary</strong>" . PHP_EOL
-                             . "<br>Name: " . $userData['patient']['firstName'] . " " . $userData['patient']['lastName'] . PHP_EOL;
-                    if(isset($userData['checkindate']) && $userData['checkindate'] != ''){
-                        $date = new \DateTime($userData['checkindate']);
-                        $content .= "<br>Expected Arrival: " . $date->format("M d, Y") . PHP_EOL;
-                    }
-                    if(isset($userData['checkoutdate']) && $userData['checkoutdate'] != ''){
-                        $date = new \DateTime($userData['checkoutdate']);
-                        $content .= "<br>Expected Departure: " . $date->format("M d, Y") . PHP_EOL;
-                    }
-                }
+                $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ". <br><br><a href='" . $uS->resourceURL . "house/register.php?tab=4' target='_blank'>Click here to log into HHK and take action.</a><br>" . PHP_EOL;
 
                 $mail = prepareEmail();
 

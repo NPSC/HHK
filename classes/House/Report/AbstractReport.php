@@ -107,7 +107,7 @@ abstract class AbstractReport {
         return HTMLContainer::generateMarkup("div",
                 HTMLContainer::generateMarkup("form",
                     $this->filterMkup . $btnMkup . $emDialog
-                , array("method"=>"POST", "action"=>htmlspecialchars($_SERVER["PHP_SELF"]), "id"=>"rpt" . $this->inputSetReportName . "FilterForm"))
+                , array("method"=>"POST", "action"=>htmlspecialchars($_SERVER["PHP_SELF"]), "id"=>$this->inputSetReportName . "RptFilterForm"))
             , array("class"=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper"));
     }
 
@@ -227,7 +227,7 @@ abstract class AbstractReport {
             width: "auto",
             buttons: {
                 "Send":function(){
-                    var data = $("#' . $this->inputSetReportName . 'rptFilterForm").serializeArray();
+                    var data = $("#' . $this->inputSetReportName . 'RptFilterForm").serializeArray();
                         data.push({"name":"btn' . $this->inputSetReportName . 'Email", "value":"true"});
                         data.push({"name":"txtSubject", "value":$(this).find("#txtSubject").val()});
                         data.push({"name":"txtEmail", "value":$(this).find("#txtEmail").val()});

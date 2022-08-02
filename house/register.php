@@ -54,7 +54,15 @@ $rvCols = array();
 $wlCols = array();
 
 
-if ($uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
+//set defaultRegisterTab - use tab url param else default
+if (isset($_GET["tab"])){
+    $tab = intval(filter_var($_GET["tab"], FILTER_SANITIZE_NUMBER_INT), 10);
+    if($tab < 5){
+        $defaultRegisterTab = $tab;
+    }
+}
+
+if ($defaultRegisterTab == 0 && $uS->DefaultRegisterTab > 0 && $uS->DefaultRegisterTab < 5) {
     $defaultRegisterTab = $uS->DefaultRegisterTab;
 }
 

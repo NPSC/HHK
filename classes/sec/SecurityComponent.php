@@ -52,7 +52,7 @@ class SecurityComponent {
 
     }
 
-    public static function rerouteIfNotLoggedIn($pageType, $loginPage) {
+    public function rerouteIfNotLoggedIn($pageType, $loginPage) {
 
         $ssn = Session::getInstance();
 
@@ -66,7 +66,13 @@ class SecurityComponent {
 
             } else {
 
-                header("Location: " . $loginPage);
+                //build redirect path
+                $xf = $this->fileName;
+                if(count($_GET) > 0){
+                    $xf .= "?" . http_build_query($_GET);
+                }
+
+                header("Location: " . $loginPage . "?xf=" . urlencode($xf));
             }
 
             exit();

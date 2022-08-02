@@ -37,7 +37,8 @@ class WebInit {
 
     function __construct($page_Type = WebPageCode::Page, $addCSP = TRUE) {
 
-        SecurityComponent::rerouteIfNotLoggedIn($page_Type, 'index.php');
+        $secComp = new SecurityComponent();
+        $secComp->rerouteIfNotLoggedIn($page_Type, 'index.php');
 
         // define db connection obj
         try {
