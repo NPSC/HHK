@@ -195,7 +195,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     	}
     }
 
-    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) < DATE('" . $filter->getReportEnd() . "') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $filter->getReportStart() . "') ";
+    $whDates = " and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) < DATE('" . $filter->getQueryEnd() . "') and (CASE WHEN lp.Payment_Status = 'r' THEN DATE(lp.Payment_Last_Updated) ELSE DATE(lp.Payment_Date) END) >= DATE('" . $filter->getReportStart() . "') ";
 
     $endDT = new DateTime($end);
     $endDT->sub(new DateInterval('P1D'));
@@ -473,7 +473,7 @@ $payTypeSelector = HTMLSelector::generateMarkup(
 
 $gwSelector = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($gwList, $gwSelections), array('name' => 'selGateway[]', 'multiple' => 'multiple', 'size'=>(count($gwList) + 1)));
 
-$timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup(array('style'=>'float: left;'));
+$timePeriodMarkup = $filter->timePeriodMarkup('Payment')->generateMarkup(array('style'=>'float: left;'));
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup(array('style'=>'float: left;margin-left:5px;'));
 
 $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('style'=>'float:left; margin-left: 5px;', 'id'=>'includeFields'));

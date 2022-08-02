@@ -403,7 +403,7 @@ ORDER BY rn.Reservation_Id, n.`Timestamp` DESC;");
 
         $stDT = new \DateTime($startDate);
         $endDT = new \DateTime($endDate);
-        //$endDT->add($oneDay);
+
 
         if ($stDT === FALSE || $endDT === FALSE) {
             return;
@@ -613,7 +613,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         $stDT = new \DateTime($startDate);
         $stDT->setTime(0,0,0);
         $endDT = new \DateTime($endDate);
-        //$endDT->add($oneDay);
+
 
         if ($stDT === FALSE || $endDT === FALSE) {
             return;

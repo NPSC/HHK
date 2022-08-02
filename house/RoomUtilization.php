@@ -99,9 +99,9 @@ if (isset($_POST['btnByGuest']) || isset($_POST['btnByRoom'])) {
     $mkTable = 1;
 
     if (isset($_POST['btnByGuest'])) {
-        $output = RoomReport::roomNOR($dbh, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $roomGroups[$groupingSelection]);
+        $output = RoomReport::roomNOR($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $roomGroups[$groupingSelection]);
     } else {
-        $output = RoomReport::rescUtilization($dbh, $filter->getReportStart(), $filter->getReportEnd(), $roomGroups[$groupingSelection]);
+        $output = RoomReport::rescUtilization($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $roomGroups[$groupingSelection]);
     }
 }
 

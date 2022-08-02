@@ -361,7 +361,7 @@ BEGIN
 	delete mn from member_note mn join tids n on mn.idName = n.idName;
 	delete f from fbx f join tids n on f.idName = n.idName;
 	delete mh from member_history mh join tids n on mh.idName = n.idName;
-	delete fa from fin_application fa join tids n on fa.idGuest = n.idName;
+	-- delete fa from fin_application fa join tids n on fa.idGuest = n.idName;
 	delete gt from guest_token gt join tids n on gt.idGuest = n.idName;
 	-- remove deleted organizations from member records.
 	update name n join tids n1 on n.Company_Id = n1.idName set n.Company_Id=0, n.Company='';
@@ -864,9 +864,9 @@ BEGIN
 	idGuest = goodId
         where idGuest = badId;
 
-    update fin_application set
-	idGuest = goodId
-        where idGuest = badId;
+--    update fin_application set
+-- idGuest = goodId
+--        where idGuest = badId;
 
     update activity set
 	idName = goodId

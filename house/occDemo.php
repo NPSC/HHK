@@ -103,10 +103,11 @@ if (isset($_POST['btnSmt'])) {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
 
-    $report = GuestDemogReport::demogReport($dbh, $filter->getReportStart(), $filter->getReportEnd(), $whHosp, $whAssoc, $whichGuests, $zip);
+
+    $report = GuestReport::demogReport($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, $whichGuests, $zip);
 
     $title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' ' . $labels->getString('MemberType', 'visitor', 'Guest'). ' Demographics compiled on ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
-
+    $title .= HTMLContainer::generateMarkup('p', 'Report Interval: ' . date('M j, Y', strtotime($filter->getReportStart())) . ' Thru ' . date('M j, Y', strtotime($filter->getReportEnd())));
 }
 
 
