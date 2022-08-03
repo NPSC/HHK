@@ -1281,6 +1281,12 @@ $(document).ready(function () {
     
     calendar.render();
     
+    //redraw calendar after finishing window resize
+	var resizeTimer;
+	window.onresize = function(){
+	  clearTimeout(resizeTimer);
+	  resizeTimer = setTimeout(calendar.setOption('height', window.innerHeight - 175), 100);
+	};
 
     // disappear the pop-up rescouce groups.
     $(document).mousedown(function (event) {

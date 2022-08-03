@@ -89,7 +89,6 @@
                         data: 'Date',
                         sortable: true,
                         render: function (data, type) {
-                        	console.log(type);
                             return dateRender(data, type, dateFormat);
                         }
                 },
