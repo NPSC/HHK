@@ -78,5 +78,5 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 -- Add deep clean to housekeeping
 ALTER TABLE `room` 
 ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Last_Cleaned`;
-ALTER TABLE `Cleaning_Log`
+ALTER TABLE `cleaning_log`
 ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Last_Cleaned`;
