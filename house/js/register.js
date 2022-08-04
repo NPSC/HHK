@@ -1066,7 +1066,11 @@ $(document).ready(function () {
 
             if (info.resource.id > 0) {
 
-                info.el.title = 'Maximum Occupants: ' + info.resource.extendedProps.maxOcc;
+				if(info.resource.extendedProps.hoverText){
+                	info.el.title = info.resource.extendedProps.hoverText;
+                }else{
+                	info.el.title = 'Maximum Occupants: ' + info.resource.extendedProps.maxOcc;
+                }
                 info.el.style.cursor = 'pointer'
 				// Bring up OOS dialog
                 info.el.onclick = function(){ getStatusEvent(info.resource.id, 'resc', info.resource.title) };

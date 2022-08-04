@@ -184,7 +184,13 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
     	if (strtolower($r['Reservation_Style']) != 'transparent') {
 
 	        $attrs = array('class'=>'btnHosp', 'data-id'=>$r['idHospital']);
-	        $attrs['style'] = 'background-color:' . $r['Reservation_Style'] . ';color:' . $r['Stay_Style'] . ';';
+	        $attrs['style'] = '';
+	        if($r['Reservation_Style'] != ''){
+	            $attrs['style'] .= 'background-color:' . $r['Reservation_Style'] . ';';
+	        }
+	        if($r['Stay_Style'] != ''){
+	            $attrs['style'] .= 'color:' . $r['Stay_Style'] . ';';
+	        }
 
 	        $colorKey .= HTMLContainer::generateMarkup('button', $r['Title'], $attrs);
     	}

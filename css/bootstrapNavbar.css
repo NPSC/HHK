@@ -380,8 +380,11 @@
     position: absolute;
   }
   .navbar-expand-xl .navbar-nav .nav-link {
-    padding-right: 0.5rem;
-    padding-left: 0.5rem;
+    padding-right: 0.75rem;
+    padding-left: 0.75rem;
+  }
+  .navbar-expand-xl .navbar-nav .nav-item:not(:last-child) .nav-link {
+  	border-right: 1px solid var(--nav-active-color);
   }
   .navbar-expand-xl .navbar-nav-scroll {
     overflow: visible;

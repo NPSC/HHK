@@ -6,6 +6,7 @@ use HHK\sec\Session;
 use HHK\SysConst\ResourceStatus;
 use HHK\US_Holidays;
 use HHK\House\Reservation\Reservation_1;
+use HHK\SysConst\RoomState;
 use HHK\SysConst\VisitStatus;
 use HHK\SysConst\ReservationStatus;
 use HHK\SysConst\CalEventKind;
@@ -78,6 +79,7 @@ class GuestRegister {
     rm.Max_Occupants as `maxOcc`,
     rm.`Type`,
 	rm.`Status`,
+    ifnull(stat.Description, 'Unknown') as `Status_Text`,
 	rm.`Category`,
 	rm.`Report_Category`,
     rm.`Floor`,
@@ -87,6 +89,7 @@ from resource r
 resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDT->format('Y-m-d') . "')
     left join resource_room rr on r.idResource = rr.idResource
     left join room rm on rr.idRoom = rm.idRoom
+    left join gen_lookups stat on stat.Table_Name = 'Room_Status' and stat.Code = rm.Status
 	$genJoin
 where ru.idResource_use is null
  order by $orderBy;";
@@ -142,7 +145,6 @@ where ru.idResource_use is null
 
 	    }
 
-
         // Set the grouping totals in the group titles
         foreach ($rawRescs as $r) {
 
@@ -153,11 +155,31 @@ where ru.idResource_use is null
             // Fix room title
             $r['title'] = htmlspecialchars_decode($r['title'], ENT_QUOTES);
 
+            $r['hoverText'] = '';
+
             // Room color
-            if ($uS->Room_Colors == FALSE) {
-                $r['bgColor'] =  '';
-                $r['textColor'] = '';
+            switch($uS->Room_Colors) {
+                case 'housekeeping': //use housekeeping status colors
+                    if ($r['Status'] == RoomState::TurnOver || $r['Status'] == RoomState::Dirty) {
+                        $r['bgColor'] = 'yellow';
+                    } else if ($r['Status'] == RoomState::Ready) {
+                        $r['bgColor'] = '#3fff0f';
+                    }else{
+                        $r['bgColor'] = '';
+                    }
+
+                    $r['textColor'] = '';
+                    $r['hoverText'] .= "Status: " . $r['Status_Text'] . " | ";
+                    break;
+                case 'room': //use Resource Builder room colors
+                    break;
+                default: //None
+                    $r['bgColor'] =  '';
+                    $r['textColor'] = '';
             }
+
+            //Room hover text
+            $r['hoverText'] .= "Maximum Occupants: " . $r['maxOcc'];
 
             $rescs[] = $r;
         }

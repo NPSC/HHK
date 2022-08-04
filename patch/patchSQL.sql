@@ -45,9 +45,9 @@ Insert IGNORE into rate_breakpoint (idrate_breakpoint, Household_Size, Rate_Cate
 	select `HouseHoldSize`+24, `HouseHoldSize`, 'd', Income_D from fa_category;
 -- End of Financial Assistance Updates
 
--- Begin Bug 467:  Update Visit Ribbon color parameters.
-INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) 
-	VALUES ('Room_colors', 'false', 'b', 'c', 'Use Room Color for Rooms column on calendar', '1');
+-- Begin Bug 467 & feature 761:  Update Visit Ribbon color parameters.
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) 
+	VALUES ('Room_Colors', '', 'lu', 'c', 'Use Room Color or housekeeping status for Rooms column on calendar', 'RoomColors', '1');
 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) 
 	VALUES ('RibbonBottomColor', '', 'lu', 'c', 'Ribbon bottom-bar color source', 'RibbonColors', '1');
@@ -61,7 +61,14 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`)
 	VALUES ('RibbonColors', '','None', 0);
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
 	VALUES ('RibbonColors', 'hospital','Hospital', 1);
--- End Bug 467
+
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
+	VALUES ('RoomColors', '','None', 0);
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
+	VALUES ('RoomColors', 'room','Room', 1);
+REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`) 
+	VALUES ('RoomColors', 'housekeeping','Housekeeping', 1);
+-- End Bug 467 & feature 761
 
 -- Add Juneteenth Holiday
 REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) 

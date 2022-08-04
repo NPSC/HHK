@@ -389,6 +389,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('RibbonColors', '','None', '', '', 0),
 ('RibbonColors', 'hospital','Hospital', '', '', 1),
 
+('RoomColors', '','None', '', '', 0),
+('RoomColors', 'room','Room', '', '', 1),
+('RoomColors', 'housekeeping','Housekeeping', '', '', 2),
+
 ('Role_Codes','10','Admin User','','',0),
 ('Role_Codes','100','Web User','','',0),
 ('Role_Codes','700','Guest','','',0),
@@ -636,7 +640,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ReturnAddress','','ea','v','','Return address for automatic emails to volunteers','',1),
 ('RibbonBottomColor', '', 'lu', 'c', '', 'Ribbon bottom-bar color source', 'RibbonColors', '1'),
 ('RibbonColor','hospital','lu','c','','Ribbon Background color source','RibbonColors',1),
-('Room_colors', 'false', 'b', 'c','', 'Use Room Color for Rooms column on calendar', '', '1'),
+('Room_Colors', '', 'lu', 'c','', 'Use Room Color or housekeeping status for Rooms column on calendar', 'RoomColors', '1'),
 ('RoomPriceModel','d','lu','h','','Room rate price model - Do not change!','Price_Model',0),
 ('RoomRateDefault','e','s','h','','Use the Resource Builder','',1),
 ('RoomsPerPatient','2','i','h','','Number of simultaneous rooms per patient allowed','',1),

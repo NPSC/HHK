@@ -677,6 +677,10 @@ div.dt-buttons .dt-button:hover>span {
 	text-underline-offset:3px;
 }
 
+#hospBtns button:hover {
+	box-shadow: inset 0 0 0 1000px rgb(0 0 0 / 30%)
+}
+
 #page-title-row {
 	justify-content: space-between;
 	align-items: baseline;

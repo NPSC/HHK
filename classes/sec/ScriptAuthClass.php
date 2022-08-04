@@ -303,7 +303,7 @@ class ScriptAuthClass extends SecurityComponent {
         }
 
 
-        $markup = "<header class='navbar navbar-expand-xl sticky-top'><div class='container-fluid'><div class='navbar-brand'>" . $this->getSiteIcons($uS->siteList);
+        $markup = "<header class='navbar navbar-expand-xl sticky-top'><div class='container-fluid px-1'><div class='navbar-brand'>" . $this->getSiteIcons($uS->siteList);
         $markup .= "<div id='global-title'>$pageHeader</div></div><button class='navbar-toggler' type='button' data-bs-toggle='collapse' data-bs-target='#navbarNavDropdown' aria-controls='navbarNavDropdown' aria-expanded='false' aria-label='Toggle navigation'>
       <span class='navbar-toggler-icon'></span>
     </button><div class='collapse navbar-collapse nav-menu-right' id='navbarNavDropdown'><ul class='navbar-nav' id='nav'>";
