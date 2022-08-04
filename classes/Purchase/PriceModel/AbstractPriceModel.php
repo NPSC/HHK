@@ -55,6 +55,14 @@ abstract class AbstractPriceModel {
         return $stmt1->fetchAll(\PDO::FETCH_ASSOC);
     }
 
+    public function loadRegistrationNights(\PDO $dbh, $idRegistration) {
+
+        // Get current nights .
+        $stmt1 = $dbh->query("select * from `vvisit_stmt` where `idRegistration` = $idRegistration and `Status` != 'p' order by `idVisit`, `Span`");
+
+        return $stmt1->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public abstract function amountCalculator($nites, $idRoomRate, $rateCatetgory = '', $pledgedRate = 0, $guestDays = 0);
 
     public function daysPaidCalculator($amount, $idRoomRate, $rateCategory = '', $pledgedRate = 0, $rateAdjust = 0, $aveGuestPerDay = 1) {

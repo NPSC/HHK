@@ -1424,9 +1424,20 @@ WHERE
         }
     }
 
-    public static function createComprehensiveStatements(\PDO $dbh, $spans, $idRegistration, $guestName, $priceModel, $includeLogo = TRUE) {
+    public static function createComprehensiveStatements(\PDO $dbh, $idRegistration, $includeLogo = TRUE) {
 
         $uS = Session::getInstance();
+
+        $spans = array();
+
+        $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
+
+        if ($idRegistration > 0) {
+            $spans = $priceModel->loadRegistrationNights($dbh, $idRegistration);
+        } else {
+            return 'Missing Registration Id.  ';
+        }
+
 
         if (count($spans) == 0) {
             return 'Visits Not Found.  ';
@@ -1514,7 +1525,7 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $rec .= HTMLContainer::generateMarkup('h2', 'Comprehensive Statement of Account', array('style'=>'clear:both;margin-bottom:1em;'));
 
 
-        $rec .= self::makeSummaryDiv($guestName, $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
+        $rec .= self::makeSummaryDiv('', $patientName, $hospital, $diags, $labels, $totalCharge, $totalThirdPayments, $totalGuestPayments, Registration::loadLodgingBalance($dbh, $idRegistration), $totalNights);
 
         $rec .= HTMLContainer::generateMarkup('h4', $labels->getString('statement', 'datesChargesCaption', 'Visit Dates & Room Charges'), array('style'=>'margin-top:25px;'));
         $rec .= HTMLContainer::generateMarkup('div', $tbl->generateMarkup(), array('class'=>'hhk-tdbox'));
@@ -1666,7 +1677,10 @@ WHERE
         $uS = Session::getInstance();
         $tbl = new HTMLTable();
 
-        $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('memberType', 'visitor', 'Guest') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($guestName));
+        if ($guestName != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd(Labels::getString('memberType', 'visitor', 'Guest') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($guestName));
+        }
+
         $tbl->addBodyTr(HTMLTable::makeTd($labels->getString('MemberType', 'patient', 'Patient') . ':', array('class'=>'tdlabel')) . HTMLTable::makeTd($patientName));
 
         // Show diagnosis

@@ -462,70 +462,6 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     // Make titles for all the rates
     $rateTitles = RoomRate::makeDescriptions($dbh);
 
-    $guestNightsSql = "0 as `Actual_Guest_Nights`, 0 as `PI_Guest_Nights`,";
-
-    if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
-
-        $guestNightsSql = "CASE
-        WHEN DATE(IFNULL(v.Span_End, DATEDEFAULTNOW(v.Expected_Departure))) <= DATE('$start') THEN 0
-        WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
-        ELSE
-            (SELECT SUM(
-                CASE WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start') THEN 0
-                WHEN DATE(s.Span_Start_Date) >= DATE('$end') THEN 0
-                ELSE
-                    DATEDIFF(CASE
-                        WHEN
-                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$end')
-                        THEN
-                        DATE('$end')
-                        ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
-                        END,
-                    CASE
-                        WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
-                        ELSE DATE(s.Span_Start_Date)
-                        END)
-                END)
-                FROM
-                stays s
-                WHERE
-                s.idVisit = v.idVisit
-                AND s.Visit_Span = v.Span)
-        END AS `Actual_Guest_Nights`,
-
-        CASE
-            WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0
-            ELSE
-                (SELECT SUM(
-            CASE WHEN DATE(s.Span_Start_Date) >= DATE('$start') THEN 0
-                    WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start') THEN
-                    DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))), DATE(s.Span_Start_Date))
-                    ELSE
-                        DATEDIFF(
-                            CASE
-                            WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$start') THEN DATE('$start')
-                            ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
-                            END,
-                            DATE(s.Span_Start_Date))
-                    END)
-                    FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
-       END AS `PI_Guest_Nights`,";
-    }
-//     	"CASE WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start') THEN 0
-//         WHEN DATE(v.Span_Start) >= DATE('$end') THEN 0
-//         ELSE (SELECT SUM(DATEDIFF(CASE WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$end')
-//         THEN DATE('$end') ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END,
-//         CASE WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start') ELSE DATE(s.Span_Start_Date) END))
-//         FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)
-//     	END AS `Actual_Guest_Nights`,
-//     	CASE WHEN DATE(v.Span_Start) >= DATE('$start') THEN 0 WHEN DATE(IFNULL(v.Span_End, datedefaultnow(v.Expected_Departure))) <= DATE('$start')
-//     	THEN (SELECT SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))), DATE(s.Span_Start_Date)))
-//     	FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span)ELSE (SELECT SUM(DATEDIFF(CASE
-//       	WHEN DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) > DATE('$start') THEN DATE('$start')
-//       	ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(v.Expected_Departure))) END, DATE(s.Span_Start_Date)))
-//         FROM stays s WHERE s.idVisit = v.idVisit AND s.Visit_Span = v.Span) END AS `PI_Guest_Nights`, ";
-
-
     $query = "select
     v.idVisit,
     v.Span,
@@ -583,7 +519,8 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
                 DATE(v.Span_Start))
     END AS `Pre_Interval_Nights`,
 
-	$guestNightsSql
+    0 as `Actual_Guest_Nights`,
+    0 as `PI_Guest_Nights`,
 
     ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
     ifnull(n.Name_Last,'') as Name_Last,
