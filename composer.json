@@ -24,5 +24,11 @@
 		"chillerlan/php-qrcode" : "~4.3",
 		"onelogin/php-saml" : "~4.0",
 		"cerdic/css-tidy" : "~2.0"
+	},
+	"scripts" : {
+		"pack" : "HHK\\devTools\\Build::run"
+	},
+	"require-dev" : {
+		"matthiasmullie/minify" : "~1.3"
 	}
 }

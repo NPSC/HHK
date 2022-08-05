@@ -17,6 +17,11 @@
                 style: 'width: 80%;',
                 rows: 2
             },
+            newNoteLocation: 'bottom',
+            
+            defaultLength: 5,
+            defaultLengthMenu: [[5, 10, 25, -1], [5, 10, 25, "All"]],
+            
             alertMessage: function (text, type) {},
 
             newTaLabel: 'New note text here',
@@ -107,7 +112,7 @@
         // Create textarea contorl with greyed out label
         $ta = $('<textarea placeholder="' + settings.newTaLabel + '" />').attr(settings.newNoteAttrs);
                 
-        $div = $('<div style="margin-top:5px;" class="hhk-panel" />').append($ta);
+        $div = $('<div class="hhk-panel" />').append($ta);
         
         if (settings.linkId >= 0) {
             
@@ -401,8 +406,8 @@
 		        "deferRender": true,
 		        "language": {"sSearch": "Search Notes:"},
 		        "sorting": [[0,'desc'], [2,'desc']],
-		        "displayLength": 5,
-		        "lengthMenu": [[5, 10, 25, -1], [5, 10, 25, "All"]],
+		        "displayLength": settings.defaultLength,
+		        "lengthMenu": settings.defaultLengthMenu,
 	                "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
 		        ajax: {
 		            url: settings.serviceURL,
@@ -435,10 +440,12 @@
             
         }
         
-        $wrapper.append(createNewNote(settings, dtTable));
-
+        if(settings.newNoteLocation == 'top'){
+        	$wrapper.prepend(createNewNote(settings, dtTable));
+        }else{
+        	$wrapper.append(createNewNote(settings, dtTable));
+		}
 		
-
         $wrapper.show();
 
     }

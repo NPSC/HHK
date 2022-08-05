@@ -472,7 +472,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                     HTMLInput::generateMarkup(($this->reserveData->getDepartureDateStr()), array('name'=>$prefix.'gstCoDate', 'readonly'=>'readonly', 'size'=>'14'))
                     , array('class'=>'mb-2 mb-md-0 mr-3'))
                 .HTMLContainer::generateMarkup('span', 'Expected Days: '.
-                    HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4'))
+                    HTMLInput::generateMarkup($days, array('name'=>$prefix.'gstDays', 'readonly'=>'readonly', 'size'=>'4', "style"=>"outline: none; border: none; background:none; font-weight:bold; color:#2e6e9e;"))
                     , array('class'=>'mb-2 mb-md-0 mr-3'))
         		.HTMLContainer::generateMarkup('span', $lastVisitMU, array('style'=>'font-size:.8em;'))
         		, array('style'=>'font-size:.9em; align-items: center;', 'id'=>$prefix.'spnRangePicker', "class"=>"hhk-flex hhk-flex-wrap"))

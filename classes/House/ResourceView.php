@@ -262,11 +262,22 @@ order by r.Title;");
             }
         }
 
-        $stmt = $dbh->query("Select * from resource_use where $whid = $id order by Start_Date");
+        $stmt = $dbh->query("Select * from resource_use where $whid = $id order by Start_Date desc");
 
 
         /* var \HTMLTable */
         $tbl = new HTMLTable();
+
+        // New event
+        $tbl->addBodyTr(
+            HTMLTable::makeTd('New:')
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtstart[0]', 'class'=>'ckdate')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtend[0]', 'class'=>'ckdate')))
+            .HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                HTMLSelector::doOptionsMkup($rStts, '', TRUE), array('name'=>'selStatus[0]')))
+            .HTMLTable::makeTd(HTMLSelector::generateMarkup(
+                HTMLSelector::doOptionsMkup($oosCodes, '', TRUE), array('name'=>'selOos[0]')))
+            .HTMLTable::makeTd('', array('colspan'=>'2')));
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -282,17 +293,6 @@ order by r.Title;");
                 .HTMLTable::makeTd($r['Last_Updated'] == '' ? '' : date('M j, Y H:i', strtotime($r['Last_Updated'])))
                     );
         }
-
-        // New event
-        $tbl->addBodyTr(
-                HTMLTable::makeTd('New:')
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtstart[0]', 'class'=>'ckdate')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtend[0]', 'class'=>'ckdate')))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                        HTMLSelector::doOptionsMkup($rStts, '', TRUE), array('name'=>'selStatus[0]')))
-                .HTMLTable::makeTd(HTMLSelector::generateMarkup(
-                        HTMLSelector::doOptionsMkup($oosCodes, '', TRUE), array('name'=>'selOos[0]')))
-                .HTMLTable::makeTd('', array('colspan'=>'2')));
 
 
         $tbl->addHeaderTr(HTMLTable::makeTh('Delete').HTMLTable::makeTh('Start').HTMLTable::makeTh('End').HTMLTable::makeTh('Status').HTMLTable::makeTh('Reason').HTMLTable::makeTh('User').HTMLTable::makeTh('Last Updated'));

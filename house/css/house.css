@@ -656,18 +656,9 @@ div.dt-buttons .dt-button:hover>span {
     overflow: visible;
     text-transform: none;
     margin: 0;
+    margin-left:0.25em;
+    margin-right:0.25em;
     font-family: inherit;
-}
-
-#hospBtns button:not(:last-child){
-	border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-#hospBtns button:not(:first-child){
-	margin-left: -1px;
-	border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
 }
 
 #hospBtns button.hospActive {

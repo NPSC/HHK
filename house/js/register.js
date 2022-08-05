@@ -1590,6 +1590,9 @@ $(document).ready(function () {
             	$('.staffNotesDiv').empty().notesViewer({
 					linkType: 'staff',
 					newNoteAttrs: {id:'staffNewNote', name:'staffNewNote'},
+					newNoteLocation:'top',
+					defaultLength: 25,
+					defaultLengthMenu: [[5,10,25,50],["5","10","25","50"]],
 					alertMessage: function(text, type) {
 					    flagAlertMessage(text, type);
 					}
