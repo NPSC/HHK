@@ -131,6 +131,11 @@ class WebInit {
                 header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12
             }
         }
+
+        //add cache control
+        if ($page_Type == WebPageCode::Service){
+            header("Cache-Control: must-revalidate,no-cache,no-store");
+        }
     }
 
 
