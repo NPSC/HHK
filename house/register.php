@@ -187,9 +187,15 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
 	        $attrs['style'] = '';
 	        if($r['Reservation_Style'] != ''){
 	            $attrs['style'] .= 'background-color:' . $r['Reservation_Style'] . ';';
+	        }else if($uS->DefaultCalEventColor){
+	            $attrs['style'] .= 'background-color: ' . $uS->DefaultCalEventColor . ';';
+	        }else{
+	            $attrs['style'] .= 'background-color: var(--fc-event-bg-color,#3788d8);';
 	        }
 	        if($r['Stay_Style'] != ''){
 	            $attrs['style'] .= 'color:' . $r['Stay_Style'] . ';';
+	        }else if($uS->DefCalEventTextColor){
+	            $attrs['style'] .= 'color:' . $uS->DefCalEventTextColor . ';';
 	        }
 
 	        $colorKey .= HTMLContainer::generateMarkup('button', $r['Title'], $attrs);

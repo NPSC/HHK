@@ -405,6 +405,24 @@ li.hhk-myMenuTop {
 	background-color: initial !important;
 }
 */
+
+.hhk-ui-icons {
+    margin: 0;
+    padding: 0;
+}
+.hhk-ui-icons li {
+    margin: 2px;
+    position: relative;
+    padding: 4px 0;
+    cursor: pointer;
+    float: left;
+    list-style: none;
+}
+.hhk-ui-icons span.ui-icon {
+    float: left;
+    margin: 0 4px;
+}
+
 .ui-icon-background, .ui-state-active .ui-icon-background {background-color:#fff;}
 .ui-state-active .ui-icon-background {background-color: #fbec88; border: 1px solid #fad42e;}
 
@@ -655,9 +673,7 @@ div.dt-buttons .dt-button:hover>span {
     border-radius: 0.25em;
     overflow: visible;
     text-transform: none;
-    margin: 0;
-    margin-left:0.25em;
-    margin-right:0.25em;
+    margin: 0 0.25em 0.25em 0.25em;
     font-family: inherit;
 }
 

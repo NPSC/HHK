@@ -949,19 +949,19 @@
 	cursor:pointer;
 }
 
-.hhk-ui-icons {
+#divNavIcons .hhk-ui-icons {
     margin: 0;
     padding: 0;
     padding-right:0.5em;
 }
-.hhk-ui-icons li {
+#divNavIcons .hhk-ui-icons li {
     margin: 2px;
     position: relative;
     cursor: pointer;
     list-style: none;
     display:inline-block;
 }
-.hhk-ui-icons span.ui-icon {
+#divNavIcons .hhk-ui-icons span.ui-icon {
     margin: 0 4px;
 }
 

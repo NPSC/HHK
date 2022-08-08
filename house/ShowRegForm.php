@@ -153,6 +153,7 @@ unset($reservArray);
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
+        <?php echo NAVBAR_CSS; ?>
 
         <style type="text/css" media="print">
             #PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -165,6 +166,7 @@ unset($reservArray);
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 
         <script type='text/javascript'>
 $(document).ready(function() {

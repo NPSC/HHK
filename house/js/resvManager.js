@@ -2481,6 +2481,8 @@ function resvManager(initData, options) {
             
             insistCkinDemog = data.insistCkinDemog;
 
+			$('#submitButtons').show();
+
         }
 
         if (data.addPerson !== undefined) {

@@ -54,7 +54,6 @@
                         title: "Date",
                         data: 'Date',
                         sortable: true,
-                        width: "10%",
                         render: function (data, type) {
                             return dateRender(data, type, 'MMM D, YYYY h:mm a');
                         }
@@ -228,6 +227,7 @@
             $(this).closest('td').find('.note-action').show();
             $(this).closest('td').find('.note-delete').hide();
             $(this).hide();
+            $wrapper.find('.hhk-note-button').button();
         });
         //End Show Edit mode
         
@@ -255,6 +255,7 @@
                                 rowdata["Note"] = noteText;
 								$table.row(row).data(rowdata);
 								row.find("input.flag").checkboxradio({icon:false});
+								$wrapper.find('.hhk-note-button').button();
                             }else{
                                 if(data.error){
                                     settings.alertMessage.call(data.error, 'alert');
@@ -276,6 +277,7 @@
             $(this).closest('td').find('.note-action').hide();
             $(this).closest('td').find('.note-edit').show();
             $(this).closest('td').find('.note-delete').show();
+            $wrapper.find('.hhk-note-button').button();
 
         });
         //End Cancel Note
@@ -310,6 +312,7 @@
                                     row.find('.note-undodelete').show();
                             $("#noteText").val("");
                             $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                            $wrapper.find('.hhk-note-button').button();
                         }else{
                             settings.alertMessage.call(data.error, 'error');
                         }
@@ -341,6 +344,7 @@
                             row.find("input.flag").checkboxradio({icon:false});
                             $("#noteText").val("");
                             $('#hhk-newNote').removeAttr("disabled").text(settings.newLabel);
+                            $wrapper.find('.hhk-note-button').button();
                         }else{
                             settings.alertMessage.call(data.error, 'error');
                         }
@@ -384,6 +388,7 @@
 	                        rowdata["Flag"] = data.flag;
                             row.data(rowdata);
                             rowtr.find("input.flag").checkboxradio({icon:false});
+                            $wrapper.find('.hhk-note-button').button();
                         }else{
                             settings.alertMessage.call(data.error, 'error');
                         }

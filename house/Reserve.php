@@ -138,7 +138,7 @@ if ($idReserv > 0 || $idGuest >= 0) {
 } else {
 
     // Guest Search markup
-	$gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ", $uS->searchMRN);
+	$gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ", true, $uS->searchMRN);
     $mk1 = $gMk['hdr'];
 
 }
@@ -255,7 +255,7 @@ $resvObjEncoded = json_encode($resvAr);
                 <div id="hospitalSection" style="font-size: .9em; display:none;"  class="ui-widget hhk-visitdialog mb-3"></div>
                 <div id="resvSection" style="font-size:.9em; display:none;" class="ui-widget hhk-visitdialog mb-3"></div>
                 <div style="clear:left; min-height: 70px;"></div>
-                <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; clear:both;">
+                <div id="submitButtons" class="ui-corner-all" style="font-size:.9em; display:none;">
                     <table >
                         <tr><td ><span id="pWarnings" style="display:none; font-size: 1.4em; border: 1px solid #ddce99;margin-bottom:3px; padding: 0 2px; color:red; background-color: yellow; float:right;"></span></td></tr>
                         <tr><td>
