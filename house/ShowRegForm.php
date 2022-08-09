@@ -178,12 +178,13 @@ $(document).ready(function() {
     var invoiceNumber = '<?php echo $invoiceNumber; ?>';
     var vid = '<?php echo $idVisit; ?>';
     var opt = {mode: 'popup',
-        popClose: true,
+        popClose: false,
         popHt      : $('div#PrintArea').height(),
         popWd      : 950,
         popX       : 20,
         popY       : 20,
-        popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' + ' Registration Form'};
+        popTitle   : '<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>' + ' Registration Form',
+        extraHead  : $('#regFormStyle').prop('outerHTML')};
 
     $('#mainTabs').tabs();
 

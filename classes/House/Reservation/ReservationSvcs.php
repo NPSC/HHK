@@ -15,11 +15,12 @@ use HHK\sec\{SecurityComponent, Session};
 use HHK\Tables\PaymentGW\Guest_TokenRS;
 use HHK\House\Room\RoomChooser;
 use HHK\SysConst\RoomRateCategories;
-use HHK\House\RegisterForm;
+use HHK\House\RegistrationForm\RegisterForm;
 use HHK\House\RegistrationForm;
 use HHK\House\TemplateForm\ConfirmationForm;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Member\Role\Agent;
+use HHK\House\RegistrationForm\CustomRegisterForm;
 
 /**
  * ReservationSvcs.php
@@ -262,6 +263,31 @@ class ReservationSvcs
                     'tabTitle' => 'English'
                 );
             }
+
+        } else if($uS->RegForm == 3){
+            $regForm = new CustomRegisterForm();
+
+            if (count($docRows) > 0) {
+
+                foreach ($docRows as $d) {
+
+                    $docs[] = array(
+                        'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d['Doc']),
+                        'style' => CustomRegisterForm::getStyling(),
+                        'tabIndex' => $d['Code'],
+                        'tabTitle' => $d['Description']
+                    );
+                }
+            } else {
+
+                $docs[] = array(
+                    'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
+                    'style' => RegisterForm::getStyling(),
+                    'tabIndex' => 'en',
+                    'tabTitle' => 'English'
+                );
+            }
+
         } else if ($uS->RegForm == 2) {
 
             // IMD
