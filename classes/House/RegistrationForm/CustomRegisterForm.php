@@ -10,19 +10,20 @@ use HHK\Member\Role\AbstractRole;
 use HHK\Tables\Registration\VehicleRS;
 use HHK\Tables\EditRS;
 use HHK\HTMLControls\HTMLContainer;
+use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\House\Visit\Visit;
 use HHK\Member\Role\Guest;
 use HHK\House\Constraint\ConstraintsVisit;
 use HHK\Member\Role\Patient;
 use HHK\Payment\CreditToken;
-use HHK\HTMLControls\HTMLTable;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\Tables\Name\NameRS;
 use HHK\sec\Labels;
 use HHK\House\Registration;
 use HHK\House\PSG;
 use HHK\House\Vehicle;
+use HHK\HTMLControls\HTMLInput;
 
 /**
  * CustomRegisterForm.php
@@ -43,118 +44,160 @@ class CustomRegisterForm {
 
     public $settingTemplate = [
         "Header"=>[
-            "Title"=>[
+            "title"=>[
+                "label"=>"Title",
                 "type"=>"string"
             ],
-            "Logo"=>[
+            "logo"=>[
+                "label"=>"Logo",
                 "type"=>"bool"
             ],
-            "Address"=>[
+            "houseAddr"=>[
+                "label"=>"House Address",
                 "type"=>"bool"
             ],
-            "Layout"=>[
-                "type"=>"dropdown",
+            "layout"=>[
+                "label"=>"Header Layout",
+                "type"=>"select",
                 "values"=>[
-                    "logoRight"=>"Logo Right",
-                    "logoLeft"=>"Logo Left",
-                    "center"=>"Center Stacked"
+                    ["logoRight","Logo Right"],
+                    ["logoLeft","Logo Left"],
+                    ["center","Center Stacked"]
                 ]
             ]
         ],
         "Top"=>[
-            "Room"=>[
+            "room"=>[
+                "label"=>"Room",
                 "type"=>"bool"
             ],
-            "Rate"=>[
+            "rate"=>[
+                "label"=>"Rate",
                 "type"=>"bool"
             ],
-            "Departure"=>[
+            "depart"=>[
+                "label"=>"Expected Departure",
                 "type"=>"bool"
             ],
-            "Staff"=>[
+            "staff"=>[
+                "label"=>"Staff",
+                "type"=>"select",
+                "values"=>[
+                    ["hide","Hide"],
+                    ["shortuser","2 character username"],
+                    ["username","Full username"],
+                    ["nickname","Nickname field"]
+                ]
+            ],
+            "checkinNotes"=>[
+                "label"=>"Check in Notes",
                 "type"=>"bool"
             ]
         ],
         "Guests"=>[
-            "Show"=>[
+            "show"=>[
+                "label"=>"Show",
                 "type"=>"bool"
             ],
-            "Type"=>[
-                "type"=>"dropdown",
+            "type"=>[
+                "label"=>"Type",
+                "type"=>"select",
                 "values"=>[
-                    "checkedin"=>"Only Checked in guests",
-                    "allstays"=>"All Guests staying"
+                    ["checkedin","Only Checked in guests"],
+                    ["allstays","All Guests staying"]
                 ]
             ],
         ],
         "Patient"=>[
-            "Show"=>[
+            "show"=>[
+                "label"=>"Show",
                 "type"=>"bool"
             ],
-            "Hospital"=>[
+            "hospital"=>[
+                "label"=>"Hospital",
                 "type"=>"bool"
             ],
-            "HospRoom"=>[
+            "hospRoom"=>[
+                "label"=>"Hospital Room",
                 "type"=>"bool"
             ],
-            "Diagnosis"=>[
+            "diagnosis"=>[
+                "label"=>"Diagnosis",
                 "type"=>"bool"
             ],
         ],
         "Vehicle"=>[
-            "Show"=>[
+            "show"=>[
+                "label"=>"Show",
                 "type"=>"bool"
             ],
         ],
+        "Credit Cards"=>[
+            "show"=>[
+                "label"=>"Show",
+                "type"=>"bool"
+            ]
+        ],
         "Agreement"=>[
-            "Show"=>[
+            "show"=>[
+                "label"=>"Show",
                 "type"=>"bool"
             ],
-            "Title"=>[
+            "title"=>[
+                "label"=>"Title",
                 "type"=>"string"
             ]
         ],
         "Signatures"=>[
-            "Show"=>[
+            "show"=>[
+                "label"=>"Show",
                 "type"=>"bool"
             ],
-            "Type"=>[
-                "type"=>"dropdown",
+            "type"=>[
+                "label"=>"Type",
+                "type"=>"select",
                 "values"=>[
-                    "all"=>"All Guests",
-                    "primary"=>"Primary Guest Only",
-                    "adults"=>"Adults (18+) Only"
+                    ["all","All Guests"],
+                    ["primary","Primary Guest Only"],
+                    ["adults","Adults (18+) Only"]
                 ]
             ]
         ]
     ];
 
+    public $settings;
+
     public $labels;
 
-    protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
+    protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $notes = '', $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 
         $uS = Session::getInstance();
 
         $staff = 'Staff';
-        $mkup = '<div class="header row mb-3"><div class="col-8"><h2 class="title">' . $title . '</h2>';
+        $mkup = '<div class="header row mb-3"><div class="col"><h2 class="title">' . $title . '</h2>';
 
-        if ($houseAddr != '') {
-            $mkup .= '<p>' . $houseAddr . '</p>'; //'<br>' . date("M j, Y") .
+        if ($houseAddr != '' && isset($this->settings["Header"]["houseAddr"]) && $this->settings["Header"]["houseAddr"]) {
+            $mkup .= '<p>' . $houseAddr . '</p>';
         }
 
-        $mkup .= '</div><div class="col-4"><img src="' . $uS->statementLogoFile . '" style="max-width:100%"></div></div>';
+        $mkup .= '</div>';
 
-        if (stristr($title, 'Patient Family Housing') !== false) {
-            $agent = '';
-            $staff = '';
+        if(isset($this->settings["Header"]["logo"]) && $this->settings["Header"]["logo"]){
+            $mkup .= '<div class="col-4"><img src="' . $uS->statementLogoFile . '" style="max-width:100%"></div>';
         }
+        $mkup .= '</div>';
 
         $mkup .= '<div class="row mb-3 ui-widget-content ui-corner-all py-2">';
 
-        $mkup .= '<div class="col" style="min-width: fit-content"><strong>Room:</strong> <span class="room">' . $roomTitle . '</span></div>';
-        $mkup .= ($priceModelCode == ItemPriceCode::None ? '' : "<div class='col' style='min-width: fit-content'><strong>" . $this->labels->getString('register', 'rateTitle','Pledged Fee') . ":</strong> $"  . number_format($rate, 2) . "</div>");
-        $mkup .= '<div class="col" style="min-width: fit-content"><strong>' . $expDepartPrompt . ': </strong><span>' . ($expectedDeparture == '' ? '' : date("M j, Y", strtotime($expectedDeparture))) . '</span></div>';
-        $mkup .= '<div class="col" style="min-width: fit-content"><strong>' . $staff . ": </strong>" . $agent . '</div>';
+        $mkup .= (isset($this->settings["Top"]["room"]) && $this->settings["Top"]["room"] ? '<div class="col" style="min-width: fit-content"><strong>Room:</strong> <span class="room">' . $roomTitle . '</span></div>': '');
+        $mkup .= ($priceModelCode != ItemPriceCode::None && isset($this->settings["Top"]["rate"]) && $this->settings["Top"]["rate"] ? "<div class='col' style='min-width: fit-content'><strong>" . $this->labels->getString('register', 'rateTitle','Pledged Fee') . ":</strong> $"  . number_format($rate, 2) . "</div>": '');
+        $mkup .= (isset($this->settings["Top"]["depart"]) && $this->settings["Top"]["depart"] ? '<div class="col" style="min-width: fit-content"><strong>' . $expDepartPrompt . ': </strong><span>' . ($expectedDeparture == '' ? '' : date("M j, Y", strtotime($expectedDeparture))) . '</span></div>': '');
+        $mkup .= (isset($this->settings["Top"]["staff"]) && $this->settings["Top"]["staff"] != "none" ? '<div class="col" style="min-width: fit-content"><strong>' . $staff . ": </strong>" . $agent . '</div>': '');
+
+        // don't use notes if they are for the waitlist.
+        if (!$uS->UseWLnotes && $notes != '' && isset($this->settings["Top"]["checkinNotes"]) && $this->settings["Top"]["checkinNotes"]) {
+            $mkup .='<div class="col-12 mt-2"><strong>Check-in Notes: </strong>' . $notes . '</div>';
+        }
 
         $mkup .= '</div>';
 
@@ -173,10 +216,9 @@ class CustomRegisterForm {
         $mkup .= '<div class="row mb-3 ui-widget-content ui-corner-all py-2">';
 
         $mkup .= '<div class="col"><strong>Name: </strong>' . $patient->getRoleMember()->get_fullName() . $bd . '</div>';
-        $mkup .= '<div class="col"><strong>' . $this->labels->getString('hospital', 'hospital', 'Hospital') . ': </strong>' . $hospital . '</div>';
-        if($hospRoom != ''){
-            $mkup .= '<div class="col"><strong>' . $this->labels->getString('hospital', 'hospital', 'Hospital') . " Room: </strong>" . $hospRoom . '</div>';
-        }
+        $mkup .= (isset($this->settings["Patient"]["hospital"]) && $this->settings["Patient"]["hospital"] ? '<div class="col"><strong>' . $this->labels->getString('hospital', 'hospital', 'Hospital') . ': </strong>' . $hospital . '</div>': '');
+        $mkup .= ($hospRoom != '' && isset($this->settings["Patient"]["hospRoom"]) && $this->settings["Patient"]["hospRoom"] ? '<div class="col"><strong>' . $this->labels->getString('hospital', 'hospital', 'Hospital') . " Room: </strong>" . $hospRoom . '</div>': '');
+
         $mkup .= '</div>';
 
         return $mkup;
@@ -222,18 +264,18 @@ class CustomRegisterForm {
     protected function AgreementBlock(array $guests, $agreementLabel, $agreement) {
 
         $uS = Session::getInstance();
-        $mkup = '<div class="agreementContainer">' . HTMLContainer::generateMarkup('h2', $agreementLabel, array('class'=>'mb-2'));
+        $mkup = '<div class="agreementContainer">';
 
-        if ($agreement != '') {
-            $mkup .= '<div class="agreement">' . $agreement . '</div></div>';
-        } else {
-            $mkup .= HTMLContainer::generateMarkup('div', "Your Registration Agreement is missing.  ", array('class'=>'ui-state-error'));
+        if (isset($this->settings['Agreement']['show']) && $this->settings['Agreement']['show']){
+            $mkup .= HTMLContainer::generateMarkup('h2', $agreementLabel, array('class'=>'mb-2'));
+            if ($agreement != '') {
+                $mkup .= '<div class="agreement">' . $agreement . '</div></div>';
+            } else {
+                $mkup .= HTMLContainer::generateMarkup('div', "Your Registration Agreement is missing.  ", array('class'=>'ui-state-error'));
+            }
         }
 
-
-        if (stristr($uS->siteName, 'Patient Family Housing') === false) {
-
-            $usedNames = array();
+        if (isset($this->settings['Signatures']['show']) && $this->settings['Signatures']['show']){
 
             $usedNames = array();
 
@@ -257,12 +299,26 @@ class CustomRegisterForm {
         return $mkup;
     }
 
-    protected function creditBlock($creditRecord) {
+    protected function creditBlock(array $cardTokens = []) {
 
-        $mkup = HTMLContainer::generateMarkup('div',  HTMLContainer::generateMarkup('h2', 'Payment Information'), array('style'=>'border:none;border-bottom:1.5pt solid #98C723;padding-left:0;'));
-        $mkup .= $creditRecord;
+        $mkup = HTMLContainer::generateMarkup('h2', 'Payment Information', array('class'=>"mb-2"));
 
-        return $mkup;
+        if (count($cardTokens) > 0) {
+
+            foreach ($cardTokens as $tkRs) {
+
+                if (CreditToken::hasToken($tkRs)) {
+                    $mkup .= '<div class="row mb-2 ui-widget-content ui-corner-all py-2">';
+
+                    $mkup .= '<div class="col"><strong>Card on File: </strong>' . $tkRs->CardType->getStoredVal() . ($tkRs->MaskedAccount->getStoredVal() != '' ? ':  ...' . $tkRs->MaskedAccount->getStoredVal() : '') . '</div>';
+                    $mkup .= '<div class="col"><strong>Cardholder Name: </strong>' . $tkRs->CardHolderName->getStoredVal() . '</div>';
+
+                    $mkup .= '</div>';
+                }
+            }
+        }
+
+        return HTMLContainer::generateMarkup('div', $mkup);
     }
 
     protected function notesBlock($notes, $title = 'Check-in Notes') {
@@ -339,28 +395,27 @@ class CustomRegisterForm {
     }
 
     protected function printFooterBlock($primaryGuestName = "", $room = ""){
-        $mkup = '<footer class="row pt-3" style="width: 100%;"><div class="col-6">Registration Form' . ($primaryGuestName != "" ? "  &bull;  " . $primaryGuestName : "") . ($room != '' ? '  &bull;  Room ' . $room : "") . '</div><div class="col-6" style="text-align:right;">Printed at ' . date("m/d/Y g:i A") . '</div></footer>';
+        $mkup = '<footer class="row pt-3" style="width: 100%;"><div class="col">Registration Form' . ($primaryGuestName != "" ? "  &bull;  " . $primaryGuestName : "") . ($room != '' ? '  &bull;  Room ' . $room : "") . '</div><div class="col" style="text-align:right; max-width: fit-content;">Printed at ' . date("m/d/Y g:i A") . '</div></footer>';
 
         return $mkup;
     }
 
     protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $patientRelCodes,
-            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $creditRecord, $notes, $primaryGuestId = 0) {
+            $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $cardTokens, $notes, $primaryGuestId = 0) {
 
         $uS = Session::getInstance();
 
         $mkup = "<div class='container'>";
-        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $uS->RoomPriceModel, $houseAddr);
+        $mkup .= self::titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $uS->RoomPriceModel, $notes, $houseAddr);
 
-        // don't use notes if they are for the waitlist.
-        if (!$uS->UseWLnotes) {
-            $mkup .= self::notesBlock($notes);
+        if(isset($this->settings['Guests']['show']) && $this->settings['Guests']['show']){
+            $mkup .= $this->guestBlock($dbh, $guests, $patientRelCodes, $primaryGuestId);
         }
 
-        $mkup .= $this->guestBlock($dbh, $guests, $patientRelCodes, $primaryGuestId);
-
         // Patient
-        $mkup .= $this->patientBlock($patient, $hospital, $hospRoom);
+        if(isset($this->settings['Patient']['show']) && $this->settings['Patient']['show']){
+            $mkup .= $this->patientBlock($patient, $hospital, $hospRoom);
+        }
 
         // Vehicles
         if (is_null($vehicles) === FALSE) {
@@ -368,8 +423,8 @@ class CustomRegisterForm {
         }
 
         // Credit card
-        if ($creditRecord != '') {
-            $mkup .= $this->creditBlock($creditRecord);
+        if (count($cardTokens) > 0) {
+            $mkup .= $this->creditBlock($cardTokens);
         }
 
         // Agreement
@@ -432,24 +487,34 @@ class CustomRegisterForm {
         footer {
             position: fixed;
             bottom: 0;
+            //height: .25in;
+            display: table-footer-group;
         }
 
         @page {
             size: letter;
             margin: .25in .5in;
+            //margin-bottom: 0.5in;
         }
 
         .agreementContainer {
             page-break-inside: avoid;
         }
 
+        .agreementContainer p {
+            page-break-inside: always;
+        }
+
+        .agreementContainer li {
+            page-break-inside: always;
+        }
 
     }
 
 </style>';
     }
 
-    public function prepareRegForm(\PDO $dbh, $idVisit, $span, $idReservation, $agreement = '') {
+    public function prepareRegForm(\PDO $dbh, $idVisit, $span, $idReservation, $doc = []) {
 
         $uS = Session::getInstance();
         $this->labels = Labels::getLabels();
@@ -465,6 +530,16 @@ class CustomRegisterForm {
         $notes = '';
         $expectedDeparturePrompt = 'Expected Departure';
         $hospital = '';
+        $this->settings = [];
+
+        if(isset($doc['Abstract']) && @json_decode($doc['Abstract'], true)){
+            $this->settings = json_decode($doc['Abstract'], true);
+        }
+
+        $agreement = "";
+        if(isset($doc['Doc'])){
+            $agreement = $doc['Doc'];
+        }
 
         if ($idVisit > 0) {
 
@@ -615,10 +690,14 @@ class CustomRegisterForm {
         }
 
         // Title
-        $title = $uS->siteName . " Registration Form";
+        if(isset($this->settings["Header"]["title"]) && $this->settings["Header"]["title"] != ''){
+            $title = $this->settings["Header"]["title"];
+        }else{
+            $title = $uS->siteName . " Registration Form";
+        }
 
         // Vehicles
-        if ($uS->TrackAuto) {
+        if ($uS->TrackAuto && isset($this->settings['Vehicle']['show']) && $this->settings['Vehicle']['show']) {
 
             $vehs = array();
             if ($reg->getNoVehicle() == 0) {
@@ -636,39 +715,17 @@ class CustomRegisterForm {
         }
 
         // Credit
-        $creditReport = '';
-        if ($primaryGuestId > 0 || $reg->getIdRegistration() > 0) {
+        $cardTokens = [];
+        if (($primaryGuestId > 0 || $reg->getIdRegistration() > 0) && isset($this->settings['Credit Cards']['show']) && $this->settings['Credit Cards']['show']) {
 
-            $tkRArray = CreditToken::getRegTokenRSs($dbh, $reg->getIdRegistration(), $primaryGuestId);
+            $cardTokens = CreditToken::getRegTokenRSs($dbh, $reg->getIdRegistration(), '', $primaryGuestId);
 
-            if (count($tkRArray) > 0) {
-
-                $tblPayment = new HTMLTable();
-
-                foreach ($tkRArray as $tkRs) {
-
-                    if (CreditToken::hasToken($tkRs)) {
-
-                        $tblPayment->addBodyTr(
-                                HTMLTable::makeTd('&nbsp;', array('style'=>'width:.5in;border:none;'))
-                                . HTMLTable::makeTd("<p class='label'>Card on File</p>", array('style'=>'border:solid black 1pt;border-top:none;padding:1.5pt 5pt 1.5 5pt;'))
-                                . HTMLTable::makeTd(
-                                        $tkRs->CardType->getStoredVal() . ':  ...' .
-                                        $tkRs->MaskedAccount->getStoredVal(), array('style'=>'border:solid black 1pt;border-top:none;padding:0 15pt 0 15pt;'))
-                                . HTMLTable::makeTd("<p class='label'>Cardholder Name</p>", array('style'=>'border:solid black 1pt;border-top:none;padding:0 5pt 0 5pt;'))
-                                . HTMLTable::makeTd($tkRs->CardHolderName->getStoredVal(), array('style'=>'border:solid black 1pt;border-top:none;padding:0 15pt 0 15pt;')));
-
-                    }
-                }
-
-                $creditReport = $tblPayment->generateMarkup();
-            }
         }
 
 
         $roomTitle = '';
 
-        if ($uS->RegFormNoRm === FALSE) {
+        if (isset($this->settings['Top']['room']) && $this->settings['Top']['room']) {
 
             $stmt2 = $dbh->query("select Title from resource where idResource = " . $idResc . ";");
             $rows2 = $stmt2->fetchAll();
@@ -716,7 +773,7 @@ class CustomRegisterForm {
 
 
 
-        return CustomRegisterForm::generateDocument(
+        return $this->generateDocument(
                 $dbh,
                 $title,
                 $patient,
@@ -732,14 +789,67 @@ class CustomRegisterForm {
                 $depDate,
                 $expectedDeparturePrompt,
                 $agreement,
-                $creditReport,
+                $cardTokens,
                 $notes,
                 $primaryGuestId
             );
 
     }
+
+    public function getEditMkup(){
+        $mkup = HTMLContainer::generateMarkup("h2", "Options");
+
+        foreach($this->settingTemplate as $group=>$inputs){
+            $mkup .= HTMLContainer::generateMarkup("h3", $group, ["class"=>"mb-2"]);
+
+            foreach($inputs as $key=>$input){
+                switch($input["type"]){
+                    case "string":
+                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLInput::generateMarkup("", ["name"=>"regForm[" . $group . "][" . $key . "]"]);
+                        break;
+                    case "bool":
+                        $inputMkup = HTMLInput::generateMarkup("", ["type"=>"checkbox", "name"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]"]);
+                        break;
+                    case "select":
+                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($input['values'], '', false), ["name"=>"regForm[" . $group . "][" . $key . "]"]);
+                        break;
+                    default:
+                        $inputMkup = '';
+                }
+
+                $mkup .= HTMLContainer::generateMarkup("div",$inputMkup, ["class"=>"mb-2"]);
+            }
+        }
+
+        return HTMLContainer::generateMarkup("div", $mkup);
+    }
+
+    public function validateSettings($post = array()){
+
+        $settings = [];
+
+        foreach($this->settingTemplate as $group=>$inputs){
+
+            foreach($inputs as $key=>$input){
+                switch($input["type"]){
+                    case "string":
+                        $settings[$group][$key] = "";
+                        break;
+                    case "bool":
+                        $settings[$group][$key] = true;
+                        break;
+                    case "select":
+                        $settings[$group][$key] = "";
+                        break;
+                    default:
+                }
+
+            }
+        }
+
+        return $settings;
+
+    }
 }
-
-
 
 ?>

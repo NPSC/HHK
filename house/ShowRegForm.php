@@ -122,7 +122,7 @@ foreach ($reservArray['docs'] as $r) {
 
 
     $tabContent .= HTMLContainer::generateMarkup('div',
-        HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint', 'data-tab'=>$r['tabIndex']))
+        HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex']))
         .HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex'])),
         array('id'=>$r['tabIndex']));
 

@@ -236,7 +236,7 @@ class ReservationSvcs
         $uS = Session::getInstance();
         $docs = array();
 
-        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
+        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Abstract`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
         $docRows = $stmt->fetchAll();
 
         if ($uS->RegForm == 1) {
@@ -272,7 +272,7 @@ class ReservationSvcs
                 foreach ($docRows as $d) {
 
                     $docs[] = array(
-                        'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d['Doc']),
+                        'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d),
                         'style' => CustomRegisterForm::getStyling(),
                         'tabIndex' => $d['Code'],
                         'tabTitle' => $d['Description']

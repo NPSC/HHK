@@ -38,6 +38,7 @@ use HHK\House\Insurance\Insurance;
 use HHK\Tables\House\Rate_BreakpointRS;
 use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RateStatus;
+use HHK\House\RegistrationForm\CustomRegisterForm;
 
 /**
  * ResourceBuilder.php
@@ -1295,6 +1296,12 @@ if (isset($_POST['ldfm'])) {
     //set help text
     $help = '';
 
+    $editMkup = '';
+    if($formType == 'ra' && $uS->RegForm == "3"){
+        $regForm = new CustomRegisterForm();
+        $editMkup = $regForm->getEditMkup();
+    }
+
     foreach ($docRows as $r) {
 
         //subject line
@@ -1317,7 +1324,10 @@ if (isset($_POST['ldfm'])) {
             'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3 user-agent-spacing')): '') .
             '<div><div class="d-inline-block p-3 uploadFormDiv ui-widget-content ui-corner-all"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" style="padding: 5px 7px;">
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>' .
-            '<div class="form-group mb-3"><label for="emailSubjectLine">Email Subject Line: </label><input type="text" name="emailSubjectLine" placeholder="Email Subject Line" value="' . $subjectLine . '" size="35"></div>' .
+
+        ($editMkup != '' ? $editMkup: '') .
+
+        ($formType == 'c' || $formType == 's' ? '<div class="form-group mb-3"><label for="emailSubjectLine">Email Subject Line: </label><input type="text" name="emailSubjectLine" placeholder="Email Subject Line" value="' . $subjectLine . '" size="35"></div>' : '') .
             '<input type="hidden" name="filefrmtype" value="' . $formType . '"/>' .
             '<input type="hidden" name="docAction">' .
             '<input type="hidden" name="formDef" value="' . $formDef . '">' .
@@ -1392,6 +1402,12 @@ if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
             $subjectLine = filter_var($_POST["emailSubjectLine"], FILTER_SANITIZE_STRING);
             $abstract["subjectLine"] = $subjectLine;
         }
+
+        if($formType == 'ra' && $uS->RegForm == "3"){
+            $regForm = new CustomRegisterForm();
+            $abstract = $regForm->validateSettings($_POST['regForm']);
+        }
+
         $abstract = json_encode($abstract);
 
         $mimetype = "";
