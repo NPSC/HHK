@@ -240,7 +240,18 @@ function getStatusEvent(idResc, type, title) {
             } else if (data.tbl) {
                 
                 $('#statEvents').children().remove().end().append($(data.tbl));
-                $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
+                $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy',
+                	beforeShow: function(el,ui){
+                		var startEl = $(this).closest('tr').find('[id^="txtstart"]');
+                		var endEl = $(this).closest('tr').find('[id^="txtend"]');
+                		if($(this).attr("id").startsWith("txtstart") && endEl.val() != ''){
+                			$(this).datepicker('option',"maxDate", endEl.val());
+                		}
+                		if($(this).attr("id").startsWith("txtend") && startEl.val() != ''){
+                			$(this).datepicker('option', "minDate", startEl.val());
+                		}
+                	}
+                });
                 var buttons = {
                     "Save": function () {
                         saveStatusEvent(idResc, type);

@@ -89,6 +89,16 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         $this->query = "select * from vguest_view";
     }
 
+    public function generateMarkup(string $outputType = ""){
+        $this->getResultSet();
+
+        foreach($this->resultSet as $k=>$r) {
+            $this->resultSet[$k]['On_Leave'] = ($this->resultSet[$k]['On_Leave'] > 0 ? "Yes":"");
+        }
+
+        return parent::generateMarkup($outputType);
+    }
+
 }
 
 ?>
