@@ -22,6 +22,9 @@ use HHK\sec\Labels;
  * @link      https://github.com/NPSC/HHK
  *
  * Used only by IMD GH
+ *
+ * Reg Form Type 2
+ *
  */
 class RegistrationForm {
 

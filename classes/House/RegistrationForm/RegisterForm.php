@@ -39,6 +39,9 @@ use HHK\House\Vehicle;
  * @author Eric
  *
  * This form is used by all Houses except 1
+ *
+ * Reg Form Type 1
+ *
  */
 class RegisterForm {
 
