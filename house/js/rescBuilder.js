@@ -540,7 +540,7 @@ $(document).ready(function () {
         }
         $(this).val(this.value);
     });
-    $('#mainTabs').show();
+    $('#mainTabs').addClass('d-inline-block');
 
     $(document).on('click', '.replaceForm', function(){
         var form = $(this).closest("div.row").find('.uploadFormDiv');

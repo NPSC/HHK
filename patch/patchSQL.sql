@@ -87,3 +87,6 @@ ALTER TABLE `room`
 ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Last_Cleaned`;
 ALTER TABLE `cleaning_log`
 ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Last_Cleaned`;
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`)
+	VALUES('EmergContactReserv', 'false', 'b', 'h', 'Collect Emergency Contact on Reservation','1');

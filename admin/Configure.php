@@ -82,7 +82,7 @@ if (isset($_POST["btnSiteCnf"]) || isset($_POST["btnLocalAuth"])) {
 
 if (isset($_POST["btnLabelCnf"])) {
 
-    $tabIndex = 6;
+    $tabIndex = 7;
 
     $notymsg = SiteConfig::saveLabels($dbh, $_POST);
 }

@@ -2388,13 +2388,11 @@ foreach($demogs as $key=>$demog){
 <body <?php if ($wInit->testVersion) {echo "class='testbody'";} ?>>
 <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
-		<div style="float: left; margin-right: 20px; margin-top: 10px;">
-			<h1><?php echo $wInit->pageHeading; ?>&nbsp; (Any changes require everybody to log out and log back in!)</h1>
-		</div>
-<?php echo $resultMessage ?>
+			<h1 class="mt-2"><?php echo $wInit->pageHeading; ?>&nbsp; (Any changes require everybody to log out and log back in!)</h1>
+
+			<?php echo $resultMessage ?>
             <div id="mainTabs"
-			style="font-size: .9em; clear: left; display: none;"
-			class="hhk-member-detail">
+			style="font-size: .9em; display: none;">
 			<ul>
 				<li><a href="#rescTable">Resources</a></li>
 				<li><a href="#roomTable">Rooms</a></li>

@@ -138,7 +138,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             ->setResvStatusCode($rows[0]['Status']);
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
-            return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
+            return new ActiveReservation($rData, $rRs, new Family($dbh, $rData, $uS->EmergContactReserv));
         }
 
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
@@ -151,7 +151,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         // Turned away, cancelled, etc.
-        return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
+        return new StaticReservation($rData, $rRs, new Family($dbh, $rData, $uS->EmergContactReserv));
 
     }
 

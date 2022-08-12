@@ -572,6 +572,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('EmailBlockSize','200','i','v','','Number of email addresses per block','',1),
 ('EmailType','','lu','es','','Email protocol','Email_Server',1),
 ('EmergContactFill','false','b','h','','Insist on Filling in the emergency contact','',1),
+('EmergContactReserv', 'false', 'b', 'h', '', 'Collect Emergency Contact on Reservation','1'),
 ('EmptyExtendLimit','0','i','hf','','Extend visit (go on leave) default number of days','',1),
 ('Error_Report_Email', 'support@nonprofitsoftwarecorp.org', 's', 'a', '', 'Email for reporting server errors', '',0),
 ('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication','',1),
