@@ -1297,12 +1297,18 @@ if (isset($_POST['ldfm'])) {
     $help = '';
 
     $editMkup = '';
-    if($formType == 'ra' && $uS->RegForm == "3"){
-        $regForm = new CustomRegisterForm();
-        $editMkup = $regForm->getEditMkup();
-    }
 
     foreach ($docRows as $r) {
+
+        if($formType == 'ra' && $uS->RegForm == "3"){
+            $regSettings = [];
+            if(!empty($r['Abstract']) && @json_decode($r['Abstract'], true)){
+                $regSettings = json_decode($r['Abstract'], true);
+            }
+
+            $regForm = new CustomRegisterForm($regSettings);
+            $editMkup = $regForm->getEditMkup();
+        }
 
         //subject line
         $subjectLine = "";

@@ -265,11 +265,17 @@ class ReservationSvcs
             }
 
         } else if($uS->RegForm == 3){
-            $regForm = new CustomRegisterForm();
 
             if (count($docRows) > 0) {
 
                 foreach ($docRows as $d) {
+
+                    $regSettings = [];
+                    if(!empty($d['Abstract']) && @json_decode($d['Abstract'], true)){
+                        $regSettings = json_decode($d['Abstract'], true);
+                    }
+
+                    $regForm = new CustomRegisterForm($regSettings);
 
                     $docs[] = array(
                         'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d),

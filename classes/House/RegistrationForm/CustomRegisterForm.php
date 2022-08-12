@@ -199,6 +199,14 @@ class CustomRegisterForm {
 
     public $labels;
 
+    public function __construct(array $settings = []){
+        if(count($settings) == 0){
+            $this->settings = $this->getDefaultSettings();
+        }else{
+            $this->settings = $settings;
+        }
+    }
+
     protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $notes = '', $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
 
         $uS = Session::getInstance();
@@ -294,7 +302,7 @@ class CustomRegisterForm {
 
     protected function AgreementBlock(array $guests, $agreementLabel, $agreement) {
 
-        $uS = Session::getInstance();
+
         $mkup = '<div class="agreementContainer">';
 
         if (!empty($this->settings['Agreement']['show'])){
@@ -566,11 +574,6 @@ class CustomRegisterForm {
         $notes = '';
         $expectedDeparturePrompt = 'Expected Departure';
         $hospital = '';
-        $this->settings = $this->getDefaultSettings();
-
-        if(!empty($doc['Abstract']) && @json_decode($doc['Abstract'], true)){
-            $this->settings = json_decode($doc['Abstract'], true);
-        }
 
         $agreement = "";
         if(isset($doc['Doc'])){
@@ -843,13 +846,17 @@ class CustomRegisterForm {
             foreach($inputs as $key=>$input){
                 switch($input["type"]){
                     case "string":
-                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLInput::generateMarkup("", ["name"=>"regForm[" . $group . "][" . $key . "]"]);
+                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLInput::generateMarkup((!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), ["name"=>"regForm[" . $group . "][" . $key . "]"]);
                         break;
                     case "bool":
-                        $inputMkup = HTMLInput::generateMarkup("", ["type"=>"checkbox", "name"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]"]);
+                        $cbAttr = ["type"=>"checkbox", "name"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"];
+                        if(!empty($this->settings[$group][$key])){
+                            $cbAttr['checked'] = 'checked';
+                        };
+                        $inputMkup = HTMLInput::generateMarkup("", $cbAttr) . HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]"]);
                         break;
                     case "select":
-                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($input['values'], '', false), ["name"=>"regForm[" . $group . "][" . $key . "]"]);
+                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($input['values'], (!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), false), ["name"=>"regForm[" . $group . "][" . $key . "]"]);
                         break;
                     default:
                         $inputMkup = '';
@@ -866,20 +873,18 @@ class CustomRegisterForm {
 
         $settings = [];
 
-        $regSettings = (!empty($post["regForm"]) ? $post["regForm"]: array());
-
         foreach($this->settingTemplate as $group=>$inputs){
 
             foreach($inputs as $key=>$input){
                 switch($input["type"]){
                     case "string":
-                        $settings[$group][$key] = (!empty($regSettings[$group][$key]) ? $regSettings[$group][$key]: "");
+                        $settings[$group][$key] = (!empty($post[$group][$key]) ? $post[$group][$key]: "");
                         break;
                     case "bool":
-                        $settings[$group][$key] = (!empty($regSettings[$group][$key]) ? boolval($regSettings[$group][$key]): false);
+                        $settings[$group][$key] = (!empty($post[$group][$key]) ? boolval($post[$group][$key]): false);
                         break;
                     case "select":
-                        $settings[$group][$key] = (!empty($regSettings[$group][$key]) ? $regSettings[$group][$key]: "");
+                        $settings[$group][$key] = (!empty($post[$group][$key]) ? $post[$group][$key]: "");
                         break;
                     default:
                 }
