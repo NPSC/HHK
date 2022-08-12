@@ -80,6 +80,9 @@ abstract class AbstractRole {
         $phoneSearchMkup = '';
         $MRNSearchMkup = '';
 
+        $outerwidth = "col-xl-8";
+        $gstwidth = "col-lg-7";
+
         if ($showPhoneSearch) {
             $phoneSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch', "style"=>"min-width: fit-content", "class"=>"mr-2"))
                     .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'14', 'title'=>'Enter at least 5 numbers to invoke search', "style"=>"width:100%")), array("class"=>"col-12 col-lg mb-2 mb-lg-0 hhk-flex"));
@@ -88,15 +91,17 @@ abstract class AbstractRole {
         if ($showMRNSearch) {
             $MRNSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'MRN Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>"min-width: fit-content", "class"=>"mr-2"))
             .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'MRNSearch', 'size'=>'14', 'title'=>'Enter at least 3 characters to invoke search', "style"=>"width: 100%")), array("class"=>"col-12 col-lg mb-2 mb-lg-0 hhk-flex"));
+            $outerwidth = 'col-xl-10';
+            $gstwidth = 'col-lg-6';
         }
 
         $gstSearch = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('label', $title, array('for'=>$prefix.'Search', 'style'=>"min-width:fit-content", "class"=>"mr-2"))
-            .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'Search', 'title'=>'Enter at least 3 characters to invoke search', "style"=>"width: 100%")), array("class"=>"col-12 col-lg-7 mb-2 mb-lg-0 hhk-flex"));
+            .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'Search', 'title'=>'Enter at least 3 characters to invoke search', "style"=>"width: 100%")), array("class"=>"col-12 mb-2 mb-lg-0 hhk-flex " . $gstwidth));
 
         $full = HTMLContainer::generateMarkup('span', 'Room Full', array('id'=>$prefix.'fullspan', 'style'=>'display:none;'));
 
         $rtn = array();
-        $rtn['hdr'] = HTMLContainer::generateMarkup('div', $gstSearch . $MRNSearchMkup . $phoneSearchMkup . $full, array('id'=>'h2srch'.$prefix, 'style'=>"padding:4px;max-width:100%;", 'class'=>$prefix.'Slot ui-widget ui-widget-header ui-state-default ui-corner-all row col-12 col-xl-8'));
+        $rtn['hdr'] = HTMLContainer::generateMarkup('div', $gstSearch . $MRNSearchMkup . $phoneSearchMkup . $full, array('id'=>'h2srch'.$prefix, 'style'=>"padding:4px;max-width:100%;", 'class'=>$prefix.'Slot ui-widget ui-widget-header ui-state-default ui-corner-all row col-12 ' . $outerwidth));
         $rtn['idPrefix'] = $prefix;
         return  $rtn;
     }

@@ -846,6 +846,9 @@ $(document).ready(function () {
         modal: true,
         title: 'Manage Status Events'
     });
+    
+    //turn off autofocus
+    $("#statEvents").data("uiDialog")._focusTabbable = function(){};
 
     $('#keysfees').dialog({
         autoOpen: false,
