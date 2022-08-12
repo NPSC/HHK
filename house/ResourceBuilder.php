@@ -38,6 +38,7 @@ use HHK\House\Insurance\Insurance;
 use HHK\Tables\House\Rate_BreakpointRS;
 use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RateStatus;
+use HHK\Purchase\PriceModel\PriceDaily;
 
 /**
  * ResourceBuilder.php
@@ -879,6 +880,9 @@ if (isset($_POST['btnkfSave'])) {
 
                 // Log action.
                 HouseLog::logRoomRate($dbh, 'insert', $idRoomRate, HouseLog::getInsertText($rpRs), $uS->username);
+
+                //reload rate cats
+                $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
             }
         } else if ($newRateSize > 0 && $newRateSize < count($ratCats)) {
             // remove rate categories

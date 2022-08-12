@@ -886,15 +886,15 @@ WHERE
         }
 
 
-        $divAttr = array('id' => 'pudiv', 'class' => 'ui-widget ui-widget-content ui-corner-all hhk-tdbox', 'style' => 'clear:both; float:left; position:absolute; min-width:300px;');
+        $divAttr = array('id' => 'pudiv', 'class' => 'ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-panel', 'style' => 'position:absolute; min-width:300px;');
         $tblAttr = array('style' => 'background-color:lightyellow; width:100%;');
 
         if ($lines[0]['Deleted'] == 1) {
             $tblAttr['style'] = 'background-color:red;';
         }
 
-        $mkup = HTMLContainer::generateMarkup('div', $tbl->generateMarkup(
-                $tblAttr, 'Items For Invoice #' . $lines[0]['Invoice_Number'] . HTMLContainer::generateMarkup('span', ' (' . $lines[0]['GuestName'] . ')', array('style' => 'font-size:.8em;')))
+        $mkup = HTMLContainer::generateMarkup('div',
+            $tbl->generateMarkup($tblAttr, 'Items For Invoice #' . $lines[0]['Invoice_Number'] . HTMLContainer::generateMarkup('span', ' (' . $lines[0]['GuestName'] . ')', array('style' => 'font-size:.8em;')))
                . ($showBillTo ? Invoice::getBillToAddress($dbh, $lines[0]['Sold_To_Id'])->generateMarkup(array(), 'Bill To') : '')
                , $divAttr);
 

@@ -1229,7 +1229,7 @@ if ($uS->UseIncidentReports) {
         var makeTable = '<?php echo $mkTable; ?>';
         $('#btnHere, #btnExcel').button();
         if (makeTable >= 1) {
-            $('div#printArea').show();
+            $('div#printArea').addClass("d-inline-block");
             $('#divPrintButton').show();
 
             if (makeTable == 1) {
@@ -1395,7 +1395,7 @@ if ($uS->UseIncidentReports) {
             </div>
             <div style="clear:both;"></div>
             <div id="divPrintButton" style="display:none; margin: 10px 0;"><input id="printButton" value="Print" type="button" /></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog ui-corner-all" style="float:left;display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog ui-corner-all" style="display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
                 <div style="margin-bottom:.5em;"><?php echo $settingstable; ?></div>
                 <?php echo $dataTable; ?>
             </div>

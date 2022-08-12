@@ -1086,7 +1086,7 @@ $(document).ready(function() {
 
     }
 
-    $('#mainTabs').show();
+    $('#mainTabs').addClass('d-inline-block');
 
     $('#includeFields').fieldSets({'reportName': 'invoice', 'defaultFields': <?php echo json_encode($defaultFields); ?>});
 });
@@ -1098,7 +1098,7 @@ $(document).ready(function() {
         <h2><?php echo $wInit->pageHeading; ?></h2>
         <div id="paymentMessage" style="display:none;" class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"></div>
 
-        <div id="mainTabs" style="font-size:.9em;display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog">
+        <div id="mainTabs" style="font-size:.9em;display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
             <ul>
                 <li><a href="#invr">All Invoices</a></li>
                 <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
