@@ -2,6 +2,8 @@
 
 namespace HHK\Payment\PaymentResult;
 
+use HHK\Note\LinkNote;
+use HHK\Note\Note;
 use HHK\Payment\Receipt;
 use HHK\Payment\Invoice\Invoice;
 use HHK\Payment\PaymentResponse\AbstractPaymentResponse;
@@ -169,35 +171,47 @@ WHERE r.Email_Receipt = 1 and
 
         try{
             $mail = prepareEmail();
-    
+
             $mail->From = $fromAddr;
             $mail->addReplyTo($uS->ReplyTo);
             $mail->FromName = $uS->siteName;
-    
+
             $mail->addAddress($toAddrSan);     // Add a recipient
-    
+
             $bccEntry = $uS->BccAddress;
             $bccs = explode(',', $bccEntry);
-    
+
             foreach ($bccs as $b) {
-    
+
                 $bcc = filter_var($b, FILTER_SANITIZE_EMAIL);
-    
+
                 if ($bcc !== FALSE && $bcc != '') {
                     $mail->addBCC($bcc);
                 }
             }
-    
+
             $mail->isHTML(true);
-    
+
             $mail->Subject = $uS->siteName . ' Payment Receipt';
             $mail->msgHTML($this->receiptMarkup);
-    
+
             $mail->send();
             if ($guestHasEmail) {
+
+                $stmt = $dbh->prepare("select `Invoice_Number` from invoice where idInvoice = :idInvoice limit 1");
+                $stmt->execute([":idInvoice"=>$this->idInvoice]);
+                $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                if(count($rows) == 1){
+                    $this->invoiceNumber = $rows[0]["Invoice_Number"];
+                }
+
+
+                LinkNote::save($dbh, "Receipt" . ($this->invoiceNumber != '' ? " for invoice <a href='ShowInvoice.php?invnum=" . $this->invoiceNumber . "' target='_blank'>" . $this->invoiceNumber . "</a>" : '') . " emailed to " . $toAddrSan, $this->idRegistration, Note::PsgLink, $uS->username, $uS->ConcatVisitNotes);
+
                 return "Email sent" . $guestName;
             }
-            
+
         }catch(\Exception $e){
             return "Send Email failed:  " . $mail->ErrorInfo;
         }
