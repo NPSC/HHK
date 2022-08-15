@@ -383,7 +383,7 @@ $(document).ready(function () {
                     $('#divUploadForm input[type=submit]').button();
                     if(changeEventData && changeEventData.docCode){
                     	console.log('#docTab-' + changeEventData.docCode);
-                    	$('#regTabDiv').find('#docTab-' + changeEventData.docCode).click();
+                    	$('#regTabDiv').find('li.ui-tab[aria-selected=false] #docTab-' + changeEventData.docCode).click();
                     }
                 }
             });

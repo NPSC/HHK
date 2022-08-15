@@ -109,7 +109,7 @@ class CustomRegisterForm {
                 "type"=>"bool",
                 "default"=>true
             ],
-            "type"=>[
+/*             "type"=>[
                 "label"=>"Type",
                 "type"=>"select",
                 "values"=>[
@@ -117,7 +117,7 @@ class CustomRegisterForm {
                     ["allstays","All Guests staying"],
                 ],
                 "default"=>"checkedin"
-            ],
+            ], */
             "emerg"=>[
                 "label"=>"Emergency Contact",
                 "type"=>"bool",
@@ -135,6 +135,11 @@ class CustomRegisterForm {
                 "type"=>"bool",
                 "default"=>true
             ],
+            "mrn"=>[
+                "label"=>"MRN",
+                "type"=>"bool",
+                "default"=>false
+            ],
             "hospital"=>[
                 "label"=>"Hospital",
                 "type"=>"bool",
@@ -147,6 +152,11 @@ class CustomRegisterForm {
             ],
             "diagnosis"=>[
                 "label"=>"Diagnosis",
+                "type"=>"bool",
+                "default"=>false
+            ],
+            "location"=>[
+                "label"=>"Location",
                 "type"=>"bool",
                 "default"=>false
             ],
@@ -188,7 +198,7 @@ class CustomRegisterForm {
                 "values"=>[
                     ["all","All Guests"],
                     ["primary","Primary Guest Only"],
-                    ["adults","Adults (18+) Only"]
+                    ["adults","Exclude minors"]
                 ],
                 "default"=>"all"
             ]
@@ -242,21 +252,26 @@ class CustomRegisterForm {
         return $mkup;
     }
 
-    protected function patientBlock(AbstractRole $patient, $hospital, $hospRoom, $diagnosis) {
+    protected function patientBlock(AbstractRole $patient, $hospital, $mrn, $hospRoom, $diagnosis, $location = '') {
 
         $bd = '';
         if ($patient->getRoleMember()->get_birthDate() != '' && !empty($this->settings["Patient"]["birthdate"])) {
             $bd = ' (' . date('M j, Y', strtotime($patient->getRoleMember()->get_birthDate())) . ')';
         }
 
+        if ($mrn != '' && !empty($this->settings["Patient"]["mrn"])) {
+            $mrn = ' (' . $mrn . ')';
+        }
+
         $mkup = "<h2 class='mb-2'>" .$this->labels->getString('MemberType', 'patient', 'Patient'). "</h2>";
 
         $mkup .= '<div class="row mb-3 ui-widget-content ui-corner-all py-2">';
 
-        $mkup .= '<div class="col" style="min-width:fit-content"><strong>Name: </strong>' . $patient->getRoleMember()->get_fullName() . $bd . '</div>';
+        $mkup .= '<div class="col" style="min-width:fit-content"><strong>Name: </strong>' . $patient->getRoleMember()->get_fullName() . $bd . $mrn . '</div>';
         $mkup .= (!empty($this->settings["Patient"]["hospital"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'hospital', 'Hospital') . ': </strong>' . $hospital . '</div>': '');
-        $mkup .= ($hospRoom != '' && !empty($this->settings["Patient"]["hospRoom"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'hospital', 'Hospital') . " Room: </strong>" . $hospRoom . '</div>': '');
+        $mkup .= ($hospRoom != '' && !empty($this->settings["Patient"]["hospRoom"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'roomNumber', 'Room') . ": </strong>" . $hospRoom . '</div>': '');
         $mkup .= ($diagnosis != '' && !empty($this->settings["Patient"]["diagnosis"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'diagnosis', 'Diagnosis') . ": </strong>" . $diagnosis . '</div>': '');
+        $mkup .= ($location != '' && !empty($this->settings["Patient"]["location"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'location', 'Hospital Location') . ": </strong>" . $location . '</div>': '');
 
         $mkup .= '</div>';
 
@@ -300,7 +315,7 @@ class CustomRegisterForm {
 
     }
 
-    protected function AgreementBlock(array $guests, $agreementLabel, $agreement) {
+    protected function AgreementBlock(array $guests, $primaryGuestId, $agreementLabel, $agreement) {
 
 
         $mkup = '<div class="agreementContainer">';
@@ -322,8 +337,30 @@ class CustomRegisterForm {
 
                 if (!isset($usedNames[$g->getIdName()])) {
 
-                    $mkup .= '<div class="row mt-4"><div class="col-8 row"><div class="col pr-0" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div><div class="col" style="border-bottom: 1px solid black;"></div></div><div class="col-4 row"><div class="col pr-0" style="max-width: fit-content">Date</div><div class="col" style="border-bottom: 1px solid black;"></div></div></div>';
-                    $usedNames[$g->getIdName()] = 'y';
+                    if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'primary' && $g->getRoleMember()->get_IdName() == $primaryGuestId){
+                        //show primary guest signature line
+                        $mkup .= '<div class="row mt-4"><div class="col-8 row"><div class="col pr-0" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div><div class="col" style="border-bottom: 1px solid black;"></div></div><div class="col-4 row"><div class="col pr-0" style="max-width: fit-content">Date</div><div class="col" style="border-bottom: 1px solid black;"></div></div></div>';
+                        $usedNames[$g->getIdName()] = 'y';
+                        break;
+                    }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'all'){
+                        //if showing all guests
+                        $mkup .= '<div class="row mt-4"><div class="col-8 row"><div class="col pr-0" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div><div class="col" style="border-bottom: 1px solid black;"></div></div><div class="col-4 row"><div class="col pr-0" style="max-width: fit-content">Date</div><div class="col" style="border-bottom: 1px solid black;"></div></div></div>';
+                        $usedNames[$g->getIdName()] = 'y';
+                    }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'adults'){
+                        //if excluding minors
+                        if($g->getRoleMember()->get_birthDate() != ''){
+                            $dob = new \DateTime($g->getRoleMember()->get_birthDate());
+                            $now = new \DateTime();
+                            $age = $dob->diff($now);
+                            $age = $age->format("%y");
+
+                            if($age < 18){
+                                continue;
+                            }
+                        }
+                        $mkup .= '<div class="row mt-4"><div class="col-8 row"><div class="col pr-0" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div><div class="col" style="border-bottom: 1px solid black;"></div></div><div class="col-4 row"><div class="col pr-0" style="max-width: fit-content">Date</div><div class="col" style="border-bottom: 1px solid black;"></div></div></div>';
+                        $usedNames[$g->getIdName()] = 'y';
+                    }
                 }
             }
 
@@ -404,32 +441,40 @@ class CustomRegisterForm {
             $mkup .= '<strong>' . ($guest->getIdName() == $primaryGuestId ? Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'): "Name") . ': </strong>' . $name->get_fullName() . '<br>';
             $mkup .= '<div class="hhk-flex"><div class="mr-2"><strong>Address: </strong></div><div>' . $addr["Address_1"] . " " .  $addr["Address_2"] . '<br>' . $addr["City"] . ($addr["City"] == "" ? "" : ", ") . $addr["State_Province"] . "  ". $addr["Postal_Code"] . '</div></div>';
             $mkup .= '<strong>Cell Phone: </strong>' . $phoneCell["Phone_Num"] . '<br>';
-            $mkup .='</div>';
+            $mkup .='</div>';//end col
             if(!empty($this->settings['Guests']["emerg"])){
                 $mkup .= '<div class="col ui-widget-content ui-corner-all py-2 mr-2 mb-2">';
                 $mkup .= '<strong>Emergency Contact:</strong>' . $emrg->getEcNameFirst() . ' ' . $emrg->getEcNameLast() . '<br>';
                 $mkup .= '<strong>Phone: </strong>' . $emrg->getEcPhone() . '<br>';
                 $mkup .= '<strong>Relationship to ' . Labels::getString('memberType', 'visitor', "Guest") . ': </strong>' . (isset($ecRels[$emrg->getEcRelationship()]) ? $ecRels[$emrg->getEcRelationship()][1] : '');
-                $mkup .= '</div>';
+                $mkup .= '</div>';//end .col emerg contact
+                $mkup .= '</div>';//end .row
+                $mkup .= '<div class="row">';
+                $mkup .= '<div class="col-6">';
+                $mkup .= '<strong>E-Mail: </strong>' . $email["Email"] . '<br>';
+                $mkup .= '</div>';//end col-6
+                $mkup .= '<div class="col-6">';
+                $mkup .= '<strong>Check In Date: </strong>' . $guest->getCheckinDT()->format('M j, Y');
+                $mkup .= '</div>';//end col-6
+                $mkup .= '<div class="col-6">';
+                $mkup .= '<strong>Relationship to ' . $this->labels->getString('MemberType', 'patient', 'Patient') . ': </strong>' . (isset($relationText[$guest->getPatientRelationshipCode()]) ? $relationText[$guest->getPatientRelationshipCode()][1] : '');
+                $mkup .= '</div>';//end col-6;
+                $mkup .= '<div class="col-6">';
+                $mkup .= '<strong>Expected Check Out: </strong>' . $guest->getExpectedCheckOutDT()->format('M j, Y');
+                $mkup .= '</div>';//end col-6
+            }else{
+                $mkup .= '<div class="col">';
+                $mkup .= '<strong>E-Mail: </strong>' . $email["Email"] . '<br>';
+                $mkup .= '<strong>Relationship to ' . $this->labels->getString('MemberType', 'patient', 'Patient') . ': </strong>' . (isset($relationText[$guest->getPatientRelationshipCode()]) ? $relationText[$guest->getPatientRelationshipCode()][1] : ''). "<br>";
+                $mkup .= '<strong>Check In Date: </strong>' . $guest->getCheckinDT()->format('M j, Y') . "<br>";
+                $mkup .= '<strong>Expected Check Out: </strong>' . $guest->getExpectedCheckOutDT()->format('M j, Y');
+                $mkup .= '</div>';//end col
             }
-            $mkup .= '</div>';
-            $mkup .= '<div class="row">';
-            $mkup .= '<div class="col-6">';
-            $mkup .= '<strong>E-Mail: </strong>' . $email["Email"] . '<br>';
-            $mkup .= '</div>';
-            $mkup .= '<div class="col-6">';
-            $mkup .= '<strong>Check In Date: </strong>' . $guest->getCheckinDT()->format('M j, Y');
-            $mkup .= '</div>';
-            $mkup .= '<div class="col-6">';
-            $mkup .= '<strong>Relationship to ' . $this->labels->getString('MemberType', 'patient', 'Patient') . ': </strong>' . (isset($relationText[$guest->getPatientRelationshipCode()]) ? $relationText[$guest->getPatientRelationshipCode()][1] : '');
-            $mkup .= '</div>';
-            $mkup .= '<div class="col-6">';
-            $mkup .= '<strong>Expected Check Out: </strong>' . $guest->getExpectedCheckOutDT()->format('M j, Y');
-            $mkup .= '</div>';
-            $mkup .= '</div>';
-            $mkup .= '</div>';
+            $mkup .= '</div>';//end row
 
-            $mkup .= '</div>';
+            $mkup .= '</div>';//end col-12
+
+            $mkup .= '</div>';//end row
 
         }
 
@@ -443,7 +488,7 @@ class CustomRegisterForm {
         return $mkup;
     }
 
-    protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, array $guests,  $houseAddr, $hospital, $hospRoom, $diagnosis, $patientRelCodes,
+    protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, array $guests,  $houseAddr, $hospital, $mrn, $hospRoom, $diagnosis, $location, $patientRelCodes,
             $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $cardTokens, $notes, $primaryGuestId = 0) {
 
         $uS = Session::getInstance();
@@ -458,7 +503,7 @@ class CustomRegisterForm {
 
         // Patient
         if(!empty($this->settings['Patient']['show'])){
-            $mkup .= $this->patientBlock($patient, $hospital, $hospRoom, $diagnosis);
+            $mkup .= $this->patientBlock($patient, $hospital, $mrn, $hospRoom, $diagnosis, $location);
         }
 
         // Vehicles
@@ -472,7 +517,14 @@ class CustomRegisterForm {
         }
 
         // Agreement
-        $mkup .= $this->AgreementBlock($guests, $this->labels->getString('referral', 'agreementTitle','Agreement'), $agreement);
+
+        if(!empty($this->settings["Agreement"]['title'])){
+            $agreementTitle = $this->settings['Agreement']['title'];
+        }else{
+            $agreementTitle = $this->labels->getString('referral', 'agreementTitle','Agreement');
+        }
+
+        $mkup .= $this->AgreementBlock($guests, $primaryGuestId, $agreementTitle, $agreement);
 
         $mkup .= "</div> <!-- end .container -->";
 
@@ -645,8 +697,8 @@ class CustomRegisterForm {
                 $guests[] = $gst;
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis' from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
-				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
+            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
+				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' left join gen_lookups l on hs.Location = l.Code and l.Table_Name = 'Location' where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
 
             $stmt = $dbh->query($query);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -693,8 +745,8 @@ class CustomRegisterForm {
 
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis' from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
-				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' where r.idReservation = " . intval($idReservation) . " limit 1";
+            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
+				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' left join gen_lookups l on hs.Location = l.Code and l.Table_Name = 'Location' where r.idReservation = " . intval($idReservation) . " limit 1";
 
             $stmt = $dbh->query($query);
             $hospitalStay = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -727,6 +779,8 @@ class CustomRegisterForm {
             $hospRoom = $hospitalStay[0][1];
             $hospital = $hospitalStay[0][2];
             $diagnosis = $hospitalStay[0][3];
+            $location = $hospitalStay[0][4];
+            $mrn = $hospitalStay[0][5];
         }
 
         // Title
@@ -785,7 +839,21 @@ class CustomRegisterForm {
         if (count($users) > 0) {
             EditRS::loadRow($users[0], $userRS);
 
-            $agent = $userRS->Name_First->getStoredVal() . ' ' . substr($userRS->Name_Last->getStoredVal(), 0, 2);
+            switch($this->settings["Top"]["staff"]){
+                case 'shortuser':
+                    $agent = substr($uS->username, 0, 2);
+                    break;
+                case 'username':
+                    $agent = $uS->username;
+                    break;
+                case 'nickname':
+                    $agent = $userRS->Name_Nickname;
+                    break;
+                default:
+                    $agent = '';
+            }
+
+            //$agent = $userRS->Name_First->getStoredVal() . ' ' . substr($userRS->Name_Last->getStoredVal(), 0, 2);
         }
 
         $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
@@ -820,8 +888,10 @@ class CustomRegisterForm {
                 $guests,
                 $houseAddr,
                 $hospital,
+                $mrn,
                 $hospRoom,
                 $diagnosis,
+                $location,
                 $uS->guestLookups[GLTableNames::PatientRel],
                 $vehs,
                 $agent,
