@@ -28,7 +28,7 @@ $uS = Session::getInstance();
 $logoUrl = $uS->resourceURL . 'images/registrationLogo.png';
 
 
-$stmtMarkup = '<h4>No Information</h4>';
+$stmtMarkup = '';
 $emAddr = '';
 $emtableMarkup = '';
 $msg = '';
@@ -96,17 +96,17 @@ try {
 
         try{
             $mail = prepareEmail();
-    
+
             $mail->From = $uS->FromAddress;
             $mail->FromName = $uS->siteName;
             $mail->addAddress($emAddr);     // Add a recipient
             $mail->addReplyTo($uS->ReplyTo);
-    
+
             $mail->isHTML(true);
-    
+
             $mail->Subject = $emSubject;
             $mail->msgHTML($stmtMarkup);
-    
+
             $mail->send();
             $msg .= "Email sent.  ";
         }catch(\Exception $e){
@@ -141,7 +141,7 @@ try {
 
 
 if ($msg != '') {
-    $msg = HTMLContainer::generateMarkup('div', $msg, array('class' => 'ui-state-highlight', 'style' => 'font-size:14pt;'));
+    $msg = HTMLContainer::generateMarkup('div', $msg, array('class' => 'ui-state-highlight', 'style' => 'font-size:14pt; padding: 0.5em;'));
 }
 ?>
 <!DOCTYPE html>
@@ -183,6 +183,7 @@ $(document).ready(function () {
             <div style="float:left; margin-top:5px;margin-bottom:5px;" class="hhk-noprint ui-widget ui-widget-content ui-corner-all">
                 <?php echo $msg; ?>
             </div>
+            <?php if($stmtMarkup != '') { ?>
             <div style='margin-left:100px;margin-bottom:10px; clear:left; float:left;' class='hhk-noprint ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'>
                 <form name="formEm" method="Post" action="ShowInvoice.php">
                 <?php echo $emtableMarkup; ?>
@@ -194,6 +195,7 @@ $(document).ready(function () {
             <div id="divBody" style="max-width: 800px; clear:left;" class='PrintArea ui-widget ui-widget-content ui-corner-all hhk-panel'>
                     <?php echo $stmtMarkup; ?>
             </div>
+            <?php } ?>
         </div>
 
     </body>

@@ -198,6 +198,7 @@ WHERE r.Email_Receipt = 1 and
             $mail->send();
             if ($guestHasEmail) {
 
+                //get invoice number
                 $stmt = $dbh->prepare("select `Invoice_Number` from invoice where idInvoice = :idInvoice limit 1");
                 $stmt->execute([":idInvoice"=>$this->idInvoice]);
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);

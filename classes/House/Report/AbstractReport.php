@@ -60,7 +60,7 @@ abstract class AbstractReport {
 
         $this->fieldSets = ReportFieldSet::listFieldSets($this->dbh, $report, true);
         $fieldSetSelection = (isset($request['fieldset']) ? $request['fieldset']: '');
-        $this->colSelector = new ColumnSelectors($this->cFields, 'selFld', true, $this->fieldSets, $fieldSetSelection);
+        $this->colSelector = new ColumnSelectors($this->cFields, $report . '-selFld', true, $this->fieldSets, $fieldSetSelection);
 
         // set the selected filters
         $this->colSelector->setColumnSelectors($request);

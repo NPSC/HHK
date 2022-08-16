@@ -70,7 +70,7 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         $eFields = array('EC Name', 'EC Phone Home', 'EC Phone Alternate');
         $eTitles = array('Emergency Contact', 'Emergency Contact Home Phone', 'Emergency Contact Alternate Phone');
 
-        $cFields[] = array($eTitles, $eFields, '', '', 's', '', array());
+        $cFields[] = array($eTitles, $eFields, '', '', 'string', '20', array());
 
         if ($uS->TrackAuto) {
             $cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');
