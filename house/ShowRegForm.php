@@ -122,7 +122,7 @@ foreach ($reservArray['docs'] as $r) {
 
 
     $tabContent .= HTMLContainer::generateMarkup('div',
-        HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex']))
+        HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
         .HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex'])),
         array('id'=>$r['tabIndex']));
 
@@ -167,6 +167,7 @@ unset($reservArray);
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
 
         <script type='text/javascript'>
 $(document).ready(function() {
@@ -178,7 +179,7 @@ $(document).ready(function() {
     var invoiceNumber = '<?php echo $invoiceNumber; ?>';
     var vid = '<?php echo $idVisit; ?>';
     var opt = {mode: 'popup',
-        popClose: false,
+        popClose: true,
         popHt      : $('div#PrintArea').height(),
         popWd      : 950,
         popX       : 20,
@@ -190,6 +191,7 @@ $(document).ready(function() {
 
     $('.btnPrint').click(function() {
         opt.popHt = $('div#PrintArea' + $(this).data('tab')).height();
+        opt.popTitle = $(this).data('title');
         $('div#PrintArea' + $(this).data('tab')).printArea(opt);
     }).button();
 
@@ -224,6 +226,42 @@ $(document).ready(function() {
         window.open('ShowInvoice.php?invnum=' + invoiceNumber);
     }
 
+    $("#signDialog").dialog({
+    	autoOpen: false,
+    	width: getDialogWidth(800),
+    	height: 350,
+    	modal: true,
+    	buttons: {
+    		"Clear": function(){
+    			var idName = $(this).find("input#idName").val();
+    			var formCode = $(this).find("input#formCode").val();
+    			$(this).find(".signature").jSignature('clear');
+    			$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
+    			$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
+    		},
+            "Sign": function() {
+            	var idName = $(this).find("input#idName").val();
+            	var formCode = $(this).find("input#formCode").val();
+				var signature = $(this).find('.signature').jSignature("getData")
+            	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", signature).show();
+            	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").show();
+
+                $(this).dialog("close");
+            }
+        }
+    });
+
+    $("#signDialog .signature").jSignature({"width": "750px", "height": "141px"});
+
+    $(".btnSign").on("click", function(){
+    	var name = $(this).closest(".row").find(".printName").text();
+    	$("#signDialog input#idName").val($(this).closest(".signWrapper").data("idname"));
+    	$("#signDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr('id'));
+    	$("#signDialog").find(".signature").jSignature('clear')
+    	$("#signDialog").dialog("option", "title", "Signature: " + name).dialog("open");
+
+    });
+
     $('#mainTabs').show();
     $('#regTabDiv').tabs();
 
@@ -251,6 +289,12 @@ $(document).ready(function() {
             </div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
             <div id="regDialog"></div>
+            <div id="signDialog">
+            	<input type="hidden" id="idName">
+            	<input type="hidden" id="formCode">
+            	<p style="text-align:center">Use your mouse, finger or touch pen to sign</p>
+            	<div class="signature ui-widget-content ui-corner-all"></div>
+            </div>
         </div>
     </body>
 </html>

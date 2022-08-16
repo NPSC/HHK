@@ -281,7 +281,8 @@ class ReservationSvcs
                         'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d),
                         'style' => CustomRegisterForm::getStyling(),
                         'tabIndex' => $d['Code'],
-                        'tabTitle' => $d['Description']
+                        'tabTitle' => $d['Description'],
+                        'pageTitle' => $regForm->getPageTitle()
                     );
                 }
             } else {

@@ -91,11 +91,11 @@ class CustomRegisterForm {
                 "type"=>"select",
                 "values"=>[
                     ["","Hide"],
-                    ["shortuser","2 character username"],
+                    ["shortname","First & 2 character last"],
                     ["username","Full username"],
                     ["nickname","Nickname field"]
                 ],
-                "default"=>"shortuser"
+                "default"=>"shortname"
             ],
             "checkinNotes"=>[
                 "label"=>"Check in Notes",
@@ -105,7 +105,7 @@ class CustomRegisterForm {
         ],
         "Guests"=>[
             "show"=>[
-                "label"=>"Show",
+                "label"=>"Show Section",
                 "type"=>"bool",
                 "default"=>true
             ],
@@ -126,7 +126,7 @@ class CustomRegisterForm {
         ],
         "Patient"=>[
             "show"=>[
-                "label"=>"Show",
+                "label"=>"Show Section",
                 "type"=>"bool",
                 "default"=>true
             ],
@@ -163,37 +163,46 @@ class CustomRegisterForm {
         ],
         "Vehicle"=>[
             "show"=>[
-                "label"=>"Show",
+                "label"=>"Show Section",
                 "type"=>"bool",
                 "default"=>true
             ],
         ],
         "Credit Cards"=>[
             "show"=>[
-                "label"=>"Show",
+                "label"=>"Show Section",
                 "type"=>"bool",
                 "default"=>false
             ]
         ],
         "Agreement"=>[
             "show"=>[
-                "label"=>"Show",
+                "label"=>"Show Section",
                 "type"=>"bool",
                 "default"=>true
             ],
             "title"=>[
                 "label"=>"Title",
                 "type"=>"string"
+            ],
+            "pagebreak"=>[
+                "label"=>"Page Break",
+                "type"=>"select",
+                "values"=>[
+                    ["", "Never"],
+                    ["page-break-inside:avoid", "Avoid"],
+                    ["page-break-before:always", "Always"]
+                ]
             ]
         ],
         "Signatures"=>[
             "show"=>[
-                "label"=>"Show",
+                "label"=>"Show Section",
                 "type"=>"bool",
                 "default"=>true
             ],
             "type"=>[
-                "label"=>"Type",
+                "label"=>"Guest Type",
                 "type"=>"select",
                 "values"=>[
                     ["all","All Guests"],
@@ -201,7 +210,16 @@ class CustomRegisterForm {
                     ["adults","Exclude minors"]
                 ],
                 "default"=>"all"
-            ]
+            ],
+            "eSign"=>[
+                "label"=>"Signature Type",
+                "type"=>"select",
+                "values"=>[
+                    ["","Paper"],
+                    ["jSign","Touch"]
+                ],
+                "default"=>""
+            ],
         ]
     ];
 
@@ -209,12 +227,23 @@ class CustomRegisterForm {
 
     public $labels;
 
+    public $pageTitle = '';
+
     public function __construct(array $settings = []){
+        $this->labels = Labels::getLabels();
+
         if(count($settings) == 0){
             $this->settings = $this->getDefaultSettings();
         }else{
             $this->settings = $settings;
         }
+
+        $this->settingTemplate["Patient"]["mrn"]["label"] = $this->labels->getString("hospital", "MRN", "MRN");
+        $this->settingTemplate["Patient"]["hospital"]["label"] = $this->labels->getString("hospital", "hospital", "Hospital");
+        $this->settingTemplate["Patient"]["hospRoom"]["label"] = $this->labels->getString("hospital", "roomNumber", "Hospital Room");
+        $this->settingTemplate["Patient"]["diagnosis"]["label"] = $this->labels->getString("hospital", "diagnosis", "Diagnosis");
+        $this->settingTemplate["Patient"]["location"]["label"] = $this->labels->getString("hospital", "location", "Location");
+
     }
 
     protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $notes = '', $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
@@ -316,12 +345,11 @@ class CustomRegisterForm {
     }
 
     protected function AgreementBlock(array $guests, $primaryGuestId, $agreementLabel, $agreement) {
-
-
-        $mkup = '<div class="agreementContainer">';
+        $style = (!empty($this->settings["Agreement"]["pagebreak"]) ? $this->settings["Agreement"]["pagebreak"] : "");
+        $mkup = '<div class="agreementContainer" style="' . $style . '">';
 
         if (!empty($this->settings['Agreement']['show'])){
-            $mkup .= HTMLContainer::generateMarkup('h2', $agreementLabel, array('class'=>'mb-2'));
+            $mkup .= HTMLContainer::generateMarkup('h2', $agreementLabel, array('class'=>'mb-2', 'style'=>$style));
             if ($agreement != '') {
                 $mkup .= '<div class="agreement">' . $agreement . '</div>';
             } else {
@@ -336,16 +364,25 @@ class CustomRegisterForm {
             foreach ($guests as $g) {
 
                 if (!isset($usedNames[$g->getIdName()])) {
-
+                    $sigMkup = '<div class="row mt-4 signWrapper" data-idname="' . $g->getIdName() . '">
+                                    <div class="col-8 row" style="align-items:flex-end;">
+                                        <div class="col pr-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
+                                        <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && $this->settings["Signatures"]["eSign"] == 'jSign' ? '<img src="" style="display:none; width:100%"></div>
+                                        <div classs="col"><button class="ui-button ui-corner-all mb-1 ml-2 btnSign">Sign</button>' : '') . '</div>
+                                    </div>
+                                    <div class="col-4 row" style="align-items:flex-end;">
+                                        <div class="col pr-0" style="max-width: fit-content;">Date</div>
+                                        <div class="col" style="border-bottom: 1px solid black; text-align:center;"><span class="signDate" style="display:none;">' . (new \DateTime())->format('M j, Y') . '</span></div>
+                                    </div>
+                                </div>';
                     if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'primary' && $g->getRoleMember()->get_IdName() == $primaryGuestId){
                         //show primary guest signature line
-                        $mkup .= '<div class="row mt-4"><div class="col-8 row"><div class="col pr-0" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div><div class="col" style="border-bottom: 1px solid black;"></div></div><div class="col-4 row"><div class="col pr-0" style="max-width: fit-content">Date</div><div class="col" style="border-bottom: 1px solid black;"></div></div></div>';
+                        $mkup .= $sigMkup;
                         $usedNames[$g->getIdName()] = 'y';
                         break;
                     }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'all'){
                         //if showing all guests
-                        $mkup .= '<div class="row mt-4"><div class="col-8 row"><div class="col pr-0" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div><div class="col" style="border-bottom: 1px solid black;"></div></div><div class="col-4 row"><div class="col pr-0" style="max-width: fit-content">Date</div><div class="col" style="border-bottom: 1px solid black;"></div></div></div>';
-                        $usedNames[$g->getIdName()] = 'y';
+                        $mkup .= $sigMkup;
                     }else if(!empty($this->settings['Signatures']['type']) && $this->settings['Signatures']['type'] == 'adults'){
                         //if excluding minors
                         if($g->getRoleMember()->get_birthDate() != ''){
@@ -358,7 +395,7 @@ class CustomRegisterForm {
                                 continue;
                             }
                         }
-                        $mkup .= '<div class="row mt-4"><div class="col-8 row"><div class="col pr-0" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div><div class="col" style="border-bottom: 1px solid black;"></div></div><div class="col-4 row"><div class="col pr-0" style="max-width: fit-content">Date</div><div class="col" style="border-bottom: 1px solid black;"></div></div></div>';
+                        $mkup .= $sigMkup;
                         $usedNames[$g->getIdName()] = 'y';
                     }
                 }
@@ -488,6 +525,14 @@ class CustomRegisterForm {
         return $mkup;
     }
 
+    protected function setPageTitle($primaryGuestName = "", $room = ""){
+        $this->pageTitle = 'Registration Form' . ($primaryGuestName != "" ? " - " . $primaryGuestName : "") . ($room != '' ? ' - Room ' . $room : "");
+    }
+
+    public function getPageTitle(){
+        return $this->pageTitle;
+    }
+
     protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, array $guests,  $houseAddr, $hospital, $mrn, $hospRoom, $diagnosis, $location, $patientRelCodes,
             $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $cardTokens, $notes, $primaryGuestId = 0) {
 
@@ -536,7 +581,9 @@ class CustomRegisterForm {
             }
         }
 
-        $mkup .= $this->printFooterBlock($primaryGuestName, $roomTitle);
+        //$mkup .= $this->printFooterBlock($primaryGuestName, $roomTitle);
+
+        $this->setPageTitle($primaryGuestName, $roomTitle);
 
         return $mkup;
     }
@@ -584,17 +631,17 @@ class CustomRegisterForm {
             position: fixed;
             bottom: 0;
             //height: .25in;
-            display: table-footer-group;
+            //display: table-footer-group;
+        }
+
+        button.btnSign{
+            display:none;
         }
 
         @page {
             size: letter;
-            margin: .25in .5in;
+            margin: .5in .5in;
             //margin-bottom: 0.5in;
-        }
-
-        .agreementContainer {
-            page-break-inside: avoid;
         }
 
         .agreementContainer p {
@@ -613,7 +660,6 @@ class CustomRegisterForm {
     public function prepareRegForm(\PDO $dbh, $idVisit, $span, $idReservation, $doc = []) {
 
         $uS = Session::getInstance();
-        $this->labels = Labels::getLabels();
         $guests = array();
         $depDate = '';
         $reg = NULL;
@@ -840,14 +886,14 @@ class CustomRegisterForm {
             EditRS::loadRow($users[0], $userRS);
 
             switch($this->settings["Top"]["staff"]){
-                case 'shortuser':
-                    $agent = substr($uS->username, 0, 2);
+                case 'shortname':
+                    $agent = $userRS->Name_First->getStoredVal() . " " . substr($userRS->Name_Last->getStoredVal(), 0, 2);
                     break;
                 case 'username':
                     $agent = $uS->username;
                     break;
                 case 'nickname':
-                    $agent = $userRS->Name_Nickname;
+                    $agent = $userRS->Name_Nickname->getStoredVal();
                     break;
                 default:
                     $agent = '';
@@ -908,10 +954,12 @@ class CustomRegisterForm {
     }
 
     public function getEditMkup(){
-        $mkup = HTMLContainer::generateMarkup("h2", "Options");
+        $mkup = HTMLContainer::generateMarkup("h2", "Registration Form Layout Options");
 
         foreach($this->settingTemplate as $group=>$inputs){
-            $mkup .= HTMLContainer::generateMarkup("h3", $group, ["class"=>"mb-2"]);
+            $mkup .= '<div class="ui-widget mb-3">';
+            $mkup .= HTMLContainer::generateMarkup("h3", $group, ["class"=>"ui-widget-header ui-corner-top pl-2"]);
+            $mkup .= '<div class="ui-widget-content ui-corner-bottom p-2">';
 
             foreach($inputs as $key=>$input){
                 switch($input["type"]){
@@ -934,6 +982,7 @@ class CustomRegisterForm {
 
                 $mkup .= HTMLContainer::generateMarkup("div",$inputMkup, ["class"=>"mb-2"]);
             }
+            $mkup .= "</div></div>";
         }
 
         return HTMLContainer::generateMarkup("div", $mkup);
