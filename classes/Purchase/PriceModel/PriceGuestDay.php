@@ -41,7 +41,7 @@ class PriceGuestDay extends AbstractPriceModel {
     SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date),
     DATE($parm)), DATE(s.Span_Start_Date))) AS `GDays`
 FROM stays s JOIN name n ON s.idName = n.idName
-WHERE IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(NOW()), INTERVAL $ageYears YEAR)) AND s.idVisit = $idVisit
+WHERE IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR)) AND s.idVisit = $idVisit
 GROUP BY s.Visit_Span");
 
 
@@ -82,22 +82,21 @@ GROUP BY s.Visit_Span");
     SUM(DATEDIFF(IFNULL(DATE(s.Span_End_Date), DATE($parm)), DATE(s.Span_Start_Date))) AS `GDays`
 FROM stays s JOIN name n ON s.idName = n.idName
     JOIN visit v on s.idVisit = v.idVisit and s.Visit_Span = v.Span
-WHERE v.idRegistration = $idRegistration AND IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(NOW()), INTERVAL $ageYears YEAR))
-GROUP BY s.Visit_Span");
+WHERE v.idRegistration = $idRegistration AND IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR))
+GROUP BY s.idVisit, s.Visit_Span");
 
 
         $stays = array();
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
-            $stays[$r['Visit_Span']] = $r['GDays'] < 0 ? 0 : $r['GDays'];
+            $stays[$r['idVisit']][$r['Visit_Span']] = $r['GDays'] < 0 ? 0 : $r['GDays'];
         }
 
         for ($n=0; $n<count($spans); $n++) {
 
-            if (isset($stays[$spans[$n]['Span']])) {
-                $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['Span']];
+            if (isset($stays[$spans[$n]['idVisit']][$spans[$n]['Span']])) {
+                $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['idVisit']][$spans[$n]['Span']];
             }
-
         }
 
         return $spans;

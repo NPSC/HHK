@@ -62,7 +62,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $niteCount;
     }
 
-    protected static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths) {
+    protected static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths = 0) {
 
         $whClause = '';
         if ($year != '') {
