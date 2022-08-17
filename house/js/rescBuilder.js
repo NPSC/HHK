@@ -382,7 +382,6 @@ $(document).ready(function () {
                     $('#divUploadForm button').button();
                     $('#divUploadForm input[type=submit]').button();
                     if(changeEventData && changeEventData.docCode){
-                    	console.log('#docTab-' + changeEventData.docCode);
                     	$('#regTabDiv').find('li.ui-tab[aria-selected=false] #docTab-' + changeEventData.docCode).click();
                     }
                 }

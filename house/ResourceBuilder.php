@@ -1999,10 +1999,12 @@ foreach ($hrows as $h) {
         'size' => '25'
     ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Reservation_Style'], array(
         'name' => 'hColor[' . $h['idHospital'] . ']',
+        'type' => 'color',
         'class' => 'color',
         'size' => '5'
     ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Stay_Style'], array(
         'name' => 'hText[' . $h['idHospital'] . ']',
+        'type' => 'color',
         'class' => 'color',
         'size' => '5'
     )));
@@ -2049,9 +2051,11 @@ $hTbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd(HTMLInput::generateMa
     'name' => 'hDesc[0]'
 ))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
     'name' => 'hColor[0]',
+    'type' => 'color',
     'size' => '5'
 ))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
     'name' => 'hText[0]',
+    'type' => 'color',
     'size' => '5'
 ))) . HTMLTable::makeTd('Create New', array(
     'colspan' => '4'

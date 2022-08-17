@@ -87,3 +87,11 @@ ALTER TABLE `room`
 ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Last_Cleaned`;
 ALTER TABLE `cleaning_log`
 ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Last_Cleaned`;
+
+-- update hospital colors to hex
+UPDATE `hospital` set `Reservation_Style` = "#ffffff" WHERE `Reservation_Style` = "white";
+UPDATE `hospital` set `Reservation_Style` = "#000000" WHERE `Reservation_Style` = "black";
+UPDATE `hospital` set `Stay_Style` = "#ffffff" WHERE `Stay_Style` = "white";
+UPDATE `hospital` set `Stay_Style` = "#000000" WHERE `Stay_Style` = "black";
+UPDATE `hospital` set `Reservation_Style` = TRIM(`Reservation_Style`);
+UPDATE `hospital` set `Stay_Style` = TRIM(`Stay_Style`);
