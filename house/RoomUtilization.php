@@ -224,8 +224,8 @@ $(document).ready(function() {
                     </div>
                 </form>
             </div>
-            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
-                <div><input id="printButton" value="Print" type="button"/></div>
+            <div id="printArea" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog hhk-overflow-x" style="display:none; font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
+                <div class="mb-2 mt-1"><input id="printButton" value="Print" type="button"/></div>
                 <?php echo $output; ?>
             </div>
         </div>  <!-- div id="contentDiv"-->

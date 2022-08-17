@@ -220,6 +220,8 @@
     
     function actions($wrapper, settings, $table) {
         
+        $wrapper.off('click');
+        
         //Show Edit mode
         $wrapper.on('click', '.note-edit', function(e){
             e.preventDefault();
