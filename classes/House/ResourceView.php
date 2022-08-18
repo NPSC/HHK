@@ -46,6 +46,8 @@ class ResourceView {
 
     public static function resourceTable(\PDO $dbh) {
 
+        $uS = Session::getInstance();
+
         $rooms = array();
 
         $attribute = new Attributes($dbh);
@@ -96,6 +98,11 @@ order by r.Title;");
 
                 $r['Status'] = HTMLInput::generateMarkup('', array('id'=>$r['Id'].'reStatbtn', 'name'=>$r['Id'], 'type'=>'button', 'data-enty'=>'resc', 'data-title'=>$r['Title'], 'class'=>'reStatBtn ui-icon ui-icon-wrench', 'style'=>'width:20px;height:20px;margin-left:.5em;display:inline;', 'title'=>'View Status Events'));
 
+                if($uS->Room_Colors != "room"){
+                    unset($r["Bkgrd Color"]);
+                    unset($r["Text Color"]);
+                }
+
                 $rooms[] = $r;
 
             } else {
@@ -120,6 +127,11 @@ order by r.Title;");
             'Text Color' => '',
             'status' => ''
             );
+
+       if($uS->Room_Colors != "room"){
+           unset($newRow["Bkgrd Color"]);
+           unset($newRow["Text Color"]);
+       }
 
 
         $rooms[] = $newRow;
