@@ -72,12 +72,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
             $whStatus = "and r.Status in (" . $whStatus . ") ";
         }
 
-        //show all guests?
-        if(isset($this->request["cbShowAll"])){
-            $groupBy = " Group By rg.idReservation, rg.idGuest";
-        }else{
-            $groupBy = " and rg.Primary_Guest = 1 Group By rg.idReservation";
-        }
+        $groupBy = " and rg.Primary_Guest = 1 Group By rg.idReservation";
 
         $this->query = "select
     r.idReservation,
@@ -163,10 +158,10 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.id
         $this->filterMkup .= $this->filter->timePeriodMarkup()->generateMarkup();
         $this->filterMkup .= $this->getResvStatusMkup()->generateMarkup();
         $this->filterMkup .= $this->filter->hospitalMarkup()->generateMarkup();
-        $this->filterMkup .= $this->colSelector->makeSelectorTable(TRUE)->generateMarkup(array('id'=>'includeFields'));
+        $this->filterMkup .= $this->getColSelectorMkup();
     }
 
-    public function makeFilterOptsMkup():void{
+    /* public function makeFilterOptsMkup():void{
         $showAllAttrs = array("type"=>"checkbox", "id"=>"cbShowAll", "name"=>"cbShowAll");
         if(isset($this->request["cbShowAll"])){
             $showAllAttrs['checked'] = 'checked';
@@ -177,7 +172,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.id
             HTMLContainer::generateMarkup("label", "Show all " . Labels::getString('MemberType', 'visitor', 'Guest') . 's', array("for"=>"cbShowAll"))
         );
 
-    }
+    } */
 
     protected function getResvStatusMkup(){
 

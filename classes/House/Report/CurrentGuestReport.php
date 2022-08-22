@@ -33,7 +33,7 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
 
     public function makeFilterMkup(): void
     {
-        $this->filterMkup .= $this->colSelector->makeSelectorTable(TRUE)->generateMarkup(array('id'=>'includeFields'));
+        $this->filterMkup .= $this->getColSelectorMkup();
     }
 
     public function makeSummaryMkup(): string

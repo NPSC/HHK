@@ -12,6 +12,7 @@ use HHK\ColumnSelectors;
 use HHK\House\Report\CurrentGuestReport;
 use HHK\House\Report\GuestVehicleReportOld;
 use HHK\House\Report\VehiclesReport;
+use HHK\House\Report\BirthdayReport;
 
 /**
  * GuestView.php
@@ -42,18 +43,31 @@ $menuMarkup = $wInit->generatePageMenu();
 $labels = Labels::getLabels();
 
 $currentGuestReport = new CurrentGuestReport($dbh, $_REQUEST);
+$birthdayReport = new BirthdayReport($dbh, $_REQUEST);
 $vehicleReport = new VehiclesReport($dbh, $_REQUEST);
 
 $resultMessage = "";
 
 $guestReportMkup = '';
+$birthdayReportMkup = '';
+$tab = 0;
 
-if (isset($_POST['btnHere'])){
+if (isset($_POST['btnHere-' . $currentGuestReport->getInputSetReportName()])){
     $guestReportMkup = $currentGuestReport->generateMarkup();
 }
 
-if (isset($_POST['btnExcel'])) {
+if (isset($_POST['btnExcel-' . $currentGuestReport->getInputSetReportName()])) {
     $currentGuestReport->downloadExcel("CurrentGuestsReport");
+}
+
+if (isset($_POST['btnHere-' . $birthdayReport->getInputSetReportName()])){
+    $tab = 1;
+    $birthdayReportMkup = $birthdayReport->generateMarkup();
+}
+
+if (isset($_POST['btnExcel-' . $birthdayReport->getInputSetReportName()])) {
+    $tab = 1;
+    $birthdayReport->downloadExcel("AllGuestsReport");
 }
 
 //vehicle report
@@ -65,11 +79,8 @@ if ($uS->TrackAuto) {
 
 $vehicleMessage = '';
 $emtableMarkupv = '';
-$tab = 0;
 
-if ($uS->TrackAuto) {
 
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -100,7 +111,7 @@ if ($uS->TrackAuto) {
         <script type="text/javascript">
     $(document).ready(function () {
         "use strict";
-        $('#includeFields').fieldSets({'reportName': 'GuestView', 'defaultFields': <?php echo json_encode($currentGuestReport->getDefaultFields()) ?>});
+
 
         var dateFormat = '<?php echo $labels->getString("momentFormats", "report", "MMM d, YYYY"); ?>';
         var tabReturn = '<?php echo $tab; ?>';
@@ -108,6 +119,7 @@ if ($uS->TrackAuto) {
         $('#btnEmail, #btnPrint, #btnEmailv, #btnPrintv').button();
 
         <?php echo $currentGuestReport->generateReportScript() .
+                $birthdayReport->generateReportScript() .
                 $vehicleReport->generateReportScript() ?>
 
         function dispVehicle(item) {
@@ -160,6 +172,7 @@ if ($uS->TrackAuto) {
             <div id="mainTabs" style="display:none;font-size: .9em;">
                 <ul>
                     <li><a href="#tabGuest">Resident <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s</a></li>
+                    <li><a href="#tabBirthday">Birthday Report</a></li>
                     <?php if ($uS->TrackAuto) { ?>
                     <li><a href="#tabVeh">Vehicles</a></li>
                     <li><a href="#tabsrch"><?php echo $labels->getString('referral', 'licensePlate', 'License Plate'); ?> Search</a></li>
@@ -167,6 +180,9 @@ if ($uS->TrackAuto) {
                 </ul>
                 <div id="tabGuest" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
                 	<?php echo $currentGuestReport->generateFilterMarkup() . $guestReportMkup; ?>
+                </div>
+                <div id="tabBirthday" class="hhk-tdbox hhk-visitdialog" style=" padding-bottom: 1.5em; display:none;">
+                	<?php echo $birthdayReport->generateFilterMarkup() . $birthdayReportMkup; ?>
                 </div>
                 <div id="tabVeh" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none;">
                     <?php echo $vehicleReportMkup; ?>

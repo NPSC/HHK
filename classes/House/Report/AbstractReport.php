@@ -97,8 +97,8 @@ abstract class AbstractReport {
         $this->filterMkup = HTMLContainer::generateMarkup("div", $this->filterMkup, array("id"=>"filterSelectors", "class"=>"hhk-flex"));
         $btnMkup = HTMLContainer::generateMarkup("div",
             $filterOptsMkup .
-            HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere", "id"=>"btnHere", "class"=>"ui-button ui-corner-all ui-widget")) .
-            HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel", "id"=>"btnExcel", "class"=>"ui-button ui-corner-all ui-widget"))
+            HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) .
+            HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget"))
         , array("id"=>"filterBtns", "class"=>"mt-3"));
 
         $emDialog = $this->generateEmailDialog();
@@ -180,6 +180,7 @@ abstract class AbstractReport {
         $uS = Session::getInstance();
 
         return '
+        $("#' . $this->inputSetReportName . '-includeFields").fieldSets({"reportName": "' . $this->inputSetReportName .  '", "defaultFields": ' . json_encode($this->getDefaultFields()) . '});
         $("#tbl' . $this->inputSetReportName . 'rpt").dataTable({
             "columnDefs": [
             {"targets": ' . $jsonColumnDefs . ',
@@ -249,7 +250,8 @@ abstract class AbstractReport {
                 }
             }
         });
-';
+' . $this->filter->getTimePeriodScript();
+
     }
 
     public function generateEmailStyles():string {
@@ -437,6 +439,10 @@ abstract class AbstractReport {
 
     public function getInputSetReportName(){
         return $this->inputSetReportName;
+    }
+
+    public function getColSelectorMkup(){
+        return $this->colSelector->makeSelectorTable(TRUE)->generateMarkup(array('id'=>$this->inputSetReportName . '-includeFields'));
     }
 
 }

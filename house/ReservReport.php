@@ -47,11 +47,11 @@ $dataTableWrapper = '';
 
 $reservationReport = new ReservationReport($dbh, $_REQUEST);
 
-if (isset($_POST['btnHere'])) {
+if (isset($_POST['btnHere-' . $reservationReport->getInputSetReportName()])) {
     $dataTableWrapper = $reservationReport->generateMarkup();
 }
 
-if (isset($_POST['btnExcel'])) {
+if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
     ini_set('memory_limit', "280M");
     $reservationReport->downloadExcel("reservReport");
 }
@@ -89,8 +89,6 @@ if (isset($_POST['btnExcel'])) {
 
                 <?php echo $reservationReport->filter->getTimePeriodScript(); ?>;
                 <?php echo $reservationReport->generateReportScript(); ?>
-
-                $('#includeFields').fieldSets({'reportName': 'reserv', 'defaultFields': <?php echo json_encode($reservationReport->getDefaultFields()) ?>});
             });
          </script>
     </head>
