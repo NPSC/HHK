@@ -308,7 +308,7 @@ GROUP BY s.idVisit, s.Visit_Span");
             }
 
             $cbRetire = '';
-            if ($r->FA_Category->getStoredVal() == RoomRateCategories::NewRate && $r->Rate_Breakpoint_Category->getStoredVal() == '') {
+            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate && $r->Rate_Breakpoint_Category->getStoredVal() == '') {
 
                 $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
 

@@ -55,7 +55,7 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
 
     CASE
         WHEN
-            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start')
+            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start')
         THEN 0
         WHEN
             DATE(s.Span_Start_Date) >= DATE('$end')
@@ -64,7 +64,7 @@ function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
             SUM(DATEDIFF(
                 CASE
                     WHEN
-                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$end')
+                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('$end')
                     THEN
                         DATE('$end')
                     ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
@@ -536,7 +536,7 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     $actualGuestNights = [];
     $piGuestNights = [];
 
-    if($uS->RoomPriceModel == ItemPriceCode::Dailey){
+    if($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily){
         // routine defines acutalGuestNights and piGuestNights.
         getGuestNights($dbh, $start, $end, $actualGuestNights, $piGuestNights);
 
