@@ -36,6 +36,7 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
         $uS = Session::getInstance();
 
         $this->reportTitle = $uS->siteName . ' Birthday Report';
+        $this->description = "This report shows all guests who are staying or scheduled to stay AND have a birthday during the selected time period";
         $this->inputSetReportName = "birthday";
 
         parent::__construct($dbh, $this->inputSetReportName, $request);
@@ -66,15 +67,21 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
         WHEN r.Expected_Arrival IS NOT NULL THEN r.Expected_Arrival ELSE NULL END";
 
         $departureCase = "CASE WHEN s.Span_End_Date IS NOT NULL THEN s.Span_End_Date
-         WHEN s.Expected_Co_Date IS NOT NULL THEN s.Expected_Co_Date
+         WHEN s.Expected_Co_Date IS NOT NULL AND s.Expected_Co_Date > NOW() THEN s.Expected_Co_Date
          WHEN r.Actual_Departure IS NOT NULL THEN r.Actual_Departure
-         WHEN s.Status is not null THEN NOW()
+         WHEN s.Status = 'a' THEN ''
+         WHEN r.Expected_Departure IS NOT NULL THEN r.Expected_Departure ELSE '' END";
+
+        $whDepartureCase = "CASE WHEN s.Span_End_Date IS NOT NULL THEN s.Span_End_Date
+         WHEN s.Expected_Co_Date IS NOT NULL AND s.Expected_Co_Date > NOW() THEN s.Expected_Co_Date
+         WHEN r.Actual_Departure IS NOT NULL THEN r.Actual_Departure
+         WHEN s.Status IS NOT NULL THEN NOW()
          WHEN r.Expected_Departure IS NOT NULL THEN r.Expected_Departure ELSE NOW() END";
 
-        $whDates = $arrivalCase . " <= '" . $this->filter->getReportEnd() . "' and " . $departureCase . " >= '" . $this->filter->getReportStart() . "' ";
+        $whDates = $arrivalCase . " <= '" . $this->filter->getReportEnd() . "' and " . $whDepartureCase . " >= '" . $this->filter->getReportStart() . "' ";
 
         //birthday in timeframe
-        //$whDates .= "and 1 = (FLOOR(DATEDIFF('" . $this->filter->getReportEnd() . "', n.BirthDate) / 365.25)) - (FLOOR(DATEDIFF('" . $this->filter->getReportStart() . "', n.BirthDate) / 365.25)) ";
+        $whDates .= "and 1 = (FLOOR(DATEDIFF('" . $this->filter->getReportEnd() . "', n.BirthDate) / 365.25)) - (FLOOR(DATEDIFF('" . $this->filter->getReportStart() . "', n.BirthDate) / 365.25)) ";
 
         $groupBy = " Group By r.idReservation, ifnull(s.idStays, n.idName)";
 
@@ -107,7 +114,6 @@ class BirthdayReport extends AbstractReport implements ReportInterface {
     IF(rr.FA_Category='f', r.Fixed_Room_Rate, rr.`Title`) as `FA_Category`,
     rr.`Title` as `Rate`,
     if(s.On_Leave > 0, 'On Leave', ifnull(vs.Description, g.Title)) as 'Status_Title',
-    vs.Description as 'visit_status',
     hs.idPsg,
     hs.idHospital
 from
@@ -164,12 +170,9 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
         $labels = Labels::getLabels();
         $uS = Session::getInstance();
 
-        $cFields[] = array('Resv Id', 'idReservation', 'checked', 'f', 'string', '10');
-        $cFields[] = array('Visit Id', 'idVisit', 'checked', 'f', 'string', '10');
-        $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
-
         $cFields[] = array("First", 'Name_First', 'checked', '', 'string', '20');
         $cFields[] = array("Last", 'Name_Last', 'checked', '', 'string', '20');
+        $cFields[] = array("Birth Date", 'BirthDate', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
 
         // Address.
         $pFields = array('gAddr', 'gCity');
@@ -186,13 +189,12 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
         $cFields[] = array($pTitles, $pFields, '', '', 'string', '15', array());
 
         $cFields[] = array("Room Phone", 'Phone', '', '', 'string', '20');
-        $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Phone", 'Phone_Num', '', '', 'string', '20');
-        $cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest')." Email", 'Email', '', '', 'string', '20');
-        $cFields[] = array("Birth Date", 'BirthDate', '', '', 'MM/DD/YYYY', '15', array(), 'date');
+        $cFields[] = array("Phone", 'Phone_Num', '', '', 'string', '20');
+        $cFields[] = array("Email", 'Email', '', '', 'string', '20');
+        $cFields[] = array("Room", 'Room', 'checked', '', 'string', '15');
         $cFields[] = array("Arrive", 'Arrival', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Depart", 'Departure', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
-        $cFields[] = array("Visit Status", 'visit_status', 'checked', '', 'string', '15');
 
         return $cFields;
     }
@@ -203,8 +205,8 @@ where " . $whDates . $whResvStatus . $whStayStatus . $groupBy . " order by r.idR
 
         $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: ' . date('M j, Y', strtotime($this->filter->getReportStart())) . ' thru ' . date('M j, Y', strtotime($this->filter->getReportEnd())));
 
-        if(isset($this->request["cbBirthday"])){
-            $mkup .= HTMLContainer::generateMarkup('p', "Showing " . Labels::getString('MemberType', 'visitor', 'Guest') . "s with birthdays in report period");
+        if(isset($this->request["cbIncCheckedOut"])){
+            $mkup .= HTMLContainer::generateMarkup('p', "Includes Checked Out " . Labels::getString('MemberType', 'visitor', 'Guest') . "s");
         }
 
         return $mkup;

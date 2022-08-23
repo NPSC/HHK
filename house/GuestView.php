@@ -67,7 +67,7 @@ if (isset($_POST['btnHere-' . $birthdayReport->getInputSetReportName()])){
 
 if (isset($_POST['btnExcel-' . $birthdayReport->getInputSetReportName()])) {
     $tab = 1;
-    $birthdayReport->downloadExcel("AllGuestsReport");
+    $birthdayReport->downloadExcel("BirthdayReport");
 }
 
 //vehicle report
