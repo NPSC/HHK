@@ -115,6 +115,11 @@ body {
     max-width: 40%;
     max-height: 125px;
 }
+
+td.noteText {
+	white-space: pre-wrap;
+}
+
 .hhk-noteBox div {
     border: 1px solid #79B7E7;
     max-height: 100px;

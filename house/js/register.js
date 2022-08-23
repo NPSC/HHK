@@ -1263,7 +1263,8 @@ $(document).ready(function () {
                     //2nd ribbon color
                     if (info.event.extendedProps.backBorderColor != '') {
                     	
-                    	info.el.style.cssText += 'border-bottom: 9px solid ' + info.event.extendedProps.backBorderColor;
+                    	info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
+                    	
                     }
                     
                 // visits
@@ -1282,7 +1283,7 @@ $(document).ready(function () {
                     //2nd ribbon color
                     if (info.event.extendedProps.backBorderColor != '') {
                     	
-                    	info.el.style.cssText += 'border-bottom: 9px solid ' + info.event.extendedProps.backBorderColor;
+                    	info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
                     }
 
                 // Out of service
