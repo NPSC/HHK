@@ -18,5 +18,6 @@ class VisitStatus {
     const NewSpan = "n";
     const ChangeRate = "cp";
     const OnLeave = 'l';
+    const Cancelled = 'c';
 }
 ?>

@@ -700,7 +700,7 @@ where
         from
             visit
         where
-            `Status` <> 'p'
+            `Status` not in ('p', 'c')
                 and DATE(Arrival_Date) < DATE('$end')
                 and DATE(ifnull(Span_End,
                     case

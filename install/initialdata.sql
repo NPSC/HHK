@@ -478,6 +478,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Visit_Status','cp','Room Rate Changed','','',0),
 ('Visit_Status','n','Room Changed','','',0),
 ('Visit_Status', '1', 'On Leave','','',0),
+('Visit_Status', 'c', 'Cancelled','','',0)'
+('Visit_Status', 'p', 'Pending','','',0)'
 
 ('Vol_Activities','1','Greeter','green,white','',0),
 ('Vol_Activities','5','Fundraising','black,white','',0),
@@ -543,6 +545,7 @@ REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) V
 -- insert System configuration
 --
 REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description`,`GenLookup`, `Show`) VALUES 
+('AcceptResvPaymt','false','b','h','', 'Accept payments at Reservation Comfirmation','', '1'),
 ('Admin_Address','','ea','v','','Volunteer administrator email address','',1),
 ('Auto_Email_Address','','ea','ha','','Notified for each batch of automatic emails','',1),
 ('BatchSettlementHour','03:00','s','fg','','Batch settlement time of day for auto-settlements','',0),

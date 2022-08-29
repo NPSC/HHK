@@ -90,3 +90,10 @@ ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Las
 
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`)
 	VALUES('EmergContactReserv', 'false', 'b', 'h', 'Collect Emergency Contact on Reservation','1');
+	
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Visit_Status', 'c', 'Cancelled');
+INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Visit_Status', 'p', 'Pending');
+
+INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('AcceptResvPaymt', 'false', 'b', 'h', 'Accept payments at Reservation Comfirmation', '1');
+
+	
