@@ -39,7 +39,8 @@ class Document {
         'image/png' => 'png',
         'application/pdf' => 'pdf',
         'application/msword' => 'doc',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx'
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+        'text/html'=>'html',
     ];
 
     // Document record field vars

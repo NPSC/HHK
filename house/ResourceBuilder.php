@@ -1306,7 +1306,7 @@ if (isset($_POST['ldfm'])) {
                 $regSettings = json_decode($r['Abstract'], true);
             }
 
-            $regForm = new CustomRegisterForm($regSettings);
+            $regForm = new CustomRegisterForm($r['Code'], $regSettings);
             $editMkup = $regForm->getEditMkup();
         }
 
@@ -1409,9 +1409,14 @@ if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
             $abstract["subjectLine"] = $subjectLine;
         }
 
-        if($formType == 'ra' && $uS->RegForm == "3"){
+        if($formType == 'ra' && $uS->RegForm == "3" && isset($_POST["regForm"][$docCode])){
             $regForm = new CustomRegisterForm();
-            $abstract = $regForm->validateSettings($_POST['regForm']);
+            $abstract = $regForm->validateSettings($_POST['regForm'][$docCode]);
+        }
+
+        $applyAll = FALSE;
+        if(isset($_POST['regForm']['misc']['applyAll'])){
+            $applyAll = TRUE;
         }
 
         $abstract = json_encode($abstract);
@@ -1429,6 +1434,7 @@ if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
             $sql .= "Doc = :doc, ";
         }
         $sql .= "Updated_By = :updatedBy, Last_Updated = now() where idDocument = :idDoc";
+
         $ustmt = $dbh->prepare($sql);
 
         if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
@@ -1439,11 +1445,20 @@ if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
         $ustmt->bindParam(":idDoc", $docId);
         $dbh->beginTransaction();
         $ustmt->execute();
+
+        if($applyAll){
+            $applyAllSql = "UPDATE `document` d join gen_lookups g on d.idDocument = g.Substitute and g.Table_Name = 'Reg_Agreement' SET Abstract = :abstract";
+            $astmt = $dbh->prepare($applyAllSql);
+            $astmt->bindParam(":abstract", $abstract);
+            $astmt->execute();
+        }
+
         $dbh->commit();
 
         echo json_encode(array("docCode"=>$docCode, "success"=>"Form saved successfully"));
         exit();
     }catch(\Exception $e){
+        $dbh->rollBack();
         echo json_encode(array("error"=>"Could not save form: " . $e->getMessage()));
         exit();
     }

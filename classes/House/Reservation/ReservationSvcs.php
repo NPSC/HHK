@@ -234,6 +234,7 @@ class ReservationSvcs
     public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $span = 0, $logoURL = '', $notes = '')
     {
         $uS = Session::getInstance();
+        $return = array("docs"=>[]);
         $docs = array();
 
         $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Abstract`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
@@ -264,6 +265,7 @@ class ReservationSvcs
                 );
             }
 
+
         } else if($uS->RegForm == 3){
 
             if (count($docRows) > 0) {
@@ -275,7 +277,7 @@ class ReservationSvcs
                         $regSettings = json_decode($d['Abstract'], true);
                     }
 
-                    $regForm = new CustomRegisterForm($regSettings);
+                    $regForm = new CustomRegisterForm($d["Code"], $regSettings);
 
                     $docs[] = array(
                         'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d),
@@ -289,10 +291,38 @@ class ReservationSvcs
 
                 $docs[] = array(
                     'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
-                    'style' => RegisterForm::getStyling(),
+                    'style' => CustomRegisterForm::getStyling(),
                     'tabIndex' => 'en',
                     'tabTitle' => 'English'
                 );
+            }
+
+            //get primary guest
+            if ($idVisit > 0) {
+
+                $stmtv = $dbh->prepare("Select v.idPrimaryGuest, v.idRegistration, r.idPsg from visit v join registration r on v.idRegistration = r.idRegistration where idVisit = :idv");
+                $stmtv->execute(array(
+                    ':idv' => $idVisit
+                ));
+                $rows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
+
+                if(count($rows) == 1){
+                    $return["idPrimaryGuest"] = $rows[0]["idPrimaryGuest"];
+                    $return["idPsg"] = $rows[0]["idPsg"];
+                }
+
+            }else if($idReservation > 0){
+                $stmtr = $dbh->prepare("Select rg.idGuest, reg.idPsg from reservation r join reservation_guest rg on r.idReservation = rg.idReservation join registration reg on r.idRegistration = reg.idRegistration where rg.idReservation = :idr and `Primary_Guest` = '1'");
+                $stmtr->execute(array(
+                    ':idr' => $idReservation
+                ));
+                $rows = $stmtr->fetchAll(\PDO::FETCH_ASSOC);
+
+                if(count($rows) == 1){
+                    $return["idPrimaryGuest"] = $rows[0]["idGuest"];
+                    $return["idPsg"] = $rows[0]["idPsg"];
+                }
+
             }
 
         } else if ($uS->RegForm == 2) {
@@ -501,9 +531,8 @@ class ReservationSvcs
             );
         }
 
-        return array(
-            'docs' => $docs
-        );
+        $return["docs"] = $docs;
+        return $return;
     }
 
     public static function getReservGuests(\PDO $dbh, $idReservation)

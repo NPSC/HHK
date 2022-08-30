@@ -229,8 +229,11 @@ class CustomRegisterForm {
 
     public $pageTitle = '';
 
-    public function __construct(array $settings = []){
+    public $docCode = "";
+
+    public function __construct($docCode = "", array $settings = []){
         $this->labels = Labels::getLabels();
+        $this->docCode = $docCode;
 
         if(count($settings) == 0){
             $this->settings = $this->getDefaultSettings();
@@ -964,17 +967,17 @@ class CustomRegisterForm {
             foreach($inputs as $key=>$input){
                 switch($input["type"]){
                     case "string":
-                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLInput::generateMarkup((!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), ["name"=>"regForm[" . $group . "][" . $key . "]"]);
+                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLInput::generateMarkup((!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), ["name"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]"]);
                         break;
                     case "bool":
-                        $cbAttr = ["type"=>"checkbox", "name"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"];
+                        $cbAttr = ["type"=>"checkbox", "name"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]", "class"=>"mr-2"];
                         if(!empty($this->settings[$group][$key])){
                             $cbAttr['checked'] = 'checked';
                         };
-                        $inputMkup = HTMLInput::generateMarkup("", $cbAttr) . HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]"]);
+                        $inputMkup = HTMLInput::generateMarkup("", $cbAttr) . HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]"]);
                         break;
                     case "select":
-                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($input['values'], (!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), false), ["name"=>"regForm[" . $group . "][" . $key . "]"]);
+                        $inputMkup = HTMLContainer::generateMarkup("label", $input['label'], ["for"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]", "class"=>"mr-2"]) . HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($input['values'], (!empty($this->settings[$group][$key]) ? $this->settings[$group][$key] : ''), false), ["name"=>"regForm[" . $this->docCode . "][" . $group . "][" . $key . "]"]);
                         break;
                     default:
                         $inputMkup = '';
@@ -984,6 +987,17 @@ class CustomRegisterForm {
             }
             $mkup .= "</div></div>";
         }
+
+        //misc settings
+        $mkup .= '<div class="ui-widget mb-3">';
+        $mkup .= HTMLContainer::generateMarkup("h3", "Miscellaneous", ["class"=>"ui-widget-header ui-corner-top pl-2"]);
+        $mkup .= '<div class="ui-widget-content ui-corner-bottom p-2">';
+
+        $cbAttr = ["type"=>"checkbox", "name"=>"regForm[misc][applyAll]", "class"=>"mr-2"];
+        $inputMkup = HTMLInput::generateMarkup("", $cbAttr) . HTMLContainer::generateMarkup("label", "Apply layout options to all forms", ["for"=>"regForm[misc][applyAll]"]);
+
+        $mkup .= HTMLContainer::generateMarkup("div",$inputMkup, ["class"=>"mb-2"]);
+        $mkup .= "</div></div>";
 
         return HTMLContainer::generateMarkup("div", $mkup);
     }

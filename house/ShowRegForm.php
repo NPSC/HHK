@@ -7,6 +7,8 @@ use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Registration;
 use HHK\House\Reservation\ReservationSvcs;
 use HHK\HTMLControls\HTMLInput;
+use HHK\Document\Document;
+use HHK\House\RegistrationForm\CustomRegisterForm;
 
 
 /**
@@ -29,11 +31,14 @@ $dbh = $wInit->dbh;
 $uS = Session::getInstance();
 $labels = Labels::getLabels();
 
-
+$tabControl = "";
 $idVisit = 0;
 $idResv = 0;
 $span =0;
 $idRegistration = 0;
+$idDoc = 0;
+$sty = "";
+$regContents = "";
 $idPayment = 0;
 $paymentMarkup = '';
 $regDialogmkup = '';
@@ -89,6 +94,10 @@ if (isset($_GET['rid'])) {
     $idResv = intval(filter_var($_REQUEST['rid'], FILTER_SANITIZE_STRING), 10);
 }
 
+if(isset($_GET["idDoc"])){
+    $idDoc = intval(filter_var($_REQUEST['idDoc'], FILTER_SANITIZE_STRING), 10);
+}
+
 if ($idVisit == 0 && $idResv > 0) {
     $stmt = $dbh->query("Select idVisit from visit where idReservation = $idResv");
     $rows = $stmt->fetchAll(PDO::FETCH_NUM);
@@ -109,29 +118,48 @@ if ($idRegistration > 0) {
     $regButtonStyle = '';
 }
 
+if($idDoc > 0){
+    $doc = new Document($idDoc);
+    $doc->loadDocument($dbh);
+    if($doc->getType() == "reg"){
+        $regContents = $doc->getDoc();
+        if($uS->RegForm == "3"){
+            $form = new CustomRegisterForm();
+            $sty = $form->getStyling();
+        }
+    }
 
-// Generate Registration Form
-$reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
-$li = '';
-$tabContent = '';
-
-foreach ($reservArray['docs'] as $r) {
-
-    $li .= HTMLContainer::generateMarkup('li',
-            HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])));
-
-
-    $tabContent .= HTMLContainer::generateMarkup('div',
-        HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-        .HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex'])),
-        array('id'=>$r['tabIndex']));
-
-    $sty = $r['style'];
 }
 
-$ul = HTMLContainer::generateMarkup('ul', $li, array());
-$tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+if($idVisit || $idResv){
 
+    // Generate Registration Form
+    $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
+    $li = '';
+    $tabContent = '';
+
+    foreach ($reservArray['docs'] as $r) {
+
+        $li .= HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])));
+
+
+        $tabContent .= HTMLContainer::generateMarkup('div',
+            HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
+            .HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex']))
+            .HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex']))
+            .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
+            .HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'])),
+            array('id'=>$r['tabIndex']));
+
+        $sty = $r['style'];
+    }
+
+    $ul = HTMLContainer::generateMarkup('ul', $li, array());
+    $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+}else if($idDoc > 0){
+    $tabControl = $regContents;
+}
 
 $shoRegBtn = HTMLInput::generateMarkup('Check In Followup', array('type'=>'button', 'id'=>'btnReg', 'style'=>$regButtonStyle));
 $shoStmtBtn = HTMLInput::generateMarkup('Show Statement', array('type'=>'button', 'id'=>'btnStmt', 'style'=>$regButtonStyle));
@@ -140,7 +168,7 @@ $regMessage = HTMLContainer::generateMarkup('div', '', array('id'=>'mesgReg', 's
 
 $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regMessage, array());
 
-unset($reservArray);
+//unset($reservArray);
 
 ?>
 <!DOCTYPE html>
@@ -193,6 +221,40 @@ $(document).ready(function() {
         opt.popHt = $('div#PrintArea' + $(this).data('tab')).height();
         opt.popTitle = $(this).data('title');
         $('div#PrintArea' + $(this).data('tab')).printArea(opt);
+    }).button();
+
+    $('.btnSave').click(function(){
+    	var docCode = $(this).data("tab");
+    	$("#PrintArea" + docCode + " .btnSign").closest(".col").remove();
+    	var formContent = document.getElementById("PrintArea" + docCode).innerHTML;
+
+    	var formData = new FormData();
+		formData.append('cmd', 'saveRegForm');
+		formData.append('guestId', '<?php echo (isset($reservArray['idPrimaryGuest']) ? $reservArray['idPrimaryGuest'] : 0) ?>');
+		formData.append('psgId', '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>');
+		formData.append('docTitle', "Registration Form");
+		formData.append('docContents', formContent);
+
+		$.ajax({
+			url: 'ws_ckin.php',
+			dataType: 'JSON',
+			type: 'post',
+			data: formData,
+			contentType: false,
+			processData: false,
+			success: function (data) {
+				if (data.idDoc > 0) {
+			    	window.close();
+			    } else {
+			        if (data.error) {
+
+			        } else {
+
+			        }
+			    }
+			},
+		});
+
     }).button();
 
     $('#btnReg').click(function() {

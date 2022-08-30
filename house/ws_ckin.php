@@ -17,6 +17,7 @@ use HHK\Config_Lite\Config_Lite;
 use HHK\House\PSG;
 use HHK\House\Room\RoomChooser;
 use HHK\sec\Labels;
+use HHK\Document\Document;
 
 /**
  * ws_ckin.php
@@ -242,6 +243,23 @@ try {
             }
 
             $events = ReservationSvcs::getConfirmForm($dbh, $idresv, $idGuest, $amount, $sendemail, $notes, $eaddr, $tabIndex,$ccAddr);
+            break;
+
+        case 'saveRegForm':
+
+            $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
+            $psgId = intval(filter_input(INPUT_POST, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
+            $docContents = $_POST["docContents"];
+
+            $document = Document::createNew("Registration Form", "text/html", $docContents, $uS->username, "reg");
+
+            $document->saveNew($dbh);
+
+            if($document->linkNew($dbh, $guestId, $psgId) > 0){
+                $events = ["idDoc"=> $document->getIdDocument()];
+            }else{
+                $events = ["error" => "Unable to save Registration Form"];
+            }
             break;
 
         case 'void':

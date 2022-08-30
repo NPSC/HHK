@@ -163,6 +163,8 @@ try {
 
                 if($document->getCategory() == 'form' && $document->getType() == 'json'){
                     header("location: showReferral.php?form=" . $document->getIdDocument());
+                }else if ($document->getType() == "reg"){
+                    header("location: ShowRegForm.php?idDoc=" . $document->getIdDocument());
                 }else{
                     if($document->getExtension()){
                             $ending = "." . $document->getExtension();
