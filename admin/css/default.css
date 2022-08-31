@@ -126,12 +126,12 @@ div.divSubmitButtons {
     right: 80px;
     padding: 5px 10px;
     border: solid 1px teal;
-}
-div.divSubmitButtons:hover {
     background-color: white;
 }
+
 div#contentDiv {
     margin-left: 10px;
+    margin-right: 10px;
 }
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
 .ui-menu-item .ui-autocomplete {width:250px;font-size:.8em;}
@@ -294,11 +294,16 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 
 #tabs.ui-tabs{
 	display: inline-block;
+	max-width: 100%;
 }
 
 .cronActions button {
 	margin-left: 0.5em;
 	margin-right: 0.5em;
+}
+
+.hhk-overflow-x {
+	overflow-x: auto;
 }
 
 @media only screen and (max-width: 1024px){

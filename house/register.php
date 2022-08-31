@@ -176,6 +176,10 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
     $shoHosptialName = TRUE;
 
     $hospLabel = HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'hospital', 'Hospital') . ': ');
+
+    $leftArrow = '<div class="d-md-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>';
+    $rightArrow = '<div class="d-md-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-e"></span></div>';
+
     // All button
     $colorKey = HTMLContainer::generateMarkup('button', 'All', array('class'=>'btnHosp hospActive', 'data-id'=>0));
 
@@ -201,7 +205,8 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
 	        $colorKey .= HTMLContainer::generateMarkup('button', $r['Title'], $attrs);
     	}
     }
-    $colorKey = HTMLContainer::generateMarkup("div", $hospLabel . HTMLContainer::generateMarkup("div", $colorKey, array("id"=>"hospBtns")), array("id"=>"hospBtnWrapper"));
+
+    $colorKey = HTMLContainer::generateMarkup("div", $hospLabel . HTMLContainer::generateMarkup("div", $leftArrow . HTMLContainer::generateMarkup("div", $colorKey, array("id"=>"hospBtns")) . $rightArrow, array("class"=>"d-flex")), array("id"=>"hospBtnWrapper"));
 }
 
 
