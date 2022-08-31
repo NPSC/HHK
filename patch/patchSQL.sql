@@ -96,4 +96,5 @@ INSERT INTO `gen_lookups` (`Table_Name`, `Code`, `Description`) VALUES ('Visit_S
 
 INSERT INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('AcceptResvPaymt', 'false', 'b', 'h', 'Accept payments at Reservation Comfirmation', '1');
 
-	
+-- enable report fieldsets for guest operations users
+insert ignore into `page_securitygroup` (`idPage`, `Group_Code`) values ((select `idPage` from `page` where `File_Name` = "ws_reportFilter.php"), "g");

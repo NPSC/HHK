@@ -387,7 +387,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
                     		<li id="liJobs"><a href="#jobs">Jobs</a></li>
                     		<li id="liCronLog"><a href="#cronLog">Log</a></li>
                     	</ul>
-						<div id="jobs">
+						<div id="jobs" class="hhk-overflow-x">
 							<?php if(SecurityComponent::is_TheAdmin()){ ?>
 							<div id="newJob" class="ui-widget ui-widget-content ui-corner-all p-2 d-inline-block">
 								<label for="newJobType"><strong>Add New Job:</strong></label>

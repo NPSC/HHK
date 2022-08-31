@@ -2481,7 +2481,7 @@ function resvManager(initData, options) {
             
             insistCkinDemog = data.insistCkinDemog;
 
-			$('#submitButtons').show();
+			
 
         }
 
@@ -2500,7 +2500,7 @@ function resvManager(initData, options) {
                 $('#' + data.addPerson.mem.pref + 'txtFirstName').focus();
             }
         }
-
+		$('#submitButtons').show();
     }
 
     function verifyInput() {

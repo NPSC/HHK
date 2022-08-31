@@ -697,6 +697,17 @@ div.dt-buttons .dt-button:hover>span {
 	box-shadow: inset 0 0 0 1000px rgb(0 0 0 / 30%)
 }
 
+@media (max-width: 768px){
+	#hospBtns {
+		display:flex;
+		overflow-x: scroll;
+	}
+	
+	#hospBtns button{
+		min-width: fit-content;
+	}
+}
+
 #page-title-row {
 	justify-content: space-between;
 	align-items: baseline;
@@ -736,4 +747,8 @@ div.dt-buttons .dt-button:hover>span {
 .ui-widget-content.hhk-widget-mobile, .hhk-mobile-tabs .ui-widget-content {
 	overflow-x: auto;
 	overflow-y: auto
+}
+
+.ui-autocomplete {
+	max-width: device-width;
 }
