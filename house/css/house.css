@@ -336,8 +336,8 @@ div#global-title {
     font-size: 1.5em;
 }
 
-li.hhk-myMenuTop {
-    background-color: #3E6D8F;
+.navbar li.hhk-active {
+    background-color: var(--nav-active-color);
 }
 
 
@@ -749,6 +749,7 @@ div.dt-buttons .dt-button:hover>span {
 	overflow-y: auto
 }
 
-.ui-autocomplete {
-	max-width: device-width;
+table.dataTable tbody th,
+table.dataTable tbody td {
+    white-space: nowrap;
 }

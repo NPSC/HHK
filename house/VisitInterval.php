@@ -1339,7 +1339,7 @@ where
         }
 
         // Main data table
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact'));
+        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact', 'style'=>'width:100%'));
 
         // Stats panel
         $statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
@@ -1768,7 +1768,7 @@ if ($uS->CoTod) {
                  ],
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><"hhk-overflow-x"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
             });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();

@@ -9,6 +9,10 @@
 	--nav-text-color: #4C3000;
 }
 
+.navbar .hhk-active {
+	background-color: var(--nav-active-color);
+}
+
 body {
     background: url('../../conf/vol_bg.jpg') repeat #CEC9B5;
     font-family: Arial, Helvetica, sans-serif;

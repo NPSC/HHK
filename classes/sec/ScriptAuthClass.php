@@ -314,20 +314,20 @@ class ScriptAuthClass extends SecurityComponent {
             if (isset($menu[$item])) { //if dropdown
                 // children to capture
                 $chd = '';
-                $cls = '';
+                $topActiveClass = '';
 
                 foreach ($menu[$item] as $k => $chld) {
 
                     if (strtolower($k) != "none") {
 
-                        $myClass = '';
+                        $activeClass = '';
 
                         if ($pageAnchors[$chld]["File_Name"] == $this->getFileName()) {
-                            $myClass = " hhk-myPage";
-                            $cls = ' hhk-myMenuTop';
+                            $topActiveClass = "hhk-active";
+                            $activeClass = "hhk-active";
                         }
 
-                        $chd .= "<li class='" . $myClass . "'><a href='".$pageAnchors[$chld]["File_Name"]."' class='dropdown-item'>" . $pageAnchors[$chld]["Title"] . "</a></li>";
+                        $chd .= "<li class='" . $activeClass . "'><a href='".$pageAnchors[$chld]["File_Name"]."' class='dropdown-item'>" . $pageAnchors[$chld]["Title"] . "</a></li>";
                     }
                 }
 
@@ -335,14 +335,14 @@ class ScriptAuthClass extends SecurityComponent {
                     $chd = "<ul class='dropdown-menu' aria-labelledby='dropdownLink" . $k . "'>" . $chd . "</ul>";
                 }
 
-                $markup .= "<li class='nav-item dropdown$cls'><a href='#' class='nav-link dropdown-toggle' id='dropdownLink" . $k . "' role='button' data-bs-toggle='dropdown' aria-expanded='false'>" . $pageAnchors[$item]["Title"] . "</a>" . $chd;
+                $markup .= "<li class='nav-item dropdown $topActiveClass'><a href='#' class='nav-link dropdown-toggle' id='dropdownLink" . $k . "' role='button' data-bs-toggle='dropdown' aria-expanded='false'>" . $pageAnchors[$item]["Title"] . "</a>" . $chd;
 
             } else {
-                $clss = '';
+                $activeClass = '';
                 if ($pageAnchors[$item]["File_Name"] == $this->getFileName()) {
-                    $clss = " active";
+                    $activeClass = " hhk-active";
                 }
-                $markup .= "<li class='nav-item" . $clss . "'><a href='".$pageAnchors[$item]["File_Name"]."' class='nav-link'>" . $pageAnchors[$item]["Title"] . "</a>";
+                $markup .= "<li class='nav-item" . $activeClass . "'><a href='".$pageAnchors[$item]["File_Name"]."' class='nav-link'>" . $pageAnchors[$item]["Title"] . "</a>";
             }
             $markup .= "</li></li>";
         }

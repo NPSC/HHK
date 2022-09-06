@@ -130,6 +130,7 @@ class PaymentResult {
         $toAddr = '';
         $guestName = '';
         $guestHasEmail = FALSE;
+        $invoiceNumber = "";
 
         $fromAddr = $uS->FromAddress;
 
@@ -204,11 +205,11 @@ WHERE r.Email_Receipt = 1 and
                 $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
                 if(count($rows) == 1){
-                    $this->invoiceNumber = $rows[0]["Invoice_Number"];
+                    $invoiceNumber = $rows[0]["Invoice_Number"];
                 }
 
 
-                LinkNote::save($dbh, "Receipt" . ($this->invoiceNumber != '' ? " for invoice <a href='ShowInvoice.php?invnum=" . $this->invoiceNumber . "' target='_blank'>" . $this->invoiceNumber . "</a>" : '') . " emailed to " . $toAddrSan, $this->idRegistration, Note::PsgLink, $uS->username, $uS->ConcatVisitNotes);
+                LinkNote::save($dbh, "Receipt" . ($invoiceNumber != '' ? " for invoice <a href='ShowInvoice.php?invnum=" . $invoiceNumber . "' target='_blank'>" . $invoiceNumber . "</a>" : '') . " emailed to " . $toAddrSan, $this->idRegistration, Note::PsgLink, $uS->username, $uS->ConcatVisitNotes);
 
                 return "Email sent" . $guestName;
             }

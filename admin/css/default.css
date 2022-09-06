@@ -30,6 +30,10 @@ body.testbody {
 	--nav-text-color: #fff;
 }
 
+.navbar .hhk-active {
+	background-color: var(--nav-active-color);
+}
+
 .pageHeader {
     width: 100%;
     background-color: #459e00;

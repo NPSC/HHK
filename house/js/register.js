@@ -1665,7 +1665,8 @@ $(document).ready(function () {
            		}
            });
        },
-       columns: cgCols
+       columns: cgCols,
+       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
     
     
@@ -1683,7 +1684,7 @@ $(document).ready(function () {
            });
        },
        columns: rvCols,
-
+       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
     
     if ($('#unreserv').length > 0) {
@@ -1700,7 +1701,8 @@ $(document).ready(function () {
            			}
            		});
            },
-           columns: rvCols
+           columns: rvCols,
+       		"dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
         });
     }
     
@@ -1718,7 +1720,8 @@ $(document).ready(function () {
            		}
            });
        },
-       columns: wlCols
+       columns: wlCols,
+       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
 
 });

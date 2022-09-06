@@ -505,7 +505,8 @@ foreach ($rescGroups as $g) {
                                     },
                                     "columnDefs": dtColDefs,
                                     "deferRender": true,
-                                    "order": [[7, 'desc']]
+                                    "order": [[7, 'desc']],
+                                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                                 });
                             }
                         }
@@ -588,6 +589,7 @@ foreach ($rescGroups as $g) {
                     "deferRender": true,
                     "columns": cgCols,
                     rowGroup: {dataSrc: 'Group_Title'},
+                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                     "initComplete": function(settings, json){
                     	$('.ckdate').datepicker({
                             yearRange: '-07:+01',
@@ -609,6 +611,7 @@ foreach ($rescGroups as $g) {
                     "deferRender": true,
                     "columns": cgCols,
                     rowGroup: {dataSrc: 'Group_Title'},
+                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                     "initComplete": function(settings, json){
                     	$('.ckdate').datepicker({
                             yearRange: '-07:+01',
@@ -628,7 +631,8 @@ foreach ($rescGroups as $g) {
                         dataSrc: 'outTable'
                     },
                     "deferRender": true,
-                    "columns": outCols
+                    "columns": outCols,
+                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                 });
 
                 $('#inTable').dataTable({
@@ -637,7 +641,8 @@ foreach ($rescGroups as $g) {
                         dataSrc: 'inTable'
                     },
                     "deferRender": true,
-                    "columns": inCols
+                    "columns": inCols,
+                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                 });
 
                 $('#atblgetter').dataTable({
@@ -648,7 +653,8 @@ foreach ($rescGroups as $g) {
                                 return dateRender(data, type, dateFormat);
                             }
                         }
-                    ]
+                    ],
+                    "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                 });
 
                 $('#btnPrintAll').click(function () {

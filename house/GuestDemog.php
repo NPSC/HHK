@@ -226,7 +226,7 @@ if ($cmd){
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="font-size:.8em;padding:15px;margin-top:15px;">
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox d-inline-block mt-3 p-2" style="font-size:.8em;padding:15px;margin-top:15px;">
             	<table id="dataTbl"></table>
             </div>
             <input type="hidden" id="columns" value='<?php echo json_encode($columns); ?>'>

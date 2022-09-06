@@ -41,6 +41,7 @@ abstract class AbstractReport {
     protected string $reportTitle = "";
     protected string $description = "";
     protected string $inputSetReportName = "";
+    protected bool $rendered = false;
 
     /**
      * @param \PDO $dbh
@@ -167,7 +168,9 @@ abstract class AbstractReport {
             $tbl->addBodyTr($tr);
         }
 
-        return HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper'));
+        $this->rendered = true;
+
+        return HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display', 'style'=>'width:100%;')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper'));
     }
 
     public function generateSummaryMkup():string {
@@ -186,8 +189,9 @@ abstract class AbstractReport {
         $uS = Session::getInstance();
 
         return '
-        $("#' . $this->inputSetReportName . '-includeFields").fieldSets({"reportName": "' . $this->inputSetReportName .  '", "defaultFields": ' . json_encode($this->getDefaultFields()) . '});
-        $("#tbl' . $this->inputSetReportName . 'rpt").dataTable({
+        $("#' . $this->inputSetReportName . '-includeFields").fieldSets({"reportName": "' . $this->inputSetReportName .  '", "defaultFields": ' . json_encode($this->getDefaultFields()) . '});' .
+
+        ($this->rendered ? '$("#tbl' . $this->inputSetReportName . 'rpt").dataTable({
             "columnDefs": [
             {"targets": ' . $jsonColumnDefs . ',
             "type": "date",
@@ -196,7 +200,7 @@ abstract class AbstractReport {
             ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bilf>rt<\"bottom ui-toolbar ui-helper-clearfix\"lp>",
+            "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bilf><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
             "buttons": [
             {
                 extend: "print",
@@ -253,7 +257,7 @@ abstract class AbstractReport {
                 }
             }
         });
-' . $this->filter->getTimePeriodScript();
+': '')  . $this->filter->getTimePeriodScript();
 
     }
 
