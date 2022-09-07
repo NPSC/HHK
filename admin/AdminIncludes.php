@@ -8,7 +8,7 @@
 -- @link      https://github.com/NPSC/HHK
  */
 
-define('JSV', '?eG=92');
+define('JSV', '?eG=93');
 
 define('DEFAULT_CSS', '<link href="css/default.css' . JSV . '" rel="stylesheet" type="text/css" />');
 define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
