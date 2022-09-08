@@ -155,7 +155,7 @@ BEGIN
 	    )
 	    as numNites
 	from visit
-	Where DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
+	Where `Status` <> 'c' and  DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
 
 END -- ;
 
@@ -186,7 +186,7 @@ BEGIN
 	    )
 	    as numNites
 	from visit
-	Where DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
+	Where `Status` <> 'c' and DATE(Span_Start) < DATE(endDate) and DATE(ifnull(Span_End, NOW())) >= DATE(startDate);
 
 END -- ;
 

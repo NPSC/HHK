@@ -713,7 +713,7 @@ ORDER BY v.idVisit , v.Span;");
 
             // Any remaining guest credits
             $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Guest Credit:', array('colspan'=>'2', 'class'=>'tdlabel'))
+                HTMLTable::makeTd($labels->getString('PaymentChooser', 'RoomCharges', 'Room Charges').':', array('colspan'=>'2', 'class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'guestCredit', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;'))
                 , array('style'=>'display:none;', 'class'=>'hhk-GuestCredit'));
 

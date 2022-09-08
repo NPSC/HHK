@@ -9,7 +9,7 @@ use HHK\AuditLog\NameLog;
 use HHK\sec\Labels;
 
 /**
- * GiestDemog.php
+ * GuestDemog.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
  * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
@@ -226,8 +226,8 @@ if ($cmd){
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-member-detail hhk-visitdialog" style="font-size:.8em;padding:15px;margin-top:15px;">
-            	<table id="dataTbl"></table>
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox mt-3 p-2" style="font-size:.8em; max-width: fit-content;">
+                <table id="dataTbl"></table>
             </div>
             <input type="hidden" id="columns" value='<?php echo json_encode($columns); ?>'>
             <input type="hidden" id="demos" value='<?php echo json_encode($demos); ?>'>

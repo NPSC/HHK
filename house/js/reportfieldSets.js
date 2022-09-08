@@ -95,13 +95,13 @@
 		});
 		
 		$wrapper.find('#cbColClearAll').on('click', function () {
-            $wrapper.find('#selFld option').each(function () {
+            $wrapper.find('#fields select option').each(function () {
                 $(this).prop('selected', false);
             });
         });
 
         $wrapper.find('#cbColSelAll').on('click', function () {
-            $('#selFld option').each(function () {
+            $wrapper.find('#fields select option').each(function () {
                 $(this).prop('selected', true);
             });
         });
@@ -130,8 +130,8 @@
 					formData = {
 						'cmd':'createFieldSet',
 						'report':settings.reportName,
-						'title': $('input[name=fieldsetName]').val(),
-						'fields': $('select#selFld').val(),
+						'title': $wrapper.find('input[name=fieldsetName]').val(),
+						'fields': $wrapper.find('#fields select').val(),
 						'global':'false'
 					};
 					
@@ -165,7 +165,7 @@
 						'cmd':'createFieldSet',
 						'report': settings.reportName,
 						'title': $wrapper.find('input[name=fieldsetName]').val(),
-						'fields': $wrapper.find('select#selFld').val(),
+						'fields': $wrapper.find('#fields select').val(),
 						'global':'true'
 					};
 					
@@ -199,7 +199,7 @@
 						'cmd':'updateFieldSet',
 						'idFieldSet': $wrapper.find('select#fieldset').val(),
 						'title': $wrapper.find('input[name=fieldsetName]').val(),
-						'fields': $wrapper.find('select#selFld').val(),
+						'fields': $wrapper.find('#fields select').val(),
 					};
 					
 					success = function(data, textStatus, jqXHR)

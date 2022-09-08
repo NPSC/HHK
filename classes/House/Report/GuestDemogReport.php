@@ -360,7 +360,7 @@ class GuestDemogReport {
         );
 
         $filterOptsMkup .= HTMLContainer::generateMarkup("div",
-            HTMLInput::generateMarkup("new", $allStartedAttrs) .
+            HTMLInput::generateMarkup("allStarted", $allStartedAttrs) .
             HTMLContainer::generateMarkup("label", "All " . $labels->getString('MemberType', 'visitor', 'Guest') . "s who started stay", ["for"=>"rbAllStartStay"])
         );
 

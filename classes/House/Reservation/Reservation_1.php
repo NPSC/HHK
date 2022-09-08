@@ -643,7 +643,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         }
 
         $stat = "'" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "'";
-        $vStat = VisitStatus::Pending;
+        $vStat = "'" . VisitStatus::Pending . "', '" . VisitStatus::Cancelled . "'";
 
         // Find resources in use
         if (!$uS->IncludeLastDay) {
@@ -651,7 +651,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
             $query = "select r.idResource "
                 . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
     union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
-    union select v.idResource from visit v where v.Status <> '$vStat' $omitVisit and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
+    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
     ifnull(AddDate(DATE(v.Span_End), -1), case when DATE(now()) >= DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) >= DATE('$arr')";
 
         } else {
@@ -659,7 +659,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
             $query = "select r.idResource "
                 . "from reservation r where r.Status in ($stat) $omitTxt and DATE(r.Expected_Arrival) < DATE('$dep') and DATE(r.Expected_Departure) > DATE('$arr')
     union select ru.idResource from resource_use ru where DATE(ru.Start_Date) < DATE('$dep') and ifnull(DATE(ru.End_Date), DATE(now())) > DATE('$arr')
-    union select v.idResource from visit v where v.Status <> '$vStat' $omitVisit  and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
+    union select v.idResource from visit v where v.Status not in ($vStat) $omitVisit  and (case when v.Status != 'a' then DATE(v.Span_Start) != DATE(v.Span_End) else 1=1 end) and DATE(v.Arrival_Date) < DATE('$dep') and
     ifnull(DATE(v.Span_End), case when DATE(now()) > DATE(v.Expected_Departure) then AddDate(DATE(now()), 1) else DATE(v.Expected_Departure) end) > DATE('$arr')";
         }
 

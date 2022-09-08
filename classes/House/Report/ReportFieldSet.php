@@ -97,7 +97,7 @@ class ReportFieldSet {
 
     }
 
-    public static function createFieldSet(\PDO $dbh, string $report, string $title, array $fields = [], $global){
+    public static function createFieldSet(\PDO $dbh, string $report, string $title, array $fields = [], $global = FALSE){
 
         $uS = Session::getInstance();
         $uname = $uS->username;
@@ -143,12 +143,12 @@ class ReportFieldSet {
         }
 
     }
-    
+
     public static function updateFieldSet(\PDO $dbh, int $idFieldSet, string $title, $fields = []){
         if(self::isAuthorized($dbh, $idFieldSet)){ //authorized
             $uS = Session::getInstance();
             $uname = $uS->username;
-            
+
             if (!is_array($fields) || count($fields) ==  0) {
                 return array('error' => 'Please choose at least one field');
             }

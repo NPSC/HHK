@@ -157,7 +157,7 @@ group by g.Code order by g.Order';
         try{
             if ($to !== FALSE && $to != '') {
                 $userData = $this->getUserData();
-                $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ". <br><br><a href='" . $uS->resourceURL . "house/register.php?tab=4' target='_blank'>Click here to log into HHK and take action.</a><br>" . PHP_EOL;
+                $content = "Hello,<br>" . PHP_EOL . "A new " . $this->formTemplate->getTitle() . " was submitted to " . $uS->siteName . ". <br><br><a href='" . $uS->resourceURL . "house/register.php' target='_blank'>Click here to log into HHK and take action.</a><br>" . PHP_EOL;
 
                 $mail = prepareEmail();
 

@@ -39,7 +39,9 @@ abstract class AbstractReport {
     public string $filterOptsMkup = "";
     protected $request;
     protected string $reportTitle = "";
+    protected string $description = "";
     protected string $inputSetReportName = "";
+    protected bool $rendered = false;
 
     /**
      * @param \PDO $dbh
@@ -60,7 +62,7 @@ abstract class AbstractReport {
 
         $this->fieldSets = ReportFieldSet::listFieldSets($this->dbh, $report, true);
         $fieldSetSelection = (isset($request['fieldset']) ? $request['fieldset']: '');
-        $this->colSelector = new ColumnSelectors($this->cFields, 'selFld', true, $this->fieldSets, $fieldSetSelection);
+        $this->colSelector = new ColumnSelectors($this->cFields, $report . '-selFld', true, $this->fieldSets, $fieldSetSelection);
 
         // set the selected filters
         $this->colSelector->setColumnSelectors($request);
@@ -89,16 +91,21 @@ abstract class AbstractReport {
         $this->makeFilterMkup();
         $this->makeFilterOptsMkup();
         $filterOptsMkup = "";
+        $descriptionMkup = "";
 
         if($this->filterOptsMkup != ""){
             $filterOptsMkup = HTMLContainer::generateMarkup("div","<strong>Filter Options:</strong>". $this->filterOptsMkup, array("class"=>"ui-widget-content ui-corner-all hhk-flex mr-5", "id"=>"filterOpts"));
         }
 
-        $this->filterMkup = HTMLContainer::generateMarkup("div", $this->filterMkup, array("id"=>"filterSelectors", "class"=>"hhk-flex"));
+        if($this->description != ""){
+            $descriptionMkup = HTMLContainer::generateMarkup("p", $this->description, array("class"=>"ui-widget ui-widget-content ui-corner-all mb-3 p-2", "style"=>"font-weight:500"));
+        }
+
+        $this->filterMkup = $descriptionMkup . HTMLContainer::generateMarkup("div", $this->filterMkup, array("id"=>"filterSelectors", "class"=>"hhk-flex"));
         $btnMkup = HTMLContainer::generateMarkup("div",
             $filterOptsMkup .
-            HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere", "id"=>"btnHere", "class"=>"ui-button ui-corner-all ui-widget")) .
-            HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel", "id"=>"btnExcel", "class"=>"ui-button ui-corner-all ui-widget"))
+            HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) .
+            HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget"))
         , array("id"=>"filterBtns", "class"=>"mt-3"));
 
         $emDialog = $this->generateEmailDialog();
@@ -161,7 +168,9 @@ abstract class AbstractReport {
             $tbl->addBodyTr($tr);
         }
 
-        return HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper'));
+        $this->rendered = true;
+
+        return HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display', 'style'=>'width:100%;')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper'));
     }
 
     public function generateSummaryMkup():string {
@@ -180,7 +189,9 @@ abstract class AbstractReport {
         $uS = Session::getInstance();
 
         return '
-        $("#tbl' . $this->inputSetReportName . 'rpt").dataTable({
+        $("#' . $this->inputSetReportName . '-includeFields").fieldSets({"reportName": "' . $this->inputSetReportName .  '", "defaultFields": ' . json_encode($this->getDefaultFields()) . '});' .
+
+        ($this->rendered ? '$("#tbl' . $this->inputSetReportName . 'rpt").dataTable({
             "columnDefs": [
             {"targets": ' . $jsonColumnDefs . ',
             "type": "date",
@@ -189,7 +200,7 @@ abstract class AbstractReport {
             ],
             "displayLength": 50,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bilf>rt<\"bottom ui-toolbar ui-helper-clearfix\"lp>",
+            "dom": "<\"top ui-toolbar ui-helper-clearfix\"Bilf><\"hhk-overflow-x\"rt><\"bottom ui-toolbar ui-helper-clearfix\"lp>",
             "buttons": [
             {
                 extend: "print",
@@ -202,12 +213,9 @@ abstract class AbstractReport {
                     return document.getElementById("repSummary").outerHTML;
                 },
                 messageBottom: function(){
-                    var url = "' . $uS->resourceURL . '";
-                    url = url.replace(/^(https\:\/\/)/,"");
-                    url = url.replace(/(\/)$/,"");
                     var now = moment().format("MMM d, YYYY h:mm a");
 
-                    return "<div style=\"padding-top: 10px; position: fixed; bottom: 0; right: 0\">Generated by <strong>' . $uS->username . '</strong> on " + now + " from Hospitality Housekeeper - " + url + "</div>";
+                    return "<div style=\"padding-top: 10px; position: fixed; bottom: 0; right: 0\">Generated by <strong>' . $uS->username . '</strong> on " + now + "</div>";
                 }
             },
             {
@@ -249,7 +257,8 @@ abstract class AbstractReport {
                 }
             }
         });
-';
+': '')  . $this->filter->getTimePeriodScript();
+
     }
 
     public function generateEmailStyles():string {
@@ -346,6 +355,8 @@ abstract class AbstractReport {
 
         $errors = array();
 
+        $subject = html_entity_decode($subject, ENT_QUOTES);
+
         $body = "<html><head>" . $this->generateEmailStyles() . "</head><body>" . $this->generateMarkup("email") . "</body></html>";
 
         if ($emailAddress == ''){
@@ -437,6 +448,10 @@ abstract class AbstractReport {
 
     public function getInputSetReportName(){
         return $this->inputSetReportName;
+    }
+
+    public function getColSelectorMkup(){
+        return $this->colSelector->makeSelectorTable(TRUE)->generateMarkup(array('id'=>$this->inputSetReportName . '-includeFields'));
     }
 
 }

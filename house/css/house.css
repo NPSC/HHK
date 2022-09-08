@@ -16,6 +16,10 @@ body {
 	--nav-text-color: #fff;
 }
 
+.fc {
+	--fc-event-border-color: #e9e9e9;
+}
+
 .no-close .ui-dialog-titlebar-close {
   display: none;
 }
@@ -111,6 +115,11 @@ body {
     max-width: 40%;
     max-height: 125px;
 }
+
+td.noteText {
+	white-space: pre-wrap;
+}
+
 .hhk-noteBox div {
     border: 1px solid #79B7E7;
     max-height: 100px;
@@ -327,8 +336,8 @@ div#global-title {
     font-size: 1.5em;
 }
 
-li.hhk-myMenuTop {
-    background-color: #3E6D8F;
+.navbar li.hhk-active {
+    background-color: var(--nav-active-color);
 }
 
 
@@ -688,6 +697,17 @@ div.dt-buttons .dt-button:hover>span {
 	box-shadow: inset 0 0 0 1000px rgb(0 0 0 / 30%)
 }
 
+@media (max-width: 768px){
+	#hospBtns {
+		display:flex;
+		overflow-x: scroll;
+	}
+	
+	#hospBtns button{
+		min-width: fit-content;
+	}
+}
+
 #page-title-row {
 	justify-content: space-between;
 	align-items: baseline;
@@ -727,4 +747,9 @@ div.dt-buttons .dt-button:hover>span {
 .ui-widget-content.hhk-widget-mobile, .hhk-mobile-tabs .ui-widget-content {
 	overflow-x: auto;
 	overflow-y: auto
+}
+
+table.dataTable tbody th,
+table.dataTable tbody td {
+    white-space: nowrap;
 }

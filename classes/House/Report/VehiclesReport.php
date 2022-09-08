@@ -41,7 +41,7 @@ class VehiclesReport extends AbstractReport implements ReportInterface {
 
         $mkup = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 
-        $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: Guets staying ' . date('M j, Y'));
+        $mkup .= HTMLContainer::generateMarkup('p', "Report Period: ".Labels::getString('MemberType', 'visitor', 'Guest'). "s staying " . date('M j, Y'));
 
         return $mkup;
     }

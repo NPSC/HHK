@@ -40,6 +40,76 @@ $dbh = $wInit->dbh;
 // get session instance
 $uS = Session::getInstance();
 
+function getGuestNights(\PDO $dbh, $start, $end, &$actual, &$preInterval) {
+
+    $uS = Session::getInstance();
+    $ageYears = $uS->StartGuestFeesYr;
+    $parm = "NOW()";
+    if ($end != '') {
+        $parm = "'$end'";
+    }
+
+    $stmt = $dbh->query("SELECT
+    s.idVisit,
+    s.Visit_Span,
+
+    CASE
+        WHEN
+            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) < DATE('$start')
+        THEN 0
+        WHEN
+            DATE(s.Span_Start_Date) >= DATE('$end')
+        THEN 0
+        ELSE
+            SUM(DATEDIFF(
+                CASE
+                    WHEN
+                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) >= DATE('$end')
+                    THEN
+                        DATE('$end')
+                    ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                END,
+                CASE
+                    WHEN DATE(s.Span_Start_Date) < DATE('$start') THEN DATE('$start')
+                    ELSE DATE(s.Span_Start_Date)
+                END
+            ))
+        END AS `Actual_Guest_Nights`,
+    CASE
+        WHEN DATE(s.Span_Start_Date) >= DATE('$start') THEN 0
+        WHEN
+            DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) <= DATE('$start')
+        THEN
+            SUM(DATEDIFF(DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))),
+                    DATE(s.Span_Start_Date)))
+        ELSE SUM(DATEDIFF(CASE
+                    WHEN
+                        DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date))) > DATE('$start')
+                    THEN
+                        DATE('$start')
+                    ELSE DATE(IFNULL(s.Span_End_Date, datedefaultnow(s.Expected_Co_Date)))
+                END,
+                DATE(s.Span_Start_Date)))
+    END AS `PI_Guest_Nights`
+
+FROM stays s JOIN name n ON s.idName = n.idName
+
+WHERE  IFNULL(DATE(n.BirthDate), DATE('1901-01-01')) < DATE(DATE_SUB(DATE(s.Checkin_Date), INTERVAL $ageYears YEAR))
+       AND DATE(s.Span_Start_Date) < DATE('$end')
+       and DATE(ifnull(s.Span_End_Date,
+       case
+       when now() > s.Expected_Co_Date then now()
+       else s.Expected_Co_Date
+       end)) >= DATE('$start')
+GROUP BY s.idVisit, s.Visit_Span");
+
+    while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+
+        $actual[$r['idVisit']][$r['Visit_Span']] = $r['Actual_Guest_Nights'] < 0 ? 0 : $r['Actual_Guest_Nights'];
+        $preInterval[$r['idVisit']][$r['Visit_Span']] = $r['PI_Guest_Nights'] < 0 ? 0 : $r['PI_Guest_Nights'];
+    }
+
+}
 
 function statsPanel(\PDO $dbh, $visitNites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup, $siteName) {
 
@@ -462,6 +532,17 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
     // Make titles for all the rates
     $rateTitles = RoomRate::makeDescriptions($dbh);
 
+    // Get Guest days
+    $actualGuestNights = [];
+    $piGuestNights = [];
+
+    if($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily){
+        // routine defines acutalGuestNights and piGuestNights.
+        getGuestNights($dbh, $start, $end, $actualGuestNights, $piGuestNights);
+
+    }
+
+
     $query = "select
     v.idVisit,
     v.Span,
@@ -518,9 +599,6 @@ function doReport(\PDO $dbh, ColumnSelectors $colSelector, $start, $end, $whHosp
                 END,
                 DATE(v.Span_Start))
     END AS `Pre_Interval_Nights`,
-
-    0 as `Actual_Guest_Nights`,
-    0 as `PI_Guest_Nights`,
 
     ifnull(rv.Visit_Fee, 0) as `Visit_Fee_Amount`,
     ifnull(n.Name_Last,'') as Name_Last,
@@ -622,7 +700,7 @@ where
         from
             visit
         where
-            `Status` <> 'p'
+            `Status` not in ('p', 'c')
                 and DATE(Arrival_Date) < DATE('$end')
                 and DATE(ifnull(Span_End,
                     case
@@ -954,25 +1032,24 @@ where
         $adjRatio = (1 + $r['Expected_Rate']/100);
         $visit['adj'] = $r['Expected_Rate'];
 
-        //  Add up any pre-interval charges
-        if ($r['Pre_Interval_Nights'] > 0) {
-
-            // collect all pre-charges
-            $priceModel->setCreditDays($r['Rate_Glide_Credit']);
-            $visit['preCh'] += ($priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], $r['PI_Guest_Nights']) * $adjRatio);
-
-        }
-
-
         $days = $r['Actual_Month_Nights'];
-        $gdays = $r['Actual_Guest_Nights'];
+        $gdays = isset($actualGuestNights[$r['idVisit']][$r['Span']]) ? $actualGuestNights[$r['idVisit']][$r['Span']] : 0;
 
         //$rates[] = $r['idRoom_Rate'];
         $visit['nit'] += $days;
         $totalCatNites[$r[$rescGroup[0]]] += $days;
         $visit['gnit'] += $gdays;
         $visit['pin'] += $r['Pre_Interval_Nights'];
-        $visit['gpin'] += $r['PI_Guest_Nights'];
+        $visit['gpin'] += isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0;
+
+        //  Add up any pre-interval charges
+        if ($r['Pre_Interval_Nights'] > 0) {
+
+            // collect all pre-charges
+            $priceModel->setCreditDays($r['Rate_Glide_Credit']);
+            $visit['preCh'] += ($priceModel->amountCalculator($r['Pre_Interval_Nights'], $r['idRoom_Rate'], $r['Rate_Category'], $r['Pledged_Rate'], (isset($piGuestNights[$r['idVisit']][$r['Span']]) ? $piGuestNights[$r['idVisit']][$r['Span']] : 0)) * $adjRatio);
+
+        }
 
         if ($days > 0) {
 
@@ -1262,7 +1339,7 @@ where
         }
 
         // Main data table
-        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact'));
+        $dataTable = $tbl->generateMarkup(array('id'=>'tblrpt', 'class'=>'display compact', 'style'=>'width:100%'));
 
         // Stats panel
         $statsTable = statsPanel($dbh, $nites, $rates, $totalCatNites, $start, $end, $categories, $avDailyFee, $medDailyFee, $rescGroup[0], $uS->siteName);
@@ -1691,7 +1768,7 @@ if ($uS->CoTod) {
                  ],
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
+                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><"hhk-overflow-x"rt><"bottom ui-toolbar ui-helper-clearfix"lp><"clear">',
             });
             $('#printButton').button().click(function() {
                 $("div#printArea").printArea();

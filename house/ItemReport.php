@@ -680,7 +680,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                  ],
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf>rt<"bottom ui-toolbar ui-helper-clearfix"ilp><"clear">',
+                "dom": '<"top ui-toolbar ui-helper-clearfix"ilf><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"ilp><"clear">',
                 "order": [[ sortCol, 'asc' ]]
             });
 

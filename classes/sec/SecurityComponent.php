@@ -223,7 +223,8 @@ class SecurityComponent {
 
     public function setResourceURL(\PDO $dbh){
         try{
-            if(SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL') == ''){
+            $resourceURL = SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL');
+            if($resourceURL == '' || $resourceURL == "http://./"){
                 SysConfig::saveKeyValue($dbh, "sys_config", "resourceURL", $this->getRootURL());
             }
             return SysConfig::getKeyValue($dbh, 'sys_config', 'resourceURL', '');

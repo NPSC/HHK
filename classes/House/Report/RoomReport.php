@@ -62,7 +62,7 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $niteCount;
     }
 
-    protected static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths) {
+    protected static function getGlobalStaysCount(\PDO $dbh, $year = '', $fiscalYearMonths = 0) {
 
         $whClause = '';
         if ($year != '') {
@@ -565,7 +565,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
         $tbl->addHeaderTr(HTMLTable::makeTh(' ') . $thMonth . HTMLTable::makeTh(' ', array('colspan'=>'3')));
         $tbl->addHeaderTr(HTMLTable::makeTh('Room (' . (count($days)-1) . ')') . $th . HTMLTable::makeTh('Room') . HTMLTable::makeTh('Total') . HTMLTable::makeTh('Occupied'));
 
-        $mkup = $tbl->generateMarkup();
+        $mkup = $tbl->generateMarkup(array("class"=>"mt-2 mb-2"));
 
 
         // Category report
@@ -591,7 +591,7 @@ and DATE(s.Span_Start_Date) < '" . $endDT->format('Y-m-d') . "' and ifnull(DATE(
             $tbl2->addBodyTr($td);
         }
 
-        $mkup .= $tbl2->generateMarkup();
+        $mkup .= $tbl2->generateMarkup(array("class"=>"mt-2 mb-2"));
 
         return $mkup;
     }
@@ -793,7 +793,7 @@ and DATE(v.Span_Start) < DATE('" . $endDT->format('Y-m-d') . "') and DATE(ifnull
 
         foreach ($days as $idRm => $rdateArray) {
 
-            $tds = HTMLTable::makeTd($rescs[$idRm]['Title'], array('style'=>'font-family: \"Times New Roman\", Times, serif;'));
+            $tds = HTMLTable::makeTd($rescs[$idRm]['Title']);
 
             $daysOccupied['n'] = 0;
             $daysOccupied['o'] = 0;

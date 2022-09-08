@@ -1288,7 +1288,7 @@ class HouseServices {
 
         EditRS::loadRow($visits[0], $visitRs);
 
-        if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn) {
+        if ($visitRs->Status->getStoredVal() == VisitStatus::CheckedIn || $visitRs->Status->getStoredVal() == VisitStatus::Cancelled) {
             return array("error" => "Cannot add guest here.  ");
         }
 

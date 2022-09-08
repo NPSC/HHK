@@ -2079,7 +2079,7 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
 			join
 		registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a' && n.flag = '0'
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && n.flag = '0' and v.`Status` <> 'c'
 	UNION SELECT
         n.idNote AS `Note_Id`,
         n.idNote AS `Action`,
@@ -2101,7 +2101,7 @@ CREATE OR REPLACE VIEW `vvisit_notes` AS
 			join
 		registration reg on r.idRegistration = reg.idRegistration
     WHERE
-        rn.Reservation_Id > 0 && n.`Status` = 'a' && flag = '1';
+        rn.Reservation_Id > 0 && n.`Status` = 'a' && flag = '1' and v.`Status` <> 'c';
 
 
 -- -----------------------------------------------------
@@ -2728,7 +2728,8 @@ CREATE or replace VIEW `vspan_listing` AS
         left join `hospital_stay` `hs` ON `v`.`idHospital_stay` = `hs`.`idHospital_stay`
         left join `name` n on hs.idPatient = n.idName
         left join `gen_lookups` `g2` ON `g2`.`Table_Name` = 'Visit_Status'
-            and `g2`.`Code` = `v`.`Status`;
+            and `g2`.`Code` = `v`.`Status`
+	WHERE v.`Status` <> 'c';
 
 
 -- -----------------------------------------------------
@@ -2883,7 +2884,8 @@ from
         left join
     room rm on re.idRoom = rm.idRoom
         left join
-    gen_lookups g on g.`Table_Name` = 'Key_Deposit_Code' and g.`Code` = rm.Key_Deposit_Code;
+    gen_lookups g on g.`Table_Name` = 'Key_Deposit_Code' and g.`Code` = rm.Key_Deposit_Code
+WHERE v.`Status` <> 'c';
 
 
 

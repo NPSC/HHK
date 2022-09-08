@@ -33,7 +33,7 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
 
     public function makeFilterMkup(): void
     {
-        $this->filterMkup .= $this->colSelector->makeSelectorTable(TRUE)->generateMarkup(array('id'=>'includeFields'));
+        $this->filterMkup .= $this->getColSelectorMkup();
     }
 
     public function makeSummaryMkup(): string
@@ -41,7 +41,7 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
 
         $mkup = HTMLContainer::generateMarkup('p', 'Report Generated: ' . date('M j, Y'));
 
-        $mkup .= HTMLContainer::generateMarkup('p', 'Report Period: Guets staying ' . date('M j, Y'));
+        $mkup .= HTMLContainer::generateMarkup('p', "Report Period: " . Labels::getString('MemberType', 'visitor', 'Guest'). "s staying " . date('M j, Y'));
 
         return $mkup;
     }
@@ -70,7 +70,7 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
         $eFields = array('EC Name', 'EC Phone Home', 'EC Phone Alternate');
         $eTitles = array('Emergency Contact', 'Emergency Contact Home Phone', 'Emergency Contact Alternate Phone');
 
-        $cFields[] = array($eTitles, $eFields, '', '', 's', '', array());
+        $cFields[] = array($eTitles, $eFields, '', '', 'string', '20', array());
 
         if ($uS->TrackAuto) {
             $cFields[] = array('Make', 'Make', 'checked', '', 'string', '20');
@@ -87,6 +87,16 @@ class CurrentGuestReport extends AbstractReport implements ReportInterface {
     public function makeQuery(): void
     {
         $this->query = "select * from vguest_view";
+    }
+
+    public function generateMarkup(string $outputType = ""){
+        $this->getResultSet();
+
+        foreach($this->resultSet as $k=>$r) {
+            $this->resultSet[$k]['On_Leave'] = ($this->resultSet[$k]['On_Leave'] > 0 ? "Yes":"");
+        }
+
+        return parent::generateMarkup($outputType);
     }
 
 }

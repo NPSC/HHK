@@ -127,7 +127,7 @@ class UserClass
             } else {
                 $this->incrementTries();
                 $this->logMessage = "Bad username or password.  ";
-                $this->insertUserLog($dbh, UserClass::Login_Fail, $username);
+                $this->insertUserLog($dbh, UserClass::Login_Fail, ($username != "" ? $username : "<empty>"));
             }
         }
 

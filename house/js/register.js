@@ -240,7 +240,18 @@ function getStatusEvent(idResc, type, title) {
             } else if (data.tbl) {
                 
                 $('#statEvents').children().remove().end().append($(data.tbl));
-                $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy'});
+                $('.ckdate').datepicker({autoSize: true, dateFormat: 'M d, yy',
+                	beforeShow: function(el,ui){
+                		var startEl = $(this).closest('tr').find('[id^="txtstart"]');
+                		var endEl = $(this).closest('tr').find('[id^="txtend"]');
+                		if($(this).attr("id").startsWith("txtstart") && endEl.val() != ''){
+                			$(this).datepicker('option',"maxDate", endEl.val());
+                		}
+                		if($(this).attr("id").startsWith("txtend") && startEl.val() != ''){
+                			$(this).datepicker('option', "minDate", startEl.val());
+                		}
+                	}
+                });
                 var buttons = {
                     "Save": function () {
                         saveStatusEvent(idResc, type);
@@ -835,6 +846,9 @@ $(document).ready(function () {
         modal: true,
         title: 'Manage Status Events'
     });
+    
+    //turn off autofocus
+    $("#statEvents").data("uiDialog")._focusTabbable = function(){};
 
     $('#keysfees').dialog({
         autoOpen: false,
@@ -1249,7 +1263,8 @@ $(document).ready(function () {
                     //2nd ribbon color
                     if (info.event.extendedProps.backBorderColor != '') {
                     	
-                    	info.el.style.cssText += 'border-bottom: 9px solid ' + info.event.extendedProps.backBorderColor;
+                    	info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
+                    	
                     }
                     
                 // visits
@@ -1268,7 +1283,7 @@ $(document).ready(function () {
                     //2nd ribbon color
                     if (info.event.extendedProps.backBorderColor != '') {
                     	
-                    	info.el.style.cssText += 'border-bottom: 9px solid ' + info.event.extendedProps.backBorderColor;
+                    	info.el.style.cssText += 'box-shadow: ' + info.event.extendedProps.backBorderColor + ' 0px 9px 0 0; margin-bottom:10px;';
                     }
 
                 // Out of service
@@ -1650,7 +1665,8 @@ $(document).ready(function () {
            		}
            });
        },
-       columns: cgCols
+       columns: cgCols,
+       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
     
     
@@ -1668,7 +1684,7 @@ $(document).ready(function () {
            });
        },
        columns: rvCols,
-
+       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
     
     if ($('#unreserv').length > 0) {
@@ -1685,7 +1701,8 @@ $(document).ready(function () {
            			}
            		});
            },
-           columns: rvCols
+           columns: rvCols,
+       		"dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
         });
     }
     
@@ -1703,7 +1720,8 @@ $(document).ready(function () {
            		}
            });
        },
-       columns: wlCols
+       columns: wlCols,
+       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
 
 });

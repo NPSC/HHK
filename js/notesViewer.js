@@ -220,6 +220,8 @@
     
     function actions($wrapper, settings, $table) {
         
+        $wrapper.off('click');
+        
         //Show Edit mode
         $wrapper.on('click', '.note-edit', function(e){
             e.preventDefault();
@@ -413,7 +415,7 @@
 		        "sorting": [[0,'desc'], [2,'desc']],
 		        "displayLength": settings.defaultLength,
 		        "lengthMenu": settings.defaultLengthMenu,
-	                "dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
+	                "dom": '<"dtTop"if><"hhk-overflow-x"rt><"dtBottom"lp><"clear">',
 		        ajax: {
 		            url: settings.serviceURL,
 	                data: {

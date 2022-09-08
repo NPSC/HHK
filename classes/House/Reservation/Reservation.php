@@ -138,7 +138,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
             ->setResvStatusCode($rows[0]['Status']);
 
         if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
-            return new ActiveReservation($rData, $rRs, new Family($dbh, $rData));
+            return new ActiveReservation($rData, $rRs, new Family($dbh, $rData, $uS->EmergContactReserv));
         }
 
         if ($rRs->Status->getStoredVal() == ReservationStatus::Staying) {
@@ -151,7 +151,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         // Turned away, cancelled, etc.
-        return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
+        return new StaticReservation($rData, $rRs, new Family($dbh, $rData, $uS->EmergContactReserv));
 
     }
 
@@ -1126,10 +1126,10 @@ WHERE
     	$stmt = $dbh->query("select vi.idVisit, vi.Span, vi.Span_Start, vi.Span_End, vi.`Status`, g.Description as `Status_Title`, vi.idPrimaryGuest, r.Title as `Room`
 	from visit vi left join resource r on vi.idResource = r.idResource
     left join gen_lookups g on g.Table_Name = 'Visit_Status' and g.Code = vi.`Status`
- where vi.Span_Start =
+ where vi.Status not in ('".VisitStatus::Cancelled."', '".VisitStatus::Pending."') and vi.Span_Start =
 	(SELECT  MAX(v.Span_Start)
 		FROM visit v LEFT JOIN registration rg ON v.idRegistration = rg.idRegistration
-	WHERE rg.idPsg = " . $this->reserveData->getIdPsg() .")");
+	WHERE vi.Status not in ('".VisitStatus::Cancelled."', '".VisitStatus::Pending."') and rg.idPsg = " . $this->reserveData->getIdPsg() .")");
 
     	$rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
     	$mkup = '';

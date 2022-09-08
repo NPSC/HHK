@@ -469,7 +469,12 @@ class History {
             // Room name?
             $fixedRows["Room"] = $r["Room"];
             if ($page != '') {
-                $fixedRows["Room"] = HTMLContainer::generateMarkup('span', $r["Room"], array('style'=>'background-color:' . $r["backColor"]. ';color:' . $r["textColor"] . ';'));
+                $roomStyle = [];
+                //only show room color if enabled in site config
+                if($uS->Room_Colors == "room"){
+                    $roomStyle['style'] = 'background-color:' . $r["backColor"]. ';color:' . $r["textColor"] . ';';
+                }
+                $fixedRows["Room"] = HTMLContainer::generateMarkup('span', $r["Room"], $roomStyle);
 
                 if ($r['Room_Status'] != RoomState::Clean && $r['Room_Status'] != RoomState::Ready && $r['Cleaning_Cycle_Code'] != $noCleaning) {
                 	$fixedRows['Room'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-notice', 'style'=>'float:right;', 'title'=>'Room is '.$roomStatuses[RoomState::Dirty][1]));

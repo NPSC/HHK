@@ -243,7 +243,7 @@ where ru.idResource_use is null
         $this->getRoomOosEvents($dbh, $beginDate, $endDate, $timezone, $events);
 
         // Visits
-        $query = "select * from vregister where Visit_Status <> '" . VisitStatus::Pending . "' and
+        $query = "select * from vregister where Visit_Status not in ('" . VisitStatus::Pending . "' , '" . VisitStatus::Cancelled . "') and
             DATE(Span_Start) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull(DATE(Span_End), case when DATE(now()) > DATE(Expected_Departure) then DATE(now()) else DATE(Expected_Departure) end) >= DATE('" .$beginDate->format('Y-m-d') . "');";
         $stmtv = $dbh->query($query);
 
