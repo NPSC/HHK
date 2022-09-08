@@ -1229,7 +1229,7 @@ if ($uS->UseIncidentReports) {
         var makeTable = '<?php echo $mkTable; ?>';
         $('#btnHere, #btnExcel').button();
         if (makeTable >= 1) {
-            $('div#printArea').addClass("d-inline-block");
+            $('div#printArea').addClass("d-block");
             $('#divPrintButton').show();
 
             if (makeTable == 1) {
@@ -1299,10 +1299,10 @@ if ($uS->UseIncidentReports) {
     <body <?php if ($wInit->testVersion) echo "class='testbody'"; ?>>
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-        	<div class="title" style="margin-bottom: 1em;">
-            	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span style="margin-left: 1em;">Report shows people who stayed in the time frame selected below</span>
+        	<div class="title mb-3">
+            	<h2 style="display: inline-block"><?php echo $wInit->pageHeading; ?></h2><span class="ml-3">Report shows people who stayed in the time frame selected below</span>
             </div>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="min-width: 900px; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog p-2" style="font-size:0.9em; max-width:1280px;">
                 <form id="fcat" action="PSGReport.php" method="post">
                     <fieldset class="hhk-panel" style="margin-bottom: 15px;"><legend style='font-weight:bold;'>Report Type</legend>
                      <table style="width:100%">
@@ -1323,7 +1323,7 @@ if ($uS->UseIncidentReports) {
                         	<td><?php echo $selirStat; ?></td>
                         </tr>
                     </table>
-                    <div class="filters" style="display: flex; align-items: flex-start;">
+                    <div class="filters hhk-flex hhk-flex-wrap">
                     <?php
                         echo $timePeriodMarkup;
 
@@ -1393,9 +1393,8 @@ if ($uS->UseIncidentReports) {
                     </table>
                 </form>
             </div>
-            <div style="clear:both;"></div>
             <div id="divPrintButton" style="display:none; margin: 10px 0;"><input id="printButton" value="Print" type="button" /></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog ui-corner-all" style="display:none; font-size: .8em; padding: 5px; padding-bottom:25px;">
+            <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog ui-corner-all p-2 pb-3 hhk-overflow-x" style="display:none; font-size: .8em; max-width:fit-content">
                 <div style="margin-bottom:.5em;"><?php echo $settingstable; ?></div>
                 <?php echo $dataTable; ?>
             </div>

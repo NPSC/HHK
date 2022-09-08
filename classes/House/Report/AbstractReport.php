@@ -355,6 +355,8 @@ abstract class AbstractReport {
 
         $errors = array();
 
+        $subject = html_entity_decode($subject, ENT_QUOTES);
+
         $body = "<html><head>" . $this->generateEmailStyles() . "</head><body>" . $this->generateMarkup("email") . "</body></html>";
 
         if ($emailAddress == ''){

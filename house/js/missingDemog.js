@@ -73,13 +73,13 @@ $(document).ready(function () {
         "sorting": [[0,'desc']],
         "displayLength": 25,
         "lengthMenu": [[10, 25, 50], [10, 25, 50]],
-        "dom": '<"top fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-tl ui-corner-tr"lf>rt<"bottom fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-bl ui-corner-br"ip>',
+        "dom": '<"top fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-tl ui-corner-tr"lf><"hhk-overflow-x"rt><"bottom fg-toolbar ui-toolbar ui-widget-header ui-helper-clearfix ui-corner-bl ui-corner-br"ip>',
         ajax: {
             url: "GuestDemog.php?cmd=getMissingDemog"
         },
-        "fixedHeader": {
+        /* "fixedHeader": {
         	headerOffset: 38,
-        },
+        }, */
         "initComplete": function(settings, json) {
         	$('.bottom').append('<div class="savebtns" style="float:right; padding-top: 0.25em;"><button id="dt-cancel" style="padding:0.5em; margin-right: 2px;">Cancel</button><button id="dt-save" style="padding:0.5em; margin-left: 2px;">Save</button></div>');
         	$('.bottom .savebtns').buttonset().hide();
