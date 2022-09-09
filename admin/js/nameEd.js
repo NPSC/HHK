@@ -531,7 +531,7 @@ $(document).ready(function () {
     
 
     $('#divFuncTabs').css('display', 'block');
-    $('.hhk-showonload').css('display', 'block');
+    $('.hhk-showonload').show();
     //show details/hide details
     $(".toggle-docs-detail").toggle(function(){
 
