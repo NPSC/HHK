@@ -77,10 +77,18 @@ body.testbody {
     cursor:pointer;
 }
 .hhk-member-detail {
-    float:left;
+	max-width:fit-content;
     padding: 0.7em 0.7em;
     font-size: 0.9em;
 }
+
+.ui-widget-content.hhk-widget-content {
+	max-width:fit-content;
+    padding: 0.7em 0.7em;
+    font-size: 0.9em;
+    overflow-x:auto;
+}
+
 .hhk-loginLabel {
     text-align:right;
     padding: 5px;
@@ -102,6 +110,11 @@ table.hhk-badAddress {
 h1, h2, h3 {
     padding: 3px 5px;
 }
+
+h2 {
+	margin-bottom:0.5em;
+}
+
 h2.logo {
     position: absolute;
     top: 0px;

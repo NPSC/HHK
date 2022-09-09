@@ -234,17 +234,24 @@ $getSiteReplyMessage = '';
 
     }); // end of doc load
         </script>
+        <style>
+            #divSubmitButtons {
+                position:sticky;
+                text-align:right;
+                margin-right:1em;
+                bottom: 10px;
+        </style>
     </head>
     <body <?php if ($testVersion) {echo "class='testbody'";} ?>>
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="margin-bottom: 10px; margin-right: 10px;">
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <?php echo $siteMarkup; ?>
             </div>
             <div id="divAlertMsg" style="clear:both;"><?php echo $resultMessage; ?></div>
             <form id="frmPages" action="#" method="post" style="display:none;">
-                <div id="sitepages" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="margin-bottom: 10px;"></div>
+                <div id="sitepages" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3"></div>
                 <div id="divSubmitButtons" class="ui-corner-all">
                     <input type="reset" name="btnReset" value="Reset" id="btnReset" />
                     <input type="submit" name="btnSubmit" value="Save" title="Save all changes." id="btnSubmit" />

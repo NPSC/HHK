@@ -125,7 +125,7 @@ while ($row = $stmtCat->fetch(\PDO::FETCH_NUM)) {
             $typeRows .= HTMLContainer::generateMarkup('li', $r[0] . ': ' . $r[1]);
         }
 
-        $typeDump .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('p', $row[1]). HTMLContainer::generateMarkup('ul', $typeRows, array('style'=>'margin:5px')), array('style'=>'float:left;margin-right:5px;', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-member-detail'));
+        $typeDump .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h4', $row[1]). HTMLContainer::generateMarkup('ul', $typeRows, array('style'=>'margin:5px')), array('class'=>'ui-widget ui-widget-content ui-corner-all hhk-widget-content mx-2'));
 
     }
 }
@@ -248,7 +248,7 @@ while ($rw = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $tr .= HTMLTable::makeTd(getDayControl('rbFri[0]', '0'), $dayAttrs);
     $tr .= HTMLTable::makeTd(getDayControl('rbSat[0]', '0'), $dayAttrs);
 
-    $tbl->addBodyTr(HTMLTable::makeTd('New Entry', array('colspan'=>'16')));
+    //$tbl->addBodyTr(HTMLTable::makeTd('New Entry', array('colspan'=>'16')));
     $tbl->addBodyTr($tr);
 
 
@@ -300,14 +300,11 @@ $evtShellMarkup = $tbl->generateMarkup(array('id'=>'dataTbl'));
 
         <script type="text/javascript">
     $(document).ready(function() {
-        try {
-            if ($('#dataTbl').length > 0) {
-                $('#dataTbl').dataTable({"iDisplayLength": 10,
-                    "aLengthMenu": [[10, 20, -1], [10, 20, "All"]]
-                    , "Dom": '<"top"ilf>rt<"bottom"ip>'
-                });
-            }
-        } catch (err) { }
+        $('#dataTbl').dataTable({
+            "displayLength": 50,
+            "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
+            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"p>',
+        });
 
         $( "input.ckdate" ).datepicker({
             changeMonth: true,
@@ -325,10 +322,12 @@ $evtShellMarkup = $tbl->generateMarkup(array('id'=>'dataTbl'));
 
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <form method="post">
-            <div id="tabs-3" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
+            <div id="tabs-3" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content">
+            	<div class="hhk-flex mb-3">
                 <?php echo $typeDump ?>
+                </div>
                 <?php echo $evtShellMarkup ?>
-                <input type="submit" id="btnSubmit" name="btnSubmit" value="Save" style="float:right; margin:5px;" />
+                <div style="text-align:right;" class="p-3"><input type="submit" id="btnSubmit" name="btnSubmit" value="Save" /></div>
             </div>
             </form>
         </div>

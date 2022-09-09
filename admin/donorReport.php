@@ -108,8 +108,7 @@ if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
 $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
 
 ?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-    "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE html>
 <html>
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
@@ -150,7 +149,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
             listTable = $('#tblDonor').dataTable({
                 "displayLength": 50,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]]
-                , "dom": '<"top"ilf>rt<"bottom"p>',
+                , "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"p>',
                 "order": [[2,'asc'], [3,'asc']]
             });
 
@@ -196,12 +195,10 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="vdonor" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" >
+        	<h2>Donor Report</h2>
+            <div id="vdonor" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3" >
                 <form id="fDonor" action="donorReport.php" method="post">
                     <table>
-                        <tr>
-                            <td colspan="4"><h2>Donor Report</h2></td>
-                        </tr>
                         <tr>
                             <th>Campaigns</th>
                             <th>Date Range</th>
@@ -257,18 +254,17 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                                 <input type="hidden" id="hdnseldDor" value="" /></td>
                             <td colspan="2"><input type="checkbox" name="exDeceased" id="exDeceased" <?php echo $exDeceasedChecked; ?>/><label for="exDeceased"> Include Deceased Members</label></td>
                         </tr>
-                        <tr>
-                            <td colspan="4" style="text-align:right;"><input name="btnDonors" type="submit" value="Run Report" />
-                                <input name="btnDonDL" type="submit" value="Download File" /></td>
-                        </tr>
                     </table>
+                    <div class="hhk-flex mt-3" style="justify-content: space-evenly;">
+                    	<input name="btnDonors" type="submit" value="Run Report" />
+                        <input name="btnDonDL" type="submit" value="Download File" />
+                    </div>
                 </form>
             </div>
-            <div style="clear:both;"></div>
-            <div id="printArea" style="display: none; margin-top: 10px;" class="ui-widget ui-widget-content">
-                <div style="float: left;"><table style="margin-bottom:10px;"><?php echo $donHdrMarkup; ?></table></div>
-                <div style="float: left;">&nbsp;<input id='Print_Button' type='button' value='Print'/></div>
-                <table id="tblDonor" style="font-size:.9em;" class="display"><?php echo $donmarkup; ?></table>
+            <div id="printArea" style="display: none;" class="ui-widget ui-widget-content hhk-widget-content ui-corner-all mb-3">
+                <div class="mb-3"><table><?php echo $donHdrMarkup; ?></table></div>
+                <div><input id='Print_Button' type='button' value='Print'/></div>
+                <table id="tblDonor" class="display"><?php echo $donmarkup; ?></table>
             </div>
         </div>
     </body>

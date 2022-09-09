@@ -187,8 +187,8 @@ try {
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-member-detail"  style="background:#EFDBC2; margin-bottom:10px;">
-                <div style="float: left; border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3"  style="background:#EFDBC2;">
+                <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
                     <span>Search: </span>
                     <span style="margin: 0 10px;">
                         <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" value="m" />
@@ -197,8 +197,7 @@ try {
                     <input type="search" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
                 </div>
             </div>
-            <div style="clear:both; margin-top:50px"></div>
-            <div id="historyTabs" class="hhk-member-detail" style="margin-bottom: 10px; display:none;">
+            <div id="historyTabs" class="hhk-widget-content mb-3" style="display:none;">
                 <ul>
                     <li><a href="#memHistory">Member History</a></li>
                     <?php

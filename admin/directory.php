@@ -160,7 +160,7 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
                     $('#tblDirectory').dataTable({
                         "displayLength": 50,
                         "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                        "dom": '<"top"ilf>rt<"bottom"p>',
+                        "dom": '<"top"ilf><"hhk-overflow-x"rt><"bottom"p>',
                         "order": [[1,'asc'], [2,'asc']]
                     });
                 }
@@ -173,9 +173,9 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?> - Excludes Guests and Patients.</h2>
-            <div id="vdirectory"  class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
+            <div id="vdirectory"  class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="fDirectory" action="directory.php" method="post">
-                    <table style="width:600px;">
+                    <table>
                         <tr>
                             <td>
                                 <?php echo $selDirType->createMarkup(3); ?>
@@ -193,15 +193,14 @@ if (isset($_POST["btnExcel"]) || isset($_POST["btnHere"])) {
                         <tr>
                             <td colspan="3">Last mail list refresh date: <span style="font-weight: bold;"><?php echo $refreshDate." "; ?><input type="submit" name="btnPrep" value="Prepare Address Table" /></span></td>
                         </tr>
-                        <tr>
-                            <td colspan="2" class="tdlabel"><input name="btnHere" id="btnHere" type="submit" value="Run Here" /></td>
-                            <td class="tdlabel"><input id="btnExcel" name="btnExcel" type="submit" value="Download Excel File" /></td>
-                        </tr>
                     </table>
+                    <div class="hhk-flex mt-3" style="justify-content: space-evenly;">
+                    	<input name="btnHere" id="btnHere" type="submit" value="Run Here" />
+                        <input id="btnExcel" name="btnExcel" type="submit" value="Download Excel File" />
+                    </div>
                 </form>
             </div>
-            <div style="clear: both"></div>
-                <?php echo $dirmarkup; ?>
+            <?php echo $dirmarkup; ?>
 
             <div id="submit"></div>
         </div>

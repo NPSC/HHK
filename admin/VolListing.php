@@ -137,7 +137,7 @@ $volReport = $markup;
         $('#dataTbl').dataTable({
             "displayLength": 25,
             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-            "Dom": '<"top"ilf>rt<"bottom"ip>'
+            "dom": '<"top"ilf><"hhk-overflow-x"rt><"bottom"ip>'
         });
         $('div#vollisting').on('change', 'input.delCkBox', function() {
             if ($(this).prop('checked')) {
@@ -185,10 +185,10 @@ $volReport = $markup;
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div id="vollisting" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
+            <div id="vollisting" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content">
                 <?php echo $noReport ?>
                 <table id="dataTbl" class="display">
-<?php echo $volReport ?>
+					<?php echo $volReport ?>
                 </table>
             </div>
         </div>

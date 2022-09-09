@@ -14,9 +14,6 @@ use HHK\sec\Session;
  */
 require("AdminIncludes.php");
 
-// require(CLASSES . "chkBoxCtrlClass.php");
-// require(CLASSES . "selCtrl.php");
-
 $wInit = new webInit();
 
 $dbh = $wInit->dbh;
@@ -160,7 +157,7 @@ foreach ($catSelCtrls as $sel) {
                         listTable = $('#tblCategory').dataTable({
                             "displayLength": 50,
                             "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                            "dom": '<"top"ilf>rt<"bottom"p>',
+                            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"p>',
                             "order": [[1,'asc'], [2,'asc']]
                         });
                     }
@@ -177,11 +174,10 @@ foreach ($catSelCtrls as $sel) {
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
+        	<h2><?php echo $wInit->pageHeading; ?></h2>
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="fcat" action="categoryReport.php" method="post">
-                    <table><tr>
-                            <td colspan="4"><h2><?php echo $wInit->pageHeading; ?></h2></td>
-                        </tr>
+                    <table>
                         <tr>
                             <?php echo $catSelTitleMarkup; ?>
                         </tr><tr>
@@ -206,33 +202,27 @@ foreach ($catSelCtrls as $sel) {
                             </td><td>
                                 <?php echo $catSelRoles->createMarkup($catSelRoles->get_rows(), true); ?>
                             </td>
-                        </tr></table>
-                    <table><tr>
-                            <td style="text-align:center; vertical-align: bottom; height:25px;" colspan="4"><h4>Regular Category Reports:</h4></td>
                         </tr>
-                        <tr>
-                            <td style="text-align:center;" colspan="4"><input type="submit" name="btnCSVEmail" value="Run Email List" />&nbsp;
-                                <input type="submit" name="btnCat" value="Run Category Report" />&nbsp;
-                                <input type="submit" name="btnCatDL" value="Download Category Excel File" /></td>
-                        </tr>
-                        <!--<tr>
-                            <td style="text-align:center; vertical-align: bottom; height:35px;" colspan="4"><h4>Mail Listing Format Category Reports:</h4></td>
-                        </tr>
-                        <tr><td style="text-align:center;" colspan="4"><input type="submit" name="btnMlCat" value="Run Category Mail Listing Report" />&nbsp;
-                                <input type="submit" name="btnMlCatDL" value="Download Category Mail Listing Excel File" />
-                            </td>
-                        </tr>-->
                     </table>
+                    <h4 style="text-align:center;" class="mt-3">Regular Category Reports:</h4>
+                    <div class="hhk-flex mt-1" style="justify-content: space-evenly;">
+                    	<input type="submit" name="btnCSVEmail" value="Run Email List" />
+                        <input type="submit" name="btnCat" value="Run Category Report" />
+                        <input type="submit" name="btnCatDL" value="Download Category Excel File" />
+                    </div>
                 </form>
             </div>
-            <div style="clear:both;"></div>
-            <div id="printArea" style="font-size:.9em;display:none;float:left;" class="ui-widget ui-widget-content">
-                <table style="margin-top:40px; margin-bottom:10px; min-width: 350px;">
+            <div id="printArea" style="display:none;" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content">
+            	<?php if($catagoryHeadertable != "") { ?>
+                <table class="my-3" style="min-width: 350px;">
                     <?php echo $catagoryHeadertable; ?>
                 </table>
+                <?php } ?>
+                <?php if($catmarkup != ""){ ?>
                 <table id="tblCategory" class="display">
                     <?php echo $catmarkup; ?>
                 </table>
+                <?php } ?>
             </div>
             <div id="submit"></div>
         </div>
