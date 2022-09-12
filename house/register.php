@@ -343,6 +343,7 @@ if($uS->useOnlineReferral){
         <?php echo $wInit->generatePageMenu(); ?>
         <div id="contentDiv">
             <div>
+            <form autocomplete="off">
                 <h2 class="hhk-flex" id="page-title-row">
                 	<span class="mb-3 mb-md-0"><?php echo $wInit->pageHeading;?></span>
                 	<?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); echo RoomReport::getGlobalStaysCounter($dbh); ?>
@@ -350,6 +351,7 @@ if($uS->useOnlineReferral){
                     	<input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
                 	</span>
                 </h2>
+                </form>
             </div>
 
             <div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div>

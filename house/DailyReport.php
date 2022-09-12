@@ -111,7 +111,9 @@ $dailyLog = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Log'
             </div>
             <div style="clear:both;"></div>
             <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox" style="font-size: .9em; padding: 5px; padding-bottom:25px; margin: 10px 0;">
+            <form autocomplete="off">
                 <?php echo $dailyLog; ?>
+                </form>
             </div>
         </div>
 

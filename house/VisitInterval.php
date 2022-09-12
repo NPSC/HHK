@@ -1877,7 +1877,9 @@ if ($uS->CoTod) {
                 <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $headerTable; ?>
                 </div>
+                <form autocomplete="off">
                 <?php echo $dataTable; ?>
+                </form>
             </div>
         </div>
         <input  type="hidden" id="rctMkup" value='<?php echo $receiptMarkup; ?>' />

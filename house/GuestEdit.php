@@ -745,6 +745,7 @@ $uS->guestId = $id;
                 <div style="margin-top:5px;">
                     <?php echo $guestName; ?>
                 </div>
+                <form autocomplete="off">
                 <div class="ui-widget ui-widget-content ui-corner-all row" style="font-size:.9em;background:#EFDBC2; margin:10px; padding:5px;">
                     <div class="col-12 col-md mb-2 mb-md-0 hhk-flex">
                     	<label for="txtsearch" style="min-width:fit-content" class="mr-2">Name Search </label>
@@ -761,6 +762,7 @@ $uS->guestId = $id;
                     	<input type="search" class="allSearch" id="txtPhsearch" size="15" title="Enter at least 5 numerals to invoke search" style="width: 100%" />
                 	</div>
                 </div>
+                </form>
             </div>
             <?php if ($alertMessage != '') { ?>
             <div class="alertContainer">

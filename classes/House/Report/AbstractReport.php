@@ -170,7 +170,7 @@ abstract class AbstractReport {
 
         $this->rendered = true;
 
-        return HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display', 'style'=>'width:100%;')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper'));
+        return HTMLContainer::generateMarkup('form', HTMLContainer::generateMarkup("div", $this->generateSummaryMkup() . $tbl->generateMarkup(array('id'=>'tbl' . $this->inputSetReportName . 'rpt', 'class'=>'display', 'style'=>'width:100%;')), array('class'=>"ui-widget ui-widget-content ui-corner-all hhk-tdbox", 'id'=>'hhk-reportWrapper')), array('autocomplete'=>'off'));
     }
 
     public function generateSummaryMkup():string {

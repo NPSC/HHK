@@ -226,9 +226,11 @@ if ($cmd){
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
+            <form autocomplete="off">
             <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox mt-3 p-2" style="font-size:.8em; max-width: fit-content;">
                 <table id="dataTbl"></table>
             </div>
+            </form>
             <input type="hidden" id="columns" value='<?php echo json_encode($columns); ?>'>
             <input type="hidden" id="demos" value='<?php echo json_encode($demos); ?>'>
         </div>

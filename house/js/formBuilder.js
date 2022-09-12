@@ -1062,6 +1062,7 @@
 		$wrapper.html(
 		`
 			<div>
+				<form autocomplete="off">
 				<label for="selectform">Select a form: </label>
 				<select id="selectform" name="selectform" style="margin: 0 0.5em; padding:0.4em 0.5em;">
 					<option value=""></option>
@@ -1072,6 +1073,7 @@
 					<input typle="text" id="formTitle" placeholder="Form Title" style="padding:0.4em 0.5em;">
 				</span>
 				<button id="formiframebtn" style="margin-left: 0.5em; display: none;" title="Embed Code Copied">Copy Form Embed Code</button>
+				</form>
 			</div>
 			<div id="formBuilderContent" style="margin-top: 1em;"></div>
 			<div id="settingsDialog" title="Form Settings">

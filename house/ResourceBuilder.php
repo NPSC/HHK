@@ -2414,13 +2414,16 @@ foreach($demogs as $key=>$demog){
 				<li><a href="#attrTable">Attributes</a></li>
 				<li><a href="#constr">Constraints</a></li>
 			</ul>
-			<div id="rescTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
-				style="font-size: .9em;">
+			<div id="rescTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
+				<form autocomplete="off">
                     <?php echo $rescTable; ?>
-                </div>
+                </form>
+            </div>
 			<div id="roomTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide"
 				style="font-size: .9em;">
+				<form autocomplete="off">
                     <?php echo $roomTable; ?>
+                    </form>
                 </div>
             <?php if($uS->InsuranceChooser){ ?>
 			<div id="insTable" class="hhk-tdbox hhk-visitdialog ui-tabs-hide" style="font-size: .9em;">
@@ -2598,7 +2601,9 @@ foreach($demogs as $key=>$demog){
 				</form>
 			</div>
 			<div id="constr" class="hhk-tdbox hhk-visitdialog ui-tabs-hide">
+				<form autocomplete="off">
                         <?php echo $constraintTable; ?>
+                        </form>
                 </div>
 		</div>
 		<div id="divNewForm" class="hhk-tdbox hhk-visitdialog"
