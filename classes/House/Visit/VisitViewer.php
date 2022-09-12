@@ -778,6 +778,7 @@ class VisitViewer {
         $showSubTotal = FALSE;
         // Get labels
         $labels = Labels::getLabels();
+        $totalTaxAmt = 0;
 
         // Number of nights
         $tbl2->addBodyTr(
@@ -811,32 +812,34 @@ class VisitViewer {
             );
         }
 
-            // Lodging Taxes
-            if (count($curAccount->getCurentTaxItems(ItemId::Lodging)) > 0) {
+        // Lodging Taxes
+        if (count($curAccount->getCurentTaxItems(ItemId::Lodging)) > 0) {
 
-                $showSubTotal = TRUE;
+            $showSubTotal = TRUE;
 
-                foreach ($curAccount->getCurentTaxItems(ItemId::Lodging) as $t) {
-                    $taxedRoomFees = $curAccount->getRoomCharge() + $curAccount->getTotalDiscounts() - $curAccount->getTaxExemptRoomFees();
+            foreach ($curAccount->getCurentTaxItems(ItemId::Lodging) as $t) {
+                $taxedRoomFees = $curAccount->getRoomCharge() + $curAccount->getTotalDiscounts() - $curAccount->getTaxExemptRoomFees();
 
-                    if ($curAccount->getRoomFeeBalance() < 0) {
-                        if($taxedRoomFees > 0){
-                            $taxAmt = $t->getTaxAmount($taxedRoomFees);
-                        }else{
-                            $taxAmt = 0;
-                        }
-                    } else {
-                        $taxAmt = $curAccount->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($curAccount->getRoomFeeBalance());
+                if ($curAccount->getRoomFeeBalance() < 0) {
+                    if($taxedRoomFees > 0){
+                        $taxAmt = $t->getTaxAmount($taxedRoomFees);
+                    }else{
+                        $taxAmt = 0;
                     }
-
-                    $tbl2->addBodyTr(
-                        HTMLTable::makeTd($t->getTaxingItemDesc() .  ' (' . $t->getTextPercentTax() . ' of $' . number_format($taxedRoomFees, 2) . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
-                        . HTMLTable::makeTd('$' . number_format($taxAmt, 2), array('style'=>'text-align:right;font-size:small;'))
-                    );
+                } else {
+                    $taxAmt = $curAccount->getLodgingTaxPd($t->getIdTaxingItem()) + $t->getTaxAmount($curAccount->getRoomFeeBalance());
                 }
-            }
 
-            //}
+                $totalTaxAmt += $taxAmt;
+
+                $tbl2->addBodyTr(
+                    HTMLTable::makeTd($t->getTaxingItemDesc() .  ' (' . $t->getTextPercentTax() . ' of $' . number_format($taxedRoomFees, 2) . '):', array('class'=>'tdlabel', 'style'=>'font-size:small;'))
+                    . HTMLTable::makeTd('$' . number_format($taxAmt, 2), array('style'=>'text-align:right;font-size:small;'))
+                );
+            }
+        }
+
+
 
         // Visit fees charged
         if ($curAccount->getVisitFeeCharged() > 0) {
@@ -967,7 +970,8 @@ class VisitViewer {
         // Total Due at end of visit
         if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn) {
 
-            $finalCharge = $curAccount->getTotalCharged() + $curAccount->getRoomFeesToCharge() - $curAccount->getTotalPaid() - $curAccount->getAmtPending();
+            $finalCharge = $curAccount->getTotalCharged() + $curAccount->getRoomFeesToCharge() + $totalTaxAmt + $curAccount->getAdditionalChargeTax()
+                - $curAccount->getTotalPaid() - $curAccount->getAmtPending();
 
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Exp\'d payment at checkout:', array('class'=>'tdlabel'))
