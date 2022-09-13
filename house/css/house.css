@@ -117,7 +117,7 @@ body {
 }
 
 td.noteText {
-	white-space: pre-wrap;
+	white-space: pre-wrap !important;
 }
 
 .hhk-noteBox div {
