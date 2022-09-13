@@ -774,6 +774,7 @@ class VisitViewer {
 
     protected static function currentBalanceMarkup(CurrentAccount $curAccount) {
 
+        $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
         $showSubTotal = FALSE;
         // Get labels
@@ -967,8 +968,9 @@ class VisitViewer {
             , array('style'=>'border: solid 2px #2E99DD;text-align:right;')
         );
 
+        // TODO
         // Total Due at end of visit
-        if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn) {
+        if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn && ! stristr(strtolower($uS->siteName), 'gorecki')) {
 
             // Deal with taxes
             $feesToCharge = $curAccount->getRoomFeesToCharge();
