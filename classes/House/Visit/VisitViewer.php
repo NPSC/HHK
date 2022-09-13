@@ -970,8 +970,14 @@ class VisitViewer {
         // Total Due at end of visit
         if ($curAccount->getVisitStatus() == VisitStatus::CheckedIn) {
 
-            $finalCharge = $curAccount->getTotalCharged() + $curAccount->getRoomFeesToCharge() + $totalTaxAmt + $curAccount->getAdditionalChargeTax()
-                - $curAccount->getTotalPaid() - $curAccount->getAmtPending();
+            // Deal with taxes
+            $feesToCharge = $curAccount->getRoomFeesToCharge();
+
+            if ($curAccount->getRoomFeesToCharge() > 0) {
+                $feesToCharge += $totalTaxAmt;
+            }
+
+            $finalCharge = $curAccount->getTotalCharged() + $feesToCharge - $curAccount->getTotalPaid() - $curAccount->getAmtPending();
 
             $tbl2->addBodyTr(
                 HTMLTable::makeTd('Exp\'d payment at checkout:', array('class'=>'tdlabel'))
