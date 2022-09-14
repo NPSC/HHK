@@ -1487,7 +1487,7 @@ function paymentsTable(tableID, containerID, refreshPayments) {
                 'render': function ( data, type, row ) {return dateRender(data, type);}
             }
          ],
-        'dom': '<"top"if>rt<"bottom"lp><"clear">',
+        'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
         'displayLength': 50,
         'order': [[ 8, 'asc' ]],
         'lengthMenu': [[25, 50, -1], [25, 50, "All"]]

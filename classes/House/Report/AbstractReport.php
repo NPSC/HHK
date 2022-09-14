@@ -179,7 +179,7 @@ abstract class AbstractReport {
         $summaryMkup = $this->makeSummaryMkup();
 
         $titleMkup = HTMLContainer::generateMarkup('h3', $this->reportTitle, array('class'=>'mt-2'));
-        $bodyMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $summaryMkup, array('class'=>'ml-2')) . HTMLContainer::generateMarkup("img", "", array('src'=> $uS->resourceURL . "conf/receiptlogo.png")), array('id'=>'repSummary', 'class'=>'hhk-flex mb-3', 'style'=>'justify-content: space-between'));
+        $bodyMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $summaryMkup, array('class'=>'ml-2')) . HTMLContainer::generateMarkup("img", "", array('src'=> $uS->resourceURL . "conf/" . $uS->statementLogoFile, "width"=>$uS->statementLogoWidth)), array('id'=>'repSummary', 'class'=>'hhk-flex mb-3', 'style'=>'justify-content: space-between'));
         return $titleMkup . $bodyMkup;
 
     }

@@ -120,6 +120,11 @@ td.noteText {
 	white-space: pre-wrap !important;
 }
 
+
+.hhk-tbl-wrap td {
+	white-space: pre-wrap !important;
+}
+
 .hhk-noteBox div {
     border: 1px solid #79B7E7;
     max-height: 100px;
@@ -576,6 +581,11 @@ div.dt-buttons .dt-button:hover>span {
 
 .fc .fc-toolbar{
 	flex-wrap: wrap;
+}
+
+.fc-timeline-event .fc-event-main {
+	white-space: nowrap;
+	overflow:hidden;
 }
 
 

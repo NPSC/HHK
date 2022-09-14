@@ -1540,7 +1540,7 @@ $(document).ready(function () {
                                  'render': function ( data, type, row ) {return dateRender(data, type);}
                                 }
                              ],
-                            "dom": '<"top"if>rt<"bottom"lp><"clear">',
+                            "dom": '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
                             "displayLength": 50,
                             "lengthMenu": [[20, 50, 100, -1], [20, 50, 100, "All"]],
                             "order": [[ 1, 'asc' ]]
@@ -1598,7 +1598,8 @@ $(document).ready(function () {
                    columns: dailyCols,
                    infoCallback: function( settings, start, end, max, total, pre ) {
                         return "Prepared: " + dateRender(new Date().toISOString(), 'display', 'ddd, MMM D YYYY, h:mm a');
-                  }
+                  },
+                  "dom": '<"top"if><\"hhk-overflow-x hhk-tbl-wrap\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
                 });
             }
             if(ui.newTab.prop('id') === 'liStaffNotes'){
