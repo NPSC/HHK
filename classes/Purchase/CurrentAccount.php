@@ -70,7 +70,7 @@ class CurrentAccount {
     public function __construct($visitStatus, $showVisitFee = FALSE, $showRoomFees = FALSE, $showGuestNights = FALSE) {
 
 
-        $this->visitStatus = $visitStatus === FALSE ? FALSE : TRUE;
+        $this->visitStatus = $visitStatus;
         $this->showRoomFees = $showRoomFees === FALSE ? FALSE : TRUE;
         $this->showGuestNites = $showGuestNights === FALSE ? FALSE : TRUE;
         $this->showVisitFee = $showVisitFee === FALSE ? FALSE : TRUE;
@@ -118,7 +118,9 @@ class CurrentAccount {
         $taxedFees = $fees - $this->taxExemptRoomFees;
         $pending = $visitCharge->getRoomFeesPaid() + $visitCharge->getRoomFeesPending();
         $taxedFeesPending = $pending - $this->taxExemptRoomFees;
+
         $this->setRoomFeeBalance($fees - $pending);
+//        $this->setRoomFeeBalance($fees);
 
         // taxed Room fee balance
         //taxed charges - taxed charges paid
@@ -126,7 +128,7 @@ class CurrentAccount {
             if($taxedFees < 0){
                 $this->taxedroomFeeBalance = $this->getRoomFeeBalance() - ($fees - $this->taxExemptRoomFees);
             }else{
-                $this->taxedroomFeeBalance = $this->roomFeeBalance;
+                $this->taxedroomFeeBalance = $this->getRoomFeeBalance();
             }
         }
 
