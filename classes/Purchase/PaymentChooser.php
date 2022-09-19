@@ -455,7 +455,7 @@ class PaymentChooser {
 
         return HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Paying Today', array('style'=>'font-weight:bold;'))
-                . $mkup, array('class'=>'hhk-panel hhk-kdrow', 'style'=>'float:left;'));
+                . $mkup, array('class'=>'hhk-panel', 'style'=>'float:left;'));
     }
 
     public static function createHousePaymentMarkup(array $discounts, array $addnls, $idVisit, $itemTaxSums, $arrivalDate = '') {

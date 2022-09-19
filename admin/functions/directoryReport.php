@@ -147,7 +147,7 @@ function dirReport(\PDO $dbh, chkBoxCtrl $cbBasisDir, chkBoxCtrl $cbRelationDir,
             $file = 'HouseDirectory';
             $writer = new ExcelHelper($file);
             $writer->setTitle("House Directory");
-            
+
             $hdr = array(
             "Id"=>"string",
             "*"=>"string",
@@ -215,11 +215,11 @@ function dirReport(\PDO $dbh, chkBoxCtrl $cbBasisDir, chkBoxCtrl $cbRelationDir,
         }  // while data exists.
 
         $txtreport .= "</tbody></table>";
-        
+
         if ($dlFlag) {
             $writer->download();
         }
-        $dirmarkup = "<div class='ui-widget ui-widget-content ui-corner-all hhk-member-detail'>". $txtreport . "</div>";
+        $dirmarkup = "<div class='ui-widget ui-widget-content ui-corner-all hhk-widget-content'>". $txtreport . "</div>";
     }
 
     // Mail list

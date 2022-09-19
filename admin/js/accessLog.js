@@ -85,7 +85,7 @@ $(document).ready(function() {
                 "paging": true,
                 "lengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
                 //"dom": '<"dtTop"if>rt<"dtBottom"lp><"clear">',
-                "Dom": '<"top"ilf>rt<"bottom"ip>',
+                "dom": '<"top"ilf><"hhk-overflow-x"rt><"bottom"ip>',
                 ajax: {
                     url: "ws_gen.php",
                     data: {

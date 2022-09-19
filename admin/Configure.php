@@ -327,7 +327,7 @@ $getWebReplyMessage = $webAlert->createMarkup();
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <?php echo $getWebReplyMessage; ?>
-            <div id="tabs" style="display:none; font-size: 0.9em;">
+            <div id="tabs" style="display:none;" class="hhk-widget-content">
                 <ul>
                     <li><a href="#config">Site Configuration</a></li>
                     <li><a href="#patch">Patch</a></li>

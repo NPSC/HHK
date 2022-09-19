@@ -151,7 +151,7 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
                         listTable = $('#tblCategory').dataTable({
                             "iDisplayLength": 50,
                             "aLengthMenu": [[25, 50, 100, -1], [25, 50, 100, "All"]],
-                            "dom": '<"top"ilf>rt<"bottom"ip>'
+                            "dom": '<"top"lf><"hhk-overflow-x"rt><"bottom"ip>'
                         });
                     }
                     catch (err) {
@@ -167,18 +167,17 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
+        	<h2>Time Reports</h2>
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="fcat" action="timeReport.php" method="post">
-                    <table><tr>
-                            <td colspan="4"><h2>Time Reports</h2></td>
-                        </tr>
+                    <table>
                         <tr>
 <?php echo $catSelTitleMarkup; ?>
                         </tr><tr>
                             <?php echo $catSelMarkup; ?>
                         </tr>
                     </table>
-                    <table>
+                    <table class="mb-3">
                         <tr>
                             <th>Report Type</th>
                             <th>Time Period</th>
@@ -198,19 +197,14 @@ $reportTypeSelMarkup = $typeCtrl->createMarkup(3);
                                 <select id="selIntDetail" name="selIntDetail"><option value="ru">Roll up by volunteer</option><option value="in">Show each instance</option></select>
                             </td></tr>
                     </table>
-                    <table style="margin-top: 15px;"><tr>
-                            <td style="text-align:center; vertical-align: bottom; height:25px;" colspan="4"><h4>Regular Time Reports:</h4></td>
-                        </tr>
-                        <tr>
-                            <td style="text-align:center;" colspan="4">
-                                <input type="submit" name="btnCat" value="Run Time Report" />&nbsp;
-                                <input type="submit" name="btnCatDL" value="Download to Excel File" /></td>
-                        </tr>
-                    </table>
+                    <h4 style="text-align:center;">Regular Time Reports:</h4>
+                    <div class="hhk-flex mt-1" style="justify-content: space-evenly;">
+                    	<input type="submit" name="btnCat" value="Run Time Report" />
+                        <input type="submit" name="btnCatDL" value="Download to Excel File" />
+                    </div>
                 </form>
             </div>
-            <div style="clear:both;"></div>
-            <div id="printArea" class="ui-widget ui-widget-content hhk-member-detail" style="display:none;">
+            <div id="printArea" class="ui-widget ui-widget-content hhk-widget-content ui-corner-all" style="display:none;">
 <?php echo $catmarkup; ?>
             </div>
 

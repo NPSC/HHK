@@ -65,8 +65,8 @@ if ($stmt->rowCount() > 0) {
 <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div class="ui-widget ui-widget-content hhk-tdbox" style="float:left; padding: 10px;">
-				<table style="width:100%;" class="display ignrSave" id="dtLog"></table>
+            <div class="ui-corner-all ui-widget ui-widget-content hhk-widget-content hhk-tdbox mb-3">
+				<table class="display ignrSave" id="dtLog"></table>
             </div>
             <input type="hidden" id="usernames" value='<?php echo json_encode($usernameList); ?>'>
             <input type="hidden" id="actions" value='<?php echo json_encode($actions);?>'>

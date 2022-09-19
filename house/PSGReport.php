@@ -1396,7 +1396,9 @@ if ($uS->UseIncidentReports) {
             <div id="divPrintButton" style="display:none; margin: 10px 0;"><input id="printButton" value="Print" type="button" /></div>
             <div id="printArea" class="ui-widget ui-widget-content hhk-tdbox hhk-visitdialog ui-corner-all p-2 pb-3 hhk-overflow-x" style="display:none; font-size: .8em; max-width:fit-content">
                 <div style="margin-bottom:.5em;"><?php echo $settingstable; ?></div>
+                <form autocomplete="off">
                 <?php echo $dataTable; ?>
+                </form>
             </div>
         </div>
     </body>

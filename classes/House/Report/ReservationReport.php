@@ -35,7 +35,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     public function __construct(\PDO $dbh, array $request = []){
         $uS = Session::getInstance();
 
-        $this->reportTitle = $uS->siteName . ' Reservation Report';
+        $this->reportTitle = $uS->siteName . ' ' . Labels::getString('guestEdit', 'reservationTitle', 'Reservation') . ' Report';
         $this->inputSetReportName = "reserv";
         $this->locations = readGenLookupsPDO($dbh, 'Location');
         $this->diags = readGenLookupsPDO($dbh, 'Diagnosis');

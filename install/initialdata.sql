@@ -54,8 +54,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Charge_Cards', '3', 'Discover','DCVR', '',0),
 ('Charge_Cards', '4', 'Am Ex', 'AMEX','',0),
 
-('cronJobTypes', 'SendPostCheckoutEmailJob', 'Send Post Checkout Email', '', 0),
-('cronJobTypes', 'EmailReportJob', 'Send Report Email', '', 0),
+('cronJobTypes', 'SendPostCheckoutEmailJob', 'Send Post Checkout Email', '','', 0),
+('cronJobTypes', 'EmailReportJob', 'Send Report Email', '','', 0),
 
 ('dayIncrements', '', 'Never', '','', '6'),
 ('dayIncrements', '30', '30 days', '','', '1'),
@@ -478,8 +478,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Visit_Status','cp','Room Rate Changed','','',0),
 ('Visit_Status','n','Room Changed','','',0),
 ('Visit_Status', '1', 'On Leave','','',0),
-('Visit_Status', 'c', 'Cancelled','','',0)'
-('Visit_Status', 'p', 'Pending','','',0)'
+('Visit_Status', 'c', 'Cancelled','','',0),
+('Visit_Status', 'p', 'Pending','','',0),
 
 ('Vol_Activities','1','Greeter','green,white','',0),
 ('Vol_Activities','5','Fundraising','black,white','',0),
@@ -575,7 +575,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('EmailBlockSize','200','i','v','','Number of email addresses per block','',1),
 ('EmailType','','lu','es','','Email protocol','Email_Server',1),
 ('EmergContactFill','false','b','h','','Insist on Filling in the emergency contact','',1),
-('EmergContactReserv', 'false', 'b', 'h', '', 'Collect Emergency Contact on Reservation','1'),
+('EmergContactReserv', 'false', 'b', 'h', '', 'Collect Emergency Contact on Reservation','',1),
 ('EmptyExtendLimit','0','i','hf','','Extend visit (go on leave) default number of days','',1),
 ('Error_Report_Email', 'support@nonprofitsoftwarecorp.org', 's', 'a', '', 'Email for reporting server errors', '',0),
 ('Enforce2fa', 'false', 'b', 'pr', '', 'Force users to use Two factor authentication','',1),

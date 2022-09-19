@@ -437,32 +437,30 @@ $alertMessage = $alertMsg->createMarkup();
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
 
-            <div style="float:left; margin-right: 100px; margin-top:10px;">
-                <?php echo $NiceName; ?></div>
-            <div class="ui-corner-all hhk-member-detail" style="background:#EFDBC2; margin-bottom:10px;">
-                <div style="float: left; border-width: 1px; border-color: gray; border-style: ridge; padding: 5px;">
-                    <span>Search: </span>
-                    <span style="margin: 0 10px;">
-                        <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" />
-                        <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" />
-                    </span>
-                    <input type="text" id='hdnblank' value='' style='display:none;'/>
-                    <input type="search" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+            <div class="hhk-flex my-3">
+                <?php echo $NiceName; ?>
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content p-2 ml-3" style="background:#EFDBC2;">
+                    <div style="border-width: 1px; border-color: gray; border-style: ridge; padding: 2px;">
+                        <span>Search: </span>
+                        <span style="margin: 0 10px;">
+                            <label for="rbmemName">Name</label><input type="radio" name="msearch" checked="checked" id="rbmemName" />
+                            <label for="rbmemEmail">Email</label><input type="radio" name="msearch" id="rbmemEmail" />
+                        </span>
+                        <input type="text" id='hdnblank' value='' style='display:none;'/>
+                        <input type="search" id="txtsearch" size="20" title="Enter at least 3 characters to invoke search" />
+                    </div>
                 </div>
             </div>
-            <div style="clear:both;"></div>
             <?php echo $resultMessage; ?> <?php echo $alertMessage; ?>
             <form action="NameEdit.php" method="post" id="form1" name="form1" >
-                <div class="ui-widget ui-widget-content ui-corner-all" style="font-size:0.95em; float:left; padding: 0.7em 1.0em;">
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2" style="font-size:0.95em;padding: 0.7em 1.0em;">
                     <?php echo $nameMarkup; ?>
                 </div>
-                <div style="clear:both;"></div>
-                <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all" style="font-size:0.95em; float:left; padding: 0.7em 1.0em;">
+                <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2" style="font-size:0.95em;padding: 0.7em 1.0em;">
                         <?php echo $relationsMarkup; ?>
                 </div>
-                <div style="clear:both;"></div>
-                <div id="divaddrTabs" class="hhk-showonload" style="display:none;">
-                    <div id="phEmlTabs" class="hhk-member-detail">
+                <div id="divaddrTabs" class="hhk-showonload hhk-flex hhk-flex-wrap" style="display:none;">
+                    <div id="phEmlTabs" class="hhk-member-detail mr-2 mb-2">
                         <ul>
                             <li><a href="#prefTab" title="Show only preferred phone and Email">Summary</a></li>
                             <li><a href="#phonesTab" title="Edit the Phone Numbers and designate the preferred number">Phone</a></li>
@@ -478,15 +476,14 @@ $alertMessage = $alertMsg->createMarkup();
                             <?php echo $emailMkup; ?>
                         </div>
                     </div>
-                    <div id="addrsTabs" class="hhk-member-detail">
+                    <div id="addrsTabs" class="hhk-member-detail mr-2 mb-2">
                         <?php echo $addrPanelMkup; ?>
                     </div>
-                    <div id="demographicTabs" class="hhk-member-detail">
+                    <div id="demographicTabs" class="hhk-member-detail mr-2 mb-2">
                         <?php echo $miscTabs; ?>
                     </div>
-                    <div style="clear:both;"></div>
                 </div>
-                <div id="divFuncTabs" class="hhk-member-detail" style="display:none; margin-bottom: 50px;" >
+                <div id="divFuncTabs" class="hhk-widget-content" style="display:none; margin-bottom: 50px;" >
                     <ul>
                         <li><a href="#vhistory">History</a></li>
                         <?php echo $volTabNames; ?>

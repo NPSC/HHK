@@ -342,7 +342,9 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                 <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $headerTable; ?>
                 </div>
+                <form autocomplete="off">
                 <?php echo $dataTable; ?>
+                </form>
             </div>
         </div>
     </body>

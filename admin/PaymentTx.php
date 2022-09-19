@@ -120,7 +120,7 @@ if (isset($_POST['btnGo'])) {
         // Table header and top row.
         $tbl->addBodyTr(HTMLTable::makeTh('Date') . HTMLTable::makeTh('Transaction Code') . HTMLTable::makeTh('Result Code') . HTMLTable::makeTh('Amount') . HTMLTable::makeTh('Auth Code'));
         $tbl->addBodyTr(
-                HTMLTable::makeTd(date('m d, Y H:i:s', strtotime($txRs->Timestamp->getStoredVal())))
+                HTMLTable::makeTd(date('M d, Y H:i:s', strtotime($txRs->Timestamp->getStoredVal())))
                 . HTMLTable::makeTd($txRs->GwTransCode->getStoredVal())
                 . HTMLTable::makeTd($txRs->GwResultCode->getStoredVal())
                 . HTMLTable::makeTd('')  //$txRs->Amount->getStoredVal())
@@ -144,7 +144,7 @@ if (isset($_POST['btnGo'])) {
         $tbl->addBodyTr(HTMLTable::makeTd('', array('colspan' => '5', 'style' => 'background-color:#459E00;')));
     }
 
-    $txData = HTMLContainer::generateMarkup('h3', 'Found ' . $records . ' records for ' . $searchDate) . $tbl->generateMarkup();
+    $txData = HTMLContainer::generateMarkup('h3', 'Found ' . $records . ' records for ' . $searchDate) . $tbl->generateMarkup(array("max-width"=>"100%"));
 }
 
 
@@ -204,9 +204,9 @@ $txSelector = HTMLSelector::generateMarkup(
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
             <div id="divAlertMsg"><?php echo $resultMessage; ?></div>
-            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog" style="clear:left; padding:10px;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-widget-content mb-3" style="text-align:center;">
             <form method="post">
-                <table>
+                <table class="mb-3">
                     <tr>
                         <th>Transaction Type</th>
                         <th>Date</th>
@@ -217,15 +217,15 @@ $txSelector = HTMLSelector::generateMarkup(
                         <td><input type="text" class="ckdate" name='txtDate' value='<?php echo $dateSelected; ?>'/></td>
                         <td><input type="text" name='txtName' value='<?php echo $nameSelected; ?>'/></td>
                     </tr>
-                    <tr>
-                        <td colspan="2" style='text-align: right;'><input type='submit' value='Go' name='btnGo'/></td>
-                    </tr>
                 </table>
+                <input type='submit' value='Go' name='btnGo' class="ui-button ui-corner-all"/>
                 </form>
             </div>
-            <div class="ui-widget ui-widget-content" style='clear:left; float:left; font-size: .8em;'>
+            <?php if($txData != ""){ ?>
+            <div class="ui-widget ui-widget-content hhk-widget-content ui-corner-all mb-3" style='font-size: .8em;'>
                 <?php echo $txData; ?>
             </div>
+            <?php } ?>
         </div>
     </body>
 </html>

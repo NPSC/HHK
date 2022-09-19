@@ -727,6 +727,7 @@ ORDER BY `List_Order`");
                 $n->Name_Prefix->setNewVal($prefix);
             }else{
                 $n->Name_Prefix->setNewVal('');
+                $prefix = '';
             }
         }
 
@@ -746,6 +747,7 @@ ORDER BY `List_Order`");
                 $n->Name_Suffix->setNewVal($suffix);
             }else{
                 $n->Name_Suffix->setNewVal('');
+                $suffix = '';
             }
         }
 

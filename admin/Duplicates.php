@@ -118,9 +118,10 @@ $mtypeSel = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($mtypes, ''
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
             <div id="searchSel" style="margin: 1em 0"><?php echo 'Search for: ' . $mtypeSel; ?></div>
-
-            <div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail" style="display: none; margin-right: 1em; font-size:.85em;"></div>
-            <div id="divExpansion" style="display:none;font-size:.85em;text-align:center;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail"></div>
+			<div class="hhk-flex mb-3">
+            	<div id="divList" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mr-3" style="display: none; font-size:.85em;"></div>
+            	<div id="divExpansion" style="display:none;font-size:.85em;text-align:center;" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content"></div>
+        	</div>
         </div>
     </body>
 </html>

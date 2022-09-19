@@ -17,9 +17,6 @@ use HHK\Exception\RuntimeException;
  */
 require ("AdminIncludes.php");
 
-// require (DB_TABLES . 'GenLookupsRS.php');
-// require (DB_TABLES . 'nameRS.php');
-
 $wInit = new webInit();
 $dbh = $wInit->dbh;
 
@@ -278,7 +275,7 @@ $(document).ready(function() {
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
 
-            <div id="vcategory" class="ui-widget ui-widget-content" style="float:left;">
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content" style="font-size:1em;">
                 <form action="CategoryEdit.php" method="post" name="fCheckDates">
                     <table>
                         <tr>
@@ -316,10 +313,14 @@ $(document).ready(function() {
                             <td colspan="2"><select style="width:230px" id="vTypeRepl" name="vTypeRepl" class="hhk-vcat" disabled="disabled" ></select></td>
                         </tr>
                         <tr>
-                            <td colspan="4" class="tdlabel"><input id="btnvType" name="btnvType" class="hhk-vcat" type="submit" value="Save" /></td>
+                            <td colspan="4" class="tdlabel"></td>
                         </tr>
-                        <tr><td colspan="4" class="tdReport"><?php echo $resMessage; ?></td></tr>
+                        <tr><td colspan="4" class="tdReport"></td></tr>
                     </table>
+                    <div class="hhk-flex mt-1" style="justify-content: space-evenly;">
+                    	<input id="btnvType" name="btnvType" class="hhk-vcat ui-button ui-widget ui-corner-all" type="submit" value="Save" />
+                    </div>
+                    <?php echo $resMessage; ?>
                 </form>
             </div>
         </div>

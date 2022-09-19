@@ -403,15 +403,24 @@ function amtPaid() {
 
         kdep = parseFloat($('#hdnKeyDepAmt').val());
 
-        if (isNaN(kdep) || kdep < 0 || p.keyDepCb.prop("checked") === false) {
+        if (isNaN(kdep) || kdep < 0) {
+	
             kdep = 0;
             p.keyDepAmt.val('');
+            
         } else {
-            p.keyDepAmt.val(kdep.toFixed(2).toString());
+	
+			if (p.keyDepCb.prop("checked") === false) {
+				p.keyDepAmt.val('');
+				kdep = 0;
+			} else {
+            	kdep = parseFloat($('#hdnKeyDepAmt').val());
+            	p.keyDepAmt.val(kdep.toFixed(2).toString());
+            }
+            
             // unhide row
             $('.hhk-kdrow').show();
         }
-        
     }
 
     // Unpaid Invoices - invAmt
@@ -593,7 +602,8 @@ function amtPaid() {
 
         totCharges = vfee + invAmt + totRmBalDue - totReturns;
 
-        totPay = vfee + invAmt + feePay;
+//        totPay = vfee + invAmt + feePay;
+		totPay = totCharges + feePay;
 
         if (totCharges >= totPay && totCharges > 0) {
 
@@ -681,7 +691,7 @@ function amtPaid() {
                     $('#txtRtnAmount').val(overPayAmt.toFixed(2).toString());
                 }
 
-                totPay = vfee + invAmt + feePay - overPayAmt;
+                totPay = totCharges + feePay - overPayAmt;
 
             } else {
                 $('#txtRtnAmount').val('');
@@ -1487,7 +1497,7 @@ function paymentsTable(tableID, containerID, refreshPayments) {
                 'render': function ( data, type, row ) {return dateRender(data, type);}
             }
          ],
-        'dom': '<"top"if>rt<"bottom"lp><"clear">',
+        'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
         'displayLength': 50,
         'order': [[ 8, 'asc' ]],
         'lengthMenu': [[25, 50, -1], [25, 50, "All"]]

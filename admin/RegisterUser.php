@@ -231,15 +231,15 @@ if ($toBeRegisteredRows["web"] == "") {
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h1><?php echo $wInit->pageHeading; ?></h1>
-            <div id="tabs-1" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
+            <div id="tabs-1" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content">
 
                 <form  action="RegisterUser.php" method="post"  id="form1" name="form1" >
-                    <table>
+                    <table class="mb-3">
                         <tr><th colspan="6" >Web</th></tr>
                         <?php echo $toBeRegisteredRows["web"]; ?>
                     </table>
                     <p style="text-align:right;">
-                        <input type="submit" value="Save" name="btnSave" />
+                        <input type="submit" value="Save" name="btnSave" class="ui-button ui-widget ui-corner-all" />
                     </p>
                 </form>
                 <?php echo $actionTakenTable ?>

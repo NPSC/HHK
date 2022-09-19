@@ -993,7 +993,7 @@ $(document).ready(function() {
                     } else if (data.success) {
 
                         $('#rptInvdiv').remove();
-                        $('#vInv').append($('<div id="rptInvdiv" style="min-height:500px;"/>').append($(data.success)));
+                        $('#vInv').append($('<form autocomplete="off"/>').append($('<div id="rptInvdiv" style="min-height:500px;"/>').append($(data.success))));
                         $('#rptInvdiv .gmenu').menu();
 
                         $('#rptInvdiv').on('click', '.invLoadPc', function (event) {
@@ -1153,12 +1153,16 @@ $(document).ready(function() {
                         <?php echo $headerTableMkup; ?>
                         <div style="clear:both;"></div>
                     </div>
+                    <form autocomplete="off">
                     <?php echo $dataTable; ?>
+                    </form>
                 </div>
             </div>
             <div id="vInv" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                 <input type="button" id="btnInvGo" value="Refresh"/>
+
                   <div id="rptInvdiv" class="hhk-visitdialog"></div>
+
             </div>
             <div id="vGl" class="hhk-tdbox hhk-visitdialog" style="display:none; font-size:0.8em;">
                 <form name="glform" method="post" action="InvoiceReport.php">

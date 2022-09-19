@@ -46,7 +46,7 @@ $menuMarkup = $wInit->generatePageMenu();
 
 $labels = Labels::getLabels();
 
-function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId, $returnId) {
+function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, $locations, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId, $returnId, $labels) {
 
     $amt = $r['Amount'];
 
@@ -493,7 +493,7 @@ where $whDeleted  $whDates  $whItem and il.Item_Id != 5  $whStatus $whDiags orde
 
     while ($r = $stmt->fetch(PDO::FETCH_ASSOC)) {
 
-        doMarkupRow($colSelector->getFilteredFields(), $r, $local, $statusList, $diags, $locations, $total, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId, $uS->returnId);
+        doMarkupRow($colSelector->getFilteredFields(), $r, $local, $statusList, $diags, $locations, $total, $tbl, $writer, $hdr, $reportRows, $uS->subsidyId, $uS->returnId, $labels);
 
     }
 
@@ -748,7 +748,9 @@ function invoiceAction(idInvoice, action, eid, container, show) {
                 <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $headerTableMu; ?>
                 </div>
+                <form autocomplete="off">
                 <?php echo $dataTable; ?>
+                </form>
             </div>
         </div>
     </body>

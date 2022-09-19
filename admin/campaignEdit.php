@@ -18,11 +18,6 @@ use HHK\HTMLControls\selCtrl;
  */
 
  require ("AdminIncludes.php");
-// require (DB_TABLES . "DonateRS.php");
-// require (CLASSES . "Campaign.php");
-
-// require(CLASSES . "chkBoxCtrlClass.php");
-// require(CLASSES . "selCtrl.php");
 
 function saveCampaign(PDO $dbh, $campCode, $type, $post) {
 
@@ -229,7 +224,7 @@ $selType->set_value(TRUE, $campaign->get_type());
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo BOOSTRAP_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -267,12 +262,12 @@ $selType->set_value(TRUE, $campaign->get_type());
             <div style="clear: both;">
                 <?php echo $resultMessage ?>
             </div>
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
+            <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <form id="campForm" name="campForm" action="campaignEdit.php" method="post">
-            <div class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
+            	<div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                     <span>Select a Campaign to Edit: </span>
                     <select style="width:230px" name="selCamp" id="selCamp"><?php echo $CampOpt ?></select>
-            </div><div style="clear:both"></div>
+            	</div>
                     <table>
                         <tr>
                             <td>
@@ -361,10 +356,11 @@ $selType->set_value(TRUE, $campaign->get_type());
                                 </div>
                             </td>
                         </tr>
-                        <tr>
-                            <td class="tdlabel"><input type="reset" value="Reset" style="width:61px;" />&nbsp;<input id="bttncamp" name="bttncamp" type="submit" value="Save" style="width:61px;" /></td>
-                        </tr>
                     </table>
+                    <div class="hhk-flex mt-1" style="justify-content: space-evenly;">
+                    	<input type="reset" value="Reset" class="ui-button ui-widget ui-corner-all"/>
+                    	<input id="bttncamp" name="bttncamp" type="submit" value="Save" class="ui-button ui-widget ui-corner-all"/>
+                    </div>
                 </form>
             </div>
 

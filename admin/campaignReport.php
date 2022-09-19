@@ -13,9 +13,6 @@ use HHK\Config_Lite\Config_Lite;
 
 require ("AdminIncludes.php");
 
-// require(CLASSES . "chkBoxCtrlClass.php");
-// require(CLASSES . "selCtrl.php");
-
 $wInit = new webInit();
 
 $pageTitle = $wInit->pageTitle;
@@ -148,8 +145,8 @@ $selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
     <body <?php if ($testVersion) echo "class='testbody'"; ?> >
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
-            <div id="vcampaign" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail">
-                <h2><?php echo $wInit->pageHeading; ?></h2>
+        <h2><?php echo $wInit->pageHeading; ?></h2>
+            <div id="vcampaign" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-3">
                 <table>
                     <tr>
                         <th>Year</th>
@@ -169,9 +166,9 @@ $selYearOptions = getYearOptionsMarkup($yearSelected, $startYear, $fyMonths);
                         <td style="text-align:right;"><input type="button" id="btnList" value="List Campaign Detail" /></td>
                     </tr>
                 </table>
-            </div><div style="clear:both;"></div>
-            <div id="reportDiv" style="margin-top:10px; display:none;" class="ui-widget ui-widget-content" >
-                <input id="Print_Button" type="button" value="Print" title="Press to print out this listing."/>
+            </div>
+            <div id="reportDiv" style="display:none;" class="ui-widget ui-widget-content hhk-widget-content ui-corner-all mb-3" >
+                <div class="mb-3"><input id="Print_Button" type="button" value="Print" title="Press to print out this listing."/></div>
                 <div id="divCampaignTable" class="printArea" >
                 </div>
             </div>

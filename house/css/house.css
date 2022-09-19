@@ -117,7 +117,12 @@ body {
 }
 
 td.noteText {
-	white-space: pre-wrap;
+	white-space: pre-wrap !important;
+}
+
+
+.hhk-tbl-wrap td {
+	white-space: pre-wrap !important;
 }
 
 .hhk-noteBox div {
@@ -576,6 +581,11 @@ div.dt-buttons .dt-button:hover>span {
 
 .fc .fc-toolbar{
 	flex-wrap: wrap;
+}
+
+.fc-timeline-event .fc-event-main {
+	white-space: nowrap;
+	overflow:hidden;
 }
 
 

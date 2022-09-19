@@ -659,7 +659,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-member-detail hhk-tdbox hhk-visitdialog">
+        <div id="mainTabs" style="font-size:.9em;" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog">
             <ul>
                 <li><a href="#payr">Payments</a></li>
                 <?php if ($uS->RoomPriceModel != ItemPriceCode::None) {?>
@@ -716,7 +716,9 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
                 <div style="margin-top:10px; margin-bottom:10px; min-width: 350px;">
                     <?php echo $hdrTbl; ?>
                 </div>
+                <form autocomplete="off">
                 <?php echo $dataTable; ?>
+                </form>
             </div>
                  </div>
             <div id='cards'>
