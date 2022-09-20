@@ -860,15 +860,15 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
                 $guestMember = GuestMember::GetDesignatedMember($dbh, $resv->getIdGuest(), MemBasis::Indivual);
 
-                $today = new \DateTime();
-                $today->setTime(23, 59, 59);
+                $today = new \DateTimeImmutable();
+                $today = $today->setTime(23, 59, 59);
                 $expArr = new \DateTime($resv->getExpectedArrival());
 
                 $star = '';
                 $dirtyRoom = '';
                 $roomAttr = array('style'=>'text-align:center;');
 
-                if ($reservStatus == ReservationStatus::Staying || $expArr <= $today) {
+                if ($reservStatus == ReservationStatus::Staying || $expArr <= ($uS->ResvEarlyArrDays >= 0 ? $today->add(new \DateInterval('P' . $uS->ResvEarlyArrDays . 'D')): $today)) {
 
                     if ($checkinPage != '') {
 
@@ -876,6 +876,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
                         if ($r['idVisit'] > 0) {
                             $href .= '&vid='.$r['idVisit'].'&span='.$r['Span'].'&vstatus='.$r['Visit_Status'];
+                        }
+
+                        if ($expArr > $today){
+                            $buttonText = "Check In Early";
                         }
 
                         $star = HTMLContainer::generateMarkup('a',

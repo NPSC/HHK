@@ -46,7 +46,7 @@ if ($uS->OpenCheckin) {
 }
 
 // Load reservations
-$inside = Reservation_1::showListByStatus($dbh, 'Reserve.php', 'CheckingIn.php', ReservationStatus::Committed, TRUE, NULL, 2, TRUE);
+$inside = Reservation_1::showListByStatus($dbh, 'Reserve.php', 'CheckingIn.php', ReservationStatus::Committed, TRUE, NULL, ($uS->ResvEarlyArrDays >= 0 ? $uS->ResvEarlyArrDays : 2), TRUE);
 if ($inside == '') {
     $inside = "<p style='margin-left:60px;'>-None are imminent-</p>";
 }
@@ -60,7 +60,7 @@ $committedMarkup = HTMLContainer::generateMarkup('h3', $labels->getString('regis
 
 if ($uS->OpenCheckin) {
 
-    $inside = Reservation_1::showListByStatus($dbh, 'Reserve.php', 'CheckingIn.php', ReservationStatus::Waitlist, TRUE, NULL, 2, TRUE);
+    $inside = Reservation_1::showListByStatus($dbh, 'Reserve.php', 'CheckingIn.php', ReservationStatus::Waitlist, TRUE, NULL, ($uS->ResvEarlyArrDays >= 0 ? $uS->ResvEarlyArrDays : 2), TRUE);
 
     if ($inside != '') {
         $wListMarkup = HTMLContainer::generateMarkup('h3', 'Wait List' . HTMLContainer::generateMarkup('span', '', array('style'=>'float:right;', 'class'=>'ui-icon ui-icon-triangle-1-e')), array('id'=>'hhk-wListResvHdr'
