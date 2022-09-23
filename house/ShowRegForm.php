@@ -46,6 +46,7 @@ $receiptMarkup = '';
 $invoiceNumber = '';
 $menuMarkup = '';
 $regButtonStyle = 'display:none;';
+$showSignedTab = false;
 
 
 // Hosted payment return
@@ -135,6 +136,8 @@ if($idVisit || $idResv){
 
     // Generate Registration Form
     $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
+    $signedDocsArray = ReservationSvcs::getSignedCkinDocs($dbh, (isset($reservArray['idPsg']) ? $reservArray['idPsg']: 0), $idResv, $idVisit);
+
     $li = '';
     $tabContent = '';
 
@@ -147,7 +150,7 @@ if($idVisit || $idResv){
         $tabContent .= HTMLContainer::generateMarkup('div',
             HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
             .HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex']))
-            .HTMLContainer::generateMarkup('div', $r['doc'], array('id'=>'PrintArea'.$r['tabIndex']))
+            .HTMLContainer::generateMarkup('div', $r['doc'], array('class'=>'PrintArea'))
             .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
             .HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'])),
             array('id'=>$r['tabIndex']));
@@ -157,8 +160,35 @@ if($idVisit || $idResv){
 
     $ul = HTMLContainer::generateMarkup('ul', $li, array());
     $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+
+    $signedLi = '';
+    $signedTabContent = '';
+
+    $signedDocCount = count($signedDocsArray);
+    if($signedDocCount > 0){
+        $showSignedTab = true;
+        foreach ($signedDocsArray as $r) {
+
+            $signedLi .= HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('a', $r['Doc_Id'] , array('href'=>'#'.$r['Doc_Id'])));
+
+
+            $signedTabContent .= HTMLContainer::generateMarkup('div',
+                HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form'))
+                .$r['Doc']
+                .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['Doc_Id'], 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')),
+                array('id'=>$r['Doc_Id']));
+        }
+
+        $signedUl = HTMLContainer::generateMarkup('ul', $signedLi, array());
+        $signedTabControl = HTMLContainer::generateMarkup('div', $signedUl . $signedTabContent, array('id'=>'signedRegTabDiv'));
+    }
+
 }else if($idDoc > 0){
-    $tabControl = $regContents;
+    $tabControl = HTMLContainer::generateMarkup('div',
+        HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>'', 'data-title'=>$labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')) .
+        $regContents
+    );
 }
 
 $shoRegBtn = HTMLInput::generateMarkup('Check In Followup', array('type'=>'button', 'id'=>'btnReg', 'style'=>$regButtonStyle));
@@ -184,7 +214,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <?php echo NAVBAR_CSS; ?>
 
         <style type="text/css" media="print">
-            #PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
+            .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
             @page { margin: .5cm; }
         </style>
         <?php echo $sty; ?>
@@ -208,7 +238,7 @@ $(document).ready(function() {
     var vid = '<?php echo $idVisit; ?>';
     var opt = {mode: 'popup',
         popClose: true,
-        popHt      : $('div#PrintArea').height(),
+        popHt      : $('div.PrintArea').height(),
         popWd      : 950,
         popX       : 20,
         popY       : 20,
@@ -218,20 +248,22 @@ $(document).ready(function() {
     $('#mainTabs').tabs();
 
     $('.btnPrint').click(function() {
-        opt.popHt = $('div#PrintArea' + $(this).data('tab')).height();
+        opt.popHt = $(this).closest('.ui-tabs-panel').find('div.PrintArea').height();
         opt.popTitle = $(this).data('title');
-        $('div#PrintArea' + $(this).data('tab')).printArea(opt);
+        $(this).closest('.ui-tabs-panel').find('div.PrintArea').printArea(opt);
     }).button();
 
     $('.btnSave').click(function(){
     	var docCode = $(this).data("tab");
-    	$("#PrintArea" + docCode + " .btnSign").closest(".col").remove();
-    	var formContent = document.getElementById("PrintArea" + docCode).innerHTML;
+    	$(this).closest('.ui-tabs-panel').find("div.PrintArea .btnSign").remove();
+    	var formContent = $(this).closest('.ui-tabs-panel').find("div.PrintArea")[0].outerHTML;
 
     	var formData = new FormData();
 		formData.append('cmd', 'saveRegForm');
 		formData.append('guestId', '<?php echo (isset($reservArray['idPrimaryGuest']) ? $reservArray['idPrimaryGuest'] : 0) ?>');
 		formData.append('psgId', '<?php echo (isset($reservArray['idPsg']) ? $reservArray['idPsg'] : 0) ?>');
+		formData.append('idVisit', '<?php echo $idVisit; ?>');
+		formData.append('idResv', '<?php echo $idResv; ?>');
 		formData.append('docTitle', "Registration Form");
 		formData.append('docContents', formContent);
 
@@ -325,7 +357,7 @@ $(document).ready(function() {
     });
 
     $('#mainTabs').show();
-    $('#regTabDiv').tabs();
+    $('#regTabDiv, #signedRegTabDiv').tabs();
 
 });
 </script>
@@ -340,11 +372,19 @@ $(document).ready(function() {
             <div id="mainTabs" style="max-width:900px; display:none; font-size:.9em;">
                 <ul>
                     <li id="liReg"><a href="#vreg">Registration Form</a></li>
+                    <?php if($showSignedTab){ ?>
+                    <li id="liSignedReg"><a href="#vsignedReg">Signed Registration Forms (<?php echo $signedDocCount; ?>)</a></li>
+                    <?php } ?>
                 </ul>
                 <div id="vreg" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                     <?php echo $contrls; ?>
                     <?php echo $tabControl; ?>
                 </div>
+                <?php if($showSignedTab){ ?>
+                <div id="vsignedReg" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
+                    <?php echo $signedTabControl; ?>
+                </div>
+                <?php } ?>
             </div>
             <div id="vperm" class="hhk-tdbox" style="padding-bottom: 1.5em; display:none; ">
                 <h2>No permission forms were found.</h2>

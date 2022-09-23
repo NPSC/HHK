@@ -108,3 +108,7 @@ INSERT ignore INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 -- enable report fieldsets for guest operations users
 insert ignore into `page_securitygroup` (`idPage`, `Group_Code`) values ((select `idPage` from `page` where `File_Name` = "ws_reportFilter.php"), "g");
+
+-- add label for nickname
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('nickname', 'Nickname', 's', 'mt', 'Default: Nickname');
+

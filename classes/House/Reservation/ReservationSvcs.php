@@ -535,6 +535,37 @@ class ReservationSvcs
         return $return;
     }
 
+    /**
+     * Get signed reg forms HTML
+     *
+     * @param \PDO $dbh
+     * @param number $idPsg
+     * @param number $idReservation
+     * @param number $idVisit
+     * @param number $span
+     *
+     * @return array
+     */
+    public static function getSignedCkinDocs(\PDO $dbh, $idPsg = 0, $idReservation = 0, $idVisit = 0, $span = 0){
+        $sql = 'select * from v_signed_reg_forms where PSG_Id = :idPsg';
+        $params = array(':idPsg'=>$idPsg);
+
+        if($idReservation > 0){
+            $sql .= ' AND Resv_Id = :idResv';
+            $params[':idResv'] = $idReservation;
+        }
+
+        if($idVisit > 0){
+            $sql .= ' AND Visit_Id = :idVisit';
+            $params[':idVisit'] = $idVisit;
+        }
+
+        $stmt = $dbh->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public static function getReservGuests(\PDO $dbh, $idReservation)
     {
         $idResv = intval($idReservation, 10);

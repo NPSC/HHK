@@ -758,6 +758,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('primaryGuest', 'Primary Guest', 's', 'mt', '', 'Default: Primary Guest'),
 ('primaryGuestAbrev', 'PG', 's', 'mt', '', 'Default: PG'),
 ('namePrefix', 'Prefix', 's', 'mt', '', 'Default: Prefix'),
+('nickname', 'Nickname', 's', 'mt', '', 'Default: Nickname'),
 
 ('reservationTab','Reservations','s','g','',''),
 ('reservationTitle','Reservation','s','g','',''),

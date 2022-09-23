@@ -98,7 +98,7 @@ class IndivMember extends AbstractMember {
                 . HTMLContainer::generateMarkup('th', 'Middle')
                 . HTMLContainer::generateMarkup('th', 'Last Name')
                 . HTMLContainer::generateMarkup('th', 'Suffix')
-                . HTMLContainer::generateMarkup('th', 'Nickname')
+                . HTMLContainer::generateMarkup('th', Labels::getString("MemberType", "nickname", "Nickname"))
                 . HTMLContainer::generateMarkup('th', 'Status')
                 . HTMLContainer::generateMarkup('th', 'Basis')
                 );

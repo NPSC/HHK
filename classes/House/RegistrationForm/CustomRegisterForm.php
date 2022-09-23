@@ -371,7 +371,7 @@ class CustomRegisterForm {
                                     <div class="col-8 row" style="align-items:flex-end;">
                                         <div class="col pr-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
                                         <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && $this->settings["Signatures"]["eSign"] == 'jSign' ? '<img src="" style="display:none; width:100%"></div>
-                                        <div classs="col"><button class="ui-button ui-corner-all mb-1 ml-2 btnSign">Sign</button>' : '') . '</div>
+                                        <button class="ui-button ui-corner-all mb-1 ml-2 btnSign">Sign</button>' : '') . '
                                     </div>
                                     <div class="col-4 row" style="align-items:flex-end;">
                                         <div class="col pr-0" style="max-width: fit-content;">Date</div>

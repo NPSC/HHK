@@ -249,9 +249,13 @@ try {
 
             $guestId = intval(filter_input(INPUT_POST, 'guestId', FILTER_SANITIZE_NUMBER_INT), 10);
             $psgId = intval(filter_input(INPUT_POST, 'psgId', FILTER_SANITIZE_NUMBER_INT), 10);
+            $idVisit = intval(filter_input(INPUT_POST, 'idVisit', FILTER_SANITIZE_NUMBER_INT), 10);
+            $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT), 10);
             $docContents = $_POST["docContents"];
 
             $document = Document::createNew("Registration Form", "text/html", $docContents, $uS->username, "reg");
+
+            $document->setAbstract(json_encode(['idVisit'=>$idVisit, 'idResv'=>$idResv]));
 
             $document->saveNew($dbh);
 

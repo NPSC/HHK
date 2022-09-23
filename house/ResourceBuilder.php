@@ -2683,7 +2683,8 @@ foreach($demogs as $key=>$demog){
 					referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
 					treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
 					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>",
-					mrn: "<?php echo $labels->getString('hospital', 'MRN', 'MRN'); ?>"
+					mrn: "<?php echo $labels->getString('hospital', 'MRN', 'MRN'); ?>",
+					nickname: "<?php echo $labels->getString('MemberType', 'nickname', 'Nickname'); ?>"
 				},
 				fieldOptions: {
 					county: "<?php echo $uS->county; ?>",

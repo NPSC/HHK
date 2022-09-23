@@ -542,6 +542,28 @@ AS SELECT
 FROM ((`link_doc` `ld` join `document` `d` on((`ld`.`idDocument` = `d`.`idDocument`))) left join `name` `n` on((`ld`.`idGuest` = `n`.`idName`))) where (`d`.`Status` not in ('d'));
 
 -- -----------------------------------------------------
+-- View `v_signed_reg_forms`
+-- -----------------------------------------------------
+
+CREATE OR REPLACE VIEW `v_signed_reg_forms` AS
+    SELECT 
+        `d`.`idDocument` AS `Doc_Id`,
+        `d`.`Doc` AS `Doc`,
+        JSON_VALUE(`d`.`Abstract`, '$.idResv') AS `Resv_Id`,
+        JSON_VALUE(`d`.`Abstract`, '$.idVisit') AS `Visit_Id`,
+        `ld`.`idGuest` AS `Guest_Id`,
+        `ld`.`idPSG` AS `PSG_Id`
+    FROM
+        ((`link_doc` `ld`
+        JOIN `document` `d` ON (`ld`.`idDocument` = `d`.`idDocument`))
+        LEFT JOIN `name` `n` ON (`ld`.`idGuest` = `n`.`idName`))
+    WHERE
+        `d`.`Status` <> 'd'
+            AND `d`.`Type` = 'reg'
+            AND `d`.`Abstract` <> '';
+
+
+-- -----------------------------------------------------
 -- View `vdaily_waitlist`
 -- -----------------------------------------------------
 
