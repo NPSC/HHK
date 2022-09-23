@@ -1065,6 +1065,7 @@ $(document).ready(function () {
             }
         },
 
+		resourceOrder: 'Util_Priority,id',
         resources: {
                 url: 'ws_calendar.php',
                 extraParams: {
