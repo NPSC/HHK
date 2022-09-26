@@ -82,6 +82,8 @@ if(isset($_GET['template'])){
     $method = 'post';
     $formData = json_decode($_POST['formData']);
     $style = $_POST['style'];
+    $initialGuests = $_POST['initialGuests'];
+    $maxGuests = $_POST['maxGuests'];
 }else{
     $error = "Missing required parameters";
 }
@@ -149,7 +151,10 @@ if(isset($_GET['template'])){
 					data: {
 						cmd: '<?php echo $cmd; ?>',
 						id: '<?php echo $id; ?>',
-						formData: previewFormData
+						formData: previewFormData,
+						initialGuests: '<?php echo (isset($initialGuests) ? $initialGuests: 0); ?>',
+						maxGuests: '<?php echo (isset($maxGuests) ? $maxGuests: 0); ?>'
+
 					},
 					dataType:'json',
 					success: function(ajaxData){
