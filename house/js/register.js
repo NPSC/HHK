@@ -956,7 +956,7 @@ $(document).ready(function () {
     calendar = new FullCalendar.Calendar(calendarEl, { 
 	
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
-        height: winHieght - 175,
+        height: winHieght - 210,
 
         firstDay: 0,
         dateIncrement: dateIncrementObj,
