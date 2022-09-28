@@ -526,7 +526,8 @@ class ReservationSvcs
             }
         } else {
             return array(
-                'docs' => 'Error - Registration Form is not defined in the system configuration.',
+                'docs' => [],
+                'error' => 'Error - Registration Form is not defined in the system configuration.',
                 'style' => ' '
             );
         }

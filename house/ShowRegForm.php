@@ -47,6 +47,7 @@ $invoiceNumber = '';
 $menuMarkup = '';
 $regButtonStyle = 'display:none;';
 $showSignedTab = false;
+$sty = "";
 
 
 // Hosted payment return
@@ -146,7 +147,6 @@ if($idVisit || $idResv){
         $li .= HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('a', $r['tabTitle'] , array('href'=>'#'.$r['tabIndex'])));
 
-
         $tabContent .= HTMLContainer::generateMarkup('div',
             HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
             .HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex']))
@@ -158,8 +158,13 @@ if($idVisit || $idResv){
         $sty = $r['style'];
     }
 
-    $ul = HTMLContainer::generateMarkup('ul', $li, array());
-    $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+    $tabControl = "";
+    if(count($reservArray['docs']) > 0){
+        $ul = HTMLContainer::generateMarkup('ul', $li, array());
+        $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'regTabDiv'));
+    }else if(isset($reservArray['error'])){
+        $tabControl = HTMLContainer::generateMarkup("div", $reservArray['error'], array("class"=>"ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox my-2"));
+    }
 
     $signedLi = '';
     $signedTabContent = '';
