@@ -55,7 +55,7 @@ class GuestDemogReport {
         $periods = array();
 //        $totalPSGs = array();
 
-        $firstPeriod = $thisPeriod = $stDT->format($periodFormat);
+//        $firstPeriod = $thisPeriod = $stDT->format($periodFormat);
         $badZipCodes = array();
 
         $now = new \DateTime();
