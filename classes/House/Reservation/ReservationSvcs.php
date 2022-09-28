@@ -284,7 +284,8 @@ class ReservationSvcs
                         'style' => CustomRegisterForm::getStyling(),
                         'tabIndex' => $d['Code'],
                         'tabTitle' => $d['Description'],
-                        'pageTitle' => $regForm->getPageTitle()
+                        'pageTitle' => $regForm->getPageTitle(),
+                        'allowSave' => (!empty($regForm->settings["Signatures"]["eSign"]) && $regForm->settings["Signatures"]["eSign"] == 'jSign')
                     );
                 }
             } else {

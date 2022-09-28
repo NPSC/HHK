@@ -48,6 +48,7 @@ $menuMarkup = '';
 $regButtonStyle = 'display:none;';
 $showSignedTab = false;
 $sty = "";
+$blankFormTitle = "Blank Registration Form";
 
 
 // Hosted payment return
@@ -125,6 +126,7 @@ if($idDoc > 0){
     $doc->loadDocument($dbh);
     if($doc->getType() == "reg"){
         $regContents = $doc->getDoc();
+        $blankFormTitle = "Registration Form";
         if($uS->RegForm == "3"){
             $form = new CustomRegisterForm();
             $sty = $form->getStyling();
@@ -149,10 +151,10 @@ if($idVisit || $idResv){
 
         $tabContent .= HTMLContainer::generateMarkup('div',
             HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mb-3', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-            .HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex']))
+            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mb-3 ml-3', 'data-tab'=>$r['tabIndex'])) : '')
             .HTMLContainer::generateMarkup('div', $r['doc'], array('class'=>'PrintArea'))
             .HTMLInput::generateMarkup('Print', array('type'=>'button', 'class'=>'btnPrint mt-4', 'data-tab'=>$r['tabIndex'], 'data-title'=>(!empty($r["pageTitle"]) ? $r["pageTitle"] : $labels->getString('MemberType', 'guest', 'Guest') . ' Registration Form')))
-            .HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'])),
+            . (isset($r['allowSave']) && $r['allowSave'] ? HTMLInput::generateMarkup('Save', array('type'=>'button', 'class'=>'btnSave mt-4 ml-3', 'data-tab'=>$r['tabIndex'])): ''),
             array('id'=>$r['tabIndex']));
 
         $sty = $r['style'];
@@ -174,8 +176,10 @@ if($idVisit || $idResv){
         $showSignedTab = true;
         foreach ($signedDocsArray as $r) {
 
+            $signedDate = new \DateTime($r['timestamp']);
+
             $signedLi .= HTMLContainer::generateMarkup('li',
-                HTMLContainer::generateMarkup('a', $r['Doc_Id'] , array('href'=>'#'.$r['Doc_Id'])));
+                HTMLContainer::generateMarkup('a', "Signed on " . $signedDate->format("M j, Y") , array('href'=>'#'.$r['Doc_Id'])));
 
 
             $signedTabContent .= HTMLContainer::generateMarkup('div',
@@ -217,6 +221,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo NOTY_CSS; ?>
 
         <style type="text/css" media="print">
             .PrintArea {margin:0; padding:0; font: 12px Arial, Helvetica,"Lucida Grande", serif; color: #000;}
@@ -231,6 +236,8 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
+		<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
 
         <script type='text/javascript'>
 $(document).ready(function() {
@@ -259,6 +266,12 @@ $(document).ready(function() {
     }).button();
 
     $('.btnSave').click(function(){
+    	var isSigned = ($(this).closest('.ui-tabs-panel').find("div.PrintArea .signDate:visible").length > 0);
+
+    	if(!isSigned){
+    		flagAlertMessage("<strong>Error:</strong> At least one signature is required", true);
+    		return;
+    	}
     	var docCode = $(this).data("tab");
     	$(this).closest('.ui-tabs-panel').find("div.PrintArea .btnSign").remove();
     	var formContent = $(this).closest('.ui-tabs-panel').find("div.PrintArea")[0].outerHTML;
@@ -281,10 +294,11 @@ $(document).ready(function() {
 			processData: false,
 			success: function (data) {
 				if (data.idDoc > 0) {
-			    	window.close();
+			    	flagAlertMessage("<strong>Success:</strong> Registration form saved successfully", false);
+			    	$(".btnSave").hide();
 			    } else {
 			        if (data.error) {
-
+						flagAlertMessage("<strong>Error: </strong>" + data.error, true);
 			        } else {
 
 			        }
@@ -374,9 +388,9 @@ $(document).ready(function() {
                 <?php echo $paymentMarkup; ?>
             </div>
 
-            <div id="mainTabs" style="max-width:900px; display:none; font-size:.9em;">
+            <div id="mainTabs" class="mt-2" style="max-width:900px; display:none; font-size:.9em;">
                 <ul>
-                    <li id="liReg"><a href="#vreg">Registration Form</a></li>
+                    <li id="liReg"><a href="#vreg"><?php echo $blankFormTitle; ?></a></li>
                     <?php if($showSignedTab){ ?>
                     <li id="liSignedReg"><a href="#vsignedReg">Signed Registration Forms (<?php echo $signedDocCount; ?>)</a></li>
                     <?php } ?>

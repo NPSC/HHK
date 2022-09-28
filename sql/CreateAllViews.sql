@@ -553,7 +553,8 @@ CREATE OR REPLACE VIEW `v_signed_reg_forms` AS
         JSON_VALUE(`d`.`Abstract`, '$.idResv') AS `Resv_Id`,
         JSON_VALUE(`d`.`Abstract`, '$.idVisit') AS `Visit_Id`,
         `ld`.`idGuest` AS `Guest_Id`,
-        `ld`.`idPSG` AS `PSG_Id`
+        `ld`.`idPSG` AS `PSG_Id`,
+        `d`.`timestamp`
     FROM
         ((`link_doc` `ld`
         JOIN `document` `d` ON (`ld`.`idDocument` = `d`.`idDocument`))
@@ -561,7 +562,8 @@ CREATE OR REPLACE VIEW `v_signed_reg_forms` AS
     WHERE
         `d`.`Status` <> 'd'
             AND `d`.`Type` = 'reg'
-            AND `d`.`Abstract` <> '';
+            AND `d`.`Abstract` <> ''
+	ORDER BY `d`.`timestamp` desc;
 
 
 -- -----------------------------------------------------

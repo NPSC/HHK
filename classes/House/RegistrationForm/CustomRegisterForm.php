@@ -60,6 +60,11 @@ class CustomRegisterForm {
                 "type"=>"bool",
                 "default"=>true
             ],
+            "today"=>[
+                "label"=>"Today's Date",
+                "type"=>"bool",
+                "default"=>false
+            ],
             /* "layout"=>[
                 "label"=>"Header Layout",
                 "type"=>"select",
@@ -260,6 +265,11 @@ class CustomRegisterForm {
             $mkup .= '<p>' . $houseAddr . '</p>';
         }
 
+        if (!empty($this->settings["Header"]["today"])){
+            $today = new \DateTime();
+            $mkup .= "<strong>Date: </strong>" . $today->format("M j, Y");
+        }
+
         $mkup .= '</div>';
 
         if(!empty($this->settings["Header"]["logo"])){
@@ -371,7 +381,7 @@ class CustomRegisterForm {
                                     <div class="col-8 row" style="align-items:flex-end;">
                                         <div class="col pr-0 printName" style="max-width: fit-content;">' . $g->getRoleMember()->get_fullName() . '</div>
                                         <div class="col sigLine" style="border-bottom: 1px solid black; justify-content:end;">' . (!empty($this->settings["Signatures"]["eSign"]) && $this->settings["Signatures"]["eSign"] == 'jSign' ? '<img src="" style="display:none; width:100%"></div>
-                                        <button class="ui-button ui-corner-all mb-1 ml-2 btnSign">Sign</button>' : '') . '
+                                        <button class="ui-button ui-corner-all mb-1 ml-2 btnSign">Sign</button>' : '</div>') . '
                                     </div>
                                     <div class="col-4 row" style="align-items:flex-end;">
                                         <div class="col pr-0" style="max-width: fit-content;">Date</div>
