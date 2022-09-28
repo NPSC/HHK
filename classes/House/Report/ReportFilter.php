@@ -239,17 +239,15 @@ $ckdate";
             $startDT = new \DateTime($this->selectedStart);
             $endDT = new \DateTime($this->selectedEnd);
 
-            // Add a day to the end date so all SQL can simply say "< $endDate"
-
 
             if ($startDT <= $endDT) {
                 $this->reportEnd = $endDT->format('Y-m-d');
-                $this->queryEnd = $endDT->add(new \DateInterval('P1D'))->format('Y-m-d');
+                $this->queryEnd = $endDT->format('Y-m-d');
                 $this->reportStart = $startDT->format('Y-m-d');
             } else {
                 $this->reportStart = $endDT->format('Y-m-d');
                 $this->reportEnd = $startDT->format('Y-m-d');
-                $this->queryEnd = $startDT->add(new \DateInterval('P1D'))->format('Y-m-d');
+                $this->queryEnd = $startDT->format('Y-m-d');
             }
 
         } else if ($this->selectedCalendar == self::MONTHS){

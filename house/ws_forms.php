@@ -142,6 +142,12 @@ try {
              if(isset($_REQUEST['style'])){
                  $style = filter_var($_REQUEST['style'], FILTER_SANITIZE_STRING);
              }
+             if(isset($_REQUEST['initialGuests'])){
+                 $initialGuests = filter_var($_REQUEST['initialGuests'], FILTER_SANITIZE_NUMBER_INT);
+             }
+             if(isset($_REQUEST['maxGuests'])){
+                 $maxGuests = filter_var($_REQUEST['maxGuests'], FILTER_SANITIZE_NUMBER_INT);
+             }
 
              if(!$uS->logged){
                  $events['error'] = "Unauthorized for page: Please login";
@@ -149,6 +155,8 @@ try {
                  $events['formData'] = $_REQUEST['formData'];
                  $events['formSettings']['formStyle'] = $style;
                  $events['formSettings']['enableRecaptcha'] = false;
+                 $events['formSettings']['initialGuests'] = $initialGuests;
+                 $events['formSettings']['maxGuests'] = $maxGuests;
                  $events['lookups'] = FormTemplate::getLookups($dbh);
              }
              break;

@@ -51,7 +51,7 @@ $pass = isset($_SERVER['PHP_AUTH_PW']) ? $_SERVER['PHP_AUTH_PW'] : '';
 $u = new UserClass();
 
 
-if ($u->_checkLogin($dbh, addslashes($user), $pass, FALSE, FALSE) === FALSE) {
+if ($user == '' || $u->_checkLogin($dbh, addslashes($user), $pass, FALSE, FALSE) === FALSE) {
 
     header('WWW-Authenticate: Basic realm="Hospitality HouseKeeper"');
     header('HTTP/1.0 401 Unauthorized');
