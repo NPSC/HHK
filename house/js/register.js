@@ -973,7 +973,6 @@ $(document).ready(function () {
         resourceAreaWidth: resourceColumnWidth,
         refetchResourcesOnNavigate: true,
         resourceGroupField: resourceGroupBy,
-        resourceOrder: '',
         
         customButtons: {
             refresh: {
@@ -1064,8 +1063,7 @@ $(document).ready(function () {
                 $('#spnGotoDate').show();
             }
         },
-
-		resourceOrder: 'Util_Priority,id',
+		resourceOrder: 'Util_Priority,idResc',
         resources: {
                 url: 'ws_calendar.php',
                 extraParams: {
@@ -1075,11 +1073,11 @@ $(document).ready(function () {
         },
 
         resourceLabelDidMount: function(info) {
-
+			
             info.el.style.background = info.resource.extendedProps.bgColor;
             info.el.style.color = info.resource.extendedProps.textColor;
 
-            if (info.resource.id > 0) {
+            if (info.resource.extendedProps.idResc > 0) {
 
 				if(info.resource.extendedProps.hoverText){
                 	info.el.title = info.resource.extendedProps.hoverText;
@@ -1088,7 +1086,7 @@ $(document).ready(function () {
                 }
                 info.el.style.cursor = 'pointer'
 				// Bring up OOS dialog
-                info.el.onclick = function(){ getStatusEvent(info.resource.id, 'resc', info.resource.title) };
+                info.el.onclick = function(){ getStatusEvent(info.resource.extendedProps.idResc, 'resc', info.resource.title) };
             }
 
         },
@@ -1129,7 +1127,7 @@ $(document).ready(function () {
                 let resource = resources[0];
 
                 // move by date?
-                if (info.delta.days !== 0 && resource.id === event.extendedProps.idResc) {
+                if (info.delta.days !== 0 && resource.extendedProps.idResc === event.extendedProps.idResc) {
 	
                     if (confirm('Move Reservation to a new start date?')) {
                         moveVisit('reservMove', event.extendedProps.idReservation, 0, info.delta.days, info.delta.days);
@@ -1143,16 +1141,16 @@ $(document).ready(function () {
 				}
 
                 // Change rooms?
-                if (resource.id !== event.extendedProps.idResc) {
+                if (resource.extendedProps.idResc !== event.extendedProps.idResc) {
 
                 	let mssg = 'Move Reservation to a new room?';
 
-                	if (resource.id == 0) {
+                	if (resource.extendedProps.idResc == 0) {
                 		mssg = 'Move Reservation to the waitlist?'
                 	}
 
                     if (confirm(mssg)) {
-                        if (setRoomTo(event.extendedProps.idReservation, resource.id)) {
+                        if (setRoomTo(event.extendedProps.idReservation, resource.extendedProps.idResc)) {
                         	return;
                         }
                     }
@@ -1245,7 +1243,7 @@ $(document).ready(function () {
 
             if (hindx === undefined || hindx === 0 || info.event.extendedProps.idHosp === undefined || info.event.extendedProps.idAssoc == hindx || info.event.extendedProps.idHosp == hindx) {
 
-                let resource = calendar.getResourceById(info.event.extendedProps.idResc);
+                let resource = calendar.getResourceById("id-" + info.event.extendedProps.idResc);
 
                 // Reservations
                 if (info.event.extendedProps.idReservation !== undefined) {
@@ -1305,7 +1303,7 @@ $(document).ready(function () {
 	var resizeTimer;
 	window.onresize = function(){
 	  clearTimeout(resizeTimer);
-	  resizeTimer = setTimeout(calendar.setOption('height', window.innerHeight - 175), 100);
+	  resizeTimer = setTimeout(calendar.setOption('height', window.innerHeight - 210), 100);
 	};
 
     // disappear the pop-up rescouce groups.
