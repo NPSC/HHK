@@ -182,6 +182,9 @@ where ru.idResource_use is null
             //Room hover text
             $r['hoverText'] .= "Maximum Occupants: " . $r['maxOcc'];
 
+            //cast priority to int
+            $r['Util_Priority'] = intval($r['Util_Priority'], 10);
+
             $rescs[] = $r;
         }
 
