@@ -7,7 +7,7 @@ use HHK\SysConst\GLTableNames;
 use HHK\ColumnSelectors;
 use HHK\HTMLControls\{HTMLContainer, HTMLTable, HTMLSelector};
 use HHK\SysConst\PaymentStatusCode;
-use HHK\Payment\Receipt;
+use HHK\Payment\Statement;
 use HHK\House\Report\PaymentReport;
 use HHK\ExcelHelper;
 use HHK\sec\Labels;
@@ -422,7 +422,7 @@ where lp.idPayment > 0
 
     // Now the data ...
     $stmt = $dbh->query($query);
-    $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idHospital', 'idAssociation', 'Patient_Last', 'Patient_First', 'Hosp_Arrival'));
+    $invoices = Statement::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idHospital', 'idAssociation', 'Patient_Last', 'Patient_First', 'Hosp_Arrival'));
 
     foreach ($invoices as $r) {
 

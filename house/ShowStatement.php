@@ -4,7 +4,7 @@ use HHK\sec\{Session, WebInit, Labels};
 use HHK\SysConst\WebPageCode;
 use HHK\Member\Role\Guest;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
-use HHK\Payment\Receipt;
+use HHK\Payment\Statement;
 use HHK\House\Visit\Visit;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLTable;
@@ -144,7 +144,7 @@ if ($idRegistration > 0) {
 //         $name = $guest->getRoleMember();
 
         $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-        $stmtMarkup = Receipt::createComprehensiveStatements($dbh, $idRegistration, $includeLogo);
+        $stmtMarkup = Statement::createComprehensiveStatements($dbh, $idRegistration, $includeLogo);
 
 
 } else if ($idVisit > 0) {
@@ -157,7 +157,7 @@ if ($idRegistration > 0) {
     $guest = new Guest($dbh, '', $visit->getPrimaryGuestId());
     $name = $guest->getRoleMember();
 
-    $stmtMarkup = Receipt::createStatementMarkup($dbh, $idVisit, $name->get_fullName(), $includeLogo);
+    $stmtMarkup = Statement::createStatementMarkup($dbh, $idVisit, $name->get_fullName(), $includeLogo);
 
 } else {
     $stmtMarkup = 'No Information.';
