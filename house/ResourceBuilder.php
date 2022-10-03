@@ -1343,6 +1343,7 @@ if (isset($_POST['ldfm'])) {
             '<input type="hidden" name="formDef" value="' . $formDef . '">' .
             '<input type="hidden" name="docCode" value="' . $r["Code"] . '">' .
             '<div class="form-group mb-3"><label for="formfile">Upload new HTML file: </label><input name="formfile" type="file" accept="text/html" /></div>' .
+            '<div class="form-group mb-3"><small>File must have UTF-8 or Windows-1252 caracter encoding. <br>Other character sets may produce unexpected behavior</small></div>' .
             '<div class="hhk-flex" style="justify-content: space-evenly">' .
             '<button type="submit" id="docDelFm"><span class="ui-icon ui-icon-trash"></span>Delete Form</button>' .
             '<button type="submit" id="docSaveFm"><span class="ui-icon ui-icon-disk"></span>Save Form</button>' .
@@ -1434,7 +1435,11 @@ if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
         if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
             // Get the file and convert it.
             $file = file_get_contents($_FILES['formfile']['tmp_name']);
-            $doc = iconv('Windows-1252', 'UTF-8', $file);
+            if(mb_detect_encoding($file, ["UTF-8"], true) !== false){ //test for UTF-8
+                $doc = $file;
+            }else{ //assume Windows-1252
+                $doc = iconv('Windows-1252', 'UTF-8//TRANSLIT', $file); // add //TRANSLIT for special character conversion
+            }
             $sql .= "Doc = :doc, ";
         }
         $sql .= "Updated_By = :updatedBy, Last_Updated = now() where idDocument = :idDoc";
