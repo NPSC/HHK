@@ -374,7 +374,7 @@ if($uS->useOnlineReferral){
                         <li><a href="#vreferrals"><?php echo $labels->getString('register', 'onlineReferralTab', 'Referrals'); ?> (<span id="spnNumReferral"></span>)</a></li>
                         <?php } ?>
                         <?php if ($isGuestAdmin) { ?>
-                            <li><a href="#vactivity">Recent Activity</a></li>
+
                             <?php if ($showCharges) { ?>
                             <li><a href="#vfees"><?php echo $labels->getString('register', 'recentPayTab', 'Recent Payments'); ?></a></li>
                             <li id="liInvoice"><a href="#vInv">Unpaid Invoices</a></li>
@@ -424,24 +424,6 @@ if($uS->useOnlineReferral){
                 </div>
                 <?php } ?>
                 <?php if ($isGuestAdmin) { ?>
-                <div id="vactivity" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
-                    <table><tr>
-                            <th>Reports</th><th>Dates</th>
-                        </tr><tr>
-                            <td><input id='cbVisits' type='checkbox' checked="checked"/> Visits</td>
-                            <td>Starting: <input type="text" id="txtactstart" class="ckdate" value="" /></td>
-                        </tr><tr>
-                            <td><input id='cbReserv' type='checkbox'/> Reservations</td>
-                            <td>Ending: <input type="text" id="txtactend" class="ckdate" value="" /></td>
-                        </tr><tr>
-                            <td><input id='cbHospStay' type='checkbox'/> <?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?> Stays</td>
-                            <td></td>
-                        </tr><tr>
-                            <td></td>
-                            <td style="text-align: right;"><input type="button" id="btnActvtyGo" value="Submit"/></td>
-                        </tr></table>
-                    <div id="rptdiv" class="hhk-visitdialog"></div>
-                </div>
                 <div id="vfees" class="hhk-tdbox hhk-visitdialog" style="display:none; ">
                     <table>
                         <tr>

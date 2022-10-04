@@ -1326,78 +1326,7 @@ $(document).ready(function () {
             calendar.refetchEvents();
             //$(this).css('border', 'solid 3px black').css('font-size', '120%');
         });
-    }
-
-    $('#btnActvtyGo').click(function () {
-        $(".hhk-alert").hide();
-        let stDate = $('#txtactstart').datepicker("getDate");
-        if (stDate === null) {
-            $('#txtactstart').addClass('ui-state-highlight');
-            flagAlertMessage('Enter start date', 'alert');
-            return;
-        } else {
-            $('#txtactstart').removeClass('ui-state-highlight');
-        }
-        let edDate = $('#txtactend').datepicker("getDate");
-        if (edDate === null) {
-            edDate = new Date();
-        }
-        let parms = {
-            cmd: 'actrpt',
-            start: stDate.toLocaleDateString(),
-            end: edDate.toLocaleDateString()
-        };
-        if ($('#cbVisits').prop('checked')) {
-            parms.visit = 'on';
-        }
-        if ($('#cbReserv').prop('checked')) {
-            parms.resv = 'on';
-        }
-        if ($('#cbHospStay').prop('checked')) {
-            parms.hstay = 'on';
-        }
-        $.post('ws_resc.php', parms,
-            function (data) {
-                if (data) {
-                    try {
-                        data = $.parseJSON(data);
-                    } catch (err) {
-                        alert("Parser error - " + err.message);
-                        return;
-                    }
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.open(data.gotopage, '_self');
-                        }
-                        flagAlertMessage(data.error, 'error');
-
-                    } else if (data.success) {
-                        $('#rptdiv').remove();
-                        $('#vactivity').append($('<div id="rptdiv"/>').append($(data.success)));
-                        $('.hhk-viewvisit').css('cursor', 'pointer');
-                        $('#rptdiv').on('click', '.hhk-viewvisit', function () {
-                            if ($(this).data('visitid')) {
-                                let parts = $(this).data('visitid').split('_');
-                                if (parts.length !== 2)
-                                    return;
-                                var buttons = {
-                                    "Save": function () {
-                                        saveFees(0, parts[0], parts[1]);
-                                    },
-                                    "Cancel": function () {
-                                        $(this).dialog("close");
-                                    }
-                                };
-                                viewVisit(0, parts[0], buttons, 'View Visit', 'n', parts[1]);
-                            } else if ($(this).data('reservid')) {
-                                window.location.assign('Reserve.php?rid=' + $(this).data('reservid'));
-                            }
-                        });
-                    }
-                }
-            });
-    });
-    
+    }    
 
     $('#btnFeesGo').click(function () {
         $(".hhk-alert").hide();
