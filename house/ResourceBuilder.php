@@ -1385,7 +1385,7 @@ if (isset($_POST['ldfm'])) {
 }
 
 // Upload a new form
-if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
+if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
 
     try{
         $tabIndex = 8;
@@ -1590,6 +1590,13 @@ if (isset($_POST['txtformLang'])) {
                         EditRS::insert($dbh, $genRs);
                     }
                 }
+
+                if($docId > 0){
+                    echo json_encode(array("success"=>"New form created successfully", "docCode" => $formType));
+                }else{
+                    echo json_encode(array("error"=>"Error creating form"));
+                }
+                exit;
             }
         }
     }

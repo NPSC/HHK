@@ -123,6 +123,11 @@ class CustomRegisterForm {
                 ],
                 "default"=>"checkedin"
             ], */
+            "birthdate"=>[
+                "label"=>"Date of Birth",
+                "type"=>"bool",
+                "default"=>false
+            ],
             "emerg"=>[
                 "label"=>"Emergency Contact",
                 "type"=>"bool",
@@ -303,6 +308,8 @@ class CustomRegisterForm {
 
         if ($mrn != '' && !empty($this->settings["Patient"]["mrn"])) {
             $mrn = ' (' . $mrn . ')';
+        }else{
+            $mrn = "";
         }
 
         $mkup = "<h2 class='mb-2'>" .$this->labels->getString('MemberType', 'patient', 'Patient'). "</h2>";
@@ -482,13 +489,18 @@ class CustomRegisterForm {
             $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
             $emrg = $guest->getEmergContactObj($dbh);
 
+            $bd = '';
+            if ($name->get_birthDate() != '' && !empty($this->settings["Guests"]["birthdate"])) {
+                $bd = ' (' . date('M j, Y', strtotime($name->get_birthDate())) . ')';
+            }
+
 
             $mkup .= '<div class="row mb-2 ui-widget-content ui-corner-all py-2">';
 
             $mkup .= '<div class="col-12">';
             $mkup .= '<div class="row">';
             $mkup .= '<div class="col">';
-            $mkup .= '<strong>' . ($guest->getIdName() == $primaryGuestId ? Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'): "Name") . ': </strong>' . $name->get_fullName() . '<br>';
+            $mkup .= '<strong>' . ($guest->getIdName() == $primaryGuestId ? Labels::getString('MemberType', 'primaryGuest', 'Primary Guest'): "Name") . ': </strong>' . $name->get_fullName() . $bd . '<br>';
             $mkup .= '<div class="hhk-flex"><div class="mr-2"><strong>Address: </strong></div><div>' . $addr["Address_1"] . " " .  $addr["Address_2"] . '<br>' . $addr["City"] . ($addr["City"] == "" ? "" : ", ") . $addr["State_Province"] . "  ". $addr["Postal_Code"] . '</div></div>';
             $mkup .= '<strong>Cell Phone: </strong>' . $phoneCell["Phone_Num"] . '<br>';
             $mkup .='</div>';//end col

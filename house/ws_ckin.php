@@ -253,7 +253,9 @@ try {
             $idResv = intval(filter_input(INPUT_POST, 'idResv', FILTER_SANITIZE_NUMBER_INT), 10);
             $docContents = $_POST["docContents"];
 
-            $document = Document::createNew("Registration Form", "text/html", $docContents, $uS->username, "reg");
+            $docTitle = ($idVisit > 0 ? "Visit " . $idVisit : Labels::getString("GuestEdit", "reservationTitle", "Reservation") . " " . $idResv) . " Registration Form";
+
+            $document = Document::createNew($docTitle, "text/html", $docContents, $uS->username, "reg");
 
             $document->setAbstract(json_encode(['idVisit'=>$idVisit, 'idResv'=>$idResv]));
 
