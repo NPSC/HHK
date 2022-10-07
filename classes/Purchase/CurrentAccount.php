@@ -116,7 +116,10 @@ class CurrentAccount {
         // Room fee balance
         $fees = $this->getRoomCharge() + $visitCharge->getItemInvCharges(ItemId::Discount);
         $taxedFees = $fees - $this->taxExemptRoomFees;
-        $pending = $visitCharge->getRoomFeesPaid() + $visitCharge->getRoomFeesPending();
+
+        $pending = $visitCharge->getRoomFeesPaid();
+        $pending +=  + $visitCharge->getRoomFeesPending();
+
         $taxedFeesPending = $pending - $this->taxExemptRoomFees;
 
         $this->setRoomFeeBalance($fees - $pending);

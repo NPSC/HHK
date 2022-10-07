@@ -4,7 +4,6 @@ namespace HHK\House\Reservation;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
 use HHK\House\PSG;
-use HHK\SysConst\MemBasis;
 use HHK\SysConst\MemStatus;
 
 /**

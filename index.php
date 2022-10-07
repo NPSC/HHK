@@ -64,8 +64,8 @@ $secureComp = new SecurityComponent(TRUE);
 $cspURL = $page->getHostName() . " nonprofitsoftwarecorp.org";
 
 header('X-Frame-Options: DENY');
-header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com unsafe-inline;"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
-header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com unsafe-inline;"); // IE 10+
+header("Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com 'unsafe-inline';"); // FF 23+ Chrome 25+ Safari 7+ Opera 19+
+header("X-Content-Security-Policy: default-src $cspURL; script-src $cspURL; style-src $cspURL; frame-src nonprofitsoftwarecorp.org nonprofitsoftwarecorp.us18.list-manage.com 'unsafe-inline';"); // IE 10+
 
 if (SecurityComponent::isHTTPS()) {
     header('Strict-Transport-Security: max-age=31536000'); // FF 4 Chrome 4.0.211 Opera 12

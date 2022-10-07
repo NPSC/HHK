@@ -3,7 +3,7 @@
 namespace HHK\Purchase;
 
 use HHK\House\Visit\Visit;
-use HHK\Payment\Receipt;
+use HHK\Payment\Statement;
 use HHK\Purchase\PriceModel\AbstractPriceModel;
 use HHK\SysConst\InvoiceLineType;
 use HHK\SysConst\InvoiceStatus;
@@ -152,7 +152,7 @@ class VisitCharges {
 
 
         // Collect rates
-        $rates = Receipt::processRatesRooms($spans);
+        $rates = Statement::processRatesRooms($spans);
 
         if (is_null($givenPaid)) {
             $paid = $this->getRoomFeesPaid() + $this->getRoomFeesPending();

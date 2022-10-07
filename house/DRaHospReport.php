@@ -214,9 +214,10 @@ function blanksOnly(\PDO $dbh, $type, $whClause, ReportFilter $filter, $labels) 
         $htmlId = 'txtAgentSch';
     }
 
-    $query = "select hs.idPatient as `Id`, n.Name_Full as `$nameCol Name`, hs.idHospital as `$hospitalCol`, hs.idPsg
+    $query = "select hs.idPatient as `Id`, n.Name_Full as `$nameCol Name`, h.Title as `$hospitalCol`, hs.idPsg
 from hospital_stay hs left join `name` n on hs.idPatient = n.idName
 left join reservation rv on hs.idHospital_stay = rv.idHospital_Stay
+left join hospital h on h.idHospital = hs.idHospital
 where hs.$Id = 0 and rv.`Status` in ('" . ReservationStatus::Checkedout . "', '" . ReservationStatus::Staying . "') "
  . " and DATE(ifnull(rv.Actual_Departure, rv.Expected_Departure)) >= DATE('".$filter->getReportStart()."') and DATE(ifnull(rv.Actual_Arrival, rv.Expected_Arrival)) < DATE('".$filter->getQueryEnd()."') $whClause";
 

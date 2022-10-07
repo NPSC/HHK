@@ -53,7 +53,7 @@ class WebUser {
         }
 
         $isLocal = ($wUserRS->idIdp->getStoredVal() == 0 ? true:false);
-        $isLoggedUserLocal = UserClass::isLocalUser($dbh, $uS);
+//        $isLoggedUserLocal = UserClass::isLocalUser($dbh, $uS);
 
         $lastWebAccess = $wUserRS->Last_Login->getStoredVal() == '' ? '' : date('M j, Y', strtotime($wUserRS->Last_Login->getStoredVal()));
 
