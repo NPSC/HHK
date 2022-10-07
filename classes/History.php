@@ -526,7 +526,7 @@ class History {
             $fixedRows[$patientColName] = $r['Patient'];
 
             if ($page != '' && !$static) {
-                $fixedRows[$patientColName] = HTMLContainer::generateMarkup('span', $r['Patient'], array('class'=>'hhk-getPSGDialog', 'style'=>'cursor:pointer;width:100%;text-decoration: underline;', 'data-psg'=>$r['idPsg']));
+                $fixedRows[$patientColName] = HTMLContainer::generateMarkup('a', $r['Patient'], array('href'=>"$page?id=" . $r["PatientId"] . '&psg=' . $r['idPsg']));
             }
 
             $returnRows[] = $fixedRows;

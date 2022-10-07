@@ -108,3 +108,10 @@ INSERT ignore INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 
 -- enable report fieldsets for guest operations users
 insert ignore into `page_securitygroup` (`idPage`, `Group_Code`) values ((select `idPage` from `page` where `File_Name` = "ws_reportFilter.php"), "g");
+
+
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('Credit', 'Credit', 's', 'pc');
+
+-- Add Recent Activity REport page
+call new_webpage('RecentActivity.php', 31, 'Recent Activity', 0, 'h', 102, 'w', 'p', '', '', NULL, 'ga');
+call new_webpage('RecentActivity.php', 31, 'Recent Activity', 0, 'h', 102, 'w', 'p', '', '', NULL, 'gr');

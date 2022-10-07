@@ -75,6 +75,11 @@ class PaymentManager {
         $uS = Session::getInstance();
         $this->invoice = NULL;
 
+        // Short circuit "ignore" payments  9/22/2022 EKC
+        if ($this->pmp->getBalWith() == ExcessPay::Ignore) {
+            return $this->invoice;
+        }
+
         if ($idPayor <= 0) {
             $this->result = 'Undefined Payor.  ';
             return $this->invoice;
@@ -144,7 +149,7 @@ class PaymentManager {
             }
 
             // Deposit Refunds - only if checked out...
-            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0 && $this->pmp->getBalWith() != ExcessPay::Ignore) {
+            if ($visit->getVisitStatus() == VisitStatus::CheckedOut && abs($this->pmp->getDepositRefundAmt()) > 0) {  // && $this->pmp->getBalWith() != ExcessPay::Ignore) {
                 // Return the deposit
                 $this->depositRefundAmt = abs($this->pmp->getDepositRefundAmt());
 
@@ -308,8 +313,8 @@ class PaymentManager {
 
 
                 // Credit some room fees?
-                if ($this->guestCreditAmt > 0 &&
-                        ($this->pmp->getBalWith() != ExcessPay::Ignore || $overPaymemntAmt == 0)) {
+                //if ($this->guestCreditAmt > 0 && ($this->pmp->getBalWith() != ExcessPay::Ignore || $overPaymemntAmt == 0)) {
+                if ($this->guestCreditAmt > 0) {
 
                     $reversalAmt = $this->guestCreditAmt / (1 + $taxRate);
 
@@ -341,8 +346,9 @@ class PaymentManager {
 
 
                 // Process overpayments
-                if ($overPaymemntAmt > 0 && $this->pmp->getBalWith() != ExcessPay::Ignore) {
+                if ($overPaymemntAmt > 0) {
 
+                    // Hold
                     if ($this->pmp->getBalWith() == ExcessPay::Hold) {
                         // Money on accoount
 
@@ -352,6 +358,7 @@ class PaymentManager {
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);
 
+                    // Donation
                     } else if ($this->pmp->getBalWith() == ExcessPay::RoomFund) {
                         // make a donation payment
                         $invLine = new OneTimeInvoiceLine();
@@ -360,6 +367,7 @@ class PaymentManager {
                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
                         $this->invoice->addLine($dbh, $invLine, $uS->username);
 
+                    // Refund
                     } else if ($this->pmp->getBalWith() == ExcessPay::Refund && $this->hasInvoice()) {
 
                         $credit = $this->guestCreditAmt + $this->depositRefundAmt + $this->moaRefundAmt;

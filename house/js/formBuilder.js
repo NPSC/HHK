@@ -657,6 +657,8 @@
     					f.append('<input type="hidden" name="cmd" value="preview">');
     					f.append('<textarea name="formData" style="display:none">' + JSON.stringify(formData) + '</textarea>');
     					f.append('<input type="hidden" name="style" value="' + settingsDialog.find("textarea#formStyle").val() + '">');
+    					f.append('<input type="hidden" name="initialGuests" value="' + settingsDialog.find("input[name=initialGuests]").val() + '">');
+    					f.append('<input type="hidden" name="maxGuests" value="' + settingsDialog.find("input[name=maxGuests]").val() + '">');
     					f.submit();
     					f.remove();
 	    				
@@ -1223,7 +1225,8 @@
 	
 	function actions($wrapper, settings, settingsDialog, formPreviewDialog){
 	
-		$wrapper.on('click', '#newReferral', function(){
+		$wrapper.on('click', '#newReferral', function(e){
+			e.preventDefault();
 			$wrapper.find('#selectform').val("").change();
 			settings.formBuilder = $wrapper.find('#formBuilderContent').empty().formBuilder({
 				inputSets: settings.inputSets,
@@ -1303,7 +1306,8 @@
 			
 		});
 		
-		$wrapper.on('click', '#formiframebtn', function(){
+		$wrapper.on('click', '#formiframebtn', function(e){
+			e.preventDefault();
 			var code = $(this).data('code');
 			navigator.clipboard.writeText(code)
 				.then(() => { alert("Embed Code Copied.") })

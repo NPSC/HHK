@@ -806,6 +806,8 @@ order by r.Title;");
 
     public static function resourceDialog(\PDO $dbh, $idResc, $resourceTypes, $hospitals) {
 
+        $uS = Session::getInstance();
+
         $resc = AbstractResource::getResourceObj($dbh, $idResc, ResourceTypes::Room);
 
         $cls = 'reDiag' . $resc->getIdResource();
@@ -846,8 +848,10 @@ order by r.Title;");
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($resourceTypes), $resc->getType(), TRUE), array('id'=>'selReType', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($options, $useRooms, TRUE), array('id'=>'selRooms', 'class'=>$cls)), array('style'=>'padding-right:0;padding-left:0;'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->getUtilPriority(), array('id'=>'txtRePriority', 'class'=>$cls, 'size'=>'7')), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Background_Color->getStoredVal(), array('id'=>'txtReBgc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
-                . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Text_Color->getStoredVal(), array('id'=>'txtReTc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
+                . ($uS->Room_Colors == "room" ?
+                    HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Background_Color->getStoredVal(), array('id'=>'txtReBgc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
+                    . HTMLTable::makeTd(HTMLInput::generateMarkup($resc->resourceRS->Text_Color->getStoredVal(), array('id'=>'txtReTc', 'class'=>$cls, 'size'=>'8')), array('style'=>'padding-right:0;padding-left:0;'))
+                : '')
                 . $partition . $stat;
 
         $rescAttr = new ResourceAttribute($dbh, $resc->getIdResource());

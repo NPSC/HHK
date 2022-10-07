@@ -87,6 +87,13 @@ class PaymentChooser {
             $pmp->setCardHolderName(strtoupper(filter_var($post['txtvdNewCardName'], FILTER_SANITIZE_STRING)));
         }
 
+        // Use new CC
+        if (isset($post['cbNewCard'])) {
+            $pmp->setNewCardOnFile(TRUE);
+        } else {
+            $pmp->setNewCardOnFile(FALSE);
+        }
+
         // Invoice payor
         if (isset($post['txtInvId'])) {
             $pmp->setIdInvoicePayor(intval(filter_var($post['txtInvId'], FILTER_SANITIZE_NUMBER_INT), 10));
@@ -102,6 +109,7 @@ class PaymentChooser {
             $pmp->setCheckNumber(filter_var($post['txtCheckNum'], FILTER_SANITIZE_STRING));
         }
 
+        // Return Check number
         if (isset($post['txtRtnCheckNum'])) {
             $pmp->setRtnCheckNumber(filter_var($post['txtRtnCheckNum'], FILTER_SANITIZE_STRING));
         }
@@ -111,6 +119,7 @@ class PaymentChooser {
             $pmp->setTransferAcct(filter_var($post['txtTransferAcct'], FILTER_SANITIZE_STRING));
         }
 
+        // Return transfer acct
         if (isset($post['txtRtnTransferAcct'])) {
             $pmp->setRtnTransferAcct(filter_var($post['txtRtnTransferAcct'], FILTER_SANITIZE_STRING));
         }
@@ -189,6 +198,11 @@ class PaymentChooser {
             $pmp->setTotalRoomChg(floatval(filter_var($post["feesCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
         }
 
+        // Guest Credit
+        if (isset($post['guestCredit'])) {
+            $pmp->setGuestCredit(floatval(filter_var($post["guestCredit"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
+        }
+
         // Reimburse Taxes.
         if (isset($post["cbReimburseVAT"])) {
             $pmp->setReimburseTaxCb(TRUE);
@@ -201,8 +215,15 @@ class PaymentChooser {
             $pmp->setTotalCharges(floatval(filter_var($post["totalCharges"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
         }
 
+        // House waive
+        if (isset($post['cbFinalPayment'])) {
+            $pmp->setFinalPaymentFlag(TRUE);
+        } else {
+            $pmp->setFinalPaymentFlag(FALSE);
+        }
+
         // House Discount amount
-        if (isset($post['HsDiscAmount'])) {
+        if (isset($post['cbFinalPayment']) && isset($post['HsDiscAmount'])) {
             $pmp->setHouseDiscPayment(floatval(filter_var($post["HsDiscAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
         }
 
@@ -214,11 +235,6 @@ class PaymentChooser {
         // Refund amount
         if (isset($post['txtRtnAmount'])) {
             $pmp->setRefundAmount(floatval(filter_var($post["txtRtnAmount"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
-        }
-
-        // Guest Credit
-        if (isset($post['guestCredit'])) {
-            $pmp->setGuestCredit(floatval(filter_var($post["guestCredit"], FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION)));
         }
 
         // Total payment.
@@ -240,24 +256,11 @@ class PaymentChooser {
             $pmp->setBalWith(filter_var($post['selexcpay'], FILTER_SANITIZE_STRING));
         }
 
-        // Final Payment
-        if (isset($post['cbFinalPayment'])) {
-            $pmp->setFinalPaymentFlag(TRUE);
-        } else {
-            $pmp->setFinalPaymentFlag(FALSE);
-        }
-
         // Reimburse Taxes
         if (isset($post['cbReimburseVAT'])) {
             $pmp->setReimburseTaxCb(TRUE);
         } else {
             $pmp->setReimburseTaxCb(FALSE);
-        }
-
-        if (isset($post['cbNewCard'])) {
-            $pmp->setNewCardOnFile(TRUE);
-        } else {
-            $pmp->setNewCardOnFile(FALSE);
         }
 
         return $pmp;
@@ -713,7 +716,7 @@ ORDER BY v.idVisit , v.Span;");
 
             // Any remaining guest credits
             $feesTbl->addBodyTr(
-                HTMLTable::makeTd($labels->getString('PaymentChooser', 'RoomCharges', 'Room Charges').':', array('colspan'=>'2', 'class'=>'tdlabel'))
+                HTMLTable::makeTd($labels->getString('PaymentChooser', 'Credit', 'Guest Credit').':', array('colspan'=>'2', 'class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'guestCredit', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;', 'readonly'=>'readonly')), array('style'=>'text-align:right;'))
                 , array('style'=>'display:none;', 'class'=>'hhk-GuestCredit'));
 
@@ -817,7 +820,7 @@ ORDER BY v.idVisit , v.Span;");
 
 
          // Extra payment & distribution Selector
-        if ($defaultExcessPays !== ExcessPay::Ignore && count($excessPays) > 0) {
+        if (count($excessPays) > 0) {
 
             $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', array('class'=>'tdlabel', 'colspan'=>'2'))
                     .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8'))

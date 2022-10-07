@@ -72,7 +72,8 @@ class GuestRegister {
 
         // Get list of resources
         $qu = "SELECT
-    r.idResource as `id`,
+    concat('id-', r.idResource) as `id`,
+    r.idResource as `idResc`,
     r.Title as `title`,
     r.Background_Color as `bgColor`,
     r.Text_Color as `textColor`,
@@ -83,7 +84,7 @@ class GuestRegister {
 	rm.`Category`,
 	rm.`Report_Category`,
     rm.`Floor`,
-    r.Util_Priority
+    r.`Util_Priority`
 from resource r
 	left join
 resource_use ru on r.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $beginDT->format('Y-m-d') . "') and DATE(ru.End_Date) >= DATE('" . $endDT->format('Y-m-d') . "')
@@ -181,12 +182,16 @@ where ru.idResource_use is null
             //Room hover text
             $r['hoverText'] .= "Maximum Occupants: " . $r['maxOcc'];
 
+            //cast priority to int
+            $r['Util_Priority'] = intval($r['Util_Priority'], 10);
+
             $rescs[] = $r;
         }
 
         // Add waitlist
         $rescs[] = array(
-                'id' => self::WAITLIST_RESC_ID,
+                'id' => "id-" . self::WAITLIST_RESC_ID,
+                'idResc' => self::WAITLIST_RESC_ID,
         		'title' => ($genTableName != '' ? ' ' : 'Waitlist'),
                 'bgColor' => '#555',
                 //'textColor' => '#fff',
@@ -343,7 +348,7 @@ where ru.idResource_use is null
             $s['idHosp'] = htmlspecialchars_decode($r['idHospital'], ENT_QUOTES);
             $s['idAssoc'] = htmlspecialchars_decode($r['idAssociation'], ENT_QUOTES);
             $s['hospName'] = $hospitals[$r['idHospital']]['Title'];
-            $s['resourceId'] = $r["idResource"];
+            $s['resourceId'] = "id-" . $r["idResource"];
             $s['idResc'] = $r["idResource"];
             $s['start'] = $startDT->format('Y-m-d\TH:i:00');
             $s['end'] = $endDT->format('Y-m-d\TH:i:00');
@@ -417,7 +422,7 @@ where ru.idResource_use is null
                         'id' => 'H' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => false,
-                        'resourceId' => $r["idResource"],
+                        'resourceId' => "id-" . $r["idResource"],
                         'start' => $stDT->format('Y-m-d\TH:i:00'),
                         'end' => $stDT->format('Y-m-d\TH:i:00'),
                         'title' => 'H',
@@ -444,7 +449,7 @@ where ru.idResource_use is null
                         'id' => 'BO' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => false,
-                        'resourceId' => $r["idResource"],
+                        'resourceId' => "id-" . $r["idResource"],
                         'start' => $stDT->format('Y-m-d\TH:i:00'),
                         'end' => $stDT->format('Y-m-d\TH:i:00'),
                         'title' => 'BO',
@@ -468,7 +473,7 @@ where ru.idResource_use is null
                         'id' => 'H' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => false,
-                        'resourceId' => $r["idResource"],
+                        'resourceId' => "id-" . $r["idResource"],
                         'start' => $stDT->format('Y-m-d\TH:i:00'),
                         'end' => $stDT->format('Y-m-d\TH:i:00'),
                         'title' => 'H',
@@ -506,7 +511,7 @@ where ru.idResource_use is null
                         'id' => 'H' . $eventId++,
                         'kind' => CalEventKind::BO,
                         'editable' => false,
-                        'resourceId' => $r["idResource"],
+                        'resourceId' => "id-" . $r["idResource"],
                         'start' => $clDate->format('Y-m-d\TH:i:00'),
                         'end' => $clDate->format('Y-m-d\TH:i:00'),
                         'title' => 'H',
@@ -534,7 +539,7 @@ where ru.idResource_use is null
                     'id' => 'BO' . $eventId++,
                     'kind' => CalEventKind::BO,
                     'editable' => false,
-                    'resourceId' => $r["idResource"],
+                    'resourceId' => "id-" . $r["idResource"],
                     'start' => $clDate->format('Y-m-d\TH:i:00'),
                     'end' => $clDate->format('Y-m-d\TH:i:00'),
                     'title' => 'BO',
@@ -557,7 +562,7 @@ where ru.idResource_use is null
                     'id' => 'H' . $eventId++,
                     'kind' => CalEventKind::BO,
                     'editable' => FALSE,
-                    'resourceId' => $r["idResource"],
+                    'resourceId' => "id-" . $r["idResource"],
                     'start' => $clDate->format('Y-m-d\TH:i:00'),
                     'end' => $clDate->format('Y-m-d\TH:i:00'),
                     'title' => 'H',
@@ -593,7 +598,7 @@ where ru.idResource_use is null
             $s['idHosp'] = $r['idHospital'];
             $s['idAssoc'] = $r['idAssociation'];
             $s['allDay'] = 1;
-            $s['resourceId'] = $r["idResource"];
+            $s['resourceId'] = "id-" . $r["idResource"];
             $s['idResc'] = $r["idResource"];
             $s['resvStatus'] = $r['Status_Text'];
             $s['status'] = $r['Status'];
@@ -665,7 +670,7 @@ where ru.idResource_use is null
                         'id' => 'H' . $idResc,
                         'kind' => CalEventKind::BO,
                         'editable' => FALSE,
-                        'resourceId' => $idResc,
+                        'resourceId' => "id-" . $idResc,
                         'start' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'end' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'title' => 'H',
@@ -694,7 +699,7 @@ where ru.idResource_use is null
                         'id' => 'BO' . $idResc,
                         'kind' => CalEventKind::BO,
                         'editable' => FALSE,
-                        'resourceId' => $idResc,
+                        'resourceId' => "id-" . $idResc,
                         'start' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'end' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'title' => 'BO',
@@ -721,7 +726,7 @@ where ru.idResource_use is null
                         'id' => 'H' . $idResc,
                         'kind' => CalEventKind::BO,
                         'editable' => FALSE,
-                        'resourceId' => $idResc,
+                        'resourceId' => 'id-' . $idResc,
                         'start' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'end' => $dtendDate->format('Y-m-d\TH:i:00'),
                         'title' => 'H',
@@ -780,7 +785,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
             $c = array(
                 'id' => 'RR' . $idCounter++,
                 'kind' => CalEventKind::OOS,
-                'resourceId' => $r["idResource"],
+                'resourceId' => "id-" . $r["idResource"],
                 'idResc' => $r["idResource"],
                 'reason' => $r['reasonTitle'],
             		'start' => $stDateDT->format('Y-m-d\TH:i:00'),

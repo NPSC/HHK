@@ -6,7 +6,6 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLInput;
 use HHK\HTMLControls\HTMLContainer;
-use HHK\Tables\Insurance\InsuranceTypeRS;
 use HHK\Tables\EditRS;
 use HHK\Tables\Insurance\InsuranceRS;
 use HHK\Tables\Name\Name_InsuranceRS;

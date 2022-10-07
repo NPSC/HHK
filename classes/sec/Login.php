@@ -8,7 +8,6 @@ use HHK\Exception\CsrfException;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\HTMLControls\HTMLInput;
-use HHK\HTMLControls\HTMLTable;
 use HHK\SysConst\CodeVersion;
 use HHK\SysConst\WebRole;
 

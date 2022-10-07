@@ -3,7 +3,7 @@ namespace HHK\House\Report;
 
 use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
-use HHK\Payment\Receipt;
+use HHK\Payment\Statement;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\{GLTableNames, InvoiceStatus, PaymentMethod, PaymentStatusCode, ReservationStatus, VisitStatus};
 use HHK\sec\Labels;
@@ -32,7 +32,7 @@ class ActivityReport {
             $stmt = $dbh->query("select * from vstays_log sl where sl.idName in (select idName from name_guest where idPsg = $idPsg);");
         } else {
             $query = "select * from vstays_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
-            
+
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
         }
@@ -145,16 +145,16 @@ class ActivityReport {
         $uS = Session::getInstance();
 
         if ($resvId > 0) {
-            
+
             $idResv = intval($resvId, 10);
             $stmt = $dbh->query("select * from vreservation_log where idReservation = $idResv;");
-            
+
         } else if ($idPsg > 0) {
-            
+
             $stmt = $dbh->query("select * from vreservation_log sl where sl.idName in (select idName from name_guest where idPsg = $idPsg);");
-            
+
         } else {
-            
+
             $query = "select * from vreservation_log where (DATE(Timestamp) >= :start and DATE(Timestamp) <= :end);";
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(':start' => $startDate, ':end' => $endDate));
@@ -568,7 +568,7 @@ where `lp`.`idPayment` > 0
  $whDates $whStatus $whType $whId Order By lp.idInvoice;";
 
         $stmt = $dbh->query($query);
-        $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idPsg'));
+        $invoices = Statement::processPayments($stmt, array('First', 'Last', 'Company', 'Room', 'idPsg'));
 
         $rowCount = $stmt->rowCount();
 

@@ -69,6 +69,7 @@ $waitlist = HTMLContainer::generateMarkup('h3', $uS->siteName . ' Daily Waitlist
         <?php echo HOUSE_CSS; ?>
         <?php echo JQ_DT_CSS ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
 

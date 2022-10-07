@@ -493,6 +493,7 @@ CREATE OR REPLACE VIEW `vcurrent_residents` AS
         IFNULL(`r`.`idRoom`, 0) AS `RoomId`,
         IFNULL(`r`.`Cleaning_Cycle_Code`, '') AS `Cleaning_Cycle_Code`,
         `mp`.`Name_Last_First` as `Patient`,
+		`mp`.`idName` as `PatientId`,
         'hhk-curres' AS `Action`,
         IFNULL(`re`.`Background_Color`, 'white') AS `backColor`,
         IFNULL(`re`.`Text_Color`, 'black') AS `textColor`,

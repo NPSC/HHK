@@ -118,6 +118,7 @@ FROM
 WHERE
     n.Member_Status != 'd'
         AND v.`Status` = 'co'
+        AND DATE(s.Checkin_Date) < DATE(s.Checkout_Date)
 GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
         $stmt->execute($paramList);
