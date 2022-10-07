@@ -255,7 +255,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
         var columnDefs = $.parseJSON('<?php echo json_encode($colSelector->getColumnDefs()); ?>');
         var makeTable = '<?php echo $mkTable; ?>';
         $('.ckdate').datepicker({
-            yearRange: '-05:+01',
+            yearRange: '<?php echo $uS->StartYear; ?>:+01',
             changeMonth: true,
             changeYear: true,
             autoSize: true,

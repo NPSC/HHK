@@ -546,7 +546,7 @@ $columSelector = $colSelector->makeSelectorTable(TRUE)->generateMarkup(array('st
 
         $('#btnHere, #btnExcel, #cbColClearAll, #cbColSelAll').button();
         $('.ckdate').datepicker({
-            yearRange: '-05:+01',
+            yearRange: '<?php echo $uS->StartYear; ?>:+01',
             changeMonth: true,
             changeYear: true,
             autoSize: true,

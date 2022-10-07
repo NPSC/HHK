@@ -639,7 +639,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
             });
         });
         $('.ckdate').datepicker({
-            yearRange: '-05:+01',
+            yearRange: '<?php echo $uS->StartYear; ?>:+01',
             changeMonth: true,
             changeYear: true,
             autoSize: true,

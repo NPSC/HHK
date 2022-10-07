@@ -885,7 +885,7 @@ $(document).ready(function() {
     $("form[name=glform] .ui-checkboxradio-icon").removeClass('ui-state-hover');
 
     $('.ckdate').datepicker({
-        yearRange: '-05:+01',
+        yearRange: '<?php echo $uS->StartYear; ?>:+01',
         changeMonth: true,
         changeYear: true,
         autoSize: true,

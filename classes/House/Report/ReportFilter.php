@@ -145,12 +145,12 @@ class ReportFilter {
     }
 
     public function getTimePeriodScript() {
-
+        $uS = Session::getInstance();
         $ckdate = '';
 
         if (isset($this->calendarOptions[self::DATES])) {
             $ckdate = "$('.ckdate').datepicker({
-yearRange: '-07:+02',
+yearRange: '" . $uS->StartYear . ":+02',
 changeMonth: true,
 changeYear: true,
 autoSize: true,

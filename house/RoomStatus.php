@@ -592,7 +592,7 @@ foreach ($rescGroups as $g) {
                     "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                     "initComplete": function(settings, json){
                     	$('.ckdate').datepicker({
-                            yearRange: '-07:+01',
+                            yearRange: '<?php echo $uS->StartYear; ?>:+01',
                             changeMonth: true,
                             changeYear: true,
                             autoSize: true,
@@ -614,7 +614,7 @@ foreach ($rescGroups as $g) {
                     "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom"lp>',
                     "initComplete": function(settings, json){
                     	$('.ckdate').datepicker({
-                            yearRange: '-07:+01',
+                            yearRange: '<?php echo $uS->StartYear; ?>:+01',
                             changeMonth: true,
                             changeYear: true,
                             autoSize: true,
