@@ -956,7 +956,7 @@ $(document).ready(function () {
     calendar = new FullCalendar.Calendar(calendarEl, { 
 	
         schedulerLicenseKey: 'CC-Attribution-NonCommercial-NoDerivatives',
-        height: winHieght - 210,
+        height: winHieght - 187,
 
         firstDay: 0,
         dateIncrement: dateIncrementObj,
@@ -1303,7 +1303,7 @@ $(document).ready(function () {
 	var resizeTimer;
 	window.onresize = function(){
 	  clearTimeout(resizeTimer);
-	  resizeTimer = setTimeout(calendar.setOption('height', window.innerHeight - 210), 100);
+	  resizeTimer = setTimeout(calendar.setOption('height', window.innerHeight - 187), 100);
 	};
 
     // disappear the pop-up rescouce groups.

@@ -206,7 +206,7 @@ if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' 
     	}
     }
 
-    $colorKey = HTMLContainer::generateMarkup("div", $hospLabel . HTMLContainer::generateMarkup("div", $leftArrow . HTMLContainer::generateMarkup("div", $colorKey, array("id"=>"hospBtns")) . $rightArrow, array("class"=>"d-flex")), array("id"=>"hospBtnWrapper"));
+    $colorKey = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup("div", $leftArrow . HTMLContainer::generateMarkup("div", $colorKey, array("id"=>"hospBtns")) . $rightArrow, array("class"=>"d-flex")), array("id"=>"hospBtnWrapper"));
 }
 
 
@@ -334,8 +334,8 @@ if($uS->useOnlineReferral){
                 background-color: #E3EFF9;
             }
             .hhk-fcslot-today {
-                background-color: #fff7c4;
-                opacity: .5;
+                background-color: #fbec88;
+                opacity: .6;
             }
         </style>
     </head>
