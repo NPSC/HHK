@@ -2,6 +2,7 @@ const path = require('path');
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CopyPlugin = require("copy-webpack-plugin");
 
 new webpack.ProvidePlugin({
   $: 'jquery',
@@ -44,12 +45,21 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, 'src/html/header.php')
-      filename: path.resolve(__dirname, 'dist/html/header.php'),
-      
+      template: path.resolve(__dirname, 'house/index.php'),
+      filename: path.resolve(__dirname, 'dist/house/index.php'),
+    }),
+    new HtmlWebpackPlugin({
+      template: path.resolve(__dirname, 'house/register.php'),
+      filename: path.resolve(__dirname, 'dist/house/register.php'),
     }),
     new MiniCssExtractPlugin({
     	filename: "[name].[contenthash].css"
+    }),
+    new CopyPlugin({
+    	patterns: [
+    		{from: path.resolve(__dirname, 'admin/'), to: path.resolve(__dirname, 'dist/admin')},
+    		{from: path.resolve(__dirname, 'classes/'), to: path.resolve(__dirname, 'dist/classes')},
+    	],
     }),
   ]
 };
