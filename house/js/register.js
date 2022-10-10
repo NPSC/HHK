@@ -545,7 +545,7 @@ function moveVisit(mode, idVisit, visitSpan, startDelta, endDelta, updateCal) {
     });
 }
 
-function getRoomList(idResv, eid) {
+function getRoomList(idResv, eid, targetEl) {
     if (idResv) {
         // place "loading" icon
         $.post('ws_ckin.php', {cmd: 'rmlist', rid: idResv, x:eid}, function(data) {
@@ -568,7 +568,7 @@ function getRoomList(idResv, eid) {
                 contr.position({
                     my: 'top',
                     at: 'bottom',
-                    of: '#'+data.eid
+                    of: targetEl
                 });
                 $('#selRoom').change(function () {
                     
@@ -1193,7 +1193,7 @@ $(document).ready(function () {
             // reservations
             if (info.event.extendedProps.idReservation && info.event.extendedProps.idReservation > 0) {
                 if (info.jsEvent.target.classList.contains('hhk-schrm')) {
-                    getRoomList(info.event.extendedProps.idReservation, info.jsEvent.target.id);
+                    getRoomList(info.event.extendedProps.idReservation, info.jsEvent.target.id, info.jsEvent.target);
                     return;
                 } else {
                     window.location.assign(resvPageName + '?rid=' + info.event.extendedProps.idReservation);

@@ -1042,7 +1042,7 @@ WHERE
             return;
         }
 
-        if ($idRescPosted == 0) {
+        if ($idRescPosted == 0 || $idRescPosted == 9999) {
 
             // Waitlisting the Reservation.
             $resv->setIdResource(0);
