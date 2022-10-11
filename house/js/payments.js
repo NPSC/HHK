@@ -225,17 +225,17 @@ function getInvoicee(item, orderNum, index) {
 		setTaxExempt(false);
 	}
 	$('#txtOrderNum').val(orderNum);
-	$('#txtInvSearch' + index).val('');
+	$('#txtInvSearch').val('');
+	amtPaid();
 }
 
 function setTaxExempt(taxExempt) {
 	if (taxExempt == '1') {
-		$('.hhk-TaxingItem').removeClass('hhk-applyTax').val('0.00').parent('tr').hide();
+		$('.hhk-TaxingItem').removeClass('hhk-applyTax').val('0.00');
 
 	} else {
-		$('.hhk-TaxingItem').addClass('hhk-applyTax').parent('tr').show();
+		$('.hhk-TaxingItem').addClass('hhk-applyTax');
 	}
-	//amtPaid();
 }
 
 /**
@@ -931,7 +931,8 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 				$('.hhk-cashTndrd').show('fade');
 			}
 		});
-		ptsel.change();
+		// folloeing moved to end of setup.
+		//ptsel.change();
 	}
 
 	// Card on file Cardholder name.
@@ -1116,7 +1117,11 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 		}
 	});
 
-	amtPaid();
+	if (ptsel.length > 0) {
+		ptsel.change();
+	} else {
+		amtPaid();
+	}
 }
 
 function createInvChooser(idVisit, index) {
@@ -1124,7 +1129,7 @@ function createInvChooser(idVisit, index) {
 	if ($('#txtInvSearch' + index).length > 0) {
 
 		$('#txtInvSearch' + index).keypress(function(event) {
-
+			// Handle CR character.
 			var mm = $(this).val();
 			if (event.keyCode == '13') {
 
