@@ -301,9 +301,10 @@ class ReservationSvcs
             //get primary guest
             if ($idVisit > 0) {
 
-                $stmtv = $dbh->prepare("Select v.idPrimaryGuest, v.idRegistration, r.idPsg from visit v join registration r on v.idRegistration = r.idRegistration where idVisit = :idv");
+                $stmtv = $dbh->prepare("Select v.idPrimaryGuest, v.idRegistration, r.idPsg from visit v join registration r on v.idRegistration = r.idRegistration where idVisit = :idv and span = :span");
                 $stmtv->execute(array(
-                    ':idv' => $idVisit
+                    ':idv' => $idVisit,
+                    ':span' => $span
                 ));
                 $rows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
 
