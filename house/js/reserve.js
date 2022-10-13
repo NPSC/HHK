@@ -133,6 +133,19 @@ $(document).ready(function() {
         modal: true,
         title: 'Payment Receipt'
     });
+    
+    $("#ecSearch").dialog({
+        autoOpen: false,
+        resizable: false,
+        width: getDialogWidth(300),
+        title: 'Emergency Contact',
+        modal: true,
+        buttons: {
+            "Exit": function() {
+                $(this).dialog("close");
+            }
+        }
+    });
 
     if (paymentMarkup !== '') {
         $('#paymentMessage').show();

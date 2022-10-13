@@ -48,6 +48,8 @@ class Reservation {
 
     public static function reservationFactoy(\PDO $dbh, $post) {
 
+        $uS = Session::getInstance();
+
         $rData = new ReserveData($post);
 
         // idPsg < 0
@@ -56,7 +58,7 @@ class Reservation {
             // Force new PSG, also implies new reservation
             $rData->setIdResv(0);
 
-            return new Reservation($rData, new ReservationRS(), new JoinNewFamily($dbh, $rData));
+            return new Reservation($rData, new ReservationRS(), new JoinNewFamily($dbh, $rData, $uS->EmergContactReserv));
         }
 
         // idResv < 0
@@ -64,7 +66,7 @@ class Reservation {
 
             if ($rData->getIdPsg() > 0) {
                 // Force New Resv for existing PSG
-                return new ActiveReservation($rData, new ReservationRS(), new Family($dbh, $rData));
+                return new ActiveReservation($rData, new ReservationRS(), new Family($dbh, $rData, $uS->EmergContactReserv));
 
             } else {
 
@@ -100,7 +102,7 @@ class Reservation {
 
 
         // idPsg = 0; idResv = 0;
-        return new Reservation($rData, new ReservationRS(), new Family($dbh, $rData));
+        return new Reservation($rData, new ReservationRS(), new Family($dbh, $rData, $uS->EmergContactReserv));
 
     }
 

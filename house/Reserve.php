@@ -276,6 +276,14 @@ $resvObjEncoded = json_encode($resvAr);
             <div id="activityDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="faDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="keysfees" style="display:none;font-size: .85em;"></div>
+            <div id="ecSearch" style="display:none;">
+                <table>
+                    <tr>
+                        <td>Search: </td><td><input type="text" id="txtemSch" size="15" value="" title="Type at least 3 letters to invoke the search."/></td>
+                    </tr>
+                    <tr><td><input type="hidden" value="" id="hdnEcSchPrefix"/></td></tr>
+                </table>
+            </div>
 
         </div>
         <form name="xform" id="xform" method="post"></form>
