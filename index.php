@@ -86,7 +86,7 @@ if (SecurityComponent::isHTTPS()) {
         <script type="text/javascript" src="js/login.js"></script>
 
     </head>
-    <body>
+    <body <?php if ($uS->testVersion) {echo "class='testbody'";} ?> >
         <div id="page">
             <div class='pageHeader'>
                 <h2 class="px-3 py-2">
@@ -106,7 +106,7 @@ if (SecurityComponent::isHTTPS()) {
                     </div>
                 </div>
                	<?php echo $disclaimer; ?>
-                <?php echo Login::IEMsg(); ?>
+                <?php echo Login::IEMsg() . Login::trainingMsg(); ?>
                 <div class="row justify-content-center">
 					<div class="col-xl-4 col-md-6">
 						<div class="ui-widget center">

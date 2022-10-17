@@ -82,8 +82,8 @@ class WebInit {
         * if test version, put a big TEST on the page
         */
         if ($this->testVersion !== FALSE) {
-            $this->menuTitle = "TEST VERSION";
-            $this->pageTitle = "TEST - " . $this->siteName;
+            //$this->menuTitle = "TEST VERSION";
+           //$this->pageTitle = "TEST - " . $this->siteName;
         }
 
 

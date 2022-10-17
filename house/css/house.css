@@ -3,7 +3,11 @@
     padding: 0px;
 }
 .testbody {
-    background-color: #FFCC9F;
+    background-color: #ffdec2;
+}
+.testbody .navbar {
+	--nav-bg-color: #ce6363;
+	--nav-active-color: #a14d4d;
 }
 
 body {

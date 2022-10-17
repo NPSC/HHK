@@ -233,6 +233,24 @@ class Login {
         return '';
     }
 
+    public static function trainingMsg(){
+        $uS = Session::getInstance();
+
+        if($uS->testVersion){
+            $alertMsg = new AlertMessage("TrainingAlert");
+            $alertMsg->set_DisplayAttr("block");
+            $alertMsg->set_Context(AlertMessage::Info);
+            $alertMsg->set_iconId("alrIcon");
+            $alertMsg->set_styleId("alrResponse");
+            $alertMsg->set_txtSpanId("alrMessage");
+            $alertMsg->set_Text("This is the shared HHK Training site. DO NOT use real guest or patient names. <span class='d-block mt-3'><strong>Your house HHK credentials won't work here.</strong> If you don't have training credentials, please contact NPSC at support@nonprofitsoftwarecorp.org</span>");
+
+            return HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup("div", $alertMsg->createMarkup()), array("class"=>"col-xl-10")), array("class"=>"row justify-content-center mb-3"));
+        }else{
+            return "";
+        }
+    }
+
     public function loginForm($uname = '') {
 
         if ($uname != '' && $this->userName == '') {

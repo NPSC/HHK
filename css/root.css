@@ -6,6 +6,13 @@ body {
 	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
 }
 
+.testbody {
+    background-color: #ffdec2;
+}
+.testbody .pageHeader {
+	background-color: #ce6363 !important;
+}
+
 .nplogo {
       background-image: url("../images/NPSClogoSm.png");
       background-repeat: no-repeat;
