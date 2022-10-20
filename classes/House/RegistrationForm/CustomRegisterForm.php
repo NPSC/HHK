@@ -24,6 +24,7 @@ use HHK\House\Registration;
 use HHK\House\PSG;
 use HHK\House\Vehicle;
 use HHK\HTMLControls\HTMLInput;
+use HHK\Member\Role\Agent;
 
 /**
  * CustomRegisterForm.php
@@ -167,6 +168,28 @@ class CustomRegisterForm {
             ],
             "location"=>[
                 "label"=>"Location",
+                "type"=>"bool",
+                "default"=>false
+            ],
+        ],
+        "Referral Agent"=>[
+            "show"=>[
+                "label"=>"Show Section",
+                "type"=>"bool",
+                "default"=>false
+            ],
+            "workPhone"=>[
+                "label"=>"Work Phone",
+                "type"=>"bool",
+                "default"=>false
+            ],
+            "cellPhone"=>[
+                "label"=>"Cell Phone",
+                "type"=>"bool",
+                "default"=>false
+            ],
+            "Email"=>[
+                "label"=>"Email",
                 "type"=>"bool",
                 "default"=>false
             ],
@@ -318,9 +341,34 @@ class CustomRegisterForm {
 
         $mkup .= '<div class="col" style="min-width:fit-content"><strong>Name: </strong>' . $patient->getRoleMember()->get_fullName() . $bd . $mrn . '</div>';
         $mkup .= (!empty($this->settings["Patient"]["hospital"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'hospital', 'Hospital') . ': </strong>' . $hospital . '</div>': '');
-        $mkup .= ($hospRoom != '' && !empty($this->settings["Patient"]["hospRoom"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'roomNumber', 'Room') . ": </strong>" . $hospRoom . '</div>': '');
-        $mkup .= ($diagnosis != '' && !empty($this->settings["Patient"]["diagnosis"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'diagnosis', 'Diagnosis') . ": </strong>" . $diagnosis . '</div>': '');
-        $mkup .= ($location != '' && !empty($this->settings["Patient"]["location"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'location', 'Hospital Location') . ": </strong>" . $location . '</div>': '');
+        $mkup .= (!empty($this->settings["Patient"]["hospRoom"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'roomNumber', 'Room') . ": </strong>" . $hospRoom . '</div>': '');
+        $mkup .= (!empty($this->settings["Patient"]["diagnosis"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'diagnosis', 'Diagnosis') . ": </strong>" . $diagnosis . '</div>': '');
+        $mkup .= (!empty($this->settings["Patient"]["location"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'location', 'Hospital Location') . ": </strong>" . $location . '</div>': '');
+
+        $mkup .= '</div>';
+
+        return $mkup;
+    }
+
+    protected function referralAgentBlock(AbstractRole $referralAgent = null) {
+
+        $mkup = "<h2 class='mb-2'>" .$this->labels->getString('Hospital', 'referralAgent', 'Referral Agent'). "</h2>";
+
+        $mkup .= '<div class="row mb-3 ui-widget-content ui-corner-all py-2">';
+
+        if($referralAgent instanceof AbstractRole){
+
+            $workphone = $referralAgent->getPhonesObj()->get_Data(PhonePurpose::Work)["Phone_Num"];
+            $cellphone = $referralAgent->getPhonesObj()->get_Data(PhonePurpose::Cell)["Phone_Num"];
+            $email = $referralAgent->getEmailsObj()->get_Data()["Email"];
+
+            $mkup .= '<div class="col" style="min-width:fit-content"><strong>Name: </strong>' . $referralAgent->getRoleMember()->get_fullName() . '</div>';
+            $mkup .= (!empty($this->settings["Referral Agent"]["workPhone"]) ? '<div class="col" style="min-width:fit-content"><strong>Work Phone: </strong>' . $workphone . '</div>': '');
+            $mkup .= (!empty($this->settings["Referral Agent"]["cellPhone"]) ? '<div class="col" style="min-width:fit-content"><strong>Cell Phone: </strong>' . $cellphone . '</div>': '');
+            $mkup .= (!empty($this->settings["Referral Agent"]["Email"]) ? '<div class="col" style="min-width:fit-content"><strong>Email: </strong>' . $email . '</div>': '');
+        }else{
+            $mkup .= '<div class="col" style="min-width:fit-content">No ' . $this->labels->getString('Hospital', 'referralAgent', 'Referral Agent') . ' assigned</div>';
+        }
 
         $mkup .= '</div>';
 
@@ -558,7 +606,7 @@ class CustomRegisterForm {
         return $this->pageTitle;
     }
 
-    protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, array $guests,  $houseAddr, $hospital, $mrn, $hospRoom, $diagnosis, $location, $patientRelCodes,
+    protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, $referralAgent, array $guests,  $houseAddr, $hospital, $mrn, $hospRoom, $diagnosis, $location, $patientRelCodes,
             $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $cardTokens, $notes, $primaryGuestId = 0) {
 
         $uS = Session::getInstance();
@@ -574,6 +622,11 @@ class CustomRegisterForm {
         // Patient
         if(!empty($this->settings['Patient']['show'])){
             $mkup .= $this->patientBlock($patient, $hospital, $mrn, $hospRoom, $diagnosis, $location);
+        }
+
+        // Referral Agent
+        if(!empty($this->settings['Referral Agent']['show'])){
+            $mkup .= $this->referralAgentBlock($referralAgent);
         }
 
         // Vehicles
@@ -633,7 +686,7 @@ class CustomRegisterForm {
         line-height: 1.1em;
     }
 
-    h2:not(.title) {
+    h2:not(.title):not(.agreement h2) {
         border-bottom:1.5pt solid #98C723;
     }
 
@@ -768,7 +821,7 @@ class CustomRegisterForm {
                 $guests[] = $gst;
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
+            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN, hs.idReferralAgent from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
 				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' left join gen_lookups l on hs.Location = l.Code and l.Table_Name = 'Location' where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
 
             $stmt = $dbh->query($query);
@@ -816,7 +869,7 @@ class CustomRegisterForm {
 
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
+            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN, hs.idReferralAgent from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
 				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' left join gen_lookups l on hs.Location = l.Code and l.Table_Name = 'Location' where r.idReservation = " . intval($idReservation) . " limit 1";
 
             $stmt = $dbh->query($query);
@@ -852,6 +905,11 @@ class CustomRegisterForm {
             $diagnosis = $hospitalStay[0][3];
             $location = $hospitalStay[0][4];
             $mrn = $hospitalStay[0][5];
+            if($hospitalStay[0][6] > 0){
+                $referralAgent = new Agent($dbh, '', $hospitalStay[0][6]);
+            }else{
+                $referralAgent = null;
+            }
         }
 
         // Title
@@ -956,6 +1014,7 @@ class CustomRegisterForm {
                 $dbh,
                 $title,
                 $patient,
+                $referralAgent,
                 $guests,
                 $houseAddr,
                 $hospital,
