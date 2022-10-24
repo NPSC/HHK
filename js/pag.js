@@ -8,7 +8,7 @@
  *            $txtCtrl
  * @returns {undefined}
  */
-function flagAlertMessage(mess, wasError, $txtCtrl) {
+export function flagAlertMessage(mess, wasError, $txtCtrl) {
 	"use strict";
 	// Types: alert, success, warning, error, info/information
 	var type = 'info';
@@ -39,7 +39,7 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
 
 	$txtCtrl.text(mess).show();
 }
-function dateRender(data, type, format) {
+export function dateRender(data, type, format) {
 	// If display or filter data is requested, format the date
 	if (type === 'display' || type === 'filter') {
 
@@ -66,12 +66,12 @@ function dateRender(data, type, format) {
 	return data;
 }
 
-function isIE() {
+export function isIE() {
 	var ua = window.navigator.userAgent;
 	return /MSIE|Trident/.test(ua);
 }
 
-function checkStrength(pwCtrl) {
+export function checkStrength(pwCtrl) {
 	var strongRegex = new RegExp(
 			"^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])(?!.*[<>])(?=.{8,})");
 	var rtn = true;
@@ -84,7 +84,7 @@ function checkStrength(pwCtrl) {
 	return rtn;
 }
 
-function openiframe(src, width, height, title, buttons) {
+export function openiframe(src, width, height, title, buttons) {
 	var $dialog = $('<div id="iframeDialog" style="overflow:hidden"><div class="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div><iframe id="hhk-iframe" src="'
 			+ src
 			+ '" style="border: none; height: 95%; width: 100%"></iframe></div>');
@@ -107,7 +107,7 @@ function openiframe(src, width, height, title, buttons) {
 
 }
 
-function logoutTimer(){
+export function logoutTimer(){
 	var timerID;
 	var intervalID;
 	
@@ -168,7 +168,7 @@ function logoutTimer(){
 }
 
 /* set dialog width based on screen size */
-function getDialogWidth(defaultWidth){
+export function getDialogWidth(defaultWidth){
 	var winWidth = $(window).width();
 	var dialogWidth = defaultWidth;
 	

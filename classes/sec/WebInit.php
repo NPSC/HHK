@@ -2,6 +2,7 @@
 namespace HHK\sec;
 use HHK\Exception\RuntimeException;
 use HHK\SysConst\{WebPageCode, Mode};
+use HHK\Templates\Template;
 
 /**
  * WebInit.php
@@ -29,6 +30,8 @@ class WebInit {
     public $resourceURL;
     public $siteName;
     public $testVersion;
+
+    public $template;
 
     /**
      * @var \PDO
@@ -136,6 +139,9 @@ class WebInit {
         if ($page_Type == WebPageCode::Service){
             header("Cache-Control: must-revalidate,no-cache,no-store");
         }
+
+        //instantiate Template
+        $this->template = new Template();
     }
 
 

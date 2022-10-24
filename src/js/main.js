@@ -1,9 +1,24 @@
 //jQuery
-window.$ = window.jQuery = window.customjquery = require("jquery");
+window.$ = window.jQuery = require("jquery");
+
+//jquery ui
+require("jquery-ui-bundle");
+import '../../house/css/jqui/jquery-ui.min.css';
+
+//pag.js
+require('../../js/pag.js');
 
 //import 'bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
+require('bootstrap');
 
-$(document).ready(function(){
-	$('#header').show();
-});
+//datatables
+require('datatables.net-dt');
+
+
+//import CSS
+import '../../house/css/house.css';
+import '../../css/bootstrapNavbar.css';
+
+
+require('../../house/js/reportfieldSets.js');
+//require('../../js/datatables.min.js');

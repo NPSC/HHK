@@ -45,21 +45,13 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, 'house/index.php'),
-      filename: path.resolve(__dirname, 'dist/house/index.php'),
-    }),
-    new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, 'house/register.php'),
-      filename: path.resolve(__dirname, 'dist/house/register.php'),
+      template: path.resolve(__dirname, 'src/html/base.php'),
+      filename: path.resolve(__dirname, 'house/template/base.php'),
+      scriptLoading: 'defer',
+      inject: false,
     }),
     new MiniCssExtractPlugin({
     	filename: "[name].[contenthash].css"
-    }),
-    new CopyPlugin({
-    	patterns: [
-    		{from: path.resolve(__dirname, 'admin/'), to: path.resolve(__dirname, 'dist/admin')},
-    		{from: path.resolve(__dirname, 'classes/'), to: path.resolve(__dirname, 'dist/classes')},
-    	],
     }),
   ]
 };
