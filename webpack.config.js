@@ -47,6 +47,7 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, 'src/html/base.php'),
       filename: path.resolve(__dirname, 'house/template/base.php'),
+      favicon: "./favicon.svg",
       scriptLoading: 'defer',
       inject: false,
     }),

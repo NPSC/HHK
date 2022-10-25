@@ -196,7 +196,7 @@ abstract class AbstractReport {
             "columnDefs": [
             {"targets": ' . $jsonColumnDefs . ',
             "type": "date",
-            "render": function ( data, type, row ) {return dateRender(data, type, dateFormat);}
+            "render": function ( data, type, row ) {return CommonLib.dateRender(data, type, dateFormat);}
             }
             ],
             "displayLength": 50,

@@ -58,19 +58,6 @@ if (isset($_POST['btnExcel-' . $reservationReport->getInputSetReportName()])) {
 
 //set up template
 
-$wInit->template->head = JQ_DT_CSS
-                       . FAVICON
-                       . GRID_CSS
-                       . NOTY_CSS
-
-                       . '<script type="text/javascript" defer="defer" src="' . JQ_DT_JS . '"></script>'
-                       . '<script type="text/javascript" defer="defer" src="' . MOMENT_JS . '"></script>'
-
-                       . '<script type="text/javascript" defer="defer" src="' . NOTY_JS . '"></script>'
-                       . '<script type="text/javascript" defer="defer" src="' . NOTY_SETTINGS_JS . '"></script>'
-                       . '<script type="text/javascript" defer="defer" src="' . REPORTFIELDSETS_JS . '"></script>'
-                       . '<script type="text/javascript" defer="defer" src="' . BOOTSTRAP_JS . '"></script>';
-
 $wInit->template->inlineJS = '$(document).ready(function() {
                 var dateFormat = "' . $labels->getString("momentFormats", "report", "MMM D, YYYY") . '";
                 var columnDefs = $.parseJSON("' . json_encode($reservationReport->colSelector->getColumnDefs()) . '");'
