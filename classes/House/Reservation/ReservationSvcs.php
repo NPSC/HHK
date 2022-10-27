@@ -440,7 +440,7 @@ class ReservationSvcs
             }
 
             $regdoc = new RegistrationForm();
-            $logoWidth = 114;
+            $logoWidth = $uS->statementLogoWidth;
 
             if (count($docRows) > 0) {
                 foreach ($docRows as $d) {
