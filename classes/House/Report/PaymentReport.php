@@ -3,7 +3,7 @@
 namespace HHK\House\Report;
 
 use HHK\HTMLControls\{HTMLContainer, HTMLTable};
-use HHK\Payment\Receipt;
+use HHK\Payment\Statement;
 use HHK\SysConst\{PaymentMethod, PaymentStatusCode};
 use HHK\sec\Session;
 use HHK\ExcelHelper;
@@ -143,7 +143,7 @@ class PaymentReport {
       $whDates $whStatus $whType ";
 
         $stmt = $dbh->query($query);
-        $invoices = Receipt::processPayments($stmt, array('First', 'Last', 'Company', 'Room'));
+        $invoices = Statement::processPayments($stmt, array('First', 'Last', 'Company', 'Room'));
 
 
         $reportRows = 1;
