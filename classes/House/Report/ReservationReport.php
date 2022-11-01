@@ -7,6 +7,7 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\HTMLControls\HTMLTable;
+use HHK\SysConst\ReservationStatus;
 
 
 /**
@@ -51,6 +52,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     }
 
     public function makeQuery(): void{
+        $uS = Session::getInstance();
+
         $whDates = " r.Expected_Arrival <= '" . $this->filter->getReportEnd() . "' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '" . $this->filter->getReportStart() . "' ";
 
         // Hospitals
@@ -70,6 +73,27 @@ class ReservationReport extends AbstractReport implements ReportInterface {
 
         if ($whStatus != '') {
             $whStatus = "and r.Status in (" . $whStatus . ") ";
+        }
+
+        // Reservation Prepayments
+        $prePayQuery = '';
+
+        if ($uS->AcceptResvPaymt) {
+            $prePayQuery = "  case when s.Value = 'true' AND r.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Waitlist . "') THEN
+                ifnull(
+                    (select sum(il.Amount)
+            		from
+            		    invoice_line il
+            		        join
+            		    invoice i ON il.Invoice_Id = i.idInvoice
+            		where
+            		    il.Item_Id = 10
+            		        and i.Deleted = 0
+            		        and il.Deleted = 0
+            		        and i.Status = 'p'
+            		        and i.idGroup = r.idRegistration), 0)
+                ELSE 0 END  as `PrePaymt`, ";
+
         }
 
         $groupBy = " and rg.Primary_Guest = 1 Group By rg.idReservation";
@@ -113,10 +137,9 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     hs.Diagnosis2,
     ifnull(g2.`Description`, '') as `Location`,
     r.`Timestamp` as `Created_Date`,
-    r.Last_Updated " .
-	//CASE WHEN r.Status not in ('s','co','im') THEN count(rg.idReservation) ELSE '' END as `numGuests`
-
-"from
+    $prePayQuery
+    r.Last_Updated
+from
     reservation r
         left join
 	reservation_guest rg on r.idReservation = rg.idReservation
@@ -151,7 +174,8 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         and g2.`Code` = hs.`Location`
     LEFT JOIN hospital h on hs.idHospital = h.idHospital and h.Type = 'h'
     LEFT JOIN hospital a on hs.idAssociation = a.idHospital and a.Type = 'a'
-where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.idRegistration";
+    , sys_config s
+where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.idRegistration";
     }
 
     public function makeFilterMkup():void{
@@ -253,7 +277,12 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.id
         $cFields[] = array("Nights", 'Nights', 'checked', '', 'integer', '10');
         $cFields[] = array("Days", 'Days', '', '', 'integer', '10');
         $cFields[] = array("Rate", 'FA_Category', 'checked', '', 'string', '20');
-        //$cFields[] = array($labels->getString('MemberType', 'visitor', 'Guest').'s', 'numGuests', 'checked', '', 'integer', '10');
+
+        // Reservation pre-payment
+        if ($uS->AcceptResvPaymt) {
+            $cFields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 'integer', '10');
+        }
+
         $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
         $cFields[] = array("Created Date", 'Created_Date', 'checked', '', 'MM/DD/YYYY', '15', array(), 'date');
         $cFields[] = array("Last Updated", 'Last_Updated', '', '', 'MM/DD/YYYY', '15', array(), 'date');
@@ -321,6 +350,7 @@ where " . $whDates . $whHosp . $whAssoc . $whStatus . $groupBy . " order by r.id
         foreach($this->resultSet as $k=>$r) {
             $this->resultSet[$k]['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
             $this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
+            $this->resultSet[$k]['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0));
         }
 
         return parent::generateMarkup($outputType);

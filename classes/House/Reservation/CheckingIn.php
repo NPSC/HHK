@@ -6,16 +6,16 @@ use HHK\AuditLog\NameLog;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\HTMLContainer;
 use HHK\House\Family\{Family, FamilyAddGuest};
-use HHK\House\HouseServices;
 use HHK\House\Registration;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\Room\RoomChooser;
 use HHK\House\Visit\Visit;
+use HHK\House\HouseServices;
 use HHK\sec\Labels;
 use HHK\sec\{SecurityComponent, Session};
-use HHK\Payment\PaymentManager\PaymentManager;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Payment\PaymentManager\PaymentManager;
 use HHK\Purchase\{CheckinCharges, PaymentChooser, RateChooser};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, VisitStatus};
 use HHK\Tables\EditRS;
@@ -65,7 +65,17 @@ FROM reservation r
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) != 1) {
-            throw new NotFoundException("Reservation not found.  ");
+            // Deleted?
+            $stmt = $dbh->query("Select max(idReservation) from reservation;");
+            $rows = $stmt->FetchAll(\PDO::FETCH_NUM);
+
+            if ($rData->getIdResv() > 0 && count($rows) > 0 && $rows[0][0] > $rData->getIdResv()) {
+                // Reserv has been deleted.
+                return new DeletedReservation($rData, NULL, NULL);
+            } else {
+                // Something else borke.
+                throw new NotFoundException("Reservation not found.  ");
+            }
         }
 
         $rRs = new ReservationRS();
@@ -183,7 +193,7 @@ FROM reservation r
                 $paymentGateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $merchants);
 
                 $dataArray['pay'] = HTMLContainer::generateMarkup('div',
-                    PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->DefaultVisitFee, $reg->getPreferredTokenId())
+                    PaymentChooser::createMarkup($dbh, $resv->getIdGuest(), $resv->getIdReservation(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $uS->KeyDeposit, FALSE, $uS->PayVFeeFirst, $reg->getPreferredTokenId())
                     , array('style'=>'flex-basis: 100%'));
 
             }
@@ -370,36 +380,7 @@ FROM reservation r
         //
         // Payment
         //
-        $pmp = PaymentChooser::readPostedPayment($dbh, $post);
-
-        // Check for key deposit
-        if ($uS->KeyDeposit && is_null($pmp) === FALSE) {
-
-            $reg = new Registration($dbh, 0, $resv->getIdRegistration());
-
-            $depCharge = $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]);
-            $depBalance = $reg->getDepositBalance($dbh);
-
-            if ($depCharge > 0 && $pmp->getKeyDepositPayment() == 0 && $depBalance > 0) {
-
-                // Pay deposit with registration balance
-                if ($depCharge <= $depBalance) {
-                    $pmp->setKeyDepositPayment($depCharge);
-                } else {
-                    $pmp->setKeyDepositPayment($depBalance);
-                }
-
-            } else if ($pmp->getKeyDepositPayment() > 0) {
-
-                $visit->visitRS->DepositPayType->setNewVal($pmp->getPayType());
-            }
-
-            // Update Pay type.
-            $visit->updateVisitRecord($dbh, $uS->username);
-        }
-
-        $paymentManager = new PaymentManager($pmp);
-        $this->payResult = HouseServices::processPayments($dbh, $paymentManager, $visit, 'ShowRegForm.php?vid='.$visit->getIdVisit(), $visit->getPrimaryGuestId());
+        $this->savePayment($dbh, $post, $visit, $resc, $resv->getIdRegistration());
 
         $this->resc = $resc;
         $this->visit = $visit;
@@ -500,6 +481,62 @@ FROM reservation r
 
         return $dataArray;
 
+    }
+
+    protected function savePayment(\PDO $dbh, $post, Visit $visit, $resc, $idRegistration) {
+
+        $uS = Session::getInstance();
+
+        $pmp = PaymentChooser::readPostedPayment($dbh, $post);
+
+        // Check for key deposit
+        if ($uS->KeyDeposit && is_null($pmp) === FALSE) {
+
+            $reg = new Registration($dbh, 0, $idRegistration);
+
+            $depCharge = $resc->getKeyDeposit($uS->guestLookups[GLTableNames::KeyDepositCode]);
+            $depBalance = $reg->getDepositBalance($dbh);
+
+            if ($depCharge > 0 && $pmp->getKeyDepositPayment() == 0 && $depBalance > 0) {
+
+                // Pay deposit with registration balance
+                if ($depCharge <= $depBalance) {
+                    $pmp->setKeyDepositPayment($depCharge);
+                } else {
+                    $pmp->setKeyDepositPayment($depBalance);
+                }
+
+            } else if ($pmp->getKeyDepositPayment() > 0) {
+
+                $visit->visitRS->DepositPayType->setNewVal($pmp->getPayType());
+            }
+
+            // Update Pay type.
+            $visit->updateVisitRecord($dbh, $uS->username);
+        }
+
+        $paymentManager = new PaymentManager($pmp);
+        $this->payResult = HouseServices::processPayments($dbh, $paymentManager, $visit, 'ShowRegForm.php?vid='.$visit->getIdVisit(), $visit->getPrimaryGuestId());
+
+        // Reservation prepayments
+        if ($uS->AcceptResvPaymt) {
+
+            // Add Order_Number to reservation pre-payment invoices.
+            $numRows = $dbh->exec("
+            UPDATE invoice i
+                    JOIN
+                reservation_invoice ri ON ri.Invoice_Id = i.idInvoice
+            SET
+                i.Order_Number = ".$visit->getIdVisit()."
+            WHERE
+                ri.Reservation_Id = " . $visit->getIdReservation());
+
+            // Relate Invoice to Reservation
+            if ($numRows > 1 && ! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $this->reserveData->getIdResv() > 0) {
+                $dbh->exec("insert ignore into `reservation_invoice` Values(".$this->reserveData->getIdResv()."," .$this->payResult->getIdInvoice() . ")");
+            }
+
+        }
     }
 
 }

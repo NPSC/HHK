@@ -509,7 +509,7 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="showWlNotes" value='<?php echo $showWlNotes ?>' />
         <input  type="hidden" id="wlTitle" value='<?php echo $labels->getString('referral', 'waitlistNotesLabel', 'WL Notes'); ?>' />
         <input  type="hidden" id="showCharges" value='<?php echo $showCharges ?>' />
-
+        <input  type="hidden" id="acceptResvPay" value='<?php echo $uS->AcceptResvPaymt; ?>' />
         <input  type="hidden" id="defaultEventColor" value='<?php echo $uS->DefaultCalEventColor; ?>' />
         <input  type="hidden" id="defCalEventTextColor" value='<?php echo $uS->DefCalEventTextColor; ?>' />
         <input  type="hidden" id="resourceGroupBy" value='<?php echo $resourceGroupBy; ?>' />

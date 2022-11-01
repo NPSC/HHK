@@ -1,4 +1,11 @@
-
+/**
+ * resvManager.js
+ *
+ * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
+ * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @license   GPL and MIT
+ * @link      https://github.com/NPSC/HHK
+ */
 function resvManager(initData, options) {
     var t = this;
 
@@ -23,6 +30,7 @@ function resvManager(initData, options) {
     var span = initData.span;
     var arrival = initData.arrival;
     var insistPayFilledIn = initData.insistPayFilledIn;
+    var prePaymtAmt = initData.prePaymt;
 
     var insistCkinDemog = false;
     var rooms = [];
@@ -49,10 +57,15 @@ function resvManager(initData, options) {
     t.getIdResv = getIdResv;
     t.getIdName = getIdName;
     t.getIdVisit = getIdVisit;
+    t.getPrePaymtAmt = getPrePaymtAmt;
     t.getSpan = getSpan;
     t.setRooms = setRooms;
     t.options = options;
 
+	function getPrePaymtAmt() {
+		return prePaymtAmt;
+	}
+	
     function setRooms($r) {
         rooms = $r;
     }
@@ -1820,7 +1833,7 @@ function resvManager(initData, options) {
 
         }
 
-        function setupPay(data){
+        function setupPay(data) {
 
             if ($('#selResource').length > 0 && $('#selRateCategory').length > 0) {
 
@@ -1832,6 +1845,19 @@ function resvManager(initData, options) {
                     autoSize: true,
                     dateFormat: 'M d, yy'
                 });
+                
+   				// Return pre-payment if cancelling reserv.
+                $('#selResvStatus').change(function () {
+					if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
+						// Cancel 
+						isCheckedOut = true;
+						amtPaid();
+					} else {
+						isCheckedOut = false;
+						amtPaid();
+					}
+				});
+				$('#selResvStatus').change();
             }
         }
 
@@ -1890,6 +1916,7 @@ function resvManager(initData, options) {
                 setupVehicle($veh);
             }
 
+			// Payment
             if (data.resv.rdiv.pay !== undefined) {
                 $rDiv.append($(data.resv.rdiv.pay));
             }
@@ -2080,7 +2107,7 @@ function resvManager(initData, options) {
                             $('#vehValidate').text(carVal2);
                             flagAlertMessage(carVal, 'alert', $pWarning);
                             return false;
-                        }
+                        } 
                     }
                 }
 
@@ -2121,6 +2148,19 @@ function resvManager(initData, options) {
                     }
                 }
             }
+            
+            // Return Pre-Payment?
+            //if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
+				
+				if (prePaymtAmt > 0 && isCheckedOut && $('#selexcpay').val() == '') {
+					$('#selexcpay').addClass('ui-state-error');
+					flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
+					$('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
+					return false;
+				} else {
+					$('#selexcpay').removeClass('ui-state-error');
+				}
+			//}
             
             return true;
 
@@ -2303,40 +2343,27 @@ function resvManager(initData, options) {
 
     }
 
-    function deleteReserve(rid, idForm, $delButton) {
+    function deleteReserve() {
 
-        var cmdStr = '&cmd=delResv' + '&rid=' + rid;
-        $.post(
-                'ws_ckin.php',
-                cmdStr,
-                function(datas) {
-                    var data;
-                    try {
-                        data = $.parseJSON(datas);
-                    } catch (err) {
-                        flagAlertMessage(err.message, 'error');
-                        $(idForm).remove();
-                    }
+		if (prePaymtAmt > 0 && $('#selexcpay').val() == '') {
 
-                    if (data.error) {
-                        if (data.gotopage) {
-                            window.open(data.gotopage, '_self');
-                        }
-                        flagAlertMessage(data.error, 'error');
-                        $(idForm).remove();
-                    }
+			if (isCheckedOut) {
 
-                    if (data.warning) {
-                        flagAlertMessage(data.warning, 'warning');
-                        $delButton.hide();
-                    }
+				$('#selexcpay').addClass('ui-state-error');
+				flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
+				$('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
+				return false;
 
-                    if (data.result) {
-                        $(idForm).remove();
-                        flagAlertMessage(data.result + ' <a href="Reserve.php">Continue</a>', 'success');
-                    }
-                }
-        );
+			} else {
+
+				$('#selexcpay').removeClass('ui-state-error');
+				isCheckedOut = true;
+				amtPaid();
+				return false;
+			}
+		}
+
+        return true;
     }
 
     function loadResv(data) {
@@ -2345,6 +2372,13 @@ function resvManager(initData, options) {
             transferToGw(data);
             return;
         }
+        
+        if (data.deleted) {
+			$('#guestSearch').hide();
+			$('#contentDiv').append('<p>' + data.deleted + '</p>');
+			$('#spnStatus').text('Deleted');
+			return
+		}
 
         // Patient management.
         if (data.resvChooser && data.resvChooser !== '') {
@@ -2373,6 +2407,9 @@ function resvManager(initData, options) {
         }
 		if (data.resvStatusCode) {
 			resvStatusCode = data.resvStatusCode
+		}
+		if (data.prePayment) {
+			prePaymtAmt = data.prePayment;
 		}
 
         // Hospital
@@ -2480,8 +2517,6 @@ function resvManager(initData, options) {
             manageCheckInNowButton($('#gstDate').val(), data.rid, data.resv.rdiv.hideCiNowBtn);
             
             insistCkinDemog = data.insistCkinDemog;
-
-			
 
         }
 

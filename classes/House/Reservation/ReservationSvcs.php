@@ -847,30 +847,4 @@ class ReservationSvcs
         );
     }
 
-    public static function deleteReservation(\PDO $dbh, $rid)
-    {
-
-        // Get labels
-        $labels = Labels::getLabels();
-        $uS = Session::getInstance();
-
-        if ($rid > 0) {
-
-            $resv = Reservation_1::instantiateFromIdReserv($dbh, $rid);
-
-            if ($resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
-
-                $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' status "' . $resv->getStatusTitle($dbh) . '" cannot be deleted';
-            } else {
-                // Okay to delete
-                $resv->deleteMe($dbh, $uS->username);
-
-                $dataArray['result'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Deleted.';
-            }
-        } else {
-            $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Id is not valid.  ';
-        }
-
-        return $dataArray;
-    }
 }

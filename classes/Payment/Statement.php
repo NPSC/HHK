@@ -14,13 +14,7 @@ use HHK\House\Registration;
  * @author Eric
  *
  */
-class Statement
-{
-
-    /**
-     */
-    public function __construct()
-    {}
+class Statement {
 
     public static function processRatesRooms(array $spans) {
 
@@ -540,11 +534,11 @@ class Statement
 
             $itemAmount = floatval($l['Amount']);
 
-            if ($l['Item_Id'] == ItemId::LodgingDonate && $itemAmount != 0) {
+            if ($l['Item_Id'] == ItemId::LodgingDonate && $l['Status'] == InvoiceStatus::Paid) {
                 $donAmt += $itemAmount;
             }
 
-            if ($l['Item_Id'] == ItemId::LodgingMOA && $itemAmount > 0) {
+            if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Status'] == InvoiceStatus::Paid) {
                 $moaAmt += $itemAmount;
             }
         }
@@ -921,34 +915,27 @@ class Statement
         $uS = Session::getInstance();
 
         $spans = array();
+        $hospital = '';
+        $rates = [];
 
         $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
 
         if ($idRegistration > 0) {
             $spans = $priceModel->loadRegistrationNights($dbh, $idRegistration);
+            $reg = new Registration($dbh, 0, $idRegistration);
         } else {
             return 'Missing Registration Id.  ';
         }
 
 
-        if (count($spans) == 0) {
+        if (count($spans) == 0 && $uS->AcceptResvPaymt === FALSE) {
             return 'Visits Not Found.  ';
+        } else if (count($spans) > 0) {
+            // Collect rates and rooms
+            $rates = self::processRatesRooms($spans);
         }
 
-        $idPsg = intVal($spans[0]['idPsg']);
-
-        // Hospital
-        $hospital = '';
-        if ($spans[0]['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] != '(None)') {
-            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idAssociation']][1] . ' / ';
-        }
-        if ($spans[0]['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']])) {
-            $hospital .= $uS->guestLookups[GLTableNames::Hospital][$spans[0]['idHospital']][1];
-        }
-
-        // Collect rates and rooms
-        $rates = self::processRatesRooms($spans);
-
+        $idPsg = intVal($reg->getIdPsg());
         $totalAmt = 0.00;
         $totalNights = 0;
 
@@ -993,10 +980,18 @@ where i.Deleted = 0 and il.Deleted = 0 and i.idGroup = $idRegistration order by 
         $diags = [];
         if ($idPsg > 0){
 
-            $pstmt = $dbh->query("select n.Name_First, n.Name_Last from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
+            $pstmt = $dbh->query("select n.Name_First, n.Name_Last, hs.idHospital, hs.idAssociation from name n left join hospital_stay hs on n.idName = hs.idPatient where hs.idPsg = $idPsg");
             $rows = $pstmt->fetchAll(\PDO::FETCH_ASSOC);
             if (count($rows) > 0) {
                 $patientName = $rows[0]['Name_First'] . ' ' . $rows[0]['Name_Last'];
+
+                // Hospital
+                if ($rows[0]['idAssociation'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$rows[0]['idAssociation']]) && $uS->guestLookups[GLTableNames::Hospital][$rows[0]['idAssociation']][1] != '(None)') {
+                    $hospital .= $uS->guestLookups[GLTableNames::Hospital][$rows[0]['idAssociation']][1] . ' / ';
+                }
+                if ($rows[0]['idHospital'] > 0 && isset($uS->guestLookups[GLTableNames::Hospital][$rows[0]['idHospital']])) {
+                    $hospital .= $uS->guestLookups[GLTableNames::Hospital][$rows[0]['idHospital']][1];
+                }
             }
         }
 

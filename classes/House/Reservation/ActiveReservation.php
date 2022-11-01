@@ -6,9 +6,13 @@ use HHK\House\Registration;
 use HHK\House\Vehicle;
 use HHK\House\ReserveData\ReserveData;
 use HHK\Note\{LinkNote, Note};
-use HHK\SysConst\ReservationStatus;
+use HHK\SysConst\{ReservationStatus};
 use HHK\sec\Session;
 use HHK\Document\FormDocument;
+use HHK\Purchase\PaymentChooser;
+use HHK\Payment\PaymentManager\ResvPaymentManager;
+use HHK\Payment\PaymentResult\PaymentResult;
+use HHK\House\HouseServices;
 
 
 
@@ -64,12 +68,23 @@ class ActiveReservation extends Reservation {
 
     public function save(\PDO $dbh, $post) {
 
+        $uS = Session::getInstance();
+
         $this->saveResv($dbh, $post);
+
+        if ($uS->AcceptResvPaymt) {
+            $this->savePrePayment($dbh, $post);
+        }
 
         return $this;
 
     }
 
+    /**
+     * @param \PDO $dbh
+     * @param array $post
+     * @return \HHK\House\Reservation\ActiveReservation|\HHK\House\Reservation\StaticReservation
+     */
     protected function saveResv(\PDO $dbh, $post) {
 
         $uS = Session::getInstance();
@@ -80,7 +95,7 @@ class ActiveReservation extends Reservation {
             return $this;
         }
 
-        // Return a goto checkingin page?
+        // Set goto checkingin page?
         if (isset($post['resvCkinNow'])) {
             $this->gotoCheckingIn = filter_var($post['resvCkinNow'], FILTER_SANITIZE_STRING);
         }
@@ -113,10 +128,8 @@ class ActiveReservation extends Reservation {
 
         // Cancel reservation?
         if (Reservation_1::isRemovedStatus($reservStatus)) {
-
             $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
             return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
-
         }
 
         // Registration
@@ -220,6 +233,42 @@ class ActiveReservation extends Reservation {
 
     }
 
+    public function delete(\PDO $dbh, $post = []) {
+
+        $uS = Session::getInstance();
+
+        // Check for pre-payment return target.
+        if ($uS->AcceptResvPaymt) {
+            $this->savePrePayment($dbh, $post);
+        }
+
+        // Delete it
+        $dataArray = parent::delete($dbh);
+
+
+        if ($this->payResult !== NULL) {
+            // Payment processed
+
+            if ($this->payResult->getStatus() == PaymentResult::FORWARDED) {
+
+                $creditCheckOut = $this->payResult->getForwardHostedPayment();
+
+                // Credit payment?
+                if (count($creditCheckOut) > 0) {
+                    return $creditCheckOut;
+                }
+
+            } else {
+
+                $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+
+            }
+        }
+
+        return $dataArray;
+    }
+
+
     public function changeRoom(\PDO $dbh, $idResv, $idResc) {
 
         $uS = Session::getInstance();
@@ -255,7 +304,59 @@ class ActiveReservation extends Reservation {
     }
 
     public function checkedinMarkup(\PDO $dbh) {
-        return $this->createMarkup($dbh);
+
+        // This runs after a save.  Not actually checked in.
+        $dataArray = [];
+
+        if ($this->payResult !== NULL) {
+            // Payment processed
+
+            $creditCheckOut = [];
+
+            if ($this->payResult->getStatus() == PaymentResult::FORWARDED) {
+
+                $creditCheckOut = $this->payResult->getForwardHostedPayment();
+
+                // Credit payment?
+                if (count($creditCheckOut) > 0) {
+                    return $creditCheckOut;
+                }
+
+            } else {
+
+                $this->gotoCheckingIn = 'no';
+                $dataArray = $this->createMarkup($dbh);
+                $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+
+            }
+
+        } else {
+            // No payments
+            $dataArray = $this->createMarkup($dbh);
+        }
+
+        return $dataArray;
+    }
+
+    public function savePrePayment(\PDO $dbh, $post) {
+
+        $pmp = PaymentChooser::readPostedPayment($dbh, $post);  // Returns PaymentManagerPayment.
+
+        if (is_null($pmp) === FALSE && ($pmp->getTotalPayment() != 0 || $pmp->getOverPayment() != 0)) {
+
+            $resv = new Reservation_1($this->reservRs);
+            $resvPaymentManager = new ResvPaymentManager($pmp);
+
+            $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php&rid=' . $resv->getIdReservation(), $resv->getIdGuest());
+
+            // Relate Invoice to Reservation
+            if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {
+                $dbh->exec("insert ignore into `reservation_invoice` Values(".$resv->getIdReservation()."," .$this->payResult->getIdInvoice() . ")");
+            }
+
+        } else {
+            $this->payResult = NULL;
+        }
     }
 }
 ?>

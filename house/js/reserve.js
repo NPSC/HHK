@@ -3,6 +3,7 @@ var payFailPage;
 var dateFormat;
 var paymentMarkup;
 var pageManager;
+var receiptMarkup;
 
 $(document).ready(function() {
     "use strict";
@@ -15,6 +16,7 @@ $(document).ready(function() {
     payFailPage = $('#payFailPage').val();
     dateFormat = $('#dateFormat').val();
     paymentMarkup = $('#paymentMarkup').val();
+    receiptMarkup = $('#receiptMarkup').val();
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -150,31 +152,30 @@ $(document).ready(function() {
     if (paymentMarkup !== '') {
         $('#paymentMessage').show();
     }
+    
+    if (receiptMarkup !== '') {
+        showReceipt('#pmtRcpt', receiptMarkup, 'Payment Receipt');
+    }
+
 
     pageManager = new resvManager(resv, pageManagerOptions);
 
-    // hide the alert on mousedown
     $(document).mousedown(function (event) {
-
-        if (isIE()) {
-            var target = $(event.target[0]);
-
-            if (target.id && target.id !== undefined && target.id !== 'divSelAddr' && target.closest('div') && target.closest('div').id !== 'divSelAddr') {
-                $('#divSelAddr').remove();
-            }
-
-        } else {
-
-            if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
-                $('#divSelAddr').remove();
-            }
+    	// hide the alert on mousedown
+        if (event.target.className === undefined || event.target.className !== 'hhk-addrPickerPanel') {
+            $('#divSelAddr').remove();
         }
+		// Hide invoice view box.
+        if (event.target.id && event.target.id !== undefined && event.target.id !== 'pudiv') {
+            $('div#pudiv').remove();
+        }
+
     });
 
 // Buttons
     $('#btnDone, #btnShowReg, #btnDelete, #btnCheckinNow').button();
 
-    $('#btnDelete').click(function () {
+    $('#btnDelete').click(function () { 
 
         if ($(this).val() === 'Deleting >>>>') {
             return;
@@ -182,9 +183,54 @@ $(document).ready(function() {
 
         if (confirm('Delete this ' + pageManager.resvTitle + '?')) {
 
+            if (pageManager.deleteReserve() === false) {
+				$(this).val('Final Delete');
+				$('#btnDone').hide();
+				$('#btnCheckinNow').hide();
+				$('#btnShowReg').hide();
+				return;
+			}
+			
             $(this).val('Deleting >>>>');
+			
+			 $.post(
+				'ws_resv.php',
+                $('#form1').serialize() + '&cmd=delResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                 function(datas) {
+                    let data;
+                    try {
+                        data = $.parseJSON(datas);
+                    } catch (err) {
+                        flagAlertMessage(err.message, 'error');
+                        $(idForm).remove();
+                    }
 
-            pageManager.deleteReserve(pageManager.getIdResv(), 'form#form1', $(this));
+                    if (data.error) {
+                        flagAlertMessage(data.error, 'error');
+                        $('#btnDelete').val('Delete').show();
+                    }
+
+				    if (data.warning) {
+				        flagAlertMessage(data.warning, 'warning');
+				    }
+
+				    if (data.xfer || data.inctx) {
+				        paymentRedirect (data, $('#xform'));
+				        return;
+				    }
+				    
+                    if (data.receiptMarkup && data.receiptMarkup != '') {
+						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
+					}
+					
+					if (data.deleted) {
+						$('#form1').remove();
+						$('#contentDiv').append('<p>' + data.deleted + '</p>');
+						$('#spnStatus').text('Deleted');
+					}
+					
+                }
+        	);
         }
     });
 
@@ -209,9 +255,10 @@ $(document).ready(function() {
 
             $(this).val('Saving >>>>');
             
+            
             $.post(
                 'ws_resv.php',
-                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
+                $('#form1').serialize() + '&cmd=saveResv&idPsg=' + pageManager.getIdPsg() + '&prePayment=' + pageManager.getPrePaymtAmt() + '&rid=' + pageManager.getIdResv() + '&' + $.param({mem: pageManager.people.list()}),
                 function(data) {
                     try {
                         data = $.parseJSON(data);
@@ -229,7 +276,24 @@ $(document).ready(function() {
                         $('#btnDone').val('Save').show();
                     }
 
+				    if (data.warning) {
+				        flagAlertMessage(data.warning, 'warning');
+				    }
+
+				    if (data.xfer || data.inctx) {
+				        paymentRedirect (data, $('#xform'));
+				        return;
+				    }
+				    
+				    if (data.redirTo) {
+				       location.replace(data.redirTo);
+				    }
+				    
                     pageManager.loadResv(data);
+                    
+                    if (data.receiptMarkup && data.receiptMarkup != '') {
+						showReceipt('#pmtRcpt', data.receiptMarkup, 'Payment Receipt');
+					}
 
                     if (data.resv !== undefined) {
                         if (data.warning === undefined) {

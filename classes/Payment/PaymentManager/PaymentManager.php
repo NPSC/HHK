@@ -18,6 +18,7 @@ use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\Exception\PaymentException;
 
+
 /**
  * PaymentManager.php
  *
@@ -309,7 +310,6 @@ class PaymentManager {
 
                 // Overpayments
                 $this->guestCreditAmt = abs($this->pmp->getGuestCredit());
-                $overPaymemntAmt = abs($this->pmp->getOverPayment());
 
 
                 // Credit some room fees?
@@ -346,53 +346,54 @@ class PaymentManager {
 
 
                 // Process overpayments
-                if ($overPaymemntAmt > 0) {
+                $this->processOverpayments($dbh, abs($this->pmp->getOverPayment()), $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $notes);
+//                 if ($overPaymemntAmt > 0) {
 
-                    // Hold
-                    if ($this->pmp->getBalWith() == ExcessPay::Hold) {
-                        // Money on accoount
+//                     // Hold
+//                     if ($this->pmp->getBalWith() == ExcessPay::Hold) {
+//                         // Money on accoount
 
-                        $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
-                        $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1, $notes);
+//                         $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
+//                         $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1, $notes);
 
-                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
-                        $this->invoice->addLine($dbh, $invLine, $uS->username);
+//                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
+//                         $this->invoice->addLine($dbh, $invLine, $uS->username);
 
-                    // Donation
-                    } else if ($this->pmp->getBalWith() == ExcessPay::RoomFund) {
-                        // make a donation payment
-                        $invLine = new OneTimeInvoiceLine();
-                        $invLine->createNewLine(new Item($dbh, ItemId::LodgingDonate, $overPaymemntAmt), 1);
+//                     // Donation
+//                     } else if ($this->pmp->getBalWith() == ExcessPay::RoomFund) {
+//                         // make a donation payment
+//                         $invLine = new OneTimeInvoiceLine();
+//                         $invLine->createNewLine(new Item($dbh, ItemId::LodgingDonate, $overPaymemntAmt), 1);
 
-                        $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
-                        $this->invoice->addLine($dbh, $invLine, $uS->username);
+//                         $this->getInvoice($dbh, $idPayor, $visit->getIdRegistration(), $visit->getIdVisit(), $visit->getSpan(), $uS->username, '', $notes);
+//                         $this->invoice->addLine($dbh, $invLine, $uS->username);
 
-                    // Refund
-                    } else if ($this->pmp->getBalWith() == ExcessPay::Refund && $this->hasInvoice()) {
+//                     // Refund
+//                     } else if ($this->pmp->getBalWith() == ExcessPay::Refund && $this->hasInvoice()) {
 
-                        $credit = $this->guestCreditAmt + $this->depositRefundAmt + $this->moaRefundAmt;
+//                         $credit = $this->guestCreditAmt + $this->depositRefundAmt + $this->moaRefundAmt;
 
-                        // Any payment amount should be zero
-                        if ($this->pmp->getTotalPayment() > 0) {
-                            throw new PaymentException('Cannot make a payment and get a refund at the same time.  ');
-                        }
+//                         // Any payment amount should be zero
+//                         if ($this->pmp->getTotalPayment() > 0) {
+//                             throw new PaymentException('Cannot make a payment and get a refund at the same time.  ');
+//                         }
 
-                        // Don't pay out more than the specific credits.
-                        if ($credit > 0 && $credit >= $overPaymemntAmt) {
+//                         // Don't pay out more than the specific credits.
+//                         if ($credit > 0 && $credit >= $overPaymemntAmt) {
 
-                            $this->refundAmt = $overPaymemntAmt;
-                            $this->pmp->setTotalPayment(0 - $overPaymemntAmt);
+//                             $this->refundAmt = $overPaymemntAmt;
+//                             $this->pmp->setTotalPayment(0 - $overPaymemntAmt);
 
-                            // Here is where we look for the reimbursment pay type.
-                            $this->pmp->setPayType($this->pmp->getRtnPayType());
-                            $this->pmp->setIdToken($this->pmp->getRtnIdToken());
-                            $this->pmp->setChargeAcct($this->pmp->getRtnChargeAcct());
-                            $this->pmp->setChargeCard($this->pmp->getRtnChargeCard());
-                            $this->pmp->setTransferAcct($this->pmp->getRtnTransferAcct());
+//                             // Here is where we look for the reimbursment pay type.
+//                             $this->pmp->setPayType($this->pmp->getRtnPayType());
+//                             $this->pmp->setIdToken($this->pmp->getRtnIdToken());
+//                             $this->pmp->setChargeAcct($this->pmp->getRtnChargeAcct());
+//                             $this->pmp->setChargeCard($this->pmp->getRtnChargeCard());
+//                             $this->pmp->setTransferAcct($this->pmp->getRtnTransferAcct());
 
-                        }
-                    }
-                }
+//                         }
+//                     }
+//                 }
             }
         }
 
@@ -415,7 +416,7 @@ class PaymentManager {
 
         }
 
-
+        // Final checks.
         if ($this->hasInvoice()) {
 
             if ($this->pmp->getTotalPayment() == 0 && $this->pmp->getBalWith() == ExcessPay::Refund) {
@@ -445,6 +446,60 @@ class PaymentManager {
         }
 
         return $this->invoice;
+    }
+
+    protected function processOverpayments(\PDO $dbh, $overPaymemntAmt, $idPayor, $idRegistration, $idVisit, $visitSpan, $notes) {
+
+        $uS = Session::getInstance();
+
+        if ($overPaymemntAmt > 0) {
+
+            // Hold
+            if ($this->pmp->getBalWith() == ExcessPay::Hold) {
+                // Money on accoount
+
+                $invLine = new HoldInvoiceLine($uS->ShowLodgDates);
+                $invLine->createNewLine(new Item($dbh, ItemId::LodgingMOA, $overPaymemntAmt), 1, $notes);
+
+                $this->getInvoice($dbh, $idPayor, $idRegistration, $idVisit, $visitSpan, $uS->username, '', $notes);
+                $this->invoice->addLine($dbh, $invLine, $uS->username);
+
+                // Donation
+            } else if ($this->pmp->getBalWith() == ExcessPay::RoomFund) {
+                // make a donation payment
+                $invLine = new OneTimeInvoiceLine();
+                $invLine->createNewLine(new Item($dbh, ItemId::LodgingDonate, $overPaymemntAmt), 1);
+
+                $this->getInvoice($dbh, $idPayor, $idRegistration, $idVisit, $visitSpan, $uS->username, '', $notes);
+                $this->invoice->addLine($dbh, $invLine, $uS->username);
+
+                // Refund
+            } else if ($this->pmp->getBalWith() == ExcessPay::Refund && $this->hasInvoice()) {
+
+                $credit = $this->guestCreditAmt + $this->depositRefundAmt + $this->moaRefundAmt;
+
+                // Any payment amount should be zero
+                if ($this->pmp->getTotalPayment() > 0) {
+                    throw new PaymentException('Cannot make a payment and get a refund at the same time.  ');
+                }
+
+                // Don't pay out more than the specific credits.
+                if ($credit > 0 && $credit >= $overPaymemntAmt) {
+
+                    $this->refundAmt = $overPaymemntAmt;
+                    $this->pmp->setTotalPayment(0 - $overPaymemntAmt);
+
+                    // Here is where we look for the reimbursment pay type.
+                    $this->pmp->setPayType($this->pmp->getRtnPayType());
+                    $this->pmp->setIdToken($this->pmp->getRtnIdToken());
+                    $this->pmp->setChargeAcct($this->pmp->getRtnChargeAcct());
+                    $this->pmp->setChargeCard($this->pmp->getRtnChargeCard());
+                    $this->pmp->setTransferAcct($this->pmp->getRtnTransferAcct());
+
+                }
+            }
+        }
+
     }
 
 

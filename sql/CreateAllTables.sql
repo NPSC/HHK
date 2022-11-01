@@ -1726,6 +1726,16 @@ CREATE TABLE if not exists `reservation_guest` (
 
 
 -- -----------------------------------------------------
+-- Table `reservation_invoice`
+-- -----------------------------------------------------
+CREATE TABLE `demo`.`reservation_invoice` (
+  `idReservation` INT NOT NULL,
+  `Invoice_id` INT NOT NULL,
+  PRIMARY KEY (`idReservation`, `Invoice_id`)
+) ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table `reservation_log`
 -- -----------------------------------------------------
 CREATE TABLE if not exists `reservation_log` (

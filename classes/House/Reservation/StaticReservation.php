@@ -9,9 +9,10 @@ namespace HHK\House\Reservation;
  */
 
 class StaticReservation extends ActiveReservation {
-    
+
     public function addPerson(\PDO $dbh) {
         return array();
     }
+
 }
 ?>

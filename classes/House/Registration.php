@@ -10,6 +10,7 @@ use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLTable};
+use HHK\House\Reservation\Reservation_1;
 
 /**
  * Registration.php
@@ -25,6 +26,8 @@ class Registration {
     public $isNew;
     protected $depositBalance;
     protected $lodgingMOA;
+    protected $prepaymentMOA;
+    protected $donations;
     protected $rawRow;
 
     public function __construct(\PDO $dbh, $idPsg, $idRegistration = 0) {
@@ -35,6 +38,7 @@ class Registration {
         $this->isNew = TRUE;
         $this->depositBalance = NULL;
         $this->lodgingMOA = NULL;
+        $this->prepaymentMOA = NULL;
 
         if ($idPsg > 0) {
             $this->regRS->idPsg->setStoredVal($idPsg);
@@ -100,11 +104,6 @@ from
     invoice_line il
         join
     invoice i ON il.Invoice_Id = i.idInvoice
-        LEFT JOIN
-    name_volunteer2 nv ON i.Sold_To_Id = nv.idName
-        AND nv.Vol_Category = 'Vol_Type'
-        AND nv.Vol_Code = 'ba'
-
 where
     il.Item_Id = ". ItemId::LodgingMOA . "
         and i.Deleted = 0
@@ -120,6 +119,71 @@ where
         }
 
         return $lodgingBalance;
+    }
+
+    public static function loadDonationBalance(\PDO $dbh, $idGroup) {
+
+        $DonBalance = 0.0;
+        $idg = intval($idGroup, 10);
+
+        if ($idg < 1) {
+            return $DonBalance;
+        }
+
+        $query = "select
+    sum(il.Amount)
+from
+    invoice_line il
+        join
+    invoice i ON il.Invoice_Id = i.idInvoice
+where
+    il.Item_Id = ". ItemId::LodgingDonate . "
+        and i.Deleted = 0
+        and il.Deleted = 0
+        and i.Status = '" . InvoiceStatus::Paid . "'
+        and i.idGroup = " . $idg;
+        $stmt = $dbh->query($query);
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        if (count($rows) == 1) {
+            $DonBalance = floatval($rows[0][0]);
+        }
+
+        return $DonBalance;
+    }
+
+    public static function loadPrepayments(\PDO $dbh, $idGroup) {
+
+        $prePayment = 0;
+        $idg = intval($idGroup, 10);
+
+        if ($idg < 1) {
+            return $prePayment;
+        }
+
+        $query = "select
+        sum(il.Amount)
+    from
+        invoice_line il
+            join
+        invoice i ON il.Invoice_Id = i.idInvoice and i.idGroup = $idg AND il.Item_Id = ". ItemId::LodgingMOA . " AND il.Deleted = 0
+            join
+    	reservation_invoice ri ON i.idInvoice = ri.Invoice_Id
+    where
+        i.Deleted = 0
+        AND i.Order_Number = 0
+        AND i.`Status` = '" . InvoiceStatus::Paid . "'";
+
+        $stmt = $dbh->query($query);
+
+        $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+        if (count($rows) == 1) {
+            $prePayment = floatval($rows[0][0]);
+        }
+
+        return $prePayment;
     }
 
     public static function updatePrefTokenId(\PDO $dbh, $idRegistration, $idToken) {
@@ -171,7 +235,24 @@ where
         }
 
         return $this->lodgingMOA;
+    }
 
+    public function getPrePayments(\PDO $dbh) {
+
+        if (is_null($this->prepaymentMOA)) {
+            $this->prepaymentMOA = $this->loadPrepayments($dbh, $this->getIdRegistration());
+        }
+
+        return $this->prepaymentMOA;
+    }
+
+    public function getDonations(\PDO $dbh) {
+
+        if (is_null($this->donations)) {
+            $this->donations = $this->loadDonationBalance($dbh, $this->getIdRegistration());
+        }
+
+        return $this->donations;
     }
 
     public function getIdRegistration() {
@@ -328,7 +409,7 @@ where
         $tbl = new HTMLTable();
 
         // Date Registered
-        $tbl->addBodyTr(HTMLTable::makeTh('Date')
+        $tbl->addBodyTr(HTMLTable::makeTh('Date', array('style'=>'text-align:right;'))
                 . HTMLTable::makeTd(($this->regRS->Date_Registered->getStoredVal() == '' ? '' : date('M j, Y', strtotime($this->regRS->Date_Registered->getStoredVal())))));
 
         $regs = readGenLookupsPDO($dbh, 'registration', 'Order');
@@ -351,7 +432,7 @@ where
                 }
 
                 $tbl->addBodyTr(
-                        HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $r['Description'], array('for'=>'reg' . $r['Code'])))
+                    HTMLTable::makeTh(HTMLContainer::generateMarkup('label', $r['Description'], array('for'=>'reg' . $r['Code'])), array('style'=>'text-align:right;'))
                         . HTMLTable::makeTd(HTMLInput::generateMarkup('', $attrs)));
             }
         }
@@ -369,7 +450,7 @@ where
 
         // Email receipt
         $tbl->addBodyTr(
-            HTMLTable::makeTh(HTMLContainer::generateMarkup('label', 'Email Receipt', array('for'=>'cbEml')))
+            HTMLTable::makeTh(HTMLContainer::generateMarkup('label', 'Email Receipt', array('for'=>'cbEml')), array('style'=>'text-align:right;'))
             . HTMLTable::makeTd(HTMLInput::generateMarkup('', $emAttrs))
             );
 
@@ -379,15 +460,26 @@ where
             $kdBal = $this->getDepositBalance($dbh);
 
             $tbl->addBodyTr(
-                HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'))
-                .HTMLTable::makeTd('$' . number_format($kdBal, 2)));
-            //$keyMkup = "</tr><tr><th class='tdlabel'>" . $labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit') . "</td><td>$" . number_format($kdBal, 2) . "</td>";
+                HTMLTable::makeTh($labels->getString('resourceBuilder', 'keyDepositLabel', 'Deposit'), array('style'=>'text-align:right;'))
+                .HTMLTable::makeTd('$' . number_format($kdBal, 2), array('style'=>'text-align:left;')));
         }
 
         // Lodging MOA
         $tbl->addBodyTr(
-            HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'))
-            .HTMLTable::makeTd('$' . number_format($this->getLodgingMOA($dbh), 2)));
+            HTMLTable::makeTh($labels->getString('statement', 'lodgingMOA', 'MOA'), array('style'=>'text-align:right;'))
+            .HTMLTable::makeTd('$' . number_format($this->getLodgingMOA($dbh), 2), array('style'=>'text-align:left;')));
+
+//         // Pre-Payments
+//         if ($uS->AcceptResvPaymt) {
+//             $tbl->addBodyTr(
+//                 HTMLTable::makeTh($labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Pre-Payments', array('style'=>'text-align:right;'))
+//                 .HTMLTable::makeTd('$' . number_format($this->getPrePayments($dbh), 2), array('style'=>'text-align:left;')));
+//         }
+
+        // Donations
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Donations', array('style'=>'text-align:right;'))
+            .HTMLTable::makeTd('$' . number_format($this->getDonations($dbh), 2), array('style'=>'text-align:left;')));
 
         return $tbl->generateMarkup();
 

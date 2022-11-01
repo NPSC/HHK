@@ -58,7 +58,15 @@ try {
         if ($payResult->getDisplayMessage() != '') {
             $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
         }
+
+    } else if (isset($_REQUEST['receiptMarkup']) && ! empty($_REQUEST['receiptMarkup'])) {
+        // Catch receipt
+        $receiptMarkup = filter_var($_REQUEST['receiptMarkup'], FILTER_SANITIZE_STRING);
+        if ($payResult->getDisplayMessage() != '') {
+            $paymentMarkup = HTMLContainer::generateMarkup('p', $payResult->getDisplayMessage());
+        }
     }
+
 
 } catch (RuntimeException $ex) {
     $paymentMarkup = $ex->getMessage();
@@ -151,6 +159,10 @@ $resvAr['gstAddr'] = $uS->GuestAddr;
 $resvAr['addrPurpose'] = $resvObj->getAddrPurpose();
 $resvAr['patAsGuest'] = $resvObj->getPatAsGuestFlag();
 $resvAr['insistPayFilledIn'] = $uS->InsistCkinPayAmt;
+$resvAr['prePaymt'] = 0;
+if ($uS->AcceptResvPaymt && $idReserv > 0) {
+    $resvAr['prePaymt'] = Reservation_1::getPrePayment($dbh, $idReserv);
+}
 
 $resvManagerOptions = [];
 if($uS->UseIncidentReports){
@@ -215,6 +227,7 @@ $resvObjEncoded = json_encode($resvAr);
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo MULTISELECT_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo PAYMENT_JS; ?>"></script>
+        <script type="text/javascript" src="<?php echo INVOICE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo RESV_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo DR_PICKER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo VISIT_DIALOG_JS; ?>"></script>
@@ -269,7 +282,7 @@ $resvObjEncoded = json_encode($resvAr);
 
             </form>
 
-            <div id="pmtRcpt" style="font-size: .9em; display:none;"><?php echo $receiptMarkup; ?></div>
+            <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
             <div id="resDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.8em;"></div>
             <div id="hsDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;font-size:.9em;"></div>
             <div id="psgDialog" class="hhk-tdbox hhk-visitdialog" style="display:none;"></div>
@@ -298,6 +311,7 @@ $resvObjEncoded = json_encode($resvAr);
         <input type="hidden" value='<?php echo $resvObjEncoded; ?>' id="resv"/>
         <input type="hidden" value='<?php echo $resvManagerOptionsEncoded; ?>' id="resvManagerOptions"/>
         <input type="hidden" value='<?php echo $paymentMarkup; ?>' id="paymentMarkup"/>
+        <input type="hidden" value='<?php echo $receiptMarkup; ?>' id="receiptMarkup"/>
         <script type="text/javascript" src="<?php echo RESERVE_JS; ?>"></script>
     </body>
 </html>

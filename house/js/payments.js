@@ -337,8 +337,10 @@ class AmountVariables {
 		t.feePay = 0;
 		t.feePayPreTax = 0;
 		t.feePayText = '';
+		t.prePayRoomAmt = 0;
 		t.invAmt = 0;
 		t.heldAmt = 0;
+		t.chkingIn = 0;
 		t.reimburseAmt = 0;
 		t.totCharges = 0;
 		t.ckedInCharges = 0;
@@ -382,6 +384,7 @@ class PayCtrls {
 		t.overPay = $('#txtOverPayAmt');
 		t.guestCredit = $('#guestCredit');
 		t.selBalTo = $('#selexcpay');
+		t.taxingItems = $('.hhk-TaxingItem.hhk-applyTax');
 	}
 }
 
@@ -539,9 +542,17 @@ function getPaymentData(p, a) {
 	if (p.heldCb.length > 0) {
 
 		a.heldAmt = parseFloat(p.heldCb.data('amt'));
+		a.chkingIn = parseInt(p.heldCb.data('chkingin'));
 
 		if (isNaN(a.heldAmt) || a.heldAmt < 0 || p.heldCb.prop("checked") === false) {
 			a.heldAmt = 0;
+		}
+		
+		// Reservation checking in logic.
+		if (p.heldCb.prop("checked") === true && a.chkingIn == 1) {
+			a.prePayRoomAmt = a.heldAmt;
+		} else if (p.heldCb.prop("checked") === false && a.chkingIn == 1) {
+			a.prePayRoomAmt = 0;
 		}
 	}
 
@@ -577,9 +588,8 @@ function amtPaid() {
 
 	var p = new PayCtrls(),
 		a = new AmountVariables(isCheckedOut),
-		$taxingItems = $('.hhk-TaxingItem.hhk-applyTax'),
-		updateFeeTaxes = new UpdateTaxes($taxingItems),
-		refundValidater = new RefundValidater(a, p.selBalTo, $taxingItems, updateFeeTaxes);
+		updateFeeTaxes = new UpdateTaxes(p.taxingItems),
+		refundValidater = new RefundValidater(a, p.selBalTo, p.taxingItems, updateFeeTaxes);
 
 	// Hide error messages
 	p.msg.text('').hide();
@@ -589,7 +599,7 @@ function amtPaid() {
 		a.roomBalDue = 0;
 	} else {
 
-		$taxingItems.each(function() {
+		p.taxingItems.each(function() {
 			let rate = parseFloat($(this).data('taxrate'));
 			if (a.roomBalDue < 0) { // if room bal is credit
 				a.roomBalTaxDue += roundTo(a.taxedRoomBalDue * rate, 2, 'ceil');
@@ -604,7 +614,7 @@ function amtPaid() {
 
 	a.totReturns = a.heldAmt + a.depRfAmt + a.reimburseAmt;
 
-	$taxingItems.each(function() {
+	p.taxingItems.each(function() {
 
 		let rate = parseFloat($(this).data('taxrate'));
 		a.totReturnTax += roundTo(a.totReturns / (1 + rate), 2);
@@ -632,9 +642,14 @@ function amtPaid() {
 		}
 
 		if (isNaN(a.feePayPreTax) || a.feePayPreTax <= 0) {
-			a.feePayPreTax = 0;
+			// Add reservation pre-pay only once.
+			a.feePayPreTax = a.prePayRoomAmt;
 		}
-
+		
+		// Fill up room fees to pre-payment amount
+		if (a.feePayPreTax < a.prePayRoomAmt) {
+			a.feePayPreTax = a.prePayRoomAmt;
+		}
 		a.feePayTaxAmt = updateFeeTaxes.calcTax(a.feePayPreTax);
 
 		// Only tax up to the room balance due.
@@ -891,7 +906,7 @@ function amtPaid() {
  * @param {jquery} $diagBox
  * @returns {undefined}
  */
-function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
+function setupPayments($rateSelector, idVisit, visitSpan, $diagBox, strInvoiceBox) {
 	"use strict";
 	var ptsel = $('#PayTypeSel');
 	var chg = $('.tblCredit');
@@ -933,6 +948,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 		});
 		// folloeing moved to end of setup.
 		//ptsel.change();
+
 	}
 
 	// Card on file Cardholder name.
@@ -1059,8 +1075,8 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 		});
 	}
 
-	// Delete invoice
-	$('#divPmtMkup').on('click', '.invAction', function(event) {
+	// View/Delete invoice
+	$('#divPmtMkup, #div-hhk-payments').on('click', '.invAction', function(event) {
 		event.preventDefault();
 		if ($(this).data('stat') == 'del') {
 			if (!confirm('Delete this Invoice?')) {
@@ -1068,7 +1084,7 @@ function setupPayments($rateSelector, idVisit, visitSpan, $diagBox) {
 			}
 		}
 
-		invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id, '#keysfees', true);
+		invoiceAction($(this).data('iid'), $(this).data('stat'), event.target.id, strInvoiceBox, true);
 	});
 
 	// Billing agent chooser set up

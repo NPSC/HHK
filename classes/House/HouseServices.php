@@ -730,14 +730,16 @@ class HouseServices {
             return $payResult;
         }
 
+        $paymentManager->pmp->setPriceModel(AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
 
         // Payments - setup
-        if (is_null($visit) === FALSE) {
-            $paymentManager->pmp->setPriceModel(AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel));
+        if (is_null($visit) === FALSE && is_a($visit, 'HHK\House\Visit\Visit')) {
             $paymentManager->pmp->priceModel->setCreditDays($visit->getRateGlideCredit());
             $paymentManager->pmp->setVisitCharges(new VisitCharges($visit->getIdVisit()));
+        } else {
+            $paymentManager->pmp->priceModel->setCreditDays(0);
+            $paymentManager->pmp->setVisitCharges(new VisitCharges(0));
         }
-
 
         if ($paymentManager->pmp->getPayType() == PayType::Invoice) {
             $idPayor = $paymentManager->pmp->getIdInvoicePayor();
@@ -1490,7 +1492,7 @@ class HouseServices {
 
         $tkRsArray = CreditToken::getRegTokenRSs($dbh, $idRegistration, '', $idGuest);
 
-        $tbl->addBodyTr(HTMLTable::makeTh("X") . HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name"));
+        $tbl->addBodyTr(HTMLTable::makeTh("X", array('title'=>'Delete card from file')) . HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name"));
 
         // List any valid stored cards on file
         foreach ($tkRsArray as $tkRs) {

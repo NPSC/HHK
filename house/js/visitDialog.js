@@ -2,7 +2,7 @@
  * visitDialog.js
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -172,7 +172,7 @@ var isCheckedOut = false;
  * @param {string} title
  * @param {string} action
  * @param {int} visitSpan
- * @param {string} ckoutDt
+ * @param {string} ckoutDates
  * @returns {undefined}
  */
 function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDates) {
@@ -536,7 +536,7 @@ function viewVisit(idGuest, idVisit, buttons, title, action, visitSpan, ckoutDat
             }
 
 
-            setupPayments($('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'));
+            setupPayments($('#selRateCategory'), idVisit, visitSpan, $('#pmtRcpt'), '#keysfees');
     
             // Financial Application
             let $btnFapp = $('#btnFapp');

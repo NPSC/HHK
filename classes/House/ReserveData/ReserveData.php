@@ -97,6 +97,8 @@ class ReserveData {
     protected $insistCkinDemog;
     protected $searchTerm;
     protected $resvStatusCode;
+    protected $hasMOA;
+    protected $prePayment = 0;
 
     function __construct($post, $reservationTitle = '') {
 
@@ -148,6 +150,10 @@ class ReserveData {
             $this->setMembersFromPost(filter_var_array($post['mem'], FILTER_SANITIZE_STRING));
         }
 
+        if (isset($post['prePayment'])) {
+            $this->setPrePayment(filter_var($post['prePayment'], FILTER_SANITIZE_NUMBER_FLOAT));
+        }
+
         $this->saveButtonLabel = 'Save ';
         $this->resvEarlyArrDays = $uS->ResvEarlyArrDays;
         $this->patAsGuestFlag = $uS->PatientAsGuest;
@@ -176,6 +182,7 @@ class ReserveData {
         $this->resvPrompt = $labels->getString('guestEdit', 'reservationTitle', 'Reservation');
         $this->resvTitle = ($reservationTitle == '' ? $this->resvPrompt : $reservationTitle);
         $this->resvStatusCode = '';
+        $this->hasMOA = FALSE;
 
     }
 
@@ -248,6 +255,8 @@ class ReserveData {
             'saveButtonLabel' => $this->saveButtonLabel,
         	'insistCkinDemog' => $this->insistCkinDemog,
             'resvStatusCode' => $this->getResvStatusCode(),
+            'hasMOA' => $this->getHasMOA(),
+            'prePayment' => $this->getPrePayment(),
         );
 
         if ($this->resvChooser != '') {
@@ -443,7 +452,15 @@ class ReserveData {
     }
 
     public function getFullName() {
-    	return $this->fullName;
+        return $this->fullName;
+    }
+
+    public function getPrePayment() {
+        return $this->prePayment;
+    }
+
+    public function getHasMOA() {
+        return $this->hasMOA;
     }
 
     public function findMemberById($val) {
@@ -480,6 +497,11 @@ class ReserveData {
 
         // No one defined
         return NULL;
+    }
+
+    public function setPrePayment($prepayment) {
+        $this->prePayment = $prepayment;
+        return $this;
     }
 
     public function setMember(PSGMember $mem) {
@@ -549,8 +571,13 @@ class ReserveData {
     }
 
     public function setInsistCkinDemog($id) {
-    	$this->insistCkinDemog = $id;
-    	return $this;
+        $this->insistCkinDemog = $id;
+        return $this;
+    }
+
+    public function setHasMOA($bol) {
+        $this->hasMOA = $bol;
+        return $this;
     }
 
     public function setSpanStartDT($strDate) {

@@ -65,7 +65,7 @@ try {
 
         $newResv = $resv->save($dbh, $_POST);
 
-        $events = $newResv->createMarkup($dbh);
+        $events = $newResv->checkedinMarkup($dbh);
 
         break;
 
@@ -86,6 +86,15 @@ try {
         $newResv = $resv->save($dbh, $_POST);
 
         $events = $newResv->checkedinMarkup($dbh);
+
+        break;
+
+
+    case 'delResv':
+
+        $resv = Reservation::reservationFactoy($dbh, $_POST);
+
+        $events = $resv->delete($dbh, $_POST);
 
         break;
 

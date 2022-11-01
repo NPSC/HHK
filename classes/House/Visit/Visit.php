@@ -2136,6 +2136,10 @@ class Visit {
         $this->visitRS->idPrimaryGuest->setNewVal($id);
     }
 
+    public function getIdReservation() {
+        return $this->visitRS->idReservation->getStoredVal();
+    }
+
     public function getPrimaryGuestId() {
         return $this->visitRS->idPrimaryGuest->getStoredVal();
     }

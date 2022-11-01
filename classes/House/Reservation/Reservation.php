@@ -2,7 +2,6 @@
 
 namespace HHK\House\Reservation;
 
-use HHK\Purchase\{FinAssistance, RateChooser};
 use HHK\House\Hospital\{Hospital, HospitalStay};
 use HHK\House\Family\{Family, FamilyAddGuest, JoinNewFamily};
 use HHK\House\HouseServices;
@@ -10,6 +9,8 @@ use HHK\House\Registration;
 use HHK\House\ReserveData\ReserveData;
 use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay, PSGMemVisit, PSGMemResv};
 use HHK\House\Room\RoomChooser;
+use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
+use HHK\Purchase\{FinAssistance, CheckinCharges, PaymentChooser, RateChooser};
 use HHK\House\Vehicle;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable, HTMLInput};
 use HHK\SysConst\{GLTableNames, ItemPriceCode, ReservationStatus, RoomRateCategories, VisitStatus, DefaultSettings};
@@ -124,7 +125,17 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) != 1) {
-            throw new NotFoundException("Reservation not found.  ");
+            // Deleted?
+            $stmt = $dbh->query("Select max(idReservation) from reservation;");
+            $rows = $stmt->FetchAll(\PDO::FETCH_NUM);
+
+            if ($rData->getIdResv() > 0 && count($rows) > 0 && $rows[0][0] > $rData->getIdResv()) {
+                // Reserv has been deleted.
+                return new DeletedReservation($rData, NULL, NULL);
+            } else {
+                // Something else borke.
+                throw new NotFoundException("Reservation not found.  ");
+            }
         }
 
         $rRs = new ReservationRS();
@@ -343,6 +354,31 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
     }
 
+    public function delete(\PDO $dbh) {
+        // Get labels
+        $labels = Labels::getLabels();
+        $uS = Session::getInstance();
+
+        if ($this->reserveData->getIdResv() > 0) {
+
+            $resv = Reservation_1::instantiateFromIdReserv($dbh, $this->reserveData->getIdResv());
+
+            if ($resv->getStatus() == ReservationStatus::Staying || $resv->getStatus() == ReservationStatus::Checkedout) {
+
+                $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' status "' . $resv->getStatusTitle($dbh) . '" cannot be deleted';
+            } else {
+                // Okay to delete
+                $resv->deleteMe($dbh, $uS->username);
+
+                $dataArray['deleted'] = 'This ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' is Deleted.';
+            }
+        } else {
+            $dataArray['warning'] = $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' Id is not valid.  ';
+        }
+
+        return $dataArray;
+    }
+
     public function addPerson(\PDO $dbh) {
 
         $psgMembers = $this->reserveData->getPsgMembers();
@@ -514,13 +550,58 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
                 $showPayWith = TRUE;
 
+                // Room Rate Markup
                 $dataArray['rate'] = $rateChooser->createResvMarkup($dbh, $resv, $resv->getExpectedDays(), $labels->getString('statement', 'cleaningFeeLabel', 'Cleaning Fee'), $reg->getIdRegistration());
 
-                $dataArray['cof'] = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
+                // Making Reservation Pre-Payment
+                if ($uS->AcceptResvPaymt && $resv->getIdReservation() > 0) {
+
+                    if ($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted || $resv->getStatus() == ReservationStatus::Waitlist) {
+                    // Pre-Payment Chooser
+
+                        $checkinCharges = new CheckinCharges(0, $resv->getVisitFee(), 0);
+                        $checkinCharges->sumPayments($dbh);
+
+                        // select gateway
+                        if ($resv->getIdResource() > 0) {
+                            // Get gateway merchant
+                            $gwStmt = $dbh->query("SELECT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM location l join room r on l.idLocation = r.idLocation
+                            join resource_room rr on r.idRoom = rr.idRoom where l.Status = 'a' and rr.idResource = " . $resv->getIdResource());
+
+                        } else {
+                            $gwStmt = $dbh->query("SELECT DISTINCT ifnull(l.Merchant, '') as `Merchant`, ifnull(l.idLocation, 0) as idLocation FROM room rm LEFT JOIN location l  on l.idLocation = rm.idLocation
+                            where l.`Status` = 'a' or l.`Status` is null;");
+                        }
+
+                        $rows = $gwStmt->fetchAll(\PDO::FETCH_ASSOC);
+                        $merchants = array();
+
+                        if (count($rows) > 0) {
+
+                            foreach ($rows as $r) {
+                                $merchants[$r['idLocation']] = $r['Merchant'];
+                            }
+                        }
+
+                        $paymentGateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $merchants);
+
+                        // held amount.
+                        $this->reserveData->setPrePayment(Reservation_1::getPrePayment($dbh, $resv->getIdReservation()));
+
+                        $dataArray['pay'] = HTMLContainer::generateMarkup('div',
+                            PaymentChooser::createPrePaymentMarkup($dbh, $resv->getIdGuest(), $resv->getIdReservation(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $this->reserveData->getPrePayment(), $reg->getPreferredTokenId())
+                            , array('style'=>'flex-basis: 100%;', 'name'=>'div-hhk-payments'));
+                    }
+
+                } else if ($uS->PayAtCkin) {
+                    // Credit card chooser
+
+                    $dataArray['cof'] = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+                        HTMLContainer::generateMarkup('legend', 'Credit Cards on File', array('style'=>'font-weight:bold;'))
                         . HouseServices::guestEditCreditTable($dbh, $reg->getIdRegistration(), $resv->getIdGuest(), 'g')
                         . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnUpdtCred', 'data-indx'=>'g', 'data-id'=>$resv->getIdGuest(), 'data-idreg'=>$reg->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
                     ,array('id'=>'upCreditfs', 'class'=>'hhk-panel ignrSave')), array('style'=>'display: inline-block', 'class'=>'mr-3'));
+                }
 
             }
 
@@ -545,12 +626,11 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Reservation Data
             $dataArray['rstat'] = $this->createStatusChooser(
-                    $resv,
-                    $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
-                    $uS->nameLookups[GLTableNames::PayType],
-                    $labels,
-                    $showPayWith,
-                    Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
+                $resv,
+                $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
+                $uS->nameLookups[GLTableNames::PayType],
+                $labels,
+                $showPayWith);
 
 
         } else if ($resv->isNew()) {
@@ -571,12 +651,11 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
             // Allow to change reserv status.
             $dataArray['rstat'] = $this->createStatusChooser(
-                    $resv,
-                    $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
-                    $uS->nameLookups[GLTableNames::PayType],
-                    $labels,
-                    $showPayWith,
-                    Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()));
+                $resv,
+                $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
+                $uS->nameLookups[GLTableNames::PayType],
+                $labels,
+                $showPayWith);
         }
 
         // Reservation status title
@@ -602,7 +681,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
-                HTMLContainer::generateMarkup('span', ($resv->isNew() ? 'New ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation') : $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' - '))
+                HTMLContainer::generateMarkup('span', ($resv->isNew() ? 'New ' : '') . $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ' - ')
                 .HTMLContainer::generateMarkup('span', ($resv->isNew() ? '' : $statusText), array('id'=>$prefix.'spnResvStatus', 'style'=>'margin-right: 1em;'))
                 , array('style'=>'float:left;', 'class'=>'hhk-checkinHdr'));
 
@@ -727,7 +806,16 @@ where rg.idReservation =" . $r['idReservation']);
         return $mrkup;
     }
 
-    public function createStatusChooser(Reservation_1 $resv, array $limResvStatuses, array $payTypes, $labels, $showPayWith, $moaBal) {
+    /**
+     *
+     * @param Reservation_1 $resv
+     * @param array $limResvStatuses
+     * @param array $payTypes
+     * @param Labels $labels
+     * @param bool $showPayWith
+     * @return string
+     */
+    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, $labels, $showPayWith) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
@@ -739,25 +827,25 @@ where rg.idReservation =" . $r['idReservation']);
             $attr['checked'] = 'checked';
         }
 
-        $moaHeader = '';
-        $moaData = '';
-        if ($moaBal > 0) {
-            $moaHeader = HTMLTable::makeTh('MOA Balance', array('title'=>'MOA = Money on Account'));
-            $moaData = HTMLTable::makeTd('$' . number_format($moaBal, 2), array('style'=>'text-align:center'));
+        // Limit reservation status chooser options
+        if ($resv->getStatus() == ReservationStatus::Committed) {
+            unset($resvStatuses[ReservationStatus::Waitlist]);
+        } else if ($resv->getStatus() == ReservationStatus::Waitlist || $resv->isRemoved()) {
+            unset($resvStatuses[ReservationStatus::Committed]);
         }
 
+        // Table headers
         $tbl2->addBodyTr(
-                ($showPayWith ? HTMLTable::makeTh('Pay With') . $moaHeader : '')
+                ($showPayWith ? HTMLTable::makeTh('Pay With') : '')
                 .HTMLTable::makeTh('Verbal Affirmation')
                 .($resv->getStatus() == ReservationStatus::UnCommitted ? HTMLTable::makeTh('Status', array('class'=>'ui-state-highlight')) : HTMLTable::makeTh('Status'))
                 );
 
         $tbl2->addBodyTr(
-                ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), array('name'=>'selPayType')))
-                . $moaData : '')
+                ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), array('name'=>'selPayType'))) : '')
                 .($resv->isActive() ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($limResvStatuses, $resv->getStatus(), TRUE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resvStatuses, $resv->getStatus(), TRUE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
                         .HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;float:right;')))
                 );
 
@@ -1116,9 +1204,6 @@ WHERE
         return $oldResvId;
     }
 
-    /*
-     *
-     */
     protected function findLastVisit(\PDO $dbh, $class = '') {
 
     	if ($this->reserveData->getIdPsg() < 1) {

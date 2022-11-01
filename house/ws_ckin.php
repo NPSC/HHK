@@ -751,17 +751,6 @@ try {
         $events = RoomChooser::roomAmtCalculation($dbh, $_POST);
         break;
 
-    case 'delResv':
-
-        $rid = 0;
-        if (isset($_POST['rid'])) {
-            $rid = intval(filter_var($_POST['rid'], FILTER_SANITIZE_NUMBER_INT), 10);
-        }
-
-        $events = ReservationSvcs::deleteReservation($dbh, $rid);
-
-        break;
-
     default:
         $events = array("error" => "Bad Command: \"" . $c . "\"");
 }

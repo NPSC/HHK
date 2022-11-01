@@ -746,6 +746,7 @@ class VisitViewer {
             $paymentMarkup = PaymentChooser::createMarkup(
                     $dbh,
                     $idGuest,
+                    0,
                     $r['idRegistration'],
                     $visitCharge,
                     $paymentGateway,

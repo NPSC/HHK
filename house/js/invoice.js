@@ -216,7 +216,7 @@ function invoiceAction(idInvoice, action, eid, container, show) {
 
             }
             if (data.markup) {
-                var contr = $(data.markup);
+                let contr = $(data.markup);
                 if (container != undefined && container != '') {
                     $(container).append(contr);
                 } else {

@@ -154,7 +154,7 @@ class History {
 
         if (is_null($this->resvEvents)) {
 
-            $query = "select * from vreservation_events where Status = '$status' $whDate $orderBy";
+            $query = "select * from vreservation_events where `Status` = '$status' $whDate $orderBy";
             $stmt = $dbh->query($query);
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
@@ -191,14 +191,15 @@ class History {
 
             // Action
             if ($includeAction && !$static) {
+
                 $fixedRows['Action'] =  HTMLContainer::generateMarkup(
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
                            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php' . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none; display:block;')))
-                           . $this->makeResvCanceledStatuses($uS->guestLookups['ReservStatus'], $r['idReservation'])
+                            . ($r['PrePaymt'] > 0 ? '' : $this->makeResvCanceledStatuses($uS->guestLookups['ReservStatus'], $r['idReservation']))
                            . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
-                           . ($includeAction && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
-                           . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
                           . ($uS->ccgw != '' ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['idGuest'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest Name']))) : '')
                     )), array('class' => 'gmenu'));
             }
@@ -283,9 +284,20 @@ class History {
             // Number of guests
             $fixedRows["Occupants"] = $r["Number_Guests"];
 
-            $patientTitle = $labels->getString('MemberType', 'patient', 'Patient');
+
+            // Pre-payments
+            if ($uS->AcceptResvPaymt && isset($r['PrePaymt'])) {
+                if ($r['PrePaymt'] == 0) {
+                    $fixedRows['PrePaymt'] = '';
+                } else {
+                    $fixedRows['PrePaymt'] = '$' . number_format($r['PrePaymt'], 2);
+                }
+            }
+
+
 
             // Patient Name
+            $patientTitle = $labels->getString('MemberType', 'patient', 'Patient');
             $fixedRows['Patient'] = $r['Patient Name'];
 
             if ($r['Patient_Staying'] > 0 && !$static) {

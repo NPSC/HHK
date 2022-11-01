@@ -9,7 +9,7 @@ use HHK\House\Resource\AbstractResource;
 use HHK\House\Room\Room;
 use HHK\Member\RoleMember\GuestMember;
 use HHK\Note\{LinkNote, Note};
-use HHK\SysConst\{MemBasis, ReservationStatus, RoomState, VisitStatus, RoomRateCategories};
+use HHK\SysConst\{MemBasis, ReservationStatus, RoomState, VisitStatus, RoomRateCategories, ItemId, InvoiceStatus};
 use HHK\TableLog\{ReservationLog, VisitLog};
 use HHK\Tables\EditRS;
 use HHK\Tables\Registration\RegistrationRS;
@@ -110,6 +110,35 @@ class Reservation_1 {
         return new Reservation_1($resvRs);
     }
 
+    public static function getPrePayment(\PDO $dbh, $idResv) {
+
+        $prePayment = 0.0;
+
+        if ($idResv > 0) {
+
+             $query = "select
+        sum(il.Amount)
+    from
+        invoice_line il
+            join
+        invoice i ON il.Invoice_Id = i.idInvoice and il.Item_Id = ". ItemId::LodgingMOA . " and il.Deleted = 0
+            join
+    	reservation_invoice ri on ri.Reservation_Id = $idResv AND i.idInvoice = ri.Invoice_Id
+    where
+            i.Deleted = 0
+            and i.`Status` = '" . InvoiceStatus::Paid . "'";
+
+            $stmt = $dbh->query($query);
+
+            $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
+
+            if (count($rows) == 1) {
+                $prePayment = floatval($rows[0][0]);
+            }
+        }
+
+        return $prePayment;
+    }
 
     public function move(\PDO $dbh, $startDelta, $endDelta, $uname, $forceNewResource = FALSE) {
 
@@ -807,13 +836,19 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         $labels = Labels::getLabels();
 
         $rooms = array();
+        $markupPrepay = FALSE;
 
         $noCleaning = '';
 
         // Check-in button text
         $buttonText = 'Add ' . $labels->getString('MemberType', 'visitor', 'Guest');
-        if ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate || $reservStatus == ReservationStatus::Waitlist) {
+        if ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Waitlist) {
             $buttonText = 'Check In';
+        }
+
+        // Pre-Payment markup
+        if ($uS->AcceptResvPaymt && ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Waitlist || $reservStatus == ReservationStatus::UnCommitted)) {
+            $markupPrepay = TRUE;
         }
 
         if (count($rows) > 0) {
@@ -850,6 +885,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                     .HTMLTable::makeTh('Expected Departure')
                     .HTMLTable::makeTh('Room')
                     .HTMLTable::makeTh('Nights')
+                .($markupPrepay ? HTMLTable::makeTh('Pre-Paymt') : '')
                     .($showConstraints ? HTMLTable::makeTh('Additional Items') : ''));
 
             foreach ($rows as $r) {
@@ -907,7 +943,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                 }
 
                 $constList = '';
-                if ($showConstraints && ($reservStatus == ReservationStatus::Committed  || $reservStatus == ReservationStatus::Imediate || $reservStatus == ReservationStatus::Waitlist)) {
+                if ($showConstraints && ($reservStatus == ReservationStatus::Committed || $reservStatus == ReservationStatus::Waitlist)) {
 
                     // Get constraints
                     $constraints = new ConstraintsVisit($dbh, $resv->getIdReservation(), 0);
@@ -953,6 +989,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                         .HTMLTable::makeTd($resv->getActualDeparture() != '' ? date('c', strtotime($resv->getActualDeparture())) : date('c', strtotime($resv->getExpectedDeparture())))
                         .HTMLTable::makeTd($resv->getRoomTitle($dbh) . $dirtyRoom, $roomAttr)
                         .HTMLTable::makeTd($resv->getExpectedDays(), array('style'=>'text-align:center;'))
+                    .($markupPrepay ? HTMLTable::makeTd(($r['PrePaymt'] > 0 ? '$'.number_format($r['PrePaymt']) : ''), array('style'=>'text-align:center;')) : '')
                         .$constList
                 );
 

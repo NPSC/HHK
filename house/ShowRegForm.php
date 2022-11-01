@@ -32,7 +32,7 @@ $labels = Labels::getLabels();
 
 $idVisit = 0;
 $idResv = 0;
-$span =0;
+$span = 0;
 $idRegistration = 0;
 $idPayment = 0;
 $paymentMarkup = '';

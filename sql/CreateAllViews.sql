@@ -2360,8 +2360,8 @@ CREATE or Replace VIEW `vreservation_events` AS
         ifnull(`hs`.`idHospital`, 0) AS `idHospital`,
         case when ifnull(hs.idAssociation, 0) > 0 and h.Title = '(None)' then 0 else ifnull(hs.idAssociation, 0) end
          as `idAssociation`,
-	ifnull(gl.Description, '') as `Location`,
-	ifnull(gd.Description, '') as `Diagnosis`,
+		ifnull(gl.Description, '') as `Location`,
+		ifnull(gd.Description, '') as `Diagnosis`,
         ifnull(`re`.`Title`, '') AS `Room Title`,
         r.idRegistration,
         r.Confirmation,
@@ -2370,7 +2370,19 @@ CREATE or Replace VIEW `vreservation_events` AS
         r.`Updated_By`,
         r.`Checkin_Notes`,
         ifnull(hs.idPsg, 0) as `idPsg`,
-        ifnull(rg.idGuest, 0) as `Patient_Staying`
+        ifnull(rg.idGuest, 0) as `Patient_Staying`,
+        CASE WHEN s.Value = 'true' AND r.`Status` in ('a', 'uc',  'w') THEN ifnull((select sum(il.Amount)
+			from
+			    invoice_line il
+			        join
+			    invoice i ON il.Invoice_Id = i.idInvoice
+			where
+			    il.Item_Id = 10
+			        and i.Deleted = 0
+			        and il.Deleted = 0
+			        and i.Status = 'p'
+			        and i.idGroup = r.idRegistration), 0)
+			ELSE 0 END as `PrePaymt`
     from
         `reservation` `r`
             left join
@@ -2384,7 +2396,7 @@ CREATE or Replace VIEW `vreservation_events` AS
             left join
         `name` `n` ON `r`.`idGuest` = `n`.`idName`
             left join
-	`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+		`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
             left join
         `name` n2 ON hs.idPatient = n2.idName
             left join
@@ -2394,7 +2406,10 @@ CREATE or Replace VIEW `vreservation_events` AS
             left join
         gen_lookups gl on gl.`Table_Name` = 'Location' and gl.`Code` = hs.Location
             left join
-        gen_lookups gd on gd.`Table_Name` = 'Diagnosis' and gd.`Code` = hs.Diagnosis;
+        gen_lookups gd on gd.`Table_Name` = 'Diagnosis' and gd.`Code` = hs.Diagnosis
+        , sys_config s
+	where 
+		s.Key = 'AcceptResvPaymt';
 
 
 
@@ -2587,8 +2602,6 @@ CREATE or replace VIEW `vresources_ready` AS
     order by `re`.`Type` desc , `re`.`Util_Priority`;
 
 
-
-
 -- -----------------------------------------------------
 -- View `vresv_patient`
 -- -----------------------------------------------------
@@ -2626,13 +2639,29 @@ CREATE or replace VIEW `vresv_patient` AS
         ifnull(`h`.`idPsg`, 0) AS `idPsg`,
         ifnull(v.idVisit, 0) as idVisit,
         ifnull(v.Span, 0) as Span,
-        ifnull(v.Status, '') as Visit_Status
+        ifnull(v.Status, '') as Visit_Status,
+        CASE WHEN s.Value = 'true' and r.`Status` in ('a', 'uc', 'w') 
+          THEN ifnull((select sum(il.Amount)
+			from
+			    invoice_line il
+			        join
+			    invoice i ON il.Invoice_Id = i.idInvoice
+			where
+			    il.Item_Id = 10
+			        and i.Deleted = 0
+			        and il.Deleted = 0
+			        and i.Status = 'p'
+			        and i.idGroup = r.idRegistration), 0)
+		  ELSE 0 END as `PrePaymt`
+        
     from
         `reservation` `r`
         left join visit v on r.idReservation = v.idReservation and v.Status = 'a'
         left join `hospital_stay` `h` ON `r`.`idHospital_Stay` = `h`.`idHospital_stay`
         left join resource re on r.idResource = re.idResource
-        left join `name` `n` ON `h`.`idPatient` = `n`.`idName`;
+        left join `name` `n` ON `h`.`idPatient` = `n`.`idName`, sys_config s
+	where 
+		s.Key = 'AcceptResvPaymt';
 
 
 

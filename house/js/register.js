@@ -627,7 +627,8 @@ var isGuestAdmin,
     wlCols,
     dailyCols,
     calendar,
-    calStartDate;
+    calStartDate,
+    acceptResvPay;
 
 $(document).ready(function () {
     "use strict";
@@ -664,7 +665,7 @@ $(document).ready(function () {
     showWlNotes = $('#showWlNotes').val();
     wlTitle = $('#wlTitle').val();
     showCharges = $('#showCharges').val();
-
+	acceptResvPay = $('#acceptResvPay').val()
 
     // Current Guests
     cgCols = [
@@ -703,6 +704,10 @@ $(document).ready(function () {
             }
 
             rvCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+            
+            if (acceptResvPay) {
+				rvCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});
+			}
 
             if(shoHospitalName) {
                 rvCols.push({data: 'Hospital', title: hospTitle});
@@ -732,6 +737,10 @@ $(document).ready(function () {
             wlCols.push({data: 'Nights', title: 'Nights', className: 'hhk-justify-c'});
             wlCols.push({data: 'Expected Departure', title: 'Expected Departure', render: function (data, type) {return dateRender(data, type, dateFormat);}});
             wlCols.push({data: 'Occupants', title: 'Occupants', className: 'hhk-justify-c'});
+
+            if (acceptResvPay) {
+				wlCols.push({data: 'PrePaymt', title: 'Pre-Paymt', className: 'hhk-justify-c'});
+			}
 
             if(shoHospitalName) {
                 wlCols.push({data: 'Hospital', title: hospTitle});
@@ -862,14 +871,16 @@ $(document).ready(function () {
         }
     });
 
-	// remove room chooser
+	
     $(document).mousedown(function (event) {
-        let target = $(event.target);
-        if ( target[0].id !== 'pudiv' && target.parents("#" + 'pudiv').length === 0) {
+        
+        // remove room chooser
+        if (event.target.id && event.target.id !== undefined && event.target.id !== 'pudiv') {
             $('div#pudiv').remove();
         }
-    });
 
+    });
+    
     $("#faDialog").dialog({
         autoOpen: false,
         resizable: true,
@@ -1305,14 +1316,6 @@ $(document).ready(function () {
 	  clearTimeout(resizeTimer);
 	  resizeTimer = setTimeout(calendar.setOption('height', window.innerHeight - 187), 100);
 	};
-
-    // disappear the pop-up rescouce groups.
-    $(document).mousedown(function (event) {
-        var target = $(event.target);
-        if (target[0].id !== 'divRoomGrouping' && target[0].id !== 'selRoomGroupScheme') {
-            $('#divRoomGrouping').hide();
-        }
-    });
 
     if ($('.btnHosp').length > 0) {
         $('.btnHosp').click(function (e) {

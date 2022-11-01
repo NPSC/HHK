@@ -42,7 +42,7 @@ use HHK\sec\Labels;
  * GuestEdit.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -470,17 +470,18 @@ $reservMarkup = '';
 //
 if ($psg->getIdPsg() > 0) {
 
+    // PSG markup
     $psgTabMarkup = $psg->createEditMarkup($dbh, $uS->guestLookups[GLTableNames::PatientRel], $labels, 'GuestEdit.php', $id, FALSE);
 
-    $ccMarkup = '';
+    // Credit card on file
+    $ccMarkup = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+            HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
+            . HouseServices::guestEditCreditTable($dbh, $registration->getIdRegistration(), $id, 'g')
+            . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-indx'=>'g', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
+        ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel ignrSave')));
 
-        $ccMarkup = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                HTMLContainer::generateMarkup('legend', 'Credit Cards', array('style'=>'font-weight:bold;'))
-                . HouseServices::guestEditCreditTable($dbh, $registration->getIdRegistration(), $id, 'g')
-                . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnCred', 'data-indx'=>'g', 'data-id'=>$id, 'data-idreg'=>$registration->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
-            ,array('id'=>'upCreditfs', 'style'=>'float:left;', 'class'=>'hhk-panel ignrSave')));
 
-
+    // Registration markup
     $regTabMarkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
             HTMLContainer::generateMarkup('legend', 'Registration', array('style'=>'font-weight:bold;'))
             . $registration->createRegMarkup($dbh, $memberFlag)
@@ -573,7 +574,7 @@ if ($psg->getIdPsg() > 0) {
 
     }
 
-    // Reservation
+    // Reservations
     $stmt = $dbh->query("select r.*, hs.idHospital from reservation r left join hospital_stay hs on r.idHospital_Stay = hs.idHospital_stay
  where idRegistration = ". $registration->getIdRegistration() . " order by idReservation desc");
     $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -585,18 +586,24 @@ if ($psg->getIdPsg() > 0) {
 
         $reserv = new Reservation_1($reservRs);
         $rtbl = new HTMLTable();
-        $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate'));
+        $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate') . ($uS->AcceptResvPaymt ? HTMLTable::makeTh('Pre-Paymt') : ''));
 
         // Get the room rate category names
         $categoryTitles = RoomRate::makeDescriptions($dbh);
 
+        $prePayment = 0;
+        if ($uS->AcceptResvPaymt) {
+            $prePayment = $reserv->getPrePayment($dbh, $reserv->getIdReservation());
+        }
+
         $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('a', $reserv->getIdReservation(), array('href'=>'Reserve.php?rid=' . $reserv->getIdReservation())))
-                . HTMLTable::makeTd($reserv->getStatusTitle($dbh, $reserv->getStatus()))
-                . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
-                . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
-                . HTMLTable::makeTd($reserv->getRoomTitle($dbh))
-                . ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLTable::makeTd($categoryTitles[$reserv->getIdRoomRate()]) : HTMLTable::makeTd(''))
-                );
+            . HTMLTable::makeTd($reserv->getStatusTitle($dbh, $reserv->getStatus()))
+            . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getArrival())))
+            . HTMLTable::makeTd(date('M jS, Y', strtotime($reserv->getDeparture())))
+            . HTMLTable::makeTd($reserv->getRoomTitle($dbh))
+            . ($uS->RoomPriceModel != ItemPriceCode::None ? HTMLTable::makeTd($categoryTitles[$reserv->getIdRoomRate()]) : HTMLTable::makeTd(''))
+            . ($uS->AcceptResvPaymt ? HTMLTable::makeTd($prePayment == 0 ? '0' : '$' . number_format($prePayment, 2), array('style'=>'text-align:center')) : '')
+        );
 
         $constraintMkup = RoomChooser::createResvConstMkup($dbh, $reserv->getIdReservation(), TRUE);
         if ($constraintMkup == '') {
@@ -605,13 +612,13 @@ if ($psg->getIdPsg() > 0) {
 
         $rtbl->addBodyTr(HTMLTable::makeTd(HTMLContainer::generateMarkup('div', $constraintMkup, array('style'=>'float:left;margin-left:10px;')), array('colspan'=>'7')));
 
-        $hospitalButton = '';
-
+        // Accordian header
         $hdr = HTMLContainer::generateMarkup('h3', HTMLContainer::generateMarkup('span',
                 $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '
                 . (date('Y') == date('Y', strtotime($reserv->getArrival())) ? date('M j', strtotime($reserv->getArrival())) : date('M j, Y', strtotime($reserv->getArrival())))
-                . " to " .(date('Y') == date('Y', strtotime($reserv->getDeparture())) ? date('M j', strtotime($reserv->getDeparture())) : date('M j, Y', strtotime($reserv->getDeparture())))
-        		. '.  ' . $reserv->getStatusIcon($dbh) . $hospitalButton
+                . " to " .(date('Y') == date('Y', strtotime($reserv->getDeparture())) ? date('M j', strtotime($reserv->getDeparture())) : date('M j, Y', strtotime($reserv->getDeparture()))). '.'
+        		. ($prePayment > 0 && $reserv->isActive() ? '  &nbsp; Pre-Payment = $' . number_format($prePayment, 2) : '')
+                . $reserv->getStatusIcon($dbh)
                 , array('style'=>'margin-left:10px;')), array('style'=>'min-height:25px; padding-top:5px;'));
 
         $reservMarkup .= $hdr . HTMLContainer::generateMarkup('div', $rtbl->generateMarkup());

@@ -83,6 +83,26 @@ WHERE
 
 		return $stmt->fetchAll ( \PDO::FETCH_ASSOC );
 	}
+	public static function loadPrePayUnpaidInvoices(\PDO $dbh, $idReservation, $returnId = 0) {
+
+	    if ($idReservation < 1) {
+	        return array ();
+	    }
+
+	    $stmt = $dbh->query ( "SELECT
+    i.idInvoice, i.`Invoice_Number`, i.`Balance`, i.`Amount`
+FROM
+    `invoice` i
+        LEFT JOIN
+    `reservation_invoice` ri on i.idInvoice = ri.Invoice_Id
+
+WHERE
+    ri.Reservation_Id = $idReservation AND i.Status = '" . InvoiceStatus::Unpaid . "'
+        AND i.Deleted = 0" );
+
+	    return $stmt->fetchAll ( \PDO::FETCH_ASSOC );
+	}
+
 	public static function loadUnpaidInvoices(\PDO $dbh, $orderNumber) {
 		$invRs = new InvoiceRs ();
 		$invRs->Order_Number->setStoredVal ( $orderNumber );

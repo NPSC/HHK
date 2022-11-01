@@ -10,6 +10,7 @@ use HHK\Payment\PaymentManager\PaymentManagerPayment;
 use HHK\SysConst\{ExcessPay, GLTableNames, InvoiceStatus, ItemId, ItemPriceCode, PayType, ReturnIndex};
 use HHK\sec\Labels;
 use HHK\sec\Session;
+use HHK\House\Reservation\Reservation_1;
 
 /**
  * PaymentChooser.php
@@ -266,8 +267,22 @@ class PaymentChooser {
         return $pmp;
     }
 
-
-    public static function createMarkup(\PDO $dbh, $idGuest, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
+    /**
+     *
+     * @param \PDO $dbh
+     * @param int $idGuest
+     * @param int $idRegistration
+     * @param VisitCharges $visitCharge
+     * @param AbstractPaymentGateway $paymentGateway
+     * @param string $defaultPayType
+     * @param bool $useDeposit
+     * @param boolean $showFinalPayment
+     * @param boolean $payVFeeFirst
+     * @param number $prefTokenId
+     * @param boolean $useVisitFee
+     * @return string
+     */
+    public static function createMarkup(\PDO $dbh, $idGuest, $idResv, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0, $useVisitFee = FALSE) {
 
         $uS = Session::getInstance();
 
@@ -288,9 +303,17 @@ class PaymentChooser {
         // Get taxed items
         $vat = new ValueAddedTax($dbh);
 
-        $useVisitFee = FALSE;
-        if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '')){
-                $useVisitFee = TRUE;
+        if($useVisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '' || $uS->VisitFeeDelayDays == 0)){
+            $useVisitFee = TRUE;
+        }
+
+        // Resrvation Check-in
+        if ($uS->AcceptResvPaymt && $idResv > 0) {
+            $heldAmount = Reservation_1::getPrePayment($dbh, $idResv);
+            $chkingIn = TRUE;
+        } else {
+            $heldAmount = Registration::loadLodgingBalance($dbh, $idRegistration);
+            $chkingIn = FALSE;
         }
 
         $mkup = HTMLContainer::generateMarkup('div',
@@ -299,7 +322,7 @@ class PaymentChooser {
                     $useDeposit,
                     $visitCharge,
                     $useVisitFee,
-                    Registration::loadLodgingBalance($dbh, $idRegistration),
+                    $heldAmount,
                     $payVFeeFirst,
                     $showFinalPayment,
                     $unpaidInvoices,
@@ -308,7 +331,8 @@ class PaymentChooser {
                     $visitCharge->getIdVisit(),
                     readGenLookupsPDO($dbh, 'ExcessPays'),
                     $uS->VisitExcessPaid,
-                    $uS->UseHouseWaive
+                    $uS->UseHouseWaive,
+                    $chkingIn
                 )
                 , array('id'=>'divPmtMkup', 'style'=>'float:left;margin-left:.3em;margin-right:.3em;')
                 );
@@ -338,17 +362,12 @@ class PaymentChooser {
 
         // Collect panels for Returns
         unset($payTypes[PayType::Invoice]);
-        $rtninvoiceBlock = '';
-
-        if (isset($uS->nameLookups[GLTableNames::PayType][PayType::Invoice])) {
-        	$rtninvoiceBlock = self::invoiceBlock('r');
-        }
 
         $rtnMkup = HTMLContainer::generateMarkup('div', self::showReturnSelection($dbh,
                 $defaultPayType,
                 $payTypes,
                 $paymentGateway,
-        		$idGuest, $idRegistration, $prefTokenId, $rtninvoiceBlock),
+        		$idGuest, $idRegistration, $prefTokenId),
                 array('id'=>'divReturnPay', 'style'=>'float:left; display:none;'));
 
         if ($rtnMkup != '') {
@@ -358,6 +377,130 @@ class PaymentChooser {
         return HTMLContainer::generateMarkup('fieldset',
                 HTMLContainer::generateMarkup('legend', 'Paying Today', array('style'=>'font-weight:bold;'))
                 . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
+
+    }
+
+    /**
+     *
+     * @param \PDO $dbh
+     * @param int $idGuest
+     * @param int $idResv
+     * @param int $idRegistration
+     * @param VisitCharges $visitCharge
+     * @param AbstractPaymentGateway $paymentGateway
+     * @param string $defaultPayType
+     * @param number $prefTokenId
+     * @return string
+     */
+    public static function createPrePaymentMarkup(\PDO $dbh, $idGuest, $idResv, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $heldAmount, $prefTokenId) {
+
+        $uS = Session::getInstance();
+
+        if ($defaultPayType == '') {
+            $defaultPayType = $uS->DefaultPayType;
+        }
+
+        // Get labels
+        $labels = Labels::getLabels();
+
+        $feesTbl = new HTMLTable();
+
+        // Get any Unpaid invoices
+        $trs = self::createUnpaidInvoiceMarkup(Invoice::loadPrePayUnpaidInvoices($dbh, $idResv, $uS->returnId));
+        // Add them to the table
+        foreach ($trs as $t) {
+            $feesTbl->addBodyTr($t);
+        }
+
+
+        if ($heldAmount > 0) {
+            $feesTbl->addBodyTr(
+                HTMLTable::makeTd('Pre-Payment Balance:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
+                . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '$' . number_format($heldAmount, 2) : ''), array('id'=>'spnHeldAmt'))
+                    .HTMLInput::generateMarkup('', array('id'=>'cbHeld', 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'display:none;', 'data-amt'=> number_format($heldAmount, 2, '.',''))))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+        }
+
+        $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+            , array('class'=>'hhk-RoomFees'));
+
+        // Amount to pay
+        $feesTbl->addBodyTr(
+            HTMLTable::makeTh(HTMLContainer::generateMarkup('span', 'Payment Amount:', array('id'=>'spnPayTitle')), array('colspan'=>'2', 'class'=>'tdlabel'))
+            .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'totalPayment', 'size'=>'8', 'class'=>'hhk-feeskeys', 'style'=>'border:none;text-align:right;font-weight:bold;', 'readonly'=>'readonly'))
+                , array('style'=>'text-align:right;border-top:2px solid #2E99DD;border-bottom:2px solid #2E99DD;')));
+
+
+        // Payment Date
+        $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Date:', array('colspan'=>'2', 'class'=>'tdlabel'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup(date('M j, Y'), array('name'=>'paymentDate', 'readonly'=>'readonly', 'class'=>'hhk-feeskeys ckdate')))
+            , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
+
+        $excessPays = readGenLookupsPDO($dbh, 'ExcessPays');
+
+        // Extra payment & distribution Selector
+        if (count($excessPays) > 0) {
+
+            $feesTbl->addBodyTr(HTMLTable::makeTh('Overpayment Amount:', array('class'=>'tdlabel', 'colspan'=>'2'))
+                .HTMLTable::makeTd('$' . HTMLInput::generateMarkup('', array('name'=>'txtOverPayAmt', 'style'=>'border:none;text-align:right;font-weight:bold;', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'size'=>'8'))
+                    , array('style'=>'text-align:right;'))
+                , array('class'=>'hhk-Overpayment'));
+
+            $sattrs = array('name'=>'selexcpay', 'style'=>'margin-left:3px;', 'class'=>'hhk-feeskeys');
+
+            $feesTbl->addBodyTr(HTMLTable::makeTd('Apply to:', array('class'=>'tdlabel', 'colspan'=>'2'))
+                .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($excessPays, '', TRUE), $sattrs))
+                , array('class'=>'hhk-Overpayment'));
+
+        }
+
+        // Invoice Notes
+        $feesTbl->addBodyTr(
+            HTMLTable::makeTh('Invoice Notes (Public)', array('colspan'=>'3', 'style'=>'text-align:left;'))
+            , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
+
+        $feesTbl->addBodyTr(
+            HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea', '', array('name'=>'txtInvNotes', 'rows'=>1, 'style'=>'width:100%;', 'class'=>'hhk-feeskeys')), array('colspan'=>'3'))
+            , array('style'=>'display:none;', 'class'=>'hhk-minPayment'));
+
+        // Error message
+        $mess = HTMLContainer::generateMarkup('div','', array('id'=>'payChooserMsg', 'style'=>'clear:left;color:red;margin:5px;display:none'));
+
+        $mkup =  $mess . $feesTbl->generateMarkup(array('id'=>'payTodayTbl', 'style'=>'margin-right:7px;float:left;'));
+
+        $payTypes = readGenLookupsPDO($dbh, 'Pay_Type');
+
+        unset($payTypes[PayType::Invoice]);
+
+        if ($uS->ShowTxPayType == FALSE) {
+            unset($payTypes[PayType::Transfer]);
+        }
+
+        // Collect panels for payments
+        $panelMkup = self::showPaySelection($dbh,
+            $defaultPayType,
+            $payTypes,
+            $labels,
+            $paymentGateway,
+            $idGuest, $idRegistration, $prefTokenId);
+
+        $mkup .= HTMLContainer::generateMarkup('div', $panelMkup, array('style'=>'float:left;', 'class'=>'paySelectTbl'));
+
+        // Collect panels for Returns
+        $rtnMkup = HTMLContainer::generateMarkup('div', self::showReturnSelection($dbh,
+            $defaultPayType,
+            $payTypes,
+            $paymentGateway,
+            $idGuest, $idRegistration, $prefTokenId),
+            array('id'=>'divReturnPay', 'style'=>'float:left; display:none;'));
+
+        $mkup .= HTMLContainer::generateMarkup('div', $rtnMkup, array('style'=>'float:left;'));
+
+        return HTMLContainer::generateMarkup('fieldset',
+            HTMLContainer::generateMarkup('legend', 'Pre-Payments', array('style'=>'font-weight:bold;'))
+            . $mkup, array('id'=>'hhk-PayToday', 'class'=>'hhk-panel', 'style'=>'float:left;'));
 
     }
 
@@ -624,7 +767,7 @@ ORDER BY v.idVisit , v.Span;");
     }
 
     protected static function createPaymentMarkup($showRoomFees, $useKeyDeposit, $visitCharge, $useVisitFee, $heldAmount, $payVFeeFirst,
-            $showFinalPaymentCB, array $unpaidInvoices, $labels, $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE) {
+            $showFinalPaymentCB, array $unpaidInvoices, $labels, $vat,  $idVisit = 0, $excessPays = array(), $defaultExcessPays = ExcessPay::Ignore, $useHouseWaive = FALSE, $chkingIn = FALSE) {
 
         $feesTbl = new HTMLTable();
 
@@ -737,13 +880,27 @@ ORDER BY v.idVisit , v.Span;");
         // MOA money on account - held amount.
         if ($heldAmount > 0) {
 
-            $feesTbl->addBodyTr(
-                HTMLTable::makeTd('Retained Amount:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
-                . HTMLTable::makeTd(
+            if ($chkingIn === FALSE) {
+                // Regular MOA
+                $feesTbl->addBodyTr(
+                    HTMLTable::makeTd('MOA Balance:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
+                    . HTMLTable::makeTd(
+                            HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbHeld', 'style'=>'margin-left:5px;margin-right:3px;'))
+                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>0))
+                        .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+
+            } else {
+                // Reservation Pre-Pay
+                $feesTbl->addBodyTr(
+                    HTMLTable::makeTd('Pre-Payment:', array('class'=>'tdlabel', 'title'=>'Reservation Pre-Payment'))
+                    . HTMLTable::makeTd(
                         HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbHeld', 'style'=>'margin-left:5px;margin-right:3px;'))
-                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($heldAmount, 2, '.','')))
-                    .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>1))
+                        .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
+                    .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
+
+            }
         }
 
         // Reimburse VAT.
@@ -774,7 +931,8 @@ ORDER BY v.idVisit , v.Span;");
 
         if ($showRoomFees && is_null($visitCharge) === FALSE) {
 
-        	$feesTbl->addBodyTr(HTMLTable::makeTd( $labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', array('class'=>'tdlabel'))
+
+        	$feesTbl->addBodyTr(HTMLTable::makeTd($labels->getString('PaymentChooser', 'PayRmFees', 'Pay Room Fees').':', array('class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>$idVisit, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
                 , array('class'=>'hhk-RoomFees'));
@@ -789,6 +947,7 @@ ORDER BY v.idVisit , v.Span;");
                         , array('class'=>'hhk-RoomFees'));
                 }
             }
+
         }
 
        // House Discount Amount
@@ -906,7 +1065,7 @@ ORDER BY v.idVisit , v.Span;");
         return $payTbl->generateMarkup(array('id' => 'tblPaySelect'));
     }
 
-    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId, $invBlock) {
+    protected static function showReturnSelection(\PDO $dbh, $defaultPayType, $payTypes, AbstractPaymentGateway $paymentGateway, $idPrimaryGuest, $idReg, $prefTokenId) {
 
         $payTbl = new HTMLTable();
 
@@ -929,14 +1088,6 @@ ORDER BY v.idVisit , v.Span;");
                 HTMLTable::makeTd('Transfer Acct:', array('colspan'=>'2', 'class'=>'tdlabel'))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtRtnTransferAcct', 'size'=>'10', 'class'=>'hhk-feeskeys')))
                 , array('style'=>'display:none;', 'class'=>'hhk-transferr'));
-
-
-//         // Invoice
-//         $payTbl->addBodyTr(
-//         		HTMLTable::makeTd($invBlock, array('colspan'=>'4'))
-//         		, array('style'=>'display:none;', 'class'=>'hhk-rtn-invoice'));
-
-
 
         // credit info
         if (isset($payTypes[PayType::Charge])) {
