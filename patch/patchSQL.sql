@@ -88,6 +88,16 @@ ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Las
 ALTER TABLE `cleaning_log`
 ADD COLUMN IF NOT EXISTS `Last_Deep_Clean` DATETIME NULL DEFAULT NULL AFTER `Last_Cleaned`;
 
+
+-- update hospital colors to hex
+UPDATE `hospital` set `Reservation_Style` = "#ffffff" WHERE `Reservation_Style` = "white";
+UPDATE `hospital` set `Reservation_Style` = "#000000" WHERE `Reservation_Style` = "black";
+UPDATE `hospital` set `Stay_Style` = "#ffffff" WHERE `Stay_Style` = "white";
+UPDATE `hospital` set `Stay_Style` = "#000000" WHERE `Stay_Style` = "black";
+UPDATE `hospital` set `Reservation_Style` = TRIM(`Reservation_Style`);
+UPDATE `hospital` set `Stay_Style` = TRIM(`Stay_Style`);
+
+
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`)
 	VALUES('EmergContactReserv', 'false', 'b', 'h', 'Collect Emergency Contact on Reservation','1');
 	
@@ -99,9 +109,11 @@ INSERT ignore INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 -- enable report fieldsets for guest operations users
 insert ignore into `page_securitygroup` (`idPage`, `Group_Code`) values ((select `idPage` from `page` where `File_Name` = "ws_reportFilter.php"), "g");
 
+-- add label for nickname
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('nickname', 'Nickname', 's', 'mt', 'Default: Nickname');
+
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('Credit', 'Credit', 's', 'pc');
 
 -- Add Recent Activity REport page
 call new_webpage('RecentActivity.php', 31, 'Recent Activity', 0, 'h', 102, 'w', 'p', '', '', NULL, 'ga');
 call new_webpage('RecentActivity.php', 31, 'Recent Activity', 0, 'h', 102, 'w', 'p', '', '', NULL, 'gr');
-

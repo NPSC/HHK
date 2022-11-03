@@ -188,7 +188,7 @@ $emtableMarkup .= HTMLContainer::generateMarkup('div', HTMLContainer::generateMa
                 .HTMLInput::generateMarkup($idRegistration, array('name'=>'hdnIdReg', 'type'=>'hidden'))
                 .HTMLInput::generateMarkup($idVisit, array('name'=>'hdnIdVisit', 'type'=>'hidden'))
                 , array('name'=>'frmwrod','action'=>'ShowStatement.php', 'method'=>'post'))
-        ,array('style'=>'margin-left:100px;margin-bottom:10px; float:left;', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'));
+        ,array('style'=>'margin-bottom:10px;', 'class'=>'ui-widget ui-widget-content ui-corner-all hhk-panel hhk-tdbox'));
 
 
 if (isset($_REQUEST['cmd'])) {
@@ -339,10 +339,12 @@ $(document).ready(function() {
     </head>
     <body>
         <div id="contentDiv">
-            <?php echo $msg; ?>
-            <?php echo $emtableMarkup; ?>
-            <div class="hhk-tdbox hhk-visitdialog">
-                <?php echo $stmtMarkup; ?>
+        	<div style="width:800px;">
+                <?php echo $msg; ?>
+                <?php echo $emtableMarkup; ?>
+                <div class="hhk-tdbox hhk-visitdialog">
+                    <?php echo $stmtMarkup; ?>
+                </div>
             </div>
         </div>
     </body>

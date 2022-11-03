@@ -90,7 +90,7 @@ abstract class AbstractRoleMember extends IndivMember {
             . HTMLTable::makeTh('Middle')
             . HTMLTable::makeTh($lnCopyDownIcon)
             .HTMLTable::makeTh('Suffix')
-            . HTMLTable::makeTh('Nickname')
+            . HTMLTable::makeTh(Labels::getString("MemberType", "nickname", 'Nickname'))
             . ($showBirthDate ? HTMLTable::makeTh('Birth Date') : '');
 
 

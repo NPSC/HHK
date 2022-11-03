@@ -142,8 +142,8 @@
   				{
   					"type": "text",
   					"required": false,
-    				"label": "Nickname",
-    				"placeholder": "Nickname",
+    				"label": (options.labels.nickname || 'Nickname'),
+    				"placeholder": (options.labels.nickname || 'Nickname'),
     				"className": "form-control",
     				"name": "patient.nickname",
     				"width": "col-md-4"

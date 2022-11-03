@@ -15,11 +15,12 @@ use HHK\sec\{SecurityComponent, Session};
 use HHK\Tables\PaymentGW\Guest_TokenRS;
 use HHK\House\Room\RoomChooser;
 use HHK\SysConst\RoomRateCategories;
-use HHK\House\RegisterForm;
+use HHK\House\RegistrationForm\RegisterForm;
 use HHK\House\RegistrationForm;
 use HHK\House\TemplateForm\ConfirmationForm;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Member\Role\Agent;
+use HHK\House\RegistrationForm\CustomRegisterForm;
 
 /**
  * ReservationSvcs.php
@@ -233,9 +234,10 @@ class ReservationSvcs
     public static function generateCkinDoc(\PDO $dbh, $idReservation = 0, $idVisit = 0, $span = 0, $logoURL = '', $notes = '')
     {
         $uS = Session::getInstance();
+        $return = array("docs"=>[]);
         $docs = array();
 
-        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
+        $stmt = $dbh->query("Select g.`Code`, g.`Description`, d.`Abstract`, d.`Doc` from `document` d join gen_lookups g on d.idDocument = g.`Substitute` where g.`Table_Name` = 'Reg_Agreement' order by g.`Order`");
         $docRows = $stmt->fetchAll();
 
         if ($uS->RegForm == 1) {
@@ -262,6 +264,69 @@ class ReservationSvcs
                     'tabTitle' => 'English'
                 );
             }
+
+
+        } else if($uS->RegForm == 3){
+
+            if (count($docRows) > 0) {
+
+                foreach ($docRows as $d) {
+
+                    $regSettings = [];
+                    if(!empty($d['Abstract']) && @json_decode($d['Abstract'], true)){
+                        $regSettings = json_decode($d['Abstract'], true);
+                    }
+
+                    $regForm = new CustomRegisterForm($d["Code"], $regSettings);
+
+                    $docs[] = array(
+                        'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, $d),
+                        'style' => CustomRegisterForm::getStyling(),
+                        'tabIndex' => $d['Code'],
+                        'tabTitle' => $d['Description'],
+                        'pageTitle' => $regForm->getPageTitle(),
+                        'allowSave' => (!empty($regForm->settings["Signatures"]["eSign"]) && $regForm->settings["Signatures"]["eSign"] == 'jSign')
+                    );
+                }
+            } else {
+
+                $docs[] = array(
+                    'doc' => $regForm->prepareRegForm($dbh, $idVisit, $span, $idReservation, 'The registration agreement document is missing. '),
+                    'style' => CustomRegisterForm::getStyling(),
+                    'tabIndex' => 'en',
+                    'tabTitle' => 'English'
+                );
+            }
+
+            //get primary guest
+            if ($idVisit > 0) {
+
+                $stmtv = $dbh->prepare("Select v.idPrimaryGuest, v.idRegistration, r.idPsg from visit v join registration r on v.idRegistration = r.idRegistration where idVisit = :idv and span = :span");
+                $stmtv->execute(array(
+                    ':idv' => $idVisit,
+                    ':span' => $span
+                ));
+                $rows = $stmtv->fetchAll(\PDO::FETCH_ASSOC);
+
+                if(count($rows) == 1){
+                    $return["idPrimaryGuest"] = $rows[0]["idPrimaryGuest"];
+                    $return["idPsg"] = $rows[0]["idPsg"];
+                }
+
+            }else if($idReservation > 0){
+                $stmtr = $dbh->prepare("Select rg.idGuest, reg.idPsg from reservation r join reservation_guest rg on r.idReservation = rg.idReservation join registration reg on r.idRegistration = reg.idRegistration where rg.idReservation = :idr and `Primary_Guest` = '1'");
+                $stmtr->execute(array(
+                    ':idr' => $idReservation
+                ));
+                $rows = $stmtr->fetchAll(\PDO::FETCH_ASSOC);
+
+                if(count($rows) == 1){
+                    $return["idPrimaryGuest"] = $rows[0]["idGuest"];
+                    $return["idPsg"] = $rows[0]["idPsg"];
+                }
+
+            }
+
         } else if ($uS->RegForm == 2) {
 
             // IMD
@@ -463,14 +528,45 @@ class ReservationSvcs
             }
         } else {
             return array(
-                'docs' => 'Error - Registration Form is not defined in the system configuration.',
+                'docs' => [],
+                'error' => 'Error - Registration Form is not defined in the system configuration.',
                 'style' => ' '
             );
         }
 
-        return array(
-            'docs' => $docs
-        );
+        $return["docs"] = $docs;
+        return $return;
+    }
+
+    /**
+     * Get signed reg forms HTML
+     *
+     * @param \PDO $dbh
+     * @param number $idPsg
+     * @param number $idReservation
+     * @param number $idVisit
+     * @param number $span
+     *
+     * @return array
+     */
+    public static function getSignedCkinDocs(\PDO $dbh, $idPsg = 0, $idReservation = 0, $idVisit = 0, $span = 0){
+        $sql = 'select * from v_signed_reg_forms where PSG_Id = :idPsg';
+        $params = array(':idPsg'=>$idPsg);
+
+        if($idReservation > 0){
+            $sql .= ' AND Resv_Id = :idResv';
+            $params[':idResv'] = $idReservation;
+        }
+
+        if($idVisit > 0){
+            $sql .= ' AND Visit_Id = :idVisit';
+            $params[':idVisit'] = $idVisit;
+        }
+
+        $stmt = $dbh->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 
     public static function getReservGuests(\PDO $dbh, $idReservation)
