@@ -266,7 +266,7 @@ where ru.idResource_use is null
 
             if ($r['Span_End'] != "") {
 
-                if (date('Y-m-d', strtotime($r['Span_Start'])) == date('Y-m-d', strtotime($r['Span_End']))) {
+                if ($r['Span'] < 1 && date('Y-m-d', strtotime($r['Span_Start'])) == date('Y-m-d', strtotime($r['Span_End']))) {
                     // Dont need to see these on the register.
                     continue;
                 }
