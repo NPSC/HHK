@@ -38,6 +38,7 @@ use HHK\House\Insurance\Insurance;
 use HHK\Tables\House\Rate_BreakpointRS;
 use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RateStatus;
+use HHK\House\RegistrationForm\CustomRegisterForm;
 use HHK\Purchase\PriceModel\PriceDaily;
 
 /**
@@ -1299,7 +1300,19 @@ if (isset($_POST['ldfm'])) {
     //set help text
     $help = '';
 
+    $editMkup = '';
+
     foreach ($docRows as $r) {
+
+        if($formType == 'ra' && $uS->RegForm == "3"){
+            $regSettings = [];
+            if(!empty($r['Abstract']) && @json_decode($r['Abstract'], true)){
+                $regSettings = json_decode($r['Abstract'], true);
+            }
+
+            $regForm = new CustomRegisterForm($r['Code'], $regSettings);
+            $editMkup = $regForm->getEditMkup();
+        }
 
         //subject line
         $subjectLine = "";
@@ -1321,12 +1334,16 @@ if (isset($_POST['ldfm'])) {
             'id' => 'form' . $r['idDocument'], 'class'=> 'p-3 mb-3 user-agent-spacing')): '') .
             '<div><div class="d-inline-block p-3 uploadFormDiv ui-widget-content ui-corner-all"><form enctype="multipart/form-data" action="ResourceBuilder.php" method="POST" style="padding: 5px 7px;">
 <input type="hidden" name="docId" value="' . $r['idDocument'] . '"/>' .
-            '<div class="form-group mb-3"><label for="emailSubjectLine">Email Subject Line: </label><input type="text" name="emailSubjectLine" placeholder="Email Subject Line" value="' . $subjectLine . '" size="35"></div>' .
+
+        ($editMkup != '' ? $editMkup: '') .
+
+        ($formType == 'c' || $formType == 's' ? '<div class="form-group mb-3"><label for="emailSubjectLine">Email Subject Line: </label><input type="text" name="emailSubjectLine" placeholder="Email Subject Line" value="' . $subjectLine . '" size="35"></div>' : '') .
             '<input type="hidden" name="filefrmtype" value="' . $formType . '"/>' .
             '<input type="hidden" name="docAction">' .
             '<input type="hidden" name="formDef" value="' . $formDef . '">' .
             '<input type="hidden" name="docCode" value="' . $r["Code"] . '">' .
             '<div class="form-group mb-3"><label for="formfile">Upload new HTML file: </label><input name="formfile" type="file" accept="text/html" /></div>' .
+            '<div class="form-group mb-3"><small>File must have UTF-8 or Windows-1252 caracter encoding. <br>Other character sets may produce unexpected behavior</small></div>' .
             '<div class="hhk-flex" style="justify-content: space-evenly">' .
             '<button type="submit" id="docDelFm"><span class="ui-icon ui-icon-trash"></span>Delete Form</button>' .
             '<button type="submit" id="docSaveFm"><span class="ui-icon ui-icon-disk"></span>Save Form</button>' .
@@ -1368,7 +1385,7 @@ if (isset($_POST['ldfm'])) {
 }
 
 // Upload a new form
-if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
+if (isset($_POST['docAction']) && $_POST["docAction"] == "docUpload") {
 
     try{
         $tabIndex = 8;
@@ -1396,6 +1413,17 @@ if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
             $subjectLine = filter_var($_POST["emailSubjectLine"], FILTER_SANITIZE_STRING);
             $abstract["subjectLine"] = $subjectLine;
         }
+
+        if($formType == 'ra' && $uS->RegForm == "3" && isset($_POST["regForm"][$docCode])){
+            $regForm = new CustomRegisterForm();
+            $abstract = $regForm->validateSettings($_POST['regForm'][$docCode]);
+        }
+
+        $applyAll = FALSE;
+        if(isset($_POST['regForm']['misc']['applyAll'])){
+            $applyAll = TRUE;
+        }
+
         $abstract = json_encode($abstract);
 
         $mimetype = "";
@@ -1407,10 +1435,15 @@ if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
         if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
             // Get the file and convert it.
             $file = file_get_contents($_FILES['formfile']['tmp_name']);
-            $doc = iconv('Windows-1252', 'UTF-8', $file);
+            if(mb_detect_encoding($file, ["UTF-8"], true) !== false){ //test for UTF-8
+                $doc = $file;
+            }else{ //assume Windows-1252
+                $doc = iconv('Windows-1252', 'UTF-8//TRANSLIT', $file); // add //TRANSLIT for special character conversion
+            }
             $sql .= "Doc = :doc, ";
         }
         $sql .= "Updated_By = :updatedBy, Last_Updated = now() where idDocument = :idDoc";
+
         $ustmt = $dbh->prepare($sql);
 
         if (! empty($_FILES['formfile']['tmp_name']) && ($mimetype == "text/html" || $mimetype == "text/plain") ) {
@@ -1421,11 +1454,20 @@ if (isset($_POST['docAction']) && $_POST["docAction"] = "docUpload") {
         $ustmt->bindParam(":idDoc", $docId);
         $dbh->beginTransaction();
         $ustmt->execute();
+
+        if($applyAll){
+            $applyAllSql = "UPDATE `document` d join gen_lookups g on d.idDocument = g.Substitute and g.Table_Name = 'Reg_Agreement' SET Abstract = :abstract";
+            $astmt = $dbh->prepare($applyAllSql);
+            $astmt->bindParam(":abstract", $abstract);
+            $astmt->execute();
+        }
+
         $dbh->commit();
 
         echo json_encode(array("docCode"=>$docCode, "success"=>"Form saved successfully"));
         exit();
     }catch(\Exception $e){
+        $dbh->rollBack();
         echo json_encode(array("error"=>"Could not save form: " . $e->getMessage()));
         exit();
     }
@@ -1548,6 +1590,13 @@ if (isset($_POST['txtformLang'])) {
                         EditRS::insert($dbh, $genRs);
                     }
                 }
+
+                if($docId > 0){
+                    echo json_encode(array("success"=>"New form created successfully", "docCode" => $formType));
+                }else{
+                    echo json_encode(array("error"=>"Error creating form"));
+                }
+                exit;
             }
         }
     }
@@ -1981,10 +2030,12 @@ foreach ($hrows as $h) {
         'size' => '25'
     ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Reservation_Style'], array(
         'name' => 'hColor[' . $h['idHospital'] . ']',
+        'type' => 'color',
         'class' => 'color',
         'size' => '5'
     ))) . HTMLTable::makeTd(HTMLInput::generateMarkup($h['Stay_Style'], array(
         'name' => 'hText[' . $h['idHospital'] . ']',
+        'type' => 'color',
         'class' => 'color',
         'size' => '5'
     )));
@@ -2031,9 +2082,11 @@ $hTbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd(HTMLInput::generateMa
     'name' => 'hDesc[0]'
 ))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
     'name' => 'hColor[0]',
+    'type' => 'color',
     'size' => '5'
 ))) . HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
     'name' => 'hText[0]',
+    'type' => 'color',
     'size' => '5'
 ))) . HTMLTable::makeTd('Create New', array(
     'colspan' => '4'
@@ -2642,7 +2695,8 @@ foreach($demogs as $key=>$demog){
 					referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
 					treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
 					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>",
-					mrn: "<?php echo $labels->getString('hospital', 'MRN', 'MRN'); ?>"
+					mrn: "<?php echo $labels->getString('hospital', 'MRN', 'MRN'); ?>",
+					nickname: "<?php echo $labels->getString('MemberType', 'nickname', 'Nickname'); ?>"
 				},
 				fieldOptions: {
 					county: "<?php echo $uS->county; ?>",

@@ -17,7 +17,9 @@ class Build {
         ["in"=>"house/js/resvManager.js","out"=>"house/js/resvManager-min.js"]
     ];
 
-
+    /**
+     * @param Event $event - Composer Event
+     */
     public static function run(Event $event){
         self::minify($event);
     }

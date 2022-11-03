@@ -51,89 +51,89 @@ try {
 
         $invoice = new Invoice($dbh, $invNum);
         $stmtMarkup = $invoice->createMarkup($dbh);
+
+        if (isset($_POST['btnWord'])) {
+
+
+            $form = "<!DOCTYPE html>"
+                    . "<html>"
+                        . "<head>"
+                            . "<style type='text/css'>" . file_get_contents('css/redmond/jquery-ui.min.css') . "</style>"
+                            . "<style type='text/css'>" . file_get_contents('css/house.css') . "</style>"
+                        . "</head>"
+                        . "<body><div class='ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'
+                    . '</html>';
+
+            header('Content-Disposition: attachment; filename=Invoice.doc');
+            header("Content-Description: File Transfer");
+            header('Content-Type: text/html');
+            header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+            header('Expires: 0');
+
+            echo($form);
+            exit();
+
+        }
+
+        if (isset($_POST['txtEmail'])) {
+            $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_EMAIL);
+            if ($emAddr == '') {
+                $msg .= "The Email address is required.  ";
+            }
+        }
+
+        if (isset($_POST['txtSubject'])) {
+            $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
+            if ($emSubject == '') {
+                $msg .= "The Subject is required.  ";
+            }
+        }
+
+        if (isset($_POST['btnEmail']) && $emAddr != '' && $emSubject != '' && $stmtMarkup != '') {
+
+            try{
+                $mail = prepareEmail();
+
+                $mail->From = $uS->FromAddress;
+                $mail->FromName = $uS->siteName;
+                $mail->addAddress($emAddr);     // Add a recipient
+                $mail->addReplyTo($uS->ReplyTo);
+
+                $mail->isHTML(true);
+
+                $mail->Subject = $emSubject;
+                $mail->msgHTML($stmtMarkup);
+
+                $mail->send();
+                $msg .= "Email sent.  ";
+            }catch(\Exception $e){
+                $msg .= "Email failed!  " . $mail->ErrorInfo;
+            }
+        }
+
+        $emSubject = $wInit->siteName . " Invoice";
+
+        if (is_null($guest) === FALSE && $emAddr == '') {
+            $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
+            $emAddr = $email["Email"];
+        }
+
+
+
+    // create send email table
+        if ($invoice->isDeleted() === FALSE) {
+            $emTbl = new HTMLTable();
+            $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'style' => 'width: 100%; margin-left: 0.5em;')), array("class"=>"hhk-flex", "style"=>"align-items:center;")));
+            $emTbl->addBodyTr(HTMLTable::makeTd(
+                            'Email: '
+                            . HTMLInput::generateMarkup($emAddr, array('name' => 'txtEmail', 'style' => 'width:100%; margin-left: 0.5em;'))
+                . HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')), array("class"=>"hhk-flex", "style"=>"align-items:center;")));
+            $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit'))));
+
+            $emtableMarkup .= $emTbl->generateMarkup(array("style"=>"width:100%;"), 'Email Invoice');
+        }
     } else {
-        $msg .= 'No Information.';
-    }
-
-    if (isset($_POST['btnWord'])) {
-
-
-        $form = "<!DOCTYPE html>"
-                . "<html>"
-                    . "<head>"
-                        . "<style type='text/css'>" . file_get_contents('css/redmond/jquery-ui.min.css') . "</style>"
-                        . "<style type='text/css'>" . file_get_contents('css/house.css') . "</style>"
-                    . "</head>"
-                    . "<body><div class='ui-widget ui-widget-content ui-corner-all hhk-panel'" . $stmtMarkup . '</div></body>'
-                . '</html>';
-
-        header('Content-Disposition: attachment; filename=Invoice.doc');
-        header("Content-Description: File Transfer");
-        header('Content-Type: text/html');
-        header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-        header('Expires: 0');
-
-        echo($form);
-        exit();
-
-    }
-
-    if (isset($_POST['txtEmail'])) {
-        $emAddr = filter_var($_POST['txtEmail'], FILTER_SANITIZE_EMAIL);
-        if ($emAddr == '') {
-            $msg .= "The Email address is required.  ";
-        }
-    }
-
-    if (isset($_POST['txtSubject'])) {
-        $emSubject = filter_var($_POST['txtSubject'], FILTER_SANITIZE_STRING);
-        if ($emSubject == '') {
-            $msg .= "The Subject is required.  ";
-        }
-    }
-
-    if (isset($_POST['btnEmail']) && $emAddr != '' && $emSubject != '' && $stmtMarkup != '') {
-
-        try{
-            $mail = prepareEmail();
-
-            $mail->From = $uS->FromAddress;
-            $mail->FromName = $uS->siteName;
-            $mail->addAddress($emAddr);     // Add a recipient
-            $mail->addReplyTo($uS->ReplyTo);
-
-            $mail->isHTML(true);
-
-            $mail->Subject = $emSubject;
-            $mail->msgHTML($stmtMarkup);
-
-            $mail->send();
-            $msg .= "Email sent.  ";
-        }catch(\Exception $e){
-            $msg .= "Email failed!  " . $mail->ErrorInfo;
-        }
-    }
-
-    $emSubject = $wInit->siteName . " Invoice";
-
-    if (is_null($guest) === FALSE && $emAddr == '') {
-        $email = $guest->getEmailsObj()->get_data($guest->getEmailsObj()->get_preferredCode());
-        $emAddr = $email["Email"];
-    }
-
-
-
-// create send email table
-    if ($invoice->isDeleted() === FALSE) {
-        $emTbl = new HTMLTable();
-        $emTbl->addBodyTr(HTMLTable::makeTd('Subject: ' . HTMLInput::generateMarkup($emSubject, array('name' => 'txtSubject', 'style' => 'width: 100%; margin-left: 0.5em;')), array("class"=>"hhk-flex", "style"=>"align-items:center;")));
-        $emTbl->addBodyTr(HTMLTable::makeTd(
-                        'Email: '
-                        . HTMLInput::generateMarkup($emAddr, array('name' => 'txtEmail', 'style' => 'width:100%; margin-left: 0.5em;'))
-            . HTMLInput::generateMarkup($invNum, array('name' => 'hdninvnum', 'type' => 'hidden')), array("class"=>"hhk-flex", "style"=>"align-items:center;")));
-        $emTbl->addBodyTr(HTMLTable::makeTd(HTMLInput::generateMarkup('Send Email', array('name' => 'btnEmail', 'type' => 'submit'))));
-
-        $emtableMarkup .= $emTbl->generateMarkup(array("style"=>"width:100%;"), 'Email Invoice');
+        $msg .= 'Invoice not found.';
     }
 } catch (Exception $ex) {
     $msg .= $ex->getMessage();
