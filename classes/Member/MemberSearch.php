@@ -32,9 +32,11 @@ class MemberSearch {
     protected $Company;
     protected $MRN;
     protected $twoParts;
+    protected $letters;
 
     public function __construct($letters) {
 
+        $this->letters = $letters;
     	$this->prepareLetters($letters);
     }
 
@@ -63,7 +65,7 @@ class MemberSearch {
     		$this->Name_First = $parts[0] . '%';
     		$this->Name_Last = $parts[0] . '%';
     		$this->Company = $parts[0] . '%';
-    		$this->MRN = $parts[0] . '%';
+//    		$this->MRN = $parts[0] . '%';
     		$this->twoParts = FALSE;
     	}
 
@@ -643,6 +645,234 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
         return $events;
     }
+
+    public function MRNSearch(\PDO $dbh) {
+
+        $this->MRN = $this->letters . '%';
+
+        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
+            . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
+            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
+            . " from `name` n "
+            . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
+            . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
+            . " left join name_demog nd on n.idName = nd.idName"
+            . " left join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'"
+            . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = n.Name_Suffix"
+            . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
+            . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
+            . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
+            . " left join hospital_stay hs on n.idName = hs.idPatient"
+            . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
+            . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
+            . " and hs.MRN like '" . $this->MRN . "' "
+            . " group by n.idName order by n.Name_Last, n.Name_First";
+
+        $stmt = $dbh->query($query);
+
+        $events = array();
+
+        while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $namArray = array();
+
+            $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_First"]
+                );
+            $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Last"]
+                );
+            $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Nickname"]
+                );
+
+            $strBirthDate = '';
+            if ($row2['BirthDate'] != '') {
+                $birthDate = new \DateTime($row2['BirthDate']);
+                $strBirthDate = $birthDate->format ('m/d/Y');
+            }
+
+            $phone = htmlspecialchars_decode($row2['Phone']);
+
+            $namArray = [
+                'id' => $row2["idName"],
+                'fullName' => ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' ) . $firstName . ' ' . ($nickName != '' ? '(' . $nickName . ') ' : '' ) . $lastName . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' ),
+                'noReturn' => $row2['No_Return'],
+                'value' => $row2['MRN'],
+                'mrn' => $row2['MRN'],
+                'phone' => $phone,
+                'birthDate' => $strBirthDate,
+                'memberStatus' => ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . '] ' : ''),
+                'city' => $row2['City'],
+                'state' => $row2['State'],
+            ];
+
+            $events[] = $namArray;
+        }
+
+        return $events;
+    }
+
+    public function phoneSearch(\PDO $dbh, $guestPatient = TRUE) {
+
+        $filterGP = '';
+        if ($guestPatient) {
+            $filterGP = " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') ";
+        }
+
+
+        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
+            . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
+            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51) as `MRN`, np.Phone_Search "
+            . " from `name` n "
+            . " left join name_phone np on n.idName = np.idName AND n.Preferred_Phone = np.Phone_Code"
+            . " left join name_address na on n.idName = na.idName AND n.Preferred_Mail_Address = na.Purpose"
+            . " left join name_demog nd on n.idName = nd.idName"
+            . " left join name_volunteer2 nv on n.idName = nv.idName AND nv.Vol_Category = 'Vol_Type'"
+            . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' AND g.Code = n.Name_Suffix"
+            . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' AND gp.Code = n.Name_Prefix"
+            . " left join gen_lookups gs on gs.Table_Name = 'mem_status' AND gs.Code = n.Member_Status"
+            . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' AND gr.Code = nd.No_Return"
+            . " left join hospital_stay hs on n.idName = hs.idPatient"
+            . " where n.idName>0 AND n.Member_Status in ('a','d') AND n.Record_Member = 1 "
+            . $filterGP
+            . " AND np.Phone_Search LIKE '" . $this->Name_First . "' "
+            . " group by n.idName order by np.Phone_Search";
+
+        $stmt = $dbh->query($query);
+
+        $events = array();
+
+        while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $namArray = array();
+
+            $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_First"]
+                );
+            $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Last"]
+                );
+            $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Nickname"]
+                );
+
+            $strBirthDate = '';
+            if ($row2['BirthDate'] != '') {
+                $birthDate = new \DateTime($row2['BirthDate']);
+                $strBirthDate = $birthDate->format ('m/d/Y');
+            }
+
+            $namArray = [
+                'id' => $row2["idName"],
+                'fullName' => ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' ) . $firstName . ' ' . ($nickName != '' ? '(' . $nickName . ') ' : '' ) . $lastName . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' ),
+                'noReturn' => $row2['No_Return'],
+                'value' => $row2['Phone_Search'],
+                'phone' => htmlspecialchars_decode($row2['Phone']),
+                'birthDate' => $strBirthDate,
+                'memberStatus' => ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . ']' : ''),
+                'city' => $row2['City'],
+                'state' => $row2['State'],
+            ];
+
+            $events[] = $namArray;
+        }
+
+        return $events;
+    }
+
+    public function guestSearch(\PDO $dbh) {
+
+        $operation = 'OR';
+        if ($this->twoParts) {
+            $operation = 'AND';
+        }
+
+        $query = "Select distinct n.idName,  n.Name_Last, n.Name_First, ifnull(gp.Description, '') as Name_Prefix, ifnull(g.Description, '') as Name_Suffix, n.Name_Nickname, n.BirthDate, "
+            . " n.Member_Status, ifnull(gs.Description, '') as `Status`, ifnull(np.Phone_Num, '') as `Phone`, ifnull(na.City,'') as `City`, ifnull(na.State_Province,'') as `State`, "
+            . " ifnull(gr.Description, '') as `No_Return` " . ", SUBSTR(MAX(CONCAT(LPAD(hs.idHospital_stay,50),hs.MRN)),51)as `MRN` "
+            . " from `name` n "
+            . " left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code"
+            . " left join name_address na on n.idName = na.idName and n.Preferred_Mail_Address = na.Purpose"
+            . " left join name_demog nd on n.idName = nd.idName"
+            . " left join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type'"
+            . " left join gen_lookups g on g.Table_Name = 'Name_Suffix' and g.Code = n.Name_Suffix"
+            . " left join gen_lookups gp on gp.Table_Name = 'Name_Prefix' and gp.Code = n.Name_Prefix"
+            . " left join gen_lookups gs on gs.Table_Name = 'mem_status' and gs.Code = n.Member_Status"
+            . " left join gen_lookups gr on gr.Table_Name = 'NoReturnReason' and gr.Code = nd.No_Return"
+            . " left join hospital_stay hs on n.idName = hs.idPatient"
+            . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
+            . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
+            . " and (LOWER(n.Name_Last) like '" . $this->Name_Last . "' "
+            . " $operation (LOWER(n.Name_First) like '" . $this->Name_First . "' OR LOWER(n.Name_NickName) like '" . $this->Name_First . "')) "
+            . " group by n.idName order by n.Name_Last, n.Name_First";
+
+        $stmt = $dbh->query($query);
+
+        $events = array();
+
+        while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $namArray = array();
+
+            $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_First"]
+                );
+            $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Last"]
+                );
+            $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                function($m) {
+                    return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                },
+                $row2["Name_Nickname"]
+                );
+
+            $strBirthDate = '';
+            if ($row2['BirthDate'] != '') {
+                $birthDate = new \DateTime($row2['BirthDate']);
+                $strBirthDate = $birthDate->format ('m/d/Y');
+            }
+
+            $namArray = [
+                'id' => $row2["idName"],
+                'fullName' => ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' ) . $firstName . ' ' . ($nickName != '' ? '(' . $nickName . ') ' : '' ) . $lastName . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' ),
+                'noReturn' => $row2['No_Return'],
+                'value' => $firstName . ' ' . $lastName,
+                'phone' => htmlspecialchars_decode($row2['Phone']),
+                'birthDate' => $strBirthDate,
+                'memberStatus' => ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . ']' : ''),
+                'city' => $row2['City'],
+                'state' => $row2['State'],
+            ];
+
+            $events[] = $namArray;
+        }
+
+        return $events;
+    }
+
 
     public function roleSearch(\PDO $dbh, $mode = '', $guestPatient = FALSE, $MRN = FALSE) {
 

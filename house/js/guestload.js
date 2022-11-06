@@ -111,15 +111,14 @@ $(document).ready(function () {
     var setupNotes,
         $psgList;
 
-    $.widget( "ui.autocomplete", $.ui.autocomplete, {
-        _resizeMenu: function() {
-            var ul = this.menu.element;
-            ul.outerWidth( Math.max(
-                    ul.width( "" ).outerWidth() + 1,
-                    this.element.outerWidth()
-            ) * 1.1 );
-        }
-    });
+//    $.widget( "ui.autocomplete", $.ui.autocomplete, {
+//        _resizeMenu: function() {
+//            this.menu.element.outerWidth( Math.max(
+//                    ul.width( "" ).outerWidth() + 1,
+//                    this.element.outerWidth()
+//            ) * 1.1 );
+//        }
+//    });
 
     $("#divFuncTabs").tabs({
         collapsible: true
@@ -448,22 +447,26 @@ $(document).ready(function () {
         });
     });
 
-
-    createAutoComplete($('#txtsearch'), 3, {cmd: 'role', mode: 'mo', gp:'1'},
-        function (item) {
-            if (item.id > 0) {
-                window.location.assign("GuestEdit.php?id=" + item.id);
-            }
-        });
-        
-    createAutoComplete($('#txtMRNsearch'), 3, {cmd: 'role', mode: 'mo', gp:'1', mrn:'1'},
+	// Name Search
+    createRoleAutoComplete($('#txtsearch'), 3, {cmd: 'guest'},
         function (item) {
             if (item.id > 0) {
                 window.location.assign("GuestEdit.php?id=" + item.id);
             }
         });
 
-    createAutoComplete($('#txtPhsearch'), 5, {cmd: 'role', mode: 'mo', gp:'1'},
+
+    // MRN Search
+    createRoleAutoComplete($('#txtMRNsearch'), 3, {cmd: 'mrn'},
+        function (item) {
+            if (item.id > 0) {
+                window.location.assign("GuestEdit.php?id=" + item.id);
+            }
+        });
+
+
+	// Phone Search
+    createRoleAutoComplete($('#txtPhsearch'), 5, {cmd: 'phone'},
         function (item) {
             if (item.id > 0) {
                 window.location.assign("GuestEdit.php?id=" + item.id);

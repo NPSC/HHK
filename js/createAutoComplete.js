@@ -50,17 +50,17 @@ function createZipAutoComplete(txtCtrl, wsUrl, lastXhr, selCallback, csrfToken) 
         }
     });
 }
-    
+
 function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew, searchURL, $basisCtrl) {
     "use strict";
     var cache = {};
     var _source = function (request, response, cache, shoNew, inputParms, $basisCtrl, minChars, searchURL) {
     
-        var term = request.term.toString().substr(0,minChars);
+        var term = request.term.substr(0,minChars);
         if ( term in cache ) {
 
             var bldr, 
-                terms = request.term.toString().replace(',', '').split(" "),
+                terms = request.term.replace(',', '').split(" "),
                 matcher,
                 filtered;
 
@@ -68,7 +68,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
                 bldr = '\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ')'
                         + '|\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ')';
             } else {
-                bldr = '\\b(' + $.ui.autocomplete.escapeRegex( request.term.toString() ) + ')';
+                bldr = '\\b(' + $.ui.autocomplete.escapeRegex( request.term ) + ')';
             }
 
             matcher = new RegExp( bldr , "i" );
@@ -96,7 +96,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
 
         } else {
 
-            inputParms.letters = term;
+            inputParms.letters = term //request.term;
 
             // Get basis from active control
             if ($basisCtrl !== undefined && $basisCtrl.length > 0) {
@@ -137,5 +137,145 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
         },
         delay: 120
     });
+}
+
+
+function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNew) {
+    "use strict";
+    var cache = {};
+    
+    var _source = function (request, response, cache, shoNew, inputParms, minChars) {
+    
+        let term = request.term.toString().substr(0,minChars);
+        
+        if ( term in cache ) {
+
+            let bldr, 
+                terms = request.term.toString().replace(',', '').split(" "),
+                matcher,
+                filtered;
+
+            if (terms.length > 1) {
+                bldr = '\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ')'
+                        + '|\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ')';
+            } else {
+                bldr = '\\b(' + $.ui.autocomplete.escapeRegex( request.term.toString() ) + ')';
+            }
+
+            matcher = new RegExp( bldr , "i" );
+            
+            filtered = $.grep( cache[ term ], function( item ){
+                return matcher.test( item.value );
+            });
+
+            if (shoNew) {
+                filtered.push({'id':0, 'substitute':'New Person'});
+            } else if (filtered.length === 0) {
+                filtered.push({'id':'n', 'substitute':'No one found'});
+                cache = {};
+            }
+
+            response( filtered );
+
+        } else {
+
+            inputParms.letters = term;
+
+            $.getJSON("../house/roleSearch.php", inputParms, function(data) {
+
+                if (data.gotopage) {
+                    response();
+                    window.open(data.gotopage);
+                }
+
+                cache[ term ] = data;
+                response( data );
+            });
+        }
+    };
+
+    if (shoNew === undefined || shoNew === null) {
+        shoNew = true;
+    }
+    
+    txtCtrl.autocomplete({
+        source: function(request, response) {
+            _source(request, response, cache, shoNew, inputParms, minChars);
+        },
+        position: { my: "left top", at: "left bottom", collision: "flip" },
+        minLength: minChars, 
+        select: function(event, ui) {
+            if (ui.item) {
+                selectFunction(ui.item);
+            }
+        },
+        delay: 120
+    }).autocomplete( "instance" )
+	    	._renderItem = function( ul, item ) {
+		
+				if (item.noReturn === undefined) {
+					item.noReturn = '';
+				} else if (item.noReturn != '') {
+					item.noReturn = "<span style='color:red;'>" + item.noReturn + "</span>";
+				}
+				
+				if (item.fullName === undefined) {
+					item.fullName = ''
+				} else if (item.fullName != '') {
+					item.fullName = "<span>" + item.fullName + "</span>";
+				}
+				
+				if (item.memberStatus === undefined) {
+					item.memberStatus = ''
+				} else if (item.memberStatus != '') {
+					item.memberStatus = "<span>" + item.memberStatus + "</span>";
+				}
+				
+				if (item.birthDate === undefined) {
+					item.birthDate = ''
+				} else if (item.birthDate != '') {
+					item.birthDate = "<span style='margin-left:.3em;'>" + item.birthDate + "</span>";
+				}
+				
+				if (item.phone === undefined) {
+					item.phone = ''
+				} else if (item.phone != '') {
+					item.phone = "<span>" + item.phone + "</span>";
+				}
+				
+				if (item.city === undefined) {
+					item.city = ''
+				} else if (item.city != '') {
+					item.city = "<span style='margin-left:.3em;'>" + item.city + "</span>";
+				}
+				
+				if (item.state === undefined) {
+					item.state = ''
+				} else  if (item.state != ''){
+					let comma = '';
+					if (item.city != '') {
+						comma = ', ';
+					}
+					item.state = "<span>" + comma + item.state + "</span>";
+				}
+				
+				if (item.substitute !== undefined) {item.fullName = item.substitute}
+				
+				let firstRow = "<div style='font-size:.85em;'>" + item.noReturn + item.fullName + item.memberStatus + item.birthDate + "</div>";
+				let secondRow = '';
+				
+				if (item.phone != '' || item.city != '' || item.state != '') {
+					secondRow = "<div style='font-size:.85em;'>" + item.phone +  item.city + item.state + "</div>";
+				}
+		      return $( "<li>" )
+		        .append( firstRow )
+				.append( secondRow )
+		        .appendTo( ul );
+			};
+		txtCtrl.autocomplete( "instance" )
+			._resizeMenu = function() {
+	            this.menu.element.outerWidth(this.element.outerWidth() * 2.5 );
+		    };
+
 }
 

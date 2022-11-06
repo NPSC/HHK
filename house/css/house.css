@@ -101,6 +101,12 @@ body {
 .dataTables_info {
     padding-right: 1em;
 }
+ .ui-autocomplete {
+    max-height: 500px;
+    overflow-y: auto;
+    /* prevent horizontal scrollbar */
+    overflow-x: hidden;
+  }
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
 .hhk-loading { background: white url('../../images/ui-anim_basic_16x16.gif') left center no-repeat; }
 .hhk-icon-redLight {
