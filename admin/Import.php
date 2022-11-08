@@ -44,7 +44,7 @@ if(isset($_FILES['csvFile'])){
         $upload = new Upload($dbh, $_FILES['csvFile']);
 
         if($upload->upload()){
-            $import = new Import($dbh);
+            $import = new ImportMarkup($dbh);
             $importTbl = $import->generateMkup();
         }
 
@@ -81,6 +81,30 @@ if(isset($_POST["startImport"]) && isset($_POST["limit"])){
 if(isset($_POST['makeRooms'])){
     $import = new Import($dbh);
     $return = $import->makeMissingRooms();
+    if(is_array($return)){
+        echo json_encode($return);
+        exit;
+    }else{
+        echo json_encode(array("error"=>"Invalid Response"));
+        exit;
+    }
+}
+
+if(isset($_POST['makeHosps'])){
+    $import = new Import($dbh);
+    $return = $import->makeMissingHospitals();
+    if(is_array($return)){
+        echo json_encode($return);
+        exit;
+    }else{
+        echo json_encode(array("error"=>"Invalid Response"));
+        exit;
+    }
+}
+
+if(isset($_POST['makeDiags'])){
+    $import = new Import($dbh);
+    $return = $import->makeMissingDiags();
     if(is_array($return)){
         echo json_encode($return);
         exit;
@@ -211,6 +235,40 @@ if(isset($_POST['makeRooms'])){
         				}
     				});
 				});
+				$(document).on("click", "#makeHosps", function(){
+    				$.ajax({
+    					url: "Import.php",
+    					method: "post",
+    					data:{
+    						makeHosps:true,
+    					},
+    					dataType:"json",
+    					success: function(data){
+        					if(data.success){
+								flagAlertMessage(data.success, false);
+        					}else if(data.error){
+        						flagAlertMessage(data.error, true);
+        					}
+        				}
+    				});
+				});
+				$(document).on("click", "#makeDiags", function(){
+    				$.ajax({
+    					url: "Import.php",
+    					method: "post",
+    					data:{
+    						makeDiags:true,
+    					},
+    					dataType:"json",
+    					success: function(data){
+        					if(data.success){
+								flagAlertMessage(data.success, false);
+        					}else if(data.error){
+        						flagAlertMessage(data.error, true);
+        					}
+        				}
+    				});
+				});
 			});
 
         </script>
@@ -231,7 +289,7 @@ if(isset($_POST['makeRooms'])){
 					</div>
 					<?php } ?>
 					<div>
-						<input type="submit" value="Upload">
+						<input type="submit" value="Upload" class="ui-button ui-corner-all">
 					</div>
 				</form>
             </div>

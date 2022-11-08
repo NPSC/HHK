@@ -26,7 +26,9 @@ class ImportMarkup {
     }
 
     public function generateSummaryMkup(){
-        return HTMLContainer::generateMarkup("h2", "Summary") . HTMLContainer::generateMarkup("div", $this->getPeopleMkup() . $this->getStayMkup() . $this->getHospitalMkup(). $this->getRoomMkup(), array("class"=>"hhk-flex mb-3"));
+        return HTMLContainer::generateMarkup("h2", "Summary") . HTMLContainer::generateMarkup("div",
+            $this->getPeopleMkup() . $this->getStayMkup() . $this->getHospitalMkup(). $this->getRoomMkup() . $this->getDiagMkup()
+        , array("class"=>"hhk-flex mb-3"));
     }
 
     public function importSize(){
@@ -40,7 +42,7 @@ class ImportMarkup {
         }
     }
 
-    private function getHospitalInfo(){
+    public function getHospitalInfo(){
         $query = "select h.idHospital, ifnull(h.Title, 'unknown') as 'HHK Hospital', `Hospital`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i left join hospital h on h.Title = i.Hospital group by `Hospital`;";
         $stmt = $this->dbh->query($query);
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -48,7 +50,7 @@ class ImportMarkup {
 
     private function getHospitalMkup(){
         $mkup = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("h3", "Hospitals") .
+            HTMLContainer::generateMarkup("h3", "Hospitals" . HTMLContainer::generateMarkup("button", "Create Missing Hospitals", array("id"=>"makeHosps", "class"=>"ui-button ui-corner-all ml-2"))) .
             CreateMarkupFromDB::generateHTML_Table($this->getHospitalInfo(), "hosp")
             , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
 
@@ -71,31 +73,72 @@ class ImportMarkup {
     }
 
     public function getRoomInfo(){
-        $query = "select r.idResource, ifnull(r.Title, 'unknown') as `HHK room`, i.`RoomNum` from " . Upload::TBL_NAME . " i left join `resource` r on i.RoomNum = r.Title group by i.RoomNum order by i.RoomNum";
-        $stmt = $this->dbh->query($query);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        try{
+            $query = "select r.idResource, ifnull(r.Title, 'unknown') as `HHK room`, i.`RoomNum` from " . Upload::TBL_NAME . " i left join `resource` r on i.RoomNum = r.Title where i.RoomNum != '' group by i.RoomNum order by i.RoomNum";
+            $stmt = $this->dbh->query($query);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\Exception $e){
+            return false;
+        }
     }
 
     private function getRoomMkup(){
-        $mkup = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("h3", "Rooms" . HTMLContainer::generateMarkup("button", "Create Missing Rooms", array("id"=>"makeRooms", "class"=>"ui-button ui-corner-all ml-2"))) .
-            CreateMarkupFromDB::generateHTML_Table($this->getRoomInfo(), "room")
-            , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
+        $roomInfo = $this->getRoomInfo();
+        if(is_array($roomInfo)){
+            $mkup = HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("h3", "Rooms" . HTMLContainer::generateMarkup("button", "Create Missing Rooms", array("id"=>"makeRooms", "class"=>"ui-button ui-corner-all ml-2"))) .
+                CreateMarkupFromDB::generateHTML_Table($this->getRoomInfo(), "room")
+                , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
+        }else{
+            $mkup = '';
+        }
+        return $mkup;
+    }
 
+    public function getDiagInfo(){
+        try{
+        $query = "select d.`Code` as idDiagnosis, ifnull(d.`Description`, '') as `HHK Diagnosis`, i.`Diagnosis` from `" . Upload::TBL_NAME . "` i left join `gen_lookups` d on i.`Diagnosis` = d.`Description` and d.`Table_Name` = 'Diagnosis' where i.Diagnosis != '' group by i.`Diagnosis` order by d.Description, i.Diagnosis;";
+        $stmt = $this->dbh->query($query);
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\Exception $e){
+            return false;
+        }
+
+    }
+
+    private function getDiagMkup(){
+        $diagInfo = $this->getDiagInfo();
+        if(is_array($diagInfo)){
+            $mkup = HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("h3", "Diagnosis" . HTMLContainer::generateMarkup("button", "Create Missing Diagnoses", array("id"=>"makeDiags", "class"=>"ui-button ui-corner-all ml-2"))) .
+                CreateMarkupFromDB::generateHTML_Table($this->getDiagInfo(), "diag")
+                , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
+        }else{
+            $mkup = "";
+        }
         return $mkup;
     }
 
     private function getStayInfo(){
-        $query = "select 'Checked Out' as `Status`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i where i.Arrive != '' and i.Departure != '' UNION select 'Checked in' as `Status`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i where i.Arrive != '' and i.Departure = ''";
-        $stmt = $this->dbh->query($query);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        try{
+            $query = "select 'Checked Out' as `Status`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i where i.Arrive != '' and i.Departure != '' UNION select 'Checked in' as `Status`, count(*) as `numRecords` from " . Upload::TBL_NAME . " i where i.Arrive != '' and i.Departure = ''";
+            $stmt = $this->dbh->query($query);
+            return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\Exception $e){
+            return false;
+        }
     }
 
     private function getStayMkup(){
-        $mkup = HTMLContainer::generateMarkup("div",
-            HTMLContainer::generateMarkup("h3", "Stays") .
-            CreateMarkupFromDB::generateHTML_Table($this->getStayInfo(), "stays")
-            , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
+        $stayInfo = $this->getStayInfo();
+        if(is_array($stayInfo)){
+            $mkup = HTMLContainer::generateMarkup("div",
+                HTMLContainer::generateMarkup("h3", "Stays") .
+                CreateMarkupFromDB::generateHTML_Table($this->getStayInfo(), "stays")
+                , array("class"=>"ui-widget ui-widget-content hhk-widget-content ui-corner-all mr-2"));
+        }else{
+            $mkup = '';
+        }
 
         return $mkup;
     }

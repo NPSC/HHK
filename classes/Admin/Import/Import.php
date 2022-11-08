@@ -14,6 +14,7 @@ use HHK\SysConst\VisitStatus;
 use HHK\Tables\EditRS;
 use HHK\SysConst\ReservationStatus;
 use HHK\Tables\Visit\StaysRS;
+use HHK\Tables\GenLookupsRS;
 
 
 class Import {
@@ -159,6 +160,12 @@ class Import {
             $hospitalStay = new HospitalStay($this->dbh, $patient->getIdName());
             $hospitalStay->setHospitalId($hospitalId);
             $hospitalStay->setIdPsg($psg->getIdPsg());
+            if(isset($r["Diagnosis"])){
+                $hospitalStay->setDiagnosis($this->findIdDiag($r["Diagnosis"]));
+            }
+            if(isset($r["MRN"])){
+                $hospitalStay->setMrn($r["MRN"]);
+            }
 
             $hospitalStay->save($this->dbh, $psg, 0, 'admin');
         }
@@ -304,53 +311,142 @@ class Import {
         }
     }
 
+    /**
+     * Create rooms in HHK if they don't already exist
+     *
+     * @return array
+     */
     public function makeMissingRooms(){
 
         $uploadedRooms = (new ImportMarkup($this->dbh))->getRoomInfo();
-
+        $insertCount = 0;
 
         try{
-        // Install missing rooms
-        foreach($uploadedRooms as $room) {
-            if($room["idResource"] == null && $room['RoomNum'] != ''){
-                $title = $room['RoomNum'];
+            $this->dbh->beginTransaction();
+            // Install missing rooms
+            foreach($uploadedRooms as $room) {
+                if($room["idResource"] == null && $room['RoomNum'] != ''){
+                    $title = $room['RoomNum'];
 
-                // create room record
-                $this->dbh->exec("insert into room "
-                    . "(`idHouse`,`Item_Id`,`Title`,`Type`,`Category`,`Status`,`State`,`Availability`,
-    `Max_Occupants`,`Min_Occupants`,`Rate_Code`,`Key_Deposit_Code`,`Cleaning_Cycle_Code`, `idLocation`) VALUES
-    (0, 1, '$title', 'r', 'dh', 'a', 'a', 'a', 4, 0,'rb', 'k0', 'a', 1);");
-
+                    // create room record
+                    $stmt = $this->dbh->prepare("insert into room (`idHouse`,`Item_Id`,`Title`,`Type`,`Category`,`Status`,`State`,`Availability`, `Max_Occupants`,`Min_Occupants`,`Rate_Code`,`Key_Deposit_Code`,`Cleaning_Cycle_Code`, `idLocation`) VALUES"
+                            . " (0, 1, :roomTitle, 'r', 'dh', 'a', 'a', 'a', 4, 0,'rb', 'k0', 'a', 1);");
+                    $stmt->execute(array(":roomTitle"=>$title));
                     $idRoom = $this->dbh->lastInsertId();
 
                     // create resource record
-                    $this->dbh->exec("insert into resource "
-                        . "(`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Util_Priority`,`Status`)"
-                        . " Values "
-                        . "($idRoom, 0, '$title', 'uc1', 'room', '$title', 'a')");
+                    $stmt = $this->dbh->prepare("insert into resource (`idResource`,`idSponsor`,`Title`,`Utilization_Category`,`Type`,`Util_Priority`,`Status`) values "
+                            . "(:idRoom, 0, :roomTitle, 'uc1', 'room', :roomTitle, 'a')");
+                    $stmt->execute(array(":idRoom"=>$idRoom, ":roomTitle"=>$title));
 
                     // Resource-Room
-                    $this->dbh->exec("insert into resource_room "
-                        . "(`idResource_room`,`idResource`,`idRoom`) values "
-                        . "($idRoom, $idRoom, $idRoom)");
+                    $stmt = $this->dbh->prepare("insert into resource_room (`idResource_room`,`idResource`,`idRoom`) values "
+                            . "(:idRoom, :idRoom, :idRoom)");
+                    $stmt->execute(array(":idRoom" => $idRoom));
+                    $insertCount++;
+                }
             }
-        }
         }catch(\Exception $e){
+            $this->dbh->rollBack();
             return array("error"=>$e->getMessage());
         }
-        return array("success"=>"Rooms inserted");
+        $this->dbh->commit();
+        return array("success"=>$insertCount . " rooms inserted");
     }
 
+    /**
+     * Create Hospitals in HHK if they don't already exist
+     *
+     * @return array
+     */
+    public function makeMissingHospitals(){
+        $uploadedHospitals = (new ImportMarkup($this->dbh))->getHospitalInfo();
+        $insertCount = 0;
+
+        try{
+            $this->dbh->beginTransaction();
+
+            foreach($uploadedHospitals as $hospital){
+                if($hospital["idHospital"] == null && $hospital["Hospital"] != ''){
+                    $stmt = $this->dbh->prepare("insert into `hospital` (`Title`, `Type`, `Status`) values (:title, 'h','a');");
+                    $stmt->execute(array(":title"=>$hospital["Hospital"]));
+                    $insertCount++;
+                }
+            }
+        }catch (\Exception $e){
+            $this->dbh->rollBack();
+            return array("error"=>$e->getMessage());
+        }
+
+        return array("success"=>$insertCount . " hospitals inserted");
+    }
+
+    /**
+     * Create Diagnoses in HHK if they don't already exist
+     *
+     * @return array
+     */
+    public function makeMissingDiags(){
+        $uploadedDiags = (new ImportMarkup($this->dbh))->getDiagInfo();
+        $insertCount = 0;
+
+        try{
+
+            foreach($uploadedDiags as $diag){
+                if($diag["idDiagnosis"] == null && $diag["Diagnosis"] != ''){
+                    //insert new diag
+                    $newCode = 'g' . incCounter($this->dbh, 'codes');
+
+                    $glRs = new GenLookupsRS();
+                    $glRs->Table_Name->setNewVal("Diagnosis");
+                    $glRs->Code->setNewVal($newCode);
+                    $glRs->Description->setNewVal($diag["Diagnosis"]);
+                    $glRs->Type->setNewVal('h');
+                    $glRs->Substitute->setNewVal('');
+                    $glRs->Order->setNewVal(0);
+
+                    EditRS::insert($this->dbh, $glRs);
+                    $insertCount++;
+                }
+            }
+        }catch (\Exception $e){
+            return array("error"=>$e->getMessage());
+        }
+
+        return array("success"=>$insertCount . " diagnoses inserted");
+    }
+
+
+    /**
+     * Undo an import - Sets member status to 'tbd' and importTbl.imported = false
+     * You must go into Misc->Delete Member Records to finish the undo process.
+     *
+     * @return array
+     */
     public function undoImport(){
         try{
+            $this->dbh->beginTransaction();
             $this->dbh->exec("update `name` set `Member_Status` = 'tbd' where `External_Id` != ''");
             $this->dbh->exec("update `" . Upload::TBL_NAME . "` set `imported` = null");
         }catch(\Exception $e){
+            $this->dbh->rollBack();
             return array("error"=>$e->getMessage());
         }
+        $this->dbh->commit();
         return array("success"=>"Imported people have been set for 'To Be Deleted', use the 'Delete Member Records' function to delete them.");
     }
 
+    /**
+     * Search for a member record depending on name/phone/email/member type (guest/patient)
+     *
+     * @param string $first
+     * @param string $last
+     * @param string $memberType - "guest", "patient" or ""
+     * @param bool $limit - limit to 1 record or multiple
+     * @param string $phone
+     * @param string $email
+     * @return number|array
+     */
     private function findPerson(string $first, string $last, string $memberType, bool $limit = true, string $phone = '', string $email = ''){
 
         $newFirst = trim(addslashes($first));
@@ -465,6 +561,10 @@ class Import {
         while ($h = $stmt->fetch(\PDO::FETCH_ASSOC)) {
             $this->rooms[strtolower($h['Title'])] = $h['idResource'];
         }
+    }
+
+    private function findIdDiag(string $diag){
+        return (isset($this->diags[trim(strtolower($diag))]) ? $this->diags[trim(strtolower($diag))] : '');
     }
 
     private function findIdResource(string $roomTitle){

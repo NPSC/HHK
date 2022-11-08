@@ -79,7 +79,7 @@ class Upload {
             $fields = array_keys($this->rawData[0]);
 
             if(count($fields) > 0){
-                $stmt = "CREATE TABLE `" . SELF::TBL_NAME . "`(`importId` INT AUTO_INCREMENT";
+                $stmt = "CREATE OR REPLACE TABLE `" . SELF::TBL_NAME . "`(`importId` INT AUTO_INCREMENT, `imported` BOOL";
 
                 //add fields
                 foreach($fields as $field){
