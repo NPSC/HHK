@@ -309,7 +309,7 @@ abstract class AbstractReport {
         border-bottom: 2px solid #111
     }
 
-</style
+</style>
 
 ';
     }

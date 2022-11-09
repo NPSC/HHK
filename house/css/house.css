@@ -410,6 +410,10 @@ div#global-title {
 	.hhk-printmedia {
 		display: inline;
 	}
+	
+	body {
+		zoom: var(--print-scale, 100%);
+	}
 }
 
 .user-agent-spacing * {

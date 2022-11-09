@@ -1728,7 +1728,7 @@ CREATE TABLE if not exists `reservation_guest` (
 -- -----------------------------------------------------
 -- Table `reservation_invoice`
 -- -----------------------------------------------------
-CREATE TABLE `demo`.`reservation_invoice` (
+CREATE TABLE if not exists `reservation_invoice` (
   `idReservation` INT NOT NULL,
   `Invoice_id` INT NOT NULL,
   PRIMARY KEY (`idReservation`, `Invoice_id`)

@@ -627,6 +627,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('PaymentGateway','','lu','fg','','Credit Payment Gateway','Pay_Gateway_Name',0),
 ('PayVFeeFirst','true','b','h','','Default check the visit fees payment checkbox','',1),
 ('PreviousNights','0','i','c','','Previous (to HHK) nights to add to nights counter','',1),
+('printScale', '100', 'i','h','','% Default print scale','',1),
 ('PriorPasswords','0','i','pr','','Number of prior passwords user cannot reuse','',1),
 ('RateChangeAuth','false','b','h','','True = only authorized users can change the defailt room rate','',1),
 ('RateGlideExtend','0','i','hf','','(Deprecated) Number of days for the Room Rate Glide to time out after visit check-out','',0),

@@ -777,6 +777,9 @@ try {
             }
             break;
 
+        case "getCssVars":
+            $events = getCssVars($uS);
+            break;
         default:
             $events = array("error" => "Bad Command: \"" . $c . "\"");
     }
@@ -960,4 +963,14 @@ WHERE
     }
 
     return array('error' => 'Bad Invoice Action.  ');
+}
+
+
+function getCssVars(Session $uS){
+    header('Content-Type: text/css');
+    $vars = "";
+
+    $vars .= ($uS->printScale ? "--print-scale: " . $uS->printScale . "%;" : '');
+
+    return ":root { " . $vars . " }";
 }

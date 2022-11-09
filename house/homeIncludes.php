@@ -10,7 +10,7 @@
 
 define('JSV', '?v=41');
 
-define('HOUSE_CSS', "<link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
+define('HOUSE_CSS', "<link href='ws_resc.php" . JSV . "&cmd=getCssVars' rel='stylesheet' type='text/css' /> <link href='css/house.css" . JSV . "' rel='stylesheet' type='text/css' />");
 define('ROOT_CSS', "<link href='../css/root.css" . JSV . "' rel='stylesheet' type='text/css' />");
 
 define('RESV_MANAGER_JS', 'js/resvManager-min.js' . JSV);

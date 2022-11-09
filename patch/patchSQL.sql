@@ -117,3 +117,6 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`) VALUES ('Credit
 -- Add Recent Activity REport page
 call new_webpage('RecentActivity.php', 31, 'Recent Activity', 0, 'h', 102, 'w', 'p', '', '', NULL, 'ga');
 call new_webpage('RecentActivity.php', 31, 'Recent Activity', 0, 'h', 102, 'w', 'p', '', '', NULL, 'gr');
+
+-- printing scale default
+INSERT ignore INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('printScale', '100', 'i', 'h', '% Default print scale', '1');
