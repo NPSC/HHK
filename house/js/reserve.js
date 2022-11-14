@@ -18,16 +18,6 @@ $(document).ready(function() {
     paymentMarkup = $('#paymentMarkup').val();
     receiptMarkup = $('#receiptMarkup').val();
 
-    $.widget( "ui.autocomplete", $.ui.autocomplete, {
-        _resizeMenu: function() {
-            var ul = this.menu.element;
-            ul.outerWidth( Math.max(
-                    ul.width( "" ).outerWidth() + 1,
-                    this.element.outerWidth()
-            ) * 1.1 );
-        }
-    });
-
 // Dialog Boxes
     $("#resDialog").dialog({
         autoOpen: false,
@@ -310,8 +300,8 @@ $(document).ready(function() {
 
     function getGuest(item) {
 
-        if (item.No_Return !== undefined && item.No_Return !== '') {
-            flagAlertMessage('This person is set for No Return: ' + item.No_Return + '.', 'alert');
+        if (item.noReturn !== undefined && item.noReturn !== '') {
+            flagAlertMessage('This person is set for No Return: ' + item.noReturn + '.', 'alert');
             return;
         }
 
@@ -342,15 +332,15 @@ $(document).ready(function() {
 
     } else {
 
-        createAutoComplete($guestSearch, 3, {cmd: 'role', gp:'1'}, getGuest);
+    	createRoleAutoComplete($guestSearch, 3, {cmd: 'guest'}, getGuest);
 
         // MRN search
-        createAutoComplete($('#gstMRNSearch'), 3, {cmd: 'role', gp:'1', mrn:'1'}, getGuest);
+        createRoleAutoComplete($('#gstMRNSearch'), 3, {cmd: 'mrn'}, getGuest);
         
         // Phone number search
-        createAutoComplete($('#gstphSearch'), 4, {cmd: 'role', gp:'1'}, getGuest);
-
-        $guestSearch.keypress(function(event) {
+		createRoleAutoComplete($('#gstphSearch'), 5, {cmd: 'phone'}, getGuest);
+		
+        $guestSearch.keypress(function() {
             $(this).removeClass('ui-state-highlight');
         });
 

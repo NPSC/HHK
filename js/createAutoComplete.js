@@ -159,7 +159,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
                 bldr = '\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ')'
                         + '|\\b(' + $.ui.autocomplete.escapeRegex( terms[1] ) + ').+\\b(' + $.ui.autocomplete.escapeRegex( terms[0] ) + ')';
             } else {
-                bldr = '\\b(' + $.ui.autocomplete.escapeRegex( request.term.toString() ) + ')';
+                bldr = '\\b(' + $.ui.autocomplete.escapeRegex( request.term.toString().replace(',', '') ) + ')';
             }
 
             matcher = new RegExp( bldr , "i" );
@@ -211,70 +211,66 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
         },
         delay: 120
     }).autocomplete( "instance" )
-	    	._renderItem = function( ul, item ) {
-		
-				if (item.noReturn === undefined) {
-					item.noReturn = '';
-				} else if (item.noReturn != '') {
-					item.noReturn = "<span style='color:red;'>" + item.noReturn + "</span>";
+    	._renderItem = function( ul, item ) {
+			let firstRow;
+			if (item.noReturn === undefined) {
+				item.noReturn = '';
+			} else if (item.noReturn != '') {
+				item.noReturn = "<span style='color:red; margin-right:.5em;'>" + item.noReturn + "</span>";
+			}
+			if (item.fullName === undefined) {
+				item.fullName = ''
+			} else if (item.fullName != '') {
+				item.fullName = "<span>" + item.fullName + "</span>";
+			}
+			if (item.memberStatus === undefined) {
+				item.memberStatus = ''
+			} else if (item.memberStatus != '') {
+				item.memberStatus = "<span style='margin-left:.3em;'>(" + item.memberStatus + ")</span>";
+			}
+			if (item.birthDate === undefined) {
+				item.birthDate = ''
+			} else if (item.birthDate != '') {
+				item.birthDate = "<span style='margin-left:.5em;'>(" + item.birthDate + ")</span>";
+			}
+			if (item.phone === undefined) {
+				item.phone = ''
+			} else if (item.phone != '') {
+				item.phone = "<span style='margin-right:.5em;'>" + item.phone + "</span>";
+			}
+			if (item.city === undefined) {
+				item.city = ''
+			} else if (item.city != '') {
+				item.city = "<span>" + item.city + "</span>";
+			}
+			if (item.state === undefined) {
+				item.state = ''
+			} else if (item.state != ''){
+				let comma = '';
+				if (item.city != '') {
+					comma = ', ';
 				}
-				
-				if (item.fullName === undefined) {
-					item.fullName = ''
-				} else if (item.fullName != '') {
-					item.fullName = "<span>" + item.fullName + "</span>";
-				}
-				
-				if (item.memberStatus === undefined) {
-					item.memberStatus = ''
-				} else if (item.memberStatus != '') {
-					item.memberStatus = "<span>" + item.memberStatus + "</span>";
-				}
-				
-				if (item.birthDate === undefined) {
-					item.birthDate = ''
-				} else if (item.birthDate != '') {
-					item.birthDate = "<span style='margin-left:.3em;'>" + item.birthDate + "</span>";
-				}
-				
-				if (item.phone === undefined) {
-					item.phone = ''
-				} else if (item.phone != '') {
-					item.phone = "<span>" + item.phone + "</span>";
-				}
-				
-				if (item.city === undefined) {
-					item.city = ''
-				} else if (item.city != '') {
-					item.city = "<span style='margin-left:.3em;'>" + item.city + "</span>";
-				}
-				
-				if (item.state === undefined) {
-					item.state = ''
-				} else  if (item.state != ''){
-					let comma = '';
-					if (item.city != '') {
-						comma = ', ';
-					}
-					item.state = "<span>" + comma + item.state + "</span>";
-				}
-				
-				if (item.substitute !== undefined) {item.fullName = item.substitute}
-				
-				let firstRow = "<div style='font-size:.85em;'>" + item.noReturn + item.fullName + item.memberStatus + item.birthDate + "</div>";
-				let secondRow = '';
-				
-				if (item.phone != '' || item.city != '' || item.state != '') {
-					secondRow = "<div style='font-size:.85em;'>" + item.phone +  item.city + item.state + "</div>";
-				}
-		      return $( "<li>" )
-		        .append( firstRow )
-				.append( secondRow )
+				item.state = "<span>" + comma + item.state + "</span>";
+			}
+			if (item.substitute === undefined) {
+				item.substitute = '';
+			} else if (item.substitute != '') {
+				item.substitute = "<span style='margin-right:.5em;'>" + item.substitute + "</span>";
+			}
+			
+			firstRow = "<div style='font-size:.85em;'>" + item.noReturn + item.substitute + item.fullName + item.memberStatus + item.birthDate;
+			
+			if (item.phone != '' || item.city != '' || item.state != '') {
+				firstRow = firstRow + "<br>" + item.phone +  item.city + item.state;
+			}
+			
+		    return $( "<li style='border-bottom: 1px solid #c1e3ec'>" )
+		        .append( firstRow + "</div>" )
 		        .appendTo( ul );
 			};
 		txtCtrl.autocomplete( "instance" )
 			._resizeMenu = function() {
-	            this.menu.element.outerWidth(this.element.outerWidth() * 2.5 );
+	            this.menu.element.outerWidth(this.element.outerWidth() * 2.7 );
 		    };
 
 }

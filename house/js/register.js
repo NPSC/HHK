@@ -774,18 +774,6 @@ $(document).ready(function () {
             dailyCols.push({data: 'Notes', title: 'Room Notes', sortable: false});
 
 
-
-
-    $.widget( "ui.autocomplete", $.ui.autocomplete, {
-        _resizeMenu: function() {
-            let ul = this.menu.element;
-            ul.outerWidth( Math.max(
-                    ul.width( "" ).outerWidth() + 1,
-                    this.element.outerWidth()
-            ) * 1.1 );
-        }
-    });
-    
     if (pmtMkup !== '') {
         $('#paymentMessage').html(pmtMkup).show("pulsate", {}, 400);
     }
@@ -935,15 +923,14 @@ $(document).ready(function () {
         }
     });
 
-    createAutoComplete($('#txtsearch'), 3, {cmd: "role",  mode: 'mo', gp:'1'}, 
-        function(item) { 
-            let cid = item.id;
-            if (cid > 0) {
-                window.location.assign("GuestEdit.php?id=" + cid);
+	// Name Search
+    createRoleAutoComplete($('#txtsearch'), 3, {cmd: 'guest'},
+        function (item) {
+            if (item.id > 0) {
+                window.location.assign("GuestEdit.php?id=" + item.id);
             }
-        },
-        false
-    );
+        }, 
+        false);
 
     let dateIncrementObj = null;
 
