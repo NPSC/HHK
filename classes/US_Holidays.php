@@ -96,7 +96,7 @@ class US_Holidays {
             ),
             2 => array
             (
-                "name" => "Wasthington's Birthday",
+                "name" => "Washington's Birthday",
                         // 3rd Monday of February
                 "timestamp" => strtotime("third monday of february $this->year"),
                  "type" => self::Federal,
