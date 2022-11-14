@@ -851,7 +851,7 @@ $(document).ready(function () {
     $('#statEvents').dialog({
         autoOpen: false,
         resizable: true,
-        width: getDialogWidth(830),
+        width: getDialogWidth(1000),
         modal: true,
         title: 'Manage Status Events'
     });

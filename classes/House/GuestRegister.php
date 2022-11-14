@@ -750,7 +750,7 @@ where ru.idResource_use is null
         $idCounter = 10;
 
         $query1 = "SELECT
-    ru.*, g.Description AS `StatusTitle`, ifnull(gr.Description, 'Undefined') as `reasonTitle`
+    ru.*, g.Description AS `StatusTitle`, ifnull(gr.Description, 'Unspecified') as `reasonTitle`
 FROM
     resource_use ru
         LEFT JOIN
@@ -787,7 +787,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
                 'kind' => CalEventKind::OOS,
                 'resourceId' => "id-" . $r["idResource"],
                 'idResc' => $r["idResource"],
-                'reason' => $r['reasonTitle'],
+                'reason' => $r['reasonTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes']: ''),
             		'start' => $stDateDT->format('Y-m-d\TH:i:00'),
             		'end' => $enDateDT->format('Y-m-d\TH:i:00'),
                 'title' => $r['StatusTitle'],
