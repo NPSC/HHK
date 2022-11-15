@@ -120,3 +120,10 @@ call new_webpage('RecentActivity.php', 31, 'Recent Activity', 0, 'h', 102, 'w', 
 
 -- printing scale default
 INSERT ignore INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('printScale', '100', 'i', 'h', '% Default print scale', '1');
+
+
+-- staff notes categories
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ("Staff_Note_Category", "g", "General", 'h');
+
+ALTER TABLE `note` 
+ADD COLUMN `Category` VARCHAR(15) NULL DEFAULT NULL AFTER `Note_Type`;
