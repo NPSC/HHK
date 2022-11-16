@@ -126,4 +126,4 @@ INSERT ignore INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) VALUES ("Staff_Note_Category", "g", "General", 'h');
 
 ALTER TABLE `note` 
-ADD COLUMN `Category` VARCHAR(15) NULL DEFAULT NULL AFTER `Note_Type`;
+ADD COLUMN IF NOT EXISTS `Category` VARCHAR(15) NULL DEFAULT NULL AFTER `Note_Type`;

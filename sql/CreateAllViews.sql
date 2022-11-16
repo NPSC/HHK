@@ -157,6 +157,7 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
         n.idNote AS `Action`,
         n.flag,
         n.User_Name,
+        n.Category,
         n.Title,
         n.Note_Text,
         n.`Timestamp`

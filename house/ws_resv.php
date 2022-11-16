@@ -199,11 +199,16 @@ try {
     case 'saveNote':
 
         $data = '';
+        $noteCategory = '';
         $linkType = '';
         $idLink = 0;
 
         if (isset($_POST['data'])) {
             $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
+        }
+
+        if(isset($_POST['noteCategory'])){
+            $noteCategory = filter_input(INPUT_POST, 'noteCategory', FILTER_SANITIZE_STRING);
         }
 
         if (isset($_POST['linkType'])) {
@@ -214,7 +219,7 @@ try {
             $idLink = intval(filter_input(INPUT_POST, 'linkId', FILTER_SANITIZE_NUMBER_INT), 10);
         }
 
-        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $uS->username, $uS->ConcatVisitNotes));
+        $events = array('idNote'=>LinkNote::save($dbh, $data, $idLink, $linkType, $noteCategory, $uS->username, $uS->ConcatVisitNotes));
 
         break;
 
@@ -222,13 +227,18 @@ try {
     case 'updateNoteContent':
 
         $data = '';
+        $noteCategory = '';
         $noteId = 0;
         $updateCount = 0;
 
         if (isset($_POST['data'])) {
-	    $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
-            //$data = addcslashes(filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING));
+	       $data = filter_input(INPUT_POST, 'data', FILTER_SANITIZE_STRING);
         }
+
+        if(isset($_POST['noteCategory'])){
+            $noteCategory = filter_input(INPUT_POST, 'noteCategory', FILTER_SANITIZE_STRING);
+        }
+
         if (isset($_POST['idNote'])) {
             $noteId = intval(filter_input(INPUT_POST, 'idNote', FILTER_SANITIZE_NUMBER_INT), 10);
         }
@@ -236,7 +246,7 @@ try {
         if ($noteId > 0 && $data != '') {
 
             $note = new Note($noteId);
-            $updateCount = $note->updateContents($dbh, $data, $uS->username);
+            $updateCount = $note->updateContents($dbh, $data, $noteCategory, $uS->username);
         }
 
         $events = array('update'=>$updateCount, 'idNote'=>$noteId);

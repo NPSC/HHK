@@ -14,6 +14,7 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\House\Report\RoomReport;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
+use HHK\sec\SysConfig;
 
 /**
  * Register.php
@@ -494,6 +495,8 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="visitorLabel" value='<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>' />
         <input  type="hidden" id="referralFormTitleLabel" value='<?php echo $labels->getString('Register', 'onlineReferralTitle'); ?>' />
         <input  type="hidden" id="reservationLabel" value='<?php echo $labels->getString('GuestEdit', 'reservationTitle'); ?>' />
+        <input  type="hidden" id="reservationTabLabel" value='<?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?>' />
+        <input  type="hidden" id="unconfirmedResvTabLabel" value='<?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?>' />
         <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
         <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
@@ -516,6 +519,7 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
+        <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REGISTER_JS; ?>"></script>

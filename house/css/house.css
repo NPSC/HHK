@@ -463,6 +463,10 @@ div#global-title {
 
 /* Datatables fixes */
 
+.dt-print-view table.dataTable.hover tbody tr:hover, .dt-print-view table.dataTable.display tbody tr:hover {
+	background-color:initial;
+}
+
 .dataTables_wrapper .dataTables_length select {
 	background-color: white !important;
 }
@@ -689,12 +693,12 @@ div.dt-buttons .dt-button:hover>span {
 #hospBtnWrapper {
 	display:block;
 }
-#hospBtns {
+#hospBtns, #noteCatBtns {
 	font-size: 0.9em;
-	display:inline-block;
+	width:100%;
 }
 
-#hospBtns button{
+#hospBtns button, #noteCatBtns button {
 	color: #fff;
     background-color: #5c9ccc;
     border-style:solid;
@@ -717,24 +721,24 @@ div.dt-buttons .dt-button:hover>span {
     font-family: inherit;
 }
 
-#hospBtns button.hospActive {
+#hospBtns button.hospActive, #noteCatBtns button.catActive  {
 	font-weight: bold;
 	text-decoration: underline;
 	text-decoration-thickness: 2px;
 	text-underline-offset:3px;
 }
 
-#hospBtns button:hover {
+#hospBtns button:hover, #noteCatBtns button:hover {
 	box-shadow: inset 0 0 0 1000px rgb(0 0 0 / 30%)
 }
 
 @media (max-width: 768px){
-	#hospBtns {
+	#hospBtns, #noteCatBtns {
 		display:flex;
 		overflow-x: scroll;
 	}
 	
-	#hospBtns button{
+	#hospBtns button, #noteCatBtns button {
 		min-width: fit-content;
 	}
 }

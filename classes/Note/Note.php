@@ -47,6 +47,7 @@ class Note {
     protected $title = '';
     protected $type = '';
     protected $flag = false;
+    protected $category = '';
     protected $userName = '';
     protected $status = '';
     protected $createdOn = null;
@@ -90,6 +91,7 @@ class Note {
                 $this->setTitle($noteRS->Title->getStoredVal());
                 $this->setType($noteRS->Note_Type->getStoredVal());
                 $this->setFlag($noteRS->Flag->getStoredVal());
+                $this->setCategory($noteRS->Category->getStoredVal());
                 $this->setUserName($noteRS->User_Name->getStoredVal());
                 $this->setUpdatedBy($noteRS->Updated_By->getstoredVal());
                 $this->setLastUpdated($noteRS->Last_Updated->getStoredVal());
@@ -111,7 +113,7 @@ class Note {
      * @param string $noteType
      * @param string $noteTitle
      */
-    public static function createNew($noteText, $userName, $noteType = self::TextType, $noteTitle = '', $noteStatus = Note::ActiveStatus ) {
+    public static function createNew($noteText, $userName, $noteCategory = '', $noteType = self::TextType, $noteTitle = '', $noteStatus = Note::ActiveStatus ) {
 
         if ($noteText != '' && $userName != '') {
 
@@ -120,6 +122,7 @@ class Note {
             $note->setText($noteText);
             $note->setType($noteType);
             $note->setFlag(0);
+            $note->setCategory($noteCategory);
             $note->setTitle($noteTitle);
             $note->setUserName($userName);
             $note->setStatus($noteStatus);
@@ -144,6 +147,7 @@ class Note {
         $noteRS->Note_Text->setNewVal($this->getNoteText());
         $noteRS->Note_Type->setNewVal($this->getNoteType());
         $noteRS->Flag->setNewVal($this->getFlag());
+        $noteRS->Category->setNewVal($this->getCategory());
         $noteRS->Title->setNewVal($this->getNoteTitle());
         $noteRS->Status->setNewVal($this->getStatus());
         $noteRS->Last_Updated->setNewVal($this->getLastUpdated());
@@ -164,13 +168,14 @@ class Note {
      * @param string $updatedBy
      * @return int the number of records updated.
      */
-    public function updateContents(\PDO $dbh, $noteText, $updatedBy) {
+    public function updateContents(\PDO $dbh, $noteText, $noteCategory, $updatedBy) {
 
         $counter = 0;
 
         if ($this->getIdNote() > 0 && $this->loadNote($dbh)) {
 
             $this->noteRS->Note_Text->setNewVal($noteText);
+            $this->noteRS->Category->setNewVal($noteCategory);
             $this->noteRS->Status->setNewVal(self::ActiveStatus);
             $this->noteRS->Updated_By->setNewVal($updatedBy);
             $this->noteRS->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
@@ -294,6 +299,10 @@ class Note {
         return $this->flag;
     }
 
+    public function getCategory(){
+        return $this->category;
+    }
+
     public function getNoteTitle() {
         return $this->title;
     }
@@ -334,6 +343,11 @@ class Note {
 
     public function setFlag($flag) {
         $this->flag = $flag;
+        return $this;
+    }
+
+    public function setCategory($category) {
+        $this->category = $category;
         return $this;
     }
 
