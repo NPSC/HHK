@@ -205,14 +205,15 @@ $(document).ready(function () {
 	
 	$("button, input[type=submit]").button();
 	
-	$(document).on('mousedown', '.showPw', function(e) {
+	$(document).on('click', '.showPw', function(e) {
 		var input = $(this).parent().find("input");
-		input.prop("type", "text");
-	});
-	
-	$(document).on('mouseup', '.showPw', function() {
-		var input = $(this).parent().find("input");
-		input.prop("type", "password");
+		if(input.prop("type") == "password"){
+			input.prop("type", "text");
+			$(this).text("Hide");
+		}else{
+			input.prop("type", "password");
+			$(this).text("Show");
+		}
 	});
 
 });

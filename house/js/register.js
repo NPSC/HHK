@@ -1632,7 +1632,7 @@ $(document).ready(function () {
            });
        },
        columns: cgCols,
-       "buttons": getDtBtns("Current " + visitorLabel + "s"),
+       "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY")),
        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
     
@@ -1651,7 +1651,7 @@ $(document).ready(function () {
            });
        },
        columns: rvCols,
-       "buttons": getDtBtns(reservationTabLabel),
+       "buttons": getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
     
@@ -1670,7 +1670,7 @@ $(document).ready(function () {
            		});
            },
            columns: rvCols,
-           "buttons": getDtBtns(unconfirmedResvTabLabel),
+           "buttons": getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
        		"dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
         });
     }
@@ -1690,8 +1690,12 @@ $(document).ready(function () {
            });
        },
        columns: wlCols,
-       "buttons": getDtBtns("Waitlist"),
+       "buttons": getDtBtns("Waitlist - " + moment().format("MMM D, YYYY")),
        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
-
+    
+    //move datatable buttons to title row
+    $("#vstays, #vresvs, #vuncon, #vdaily, #vwls").each(function(){
+    	$(this).find('h3 span:first').after($(this).find(".dt-buttons button").css("font-size", "0.9em").addClass("ml-5"));
+	});
 });

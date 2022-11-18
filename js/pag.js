@@ -477,14 +477,15 @@ $(document).ready(
 						$('#txtOldPw').focus();
 					});
 
-			$('div#dchgPw').on('mousedown', '.showPw', function() {
-				var input = $(this).closest("td").find("input");
-				input.prop("type", "text");
-			});
-
-			$('div#dchgPw').on('mouseup', '.showPw', function() {
-				var input = $(this).closest("td").find("input");
-				input.prop("type", "password");
+			$(document).on('click', '.showPw', function(e) {
+				var input = $(this).parent().find("input");
+				if(input.prop("type") == "password"){
+					input.prop("type", "text");
+					$(this).text("Hide");
+				}else{
+					input.prop("type", "password");
+					$(this).text("Show");
+				}
 			});
 
 			var chgPW = $("input#showUserSettings").val();
