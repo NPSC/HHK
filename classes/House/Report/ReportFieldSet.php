@@ -97,14 +97,14 @@ class ReportFieldSet {
 
     }
 
-    public static function createFieldSet(\PDO $dbh, string $report, string $title, array $fields = [], $global = FALSE){
+    public static function createFieldSet(\PDO $dbh, string $report, string $title, $fields = [], $global = FALSE){
 
         $uS = Session::getInstance();
         $uname = $uS->username;
         $admin = SecurityComponent::is_Admin();
 
-        if (count($fields) ==  0) {
-            return array('error' => 'Empty fields.');
+        if (!is_array($fields) || count($fields) ==  0) {
+            return array('error' => 'Please choose at least one field');
         }
 
         if(!$title){

@@ -136,7 +136,18 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
             if ($uS->NightsCounter != '') {
                 $now = new \DateTime();
                 $year = $now->format('Y');
+
+                //fix fiscal year inconsistancy
+                if ($uS->fy_diff_Months !== 0){
+                    $fiscalMonthShift = new \DateInterval('P' . $uS->fy_diff_Months . 'M');
+                    $fiscalYearEnd = (new \DateTime($year .'-12-31'))->sub($fiscalMonthShift);
+                    if($fiscalYearEnd < $now){
+                        $year++; //if fiscal year has ended, assume next year
+                    }
+                }
             }
+
+
 
             $uS->gsc = intval((self::getGlobalStaysCount($dbh, $year, $uS->fy_diff_Months) + $previousCount), 10);
         }

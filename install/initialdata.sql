@@ -437,6 +437,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Special_Needs','f','Dev. Challenged','','d',0),
 ('Special_Needs','z','Unknown','','d',1000),
 
+("Staff_Note_Category", "g", "General", '', 'h', 0),
+
 ('Static_Room_Rate','rb','Regular Rate','10','',0),
 
 ('Sys_Config_Category', 'd', 'Donation','','',50),
