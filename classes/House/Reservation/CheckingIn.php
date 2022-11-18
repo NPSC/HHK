@@ -529,7 +529,7 @@ FROM reservation r
             SET
                 i.Order_Number = ".$visit->getIdVisit()."
             WHERE
-                ri.Reservation_Id = " . $visit->getIdReservation());
+                ri.idReservation = " . $visit->getIdReservation());
 
             // Relate Invoice to Reservation
             if ($numRows > 1 && ! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $this->reserveData->getIdResv() > 0) {

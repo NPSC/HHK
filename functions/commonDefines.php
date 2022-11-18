@@ -72,6 +72,6 @@ define('MOMENT_JS', '../js/moment.min.js');
 define('MULTISELECT_JS', '../js/jquery.multiselect.min.js');
 define('DR_PICKER_JS', '../js/daterangepicker.hhk.min.js');
 define('FULLC_JS', 'js/fullcalendarold.min.js');
-define('NOTES_VIEWER_JS', '../js/notesViewer.js');
+define('NOTES_VIEWER_JS', '../js/notesViewer.js' . CJSV);
 define('SELECT2_JS', '../js/select2.min.js');
 define('UPPLOAD_JS', '../js/uppload/uppload-3.2.1.min.js');
