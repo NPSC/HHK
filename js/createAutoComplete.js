@@ -103,7 +103,7 @@ function createAutoComplete(txtCtrl, minChars, inputParms, selectFunction, shoNe
                 inputParms.basis = $basisCtrl.val();
             }
 
-            $.getJSON( searchURL, inputParms, function( data, status, xhr ) {
+            $.getJSON( searchURL, inputParms, function( data ) {
 
                 if (data.gotopage) {
                     response();

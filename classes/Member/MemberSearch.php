@@ -666,7 +666,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
             . " where n.idName>0 and n.Member_Status in ('a','d') and n.Record_Member = 1 "
             . " and nv.Vol_Code in ('" . VolMemberType::Guest . "', '" . VolMemberType::Patient . "') "
             . " and hs.MRN like '" . $this->MRN . "' "
-            . " group by n.idName order by n.Name_Last, n.Name_First";
+            . " group by n.idName order by hs.MRN";
 
         $stmt = $dbh->query($query);
 
