@@ -282,7 +282,7 @@ class PaymentChooser {
      * @param boolean $useVisitFee
      * @return string
      */
-    public static function createMarkup(\PDO $dbh, $idGuest, $idResv, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0, $useVisitFee = FALSE) {
+    public static function createMarkup(\PDO $dbh, $idGuest, $idResv, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -303,7 +303,7 @@ class PaymentChooser {
         // Get taxed items
         $vat = new ValueAddedTax($dbh);
 
-        if($useVisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '' || $uS->VisitFeeDelayDays == 0)){
+        if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '' || $uS->VisitFeeDelayDays == 0)){
             $useVisitFee = TRUE;
         }
 
@@ -313,6 +313,9 @@ class PaymentChooser {
             $chkingIn = TRUE;
         } else {
             $heldAmount = Registration::loadLodgingBalance($dbh, $idRegistration);
+            $otherPrepayments = Registration::loadPrepayments($dbh, $idRegistration);
+            // Remove other reservations' prepayments.
+            $heldAmount = max(0, ($heldAmount - $otherPrepayments));
             $chkingIn = FALSE;
         }
 

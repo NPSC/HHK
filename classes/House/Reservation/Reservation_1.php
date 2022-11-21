@@ -123,7 +123,7 @@ class Reservation_1 {
             join
         invoice i ON il.Invoice_Id = i.idInvoice and il.Item_Id = ". ItemId::LodgingMOA . " and il.Deleted = 0
             join
-    	reservation_invoice ri on ri.idReservation = $idResv AND i.idInvoice = ri.Invoice_Id
+    	reservation_invoice ri on ri.Reservation_Id = $idResv AND i.idInvoice = ri.Invoice_Id
     where
             i.Deleted = 0
             and i.`Status` = '" . InvoiceStatus::Paid . "'";

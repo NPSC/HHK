@@ -97,7 +97,7 @@ FROM
     `reservation_invoice` ri on i.idInvoice = ri.Invoice_Id
 
 WHERE
-    ri.idReservation = $idReservation AND i.Status = '" . InvoiceStatus::Unpaid . "'
+    ri.Reservation_Id = $idReservation AND i.Status = '" . InvoiceStatus::Unpaid . "'
         AND i.Deleted = 0" );
 
 	    return $stmt->fetchAll ( \PDO::FETCH_ASSOC );

@@ -127,3 +127,8 @@ INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`) V
 
 ALTER TABLE `note` 
 ADD COLUMN IF NOT EXISTS `Category` VARCHAR(15) NULL DEFAULT NULL AFTER `Note_Type`;
+
+ALTER TABLE `reservation_invoice`
+RENAME COLUMN `idReservation` TO `Reservation_Id`;
+
+
