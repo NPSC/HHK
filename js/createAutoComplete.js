@@ -144,7 +144,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
     "use strict";
     var cache = {};
     
-    var _source = function (request, response, cache, shoNew, inputParms, minChars) {
+    const _source = function (request, response, cache, shoNew, inputParms, minChars) {
     
         let term = request.term.toString().substr(0,minChars);
         
@@ -187,6 +187,13 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
                     response();
                     window.open(data.gotopage);
                 }
+
+	            if (shoNew) {
+	                data.push({'id':0, 'substitute':'New Person'});
+	            } else if (data.length === 0) {
+	                data.push({'id':'n', 'substitute':'No one found'});
+	                cache = {};
+	            }
 
                 cache[ term ] = data;
                 response( data );

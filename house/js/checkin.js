@@ -43,13 +43,13 @@ $(document).ready(function() {
     });
     createRoleAutoComplete($('#Search'), 3, {cmd: 'guest'}, function (item) {
         window.open('Reserve.php?id=' + item.id + '&title=c', '_self');
-    });
+    }, true);
     createRoleAutoComplete($('#phSearch'), 5, {cmd: 'phone'}, function (item) {
         window.open('Reserve.php?id=' + item.id + '&title=c', '_self');
-    });
+    }, true);
     createRoleAutoComplete($('#MRNSearch'), 3, {cmd: 'mrn'}, function (item) {
         window.open('Reserve.php?id=' + item.id + '&title=c', '_self');
-    });
+    }, true);
 
     $('#Search').keypress(function() {
         $(this).removeClass('ui-state-highlight');

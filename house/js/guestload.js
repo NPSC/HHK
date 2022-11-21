@@ -453,7 +453,7 @@ $(document).ready(function () {
             if (item.id > 0) {
                 window.location.assign("GuestEdit.php?id=" + item.id);
             }
-        });
+        }, false);
 
 
     // MRN Search
@@ -462,7 +462,7 @@ $(document).ready(function () {
             if (item.id > 0) {
                 window.location.assign("GuestEdit.php?id=" + item.id);
             }
-        });
+        }, false);
 
 
 	// Phone Search
@@ -471,7 +471,7 @@ $(document).ready(function () {
             if (item.id > 0) {
                 window.location.assign("GuestEdit.php?id=" + item.id);
             }
-        });
+        }, false);
 
     createAutoComplete($('#txtRelSch'), 3, {cmd: 'srrel', basis: $('#hdnRelCode').val(), id: memData.id}, function (item) {
         $.post('ws_admin.php', {'rId':item.id, 'id':memData.id, 'rc':$('#hdnRelCode').val(), 'cmd':'newRel'}, relationReturn);
