@@ -129,6 +129,8 @@ ALTER TABLE `note`
 ADD COLUMN IF NOT EXISTS `Category` VARCHAR(15) NULL DEFAULT NULL AFTER `Note_Type`;
 
 ALTER TABLE `reservation_invoice`
-RENAME COLUMN `idReservation` TO `Reservation_Id`;
+RENAME COLUMN IF EXISTS `idReservation` TO `Reservation_Id`;
 
+ALTER TABLE `hospital` 
+ADD COLUMN IF NOT EXISTS `Hide` TINYINT NOT NULL DEFAULT 0 AFTER `Status`;
 

@@ -170,7 +170,7 @@ $waitlist = HTMLContainer::generateMarkup('h3', '<span>Waitlist</span>' .
 // Hospital Selector
 $shoHosptialName = FALSE;
 $colorKey = '';
-$stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
+$stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)' and Hide = 0");
 
 if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' || strtolower($uS->RibbonColor) == 'hospital')) {
 

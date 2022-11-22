@@ -558,6 +558,7 @@ CREATE TABLE if not exists `hospital` (
   `Description` varchar(245) NOT NULL DEFAULT '',
   `Type` varchar(45) NOT NULL DEFAULT '',
   `Status` varchar(4) NOT NULL DEFAULT '',
+  `Hide` TINYINT NOT NULL DEFAULT 0,
   `idLocation` int(11) NOT NULL DEFAULT '0',
   `idName` int(11) NOT NULL DEFAULT '0',
   `Reservation_Style` varchar(145) NOT NULL DEFAULT '',

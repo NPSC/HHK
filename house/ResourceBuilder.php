@@ -992,6 +992,12 @@ if (isset($_POST['btnhSave'])) {
             $vCSS = filter_var($_POST['hText'][$idHosp], FILTER_SANITIZE_STRING);
         }
 
+        // hide?
+        $hide = 0;
+        if (isset($_POST['hhide'][$idHosp])){
+            $hide = 1;
+        }
+
         // New Hospital?
         if ($title == '' || $type == '') {
             // No new hospitals this time
@@ -1013,6 +1019,7 @@ if (isset($_POST['btnhSave'])) {
         $hospRs->Type->setNewVal($type);
         $hospRs->Description->setNewVal($desc);
         $hospRs->Status->setNewVal('a');
+        $hospRs->Hide->setNewVal($hide);
         $hospRs->Reservation_Style->setNewVal($rCSS);
         $hospRs->Stay_Style->setNewVal($vCSS);
         $hospRs->Updated_By->setNewVal($uS->username);
@@ -2009,7 +2016,7 @@ foreach ($hospConstraints as $c) {
     $hths .= HTMLTable::makeTh($c->getTitle());
 }
 
-$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire');
+$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire') . HTMLTable::makeTh('Hide from calendar list');
 $hTbl->addHeaderTr($hths);
 
 foreach ($hrows as $h) {
@@ -2058,6 +2065,11 @@ foreach ($hrows as $h) {
     		'type' => 'checkbox'
     );
 
+    $hHideAtr = array(
+        'name' => 'hhide[' . $h['idHospital'] . ']',
+        'type' => 'checkbox'
+    );
+
     $rowAtr = array();
 
     if ($h['Status'] == 'r') {
@@ -2065,10 +2077,13 @@ foreach ($hrows as $h) {
     	$rowAtr['style'] = 'background-color:lightgray;';
     }
 
+    if($h['Hide']){
+        $hHideAtr['checked'] = 'checked';
+    }
+
     $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated'])))
-    	. HTMLTable::makeTd(HTMLInput::generateMarkup('', $hdelAtr), array(
-        'style' => 'text-align:center;'
-    ));
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', $hdelAtr), array('style' => 'text-align:center;'))
+    	. HTMLTable::makeTd(HTMLInput::generateMarkup('', $hHideAtr), array('style' => 'text-align:center;'));
 
     $hTbl->addBodyTr($htds, $rowAtr);
 }
@@ -2089,7 +2104,7 @@ $hTbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd(HTMLInput::generateMa
     'type' => 'color',
     'size' => '5'
 ))) . HTMLTable::makeTd('Create New', array(
-    'colspan' => '4'
+    'colspan' => '5'
 )));
 
 $hospTable = $hTbl->generateMarkup();
