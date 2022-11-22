@@ -2601,7 +2601,7 @@ foreach($demogs as $key=>$demog){
 					directly into the text boxes below and press 'Save'.</p>
                     <?php echo $rateTableErrorMessage; ?>
                     <form method="POST" action="ResourceBuilder.php"
-					name="form1">
+					name="form1" onsubmit="return confirm('Are you sure you want to save?');">
 					<div style="clear: left; float: left;"><?php echo $pricingModelTable; ?></div>
 <?php echo $visitFeesTable . $keysTable . $payTypesTable . $feesTable . $faMarkup; ?>
                         <div style="clear: both"></div>

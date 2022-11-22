@@ -348,7 +348,7 @@ abstract class AbstractPriceModel {
         // Room rates
         $stmt = $dbh->query("SELECT `idRoom_rate`,`Title`, `Description`, `FA_Category`, `Rate_Breakpoint_Category`, `Reduced_Rate_1`, `Reduced_Rate_2`, `Reduced_Rate_3`, `Min_Rate`, `Status`, IF(`Rate_Breakpoint_Category` != '', 1,0) as 'breakpointOrder'
 FROM `room_rate`
-where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Category asc;");
+where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, idRoom_rate asc;");
 
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         $rrates = array();

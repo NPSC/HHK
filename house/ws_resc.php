@@ -27,6 +27,7 @@ use HHK\Document\FormTemplate;
 use HHK\Document\FormDocument;
 use HHK\Member\IndivMember;
 use HHK\SysConst\MemBasis;
+use HHK\Payment\Statement;
 
 
 /**
@@ -915,7 +916,7 @@ WHERE
         $mkup = HTMLContainer::generateMarkup('div', 'No Payments', $divAttr);
 
         $stmt = $dbh->query("Select * from vlist_inv_pments where idPayment > 0 and idInvoice = $iid");
-        $invoices = Receipt::processPayments($stmt, array());
+        $invoices = Statement::processPayments($stmt, array());
 
         foreach ($invoices as $r) {
 

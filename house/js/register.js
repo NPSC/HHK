@@ -905,11 +905,12 @@ $(document).ready(function () {
     });
 
 	
-    $(document).mousedown(function (event) {
+    $(document).mousedown(function (e) {
+        var roomChooser = $('div#pudiv');
         
         // remove room chooser
-        if (event.target.id && event.target.id !== undefined && event.target.id !== 'pudiv') {
-            $('div#pudiv').remove();
+        if (!roomChooser.is(e.target) && roomChooser.has(e.target).length === 0) {
+            roomChooser.remove();
         }
 
     });

@@ -64,7 +64,7 @@ $(document).ready(function () {
 		}
 	});
     
-    var filterData = $('#fcat').serializeArray();
+    var filterData = [];
     
     var missingDemogTable = $('#dataTbl').DataTable({
         "columnDefs": dtCols,
@@ -222,14 +222,14 @@ $(document).ready(function () {
     
     $(document).on('click', "#fcat #btnHere", function(e){
     	e.preventDefault();
-    	filterData = $(this).serializeArray();
+    	filterData = $('#fcat').serializeArray();
     	filterData.push({name: "btnHere", value: "true"});
     	missingDemogTable.ajax.reload();
     });
     
     $(document).on('click', "#fcat #btnReset", function(e){
     	e.preventDefault();
-    	filterData = $(this).serializeArray();
+    	filterData = [];
     	missingDemogTable.ajax.reload();
     });
     

@@ -1372,7 +1372,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     public function saveNote(\PDO $dbh, $noteText, $uname, $concatNotes) {
 
         if ($noteText != '') {
-            return LinkNote::save($dbh, $noteText, $this->getIdReservation(), Note::ResvLink, $uname, $concatNotes);
+            return LinkNote::save($dbh, $noteText, $this->getIdReservation(), Note::ResvLink, '', $uname, $concatNotes);
         }
     }
 

@@ -190,7 +190,7 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
 
                 //Add Visit note
                 $noteText = "Survey Email sent to " . $r['Email'] . " with subject: " . $subjectLine;
-                LinkNote::save($this->dbh, $noteText, $r['idVisit'], Note::VisitLink, $uS->username, $uS->ConcatVisitNotes);
+                LinkNote::save($this->dbh, $noteText, $r['idVisit'], Note::VisitLink, '', $uS->username, $uS->ConcatVisitNotes);
 
             } else {
                 $this->logMsg .= "(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>";

@@ -292,6 +292,8 @@ class PaymentReport {
 
     public static function doMarkupRow($fltrdFields, $r, $p, $isLocal, $hospital, &$total, &$tbl, &$writer, $hdr, &$reportRows, $subsidyId) {
 
+        $uS = Session::getInstance();
+
         $origAmt = $p['Payment_Amount'];
         $amt = 0;
         $payDetail = '';
@@ -306,10 +308,7 @@ class PaymentReport {
         }
 
         // Use timestamp for time of day.
-        $timeDT = new \DateTime($p['Payment_Timestamp']);
-        $dbmsDt = new \DateTime('', new \DateTimeZone('America/Los_Angeles'));
-        $offset = abs(($dbmsDt->getOffset() - $timeDT->getOffset()) / 3600);
-        $timeDT->add(new \DateInterval('PT' . $offset ."H"));
+        $timeDT = new \DateTime($p['Payment_Timestamp'], new \DateTimeZone($uS->tz));
 
         $payType = $p['Payment_Method_Title'];
         $statusAttr = array();

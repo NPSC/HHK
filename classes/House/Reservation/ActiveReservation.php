@@ -179,7 +179,7 @@ class ActiveReservation extends Reservation {
         // Verbal Confirmation Flag
         if (isset($post['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
             $resv->setVerbalConfirm('v');
-            LinkNote::save($dbh, 'Verbal Confirmation is Set.', $resv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
+            LinkNote::save($dbh, 'Verbal Confirmation is Set.', $resv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
         } else {
             $resv->setVerbalConfirm('');
         }
@@ -224,7 +224,7 @@ class ActiveReservation extends Reservation {
             $noteText = filter_var($post['taNewNote'], FILTER_SANITIZE_STRING);
 
             if ($noteText != '') {
-                LinkNote::save($dbh, $noteText, $resv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
+                LinkNote::save($dbh, $noteText, $resv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
             }
         }
 
