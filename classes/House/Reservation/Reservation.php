@@ -221,7 +221,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         if ($this->reserveData->getIdResv() > 0) {
 
             try {
-                $arrivalDT = new\DateTime($this->reservRs->Expected_Arrival->getStoredVal());
+                $arrivalDT = new \DateTime($this->reservRs->Expected_Arrival->getStoredVal());
                 $departDT = new \DateTime($this->reservRs->Expected_Departure->getStoredVal());
 
                 $psgMembers = $this->reserveData->getPsgMembers();
@@ -1324,7 +1324,7 @@ WHERE
         }
 
         try {
-            $this->reserveData->setArrivalDT(new\DateTime($arrival));
+            $this->reserveData->setArrivalDT(new \DateTime($arrival));
             $this->reserveData->setDepartureDT(new \DateTime($departure));
         } catch (\Exception $ex) {
             throw new RuntimeException('Something is wrong with one of the dates: ' . $ex->getMessage() . '.  ');

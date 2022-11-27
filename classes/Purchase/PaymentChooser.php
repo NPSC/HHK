@@ -305,6 +305,8 @@ class PaymentChooser {
 
         if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '' || $uS->VisitFeeDelayDays == 0)){
             $useVisitFee = TRUE;
+        } else {
+            $useVisitFee = FALSE;
         }
 
         // Resrvation Check-in

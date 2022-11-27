@@ -33,7 +33,6 @@ if (isset($_POST['btndec'])) {
 
 
 
-
 ?>
 <!DOCTYPE HTML>
 <html>
@@ -52,10 +51,15 @@ if (isset($_POST['btndec'])) {
             <div style="margin:10px;">
                 <input name="enctxt" type="text" /><br>
                 <p><?php echo $clearTxt; ?></p>
-                <input type="submit" name="btndec" value="DEcrypt" />
+                <input type="submit" name="btndec" value="Decrypt" />
+            </div>
+            <div style="margin:10px;">
+            	<input type="submit" name="btninfo" value="Php Info" />
             </div>
         </div>
         </form>
+            <?php  if (isset($_POST['btninfo'])) phpinfo(); ?>
+
     </body>
 </html>
 
