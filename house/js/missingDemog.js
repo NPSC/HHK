@@ -197,10 +197,12 @@ $(document).ready(function () {
     });
     
     $(document).on("click", ".savebtns #dt-cancel", function(e){
-    	$('#dataTbl').DataTable().ajax.reload(null, false);
+    	e.preventDefault();
+    	missingDemogTable.ajax.reload(null, false);
     });
     
     $(document).on("click", ".savebtns #dt-save", function(e){
+    	e.preventDefault();
     	var data = $("#dataTbl select").serializeArray();
     	data.push({name: "cmd", value: "save"});
     	$.ajax({
@@ -217,7 +219,7 @@ $(document).ready(function () {
                     datatype: "json"
                 });
     	
-    	$('#dataTbl').DataTable().ajax.reload(null, false);
+    	missingDemogTable.ajax.reload(null, false);
     });
     
     $(document).on('click', "#fcat #btnHere", function(e){
