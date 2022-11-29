@@ -347,7 +347,7 @@ class ActiveReservation extends Reservation {
             $resv = new Reservation_1($this->reservRs);
             $resvPaymentManager = new ResvPaymentManager($pmp);
 
-            $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php&rid=' . $resv->getIdReservation(), $resv->getIdGuest());
+            $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php?rid=' . $resv->getIdReservation(), $resv->getIdGuest());
 
             // Relate Invoice to Reservation
             if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {

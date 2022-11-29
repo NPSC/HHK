@@ -624,13 +624,16 @@ WHERE r.idReservation = " . $rData->getIdResv());
                 $hideCheckinButton = FALSE;
             }
 
+            $moaBalance = max(0, Registration::loadLodgingBalance($dbh, $resv->getIdRegistration()) - Registration::loadPrepayments($dbh, $resv->getIdRegistration()));
+
             // Reservation Data
             $dataArray['rstat'] = $this->createStatusChooser(
                 $resv,
                 $resv->getChooserStatuses($uS->guestLookups['ReservStatus']),
                 $uS->nameLookups[GLTableNames::PayType],
                 $labels,
-                $showPayWith);
+                $showPayWith,
+                $moaBalance);
 
 
         } else if ($resv->isNew()) {
@@ -815,7 +818,7 @@ where rg.idReservation =" . $r['idReservation']);
      * @param bool $showPayWith
      * @return string
      */
-    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, $labels, $showPayWith) {
+    public function createStatusChooser(Reservation_1 $resv, array $resvStatuses, array $payTypes, $labels, $showPayWith, $moaBalance = 0) {
 
         $uS = Session::getInstance();
         $tbl2 = new HTMLTable();
@@ -837,13 +840,15 @@ where rg.idReservation =" . $r['idReservation']);
         // Table headers
         $tbl2->addBodyTr(
                 ($showPayWith ? HTMLTable::makeTh('Pay With') : '')
+                .($moaBalance > 0 ? HTMLTable::makeTh('MOA Balance') : '')
                 .HTMLTable::makeTh('Verbal Affirmation')
                 .($resv->getStatus() == ReservationStatus::UnCommitted ? HTMLTable::makeTh('Status', array('class'=>'ui-state-highlight')) : HTMLTable::makeTh('Status'))
                 );
 
         $tbl2->addBodyTr(
                 ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), array('name'=>'selPayType'))) : '')
-                .($resv->isActive() ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')) : HTMLTable::makeTd(''))
+            .($moaBalance > 0 ? HTMLTable::makeTd('$'.number_format($moaBalance, 2), array('style'=>'text-align:center;')) : '')
+            .($resv->isActive() ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resvStatuses, $resv->getStatus(), TRUE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
                         .HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;float:right;')))
