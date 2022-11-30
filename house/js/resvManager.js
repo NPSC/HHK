@@ -1851,9 +1851,11 @@ function resvManager(initData, options) {
 					if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
 						// Cancel 
 						isCheckedOut = true;
+						$('#cbHeld').prop('checked', true);
 						amtPaid();
 					} else {
 						isCheckedOut = false;
+						$('#cbHeld').prop('checked', false);
 						amtPaid();
 					}
 				});
@@ -2347,7 +2349,7 @@ function resvManager(initData, options) {
 
 		if (prePaymtAmt > 0 && $('#selexcpay').val() == '') {
 
-			if (isCheckedOut) {
+			if (isCheckedOut) { 
 
 				$('#selexcpay').addClass('ui-state-error');
 				flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
@@ -2358,6 +2360,7 @@ function resvManager(initData, options) {
 
 				$('#selexcpay').removeClass('ui-state-error');
 				isCheckedOut = true;
+				$('#cbHeld').prop('checked', true);
 				amtPaid();
 				return false;
 			}

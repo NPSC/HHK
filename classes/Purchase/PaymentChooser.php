@@ -419,17 +419,18 @@ class PaymentChooser {
 
 
         if ($heldAmount > 0) {
+            // Show only the prepayment amount already entered.
             $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Pre-Payment Balance:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '$' . number_format($heldAmount, 2) : ''), array('id'=>'spnHeldAmt'))
-                    .HTMLInput::generateMarkup('', array('id'=>'cbHeld', 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'display:none;', 'data-amt'=> number_format($heldAmount, 2, '.',''))))
+                    .HTMLInput::generateMarkup('', array('id'=>'cbHeld', 'type'=>'checkbox', 'style'=>'display:none;', 'data-amt'=> number_format($heldAmount, 2, '.',''))))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
         }
-
-        $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
-            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
-            , array('class'=>'hhk-RoomFees'));
+            // Show the prepayment input box.
+            $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+                , array('class'=>'hhk-RoomFees'));
 
         // Amount to pay
         $feesTbl->addBodyTr(

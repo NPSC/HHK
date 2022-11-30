@@ -859,6 +859,10 @@ class VantivGateway extends AbstractPaymentGateway {
         // Spacer
         $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
 
+        if (count($rows) == 0) {
+            $rows[0] = $gwRs;
+        }
+
         foreach ($rows as $r) {
 
             $gwRs = new CC_Hosted_GatewayRS();
@@ -946,6 +950,10 @@ class VantivGateway extends AbstractPaymentGateway {
         // Use POS
         if (isset($post['selCardSwipe'])) {
             SysConfig::saveKeyValue($dbh, 'sys_config', 'CardSwipe', filter_var($post['selCardSwipe'], FILTER_SANITIZE_STRING));
+        }
+
+        if (count($rows) == 0) {
+            $rows[0] = $ccRs;
         }
 
 

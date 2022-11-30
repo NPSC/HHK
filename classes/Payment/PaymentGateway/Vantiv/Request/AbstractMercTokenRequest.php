@@ -60,7 +60,7 @@ abstract class AbstractMercTokenRequest extends AbstractMercRequest {
             $xaction = $this->execute($txClient, $data);
 
         } catch (\SoapFault $sf) {
-            throw new PaymentException('Problem with HHK web server contacting the Mercury Payment system:  ' . $sf->getMessage());
+            throw new PaymentException('Problem with HHK web server contacting the Worldpay Payment system:  ' . $sf->getMessage());
         }
 
         try {
