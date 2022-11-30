@@ -2570,9 +2570,8 @@ ALTER TABLE `visit_log`
 --
 -- function `dateDefaultNow`
 --
-DROP function IF EXISTS `datedefaultnow`;
 
-CREATE FUNCTION `datedefaultnow` (dt DateTime)
+CREATE OR REPLACE FUNCTION `datedefaultnow` (dt DateTime)
 RETURNS DATETIME
 DETERMINISTIC NO SQL
 RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end;
@@ -2581,9 +2580,8 @@ RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() el
 --
 -- function `fiscal_year`
 --
-DROP function IF EXISTS `fiscal_year`;
 
-CREATE FUNCTION `fiscal_year` (dt DateTime, adjust int)
+CREATE OR REPLACE FUNCTION `fiscal_year` (dt DateTime, adjust int)
 RETURNS Datetime
 NO SQL DETERMINISTIC
 RETURN DATE_ADD(dt, INTERVAL adjust MONTH);
