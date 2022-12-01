@@ -13,6 +13,7 @@ use HHK\Purchase\PaymentChooser;
 use HHK\Payment\PaymentManager\ResvPaymentManager;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\House\HouseServices;
+use HHK\HTMLControls\HTMLContainer;
 
 
 
@@ -326,7 +327,14 @@ class ActiveReservation extends Reservation {
 
                 $this->gotoCheckingIn = 'no';
                 $dataArray = $this->createMarkup($dbh);
-                $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+
+                if ($this->payResult->getReceiptMarkup() == '') {
+
+                    $dataArray['receiptMarkup'] = HTMLContainer::generateMarkup('div', $this->payResult->getReplyMessage());
+                } else {
+
+                    $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+                }
 
             }
 
