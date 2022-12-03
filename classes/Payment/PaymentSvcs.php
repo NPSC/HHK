@@ -188,7 +188,7 @@ class PaymentSvcs {
             case PayType::Charge:
 
                 // Load gateway
-                $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant());
+                $gateway = AbstractPaymentGateway::factory($dbh, $uS->PaymentGateway, $pmp->getMerchant(), $pmp->getRtnIdToken());
                 $rtnResult = $gateway->returnAmount($dbh, $invoice, $pmp->getRtnIdToken(), $pmp->getPayNotes());
 
                 break;

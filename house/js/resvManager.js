@@ -2149,23 +2149,35 @@ function resvManager(initData, options) {
                         return false;
                     }
                 }
-            }
-            
-            // Return Pre-Payment?
-            //if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
-				
+            } else {
+	
+				// Selected Merchant?
+				if ($('#selccgw').length > 0 && ($('input[name=rbUseCard]:checked').val() == 0 || $('input[name=rbUseCard]').prop('checked') === true)) {
+			
+					$('#selccgw').removeClass('ui-state-highlight');
+			
+					if ($('#selccgw option:selected').length === 0) {
+						$('#tdChargeMsg').text('Select a location.').show('fade');
+						$('#selccgw').addClass('ui-state-highlight');
+						return false;
+					}
+				}
+
+	            // Return Pre-Payment?
 				if (prePaymtAmt > 0 && isCheckedOut && $('#selexcpay').val() == '') {
+					
 					$('#selexcpay').addClass('ui-state-error');
 					flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
 					$('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
+					
 					return false;
+					
 				} else {
 					$('#selexcpay').removeClass('ui-state-error');
 				}
-			//}
+			}
             
             return true;
-
         }
     }
 

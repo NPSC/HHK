@@ -50,7 +50,7 @@ class PaymentChooser {
 
         $pmp = new PaymentManagerPayment($payType);
 
-        // Return payment type
+        // Return-payment type
         if (isset($post['rtnTypeSel'])) {
             $pmp->setRtnPayType(filter_var($post['rtnTypeSel'], FILTER_SANITIZE_STRING));
         }
@@ -1125,8 +1125,8 @@ ORDER BY v.idVisit , v.Span;");
         $tbl->addBodyTr(HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use")
                 , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
-        //
-        if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
+        // Pick a preferred token if one is not specified.
+        if ($prefTokenId < 1 && count($tkRsArray) > 0) {
             $keys = array_keys($tkRsArray);
             $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
         }
