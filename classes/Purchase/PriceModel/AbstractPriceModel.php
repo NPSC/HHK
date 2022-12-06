@@ -32,12 +32,14 @@ abstract class AbstractPriceModel {
     protected $remainderAmt = 0;
     protected $visitStatus = '';
     protected $priceModelCode = '';
+    public $hasPerGuestCharge = FALSE;
 
 
     public function __construct(array $roomRates) {
 
         $this->roomRates = $roomRates;
         $this->activeRoomRates = array();
+
 
         foreach($roomRates as $rs) {
 
@@ -364,7 +366,6 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, idRoom_rat
     }
 
     public function getActiveModelRoomRates() {
-        //Return them all
         return $this->activeRoomRates;
     }
 

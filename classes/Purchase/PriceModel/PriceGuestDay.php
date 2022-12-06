@@ -23,12 +23,23 @@ use HHK\HTMLControls\{HTMLTable, HTMLInput};
 
 class PriceGuestDay extends AbstractPriceModel {
 
+    /**
+     * {@inheritDoc}
+     * @see \HHK\Purchase\PriceModel\AbstractPriceModel::__construct()
+     */
+    public function __construct(array $roomRates)
+    {
+        parent::__construct($roomRates);
+
+        $this->hasPerGuestCharge = TRUE;
+     }
+
+
     public function loadVisitNights(\PDO $dbh, $idVisit, $endDate = '') {
 
         $uS = Session::getInstance();
 
         $spans = parent::loadVisitNights($dbh, $idVisit);
-
 
         $ageYears = $uS->StartGuestFeesYr;
         $parm = "NOW()";
@@ -51,16 +62,27 @@ GROUP BY s.Visit_Span");
             $stays[$r['Visit_Span']] = $r['GDays'] < 0 ? 0 : $r['GDays'];
         }
 
+        $perGuestChg = FALSE;
+
         for ($n=0; $n<count($spans); $n++) {
 
             if (isset($stays[$spans[$n]['Span']])) {
-                $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['Span']];
-            }
 
+                $rateRs = $this->getCategoryRateRs($spans[$n]['idRoom_Rate']);
+
+                // If the extra guest rate exists....
+                if ($rateRs->Reduced_Rate_2->getStoredVal() > 0) {
+                    $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['Span']];
+                    $perGuestChg = TRUE;
+                } else {
+                    $spans[$n]['Guest_Nights'] = 0;
+                }
+            }
         }
 
-        return $spans;
+        $this->hasPerGuestCharge = $perGuestChg;
 
+        return $spans;
     }
 
     public function loadRegistrationNights(\PDO $dbh, $idRegistration, $endDate = '') {
@@ -92,13 +114,25 @@ GROUP BY s.idVisit, s.Visit_Span");
             $stays[$r['idVisit']][$r['Visit_Span']] = $r['GDays'] < 0 ? 0 : $r['GDays'];
         }
 
+        $perGuestChg = FALSE;
+
         for ($n=0; $n<count($spans); $n++) {
 
             if (isset($stays[$spans[$n]['idVisit']][$spans[$n]['Span']])) {
-                $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['idVisit']][$spans[$n]['Span']];
+
+                $rateRs = $this->getCategoryRateRs($spans[$n]['idRoom_Rate']);
+
+                // If the extra guest rate exists....
+                if ($rateRs->Reduced_Rate_2->getStoredVal() > 0) {
+                    $spans[$n]['Guest_Nights'] = $stays[$spans[$n]['idVisit']][$spans[$n]['Span']];
+                    $perGuestChg = TRUE;
+                } else {
+                    $spans[$n]['Guest_Nights'] = 0;
+                }
             }
         }
 
+        $this->hasPerGuestCharge = $perGuestChg;
         return $spans;
     }
 
@@ -181,7 +215,7 @@ GROUP BY s.idVisit, s.Visit_Span");
 
         $rrateRs = $this->getCategoryRateRs($idRoomRate, $rateCategory);
 
-        // Short circuit for fixed rate x
+        // Short circuit for fixed rate f
         if ($rrateRs->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category) {
             $tiers[] = array('rate'=> $pledgedRate, 'days'=>$days, 'amt'=>($days * $pledgedRate), 'gdays'=>0);
             return $tiers;
@@ -194,7 +228,7 @@ GROUP BY s.idVisit, s.Visit_Span");
 
         $guestDays -= $days;
 
-        if ($guestDays > 0) {
+        if ($guestDays > 0 && $this->hasPerGuestCharge) {  // added rate check EKC 12/5/2022
             $amount = $rrateRs->Reduced_Rate_2->getStoredVal() * $guestDays * $adjRatio;
             $tiers[] = array('rate'=>$rrateRs->Reduced_Rate_2->getStoredVal() * $adjRatio, 'days'=>$days, 'amt'=>$amount, 'gdays'=>$guestDays);
         }
@@ -236,7 +270,7 @@ GROUP BY s.idVisit, s.Visit_Span");
                 .HTMLTable::makeTd($startDate, array('style'=>$separator))
                 .HTMLTable::makeTd($endDateStr, array('style'=>$separator))
                 .HTMLTable::makeTd(number_format($t['rate'], 2), array('style'=>'text-align:right;' . $separator))
-                .HTMLTable::makeTd($guestEnu, array('style'=>'text-align:center;' . $separator))
+                .($this->hasPerGuestCharge ? HTMLTable::makeTd($guestEnu, array('style'=>'text-align:center;' . $separator)) : '')
                 .HTMLTable::makeTd($gDays, array('style'=>'text-align:center;' . $separator))
                 .HTMLTable::makeTd($total, array('style'=>'text-align:right;' . $separator))
             );
@@ -253,28 +287,44 @@ GROUP BY s.idVisit, s.Visit_Span");
 
     public function rateHeaderMarkup(&$tbl, $labels) {
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('Visit Id').HTMLTable::makeTh('Room').HTMLTable::makeTh('Start').HTMLTable::makeTh('End')
-            .HTMLTable::makeTh($labels->getString('statement', 'rateHeader', 'Rate')).HTMLTable::makeTh('Guest').HTMLTable::makeTh('Guest Nights').HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
+        $tbl->addHeaderTr(
+            HTMLTable::makeTh('Visit Id')
+            .HTMLTable::makeTh('Room')
+            .HTMLTable::makeTh('Start')
+            .HTMLTable::makeTh('End')
+            .HTMLTable::makeTh($labels->getString('statement', 'rateHeader', 'Rate'))
+            .($this->hasPerGuestCharge ? HTMLTable::makeTh('Guest') : '')
+            .HTMLTable::makeTh('Nights')
+            .HTMLTable::makeTh($labels->getString('statement', 'chargeHeader', 'Charge')));
 
     }
 
     public function rateTotalMarkup(&$tbl, $desc, $numberNites, $totalAmt, $guestNites) {
 
+        $cols = 5;
+        if ($this->hasPerGuestCharge) {
+            $cols = 6;
+        }
+
         // Room Fee totals
-        $tbl->addBodyTr(HTMLTable::makeTd($desc, array('colspan'=>'6', 'class'=>'tdlabel hhk-tdTotals', 'style'=>'font-weight:bold;'))
-            //.HTMLTable::makeTd($numberNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;'))
-            .HTMLTable::makeTd($guestNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;'))
+        $tbl->addBodyTr(HTMLTable::makeTd($desc, array('colspan'=>$cols, 'class'=>'tdlabel hhk-tdTotals', 'style'=>'font-weight:bold;'))
+            .HTMLTable::makeTd($numberNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;'))
+            .($this->hasPerGuestCharge ? HTMLTable::makeTd($guestNites, array('class'=>'hhk-tdTotals', 'style'=>'text-align:center;font-weight:bold;')) : '')
             .HTMLTable::makeTd('$'. $totalAmt, array('class'=>'hhk-tdTotals', 'style'=>'text-align:right;font-weight:bold;')));
 
     }
 
     public function itemMarkup($r, &$tbl) {
 
+        $cols = 3;
+        if ($this->hasPerGuestCharge) {
+            $cols = 4;
+        }
         $tbl->addBodyTr(
             HTMLTable::makeTd($r['orderNum'], array('style'=>'text-align:center;'))
             .HTMLTable::makeTd('')
             .HTMLTable::makeTd($r['date'])
-            .HTMLTable::makeTd($r['desc'], array('colspan'=>'4', 'style'=>'text-align:right;'))
+            .HTMLTable::makeTd($r['desc'], array('colspan'=>$cols, 'style'=>'text-align:right;'))
             .HTMLTable::makeTd($r['amt'], array('style'=>'text-align:right;')));
 
     }
@@ -359,7 +409,7 @@ GROUP BY s.idVisit, s.Visit_Span");
         }
 
         $dbh->exec("Insert into `room_rate` (`idRoom_rate`,`Title`,`FA_Category`,`PriceModel`,`Reduced_Rate_1`,`Reduced_Rate_2`,`Reduced_Rate_3`,`Min_Rate`,`Status`) values "
-            . "(5,'Flat Rate','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,25.00,25.00,10,'a'), "
+            . "(5,'Flat Rate','" . RoomRateCategories::FlatRateCategory . "','$modelCode',25.00,0,0,0,'a'), "
             . "(6,'Assigned','" . RoomRateCategories::Fixed_Rate_Category . "','$modelCode',0,0,0,0,'a');");
     }
 }

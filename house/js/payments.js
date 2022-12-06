@@ -541,15 +541,20 @@ function getPaymentData(p, a) {
 	// Test held amount if any. - heldAmt
 	if (p.heldCb.length > 0) {
 
+		let ppFlag = parseInt(p.heldCb.data('prepay'));
 		a.heldAmt = parseFloat(p.heldCb.data('amt'));
 		a.chkingIn = parseInt(p.heldCb.data('chkingin'));
+		
+		if (isNaN(a.chkingIn)){
+			a.chkingIn = 0;
+		}
 
 		if (isNaN(a.heldAmt) || a.heldAmt < 0 || p.heldCb.prop("checked") === false) {
 			a.heldAmt = 0;
 		}
 		
 		// Reservation checking in logic.
-		if (p.heldCb.prop("checked") === true && a.chkingIn == 1) {
+		if (p.heldCb.prop("checked") === true && a.chkingIn == 1 && ppFlag == 1) {
 			a.prePayRoomAmt = a.heldAmt;
 		} else if (p.heldCb.prop("checked") === false && a.chkingIn == 1) {
 			a.prePayRoomAmt = 0;
@@ -631,6 +636,10 @@ function amtPaid() {
 
 		a.feePayText = p.feePayAmt.val().replace('$', '').replace(',', '');
 		a.feePayPreTax = roundTo(parseFloat(a.feePayText), 2);
+		
+		if (isNaN(a.feePayPreTax) || a.feePayPreTax <= 0) {
+			a.feePayPreTax = 0;
+		}
 
 		if (a.feePayText === '0.00') {
 			a.feePayText = '0';
@@ -641,15 +650,16 @@ function amtPaid() {
 			a.feePayText = '';
 		}
 
-		if (isNaN(a.feePayPreTax) || a.feePayPreTax <= 0) {
-			// Add reservation pre-pay only once.
-			a.feePayPreTax = a.prePayRoomAmt;
+		// Add reservation pre-pay only once.
+		let remiandr = (a.prePayRoomAmt - a.vfee - a.kdep - a.invAmt);
+		
+		// Fill up room fees to pre-payment amount, minus other charges   && a.feePayPreTax < remiandr
+		if (remiandr > 0) {
+			a.feePayPreTax = remiandr;
+		} else if (a.prePayRoomAmt > 0) {
+			a.feePayPreTax = 0;
 		}
 		
-		// Fill up room fees to pre-payment amount
-		if (a.feePayPreTax < a.prePayRoomAmt) {
-			a.feePayPreTax = a.prePayRoomAmt;
-		}
 		a.feePayTaxAmt = updateFeeTaxes.calcTax(a.feePayPreTax);
 
 		// Only tax up to the room balance due.

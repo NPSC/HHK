@@ -423,14 +423,15 @@ class PaymentChooser {
             $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Pre-Payment Balance:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '$' . number_format($heldAmount, 2) : ''), array('id'=>'spnHeldAmt'))
-                    .HTMLInput::generateMarkup('', array('id'=>'cbHeld', 'type'=>'checkbox', 'style'=>'display:none;', 'data-amt'=> number_format($heldAmount, 2, '.',''))))
+                    .HTMLInput::generateMarkup('', array('id'=>'cbHeld', 'type'=>'checkbox', 'style'=>'display:none;', 'data-prepay'=>'1', 'data-amt'=> number_format($heldAmount, 2, '.',''))))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
         }
-            // Show the prepayment input box.
-            $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
-                , array('class'=>'hhk-RoomFees'));
+
+        // Show the prepayment input box.
+        $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
+            , array('class'=>'hhk-RoomFees'));
 
         // Amount to pay
         $feesTbl->addBodyTr(
@@ -892,7 +893,7 @@ ORDER BY v.idVisit , v.Span;");
                     HTMLTable::makeTd('MOA Balance:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
                     . HTMLTable::makeTd(
                             HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbHeld', 'style'=>'margin-left:5px;margin-right:3px;'))
-                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>0))
+                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-prepay'=>'0', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>0))
                         .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
 
@@ -902,7 +903,7 @@ ORDER BY v.idVisit , v.Span;");
                     HTMLTable::makeTd('Pre-Payment:', array('class'=>'tdlabel', 'title'=>'Reservation Pre-Payment'))
                     . HTMLTable::makeTd(
                         HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbHeld', 'style'=>'margin-left:5px;margin-right:3px;'))
-                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>1))
+                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'margin-right:.4em;', 'data-prepay'=>'1', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>1))
                         .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
 

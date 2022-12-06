@@ -46,6 +46,8 @@ class VisitCharges {
     protected $span;
     protected $finalVisitCoDate;
 
+    protected $priceModel;
+
     /**
      *
      * @var array
@@ -57,13 +59,17 @@ class VisitCharges {
     public function __construct($idVisit, $span = 0) {
         $this->idVisit = $idVisit;
         $this->span = $span;
+        $this->priceModel = NULL;
     }
 
     public function sumCurrentRoomCharge(\PDO $dbh, AbstractPriceModel $priceModel, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
+        $this->priceModel = $priceModel;
         return $this->getVisitData($priceModel->loadVisitNights($dbh, $this->idVisit), $priceModel, $newPayment, $calcDaysPaid, $givenPaid);
     }
 
     public function sumDatedRoomCharge(\PDO $dbh, AbstractPriceModel $priceModel, $coDate, $newPayment = 0, $calcDaysPaid = FALSE, $givenPaid = NULL) {
+
+        $this->priceModel = $priceModel;
 
         // Get spans with current nights calculated.
         $spans = $priceModel->loadVisitNights($dbh, $this->idVisit);
@@ -406,6 +412,10 @@ where
 
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
+    }
+
+    public function getPriceModel() {
+        return $this->priceModel;
     }
 
     public function getRoomFeesPending() {
