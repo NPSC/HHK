@@ -25,6 +25,7 @@ use HHK\House\PSG;
 use HHK\House\Vehicle;
 use HHK\HTMLControls\HTMLInput;
 use HHK\Member\Role\Agent;
+use HHK\Member\Role\Doctor;
 
 /**
  * CustomRegisterForm.php
@@ -54,7 +55,7 @@ class CustomRegisterForm {
             "logo"=>[
                 "label"=>"Logo",
                 "type"=>"bool",
-                "default"=>true,
+                "default"=>false,
             ],
             "houseAddr"=>[
                 "label"=>"House Address",
@@ -171,6 +172,11 @@ class CustomRegisterForm {
                 "type"=>"bool",
                 "default"=>false
             ],
+            "doctor"=>[
+                "label"=>"Doctor",
+                "type"=>"bool",
+                "default"=>false
+            ],
         ],
         "Referral Agent"=>[
             "show"=>[
@@ -280,6 +286,21 @@ class CustomRegisterForm {
         $this->settingTemplate["Patient"]["diagnosis"]["label"] = $this->labels->getString("hospital", "diagnosis", "Diagnosis");
         $this->settingTemplate["Patient"]["location"]["label"] = $this->labels->getString("hospital", "location", "Location");
 
+        //hide disabled features
+        $uS = Session::getInstance();
+        if($this->labels->getString("hospital", "MRN", "") == ''){
+            unset($this->settingTemplate["Patient"]["mrn"]);
+        }
+        if($uS->TrackAuto === false){
+            unset($this->settingTemplate["Vehicle"]);
+        }
+        if($uS->ReferralAgent === false){
+            unset($this->settingTemplate["Referral Agent"]);
+        }
+        if($uS->Doctor === false){
+            unset($this->settingTemplate["Patient"]['doctor']);
+        }
+
     }
 
     protected function titleBlock($roomTitle, $expectedDeparture, $expDepartPrompt, $rate, $title, $agent, $priceModelCode, $notes = '', $houseAddr = '', $roomFeeTitle = 'Pledged Fee') {
@@ -301,7 +322,7 @@ class CustomRegisterForm {
         $mkup .= '</div>';
 
         if(!empty($this->settings["Header"]["logo"])){
-            $mkup .= '<div class="col-4"><img src="' . $uS->statementLogoFile . '" style="max-width:100%"></div>';
+            $mkup .= '<div class="col-4"><img src="../conf/' . $uS->statementLogoFile . '" style="max-width:100%"></div>';
         }
         $mkup .= '</div>';
 
@@ -322,7 +343,7 @@ class CustomRegisterForm {
         return $mkup;
     }
 
-    protected function patientBlock(AbstractRole $patient, $hospital, $mrn, $hospRoom, $diagnosis, $location = '') {
+    protected function patientBlock(AbstractRole $patient, $hospital, $mrn, $hospRoom, $diagnosis, $location = '', $doctor = '') {
 
         $bd = '';
         if ($patient->getRoleMember()->get_birthDate() != '' && !empty($this->settings["Patient"]["birthdate"])) {
@@ -335,6 +356,12 @@ class CustomRegisterForm {
             $mrn = "";
         }
 
+        if($doctor instanceof AbstractRole){
+            $doctorName = $doctor->getRoleMember()->get_fullName();
+        }else{
+            $doctorName = '';
+        }
+
         $mkup = "<h2 class='mb-2'>" .$this->labels->getString('MemberType', 'patient', 'Patient'). "</h2>";
 
         $mkup .= '<div class="row mb-3 ui-widget-content ui-corner-all py-2">';
@@ -344,6 +371,7 @@ class CustomRegisterForm {
         $mkup .= (!empty($this->settings["Patient"]["hospRoom"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'roomNumber', 'Room') . ": </strong>" . $hospRoom . '</div>': '');
         $mkup .= (!empty($this->settings["Patient"]["diagnosis"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'diagnosis', 'Diagnosis') . ": </strong>" . $diagnosis . '</div>': '');
         $mkup .= (!empty($this->settings["Patient"]["location"]) ? '<div class="col" style="min-width:fit-content"><strong>' . $this->labels->getString('hospital', 'location', 'Hospital Location') . ": </strong>" . $location . '</div>': '');
+        $mkup .= (!empty($this->settings["Patient"]["doctor"]) ? '<div class="col" style="min-width:fit-content"><strong>Doctor: </strong>' . $doctorName . '</div>': '');
 
         $mkup .= '</div>';
 
@@ -554,7 +582,7 @@ class CustomRegisterForm {
             $mkup .='</div>';//end col
             if(!empty($this->settings['Guests']["emerg"])){
                 $mkup .= '<div class="col ui-widget-content ui-corner-all py-2 mr-2 mb-2">';
-                $mkup .= '<strong>Emergency Contact:</strong>' . $emrg->getEcNameFirst() . ' ' . $emrg->getEcNameLast() . '<br>';
+                $mkup .= '<strong>Emergency Contact: </strong>' . $emrg->getEcNameFirst() . ' ' . $emrg->getEcNameLast() . '<br>';
                 $mkup .= '<strong>Phone: </strong>' . $emrg->getEcPhone() . '<br>';
                 $mkup .= '<strong>Relationship to ' . Labels::getString('memberType', 'visitor', "Guest") . ': </strong>' . (isset($ecRels[$emrg->getEcRelationship()]) ? $ecRels[$emrg->getEcRelationship()][1] : '');
                 $mkup .= '</div>';//end .col emerg contact
@@ -606,7 +634,7 @@ class CustomRegisterForm {
         return $this->pageTitle;
     }
 
-    protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, $referralAgent, array $guests,  $houseAddr, $hospital, $mrn, $hospRoom, $diagnosis, $location, $patientRelCodes,
+    protected function generateDocument(\PDO $dbh, $title, AbstractRole $patient, $referralAgent, array $guests,  $houseAddr, $hospital, $mrn, $hospRoom, $diagnosis, $location, $doctor, $patientRelCodes,
             $vehicles, $agent, $rate, $roomTitle, $expectedDeparture, $expDepartPrompt, $agreement, $cardTokens, $notes, $primaryGuestId = 0) {
 
         $uS = Session::getInstance();
@@ -621,7 +649,7 @@ class CustomRegisterForm {
 
         // Patient
         if(!empty($this->settings['Patient']['show'])){
-            $mkup .= $this->patientBlock($patient, $hospital, $mrn, $hospRoom, $diagnosis, $location);
+            $mkup .= $this->patientBlock($patient, $hospital, $mrn, $hospRoom, $diagnosis, $location, $doctor);
         }
 
         // Referral Agent
@@ -821,7 +849,7 @@ class CustomRegisterForm {
                 $guests[] = $gst;
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN, hs.idReferralAgent from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
+            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN, hs.idReferralAgent, hs.idDoctor from hospital_stay hs join visit v on hs.idHospital_stay = v.idHospital_Stay
 				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' left join gen_lookups l on hs.Location = l.Code and l.Table_Name = 'Location' where v.idVisit = " . intval($idVisit) . " group by v.idVisit limit 1";
 
             $stmt = $dbh->query($query);
@@ -869,7 +897,7 @@ class CustomRegisterForm {
 
             }
 
-            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN, hs.idReferralAgent from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
+            $query = "select hs.idPatient, hs.Room, IFNULL(h.Title, ''), IFNULL(d.Description, '') as 'Diagnosis', IFNULL(l.Description, '') as 'Location', hs.MRN, hs.idReferralAgent, hs.idDoctor from hospital_stay hs join reservation r on hs.idHospital_stay = r.idHospital_Stay
 				left join hospital h on hs.idHospital = h.idHospital left join gen_lookups d on hs.diagnosis = d.Code and d.Table_Name = 'diagnosis' left join gen_lookups l on hs.Location = l.Code and l.Table_Name = 'Location' where r.idReservation = " . intval($idReservation) . " limit 1";
 
             $stmt = $dbh->query($query);
@@ -910,6 +938,12 @@ class CustomRegisterForm {
             }else{
                 $referralAgent = null;
             }
+            if($hospitalStay[0][7] > 0){
+                $doctor = new Doctor($dbh, '', $hospitalStay[0][7]);
+            }else{
+                $doctor = null;
+            }
+
         }
 
         // Title
@@ -1022,6 +1056,7 @@ class CustomRegisterForm {
                 $hospRoom,
                 $diagnosis,
                 $location,
+                $doctor,
                 $uS->guestLookups[GLTableNames::PatientRel],
                 $vehs,
                 $agent,

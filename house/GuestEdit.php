@@ -760,7 +760,7 @@ $uS->guestId = $id;
                     </div>
                     <?php if($uS->searchMRN){ ?>
                     <div class="col-12 col-md mb-2 mb-md-0 hhk-flex">
-                    	<label for="txtMRNsearch" style="min-width:fit-content" class="mr-2">MRN Search </label>
+                    	<label for="txtMRNsearch" style="min-width:fit-content" class="mr-2"><?php echo Labels::getString("hospital", "MRN", "MRN"); ?> Search </label>
                     	<input type="search" class="allSearch" id="txtMRNsearch" size="15" title="Enter at least 3 characters to invoke search" style="width: 100%" />
                     </div>
                     <?php } ?>

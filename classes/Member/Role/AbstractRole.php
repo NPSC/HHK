@@ -9,6 +9,7 @@ use HHK\Member\EmergencyContact\EmergencyContact;
 use HHK\Member\RoleMember\AbstractRoleMember;
 use HHK\SysConst\{AddressPurpose, GLTableNames, MemStatus, RelLinkType, VisitStatus, VolMemberType};
 use HHK\sec\Session;
+use HHK\sec\Labels;
 
 /**
  * AbstractRole.php
@@ -89,7 +90,7 @@ abstract class AbstractRole {
         }
 
         if ($showMRNSearch) {
-            $MRNSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'MRN Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>"min-width: fit-content", "class"=>"mr-2"))
+            $MRNSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', Labels::getString("hospital", "MRN", "MRN") . ' Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>"min-width: fit-content", "class"=>"mr-2"))
             .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'MRNSearch', 'size'=>'14', 'title'=>'Enter at least 3 characters to invoke search', "style"=>"width: 100%")), array("class"=>"col-12 col-lg mb-2 mb-lg-0 hhk-flex"));
             $outerwidth = 'col-xl-10';
             $gstwidth = 'col-lg-6';
