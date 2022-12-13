@@ -593,7 +593,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
                             , array('style'=>'flex-basis: 100%;', 'name'=>'div-hhk-payments'));
                     }
 
-                } else if ($uS->PayAtCkin) {
+                } else {
                     // Credit card chooser
 
                     $dataArray['cof'] = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
