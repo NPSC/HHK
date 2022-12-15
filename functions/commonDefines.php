@@ -57,7 +57,7 @@ define('JQ_UI_JS', '../js/jquery-ui.min.js');
 define('JQ_JS', 'js/jquery-min.js');
 define('JQ_DT_JS', '../js/datatables.min.js');
 define('NOTY_JS', '../js/noty-min.js');
-define('NOTY_SETTINGS_JS', 'js/notySettings.js');  //These are local
+define('NOTY_SETTINGS_JS', 'js/notySettings.js' . CJSV);  //These are local
 define('DIRRTY_JS', '../js/jquery.dirrty.js');
 define('JSIGNATURE_JS', '../js/jSignature.min.js');
 define('BOOTSTRAP_JS', '../js/bootstrap5.1.3.min.js');

@@ -307,7 +307,7 @@ class CustomRegisterForm {
 
         $uS = Session::getInstance();
 
-        $staff = 'Staff';
+        $staff = Labels::getString("memberType", "staff", "Staff");
         $mkup = '<div class="header row mb-3"><div class="col"><h2 class="title">' . $title . '</h2>';
 
         if ($houseAddr != '' && !empty($this->settings["Header"]["houseAddr"])) {
