@@ -992,6 +992,7 @@ $(document).ready(function () {
 	//change default view on mobile + tablet
 	if(window.innerWidth < 576){ //mobile
 		defaultView = 'timeline4days';
+		dateIncrementObj = {days: 4};
 	}else if(window.innerWidth <= 768){ //tablet
 		defaultView = 'timeline1weeks';
 	}

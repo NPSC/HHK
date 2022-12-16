@@ -347,7 +347,7 @@ if($uS->useOnlineReferral){
             <form autocomplete="off">
                 <h2 class="hhk-flex" id="page-title-row">
                 	<span class="mb-3 mb-md-0"><?php echo $wInit->pageHeading;?></span>
-                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); echo RoomReport::getGlobalStaysCounter($dbh); ?>
+                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest) . RoomReport::getGlobalStaysCounter($dbh) . RoomReport::getGlobalRoomOccupancy($dbh); ?>
                 	<span id="name-search" class="d-none d-md-inline">Name Search:
                     	<input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
                 	</span>

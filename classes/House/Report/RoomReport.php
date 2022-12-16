@@ -157,6 +157,36 @@ FROM stays s WHERE s.`On_Leave` = 0  and DATE(s.Span_Start_Date) <= DATE(NOW())"
         return $span;
     }
 
+    public static function getGlobalRoomOccupancy(\PDO $dbh) {
+
+        $uS = Session::getInstance();
+
+        if (!$uS->ShowRoomOcc) {
+            return '';
+        }
+
+        $whereGroupSql = "";
+        if($uS->RoomOccCat && $uS->RoomOccCat != 'none'){
+            $whereGroupSql = " and rm.Category = '" . $uS->RoomOccCat . "'";
+        }
+        $query = "select round(sum(if(`idVisit` > 0, 1, 0))/count(r.idResource)*100) as 'Occupancy', g.Description as 'Category' from `resource` r
+left join visit v on r.idResource = v.idResource and v.Status = 'a'
+left join resource_use ru on r.idResource = ru.idResource and date(ru.Start_Date) <= date(now()) and date(ru.End_Date) > date(now())
+left join resource_room rr on r.idResource = rr.idResource
+left join room rm on rr.idRoom = rm.idRoom
+left join gen_lookups g on rm.Category = g.Code and g.Table_Name = 'Room_Category'
+where ru.idResource is null" . $whereGroupSql . ";";
+        $stmt = $dbh->query($query);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
+        if(isset($row['Occupancy'])){
+            $span = HTMLContainer::generateMarkup('span', '<strong>' . $row['Occupancy'] . '% </strong>' . ($uS->RoomOccCat != 'none' ? $row['Category'] : 'Total') . ' Occupancy.', array('style'=>'margin-left:10px;font-size:.6em;font-weight:normal;', "class"=>"hideMobile"));
+        }else{
+            $span = "";
+        }
+        return $span;
+    }
+
     public static function dailyReport(\PDO $dbh) {
 
         $roomsOOS = array();

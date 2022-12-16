@@ -80,9 +80,14 @@ switch ($c) {
             $additional = filter_var(urldecode($_REQUEST["add"]), FILTER_SANITIZE_STRING);
         }
 
+        $psg = "";
+        if (isset($_REQUEST["psg"])) {
+            $psg = filter_var(urldecode($_REQUEST["psg"]), FILTER_SANITIZE_STRING);
+        }
+
         $memberSearch = new MemberSearch($letters);
 
-        $events = $memberSearch->volunteerCmteFilter($dbh, $basis, $fltr, $additional);
+        $events = $memberSearch->volunteerCmteFilter($dbh, $basis, $fltr, $additional, $psg);
 
         break;
 

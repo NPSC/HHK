@@ -397,6 +397,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Role_Codes','100','Web User','','',0),
 ('Role_Codes','700','Guest','','',0),
 
+('Room_Category','none','(none)','','',0),
 ('Room_Category','dh','House','','',0),
 ('Room_Category','gada','Hospital','','',0),
 ('Room_Category','jph','Private Host','','',0),
@@ -651,6 +652,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('RoomPriceModel','d','lu','h','','Room rate price model - Do not change!','Price_Model',0),
 ('RoomRateDefault','e','s','h','','Use the Resource Builder','',1),
 ('RoomsPerPatient','2','i','h','','Number of simultaneous rooms per patient allowed','',1),
+('RoomOccCat', 'none', 'lu', 'c', '', 'Only include this Room Category in room occupancy percentage on calendar', 'Room_Category', '', '1'),
 ('Run_As_Test', 'false', 'b', 'a', '', 'Run As Test flag', '',0),
 ('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0'),
 ('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, 0 = never log out','',1),
@@ -664,6 +666,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
 ('ShowRateDetail','false','b','f','','Show Rate detail on statements','',1),
+('ShowRoomOcc', 'false', 'b', 'c', '', 'Show current occupancy percentage on calendar','','1'),
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
 ('ShowUncfrmdStatusTab','false','b','h','','Show the Unconfirmed reservations tab on the House Register page','',1),
 ('ShowZeroDayStays','false','b','h','','Include 0-day stays and visits in Reports and Pages','',1),

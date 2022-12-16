@@ -256,7 +256,7 @@ if (isset($_POST["btnSubmit"])) {
         $msg .= $emails->savePost($dbh, $_POST, $uname);
 
         // Emergency contact
-        $emergContact->save($dbh, $id, $_POST, $uname);
+        $msg .= $emergContact->save($dbh, $id, $_POST, $uname);
 
 
         // house
