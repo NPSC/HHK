@@ -849,7 +849,7 @@ function resvManager(initData, options) {
                 });
 
                 // Emergency Contact dialog box search text box.
-                createAutoComplete($('#txtemSch'), 3, {cmd: 'filter', add: 'phone', basis: 'g'}, getECRel);
+                createAutoComplete($('#txtemSch'), 3, {cmd: 'filter', add: 'phone', basis: 'psg', psg: data.idPsg}, getECRel);
 
                 // Hover icons
                 $( "ul.hhk-ui-icons li" ).hover(
