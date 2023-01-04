@@ -731,6 +731,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('agreementTitle','Agreement','s','rf','','Default: Agreement'),
 ('Survey_Subject','Checkout Survey','s','rf','','Default: Checkout Survey'),
 ('VisitFeeConfirmLabel','Cleaning Fee:','s','rf','','Default: Cleaning Fee:'),
+('specialNoteConfEmail', 'Special Note', 's', 'rf', '', 'Default: Special Note'),
 
 ('noticeToCheckout', 'Notice to Checkout', 's', 'vi', '', 'Default: Notice to Checkout'),
 
