@@ -493,7 +493,7 @@ function readLookups(\PDO $dbh, $tbl, $orderBy = "Code", $includeUnused = false)
         $where = "and `Use` = 'y'";
     }
 
-    $query = "SELECT `Code`, `Title`, `Use`, `Other` as 'Icon' FROM `lookups` WHERE `Category` = '$tbl' $where order by `$orderBy`;";
+    $query = "SELECT `Code`, `Title`, `Use`, 'Show', 'Type', `Other` as 'Icon' FROM `lookups` WHERE `Category` = '$tbl' $where order by `$orderBy`;";
     $stmt = $dbh->query($query);
     $genArray = array();
 

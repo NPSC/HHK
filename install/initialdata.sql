@@ -438,7 +438,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Special_Needs','f','Dev. Challenged','','d',0),
 ('Special_Needs','z','Unknown','','d',1000),
 
-("Staff_Note_Category", "g", "General", '', 'h', 0),
+('Staff_Note_Category', 'g', 'General', '', 'h', 0),
 
 ('Static_Room_Rate','rb','Regular Rate','10','',0),
 
@@ -528,19 +528,21 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) VALUES
 ('FinAppStatus','a','Granted','y','y','',''),
 ('FinAppStatus','n','Not Granted','y','y','',''),
-('ReservStatus','a','Confirmed','y','y','','ui-icon-check'),
-('ReservStatus','uc','Unconfirmed','y','y','','ui-icon-help'),
-('ReservStatus','c','Guest Canceled','y','y','','ui-icon-cancel'),
-('ReservStatus','c1','Canceled 1','y','y','','ui-icon-cancel'),
-('ReservStatus','c2','Canceled 2','n','n','','ui-icon-cancel'),
-('ReservStatus','c3','Canceled 3','n','n','','ui-icon-cancel'),
-('ReservStatus','c4','Canceled 4','n','n','','ui-icon-cancel'),
-('ReservStatus','ns','No Show','y','y','','ui-icon-alert'),
-('ReservStatus','co','Checked Out','y','y','','ui-icon-extlink'),
-('ReservStatus','p','New','y','y','',''),
-('ReservStatus','s','Checked In','y','y','','ui-icon-circle-check'),
-('ReservStatus','td','Turned Away','y','y','','ui-icon-arrowreturnthick-1-s'),
-('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e');
+
+('ReservStatus','a','Confirmed','y','y','a','ui-icon-check'),
+('ReservStatus','uc','Unconfirmed','y','y','a','ui-icon-help'),
+('ReservStatus','w','Waitlist','y','y','a','ui-icon-arrowstop-1-e'),
+('ReservStatus','c','Guest Canceled','y','y','c','ui-icon-cancel'),
+('ReservStatus','td','Turned Away','y','y','c','ui-icon-arrowreturnthick-1-s'),
+('ReservStatus','ns','No Show','y','y','c','ui-icon-alert'),
+('ReservStatus','c1','Canceled 1','y','y','c','ui-icon-cancel'),
+('ReservStatus','c2','Canceled 2','n','n','c','ui-icon-cancel'),
+('ReservStatus','c3','Canceled 3','n','n','c','ui-icon-cancel'),
+('ReservStatus','c4','Canceled 4','n','n','c','ui-icon-cancel'),
+('ReservStatus','c5','Canceled 5','n','n','c','ui-icon-cancel'),
+('ReservStatus','c6','Canceled 6','n','n','c','ui-icon-cancel'),
+('ReservStatus','co','Checked Out','y','n','','ui-icon-extlink'),
+('ReservStatus','s','Checked In','y','n','','ui-icon-circle-check');
 -- ;
 
 
