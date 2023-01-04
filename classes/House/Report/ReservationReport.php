@@ -55,7 +55,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     public function makeQuery(): void{
         $uS = Session::getInstance();
 
-        $whDates = " r.Expected_Arrival <= '" . $this->filter->getReportEnd() . "' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '" . $this->filter->getReportStart() . "' ";
+        $whDates = " date(ifnull(r.Actual_Arrival, r.Expected_Arrival)) <= '" . $this->filter->getReportEnd() . "' and date(ifnull(r.Actual_Departure, r.Expected_Departure)) >= '" . $this->filter->getReportStart() . "' ";
 
         // Hospitals
         $whHosp = implode(",", $this->filter->getSelectedHosptials());
