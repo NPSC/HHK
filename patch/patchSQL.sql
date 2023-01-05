@@ -4,6 +4,7 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `GenLookup`, `Show`) VALUES ('RoomOccCat', '', 'lu', 'c', 'Only include this Room Category in room occupancy percentage on calendar', 'Room_Category', '1');
 INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Order`, `Timestamp`) VALUES ('Room_Category', 'none', '(None)', '-10', '2022-12-16 00:00:00');
 
+
 -- Add Reservation Status type codes 
 UPDATE `lookups` SET `Type` = 'a' WHERE (`Category` = 'ReservStatus') and (`Code` in ('a','uc', 'w'));
 UPDATE `lookups` SET `Type` = 'c' WHERE (`Category` = 'ReservStatus') and (`Code` in ('c','c1','c2','c3','c4', 'ns','td'));
@@ -15,3 +16,4 @@ INSERT IGNORE into `lookups` (`Category`, `Code`, `Title`, `Use`, `Show`, `Type`
 DELETE FROM `lookups` WHERE (`Category` = 'ReservStatus') and (`Code` = 'im');
 DELETE FROM `lookups` WHERE (`Category` = 'ReservStatus') and (`Code` = 'p');
 
+INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('specialNoteConfEmail', 'Special Note', 's', 'rf', 'Default: Special Note');
