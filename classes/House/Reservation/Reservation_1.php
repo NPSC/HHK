@@ -1078,13 +1078,15 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
                     continue;
                 }
 
-                if ($s['Type'] = ReservationStatusType::Cancelled) {
+                if ($s['Type'] == ReservationStatusType::Cancelled) {
                     $s[2] = 'Cancel Codes';
+                } else if  ($s['Type'] == '') {
+                    continue;
                 } else {
-                    $s[2] = '';
+                    $s[2] = 'Active Codes';
                 }
 
-                $limResvStatuses[$s[0]] = [$s[0], $s[1], $s[2]];
+                $limResvStatuses[$s[0]] = [$s[0], $s[1], $s[2], 'Type' =>$s['Type']];
             }
         }
 

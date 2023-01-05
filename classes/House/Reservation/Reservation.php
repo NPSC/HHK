@@ -153,7 +153,11 @@ WHERE r.idReservation = " . $rData->getIdResv());
         // Get Resv status codes
         $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
 
-        if (Reservation_1::isActiveStatus($rData->getResvStatusCode().$reservStatuses)) {
+        if (isset($reservStatuses[$rData->getResvStatusCode()])) {
+            $rData->setResvStatusType($reservStatuses[$rData->getResvStatusCode()]['Type']);
+        }
+
+        if (Reservation_1::isActiveStatus($rData->getResvStatusCode(), $reservStatuses)) {
             return new ActiveReservation($rData, $rRs, new Family($dbh, $rData, $uS->EmergContactReserv));
         }
 
@@ -721,7 +725,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         $mrkup = '';
 
         $stmt = $dbh->query("select * from vresv_patient "
-            . "where Status in ('".ReservationStatus::Staying."','".ReservationStatus::Committed."','".ReservationStatus::Imediate."','".ReservationStatus::UnCommitted."','".ReservationStatus::Waitlist."') "
+            . "where Status in ('".ReservationStatus::Staying."','".ReservationStatus::Committed."','".ReservationStatus::UnCommitted."','".ReservationStatus::Waitlist."') "
             . "and idPsg= " . $this->reserveData->getIdPsg() . " order by `Expected_Arrival`");
 
 
@@ -852,9 +856,9 @@ where rg.idReservation =" . $r['idReservation']);
         $tbl2->addBodyTr(
                 ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), array('name'=>'selPayType'))) : '')
             .($moaBalance > 0 ? HTMLTable::makeTd('$'.number_format($moaBalance, 2), array('style'=>'text-align:center;')) : '')
-            .($resv->isActive() ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')) : HTMLTable::makeTd(''))
+            .($resv->isActive($resvStatuses) ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
-                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resvStatuses, $resv->getStatus(), TRUE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
+                        HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resvStatuses, $resv->getStatus(), FALSE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
                         .HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;float:right;')))
                 );
 
@@ -1133,11 +1137,11 @@ WHERE
 
     }
 
-    protected function setRoomChoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted) {
+    protected function setRoomChoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted, $reservStatuses) {
 
         $uS = Session::getInstance();
 
-        if ($resv->isActive() === FALSE) {
+        if ($resv->isActive($reservStatuses) === FALSE) {
             return;
         }
 
@@ -1154,7 +1158,7 @@ WHERE
         $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
 
         // Does the resource fit the requirements?
-        if (($resv->getStatus() == ReservationStatus::Committed || $resv->getStatus() == ReservationStatus::UnCommitted || $resv->getStatus() == ReservationStatus::Waitlist)
+        if (($resv->isActive($reservStatuses))
                 && isset($resources[$idRescPosted]) === FALSE) {
 
             //  No.

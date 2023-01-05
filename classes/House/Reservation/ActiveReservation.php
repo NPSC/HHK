@@ -112,11 +112,13 @@ class ActiveReservation extends Reservation {
         // Determine Reservation Status
         $reservStatus = ReservationStatus::Waitlist;
 
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+
         if (isset($post['selResvStatus']) && $post['selResvStatus'] != '') {
 
             $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_STRING);
 
-            if ($rStat != ''  && isset($uS->guestLookups['ReservStatus'][$rStat])) {
+            if ($rStat != ''  && isset($reservStatuses[$rStat])) {
                 $reservStatus = $rStat;
             }
 
@@ -126,9 +128,10 @@ class ActiveReservation extends Reservation {
 
         // Set reservation status
         $resv->setStatus($reservStatus);
+        $this->reserveData->setResvStatusType($reservStatuses[$reservStatus]['Type']);
 
         // Cancel reservation?
-        if (Reservation_1::isRemovedStatus($reservStatus)) {
+        if ($resv->isRemovedStatus($reservStatus, $reservStatuses)) {
             $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
             return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
         }
@@ -207,7 +210,7 @@ class ActiveReservation extends Reservation {
         }
 
         // Switch to waitlist status if room is 0
-        if ($resv->isActiveStatus($reservStatus) && $idRescPosted == 0) {
+        if ($resv->isActiveStatus($reservStatus, $reservStatuses) && $idRescPosted == 0) {
             $resv->setStatus(ReservationStatus::Waitlist);
         }
 
@@ -230,7 +233,7 @@ class ActiveReservation extends Reservation {
         }
 
         // Room Choice
-        $this->setRoomChoice($dbh, $resv, $idRescPosted);
+        $this->setRoomChoice($dbh, $resv, $idRescPosted, $reservStatuses);
 
     }
 

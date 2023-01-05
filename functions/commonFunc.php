@@ -485,7 +485,7 @@ function readGenLookupsPDO(\PDO $dbh, $tbl, $orderBy = "Code")
     return $genArray;
 }
 
-function readLookups(\PDO $dbh, $tbl, $orderBy = "Code", $includeUnused = false)
+function readLookups(\PDO $dbh, $category, $orderBy = "Code", $includeUnused = false)
 {
     if ($includeUnused) {
         $where = "";
@@ -493,12 +493,12 @@ function readLookups(\PDO $dbh, $tbl, $orderBy = "Code", $includeUnused = false)
         $where = "and `Use` = 'y'";
     }
 
-    $query = "SELECT `Code`, `Title`, `Use`, 'Show', 'Type', `Other` as 'Icon' FROM `lookups` WHERE `Category` = '$tbl' $where order by `$orderBy`;";
+    $query = "SELECT `Code`, `Title`, `Use`, `Show`, `Type`, `Other` as 'Icon' FROM `lookups` WHERE `Category` = '$category' $where order by `$orderBy`;";
     $stmt = $dbh->query($query);
     $genArray = array();
 
     while ($row = $stmt->fetch(\PDO::FETCH_BOTH)) {
-        $genArray[$row["Code"]] = $row;
+        $genArray[$row['Code']] = $row;
     }
 
     return $genArray;

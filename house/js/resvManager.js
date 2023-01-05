@@ -44,6 +44,7 @@ function resvManager(initData, options) {
     var $pWarning = $('#pWarnings');
     var options = options;
 	var resvStatusCode = '';
+	var resvStatusType = '';
 
     // Exports
     t.getReserve = getReserve;
@@ -1788,7 +1789,7 @@ function resvManager(initData, options) {
 					// Room Default Rate
 					var room = rooms[$('#selResource').val()];
 
-					if (room.defaultRateCat && room.defaultRateCat != '' && (resvStatusCode === 'w' || resvStatusCode === 'uc' || resvStatusCode === 'a')) {
+					if (room.defaultRateCat && room.defaultRateCat != '' && resvStatusType == 'a') {
 						$('#selRateCategory').val(room.defaultRateCat);
 					}
 
@@ -2422,6 +2423,9 @@ function resvManager(initData, options) {
         }
 		if (data.resvStatusCode) {
 			resvStatusCode = data.resvStatusCode
+		}
+		if (data.resvStatusType) {
+			resvStatusType = data.resvStatusType
 		}
 		if (data.prePayment) {
 			prePaymtAmt = data.prePayment;

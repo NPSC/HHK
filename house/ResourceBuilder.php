@@ -40,6 +40,7 @@ use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RateStatus;
 use HHK\House\RegistrationForm\CustomRegisterForm;
 use HHK\Purchase\PriceModel\PriceDaily;
+use HHK\SysConst\ReservationStatusType;
 
 /**
  * ResourceBuilder.php
@@ -161,7 +162,7 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName)
 function getSelections(\PDO $dbh, $tableName, $type, $labels)
 {
     $uS = Session::getInstance();
-
+    $diags = array();
     if ($tableName == $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME)) {
         $tableName = DIAGNOSIS_TABLE_NAME;
     } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
@@ -170,12 +171,12 @@ function getSelections(\PDO $dbh, $tableName, $type, $labels)
 
     // Generate selectors.
     if ($tableName == RESERV_STATUS_TABLE_NAME) {
-        $lookups = readLookups($dbh, $type, "Code", true);
-        $diags = array();
+
+        $lookups = readLookups($dbh, $type, 'Code', true);
 
         // get Cancel Codes
         foreach ($lookups as $lookup) {
-            if (Reservation_1::isRemovedStatus($lookup["Code"])) {
+            if ( isset ($lookup['Code']) && $lookup['Type'] == ReservationStatusType::Cancelled) {
                 $diags[] = $lookup;
             }
         }
@@ -204,13 +205,9 @@ Order by `t`.`List_Order`;");
 
     foreach ($diags as $d) {
 
-        // Remove this item from the replacement entries.
-        $tDiags = removeOptionGroups($diags);
-        unset($tDiags[$d[0]]);
-
         $cbDelMU = '';
 
-        if ($type == GlTypeCodes::m || ($tableName == RESERV_STATUS_TABLE_NAME && ($d[0] == "c1" || $d[0] == "c2" || $d[0] == "c3" || $d[0] == "c4"))) {
+        if ($type == GlTypeCodes::m || ($tableName == RESERV_STATUS_TABLE_NAME && ($d['Type'] == ReservationStatusType::Cancelled))) {
 
             $ary = array(
                 'name' => 'cbDiagDel[' . $d[0] . ']',
@@ -223,6 +220,7 @@ Order by `t`.`List_Order`;");
             }
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
+
         } else if (($type == GlTypeCodes::Demographics && $d[0] == 'z') || $tableName == RESERV_STATUS_TABLE_NAME) {
 
             $cbDelMU = HTMLTable::makeTd('');

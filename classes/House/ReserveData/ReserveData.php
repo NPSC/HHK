@@ -3,7 +3,7 @@
 namespace HHK\House\ReserveData;
 
 use HHK\House\ReserveData\PSGMember\{PSGMember, PSGMemStay};
-use HHK\SysConst\VolMemberType;
+use HHK\SysConst\{VolMemberType, ReservationStatusType};
 use HHK\sec\Labels;
 use HHK\sec\Session;
 
@@ -97,6 +97,7 @@ class ReserveData {
     protected $insistCkinDemog;
     protected $searchTerm;
     protected $resvStatusCode;
+    protected $resvStatusType;
     protected $hasMOA;
     protected $prePayment = 0;
 
@@ -255,6 +256,7 @@ class ReserveData {
             'saveButtonLabel' => $this->saveButtonLabel,
         	'insistCkinDemog' => $this->insistCkinDemog,
             'resvStatusCode' => $this->getResvStatusCode(),
+            'resvStatusType' => $this->getResvStatusType(),
             'hasMOA' => $this->getHasMOA(),
             'prePayment' => $this->getPrePayment(),
         );
@@ -382,6 +384,10 @@ class ReserveData {
 
     public function getResvStatusCode() {
         return $this->resvStatusCode;
+    }
+
+    public function getResvStatusType() {
+        return $this->resvStatusType;
     }
 
     public function getWlNotesLabel() {
@@ -557,6 +563,11 @@ class ReserveData {
 
     public function setSpan($id) {
         $this->span = $id;
+        return $this;
+    }
+
+    public function setResvStatusType($resvStatusType) {
+        $this->resvStatusType = $resvStatusType;
         return $this;
     }
 
