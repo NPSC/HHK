@@ -35,6 +35,7 @@
                         sortable: true,
                         searchable: false,
                         className:'actionBtns',
+                        width: "40px",
                         render: function (data, type, row) {
                             return showFlag(data, row);  
                         }
@@ -46,6 +47,7 @@
                         sortable: false,
                         searchable: false,
                         className:'actionBtns',
+                        width: "50px",
                         render: function (data, type, row) {
                             return createActions(data, row);  
                         }
@@ -55,6 +57,7 @@
                         title: "Date",
                         data: 'Date',
                         sortable: true,
+                        width: "110px",
                         render: function (data, type) {
                             return dateRender(data, type, 'MMM D, YYYY h:mm a');
                         }
@@ -64,14 +67,14 @@
                         title: "User",
                         searchable: true,
                         sortable: true,
-                        data: "User"
+                        data: "User",
+                        width: "100px"
                 },
                 {
                 "targets":4,
                         title: "Note",
                         searchable: true,
                         sortable: false,
-                        width:"70%",
                         className:'noteText',
                         data: "Note",
                         render: function (data, type, row) {

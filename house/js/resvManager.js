@@ -1886,6 +1886,19 @@ function resvManager(initData, options) {
 
             return $container;
         }
+        
+        function setupDocs(psgid, $container) {
+
+            $container.docUploader({
+	    		visitorLabel: visitorLabel,
+	        	psgId: psgid,
+	        	alertMessage: function(text, type) {
+	            	flagAlertMessage(text, type);
+	        	}
+			});
+
+            return $container;
+        }
 
         function setUp(data) {
 
@@ -1923,9 +1936,14 @@ function resvManager(initData, options) {
                 $rDiv.append($(data.resv.rdiv.pay));
             }
 
-            // Reservation notes.
+			// Reservation notes.
             if (data.resv.rdiv.notes !== undefined) {
                 $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
+            }
+
+            // Reservation docs.
+            if (data.resv.rdiv.docViewer !== undefined) {
+                $rDiv.append(setupDocs(data.idPsg, $(data.resv.rdiv.docViewer)));
             }
 
             // waitlist notes

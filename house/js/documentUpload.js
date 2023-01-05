@@ -30,6 +30,7 @@
                     data: "Action",
                     sortable: false,
                     searchable: false,
+                    width: "50px",
                     render: function (data, type, row) {
                         return createActions(data, row);
                     }
@@ -38,6 +39,7 @@
                     "targets": [1],
                     title: "Date",
                     data: 'Date',
+                    width: "70px",
                     render: function (data, type) {
                         return dateRender(data, type, dateFormat);
                     }
@@ -47,7 +49,8 @@
                     title: settings.visitorLabel,
                     searchable: true,
                     sortable: true,
-                    data: "Guest"
+                    data: "Guest",
+                    width: "150px"
                 },
                 {
                     "targets": [3],
@@ -63,7 +66,8 @@
                     sortable: false,
                     searchable: false,
                     visible: true,
-                    data: "User"
+                    data: "User",
+                    width: "100px"
                 },
                 {
                     "targets": [5],
@@ -71,6 +75,7 @@
                     data: "View Doc",
                     sortable: false,
                     searchable: false,
+                    width: "50px",
                     render: function (data, type, row) {
                         return createDownload(data, row);
                     }

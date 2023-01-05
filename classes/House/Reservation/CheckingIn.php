@@ -227,6 +227,12 @@ FROM reservation r
             HTMLContainer::generateMarkup('legend', 'Visit Notes', array('style'=>'font-weight:bold;'))
             , array('id'=>'hhk-noteViewer', 'style'=>'width: 100%; font-size: 0.9em;', 'class'=>'hhk-panel'));
 
+        if ($uS->UseDocumentUpload) {
+            // Reservation Docs
+            $dataArray['docViewer'] = HTMLContainer::generateMarkup('fieldset',
+                HTMLContainer::generateMarkup('legend', "Documents", array('style'=>'font-weight:bold;'))
+                , array('id'=>'vDocs', 'style'=>'width: 100%; font-size:0.9em;', 'class'=>'hhk-panel'));
+        }
 
         // Collapsing header
         $hdr = HTMLContainer::generateMarkup('div',
