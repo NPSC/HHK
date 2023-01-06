@@ -98,7 +98,7 @@ class Reservation {
 
         // Guest has a name_guest record, which means they has one or more psg's
         if ($rData->getIdPsg() > 0 || $hasNameGuestRecord) {
-            return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
+            return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData, $uS->EmergContactReserv));
         }
 
 
