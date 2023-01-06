@@ -178,6 +178,10 @@ class Document {
         EditRS::updateStoredVals($documentRS);
 
         $this->documentRS = $documentRS;
+
+        if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
+            $this->savePDFTitle($dbh);
+        }
     }
 
     /**
@@ -212,9 +216,37 @@ class Document {
 
             $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
             EditRS::updateStoredVals($this->documentRS);
+
+            if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
+                $this->savePDFTitle($dbh);
+            }
         }
 
         return $counter;
+    }
+
+    public function savePDFTitle(\PDO $dbh) {
+
+        $counter = 0;
+
+        if ($this->getIdDocument() > 0 && $this->loadDocument($dbh)) {
+
+            if($this->documentRS->Mime_Type->getStoredVal() == "application/pdf"){
+                $title = utf8_decode($this->documentRS->Title->getStoredVal());
+
+                $doc = $this->documentRS->Doc->getStoredVal();
+                $doc = preg_replace('/\/Title \(.*\)/', '/Title (' . $title . ')', $doc);
+
+                $this->documentRS->Doc->setNewVal($doc);
+
+                $counter = EditRS::update($dbh, $this->documentRS, array($this->documentRS->idDocument));
+                EditRS::updateStoredVals($this->documentRS);
+
+            }
+        }
+
+
+
     }
 
     /**
