@@ -37,10 +37,11 @@ class Family {
     protected $showInsurance;
 
 
-    public function __construct(\PDO $dbh, &$rData) {
+    public function __construct(\PDO $dbh, &$rData, $incldEmContact = FALSE) {
 
         $uS = Session::getInstance();
 
+        $this->IncldEmContact = $incldEmContact;
         $this->patientId = 0;
         $this->patientPrefix = 0;
 
@@ -49,7 +50,6 @@ class Family {
         $this->showGuestAddr = $uS->GuestAddr;
         $this->showDemographics = $uS->ShowDemographics;
         $this->showInsurance = $uS->InsuranceChooser;
-        $this->IncldEmContact = $uS->EmergContactReserv;
 
         // Prefix
         if (isset($uS->addPerPrefix) === FALSE) {

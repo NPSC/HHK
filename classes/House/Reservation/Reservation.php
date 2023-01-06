@@ -59,7 +59,7 @@ class Reservation {
             // Force new PSG, also implies new reservation
             $rData->setIdResv(0);
 
-            return new Reservation($rData, new ReservationRS(), new JoinNewFamily($dbh, $rData));
+            return new Reservation($rData, new ReservationRS(), new JoinNewFamily($dbh, $rData, $uS->EmergContactReserv));
         }
 
         // idResv < 0
@@ -67,7 +67,7 @@ class Reservation {
 
             if ($rData->getIdPsg() > 0) {
                 // Force New Resv for existing PSG
-                return new ActiveReservation($rData, new ReservationRS(), new Family($dbh, $rData));
+                return new ActiveReservation($rData, new ReservationRS(), new Family($dbh, $rData, $uS->EmergContactReserv));
 
             } else {
 
@@ -98,12 +98,12 @@ class Reservation {
 
         // Guest has a name_guest record, which means they has one or more psg's
         if ($rData->getIdPsg() > 0 || $hasNameGuestRecord) {
-            return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData));
+            return new ReserveSearcher($rData, new ReservationRS(), new Family($dbh, $rData, $uS->EmergContactReserv));
         }
 
 
         // idPsg = 0; idResv = 0;
-        return new Reservation($rData, new ReservationRS(), new Family($dbh, $rData));
+        return new Reservation($rData, new ReservationRS(), new Family($dbh, $rData, $uS->EmergContactReserv));
 
     }
 
@@ -150,7 +150,6 @@ WHERE r.idReservation = " . $rData->getIdResv());
             ->setidReferralDoc($rows[0]['idReferralDoc'])
             ->setResvStatusCode($rows[0]['Status']);
 
-
         // Get Resv status codes
         $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
 
@@ -172,7 +171,7 @@ WHERE r.idReservation = " . $rData->getIdResv());
         }
 
         // Turned away, cancelled, etc.
-        return new StaticReservation($rData, $rRs, new Family($dbh, $rData));
+        return new StaticReservation($rData, $rRs, new Family($dbh, $rData, $uS->EmergContactReserv));
 
     }
 
