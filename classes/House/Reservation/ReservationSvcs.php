@@ -16,7 +16,7 @@ use HHK\Tables\PaymentGW\Guest_TokenRS;
 use HHK\House\Room\RoomChooser;
 use HHK\SysConst\RoomRateCategories;
 use HHK\House\RegistrationForm\RegisterForm;
-use HHK\House\RegistrationForm;
+use HHK\House\RegistrationForm\RegistrationForm;
 use HHK\House\TemplateForm\ConfirmationForm;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Member\Role\Agent;
