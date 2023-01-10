@@ -98,28 +98,25 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
     n.Name_Prefix,
     ne.Email,
     v.idVisit,
-    np.idName,
-    MAX(v.Actual_Departure) AS `Last_Departure`
+    v.idPrimaryGuest,
+	v.Actual_Departure
 FROM
     stays s
         JOIN
     visit v ON v.idVisit = s.idVisit
         AND v.Span = s.Visit_Span
-        JOIN
-    hospital_stay hp ON v.idHospital_stay = hp.idHospital_stay
-        JOIN
+	JOIN
     `name` n ON s.idName = n.idName
+		AND n.Member_Status != 'd'
         JOIN
-    `name` np ON hp.idPatient = np.idName
-        AND np.Member_Status != 'd'
-        JOIN
-    name_email ne ON n.idName = ne.idName
+    `name_email` ne ON n.idName = ne.idName
         AND n.Preferred_Email = ne.Purpose
 WHERE
     n.Member_Status != 'd'
         AND v.`Status` = 'co'
-        AND DATE(s.Checkin_Date) < DATE(s.Checkout_Date)
-GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        AND DATE(s.Checkin_Date) < DATE(s.Checkout_Date) and
+        DateDiff(DATE(NOW()), DATE(v.Actual_Departure)) = :delayDays
+GROUP BY s.idName;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
 
         $stmt->execute($paramList);
         $numRecipients = $stmt->rowCount();
@@ -156,7 +153,7 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
 
         foreach ($recipients as $r) {
 
-            $deparatureDT = new \DateTime($r['Last_Departure']);
+            $deparatureDT = new \DateTime($r['Actual_Departure']);
 
             if (isset($r['Email']) && $r['Email'] != '') {
                 // Verify Email Address
@@ -186,14 +183,14 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
                     $this->logMsg .= "Email Address: " . $r['Email'] . " - Email send error: " . $mail->ErrorInfo . '<br>';
                 }
 
-                $this->logMsg .= "Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . "<br>";
+                $this->logMsg .= "Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', PrimaryGuest Id: ' . $r['idPrimaryGuest'] . "<br>";
 
                 //Add Visit note
-                $noteText = "Survey Email sent to " . $r['Email'] . " with subject: " . $subjectLine;
+                $noteText = "Email sent to " . $r['Email'] . " with subject: " . $subjectLine;
                 LinkNote::save($this->dbh, $noteText, $r['idVisit'], Note::VisitLink, '', $uS->username, $uS->ConcatVisitNotes);
 
             } else {
-                $this->logMsg .= "(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', Patient Id: ' . $r['idName'] . ")<br/>";
+                $this->logMsg .= "(Email Address: " . $r['Email'] . ',  Visit Id: ' . $r['idVisit'] . ', PrimaryGuest Id: ' . $r['idPrimaryGuest'] . ")<br/>";
             }
 
         }
@@ -225,7 +222,6 @@ GROUP BY s.idName HAVING DateDiff(NOW(), MAX(v.Actual_Departure)) = :delayDays;"
             $this->logMsg .= "<hr/>Auto Email Results: " . $numRecipients . " messages would be sent. Bad addresses: ".$badAddresses;
             $this->logMsg .= "<p>For ".$labels->getString('MemberType', 'visitor', 'Guest'). "s leaving " . $deparatureDT->format('M j, Y');
             $this->logMsg .= "<br/> Subject Line: " . $subjectLine;
-            //echo "<br/>Body Template:<br/>" . $sForm->template;
         }
 
 
