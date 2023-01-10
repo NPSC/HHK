@@ -769,7 +769,8 @@ if (isset($_POST['btnkfSave'])) {
             $currentHhSize = $rows[0][0];
         }
 
-        $stmt = $dbh->query("Select DISTINCT(`Rate_Category`) from rate_breakpoint;");
+        $stmt = $dbh->query("select Rate_Breakpoint_Category from room_rate WHERE Rate_Breakpoint_Category != '' AND  `Status` = '".RateStatus::Active."' ORDER BY `Rate_Breakpoint_Category`");
+        //$stmt = $dbh->query("Select DISTINCT(`Rate_Category`) from rate_breakpoint;");
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         foreach ($rows as $r) {
@@ -1637,7 +1638,7 @@ $roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->PaymentGateway)
 
 // Room Pricing
 $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-$fTbl = $priceModel->getEditMarkup($dbh, $uS->RoomRateDefault);
+$fTbl = $priceModel->getEditMarkup($dbh, $uS->RoomRateDefault, $uS->IncomeRated);
 
 // Static room rate
 $rp = readGenLookupsPDO($dbh, 'Static_Room_Rate', 'Description');
@@ -1804,7 +1805,7 @@ if ($uS->IncomeRated) {
     $headerTr = HTMLTable::makeTh('Household Size');
 
     // preload all rate categories and make header row
-    $stmt = $dbh->query("select distinct Rate_Category from rate_breakpoint ORDER BY `Rate_Category`");
+    $stmt = $dbh->query("select Rate_Breakpoint_Category from room_rate WHERE Rate_Breakpoint_Category != '' AND  `Status` = '".RateStatus::Active."' ORDER BY `Rate_Breakpoint_Category`");
 
     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
         $ratCats[] = $r[0];
@@ -1813,6 +1814,18 @@ if ($uS->IncomeRated) {
 
     $faTbl->addHeaderTr($headerTr);
 
+    // Limit the breakpoints
+    $catList = '';
+    // Make cdl of rate categories
+    foreach ($ratCats as $c) {
+        if ($catList == '') {
+            $catList .= "'$c'";
+        } else {
+            $catList .= ",'$c'";
+        }
+    }
+
+    $stmt = $dbh->query("Select * from rate_breakpoint where Rate_Category in (" .$catList . ")");
     $rbRs = new Rate_BreakpointRS();
     $rbRows = EditRS::select($dbh, $rbRs, array(), 'and', array($rbRs->Household_Size, $rbRs->Rate_Category));
 
