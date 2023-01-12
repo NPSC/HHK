@@ -659,7 +659,8 @@ var isGuestAdmin,
     dailyCols,
     calendar,
     calStartDate,
-    acceptResvPay;
+    acceptResvPay,
+    holidays;
 
 $(document).ready(function () {
     "use strict";
@@ -698,7 +699,8 @@ $(document).ready(function () {
     showWlNotes = $('#showWlNotes').val();
     wlTitle = $('#wlTitle').val();
     showCharges = $('#showCharges').val();
-	acceptResvPay = $('#acceptResvPay').val()
+	acceptResvPay = $('#acceptResvPay').val();
+	holidays = $.parseJSON($('#holidays').val());
 
     // Current Guests
     cgCols = [
@@ -1093,9 +1095,15 @@ $(document).ready(function () {
         },
 
         slotLabelClassNames: 'hhk-fc-slot-title',
+        
 		slotLaneClassNames: function (info) {
 			if (info.isToday) {
 				return 'hhk-fcslot-today';
+			} else {
+				let strDay = (info.date.getMonth() + 1) + '-' + info.date.getDate();
+				if (holidays.includes(strDay)) {
+					return 'hhk-fcslot-holiday';
+				}
 			}
 		},
 

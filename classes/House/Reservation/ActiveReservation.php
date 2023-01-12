@@ -283,10 +283,11 @@ class ActiveReservation extends Reservation {
         }
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
 
-        if ($resv->isActive()) {
+        if ($resv->isActive($reservStatuses)) {
 
-            $this->setRoomChoice($dbh, $resv, $idResc);
+            $this->setRoomChoice($dbh, $resv, $idResc, $reservStatuses);
 
             if ($this->reserveData->hasError()) {
                 $dataArray[ReserveData::WARNING] = $this->reserveData->getErrors();

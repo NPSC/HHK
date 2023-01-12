@@ -90,7 +90,7 @@ class US_Holidays {
             (
                 "name" => "Birthday of Martin Luther King, Jr.",
                         // 3rd Monday of January
-                "timestamp" => strtotime("third monday ofjanuary $this->year"),
+                "timestamp" => strtotime("third monday of january $this->year"),
                  "type" => self::Federal,
                 'use' => '1'
             ),

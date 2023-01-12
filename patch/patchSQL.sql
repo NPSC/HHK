@@ -17,3 +17,5 @@ DELETE FROM `lookups` WHERE (`Category` = 'ReservStatus') and (`Code` = 'im');
 DELETE FROM `lookups` WHERE (`Category` = 'ReservStatus') and (`Code` = 'p');
 
 INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) VALUES ('specialNoteConfEmail', 'Special Note', 's', 'rf', 'Default: Special Note');
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('Show_Holidays', 'false', 'b', 'c', 'Indicate holidays on the calendar', '1');

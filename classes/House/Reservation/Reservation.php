@@ -1137,9 +1137,13 @@ WHERE
 
     }
 
-    protected function setRoomChoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted, $reservStatuses) {
+    protected function setRoomChoice(\PDO $dbh, Reservation_1 &$resv, $idRescPosted, $reservStatuses = []) {
 
         $uS = Session::getInstance();
+
+        if (count($reservStatuses) == 0) {
+            $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+        }
 
         if ($resv->isActive($reservStatuses) === FALSE) {
             return;

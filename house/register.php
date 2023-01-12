@@ -15,6 +15,7 @@ use HHK\House\Report\RoomReport;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
 use HHK\sec\SysConfig;
+use HHK\US_Holidays;
 
 /**
  * Register.php
@@ -224,6 +225,28 @@ $defaultView = 'timeline' . $weeks . 'weeks';
 // Calendar date increment for date navigation controls.
 $calDateIncrement = intval($uS->CalDateIncrement);
 
+// show holidays
+$holidays = [];
+if ($uS->Show_Holidays) {
+
+    $hol = new US_Holidays($dbh);
+
+    $begin = new \DateTimeImmutable("sunday this week");
+    $end = $begin->add(new \DateInterval('P'. $weeks*4 ."D"));
+
+    $interval = DateInterval::createFromDateString('1 day');
+    $daterange = new DatePeriod($begin, $interval, $end);
+
+
+    foreach($daterange as $date1){
+        if ($hol->is_holiday($date1->getTimestamp())) {
+            $holidays[] = $date1->format('n') . '-' . $date1->format('j');
+        }
+    }
+
+}
+
+
 //Resource grouping controls
 $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
 
@@ -336,7 +359,11 @@ if($uS->useOnlineReferral){
             }
             .hhk-fcslot-today {
                 background-color: #fbec88;
-                opacity: .6;
+                opacity: .4;
+            }
+            .hhk-fcslot-holiday {
+                background-color: #dbfcb5;
+                opacity: .4;
             }
         </style>
     </head>
@@ -520,6 +547,7 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
         <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
+        <input  type="hidden" id="holidays" value='<?php echo json_encode($holidays); ?>' />
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REGISTER_JS; ?>"></script>
