@@ -1100,7 +1100,7 @@ $(document).ready(function () {
 			if (info.isToday) {
 				return 'hhk-fcslot-today';
 			} else {
-				let strDay = (info.date.getMonth() + 1) + '-' + info.date.getDate();
+				let strDay = info.date.getFullYear() + '-' + (info.date.getMonth() + 1) + '-' + info.date.getDate();
 				if (holidays.includes(strDay)) {
 					return 'hhk-fcslot-holiday';
 				}

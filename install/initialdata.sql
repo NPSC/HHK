@@ -702,6 +702,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),
+('UseCleaningBOdays', 'false', 'b', 'hf','', 'Set holidays as housekeeping black-out days','', '1'),
 ('vehicleReportEmail', '', 'ea', 'ha', '', 'Notified of Vehicle Report (configured in Job Scheduler)','', 1),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry','',1),
 ('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays',1),

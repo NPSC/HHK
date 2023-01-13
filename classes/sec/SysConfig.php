@@ -75,6 +75,33 @@ class SysConfig {
 
     }
 
+    public static function getKeyRecord(\PDO $dbh, $tableName, $key) {
+
+        if ($tableName == '' || $key == '') {
+            throw new RuntimeException('System Configuration database table name or key not specified.  ');
+        }
+
+        try{
+            $stmt = $dbh->query("select * from `" . $tableName . "` where `Key` = '$key' ");
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        }catch(\Exception $e){
+            $rows = array();
+        }
+
+        if (count($rows) == 1) {
+
+            $keyrow = $rows[0];
+            //$keyrow['Value'] = self::getTypedVal($rows[0]['Type'], $rows[0]['Value']);
+            return $keyrow;
+
+        }else{
+            throw new RuntimeException('System Configuration key not found: ' . $key);
+        }
+
+    }
+
+
+
     public static function saveKeyValue(\PDO $dbh, $tableName, $key, $value, $category = null) {
 
         if ($tableName == '' || $key == '') {

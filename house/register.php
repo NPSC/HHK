@@ -229,21 +229,20 @@ $calDateIncrement = intval($uS->CalDateIncrement);
 $holidays = [];
 if ($uS->Show_Holidays) {
 
-    $hol = new US_Holidays($dbh);
+    $year = date('Y');
+    // List holidays for three years, past, now, next year
+    for ($i = $year - 1; $i < $year+2; $i++) {
 
-    $begin = new \DateTimeImmutable("sunday this week");
-    $end = $begin->add(new \DateInterval('P'. $weeks*4 ."D"));
+        $hol = new US_Holidays($dbh, $i);
+        $list = $hol->get_list();
 
-    $interval = DateInterval::createFromDateString('1 day');
-    $daterange = new DatePeriod($begin, $interval, $end);
-
-
-    foreach($daterange as $date1){
-        if ($hol->is_holiday($date1->getTimestamp())) {
-            $holidays[] = $date1->format('n') . '-' . $date1->format('j');
+        foreach($list as $h){
+            if ($h['use'] == 1) {
+                $date1 = \DateTime::createFromFormat('U', $h['timestamp']);
+                $holidays[] = $date1->format('Y') . '-' . $date1->format('n') . '-' . $date1->format('j');
+            }
         }
     }
-
 }
 
 

@@ -291,8 +291,13 @@ where ru.idResource_use is null
                 }
             }
 
+            $validHolidays = FALSE;
+            // New parameter controls BO days
+            if ($uS->UseCleaningBOdays) {
+                $validHolidays = TRUE;
+            }
+
             // End date fall on a holiday?
-            $validHolidays = TRUE;
             $endYear = $dtendDate->format('Y');
 
             if ($endYear == $beginHolidays->getYear()) {
@@ -399,7 +404,12 @@ where ru.idResource_use is null
             $dateInfo = getDate(strtotime($r['Expected_Arrival']));
 
             // start date fall on a holiday?
-            $validHolidays = TRUE;
+            $validHolidays = FALSE;
+            // New parameter controls BO days
+            if ($uS->UseCleaningBOdays) {
+                $validHolidays = TRUE;
+            }
+
             $stYear = $stDT->format('Y');
 
             if ($stYear == $beginHolidays->getYear()) {
@@ -491,8 +501,12 @@ where ru.idResource_use is null
                 }
             }
 
+            // New parameter controls BO days
+            $validHolidays = FALSE;
+            if ($uS->UseCleaningBOdays) {
+                $validHolidays = TRUE;
+            }
 
-            $validHolidays = TRUE;
             $edYear = $clDate->format('Y');
 
             if ($edYear == $beginHolidays->getYear()) {
