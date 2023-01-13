@@ -20,4 +20,4 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) 
 
 // New holiday management flags.
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('Show_Holidays', 'false', 'b', 'c', 'Indicate holidays on the calendar', '1');
-INSERT INTO `demo`.`sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('UseCleaningBOdays', 'false', 'b', 'hf', 'Set holidays as housekeeping black-out days', '1');
+INSERT IGNORE INTO `demo`.`sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('UseCleaningBOdays', 'false', 'b', 'hf', 'Set holidays as housekeeping black-out days', '1');
