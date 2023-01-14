@@ -62,14 +62,14 @@ class EmergencyContact implements EmergencyContactInterface {
 
             if ($this->ecRS->idEmergency_contact->getStoredVal() == 0) {
 
-                if ($this->ecRS->Name_Last->getNewVal() != '' && $this->ecRS->Name_First->getNewVal() != '') {
+                if ($this->ecRS->Name_Last->getNewVal() != '' || $this->ecRS->Name_First->getNewVal() != '') {
 
                     // Insert
                     $this->ecRS->idName->setNewVal($id);
 
                     $n = EditRS::insert($dbh, $this->ecRS);
                     if ($n > 0) {
-                        $rtnMsg .= "Emergency Contact Inserted.  ";
+                        $rtnMsg .= "Emergency Contact Saved.  ";
                     }
                 }
 

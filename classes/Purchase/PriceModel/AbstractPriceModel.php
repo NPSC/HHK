@@ -32,12 +32,14 @@ abstract class AbstractPriceModel {
     protected $remainderAmt = 0;
     protected $visitStatus = '';
     protected $priceModelCode = '';
+    public $hasPerGuestCharge = FALSE;
 
 
     public function __construct(array $roomRates) {
 
         $this->roomRates = $roomRates;
         $this->activeRoomRates = array();
+
 
         foreach($roomRates as $rs) {
 
@@ -364,15 +366,16 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
     }
 
     public function getActiveModelRoomRates() {
-        //Return them all
         return $this->activeRoomRates;
     }
 
-    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
+    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = FALSE) {
+
 
         $fTbl = new HTMLTable();
         $fTbl->addHeaderTr(
-            HTMLTable::makeTh('Title')
+            ($financialAssistance ? HTMLTable::makeTh('BP', array('style'=>'width:30px;', 'title'=>'Financial Assistance Breakpoint Category')) : '')
+            .HTMLTable::makeTh('Title')
             .HTMLTable::makeTh('Default')
             .HTMLTable::makeTh('Rate')
             .HTMLTable::makeTh('Retire')
@@ -397,7 +400,7 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
             }
 
             $cbRetire = '';
-            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate && $r->Rate_Breakpoint_Category->getStoredVal() == '') {  //RoomRateCategories::Fixed_Rate_Category && $r->FA_Category->getStoredVal() != RoomRateCategories::FlatRateCategory) {
+            if ($r->FA_Category->getStoredVal()[0] == RoomRateCategories::NewRate && $r->Rate_Breakpoint_Category->getStoredVal() == '') {
 
                 $cbRetire = HTMLInput::generateMarkup('', array('type'=>'checkbox', 'name'=>'cbRetire['.$r->idRoom_rate->getStoredVal().']'));
 
@@ -414,25 +417,27 @@ where PriceModel = '$priceModelCode' order by `breakpointOrder` desc, FA_Categor
             }
 
             $fTbl->addBodyTr(
-                HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
-                .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs))
+                ($financialAssistance ? HTMLTable::makeTd(strtoupper($r->Rate_Breakpoint_Category->getStoredVal()), array('style'=>'text-align:center')) : '')
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($r->Title->getStoredVal(), $titleAttrs))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($r->FA_Category->getStoredVal(), $attrs), array('style'=>'text-align:center'))
                 .($r->FA_Category->getStoredVal() == RoomRateCategories::Fixed_Rate_Category ? HTMLTable::makeTd('') :  HTMLTable::makeTd('$'.HTMLInput::generateMarkup(number_format($r->Reduced_Rate_1->getStoredVal(), 2), $rr1Attrs), array('style'=>'text-align:center;')))
                 .HTMLTable::makeTd($cbRetire, array('style'=>'text-align:center;'))
             );
         }
 
         // New rate
-        $this->newRateMarkup($fTbl);
+        $this->newRateMarkup($fTbl, $financialAssistance);
 
         return $fTbl;
     }
 
-    protected function newRateMarkup(&$fTbl) {
+    protected function newRateMarkup(&$fTbl, $financialAssistance = FALSE) {
 
         // New rate
         $fTbl->addBodyTr(
-            HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
-            .HTMLTable::makeTd('(New)')
+            ($financialAssistance ? HTMLTable::makeTd('', array('style'=>'width:30px;')) : '')
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'ratetitle[0]', 'size'=>'17')))
+            .HTMLTable::makeTd('(New)', array('style'=>'text-align:center'))
             .HTMLTable::makeTd('$'.HTMLInput::generateMarkup('', array('name'=>'rr1[0]', 'size'=>'6')), array('style'=>'text-align:center;'))
             .HTMLTable::makeTd('')
         );

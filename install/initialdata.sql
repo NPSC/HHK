@@ -397,6 +397,7 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Role_Codes','100','Web User','','',0),
 ('Role_Codes','700','Guest','','',0),
 
+('Room_Category','none','(none)','','',0),
 ('Room_Category','dh','House','','',0),
 ('Room_Category','gada','Hospital','','',0),
 ('Room_Category','jph','Private Host','','',0),
@@ -436,6 +437,8 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Special_Needs','c','Cancer','','d',0),
 ('Special_Needs','f','Dev. Challenged','','d',0),
 ('Special_Needs','z','Unknown','','d',1000),
+
+('Staff_Note_Category', 'g', 'General', '', 'h', 0),
 
 ('Static_Room_Rate','rb','Regular Rate','10','',0),
 
@@ -525,19 +528,21 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 REPLACE INTO `lookups` (`Category`,`Code`,`Title`,`Use`,`Show`,`Type`,`Other`) VALUES
 ('FinAppStatus','a','Granted','y','y','',''),
 ('FinAppStatus','n','Not Granted','y','y','',''),
-('ReservStatus','a','Confirmed','y','y','','ui-icon-check'),
-('ReservStatus','uc','Unconfirmed','y','y','','ui-icon-help'),
-('ReservStatus','c','Guest Canceled','y','y','','ui-icon-cancel'),
-('ReservStatus','c1','Canceled 1','y','y','','ui-icon-cancel'),
-('ReservStatus','c2','Canceled 2','n','n','','ui-icon-cancel'),
-('ReservStatus','c3','Canceled 3','n','n','','ui-icon-cancel'),
-('ReservStatus','c4','Canceled 4','n','n','','ui-icon-cancel'),
-('ReservStatus','ns','No Show','y','y','','ui-icon-alert'),
-('ReservStatus','co','Checked Out','y','y','','ui-icon-extlink'),
-('ReservStatus','p','New','y','y','',''),
-('ReservStatus','s','Checked In','y','y','','ui-icon-circle-check'),
-('ReservStatus','td','Turned Away','y','y','','ui-icon-arrowreturnthick-1-s'),
-('ReservStatus','w','Waitlist','y','y','','ui-icon-arrowstop-1-e');
+
+('ReservStatus','a','Confirmed','y','y','a','ui-icon-check'),
+('ReservStatus','uc','Unconfirmed','y','y','a','ui-icon-help'),
+('ReservStatus','w','Waitlist','y','y','a','ui-icon-arrowstop-1-e'),
+('ReservStatus','c','Guest Canceled','y','y','c','ui-icon-cancel'),
+('ReservStatus','td','Turned Away','y','y','c','ui-icon-arrowreturnthick-1-s'),
+('ReservStatus','ns','No Show','y','y','c','ui-icon-alert'),
+('ReservStatus','c1','Canceled 1','y','y','c','ui-icon-cancel'),
+('ReservStatus','c2','Canceled 2','n','n','c','ui-icon-cancel'),
+('ReservStatus','c3','Canceled 3','n','n','c','ui-icon-cancel'),
+('ReservStatus','c4','Canceled 4','n','n','c','ui-icon-cancel'),
+('ReservStatus','c5','Canceled 5','n','n','c','ui-icon-cancel'),
+('ReservStatus','c6','Canceled 6','n','n','c','ui-icon-cancel'),
+('ReservStatus','co','Checked Out','y','n','','ui-icon-extlink'),
+('ReservStatus','s','Checked In','y','n','','ui-icon-circle-check');
 -- ;
 
 
@@ -627,6 +632,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('PaymentGateway','','lu','fg','','Credit Payment Gateway','Pay_Gateway_Name',0),
 ('PayVFeeFirst','true','b','h','','Default check the visit fees payment checkbox','',1),
 ('PreviousNights','0','i','c','','Previous (to HHK) nights to add to nights counter','',1),
+('printScale', '100', 'i','h','','% Default print scale','',1),
 ('PriorPasswords','0','i','pr','','Number of prior passwords user cannot reuse','',1),
 ('RateChangeAuth','false','b','h','','True = only authorized users can change the defailt room rate','',1),
 ('RateGlideExtend','0','i','hf','','(Deprecated) Number of days for the Room Rate Glide to time out after visit check-out','',0),
@@ -648,6 +654,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('RoomPriceModel','d','lu','h','','Room rate price model - Do not change!','Price_Model',0),
 ('RoomRateDefault','e','s','h','','Use the Resource Builder','',1),
 ('RoomsPerPatient','2','i','h','','Number of simultaneous rooms per patient allowed','',1),
+('RoomOccCat', 'none', 'lu', 'c', '', 'Only include this Room Category in room occupancy percentage on calendar', 'Room_Category', '', '1'),
 ('Run_As_Test', 'false', 'b', 'a', '', 'Run As Test flag', '',0),
 ('keyPath', '/etc/pki/hhkapp', 's', 'a', '', 'Filesystem path to SAML and DKIM keys', '','0'),
 ('SessionTimeout','30','i','a','','Number of minutes until an idle session get automatically logged out, 0 = never log out','',1),
@@ -661,9 +668,11 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
 ('ShowRateDetail','false','b','f','','Show Rate detail on statements','',1),
+('ShowRoomOcc', 'false', 'b', 'c', '', 'Show current occupancy percentage on calendar','','1'),
 ('ShowTxPayType','false','b','h','','Always Show the Transfer pay type','',1),
 ('ShowUncfrmdStatusTab','false','b','h','','Show the Unconfirmed reservations tab on the House Register page','',1),
 ('ShowZeroDayStays','false','b','h','','Include 0-day stays and visits in Reports and Pages','',1),
+('Show_Holidays', 'false', 'b', 'c', '', 'Indicate holidays on the calendar'.'', '1'),
 ('sId','11','i','a','','House organization Id','',1),
 ('siteName','Hospitality HouseKeeper','s','a','','House or organization  name','',1),
 ('Site_Maintenance', 'false', 'b', 'a', '', 'Flag to temporarily deny access to the site', '',1),
@@ -693,6 +702,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('useOnlineReferral', 'false', 'b', 'hf','','Enable public online referrals', '', 1),
 ('UseRepeatResv', 'false', 'b', 'h', '','Allow repeating reservations','',0),
 ('UseWLnotes','false','b','hf','','Enable wait list notes feature on reservations','',1),
+('UseCleaningBOdays', 'false', 'b', 'hf','', 'Set holidays as housekeeping black-out days','', '1'),
 ('vehicleReportEmail', '', 'ea', 'ha', '', 'Notified of Vehicle Report (configured in Job Scheduler)','', 1),
 ('VerifyHospDate','false','b','h','','Insist on hospital treatment date entry','',1),
 ('VisitExcessPaid','d','lu','h','','Default place for excess visit payments','ExcessPays',1),
@@ -725,6 +735,7 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('agreementTitle','Agreement','s','rf','','Default: Agreement'),
 ('Survey_Subject','Checkout Survey','s','rf','','Default: Checkout Survey'),
 ('VisitFeeConfirmLabel','Cleaning Fee:','s','rf','','Default: Cleaning Fee:'),
+('specialNoteConfEmail', 'Special Note', 's', 'rf', '', 'Default: Special Note'),
 
 ('noticeToCheckout', 'Notice to Checkout', 's', 'vi', '', 'Default: Notice to Checkout'),
 
@@ -761,6 +772,8 @@ REPLACE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Header`, `Descriptio
 ('primaryGuestAbrev', 'PG', 's', 'mt', '', 'Default: PG'),
 ('namePrefix', 'Prefix', 's', 'mt', '', 'Default: Prefix'),
 ('nickname', 'Nickname', 's', 'mt', '', 'Default: Nickname'),
+('staff', 'Staff', 's', 'mt', '', 'Default: Staff'),
+
 
 ('reservationTab','Reservations','s','g','',''),
 ('reservationTitle','Reservation','s','g','',''),

@@ -289,6 +289,7 @@ order by r.Title;");
                 HTMLSelector::doOptionsMkup($rStts, '', TRUE), array('name'=>'selStatus[0]')))
             .HTMLTable::makeTd(HTMLSelector::generateMarkup(
                 HTMLSelector::doOptionsMkup($oosCodes, '', TRUE), array('name'=>'selOos[0]')))
+            .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'txtNotes[0]')))
             .HTMLTable::makeTd('', array('colspan'=>'2')));
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
@@ -301,13 +302,14 @@ order by r.Title;");
                         HTMLSelector::doOptionsMkup($rStts, $r['Status'], FALSE), array('name'=>'selStatus[' . $r['idResource_use'] . ']')))
                 .HTMLTable::makeTd(HTMLSelector::generateMarkup(
                         HTMLSelector::doOptionsMkup($oosCodes, $r['OOS_Code'], TRUE), array('name'=>'selOos[' . $r['idResource_use'] . ']')))
+                .HTMLTable::makeTd(HTMLInput::generateMarkup($r["Notes"], array('name'=>'txtNotes[' . $r['idResource_use'] . ']')))
                 .HTMLTable::makeTd($r['Updated_By'])
                 .HTMLTable::makeTd($r['Last_Updated'] == '' ? '' : date('M j, Y H:i', strtotime($r['Last_Updated'])))
                     );
         }
 
 
-        $tbl->addHeaderTr(HTMLTable::makeTh('Delete').HTMLTable::makeTh('Start').HTMLTable::makeTh('End').HTMLTable::makeTh('Status').HTMLTable::makeTh('Reason').HTMLTable::makeTh('User').HTMLTable::makeTh('Last Updated'));
+        $tbl->addHeaderTr(HTMLTable::makeTh('Delete').HTMLTable::makeTh('Start').HTMLTable::makeTh('End').HTMLTable::makeTh('Status').HTMLTable::makeTh('Reason').HTMLTable::makeTh('Notes').HTMLTable::makeTh('User').HTMLTable::makeTh('Last Updated'));
 
         $mkup = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('h3', $title) . HTMLContainer::generateMarkup('form', $tbl->generateMarkup(), array('name'=>'statForm')), array('style'=>'font-size:.9em; max-height: 450px; overflow: auto;'));
         return array('tbl'=>$mkup);
@@ -327,6 +329,7 @@ order by r.Title;");
             $endDate = filter_var($post['txtend'][$k], FILTER_SANITIZE_STRING);
             $stat = filter_var($post['selStatus'][$k], FILTER_SANITIZE_STRING);
             $oosCode = filter_var($post['selOos'][$k], FILTER_SANITIZE_STRING);
+            $notes = filter_var($post['txtNotes'][$k], FILTER_SANITIZE_STRING);
 
             $idRescUse = intval($k, 10);
 
@@ -395,6 +398,7 @@ order by r.Title;");
                 $ruRs->idResource->setNewVal($id);
                 $ruRs->Status->setNewVal($stat);
                 $ruRs->OOS_Code->setNewVal($oosCode);
+                $ruRs->Notes->setNewVal($notes);
 
             } else if ($type == 'room') {
                 $reply .= 'Room status is unsupported.  ';

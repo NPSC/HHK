@@ -89,7 +89,7 @@ if (isset($_POST["btnLabelCnf"])) {
 
 if (isset($_POST["btnExtCnf"]) && $serviceFile != '') {
 
-    $tabIndex = 8;
+    $tabIndex = 9;
 
 
     try {
@@ -120,7 +120,7 @@ if (isset($_POST['btnUpdate'])) {
 
 // Zip code file
 if (isset($_FILES['zipfile'])) {
-    $tabIndex = 5;
+    $tabIndex = 6;
 
     try {
 
@@ -136,7 +136,7 @@ if (isset($_FILES['zipfile'])) {
     }
 }
 
-// Save SQL
+// Patch Tab
 if (isset($_POST['btnSaveSQL'])) {
 
     $tabIndex = 1;
@@ -180,6 +180,7 @@ if (isset($_POST['btnPay'])) {
     $wInit->reloadGenLkUps($uS);
 }
 
+// Patch Log
 $logs = '';
 if (isset($_POST['btnLogs'])) {
     $tabIndex = 1;
@@ -216,7 +217,7 @@ try {
 }
 
 if (isset($_POST['btnHoliday'])) {
-    $tabIndex = 4;
+    $tabIndex = 5;
     $holResultMessage = SiteConfig::saveHolidays($dbh, $_POST, $uS->username);
 }
 

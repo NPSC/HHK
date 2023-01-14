@@ -44,6 +44,7 @@ function resvManager(initData, options) {
     var $pWarning = $('#pWarnings');
     var options = options;
 	var resvStatusCode = '';
+	var resvStatusType = '';
 
     // Exports
     t.getReserve = getReserve;
@@ -849,7 +850,7 @@ function resvManager(initData, options) {
                 });
 
                 // Emergency Contact dialog box search text box.
-                createAutoComplete($('#txtemSch'), 3, {cmd: 'filter', add: 'phone', basis: 'g'}, getECRel);
+                createAutoComplete($('#txtemSch'), 3, {cmd: 'filter', add: 'phone', basis: 'psg', psg: data.idPsg}, getECRel);
 
                 // Hover icons
                 $( "ul.hhk-ui-icons li" ).hover(
@@ -1788,7 +1789,7 @@ function resvManager(initData, options) {
 					// Room Default Rate
 					var room = rooms[$('#selResource').val()];
 
-					if (room.defaultRateCat && room.defaultRateCat != '' && (resvStatusCode === 'w' || resvStatusCode === 'uc' || resvStatusCode === 'a')) {
+					if (room.defaultRateCat && room.defaultRateCat != '' && resvStatusType == 'a') {
 						$('#selRateCategory').val(room.defaultRateCat);
 					}
 
@@ -1851,9 +1852,11 @@ function resvManager(initData, options) {
 					if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
 						// Cancel 
 						isCheckedOut = true;
+						$('#cbHeld').prop('checked', true);
 						amtPaid();
 					} else {
 						isCheckedOut = false;
+						$('#cbHeld').prop('checked', false);
 						amtPaid();
 					}
 				});
@@ -2147,23 +2150,35 @@ function resvManager(initData, options) {
                         return false;
                     }
                 }
-            }
-            
-            // Return Pre-Payment?
-            //if (prePaymtAmt > 0 && $(this).val() != 'a' && $(this).val() != 'uc' && $(this).val() != 'w') {
-				
+            } else {
+	
+				// Selected Merchant?
+				if ($('#selccgw').length > 0 && ($('input[name=rbUseCard]:checked').val() == 0 || $('input[name=rbUseCard]').prop('checked') === true)) {
+			
+					$('#selccgw').removeClass('ui-state-highlight');
+			
+					if ($('#selccgw option:selected').length === 0) {
+						$('#tdChargeMsg').text('Select a location.').show('fade');
+						$('#selccgw').addClass('ui-state-highlight');
+						return false;
+					}
+				}
+
+	            // Return Pre-Payment?
 				if (prePaymtAmt > 0 && isCheckedOut && $('#selexcpay').val() == '') {
+					
 					$('#selexcpay').addClass('ui-state-error');
 					flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
 					$('#payChooserMsg').text("Determine how to handle the pre-payment.").show();
+					
 					return false;
+					
 				} else {
 					$('#selexcpay').removeClass('ui-state-error');
 				}
-			//}
+			}
             
             return true;
-
         }
     }
 
@@ -2347,7 +2362,7 @@ function resvManager(initData, options) {
 
 		if (prePaymtAmt > 0 && $('#selexcpay').val() == '') {
 
-			if (isCheckedOut) {
+			if (isCheckedOut) { 
 
 				$('#selexcpay').addClass('ui-state-error');
 				flagAlertMessage("Determine how to handle the pre-payment.", 'alert', $pWarning);
@@ -2358,6 +2373,7 @@ function resvManager(initData, options) {
 
 				$('#selexcpay').removeClass('ui-state-error');
 				isCheckedOut = true;
+				$('#cbHeld').prop('checked', true);
 				amtPaid();
 				return false;
 			}
@@ -2407,6 +2423,9 @@ function resvManager(initData, options) {
         }
 		if (data.resvStatusCode) {
 			resvStatusCode = data.resvStatusCode
+		}
+		if (data.resvStatusType) {
+			resvStatusType = data.resvStatusType
 		}
 		if (data.prePayment) {
 			prePaymtAmt = data.prePayment;

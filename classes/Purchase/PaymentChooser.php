@@ -50,7 +50,7 @@ class PaymentChooser {
 
         $pmp = new PaymentManagerPayment($payType);
 
-        // Return payment type
+        // Return-payment type
         if (isset($post['rtnTypeSel'])) {
             $pmp->setRtnPayType(filter_var($post['rtnTypeSel'], FILTER_SANITIZE_STRING));
         }
@@ -282,7 +282,7 @@ class PaymentChooser {
      * @param boolean $useVisitFee
      * @return string
      */
-    public static function createMarkup(\PDO $dbh, $idGuest, $idResv, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0, $useVisitFee = FALSE) {
+    public static function createMarkup(\PDO $dbh, $idGuest, $idResv, $idRegistration, VisitCharges $visitCharge, AbstractPaymentGateway $paymentGateway, $defaultPayType, $useDeposit, $showFinalPayment = FALSE, $payVFeeFirst = TRUE, $prefTokenId = 0) {
 
         $uS = Session::getInstance();
 
@@ -303,8 +303,10 @@ class PaymentChooser {
         // Get taxed items
         $vat = new ValueAddedTax($dbh);
 
-        if($useVisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '' || $uS->VisitFeeDelayDays == 0)){
+        if($uS->VisitFee && ($visitCharge->getNightsStayed() > $uS->VisitFeeDelayDays || $uS->VisitFeeDelayDays == '' || $uS->VisitFeeDelayDays == 0)){
             $useVisitFee = TRUE;
+        } else {
+            $useVisitFee = FALSE;
         }
 
         // Resrvation Check-in
@@ -313,6 +315,9 @@ class PaymentChooser {
             $chkingIn = TRUE;
         } else {
             $heldAmount = Registration::loadLodgingBalance($dbh, $idRegistration);
+            $otherPrepayments = Registration::loadPrepayments($dbh, $idRegistration);
+            // Remove other reservations' prepayments.
+            $heldAmount = max(0, ($heldAmount - $otherPrepayments));
             $chkingIn = FALSE;
         }
 
@@ -414,13 +419,15 @@ class PaymentChooser {
 
 
         if ($heldAmount > 0) {
+            // Show only the prepayment amount already entered.
             $feesTbl->addBodyTr(
                 HTMLTable::makeTd('Pre-Payment Balance:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
                 . HTMLTable::makeTd(HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '$' . number_format($heldAmount, 2) : ''), array('id'=>'spnHeldAmt'))
-                    .HTMLInput::generateMarkup('', array('id'=>'cbHeld', 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'display:none;', 'data-amt'=> number_format($heldAmount, 2, '.',''))))
+                    .HTMLInput::generateMarkup('', array('id'=>'cbHeld', 'type'=>'checkbox', 'style'=>'display:none;', 'data-prepay'=>'1', 'data-amt'=> number_format($heldAmount, 2, '.',''))))
                 .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
         }
 
+        // Show the prepayment input box.
         $feesTbl->addBodyTr(HTMLTable::makeTd('Pre-Pay Room Fees:', array('class'=>'tdlabel'))
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('id'=>'daystoPay', 'size'=>'6', 'data-vid'=>0, 'placeholder'=>'# days', 'style'=>'text-align: center;')), array('style'=>'text-align:center;'))
             .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'feesPayment', 'size'=>'8', 'class'=>'hhk-feeskeys','style'=>'text-align:right;')), array('style'=>'text-align:right;', 'class'=>'hhk-feesPay'))
@@ -886,7 +893,7 @@ ORDER BY v.idVisit , v.Span;");
                     HTMLTable::makeTd('MOA Balance:', array('class'=>'tdlabel', 'title'=>'Money on Account (MOA)'))
                     . HTMLTable::makeTd(
                             HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbHeld', 'style'=>'margin-left:5px;margin-right:3px;'))
-                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>0))
+                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'style'=>'margin-right:.4em;', 'data-prepay'=>'0', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>0))
                         .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
 
@@ -896,7 +903,7 @@ ORDER BY v.idVisit , v.Span;");
                     HTMLTable::makeTd('Pre-Payment:', array('class'=>'tdlabel', 'title'=>'Reservation Pre-Payment'))
                     . HTMLTable::makeTd(
                         HTMLContainer::generateMarkup('label', "Apply", array('for'=>'cbHeld', 'style'=>'margin-left:5px;margin-right:3px;'))
-                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'margin-right:.4em;', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>1))
+                        .HTMLInput::generateMarkup('', array('name'=>'cbHeld', 'class'=>'hhk-feeskeys', 'type'=>'checkbox', 'checked'=>'checked', 'style'=>'margin-right:.4em;', 'data-prepay'=>'1', 'data-amt'=> number_format($heldAmount, 2, '.',''), 'data-chkingin'=>1))
                         .HTMLContainer::generateMarkup('span', ($heldAmount > 0 ? '($' . number_format($heldAmount, 2) . ')' : ''), array('id'=>'spnHeldAmt')))
                     .HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name'=>'heldAmount', 'size'=>'8', 'class'=>'hhk-feeskeys', 'readonly'=>'readonly', 'style'=>'border:none;text-align:right;')), array('style'=>'text-align:right;')));
 
@@ -1119,8 +1126,8 @@ ORDER BY v.idVisit , v.Span;");
         $tbl->addBodyTr(HTMLTable::makeTh("Card on File") . HTMLTable::makeTh("Name") . HTMLTable::makeTh("Use")
                 , array('style'=>$display, 'class'=>'tblCredit' . $index));
 
-        //
-        if (count($tkRsArray) == 1 || (count($tkRsArray) > 1 && $prefTokenId == 0)) {
+        // Pick a preferred token if one is not specified.
+        if ($prefTokenId < 1 && count($tkRsArray) > 0) {
             $keys = array_keys($tkRsArray);
             $prefTokenId = $tkRsArray[$keys[0]]->idGuest_token->getStoredVal();
         }

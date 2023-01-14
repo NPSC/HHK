@@ -7,6 +7,7 @@ use HHK\Tables\Name\NameDemogRS;
 use HHK\Tables\EditRS;
 use HHK\AuditLog\NameLog;
 use HHK\sec\Labels;
+use HHK\House\Report\ReportFilter;
 
 /**
  * GuestDemog.php
@@ -28,6 +29,9 @@ $pageTitle = $wInit->pageTitle;
 $testVersion = $wInit->testVersion;
 $menuMarkup = $wInit->generatePageMenu();
 
+$filter = new ReportFilter();
+$filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months);
+
 $demos = array();
 
 $whDemos = '';
@@ -36,6 +40,16 @@ $columns = array(
             array("db"=>'Name_Full', "dt"=>"Name"),
             array("db"=>'Patient_Name', "dt"=>Labels::getString('memberType', 'patient', 'Patient') . " Name")
            );
+
+$whStayed = "";
+if(isset($_POST['btnHere'])){
+    $filter->loadSelectedTimePeriod();
+    if ($filter->getReportStart() != '' && $filter->getReportEnd() != '') {
+        $start = $filter->getReportStart();
+        $end = $filter->getQueryEnd();
+        $whStayed = "and idName in (select idName from stays where Span_Start_Date < DATE('$end') and DATE(ifnull(Span_End_Date, now())) >= DATE('$start'))";
+    }
+}
 
 foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 
@@ -63,7 +77,7 @@ foreach (readGenLookupsPDO($dbh, 'Demographics') as $d) {
 }
 
 if(strlen($whDemos) > 0){
-    $whDemos .= ") ";
+    $whDemos .= ") " . $whStayed;
 }
 
 function getDemographicField($tableName, $recordSet) {
@@ -185,8 +199,8 @@ if ($cmd){
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
-        <?php echo HOUSE_CSS; ?>
         <?php echo JQ_UI_CSS; ?>
+        <?php echo HOUSE_CSS; ?>
         <?php echo NOTY_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo GRID_CSS; ?>
@@ -219,6 +233,8 @@ if ($cmd){
         "use strict";
         $('#btnnotind').button();
 
+        <?php echo $filter->getTimePeriodScript(); ?>
+
     });
         </script>
     </head>
@@ -226,6 +242,18 @@ if ($cmd){
             <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
+            <div id="vcategory" class="ui-widget ui-widget-content ui-corner-all hhk-tdbox hhk-visitdialog filterWrapper">
+            	<h4 class="mb-2">Filter by people who stayed in the time frame</h4>
+                <form id="fcat" action="#" method="post">
+                    <?php
+                        echo $filter->timePeriodMarkup()->generateMarkup();
+                    ?>
+                    <div style="text-align:center; margin-top: 10px;">
+                    	<input type="submit" name="btnHere" id="btnHere" value="Apply Filter" class="ui-button ui-corner-all" style="margin-right: 1em;"/>
+                    	<input type="submit" name="btnReset" id="btnReset" value="Show All" class="ui-button ui-corner-all" style="margin-right: 1em;"/>
+                    </div>
+                </form>
+            </div>
             <form autocomplete="off">
             <div class="ui-widget ui-widget-content ui-corner-all hhk-tdbox mt-3 p-2" style="font-size:.8em; max-width: fit-content;">
                 <table id="dataTbl"></table>

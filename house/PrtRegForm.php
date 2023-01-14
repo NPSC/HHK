@@ -52,14 +52,14 @@ if ($checkinDate == '') {
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     if (count($rows) == 0) {
-        $regForm = '<h2 style="margin-top:20px;">No registrations found for ' . $ckinDT->format('M j, Y') . '</h2>';
+        $regForm = '<h2 style="margin-top:20px;">No reservation found for ' . $ckinDT->format('M j, Y') . '</h2>';
     }
 
     foreach ($rows as $r) {
 
         $reservArray = ReservationSvcs::generateCkinDoc($dbh, $r['idReservation'], 0, 0, $wInit->resourceURL . '../conf/registrationLogo.png');
-        //$sty = $reservArray['style'];
 
+        $sty = $reservArray['docs'][0]['style'];
         $regForm .= $reservArray['docs'][0]['doc'] . HTMLContainer::generateMarkup('div', '', array('style'=>'page-break-before: right;'));
 
     }
@@ -73,10 +73,12 @@ if ($checkinDate == '') {
         <?php echo JQ_UI_CSS; ?>
         <?php echo HOUSE_CSS; ?>
         <?php echo FAVICON; ?>
+        <?php echo GRID_CSS; ?>
         <?php echo $sty; ?>
         <script type="text/javascript" src="<?php echo JQ_JS ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS ?>"></script>
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
+
         <script type="text/javascript">
     $(document).ready(function () {
     "use strict";
@@ -89,6 +91,7 @@ if ($checkinDate == '') {
         <form action="#" method="post" name="form1">
             <?php echo $queryForm; ?>
         </form>
-<?php echo $regForm; ?>
+        <div class="PrintArea"><?php echo $regForm; ?></div>
+
     </body>
 </html>

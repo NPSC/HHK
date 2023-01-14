@@ -40,6 +40,7 @@ use HHK\Tables\House\Room_RateRS;
 use HHK\SysConst\RateStatus;
 use HHK\House\RegistrationForm\CustomRegisterForm;
 use HHK\Purchase\PriceModel\PriceDaily;
+use HHK\SysConst\ReservationStatusType;
 
 /**
  * ResourceBuilder.php
@@ -161,7 +162,7 @@ function saveArchive(\PDO $dbh, $desc, $subt, $tblName)
 function getSelections(\PDO $dbh, $tableName, $type, $labels)
 {
     $uS = Session::getInstance();
-
+    $diags = array();
     if ($tableName == $labels->getString('hospital', 'diagnosis', DIAGNOSIS_TABLE_NAME)) {
         $tableName = DIAGNOSIS_TABLE_NAME;
     } else if ($tableName == $labels->getString('hospital', 'location', LOCATION_TABLE_NAME)) {
@@ -170,12 +171,12 @@ function getSelections(\PDO $dbh, $tableName, $type, $labels)
 
     // Generate selectors.
     if ($tableName == RESERV_STATUS_TABLE_NAME) {
-        $lookups = readLookups($dbh, $type, "Code", true);
-        $diags = array();
+
+        $lookups = readLookups($dbh, $type, 'Code', true);
 
         // get Cancel Codes
         foreach ($lookups as $lookup) {
-            if (Reservation_1::isRemovedStatus($lookup["Code"])) {
+            if ( isset ($lookup['Code']) && $lookup['Type'] == ReservationStatusType::Cancelled) {
                 $diags[] = $lookup;
             }
         }
@@ -204,13 +205,9 @@ Order by `t`.`List_Order`;");
 
     foreach ($diags as $d) {
 
-        // Remove this item from the replacement entries.
-        $tDiags = removeOptionGroups($diags);
-        unset($tDiags[$d[0]]);
-
         $cbDelMU = '';
 
-        if ($type == GlTypeCodes::m || ($tableName == RESERV_STATUS_TABLE_NAME && ($d[0] == "c1" || $d[0] == "c2" || $d[0] == "c3" || $d[0] == "c4"))) {
+        if ($type == GlTypeCodes::m || ($tableName == RESERV_STATUS_TABLE_NAME && ($d['Type'] == ReservationStatusType::Cancelled))) {
 
             $ary = array(
                 'name' => 'cbDiagDel[' . $d[0] . ']',
@@ -223,6 +220,7 @@ Order by `t`.`List_Order`;");
             }
 
             $cbDelMU = HTMLTable::makeTd(HTMLInput::generateMarkup('', $ary));
+
         } else if (($type == GlTypeCodes::Demographics && $d[0] == 'z') || $tableName == RESERV_STATUS_TABLE_NAME) {
 
             $cbDelMU = HTMLTable::makeTd('');
@@ -771,7 +769,8 @@ if (isset($_POST['btnkfSave'])) {
             $currentHhSize = $rows[0][0];
         }
 
-        $stmt = $dbh->query("Select DISTINCT(`Rate_Category`) from rate_breakpoint;");
+        $stmt = $dbh->query("select Rate_Breakpoint_Category from room_rate WHERE Rate_Breakpoint_Category != '' AND  `Status` = '".RateStatus::Active."' ORDER BY `Rate_Breakpoint_Category`");
+        //$stmt = $dbh->query("Select DISTINCT(`Rate_Category`) from rate_breakpoint;");
         $rows = $stmt->fetchAll(\PDO::FETCH_NUM);
 
         foreach ($rows as $r) {
@@ -992,6 +991,12 @@ if (isset($_POST['btnhSave'])) {
             $vCSS = filter_var($_POST['hText'][$idHosp], FILTER_SANITIZE_STRING);
         }
 
+        // hide?
+        $hide = 0;
+        if (isset($_POST['hhide'][$idHosp])){
+            $hide = 1;
+        }
+
         // New Hospital?
         if ($title == '' || $type == '') {
             // No new hospitals this time
@@ -1013,6 +1018,7 @@ if (isset($_POST['btnhSave'])) {
         $hospRs->Type->setNewVal($type);
         $hospRs->Description->setNewVal($desc);
         $hospRs->Status->setNewVal('a');
+        $hospRs->Hide->setNewVal($hide);
         $hospRs->Reservation_Style->setNewVal($rCSS);
         $hospRs->Stay_Style->setNewVal($vCSS);
         $hospRs->Updated_By->setNewVal($uS->username);
@@ -1632,7 +1638,7 @@ $roomTable = ResourceView::roomTable($dbh, $uS->KeyDeposit, $uS->PaymentGateway)
 
 // Room Pricing
 $priceModel = AbstractPriceModel::priceModelFactory($dbh, $uS->RoomPriceModel);
-$fTbl = $priceModel->getEditMarkup($dbh, $uS->RoomRateDefault);
+$fTbl = $priceModel->getEditMarkup($dbh, $uS->RoomRateDefault, $uS->IncomeRated);
 
 // Static room rate
 $rp = readGenLookupsPDO($dbh, 'Static_Room_Rate', 'Description');
@@ -1799,7 +1805,7 @@ if ($uS->IncomeRated) {
     $headerTr = HTMLTable::makeTh('Household Size');
 
     // preload all rate categories and make header row
-    $stmt = $dbh->query("select distinct Rate_Category from rate_breakpoint ORDER BY `Rate_Category`");
+    $stmt = $dbh->query("select Rate_Breakpoint_Category from room_rate WHERE Rate_Breakpoint_Category != '' AND  `Status` = '".RateStatus::Active."' ORDER BY `Rate_Breakpoint_Category`");
 
     while ($r = $stmt->fetch(\PDO::FETCH_NUM)) {
         $ratCats[] = $r[0];
@@ -1808,6 +1814,18 @@ if ($uS->IncomeRated) {
 
     $faTbl->addHeaderTr($headerTr);
 
+    // Limit the breakpoints
+    $catList = '';
+    // Make cdl of rate categories
+    foreach ($ratCats as $c) {
+        if ($catList == '') {
+            $catList .= "'$c'";
+        } else {
+            $catList .= ",'$c'";
+        }
+    }
+
+    $stmt = $dbh->query("Select * from rate_breakpoint where Rate_Category in (" .$catList . ")");
     $rbRs = new Rate_BreakpointRS();
     $rbRows = EditRS::select($dbh, $rbRs, array(), 'and', array($rbRs->Household_Size, $rbRs->Rate_Category));
 
@@ -2009,7 +2027,7 @@ foreach ($hospConstraints as $c) {
     $hths .= HTMLTable::makeTh($c->getTitle());
 }
 
-$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire');
+$hths .= HTMLTable::makeTh('Last Updated') . HTMLTable::makeTh('Retire') . HTMLTable::makeTh('Hide from calendar list');
 $hTbl->addHeaderTr($hths);
 
 foreach ($hrows as $h) {
@@ -2058,6 +2076,11 @@ foreach ($hrows as $h) {
     		'type' => 'checkbox'
     );
 
+    $hHideAtr = array(
+        'name' => 'hhide[' . $h['idHospital'] . ']',
+        'type' => 'checkbox'
+    );
+
     $rowAtr = array();
 
     if ($h['Status'] == 'r') {
@@ -2065,10 +2088,13 @@ foreach ($hrows as $h) {
     	$rowAtr['style'] = 'background-color:lightgray;';
     }
 
+    if($h['Hide']){
+        $hHideAtr['checked'] = 'checked';
+    }
+
     $htds .= HTMLTable::makeTd(date('M j, Y', strtotime($h['Last_Updated'] == '' ? $h['Timestamp'] : $h['Last_Updated'])))
-    	. HTMLTable::makeTd(HTMLInput::generateMarkup('', $hdelAtr), array(
-        'style' => 'text-align:center;'
-    ));
+        . HTMLTable::makeTd(HTMLInput::generateMarkup('', $hdelAtr), array('style' => 'text-align:center;'))
+    	. HTMLTable::makeTd(HTMLInput::generateMarkup('', $hHideAtr), array('style' => 'text-align:center;'));
 
     $hTbl->addBodyTr($htds, $rowAtr);
 }
@@ -2089,7 +2115,7 @@ $hTbl->addBodyTr(HTMLTable::makeTd('') . HTMLTable::makeTd(HTMLInput::generateMa
     'type' => 'color',
     'size' => '5'
 ))) . HTMLTable::makeTd('Create New', array(
-    'colspan' => '4'
+    'colspan' => '5'
 )));
 
 $hospTable = $hTbl->generateMarkup();
@@ -2601,7 +2627,7 @@ foreach($demogs as $key=>$demog){
 					directly into the text boxes below and press 'Save'.</p>
                     <?php echo $rateTableErrorMessage; ?>
                     <form method="POST" action="ResourceBuilder.php"
-					name="form1">
+					name="form1" onsubmit="return confirm('Are you sure you want to save?');">
 					<div style="clear: left; float: left;"><?php echo $pricingModelTable; ?></div>
 <?php echo $visitFeesTable . $keysTable . $payTypesTable . $feesTable . $faMarkup; ?>
                         <div style="clear: both"></div>

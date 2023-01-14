@@ -26,15 +26,16 @@ body {
 
 /* override fullcalendar row height */
 
-.fc-datagrid-cell-frame {height: 31px !important}
-.fc-timeline-lane-frame {height: 31px !important}
-.fc-timeline-lane.fc-resource-group>div{ height: 31px !important}
+.fc .fc-timeline-overlap-enabled .fc-timeline-lane-frame .fc-timeline-events {
+	padding-bottom: 0px !important;
+}
+
 
 @media only screen and (max-width: 1024px){
-	.fc-datagrid-cell-frame {height: calc(31px + 1rem) !important}
-	.fc-timeline-lane-frame {height: calc(31px + 1rem) !important}
-	.fc-timeline-lane.fc-resource-group>div{ height: calc(31px) !important}
-	.fc-datagrid-cell.fc-resource-group>div{ height: calc(31px) !important}
+	.fc .fc-event {
+		padding-top:0.5rem !important;
+		padding-bottom: 0.5rem !important;
+	}
 }
 
 .no-close .ui-dialog-titlebar-close {
@@ -416,6 +417,10 @@ div#global-title {
 	.hhk-printmedia {
 		display: inline;
 	}
+	
+	body {
+		zoom: var(--print-scale, 100%);
+	}
 }
 
 .user-agent-spacing * {
@@ -464,6 +469,10 @@ div#global-title {
 .ui-state-active .ui-icon-background {background-color: #fbec88; border: 1px solid #fad42e;}
 
 /* Datatables fixes */
+
+.dt-print-view table.dataTable.hover tbody tr:hover, .dt-print-view table.dataTable.display tbody tr:hover {
+	background-color:initial;
+}
 
 .dataTables_wrapper .dataTables_length select {
 	background-color: white !important;
@@ -691,12 +700,12 @@ div.dt-buttons .dt-button:hover>span {
 #hospBtnWrapper {
 	display:block;
 }
-#hospBtns {
+#hospBtns, #noteCatBtns {
 	font-size: 0.9em;
-	display:inline-block;
+	width:100%;
 }
 
-#hospBtns button{
+#hospBtns button, #noteCatBtns button {
 	color: #fff;
     background-color: #5c9ccc;
     border-style:solid;
@@ -719,24 +728,24 @@ div.dt-buttons .dt-button:hover>span {
     font-family: inherit;
 }
 
-#hospBtns button.hospActive {
+#hospBtns button.hospActive, #noteCatBtns button.catActive  {
 	font-weight: bold;
 	text-decoration: underline;
 	text-decoration-thickness: 2px;
 	text-underline-offset:3px;
 }
 
-#hospBtns button:hover {
+#hospBtns button:hover, #noteCatBtns button:hover {
 	box-shadow: inset 0 0 0 1000px rgb(0 0 0 / 30%)
 }
 
 @media (max-width: 768px){
-	#hospBtns {
+	#hospBtns, #noteCatBtns {
 		display:flex;
 		overflow-x: scroll;
 	}
 	
-	#hospBtns button{
+	#hospBtns button, #noteCatBtns button {
 		min-width: fit-content;
 	}
 }

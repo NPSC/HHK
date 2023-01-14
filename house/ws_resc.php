@@ -27,6 +27,7 @@ use HHK\Document\FormTemplate;
 use HHK\Document\FormDocument;
 use HHK\Member\IndivMember;
 use HHK\SysConst\MemBasis;
+use HHK\Payment\Statement;
 
 
 /**
@@ -777,6 +778,9 @@ try {
             }
             break;
 
+        case "getCssVars":
+            $events = getCssVars($uS);
+            break;
         default:
             $events = array("error" => "Bad Command: \"" . $c . "\"");
     }
@@ -912,7 +916,7 @@ WHERE
         $mkup = HTMLContainer::generateMarkup('div', 'No Payments', $divAttr);
 
         $stmt = $dbh->query("Select * from vlist_inv_pments where idPayment > 0 and idInvoice = $iid");
-        $invoices = Receipt::processPayments($stmt, array());
+        $invoices = Statement::processPayments($stmt, array());
 
         foreach ($invoices as $r) {
 
@@ -960,4 +964,14 @@ WHERE
     }
 
     return array('error' => 'Bad Invoice Action.  ');
+}
+
+
+function getCssVars(Session $uS){
+    header('Content-Type: text/css');
+    $vars = "";
+
+    $vars .= ($uS->printScale ? "--print-scale: " . $uS->printScale . "%;" : '');
+
+    return ":root { " . $vars . " }";
 }

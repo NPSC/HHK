@@ -14,6 +14,8 @@ use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\House\Report\RoomReport;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
+use HHK\sec\SysConfig;
+use HHK\US_Holidays;
 
 /**
  * Register.php
@@ -127,49 +129,49 @@ $diags = readGenLookupsPDO($dbh, 'Diagnosis');
 
 // Daily Log
 $dailyLog = HTMLContainer::generateMarkup('h3', 'Daily Log'
-        . HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrtDaily', 'style'=>'margin-left:5em;font-size:.8em;'))
-        . HTMLInput::generateMarkup('Refresh', array('type'=>'button', 'id'=>'btnRefreshDaily', 'style'=>'margin-left:5em;font-size:.8em;'))
-        , array('style' => 'background-color:#D3D3D3; padding:10px;'))
+    . HTMLInput::generateMarkup('Print', array('type'=>'button', 'id'=>'btnPrtDaily', 'style'=>'font-size:.8em;', 'class'=>'ml-5'))
+        . HTMLInput::generateMarkup('Refresh', array('type'=>'button', 'id'=>'btnRefreshDaily', 'style'=>'font-size:.8em;', 'class'=>'ml-5'))
+        , array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
         . HTMLContainer::generateMarkup('div', "<table id='daily' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divdaily'));
 
 // Currently Checked In guests
-        $currentCheckedIn = HTMLContainer::generateMarkup('h3', 'Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
+        $currentCheckedIn = HTMLContainer::generateMarkup('h3', '<span>Current '.$labels->getString('MemberType', 'visitor', 'Guest').'s</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlCurGuests', 'class'=>'ml-5', 'style'=>'font-size:.9em;')), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
         . HTMLContainer::generateMarkup('div', "<table id='curres' class='display' style='width:100%;' cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divcurres'));
 
 // make registration form print button
 $regButton = HTMLContainer::generateMarkup('span', 'Check-in Date: ' . HTMLInput::generateMarkup('', array('id'=>'regckindate', 'class'=>'ckdate hhk-prtRegForm ml-2 mr-3'))
-        . HTMLInput::generateMarkup('Print Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm mt-3 mt-md-0', 'style'=>'font-size:0.86em;'))
+        . HTMLInput::generateMarkup('Print Default Registration Forms', array('id'=>'btnPrintRegForm', 'type'=>'button', 'data-page'=>'PrtRegForm.php', 'class'=>'hhk-prtRegForm mt-3 mt-md-0', 'style'=>'font-size:0.86em;'))
         , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;',"class"=>"hhk-flex hhk-flex-wrap my-3 my-lg-0 ml-lg-5"));
 
 $currentReservations = HTMLContainer::generateMarkup('h3',
-        $labels->getString('register', 'reservationTab', 'Confirmed Reservations') .
+        '<span>' . $labels->getString('register', 'reservationTab', 'Confirmed Reservations') . '</span>' .
         HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlConfRes', 'style'=>'font-size:.9em;', 'class'=>"ml-5")) . $regButton
         , array('style' => 'background-color:#D3D3D3; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap p-3"))
         . HTMLContainer::generateMarkup('div', "<table id='reservs' class='display' style='width:100%; 'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divreservs'));
 
 if ($uS->ShowUncfrmdStatusTab) {
-    $uncommittedReservations = HTMLContainer::generateMarkup('h3', $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'margin-left:5em;font-size:.9em;')), array('style' => 'background-color:#D3D3D3; padding:10px;'))
+    $uncommittedReservations = HTMLContainer::generateMarkup('h3', '<span>' . $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations') . '</span>' . HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlUcRes', 'style'=>'font-size:.9em;', 'class'=>'ml-5')), array('style' => 'background-color:#D3D3D3;', 'class'=>'p-2'))
         . HTMLContainer::generateMarkup('div', "<table id='unreserv' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divunreserv'));
 }
 
 
 // make waitlist print button
-$wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL ml-2 mr-3'))
-        . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL mt-3 mt-md-0', 'style'=>'font-size:.85em;'))
-        , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap my-3 my-md-0 ml-md-5"));
+//$wlButton = HTMLContainer::generateMarkup('span', 'Date: ' . HTMLInput::generateMarkup(date('M j, Y'), array('id'=>'regwldate', 'class'=>'ckdate hhk-prtWL ml-2 mr-3'))
+//        . HTMLInput::generateMarkup('Print Wait List', array('id'=>'btnPrintWL', 'type'=>'button', 'data-page'=>'PrtWaitList.php', 'class'=>'hhk-prtWL mt-3 mt-md-0', 'style'=>'font-size:.85em;'))
+//        , array('style'=>'padding:9px;border:solid 1px #62A0CE;background-color:#E8E5E5; align-items:baseline;', "class"=>"hhk-flex hhk-flex-wrap my-3 my-md-0 ml-md-5"));
 
 
-$waitlist = HTMLContainer::generateMarkup('h3', 'Waitlist' .
+$waitlist = HTMLContainer::generateMarkup('h3', '<span>Waitlist</span>' .
         HTMLInput::generateMarkup('Excel Download', array('type'=>'submit', 'name'=>'btnDlWlist', 'style'=>'font-size:.9em;', "class"=>"ml-5"))
-        .$wlButton
-        , array('style' => 'background-color:#D3D3D3; align-items:baseline;','class'=>'hhk-flex hhk-flex-wrap p-3'))
+        //.$wlButton
+        , array('style' => 'background-color:#D3D3D3; align-items:baseline;','class'=>'hhk-flex hhk-flex-wrap p-2'))
         . HTMLContainer::generateMarkup('div', "<table id='waitlist' class='display' style='width:100%;'cellpadding='0' cellspacing='0' border='0'></table>", array('id' => 'divwaitlist'));
 
 
 // Hospital Selector
 $shoHosptialName = FALSE;
 $colorKey = '';
-$stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)'");
+$stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)' and Hide = 0");
 
 if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' || strtolower($uS->RibbonColor) == 'hospital')) {
 
@@ -222,6 +224,27 @@ $defaultView = 'timeline' . $weeks . 'weeks';
 
 // Calendar date increment for date navigation controls.
 $calDateIncrement = intval($uS->CalDateIncrement);
+
+// show holidays
+$holidays = [];
+if ($uS->Show_Holidays) {
+
+    $year = date('Y');
+    // List holidays for three years, past, now, next year
+    for ($i = $year - 1; $i < $year+2; $i++) {
+
+        $hol = new US_Holidays($dbh, $i);
+        $list = $hol->get_list();
+
+        foreach($list as $h){
+            if ($h['use'] == 1) {
+                $date1 = \DateTime::createFromFormat('U', $h['timestamp']);
+                $holidays[] = $date1->format('Y') . '-' . $date1->format('n') . '-' . $date1->format('j');
+            }
+        }
+    }
+}
+
 
 //Resource grouping controls
 $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
@@ -281,7 +304,7 @@ if($uS->useOnlineReferral){
 
 ?>
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -335,7 +358,11 @@ if($uS->useOnlineReferral){
             }
             .hhk-fcslot-today {
                 background-color: #fbec88;
-                opacity: .6;
+                opacity: .4;
+            }
+            .hhk-fcslot-holiday {
+                background-color: #dbfcb5;
+                opacity: .4;
             }
         </style>
     </head>
@@ -346,7 +373,7 @@ if($uS->useOnlineReferral){
             <form autocomplete="off">
                 <h2 class="hhk-flex" id="page-title-row">
                 	<span class="mb-3 mb-md-0"><?php echo $wInit->pageHeading;?></span>
-                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest); echo RoomReport::getGlobalStaysCounter($dbh); ?>
+                	<?php echo RoomReport::getGlobalNightsCounter($dbh, $totalRest) . RoomReport::getGlobalStaysCounter($dbh) . RoomReport::getGlobalRoomOccupancy($dbh); ?>
                 	<span id="name-search" class="d-none d-md-inline">Name Search:
                     	<input type="search" class="allSearch" id="txtsearch" autocomplete='off' size="20" title="Enter at least 3 characters to invoke search" />
                 	</span>
@@ -494,6 +521,8 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="visitorLabel" value='<?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>' />
         <input  type="hidden" id="referralFormTitleLabel" value='<?php echo $labels->getString('Register', 'onlineReferralTitle'); ?>' />
         <input  type="hidden" id="reservationLabel" value='<?php echo $labels->getString('GuestEdit', 'reservationTitle'); ?>' />
+        <input  type="hidden" id="reservationTabLabel" value='<?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?>' />
+        <input  type="hidden" id="unconfirmedResvTabLabel" value='<?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?>' />
         <input  type="hidden" id="calDateIncrement" value='<?php echo $calDateIncrement; ?>' />
         <input  type="hidden" id="dateFormat" value='<?php echo $labels->getString("momentFormats", "report", "MMM D, YYYY"); ?>' />
         <input  type="hidden" id="fixedRate" value='<?php echo RoomRateCategories::Fixed_Rate_Category; ?>' />
@@ -516,6 +545,8 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="resourceColumnWidth" value='<?php echo $uS->CalRescColWidth; ?>' />
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
+        <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
+        <input  type="hidden" id="holidays" value='<?php echo json_encode($holidays); ?>' />
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REGISTER_JS; ?>"></script>

@@ -100,10 +100,10 @@ class ConfirmationForm extends AbstractTemplateForm {
         $notesText = '';
 
         if ($editable) {
-            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style'=>'font-weight:bold;')));
+            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', Labels::getString("Referral", "specialNoteConfEmail", "Special Note"), array('style'=>'font-weight:bold;')));
             $notesText .= HTMLContainer::generateMarkup('textarea', '', array('id'=>'tbCfmNotes'. $tabIndex, 'name'=>'tbCfmNotes'.$tabIndex, 'rows'=>'3', 'cols'=>'80'));
         } else if (strlen($text) > 5) {
-            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', "Special Note", array('style'=>'font-weight:bold;')) . "<br/>" . nl2br($text));
+            $notesText .= HTMLContainer::generateMarkup('p', HTMLContainer::generateMarkup('span', Labels::getString("Referral", "specialNoteConfEmail", "Special Note"), array('style'=>'font-weight:bold;')) . "<br/>" . nl2br($text));
             $notesText .= '<br />';
         }
 

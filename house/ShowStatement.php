@@ -241,12 +241,12 @@ if (isset($_REQUEST['cmd'])) {
                 // Make a note in the visit or PSG
                 if($idVisit > 0){
                     $noteText = 'Visit Statement email sent to ' . $emAddr;
-                    LinkNote::save($dbh, $noteText, $idVisit, Note::VisitLink, $uS->username, $uS->ConcatVisitNotes);
+                    LinkNote::save($dbh, $noteText, $idVisit, Note::VisitLink, '', $uS->username, $uS->ConcatVisitNotes);
                 }elseif($idRegistration > 0){
                     $noteText = 'Comprehensive Statement email sent to ' . $emAddr;
                     $reg = new Registration($dbh, 0, $idRegistration);
                     $idPsg = $reg->getIdPsg();
-                    LinkNote::save($dbh, $noteText, $idRegistration, Note::PsgLink, $uS->username, $uS->ConcatVisitNotes);
+                    LinkNote::save($dbh, $noteText, $idRegistration, Note::PsgLink, '', $uS->username, $uS->ConcatVisitNotes);
                 }
             }catch (\Exception $e){
                 $msg .= "Email failed! " . $mail->ErrorInfo;

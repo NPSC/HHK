@@ -18,14 +18,14 @@ namespace HHK\Note;
  */
 class LinkNote {
 
-    public static function save(\PDO $dbh, $noteText, $linkId, $linkType, $userName, $concatNotes = FALSE) {
+    public static function save(\PDO $dbh, $noteText, $linkId, $linkType, $noteCategory, $userName, $concatNotes = FALSE) {
 
         if ($linkType == '' || $linkId < 0) {
             return array('error'=>'The Link Type is missing.');
         }
 
         // Create a new note.
-        $note = Note::createNew($noteText, $userName);
+        $note = Note::createNew($noteText, $userName, $noteCategory);
         $note->saveNew($dbh);
 
         if ($note->getIdNote() > 0) {

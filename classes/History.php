@@ -159,7 +159,9 @@ class History {
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
-        return $this->createMarkup($status, $page, $includeAction, $static);
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+
+        return $this->createMarkup($status, $page, $includeAction, $reservStatuses, $static);
     }
 
     protected function makeResvCanceledStatuses($resvStatuses, $idResv) {
@@ -168,7 +170,7 @@ class History {
 
         foreach ($resvStatuses as $s) {
 
-            if (Reservation_1::isRemovedStatus($s[0])) {
+            if (Reservation_1::isRemovedStatus($s[0], $resvStatuses)) {
                 $markup .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $s[1], array('class'=>'resvStat', 'data-stat'=>$s[0], 'data-rid'=>$idResv)));
             }
         }
@@ -177,12 +179,13 @@ class History {
 
     }
 
-    protected function createMarkup($status, $page, $includeAction, $static = FALSE) {
+    protected function createMarkup($status, $page, $includeAction, $reservStatuses, $static = FALSE) {
 
         $uS = Session::getInstance();
         // Get labels
-
         $labels = Labels::getLabels();
+
+
         $returnRows = array();
 
         foreach ($this->resvEvents as $r) {
@@ -196,10 +199,10 @@ class History {
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
                            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php' . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none; display:block;')))
-                            . ($r['PrePaymt'] > 0 ? '' : $this->makeResvCanceledStatuses($uS->guestLookups['ReservStatus'], $r['idReservation']))
-                           . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
-                            . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
-                            . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($r['PrePaymt'] > 0 ? '' : $this->makeResvCanceledStatuses($reservStatuses, $r['idReservation']))
+                            . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
                           . ($uS->ccgw != '' ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['idGuest'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest Name']))) : '')
                     )), array('class' => 'gmenu'));
             }

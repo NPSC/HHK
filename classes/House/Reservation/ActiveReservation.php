@@ -13,6 +13,7 @@ use HHK\Purchase\PaymentChooser;
 use HHK\Payment\PaymentManager\ResvPaymentManager;
 use HHK\Payment\PaymentResult\PaymentResult;
 use HHK\House\HouseServices;
+use HHK\HTMLControls\HTMLContainer;
 
 
 
@@ -111,11 +112,13 @@ class ActiveReservation extends Reservation {
         // Determine Reservation Status
         $reservStatus = ReservationStatus::Waitlist;
 
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+
         if (isset($post['selResvStatus']) && $post['selResvStatus'] != '') {
 
             $rStat = filter_var($post['selResvStatus'], FILTER_SANITIZE_STRING);
 
-            if ($rStat != ''  && isset($uS->guestLookups['ReservStatus'][$rStat])) {
+            if ($rStat != ''  && isset($reservStatuses[$rStat])) {
                 $reservStatus = $rStat;
             }
 
@@ -125,9 +128,10 @@ class ActiveReservation extends Reservation {
 
         // Set reservation status
         $resv->setStatus($reservStatus);
+        $this->reserveData->setResvStatusType($reservStatuses[$reservStatus]['Type']);
 
         // Cancel reservation?
-        if (Reservation_1::isRemovedStatus($reservStatus)) {
+        if ($resv->isRemovedStatus($reservStatus, $reservStatuses)) {
             $resv->saveReservation($dbh, $resv->getIdRegistration(), $uS->username);
             return new StaticReservation($this->reserveData, $this->reservRs, $this->family);
         }
@@ -179,7 +183,7 @@ class ActiveReservation extends Reservation {
         // Verbal Confirmation Flag
         if (isset($post['cbVerbalConf']) && $resv->getVerbalConfirm() != 'v') {
             $resv->setVerbalConfirm('v');
-            LinkNote::save($dbh, 'Verbal Confirmation is Set.', $resv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
+            LinkNote::save($dbh, 'Verbal Confirmation is Set.', $resv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
         } else {
             $resv->setVerbalConfirm('');
         }
@@ -206,7 +210,7 @@ class ActiveReservation extends Reservation {
         }
 
         // Switch to waitlist status if room is 0
-        if ($resv->isActiveStatus($reservStatus) && $idRescPosted == 0) {
+        if ($resv->isActiveStatus($reservStatus, $reservStatuses) && $idRescPosted == 0) {
             $resv->setStatus(ReservationStatus::Waitlist);
         }
 
@@ -224,12 +228,12 @@ class ActiveReservation extends Reservation {
             $noteText = filter_var($post['taNewNote'], FILTER_SANITIZE_STRING);
 
             if ($noteText != '') {
-                LinkNote::save($dbh, $noteText, $resv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
+                LinkNote::save($dbh, $noteText, $resv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
             }
         }
 
         // Room Choice
-        $this->setRoomChoice($dbh, $resv, $idRescPosted);
+        $this->setRoomChoice($dbh, $resv, $idRescPosted, $reservStatuses);
 
     }
 
@@ -279,10 +283,11 @@ class ActiveReservation extends Reservation {
         }
 
         $resv = Reservation_1::instantiateFromIdReserv($dbh, $idResv);
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
 
-        if ($resv->isActive()) {
+        if ($resv->isActive($reservStatuses)) {
 
-            $this->setRoomChoice($dbh, $resv, $idResc);
+            $this->setRoomChoice($dbh, $resv, $idResc, $reservStatuses);
 
             if ($this->reserveData->hasError()) {
                 $dataArray[ReserveData::WARNING] = $this->reserveData->getErrors();
@@ -326,7 +331,14 @@ class ActiveReservation extends Reservation {
 
                 $this->gotoCheckingIn = 'no';
                 $dataArray = $this->createMarkup($dbh);
-                $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+
+                if ($this->payResult->getReceiptMarkup() == '') {
+
+                    $dataArray['receiptMarkup'] = HTMLContainer::generateMarkup('div', $this->payResult->getReplyMessage());
+                } else {
+
+                    $dataArray['receiptMarkup'] = $this->payResult->getReceiptMarkup();
+                }
 
             }
 
@@ -347,7 +359,7 @@ class ActiveReservation extends Reservation {
             $resv = new Reservation_1($this->reservRs);
             $resvPaymentManager = new ResvPaymentManager($pmp);
 
-            $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php&rid=' . $resv->getIdReservation(), $resv->getIdGuest());
+            $this->payResult = HouseServices::processPayments($dbh, $resvPaymentManager, $resv, 'Reserve.php?rid=' . $resv->getIdReservation(), $resv->getIdGuest());
 
             // Relate Invoice to Reservation
             if (! is_Null($this->payResult) && $this->payResult->getIdInvoice() > 0 && $resv->getIdReservation() > 0) {

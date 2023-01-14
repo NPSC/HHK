@@ -71,7 +71,7 @@ class MemberSearch {
 
     }
 
-    public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '') {
+    public function volunteerCmteFilter(\PDO $dbh, $basis, $fltr, $additional = '', $psg = '') {
         $events = array();
 
         $operation = 'OR';
@@ -311,9 +311,62 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
 
 
+        //search guests/patients based on PSG
+        } else if ($basis == 'psg') {
+
+            $andVc = " and nv.Vol_Code = '" . VolMemberType::Guest . "' ";
 
 
-        } else if ($basis == VolMemberType::Patient) {
+            $query2 = "SELECT distinct n.idName, n.Name_Last, n.Name_First, n.Name_Nickname, ifnull(np.Phone_Num, '') as `Phone`
+            FROM name n join name_volunteer2 nv on n.idName = nv.idName and nv.Vol_Category = 'Vol_Type' $andVc
+            left join name_phone np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
+            left join name_guest ng on n.idName = ng.idName
+            where n.idName>0 and n.Member_Status='a' and n.Record_Member = 1  and idPsg = :idPsg and (LOWER(n.Name_Last) like :ltrln
+            $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrnk)) order by n.Name_Last, n.Name_First;";
+
+            $stmt = $dbh->prepare($query2, array(\PDO::ATTR_CURSOR => \PDO::CURSOR_FWDONLY));
+            $stmt->execute(array(':ltrln' => $this->Name_Last, ':ltrfn' => $this->Name_First, ':ltrnk' => $this->Name_First, ':idPsg'=>$psg));
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+            foreach ($rows as $r) {
+
+                $firstName = preg_replace_callback("/(&#[0-9]+;)/",
+                    function($m) {
+                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                    },
+                    $r["Name_First"]
+                    );
+                $lastName = preg_replace_callback("/(&#[0-9]+;)/",
+                    function($m) {
+                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                    },
+                    $r["Name_Last"]
+                    );
+                $nickName = preg_replace_callback("/(&#[0-9]+;)/",
+                    function($m) {
+                        return mb_convert_encoding($m[1], "UTF-8", "HTML-ENTITIES");
+                    },
+                    $r["Name_Nickname"]
+                    );
+
+                $events[] = array(
+                    'id' => $r["idName"],
+                    'value' => $lastName . ", " . $firstName . ($nickName != '' ? ' (' . $nickName . ')' : '' ) . '  ' . $r['Phone'],
+                    'first' => ($nickName != '' ? $nickName : $firstName ),
+                    'last' => $lastName,
+                    'phone' => $r["Phone"],
+                );
+            }
+
+            if (count($events) == 0) {
+                $events[] = array("id" => 0, "value" => "Nothing Found");
+            }
+
+
+
+
+
+        }else if ($basis == VolMemberType::Patient) {
             // Search patient
 
             $query2 = "SELECT n.idName, n.Name_Last, n.Name_First, n.Name_Nickname

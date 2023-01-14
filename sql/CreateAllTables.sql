@@ -558,6 +558,7 @@ CREATE TABLE if not exists `hospital` (
   `Description` varchar(245) NOT NULL DEFAULT '',
   `Type` varchar(45) NOT NULL DEFAULT '',
   `Status` varchar(4) NOT NULL DEFAULT '',
+  `Hide` TINYINT NOT NULL DEFAULT 0,
   `idLocation` int(11) NOT NULL DEFAULT '0',
   `idName` int(11) NOT NULL DEFAULT '0',
   `Reservation_Style` varchar(145) NOT NULL DEFAULT '',
@@ -1293,6 +1294,7 @@ CREATE TABLE IF NOT EXISTS `note` (
   `idNote` INT NOT NULL AUTO_INCREMENT,
   `User_Name` VARCHAR(45) NOT NULL,
   `Note_Type` VARCHAR(15) NULL,
+  `Category` VARCHAR(15) NULL,
   `flag` BOOL DEFAULT FALSE,
   `Title` VARCHAR(145) NULL,
   `Note_Text` TEXT NULL,
@@ -1728,10 +1730,10 @@ CREATE TABLE if not exists `reservation_guest` (
 -- -----------------------------------------------------
 -- Table `reservation_invoice`
 -- -----------------------------------------------------
-CREATE TABLE `demo`.`reservation_invoice` (
-  `idReservation` INT NOT NULL,
+CREATE TABLE if not exists `reservation_invoice` (
+  `Reservation_Id` INT NOT NULL,
   `Invoice_id` INT NOT NULL,
-  PRIMARY KEY (`idReservation`, `Invoice_id`)
+  PRIMARY KEY (`Reservation_Id`, `Invoice_id`)
 ) ENGINE=InnoDB;
 
 
@@ -2568,9 +2570,8 @@ ALTER TABLE `visit_log`
 --
 -- function `dateDefaultNow`
 --
-DROP function IF EXISTS `datedefaultnow`;
 
-CREATE FUNCTION `datedefaultnow` (dt DateTime)
+CREATE OR REPLACE FUNCTION `datedefaultnow` (dt DateTime)
 RETURNS DATETIME
 DETERMINISTIC NO SQL
 RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() else dt end;
@@ -2579,9 +2580,8 @@ RETURN case when dt is null then now() when DATE(dt) < DATE(now()) then now() el
 --
 -- function `fiscal_year`
 --
-DROP function IF EXISTS `fiscal_year`;
 
-CREATE FUNCTION `fiscal_year` (dt DateTime, adjust int)
+CREATE OR REPLACE FUNCTION `fiscal_year` (dt DateTime, adjust int)
 RETURNS Datetime
 NO SQL DETERMINISTIC
 RETURN DATE_ADD(dt, INTERVAL adjust MONTH);

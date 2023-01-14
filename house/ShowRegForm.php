@@ -48,7 +48,7 @@ $menuMarkup = '';
 $regButtonStyle = 'display:none;';
 $showSignedTab = false;
 $sty = "";
-$blankFormTitle = "Blank Registration Form";
+$blankFormTitle = "Registration Form";
 
 
 // Hosted payment return
@@ -126,7 +126,6 @@ if($idDoc > 0){
     $doc->loadDocument($dbh);
     if($doc->getType() == "reg"){
         $regContents = $doc->getDoc();
-        $blankFormTitle = "Registration Form";
         if($uS->RegForm == "3"){
             $form = new CustomRegisterForm();
             $sty = $form->getStyling();
@@ -174,6 +173,7 @@ if($idVisit || $idResv){
     $signedDocCount = count($signedDocsArray);
     if($signedDocCount > 0){
         $showSignedTab = true;
+        $blankFormTitle = "Blank Registration Form";
         foreach ($signedDocsArray as $r) {
 
             $signedDate = new \DateTime($r['timestamp']);

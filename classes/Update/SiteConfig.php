@@ -12,6 +12,8 @@ use HHK\sec\{Session, SysConfig};
 use HHK\US_Holidays;
 use HHK\sec\Labels;
 use HHK\sec\SecurityComponent;
+use HHK\SysConst\SalutationCodes;
+use HHK\sec\WebInit;
 
 /**
  * SiteConfig.php
@@ -41,6 +43,23 @@ class SiteConfig {
 
         $tbl = new HTMLTable();
         $trs = array();
+        $opts = array(
+            array('true', 'True'),
+            array('false', 'False')
+        );
+
+
+        // Show sys config parms
+        $stbl = new HTMLTable();
+
+        $r = SysConfig::getKeyRecord($dbh, WebInit::SYS_CONFIG, 'UseCleaningBOdays');
+        $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
+        $stbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
+
+        $r = SysConfig::getKeyRecord($dbh, WebInit::SYS_CONFIG, 'Show_Holidays');
+        $inpt = HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $r['Value'], FALSE), array('name' => 'sys_config' . '[' . $r['Key'] . ']'));
+        $stbl->addBodyTr(HTMLTable::makeTd($r['Key'].':', array('class' => 'tdlabel')) . HTMLTable::makeTd($inpt . ' ' . $r['Description']));
+
 
         $year = (int) date("Y");
         $year--;
@@ -95,7 +114,7 @@ class SiteConfig {
             $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan'=>'4', 'style'=>'text-align:center; font-weight:bold;')));
         }
 
-        $tbl->addHeader(HTMLTable::makeTh('Holiday') . HTMLTable::makeTh('Non-Cleaning') .HTMLTable::makeTh($year++)
+        $tbl->addHeader(HTMLTable::makeTh('Holiday') . HTMLTable::makeTh('Enable') .HTMLTable::makeTh($year++)
                 . HTMLTable::makeTh($year++) . HTMLTable::makeTh($year++) . HTMLTable::makeTh($year++));
 
         // Week days
@@ -121,7 +140,9 @@ class SiteConfig {
         }
 
 
-        return HTMLContainer::generateMarkup('h3', 'Annual Non-Cleaning Days') . $tbl->generateMarkup() . HTMLContainer::generateMarkup('h3', 'Weekly Non-Cleaning Days', array('style'=>'margin-top:12px;')) . $wdTbl->generateMarkup();
+        return HTMLContainer::generateMarkup('h3', 'Configuration Parameters') . $stbl->generateMarkup() . '<br/>'
+        . HTMLContainer::generateMarkup('h3', 'Annual Holidays') . $tbl->generateMarkup()
+        . HTMLContainer::generateMarkup('h3', 'Weekly Non-Cleaning Days', array('style'=>'margin-top:12px;')) . $wdTbl->generateMarkup();
     }
 
     public static function checkUploadFile($upFile) {
@@ -367,6 +388,8 @@ class SiteConfig {
                 $dbh->exec("delete from gen_lookups where `Table_Name`='Non_Cleaning_Day' and `Code`='$d'");
             }
         }
+
+        self::saveSysConfig($dbh, $post);
 
         return $resultMsg;
     }

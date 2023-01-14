@@ -431,7 +431,7 @@ $(document).ready(function () {
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
     });
     $('.hhk-selLookup').change(function () {
-        var $sel = $(this),
+        let $sel = $(this),
             table = $(this).find("option:selected").text(),
             type = $(this).val();
 
@@ -467,9 +467,9 @@ $(document).ready(function () {
                 });
     });
     $('.hhk-saveLookup').click(function () {
-        var $frm = $(this).closest('form');
-        var sel = $frm.find('select.hhk-selLookup');
-        var table = sel.find('option:selected').text(),
+        let $frm = $(this).closest('form');
+        let sel = $frm.find('select.hhk-selLookup');
+        let table = sel.find('option:selected').text(),
             type = $frm.find('select').val(),
             $btn = $(this);
 

@@ -23,7 +23,7 @@ use HHK\Tables\Fields\DB_Field;
  * Visit.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2017 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -119,6 +119,7 @@ class Visit {
         $visits = array();
 
         if ($idVisit > 0) {
+            // Existing Visit
 
             if ($span >= 0) {
 
@@ -143,6 +144,7 @@ class Visit {
                 }
             }
         } else if ($idReg > 0 && $idVisit == 0) {
+            // New visit, existing Registration
 
             $visitRS->idRegistration->setStoredVal($idReg);
             $visitRS->Status->setStoredVal(VisitStatus::CheckedIn);
@@ -166,7 +168,7 @@ class Visit {
             }
 
         } else if ($idReg > 0 && $idVisit < 0) {
-            // add a room to this registration
+            // add another visit to this registration
             $visitRS = new VisitRs();
             $visitRS->idRegistration->setNewVal($idReg);
             $visitRS->Span->setNewVal(0);
@@ -769,7 +771,7 @@ class Visit {
 
         $stayRS = NULL;
 
-        // Guest must be already checked in
+        // Guest must be checked in
         foreach ($this->stays as $sRS) {
 
             if ($sRS->Status->getStoredVal() == VisitStatus::CheckedIn && $sRS->idName->getStoredVal() == $idGuest) {
@@ -864,7 +866,7 @@ class Visit {
 	                    $tbl->addHeaderTr(HTMLTable::makeTh('Id') . HTMLTable::makeTh('Guest Name') . HTMLTable::makeTh('Checked-In') . HTMLTable::makeTh('Checked-Out'));
 
 	                    foreach ($gsts as $g) {
-	                        $tbl->addBodyTr(HTMLTable::makeTd($idGuest) . HTMLTable::makeTd($guestName)
+	                        $tbl->addBodyTr(HTMLTable::makeTd($idGuest) . HTMLTable::makeTd($g[0])
 	                                . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkin_Date->getStoredVal())))
 	                                . HTMLTable::makeTd(date('g:ia D M jS, Y', strtotime($stayRS->Checkout_Date->getStoredVal()))));
 	                    }
@@ -912,8 +914,6 @@ class Visit {
 
         $uS = Session::getInstance();
 
-        //$this->loadStays($dbh, '');
-
         $allStays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), '');
 
         // Check each stay status
@@ -934,10 +934,23 @@ class Visit {
             }
         }
 
+        //
+        // Visit has ended.
+        //
 
-        // Visit is done
 
+        // Check for last span > 0 being 0 days long, i.e. checked out same day as change of room or rate.
+        if ($this->visitRS->Span->getStoredVal() > 0) {
 
+            $visitCkedIn = new \DateTime($this->visitRS->Span_Start->getStoredVal());
+            $visitCkedIn->setTime(0, 0);
+            $endDate = new \DateTime($dateDeparted->format('Y-m-d 0:0:0'));
+
+            if ($endDate == $visitCkedIn) {
+                // Delete this new span .
+                $this->removeSpanStub($dbh, $dateDeparted);
+            }
+        }
 
         // Update visit record
         $this->visitRS->Actual_Departure->setNewVal($dateDeparted->format("Y-m-d H:i:s"));
@@ -945,7 +958,6 @@ class Visit {
         $this->visitRS->Status->setNewVal(VisitStatus::CheckedOut);
 
         $this->updateVisitRecord($dbh, $username);
-
 
         // Update resource cleaning status
         $resc = AbstractResource::getResourceObj($dbh, $this->getidResource());
@@ -1047,41 +1059,59 @@ class Visit {
         return TRUE;
     }
 
-    protected function checkOutVisit(\PDO $dbh, $dateDeparted = "", $sendEmail = TRUE) {
-        $msg = "";
+    protected function removeSpanStub(\PDO $dbh, \DateTime $dateDepartedDT){
 
-        // Check out date
-        if ($dateDeparted == "") {
-            $dateDepartedDT = new \DateTime();
-            $depDate = new \DateTime();
-            $depDate->setTime(0, 0, 0);
+        $uS = Session::getInstance();
+
+        // delete this visit span and all its stays
+        $rowsAffected = $dbh->exec("Delete from visit where idVisit = ". $this->getIdVisit()." and Span = ". $this->getSpan() .";");
+
+        if ($rowsAffected == 1){
+            // remove any onleave stuff.
+            $dbh->exec("Delete from visit_onleave where idVisit = ". $this->getIdVisit()." and Span = ". $this->getSpan() .";");
+
+            // Delete stays
+            $dbh->exec("Delete from stays where idVisit = ". $this->getIdVisit()." and Visit_Span = ". $this->getSpan() .";");
+
+            $logText = VisitLog::getDeleteText($this->visitRS, $this->getIdVisit());
+            VisitLog::logVisit($dbh, $this->visitRS->idVisit->getStoredVal(), $this->visitRS->Span->getStoredVal(), $this->visitRS->idResource->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "delete", $uS->username);
+
+            unset($this->visitRSs[$this->getSpan()]);
+            unset($this->stays);
+            $this->resource = NULL;
+
         } else {
-            $dateDepartedDT = new \DateTime($dateDeparted);
-            $depDate = new \DateTime($dateDeparted);
-            $depDate->setTime(0, 0, 0);
+            throw new RuntimeException("Remove stub: Visit record not found.");
         }
 
-        $nowDate = new \DateTime();
-        $nowDate->setTime(0, 0, 0);
+        // Load previous visit span
+        $visitRS = new VisitRS();
+        $visitRS->Span->setStoredVal(($this->getSpan() - 1));
+        $visitRS->idVisit->setStoredVal($this->getIdVisit());
+        $rows = EditRS::select($dbh, $visitRS, Array($visitRS->idVisit, $visitRS->Span));
 
-        if ($depDate > $nowDate) {
-            return "Checkout failed:  Cannot checkout in the future.";
+        if (count($rows) == 0) {
+            throw new RuntimeException("Remove stub: Previous Visit record not found.");
         }
 
-        // CO date validity
-        $stDate = new \DateTime($this->getArrivalDate());
+        // load visitRS
+        $this->visitRS = new VisitRs();
+        EditRS::loadRow($rows[0], $this->visitRS);
 
-        if ($dateDepartedDT < $stDate) {
-            return "But Checkout Failed: The checkout date is before the checkin date.  ";
+        // Load and update previous stays
+        $allStays = self::loadStaysStatic($dbh, $this->getIdVisit(), $this->getSpan(), '');
+        foreach ($allStays as $stayRs) {
+
+            $stayRs->Status->setNewVal(VisitStatus::CheckedOut);
+            $stayRs->Checkout_Date->setNewVal($dateDepartedDT->format('Y-m-d H:i:s'));
+            $stayRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+            $stayRs->Updated_By->setNewVal($uS->username);
+            EditRS::update($dbh, $stayRs, array($stayRs->idStays));
+
+            $logText = VisitLog::getUpdateText($stayRs);
+            VisitLog::logStay($dbh, $this->getIdVisit(), $stayRs->Visit_Span->getStoredVal(), $stayRs->idRoom->getStoredVal(), $stayRs->idStays->getStoredVal(), $stayRs->idName->getStoredVal(), $this->visitRS->idRegistration->getStoredVal(), $logText, "update", $uS->username);
         }
 
-        // Check out each stay
-        foreach ($this->stays as $stayRS) {
-            if ($stayRS->Status->getStoredVal() == VisitStatus::CheckedIn) {
-                $msg .= $this->checkOutGuest($dbh, $stayRS->idName->getStoredVal(), $dateDeparted, '', $sendEmail);
-            }
-        }
-        return $msg;
     }
 
     /**

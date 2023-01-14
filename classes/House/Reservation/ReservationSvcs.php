@@ -16,7 +16,7 @@ use HHK\Tables\PaymentGW\Guest_TokenRS;
 use HHK\House\Room\RoomChooser;
 use HHK\SysConst\RoomRateCategories;
 use HHK\House\RegistrationForm\RegisterForm;
-use HHK\House\RegistrationForm;
+use HHK\House\RegistrationForm\RegistrationForm;
 use HHK\House\TemplateForm\ConfirmationForm;
 use HHK\House\Hospital\HospitalStay;
 use HHK\Member\Role\Agent;
@@ -202,9 +202,9 @@ class ReservationSvcs
                         }
                     }
                     if ($notes != '') { // add special note if any are present
-                        $noteText .= ' with the following as a special note: ' . str_replace('\n', ' ', $notes);
+                        $noteText .= ' with a ' . Labels::getString("Referral", "specialNoteConfEmail", "Special Note") . ': ' . str_replace('\n', ' ', $notes);
                     }
-                    LinkNote::save($dbh, $noteText, $reserv->getIdReservation(), Note::ResvLink, $uS->username, $uS->ConcatVisitNotes);
+                    LinkNote::save($dbh, $noteText, $reserv->getIdReservation(), Note::ResvLink, '', $uS->username, $uS->ConcatVisitNotes);
 
                     $reserv->saveReservation($dbh, $reserv->getIdRegistration(), $uS->username);
 

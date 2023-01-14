@@ -41,7 +41,7 @@ abstract class AbstractPaymentGateway {
     protected $checkManualEntryCheckbox = FALSE;
 
 
-    public function __construct(\PDO $dbh, $gwType = '') {
+    public function __construct(\PDO $dbh, $gwType = '', $tokenId = 0) {
 
         $this->gwType = $gwType;
         $this->setCredentials($this->loadGateway($dbh));
@@ -179,13 +179,13 @@ abstract class AbstractPaymentGateway {
         return EditRS::insert($dbh, $gwRs);
     }
 
-    public static function factory(\PDO $dbh, $gwName, $gwType) {
+    public static function factory(\PDO $dbh, $gwName, $gwType, $tokenId = 0) {
 
         switch (strtolower($gwName)) {
 
             case AbstractPaymentGateway::VANTIV:
 
-                return new VantivGateway($dbh, $gwType);
+                return new VantivGateway($dbh, $gwType, $tokenId);
 
             case AbstractPaymentGateway::INSTAMED:
 

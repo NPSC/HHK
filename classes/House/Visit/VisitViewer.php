@@ -716,7 +716,12 @@ class VisitViewer {
 
         $showGuestNights = FALSE;
         if ($uS->RoomPriceModel == ItemPriceCode::PerGuestDaily) {
-            $showGuestNights = TRUE;
+
+            $pm = $visitCharge->getPriceModel();
+
+            if (!is_null($pm) && $pm->hasPerGuestCharge) {
+                $showGuestNights = TRUE;
+            }
         }
 
         // Any taxes

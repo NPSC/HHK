@@ -7,7 +7,8 @@ use HHK\HTMLControls\HTMLSelector;
 use HHK\sec\Session;
 use HHK\sec\Labels;
 use HHK\HTMLControls\HTMLTable;
-use HHK\SysConst\ReservationStatus;
+use HHK\SysConst\{ReservationStatus, ItemId};
+use HHK\SysConst\InvoiceStatus;
 
 
 /**
@@ -54,7 +55,7 @@ class ReservationReport extends AbstractReport implements ReportInterface {
     public function makeQuery(): void{
         $uS = Session::getInstance();
 
-        $whDates = " r.Expected_Arrival <= '" . $this->filter->getReportEnd() . "' and ifnull(r.Actual_Departure, r.Expected_Departure) >= '" . $this->filter->getReportStart() . "' ";
+        $whDates = " date(ifnull(r.Actual_Arrival, r.Expected_Arrival)) <= '" . $this->filter->getReportEnd() . "' and date(ifnull(r.Actual_Departure, r.Expected_Departure)) >= '" . $this->filter->getReportStart() . "' ";
 
         // Hospitals
         $whHosp = implode(",", $this->filter->getSelectedHosptials());
@@ -81,18 +82,21 @@ class ReservationReport extends AbstractReport implements ReportInterface {
         if ($uS->AcceptResvPaymt) {
             $prePayQuery = "  case when s.Value = 'true' AND r.`Status` in ('" . ReservationStatus::Committed . "', '" . ReservationStatus::UnCommitted . "', '" . ReservationStatus::Waitlist . "') THEN
                 ifnull(
-                    (select sum(il.Amount)
-            		from
-            		    invoice_line il
-            		        join
-            		    invoice i ON il.Invoice_Id = i.idInvoice
-            		where
-            		    il.Item_Id = 10
-            		        and i.Deleted = 0
-            		        and il.Deleted = 0
-            		        and i.Status = 'p'
-            		        and i.idGroup = r.idRegistration), 0)
-                ELSE 0 END  as `PrePaymt`, ";
+	        (select sum(invoice_line.Amount)
+			from
+	        invoice_line
+	            join
+	        invoice ON invoice_line.Invoice_Id = invoice.idInvoice
+			        AND invoice_line.Item_Id = " . ItemId::LodgingMOA . "
+			        AND invoice_line.Deleted = 0
+	            join
+	    	reservation_invoice ON invoice.idInvoice = reservation_invoice.Invoice_Id
+		    where
+		        invoice.Deleted = 0
+		        AND invoice.Order_Number = 0
+                AND reservation_invoice.Reservation_Id = r.idReservation
+		        AND invoice.`Status` = '" .InvoiceStatus::Paid . "'), 0)
+            ELSE 0 END  as `PrePaymt`, ";
 
         }
 
@@ -280,7 +284,7 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
 
         // Reservation pre-payment
         if ($uS->AcceptResvPaymt) {
-            $cFields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 'integer', '10');
+            $cFields[] = array('Pre-Paymt', 'PrePaymt', 'checked', '', 's', '_(* #,##0.00_);_(* \(#,##0.00\);_(* "-"??_);_(@_)');
         }
 
         $cFields[] = array("Status", 'Status_Title', 'checked', '', 'string', '15');
@@ -350,7 +354,7 @@ where s.Key = 'AcceptResvPaymt' AND " . $whDates . $whHosp . $whAssoc . $whStatu
         foreach($this->resultSet as $k=>$r) {
             $this->resultSet[$k]['Status_Title'] = HTMLContainer::generateMarkup('a', $r['Status_Title'], array('href'=>$uS->resourceURL . 'house/Reserve.php?rid=' . $r['idReservation']));
             $this->resultSet[$k]['Name_Last'] = HTMLContainer::generateMarkup('a', $r['Name_Last'], array('href'=>$uS->resourceURL . 'house/GuestEdit.php?id=' . $r['idGuest'] . '&psg=' . $r['idPsg']));
-            $this->resultSet[$k]['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0));
+            if($uS->AcceptResvPaymt){ $this->resultSet[$k]['PrePaymt'] = ($r['PrePaymt'] == 0 ? '' : '$' . number_format($r['PrePaymt'], 0)); };
         }
 
         return parent::generateMarkup($outputType);

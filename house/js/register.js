@@ -591,6 +591,35 @@ function refreshPayments() {
 	$('#btnFeesGo').click();
 }
 
+function getDtBtns(title){
+		return [
+            {
+                extend: "print",
+                className: "ui-corner-all",
+                autoPrint: true,
+                paperSize: "letter",
+                exportOptions: {
+                	columns: ":not('.noPrint')",
+                },
+                title: function(){
+                    return title;
+                },
+                messageBottom: function(){
+                	var now = moment().format("MMM D, YYYY") + " at " + moment().format("h:mm a");
+                	return '<div style="padding-top: 10px; position: fixed; bottom: 0; right: 0">Printed on '+now+'</div>';
+                },
+                customize: function (win) {
+                    $(win.document.body)
+                        .css("font-size", "0.9em");
+
+                    $(win.document.body).find("table")
+                        //.addClass("compact")
+                        .css("font-size", "inherit");
+                }
+            }
+    	];
+    }
+
 var isGuestAdmin,
     pmtMkup,
     rctMkup,
@@ -602,6 +631,8 @@ var isGuestAdmin,
     visitorLabel,
     referralFormTitleLabel,
     reservationLabel,
+    reservationTabLabel,
+    unconfirmedResvTabLabel,
     challVar,
     defaultView,
     defaultEventColor,
@@ -628,7 +659,8 @@ var isGuestAdmin,
     dailyCols,
     calendar,
     calStartDate,
-    acceptResvPay;
+    acceptResvPay,
+    holidays;
 
 $(document).ready(function () {
     "use strict";
@@ -645,6 +677,8 @@ $(document).ready(function () {
     guestLabel = $('#guestLabel').val();
     referralFormTitleLabel = $('#referralFormTitleLabel').val();
     reservationLabel = $('#reservationLabel').val();
+    reservationTabLabel = $('#reservationTabLabel').val();
+    unconfirmedResvTabLabel = $('#unconfirmedResvTabLabel').val();
     challVar = $('#challVar').val();
     defaultView = $('#defaultView').val();
     defaultEventColor = $('#defaultEventColor').val();
@@ -665,11 +699,12 @@ $(document).ready(function () {
     showWlNotes = $('#showWlNotes').val();
     wlTitle = $('#wlTitle').val();
     showCharges = $('#showCharges').val();
-	acceptResvPay = $('#acceptResvPay').val()
+	acceptResvPay = $('#acceptResvPay').val();
+	holidays = $.parseJSON($('#holidays').val());
 
     // Current Guests
     cgCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false},
+            {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
             {data: visitorLabel+' First', title: visitorLabel+' First'},
             {data: visitorLabel+' Last', title: visitorLabel+' Last'},
             {data: 'Checked In', title: 'Checked In', render: function (data, type) {return dateRender(data, type, dateFormat);}},
@@ -691,7 +726,7 @@ $(document).ready(function () {
 
     // Reservations
     rvCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false},
+            {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'},
             {data: 'Expected Arrival', title: 'Expected Arrival', render: function (data, type) {return dateRender(data, type, dateFormat);}},
@@ -724,7 +759,7 @@ $(document).ready(function () {
 
     //Waitlist
     wlCols = [
-            {data: 'Action', title: 'Action', sortable: false, searchable:false},
+            {data: 'Action', title: 'Action', sortable: false, searchable:false, "className": "noPrint"},
             {data: 'Guest First', title: visitorLabel+' First'},
             {data: 'Guest Last', title: visitorLabel+' Last'}];
 
@@ -839,7 +874,7 @@ $(document).ready(function () {
     $('#statEvents').dialog({
         autoOpen: false,
         resizable: true,
-        width: getDialogWidth(830),
+        width: getDialogWidth(1000),
         modal: true,
         title: 'Manage Status Events'
     });
@@ -860,11 +895,12 @@ $(document).ready(function () {
     });
 
 	
-    $(document).mousedown(function (event) {
+    $(document).mousedown(function (e) {
+        var roomChooser = $('div#pudiv');
         
         // remove room chooser
-        if (event.target.id && event.target.id !== undefined && event.target.id !== 'pudiv') {
-            $('div#pudiv').remove();
+        if (!roomChooser.is(e.target) && roomChooser.has(e.target).length === 0) {
+            roomChooser.remove();
         }
 
     });
@@ -945,6 +981,7 @@ $(document).ready(function () {
 	//change default view on mobile + tablet
 	if(window.innerWidth < 576){ //mobile
 		defaultView = 'timeline4days';
+		dateIncrementObj = {days: 4};
 	}else if(window.innerWidth <= 768){ //tablet
 		defaultView = 'timeline1weeks';
 	}
@@ -1045,9 +1082,15 @@ $(document).ready(function () {
         },
 
         slotLabelClassNames: 'hhk-fc-slot-title',
+        
 		slotLaneClassNames: function (info) {
 			if (info.isToday) {
 				return 'hhk-fcslot-today';
+			} else {
+				let strDay = info.date.getFullYear() + '-' + (info.date.getMonth() + 1) + '-' + info.date.getDate();
+				if (holidays.includes(strDay)) {
+					return 'hhk-fcslot-holiday';
+				}
 			}
 		},
 
@@ -1521,6 +1564,8 @@ $(document).ready(function () {
                 });
             }
             if(ui.newTab.prop('id') === 'liStaffNotes'){
+            	var staffNoteCats = JSON.parse($('#staffNoteCats').val());
+            
             	$('.staffNotesDiv').empty().notesViewer({
 					linkType: 'staff',
 					newNoteAttrs: {id:'staffNewNote', name:'staffNewNote'},
@@ -1529,7 +1574,8 @@ $(document).ready(function () {
 					defaultLengthMenu: [[5,10,25,50],["5","10","25","50"]],
 					alertMessage: function(text, type) {
 					    flagAlertMessage(text, type);
-					}
+					},
+					staffNoteCats: staffNoteCats,
 			    });
             }
             
@@ -1568,8 +1614,6 @@ $(document).ready(function () {
                 }
             }
         });
-	
-
 
     $('#curres').DataTable({
        ajax: {
@@ -1585,7 +1629,8 @@ $(document).ready(function () {
            });
        },
        columns: cgCols,
-       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY")),
+       "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
     
     
@@ -1603,7 +1648,8 @@ $(document).ready(function () {
            });
        },
        columns: rvCols,
-       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       "buttons": getDtBtns(reservationTabLabel + " - " + moment().format("MMM D, YYYY")),
+       "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
     
     if ($('#unreserv').length > 0) {
@@ -1621,7 +1667,8 @@ $(document).ready(function () {
            		});
            },
            columns: rvCols,
-       		"dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+           "buttons": getDtBtns(unconfirmedResvTabLabel + " - " + moment().format("MMM D, YYYY")),
+       		"dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
         });
     }
     
@@ -1640,7 +1687,12 @@ $(document).ready(function () {
            });
        },
        columns: wlCols,
-       "dom": '<"top"if><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       "buttons": getDtBtns("Waitlist - " + moment().format("MMM D, YYYY")),
+       "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
     });
-
+    
+    //move datatable buttons to title row
+    $("#vstays, #vresvs, #vuncon, #vdaily, #vwls").each(function(){
+    	$(this).find('h3 span:first').after($(this).find(".dt-buttons button").css("font-size", "0.9em").addClass("ml-5"));
+	});
 });

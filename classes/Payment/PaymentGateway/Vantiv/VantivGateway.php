@@ -19,6 +19,7 @@ use HHK\sec\{SecurityComponent, Session, SysConfig};
 use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Exception\{RuntimeException, PaymentException};
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
+use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
 
 /**
  * VantivGateway.php
@@ -44,6 +45,21 @@ class VantivGateway extends AbstractPaymentGateway {
     protected $paymentPageLogoUrl = '';
     protected $manualKey = FALSE;
 
+    public function __construct(\PDO $dbh, $gwType = '', $tokenId = 0) {
+
+        // Glean gwType if not there.
+        if ($gwType == '' && $tokenId > 0) {
+
+            // Find merchant (gwType) from the token.
+            $tknRs = CreditToken::getTokenRsFromId($dbh, $tokenId);
+
+            if (CreditToken::hasToken($tknRs)) {
+                $gwType = $tknRs->Merchant->getStoredVal();
+            }
+        }
+
+        parent::__construct($dbh, $gwType);
+    }
 
     public static function getPaymentMethod() {
         return PaymentMethod::Charge;
@@ -735,7 +751,8 @@ class VantivGateway extends AbstractPaymentGateway {
         $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
         if (count($rows) < 1) {
-            $rows[0] = array();
+            $rows[0] = [];
+            //throw new PaymentException('Payment Gateway Merchant "' . $this->getGatewayType() . '" is not found for '.$this->getGatewayName());
         }
 
         $gwRs = new CC_Hosted_GatewayRS();
@@ -859,6 +876,10 @@ class VantivGateway extends AbstractPaymentGateway {
         // Spacer
         $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
 
+        if (count($rows) == 0) {
+            $rows[0] = $gwRs;
+        }
+
         foreach ($rows as $r) {
 
             $gwRs = new CC_Hosted_GatewayRS();
@@ -946,6 +967,10 @@ class VantivGateway extends AbstractPaymentGateway {
         // Use POS
         if (isset($post['selCardSwipe'])) {
             SysConfig::saveKeyValue($dbh, 'sys_config', 'CardSwipe', filter_var($post['selCardSwipe'], FILTER_SANITIZE_STRING));
+        }
+
+        if (count($rows) == 0) {
+            $rows[0] = $ccRs;
         }
 
 

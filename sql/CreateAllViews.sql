@@ -157,6 +157,7 @@ CREATE OR REPLACE VIEW `vstaff_notes` AS
         n.idNote AS `Action`,
         n.flag,
         n.User_Name,
+        n.Category,
         n.Title,
         n.Note_Text,
         n.`Timestamp`
@@ -2395,18 +2396,22 @@ CREATE or Replace VIEW `vreservation_events` AS
         r.`Checkin_Notes`,
         ifnull(hs.idPsg, 0) as `idPsg`,
         ifnull(rg.idGuest, 0) as `Patient_Staying`,
-        CASE WHEN s.Value = 'true' AND r.`Status` in ('a', 'uc',  'w') THEN ifnull((select sum(il.Amount)
+        CASE WHEN s.Value = 'true' AND r.`Status` in ('a', 'uc',  'w') THEN ifnull(
+	        (select sum(invoice_line.Amount)
 			from
-			    invoice_line il
-			        join
-			    invoice i ON il.Invoice_Id = i.idInvoice
-			where
-			    il.Item_Id = 10
-			        and i.Deleted = 0
-			        and il.Deleted = 0
-			        and i.Status = 'p'
-			        and i.idGroup = r.idRegistration), 0)
-			ELSE 0 END as `PrePaymt`
+	        invoice_line
+	            join
+	        invoice ON invoice_line.Invoice_Id = invoice.idInvoice 
+			        AND invoice_line.Item_Id = 10 
+			        AND invoice_line.Deleted = 0
+	            join
+	    	reservation_invoice ON invoice.idInvoice = reservation_invoice.Invoice_Id
+		    where
+		        invoice.Deleted = 0
+		        AND invoice.Order_Number = 0
+		        AND reservation_invoice.Reservation_Id = r.idReservation
+		        AND invoice.`Status` = 'p'), 0)
+		ELSE 0 END as `PrePaymt`
     from
         `reservation` `r`
             left join

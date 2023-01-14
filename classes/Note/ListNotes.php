@@ -88,6 +88,7 @@ class ListNotes {
             case Note::StaffLink:
                 $dbView = 'vstaff_notes';
                 $whereClause = "";
+                $columns[] = array('db'=> 'Category', 'dt'=>'Category');
                 break;
             case Note::MemberLink:
 

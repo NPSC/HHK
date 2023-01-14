@@ -291,8 +291,13 @@ where ru.idResource_use is null
                 }
             }
 
+            $validHolidays = FALSE;
+            // New parameter controls BO days
+            if ($uS->UseCleaningBOdays) {
+                $validHolidays = TRUE;
+            }
+
             // End date fall on a holiday?
-            $validHolidays = TRUE;
             $endYear = $dtendDate->format('Y');
 
             if ($endYear == $beginHolidays->getYear()) {
@@ -399,7 +404,12 @@ where ru.idResource_use is null
             $dateInfo = getDate(strtotime($r['Expected_Arrival']));
 
             // start date fall on a holiday?
-            $validHolidays = TRUE;
+            $validHolidays = FALSE;
+            // New parameter controls BO days
+            if ($uS->UseCleaningBOdays) {
+                $validHolidays = TRUE;
+            }
+
             $stYear = $stDT->format('Y');
 
             if ($stYear == $beginHolidays->getYear()) {
@@ -491,8 +501,12 @@ where ru.idResource_use is null
                 }
             }
 
+            // New parameter controls BO days
+            $validHolidays = FALSE;
+            if ($uS->UseCleaningBOdays) {
+                $validHolidays = TRUE;
+            }
 
-            $validHolidays = TRUE;
             $edYear = $clDate->format('Y');
 
             if ($edYear == $beginHolidays->getYear()) {
@@ -750,7 +764,7 @@ where ru.idResource_use is null
         $idCounter = 10;
 
         $query1 = "SELECT
-    ru.*, g.Description AS `StatusTitle`, ifnull(gr.Description, 'Undefined') as `reasonTitle`
+    ru.*, g.Description AS `StatusTitle`, ifnull(gr.Description, 'Unspecified') as `reasonTitle`
 FROM
     resource_use ru
         LEFT JOIN
@@ -787,7 +801,7 @@ where DATE(ru.Start_Date) < DATE('" . $endDate->format('Y-m-d') . "') and ifnull
                 'kind' => CalEventKind::OOS,
                 'resourceId' => "id-" . $r["idResource"],
                 'idResc' => $r["idResource"],
-                'reason' => $r['reasonTitle'],
+                'reason' => $r['reasonTitle'] . ($r['Notes'] != '' ? " - " . $r['Notes']: ''),
             		'start' => $stDateDT->format('Y-m-d\TH:i:00'),
             		'end' => $enDateDT->format('Y-m-d\TH:i:00'),
                 'title' => $r['StatusTitle'],
