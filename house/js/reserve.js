@@ -336,18 +336,17 @@ $(document).ready(function() {
 
         // MRN search
         createRoleAutoComplete($('#gstMRNSearch'), 3, {cmd: 'mrn'}, getGuest);
-        
+
         // Phone number search
 		createRoleAutoComplete($('#gstphSearch'), 5, {cmd: 'phone'}, getGuest);
-		
+
         $guestSearch.keypress(function() {
             $(this).removeClass('ui-state-highlight');
         });
 
         $guestSearch.focus();
     }
-    
-    
+
 });
 
 

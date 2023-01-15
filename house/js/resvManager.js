@@ -661,7 +661,7 @@ function resvManager(initData, options) {
             // Remove any previous entries.
             for (var i in data.famSection.mem) {
 
-                var item = people.findItem('pref', data.famSection.mem[i].pref);
+                let item = people.findItem('pref', data.famSection.mem[i].pref);
 
                 if (item) {
                     $famTbl.find('tr#' + item.id + 'n').remove();
@@ -839,7 +839,7 @@ function resvManager(initData, options) {
                 });
 
                 // Add people search
-                createAutoComplete($('#txtPersonSearch'), 3, {cmd: 'role', gp:'1'}, function (item) {
+                createRoleAutoComplete($('#txtPersonSearch'), 3, {cmd: 'guest'}, function (item) {
                     addGuest(item, data, $('#txtPersonSearch').val());
                 });
 
