@@ -237,6 +237,27 @@ function saveResource(idresc, type, clas) {
 
 $(document).ready(function () {
     "use strict";
+    
+	$('#formBuilder').hhkFormBuilder({
+		labels: {
+			hospital: "<?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>",
+			guest: "<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>",
+			patient: "<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>",
+			diagnosis: "<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>",
+			location: "<?php echo $labels->getString('hospital', 'location', 'Unit'); ?>",
+			referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
+			treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
+			treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>",
+			mrn: "<?php echo $labels->getString('hospital', 'MRN', 'MRN'); ?>",
+			nickname: "<?php echo $labels->getString('MemberType', 'nickname', 'Nickname'); ?>"
+		},
+		fieldOptions: {
+			county: "<?php echo $uS->county; ?>",
+			doctor: "<?php echo $uS->Doctor; ?>",
+			referralAgent: "<?php echo $uS->ReferralAgent; ?>"
+		},
+		demogs: $.parseJSON($('#frmDemog').val())
+	});
 
     var tabIndex = parseInt($('#tabIndex').val());
     $('#btnMulti, #btnkfSave, #btnNewK, #btnNewF, #btnAttrSave, #btnhSave, #btnItemSave, .reNewBtn').button();
@@ -430,6 +451,7 @@ $(document).ready(function () {
         "order": [[1, 'asc']],
         "lengthMenu": [[20, 50, -1], [20, 50, "All"]]
     });
+    
     $('.hhk-selLookup').change(function () {
         let $sel = $(this),
             table = $(this).find("option:selected").text(),

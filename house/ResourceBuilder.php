@@ -2263,33 +2263,8 @@ foreach($demogs as $key=>$demog){
 			style="font-size: .9em;"></div>
 		<input type="hidden" id='fixedRate' value="<?php echo(RoomRateCategories::Fixed_Rate_Category); ?>" />
 		<input type="hidden" id='tabIndex' value="<?php echo($tabIndex); ?>" />
+		<input type="hidden" id='frmDemog' value='<?php echo json_encode($demogs); ?>' />
 	</div>
 	<!-- div id="contentDiv"-->
-	<script type="text/javascript">
-
-		$(document).ready(function(){
-			$('#formBuilder').hhkFormBuilder({
-				labels: {
-					hospital: "<?php echo $labels->getString('hospital', 'hospital', 'Hospital'); ?>",
-					guest: "<?php echo $labels->getString('MemberType', 'guest', 'Guest'); ?>",
-					patient: "<?php echo $labels->getString('MemberType', 'patient', 'Patient'); ?>",
-					diagnosis: "<?php echo $labels->getString('hospital', 'diagnosis', 'Diagnosis'); ?>",
-					location: "<?php echo $labels->getString('hospital', 'location', 'Unit'); ?>",
-					referralAgent: "<?php echo $labels->getString('hospital', 'referralAgent', 'Referral Agent'); ?>",
-					treatmentStart: "<?php echo $labels->getString('hospital', 'treatmentStart', 'Treatement Start'); ?>",
-					treatmentEnd: "<?php echo $labels->getString('hospital', 'treatmentEnd', 'Treatment End'); ?>",
-					mrn: "<?php echo $labels->getString('hospital', 'MRN', 'MRN'); ?>",
-					nickname: "<?php echo $labels->getString('MemberType', 'nickname', 'Nickname'); ?>"
-				},
-				fieldOptions: {
-					county: "<?php echo $uS->county; ?>",
-					doctor: "<?php echo $uS->Doctor; ?>",
-					referralAgent: "<?php echo $uS->ReferralAgent; ?>"
-				},
-				demogs: <?php echo json_encode($demogs); ?>
-			});
-		});
-
-	</script>
 </body>
 </html>

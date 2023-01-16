@@ -7,6 +7,7 @@ use HHK\TableLog\HouseLog;
 use HHK\SysConst\{ReservationStatusType, GLTypeCodes};
 use HHK\HTMLControls\{HTMLTable,HTMLInput, HTMLSelector};
 use HHK\House\Insurance\Insurance;
+use HHK\SysConst\ReservationStatus;
 
 
 /**
@@ -130,7 +131,7 @@ class ResourceBldr
                 }
             }
 
-        }else if($tableName == "insurance_type") {
+        } else if($tableName == "insurance_type") {
 
             $stmt = $dbh->query("SELECT
     `t`.`idInsurance_type` as 'Table_Name', `t`.`Title` as 'Description',if(`t`.`Status` = 'a','y',''),'', `t`.`List_Order` as 'Order'
@@ -219,6 +220,7 @@ Order by `t`.`List_Order`;");
 
     public static function checkLookups(\PDO $dbh, $post, $labels) {
 
+        $uS = Session::getInstance();
         $tableName = filter_var($post['table'], FILTER_SANITIZE_STRING);
 
         if ($tableName == '') {
@@ -460,9 +462,9 @@ Order by `t`.`List_Order`;");
 
         // Generate selectors.
         if (isset($post['selmisc'])) {
-            $tbl = getSelections($dbh, RESERV_STATUS_TABLE_NAME, $post['selmisc'], $labels);
+            $tbl = self::getSelections($dbh, RESERV_STATUS_TABLE_NAME, $post['selmisc'], $labels);
         } else {
-            $tbl = getSelections($dbh, $tableName, $type, $labels);
+            $tbl = self::getSelections($dbh, $tableName, $type, $labels);
         }
 
         echo ($tbl->generateMarkup());

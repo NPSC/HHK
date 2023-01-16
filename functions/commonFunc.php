@@ -12,6 +12,8 @@ use HHK\Tables\{EditRS, GenLookupsRS, LookupsRS};
 use HHK\TableLog\HouseLog;
 use HHK\ExcelHelper;
 use HHK\sec\{SecurityComponent, SysConfig};
+use HHK\House\Reservation\Reservation_1;
+use HHK\SysConst\ReservationStatus;
 
 /**
  * commonFunc.php
@@ -695,9 +697,12 @@ function replaceGenLk(\PDO $dbh, $tblName, array $desc, array $subt, array $orde
 
 function replaceLookups(\PDO $dbh, $category, array $title, array $use)
 {
+    $uS = Session::getInstance();
     $rowsAffected = 0;
 
     if (isset($title)) {
+
+        $reserveStatuses = readLookups($dbh, "ReservStatus", "Code", true);
 
         foreach ($title as $k => $r) {
 
@@ -717,16 +722,15 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
             ));
 
             if (count($rates) == 1) {
-                $uS = Session::getInstance();
 
                 EditRS::loadRow($rates[0], $lookRs);
 
-                if ($code == "c1" || $code == "c2" || $code == "c3" || $code == "c4") {
+                if (Reservation_1::isRemovedStatus($code, $reserveStatuses)) {
                     if (isset($use[$code])) {
                         // activate
                         $lookRs->Use->setNewVal("y");
                         $lookRs->Show->setNewVal("y");
-                    } else {
+                    } else if ($code != ReservationStatus::Canceled) {  // Make sure at least one code is available
                         $lookRs->Use->setNewVal("n");
                         $lookRs->Show->setNewVal("n");
                     }
