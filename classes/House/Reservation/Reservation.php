@@ -601,15 +601,16 @@ WHERE r.idReservation = " . $rData->getIdResv());
                         PaymentChooser::createPrePaymentMarkup($dbh, $resv->getIdGuest(), $resv->getIdReservation(), $reg->getIdRegistration(), $checkinCharges, $paymentGateway, $resv->getExpectedPayType(), $this->reserveData->getPrePayment(), $reg->getPreferredTokenId())
                         , array('style'=>'flex-basis: 100%;', 'name'=>'div-hhk-payments'));
 
-                } else {
-                    // Credit card chooser
-
-                    $dataArray['cof'] = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
-                        HTMLContainer::generateMarkup('legend', 'Credit Cards on File', array('style'=>'font-weight:bold;'))
-                        . HouseServices::guestEditCreditTable($dbh, $reg->getIdRegistration(), $resv->getIdGuest(), 'g')
-                        . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnUpdtCred', 'data-indx'=>'g', 'data-id'=>$resv->getIdGuest(), 'data-idreg'=>$reg->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
-                    ,array('id'=>'upCreditfs', 'class'=>'hhk-panel ignrSave')), array('style'=>'display: inline-block', 'class'=>'mr-3'));
                 }
+
+                // Credit card chooser
+
+                $dataArray['cof'] = HTMLcontainer::generateMarkup('div', HTMLContainer::generateMarkup('fieldset',
+                    HTMLContainer::generateMarkup('legend', 'Credit Cards on File', array('style'=>'font-weight:bold;'))
+                    . HouseServices::guestEditCreditTable($dbh, $reg->getIdRegistration(), $resv->getIdGuest(), 'g')
+                    . HTMLInput::generateMarkup('Update Credit', array('type'=>'button','id'=>'btnUpdtCred', 'data-indx'=>'g', 'data-id'=>$resv->getIdGuest(), 'data-idreg'=>$reg->getIdRegistration(), 'style'=>'margin:5px;float:right;'))
+                ,array('id'=>'upCreditfs', 'class'=>'hhk-panel ignrSave')), array('style'=>'display: inline-block', 'class'=>'mr-3'));
+
 
             }
 
