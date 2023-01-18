@@ -2,7 +2,7 @@
  * resvManager.js
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2022 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   GPL and MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -45,6 +45,7 @@ function resvManager(initData, options) {
     var options = options;
 	var resvStatusCode = '';
 	var resvStatusType = '';
+	var guestSearchTerm = '';
 
     // Exports
     t.getReserve = getReserve;
@@ -62,6 +63,7 @@ function resvManager(initData, options) {
     t.getSpan = getSpan;
     t.setRooms = setRooms;
     t.options = options;
+    //t.guestSearchTerm = guestSearchTerm;
 
 	function getPrePaymtAmt() {
 		return prePaymtAmt;
@@ -195,6 +197,8 @@ function resvManager(initData, options) {
                 flagAlertMessage('This person is already listed here. ', 'alert');
                 return;
             }
+            
+            guestSearchTerm = term;
 
             var resv = {
                 id: item.id,
@@ -203,8 +207,7 @@ function resvManager(initData, options) {
                 isCheckin: isCheckin,
                 gstDate: $('#gstDate').val(),
                 gstCoDate: $('#gstCoDate').val(),
-                cmd: 'addResvGuest',
-                schTerm: term
+                cmd: 'addResvGuest'
             };
 
             getReserve(resv);
@@ -654,7 +657,7 @@ function resvManager(initData, options) {
             if (setupComplete === false) {
                 initFamilyTable(data);
                 if(options.UseIncidentReports){
-	            initIncidentSection();
+	            	initIncidentSection();
                 }
             }
 
@@ -682,8 +685,11 @@ function resvManager(initData, options) {
                 $famTbl.find('tbody:first').prepend($(data.famSection.tblBody['1']));
             }
             if (data.famSection.tblBody['0'] !== undefined) {
+
                 $famTbl.find('tbody:first').prepend($(data.famSection.tblBody['0']));
+
             }
+
 
             // Add people to the UI
             for (var t in data.famSection.tblBody) {
@@ -691,9 +697,22 @@ function resvManager(initData, options) {
                 // Patient is first
                 if (t === '0' || t === '1') {
                     continue;
-                } else {
-                    $famTbl.find('tbody:first').append($(data.famSection.tblBody[t]));
-                }
+                 } else {
+	
+					let tr = $(data.famSection.tblBody[t]);
+					
+					if (t ==2) {
+						// Load search term
+						let inp = tr.find('input.hhk-lastname');
+						if (inp.val() === '') {
+							inp.val(guestSearchTerm).focus();
+						}
+					}
+					
+					$famTbl.find('tbody:first').append(tr);
+
+				}
+
             }
 
             // Staying controls
@@ -2323,6 +2342,10 @@ function resvManager(initData, options) {
     }
 
     function getReserve(sdata) {
+	
+		if (sdata.guestSearchTerm && sdata.guestSearchTerm != '') {
+			guestSearchTerm = sdata.guestSearchTerm;
+		}
 
         var parms = {
             id:sdata.id,
@@ -2541,9 +2564,6 @@ function resvManager(initData, options) {
 
         if (data.addPerson !== undefined) {
 
-            // Clear the person search textbox.
-            $('input#txtPersonSearch').val('');
-
             if (people.addItem(data.addPerson.mem)) {
                 addrs.addItem(data.addPerson.addrs);
                 familySection.newGuestMarkup(data.addPerson, data.addPerson.mem.pref);
@@ -2551,7 +2571,7 @@ function resvManager(initData, options) {
 
                 $('.hhk-cbStay').change();
 
-                $('#' + data.addPerson.mem.pref + 'txtFirstName').focus();
+                $('#' + data.addPerson.mem.pref + 'txtLastName').val(guestSearchTerm).focus();
             }
         }
 		$('#submitButtons').show();

@@ -315,7 +315,8 @@ $(document).ready(function() {
 
         resv.fullName = item.fullName;
         resv.cmd = 'getResv';
-
+        resv.guestSearchTerm = $guestSearch.val();
+        
         pageManager.getReserve(resv);
 
     }
