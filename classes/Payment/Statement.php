@@ -458,6 +458,7 @@ class Statement {
                             $priceModel->itemDetailMarkup($item, $detailTbl);
                         }
 
+                    // Only show MOA payouts here (negative amounts).
                     } else if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Amount'] < 0) {
 
                         $moaAmt = floatval($l['Amount']);
@@ -538,7 +539,8 @@ class Statement {
                 $donAmt += $itemAmount;
             }
 
-            if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Status'] == InvoiceStatus::Paid) {
+            // Only show payments to MOA here.
+            if ($l['Item_Id'] == ItemId::LodgingMOA && $l['Status'] == InvoiceStatus::Paid && $itemAmount > 0) {
                 $moaAmt += $itemAmount;
             }
         }

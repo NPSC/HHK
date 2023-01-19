@@ -19,6 +19,8 @@ use HHK\Tables\Reservation\Reservation_GuestRS;
 use HHK\Member\ProgressiveSearch\SearchNameData\SearchNameDataInterface;
 use HHK\SysConst\ReferralFormStatus;
 use HHK\Exception\RuntimeException;
+use HHK\Purchase\RateChooser;
+use HHK\SysConst\{ItemPriceCode, RoomRateCategories, DefaultSettings};
 
 /**
  * ReferralForm.php
@@ -526,8 +528,25 @@ class ReferralForm {
 	        $this->CkoutDT = $this->CkinDT->add(new \DateInterval('P' . $uS->DefaultDays . 'D'));
 	    }
 
+	    // Room Rate
+	    $rateChooser = new RateChooser($dbh);
+
+	    // Default Room Rate category
+	    if ($uS->RoomPriceModel == ItemPriceCode::Basic) {
+	        $rateCategory = RoomRateCategories::Fixed_Rate_Category;
+	    } else if ($uS->RoomRateDefault != '') {
+	        $rateCategory = $uS->RoomRateDefault;
+	    } else {
+	        $rateCategory = DefaultSettings::Rate_Category;
+	    }
+
+	    $rateRs = $rateChooser->getPriceModel()->getCategoryRateRs(0, $rateCategory);
+
+
 	    $reg = new Registration($dbh, $psg->getIdPsg());
 	    $hospStay = new HospitalStay($dbh, $psg->getIdPatient());
+
+	    // Define the reservation.
         $resv = Reservation_1::instantiateFromIdReserv($dbh, 0);
 
         $resv->setExpectedArrival($this->CkinDT->format('Y-m-d'))
@@ -537,7 +556,8 @@ class ReferralForm {
             ->setIdHospitalStay($hospStay->getIdHospital_Stay())
             ->setNumberGuests(count($guests))
             ->setIdResource(0)
-            ->setRoomRateCategory($uS->RoomRateDefault)
+            ->setRoomRateCategory($rateCategory)
+            ->setIdRoomRate($rateRs->idRoom_rate->getStoredVal())
             ->setIdReferralDoc($this->referralDocId);
 
         $resv->saveReservation($dbh, $reg->getIdRegistration(), $uS->username);

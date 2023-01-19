@@ -300,6 +300,7 @@ FROM reservation r
             return;
         }
 
+        // Maximum Occupancy
         if (count($this->getStayingMembers()) > $resc->getMaxOccupants()) {
             $this->reserveData->addError("The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ");
             return;
