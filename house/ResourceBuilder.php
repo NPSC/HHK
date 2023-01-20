@@ -1998,6 +1998,24 @@ foreach($demogs as $key=>$demog){
     }
 }
 
+$formBuilderLabels = [
+    "hospital"=>$labels->getString('hospital', 'hospital', 'Hospital'),
+    "guest"=>$labels->getString('MemberType', 'guest', 'Guest'),
+    "patient"=>$labels->getString('MemberType', 'patient', 'Patient'),
+    "diagnosis"=>$labels->getString('hospital', 'diagnosis', 'Diagnosis'),
+    "location"=>$labels->getString('hospital', 'location', 'Unit'),
+    "referralAgent"=>$labels->getString('hospital', 'referralAgent', 'Referral Agent'),
+    "treatmentStart"=>$labels->getString('hospital', 'treatmentStart', 'Treatement Start'),
+    "treatmentEnd"=>$labels->getString('hospital', 'treatmentEnd', 'Treatment End'),
+    "mrn"=>$labels->getString('hospital', 'MRN', 'MRN'),
+    "nickname"=>$labels->getString('MemberType', 'nickname', 'Nickname')
+];
+$formBuilderOptions = [
+    "county"=>$uS->county,
+    "doctor"=>$uS->Doctor,
+    "referralAgent"=>$uS->ReferralAgent
+];
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -2264,6 +2282,8 @@ foreach($demogs as $key=>$demog){
 		<input type="hidden" id='fixedRate' value="<?php echo(RoomRateCategories::Fixed_Rate_Category); ?>" />
 		<input type="hidden" id='tabIndex' value="<?php echo($tabIndex); ?>" />
 		<input type="hidden" id='frmDemog' value='<?php echo json_encode($demogs); ?>' />
+		<input type="hidden" id="labels" value='<?php echo json_encode($formBuilderLabels); ?>' />
+		<input type="hidden" id="frmOptions" value='<?php echo json_encode($formBuilderOptions); ?>' />
 	</div>
 	<!-- div id="contentDiv"-->
 </body>
