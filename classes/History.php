@@ -184,7 +184,20 @@ class History {
         $uS = Session::getInstance();
         // Get labels
         $labels = Labels::getLabels();
+        $patientTitle = $labels->getString('MemberType', 'patient', 'Patient');
 
+        // make incomplete address icon
+        $addr_icon = HTMLContainer::generateMarkup('ul'
+            , HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-mail-closed'))
+                , array('class'=>'ui-state-highlight ui-corner-all', 'style'=>'float:right;margin:0;padding:1px;', 'title'=>"Incomplete Address"))
+            , array('class'=>'ui-widget hhk-ui-icons'));
+
+        $patientStayingIcon = HTMLContainer::generateMarkup('ul'
+            , HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase'))
+                , array('class'=>'ui-state-default ui-corner-all', 'style'=>'float:right; margin:0; padding:1px;', 'title'=>"$patientTitle Planning to stay"))
+            , array('class'=>'ui-widget hhk-ui-icons'));
 
         $returnRows = array();
 
@@ -209,9 +222,15 @@ class History {
 
             $fixedRows['Guest First'] = $r['Guest First'];
 
-            // Build the page anchor
+            // Build a page anchor - last name
             if ($page != '' && !$static) {
+
                 $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?rid=" . $r["idReservation"]));
+
+                if ($r['Incomplete_Address'] == 1) {
+                    $fixedRows['Guest Last'] = $addr_icon . $fixedRows['Guest Last'];
+                }
+
             } else {
                 $fixedRows['Guest Last'] = $r['Guest Last'];
             }
@@ -300,11 +319,11 @@ class History {
 
 
             // Patient Name
-            $patientTitle = $labels->getString('MemberType', 'patient', 'Patient');
+
             $fixedRows['Patient'] = $r['Patient Name'];
 
-            if ($r['Patient_Staying'] > 0 && !$static) {
-                $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
+            if ($r['Patient_Staying'] > 0 && ! $static) {
+                $fixedRows['Patient'] = $patientStayingIcon . $fixedRows['Patient']; //HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
             }
 
 

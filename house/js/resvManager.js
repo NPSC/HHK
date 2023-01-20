@@ -557,7 +557,7 @@ function resvManager(initData, options) {
             } else {
 
                 if (!isAddressComplete(prefix)) {
-                    $addrFlag.show().find('span').removeClass('ui-icon-check').addClass('ui-icon-alert').attr('title', 'Address is Incomplete');
+                    $addrFlag.show().find('span').removeClass('ui-icon-check').addClass('ui-icon-mail-closed').attr('title', 'Address is Incomplete');
                     $addrFlag.removeClass('ui-state-highlight').addClass('ui-state-error');
                 } else {
                     $addrFlag.hide();

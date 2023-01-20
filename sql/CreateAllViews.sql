@@ -2411,7 +2411,8 @@ CREATE or Replace VIEW `vreservation_events` AS
 		        AND invoice.Order_Number = 0
 		        AND reservation_invoice.Reservation_Id = r.idReservation
 		        AND invoice.`Status` = 'p'), 0)
-		ELSE 0 END as `PrePaymt`
+		ELSE 0 END as `PrePaymt`,
+		ifnull(na.Set_Incomplete, 0) as `Incomplete_Address`
     from
         `reservation` `r`
             left join
@@ -2427,6 +2428,8 @@ CREATE or Replace VIEW `vreservation_events` AS
             left join
 		`name_phone` np on n.idName = np.idName and n.Preferred_Phone = np.Phone_Code
             left join
+        `name_address` na on n.idName = na.idName and na.Purpose = 1
+        	left join
         `name` n2 ON hs.idPatient = n2.idName
             left join
         gen_lookups gs on gs.`Table_Name` = 'Name_Suffix' and gs.`Code` = n.Name_Suffix

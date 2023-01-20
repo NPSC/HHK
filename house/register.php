@@ -51,6 +51,8 @@ $currentReservations = '';
 $uncommittedReservations = '';
 $waitlist = '';
 $guestAddMessage = '';
+$shoHosptialName = FALSE;
+$colorKey = '';
 
 $rvCols = array();
 $wlCols = array();
@@ -169,13 +171,13 @@ $waitlist = HTMLContainer::generateMarkup('h3', '<span>Waitlist</span>' .
 
 
 // Hospital Selector
-$shoHosptialName = FALSE;
-$colorKey = '';
 $stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)' and Hide = 0");
 
-if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' || strtolower($uS->RibbonColor) == 'hospital')) {
-
+if ($stmth->rowCount() > 1) {
     $shoHosptialName = TRUE;
+}
+
+if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' || strtolower($uS->RibbonColor) == 'hospital')) {
 
     $hospLabel = HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'hospital', 'Hospital') . ': ');
 

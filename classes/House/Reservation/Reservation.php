@@ -839,6 +839,8 @@ where rg.idReservation =" . $r['idReservation']);
             $attr['checked'] = 'checked';
         }
 
+        $allResvStatuses = $resvStatuses;
+
         // Limit reservation status chooser options
         if ($resv->getStatus() == ReservationStatus::Committed) {
             unset($resvStatuses[ReservationStatus::Waitlist]);
@@ -857,14 +859,14 @@ where rg.idReservation =" . $r['idReservation']);
         $tbl2->addBodyTr(
                 ($showPayWith ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup(removeOptionGroups($payTypes), $resv->getExpectedPayType()), array('name'=>'selPayType'))) : '')
             .($moaBalance > 0 ? HTMLTable::makeTd('$'.number_format($moaBalance, 2), array('style'=>'text-align:center;')) : '')
-            .($resv->isActive($resvStatuses) ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')) : HTMLTable::makeTd(''))
+            .($resv->isActive($allResvStatuses) ? HTMLTable::makeTd(HTMLInput::generateMarkup('', $attr), array('style'=>'text-align:center;')) : HTMLTable::makeTd(''))
                 .HTMLTable::makeTd(
                         HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($resvStatuses, $resv->getStatus(), FALSE), array('name'=>'selResvStatus', 'style'=>'float:left;margin-right:.4em;'))
                         .HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-comment hhk-viewResvActivity', 'data-rid'=>$resv->getIdReservation(), 'title'=>'View Activity Log', 'style'=>'cursor:pointer;float:right;')))
                 );
 
 
-        if ($uS->UseWLnotes === FALSE && $resv->isActive()) {
+        if ($uS->UseWLnotes === FALSE && $resv->isActive($allResvStatuses)) {
             $tbl2->addBodyTr(HTMLTable::makeTd('Registration Note:',array('class'=>'tdlabel')).HTMLTable::makeTd(HTMLContainer::generateMarkup('textarea',$resv->getCheckinNotes(), array('name'=>'taCkinNotes', 'rows'=>'1', 'cols'=>'40')),array('colspan'=>'3')));
         }
 
