@@ -65,10 +65,10 @@ class Recaptcha {
                     'json'=>$data
                 ]);
 
-            $body = json_decode($response->getBody()->getContents());
+            $body = json_decode($response->getBody());
 
             if($body->tokenProperties->valid && $body->tokenProperties->action == 'submit'){
-                return $body->score;
+                return $body->riskAnalysis->score;
             }else{
                 return false;
             }
