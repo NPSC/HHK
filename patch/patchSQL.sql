@@ -21,3 +21,6 @@ INSERT IGNORE INTO `labels` (`Key`, `Value`, `Type`, `Category`, `Description`) 
 -- New holiday management flags.
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('Show_Holidays', 'false', 'b', 'c', 'Indicate holidays on the calendar', '1');
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('UseCleaningBOdays', 'false', 'b', 'hf', 'Set holidays as housekeeping black-out days', '1');
+
+-- Hide old sys config params
+update `sys_config` set `Show` = 0 where `Key` in ("DefaultPayType", "DefaultVisitFee", "RoomRateDefault", "RegForm", "RegFormNoRm");

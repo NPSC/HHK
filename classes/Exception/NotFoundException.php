@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * NotFoundException.php
  *
@@ -16,7 +19,11 @@ namespace HHK\Exception;
  */
 
 class NotFoundException extends \UnexpectedValueException {
-
+    public function __construct ($message = null, $code = null, $previous = null) {
+        $dbh = initPDO();
+        $uS = Session::getInstance();
+        HouseLog::logError($dbh, "NotFoundException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+    }
 }
 
 ?>

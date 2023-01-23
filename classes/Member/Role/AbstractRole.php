@@ -102,7 +102,7 @@ abstract class AbstractRole {
         $full = HTMLContainer::generateMarkup('span', 'Room Full', array('id'=>$prefix.'fullspan', 'style'=>'display:none;'));
 
         $rtn = array();
-        $rtn['hdr'] = HTMLContainer::generateMarkup('div', $gstSearch . $MRNSearchMkup . $phoneSearchMkup . $full, array('id'=>'h2srch'.$prefix, 'style'=>"padding:4px;max-width:100%;", 'class'=>$prefix.'Slot ui-widget ui-widget-header ui-state-default ui-corner-all row col-12 ' . $outerwidth));
+        $rtn['hdr'] = HTMLContainer::generateMarkup('form', $gstSearch . $MRNSearchMkup . $phoneSearchMkup . $full, array('id'=>'h2srch'.$prefix, 'style'=>"padding:4px;max-width:100%;", 'autocomplete'=>"off", 'class'=>$prefix.'Slot ui-widget ui-widget-header ui-state-default ui-corner-all row col-12 ' . $outerwidth));
         $rtn['idPrefix'] = $prefix;
         return  $rtn;
     }

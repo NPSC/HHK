@@ -35,6 +35,13 @@ class SiteLog {
 
     }
 
+    public static function logError(\PDO $dbh, $logText, $GIT_Id = '') {
+
+
+        self::writeLog($dbh, "Error", $logText, $GIT_Id);
+
+    }
+
     public static function writeLog(\PDO $dbh, $logType, $logText, $gitId) {
 
         if ($logText == '' || $logType == '') {

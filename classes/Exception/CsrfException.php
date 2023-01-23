@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * CsrfException.php
  *
@@ -15,8 +18,12 @@ namespace HHK\Exception;
  * @author Will Ireland
  */
 
-class CsrfException
-        extends \Exception {
+class CsrfException extends \Exception {
+    public function __construct ($message = null, $code = null, $previous = null) {
+        $dbh = initPDO();
+        $uS = Session::getInstance();
+        HouseLog::logError($dbh, "CSRFException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+    }
 
 }
 ?>
