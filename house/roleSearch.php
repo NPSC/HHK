@@ -116,6 +116,42 @@ switch ($c) {
 
         break;
 
+    case 'guest':
+
+        $letters = '';
+        if (isset($_GET['letters'])) {
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_STRING);
+        }
+
+        $memberSearch = new MemberSearch($letters);
+        $events = $memberSearch->guestSearch($dbh);
+
+        break;
+
+    case 'mrn':
+
+        $letters = '';
+        if (isset($_GET['letters'])) {
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_STRING);
+        }
+
+        $memberSearch = new MemberSearch($letters);
+        $events = $memberSearch->MRNSearch($dbh);
+
+        break;
+
+    case 'phone':
+
+        $letters = '';
+        if (isset($_GET['letters'])) {
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_STRING);
+        }
+
+        $memberSearch = new MemberSearch($letters);
+        $events = $memberSearch->phoneSearch($dbh);
+
+        break;
+
     default:
         $events = array("error" => "Bad Command:  $c");
 

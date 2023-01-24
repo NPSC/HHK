@@ -585,6 +585,7 @@ if ($psg->getIdPsg() > 0) {
         EditRS::loadRow($r, $reservRs);
 
         $reserv = new Reservation_1($reservRs);
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
         $rtbl = new HTMLTable();
         $rtbl->addHeaderTr(HTMLTable::makeTh('Id').HTMLTable::makeTh('Status').HTMLTable::makeTh('Arrival').HTMLTable::makeTh('Depart').HTMLTable::makeTh('Room').HTMLTable::makeTh('Rate') . ($uS->AcceptResvPaymt ? HTMLTable::makeTh('Pre-Paymt') : ''));
 
@@ -617,7 +618,7 @@ if ($psg->getIdPsg() > 0) {
                 $labels->getString('guestEdit', 'reservationTitle', 'Reservation') . ': '
                 . (date('Y') == date('Y', strtotime($reserv->getArrival())) ? date('M j', strtotime($reserv->getArrival())) : date('M j, Y', strtotime($reserv->getArrival())))
                 . " to " .(date('Y') == date('Y', strtotime($reserv->getDeparture())) ? date('M j', strtotime($reserv->getDeparture())) : date('M j, Y', strtotime($reserv->getDeparture()))). '.'
-        		. ($prePayment > 0 && $reserv->isActive() ? '  &nbsp; Pre-Payment = $' . number_format($prePayment, 2) : '')
+            . ($prePayment > 0 && $reserv->isActive($reservStatuses) ? '  &nbsp; Pre-Payment = $' . number_format($prePayment, 2) : '')
                 . $reserv->getStatusIcon($dbh)
                 , array('style'=>'margin-left:10px;')), array('style'=>'min-height:25px; padding-top:5px;'));
 

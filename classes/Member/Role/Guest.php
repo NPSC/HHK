@@ -57,16 +57,16 @@ class Guest extends AbstractRole {
         if ($uS->GuestAddr) {
             // Address toggle comtrols
             $mu .= HTMLTable::makeTd(
-                    HTMLContainer::generateMarkup('ul'
-                            , HTMLContainer::generateMarkup('li',
-                                    HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check'))
-                                    , array('class'=>'ui-state-highlight ui-corner-all hhk-AddrFlag', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'liaddrflag'))
-                            . HTMLContainer::generateMarkup('li',
-                                    HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-circle-triangle-n'))
-                                    , array('class'=>'ui-state-default ui-corner-all hhk-togAddr', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'toggleAddr'))
-                            , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'))
-                    , array('style'=>'text-align:center;min-width:50px;')
-                    );
+                HTMLContainer::generateMarkup('ul'
+                        , HTMLContainer::generateMarkup('li',
+                                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-check'))
+                                , array('class'=>'ui-state-highlight ui-corner-all hhk-AddrFlag', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'liaddrflag'))
+                        . HTMLContainer::generateMarkup('li',
+                                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-circle-triangle-n'))
+                                , array('class'=>'ui-state-default ui-corner-all hhk-togAddr', 'data-pref'=>$this->getRoleMember()->getIdPrefix(), 'id'=>$this->getRoleMember()->getIdPrefix().'toggleAddr'))
+                        , array('class'=>'ui-widget ui-helper-clearfix hhk-ui-icons'))
+                , array('style'=>'text-align:center;min-width:50px;')
+                );
 
         } else {
             $mu .= HTMLTable::makeTd('');

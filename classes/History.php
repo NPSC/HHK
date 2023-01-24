@@ -159,7 +159,9 @@ class History {
             $this->resvEvents = $stmt->fetchAll(\PDO::FETCH_ASSOC);
         }
 
-        return $this->createMarkup($status, $page, $includeAction, $static);
+        $reservStatuses = readLookups($dbh, "reservStatus", "Code");
+
+        return $this->createMarkup($status, $page, $includeAction, $reservStatuses, $static);
     }
 
     protected function makeResvCanceledStatuses($resvStatuses, $idResv) {
@@ -168,7 +170,7 @@ class History {
 
         foreach ($resvStatuses as $s) {
 
-            if (Reservation_1::isRemovedStatus($s[0])) {
+            if (Reservation_1::isRemovedStatus($s[0], $resvStatuses)) {
                 $markup .= HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $s[1], array('class'=>'resvStat', 'data-stat'=>$s[0], 'data-rid'=>$idResv)));
             }
         }
@@ -177,12 +179,26 @@ class History {
 
     }
 
-    protected function createMarkup($status, $page, $includeAction, $static = FALSE) {
+    protected function createMarkup($status, $page, $includeAction, $reservStatuses, $static = FALSE) {
 
         $uS = Session::getInstance();
         // Get labels
-
         $labels = Labels::getLabels();
+        $patientTitle = $labels->getString('MemberType', 'patient', 'Patient');
+
+        // make incomplete address icon
+        $addr_icon = HTMLContainer::generateMarkup('ul'
+            , HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-mail-closed'))
+                , array('class'=>'ui-state-highlight ui-corner-all', 'style'=>'float:right;margin:0;padding:1px;', 'title'=>"Incomplete Address"))
+            , array('class'=>'ui-widget hhk-ui-icons'));
+
+        $patientStayingIcon = HTMLContainer::generateMarkup('ul'
+            , HTMLContainer::generateMarkup('li',
+                HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase'))
+                , array('class'=>'ui-state-default ui-corner-all', 'style'=>'float:right; margin:0; padding:1px;', 'title'=>"$patientTitle Planning to stay"))
+            , array('class'=>'ui-widget hhk-ui-icons'));
+
         $returnRows = array();
 
         foreach ($this->resvEvents as $r) {
@@ -196,19 +212,25 @@ class History {
                     'ul', HTMLContainer::generateMarkup('li', 'Action' .
                         HTMLContainer::generateMarkup('ul',
                            HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('a', 'View ' . $labels->getString('guestEdit', 'reservationTitle', 'Reservation'), array('href'=>'Reserve.php' . '?rid='.$r['idReservation'], 'style'=>'text-decoration:none; display:block;')))
-                            . ($r['PrePaymt'] > 0 ? '' : $this->makeResvCanceledStatuses($uS->guestLookups['ReservStatus'], $r['idReservation']))
-                           . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
-                            . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
-                            . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $uS->guestLookups['ReservStatus'][ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($r['PrePaymt'] > 0 ? '' : $this->makeResvCanceledStatuses($reservStatuses, $r['idReservation']))
+                            . ($includeAction && ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted) ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Waitlist][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Waitlist, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($includeAction && $uS->ShowUncfrmdStatusTab && $status == ReservationStatus::Committed ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::UnCommitted][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::UnCommitted, 'data-rid'=>$r['idReservation']))) : '')
+                            . ($includeAction && $status == ReservationStatus::UnCommitted ? HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', $reservStatuses[ReservationStatus::Committed][1], array('class'=>'resvStat', 'data-stat'=>  ReservationStatus::Committed, 'data-rid'=>$r['idReservation']))) : '')
                           . ($uS->ccgw != '' ? HTMLContainer::generateMarkup('li', '-------') . HTMLContainer::generateMarkup('li', HTMLContainer::generateMarkup('div', 'Credit Card', array('class'=>'stupCredit', 'data-id'=>$r['idGuest'], 'data-reg'=>$r['idRegistration'], 'data-name'=>$r['Guest Name']))) : '')
                     )), array('class' => 'gmenu'));
             }
 
             $fixedRows['Guest First'] = $r['Guest First'];
 
-            // Build the page anchor
+            // Build a page anchor - last name
             if ($page != '' && !$static) {
+
                 $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?rid=" . $r["idReservation"]));
+
+                if ($r['Incomplete_Address'] == 1) {
+                    $fixedRows['Guest Last'] = $addr_icon . $fixedRows['Guest Last'];
+                }
+
             } else {
                 $fixedRows['Guest Last'] = $r['Guest Last'];
             }
@@ -297,11 +319,11 @@ class History {
 
 
             // Patient Name
-            $patientTitle = $labels->getString('MemberType', 'patient', 'Patient');
+
             $fixedRows['Patient'] = $r['Patient Name'];
 
-            if ($r['Patient_Staying'] > 0 && !$static) {
-                $fixedRows['Patient'] .= HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
+            if ($r['Patient_Staying'] > 0 && ! $static) {
+                $fixedRows['Patient'] = $patientStayingIcon . $fixedRows['Patient']; //HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
             }
 
 

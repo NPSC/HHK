@@ -15,6 +15,7 @@ use HHK\House\Report\RoomReport;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
 use HHK\sec\SysConfig;
+use HHK\US_Holidays;
 
 /**
  * Register.php
@@ -50,6 +51,8 @@ $currentReservations = '';
 $uncommittedReservations = '';
 $waitlist = '';
 $guestAddMessage = '';
+$shoHosptialName = FALSE;
+$colorKey = '';
 
 $rvCols = array();
 $wlCols = array();
@@ -168,13 +171,13 @@ $waitlist = HTMLContainer::generateMarkup('h3', '<span>Waitlist</span>' .
 
 
 // Hospital Selector
-$shoHosptialName = FALSE;
-$colorKey = '';
 $stmth = $dbh->query("Select idHospital, Title, Reservation_Style, Stay_Style from hospital where Status = 'a' and Title != '(None)' and Hide = 0");
 
-if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' || strtolower($uS->RibbonColor) == 'hospital')) {
-
+if ($stmth->rowCount() > 1) {
     $shoHosptialName = TRUE;
+}
+
+if ($stmth->rowCount() > 1 && (strtolower($uS->RibbonBottomColor) == 'hospital' || strtolower($uS->RibbonColor) == 'hospital')) {
 
     $hospLabel = HTMLContainer::generateMarkup('span', $labels->getString('hospital', 'hospital', 'Hospital') . ': ');
 
@@ -223,6 +226,27 @@ $defaultView = 'timeline' . $weeks . 'weeks';
 
 // Calendar date increment for date navigation controls.
 $calDateIncrement = intval($uS->CalDateIncrement);
+
+// show holidays
+$holidays = [];
+if ($uS->Show_Holidays) {
+
+    $year = date('Y');
+    // List holidays for three years, past, now, next year
+    for ($i = $year - 1; $i < $year+2; $i++) {
+
+        $hol = new US_Holidays($dbh, $i);
+        $list = $hol->get_list();
+
+        foreach($list as $h){
+            if ($h['use'] == 1) {
+                $date1 = \DateTime::createFromFormat('U', $h['timestamp']);
+                $holidays[] = $date1->format('Y') . '-' . $date1->format('n') . '-' . $date1->format('j');
+            }
+        }
+    }
+}
+
 
 //Resource grouping controls
 $rescGroups = readGenLookupsPDO($dbh, 'Room_Group');
@@ -336,7 +360,11 @@ if($uS->useOnlineReferral){
             }
             .hhk-fcslot-today {
                 background-color: #fbec88;
-                opacity: .6;
+                opacity: .4;
+            }
+            .hhk-fcslot-holiday {
+                background-color: #dbfcb5;
+                opacity: .4;
             }
         </style>
     </head>
@@ -520,6 +548,7 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="defaultView" value='<?php echo $defaultView; ?>' />
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
         <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
+        <input  type="hidden" id="holidays" value='<?php echo json_encode($holidays); ?>' />
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REGISTER_JS; ?>"></script>

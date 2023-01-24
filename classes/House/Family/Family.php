@@ -390,7 +390,7 @@ class Family {
 
             $trs[0] = HTMLContainer::generateMarkup('tr',
                     $role->createThinMarkup($rData->getPsgMember($idPrefix), TRUE)
-                    , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
+                , array('id'=>$role->getIdName() . 'n', 'class'=>$rowClass));
 
             if ($this->patientAddr || ($this->patientAsGuest && $this->showGuestAddr)) {
 

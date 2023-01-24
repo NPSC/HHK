@@ -291,8 +291,13 @@ where ru.idResource_use is null
                 }
             }
 
+            $validHolidays = FALSE;
+            // New parameter controls BO days
+            if ($uS->UseCleaningBOdays) {
+                $validHolidays = TRUE;
+            }
+
             // End date fall on a holiday?
-            $validHolidays = TRUE;
             $endYear = $dtendDate->format('Y');
 
             if ($endYear == $beginHolidays->getYear()) {
@@ -399,7 +404,12 @@ where ru.idResource_use is null
             $dateInfo = getDate(strtotime($r['Expected_Arrival']));
 
             // start date fall on a holiday?
-            $validHolidays = TRUE;
+            $validHolidays = FALSE;
+            // New parameter controls BO days
+            if ($uS->UseCleaningBOdays) {
+                $validHolidays = TRUE;
+            }
+
             $stYear = $stDT->format('Y');
 
             if ($stYear == $beginHolidays->getYear()) {
@@ -491,8 +501,6 @@ where ru.idResource_use is null
                 }
             }
 
-
-            $validHolidays = TRUE;
             $edYear = $clDate->format('Y');
 
             if ($edYear == $beginHolidays->getYear()) {
@@ -528,57 +536,57 @@ where ru.idResource_use is null
                     $clDate->add($p1d);
                     $clDate->setTime(10, 0, 0);
                 }
+
+                // end date fall on non-cleaning day?
+                $dateInfo = getDate(strtotime($r['Expected_Departure']));
+                $limit = 5;
+
+                while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
+                    // Add a Cleaning Black-Out Event
+                    $c = array(
+                        'id' => 'BO' . $eventId++,
+                        'kind' => CalEventKind::BO,
+                        'editable' => false,
+                        'resourceId' => "id-" . $r["idResource"],
+                        'start' => $clDate->format('Y-m-d\TH:i:00'),
+                        'end' => $clDate->format('Y-m-d\TH:i:00'),
+                        'title' => 'BO',
+                        'allDay' => 1,
+                        'backgroundColor' => 'black',
+                        'textColor' => 'white',
+                        'borderColor' => 'white',
+
+                    );
+                    $event = new Event($c, $timezone);
+                    $events[] = $event->toArray();
+
+                    $clDate->add($p1d);
+                    $dateInfo = getDate($clDate->format('U'));
+                }
+
+                // Now End date fall on a holiday?
+                while ($beginHolidays->is_holiday($clDate->format('U')) || $endHolidays->is_holiday($clDate->format('U'))) {
+                    $c = array(
+                        'id' => 'H' . $eventId++,
+                        'kind' => CalEventKind::BO,
+                        'editable' => FALSE,
+                        'resourceId' => "id-" . $r["idResource"],
+                        'start' => $clDate->format('Y-m-d\TH:i:00'),
+                        'end' => $clDate->format('Y-m-d\TH:i:00'),
+                        'title' => 'H',
+                        'allDay' => 1,
+                        'backgroundColor' => 'black',
+                        'textColor' => 'white',
+                        'borderColor' => 'Yellow',
+
+                    );
+                    $event = new Event($c, $timezone);
+                    $events[] = $event->toArray();
+
+                    $clDate->add($p1d);
+                    $clDate->setTime(10, 0, 0);
+                }
             }
-            // end date fall on non-cleaning day?
-            $dateInfo = getDate(strtotime($r['Expected_Departure']));
-            $limit = 5;
-
-            while (array_search($dateInfo['wday'], $nonClean) !== FALSE && $limit-- > 0) {
-                // Add a Cleaning Black-Out Event
-                $c = array(
-                    'id' => 'BO' . $eventId++,
-                    'kind' => CalEventKind::BO,
-                    'editable' => false,
-                    'resourceId' => "id-" . $r["idResource"],
-                    'start' => $clDate->format('Y-m-d\TH:i:00'),
-                    'end' => $clDate->format('Y-m-d\TH:i:00'),
-                    'title' => 'BO',
-                    'allDay' => 1,
-                    'backgroundColor' => 'black',
-                    'textColor' => 'white',
-                    'borderColor' => 'white',
-
-                );
-                $event = new Event($c, $timezone);
-                $events[] = $event->toArray();
-
-                $clDate->add($p1d);
-                $dateInfo = getDate($clDate->format('U'));
-            }
-
-            // Now End date fall on a holiday?
-            while ($beginHolidays->is_holiday($clDate->format('U')) || $endHolidays->is_holiday($clDate->format('U'))) {
-                $c = array(
-                    'id' => 'H' . $eventId++,
-                    'kind' => CalEventKind::BO,
-                    'editable' => FALSE,
-                    'resourceId' => "id-" . $r["idResource"],
-                    'start' => $clDate->format('Y-m-d\TH:i:00'),
-                    'end' => $clDate->format('Y-m-d\TH:i:00'),
-                    'title' => 'H',
-                    'allDay' => 1,
-                    'backgroundColor' => 'black',
-                    'textColor' => 'white',
-                    'borderColor' => 'Yellow',
-
-                );
-                $event = new Event($c, $timezone);
-                $events[] = $event->toArray();
-
-                $clDate->add($p1d);
-                $clDate->setTime(10, 0, 0);
-            }
-
             // Waitlist omit background event.
 //            if ($r['idResource'] != 0 && $r['idHospital'] > 0) {
 //                $backgroundBorderColor = $this->addBackgroundEvent($r, $hospitals, $uS->HospitalColorBar);

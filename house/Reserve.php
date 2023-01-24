@@ -262,9 +262,11 @@ $resvObjEncoded = json_encode($resvAr);
                 <?php echo $paymentMarkup; ?>
             </div>
             <div id="guestSearch" class="mb-3 hhk-panel row" style="margin-left:10px; margin-right:10px;">
+            <form autocomplete="off">
                 <?php echo $mk1; ?>
+            </form>
             </div>
-            <form action="Reserve.php" method="post"  id="form1">
+            <form action="Reserve.php" method="post"  id="form1" autocomplete="off">
                 <div id="datesSection" style="display:none;" class="ui-widget ui-widget-header ui-state-default ui-corner-all hhk-panel mb-3"></div>
                 <div id="famSection" style="font-size: .9em; display:none; max-width: 100%; margin-bottom:.5em;" class="ui-widget hhk-visitdialog mb-3"></div>
                 <?php if ($uS->UseIncidentReports) { ?>

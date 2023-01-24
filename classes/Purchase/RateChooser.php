@@ -367,7 +367,10 @@ class RateChooser {
 
     public function createResvMarkup(\PDO $dbh, Reservation_1 $resv, $numNights, $visitFeeTitle, $idRegistration) {
 
-        if ($resv->isActive()) {
+        // Get Resv status codes
+        $reservStatuses = readLookups($dbh, "ReservStatus", "Code", TRUE);
+
+        if ($resv->isActive($reservStatuses)) {
 
             $markup = $this->createBasicChooserMarkup($dbh, $resv, $numNights, $visitFeeTitle, $idRegistration);
 

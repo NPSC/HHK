@@ -113,13 +113,12 @@ if ($stayingMarkup == '') {
                     <span class="ui-icon ui-icon-triangle-1-e" style="float:right;"></span></h3>
                 <?php echo $stayingMarkup; ?>
             </div>
-            <form  action="CheckIn.php" method="post"  id="form1">
-                <div id="guestSearchWrapper" style="display: none;">
-                    <div id="guestSearch" style="margin-left:10px;margin-right:10px; <?php echo $gSearchDisplay; ?>" class="my-3 hhk-panel row">
-                        <?php echo $mk1; ?>
-                    </div>
-                </div>
+            <div id="guestSearch" style="margin-left:10px;margin-right:10px; <?php echo $gSearchDisplay; ?>" class="mb-3 hhk-panel row">
+            <form autocomplete="off">
+                <?php echo $mk1; ?>
             </form>
+            </div>
+
 
             <input type="hidden" id="dateFormat" value ="<?php echo $labels->getString("momentFormats", "reportDay", "ddd, MMM D YYYY"); ?>" />
         </div>  <!-- div id="contentDiv"-->

@@ -88,6 +88,13 @@ FROM reservation r
         ->setSpanEndDT($rows[0]['SpanEnd'])
         ->setResvStatusCode($rows[0]['Status']);
 
+        // Get Resv status codes
+        $reservStatuses = readLookups($dbh, "ReservStatus", "Code");
+
+        if (isset($reservStatuses[$rData->getResvStatusCode()])) {
+            $rData->setResvStatusType($reservStatuses[$rData->getResvStatusCode()]['Type']);
+        }
+
         // Reservation status determines which class to use.
 
         // Uncommitted cannot check in.
@@ -108,7 +115,7 @@ FROM reservation r
         }
 
         // Otherwise we can check in.
-        if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal())) {
+        if (Reservation_1::isActiveStatus($rRs->Status->getStoredVal(), $reservStatuses)) {
             $rData->setInsistCkinDemog($uS->InsistCkinDemog);
             return new CheckingIn($rData, $rRs, new Family($dbh, $rData, TRUE));
         }
@@ -299,6 +306,7 @@ FROM reservation r
             return;
         }
 
+        // Maximum Occupancy
         if (count($this->getStayingMembers()) > $resc->getMaxOccupants()) {
             $this->reserveData->addError("The maximum occupancy (" . $resc->getMaxOccupants() . ") for room " . $resc->getTitle() . " is exceded.  ");
             return;

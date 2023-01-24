@@ -19,6 +19,7 @@ use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\Exception\RuntimeException;
 use HHK\US_Holidays;
+use HHK\SysConst\ReservationStatusType;
 
 /**
  * Reservation_1.php
@@ -651,7 +652,6 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
     }
 
-
     protected function findRescsInUse(\PDO $dbh, $expectedArrival, $expectedDeparture, $omitSelf = FALSE) {
 
         // Deal with non-cleaning days
@@ -697,7 +697,6 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         // return an array of resourceId's
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
-
 
     protected function testResources(\PDO $dbh, $rescRows) {
 
@@ -759,7 +758,6 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $roomIds;
     }
 
-
     public function testResource(\PDO $dbh, AbstractResource $resc) {
 
         $pass = FALSE;
@@ -782,7 +780,6 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
 
         return $pass;
     }
-
 
     public function getConstraints(\PDO $dbh, $refresh = FALSE) {
 
@@ -1018,7 +1015,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
             }
         }
 
-        $reservStatuses = readLookups($dbh, "reservStatus", "Code", true);
+        $reservStatuses = readLookups($dbh, "ReservStatus", "Code", true);
 
         if(isset($reservStatuses[$status])){
             return $reservStatuses[$status]["Title"];
@@ -1037,6 +1034,7 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
     public function getStatusIcon(\PDO $dbh, $status = '') {
 
         if ($status == '') {
+
             $status = $this->getStatus();
 
             if ($status == '') {
@@ -1060,58 +1058,69 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return '';
     }
 
+    /**
+     *
+     * @param array $reserveStatuses
+     * @return array
+     */
     public function getChooserStatuses($reserveStatuses) {
 
         $uS = Session::getInstance();
 
-        $limResvStatuses = array();
+        $limResvStatuses = [];
 
-        foreach (removeOptionGroups($reserveStatuses) as $s) {
+        foreach ($reserveStatuses as $s) {
 
-            if ($s['0'] != ReservationStatus::Checkedout && $s[0] != ReservationStatus::Staying && $s[0] != ReservationStatus::Pending && $s[0] != ReservationStatus::Imediate) {
+            if ($s['Show'] == 'y') {
 
-                if ($s[0] == ReservationStatus::UnCommitted && $uS->ShowUncfrmdStatusTab === FALSE) {
+                // Opt out if not useing Unconfirmed Status.
+                if ($s['Code'] == ReservationStatus::UnCommitted && $uS->ShowUncfrmdStatusTab === FALSE) {
                     continue;
                 }
 
-                if ($this->isRemovedStatus($s[0])) {
+                if ($s['Type'] == ReservationStatusType::Cancelled) {
                     $s[2] = 'Cancel Codes';
+                } else if  ($s['Type'] == '') {
+                    continue;
+                } else {
+                    $s[2] = 'Active Codes';
                 }
 
-                $limResvStatuses[$s[0]] = $s;
+                $limResvStatuses[$s[0]] = [$s[0], $s[1], $s[2], 'Type' =>$s['Type']];
             }
         }
 
         return $limResvStatuses;
     }
 
-    public function isActive() {
-        return $this->isActiveStatus($this->getStatus());
+    public function isActive($reserveStatuses) {
+        return $this->isActiveStatus($this->getStatus(), $reserveStatuses);
     }
 
-    public static function isActiveStatus($status) {
+    public static function isActiveStatus($status, $reserveStatuses) {
 
-        if ($status == ReservationStatus::Committed || $status == ReservationStatus::UnCommitted || $status == ReservationStatus::Waitlist) {
-            return TRUE;
+        if (isset($reserveStatuses[$status])) {
+
+
+            if ($reserveStatuses[$status]['Type'] == ReservationStatusType::Active) {
+                return TRUE;
+            }
         }
-
         return FALSE;
     }
 
-    public function isRemoved() {
-        return $this->isRemovedStatus($this->getStatus());
+    public function isRemoved($reserveStatuses) {
+        return $this->isRemovedStatus($this->getStatus(), $reserveStatuses);
     }
 
-    public static function isRemovedStatus($reservStatus) {
+    public static function isRemovedStatus($status, $reserveStatuses) {
 
-        if ($reservStatus == ReservationStatus::Canceled || $reservStatus == ReservationStatus::NoShow || $reservStatus == ReservationStatus::TurnDown) {
-            return TRUE;
+        if (isset($reserveStatuses[$status])) {
+
+            if ($reserveStatuses[$status]['Type'] == ReservationStatusType::Cancelled) {
+                return TRUE;
+            }
         }
-
-        if ($reservStatus == ReservationStatus::Canceled1 || $reservStatus == ReservationStatus::Canceled2 || $reservStatus == ReservationStatus::Canceled3 || $reservStatus == ReservationStatus::Canceled4) {
-            return TRUE;
-        }
-
         return FALSE;
     }
 
@@ -1364,6 +1373,10 @@ where $typeList group by rc.idResource having `Max_Occupants` >= $numOccupants o
         return $this;
     }
 
+    public function setStatusType($t) {
+        $this->reserveStatusType = $t;
+    }
+
     public function setAddRoom($v) {
         $this->reservRs->Add_Room->setNewVal($v);
         return $this;
@@ -1481,6 +1494,10 @@ where v.Status = 'a' and s.Status = 'a' and v.idReservation = " . $this->getIdRe
 
     public function getStatus() {
         return $this->reservRs->Status->getStoredVal();
+    }
+
+    public function getStatusType() {
+        return $this->reserveStatusType;
     }
 
     public function getAddRoom() {
