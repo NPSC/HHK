@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * RuntimeException.php
  *
@@ -15,8 +18,12 @@ namespace HHK\Exception;
  * @author Eric Crane
  */
 
-class RuntimeException
-              extends \RuntimeException {
+class RuntimeException extends \RuntimeException {
+    public function __construct ($message = null, $code = null, $previous = null) {
+        $dbh = initPDO();
+        $uS = Session::getInstance();
+        HouseLog::logError($dbh, "Runtime Exception", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+    }
 }
 
 ?>

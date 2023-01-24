@@ -29,6 +29,16 @@ use HHK\Exception\RuntimeException;
 class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
     public array $paramTemplate = [
+        "after"=>[
+            "label"=>"Send After",
+            "type"=>"select",
+            "values"=>[
+                "checkin"=>["checkin","Check In"],
+                "checkout"=>["checkout","Check Out"]
+            ],
+            "defaultVal"=>"checkout",
+            "required"=>true
+        ],
         "solicitBuffer"=>[
             "label"=>"SolicitBuffer (days)",
             "type"=>"number",
@@ -91,32 +101,59 @@ class SendPostCheckoutEmailJob extends AbstractJob implements JobInterface{
 
         $paramList[":delayDays"] = $delayDays;
 
-        $stmt = $this->dbh->prepare("SELECT
-    n.Name_First,
-    n.Name_Last,
-    n.Name_Suffix,
-    n.Name_Prefix,
-    ne.Email,
-    v.idVisit,
-    v.idPrimaryGuest,
-	v.Actual_Departure
-FROM
-    stays s
-        JOIN
-    visit v ON v.idVisit = s.idVisit
-        AND v.Span = s.Visit_Span
-	JOIN
-    `name` n ON s.idName = n.idName
-		AND n.Member_Status != 'd'
-        JOIN
-    `name_email` ne ON n.idName = ne.idName
-        AND n.Preferred_Email = ne.Purpose
-WHERE
-    n.Member_Status != 'd'
-        AND v.`Status` = 'co'
-        AND DATE(s.Checkin_Date) < DATE(s.Checkout_Date) and
-        DateDiff(DATE(NOW()), DATE(v.Actual_Departure)) = :delayDays
-GROUP BY s.idName;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        if(!empty($this->params["after"]) && $this->params["after"] == "checkin"){
+            $stmt = $this->dbh->prepare("SELECT
+                n.Name_First,
+                n.Name_Last,
+                n.Name_Suffix,
+                n.Name_Prefix,
+                ne.Email,
+                v.idVisit,
+                v.idPrimaryGuest
+            FROM
+                stays s
+                    JOIN
+                visit v ON v.idVisit = s.idVisit
+                    AND v.Span = s.Visit_Span
+            	JOIN
+                `name` n ON s.idName = n.idName
+            		AND n.Member_Status != 'd'
+                    JOIN
+                `name_email` ne ON n.idName = ne.idName
+                    AND n.Preferred_Email = ne.Purpose
+            WHERE
+                n.Member_Status != 'd'
+                    AND v.`Status` = 'a'
+                    and DateDiff(DATE(NOW()), DATE(v.Arrival_Date)) = :delayDays
+            GROUP BY s.idName;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        }else{
+            $stmt = $this->dbh->prepare("SELECT
+                n.Name_First,
+                n.Name_Last,
+                n.Name_Suffix,
+                n.Name_Prefix,
+                ne.Email,
+                v.idVisit,
+                v.idPrimaryGuest,
+            	v.Actual_Departure
+            FROM
+                stays s
+                    JOIN
+                visit v ON v.idVisit = s.idVisit
+                    AND v.Span = s.Visit_Span
+            	JOIN
+                `name` n ON s.idName = n.idName
+            		AND n.Member_Status != 'd'
+                    JOIN
+                `name_email` ne ON n.idName = ne.idName
+                    AND n.Preferred_Email = ne.Purpose
+            WHERE
+                n.Member_Status != 'd'
+                    AND v.`Status` = 'co'
+                    AND DATE(s.Checkin_Date) < DATE(s.Checkout_Date) and
+                    DateDiff(DATE(NOW()), DATE(v.Actual_Departure)) = :delayDays
+            GROUP BY s.idName;", array(PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY));
+        }
 
         $stmt->execute($paramList);
         $numRecipients = $stmt->rowCount();

@@ -169,7 +169,7 @@ try {
 			}
 
 			$recaptcha = new Recaptcha();
-			if(($uS->mode == 'demo' || $uS->mode == 'prod') && $recaptchaToken != ''){
+			if(($uS->mode == 'demo' || $uS->mode == 'live') && $recaptchaToken != ''){
 			     $score = $recaptcha->verify($recaptchaToken);
 			}else{
 			    $score = 1.0;
@@ -195,7 +195,7 @@ try {
 				$events = $formDocument->saveNew($dbh, $formRenderData, $templateId);
 				$events['recaptchaScore'] = $score;
 			}else{
-				$events = ['status'=>'error', 'errors'=>['server'=>'Recaptcha failed with score of ' . $score]];
+				$events = ['status'=>'error', 'errors'=>['server'=>'Recaptcha spam check failed'], 'recaptchaScore'=>$score];
 			}
             break;
 

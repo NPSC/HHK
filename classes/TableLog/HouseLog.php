@@ -94,4 +94,28 @@ class HouseLog extends AbstractTableLog {
 
     }
 
+    /**
+     * Log errors/exceptions
+     *
+     * @param \PDO $dbh
+     * @param string $apiService (google, salesforce, etc)
+     * @param bool $isSuccess
+     * @param string $logText
+     * @param string $userName
+     * @return number
+     */
+    public static function logError(\PDO $dbh, string $exceptionType, string $logText, string $userName) {
+
+        $logRS = new House_LogRS();
+        $logRS->Log_Type->setNewVal('Error');
+        $logRS->Sub_Type->setNewVal($exceptionType);
+        $logRS->Str1->setNewVal("error");
+        $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
+        $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
+
+        return self::insertLog($dbh, $logRS);
+
+    }
+
 }

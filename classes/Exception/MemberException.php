@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * MemberException.php
  *
@@ -16,6 +19,10 @@ namespace HHK\Exception;
  */
 
 class MemberException extends \RuntimeException {
-
+    public function __construct ($message = null, $code = null, $previous = null) {
+        $dbh = initPDO();
+        $uS = Session::getInstance();
+        HouseLog::logError($dbh, "MemberException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+    }
 }
 ?>

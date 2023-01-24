@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * DuplicateException.php
  *
@@ -15,8 +18,11 @@ namespace HHK\Exception;
  * @author Eric Crane
  */
 
-class DuplicateException
-        extends \Exception {
-
+class DuplicateException extends \Exception {
+    public function __construct ($message = null, $code = null, $previous = null) {
+        $dbh = initPDO();
+        $uS = Session::getInstance();
+        HouseLog::logError($dbh, "DuplicateException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+    }
 }
 ?>

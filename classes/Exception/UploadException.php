@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * UploadException.php
  *
@@ -15,6 +18,10 @@ namespace HHK\Exception;
  * @author Eric Crane
  */
 
-class UploadException
-              extends \RuntimeException {
+class UploadException extends \RuntimeException {
+    public function __construct ($message = null, $code = null, $previous = null) {
+        $dbh = initPDO();
+        $uS = Session::getInstance();
+        HouseLog::logError($dbh, "UploadException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+    }
 }

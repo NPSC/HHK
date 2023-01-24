@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * InvalidArgumentException.php
  *
@@ -15,8 +18,11 @@ namespace HHK\Exception;
  * @author Eric Crane
  */
 
-class InvalidArgumentException
-              extends \RuntimeException {
-
+class InvalidArgumentException extends \RuntimeException {
+    public function __construct ($message = null, $code = null, $previous = null) {
+        $dbh = initPDO();
+        $uS = Session::getInstance();
+        HouseLog::logError($dbh, "InvalidArgumentException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+    }
 }
 ?>

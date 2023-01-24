@@ -1,6 +1,9 @@
 <?php
 namespace HHK\Exception;
 
+use HHK\TableLog\HouseLog;
+use HHK\sec\Session;
+
 /**
  * PaymentException.php
  *
@@ -15,7 +18,11 @@ namespace HHK\Exception;
  * @author Eric Crane
  */
 
-class PaymentException
-              extends \RuntimeException {
+class PaymentException extends \RuntimeException {
+    public function __construct ($message = null, $code = null, $previous = null) {
+        $dbh = initPDO();
+        $uS = Session::getInstance();
+        HouseLog::logError($dbh, "PaymntException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+    }
 }
 ?>
