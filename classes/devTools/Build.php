@@ -1,7 +1,6 @@
 <?php
 namespace HHK\devTools;
 
-use MatthiasMullie\Minify;
 use Composer\Script\Event;
 
 /**
@@ -36,9 +35,6 @@ class Build {
                 switch($info['extension']){
                     case "js":
                         $minifier = new Minify\JS($file['in']);
-                        break;
-                    case "css":
-                        $minifier = new Minify\CSS($file['in']);
                         break;
                     default:
                         $minifier = false;
