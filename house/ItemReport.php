@@ -114,6 +114,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         'Description' => $r['Description'],
         'Invoice_Number' => $r['Invoice_Number'],
         'Amount' => $amt,
+        'Updated_By'=>$r["Updated_By"],
     );
 
     $total += $amt;
@@ -204,6 +205,7 @@ if (count($diags) > 0) {
     $cFields[] = array($labels->getString('hospital', 'diagnosis', 'Diagnosis'), 'Diagnosis', '', '', 'string', '20', array());
 }
 
+$cFields[] = array("Updated By", 'Updated_By', '', '', 'string', '15', array());
 $cFields[] = array("Status", 'Status', 'checked', '', 'string', '15', array());
 $cFields[] = array("Amount", 'Amount', 'checked', '', 'dollar', '15', array('style'=>'text-align:right;'));
 
@@ -410,6 +412,7 @@ if (isset($_POST['btnHere']) || isset($_POST['btnExcel'])) {
     i.Carried_Amount,
     i.`Balance`,
     i.`Deleted` as `Invoice_Deleted`,
+    i.`Updated_By`,
     il.`Price`,
     il.`Amount`,
     il.`Quantity`,
