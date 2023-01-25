@@ -327,7 +327,7 @@ order by r.Title;");
 
             $startDate = filter_var($post['txtstart'][$k], FILTER_SANITIZE_STRING);
             $endDate = filter_var($post['txtend'][$k], FILTER_SANITIZE_STRING);
-            $stat = filter_var($post['selStatus'][$k], FILTER_SANITIZE_STRING);
+            $stat = filter_var($v, FILTER_SANITIZE_STRING);
             $oosCode = filter_var($post['selOos'][$k], FILTER_SANITIZE_STRING);
             $notes = filter_var($post['txtNotes'][$k], FILTER_SANITIZE_STRING);
 
@@ -361,11 +361,28 @@ order by r.Title;");
             $enDT = new \DateTime($endDate);
 
             // Check for resource in use
-            $query = "select r.idResource from reservation r where r.Status in "
-                    . "('" .ReservationStatus::Checkedout . "','" .ReservationStatus::Staying . "')
-    and DATE(r.Actual_Arrival) < DATE(:dtend) and ifnull(DATE(r.Actual_Departure), DATE(r.Expected_Departure)) > DATE(:start)
-    union
-    select ru.idResource from resource_use ru where ru.idResource_use != :idRu and DATE(ru.Start_Date) < DATE(:ruend) and ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)";
+            $query = "SELECT
+    r.idResource
+FROM
+    reservation r
+WHERE
+case WHEN r.`Status` = '" .ReservationStatus::Staying . "' THEN
+		DATE(r.Actual_Arrival) < DATE(:dtend)
+	WHEN r.`Status` = '" .ReservationStatus::Checkedout . "' THEN
+        DATE(r.Actual_Arrival) < DATE(:dtend)
+        AND DATE(r.Actual_Departure) > DATE(:start)
+        AND DATEDIFF(r.Actual_Departure, r.Actual_Arrival) > 0
+	ELSE 1=2
+END
+UNION
+SELECT
+    ru.idResource
+FROM resource_use ru
+WHERE
+    ru.idResource_use != :idRu
+    AND DATE(ru.Start_Date) < DATE(:ruend)
+    AND ifnull(DATE(ru.End_Date), DATE(now())) > DATE(:rustart)";
+
             $stmt = $dbh->prepare($query);
             $stmt->execute(array(
                 ':idRu'=>$idRescUse,
@@ -385,7 +402,7 @@ order by r.Title;");
             if ($inUse) {
 
                 if ($idRescUse == 0) {
-                    $reply .= 'An existing visit or status record conflicts with the dates entered.  ';
+                    $reply .= 'An existing reservation or room status record conflicts with the dates entered.  ';
                 }
                 continue;
             }
@@ -403,14 +420,6 @@ order by r.Title;");
             } else if ($type == 'room') {
                 $reply .= 'Room status is unsupported.  ';
                 continue;
-
-//                $ruRs->idRoom->setNewVal($id);
-//
-//                if ($stat == RoomService::OutOfService) {
-//                    $ruRs->Room_State->setNewVal(RoomService::OutOfService);
-//                } else if ($stat == ResourceStatus::Unavailable) {
-//                    $ruRs->Room_Availability->setNewVal(ResourceStatus::Unavailable);
-//                }
             }
 
             $ruRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
