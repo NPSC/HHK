@@ -29,14 +29,14 @@ class LocationRS extends AbstractTableRS {
 
     function __construct($TableName = "location") {
 
-        $this->idLocation = new DB_Field("idLocation", 0, new DbIntSanitizer());
-        $this->Title = new DB_Field("Title", "", new DbStrSanitizer(45));
-        $this->Description = new DB_Field("Description", "", new DbStrSanitizer(2000));
-        $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5));
-        $this->Address = new DB_Field("Address", "", new DbStrSanitizer(145));
-        $this->Merchant = new DB_Field("Merchant", "", new DbStrSanitizer(45));
+        $this->idLocation = new DB_Field("idLocation", 0, new DbIntSanitizer(), TRUE, TRUE);
+        $this->Title = new DB_Field("Title", "", new DbStrSanitizer(45), TRUE, TRUE);
+        $this->Description = new DB_Field("Description", "", new DbStrSanitizer(2000), TRUE, TRUE);
+        $this->Status = new DB_Field("Status", "", new DbStrSanitizer(5), TRUE, TRUE);
+        $this->Address = new DB_Field("Address", "", new DbStrSanitizer(145), TRUE, TRUE);
+        $this->Merchant = new DB_Field("Merchant", "", new DbStrSanitizer(45), TRUE, TRUE);
         $this->Map = new DB_Field("Map", "", new DbStrSanitizer(45));
-        $this->Owner_Id = new DB_Field("Owner_Id", 0, new DbIntSanitizer());
+        $this->Owner_Id = new DB_Field("Owner_Id", 0, new DbIntSanitizer(), TRUE, TRUE);
         $this->Updated_By = new DB_Field("Updated_By", "", new DbStrSanitizer(45), FALSE);
         $this->Last_Updated = new DB_Field("Last_Updated", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);
         $this->Timestamp = new DB_Field("Timestamp", NULL, new DbDateSanitizer("Y-m-d H:i:s"), FALSE);

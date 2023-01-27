@@ -131,13 +131,13 @@ abstract class AbstractPaymentGateway {
         throw new PaymentException('Webhook not implemeneted');
     }
 
-    public static function createEditMarkup(\PDO $dbh, $gatewayName) {
+    public static function createEditMarkup(\PDO $dbh, $gatewayName, $resultMsg = '') {
 
         switch (strtolower($gatewayName)) {
 
             case AbstractPaymentGateway::VANTIV:
 
-                return VantivGateway::_createEditMarkup($dbh, $gatewayName);
+                return VantivGateway::_createEditMarkup($dbh, $gatewayName, $resultMsg);
 
             case AbstractPaymentGateway::INSTAMED:
 

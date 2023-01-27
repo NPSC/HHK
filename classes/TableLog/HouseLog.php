@@ -65,6 +65,19 @@ class HouseLog extends AbstractTableLog {
 
     }
 
+    public static function logGeneral(\PDO $dbh, $table, $id, $logText, $userName, $subType) {
+
+        $logRS = new House_LogRS();
+        $logRS->Log_Type->setNewVal($table);
+        $logRS->Sub_Type->setNewVal($subType);
+        $logRS->Id1->setNewVal($id);
+        $logRS->Log_Text->setNewVal(self::encodeLogText($logText));
+        $logRS->User_Name->setNewVal($userName);
+        $logRS->Timestamp->setNewVal(date("Y-m-d H:i:s"));
+
+        return self::insertLog($dbh, $logRS);
+    }
+
 
     public static function logRoomRate(\PDO $dbh, $action, $idRoomRate,  $logText, $userName) {
 

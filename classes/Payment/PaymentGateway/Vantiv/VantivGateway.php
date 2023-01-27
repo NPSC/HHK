@@ -20,6 +20,9 @@ use HHK\HTMLControls\{HTMLContainer, HTMLInput, HTMLSelector, HTMLTable};
 use HHK\Exception\{RuntimeException, PaymentException};
 use HHK\Payment\GatewayResponse\GatewayResponseInterface;
 use HHK\Payment\PaymentGateway\Vantiv\Response\CreditTokenResponse;
+use HHK\Tables\House\LocationRS;
+use HHK\TableLog\AbstractTableLog;
+use HHK\TableLog\HouseLog;
 
 /**
  * VantivGateway.php
@@ -873,28 +876,28 @@ class VantivGateway extends AbstractPaymentGateway {
 
         $tbl = new HTMLTable();
 
-        // Spacer
-        $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
-
-        if (count($rows) == 0) {
-            $rows[0] = $gwRs;
+        if ($resultMessage != '') {
+            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));
         }
 
         foreach ($rows as $r) {
+
+            $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
 
             $gwRs = new CC_Hosted_GatewayRS();
             EditRS::loadRow($r, $gwRs);
 
             $indx = $gwRs->idcc_gateway->getStoredVal();
 
+            // Nerchant name
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Merchant Name', array('style' => 'border-top:2px solid black;'))
-                    . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('style' => 'border-top:2px solid black;'))
+                HTMLTable::makeTh('Merchant Name', array())
+                . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('name' => $indx . '_txtmercName', 'size' => '50'))
             );
 
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Merchant Id', array())
-                    . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
             );
             $tbl->addBodyTr(
                     HTMLTable::makeTh('Password', array())
@@ -947,38 +950,95 @@ class VantivGateway extends AbstractPaymentGateway {
             		HTMLTable::makeTh('Payment Page Logo URL', array())
             		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Page_Header_URL->getStoredVal(), array('name' => $indx . '_txtpageLogourl', 'size' => '90')))
             		);
+
+            // Delete me
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Delete ' . $gwRs->cc_name->getStoredVal(), array())
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_cbdelMerchant', 'type'=>'checkbox')))
+                );
         }
 
 
-        if ($resultMessage != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));
-        }
+        // New location
+        $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
+        $tbl->addBodyTr(
+            HTMLTable::makeTh('Add a new merchant', array())
+            .HTMLTable::makeTd('New Merchant Name: '.HTMLInput::generateMarkup('', array('name' => 'txtnewMerchant', 'size' => '50')))
+
+        );
 
         return $tbl->generateMarkup();
     }
 
     protected static function _saveEditMarkup(\PDO $dbh, $gatewayName, $post) {
 
+        $uS = Session::getInstance();
+
         $msg = '';
+
         $ccRs = new CC_Hosted_GatewayRS();
         $ccRs->Gateway_Name->setStoredVal($gatewayName);
         $rows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name));
 
-        // Use POS
-        if (isset($post['selCardSwipe'])) {
-            SysConfig::saveKeyValue($dbh, 'sys_config', 'CardSwipe', filter_var($post['selCardSwipe'], FILTER_SANITIZE_STRING));
-        }
+        // Add new merchant
+        if (isset($post['txtnewMerchant'])) {
+            // Add a new default row
 
-        if (count($rows) == 0) {
-            $rows[0] = $ccRs;
-        }
+            $merchantName = strtolower(filter_var($post['txtnewMerchant'], FILTER_SANITIZE_STRING));
 
+            if ( ! empty($merchantName)) {
+
+                $isThere = FALSE;
+
+                // Compare with previous merchant names
+                foreach ($rows as $r) {
+
+                    $ccRs = new CC_Hosted_GatewayRS();
+                    EditRS::loadRow($r, $ccRs);
+
+                    if ($ccRs->cc_name->getStoredVal() == $merchantName) {
+                        $isThere = TRUE;
+                        break;
+                    }
+                }
+
+                reset($rows);
+
+                // Don't let them make a new merchant with the same name.
+                if ($isThere) {
+                    $msg .= HTMLContainer::generateMarkup('p', 'Merchant name ' . $merchantName . ' already exists.');
+                } else {
+                    //Insert new gateway record
+                    $num = self::insertGwRecord($dbh, $gatewayName, $merchantName, new CC_Hosted_GatewayRS());
+                    self::checkLocationTable($dbh, $merchantName);
+
+                    // Retrieve the new record.
+                    $ccRs = new CC_Hosted_GatewayRS();
+                    $ccRs->Gateway_Name->setStoredVal($gatewayName);
+                    $ccRs->cc_name->setStoredVal($merchantName);
+                    $newrows = EditRS::select($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->cc_name));
+
+                    $rows[] = $newrows[0];
+                }
+            }
+        }
 
         foreach ($rows as $r) {
 
+            $ccRs = new CC_Hosted_GatewayRS();
             EditRS::loadRow($r, $ccRs);
 
             $indx = $ccRs->idcc_gateway->getStoredVal();
+            $merchantName = $ccRs->cc_name->getStoredVal();
+
+            // Delete Merchant
+            if (isset($post[$indx . '_cbdelMerchant']) && $ccRs->cc_name->getStoredVal() != '') {
+
+                $result = self::deleteMerchant($dbh, $ccRs);
+                $msg .= HTMLContainer::generateMarkup('p', $result);
+
+                continue;
+            }
 
             // Merchant Id
             if (isset($post[$indx . '_txtuid'])) {
@@ -1054,12 +1114,32 @@ class VantivGateway extends AbstractPaymentGateway {
                 }
             }
 
+            $num = 0;
 
             // Save record.
-            $num = EditRS::update($dbh, $ccRs, array($ccRs->Gateway_Name, $ccRs->idcc_gateway));
+            if ($merchantName != '') {
+                //Update
 
-            if ($num > 0) {
-                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - Payment Credentials Updated.  ");
+                $ccRs->Updated_By->setNewVal($uS->username);
+                $ccRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+                $num = EditRS::update($dbh, $ccRs, array($ccRs->idcc_gateway));
+
+                if ($num > 0) {
+
+                    $logText = AbstractTableLog::getUpdateText($ccRs);
+                    HouseLog::logGeneral($dbh, 'CC Gateway', $ccRs->idcc_gateway->getStoredVal(), $logText, $uS->username, 'update');
+
+                    self::checkLocationTable($dbh, $merchantName);
+                }
+
+            } else if (empty($merchantName)) {
+                $num = 'Merchant name is missing.';
+            }
+
+            if (intval($num, 10) == 0 && $num !== 0) {
+                $msg .= HTMLContainer::generateMarkup('p', $num);
+            } else if ($num > 0) {
+                $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $merchantName . " - Payment Credentials Updated.  ");
             } else {
                 $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " " . $ccRs->cc_name->getStoredVal() . " - No changes detected.  ");
             }
@@ -1068,5 +1148,125 @@ class VantivGateway extends AbstractPaymentGateway {
         return $msg;
     }
 
+    private static function insertGwRecord(\PDO $dbh, $gatewayName, $merchantName, CC_Hosted_GatewayRS $ccRs) {
+
+        $uS = Session::getInstance();
+
+        // Check for previous entry
+        $rs = new CC_Hosted_GatewayRS();
+        $rs->Gateway_Name->setStoredVal($gatewayName);
+        $rs->cc_name->setStoredVal($merchantName);
+        $rows = EditRS::select($dbh, $rs, array($rs->Gateway_Name, $rs->cc_name));
+
+        if (count($rows) > 0) {
+            return 'Merchant ' . $merchantName . ' already exists for gateway ' .$gatewayName;
+        }
+
+        //Insert gateway record
+        $ccRs->Gateway_Name->setNewVal($gatewayName);
+        $ccRs->cc_name->setNewVal($merchantName);
+        $ccRs->Updated_By->setNewVal($uS->username);
+        $ccRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+        $num = EditRS::insert($dbh, $ccRs);
+
+        if ($num > 0) {
+            $logText = AbstractTableLog::getInsertText($ccRs);
+            HouseLog::logGeneral($dbh, 'CC Gateway', $num, $logText, $uS->username, 'insert');
+        }
+
+        return $num;
+    }
+
+    private static function deleteMerchant(\PDO $dbh, CC_Hosted_GatewayRS $ccRs) {
+
+        $uS = Session::getInstance();
+        $num = '';
+        $merchantName = $ccRs->cc_name->getStoredVal();
+
+        //
+        $result = EditRS::delete($dbh, $ccRs, array($ccRs->idcc_gateway));
+
+        if ($result) {
+
+            $logText = AbstractTableLog::getDeleteText($ccRs, $ccRs->idcc_gateway->getStoredVal());
+            HouseLog::logGeneral($dbh, 'CC Gateway', $ccRs->idcc_gateway->getStoredVal(), $logText, $uS->username, 'delete');
+
+            $num = 'Merchant ' . $merchantName . ' is deleted. ';
+
+        } else {
+            $num = 'Merchant ' . $merchantName . ' was not found! ';
+        }
+
+        // Deal with location table
+        $locRs = new LocationRS();
+        $locRs->Merchant->setStoredVal($merchantName);
+        $r = EditRS::select($dbh, $locRs, array($locRs->Merchant));
+
+        if (count($r) > 0) {
+
+            EditRS::loadRow($r[0], $locRs);
+
+            $result = EditRS::delete($dbh, $locRs, array($locRs->idLocation));
+
+            if ($result) {
+                $logText = AbstractTableLog::getDeleteText($locRs, $locRs->idLocation->getStoredVal());
+                HouseLog::logGeneral($dbh, 'Location', $locRs->idLocation->getStoredVal(), $logText, $uS->username, 'delete');
+                $num .= 'Location ' . $merchantName . ' is deleted. ';
+            }
+
+        } else {
+            $num .= 'Location ' . $merchantName . ' was not found! ';
+        }
+
+        return $num;
+    }
+
+    private static function checkLocationTable(\PDO $dbh, $merchantName) {
+
+        $uS = Session::getInstance();
+        $num = 0;
+
+        $locRs = new LocationRS();
+        $locRs->Merchant->setStoredVal($merchantName);
+        $locRows = EditRS::select($dbh, $locRs, array($locRs->Merchant));
+
+        if (count($locRows) == 0) {
+            // Insert
+
+            $locRs = new LocationRS();
+            $locRs->Merchant->setNewVal($merchantName);
+            $locRs->Title->setNewVal(ucfirst($merchantName));
+            $locRs->Status->setNewVal('a');
+            $locRs->Updated_By->setNewVal($uS->username);
+            $locRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+            $num = EditRS::insert($dbh, $locRs);
+
+            if ($num > 0) {
+                $logText = AbstractTableLog::getInsertText($locRs);
+                HouseLog::logGeneral($dbh, 'Location', $num, $logText, $uS->username, 'insert');
+            }
+
+        } else {
+            // Update
+            EditRS::loadRow($locRows[0], $locRs);
+
+            $locRs->Merchant->setNewVal($merchantName);
+            $locRs->Title->setNewVal(ucfirst($merchantName));
+            $locRs->Status->setNewVal('a');
+            $locRs->Updated_By->setNewVal($uS->username);
+            $locRs->Last_Updated->setNewVal(date('Y-m-d H:i:s'));
+
+            $num = EditRS::update($dbh, $locRs, array($locRs->idLocation));
+
+            if ($num > 0) {
+                $logText = AbstractTableLog::getUpdateText($locRs);
+                HouseLog::logGeneral($dbh, 'Location', $locRs->idLocation->getStoredVal(), $logText, $uS->username, 'update');
+            }
+        }
+
+        return $num;
+    }
 }
+
 ?>

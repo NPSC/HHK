@@ -745,15 +745,15 @@ class SiteConfig {
                 // use "local" gateway
                 SysConfig::saveKeyValue($dbh, 'sys_config', 'PaymentGateway', $newGW);
                 $uS->PaymentGateway = $newGW;
-                $msg .= "Payment Gateway Changed.";
 
             } else {
 
                 // Change payment gateway
                 SysConfig::saveKeyValue($dbh, 'sys_config', 'PaymentGateway', $newGW);
                 $uS->PaymentGateway = $newGW;
-                $msg .= "Payment Gateway Changed.";
             }
+
+            $msg .= "Payment Gateway Changed.";
 
         } else {
             // Update current GW.
