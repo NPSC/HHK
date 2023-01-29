@@ -72,6 +72,23 @@ $(document).ready(function () {
     }
 ];
 
+// CC processor tab
+if ($('.hhk-delMerchant').length > 0) {
+	$('.hhk-delMerchant').on('change', function() {
+		if ($(this).prop('checked') && ! confirm('Delete the ' + $(this).data('merchant') + ' merchant?')) {
+			$(this).prop('checked', false);
+		}
+	});
+}
+if ($('.hhk-setMerchantRooms').length > 0) {
+	$('.hhk-setMerchantRooms').on('change', function() {
+		if ($(this).prop('checked') && ! confirm('This sets ALL the rooms to the ' + $(this).data('merchant') + ' merchant!')) {
+			$(this).prop('checked', false);
+		}
+	});
+}
+
+
 	//display noty
 
 	if(notyMsg.type){

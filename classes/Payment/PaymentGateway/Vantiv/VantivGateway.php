@@ -877,92 +877,100 @@ class VantivGateway extends AbstractPaymentGateway {
         $tbl = new HTMLTable();
 
         if ($resultMessage != '') {
-            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'style' => 'font-weight:bold;')));
+            $tbl->addBodyTr(HTMLTable::makeTd($resultMessage, array('colspan' => '2', 'class' => 'ui-state-highlight')));
         }
 
         foreach ($rows as $r) {
 
-            $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
+            $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')), array('style'=>'border-top: solid 1px black;'));
 
             $gwRs = new CC_Hosted_GatewayRS();
             EditRS::loadRow($r, $gwRs);
 
             $indx = $gwRs->idcc_gateway->getStoredVal();
+            $title = ucfirst($gwRs->cc_name->getStoredVal());
 
             // Nerchant name
             $tbl->addBodyTr(
-                HTMLTable::makeTh('Merchant Name', array())
-                . HTMLTable::makeTd($gwRs->cc_name->getStoredVal(), array('name' => $indx . '_txtmercName', 'size' => '50'))
+                HTMLTable::makeTh('Merchant Name:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd($title)
             );
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Merchant Id', array())
+                HTMLTable::makeTh('Merchant Id:', array('class' => 'tdlabel'))
                 . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Merchant_Id->getStoredVal(), array('name' => $indx . '_txtuid', 'size' => '50')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Password', array())
+                HTMLTable::makeTh('Password:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Password->getStoredVal(), array('name' => $indx . '_txtpwd', 'size' => '90')) . ' (Obfuscated)')
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Credit URL', array())
+                HTMLTable::makeTh('Credit URL:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Credit_Url->getStoredVal(), array('name' => $indx . '_txtcrdurl', 'size' => '90')))
             );
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Token Trans URL', array())
+                HTMLTable::makeTh('Token Trans URL:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Trans_Url->getStoredVal(), array('name' => $indx . '_txttransurl', 'size' => '90')))
             );
 
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('CheckoutPOS URL', array())
+                HTMLTable::makeTh('CheckoutPOS URL:', array('class' => 'tdlabel'))
                     . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->CheckoutPOS_Url->getStoredVal(), array('name' => $indx . '_txtcoposurl', 'size' => '90')))
             );
 
             $tbl->addBodyTr(
-                        HTMLTable::makeTh('Checkout URL', array())
+                HTMLTable::makeTh('Checkout URL:', array('class' => 'tdlabel'))
                         . HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Checkout_Url->getStoredVal(), array('name' => $indx . '_txtckouturl', 'size' => '90')))
             );
 
             $tbl->addBodyTr(
-                		HTMLTable::makeTh('Manual Merchant Id', array())
+                HTMLTable::makeTh('Manual Merchant Id:', array('class' => 'tdlabel'))
                 		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Manual_MerchantId->getStoredVal(), array('name' => $indx . '_txtManMerchId', 'size' => '90')))
        		);
             $tbl->addBodyTr(
-                		HTMLTable::makeTh('Manual Password', array())
+                HTMLTable::makeTh('Manual Password:', array('class' => 'tdlabel'))
                 		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Manual_Password->getStoredVal(), array('name' => $indx . '_txtManMerchPW', 'size' => '90')). ' (Obfuscated)')
             );
             $tbl->addBodyTr(
-            		HTMLTable::makeTh('Use AVS', array())
+                HTMLTable::makeTh('Use AVS:', array('class' => 'tdlabel'))
             		.HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_AVS_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseAVS')))
             		);
 
             $tbl->addBodyTr(
-                    HTMLTable::makeTh('Use CCV', array())
+                HTMLTable::makeTh('Use CCV:', array('class' => 'tdlabel'))
                     .HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Use_Ccv_Flag->getStoredVal(), FALSE), array('name' => $indx . '_txtuseCVV')))
             );
 
             $tbl->addBodyTr(
-            		HTMLTable::makeTh('Use Card Swiper', array())
+                HTMLTable::makeTh('Use Card Swiper:', array('class' => 'tdlabel'))
             		.HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($opts, $gwRs->Retry_Count->getStoredVal(), FALSE), array('name' => $indx . '_txtuseSwipe')))
             		);
 
             $tbl->addBodyTr(
-            		HTMLTable::makeTh('Payment Page Logo URL', array())
+                HTMLTable::makeTh('Payment Page Logo URL:', array('class' => 'tdlabel'))
             		. HTMLTable::makeTd(HTMLInput::generateMarkup($gwRs->Page_Header_URL->getStoredVal(), array('name' => $indx . '_txtpageLogourl', 'size' => '90')))
             		);
 
+
+            // Set my rooms
+            $tbl->addBodyTr(
+                HTMLTable::makeTh('Set '.$title.' Rooms:', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_cbSetRooms', 'class'=>'hhk-setMerchantRooms', 'data-merchant'=>$title, 'type'=>'checkbox')))
+                );
+
             // Delete me
             $tbl->addBodyTr(
-                HTMLTable::makeTh('Delete ' . $gwRs->cc_name->getStoredVal(), array())
-                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_cbdelMerchant', 'type'=>'checkbox')))
+                HTMLTable::makeTh('Delete ' . $title . ':', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd(HTMLInput::generateMarkup('', array('name' => $indx . '_cbdelMerchant', 'class'=>'hhk-delMerchant', 'data-merchant'=>$title, 'type'=>'checkbox')))
                 );
         }
 
 
         // New location
-        $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')));
+        $tbl->addBodyTr(HTMLTable::makeTd('&nbsp', array('colspan'=>'2')), array('style'=>'border-top: solid 1px black;'));
         $tbl->addBodyTr(
-            HTMLTable::makeTh('Add a new merchant', array())
+            HTMLTable::makeTh('Add a new merchant', array('class' => 'tdlabel'))
             .HTMLTable::makeTd('New Merchant Name: '.HTMLInput::generateMarkup('', array('name' => 'txtnewMerchant', 'size' => '50')))
 
         );
@@ -1136,6 +1144,17 @@ class VantivGateway extends AbstractPaymentGateway {
                 $num = 'Merchant name is missing.';
             }
 
+            // Set Merchant Rooms
+            if (isset($post[$indx . '_cbSetRooms']) && $ccRs->cc_name->getStoredVal() != '') {
+
+                $rooms = self::setMerchantRooms($dbh, $ccRs);
+
+                if ($rooms > 0) {
+                    $msg .= HTMLContainer::generateMarkup('p', $ccRs->Gateway_Name->getStoredVal() . " - " . $rooms . " rooms set to $merchantName");
+                }
+
+            }
+
             if (intval($num, 10) == 0 && $num !== 0) {
                 $msg .= HTMLContainer::generateMarkup('p', $num);
             } else if ($num > 0) {
@@ -1172,6 +1191,25 @@ class VantivGateway extends AbstractPaymentGateway {
         if ($num > 0) {
             $logText = AbstractTableLog::getInsertText($ccRs);
             HouseLog::logGeneral($dbh, 'CC Gateway', $num, $logText, $uS->username, 'insert');
+        }
+
+        return $num;
+    }
+
+    private static function setMerchantRooms(\PDO $dbh, CC_Hosted_GatewayRS $ccRs) {
+
+        $idLocation = 0;
+        $num = 0;
+
+        $locRs = new LocationRS();
+        $locRs->Merchant->setStoredVal($ccRs->cc_name->getStoredVal());
+        $r = EditRS::select($dbh, $locRs, array($locRs->Merchant));
+
+        if (count($r) > 0) {
+            EditRS::loadRow($r[0], $locRs);
+            $idLocation = $locRs->idLocation->getStoredVal();
+
+            $num = $dbh->exec("update room set idLocation = $idLocation");
         }
 
         return $num;

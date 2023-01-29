@@ -12,7 +12,6 @@ use HHK\sec\{Session, SysConfig};
 use HHK\US_Holidays;
 use HHK\sec\Labels;
 use HHK\sec\SecurityComponent;
-use HHK\SysConst\SalutationCodes;
 use HHK\sec\WebInit;
 
 /**
@@ -509,8 +508,6 @@ class SiteConfig {
     }
 
     public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL, $category = NULL, array $hideCats = array()) {
-
-        $uS = Session::getInstance();
 
         // sys config table
         $sctbl = new HTMLTable();
