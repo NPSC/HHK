@@ -152,6 +152,18 @@ switch ($c) {
 
         break;
 
+    case 'diagnosis':
+
+        $letters = '';
+        if (isset($_GET['letters'])) {
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_STRING);
+        }
+
+        $memberSearch = new MemberSearch($letters);
+        $events = $memberSearch->diagnosisSearch($dbh);
+
+        break;
+
     default:
         $events = array("error" => "Bad Command:  $c");
 

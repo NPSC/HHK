@@ -425,37 +425,63 @@ class Hospital {
 
         // Diagnosis
         $diags = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
+        $diagCats = readGenLookupsPDO($dbh, 'Diagnosis_Category', 'Description');
 
         if (count($diags) > 0) {
 
             $diagtbl = new HTMLTable();
-            $diagtbl->addBodyTr(
-                HTMLTable::makeTh($labels->getString('hospital', 'diagnosis', 'Diagnosis'))
-            );
 
             $myDiagnosis = (isset($referralHospitalData['diagnosis']) && $referralHospitalData['diagnosis'] != '' ? $referralHospitalData['diagnosis'] : $hstay->getDiagnosisCode());
+            $diagId = (isset($diags[$myDiagnosis]) ? $myDiagnosis : '');
+            $diagCat = (!empty($diagId) && isset($diagCats[$diags[$diagId]['Substitute']]) ? $diagCats[$diags[$diagId]['Substitute']][1] . ": " : '');
 
-            $diagtbl->addBodyTr(HTMLTable::makeTd(
-                HTMLSelector::generateMarkup(
-                    HTMLSelector::doOptionsMkup($diags, $myDiagnosis, TRUE),
-                    array('name'=>'selDiagnosis', 'class'=>'hospital-stay', 'style'=>'width: 100%'))
-            ));
+            if ($uS->UseDiagSearch){
+                $diagtbl->addBodyTr(
+                    HTMLTable::makeTh(
+                        HTMLContainer::generateMarkup("span", $labels->getString('hospital', 'diagnosis', 'Diagnosis'))
+                      . HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-search", "style"=>"margin-left:1.3em; margin-right:0.3em;"))
+                      . HTMLInput::generateMarkup("", array('id'=>'diagSearch'))
+                        . HTMLInput::generateMarkup($diagId, array("type"=>"hidden", "name"=>"selDiagnosis", 'class'=>'hospital-stay')), array("colspan"=>"2"))
+                );
+
+                $selectedClass = "";
+                $selectedDiag = "";
+                if(empty($diagId)){
+                   $selectedClass = "d-none";
+                }else{
+                    $selectedDiag = $diagCat . $diags[$myDiagnosis][1];
+                }
+
+                $diagtbl->addBodyTr(
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-trash")), array("class"=>"ui-corner-all ui-state-default ui-button ui-widget", "style"=>"padding: 0.2em 0.4em;"))) .
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup("strong", "Diagnosis: ") . HTMLContainer::generateMarkup("span", $selectedDiag, array("id"=>"selectedDiag")))
+                    , array("class"=>$selectedClass));
+
+            }else{
+                $diagtbl->addBodyTr(
+                    HTMLTable::makeTh($labels->getString('hospital', 'diagnosis', 'Diagnosis'))
+                );
+                $diagtbl->addBodyTr(HTMLTable::makeTd(
+                    HTMLSelector::generateMarkup(
+                        HTMLSelector::doOptionsMkup($diags, $myDiagnosis, TRUE),
+                        array('name'=>'selDiagnosis', 'class'=>'hospital-stay', 'style'=>'width: 100%'))
+                ));
+            }
 
             // Use Diagnosis as a text box?
             if ($uS->ShowDiagTB) {
                 if ($myDiagnosis != '' && isset($diags[$myDiagnosis]) === FALSE) {
 
                     $diagtbl->addBodyTr(
-                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay'))));
+                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', "style"=>"width:100%")), array("colspan"=>"2")));
 
                     $myDiagnosis = '';
                 }else{
                     $diagtbl->addBodyTr(
-                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis2(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', 'placeholder'=>$labels->getString('hospital','diagnosisDetail', 'Diagnosis Details')))));
+                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis2(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', 'placeholder'=>$labels->getString('hospital','diagnosisDetail', 'Diagnosis Details'),  "style"=>"width:100%")), array("colspan"=>"2")));
 
                 }
             }
-
 
             $diagMarkup = $diagtbl->generateMarkup(array('style'=>'display:inline-table; vertical-align: top;'));
 

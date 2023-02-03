@@ -82,18 +82,20 @@ abstract class AbstractRole {
         $MRNSearchMkup = '';
 
         $outerwidth = "col-xl-8";
-        $gstwidth = "col-lg-5";
-
-        if ($showPhoneSearch) {
-            $phoneSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch', "style"=>"min-width: fit-content", "class"=>"mr-2"))
-                .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'20', 'title'=>'Enter at least 5 numbers to invoke search', "style"=>"width:100%")), array("class"=>"col-12 col-lg mb-2 mb-lg-0 hhk-flex"));
-        }
+        $gstwidth = "col-lg";
+        $phoneWidth = "col-lg-5";
 
         if ($showMRNSearch) {
             $MRNSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', Labels::getString("hospital", "MRN", "MRN") . ' Search: ', array('for'=>$prefix.'MRNSearch', 'style'=>"min-width: fit-content", "class"=>"mr-2"))
                 .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'MRNSearch', 'size'=>'14', 'title'=>'Enter at least 3 characters to invoke search', "style"=>"width: 100%")), array("class"=>"col-12 col-lg mb-2 mb-lg-0 hhk-flex"));
-//            $outerwidth = 'col-xl-10';
-//            $gstwidth = 'col-lg-6';
+            $outerwidth = 'col-xl-10';
+            $gstwidth = 'col-lg-6';
+            $phoneWidth = "col-lg";
+        }
+
+        if ($showPhoneSearch) {
+            $phoneSearchMkup = HTMLContainer::generateMarkup("div", HTMLContainer::generateMarkup('label', 'Phone # Search: ', array('for'=>$prefix.'phSearch', "style"=>"min-width: fit-content", "class"=>"mr-2"))
+                .HTMLInput::generateMarkup('', array('type'=>'search', 'id'=>$prefix.'phSearch', 'size'=>'20', 'title'=>'Enter at least 5 numbers to invoke search', "style"=>"width:100%")), array("class"=>"col-12 mb-2 mb-lg-0 hhk-flex " . $phoneWidth));
         }
 
         $gstSearch = HTMLContainer::generateMarkup('div', HTMLContainer::generateMarkup('label', $title, array('for'=>$prefix.'Search', 'style'=>"min-width:fit-content", "class"=>"mr-2"))
