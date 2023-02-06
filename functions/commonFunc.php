@@ -768,15 +768,14 @@ function replaceLookups(\PDO $dbh, $category, array $title, array $use)
 function showGuestPicture ($idGuest, $widthPx) {
 
     return HTMLContainer::generateMarkup('div',
-        HTMLContainer::generateMarkup('img ', '', array('id'=>'guestPhoto', 'src'=>"ws_resc.php?cmd=getguestphoto&guestId=$idGuest", 'width'=>$widthPx)) .
         HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('div',
         HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-plusthick'))
-        , array("class"=>"ui-button ui-corner-all ui-widget upload-guest-photo", 'style'=>'padding: .3em; margin-right:0.3em;')) . HTMLContainer::generateMarkup('div',
+        , array("class"=>"ui-button ui-corner-all ui-widget upload-guest-photo", 'style'=>'padding: .3em;')) . HTMLContainer::generateMarkup('div',
         htmlContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-trash'))
         , array("class"=>"ui-button ui-corner-all ui-widget delete-guest-photo", 'style'=>'padding: .3em'))
-        , array('style'=>"position:absolute; top:25%; left:20%; width: 100%; height: 100%; display:none;", 'id'=>'hhk-guest-photo-actions'))
-        ,array('class'=>'hhk-panel', 'style'=>'display: inline-block; position:relative', 'id'=>'hhk-guest-photo'));
+        , array('style'=>"display:none;", 'id'=>'hhk-guest-photo-actions'))
+        ,array("class"=>"ui-widget ui-widget-content ui-corner-all", "style"=>"width:" . $widthPx . "px; height:" . $widthPx . "px; background-image: url(../house/ws_resc.php?cmd=getguestphoto&guestId=$idGuest);", 'id'=>'hhk-guest-photo'));
 }
 
 /**

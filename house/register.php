@@ -393,7 +393,7 @@ if($uS->useOnlineReferral){
             		<div class="d-xl-none d-flex" style="align-items:center"><span class="ui-icon ui-icon-triangle-1-w"></span></div>
                     <ul class="hhk-flex" style="border:none;">
                         <li id="liCal"><a href="#vcal">Calendar</a></li>
-                        <li><a href="#vstays">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s (<span id="spnNumCurrent"></span>)</a></li>
+                        <li id="liCurrGuests"><a href="#vstays">Current <?php echo $labels->getString('MemberType', 'visitor', 'Guest'); ?>s (<span id="spnNumCurrent"></span>)</a></li>
                         <li><a href="#vresvs"><?php echo $labels->getString('register', 'reservationTab', 'Confirmed Reservations'); ?> (<span id="spnNumConfirmed"></span>)</a></li>
                         <?php if ($uS->ShowUncfrmdStatusTab) { ?>
                         <li><a href="#vuncon"><?php echo $labels->getString('register', 'unconfirmedTab', 'UnConfirmed Reservations'); ?> (<span id="spnNumUnconfirmed"></span>)</a></li>
@@ -549,6 +549,7 @@ if($uS->useOnlineReferral){
         <input  type="hidden" id="expandResources" value='<?php echo $uS->CalExpandResources; ?>' />
         <input  type="hidden" id="staffNoteCats" value='<?php echo json_encode(readGenLookupsPDO($dbh, 'Staff_Note_Category', 'Order')); ?>' />
         <input  type="hidden" id="holidays" value='<?php echo json_encode($holidays); ?>' />
+		<input  type="hidden" id="showCurrentGuestPhotos" value='<?php echo ($uS->showCurrentGuestPhotos && $uS->ShowGuestPhoto); ?>' />
 
 		<script type="text/javascript" src="<?php echo RESV_MANAGER_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo REGISTER_JS; ?>"></script>

@@ -413,6 +413,7 @@ $alertMessage = $alertMsg->createMarkup();
         <?php echo MULTISELECT_CSS; ?>
         <?php echo GRID_CSS; ?>
         <?php echo NAVBAR_CSS; ?>
+        <?php echo UPPLOAD_CSS; ?>
         <link href="css/volCtrl.css" rel="stylesheet" type="text/css" />
 
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
@@ -453,7 +454,7 @@ $alertMessage = $alertMsg->createMarkup();
             </div>
             <?php echo $resultMessage; ?> <?php echo $alertMessage; ?>
             <form action="NameEdit.php" method="post" id="form1" name="form1" >
-                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2" style="font-size:0.95em;padding: 0.7em 1.0em;">
+                <div class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2 hhk-flex" style="font-size:0.95em;padding: 0.7em 1.0em;">
                     <?php echo $nameMarkup; ?>
                 </div>
                 <div id="linkTabs" class="ui-widget ui-widget-content ui-corner-all hhk-widget-content mb-2" style="font-size:0.95em;padding: 0.7em 1.0em;">
@@ -559,6 +560,15 @@ $alertMessage = $alertMsg->createMarkup();
                 <?php echo $webUserDialogMarkup; ?>
             </div>
         </div>  <!-- div id="page"-->
+        <?php if ($uS->ShowGuestPhoto) {
+            echo '<script type="text/javascript" src="' . UPPLOAD_JS . '"></script>';
+        ?>
+        	<script>
+        		$(document).ready(function(){
+        			window.uploader = new Upploader.Uppload({lang: Upploader.en});
+        		});
+        	</script>
+        <?php } ?>
         <script type="text/javascript"><?php include_once("js/nameEd.js") ?></script>
     </body>
 </html>

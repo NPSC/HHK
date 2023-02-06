@@ -8,6 +8,7 @@ $(document).ready(function () {
     var donName;
     var savePressed = false;
     var forceNamePrefix = '<?php echo isset($uS->ForceNamePrefix) ? $uS->ForceNamePrefix : "false"; ?>';
+	var showGuestPhoto = '<?php echo $uS->ShowGuestPhoto; ?>';
 
     $.widget( "ui.autocomplete", $.ui.autocomplete, {
         _resizeMenu: function() {
@@ -607,6 +608,128 @@ $(document).ready(function () {
     
     // init dirrty
     $("#form1").dirrty();
-
+    
+    //member photo
+    if(showGuestPhoto){
+		var guestPhoto = window.uploader;
+		$(document).on('click', '.upload-guest-photo', function(){
+			$(guestPhoto.container).removeClass().addClass('uppload-container');
+			guestPhoto.updatePlugins(plugins => []);
+			guestPhoto.updateSettings({
+				maxSize: [500, 500],
+				customClass: 'guestPhotouploadContainer',
+				uploader: function uploadFunction(file){
+	            	return new Promise(function (resolve, reject) {
+	                	var formData = new FormData();
+	                	formData.append('cmd', 'putguestphoto');
+	                	formData.append('guestId', memData.id);
+	                	formData.append('guestPhoto', file);
+	
+	                	$.ajax({
+	                    	type: "POST",
+	                   	 	url: "../house/ws_resc.php",
+	                   	 	dataType: "json",
+	                    	data: formData,
+	                    	//use contentType, processData for sure.
+	                    	contentType: false,
+	                    	processData: false,
+	                    	success: function(data) {
+	                        	if(data.error){
+	                            	reject(data.error);
+	                        	}else{
+	                            	resolve("success");
+	                            	$("#hhk-guest-photo").css("background-image", "url(../house/ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "r&x="+new Date().getTime() + ")");
+	                            	$(".delete-guest-photo").show();
+	                        	}
+	                        	guestPhoto.navigate('local');
+	                    	},
+	                    	error: function(error) {
+	                        	reject(error);
+	                    	}
+	                	});
+	            	});
+	        	},
+			});
+	
+	
+			var guestphotoLocal = new Upploader.Local(
+	    	{
+	        	maxFileSize: 5000000,
+	        	mimeTypes: ["image/jpeg", "image/png"]
+	    	});
+	    	
+	    	window.camera = new Upploader.Camera()
+	            
+	    	guestPhoto.use([guestphotoLocal, new Upploader.Crop({aspectRatio: 1}), window.camera]);
+	    	
+	    	guestPhoto.open();
+	    
+	    });
+	    
+	    guestPhoto.on("open", function(){
+			//hide effects if only one
+	        if(guestPhoto.effects.length == 1) {
+	        	$(guestPhoto.container).find(".effects-tabs").hide();
+	        }else{
+	        	$(guestPhoto.container).find(".effects-tabs").show();
+	        }
+	    });
+	    
+	    guestPhoto.on('close', function(){
+	    	guestPhoto.navigate('local'); //trigger camera to stop
+	    	var camera = guestPhoto.services.filter(service => service.name == 'camera');
+	    	if(camera.length == 1){
+	    		camera[0].stop();
+	    	}
+	    });
+	
+	    $(document).on("click", "#hhk-guest-photo", function(e){
+	        e.preventDefault();
+	    });
+	
+	    //toggle guest photo action buttons on hover
+	    $("#hhk-guest-photo").on({
+	        mouseenter: function () {
+	            $("#hhk-guest-photo-actions").show();
+	            $("#hhk-guest-photo img").fadeTo(100, 0.5);
+	        },
+	        mouseleave: function () {
+	            $("#hhk-guest-photo-actions").hide();
+	            $("#hhk-guest-photo img").fadeTo(100, 1);
+	        }
+	    });
+	
+	    $(".delete-guest-photo").on("click", function(){
+	
+	        if (confirm("Really Delete this photo?")) {
+	            $.ajax({
+	                type: "POST",
+	                url: "../house/ws_resc.php",
+	                dataType: "json",
+	                data: {
+	                        cmd: "deleteguestphoto",
+	                        guestId: memData.id
+	                    },
+	                success: function(data) {
+	                    if(data.error){
+	
+	                        if (data.gotopage) {
+	                            window.location.assign(data.gotopage);
+	                        }
+	
+	                        flagAlertMessage("Server error - " + data.error, 'error');
+	                        return;
+	
+	                    }else{
+	                        $("#hhk-guest-photo").css("background-image", "url(../house/ws_resc.php?cmd=getguestphoto&guestId=" + memData.id + "&rx="+new Date().getTime() + ")");
+	                    }
+	                },
+	                error: function(error) {
+	                    flagAlertMessage("AJAX error - " + error);
+	                }
+	            });
+	        }
+	    });
+    };
 });
 

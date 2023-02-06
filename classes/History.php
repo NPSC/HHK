@@ -435,6 +435,9 @@ class History {
                 }
             }
 
+            $fixedRows["photo"] = showGuestPicture($r["Id"], $uS->MemberImageSizePx);
+
+
             // Guest first name
             $fixedRows[Labels::getString('memberType', 'visitor', 'Guest') . ' First'] = $r['Guest First'];
 

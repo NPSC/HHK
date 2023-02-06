@@ -90,6 +90,11 @@ class IndivMember extends AbstractMember {
         $uS = Session::getInstance();
         $idPrefix = $this->getIdPrefix();
 
+        $memPhotoMarkup = "";
+        if($uS->ShowGuestPhoto){
+            $memPhotoMarkup = HTMLContainer::generateMarkup("div", showGuestPicture($this->get_idName(), $uS->MemberImageSizePx), array("class"=>"mr-2"));
+        }
+
         $table = new HTMLTable();
         $table->addHeaderTr(
                 HTMLContainer::generateMarkup('th', 'Id')
@@ -154,7 +159,7 @@ class IndivMember extends AbstractMember {
                 );
 
         $table->addBodyTr($tr);
-        return $table->generateMarkup();
+        return $memPhotoMarkup . $table->generateMarkup();
     }
 
 

@@ -26,3 +26,5 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 update `sys_config` set `Show` = 0 where `Key` in ("DefaultPayType", "DefaultVisitFee", "RoomRateDefault", "RegForm", "RegFormNoRm");
 
 UPDATE `gen_lookups` SET `Description` = 'Send Post Check In/Out Email' WHERE (`Table_Name` = 'cronJobTypes') and (`Code` = 'SendPostCheckoutEmailJob');
+
+INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showCurrentGuestPhotos', 'false', 'b', 'hf', 'Show Guest Photos on Current Guests tab', '1');

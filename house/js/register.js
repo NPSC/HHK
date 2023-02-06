@@ -660,7 +660,8 @@ var isGuestAdmin,
     calendar,
     calStartDate,
     acceptResvPay,
-    holidays;
+    holidays,
+    showCurrentGuestPhotos;
 
 $(document).ready(function () {
     "use strict";
@@ -701,6 +702,7 @@ $(document).ready(function () {
     showCharges = $('#showCharges').val();
 	acceptResvPay = $('#acceptResvPay').val();
 	holidays = $.parseJSON($('#holidays').val());
+	showCurrentGuestPhotos = $("#showCurrentGuestPhotos").val();
 
     // Current Guests
     cgCols = [
@@ -724,6 +726,10 @@ $(document).ready(function () {
 
         cgCols.push({data: 'Patient', title: patientLabel});
 
+		if(showCurrentGuestPhotos){
+			cgCols.unshift({data: 'photo', title: 'Photo', sortable: false, searchable: false, className: "noPrint", width: "80px"});
+		}
+		
     // Reservations
     rvCols = [
             {data: 'Action', title: 'Action', sortable: false, searchable:false, className: "noPrint"},
@@ -1631,6 +1637,7 @@ $(document).ready(function () {
        columns: cgCols,
        "buttons": getDtBtns("Current " + visitorLabel + "s - " + moment().format("MMM D, YYYY")),
        "dom": '<"top"Bif><\"hhk-overflow-x\"rt><"bottom ui-toolbar ui-helper-clearfix"lp>',
+       autoWidth:false,
     });
     
     

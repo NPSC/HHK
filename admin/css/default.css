@@ -330,3 +330,15 @@ ul.ui-tabs-nav .ui-state-active .ui-icon {
 	}
 	
 }
+
+#hhk-guest-photo-actions {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: space-evenly;
+}
+
+#hhk-guest-photo {
+	background-size: cover;
+}
