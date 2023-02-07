@@ -66,7 +66,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
     public function getAgeDistribution(){
 
-        $query = 'select if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, CURDATE()) < 18, "Child", "Adult"), "Unknown") as `Key`, count(distinct n.idName) as "count" from stays s join name n on s.idName = n.idName where date(s.Span_Start_Date) < date(:endDate) and date(ifnull(s.Span_End_Date, now()+interval 1 day)) > date(:startDate) group by `Key`';
+        $query = 'select if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), "Unknown") as `Key`, count(distinct n.idName) as "count" from stays s join name n on s.idName = n.idName where date(s.Span_Start_Date) < date(:endDate) and date(ifnull(s.Span_End_Date, now()+interval 1 day)) > date(:startDate) group by `Key`';
         $stmt = $this->dbh->prepare($query);
         $stmt->execute([":startDate"=>$this->filter->getReportStart(), ":endDate"=>$this->filter->getQueryEnd()]);
         $data = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -86,17 +86,17 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
         $query = '
 SELECT
 (select count(*) from resource re where re.Type = "room")*datediff("' . $this->filter->getQueryEnd() . '", "' . $this->filter->getReportStart() . '") as "Room-nights available",
-(select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v where date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '")) as "Room-nights occupied",
+(select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v where date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '") and date(ifnull(v.Span_Start, curdate())) != date(ifnull(v.Span_End, curdate()))) as "Room-nights occupied",
 ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v where date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '"))/((select count(*) from resource re where re.Type = "room")*datediff("' . $this->filter->getQueryEnd() . '", "' . $this->filter->getReportStart() . '"))*100,1) as "Occupancy Rate",
 (select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v join resource re on v.idResource = re.idResource where re.Type = "rmtroom" and date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '")) as "Burst Room-nights occupied",
 (select count(distinct ng.idPsg) from stays s join name_guest ng on s.idName = ng.idName where date(s.Span_Start_Date) < date(:endDate6) and date(ifnull(s.Span_End_Date, curdate())) > date(:startDate6)) as "Unique PSGs",
 (select count(distinct ng.idPsg) from stays s join name_guest ng on s.idName = ng.idName where date(s.Span_Start_Date) < date(:endDate13) and date(ifnull(s.Span_End_Date, curdate())) > date(:startDate13)) as "Unique Patients",
-(select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Actual_Departure, curdate())) > date(:startDate14) and date(ifnull(fv.Arrival_Date, curdate())) < date(:endDate14))) as "New Families",
-(select count(distinct v.idVisit) from visit v where date(v.Arrival_Date) < date(:endDate8) and date(ifnull(v.Actual_Departure, curdate())) > date(:startDate8)) as "Total Visits",
-(select ROUND(AVG(DATEDIFF(ifnull(v.Actual_Departure, curdate()), v.Arrival_Date)),1) from visit v where date(v.Arrival_Date) < date(:endDate9) and date(ifnull(v.Actual_Departure, curdate())) > date(:startDate9)) as "Average Visit Length",
-(select ROUND(MEDIAN(DATEDIFF(ifnull(v.Actual_Departure, curdate()), v.Arrival_Date)) over (),1) from visit v where date(v.Arrival_Date) < date(:endDate10) and date(ifnull(v.Actual_Departure, curdate())) > date(:startDate10) limit 1) as "Median Visit Length",
-(select round(AVG(DATEDIFF(ifnull(v.Actual_Departure, curdate()), v.Arrival_Date))) from visit v where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Actual_Departure, curdate())) > date(:startDate11) and date(fv.Arrival_Date) < date(:endDate11))) as "Average First Visit Length",
-(select round(MEDIAN(DATEDIFF(ifnull(v.Actual_Departure, curdate()), v.Arrival_Date)) over (),1) from visit v where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Actual_Departure, curdate())) > date(:startDate12) and date(fv.Arrival_Date) < date(:endDate12)) limit 1) as "Median First Visit Length";
+(select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate())) > date(:startDate14) and date(ifnull(fv.Span_Start, curdate())) < date(:endDate14))) as "New Families",
+(select count(distinct v.idVisit) from visit v where date(v.Span_Start) < date(:endDate8) and date(ifnull(v.Span_End, curdate())) > date(:startDate8)) as "Total Visits",
+(select ROUND(AVG(DATEDIFF(ifnull(v.Span_End, curdate()), v.Span_Start)),1) from visit v where date(v.Span_Start) < date(:endDate9) and date(ifnull(v.Span_End, curdate())) > date(:startDate9)) as "Average Visit Length",
+(select ROUND(MEDIAN(DATEDIFF(ifnull(v.Span_End, curdate()), v.Span_Start)) over (),1) from visit v where date(v.Span_Start) < date(:endDate10) and date(ifnull(v.Span_End, curdate())) > date(:startDate10) limit 1) as "Median Visit Length",
+(select round(AVG(DATEDIFF(ifnull(v.Span_End, curdate()), v.Span_Start))) from visit v where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate())) > date(:startDate11) and date(fv.Span_Start) < date(:endDate11))) as "Average First Visit Length",
+(select round(MEDIAN(DATEDIFF(ifnull(v.Span_End, curdate()), v.Span_Start)) over (),1) from visit v where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate())) > date(:startDate12) and date(fv.Span_Start) < date(:endDate12)) limit 1) as "Median First Visit Length";
 ';
         $stmt = $this->dbh->prepare($query);
         $stmt->execute([
@@ -115,8 +115,8 @@ ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->get
 
     public function getGuestAvgPerNight(){
         $query = 'select
-	if(timestampdiff(YEAR, n.BirthDate, CURDATE()) < 18, "Child", "Adult") as "child/adult",
-    round(sum(DATEDIFF(IF(date(s.Span_End_Date) > date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getQueryEnd() . '"), date(s.Span_End_Date)), IF(date(s.Span_Start_Date) < date("' . $this->filter->getReportStart() . '"), date("' . $this->filter->getReportStart() . '"), date(s.Span_Start_Date))))/datediff(date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getReportStart() . '")),1) as "avg guests per night"
+	if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), "Unknown") as "child/adult",
+    round(sum(DATEDIFF(IF(date(ifnull(s.Span_End_Date, now())) > date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getQueryEnd() . '"), date(ifnull(s.Span_End_Date, now()))), IF(date(s.Span_Start_Date) < date("' . $this->filter->getReportStart() . '"), date("' . $this->filter->getReportStart() . '"), date(s.Span_Start_Date))))/datediff(date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getReportStart() . '")),1) as "avg guests per night"
 from stays s
 join name n on s.idName = n.idName
 where date(ifnull(s.Span_End_Date, now()+interval 1 day)) > date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '")
@@ -136,13 +136,13 @@ group by `child/adult`;';
     }
 
     public function getDiagnosisCategoryTotals(){
-        $query = 'select ifnull(dc.Description, "Other") as "Category", count(distinct s.idName) as "count"
+        $query = 'select if(d.Code is not null, ifnull(dc.Description, "Other"), "Unknown") as "Category", SUM(DATEDIFF(least(ifnull(s.Span_End_Date, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(s.Span_Start_Date, date("' . $this->filter->getReportStart() . '")))) as "count"
 from stays s
 join visit v on s.idVisit = v.idVisit
 join hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
+left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
 left join gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = "Diagnosis_Category"
-where date(ifnull(s.Span_End_Date, now()+interval 1 day)) > date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '")
+where date(ifnull(s.Span_End_Date, now()+interval 1 day)) > date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '") and s.idName = hs.idPatient
 group by `Category`;';
 
         $stmt = $this->dbh->prepare($query);
