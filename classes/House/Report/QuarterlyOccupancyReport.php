@@ -47,7 +47,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
             }
         }
 
-        return HTMLContainer::generateMarkup("div", $summaryTbl->generateMarkup(array("class"=>"mr-3")) . $ageDistTbl->generateMarkup() . '<div id="guestsPerNight"></div><div id="diagnosisCategoryTotals"></div>', array("class"=>"hhk-flex hhk-visitdialog"));
+        return HTMLContainer::generateMarkup("div", $summaryTbl->generateMarkup(array("class"=>"mr-3 mb-3","style"=>"min-width: fit-content")) . $ageDistTbl->generateMarkup(array("class"=>"mb-3", "style"=>"min-width: fit-content")) . '<div><p style="text-align:center; font-size: 0.9em;"><strong>Average Number of Guests per Night</strong></p><div id="guestsPerNight" class=""></div></div><div><p style="text-align:center; font-size: 0.9em;"><strong>Patient-Nights by Diagnosis</strong></p><div id="diagnosisCategoryTotals"></div></div>', array("class"=>"hhk-flex hhk-flex-wrap hhk-visitdialog"));
 
     }
 
@@ -66,7 +66,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
     public function getAgeDistribution(){
 
-        $query = 'select if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), "Unknown") as `Key`, count(distinct n.idName) as "count" from stays s join name n on s.idName = n.idName where date(s.Span_Start_Date) < date(:endDate) and date(ifnull(s.Span_End_Date, now()+interval 1 day)) > date(:startDate) group by `Key`';
+        $query = 'select if(n.BirthDate is not null, if(timestampdiff(YEAR, n.BirthDate, s.Span_Start_Date) < 18, "Child", "Adult"), "Unknown") as `Key`, count(distinct n.idName) as "count" from stays s join name n on s.idName = n.idName where date(s.Span_Start_Date) < date(:endDate) and date(ifnull(s.Span_End_Date, now())) >= date(:startDate) and DATEDIFF(DATE(ifnull(s.Span_End_Date, now())), DATE(s.Span_Start_Date)) > 0 group by `key`';
         $stmt = $this->dbh->prepare($query);
         $stmt->execute([":startDate"=>$this->filter->getReportStart(), ":endDate"=>$this->filter->getQueryEnd()]);
         $data = $stmt->fetchAll(\PDO::FETCH_NUM);
@@ -119,7 +119,7 @@ ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->get
     round(sum(DATEDIFF(IF(date(ifnull(s.Span_End_Date, now())) > date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getQueryEnd() . '"), date(ifnull(s.Span_End_Date, now()))), IF(date(s.Span_Start_Date) < date("' . $this->filter->getReportStart() . '"), date("' . $this->filter->getReportStart() . '"), date(s.Span_Start_Date))))/datediff(date("' . $this->filter->getQueryEnd() . '"), date("' . $this->filter->getReportStart() . '")),1) as "avg guests per night"
 from stays s
 join name n on s.idName = n.idName
-where date(ifnull(s.Span_End_Date, now()+interval 1 day)) > date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '")
+where date(ifnull(s.Span_End_Date, now())) >= date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '")
 group by `child/adult`;';
 
         $stmt = $this->dbh->prepare($query);
@@ -136,13 +136,21 @@ group by `child/adult`;';
     }
 
     public function getDiagnosisCategoryTotals(){
-        $query = 'select if(d.Code is not null, ifnull(dc.Description, "Other"), "Unknown") as "Category", SUM(DATEDIFF(least(ifnull(s.Span_End_Date, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(s.Span_Start_Date, date("' . $this->filter->getReportStart() . '")))) as "count"
+/*         $query = 'select if(d.Code is not null, ifnull(dc.Description, "Other"), "Unknown") as "Category", SUM(DATEDIFF(least(ifnull(s.Span_End_Date, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(s.Span_Start_Date, date("' . $this->filter->getReportStart() . '")))) as "count"
 from stays s
 join visit v on s.idVisit = v.idVisit
 join hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
 left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
 left join gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = "Diagnosis_Category"
-where date(ifnull(s.Span_End_Date, now()+interval 1 day)) > date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '") and s.idName = hs.idPatient
+where date(ifnull(s.Span_End_Date, now())) >= date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '") -- and s.idName = hs.idPatient
+group by `Category`;'; */
+
+        $query = 'select if(d.Code is not null, ifnull(dc.Description, "Other"), "Unknown") as "Category", sum(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) as "count"
+from visit v
+join hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
+left join gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = "Diagnosis_Category"
+where date(ifnull(v.Span_End, now())) >= date("' . $this->filter->getReportStart() . '") and date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '")
 group by `Category`;';
 
         $stmt = $this->dbh->prepare($query);

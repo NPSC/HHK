@@ -98,10 +98,10 @@ if (isset($_POST['btnExcel-' . $occupancyReport->getInputSetReportName()])) {
 
         var chart = new google.visualization.PieChart(document.getElementById('guestsPerNight'));
         let options = {
-        	height:500,
-        	width:600,
-        	title:"Average Number of Guests per Night",
-        	legend: {position: 'right', alignment: 'center'},
+        	height:300,
+        	width:300,
+        	'chartArea': {'width': '100%', 'height': '60%'},
+        	legend: {position: 'top', alignment: 'center'},
 
         };
 
@@ -118,9 +118,9 @@ if (isset($_POST['btnExcel-' . $occupancyReport->getInputSetReportName()])) {
 
         var chart = new google.visualization.PieChart(document.getElementById('diagnosisCategoryTotals'));
         let options = {
-        	height:500,
-        	width:600,
-        	title:"Patient-Nights by Diagnosis",
+        	height:300,
+        	width: 400,
+        	'chartArea': {'width': '100%', 'height': '80%'},
         	legend: {position: 'right', alignment: 'center'},
 
         };
