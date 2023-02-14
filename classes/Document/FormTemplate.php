@@ -25,6 +25,12 @@ class FormTemplate {
     const TemplateCat = "tmpt";
     const JsonType = "json";
 
+    const MAX_GUESTS = 20;
+
+    /**
+     *
+     * @var Document
+     */
     protected $doc;
 
     public function __construct() {
@@ -79,12 +85,12 @@ class FormTemplate {
             $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
         }
 
-        if($initialGuests > 20){
-            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20";
+        if($initialGuests > self::MAX_GUESTS){
+            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than " . self::MAX_GUESTS;
         }
 
-        if($maxGuests > 20){
-            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than 20";
+        if($maxGuests > self::MAX_GUESTS){
+            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than " . self::MAX_GUESTS;
         }
 
         if($initialGuests > $maxGuests){
@@ -147,19 +153,19 @@ class FormTemplate {
             $validationErrors['successTitle'] = "The success title field is required.";
         }
         if($emailPatient && $notifySubject == '' && $notifyContent == ''){
-            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled";
+            $validationErrors['notify'] = "Email Subject and Email Content are both required when email notifications are enabled.";
         }
 
         if($initialGuests > 20){
-            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20";
+            $validationErrors['initialGuests'] = "Initial Guests field cannot be greater than 20 people.";
         }
 
         if($maxGuests > 20){
-            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than 20";
+            $validationErrors['maxGuests'] = "Max Guests field cannot be greater than 20 people.";
         }
 
         if($initialGuests > $maxGuests){
-            $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests";
+            $validationErrors['initialmaxguests'] = "Initial guests cannot be greater than max guests.";
         }
 
         if($this->doc->getIdDocument() > 0 && count($validationErrors) == 0){
@@ -234,7 +240,7 @@ class FormTemplate {
         return [
             'formStyle'=>$this->getStyle(),
             'successTitle'=>$abstract->successTitle,
-            'successContent'=>htmlspecialchars_decode($abstract->successContent, ENT_QUOTES),
+            'successContent'=>htmlspecialchars_decode((isset($abstract->successContent) ? $abstract->successContent : ''), ENT_QUOTES),
             'enableRecaptcha'=>(isset($abstract->enableRecaptcha) && $uS->mode != "dev" ? $abstract->enableRecaptcha : false),
             'enableReservation'=>(isset($abstract->enableReservation) ? $abstract->enableReservation : true),
             'emailPatient'=>(isset($abstract->emailPatient) ? $abstract->emailPatient : false),
