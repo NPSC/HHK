@@ -19,7 +19,7 @@ use HHK\Admin\MemberSalutation\IndividualSalutation;
 use HHK\Admin\MemberSalutation\OrganizationSalutation;
 use HHK\ExcelHelper;
 
-function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSalutations, $letterSalutation, $envSalutation, $showAmounts = FALSE) {
+function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSalutations, $letterSalutation, $envSalutation, $showAmounts = FALSE, $streamlined = FALSE) {
 
     ini_set('memory_limit', "128M");
 
@@ -32,6 +32,13 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $includeDeceased = FALSE;
     if (isset($_POST["exDeceased"])) {
         $includeDeceased = TRUE;
+    }
+
+
+    if (isset($_POST["btnstreamlined"])) {
+        $slFlag = FALSE;
+    } else {
+        $slFlag = TRUE;
     }
 
 
@@ -165,7 +172,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         }
 
      $dateClause = " and vd.Effective_Date >= '" . $sDate . "' and vd.Effective_Date <= '" . $eDate . "' ";
-     
+
     } else {
         $dateClause = "";
     }
@@ -220,7 +227,9 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $cbBasisDonor->setReturnValues($_POST[$cbBasisDonor->get_htmlNameBase()]);
 
 
-    $sumaryRows["Basis"] = $cbBasisDonor->setCsvLabel();
+    if ($slFlag) {
+        $sumaryRows["Basis"] = $cbBasisDonor->setCsvLabel();
+    }
     $mTypeList = $cbBasisDonor->setSqlString();
     if ($mTypeList != "") {
         $selClause .= " and vd.Member_Type in ($mTypeList) ";
@@ -262,7 +271,10 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     } else {
         $between = "Amounts between $" . $minAmt . " and $" . $maxAmt;
     }
-    $sumaryRows["Amount Range"] = $between;
+
+    if ($slFlag) {
+        $sumaryRows["Amount Range"] = $between;
+    }
 
     // Fix up the campaign list descriptors
     if ($campList == "") {
@@ -279,14 +291,17 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     } else {
         $typeMarkup = "All Member Types";
     }
-    $sumaryRows["Member Types"] = $typeMarkup;
 
-    // Exclude Deceased members
-    if ($includeDeceased) {
-        $sumaryRows["Deceased Members"] = "Included";
-    } else {
-        $sumaryRows["Deceased Members"] = "Excluded";
+    if ($slFlag) {
+        $sumaryRows["Member Types"] = $typeMarkup;
+        // Exclude Deceased members
+        if ($includeDeceased) {
+            $sumaryRows["Deceased Members"] = "Included";
+        } else {
+            $sumaryRows["Deceased Members"] = "Excluded";
+        }
     }
+
 
 
     // set up some variables for the query and translation
@@ -305,13 +320,15 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     );
 
     $colWidths = array("10", "10", "20", "20", "20", "20", "20", "20", "10", "10", "35");
-    
-    
+
+
     // We use a different query string for roll-up and individual reports
     // set up the query, open the result set and create the header markup for each case
-    
+
     if ($rollup) {
-        $sumaryRows['Report Type'] = "Rollup Report - Monetary Donations Only";
+        if ($slFlag) {
+            $sumaryRows['Report Type'] = "Rollup Report - Monetary Donations Only";
+        }
 
         $query = "from vindividual_donations vd $ljClause where vd.Campaign_Type <> 'ink' $wclause $dateClause $selClause group by id $totalClause $oClause";
 
@@ -325,19 +342,19 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         		"Free & Clear"=>"dollar"
         );
         $amountsColWidths = array("15", "15", "15");
-        
+
         // header - after opening the result set to the the number of records.
         if ($dlFlag) {
             $file = "DonorRollup";
             $writer = new ExcelHelper($file);
             $writer->setAuthor($uname);
             $writer->setTitle("Donor Roll-up Report");
-            
+
             // build header
             $hdr["#"] = "string";
-            
+
             $colWidths[] = "10";
-            
+
             if ($showAmounts) {
                 $hdr = array_merge($hdr, $amountsHdr);
                 $colWidths = array_merge($colWidths, $amountsColWidths);
@@ -349,12 +366,14 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
         } else {
 
             $txtIntro .= "<tr><th colspan='2'>" . $reportTitle . "</th></tr>";
+
             foreach ($sumaryRows as $key => $val) {
                 if ($key != "" && $val != "") {
 
                     $txtIntro .= "<tr><td class='tdlabel'>$key: </td><td>" . $val . "</td></tr>";
                 }
             }
+
             $txtIntro .= "<tr><td class='tdlabel'>Records Fetched: </td><td>" . count($rows) . "</td></tr>";
             $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>First</th>";
             if ($showAmounts) {
@@ -366,36 +385,40 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     } else {
     	// Not rollup
     	if ($roll == 'ft') {
-    		
+
     		// First don report
-    		$sumaryRows['Report Type'] = "First Donations Report";
-    		
+    	    if ($slFlag) {
+    	        $sumaryRows['Report Type'] = "First Donations Report";
+    	    }
+
     		$query = "from vindividual_donations vd $ljClause where 1=1 $wclause $selClause $totalClause group by vd.id having min(vd.Effective_Date) >= '" . $sDate . "' and min(vd.Effective_Date) <= '" . $eDate . "' $oClause ";
-    		
+
     		$stmt = $dbh->query("select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree`, min(vd.Effective_Date)" . $query);
     		$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    		
+
     		$reportTitle = "First Donations Report.   Date: " . date("m/d/Y");
     	} else {
 	        // Individual donation report
-	        $sumaryRows['Report Type'] = "Individual Donation Report";
-	        
-	
+    	    if ($slFlag) {
+    	        $sumaryRows['Report Type'] = "Individual Donation Report";
+    	    }
+
+
 	        $query = "from vindividual_donations vd $ljClause where 1=1 $wclause $dateClause $selClause $totalClause $oClause";
-	
+
 	        $stmt = $dbh->query("select vd.*, vd.Amount as Total, vd.Tax_Free as `Tot_TaxFree` " . $query);
 	        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-	
+
 	        $reportTitle = "Individual Donation Report.   Date: " . date("m/d/Y");
     	}
-    	
+
         // header - after opening the result set to get number of rows.
         if ($dlFlag) {
             $file = 'IndividualDonationReport';
             $writer = new ExcelHelper($file);
             $writer->setAuthor($uname);
             $writer->setTitle("Individual Donation Report");
-            
+
             $amountsHdr = array(
             		"Total"=>"dollar",
             		"Vendor Amount"=>"dollar",
@@ -403,7 +426,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             		"Pay Type" => "string"
             );
             $amountsColWidths = array("15", "15", "15", "14");
-            
+
             if ($showAmounts) {
                 $hdr = array_merge($hdr, $amountsHdr);
                 $colWidths = array_merge($colWidths, $amountsColWidths);
@@ -412,12 +435,12 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             $hdr["Date"] = "MM/DD/YYYY";
             $hdr["Merge Code"] = "string";
             $hdr["Notes"] = "string";
-            
+
             $colWidths = array_merge($colWidths, array("20", "15", "15", "30"));
-            
+
             $hdrStyle = $writer->getHdrStyle($colWidths);
             $writer->writeSheetHeader("Worksheet", $hdr, $hdrStyle);
-            
+
         } else {
             $txtIntro .= "<tr><th colspan='2'>" . $reportTitle . "</th></tr>";
 
@@ -427,12 +450,19 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                     $txtIntro .= "<tr><td class='tdlabel'>$key: </td><td>" . $val . "</td></tr>";
                 }
             }
-            $txtIntro .= "<tr><td class='tdlabel'>Records Fetched: </td><td>" . count($rows) . "</td></tr>";
+            if ($slFlag) {
+                $txtIntro .= "<tr><td class='tdlabel'>Records Fetched: </td><td>" . count($rows) . "</td></tr>";
+                $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>Envelope Salutation</th>";
+                if ($showAmounts) {
+                    $txtheadr .= "<th>Total</th><th>Vendor Amount</th><th>Free & Clear</th><th>Pay Type</th>";
+                }
 
-            $txtheadr = "<thead><tr><th style='width:40px;'>Id</th><th> * </th><th>Last Name</th><th>Envelope Salutation</th>";
+            } else {
+                $txtheadr = "<thead><tr><th>Nme</th>";
+                if ($showAmounts) {
+                    $txtheadr .= "<th>Total</th><th>Pay Type</th>";
+                }
 
-            if ($showAmounts) {
-                $txtheadr .= "<th>Total</th><th>Vendor Amount</th><th>Free & Clear</th><th>Pay Type</th>";
             }
 
             $txtheadr .= "<th>Campaign</th><th>Date</th><th>Note</th></tr></thead>";
@@ -444,26 +474,6 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     $houseTotal = 0.0;
     $inKindAmt = 0.0;
     $deceased = 0;
-
-    if ($dlFlag) {
-        //New Sheet
-        /* $sHdr = array("Filter"=>"string", "Parameters"=>"string");
-        $sColWidths = array("50","50");
-        $sHdrStyle = $writer->getHdrStyle($sColWidths);
-        $writer->writeSheetHeader("Constraints", $sHdr, $sHdrStyle);
-
-        // create summary table
-        $sheet = array();
-        foreach ($sumaryRows as $key => $val) {
-            if ($key != "" && $val != "") {
-                $flds = array($key, $val);
-                $sheet[] = $writer->convertStrings($sHdr, $flds);
-            }
-        }
-
-        $writer->writeSheet($sheet, "Constraints"); */
-
-    }
 
     // Major donation amount
     $majorFloat = floatval($uS->Major_Donation);
@@ -637,19 +647,33 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
             if ($rollup) {
 
                 // webpage output with roll-up
-                $txtreport .= "<tr><td style='width:40px;'><a href='NameEdit.php?id=" . $r["id"] . "'>" . $r["id"] . "</a></td><td>$majorDonorMark</td><td>" .
-                        $r["Donor_Last"] . "</td><td>" . $r["Donor_First"] . "</td>";
+                $txtreport .= "<tr>
+                    <td style='width:40px;'><a href='NameEdit.php?id=" . $r["id"] . "'>" . $r["id"] . "</a></td>
+                    <td>$majorDonorMark</td>
+                    <td>" . $r["Donor_Last"] . "</td>
+                    <td>" . $r["Donor_First"] . "</td>";
+
                 if ($showAmounts) {
                     $txtreport .= "<td style='text-align:center;'>" . $r["numDon"] . "</td><td style='text-align:right;'>" . $amountMkup . "</td><td style='text-align:right;'>" . $vendorAmt . "</td><td style='text-align:right;'>" . $taxFreeMkup . "</td>";
                 }
                 $txtreport .= "</tr>";
+
             } else {
+
                 //webpage output individual donor report
-                $txtreport .= "<tr><td style='width:40px;'><a href='NameEdit.php?id=" . $r["id"] . "'>" . $r["id"] . "</a></td>
-                    <td>$majorDonorMark</td><td>" . $r["Donor_Last"] . "</td><td>" . $envName . "</td>";
+                $txtreport .= "<tr>";
+
+                $txtreport .= ($slFlag ? "<td style='width:40px;'><a href='NameEdit.php?id=" . $r["id"] . "'>" . $r["id"] . "</a></td>" : '');
+                $txtreport .= ($slFlag ? "<td>$majorDonorMark</td>" : '') . "<td>" . $r["Donor_Last"] . "</td>";
+                $txtreport .= ($slFlag ? "<td>" . $envName . "</td>" : '');
+
                 if ($showAmounts) {
-                    $txtreport .= "<td style='text-align:right;'>" . $amountMkup . "</td><td style='text-align:right;'>" . $vendorAmt . "</td><td style='text-align:right;'>" . $taxFreeMkup . "</td><td>" . $r['Pay Type'] . "</td>";
+
+                    $txtreport .= "<td style='text-align:right;'>" . $amountMkup . "</td>";
+                    $txtreport .= ($slFlag ? "<td style='text-align:right;'>" . $vendorAmt . "</td><td style='text-align:right;'>" . $taxFreeMkup . "</td>" : '')
+                       . "<td>" . $r['Pay Type'] . "</td>";
                 }
+
                 $txtreport .= "<td>" . $r["Campaign_Title"] . "</td><td>" . date("Y/m/d", strtotime($r["Effective_Date"])) . "</td><td>" . $r["Note"] . "</td></tr>";
             }
         }
@@ -662,14 +686,23 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
     }
 
     $voldCat->set_reportMarkup($txtheadr . $txtreport . "</tbody>");
+
+    if ($slFlag) {
         $txtIntro .= "<tr><td class='tdlabel'>Deceased Records not shown: </td><td>" . $deceased . "</td></tr>";
+    }
+
     if ($showAmounts) {
-        if ($inKindAmt > 0) {
+        if ($inKindAmt > 0 && $slFlag) {
             $txtIntro .= "<tr><td class='tdlabel'>In Kind Total: </td><td>$" . number_format($inKindAmt, 2) . "</td></tr>";
         }
-        $txtIntro .= "<tr><td class='tdlabel'>Report Total: </td><td>$" . number_format($reportAmt, 2) . "</td></tr>";
+
+        if ($slFlag) {
+            $txtIntro .= "<tr><td class='tdlabel'>Report Total: </td><td>$" . number_format($reportAmt, 2) . "</td></tr>";
+        }
+
         $txtIntro .= "<tr><td class='tdlabel' style='font-weight:bold;'>House Total: </td><td style='font-weight:bold;'>$" . number_format($houseTotal, 2) . "</td></tr>";
     }
+
     $voldCat->reportHdrMarkup = $txtIntro;
     return $voldCat;
 }

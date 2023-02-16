@@ -597,7 +597,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('HouseKeepingEmail','','ea','ha','','This address receives all room turn-over notices','',1),
 ('HouseKeepingSteps','1','lu','hf','','Number of steps to cleaning/preparing rooms for new guests','HouseKpgSteps',1),
 ('HUF_URL', 'https://forum.hospitalityhousekeeper.net/', 's', 'a', '', 'HHK Users Form', '',0),
-('IncludeLastDay','true','b','h','','Include the departure day in room searches','',1),
+('IncludeLastDay','false','b','h','','Include the departure day in room searches','',1),
 ('IncomeRated','true','b','hf','','Enable guest income chooser rate assistance','',1),
 ('InitResvStatus','a','lu','h','','Initial reservation status setting, confirmed or unconfirmed','Init_Reserv_Status',1),
 ('InsistCkinDemog','false','b','h','','Insist that user fill in the demographics on the check in page','',1),

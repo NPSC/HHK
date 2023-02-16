@@ -9,7 +9,7 @@ use HHK\Donation\Campaign;
  * donationReport.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2018 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -52,7 +52,7 @@ $letterSalSelector->set_value(TRUE, SalutationCodes::FirstOnly);
 
 #--------------------------------------------------------------
 // form1 save button:
-if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"])) {
+if (isset($_POST["btnDonors"]) || isset($_POST["btnDonDL"]) || isset($_POST["btnstreamlined"])) {
 #--------------------------------------------------------------
     require_once("functions" . DS . "donorReportManager.php");
 
@@ -276,6 +276,7 @@ $CampOpt = Campaign::CampaignSelOptionMarkup($dbh, '', FALSE);
                     </table>
                     <div class="hhk-flex mt-3" style="justify-content: space-evenly;">
 						<input name="btnDonors" type="submit" value="Run Report" />
+						<input name="btnstreamlined" type="submit" value="Run Streamlined Report" />
                         <input name="btnDonDL" type="submit" value="Download File" />
                     </div>
                 </form>
