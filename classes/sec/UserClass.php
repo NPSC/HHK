@@ -362,7 +362,7 @@ class UserClass
         if(isset($ssn->sitePepper) && $ssn->sitePepper != ''){
             $newPwHash = password_hash($newPw . $ssn->sitePepper, PASSWORD_ARGON2ID);
         }else{
-            $newPwHash = md5($newPw);
+            $newPwHash = password_hash($newPw, PASSWORD_ARGON2ID);
         }
 
 

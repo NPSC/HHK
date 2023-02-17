@@ -142,7 +142,7 @@ class Login {
 
             $this->userName = strtolower(substr(filter_var($post["txtUname"], FILTER_SANITIZE_STRING), 0, 100));
 
-            $password = filter_var($post["txtPass"], FILTER_SANITIZE_STRING);
+            $password = filter_var($post["txtPass"], FILTER_UNSAFE_RAW);
 
             $otp = '';
             if(isset($post["otp"])){

@@ -65,7 +65,7 @@ if ($c == "testdb") {
         // Update admin password
         if (isset($_POST['new'])) {
 
-            $newPw = filter_var($_POST['new'], FILTER_SANITIZE_STRING);
+            $newPw = filter_var($_POST['new'], FILTER_UNSAFE_RAW);
 
             $uclass = new UserClass();
             if ($uclass->setPassword($dbh, -1, $newPw)) {
