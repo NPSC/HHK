@@ -61,11 +61,22 @@ class UserClass
             }
 
             //check PW
+            //TODO Update password logic for php8
             $match = false;
             //new method
             if($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 && isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
                 $match = true;
+            }else if ($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 ) {
+                //old sanitizer )o:
+                // Sanitize and try again - breaks in php8
+                $password = filter_var($password, FILTER_SANITIZE_STRING);
+
+                if(isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
+                    $this->forcePwReset($dbh, $r['idName']);
+                    $match = true;
+                }
             }else if ($r != NULL && $r['Enc_PW'] == md5($password)) { //old method
+                $this->forcePwReset($dbh, $r['idName']);
                 $match = true;
             }
 
@@ -132,6 +143,20 @@ class UserClass
         }
 
         return FALSE;
+    }
+
+    protected function forcePwReset(\PDO $dbh, $userId) {
+
+        try {
+        $id = intval($userId, 10);
+
+        $stmt = "update w_users set `Chg_PW` = '1', `Last_Updated` = '" . date("Y-m-d H:i:s") . "' where idName = $id";
+
+        if ($dbh->exec($stmt) > 0) {
+            self::insertUserLog($dbh, UserClass::Expired, 'forcePwReset', date("Y-m-d H:i:s"));
+        }
+        } catch (\Exception $e) {}
+
     }
 
     public function doLogin(\PDO $dbh, array $r){
@@ -510,6 +535,7 @@ class UserClass
     }
 
     public static function setPassExpired(\PDO $dbh, array $user){
+
         if(isset($user['pass_rules']) && $user['pass_rules'] && $user['idIdp'] == '0'){ //if password rules apply
             $date = false;
             //use creation date if never logged in
