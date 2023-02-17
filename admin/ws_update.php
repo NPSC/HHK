@@ -69,7 +69,7 @@ if (isset($_POST['cd'])) {
     $cd = filter_input(INPUT_POST, 'cd');
 }
 if (isset($_POST['so'])) {
-    $so = filter_input(INPUT_POST, 'so', FILTER_SANITIZE_STRING);
+    $so = filter_input(INPUT_POST, 'so');
 }
 if (isset($_POST['un'])) {
     $un = filter_input(INPUT_POST, 'un');

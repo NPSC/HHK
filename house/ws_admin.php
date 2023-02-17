@@ -176,44 +176,13 @@ switch ($c) {
         $oldPw = ''; $newPw = '';
 
         if (isset($_POST["old"])) {
-            $oldPw = filter_var($_POST["old"], FILTER_SANITIZE_STRING);
+            $oldPw = filter_var($_POST["old"], FILTER_UNSAFE_RAW);
         }
         if (isset($_POST["newer"])) {
-            $newPw = filter_var($_POST["newer"], FILTER_SANITIZE_STRING);
+            $newPw = filter_var($_POST["newer"], FILTER_UNSAFE_RAW);
         }
 
         $events = changePW($dbh, $oldPw, $newPw, $uS->username, $uS->uid);
-
-        break;
-
-    case "chgquestions":
-        $questions = array();
-
-        if (isset($_POST["q1"]) && isset($_POST["a1"]) && isset($_POST["aid1"])) {
-            $questions[] = [
-                'idQuestion'=>filter_var($_POST["q1"], FILTER_SANITIZE_STRING),
-                'idAnswer'=>filter_var($_POST["aid1"], FILTER_SANITIZE_STRING),
-                'Answer'=>filter_var($_POST["a1"], FILTER_SANITIZE_STRING)
-            ];
-        }
-
-        if (isset($_POST["q2"]) && isset($_POST["a2"]) && isset($_POST["aid2"])) {
-            $questions[] = [
-                'idQuestion'=>filter_var($_POST["q2"], FILTER_SANITIZE_STRING),
-                'idAnswer'=>filter_var($_POST["aid2"], FILTER_SANITIZE_STRING),
-                'Answer'=>filter_var($_POST["a2"], FILTER_SANITIZE_STRING)
-            ];
-        }
-
-        if (isset($_POST["q3"]) && isset($_POST["a3"]) && isset($_POST["aid3"])) {
-            $questions[] = [
-                'idQuestion'=>filter_var($_POST["q3"], FILTER_SANITIZE_STRING),
-                'idAnswer'=>filter_var($_POST["aid3"], FILTER_SANITIZE_STRING),
-                'Answer'=>filter_var($_POST["a3"], FILTER_SANITIZE_STRING)
-            ];
-        }
-
-        $events = changeQuestions($dbh, $questions);
 
         break;
 
