@@ -132,7 +132,7 @@ class Login {
 
         // Get next page address
         if (isset($_POST["xf"]) && $_POST["xf"] != '') {
-            $pge = filter_var(urldecode($_POST["xf"]), FILTER_SANITIZE_STRING);
+            $pge = urldecode($_POST["xf"]);
         } else {
             $pge = $defaultPage;
         }
@@ -140,18 +140,18 @@ class Login {
 
         if (isset($post["txtUname"]) && isset($post["txtPass"])) {
 
-            $this->userName = strtolower(substr(filter_var($post["txtUname"], FILTER_SANITIZE_STRING), 0, 100));
+            $this->userName = strtolower(substr($post["txtUname"], 0, 100));
 
             $password = filter_var($post["txtPass"], FILTER_UNSAFE_RAW);
 
             $otp = '';
             if(isset($post["otp"])){
-                $otp = filter_var($post["otp"], FILTER_SANITIZE_STRING);
+                $otp = filter_var($post["otp"], FILTER_UNSAFE_RAW);
             }
 
             $otpMethod = false;
             if(isset($post["otpMethod"])){
-                $otpMethod = filter_var($post['otpMethod'], FILTER_SANITIZE_STRING);
+                $otpMethod = filter_var($post['otpMethod'], FILTER_UNSAFE_RAW);
             }
 
             $showMethodMkup = false;

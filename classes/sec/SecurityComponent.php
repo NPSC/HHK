@@ -138,11 +138,7 @@ class SecurityComponent {
 
     public static function isHTTPS() {
 
-        $serverHTTPS = '';
-
-        if (isset($_SERVER["HTTPS"])) {
-            $serverHTTPS = filter_var($_SERVER["HTTPS"], FILTER_SANITIZE_STRING);
-        }
+        $serverHTTPS = (isset($_SERVER["HTTPS"]) ? $_SERVER["HTTPS"] : '');
 
         if (empty($serverHTTPS) || strtolower($serverHTTPS) == 'off' ) {
             return FALSE;
@@ -153,7 +149,7 @@ class SecurityComponent {
 
     private function defineThisURL() {
 
-        $scriptName = filter_var((isset($_SERVER["SCRIPT_NAME"]) ? $_SERVER["SCRIPT_NAME"]: false), FILTER_SANITIZE_STRING);
+        $scriptName = filter_var((isset($_SERVER["SCRIPT_NAME"]) ? $_SERVER["SCRIPT_NAME"]: false), FILTER_UNSAFE_RAW);
         $serverName = filter_var((isset($_SERVER["SERVER_NAME"]) ? $_SERVER["SERVER_NAME"]: false), FILTER_SANITIZE_URL);
 
         if (is_null($scriptName) || $scriptName === FALSE) {

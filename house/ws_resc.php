@@ -54,7 +54,7 @@ $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = htmlspecialchars($_REQUEST["cmd"]);
 }
 
 $uS = Session::getInstance();
@@ -464,7 +464,7 @@ try {
 
             $tbl = '';
             if (isset($_REQUEST['tbl'])) {
-                $tbl = filter_var($_REQUEST['tbl'], FILTER_SANITIZE_STRING);
+                $tbl = htmlspecialchars($_REQUEST['tbl']);
             }
 
             $history = new History();
@@ -739,7 +739,7 @@ try {
         case "listforms" :
             $status = '';
             if(isset($_REQUEST['status'])){
-                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+                $status = htmlspecialchars($_REQUEST['status']);
             }
 
             $totalsOnly = false;
@@ -759,7 +759,7 @@ try {
 
             $status = '';
             if(isset($_REQUEST['status'])){
-                $status = filter_var($_REQUEST['status'], FILTER_SANITIZE_STRING);
+                $status = htmlspecialchars($_REQUEST['status']);
             }
 
             $formDocument = new FormDocument();

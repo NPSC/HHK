@@ -39,7 +39,7 @@ $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = htmlspecialchars($_REQUEST["cmd"]);
 }
 
 
@@ -184,7 +184,7 @@ try {
         $idLink = 0;
 
         if (isset($_GET['linkType'])) {
-            $linkType = filter_input(INPUT_GET, 'linkType', FILTER_SANITIZE_STRING);
+            $linkType = filter_input(INPUT_GET, 'linkType');
         }
 
         if (isset($_GET['linkId'])) {

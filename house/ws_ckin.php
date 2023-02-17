@@ -46,17 +46,17 @@ $c = "";
 
 // Get our command
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = htmlspecialchars($_REQUEST["cmd"]);
 }
 
 $idGuest = 0;
 if (isset($_REQUEST["idGuest"])) {
-    $idGuest = intval(filter_var($_REQUEST["idGuest"], FILTER_SANITIZE_STRING), 10);
+    $idGuest = intval(filter_var($_REQUEST["idGuest"], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
 $idVisit = 0;
 if (isset($_REQUEST["idVisit"])) {
-    $idVisit = intval(filter_var($_REQUEST["idVisit"], FILTER_SANITIZE_STRING), 10);
+    $idVisit = intval(filter_var($_REQUEST["idVisit"], FILTER_SANITIZE_NUMBER_INT), 10);
 }
 
 
@@ -457,13 +457,13 @@ try {
     case "visitFees":
         $s = 'n';
         if (isset($_POST['action'])) {
-            $s = filter_var($_POST['action'], FILTER_SANITIZE_STRING);
+            $s = htmlspecialchars($_POST['action']);
         }
 
         $cod = [];
         if (isset($_POST['ckoutdt'])) {
 
-        	$cod = filter_var_array($_POST['ckoutdt'], FILTER_SANITIZE_STRING);
+        	$cod = filter_var_array($_POST['ckoutdt'], FILTER_UNSAFE_RAW);
         }
 
         $span = 0;
