@@ -698,12 +698,12 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * implemented for interface ArrayAccess
      *
-     * @param string $offset section, implemented by ArrayAccess
+     * @param mixed $offset section, implemented by ArrayAccess
      * @param mixed  $value  KVP, implemented by ArrayAccess
      *
      * @return void
      */
-    public function offsetSet($offset, $value)
+    public function offsetSet(mixed $offset, mixed $value):void
     {
         $this->sections[$offset] = $value;
     }
@@ -715,7 +715,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * @return bool
      */
-    public function offsetExists($offset)
+    public function offsetExists($offset):bool
     {
         return isset($this->sections[$offset]);
     }
@@ -727,7 +727,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      *
      * @return void
      */
-    public function offsetUnset($offset)
+    public function offsetUnset(mixed $offset):void
     {
         unset($this->sections[$offset]);
     }
@@ -735,11 +735,11 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
     /**
      * implemented for interface ArrayAccess
      *
-     * @param string $offset - section, implemented by ArrayAccess
+     * @param mixed $offset - section, implemented by ArrayAccess
      *
      * @return mixed
      */
-    public function offsetGet($offset)
+    public function offsetGet(mixed $offset):mixed
     {
         if (array_key_exists($offset, $this->sections)) {
             return $this->sections[$offset];
@@ -752,7 +752,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @see http://www.php.net/~helly/php/ext/spl/interfaceIterator.html
      * @return \Iterator
      */
-    public function getIterator()
+    public function getIterator(): \Traversable
     {
         return new \ArrayIterator($this->sections);
     }
@@ -763,7 +763,7 @@ class Config_Lite implements \ArrayAccess, \IteratorAggregate, \Countable
      * @see http://php.net.countable
      * @return int
      */
-    public function count()
+    public function count():int
     {
         return count($this->sections);
     }
