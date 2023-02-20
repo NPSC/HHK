@@ -68,8 +68,9 @@ class UserClass
                 $match = true;
             }else if ($r != NULL && stripos($r['Enc_PW'], '$argon2id') === 0 ) {
                 //old sanitizer )o:
-                // Sanitize and try again - breaks in php8
-                //$password = filter_var($password, FILTER_SANITIZE_STRING);
+                // Sanitize and try again - equivelant to FILTER_SANITIZE_STRING
+                $str = preg_replace('/\x00|<[^>]*>?/', '', $password);
+                $password = str_replace(["'", '"'], ['&#39;', '&#34;'], $str);
 
                 if(isset($ssn->sitePepper) && password_verify($password . $ssn->sitePepper, $r['Enc_PW'])){
                     $this->forcePwReset($dbh, $r['idName']);

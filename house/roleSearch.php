@@ -20,7 +20,7 @@ $dbh = $wInit->dbh;
 
 
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_UNSAFE_RAW);
 } else {
     exit();
 }
@@ -120,7 +120,7 @@ switch ($c) {
 
         $letters = '';
         if (isset($_GET['letters'])) {
-            $letters = filter_var(urldecode($_GET['letters']), FILTER_SANITIZE_STRING);
+            $letters = filter_var(urldecode($_GET['letters']), FILTER_UNSAFE_RAW);
         }
 
         $memberSearch = new MemberSearch($letters);
