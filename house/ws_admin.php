@@ -37,7 +37,7 @@ $uS = Session::getInstance();
 
 
 if (isset($_REQUEST["cmd"])) {
-    $c = filter_var($_REQUEST["cmd"], FILTER_SANITIZE_STRING);
+    $c = filter_var($_REQUEST["cmd"], FILTER_UNSAFE_RAW);
 }
 
 $events = array();
