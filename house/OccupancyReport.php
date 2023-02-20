@@ -142,7 +142,7 @@ if (isset($_POST['btnExcel-' . $occupancyReport->getInputSetReportName()])) {
         <?php echo $menuMarkup; ?>
         <div id="contentDiv">
             <h2><?php echo $wInit->pageHeading; ?></h2>
-            <?php echo $occupancyReport->generateFilterMarkup() . $dataTableWrapper; ?>
+            <?php echo $occupancyReport->generateFilterMarkup(false) . $dataTableWrapper; ?>
         </div>
     </body>
 </html>
