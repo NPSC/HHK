@@ -458,7 +458,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 }
 
             } else {
-                $txtheadr = "<thead><tr><th>Nme</th>";
+                $txtheadr = "<thead><tr><th>Name</th>";
                 if ($showAmounts) {
                     $txtheadr .= "<th>Total</th><th>Pay Type</th>";
                 }
