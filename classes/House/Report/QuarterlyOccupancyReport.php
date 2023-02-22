@@ -1,7 +1,6 @@
 <?php
 namespace HHK\House\Report;
 
-use HHK\sec\Labels;
 use HHK\sec\Session;
 use HHK\HTMLControls\HTMLTable;
 use HHK\HTMLControls\HTMLContainer;
@@ -27,14 +26,15 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
         $summaryTbl = new HTMLTable();
         $summaryTbl->addHeaderTr($summaryTbl->makeTh("Parameter"). $summaryTbl->makeTh("Value"));
+        $summaryTbl->addBodyTr($summaryTbl->makeTd("Prepared at", array("class"=>"tdlabel")) . $summaryTbl->makeTd((new \DateTime())->format("M j, Y h:i a")));
         $summaryTbl->addBodyTr($summaryTbl->makeTd("Report Dates", array("class"=>"tdlabel")) . $summaryTbl->makeTd((new \DateTime($this->filter->getReportStart()))->format("M j, Y") . " - " . (new \DateTime($this->filter->getReportEnd()))->format("M j, Y")));
 
         foreach($summaryData[0] as $key=>$val){
-            $summaryTbl->addBodyTr($summaryTbl->makeTd($key, array("class"=>"tdlabel")) . $summaryTbl->makeTd($val));
+            $summaryTbl->addBodyTr($summaryTbl->makeTd($key . (isset($summaryData[1][$key]) ? '<span class="hhk-tooltip ui-icon ui-icon-help" title="' . $summaryData[1][$key] . '"></span>' : ''), array("class"=>"tdlabel")) . $summaryTbl->makeTd($val));
         }
 
         $ageDistTbl = new HTMLTable();
-        $ageDistTbl->addHeaderTr($ageDistTbl->makeTh("Unique Guests", array("colspan"=>"2")));
+        $ageDistTbl->addHeaderTr($ageDistTbl->makeTh("Unique Guests <span class='ui-icon ui-icon-help hhk-tooltip' title='Unique guests split by guest age at check-in time. Guest age is determined by birth date'></span>", array("colspan"=>"2")));
         foreach($ageDist as $row){
             if($row[0] == "Total Guests"){
                 $ageDistTbl->addBodyTr(
@@ -47,7 +47,7 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
             }
         }
 
-        return HTMLContainer::generateMarkup("div", $summaryTbl->generateMarkup(array("class"=>"mr-3 mb-3","style"=>"min-width: fit-content")) . $ageDistTbl->generateMarkup(array("class"=>"mb-3", "style"=>"min-width: fit-content")) . '<div><p style="text-align:center; font-size: 0.9em;"><strong>Average Number of Guests per Night</strong></p><div id="guestsPerNight" class=""></div></div><div><p style="text-align:center; font-size: 0.9em;"><strong>Patient-Nights by Diagnosis</strong></p><div id="diagnosisCategoryTotals"></div></div>', array("class"=>"hhk-flex hhk-flex-wrap hhk-visitdialog"));
+        return HTMLContainer::generateMarkup("div", '<div class="hhk-flex hhk-flex-wrap hhk-print-row">' . $summaryTbl->generateMarkup(array("class"=>"mr-3 mb-3","style"=>"min-width: fit-content")) . $ageDistTbl->generateMarkup(array("class"=>"mb-3", "style"=>"min-width: fit-content")) . '</div><div class="hhk-flex hhk-flex-wrap hhk-print-row">' . '<div class="hhk-pieChart"><p style="text-align:center; font-size: 0.9em;"><strong>Average Number of Guests per Night</strong></p><div id="guestsPerNight" class=""></div></div><div class="hhk-pieChart"><p style="text-align:center; font-size: 0.9em;"><strong>Visit-Nights by Diagnosis<span class="hhk-tooltip ui-icon ui-icon-help" title="Counts number of nights in a visit by diagnosis, whether or not the patient stayed"></span></strong></p><div id="diagnosisCategoryTotals"></div></div></div>', array("class"=>"hhk-flex hhk-flex-wrap hhk-visitdialog"));
 
     }
 
@@ -90,10 +90,9 @@ SELECT
 ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v where date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '"))/((select count(*) from resource re where re.Type = "room")*datediff("' . $this->filter->getQueryEnd() . '", "' . $this->filter->getReportStart() . '"))*100,1) as "Occupancy Rate",
 (select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v join resource re on v.idResource = re.idResource where re.Type = "rmtroom" and date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '")) as "Burst Room-nights occupied",
 (select count(distinct ng.idPsg) from stays s join name_guest ng on s.idName = ng.idName where date(s.Span_Start_Date) < date(:endDate6) and date(ifnull(s.Span_End_Date, curdate())) > date(:startDate6)) as "Unique PSGs",
-(select count(distinct ng.idPsg) from stays s join name_guest ng on s.idName = ng.idName where date(s.Span_Start_Date) < date(:endDate13) and date(ifnull(s.Span_End_Date, curdate())) > date(:startDate13)) as "Unique Patients",
-(select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate())) > date(:startDate14) and date(ifnull(fv.Span_Start, curdate())) < date(:endDate14))) as "New Families",
+(select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate())) > date(:startDate14) and date(ifnull(fv.Span_Start, curdate())) < date(:endDate14))) as "New PSGs",
 (select count(distinct v.idVisit) from visit v where date(v.Span_Start) < date(:endDate8) and date(ifnull(v.Span_End, curdate())) > date(:startDate8)) as "Total Visits",
-(select ROUND(AVG(DATEDIFF(ifnull(v.Span_End, curdate()), v.Span_Start)),1) from visit v where date(v.Span_Start) < date(:endDate9) and date(ifnull(v.Span_End, curdate())) > date(:startDate9)) as "Average Visit Length",
+(select ROUND(AVG(DATEDIFF(ifnull(v.Span_End, curdate()), v.Span_Start)),1) from visit v where date(v.Span_Start) < date(:endDate9) and date(ifnull(v.Span_End, curdate())) > date(:startDate9) and v.Status not in ("p","c")) as "Average Visit Length",
 (select ROUND(MEDIAN(DATEDIFF(ifnull(v.Span_End, curdate()), v.Span_Start)) over (),1) from visit v where date(v.Span_Start) < date(:endDate10) and date(ifnull(v.Span_End, curdate())) > date(:startDate10) limit 1) as "Median Visit Length",
 (select round(AVG(DATEDIFF(ifnull(v.Span_End, curdate()), v.Span_Start))) from visit v where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate())) > date(:startDate11) and date(fv.Span_Start) < date(:endDate11))) as "Average First Visit Length",
 (select round(MEDIAN(DATEDIFF(ifnull(v.Span_End, curdate()), v.Span_Start)) over (),1) from visit v where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate())) > date(:startDate12) and date(fv.Span_Start) < date(:endDate12)) limit 1) as "Median First Visit Length";
@@ -106,11 +105,26 @@ ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->get
             ":startDate10"=>$this->filter->getReportStart(), ":endDate10"=>$this->filter->getQueryEnd(),
             ":startDate11"=>$this->filter->getReportStart(), ":endDate11"=>$this->filter->getQueryEnd(),
             ":startDate12"=>$this->filter->getReportStart(), ":endDate12"=>$this->filter->getQueryEnd(),
-            ":startDate13"=>$this->filter->getReportStart(), ":endDate13"=>$this->filter->getQueryEnd(),
             ":startDate14"=>$this->filter->getReportStart(), ":endDate14"=>$this->filter->getQueryEnd(),
         ]);
 
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $data = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $helptexts = array();
+
+        //add help text
+        $helptexts["Room-nights available"] = "Number of nights in time frame * number of regular rooms";
+        $helptexts["Room-nights occupied"] = "Number of nights each room was occupied, including Burst rooms";
+        $helptexts["Occupancy Rate"] = "Room-nights occupied / Room-nights available";
+        $helptexts["Burst Room-nights occupied"] = "Number of nights each Burst room was occupied";
+        $helptexts["Unique PSGs"] = "Number of unique PGSs where anyone in the PSG stayed";
+        $helptexts["New PSGs"] = "Number of unique PSGs whose first visit was in the time frame";
+        $helptexts["Total Visits"] = "Number of visits with at least one ngiht in the time frame";
+        $helptexts["Average Visit Length"] = "Average length of an entire visit with at least one night in the time frame";
+        $helptexts["Median Visit Length"] = "Median length of an entire visit with at least one night in the time frame";
+        $helptexts["Average First Visit Length"] = "Average length of a PSG's FIRST visit with at least one night in the time frame";
+        $helptexts["Median First Visit Length"] = "Median length of a PSG's FIRST visit with at least one night in the time frame";
+
+        return array($data[0], $helptexts);
     }
 
     public function getGuestAvgPerNight(){
@@ -136,14 +150,6 @@ group by `child/adult`;';
     }
 
     public function getDiagnosisCategoryTotals(){
-/*         $query = 'select if(d.Code is not null, ifnull(dc.Description, "Other"), "Unknown") as "Category", SUM(DATEDIFF(least(ifnull(s.Span_End_Date, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(s.Span_Start_Date, date("' . $this->filter->getReportStart() . '")))) as "count"
-from stays s
-join visit v on s.idVisit = v.idVisit
-join hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
-left join gen_lookups d on hs.Diagnosis = d.Code and d.Table_Name = "Diagnosis"
-left join gen_lookups dc on d.Substitute = dc.Code and dc.Table_Name = "Diagnosis_Category"
-where date(ifnull(s.Span_End_Date, now())) >= date("' . $this->filter->getReportStart() . '") and date(s.Span_Start_Date) < date("' . $this->filter->getQueryEnd() . '") -- and s.idName = hs.idPatient
-group by `Category`;'; */
 
         $query = 'select if(d.Code is not null, ifnull(dc.Description, "Other"), "Unknown") as "Category", sum(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) as "count"
 from visit v
