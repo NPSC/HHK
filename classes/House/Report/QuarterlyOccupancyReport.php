@@ -83,12 +83,15 @@ class QuarterlyOccupancyReport extends AbstractReport implements ReportInterface
 
     public function getMainSummaryData(){
 
+        $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
+        $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
+
         $query = '
 SELECT
 (select count(*) from resource re where re.Type = "room")*datediff("' . $this->filter->getQueryEnd() . '", "' . $this->filter->getReportStart() . '") as "Room-nights available",
 (select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v where date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '") and date(ifnull(v.Span_Start, curdate())) != date(ifnull(v.Span_End, curdate()))) as "Room-nights occupied",
 ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v where date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '"))/((select count(*) from resource re where re.Type = "room")*datediff("' . $this->filter->getQueryEnd() . '", "' . $this->filter->getReportStart() . '"))*100,1) as "Occupancy Rate",
-(select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v join resource re on v.idResource = re.idResource where re.Type = "rmtroom" and date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '")) as "Burst Room-nights occupied",
+(select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->getReportEnd() . '")), date("' . $this->filter->getReportEnd() . '")), greatest(v.Span_Start, date("' . $this->filter->getReportStart() . '")))) from visit v join resource re on v.idResource = re.idResource where re.Type = "rmtroom" and date(v.Span_Start) < date("' . $this->filter->getQueryEnd() . '") and date(ifnull(v.Span_End, curdate())) > date("' . $this->filter->getReportStart() . '")) as "' . $rmtroomTitle . '-nights occupied",
 (select count(distinct ng.idPsg) from stays s join name_guest ng on s.idName = ng.idName where date(s.Span_Start_Date) < date(:endDate6) and date(ifnull(s.Span_End_Date, curdate())) > date(:startDate6)) as "Unique PSGs",
 (select count(distinct reg.idPsg) from visit v join registration reg on v.idRegistration = reg.idRegistration where idVisit in (select fv.idVisit from vlist_first_visit fv where date(ifnull(fv.Span_End, curdate())) > date(:startDate14) and date(ifnull(fv.Span_Start, curdate())) < date(:endDate14))) as "New PSGs",
 (select count(distinct v.idVisit) from visit v where date(v.Span_Start) < date(:endDate8) and date(ifnull(v.Span_End, curdate())) > date(:startDate8)) as "Total Visits",
@@ -115,7 +118,7 @@ ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->get
         $helptexts["Room-nights available"] = "Number of nights in time frame * number of regular rooms";
         $helptexts["Room-nights occupied"] = "Number of nights each room was occupied, including Burst rooms";
         $helptexts["Occupancy Rate"] = "Room-nights occupied / Room-nights available";
-        $helptexts["Burst Room-nights occupied"] = "Number of nights each Burst room was occupied";
+        $helptexts[$rmtroomTitle . "-nights occupied"] = "Number of nights each " . $rmtroomTitle . " was occupied";
         $helptexts["Unique PSGs"] = "Number of unique PGSs where anyone in the PSG stayed";
         $helptexts["New PSGs"] = "Number of unique PSGs whose first visit was in the time frame";
         $helptexts["Total Visits"] = "Number of visits with at least one ngiht in the time frame";

@@ -45,6 +45,9 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
 
     public function getMainSummaryData(){
 
+        $roomTypes = readGenLookupsPDO($this->dbh, "Resource_Type");
+        $rmtroomTitle = (isset($roomTypes['rmtroom']['Description']) ? $roomTypes['rmtroom']['Description']: "Remote Room");
+
         $query = "select
                     (select count(*) from resource where Type = 'room') as 'Total Rooms',
                     (select count(*) from resource r
@@ -52,7 +55,7 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
 	                       r.idResource = ru.idResource and
                            date(ru.Start_Date) <= date(now()) and
                            date(ru.End_Date) > date(now())
-                        where r.Type = 'rmtroom' and ru.idResource_use is null) as 'Total Burst Rooms',
+                        where r.Type = 'rmtroom' and ru.idResource_use is null) as 'Total " . $rmtroomTitle . "s',
                     (select count(*) from resource r
                         left join resource_use ru on
 	                       r.idResource = ru.idResource and
@@ -87,17 +90,14 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
         $helptexts = array();
 
         //add help text
-        $helptexts["Room-nights available"] = "Number of nights in time frame * number of regular rooms";
-        $helptexts["Room-nights occupied"] = "Number of nights each room was occupied, including Burst rooms";
-        $helptexts["Occupancy Rate"] = "Room-nights occupied / Room-nights available";
-        $helptexts["Burst Room-nights occupied"] = "Number of nights each Burst room was occupied";
-        $helptexts["Unique PSGs"] = "Number of unique PGSs where anyone in the PSG stayed";
-        $helptexts["New PSGs"] = "Number of unique PSGs whose first visit was in the time frame";
-        $helptexts["Total Visits"] = "Number of visits with at least one ngiht in the time frame";
-        $helptexts["Average Visit Length"] = "Average length of an entire visit with at least one night in the time frame";
-        $helptexts["Median Visit Length"] = "Median length of an entire visit with at least one night in the time frame";
-        $helptexts["Average First Visit Length"] = "Average length of a PSG's FIRST visit with at least one night in the time frame";
-        $helptexts["Median First Visit Length"] = "Median length of a PSG's FIRST visit with at least one night in the time frame";
+        $helptexts["Total Rooms"] = "Total regular rooms";
+        $helptexts["Total " . $rmtroomTitle . "s"] = "Total " . $rmtroomTitle . "s available";
+        $helptexts["Vacant Rooms"] = "Number of vacant available rooms";
+        $helptexts["Occupied Rooms"] = "Number of rooms with active visits";
+        $helptexts["Anticipated Arrivals"] = "Number of active reservations with an arrival date of today";
+        $helptexts["Anticipated Departures"] = "Number of checked in visits with an expected departure of today";
+        $helptexts["Available Room Occupancy"] = "Total Occupied Rooms / (Total Regular Rooms - Out of service regular rooms)*100";
+        $helptexts["Total Room Occupancy"] = "Total Occupied Rooms / Total Regular Rooms*100";
 
         return array($data[0], $helptexts);
     }
