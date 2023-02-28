@@ -8,14 +8,12 @@ Noty.overrideDefaults({
         open : 'animated bounceInDown',
         close: 'animated bounceOutUp'
     },
-    callbacks: {
-    	afterShow: function(){
-    		//set up custom close handler
-    		$(this.barDom).on('click', function(){
-    			let barDom = $(this);
-				setTimeout(()=>{barDom.hide();}, 500);
-				$(this).addClass('animated bounceOutUp');
-    		});
-    	}
-    }
+});
+
+//custom click handler
+$(document).on('click', '.noty_bar', function(){
+	console.log("Banner clicked");
+	let barDom = $(this);
+	setTimeout(()=>{barDom.hide();}, 500);
+	barDom.addClass('animated bounceOutUp');
 });
