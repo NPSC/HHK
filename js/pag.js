@@ -33,6 +33,8 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
 			toastr.error(mess);
 		}else if(type == 'success'){
 			toastr.success(mess);
+		}else if(type == 'warning'){
+			toastr.warning(mess);
 		}else{
 			toastr.info(mess);
 		}
