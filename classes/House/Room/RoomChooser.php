@@ -152,7 +152,7 @@ class RoomChooser {
 
     public function createCheckinMarkup(\PDO $dbh, $isAuthorized, $constraintsDisabled = FALSE, $omitSelf = TRUE, $overrideMaxOcc = 0) {
 
-        if ($this->resv->getStatus() === ReservationStatus::Committed || $this->resv->getStatus() === ReservationStatus::Imediate || $this->resv->getStatus() === ReservationStatus::Waitlist) {
+        if ($this->resv->getStatus() === ReservationStatus::Committed || $this->resv->getStatus() === ReservationStatus::Waitlist) {
 
             $rescs = $this->findResources($dbh, $isAuthorized, $omitSelf, $overrideMaxOcc);
 
