@@ -24,10 +24,19 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
 	}
 
 	try {
-		new Noty({
+/*		new Noty({
 			type : type,
 			text : mess
-		}).show();
+		}).show();*/
+		
+		if(type == 'error'){
+			toastr.error(mess);
+		}else if(type == 'success'){
+			toastr.success(mess);
+		}else{
+			toastr.info(mess);
+		}
+		
 	} catch (err) {
 		// do nothing for now.
 	}
