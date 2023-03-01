@@ -1,7 +1,7 @@
 Noty.overrideDefaults({
     layout   : 'top',
     theme    : 'semanticui',
-    timeout  : '4000',
+    timeout  : '5000',
     progressBar : true,
     closeWith: ['button'],
     animation: {
@@ -14,6 +14,6 @@ Noty.overrideDefaults({
 $(document).on('click', '.noty_bar', function(){
 	console.log("Banner clicked");
 	let barDom = $(this);
-	setTimeout(()=>{barDom.hide();}, 500);
+	setTimeout(()=>{console.log("Banner hiding...");barDom.hide();}, 500);
 	barDom.addClass('animated bounceOutUp');
 });
