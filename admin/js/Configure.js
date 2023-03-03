@@ -92,10 +92,7 @@ if ($('.hhk-setMerchantRooms').length > 0) {
 	//display noty
 
 	if(notyMsg.type){
-		new Noty({
-			type : notyMsg.type,
-			text : notyMsg.text
-		}).show();
+		flagAlertMessage(notyMsg.text, notyMsg.type);
 	}
 
     tbs = $('#tabs').tabs({
@@ -790,16 +787,10 @@ $('#tabs').show();
             timeout: 800000,
             success: function (data) {
             	if(data.success){
-	            	new Noty({
-						type : 'success',
-						text : data.success
-					}).show();
+					flagAlertMessage(data.success, false);
 				}
 				if(data.error){
-	            	new Noty({
-						type : 'error',
-						text : data.error
-					}).show();
+					flagAlertMessage(data.error, true);
 				}
 				if(data.idpMkup && data.idpName){
 					$this.empty().html(data.idpMkup);
@@ -809,10 +800,7 @@ $('#tabs').show();
 				$submitbtn.prop("disabled", false);
             },
             error: function (e) {
-            	new Noty({
-					type : 'error',
-					text : e.responseText
-				}).show();
+				flagAlertMessage(e.responseText, true);
                 $submitbtn.prop("disabled", false);
             }
         });
