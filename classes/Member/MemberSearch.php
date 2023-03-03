@@ -31,6 +31,7 @@ class MemberSearch {
     protected $Phone;
     protected $Company;
     protected $MRN;
+    protected $diag;
     protected $twoParts;
     protected $letters;
 
@@ -763,7 +764,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 'substitute' => $row2['MRN'],
                 'phone' => $phone,
                 'birthDate' => $strBirthDate,
-                'memberStatus' => ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . '] ' : ''),
+                'memberStatus' => ($row2['Member_Status'] == 'd' ? $row2['Status'] : ''),
                 'city' => $row2['City'],
                 'state' => $row2['State'],
             ];
@@ -837,9 +838,9 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 'fullName' => ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' ) . $firstName . ' ' . ($nickName != '' ? '(' . $nickName . ') ' : '' ) . $lastName . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' ),
                 'noReturn' => $row2['No_Return'],
                 'value' => $row2['Phone_Search'],
-                'substitute' => htmlspecialchars_decode($row2['Phone']),
+                'phone' => htmlspecialchars_decode($row2['Phone']),
                 'birthDate' => $strBirthDate,
-                'memberStatus' => ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . ']' : ''),
+                'memberStatus' => ($row2['Member_Status'] == 'd' ? $row2['Status']: ''),
                 'city' => $row2['City'],
                 'state' => $row2['State'],
             ];
@@ -848,6 +849,36 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
         }
 
         return $events;
+    }
+
+    public function diagnosisSearch(\PDO $dbh){
+
+        $this->diag = '%' . $this->letters . '%';
+
+        $query = "select d.Code as 'DiagCode', ifnull(cat.Description, '') as 'Category', d.Description as 'Diagnosis', concat(if(cat.Description is not null, concat(cat.Description, ': '), ''), d.Description) as `Title` from gen_lookups d
+	               left join gen_lookups cat on d.`Substitute` = cat.`Code` and cat.`Table_Name` = 'Diagnosis_Category'
+                where d.`Table_Name` = 'Diagnosis'
+                having `Title` like :search;";
+
+        $stmt = $dbh->prepare($query);
+
+        $stmt->execute([":search"=>$this->diag]);
+
+        $events = array();
+
+        while ($row2 = $stmt->fetch(\PDO::FETCH_ASSOC)) {
+            $diagAr = array();
+
+            $diagAr = [
+                'id' => $row2["DiagCode"],
+                'value' => $row2['Title'],
+            ];
+
+            $events[] = $diagAr;
+        }
+
+        return $events;
+
     }
 
     public function guestSearch(\PDO $dbh) {
@@ -915,7 +946,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 'value' => $firstName . ' ' . $lastName . ' ' . $nickName,
                 'phone' => htmlspecialchars_decode($row2['Phone']),
                 'birthDate' => $strBirthDate,
-                'memberStatus' => ($row2['Member_Status'] == 'd' ? ' [' . $row2['Status'] . ']' : ''),
+                'memberStatus' => ($row2['Member_Status'] == 'd' ? $row2['Status'] : ''),
                 'city' => $row2['City'],
                 'state' => $row2['State'],
             ];

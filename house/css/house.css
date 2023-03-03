@@ -14,7 +14,7 @@ body {
 	font-family: Lucida Grande,Lucida Sans,Arial,sans-serif;
 }
 
-.navbar {
+.navbar, .ui-autocomplete {
 	--nav-bg-color: #5c9ccc;
 	--nav-active-color: #3E6D8F;
 	--nav-text-color: #fff;
@@ -107,7 +107,51 @@ body {
     overflow-y: auto;
     /* prevent horizontal scrollbar */
     overflow-x: hidden;
-  }
+    min-width: fit-content;
+}
+
+.ui-autocomplete .hhk-flex {
+	align-items: center;
+	justify-content: space-between;
+}
+  
+.ui-autocomplete .autocompleteName {
+	font-weight:bold;
+}
+
+.ui-autocomplete.ui-menu-icons .ui-menu-item-wrapper {
+	padding: 3px 1em 3px .4em;
+}
+
+.ui-autocomplete .autocompleteNoReturn {
+	background-color: red;
+	border-radius: 0.5em;
+	color: white;
+	padding: 0 0.5em;
+	margin-left: 0.5em;
+}
+
+.ui-autocomplete .autocompleteMemStatus {
+	background-color: gray;
+	border-radius: 0.5em;
+	color: white;
+	padding: 0 0.5em;
+	margin-left: 0.5em;
+}
+
+.ui-autocomplete li.ui-menu-item {
+	border-bottom: 1px solid #c1e3ec;
+}
+
+.ui-autocomplete .ui-state-active{
+	border: initial;
+	border-bottom: 1px solid #c1e3ec !important;
+	background: var(--nav-bg-color);
+	color: white;
+	font-weight: unset;
+	margin: 0px;
+}
+  
 .ui-autocomplete-loading { background: white url('../../images/ui-anim_basic_16x16.gif') right center no-repeat; }
 .hhk-loading { background: white url('../../images/ui-anim_basic_16x16.gif') left center no-repeat; }
 .hhk-icon-redLight {

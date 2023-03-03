@@ -1771,6 +1771,13 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
     ORDER BY i.idInvoice, p.idPayment, pa.idPayment_auth;
 
 
+-- -----------------------------------------------------
+-- View `vlist_first_visit`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vlist_first_visit` AS
+select * from visit v
+group by v.idVisit having min(v.Arrival_Date) = v.Arrival_Date;
+
 
 -- -----------------------------------------------------
 -- View `vlocation_listing`

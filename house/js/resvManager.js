@@ -871,6 +871,13 @@ function resvManager(initData, options) {
                 // Emergency Contact dialog box search text box.
                 createAutoComplete($('#txtemSch'), 3, {cmd: 'filter', add: 'phone', basis: 'psg', psg: data.idPsg}, getECRel);
 
+				// Diagnosis Search
+				let diagSelect = function(item){
+					$('#selDiagnosis').val(item.id);
+					$("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
+				}
+				createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
+
                 // Hover icons
                 $( "ul.hhk-ui-icons li" ).hover(
                     function() {

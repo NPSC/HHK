@@ -666,6 +666,7 @@ REPLACE INTO `sys_config` (`Key`,`Value`,`Type`,`Category`,`Header`,`Description
 ('ShowDiagOnStmt', 'false', 'b', 'h', '', 'Show the patient diagnoses on the statements', '', '1'),
 ('ShowDiagTB','false','b','h','','Show the diagnosis textbox (in addition to the diagnosis selector)','',1),
 ('showCurrentGuestPhotos', 'false', 'b', 'hf', '', 'Show Guest Photos on Current Guests tab', '', '1'),
+('UseDiagSearch', 'false', 'b', 'h', '', 'Use Autocomplete search in place of Diagnosis drop down', '', '1'),
 ('ShowGuestPhoto','true','b','hf','','Enable guest photos','',1),
 ('ShowLodgDates','true','b','h','','Show dates on lodging invoice lines','',1),
 ('ShowRateDetail','false','b','f','','Show Rate detail on statements','',1),
