@@ -8,8 +8,7 @@
  *            $txtCtrl
  * @returns {undefined}
  */
-function flagAlertMessage(mess, wasError, $txtCtrl) {
-	"use strict";
+function flagAlertMessage(mess, wasError, $txtCtrl, title = '') {
 	// Types: alert, success, warning, error, info/information
 	var type = 'info';
 
@@ -30,13 +29,13 @@ function flagAlertMessage(mess, wasError, $txtCtrl) {
 		}).show();*/
 		
 		if(type == 'error'){
-			toastr.error(mess);
+			toastr.error(mess, title);
 		}else if(type == 'success'){
-			toastr.success(mess);
+			toastr.success(mess, title);
 		}else if(type == 'warning'){
-			toastr.warning(mess);
+			toastr.warning(mess, title);
 		}else{
-			toastr.info(mess);
+			toastr.info(mess, title);
 		}
 		
 	} catch (err) {

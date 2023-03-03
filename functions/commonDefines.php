@@ -49,7 +49,7 @@ define('FAVICON', '<link rel="icon" type="image/svg+xml" href="../favicon.svg" /
 define('DR_PICKER_CSS', '<link rel="stylesheet" href="css/daterangepicker.min.css">');
 define('FULLC_CSS', '<link href="css/fullcalendar.min.css" rel="stylesheet" type="text/css" />');
 define('SELECT2_CSS', '<link href="css/select2.min.css" rel="stylesheet" type="text/css" />');
-define('NOTY_CSS', "<link href='../css/toastr.min.css' rel='stylesheet' type='text/css' />");
+define('NOTY_CSS', "<link href='../css/toastr.css' rel='stylesheet' type='text/css' />");
 define('INCIDENT_CSS', '<link href="css/incidentReports.css" rel="stylesheet" type="text/css" />');
 define('UPPLOAD_CSS', '<link rel="stylesheet" href="../js/uppload/uppload.css"><link rel="stylesheet" href="../js/uppload/light.css">');
 
