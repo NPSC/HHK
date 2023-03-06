@@ -139,6 +139,26 @@ body {
 	margin-left: 0.5em;
 }
 
+.ui-autocomplete .autocompleteMRN {
+	background-color: #5c9ccc;
+	border-radius: 0.25em;
+	color: white;
+	padding: 0 0.5em;
+	margin-top: 0.5em;
+}
+
+.ui-autocomplete .ui-menu-item-wrapper:hover .autocompleteMRN {
+	background-color: white;
+	border-radius: 0.25em;
+	color: #5c9ccc;
+	padding: 0 0.5em;
+	margin-top: 0.5em;
+}
+
+.ui-autocomplete .autocompleteItemMRN {
+	margin-top: 0.2em;
+}
+
 .ui-autocomplete li.ui-menu-item {
 	border-bottom: 1px solid #c1e3ec;
 }

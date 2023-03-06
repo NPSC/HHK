@@ -144,6 +144,8 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
     "use strict";
     var cache = {};
     
+    const maxLength = 10;
+    
     const _source = function (request, response, cache, shoNew, inputParms, minChars) {
     
         let term = request.term.toString().substr(0,minChars);
@@ -175,8 +177,8 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
                 cache = {};
             }
             
-            if(filtered.length > 10){
-				filtered.unshift({'id':'n', 'substitute':'Keep typing... (' + filtered.length + ' results found)'});
+            if(filtered.length > maxLength){
+				filtered.unshift({'id':'n', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
 			}
 
             response( filtered );
@@ -199,8 +201,8 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 	                cache = {};
 	            }
 	            
-	            if(data.length > 4){
-					data.unshift({'id':'n', 'substitute':'Keep typing... (' + data.length + ' results found)'});
+	            if(data.length > maxLength){
+					data.unshift({'id':'n', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
 				}
 
                 cache[ term ] = data;
@@ -229,7 +231,7 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
     if(txtCtrl.autocomplete("instance") !== undefined){
 	    txtCtrl.autocomplete( "instance" )
 	    	._renderItem = function( ul, item ) {
-				let firstRow = "", detailsRow = "", rightContent = "";
+				let firstRow = "", detailsRow = "", rightContent = "", mrnRow = "";
 				if (item.noReturn === undefined) {
 					item.noReturn = '';
 				} else if (item.noReturn != '') {
@@ -249,6 +251,11 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 					item.birthDate = ''
 				} else if (item.birthDate != '') {
 					item.birthDate = "<span style='margin-left:.5em;'>(" + item.birthDate + ")</span>";
+				}
+				if (item.mrn === undefined) {
+					item.mrn = ''
+				} else if (item.mrn != '') {
+					item.mrn = "<span class='autocompleteMRN'>" + item.mrn + "</span>";
 				}
 				if (item.phone === undefined) {
 					item.phone = ''
@@ -281,12 +288,16 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
 					detailsRow = "<div class='autocompleteItemDetails'>" + item.phone +  item.city + item.state + "</div>";
 				}
 				
+				if(item.mrn != ''){
+					mrnRow = "<div class='autocompleteItemMRN'>" + item.mrn + "</div>";
+				}
+				
 				if(item.memberStatus != '' || item.noReturn != ''){
 					rightContent = "<div class='right'>" + item.memberStatus + item.noReturn + "</div>";
 				}
 				
 			    return $( "<li>" )
-			        .append( "<div style='font-size:.85em;'><div class='hhk-flex'><div class='left'>" + firstRow + detailsRow + "</div>" + rightContent + "</div></div>" )
+			        .append( "<div style='font-size:.85em;'><div class='hhk-flex'><div class='left'>" + firstRow + detailsRow + mrnRow + "</div>" + rightContent + "</div></div>" )
 			        .appendTo( ul );
 		};
 		txtCtrl.autocomplete( "instance" )

@@ -458,6 +458,13 @@ class Hospital {
                     , array("class"=>$selectedClass));
 
             }else{
+                //prepare diag categories for doOptionsMkup
+                foreach($diags as $key=>$diag){
+                    if(!empty($diag['Substitute'])){
+                        $diags[$key][2] = $diagCats[$diags[$key]['Substitute']][1];
+                    }
+                }
+
                 $diagtbl->addBodyTr(
                     HTMLTable::makeTh($labels->getString('hospital', 'diagnosis', 'Diagnosis'))
                 );

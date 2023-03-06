@@ -761,7 +761,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
                 'fullName' => ($row2['Name_Prefix'] != '' ? $row2['Name_Prefix'] . ' ' : '' ) . $firstName . ' ' . ($nickName != '' ? '(' . $nickName . ') ' : '' ) . $lastName . ($row2['Name_Suffix'] != '' ? ', ' . $row2['Name_Suffix'] : '' ),
                 'noReturn' => $row2['No_Return'],
                 'value' => $row2['MRN'],
-                'substitute' => $row2['MRN'],
+                'mrn' => $row2['MRN'],
                 'phone' => $phone,
                 'birthDate' => $strBirthDate,
                 'memberStatus' => ($row2['Member_Status'] == 'd' ? $row2['Status'] : ''),
@@ -871,7 +871,7 @@ $operation (LOWER(n.Name_First) like :ltrfn OR LOWER(n.Name_NickName) like :ltrn
 
             $diagAr = [
                 'id' => $row2["DiagCode"],
-                'value' => $row2['Title'],
+                'value' => htmlspecialchars_decode($row2['Title'], ENT_QUOTES),
             ];
 
             $events[] = $diagAr;
