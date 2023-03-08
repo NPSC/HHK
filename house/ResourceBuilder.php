@@ -2008,12 +2008,14 @@ $formBuilderLabels = [
     "treatmentStart"=>$labels->getString('hospital', 'treatmentStart', 'Treatement Start'),
     "treatmentEnd"=>$labels->getString('hospital', 'treatmentEnd', 'Treatment End'),
     "mrn"=>$labels->getString('hospital', 'MRN', 'MRN'),
-    "nickname"=>$labels->getString('MemberType', 'nickname', 'Nickname')
+    "nickname"=>$labels->getString('MemberType', 'nickname', 'Nickname'),
+    "namePrefix"=>$labels->getString('MemberType', 'namePrefix', 'Prefix')
 ];
 $formBuilderOptions = [
     "county"=>$uS->county,
     "doctor"=>$uS->Doctor,
-    "referralAgent"=>$uS->ReferralAgent
+    "referralAgent"=>$uS->ReferralAgent,
+    "diagnosisDetails"=>$uS->ShowDiagTB
 ];
 
 ?>

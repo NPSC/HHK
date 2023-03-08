@@ -877,6 +877,14 @@ function resvManager(initData, options) {
 					$("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
 				}
 				createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
+				
+				//Diagnosis delete button
+				$(document).on('click', '#delDiagnosis', function(e){
+					e.preventDefault();
+					$("#selDiagnosis").val("");
+					$("#diagSearch").val("");
+					$(this).closest('tr').addClass('d-none');
+				});
 
                 // Hover icons
                 $( "ul.hhk-ui-icons li" ).hover(
@@ -1900,16 +1908,27 @@ function resvManager(initData, options) {
             });
         }
 
-        function setupNotes(rid, $container) {
+        function setupNotes(rid, $container, psgId = null) {
 
-            $container.notesViewer({
-                linkId: rid,
-                linkType: 'reservation',
-                newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
-                alertMessage: function(text, type) {
-                    flagAlertMessage(text, type);
-                }
-            });
+			if(rid > 0){
+	            $container.notesViewer({
+	                linkId: rid,
+	                linkType: 'reservation',
+	                newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
+	                alertMessage: function(text, type) {
+	                    flagAlertMessage(text, type);
+	                }
+	            });
+	        }else if(psgId > 0){
+				$container.notesViewer({
+	                linkId: psgId,
+	                linkType: 'psg',
+	                newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
+	                alertMessage: function(text, type) {
+	                    flagAlertMessage(text, type);
+	                }
+	            });
+			}
 
             return $container;
         }
@@ -1965,7 +1984,7 @@ function resvManager(initData, options) {
 
 			// Reservation notes.
             if (data.resv.rdiv.notes !== undefined) {
-                $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
+                $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes), data.idPsg));
             }
 
             // Reservation docs.

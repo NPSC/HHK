@@ -126,6 +126,13 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
 			}
 			createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
 
+			//Diagnosis delete button
+			$(document).on('click', '#delDiagnosis', function(e){
+				$("#selDiagnosis").val("");
+				$("#diagSearch").val("");
+				$(this).closest('tr').addClass('d-none');
+			});
+
             // Calendars for treatment start and end dates
             $('.ckhsdate').datepicker({
                 yearRange: '-01:+01',

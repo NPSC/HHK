@@ -45,6 +45,16 @@
     			"multiple": false,
     			"values": []
   			},
+  			... (options.fieldOptions.diagnosisDetails ?
+  				[{
+				"type": "text",
+				"required": false,
+    			"label": (options.labels.diagnosis || 'Diagnosis') + " Details",
+    			"placeholder": (options.labels.diagnosis || 'Diagnosis') + " Details",
+    			"className": "form-control",
+    			"name": "hospital.diagnosisDetails",
+    			"width": "col-md-3"
+  			}]:[]),
   			{
     			"type": "select",
     			"label": (options.labels.location || 'Unit'),
@@ -92,8 +102,8 @@
         		fields: [
 				{
     				"type": "select",
-    				"label": "Prefix",
-    				"placeholder": "Prefix",
+    				"label": (options.labels.namePrefix || 'Prefix'),
+    				"placeholder": (options.labels.namePrefix || 'Prefix'),
     				"className": "form-select",
     				"name": "patient.prefix",
     				"width": "col-md-3",
@@ -362,6 +372,18 @@
         			"group": "guest",
         			"className": "guestHeader"
     			},
+    			{
+    				"type": "select",
+    				"label": (options.labels.namePrefix || 'Prefix'),
+    				"placeholder": (options.labels.namePrefix || 'Prefix'),
+    				"className": "form-select",
+    				"name": "guests.g0.prefix",
+    				"width": "col-md-3",
+    				"dataSource":"namePrefix",
+    				"multiple": false,
+    				"values": [],
+    				"group": "guest"
+  				},
 				{
 					"type": "text",
     				"label": "First Name",
@@ -379,6 +401,15 @@
     				"name": "guests.g0.lastName",
     				"width": "col-md-3",
     				"group": "guest"
+  				},
+  				{
+    				"type": "date",
+    				"label": "Birthdate",
+    				"placeholder": "Birthdate",
+    				"className": "form-control",
+    				"name": "guests.g0.birthdate",
+    				"width": "col-md-4",
+    				"validation": "lessThanToday"
   				},
   				{
     				"type": "text",

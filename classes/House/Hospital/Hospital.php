@@ -432,6 +432,8 @@ class Hospital {
             $diagtbl = new HTMLTable();
 
             $myDiagnosis = (isset($referralHospitalData['diagnosis']) && $referralHospitalData['diagnosis'] != '' ? $referralHospitalData['diagnosis'] : $hstay->getDiagnosisCode());
+            $diagnosisDetails = (isset($referralHospitalData['diagnosisDetails']) && $referralHospitalData['diagnosisDetails'] != '' ? $referralHospitalData['diagnosisDetails']: $hstay->getDiagnosis2());
+
             $diagId = (isset($diags[$myDiagnosis]) ? $myDiagnosis : '');
             $diagCat = (!empty($diagId) && isset($diagCats[$diags[$diagId]['Substitute']]) ? $diagCats[$diags[$diagId]['Substitute']][1] . ": " : '');
 
@@ -440,7 +442,7 @@ class Hospital {
                     HTMLTable::makeTh(
                         HTMLContainer::generateMarkup("span", $labels->getString('hospital', 'diagnosis', 'Diagnosis'))
                       . HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-search", "style"=>"margin-left:1.3em; margin-right:0.3em;"))
-                      . HTMLInput::generateMarkup("", array('id'=>'diagSearch'))
+                      . HTMLInput::generateMarkup("", array('id'=>'diagSearch', 'type'=>'search'))
                         . HTMLInput::generateMarkup($diagId, array("type"=>"hidden", "name"=>"selDiagnosis", 'class'=>'hospital-stay')), array("colspan"=>"2"))
                 );
 
@@ -453,7 +455,7 @@ class Hospital {
                 }
 
                 $diagtbl->addBodyTr(
-                    HTMLTable::makeTd(HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-trash")), array("class"=>"ui-corner-all ui-state-default ui-button ui-widget", "style"=>"padding: 0.2em 0.4em;"))) .
+                    HTMLTable::makeTd(HTMLContainer::generateMarkup("button", HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-trash")), array("class"=>"ui-corner-all ui-state-default ui-button ui-widget", "style"=>"padding: 0.2em 0.4em;", "id"=>"delDiagnosis"))) .
                     HTMLTable::makeTd(HTMLContainer::generateMarkup("strong", "Diagnosis: ") . HTMLContainer::generateMarkup("span", $selectedDiag, array("id"=>"selectedDiag")))
                     , array("class"=>$selectedClass));
 
@@ -461,7 +463,7 @@ class Hospital {
                 //prepare diag categories for doOptionsMkup
                 foreach($diags as $key=>$diag){
                     if(!empty($diag['Substitute'])){
-                        $diags[$key][2] = $diagCats[$diags[$key]['Substitute']][1];
+                        $diags[$key][2] = $diagCats[$diag['Substitute']][1];
                     }
                 }
 
@@ -485,8 +487,8 @@ class Hospital {
                     $myDiagnosis = '';
                 }else{
                     $diagtbl->addBodyTr(
-                        HTMLTable::makeTd(HTMLInput::generateMarkup($hstay->getDiagnosis2(), array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', 'placeholder'=>$labels->getString('hospital','diagnosisDetail', 'Diagnosis Details'),  "style"=>"width:100%")), array("colspan"=>"2")));
-
+                        HTMLTable::makeTd(HTMLInput::generateMarkup($diagnosisDetails, array('name'=>'txtDiagnosis', 'class'=>'hospital-stay', 'placeholder'=>$labels->getString('hospital','diagnosisDetail', 'Diagnosis Details'),  "style"=>"width:100%")), array("colspan"=>"2")));
+                    $diagnosisDetails = '';
                 }
             }
 
