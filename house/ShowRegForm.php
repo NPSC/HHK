@@ -140,6 +140,8 @@ if($idVisit || $idResv){
     $reservArray = ReservationSvcs::generateCkinDoc($dbh, $idResv, $idVisit, $span, '../conf/registrationLogo.png');
     $signedDocsArray = ReservationSvcs::getSignedCkinDocs($dbh, (isset($reservArray['idPsg']) ? $reservArray['idPsg']: 0), $idResv, $idVisit);
 
+    $isTopazRequired = false;
+
     $li = '';
     $tabContent = '';
 
@@ -157,6 +159,11 @@ if($idVisit || $idResv){
             array('id'=>$r['tabIndex']));
 
         $sty = $r['style'];
+
+        //is Topaz sigWeb required?
+        if(!empty($r['signType']) && $r['signType'] == 'topaz'){
+            $isTopazRequired = true;
+        }
     }
 
     $tabControl = "";
@@ -238,6 +245,7 @@ $contrls = HTMLContainer::generateMarkup('div', $shoRegBtn . $shoStmtBtn . $regM
 		<script type="text/javascript" src="<?php echo JSIGNATURE_JS; ?>"></script>
 		<script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_SETTINGS_JS; ?>"></script>
+        <?php echo ($isTopazRequired ? '<script type="text/javascript" src="' . TOPAZ_SIGWEB_JS . '"></script>': ''); ?>
 
         <script type='text/javascript'>
 $(document).ready(function() {
@@ -339,7 +347,7 @@ $(document).ready(function() {
         window.open('ShowInvoice.php?invnum=' + invoiceNumber);
     }
 
-    $("#signDialog").dialog({
+    $("#jSignDialog").dialog({
     	autoOpen: false,
     	width: getDialogWidth(800),
     	height: 350,
@@ -364,15 +372,238 @@ $(document).ready(function() {
         }
     });
 
-    $("#signDialog .signature").jSignature({"width": "750px", "height": "141px"});
+    $("#jSignDialog .signature").jSignature({"width": "750px", "height": "141px"});
+
+	$("#topazDialog").dialog({
+    	autoOpen: false,
+    	width: getDialogWidth(550),
+    	height: 300,
+    	modal: true,
+    	buttons: {
+    		"Clear": function(){
+    			var idName = $(this).find("input#idName").val();
+    			var formCode = $(this).find("input#formCode").val();
+    			//$(this).find(".signature").jSignature('clear');
+    			$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
+    			$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
+    		},
+            "Sign": function() {
+            	var idName = $(this).find("input#idName").val();
+            	var formCode = $(this).find("input#formCode").val();
+				//var signature = $(this).find('.signature').jSignature("getData")
+            	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", signature).show();
+            	$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").show();
+
+                $(this).dialog("close");
+            }
+        },
+        open: function(){
+        	initTopaz();
+        }
+    });
+
+	//topaz code
+      var tmr;
+
+      var resetIsSupported = false;
+      var SigWeb_1_6_4_0_IsInstalled = false; //SigWeb 1.6.4.0 and above add the Reset() and GetSigWebVersion functions
+      var SigWeb_1_7_0_0_IsInstalled = false; //SigWeb 1.7.0.0 and above add the GetDaysUntilCertificateExpires() function
+
+      function initTopaz(){
+    		if(IsSigWebInstalled()){
+    			var sigWebVer = "";
+    			try{
+    				sigWebVer = GetSigWebVersion();
+    			} catch(err){console.log("Unable to get SigWeb Version: "+err.message)}
+
+    			if(sigWebVer != ""){
+    				try {
+    					SigWeb_1_7_0_0_IsInstalled = isSigWeb_1_7_0_0_Installed(sigWebVer);
+    				} catch( err ){console.log(err.message)};
+    				//if SigWeb 1.7.0.0 is installed, then enable corresponding functionality
+    				if(SigWeb_1_7_0_0_IsInstalled){
+
+    					resetIsSupported = true;
+    					try{
+    						var daysUntilCertExpires = GetDaysUntilCertificateExpires();
+    						document.getElementById("daysUntilExpElement").innerHTML = "SigWeb Certificate expires in " + daysUntilCertExpires + " days.";
+    					} catch( err ){console.log(err.message)};
+    					var note = document.getElementById("sigWebVrsnNote");
+    					note.innerHTML = "SigWeb 1.7.0 installed";
+    				} else {
+    					try{
+    						SigWeb_1_6_4_0_IsInstalled = isSigWeb_1_6_4_0_Installed(sigWebVer);
+    						//if SigWeb 1.6.4.0 is installed, then enable corresponding functionality
+    					} catch( err ){console.log(err.message)};
+    					if(SigWeb_1_6_4_0_IsInstalled){
+    						resetIsSupported = true;
+    						var sigweb_link = document.createElement("a");
+    						sigweb_link.href = "https://www.topazsystems.com/software/sigweb.exe";
+    						sigweb_link.innerHTML = "https://www.topazsystems.com/software/sigweb.exe";
+
+    						var note = document.getElementById("sigWebVrsnNote");
+    						note.innerHTML = "SigWeb 1.6.4 is installed. Install the newer version of SigWeb from the following link: ";
+    						note.appendChild(sigweb_link);
+    					} else{
+    						var sigweb_link = document.createElement("a");
+    						sigweb_link.href = "https://www.topazsystems.com/software/sigweb.exe";
+    						sigweb_link.innerHTML = "https://www.topazsystems.com/software/sigweb.exe";
+
+    						var note = document.getElementById("sigWebVrsnNote");
+    						note.innerHTML = "A newer version of SigWeb is available. Please uninstall the currently installed version of SigWeb and then install the new version of SigWeb from the following link: ";
+    						note.appendChild(sigweb_link);
+    					}
+    				}
+    			} else{
+    				//Older version of SigWeb installed that does not support retrieving the version of SigWeb (Version 1.6.0.2 and older)
+    				var sigweb_link = document.createElement("a");
+    				sigweb_link.href = "https://www.topazsystems.com/software/sigweb.exe";
+    				sigweb_link.innerHTML = "https://www.topazsystems.com/software/sigweb.exe";
+
+    				var note = document.getElementById("sigWebVrsnNote");
+    				note.innerHTML = "A newer version of SigWeb is available. Please uninstall the currently installed version of SigWeb and then install the new version of SigWeb from the following link: ";
+    				note.appendChild(sigweb_link);
+    			}
+    		}
+    		else{
+    			flagAlertMessage("Unable to communicate with SigWeb. Please confirm that SigWeb is installed and running on this PC.", true);
+    		}
+    		}
+
+      function isSigWeb_1_6_4_0_Installed(sigWebVer){
+        var minSigWebVersionResetSupport = "1.6.4.0";
+
+        if(isOlderSigWebVersionInstalled(minSigWebVersionResetSupport, sigWebVer)){
+          console.log("SigWeb version 1.6.4.0 or higher not installed.");
+          return false;
+        }
+        return true;
+      }
+
+      function isSigWeb_1_7_0_0_Installed(sigWebVer) {
+    	var minSigWebVersionGetDaysUntilCertificateExpiresSupport = "1.7.0.0";
+
+    	if(isOlderSigWebVersionInstalled(minSigWebVersionGetDaysUntilCertificateExpiresSupport, sigWebVer)){
+          console.log("SigWeb version 1.7.0.0 or higher not installed.");
+          return false;
+        }
+        return true;
+      }
+
+      function isOlderSigWebVersionInstalled(cmprVer, sigWebVer){
+          return isOlderVersion(cmprVer, sigWebVer);
+      }
+
+      function isOlderVersion (oldVer, newVer) {
+        const oldParts = oldVer.split('.')
+        const newParts = newVer.split('.')
+        for (var i = 0; i < newParts.length; i++) {
+          const a = parseInt(newParts[i]) || 0
+          const b = parseInt(oldParts[i]) || 0
+          if (a < b) return true
+          if (a > b) return false
+        }
+        return false;
+      }
+
+      function onSign()
+      {
+        if(IsSigWebInstalled()){
+          var ctx = document.getElementById('cnv').getContext('2d');
+          SetDisplayXSize( 500 );
+          SetDisplayYSize( 100 );
+          SetTabletState(0, tmr);
+          SetJustifyMode(0);
+          ClearTablet();
+          if(tmr == null)
+          {
+            tmr = SetTabletState(1, ctx, 50);
+          }
+          else
+          {
+            SetTabletState(0, tmr);
+            tmr = null;
+            tmr = SetTabletState(1, ctx, 50);
+          }
+        } else{
+          flagAlertMessage("Unable to communicate with SigWeb. Please confirm that SigWeb is installed and running on this PC.", true);
+        }
+      }
+
+      function onClear()
+      {
+        ClearTablet();
+      }
+
+      function onDone()
+      {
+        if(NumberOfTabletPoints() == 0)
+        {
+          flagAlertMessage("Please sign before continuing");
+        }
+        else
+        {
+          SetTabletState(0, tmr);
+          //RETURN TOPAZ-FORMAT SIGSTRING
+          SetSigCompressionMode(1);
+          document.FORM1.bioSigData.value=GetSigString();
+          document.FORM1.sigStringData.value = GetSigString();
+          //this returns the signature in Topaz's own format, with biometric information
+
+
+          //RETURN BMP BYTE ARRAY CONVERTED TO BASE64 STRING
+          SetImageXSize(500);
+          SetImageYSize(100);
+          SetImagePenWidth(5);
+          GetSigImageB64(SigImageCallback);
+        }
+      }
+
+      function SigImageCallback( str )
+      {
+        document.FORM1.sigImageData.value = str;
+      }
+
+      function endDemo()
+      {
+        ClearTablet();
+        SetTabletState(0, tmr);
+      }
+
+      function close(){
+        if(resetIsSupported){
+          Reset();
+        } else{
+          endDemo();
+        }
+      }
+
+      //Perform the following actions on
+      //	1. Browser Closure
+      //	2. Tab Closure
+      //	3. Tab Refresh
+      window.onbeforeunload = function(evt){
+        close();
+        clearInterval(tmr);
+        evt.preventDefault(); //For Firefox, needed for browser closure
+      };
+
 
     $(".btnSign").on("click", function(){
-    	var name = $(this).closest(".row").find(".printName").text();
-    	$("#signDialog input#idName").val($(this).closest(".signWrapper").data("idname"));
-    	$("#signDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr('id'));
-    	$("#signDialog").find(".signature").jSignature('clear')
-    	$("#signDialog").dialog("option", "title", "Signature: " + name).dialog("open");
+    	let eSignMethod = $(this).data('esign');
+    	let name = $(this).closest(".row").find(".printName").text();
 
+    	if(eSignMethod == 'jSign'){
+        	$("#jSignDialog input#idName").val($(this).closest(".signWrapper").data("idname"));
+        	$("#jSignDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr('id'));
+        	$("#jSignDialog").find(".signature").jSignature('clear')
+        	$("#jSignDialog").dialog("option", "title", "Signature: " + name).dialog("open");
+		}else if(eSignMethod == 'topaz'){
+			$("#topazDialog input#idName").val($(this).closest(".signWrapper").data("idname"));
+        	$("#topazDialog input#formCode").val($(this).closest(".ui-tabs-panel").attr('id'));
+        	//$("#topazDialog").find(".signature").jSignature('clear')
+        	$("#topazDialog").dialog("option", "title", "Signature: " + name).dialog("open");
+		}
     });
 
     $('#mainTabs').show();
@@ -410,11 +641,22 @@ $(document).ready(function() {
             </div>
             <div id="pmtRcpt" style="font-size: .9em; display:none;"></div>
             <div id="regDialog"></div>
-            <div id="signDialog">
+            <div id="jSignDialog" style="display:none;">
             	<input type="hidden" id="idName">
             	<input type="hidden" id="formCode">
             	<p style="text-align:center">Use your mouse, finger or touch pen to sign</p>
             	<div class="signature ui-widget-content ui-corner-all"></div>
+            </div>
+            <div id="topazDialog" style="display:none; text-align:center;">
+            	<input type="hidden" id="idName">
+            	<input type="hidden" id="formCode">
+            	<p style="text-align:center">Use your Topaz Signature Pad to sign</p>
+            	<canvas name="signature" class="signature ui-widget-content ui-corner-all" width="500" height="100"></canvas>
+            	<div class="alertContainer" style="display:none;">
+                    <div id="alertMessage" style="margin-top:5px;margin-bottom:5px; " class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
+
+                    </div>
+                </div>
             </div>
         </div>
     </body>
