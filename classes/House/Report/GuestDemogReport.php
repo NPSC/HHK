@@ -23,7 +23,7 @@ use HHK\sec\Session;
  */
 class GuestDemogReport {
 
-    public static function demogReport(\PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $whichGuests, $sourceZip) {
+    public static function demogReport(\PDO $dbh, $startDate, $endDate, $whHosp, $whAssoc, $whichGuests, $sourceZip, $roomGroupBy) {
 
         if ($startDate == '') {
             return;
@@ -81,6 +81,26 @@ class GuestDemogReport {
             }
         }
 
+        //set up room grouping
+        $roomGroupingTitle = "";
+        $roomGroupings = readGenLookupsPDO($dbh, 'Room_Group', 'Order');
+        switch ($roomGroupBy){
+            case "Category":
+                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Category', 'Order');
+                $roomGroupingTitle = (isset($roomGroupings["Category"]["Description"]) ? $roomGroupings["Category"]["Description"]: "Room Category");
+                break;
+            case "Report_Category":
+                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Rpt_Cat', 'Order');
+                $roomGroupingTitle = (isset($roomGroupings["Report_Category"]["Description"]) ? $roomGroupings["Report_Category"]["Description"]: "Room Report Category");
+                break;
+            case "Type":
+                $roomGrouping = readGenLookupsPDO($dbh, 'Room_Type', 'Order');
+                $roomGroupingTitle = (isset($roomGroupings["Type"]["Description"]) ? $roomGroupings["Type"]["Description"]: "Room Type");
+                break;
+            default:
+                $roomGrouping = [];
+        }
+
 
         // Set up the Months array
         $th = HTMLTable::makeTh('');
@@ -99,6 +119,9 @@ class GuestDemogReport {
                 } else if($whichGuests == 'allStayed'){
                     $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'Unique ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
                 }
+
+                //room grouping
+                $accum[$thisPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(removeOptionGroups($roomGrouping));
 
                 // Demographics
                 foreach ($demoCategorys as $k => $d) {
@@ -122,6 +145,9 @@ class GuestDemogReport {
         } else if($whichGuests == 'allStayed'){
             $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['title'] = 'Unique ' . Labels::getString('memberType', 'visitor', 'Guest') . 's staying in time period';
         }
+
+        //room grouping
+        $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle] = self::makeCounters(removeOptionGroups($roomGrouping));
 
         // Totals
         foreach ($demoCategorys as $k => $d) {
@@ -150,7 +176,10 @@ class GuestDemogReport {
         na.State_Province,
         hs.idPsg,
         hs.idHospital,
-        hs.idAssociation
+        hs.idAssociation,
+        r.Category,
+        r.Report_Category,
+        r.Type
     FROM
         stays s
             LEFT JOIN
@@ -164,6 +193,10 @@ class GuestDemogReport {
         visit v ON s.idVisit = v.idVisit and s.Visit_Span = v.Span
             LEFT JOIN
         hospital_stay hs on v.idHospital_stay = hs.idHospital_stay
+            LEFT JOIN
+        resource_room rr on v.idResource = rr.idResource
+            LEFT JOIN
+        room r on rr.idRoom = r.idRoom
     WHERE
         n.Member_Status IN ('a' , 'in', 'd') $whHosp $whAssoc
         AND DATE(s.Span_Start_Date) < DATE('" . $endDT->format('Y-m-d') . "') ";
@@ -202,6 +235,12 @@ class GuestDemogReport {
                 }
                 $accum['Total'][$d][$r[$d]]['cnt']++;
             }
+
+            //room grouping
+            if($whichGuests != 'allStayed'){
+                $accum[$startPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle][$r[$roomGroupBy]]['cnt']++;
+            }
+            $accum['Total'][Labels::getString('memberType', 'visitor', 'Guest') . 's by ' . $roomGroupingTitle][$r[$roomGroupBy]]['cnt']++;
 
             if($whichGuests != 'allStayed'){
                 $accum[$startPeriod][Labels::getString('memberType', 'visitor', 'Guest') . 's']['o']['cnt']++;
