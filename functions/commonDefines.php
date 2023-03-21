@@ -42,7 +42,7 @@ define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 define('CJSV', '?eG=93');
 
 // Page header links and scripts
-define('JQ_UI_CSS', '<link href="css/jqui/jquery-ui.min.css" rel="stylesheet" type="text/css" />');
+define('JQ_UI_CSS', '<link href="css/jqui/jquery-ui.min.css' . CJSV . '" rel="stylesheet" type="text/css" />');
 define('JQ_DT_CSS', '<link href="css/datatables.min.css" rel="stylesheet" type="text/css" />');
 define('MULTISELECT_CSS', '<link href="css/jquery.multiselect.css" rel="stylesheet" type="text/css" />');
 define('FAVICON', '<link rel="icon" type="image/svg+xml" href="../favicon.svg" />');
@@ -53,7 +53,7 @@ define('NOTY_CSS', "<link href='../css/toastr.css' rel='stylesheet' type='text/c
 define('INCIDENT_CSS', '<link href="css/incidentReports.css" rel="stylesheet" type="text/css" />');
 define('UPPLOAD_CSS', '<link rel="stylesheet" href="../js/uppload/uppload.css"><link rel="stylesheet" href="../js/uppload/light.css">');
 
-define('JQ_UI_JS', '../js/jquery-ui.min.js');
+define('JQ_UI_JS', '../js/jquery-ui.min.js' . CJSV);
 define('JQ_JS', 'js/jquery-min.js');
 define('JQ_DT_JS', '../js/datatables.min.js');
 define('NOTY_JS', '../js/toastr.min.js');

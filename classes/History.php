@@ -190,14 +190,14 @@ class History {
         $addr_icon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-mail-closed'))
-                , array('class'=>'ui-state-highlight ui-corner-all', 'style'=>'float:right;margin:0;padding:1px;', 'title'=>"Incomplete Address"))
-            , array('class'=>'ui-widget hhk-ui-icons'));
+                , array('class'=>'ui-state-highlight ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"Incomplete Address"))
+            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
 
         $patientStayingIcon = HTMLContainer::generateMarkup('ul'
             , HTMLContainer::generateMarkup('li',
                 HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase'))
-                , array('class'=>'ui-state-default ui-corner-all', 'style'=>'float:right; margin:0; padding:1px;', 'title'=>"$patientTitle Planning to stay"))
-            , array('class'=>'ui-widget hhk-ui-icons'));
+                , array('class'=>'ui-state-default ui-corner-all m-0', 'style'=>'padding:1px;', 'title'=>"$patientTitle Planning to stay"))
+            , array('class'=>'ui-widget hhk-ui-icons ml-2'));
 
         $returnRows = array();
 
@@ -228,7 +228,7 @@ class History {
                 $fixedRows['Guest Last'] = HTMLContainer::generateMarkup('a', $r['Guest Last'], array('href'=>"$page?rid=" . $r["idReservation"]));
 
                 if ($r['Incomplete_Address'] == 1) {
-                    $fixedRows['Guest Last'] = $addr_icon . $fixedRows['Guest Last'];
+                    $fixedRows['Guest Last'] = HTMLContainer::generateMarkup("div", $fixedRows['Guest Last'] . $addr_icon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between"));
                 }
 
             } else {
@@ -323,7 +323,7 @@ class History {
             $fixedRows['Patient'] = $r['Patient Name'];
 
             if ($r['Patient_Staying'] > 0 && ! $static) {
-                $fixedRows['Patient'] = $patientStayingIcon . $fixedRows['Patient']; //HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
+                $fixedRows['Patient'] = HTMLContainer::generateMarkup("div", $fixedRows['Patient'] . $patientStayingIcon, array("class"=>"hhk-flex", "style"=>"justify-content: space-between")); //HTMLContainer::generateMarkup('span', '', array('class'=>'ui-icon ui-icon-suitcase', 'style'=>'float:right;', 'title'=>"$patientTitle Planning to stay"));
             }
 
 

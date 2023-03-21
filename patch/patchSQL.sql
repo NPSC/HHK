@@ -30,3 +30,5 @@ UPDATE `gen_lookups` SET `Description` = 'Send Post Check In/Out Email' WHERE (`
 INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES ('showCurrentGuestPhotos', 'false', 'b', 'hf', 'Show Guest Photos on Current Guests tab', '1');
 
 INSERT IGNORE INTO 	`sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES('UseDiagSearch', 'false', 'b', 'h', 'Use Autocomplete search in place of Diagnosis drop down', '1');
+
+UPDATE `sys_config` SET `Value` = 'https://manage.hospitalityhousekeeper.net/tips/current' WHERE (`Key` = 'loginFeedURL');

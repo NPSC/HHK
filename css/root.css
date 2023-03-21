@@ -121,3 +121,23 @@ table {
 	height: 320px;
 	width: 100%;
 }
+
+.welcomeWidgetContainer #welcomeWidget {
+	display:flex;
+	align-items: center;
+	justify-content: center;
+	height:320px;
+}
+
+.welcomeWidgetContainer #welcomeWidget .welcomeContent {
+	text-align:center;
+	font-size: 1.4em;
+    line-height: 2em;
+    margin-left: 0.5em;
+    margin-right: 0.5em;
+}
+
+.welcomeWidgetContainer #welcomeWidget .welcomeContent a {
+	text-decoration: underline;
+	color: inherit;
+}
