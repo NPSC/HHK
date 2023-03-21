@@ -554,7 +554,7 @@ class ReferralForm {
             ->setIdGuest($psg->getIdPatient())
             ->setStatus(ReservationStatus::Waitlist)
             ->setIdHospitalStay($hospStay->getIdHospital_Stay())
-            ->setNumberGuests(count($guests))
+            ->setNumberGuests(count($guests)+1)
             ->setIdResource(0)
             ->setRoomRateCategory($rateCategory)
             ->setIdRoomRate($rateRs->idRoom_rate->getStoredVal())
