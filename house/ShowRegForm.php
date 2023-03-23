@@ -383,7 +383,7 @@ $(document).ready(function() {
     		"Clear": function(){
     			var idName = $(this).find("input#idName").val();
     			var formCode = $(this).find("input#formCode").val();
-    			//$(this).find(".signature").jSignature('clear');
+    			onClear();
     			$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .sigLine img").attr("src", "").hide();
     			$("#" + formCode + " .signWrapper[data-idname=" + idName + "] .signDate").hide();
     		},
@@ -430,6 +430,7 @@ $(document).ready(function() {
     					} catch( err ){console.log(err.message)};
     					var note = document.getElementById("sigWebVrsnNote");
     					note.innerHTML = "SigWeb 1.7.0 installed";
+    					onSign();
     				} else {
     					try{
     						SigWeb_1_6_4_0_IsInstalled = isSigWeb_1_6_4_0_Installed(sigWebVer);
@@ -509,7 +510,7 @@ $(document).ready(function() {
       function onSign()
       {
         if(IsSigWebInstalled()){
-          var ctx = document.getElementById('cnv').getContext('2d');
+          var ctx = document.getElementById('sigImg').getContext('2d');
           SetDisplayXSize( 500 );
           SetDisplayYSize( 100 );
           SetTabletState(0, tmr);
@@ -651,12 +652,14 @@ $(document).ready(function() {
             	<input type="hidden" id="idName">
             	<input type="hidden" id="formCode">
             	<p style="text-align:center">Use your Topaz Signature Pad to sign</p>
-            	<canvas name="signature" class="signature ui-widget-content ui-corner-all" width="500" height="100"></canvas>
+            	<canvas name="signature" id="sigImg" class="signature ui-widget-content ui-corner-all" width="500" height="100"></canvas>
             	<div class="alertContainer" style="display:none;">
                     <div id="alertMessage" style="margin-top:5px;margin-bottom:5px; " class="ui-widget ui-widget-content ui-corner-all ui-state-highlight hhk-panel hhk-tdbox">
 
                     </div>
                 </div>
+                <div id="sigWebVrsnNote"></div>
+                <div id="daysUntilExpElement"></div>
             </div>
         </div>
     </body>
