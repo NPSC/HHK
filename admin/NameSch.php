@@ -63,7 +63,7 @@ try {
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
         <title><?php echo $pageTitle; ?></title>
         <?php echo JQ_UI_CSS; ?>
-        <?php echo FULLC_CSS; ?>
+
         <?php echo DEFAULT_CSS; ?>
         <?php echo FAVICON; ?>
         <?php echo NOTY_CSS; ?>
@@ -73,7 +73,7 @@ try {
         <script type="text/javascript" src="<?php echo JQ_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo JQ_UI_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo BOOTSTRAP_JS; ?>"></script>
-        <script type="text/javascript" src="<?php echo FULLC_JS; ?>"></script>
+
         <script type="text/javascript" src="<?php echo PAG_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo CREATE_AUTO_COMPLETE_JS; ?>"></script>
         <script type="text/javascript" src="<?php echo NOTY_JS; ?>"></script>
@@ -97,14 +97,7 @@ try {
     });
 
         var d=new Date();
-        $('#historyTabs').tabs({
-            // Fetch hte calender events when the calendar is visible.
-            activate: function(event, ui) {
-                if (ui.newTab.index() === 3) {
-                    $('#calendar').fullCalendar('render');
-                }
-            }
-        });
+        $('#historyTabs').tabs();
 
     createAutoComplete(
         $('#txtsearch'),
@@ -147,39 +140,9 @@ try {
                 }
             }
         });
-        $('#calendar').fullCalendar({
-            //aspectRatio: 1.6,
-            theme: true,
-            header: {left: 'title', center: 'agendaWeek,agendaDay', right: 'today prev,next' },
-            allDayDefault: false,
-            lazyFetching: true,
-            draggable: false,
-            editable: false,
-            selectHelper: false,
-            selectable: false,
-            unselectAuto: false,
-            minTime: '5:00am',
-            firstHour: 7,
-            year: d.getFullYear(),
-            month: d.getMonth(),
-            ignoreTimezone: false,
-            defaultView: 'agendaDay',
-            eventSources: [{
-                url: "../volunteer/gCalFeed.php?c=getday",
-                ignoreTimezone: false
-            }]
-        });
         $(".fc-icon-wrap").append("\u00A0"); //fix short icon buttons
-        $("#btnRefresh button").button();
-        $("#btnRefresh").click( function () {
-            $('#calendar').fullCalendar( 'refetchEvents');
-        });
-        $('#gotoDate').change( function() {
-            var gtDate = new Date($('#gotoDate').datepicker('getDate'));
-            $('#calendar').fullCalendar('gotoDate', gtDate);
-        });
         $('#historyTabs').show();
-        $('#txtsearch').focus();
+        
     });
         </script>
     </head>
@@ -202,10 +165,6 @@ try {
                     <li><a href="#memHistory">Member History</a></li>
                     <?php
                         if ($guestHistory != 'f'){echo "<li><a href='" . "#resHistory" . "'>Current Guests</a></li>";}
-                        if ($volHistory != 'f'){
-                            echo "<li><a href='" . "#volHistory" . "'>Recent Event history</a></li>"
-                                ."<li><a href='#important'>Today's Events</a></li>";
-                        }
                     ?>
                 </ul>
                 <div id="memHistory" class="hhk-tdbox">
@@ -216,26 +175,7 @@ try {
                 <div id="resHistory" class="hhk-tdbox">
                     <h3>Current Guests</h3>
                     <?php echo $guestHistory; ?>
-                </div> <?php }; ?>
-                <?php if ($volHistory != 'f') { ?>
-                <div id="volHistory" class="ui-widget">
-                    <?php echo $volHistory ?>
-                </div>
-                <div id="important">
-                    <div style="margin-bottom:7px; padding:3px; min-width:800px;">
-                        <div id="btnRefresh" style="font-size: 0.9em; float: left;">
-                            <button>Refresh Calendar</button>
-                        </div>
-                        <div style="font-size: 0.9em; float: left; padding-top:5px;">
-                            <label for="gotoDate" style="margin-left:15px;">Go To Date: </label>
-                            <input type="text" id="gotoDate" class="ckdate ignrSave" value=""/>
-                            <label for="includeHouseCal" style="margin-left:15px;">Include House Calendar</label>
-                            <input type="checkbox" id="includeHouseCal" class="ignrSave" checked="checked" />
-                        </div>
-                        <div style="clear: both;"></div>
-                        <div id="calendar"></div>
-                    </div>
-                </div> <?php }; ?>
+                </div> <?php } ?>
             </div>
         </div> <!-- div id="page"-->
     </body>
