@@ -63,7 +63,7 @@ function doMarkupRow($fltrdFields, $r, $isLocal, $invoice_Statuses, $diagnoses, 
         if ($r['Invoice_Deleted'] > 0) {
             $iAttr['style'] .= 'color:red;';
             $iAttr['title'] = 'Invoice is Deleted.';
-        } else if ($r['Balance'] != 0) {
+        } else if ($r['Balance'] != 0 && $r['Balance'] != $r['Invoice_Amount']) {
 
             $iAttr['title'] = 'Partial payment.';
             $invNumber .= HTMLContainer::generateMarkup('sup', '-p');
