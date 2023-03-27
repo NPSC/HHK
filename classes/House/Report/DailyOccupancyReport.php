@@ -69,17 +69,17 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
                         where v.idVisit is not null) as 'Occupied Rooms',
                     (select count(*) from reservation where date(Expected_Arrival) = date(now()) and Status = 'a') as 'Anticipated Arrivals',
                     (select count(*) from visit where date(Expected_Departure) = date(now()) and Status = 'a') as 'Anticipated Departures',
-                    (ROUND((select count(distinct r.idResource) from resource r
+                    (concat(ROUND((select count(distinct r.idResource) from resource r
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
                         where v.idVisit is not null)/(select count(*) from resource r
                         left join resource_use ru on
 	                       r.idResource = ru.idResource and
                            date(ru.Start_Date) <= date(now()) and
                            date(ru.End_Date) > date(now())
-                        where ru.idResource_use is null and r.Type = 'room')*100,2)) as 'Available Room Occupancy',
-                    (ROUND((select count(distinct r.idResource) from resource r
+                        where ru.idResource_use is null and r.Type = 'room')*100,2), '%')) as 'Available Room Occupancy',
+                    (concat(ROUND((select count(distinct r.idResource) from resource r
                         left join visit v ON r.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
-                        where v.idVisit is not null)/(select count(*) from resource where Type = 'room')*100,2)) as 'Total Room Occupancy'
+                        where v.idVisit is not null)/(select count(*) from resource where Type = 'room')*100,2), '%')) as 'Total Room Occupancy'
 
                 ";
         $stmt = $this->dbh->prepare($query);

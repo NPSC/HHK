@@ -120,7 +120,7 @@ ROUND((select SUM(DATEDIFF(least(ifnull(v.Span_End, date("' . $this->filter->get
         $helptexts[$rmtroomTitle . "-nights occupied"] = "Number of nights each " . $rmtroomTitle . " was occupied";
         $helptexts["Unique PSGs"] = "Number of unique PGSs where anyone in the PSG stayed";
         $helptexts["New PSGs"] = "Number of unique PSGs whose first visit was in the time frame";
-        $helptexts["Total Visits"] = "Number of visits with at least one ngiht in the time frame";
+        $helptexts["Total Visits"] = "Number of visits with at least one night in the time frame";
         $helptexts["Average Visit Length"] = "Average length of an entire visit with at least one night in the time frame";
         $helptexts["Median Visit Length"] = "Median length of an entire visit with at least one night in the time frame";
         $helptexts["Average First Visit Length"] = "Average length of a PSG's FIRST visit with at least one night in the time frame";

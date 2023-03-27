@@ -39,7 +39,7 @@ define('SEC', CLASSES . 'sec' . DS);
 define('PMT', CLASSES . 'Payment' . DS);
 define('FUNCTIONS', REL_BASE_DIR . 'functions' .DS);
 
-define('CJSV', '?eG=93');
+define('CJSV', '?eG=94');
 
 // Page header links and scripts
 define('JQ_UI_CSS', '<link href="css/jqui/jquery-ui.min.css' . CJSV . '" rel="stylesheet" type="text/css" />');
@@ -54,7 +54,7 @@ define('INCIDENT_CSS', '<link href="css/incidentReports.css" rel="stylesheet" ty
 define('UPPLOAD_CSS', '<link rel="stylesheet" href="../js/uppload/uppload.css"><link rel="stylesheet" href="../js/uppload/light.css">');
 
 define('JQ_UI_JS', '../js/jquery-ui.min.js' . CJSV);
-define('JQ_JS', 'js/jquery-min.js');
+define('JQ_JS', 'js/jquery-min.js' . CJSV);
 define('JQ_DT_JS', '../js/datatables.min.js');
 define('NOTY_JS', '../js/toastr.min.js');
 define('NOTY_SETTINGS_JS', '../js/toastrSettings.js' . CJSV);  //These are local
