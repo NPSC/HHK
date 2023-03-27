@@ -24,7 +24,6 @@ class DailyOccupancyReport extends AbstractReport implements ReportInterface {
         $summaryData = $this->getMainSummaryData();
 
         $summaryTbl = new HTMLTable();
-        $summaryTbl->addHeaderTr($summaryTbl->makeTh("Parameter"). $summaryTbl->makeTh("Value"));
         $summaryTbl->addBodyTr($summaryTbl->makeTd("Prepared at", array("class"=>"tdlabel")) . $summaryTbl->makeTd((new \DateTime())->format("M j, Y h:i a")));
 
         foreach($summaryData[0] as $key=>$val){

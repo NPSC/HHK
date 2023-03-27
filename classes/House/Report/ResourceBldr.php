@@ -221,13 +221,13 @@ Order by `t`.`List_Order`;");
                 ($tableName != RESERV_STATUS_TABLE_NAME ?
                     HTMLTable::makeTd(
                         HTMLContainer::generateMarkup("span", "", array("class"=>"ui-icon ui-icon-arrowthick-2-n-s")) .
-                        HTMLInput::generateMarkup($d[4], array("name"=>'txtDOrder[' . $d[0] . ']', "type"=>"hidden"))
+                        HTMLInput::generateMarkup($d[4], array("name"=>'txtDOrder[0]', "type"=>"hidden"))
                         , array("class"=>"sort-handle", "title"=>"Drag to sort")) : '') .
 
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
                 'name' => 'txtDiag[0]'
             ))) . ($tableName == DIAGNOSIS_TABLE_NAME ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, $d['Substitute']), array(
-                'name' => 'selDiagCat[' . $d[0] . ']'
+                'name' => 'selDiagCat[0]'
             ))) : '') . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
                 'size' => '10',
                 'style' => 'text-align:right;',
@@ -278,6 +278,10 @@ Order by `t`.`List_Order`;");
                 // new entry
                 $dText = filter_var($post['txtDiag'][0], FILTER_SANITIZE_STRING);
                 $aText = '';
+
+                if(isset($post['selDiagCat'][0])){
+                    $aText = filter_var($post['selDiagCat'][0], FILTER_SANITIZE_STRING);
+                }
 
                 if ($tableName == 'Patient_Rel_Type') {
                     $aText = $labels->getString('MemberType', 'visitor', 'Guest').'s';
@@ -408,6 +412,8 @@ Order by `t`.`List_Order`;");
 
                     $amounts[$k] = $a;
                 }
+            }elseif(isset($post['selDiagCat'])){
+                $amounts = filter_var_array($post['selDiagCat'], FILTER_SANITIZE_STRING);
             }
 
             $codeArray = filter_var_array($post['txtDiag'], FILTER_SANITIZE_STRING);

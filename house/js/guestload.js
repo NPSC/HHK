@@ -678,14 +678,14 @@ $(document).ready(function () {
 	    });
 	
 	    //toggle guest photo action buttons on hover
-	    $("#hhk-guest-photo").on({
+	    $(".hhk-visitdialog #hhk-guest-photo").on({
 	        mouseenter: function () {
-	            $("#hhk-guest-photo-actions").show();
-	            $("#hhk-guest-photo img").fadeTo(100, 0.5);
+	            $(this).find("#hhk-guest-photo-actions").show();
+	            $(this).find("#hhk-guest-photo img").fadeTo(100, 0.5);
 	        },
 	        mouseleave: function () {
-	            $("#hhk-guest-photo-actions").hide();
-	            $("#hhk-guest-photo img").fadeTo(100, 1);
+	            $(this).find("#hhk-guest-photo-actions").hide();
+	            $(this).find("#hhk-guest-photo img").fadeTo(100, 1);
 	        }
 	    });
 	
