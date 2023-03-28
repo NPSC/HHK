@@ -22,8 +22,6 @@ class RuntimeException extends \RuntimeException {
     public function __construct ($message = null, $code = null, $previous = null) {
         $dbh = initPDO();
         $uS = Session::getInstance();
-        HouseLog::logError($dbh, "Runtime Exception", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+        HouseLog::logError($dbh, "Runtime Exception", $message . " : " . $this->file . ":" . $this->line, (is_null($uS->username) ? '' : $uS->username));
     }
 }
-
-?>

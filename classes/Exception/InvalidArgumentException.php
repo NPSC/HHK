@@ -22,7 +22,7 @@ class InvalidArgumentException extends \RuntimeException {
     public function __construct ($message = null, $code = null, $previous = null) {
         $dbh = initPDO();
         $uS = Session::getInstance();
-        HouseLog::logError($dbh, "InvalidArgumentException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
+        HouseLog::logError($dbh, "InvalidArgumentException", $message . " : " . $this->file . ":" . $this->line, (is_null($uS->username) ? '' : $uS->username));
     }
 }
 ?>

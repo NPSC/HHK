@@ -731,7 +731,7 @@ END -- ;
 -- Procedure `sync_referral_resv_status`
 --
 
-drop procedure IF EXISTS `sync_referral_resv_status`;
+drop procedure IF EXISTS `sync_referral_resv_status`; -- ;
 
 CREATE PROCEDURE `sync_referral_resv_status` ()
 BEGIN
