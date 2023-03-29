@@ -1775,7 +1775,7 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
 -- View `vlist_first_visit`
 -- -----------------------------------------------------
 CREATE OR REPLACE VIEW `vlist_first_visit` AS
-select * from visit v
+select v.* from visit v
 join registration reg on v.idRegistration = reg.idRegistration
 where v.Arrival_Date = (select min(vv.Arrival_Date) from visit vv join registration reg2 on vv.idRegistration = reg2.idRegistration where reg.idPsg = reg2.idPsg);
 

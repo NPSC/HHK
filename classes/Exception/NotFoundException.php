@@ -23,6 +23,7 @@ class NotFoundException extends \UnexpectedValueException {
         $dbh = initPDO();
         $uS = Session::getInstance();
         HouseLog::logError($dbh, "NotFoundException", $message . " : " . $this->file . ":" . $this->line, (is_null($uS->username) ? '' : $uS->username));
+        parent::__construct($message, $code, $previous);
     }
 }
 

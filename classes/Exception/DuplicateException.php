@@ -23,6 +23,7 @@ class DuplicateException extends \Exception {
         $dbh = initPDO();
         $uS = Session::getInstance();
         HouseLog::logError($dbh, "DuplicateException", $message . " : " . $this->file . ":" . $this->line, (is_null($uS->username) ? '' : $uS->username));
+        parent::__construct($message, $code, $previous);
     }
 }
 ?>
