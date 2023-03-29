@@ -1071,6 +1071,12 @@ WHERE
             }
 
         } else {
+            //leave category alone if it's already saved and not in the POST data
+            if(!isset($post['selRateCategory']) && !empty($resv->getRoomRateCategory())){
+
+                $rateCategory = $resv->getRoomRateCategory();
+            }
+
             // Look for an approved rate
             if ($reg->getIdRegistration() > 0 && $uS->IncomeRated) {
 
