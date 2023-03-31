@@ -81,6 +81,10 @@ REPLACE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Substitute`, `
 ('Diagnosis','0','NICU','','h',0),
 ('Diagnosis','0','Glioma','','h',0),
 
+('Diagnosis_Category', 'o', 'Oncology', '', 'h', 0),
+('Diagnosis_Category', 'n', 'Neurology', '', 'h', 0),
+('Diagnosis_Category', 'c', 'Cardiac', '', 'h', 0),
+
 ('Dir_Type_Selector_Code','d','Directory','','',0),
 ('Dir_Type_Selector_Code','e','Email Addresses','','',0),
 ('Dir_Type_Selector_Code','m','Mailing List','','',0),

@@ -32,3 +32,9 @@ INSERT IGNORE INTO `sys_config` (`Key`, `Value`, `Type`, `Category`, `Descriptio
 INSERT IGNORE INTO 	`sys_config` (`Key`, `Value`, `Type`, `Category`, `Description`, `Show`) VALUES('UseDiagSearch', 'false', 'b', 'h', 'Use Autocomplete search in place of Diagnosis drop down', '1');
 
 UPDATE `sys_config` SET `Value` = 'https://manage.hospitalityhousekeeper.net/tips/current' WHERE (`Key` = 'loginFeedURL');
+
+
+-- add default diagnosis categories
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Timestamp`) VALUES ('Diagnosis_Category', 'o', 'Oncology', 'h', current_timestamp());
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Timestamp`) VALUES ('Diagnosis_Category', 'n', 'Neurology', 'h', current_timestamp());
+INSERT IGNORE INTO `gen_lookups` (`Table_Name`, `Code`, `Description`, `Type`, `Timestamp`) VALUES ('Diagnosis_Category', 'c', 'Cardiac', 'h', current_timestamp());

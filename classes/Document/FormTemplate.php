@@ -260,15 +260,21 @@ class FormTemplate {
 
         foreach ($demos as $d) {
             $lookups[$d[0]] = readGenLookupsPDO($dbh, $d[0], 'Order');
+
+            if($d[0] == 'Gender'){
+                unset($lookups['Gender']['z']);
+            }
+
+            $lookups[$d[0]] = FormTemplate::rekeyLookups($lookups[$d[0]]);
         }
 
-        unset($lookups['Gender']['z']);
         $lookups['patientRelation'] = readGenLookupsPDO($dbh, 'Patient_Rel_Type', 'Description');
         unset($lookups['patientRelation']['slf']);
-        $lookups['namePrefix'] = readGenLookupsPDO($dbh, 'Name_Prefix', 'Description');
-        $lookups['nameSuffix'] = readGenLookupsPDO($dbh, 'Name_Suffix', 'Description');
-        $lookups['diagnosis'] = readGenLookupsPDO($dbh, 'Diagnosis', 'Description');
-        $lookups['location'] = readGenLookupsPDO($dbh, 'Location', 'Description');
+        FormTemplate::rekeyLookups($lookups['patientRelation']);
+        $lookups['namePrefix'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Name_Prefix', 'Description'));
+        $lookups['nameSuffix'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Name_Suffix', 'Description'));
+        $lookups['diagnosis'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Diagnosis', 'Description'));
+        $lookups['location'] = FormTemplate::rekeyLookups(readGenLookupsPDO($dbh, 'Location', 'Description'));
 
         //backwards compatibility
         $lookups['genders'] = $lookups['Gender'];
@@ -297,6 +303,20 @@ class FormTemplate {
         $lookups['vehicleStates'] = $formattedStates;
 
         return $lookups;
+    }
+
+    /**
+     * Rekey genlookups array to maintain correct ordering in JS
+     *
+     * @param array $lookups
+     * @return array[]
+     */
+    private static function rekeyLookups(array $lookups){
+        $newArray = array();
+        foreach($lookups as $lookup){
+            $newArray[] = $lookup;
+        }
+        return $newArray;
     }
 
 }

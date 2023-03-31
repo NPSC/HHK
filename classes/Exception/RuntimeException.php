@@ -19,10 +19,5 @@ use HHK\sec\Session;
  */
 
 class RuntimeException extends \RuntimeException {
-    public function __construct ($message = null, $code = null, $previous = null) {
-        $dbh = initPDO();
-        $uS = Session::getInstance();
-        HouseLog::logError($dbh, "Runtime Exception", $message . " : " . $this->file . ":" . $this->line, (is_null($uS->username) ? '' : $uS->username));
-        parent::__construct($message, $code, $previous);
-    }
+
 }

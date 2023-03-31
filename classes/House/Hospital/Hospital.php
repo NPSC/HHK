@@ -32,7 +32,7 @@ class Hospital {
     public static function loadHospitals(\PDO $dbh) {
 
         $hospRs = new HospitalRS();
-        return EditRS::select($dbh, $hospRs, array());
+        return EditRS::select($dbh, $hospRs, array(), 'and', array($hospRs->Title));
 
     }
 

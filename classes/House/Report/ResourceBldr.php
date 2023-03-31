@@ -226,7 +226,7 @@ Order by `t`.`List_Order`;");
 
                 HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
                 'name' => 'txtDiag[0]'
-            ))) . ($tableName == DIAGNOSIS_TABLE_NAME ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, $d['Substitute']), array(
+            ))) . ($tableName == DIAGNOSIS_TABLE_NAME && count($diagCats) > 0 ? HTMLTable::makeTd(HTMLSelector::generateMarkup(HTMLSelector::doOptionsMkup($diagCats, ''), array(
                 'name' => 'selDiagCat[0]'
             ))) : '') . ($type == GlTypeCodes::HA || $type == GlTypeCodes::CA ? HTMLTable::makeTd(HTMLInput::generateMarkup('', array(
                 'size' => '10',
