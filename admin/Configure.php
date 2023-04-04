@@ -3,8 +3,6 @@
 use HHK\AlertControl\AlertMessage;
 use HHK\sec\{SecurityComponent, Session, WebInit};
 use HHK\SysConst\{WebRole, CodeVersion};
-use HHK\Config_Lite\Config_Lite;
-use HHK\Config_Lite\Exception\Exception;
 use HHK\Update\{SiteConfig, UpdateSite, SiteLog, Patch};
 use HHK\CreateMarkupFromDB;
 use HHK\HTMLControls\{HTMLContainer, HTMLSelector, HTMLTable};
@@ -55,16 +53,15 @@ $rteFileSelection = '';
 $rteMsg = '';
 $confError = '';
 
-$config = new Config_Lite(ciCFG_FILE);
 $labl = Labels::getLabels();
 
 
 if ($uS->ContactManager == 'neon') {
 
-    if ($config->has('webServices', 'Service_Name') && $config->getString('webServices', 'Service_Name', '') != '' && $config->getString('webServices', 'ContactManager', '') != '') {
+    if (!empty($_ENV['Service_Name']) && !empty($_ENV['ContactManager'])) {
 
-        $serviceFile = encryptMessage(REL_BASE_DIR . 'conf' . DS . $config->getString('webServices', 'ContactManager', ''));
-        $serviceName = $config->getString('webServices', 'Service_Name', '');
+        $serviceFile = encryptMessage(REL_BASE_DIR . 'conf' . DS . $_ENV['ContactManager']);
+        $serviceName = $_ENV['Service_Name'];
     }
 }
 
@@ -279,11 +276,11 @@ foreach ($logSelRows as $r) {
 $ul = HTMLContainer::generateMarkup('ul', $li, array());
 $tabControl = HTMLContainer::generateMarkup('div', $ul . $tabContent, array('id'=>'logsTabDiv'));
 
-$conf = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'), NULL, array('pr'));
+$conf = SiteConfig::createMarkup($dbh, NULL, array('pr'));
 
-$localAuthMkup = SiteConfig::createMarkup($dbh, $config, new Config_Lite(REL_BASE_DIR . 'conf' . DS . 'siteTitles.cfg'), 'pr');
+$localAuthMkup = SiteConfig::createMarkup($dbh, 'pr');
 
-$labels = SiteConfig::createLabelsMarkup($dbh, $labl)->generateMarkup();
+$labels = SiteConfig::createLabelsMarkup($dbh)->generateMarkup();
 
 $authIdpList = SAML::getIdpList($dbh, false);
 

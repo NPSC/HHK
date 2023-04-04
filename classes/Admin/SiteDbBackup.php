@@ -2,7 +2,6 @@
 
 namespace HHK\Admin;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\Session;
 
 
@@ -33,9 +32,9 @@ class SiteDbBackup {
     protected $config;
 
 
-    function __construct($filePath, $configFileName) {
+    function __construct($filePath) {
 
-        $this->config = new Config_Lite($configFileName);
+        $this->config = $_ENV;
 
         $this->filePath = $filePath;
         $this->clrFileSize = 0;
@@ -51,16 +50,16 @@ class SiteDbBackup {
         $this->bkupMessage = '';
         $zipPipe = '';
 
-        if (strtoupper($this->config->getString('db', 'DBMS', '')) != 'MYSQL') {
+        if (strtoupper($this->config['DBMS']) != 'MYSQL') {
             $this->bkupMessage = 'This backup only works for MySQL Databases.  ';
             return FALSE;
         }
 
-        $dbuser = $this->config->getString("backup", "BackupUser", "");
-        $dbpwd = $this->decrypt($this->config->getString("backup", "BackupPassword", ""));
+        $dbuser = $this->config["BackupUser"];
+        $dbpwd = $this->decrypt($this->config["BackupPassword"]);
 
-        $dbUrl = $this->config->getString('db', 'URL', '');
-        $dbname = $this->config->getString('db', 'Schema', '');
+        $dbUrl = $this->config['URL'];
+        $dbname = $this->config['Schema'];
 
         if ($dbuser == '' || $dbpwd == '' || $dbname == '' || $dbUrl == '' || $this->filePath == '') {
             $this->bkupMessage = 'Database Backup parameters are not set in site.cfg.  ';

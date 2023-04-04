@@ -4,13 +4,14 @@ use HHK\Update\SiteLog;
 use HHK\AlertControl\AlertMessage;
 use HHK\AuditLog\NameLog;
 use HHK\sec\{Session, WebInit};
-use HHK\Config_Lite\Config_Lite;
 use HHK\SysConst\GLTableNames;
 use HHK\Tables\EditRS;
 use HHK\Tables\Name\NameRS;
 use HHK\HTMLControls\HTMLSelector;
 use HHK\Admin\SiteDbBackup;
 use HHK\Member\AbstractMember;
+use HHK\sec\SysConfig;
+use HHK\SysConst\CodeVersion;
 
 /**
  * Misc.php
@@ -39,7 +40,6 @@ $uS = Session::getInstance();
 
 $menuMarkup = $wInit->generatePageMenu();
 
-$config = new Config_Lite(ciCFG_FILE);
 $uname = $uS->username;
 
 function getGenLookups(\PDO $dbh) {
@@ -395,19 +395,20 @@ if (isset($_POST["btnDoBackup"])) {
 
 
 
-    $dbBack = new SiteDbBackup('/tmp' . DS, ciCFG_FILE);
+    $dbBack = new SiteDbBackup(sys_get_temp_dir() . DS, ciCFG_FILE);
 
     if ($dbBack->backupSchema($igtables)) {
         // success
         $logText = "Database Download.";
-        SiteLog::logDbDownload($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+
+        SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
 
         $dbBack->downloadFile();  // exits here.
 
     } else {
 
         $logText = "Failed Database Download:  " . $dbBack->getErrors();
-        SiteLog::logDbDownload($dbh, $logText, $config->getString('code', 'GIT_Id', ''));
+        SiteLog::logDbDownload($dbh, $logText, CodeVersion::GIT_Id);
     }
 
     $bkupMsg = $bkupAlert->createMarkup('Result: ' . $dbBack->getErrors());

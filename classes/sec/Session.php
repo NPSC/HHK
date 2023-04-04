@@ -1,7 +1,6 @@
 <?php
 namespace HHK\sec;
 
-use HHK\Config_Lite\Config_Lite;
 use Dotenv\Dotenv;
 
 /**

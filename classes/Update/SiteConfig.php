@@ -1,7 +1,6 @@
 <?php
 namespace HHK\Update;
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\HTMLControls\{HTMLTable, HTMLInput, HTMLSelector, HTMLContainer};
 use HHK\Exception\RuntimeException;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
@@ -393,61 +392,36 @@ class SiteConfig {
         return $resultMsg;
     }
 
-    public static function createCliteMarkup(Config_Lite $config, Config_Lite $titles = NULL, $onlySection = '') {
+    public static function createCliteMarkup() {
 
         $tbl = new HTMLTable();
 
-        // Limit config file to remaining sections not copied to the DB
-        $allowedSections = array('site'=>'y', 'db'=>'y', 'backup'=>'y', 'webServices'=>'y');
+        $tbl->addBodyTr(HTMLTable::makeTd(ucfirst("Environment Variables"), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
 
-        foreach ($config as $section => $name) {
+        foreach ($_ENV as $key=>$val) {
 
-            if (isset($allowedSections[$section]) && ($onlySection == '' || $onlySection == $section)) {
+            if ($key == 'Password' || $key == 'sitePepper' || $key == 'ReadonlyPassword' || $key == 'BackupPassword') {
 
-                if ($section == 'webServices') {
+                $inpt = '********';
 
-                    $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section)
-                            . '<span style="margin-left:10px;"><a href="../house/SetupNeonCRM.htm" target="_blank">(Instructions)</a></span>'
-                            , array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
+            } else {
 
-                } else {
-                    $tbl->addBodyTr(HTMLTable::makeTd(ucfirst($section), array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
-                }
-
-                if (is_array($name)) {
-
-                    foreach ($name as $key => $val) {
-
-                    	if ($key == 'Password' || $key == 'sitePepper' || $key == 'ReadonlyPassword' || $key == 'BackupPassword') {
-
-                        	$inpt = '********';
-
-                        } else {
-
-                        	$inpt = $val;
-                        }
-
-                        if (is_null($titles)) {
-                            $desc = '';
-                        } else {
-                        	$desc = $titles->getString($section, $key, '');
-                        }
-
-                        $tbl->addBodyTr(
-                                HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
-                                . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc)
-                        );
-
-                    }
-                }
+                $inpt = $val;
             }
+
+            $desc = '';
+
+            $tbl->addBodyTr(
+                HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
+                . HTMLTable::makeTd($inpt) . HTMLTable::makeTd($desc, array('style'=>'width: 100%'))
+            );
         }
 
         //$tbl->addFooterTr(HTMLTable::makeTd('', array('colspan' => '3', 'style'=>'font-weight:bold;border-top: solid 1px black;')));
         return $tbl;
     }
 
-    public static function createLabelsMarkup(\PDO $dbh, $config, Config_Lite $titles = NULL, $onlySection = '') {
+    public static function createLabelsMarkup(\PDO $dbh, $onlySection = '') {
 
         $tbl = new HTMLTable();
         $inputSize = '40';
@@ -483,11 +457,7 @@ class SiteConfig {
                             //
                             $inpt = HTMLInput::generateMarkup($val, $attr);
 
-                            if (is_null($titles)) {
-                                $desc = '';
-                            } else {
-                                $desc = $titles->getString($section, $key, '');
-                            }
+                            $desc = '';
 
                             $tbl->addBodyTr(
                                 HTMLTable::makeTd($key.':', array('class' => 'tdlabel'))
@@ -507,7 +477,7 @@ class SiteConfig {
         return $tbl;
     }
 
-    public static function createMarkup(\PDO $dbh, Config_Lite $config, Config_Lite $titles = NULL, $category = NULL, array $hideCats = array()) {
+    public static function createMarkup(\PDO $dbh, $category = NULL, array $hideCats = array()) {
 
         // sys config table
         $sctbl = new HTMLTable();
@@ -583,7 +553,7 @@ class SiteConfig {
 
         if(SecurityComponent::is_TheAdmin() && $category == NULL){
             // site.cfg entries
-            $tblMkup = self::createCliteMarkup($config, $titles)->generateMarkup();
+            $tblMkup = self::createCliteMarkup()->generateMarkup();
         }else{
             $tblMkup = '';
         }
@@ -591,36 +561,36 @@ class SiteConfig {
         return $sctbl->generateMarkup() . $tblMkup;
     }
 
-    public static function saveConfig($dbh, Config_Lite $config, array $post, $userName = '') {
+//     public static function saveConfig($dbh, array $post, $userName = '') {
 
-        foreach ($post as $secName => $secArray) {
+//         foreach ($post as $secName => $secArray) {
 
-            if ($config->hasSection($secName)) {
+//             if ($config->hasSection($secName)) {
 
-                foreach ($secArray as $itemName => $val) {
+//                 foreach ($secArray as $itemName => $val) {
 
-                    $val = filter_var($val, FILTER_SANITIZE_STRING);
+//                     $val = filter_var($val, FILTER_SANITIZE_STRING);
 
-                    if ($config->has($secName, $itemName)) {
+//                     if ($config->has($secName, $itemName)) {
 
-                        // password cutout
-                        if ($val != '' && (strstr($itemName, 'Password') !== FALSE) && $config->getString($secName, $itemName, '') != $val) {
-                            $val = encryptMessage($val);
-                        }
+//                         // password cutout
+//                         if ($val != '' && (strstr($itemName, 'Password') !== FALSE) && $config->getString($secName, $itemName, '') != $val) {
+//                             $val = encryptMessage($val);
+//                         }
 
-                        // log changes
-                        if ($config->getString($secName, $itemName, '') != $val && is_null($dbh) === FALSE) {
-                            HouseLog::logSiteConfig($dbh, $secName . ':' . $itemName, $val, $userName);
-                            $config->set($secName, $itemName, $val);
-                        }
-                    }
-                }
-            }
-        }
+//                         // log changes
+//                         if ($config->getString($secName, $itemName, '') != $val && is_null($dbh) === FALSE) {
+//                             HouseLog::logSiteConfig($dbh, $secName . ':' . $itemName, $val, $userName);
+//                             $config->set($secName, $itemName, $val);
+//                         }
+//                     }
+//                 }
+//             }
+//         }
 
-        $config->save();
+//         $config->save();
 
-    }
+//     }
 
     public static function saveSysConfig(\PDO $dbh, array $post) {
 
