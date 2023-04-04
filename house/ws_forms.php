@@ -47,7 +47,7 @@ require ("homeIncludes.php");
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
 	//$csrfToken = '';
 	//if(isset($_REQUEST['csrfToken'])){

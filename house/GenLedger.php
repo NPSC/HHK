@@ -22,10 +22,10 @@ require 'homeIncludes.php';
 
 // Access the login object, set session vars,
 try {
-	
+
 	$login = new Login();
-	$login->initHhkSession(ciCFG_FILE);
-		
+	$login->initHhkSession(CONF_PATH, ciCFG_FILE);
+
 } catch (\Exception $ex) {
 	exit ($ex->getMessage());
 }
@@ -60,7 +60,7 @@ try {
 	}
 
 	$today = new \DateTime();
-	
+
 	$glCodes = new GLCodes($dbh, $today->format('m'), $today->format('Y'), $glParm, new GLTemplateRecord());
 
 	$bytesWritten = $glCodes->mapRecords()->transferRecords();
@@ -76,7 +76,7 @@ if ($notificationAddress != '') {
 	// Mail Report
 	$siteName = SysConfig::getKeyValue($dbh, 'sys_config', 'siteName');
 	$from = SysConfig::getKeyValue($dbh, 'sys_config', 'NoReplyAddr');
-	
+
 	$mail = prepareEmail();
 
 	$mail->From = $from;
@@ -102,9 +102,9 @@ if ($notificationAddress != '') {
 	$etbl->addBodyTr(HTMLTable::makeTd('FTP Host:  ' . $glParm->getHost()));
 	$etbl->addBodyTr(HTMLTable::makeTd('File Path:  ' . $glParm->getRemoteFilePath()));
 	$etbl->addBodyTr(HTMLTable::makeTd('Processed at:  ' . $today->format('M j, Y H:i')));
-	
+
 	$mail->msgHTML($etbl->generateMarkup());
-	
+
 	if ($mail->send() === FALSE) {
 		echo $mail->ErrorInfo;
 	}

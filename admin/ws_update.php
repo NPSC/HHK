@@ -87,7 +87,7 @@ if ($cd == '' || $so == '' || $un == '') {
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
     // Load the page information
     $page = new ScriptAuthClass($dbh);

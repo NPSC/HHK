@@ -28,7 +28,7 @@ $sequence = getRandomString();
 
 try {
     $login = new Login();
-    $login->initHhkSession('conf/site.cfg');
+    $login->initHhkSession('conf/', 'site.cfg');
 
 } catch (\Exception $ex) {
     session_unset();

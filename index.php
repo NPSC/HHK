@@ -18,13 +18,14 @@ use HHK\SysConst\Mode;
  */
 define('DS', DIRECTORY_SEPARATOR);
 define('P_ROOT', dirname(__FILE__) . DS);
-define('ciCFG_FILE', P_ROOT . 'conf' . DS . 'site.cfg');
+define('CONF_PATH', P_ROOT . 'conf' . DS);
+define('ciCFG_FILE', 'site.cfg');
 date_default_timezone_set('America/Chicago');
 
 require ('vendor/autoload.php');
 require ('functions' . DS . 'commonFunc.php');
 
-$dbh = Login::initHhkSession(ciCFG_FILE);
+$dbh = Login::initHhkSession(CONF_PATH, ciCFG_FILE);
 $uS = Session::getInstance();
 
 try {

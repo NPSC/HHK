@@ -44,7 +44,7 @@ if (isset($_GET['u'])) {
 try {
 
     $login = new Login();
-    $dbh = $login->initHhkSession(ciCFG_FILE);
+    $dbh = $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 } catch (PDOException $pex) {
     exit("<h3>Database Error.  </h3>");
 } catch (Exception $ex) {

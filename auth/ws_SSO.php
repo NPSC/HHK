@@ -22,7 +22,7 @@ require ("../house/homeIncludes.php");
 try {
 
     $login = new Login();
-    $login->initHhkSession(ciCFG_FILE);
+    $login->initHhkSession(CONF_PATH, ciCFG_FILE);
     $uS = Session::getInstance();
     $dbh = initPDO(TRUE);
 

@@ -145,7 +145,7 @@ table
 try {
 
     $login = new Login();
-    $login->initHhkSession(ciCFG_FILE);
+    $login->initHhkSession(CONF_PATH, ciCFG_FILE);
 
 } catch (PDOException $pex) {
     exit("<h3>Database Error.  </h3>");
