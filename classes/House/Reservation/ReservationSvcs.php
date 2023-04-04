@@ -179,6 +179,7 @@ class ReservationSvcs
 
                     $bccs = explode(',', $uS->BccAddress);
                     foreach ($bccs as $bcc) {
+                        $bcc = trim($bcc);
                         if ($bcc != '') {
                             $mail->addBCC(filter_var($bcc, FILTER_SANITIZE_EMAIL));
                         }

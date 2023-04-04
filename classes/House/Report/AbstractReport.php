@@ -88,7 +88,7 @@ abstract class AbstractReport {
      *
      * @return string
      */
-    public function generateFilterMarkup(){
+    public function generateFilterMarkup(bool $excelDownload = true){
         $this->makeFilterMkup();
         $this->makeFilterOptsMkup();
         $filterOptsMkup = "";
@@ -106,7 +106,7 @@ abstract class AbstractReport {
         $btnMkup = HTMLContainer::generateMarkup("div",
             $filterOptsMkup .
             HTMLInput::generateMarkup("Run Here", array("type"=>"submit", "name"=>"btnHere-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) .
-            HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget"))
+            ($excelDownload ? HTMLInput::generateMarkup("Download to Excel", array("type"=>"submit", "name"=>"btnExcel-" . $this->getInputSetReportName(), "class"=>"ui-button ui-corner-all ui-widget")) : '')
         , array("id"=>"filterBtns", "class"=>"mt-3"));
 
         $emDialog = $this->generateEmailDialog();

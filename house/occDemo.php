@@ -57,6 +57,7 @@ $dateInterval = new DateInterval('P1M');
 $filter = new ReportFilter();
 $filter->createTimePeriod(date('Y'), '19', $uS->fy_diff_Months, array(ReportFilter::DATES));
 $filter->createHospitals();
+$filter->createResoourceGroups(readGenLookupsPDO($dbh, 'Room_Group'), $uS->CalResourceGroupBy);
 
 if (isset($_POST['rbAllGuests'])) {
     $whichGuests = filter_var($_POST['rbAllGuests'], FILTER_SANITIZE_STRING);
@@ -68,6 +69,7 @@ if (isset($_POST['btnSmt'])) {
 
     $filter->loadSelectedTimePeriod();
     $filter->loadSelectedHospitals();
+    $filter->loadSelectedResourceGroups();
 
     // Hospitals
     $whHosp = '';
@@ -103,8 +105,10 @@ if (isset($_POST['btnSmt'])) {
         $whAssoc = " and hs.idAssociation in (".$whAssoc.") ";
     }
 
+    $roomGroupBy = $filter->getSelectedResourceGroups();
 
-    $report = GuestDemogReport::demogReport($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, $whichGuests, $zip);
+
+    $report = GuestDemogReport::demogReport($dbh, $filter->getReportStart(), $filter->getQueryEnd(), $whHosp, $whAssoc, $whichGuests, $zip, $roomGroupBy);
 
     $title = HTMLContainer::generateMarkup('h3', $uS->siteName . ' ' . $labels->getString('MemberType', 'visitor', 'Guest'). ' Demographics compiled on ' . date('D M j, Y'), array('style'=>'margin-top: .5em;'));
     $title .= HTMLContainer::generateMarkup('p', 'Report Interval: ' . date('M j, Y', strtotime($filter->getReportStart())) . ' Thru ' . date('M j, Y', strtotime($filter->getReportEnd())));
@@ -114,6 +118,7 @@ if (isset($_POST['btnSmt'])) {
 // Setups for the page.
 $timePeriodMarkup = $filter->timePeriodMarkup()->generateMarkup();
 $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
+$roomGroupMarkup = $filter->resourceGroupsMarkup()->generateMarkup();
 
 ?>
 <!DOCTYPE html>
@@ -188,6 +193,8 @@ $hospitalMarkup = $filter->hospitalMarkup()->generateMarkup();
                             if (count($filter->getHospitals()) > 1) {
                                 echo $hospitalMarkup;
                             }
+
+                            echo $roomGroupMarkup;
                         ?>
 
                         <div style="margin-left:130px;">

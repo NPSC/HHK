@@ -85,6 +85,7 @@
         var $wrapper = $(this);
         $wrapper.uploader = uploader;
 
+		reinitialize($wrapper, settings);
         createViewer($wrapper, settings);
 
         return this;
@@ -313,7 +314,7 @@
             var filename = '';
             var docTitle = '';
             var DocUppload = window.uploader;
-            $(document).on('click', '#docUploadBtn', function(){
+            $wrapper.on('click', '#docUploadBtn', function(){
             	$(DocUppload.container).removeClass().addClass('uppload-container');
             	DocUppload.updatePlugins(plugins => []);
             	DocUppload.updateSettings({
@@ -350,16 +351,10 @@
 			                    	} else {
 			                        	if (data.error) {
 			                            	reject(data.error);
-			                            	new Noty({
-			                            		type: "error",
-			                            		text: "Error: " + data.error
-			                            	}).show();
+			                            	flagAlertMessage("Error: " + data.error, true);
 			                        	} else {
 			                            	reject('An unknown error occurred.');
-			                            	new Noty({
-			                            		type: "error",
-			                            		text: "Error: " + data.error
-			                            	}).show();
+			                            	flagAlertMessage("Error: " + data.error, true);
 			                        	}
 			                    	}
 			                	},
@@ -395,10 +390,13 @@
             		//include docTitle and helptext
             		docTitle = '';
             		//add docTitle
-            		$(DocUppload.container).find(".uppload-service--local").prepend("<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>");
+            		if($(DocUppload.container).find("#docTitle").length == 0){
+            			$(DocUppload.container).find(".uppload-service--local").prepend("<input type='text' placeholder='Enter Document Title' class='input' id='docTitle'>");
+            		}
             		//add helptext
-            		$(DocUppload.container).find(".drop-area").append('<p>Allowed filetypes: pdf, doc, docx, jpeg, png<br>Maximum File Size: 5MB</p>');
-            	
+            		if($(DocUppload.container).find("#docUploadHelp").length == 0){
+            			$(DocUppload.container).find(".drop-area").append('<p id="docUploadHelp">Allowed filetypes: pdf, doc, docx, jpeg, png<br>Maximum File Size: 5MB</p>');
+            		}
             		//hide effects if only one
             		if(DocUppload.effects.length == 1) {
             			$(DocUppload.container).find(".effects-tabs").hide();
@@ -410,5 +408,9 @@
             
         }
     }
+    
+    function reinitialize($wrapper, settings){
+		$wrapper.off('click', '*');
+	}
 
 }(jQuery));

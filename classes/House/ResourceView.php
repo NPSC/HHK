@@ -902,7 +902,9 @@ from
         left join
     resource_room rr ON r.idRoom = rr.idRoom
         join
-    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "';");
+    visit v ON rr.idResource = v.idResource and v.`Status` = '" . VisitStatus::CheckedIn . "'
+
+;");
 
         while ($r = $stmt->fetch(\PDO::FETCH_ASSOC)) {
 
@@ -989,6 +991,7 @@ from
     ifnull(g.Description, 'Unknown') as `Status_Text`,
     r.`Cleaning_Cycle_Code`,
     ifnull(n.Name_Full, '') as `Name`,
+    if(count(s.idName) > 0, count(s.idName), '') as `numGuests`,
     ifnull(v.Arrival_Date, '') as `Arrival`,
     ifnull(v.Expected_Departure, '') as `Expected_Departure`,
     r.Last_Cleaned,
@@ -1005,6 +1008,8 @@ from
         left join
     name n ON v.idPrimaryGuest = n.idName
         left join
+    stays s on v.idVisit = s.idVisit and v.Span = s.Visit_Span and s.Status = 'a'
+        left join
     gen_lookups g on g.Table_Name = 'Room_Status' and g.Code = r.Status
         left join
     gen_lookups g3 on g3.Table_Name = 'Room_Cleaning_Days' and g3.`Code` = r.Cleaning_Cycle_Code
@@ -1012,6 +1017,7 @@ from
     resource_use ru on rr.idResource = ru.idResource  and ru.`Status` = '" . ResourceStatus::Unavailable . "'  and DATE(ru.Start_Date) <= DATE('" . $endDT->format('Y-m-d') . "') and DATE(ru.End_Date) > DATE('" . $beginDT->format('Y-m-d') . "')
     $genJoin
 where g3.Substitute > 0 and ru.idResource_use is null
+group by rr.idResource
 ORDER BY $orderBy;");
 
         // Loop rooms.
@@ -1109,6 +1115,7 @@ ORDER BY $orderBy;");
             $fixedRows['Status'] = $stat;
             $fixedRows['Action'] = $action;
             $fixedRows['Occupant'] = $r['Name'];
+            $fixedRows['numGuests'] = $r['numGuests'];
             $fixedRows['Checked_In'] = $arrival;
             $fixedRows['Expected_Checkout'] = $expDeparture;
             $fixedRows['Last_Cleaned'] = $lastCleaned;
@@ -1157,6 +1164,7 @@ ORDER BY $orderBy;");
 	            'Room' => "",
 	            'Visit Status' => "",
 	            'Primary Guest' => "",
+	            'Guests' => "",
 	            'Arrival Date' => "",
 	            'Expected Checkout' => "",
 	            'Notes' => ""

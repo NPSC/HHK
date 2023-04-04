@@ -114,9 +114,7 @@ if ($stayingMarkup == '') {
                 <?php echo $stayingMarkup; ?>
             </div>
             <div id="guestSearch" style="margin-left:10px;margin-right:10px; <?php echo $gSearchDisplay; ?>" class="mb-3 hhk-panel row">
-            <form autocomplete="off">
                 <?php echo $mk1; ?>
-            </form>
             </div>
 
 

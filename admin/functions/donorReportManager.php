@@ -458,7 +458,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 }
 
             } else {
-                $txtheadr = "<thead><tr><th>Nme</th>";
+                $txtheadr = "<thead><tr><th>Name</th>";
                 if ($showAmounts) {
                     $txtheadr .= "<th>Total</th><th>Pay Type</th>";
                 }
@@ -664,7 +664,7 @@ function prepDonorRpt(PDO $dbh, &$cbBasisDonor, &$donSelMemberType, $overrideSal
                 $txtreport .= "<tr>";
 
                 $txtreport .= ($slFlag ? "<td style='width:40px;'><a href='NameEdit.php?id=" . $r["id"] . "'>" . $r["id"] . "</a></td>" : '');
-                $txtreport .= ($slFlag ? "<td>$majorDonorMark</td>" : '') . "<td>" . $r["Donor_Last"] . "</td>";
+                $txtreport .= ($slFlag ? "<td>$majorDonorMark</td>" . "<td>" . $r["Donor_Last"] . "</td>" : "<td>" . $r["Donor_First"] . ' '. $r["Donor_Last"] . ' ' .$r["Donor_Suffix"] . "</td>");
                 $txtreport .= ($slFlag ? "<td>" . $envName . "</td>" : '');
 
                 if ($showAmounts) {

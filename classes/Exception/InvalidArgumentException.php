@@ -19,10 +19,6 @@ use HHK\sec\Session;
  */
 
 class InvalidArgumentException extends \RuntimeException {
-    public function __construct ($message = null, $code = null, $previous = null) {
-        $dbh = initPDO();
-        $uS = Session::getInstance();
-        HouseLog::logError($dbh, "InvalidArgumentException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
-    }
+
 }
 ?>

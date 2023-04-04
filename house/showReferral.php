@@ -192,8 +192,10 @@ if(isset($_GET['template'])){
                             			if(data.type == 'paragraph'){
                             				field = $(field).removeAttr('width');
                             				return $('<div/>').addClass(data.width + ' field-container').append(field);
+                            			}else if(data.type == 'button'){
+                            				return $('<div/>').addClass(data.width + ' mb-3 field-container').append(field);
                             			}else{
-                            				return $('<div/>').addClass('field-container').append(field);
+                            				return $('<div/>').addClass(data.width + ' field-container').append(field);
                             			}
                             		},
                           			default: function(field, label, help, data) {
@@ -314,8 +316,28 @@ if(isset($_GET['template'])){
                         	});
 
 							var guestIndex = 0;
+							var guestCount = 1;
+							var $addGuestBtn = $renderedForm.find('#addGuest');
+
                         	$renderedForm.on('click', '#addGuest', function(){
-                        		guestIndex++;
+                        		addGuest();
+            				});
+
+            				$renderedForm.on('click', '#removeGuest', function(){
+            					let index = $(this).attr("guest-index");
+                        		removeGuest(index);
+            				});
+
+							if($addGuestBtn.length > 0){
+    							while(guestCount < ajaxData.formSettings.initialGuests){
+    								addGuest();
+    							}
+    						}
+
+    						function addGuest(){
+								guestIndex++;
+								guestCount++;
+
                 				var userData = formRender.userData;
                 				var thisGuestGroup = [];
 
@@ -377,13 +399,44 @@ if(isset($_GET['template'])){
                         			$(this).val(val);
                         		});
 
-                            	if(guestIndex+1 >= ajaxData.formSettings.maxGuests){
+                            	if(guestCount >= ajaxData.formSettings.maxGuests){
                             		$renderedForm.find('#addGuest').attr('disabled','disabled').parents(".field-container").addClass("d-none");
                             	}
-            				});
+							}
 
-							while(guestIndex+1 < ajaxData.formSettings.initialGuests){
-								$renderedForm.find('#addGuest').trigger("click");
+    						function removeGuest(guestIndex){
+								guestCount--;
+
+                				var userData = formRender.userData;
+                				var thisGuestGroup = [];
+
+								userData = userData.filter(element=>!(element.group == 'guest' && element.guestIndex == guestIndex));
+
+    							console.log(userData);
+
+                				$renderedForm.formRender('render', userData);
+
+                            	$renderedForm.find('.rendered-form').addClass('row');
+
+                            	//zip code search
+                            	$renderedForm.find('input.hhk-zipsearch').each(function() {
+                                    var lastXhr;
+                                    createZipAutoComplete($(this), 'ws_forms.php', lastXhr, null);
+                                });
+
+                                $renderedForm.find('.address').prop('autocomplete', 'search');
+
+                                //phone format
+                                verifyAddrs($renderedForm);
+
+                        		$('input.form-control').blur(function(){
+                        			var val = $(this).val().replaceAll('"', "'");
+                        			$(this).val(val);
+                        		});
+
+                            	if(guestIndex+1 < ajaxData.formSettings.maxGuests){
+                            		$renderedForm.find('#addGuest').attr('disabled',false).parents(".field-container").removeClass("d-none");
+                            	}
 							}
 
                         	function submitForm(token = ''){

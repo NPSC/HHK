@@ -44,7 +44,7 @@
                         data: 'Patient Last Name',
                         sortable: true,
                         render: function (data, type, row){
-                        	return '<a href="#" class="formDetails" data-docid="' + row.idDocument + '" data-status="' + row.idStatus + '" data-resvid="' + row.idResv + '">' + data + '</a>';
+                        	return '<a href="#" class="formDetails" data-docid="' + row.idDocument + '" data-status="' + row.idStatus + '" data-resvid="' + row.idResv + '" data-enablereservation="' + row.enableReservation + '">' + data + '</a>';
                         }
                 },
                 {
@@ -269,15 +269,17 @@
 			
 			window.frames["formPreviewIframe"].resizeTo(1920, 1080);
 			formDetailsDialog.find("#formDetailsIframe").attr('src', settings.detailURL + '?form=' + idDocument);
+			let formDetailsDialogBtns = Object.assign({}, settings.formDetailsDialogBtns);
+			
 			if(!idResv && enableReservation == 1){
-				settings.formDetailsDialogBtns["Create Reservation"] = function(){
+				formDetailsDialogBtns["Create Reservation"] = function(){
 					window.location.href = settings.reserveURL + "?docid=" + idDocument;
 				};
 			}else{
-				delete settings.formDetailsDialogBtns["Create Reservation"];
+				delete formDetailsDialogBtns["Create Reservation"];
 			};
 			
-			formDetailsDialog.dialog('option', 'buttons', settings.formDetailsDialogBtns);
+			formDetailsDialog.dialog('option', 'buttons', formDetailsDialogBtns);
 			formDetailsDialog.dialog('option', 'title', "Details" + dialogTitle);
 			
 			$("#formNotesDialog").data("iddocument", idDocument);

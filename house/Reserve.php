@@ -1,6 +1,5 @@
 <?php
 
-use HHK\Config_Lite\Config_Lite;
 use HHK\sec\{Session, WebInit};
 use HHK\HTMLControls\HTMLContainer;
 use HHK\Payment\PaymentSvcs;
@@ -13,13 +12,12 @@ use HHK\Member\Role\AbstractRole;
 use HHK\Payment\PaymentGateway\AbstractPaymentGateway;
 use HHK\SysConst\RoomRateCategories;
 use HHK\sec\Labels;
-use HHK\House\ReferralForm;
 
 /**
  * Reserve.php
  *
  * @author    Eric K. Crane <ecrane@nonprofitsoftwarecorp.org>
- * @copyright 2010-2020 <nonprofitsoftwarecorp.org>
+ * @copyright 2010-2023 <nonprofitsoftwarecorp.org>
  * @license   MIT
  * @link      https://github.com/NPSC/HHK
  */
@@ -27,7 +25,7 @@ require ("homeIncludes.php");
 
 
 try {
-    $wInit = new webInit();
+    $wInit = new WebInit();
 } catch (Exception $exw) {
     die($exw->getMessage());
 }
@@ -136,7 +134,6 @@ if (isset($_GET['idPsg'])) {
 
 if ($idReserv > 0 || $idGuest >= 0) {
 
-    //$mk1 = "<h2>Loading...</h2>";
     $mk1 = '<div id="hhk-loading-spinner" style="width: 100%; height: 100%; margin-top: 100px; text-align: center"><img src="../images/ui-anim_basic_16x16.gif"><p>Loading...</p></div>';
     $resvObj->setIdResv($idReserv);
     $resvObj->setId($idGuest);
@@ -145,9 +142,8 @@ if ($idReserv > 0 || $idGuest >= 0) {
 } else {
 
     // Guest Search markup
-	$gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ", true, $uS->searchMRN);
+    $gMk = AbstractRole::createSearchHeaderMkup("gst", $labels->getString('MemberType', 'guest', 'Guest')." or " . $labels->getString('MemberType', 'patient', 'Patient') . " Name Search: ", true, $uS->searchMRN);
     $mk1 = $gMk['hdr'];
-
 }
 
 $resvAr = $resvObj->toArray();
@@ -165,9 +161,9 @@ if ($uS->AcceptResvPaymt && $idReserv > 0) {
 
 $resvManagerOptions = [];
 if($uS->UseIncidentReports){
-	$resvManagerOptions["UseIncidentReports"] = true;
+    $resvManagerOptions["UseIncidentReports"] = true;
 }else{
-	$resvManagerOptions["UseIncidentReports"] = false;
+    $resvManagerOptions["UseIncidentReports"] = false;
 }
 $resvManagerOptionsEncoded = json_encode($resvManagerOptions);
 
@@ -177,18 +173,15 @@ $title = $wInit->pageHeading;
 // Imediate checkin, no prior reservation
 if (isset($_GET['title'])) {
 
-	$nowDT = new DateTime();
-	$extendHours = intval($uS->ExtendToday);
+    $nowDT = new DateTime();
+    $extendHours = intval($uS->ExtendToday);
 
+    if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) < $extendHours) {
+            $nowDT->sub(new DateInterval('P1D'));
+    }
 
-
-	if ($extendHours > 0 && $extendHours < 9 && intval($nowDT->format('H')) < $extendHours) {
-		$nowDT->sub(new DateInterval('P1D'));
-	}
-
-	$resvAr['arrival'] = $nowDT->format('M j, Y');
+    $resvAr['arrival'] = $nowDT->format('M j, Y');
     $title = 'Check In';
-
 }
 
 $resvObjEncoded = json_encode($resvAr);

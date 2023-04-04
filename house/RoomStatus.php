@@ -280,6 +280,12 @@ foreach ($rescGroups as $g) {
                     'sortable': true
                 },
                 {
+                    'data': 'numGuests',
+                    'title': 'Guests',
+                    'searchable': false,
+                    'sortable': true
+                },
+                {
                     'data': 'Checked_In',
                     'title': 'Checked In',
                     'type': 'date',

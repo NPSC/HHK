@@ -19,11 +19,6 @@ use HHK\sec\Session;
  */
 
 class NotFoundException extends \UnexpectedValueException {
-    public function __construct ($message = null, $code = null, $previous = null) {
-        $dbh = initPDO();
-        $uS = Session::getInstance();
-        HouseLog::logError($dbh, "NotFoundException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
-    }
 }
 
 ?>

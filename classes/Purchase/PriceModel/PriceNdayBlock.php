@@ -68,7 +68,7 @@ class PriceNdayBlock extends AbstractPriceModel {
         return $amount;
     }
 
-    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e') {
+    public function getEditMarkup(\PDO $dbh, $defaultRoomRate = 'e', $financialAssistance = false) {
 
 
         $fTbl = new HTMLTable();

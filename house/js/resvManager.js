@@ -699,20 +699,19 @@ function resvManager(initData, options) {
                     continue;
                  } else {
 	
-					let tr = $(data.famSection.tblBody[t]);
-					
-					if (t ==2) {
-						// Load search term
-						let inp = tr.find('input.hhk-lastname');
-						if (inp.val() === '') {
-							inp.val(guestSearchTerm).focus();
-						}
-					}
-					
-					$famTbl.find('tbody:first').append(tr);
+                    let tr = $(data.famSection.tblBody[t]);
 
-				}
+                    if (t == 2) {
+                            // Load search term
+                            let inp = tr.find('input.hhk-lastname');
+                            if (inp.val() === '') {
+                                    inp.val(guestSearchTerm).focus();
+                            }
+                    }
 
+                    $famTbl.find('tbody:first').append(tr);
+
+                }
             }
 
             // Staying controls
@@ -733,7 +732,75 @@ function resvManager(initData, options) {
                 changeYear: true,
                 autoSize: true,
                 maxDate: 0,
-                dateFormat: 'M d, yy'
+                dateFormat: 'M d, yy',
+                showButtonPanel: false,
+                beforeShow: function( input ) {
+                    setTimeout(function() {
+                        var buttonPane = $( input )
+                            .datepicker( "widget" )
+                            .find( ".ui-datepicker-buttonpane" );
+
+                        $( "<button>", {
+                            text: "Minor",
+                            click: function() {
+                                var target = $( input );
+                                var inst = $.datepicker._getInst(target[0]);
+                                inst.input.val( 'Minor' );
+                                var onSelect = $.datepicker._get( inst, "onSelect" );
+                                
+                                if ( onSelect ) {
+                                    onSelect.apply( ( inst.input ? inst.input[ 0 ] : null ), [ 'Minor', inst ] );  // trigger custom callback
+                                } else if ( inst.input ) {
+                                    inst.input.trigger( "change" ); // fire the change event
+                                }
+
+                                if ( inst.inline ) {
+                                    $.datepicker._updateDatepicker( inst );
+                                } else {
+                                    $.datepicker._hideDatepicker();
+                                    $.datepicker._lastInput = inst.input[ 0 ];
+                                    if ( typeof( inst.input[ 0 ] ) !== "object" ) {
+                                        inst.input.trigger( "focus" ); // restore focus
+                                    }
+                                    $.datepicker._lastInput = null;
+                                }
+                            }
+                        }).appendTo( buttonPane ).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                    }, 1 );
+                },
+                onChangeMonthYear: function( year, month, instance ) {
+                    setTimeout(function() {
+                        var buttonPane = $( instance )
+                            .datepicker( "widget" )
+                            .find( ".ui-datepicker-buttonpane" );
+
+                        $( "<button>", {
+                            text: "Minor",
+                            click: function() {
+                                var target = $( instance.input );
+                                var inst = $.datepicker._getInst(target[0]);
+                                inst.input.val( 'Minor' );
+                                var onSelect = $.datepicker._get( inst, "onSelect" );
+                                if ( onSelect ) {
+                                    onSelect.apply( ( inst.input ? inst.input[ 0 ] : null ), [ 'Minor', inst ] );  // trigger custom callback
+                                } else if ( inst.input ) {
+                                    inst.input.trigger( "change" ); // fire the change event
+                                }
+
+                                if ( inst.inline ) {
+                                    $.datepicker._updateDatepicker( inst );
+                                } else {
+                                    $.datepicker._hideDatepicker();
+                                    $.datepicker._lastInput = inst.input[ 0 ];
+                                    if ( typeof( inst.input[ 0 ] ) !== "object" ) {
+                                        inst.input.trigger( "focus" ); // restore focus
+                                    }
+                                    $.datepicker._lastInput = null;
+                                }
+                            }
+                        }).appendTo( buttonPane ).addClass("ui-datepicker-clear ui-state-default ui-priority-primary ui-corner-all");
+                    }, 1 );
+                }
             });
 
             // set country and state selectors
@@ -870,6 +937,21 @@ function resvManager(initData, options) {
 
                 // Emergency Contact dialog box search text box.
                 createAutoComplete($('#txtemSch'), 3, {cmd: 'filter', add: 'phone', basis: 'psg', psg: data.idPsg}, getECRel);
+
+				// Diagnosis Search
+				let diagSelect = function(item){
+					$('#selDiagnosis').val(item.id);
+					$("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
+				}
+				createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
+				
+				//Diagnosis delete button
+				$(document).on('click', '#delDiagnosis', function(e){
+					e.preventDefault();
+					$("#selDiagnosis").val("");
+					$("#diagSearch").val("");
+					$(this).closest('tr').addClass('d-none');
+				});
 
                 // Hover icons
                 $( "ul.hhk-ui-icons li" ).hover(
@@ -1893,16 +1975,27 @@ function resvManager(initData, options) {
             });
         }
 
-        function setupNotes(rid, $container) {
+        function setupNotes(rid, $container, psgId = null) {
 
-            $container.notesViewer({
-                linkId: rid,
-                linkType: 'reservation',
-                newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
-                alertMessage: function(text, type) {
-                    flagAlertMessage(text, type);
-                }
-            });
+			if(rid > 0){
+	            $container.notesViewer({
+	                linkId: rid,
+	                linkType: 'reservation',
+	                newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
+	                alertMessage: function(text, type) {
+	                    flagAlertMessage(text, type);
+	                }
+	            });
+	        }else if(psgId > 0){
+				$container.notesViewer({
+	                linkId: psgId,
+	                linkType: 'psg',
+	                newNoteAttrs: {id:'taNewNote', name:'taNewNote'},
+	                alertMessage: function(text, type) {
+	                    flagAlertMessage(text, type);
+	                }
+	            });
+			}
 
             return $container;
         }
@@ -1958,7 +2051,7 @@ function resvManager(initData, options) {
 
 			// Reservation notes.
             if (data.resv.rdiv.notes !== undefined) {
-                $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes)));
+                $rDiv.append(setupNotes(data.rid, $(data.resv.rdiv.notes), data.idPsg));
             }
 
             // Reservation docs.

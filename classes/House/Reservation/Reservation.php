@@ -1167,6 +1167,7 @@ WHERE
             return;
         }
 
+        $resv->getConstraints($dbh, true);
         $roomChooser = new RoomChooser($dbh, $resv, 1, new \DateTime($resv->getExpectedArrival()), new \DateTime($resv->getExpectedDeparture()));
         $resources = $roomChooser->findResources($dbh, SecurityComponent::is_Authorized(ReserveData::GUEST_ADMIN));
 

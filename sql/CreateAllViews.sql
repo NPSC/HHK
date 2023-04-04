@@ -1771,6 +1771,14 @@ CREATE OR REPLACE VIEW `vlist_pments` AS
     ORDER BY i.idInvoice, p.idPayment, pa.idPayment_auth;
 
 
+-- -----------------------------------------------------
+-- View `vlist_first_visit`
+-- -----------------------------------------------------
+CREATE OR REPLACE VIEW `vlist_first_visit` AS
+select v.* from visit v
+join registration reg on v.idRegistration = reg.idRegistration
+where v.Arrival_Date = (select min(vv.Arrival_Date) from visit vv join registration reg2 on vv.idRegistration = reg2.idRegistration where reg.idPsg = reg2.idPsg);
+
 
 -- -----------------------------------------------------
 -- View `vlocation_listing`

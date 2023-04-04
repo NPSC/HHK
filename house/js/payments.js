@@ -1579,7 +1579,7 @@ function cardOnFile(id, idGroup, postBackPage, idx) {
 
 function paymentsTable(tableID, containerID, refreshPayments) {
 
-	var ptbl = $('#' + tableID).dataTable({
+	var ptbl = $('#' + tableID).DataTable({
 		'columnDefs': [
 			{
 				'targets': 8,
@@ -1595,15 +1595,11 @@ function paymentsTable(tableID, containerID, refreshPayments) {
 		'dom': '<"top"if><"hhk-overflow-x hhk-tbl-wrap"rt><"bottom"lp><"clear">',
 		'displayLength': 50,
 		'order': [[8, 'asc']],
-		'lengthMenu': [[25, 50, -1], [25, 50, "All"]]
+		'lengthMenu': [[25, 50, -1], [25, 50, "All"]],
+		drawCallback: function(){
+			$('#' + containerID).find('input[type=button]').button();
+		}
 	});
-
-	ptbl.on('draw', function() {
-		$('#' + containerID).find('input[type=button]').button();
-	});
-
-	$('#' + containerID).find('input[type=button]').button();
-
 
 	$('#btnPayHistRef').button().click(function() {
 		refreshPayments();

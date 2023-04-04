@@ -19,11 +19,6 @@ use HHK\sec\Session;
  */
 
 class CsrfException extends \Exception {
-    public function __construct ($message = null, $code = null, $previous = null) {
-        $dbh = initPDO();
-        $uS = Session::getInstance();
-        HouseLog::logError($dbh, "CSRFException", $message . " : " . $this->file . ":" . $this->line, $uS->username);
-    }
 
 }
 ?>

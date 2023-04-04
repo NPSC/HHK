@@ -144,6 +144,8 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
     "use strict";
     var cache = {};
     
+    const maxLength = 10;
+    
     const _source = function (request, response, cache, shoNew, inputParms, minChars) {
     
         let term = request.term.toString().substr(0,minChars);
@@ -169,11 +171,15 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
             });
 
             if (shoNew) {
-                filtered.push({'id':0, 'substitute':'New Person'});
+                filtered.unshift({'id':0, 'fullName':'<span class="ui-icon ui-icon-plusthick"></span><span style="padding-left:1em;">New Person</span>'});
             } else if (filtered.length === 0) {
                 filtered.push({'id':'n', 'substitute':'No one found'});
                 cache = {};
             }
+            
+            if(filtered.length > maxLength){
+				filtered.unshift({'id':'n', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
+			}
 
             response( filtered );
 
@@ -189,11 +195,15 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
                 }
 
 	            if (shoNew) {
-	                data.push({'id':0, 'substitute':'New Person'});
+	                data.unshift({'id':0, 'fullName':'<span class="ui-icon ui-icon-plusthick"></span><span style="padding-left:1em;">New Person</span>'});
 	            } else if (data.length === 0) {
 	                data.push({'id':'n', 'substitute':'No one found'});
 	                cache = {};
 	            }
+	            
+	            if(data.length > maxLength){
+					data.unshift({'id':'n', 'substitute':'Keep typing... (More than ' + maxLength + ' results found)'});
+				}
 
                 cache[ term ] = data;
                 response( data );
@@ -217,68 +227,84 @@ function createRoleAutoComplete(txtCtrl, minChars, inputParms, selectFunction, s
             }
         },
         delay: 120
-    }).autocomplete( "instance" )
-    	._renderItem = function( ul, item ) {
-			let firstRow;
-			if (item.noReturn === undefined) {
-				item.noReturn = '';
-			} else if (item.noReturn != '') {
-				item.noReturn = "<span style='color:red; margin-right:.5em;'>" + item.noReturn + "</span>";
-			}
-			if (item.fullName === undefined) {
-				item.fullName = ''
-			} else if (item.fullName != '') {
-				item.fullName = "<span>" + item.fullName + "</span>";
-			}
-			if (item.memberStatus === undefined) {
-				item.memberStatus = ''
-			} else if (item.memberStatus != '') {
-				item.memberStatus = "<span style='margin-left:.3em;'>(" + item.memberStatus + ")</span>";
-			}
-			if (item.birthDate === undefined) {
-				item.birthDate = ''
-			} else if (item.birthDate != '') {
-				item.birthDate = "<span style='margin-left:.5em;'>(" + item.birthDate + ")</span>";
-			}
-			if (item.phone === undefined) {
-				item.phone = ''
-			} else if (item.phone != '') {
-				item.phone = "<span style='margin-right:.5em;'>" + item.phone + "</span>";
-			}
-			if (item.city === undefined) {
-				item.city = ''
-			} else if (item.city != '') {
-				item.city = "<span>" + item.city + "</span>";
-			}
-			if (item.state === undefined) {
-				item.state = ''
-			} else if (item.state != ''){
-				let comma = '';
-				if (item.city != '') {
-					comma = ', ';
+    })
+    if(txtCtrl.autocomplete("instance") !== undefined){
+	    txtCtrl.autocomplete( "instance" )
+	    	._renderItem = function( ul, item ) {
+				let firstRow = "", detailsRow = "", rightContent = "", mrnRow = "";
+				if (item.noReturn === undefined) {
+					item.noReturn = '';
+				} else if (item.noReturn != '') {
+					item.noReturn = "<span class='autocompleteNoReturn'>" + item.noReturn + "</span>";
 				}
-				item.state = "<span>" + comma + item.state + "</span>";
-			}
-			if (item.substitute === undefined) {
-				item.substitute = '';
-			} else if (item.substitute != '') {
-				item.substitute = "<span style='margin-right:.5em;'>" + item.substitute + "</span>";
-			}
-			
-			firstRow = "<div style='font-size:.85em;'>" + item.noReturn + item.substitute + item.fullName + item.memberStatus + item.birthDate;
-			
-			if (item.phone != '' || item.city != '' || item.state != '') {
-				firstRow = firstRow + "<br>" + item.phone +  item.city + item.state;
-			}
-			
-		    return $( "<li style='border-bottom: 1px solid #c1e3ec'>" )
-		        .append( firstRow + "</div>" )
-		        .appendTo( ul );
-			};
+				if (item.fullName === undefined) {
+					item.fullName = ''
+				} else if (item.fullName != '') {
+					item.fullName = "<span class='autocompleteName'>" + item.fullName + "</span>";
+				}
+				if (item.memberStatus === undefined) {
+					item.memberStatus = ''
+				} else if (item.memberStatus != '') {
+					item.memberStatus = "<span class='autocompleteMemStatus'>" + item.memberStatus + "</span>";
+				}
+				if (item.birthDate === undefined) {
+					item.birthDate = ''
+				} else if (item.birthDate != '') {
+					item.birthDate = "<span style='margin-left:.5em;'>(" + item.birthDate + ")</span>";
+				}
+				if (item.mrn === undefined) {
+					item.mrn = ''
+				} else if (item.mrn != '') {
+					item.mrn = "<span class='autocompleteMRN'>" + item.mrn + "</span>";
+				}
+				if (item.phone === undefined) {
+					item.phone = ''
+				} else if (item.phone != '') {
+					item.phone = "<span style='margin-right:.5em;'>" + item.phone + "</span>";
+				}
+				if (item.city === undefined) {
+					item.city = ''
+				} else if (item.city != '') {
+					item.city = "<span>" + item.city + "</span>";
+				}
+				if (item.state === undefined) {
+					item.state = ''
+				} else if (item.state != ''){
+					let comma = '';
+					if (item.city != '') {
+						comma = ', ';
+					}
+					item.state = "<span>" + comma + item.state + "</span>";
+				}
+				if (item.substitute === undefined) {
+					item.substitute = '';
+				} else if (item.substitute != '') {
+					item.substitute = "<span>" + item.substitute + "</span>";
+				}
+				
+				firstRow = "<div class='autocompleteItemTitle'>" + item.substitute + item.fullName + item.birthDate + "</div>";
+
+				if (item.phone != '' || item.city != '' || item.state != '') {
+					detailsRow = "<div class='autocompleteItemDetails'>" + item.phone +  item.city + item.state + "</div>";
+				}
+				
+				if(item.mrn != ''){
+					mrnRow = "<div class='autocompleteItemMRN'>" + item.mrn + "</div>";
+				}
+				
+				if(item.memberStatus != '' || item.noReturn != ''){
+					rightContent = "<div class='right'>" + item.memberStatus + item.noReturn + "</div>";
+				}
+				
+			    return $( "<li>" )
+			        .append( "<div style='font-size:.85em;'><div class='hhk-flex'><div class='left'>" + firstRow + detailsRow + mrnRow + "</div>" + rightContent + "</div></div>" )
+			        .appendTo( ul );
+		};
 		txtCtrl.autocomplete( "instance" )
 			._resizeMenu = function() {
-	            this.menu.element.outerWidth(this.element.outerWidth() * 2.7 );
-		    };
-
+			//this.menu.element.outerWidth(this.element.outerWidth() * 2.7 );
+			this.menu.element.outerWidth(txtCtrl.outerWidth());
+		};
+	}
 }
 

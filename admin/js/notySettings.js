@@ -1,21 +1,19 @@
 Noty.overrideDefaults({
     layout   : 'top',
     theme    : 'semanticui',
-    timeout  : '4000',
+    timeout  : '5000',
     progressBar : true,
     closeWith: ['button'],
     animation: {
         open : 'animated bounceInDown',
         close: 'animated bounceOutUp'
     },
-    callbacks: {
-    	afterShow: function(){
-    		//set up custom close handler
-    		$(this.barDom).on('click', function(){
-    			let barDom = $(this);
-				setTimeout(()=>{barDom.hide();}, 500);
-				$(this).addClass('animated bounceOutUp');
-    		});
-    	}
-    }
+});
+
+//custom click handler
+$(document).on('click', '.noty_bar', function(){
+	console.log("Banner clicked");
+	let barDom = $(this);
+	setTimeout(()=>{console.log("Banner hiding...");barDom.hide();}, 500);
+	barDom.addClass('animated bounceOutUp');
 });

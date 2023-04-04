@@ -265,9 +265,10 @@ $ckdate";
                 $this->reportStart = $this->selectedYear . '-' . $month . '-01';
             }
 
-            $endDT = new \DateTime($this->reportStart);
-            $endDT->add(new \DateInterval($interval));
+            $startDT = new \DateTimeImmutable($this->reportStart);
+            $endDT = $startDT->add(new \DateInterval($interval));
 
+            $this->reportStart = $startDT->format('Y-m-d');
             $this->queryEnd = $endDT->format('Y-m-d');
             $this->reportEnd = $endDT->sub(new \DateInterval('P1D'))->format('Y-m-d');
         }

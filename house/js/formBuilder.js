@@ -45,6 +45,16 @@
     			"multiple": false,
     			"values": []
   			},
+  			... (options.fieldOptions.diagnosisDetails ?
+  				[{
+				"type": "text",
+				"required": false,
+    			"label": (options.labels.diagnosis || 'Diagnosis') + " Details",
+    			"placeholder": (options.labels.diagnosis || 'Diagnosis') + " Details",
+    			"className": "form-control",
+    			"name": "hospital.diagnosisDetails",
+    			"width": "col-md-3"
+  			}]:[]),
   			{
     			"type": "select",
     			"label": (options.labels.location || 'Unit'),
@@ -92,8 +102,8 @@
         		fields: [
 				{
     				"type": "select",
-    				"label": "Prefix",
-    				"placeholder": "Prefix",
+    				"label": (options.labels.namePrefix || 'Prefix'),
+    				"placeholder": (options.labels.namePrefix || 'Prefix'),
     				"className": "form-select",
     				"name": "patient.prefix",
     				"width": "col-md-3",
@@ -360,8 +370,34 @@
         			"subtype": "h3",
         			"label": "Guest ${guestNum}",
         			"group": "guest",
+        			"width": "col-md-2",
         			"className": "guestHeader"
     			},
+    			{
+  					"type": "button",
+  					"name": 'removeGuest',
+  					"label": "Remove " + (options.labels.guest || 'Guest'),
+  					"width": "col-md-10",
+  					"group":"guest",
+  					"style":"danger"
+  				},
+  				{
+  					"type": "paragraph",
+  					"label": "&nbsp;",
+  					"group": "guest"
+  				},
+    			{
+    				"type": "select",
+    				"label": (options.labels.namePrefix || 'Prefix'),
+    				"placeholder": (options.labels.namePrefix || 'Prefix'),
+    				"className": "form-select",
+    				"name": "guests.g0.prefix",
+    				"width": "col-md-3",
+    				"dataSource":"namePrefix",
+    				"multiple": false,
+    				"values": [],
+    				"group": "guest"
+  				},
 				{
 					"type": "text",
     				"label": "First Name",
@@ -378,6 +414,16 @@
     				"className": "form-control",
     				"name": "guests.g0.lastName",
     				"width": "col-md-3",
+    				"group": "guest"
+  				},
+  				{
+    				"type": "date",
+    				"label": "Birthdate",
+    				"placeholder": "Birthdate",
+    				"className": "form-control",
+    				"name": "guests.g0.birthdate",
+    				"width": "col-md-4",
+    				"validation": "lessThanToday",
     				"group": "guest"
   				},
   				{
@@ -427,7 +473,8 @@
   				{
   					"type": "button",
   					"name": 'addGuest',
-  					"label": "Add " + (options.labels.guest || 'Guest')
+  					"label": "Add " + (options.labels.guest || 'Guest'),
+  					"style":"success"
   				}
   				]
   			},
@@ -681,6 +728,54 @@
   			disabledAttrs: ['access', 'name'],
   			typeUserAttrs: {
   				header: {
+					width: {
+      					label: 'Field Width',
+      					multiple: false,
+      					options: {
+        					'col-md-12': '12 Columns (100%)',
+        					'col-md-11': '11 Columns (91%)',
+        					'col-md-10': '10 Columns (83%)',
+        					'col-md-9': '9 Columns (75%)',
+        					'col-md-8': '8 Columns (66%)',
+        					'col-md-7': '7 Columns (58%)',
+        					'col-md-6': '6 Columns (50%)',
+        					'col-md-5': '5 Columns (41%)',
+        					'col-md-4': '4 Columns (33%)',
+        					'col-md-3': '3 Columns (25%)',
+        					'col-md-2': '2 Columns (16%)',
+        					'col-md-1': '1 Column (8%)',
+      					},
+      					value: 'col-md-12'
+    				},
+  					group: {
+  						label: 'Group',
+  						multiple: false,
+  						options: {
+  							'': '',
+  							'guest': 'Guest (used with Add Guest button)'
+  						}
+  					}
+  				},
+  				button: {
+					width: {
+      					label: 'Field Width',
+      					multiple: false,
+      					options: {
+        					'col-md-12': '12 Columns (100%)',
+        					'col-md-11': '11 Columns (91%)',
+        					'col-md-10': '10 Columns (83%)',
+        					'col-md-9': '9 Columns (75%)',
+        					'col-md-8': '8 Columns (66%)',
+        					'col-md-7': '7 Columns (58%)',
+        					'col-md-6': '6 Columns (50%)',
+        					'col-md-5': '5 Columns (41%)',
+        					'col-md-4': '4 Columns (33%)',
+        					'col-md-3': '3 Columns (25%)',
+        					'col-md-2': '2 Columns (16%)',
+        					'col-md-1': '1 Column (8%)',
+      					},
+      					value: 'col-md-12'
+    				},
   					group: {
   						label: 'Group',
   						multiple: false,
@@ -1239,7 +1334,7 @@
 				layoutTemplates: settings.layoutTemplates,
 				onSave: onSave,
 				onAddField:onAddField,
-				onCloseFieldEdit:onCloseFieldEdit,
+				//onCloseFieldEdit:onCloseFieldEdit,
 				stickyControls: settings.stickyControls,
 				"i18n":{
 					"location":"../js/formBuilder"
@@ -1273,7 +1368,7 @@
 								layoutTemplates: settings.layoutTemplates,
 								onSave: onSave,
 								onAddField:onAddField,
-								onCloseFieldEdit:onCloseFieldEdit,
+								//onCloseFieldEdit:onCloseFieldEdit,
 								stickyControls: settings.stickyControls,
 								"i18n":{
 									"location":"../js/formBuilder"
@@ -1392,10 +1487,10 @@
 				
 				//check field group
 				formData.forEach(function(field){
-					if(field.group == 'guest' && field.name && !field.name.startsWith("guests.g")){
+					/*if(field.group == 'guest' && field.name && !field.name.startsWith("guests.g")){
 						field.group = '';
 						flagAlertMessage('The "Guest" group can only be used with Guest fields, group has been removed', true);
-					}
+					}*/
 				});
 				
 				if(emailPatient){

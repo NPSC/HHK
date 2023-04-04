@@ -495,7 +495,17 @@ $(document).ready(function () {
             function(data) {
                 $btn.val('Save');
                 if (data) {
-                    $frm.children('div').empty().append(data);
+                    $frm.children('div').empty().append(data).find(".sortable tbody")
+                        	.sortable({
+                        		items: "tr:not(.no-sort)",
+                        		handle: ".sort-handle",
+                        		update: function (e, ui) {
+                        			$(this).find("tr").each(function(i){
+                        				$(this).find("td:first input").val(i);
+                        			});
+                        		}
+                        	});
+                    
                 }
             });
     }).button();
@@ -506,7 +516,16 @@ $(document).ready(function () {
         $.post('ResourceBuilder.php', $frm.serialize() + '&cmd=save' + '&table=' + 'Demographics' + '&tp=' + 'm',
             function(data) {
                 if (data) {
-                    $frm.children('div').children().remove().end().append(data);
+                    $frm.children('div').children().remove().end().append(data).find(".sortable tbody")
+                        	.sortable({
+                        		items: "tr:not(.no-sort)",
+                        		handle: ".sort-handle",
+                        		update: function (e, ui) {
+                        			$(this).find("tr").each(function(i){
+                        				$(this).find("td:first input").val(i);
+                        			});
+                        		}
+                        	});
                 }
             });
     }).button();

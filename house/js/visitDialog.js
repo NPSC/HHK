@@ -118,6 +118,20 @@ function viewHospitalStay(idHs, idVisit, $hsDialog) {
             	$('.hhk-hsdialog input.hhk-docInfo').val('');
             	$('.hhk-hsdialog .hhk-docInfo').hide();
             });
+            
+            // Diagnosis Search
+			let diagSelect = function(item){
+				$('#selDiagnosis').val(item.id);
+				$("#selectedDiag").text(item.label).closest("tr").removeClass("d-none");
+			}
+			createAutoComplete($('#diagSearch'), 3, {cmd: 'diagnosis'}, diagSelect, false);
+
+			//Diagnosis delete button
+			$(document).on('click', '#delDiagnosis', function(e){
+				$("#selDiagnosis").val("");
+				$("#diagSearch").val("");
+				$(this).closest('tr').addClass('d-none');
+			});
 
             // Calendars for treatment start and end dates
             $('.ckhsdate').datepicker({
